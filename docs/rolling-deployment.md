@@ -341,13 +341,21 @@ initial funding/claims, post and Bok readiness evidence on the final assets. A
 canonical Ethereum funding payment alone is not successful private setup or Ready.
 
 The named-wallet matrix remains separate: local native-proof-disabled MetaMask
-results do not qualify real-proof testnet or Phantom. Phantom's observed onboarding
-availability failure remains an external-response ambiguity, not a validated payment
-route; do not weaken wallet security or assert support from a mock. Current target
-network/liquidity, the selected personal GitHub App's live permissions, full archive
-recovery, independent fresh-operator restore, expert audit and the required soak
-remain their own evidence gates. Check current records rather than treating a
-transient development startup failure or success as permanent deployment status.
+results do not qualify real-proof testnet or Phantom. Prepared genuine MetaMask and
+Phantom profiles establish readiness to exercise their respective paths, not completed
+wallet acceptance. Record each wallet's actual funding, private setup, application
+use and required recovery outcomes on the target network; neither a mock nor the
+other wallet's result substitutes. Historical Phantom onboarding failures do not
+establish its current availability. Current target network/liquidity, the selected
+personal GitHub App's live permissions, full archive recovery, independent fresh-operator
+restore and expert audit remain separately evidenced requirements.
+
+The owner removed the fixed elapsed soak. Complete bounded representative reliability
+and failure/recovery exercises on the final application, recording observed outcomes
+and incidents, within the amended delivery window ending 2026-10-21T15:25:57Z; no
+minimum waiting period applies. Preserve specialist review and network-clearance gates.
+Check current records rather than treating a transient development startup failure
+or success as permanent deployment status.
 
 ## Recovery, monitoring and costs
 
