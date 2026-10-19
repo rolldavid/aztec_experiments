@@ -358584,6 +358584,7 @@ pub contract MultiCallEntrypoint {
     siloNullifier: () => siloNullifier,
     submitOnceWithReconciliation: () => submitOnceWithReconciliation,
     validateAggregateFundingIntent: () => validateAggregateFundingIntent,
+    validateAggregateFundingQuote: () => validateAggregateFundingQuote,
     validateDeploymentManifest: () => validateDeploymentManifest,
     verifyAggregateFundingEffects: () => verifyAggregateFundingEffects,
     verifyDeploymentInputs: () => verifyDeploymentInputs,
@@ -364648,6 +364649,11 @@ pub contract MultiCallEntrypoint {
     await validState(request, result, false);
     prepared.set(result, request);
     return result;
+  }
+  async function validateAggregateFundingQuote(preparation) {
+    const eth = prepared.get(preparation), usdc = preparedUsdc.get(preparation);
+    check4(eth || usdc, "UNVERIFIED_QUOTE");
+    await validState(eth ?? usdc, preparation, !!usdc);
   }
   async function aggregateFundingTransaction(preparation, consent) {
     check4(prepared.has(preparation), "UNVERIFIED_QUOTE");
@@ -390656,6 +390662,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ], [], [], [], this.address);
     }
   };
+  var PrivateClaimAndPayFeePaymentMethod = class _PrivateClaimAndPayFeePaymentMethod extends PrivateFeePaymentMethod {
+    #claim;
+    constructor(address6, { amount, secret, salt, leafIndex }, reservation) {
+      super(address6, reservation);
+      this.#claim = { amount: BigInt(amount), secret: new Fr(secret.toBigInt()), salt: new Fr(salt.toBigInt()), leafIndex: new Fr(leafIndex.toBigInt()) };
+    }
+    withReservation(reservation) {
+      return new _PrivateClaimAndPayFeePaymentMethod(this.address, this.#claim, reservation);
+    }
+    async getExecutionPayload() {
+      const { amount, secret, salt, leafIndex } = this.#claim;
+      return new ExecutionPayload([
+        await call("claim", ProtocolContractAddress.FeeJuice, "claim((Field),u128,Field,Field)", [this.address.toField(), new Fr(amount), secret, leafIndex]),
+        await call("mint", this.address, "mint(u128,Field,Field)", [new Fr(amount), salt, leafIndex]),
+        await call("pay_fee", this.address, "pay_fee(u128)", [new Fr(this.reservation)])
+      ], [], [], [], this.address);
+    }
+  };
 
   // shared/private-fee-client.mjs
   var PrivateFeePreparationError = class extends Error {
@@ -390699,7 +390723,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const functions = getAllFunctionAbis(artifact);
     const publicFunctions = functions.filter((f) => f.functionType === "public" && f.name !== "public_dispatch");
     check7(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
-    for (const [name, count] of [["pay_fee", 1], ["mint_and_pay_fee", 4]]) {
+    for (const [name, count] of [["pay_fee", 1], ["mint_and_pay_fee", 4], ["mint", 3]]) {
       check7(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
     }
     return artifact;
@@ -390758,7 +390782,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const artifact = artifactOf(privateFeeArtifact), canonical2 = await derivePrivateFeeInstance(artifact);
     check7(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
     await requirePublishedPrivateFee(node2, canonical2);
-    let paymentMethod, availableCredit;
+    let paymentMethod, availableCredit, smallClaim;
+    const privateBalance = async () => {
+      check7(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
+      const { result } = await Contract.at(payer, artifact, wallet).methods.balance_of(author).simulate({ from: author });
+      return uint3(result, 128);
+    };
     if (claim2 !== void 0) {
       check7(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
       const amount = uint3(claim2.amount, 128), salt = field5(claim2.salt), leafIndex = field5(claim2.leafIndex);
@@ -390766,13 +390795,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       availableCredit = amount;
       const secret = await derivePrivateFeeBridgeSecret({ salt, owner: author });
       check7(claim2.secret === void 0 || equal2(field5(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
-      paymentMethod = new PrivateMintAndPayFeePaymentMethod(payer, { amount, salt, leafIndex, secret }, 1n);
+      const verifiedClaim = { amount, salt, leafIndex, secret };
+      paymentMethod = new PrivateMintAndPayFeePaymentMethod(payer, verifiedClaim, 1n);
+      if (amount < fixed.maximumFee) smallClaim = verifiedClaim;
     }
     await wallet.registerContract(canonical2, artifact);
+    if (smallClaim) {
+      const existing = await privateBalance();
+      if (existing >= fixed.maximumFee) {
+        availableCredit = existing;
+        paymentMethod = new PrivateClaimAndPayFeePaymentMethod(payer, smallClaim, 1n);
+      }
+    }
     if (!paymentMethod) {
-      check7(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
-      const { result } = await Contract.at(payer, artifact, wallet).methods.balance_of(author).simulate({ from: author });
-      availableCredit = uint3(result, 128);
+      availableCredit = await privateBalance();
       check7(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
       paymentMethod = new PrivateFeePaymentMethod(payer, 1n);
     }
@@ -391604,32 +391640,25 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const providerReads = capture(suppliedProvider, providerMethods);
       const loadClaim = suppliedStore === void 0 ? null : capture(suppliedStore, ["load"]).load;
       if (aggregateCustody && kind === "collateral") requireThat(loadClaim, "INVALID");
-      const deadline = Date.now() + 2e4;
       const read2 = async (fn) => {
-        let timer;
         try {
-          requireThat(Date.now() < deadline, "UNKNOWN");
-          return await Promise.race([
-            (async () => {
-              await guard();
-              requireThat(Date.now() < deadline, "UNKNOWN");
-              const value = await fn();
-              await guard();
-              requireThat(Date.now() < deadline, "UNKNOWN");
-              return value;
-            })(),
-            new Promise((_, reject) => {
-              timer = setTimeout(() => reject(fail5("UNKNOWN")), Math.max(1, deadline - Date.now()));
-            })
-          ]);
+          await guard();
+          const value = await fn();
+          await guard();
+          return value;
         } catch {
           readFailed = true;
           throw fail5("UNKNOWN");
-        } finally {
-          clearTimeout(timer);
         }
       };
-      const provider = Object.fromEntries(providerMethods.map((name) => [name, (...args) => read2(() => providerReads[name](...args))]));
+      const immutable = /* @__PURE__ */ new Map();
+      const provider = Object.fromEntries(providerMethods.map((name) => [name, (...args) => read2(() => {
+        const reusable = (name === "getTransaction" || name === "getTransactionReceipt") && args[0] === r.txHash || name === "getCode" && args[1] === r.blockNumber;
+        if (!reusable) return providerReads[name](...args);
+        const key = JSON.stringify([name, args]);
+        if (!immutable.has(key)) immutable.set(key, Promise.resolve().then(() => providerReads[name](...args)));
+        return immutable.get(key);
+      })]));
       const node2 = Object.fromEntries(["getNodeInfo", "getContract"].map((name) => [name, (...args) => read2(() => nodeReads[name](...args))]));
       const info = await node2.getNodeInfo(), network = await provider.getNetwork();
       requireThat(String(info.l1ChainId) === s.chainId && String(info.rollupVersion) === s.version && equal3(info.l1ContractAddresses?.rollupAddress, s.rollup) && String(network.chainId) === s.chainId);
@@ -415851,36 +415880,39 @@ See docs for context: https://docs.aztec.network/errors/14`);
     }
   }
   var browserFailure = () => Object.assign(new Error("Browser proving setup could not be verified. Reload this page and check the locally hosted setup files."), { code: "BB_BROWSER_PROVER_CONFIGURATION" });
-  async function initializeBrowserProver(supplied) {
+  async function initializeBrowserProver(supplied, { verifierOnly = false } = {}) {
+    if (typeof verifierOnly !== "boolean") throw browserFailure();
     if (supplied !== void 0 && (!supplied || typeof supplied !== "object" || Array.isArray(supplied) || typeof supplied.createChonkProof === "function")) throw browserFailure();
     const proverOrOptions = { ...supplied, backend: BackendType.WasmWorker, threads: 1, skipSrsInit: true };
     try {
       const singleton = await Barretenberg.initSingleton({ ...proverOrOptions, logger: discard2 });
       if (singleton.options.backend !== BackendType.WasmWorker || singleton.options.threads !== 1 || singleton.options.skipSrsInit !== true) throw browserFailure();
-      let initialization = browserCrsInitializations.get(singleton);
-      if (!initialization) {
-        initialization = (async () => {
-          const crs = globalThis.BillboardCRS;
-          if (!crs) throw browserFailure();
-          await crs.initialize(singleton, {
-            manifest: globalThis.BILLBOARD_CRS_MANIFEST,
-            // Pinned BB 5.2.0 DEFAULT_BB_CRS_SIZE for client Chonk.
-            bn254NumPoints: 524288,
-            loadLocal: async (file7) => crs.readResponse(await fetch("crs/" + file7.name, { signal: AbortSignal.timeout(12e4), credentials: "omit", redirect: "error" }), file7),
-            // Browser deployment must serve the pinned local files. Never route
-            // fallback downloads around the deployment's local asset boundary.
-            fetch: async () => {
-              throw browserFailure();
-            },
-            sha256: async (data) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", data)), (b2) => b2.toString(16).padStart(2, "0")).join(""),
-            log: discard2
-          });
-        })();
-        browserCrsInitializations.set(singleton, initialization);
-        initialization.catch(() => {
-          if (browserCrsInitializations.get(singleton) === initialization) browserCrsInitializations.delete(singleton);
-        });
+      let state = browserCrsInitializations.get(singleton);
+      if (!state) {
+        state = { numPoints: 0, tail: Promise.resolve() };
+        browserCrsInitializations.set(singleton, state);
       }
+      const requestedPoints = verifierOnly ? 2 : 524288;
+      const initialization = state.tail.then(async () => {
+        if (state.numPoints >= requestedPoints) return;
+        const crs = globalThis.BillboardCRS;
+        if (!crs) throw browserFailure();
+        state.numPoints = 0;
+        await crs.initialize(singleton, {
+          manifest: globalThis.BILLBOARD_CRS_MANIFEST,
+          verifierOnly,
+          bn254NumPoints: requestedPoints,
+          loadLocal: async (file7) => crs.readResponse(await fetch("crs/" + file7.name, { signal: AbortSignal.timeout(12e4), credentials: "omit", redirect: "error" }), file7),
+          fetch: async () => {
+            throw browserFailure();
+          },
+          sha256: async (data) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", data)), (b2) => b2.toString(16).padStart(2, "0")).join(""),
+          log: discard2
+        });
+        state.numPoints = requestedPoints;
+      });
+      state.tail = initialization.catch(() => {
+      });
       await initialization;
       return proverOrOptions;
     } catch {
@@ -415904,8 +415936,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
     const info = await node2.getNodeInfo();
     const proofsEnabled = provingEnabledForNode(info);
     if (info.realProofs === false && Number(info.l1ChainId) !== 31337) throw Error("Disabled proofs require local devnet");
-    const transport = () => remote ? createRemoteProverClient({ ...remote, chainId: info.l1ChainId, rollupVersion: info.rollupVersion, proofsEnabled: true }) : null;
-    const route = (simulator, proverOptions) => new RoutedKernelProver(simulator, proverOptions, { proofsEnabled, transport: transport() });
+    const transport = (value) => value ? createRemoteProverClient({ ...value, chainId: info.l1ChainId, rollupVersion: info.rollupVersion, proofsEnabled: true }) : null;
+    const route = (simulator, proverOptions) => new RoutedKernelProver(simulator, proverOptions, { proofsEnabled, transport: transport(remote) });
     if (config9?.proverEnabled === false && proofsEnabled && !readOnly) throw new Error("Proofs may only be disabled on the disposable local devnet");
     if (!proofsEnabled) {
       config9 = { ...config9, proverEnabled: false };
@@ -415913,9 +415945,9 @@ See docs for context: https://docs.aztec.network/errors/14`);
       delete selected.proverOrOptions;
       delete selected.remoteProver;
     } else if (!readOnly && typeof window !== "undefined") {
-      const proverOrOptions = await initializeBrowserProver(options.proverOrOptions);
+      const proverOrOptions = await initializeBrowserProver(options.proverOrOptions, { verifierOnly: Boolean(remote) });
       const simulator = options.simulator ?? new WASMSimulator();
-      selected = { ...options, simulator, proverOrOptions: new BrowserPrivateKernelProver(simulator, { ...proverOrOptions, logger: privateLogger }, { proofsEnabled, transport: transport() }) };
+      selected = { ...options, simulator, proverOrOptions: new BrowserPrivateKernelProver(simulator, { ...proverOrOptions, logger: privateLogger }, { proofsEnabled, transport: transport(remote) }) };
     } else if (!readOnly && remote) {
       const simulator = options.simulator ?? new WASMSimulator();
       selected = { ...options, simulator, proverOrOptions: route(simulator, options.proverOrOptions ?? {}) };
@@ -415935,10 +415967,20 @@ See docs for context: https://docs.aztec.network/errors/14`);
     if (readOnly) pxe.proveTx = async () => {
       throw new Error("Read-only PXE cannot prove transactions");
     };
-    if (selected.proverOrOptions instanceof RoutedKernelProver) pxe.setRemoteProver = async (value) => {
-      remote = value;
-      selected.proverOrOptions.setTransport(transport());
-    };
+    if (selected.proverOrOptions instanceof RoutedKernelProver) {
+      let routeChange = Promise.resolve();
+      pxe.setRemoteProver = (value) => {
+        const change = routeChange.then(async () => {
+          const next = transport(value);
+          if (typeof window !== "undefined") await initializeBrowserProver(options.proverOrOptions, { verifierOnly: Boolean(next) });
+          selected.proverOrOptions.setTransport(next);
+          remote = value;
+        });
+        routeChange = change.catch(() => {
+        });
+        return change;
+      };
+    }
     return pxe;
   }
 
@@ -480598,6 +480640,18 @@ mod tests {
     const maximum = min(available, cost(caps, ceiling.maxFeesPerGas) + 1n), application = await interaction.request();
     if (available <= 0n) throw fail12("PRIVATE_FEE_BALANCE_INSUFFICIENT");
     const payloadFor = async (reservation2) => mergeExecutionPayloads([await prepared2.paymentMethod.withReservation(reservation2).getExecutionPayload(), application]);
+    const bounded2 = settings(caps, new Gas(...dimensions.map((k) => Math.min(ceiling.teardownGasLimits[k], caps[k]))));
+    const boundedFee = bounded2.getFeeLimit().toBigInt();
+    if (boundedFee <= available) {
+      const reservation2 = boundedFee || 1n;
+      await guard();
+      const payload = await payloadFor(reservation2);
+      const result = await simulator.public(payload, from, bounded2, true);
+      if (!successful(result)) throw result.publicOutput?.revertReason ?? fail12("BB_SIMULATION_FAILED");
+      if (dimensions.some((k) => result.gasUsed.totalGas[k] > bounded2.gasLimits[k] || result.gasUsed.teardownGas[k] > bounded2.teardownGasLimits[k])) throw fail12("BB_GAS_LIMIT_EXCEEDED");
+      await guard();
+      return { payload, gasSettings: bounded2, reservation: reservation2, maximumFee: boundedFee, passes: 1 };
+    }
     const privateSettings = GasSettings.forEstimation({ maxFeesPerGas: GasFees.empty(), maxPriorityFeesPerGas: GasFees.empty() });
     privateSettings.teardownGasLimits = Gas.empty();
     await guard();

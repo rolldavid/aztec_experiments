@@ -412,7 +412,7 @@
 
 <!-- The 58MB bundle -->
 <script src="aztec_bundle.js" onerror="window.__billboardBundleFailed=true"></script>
-<script>window.BILLBOARD_CRS_MANIFEST = {"schemaVersion":2,"aztecVersion":"6.0.0-rc.3","provenance":{"package":"@aztec-foundation/bb.js","version":"6.0.0-rc.6","source":"node_modules/@aztec-foundation/bb.js/dest/node/crs/net_crs.js","sourceSha256":"d73da83a2b35584632dc8a70abaaeaa1c762e6f24bd0c778e47fe85919f5a98d","observedAt":"2026-10-12","method":"Source asset SHA-256 values retain the exact ranged responses measured on 2026-10-10. The installed foundation rc6 downloader is byte-identical to that source. These are locally recorded content pins, not a separate publisher checksum attestation. The rc6 WASM hash is measured from the integrity-locked package; the derived G1 output hash remains an expected mathematical-content constraint pending a fresh rc6 derivation. Grumpkin was reacquired on 2026-10-13 as the exact 0-8388607 range of the 16777216-byte official v2 file (HTTP 206, identity encoding). Both complete 4194304-byte chunks matched the canonical barretenberg/cpp/src/barretenberg/srs/factories/grumpkin_crs_data.hpp anchors in pinned Aztec source 0df91ba1799012435c62c6108a0926b357fef88c: 64236c9455e75aeea77a94587ea607eed2e978d2609a421d66bf10bb9698b8fd and f4acd78e415e4db21fb237888c23105f4919d30e18226faa470a11aec69e49bb. The original 65537-point prefix retained SHA-256 b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9. The new whole-file pin was measured only after those checks.","pointBudget":"BN254 preserves at least the existing 1048577-point capacity, rounded to the next 131072-point/4MiB compressed chunk. Grumpkin preserves at least 65537 points by rounding up to 131072 points/two complete 65536-point chunks. Capacity for production proofs is verified separately."},"files":[{"name":"g1.dat","url":"https://crs.aztec-cdn.foundation/g1_compressed.dat","fallbackUrl":"https://crs.aztec-labs.com/g1_compressed.dat","bytes":37748736,"numPoints":1179648,"format":"bn254-g1-compressed-32-byte","range":{"start":0,"end":37748735},"sha256":"8d6fb7829bcfbfeaf02a79104539bfd3777a328ec46d3331e37effca2ee1b416"},{"name":"g2.dat","url":"https://crs.aztec-cdn.foundation/g2.dat","fallbackUrl":"https://crs.aztec-labs.com/g2.dat","bytes":128,"numPoints":1,"format":"bn254-g2-uncompressed-128-byte","range":{"start":0,"end":127},"sha256":"01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f"},{"name":"grumpkin_g1.dat","url":"https://crs.aztec-cdn.foundation/grumpkin_g1_v2.dat","fallbackUrl":"https://crs.aztec-labs.com/grumpkin_g1_v2.dat","bytes":8388608,"numPoints":131072,"format":"grumpkin-g1-v2-uncompressed-64-byte","range":{"start":0,"end":8388607},"sha256":"e703e36cfe4262d71180d9b8d0ae09ac154ff70bbba3d50d4d640356d01a9daf"}],"derivedG1":{"name":"g1_uncompressed.dat","bytes":75497472,"numPoints":1179648,"format":"bn254-g1-uncompressed-64-byte","sha256":"2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac","derivation":{"method":"bb-srs-init-v1","packageVersion":"6.0.0-rc.6","inputName":"g1.dat","inputSha256":"8d6fb7829bcfbfeaf02a79104539bfd3777a328ec46d3331e37effca2ee1b416","g2Sha256":"01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f","wasmSource":"node_modules/@aztec-foundation/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz","wasmSha256":"e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d"}}};
+<script>window.BILLBOARD_CRS_MANIFEST = {"schemaVersion":2,"aztecVersion":"6.0.0-rc.3","provenance":{"package":"@aztec-foundation/bb.js","version":"6.0.0-rc.6","source":"node_modules/@aztec-foundation/bb.js/dest/node/crs/net_crs.js","sourceSha256":"d73da83a2b35584632dc8a70abaaeaa1c762e6f24bd0c778e47fe85919f5a98d","observedAt":"2026-10-12","method":"Source asset SHA-256 values retain the exact ranged responses measured on 2026-10-10. The installed foundation rc6 downloader is byte-identical to that source. These are locally recorded content pins, not a separate publisher checksum attestation. The rc6 WASM hash is measured from the integrity-locked package; the derived G1 output hash remains an expected mathematical-content constraint pending a fresh rc6 derivation. Grumpkin was reacquired on 2026-10-13 as the exact 0-8388607 range of the 16777216-byte official v2 file (HTTP 206, identity encoding). Both complete 4194304-byte chunks matched the canonical barretenberg/cpp/src/barretenberg/srs/factories/grumpkin_crs_data.hpp anchors in pinned Aztec source 0df91ba1799012435c62c6108a0926b357fef88c: 64236c9455e75aeea77a94587ea607eed2e978d2609a421d66bf10bb9698b8fd and f4acd78e415e4db21fb237888c23105f4919d30e18226faa470a11aec69e49bb. The original 65537-point prefix retained SHA-256 b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9. The new whole-file pin was measured only after those checks.","pointBudget":"BN254 preserves at least the existing 1048577-point capacity, rounded to the next 131072-point/4MiB compressed chunk. Grumpkin preserves at least 65537 points by rounding up to 131072 points/two complete 65536-point chunks. Capacity for production proofs is verified separately."},"files":[{"name":"g1.dat","url":"https://crs.aztec-cdn.foundation/g1_compressed.dat","fallbackUrl":"https://crs.aztec-labs.com/g1_compressed.dat","bytes":37748736,"numPoints":1179648,"format":"bn254-g1-compressed-32-byte","range":{"start":0,"end":37748735},"sha256":"8d6fb7829bcfbfeaf02a79104539bfd3777a328ec46d3331e37effca2ee1b416"},{"name":"g2.dat","url":"https://crs.aztec-cdn.foundation/g2.dat","fallbackUrl":"https://crs.aztec-labs.com/g2.dat","bytes":128,"numPoints":1,"format":"bn254-g2-uncompressed-128-byte","range":{"start":0,"end":127},"sha256":"01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f"},{"name":"grumpkin_g1.dat","url":"https://crs.aztec-cdn.foundation/grumpkin_g1_v2.dat","fallbackUrl":"https://crs.aztec-labs.com/grumpkin_g1_v2.dat","bytes":8388608,"numPoints":131072,"format":"grumpkin-g1-v2-uncompressed-64-byte","range":{"start":0,"end":8388607},"sha256":"e703e36cfe4262d71180d9b8d0ae09ac154ff70bbba3d50d4d640356d01a9daf"}],"derivedG1":{"name":"g1_uncompressed.dat","bytes":75497472,"numPoints":1179648,"format":"bn254-g1-uncompressed-64-byte","sha256":"2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac","derivation":{"method":"bb-srs-init-v1","packageVersion":"6.0.0-rc.6","inputName":"g1.dat","inputSha256":"8d6fb7829bcfbfeaf02a79104539bfd3777a328ec46d3331e37effca2ee1b416","g2Sha256":"01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f","wasmSource":"node_modules/@aztec-foundation/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz","wasmSha256":"e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d"}},"verifierG1":{"name":"g1_verifier.dat","bytes":128,"numPoints":2,"format":"bn254-g1-uncompressed-64-byte","sha256":"c31e48521dee7e67349c230e835a69dd4afd6d306a4a3a2d94b8ad4d8726e6c2","derivation":{"method":"verified-prefix-v1","inputName":"g1_uncompressed.dat","inputSha256":"2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac"}}};
 // Shared browser/Node CRS loading. The manifest comes from the source build,
 // never from a cache or CDN. Every complete local asset is checked before use.
 (function (root) {
@@ -461,7 +461,16 @@
       || provenance.wasmSha256 !== 'e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d') {
       throw new Error('Invalid pinned CRS entry: derivedG1');
     }
-    return { files, derivedG1: Object.freeze({ ...derived, derivation: Object.freeze({ ...provenance }) }) };
+    const verifier = manifest.verifierG1;
+    if (!hasKeys(verifier, ['name', 'bytes', 'numPoints', 'format', 'sha256', 'derivation'])
+      || verifier.name !== 'g1_verifier.dat' || verifier.bytes !== 128 || verifier.numPoints !== 2
+      || verifier.format !== derived.format || !/^[a-f0-9]{64}$/.test(verifier.sha256)
+      || !hasKeys(verifier.derivation, ['method', 'inputName', 'inputSha256'])
+      || verifier.derivation.method !== 'verified-prefix-v1' || verifier.derivation.inputName !== derived.name
+      || verifier.derivation.inputSha256 !== derived.sha256) {
+      throw new Error('Invalid pinned CRS entry: verifierG1');
+    }
+    return { files, verifierG1: Object.freeze({ ...verifier, derivation: Object.freeze({ ...verifier.derivation }) }), derivedG1: Object.freeze({ ...derived, derivation: Object.freeze({ ...provenance }) }) };
   }
 
   async function readResponse(response, file) {
@@ -496,12 +505,14 @@
     }
   }
 
-  async function loadVerified({ manifest, loadLocal, sha256, log = () => {} }) {
-    const { files, derivedG1 } = validateManifest(manifest);
+  async function loadVerified({ manifest, loadLocal, sha256, log = () => {}, verifierOnly = false }) {
+    if (typeof verifierOnly !== 'boolean') throw new Error('Invalid CRS verifier mode');
+    const { files, derivedG1, verifierG1 } = validateManifest(manifest);
+    const selectedG1 = verifierOnly ? verifierG1 : derivedG1;
     const loaded = {};
     // Runtime setup has one source: the deployment's verified local assets.
     // Do not switch representation or destination after a missing/corrupt file.
-    for (const file of [derivedG1, files.get('g2.dat'), files.get('grumpkin_g1.dat')]) {
+    for (const file of [selectedG1, files.get('g2.dat'), files.get('grumpkin_g1.dat')]) {
       const data = await loadLocal(file);
       if (!ArrayBuffer.isView(data) || data.BYTES_PER_ELEMENT !== 1 || data.byteLength !== file.bytes) {
         throw new Error('CRS size mismatch: ' + file.name);
@@ -510,7 +521,7 @@
       loaded[file.name] = data;
       log('Verified local ' + file.name, 'info');
     }
-    return { files, data: loaded, selectedG1: derivedG1 };
+    return { files, data: loaded, selectedG1 };
   }
 
   async function initialize(bb, options) {
@@ -519,7 +530,7 @@
     const { files, data, selectedG1 } = await loadVerified(options);
     const numPoints=requestedPoints===undefined?selectedG1.numPoints:requestedPoints;
     if(numPoints>selectedG1.numPoints)throw new Error('BN254 initialization exceeds verified source capacity');
-    // A prefix is usable only AFTER the complete pinned source has passed its
+    // A local-prover prefix is usable only AFTER the complete pinned source has passed its
     // size/hash verification. Match the exact count and wire format for BB.
     const bytesPerPoint=64;
     const pointsBuf=numPoints===selectedG1.numPoints?data[selectedG1.name]:data[selectedG1.name].subarray(0,numPoints*bytesPerPoint);
