@@ -192,7 +192,7 @@ for(const hasHistory of [false,true])test('trusted allocation precedes every pai
  const {createAgent}=await import('../agent.mjs'),{githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t),events=[];let unavailable=true;
  const manager=threadRepositories({...h.options,startEmpty:true,ensureThread:async input=>{events.push('allocate');assert.match(input.repositoryId,/^[0-9a-f]{64}$/);assert.equal(input.threadId,id(9));if(unavailable)throw Object.assign(Error('Pool exhausted'),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});}});
  const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub API')});
- const conversation={load:async()=>({canonical:true,complete:true,threadId:id(9),assertCurrent:async()=>{},messages:[...(hasHistory?[{id:id(2),role:'user',text:'Earlier request'}]:[]),{id:id(3),role:'user',text:'@bok Build'}]})};
+ const conversation={load:async()=>({canonical:true,complete:true,threadId:id(9),assertCurrent:async()=>{},messages:[...(hasHistory?Array.from({length:9},(_,i)=>({id:id(20+i),role:'user',text:'Earlier request '+ 'x'.repeat(970)})):[]),{id:id(3),role:'user',text:'@bok Build'}]})};
  const model={complete:async input=>{events.push(input.modelId==='cheap'?'summary':'main');assert(!input.tools.some(tool=>tool.function?.name==='ensureThread'));return {message:{role:'assistant',content:'Done'}};}};
  const agent=createAgent({model,toolbox,instructions:'Build',conversation,summaryModelId:'cheap'}),request={id:id(1),postId:id(3),text:'@bok Build',modelId:'main'};
  await assert.rejects(agent.run(request),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});assert.deepEqual(events,['allocate']);

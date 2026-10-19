@@ -340,22 +340,22 @@ test('production hosted projection selects finalized while development stays che
  await production.getBlockData('checkpointed');await production.getBlockData(12);await development.getBlockData('checkpointed');
  assert.deepEqual(calls,['finalized',12,'checkpointed']);assert.equal(production.getNodeInfo(),'same');
 });
-test('actual agent uses the same guarded metering for prior-history summary and current answer',async()=>{
+for(const large of [false,true])test('actual agent uses guarded metering for '+(large?'large summarized':'small direct')+' history and current answer',async()=>{
  const {createAgent}=await import('../agent.mjs');const {bokRunner}=await import('../bok.mjs');
  const x=fixture(),inputs=[];let captured=0,guards=0,closed=0;
  const quote=x.args.provider.quote;x.args.provider.quote=async input=>{inputs.push(structuredClone(input));return quote(input);};
  x.args.conversation={load:async()=>{captured++;return {canonical:true,complete:true,threadId:f(9),
-  messages:[{id:f(9),role:'user',text:'prior request'},{id:f(10),role:'assistant',text:'prior Bok result'},
+  messages:[{id:f(9),role:'user',text:'prior request'+(large?'\u0001'.repeat(900):'')},{id:f(10),role:'assistant',text:'prior Bok result'+(large?'\u0001'.repeat(900):'')},
    {id:x.args.request.postId,role:'user',text:x.current.text}],assertCurrent:async()=>{guards++;assert(x.row.reserved>0n);}};}};
  const toolbox={open:async()=>({definitions:[],close:async()=>{closed++;}})};
  x.args.runAgent=({model,conversation,...input})=>bokRunner({runner:createAgent({model,conversation,toolbox,summaryModelId:'cheap-summary',
   summaryTokens:10,maxTokens:10,maxCalls:3,instructions:'Test only'})}).run(input);
- await x.run();assert.equal(captured,1);assert.equal(guards,2);assert.equal(closed,1);
- assert.deepEqual(x.events,['reserve','paid','settle','reserve','paid','settle','publish_reply','finish']);
- assert.equal(inputs[0].modelId,'cheap-summary');assert(!inputs[0].messages.at(-1).content.includes(x.current.text));
- assert(inputs[1].messages.some(m=>m.content.includes('Prior conversation summary')));
- assert.equal(inputs[1].messages.at(-1).content,x.current.text);
- assert(!JSON.stringify(inputs).includes('assertCurrent'));assert.equal(x.row.charged,12n);
+ await x.run();assert.equal(captured,1);assert.equal(guards,large?2:1);assert.equal(closed,1);
+ assert.deepEqual(x.events,[...(large?['reserve','paid','settle']:[]),'reserve','paid','settle','publish_reply','finish']);
+ if(large){assert.equal(inputs[0].modelId,'cheap-summary');assert(!inputs[0].messages.at(-1).content.includes(x.current.text));}
+ const main=inputs.at(-1);assert(main.messages.some(m=>m.content.includes(large?'Prior conversation summary':'Prior conversation originals')));
+ assert.equal(main.messages.at(-1).content,x.current.text);
+ assert(!JSON.stringify(inputs).includes('assertCurrent'));assert.equal(x.row.charged,large?12n:6n);
 });
 
 // Real retained filesystem; canonical board and chain effects remain labelled controls.
