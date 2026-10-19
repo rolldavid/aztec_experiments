@@ -1320,3 +1320,14 @@ for(const outcome of ['confirmed','failure'])test(`existing refund shows owned c
  if(outcome==='confirmed')await page.getByText('The saved Ethereum refund is confirmed.',{exact:true}).waitFor();else await page.getByRole('alert').waitFor();
  assert.equal(await progress.count(),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
 });
+
+for(const outcome of ['confirmed','failure'])test(`funding confirmation shows approval and original-payment progress until ${outcome}`,async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page);
+ await page.evaluate(outcome=>{test.hold='funding-payment';if(outcome==='failure')test.failure='funding-payment';},outcome);
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ const pending=page.getByText('Complete the requested approval in your wallet. Then this page checks the original payment for network confirmation. Do not send again.',{exact:true});assert(await pending.isVisible());
+ assert(await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).isDisabled());assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,0);
+ await page.evaluate(()=>{test.hold=null;test.release();});
+ if(outcome==='confirmed')await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();else await page.getByRole('alert').waitFor();
+ assert.equal(await pending.count(),0);assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,outcome==='confirmed'?1:0);
+});

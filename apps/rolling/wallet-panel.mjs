@@ -763,7 +763,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     paragraph('Private claim fee maximum: '+decimal(q.privateFeeCap,18)+' fee tokens ('+q.privateFeeCap+' base units). This ceiling comes from this deployment’s configured gas limits and prices.'),
     paragraph('Confirming first asks your wallet for a scoped collateral consent signature, then one Ethereum payment. It also approves the single private claim within the maximum above. Keep this panel open for bridge progress.'));
    content.append(button('Confirm funding and private claim',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;const payment=await session.funding.confirm();checkAccount(epoch);
+    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;note('Complete the requested approval in your wallet. Then this page checks the original payment for network confirmation. Do not send again.');const payment=await session.funding.confirm();note('');checkAccount(epoch);
     fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Checking relay and bridge delivery…':'Payment confirmed. Checking bridge delivery…';await advanceFunding();
    },aggregateFundingFailure),true),button('Change allocation',()=>{fundingQuote=null;render();}));
   }else if(!fundingAutomatic){
