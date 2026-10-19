@@ -12,7 +12,7 @@ const amount=value=>{
  if(typeof value!=='bigint'&&!(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)))throw Error('Invalid accounting amount');
  const n=BigInt(value);if(n<0n||n>=2n**128n)throw Error('Invalid accounting amount');return n;
 };
-// Private, bounded response data survives only until its single agent handoff.
+// Private, bounded response data survives handoff until terminal accounting.
 // It is never evidence of billing or authority to execute a tool.
 export function retainedBokResponse(value){
  if(!value||value.role!=='assistant'||value.content!==undefined&&value.content!==null&&typeof value.content!=='string')throw Error('Invalid retained provider response');
@@ -41,8 +41,7 @@ function quoteRecord(value,available,requested,limits){
 /** Request-centric G14 billing, NOT the G10 conversation/workspace runner.
  * Use one dedicated operations.fileState file per identity, under the service's
  * exclusive writer lease. Do not run two processes against this store. A copied
- * journal/changed limits are rejected. Provider outputs are private bounded data, retained until the first agent
- * handoff. Missing old outputs remain unavailable; billing never invents a reply.
+ * journal/changed limits are rejected. Provider outputs are private bounded data, retained until terminal accounting. Missing old outputs remain unavailable; billing never invents a reply.
  *
  * Frozen trusted chain port:
  * identity: {network, escrow}; request(id) -> {canonical:true, request:{state,
@@ -82,7 +81,11 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
   if(j.version!==1||hash(j.identity)!==hash(binding)||hash(j.limits)!==hash(savedCaps))throw Error('Request journal identity or limits mismatch');
   return copy(j);
  };
- const save=async j=>store.write({...store.read(),privateBok:copy(j)});
+ const save=async j=>{
+  const next={...store.read(),privateBok:copy(j)};
+  if(Buffer.byteLength(JSON.stringify(next))>8388608)throw Error('Private request journal capacity exceeded');
+  await store.write(next);
+ };
  const callRecord=id=>journal().calls[id];
  const setCall=async(id,changes)=>{const j=journal();j.calls[id]={...j.calls[id],...changes};await save(j);};
  const callId=id=>{if(!uint(id,cap.maxCalls-1))throw Error('Request call limit');};
@@ -131,8 +134,9 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
   const message=retainedBokResponse(c.response),responseDigest=hash({inputDigest:c.inputDigest,billingReceipt:c.billing.receipt,message,finishReason:c.finishReason??null});
   if(responseDigest!==c.responseDigest)throw Error('Retained provider response changed');
   // Persist the handoff fence before returning any tool call to the agent.
-  // A lost acknowledgement never authorizes another tool execution.
-  await setCall(id,{response:undefined,responseDelivered:true});
+  // A lost acknowledgement never authorizes another tool execution. Keep the
+  // payload for diagnosis/reconciliation until canonical terminal accounting.
+  await setCall(id,{responseDelivered:true});
   return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
  };
  const fence=async id=>{
@@ -203,6 +207,10 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    if(c&&!['quoted','reserved'].includes(c.phase))return resume(id);
    if(!c){
     const j=journal();if(j.finished||Object.keys(j.calls).length!==id||Object.values(j.calls).some(x=>x.phase!=='settled'))throw Error('Request call sequence');
+    // Reserve room for the largest permitted response before any new paid call.
+    // Never discard an earlier delivered answer to make capacity.
+    const retained=Object.values(j.calls).reduce((total,call)=>total+(call.response?Buffer.byteLength(JSON.stringify(call.response)):0),0);
+    if(retained+1048576>4194304)throw Error('Retained response capacity reached; finish or reconcile the existing request');
     const r=await read();if(r.state!==2||r.sequence!==id||r.reserved!==0n)throw Error('Request not ready for call');
     const q=quoteRecord(await provider.quote(frozen,r.available),r.available,frozen.maxTokens,cap);
     c={id,phase:'quoted',inputDigest,requestedTokens:frozen.maxTokens,quote:quoteJSON(q),before:{budget:String(r.budget),available:String(r.available),charged:String(r.charged),refunded:String(r.refunded)}};
@@ -260,7 +268,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    else if(before.state!==4)throw Error('Request cannot finish');
    const after=await read();if(after.state!==4||after.available!==0n||after.reserved!==0n||after.charged!==before.charged||after.budget!==before.budget)throw Error('Finish accounting mismatch');
    // Refresh after operate wrote its transaction intent.
-   await save({...journal(),finished:true});return {finished:true};
+   const terminal=journal();for(const call of Object.values(terminal.calls))delete call.response;
+   await save({...terminal,finished:true});return {finished:true};
   }),
  };
 }

@@ -344,9 +344,9 @@ for(const reason of ['length','PRIVATE_SENTINEL',null])test('paid incomplete res
  assert.match(result.replyText,/incomplete/);assert.equal(result.revision,undefined);assert.doesNotMatch(JSON.stringify(result),/PRIVATE_SENTINEL/);
  assert.deepEqual({tools,accepts,closed},{tools:0,accepts:0,closed:1});assert.equal(h.r.charged,6n);assert.equal(h.counts.settle,1);
  const saved=h.store.read().privateBok.calls[0];assert.equal(saved.phase,'settled');assert.equal(saved.finishReason,reason==='length'?'length':'invalid');
- assert.doesNotMatch(JSON.stringify(h.store.read()),/PRIVATE_SENTINEL|write_file/);
+ assert.equal(saved.responseDelivered,true);assert.equal(saved.response.content,'PRIVATE_SENTINEL');
  assert.equal((await h.create().resume(0)).replyAvailable,false);assert.equal(h.counts.execute,1);
- await metering.finish();assert.equal(h.r.refunded,994n);assert.equal(h.r.charged,6n);assert.equal(h.counts.close_uncertain,0);assert.equal(h.counts.finish,1);
+ await metering.finish();assert.doesNotMatch(JSON.stringify(h.store.read()),/PRIVATE_SENTINEL|write_file/);assert.equal(h.r.refunded,994n);assert.equal(h.r.charged,6n);assert.equal(h.counts.close_uncertain,0);assert.equal(h.counts.finish,1);
 });
 
 test('first quoted call resumes exact never-submitted reserve without requoting or repeating provider work',async()=>{
@@ -364,7 +364,7 @@ test('native settlement observer retains the received response and never repeats
  const h=fixture();let waited=0;
  h.controls.after=method=>{if(method==='settle')h.controls.inspectUnknown=true;};
  h.escrow.waitForOperation=async id=>{waited++;assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);assert.equal(h.store.read().privateBok.calls[0].response.content,'UNTRUSTED_REPLY');h.controls.inspectUnknown=false;return h.ops.get(id);};
- const result=await h.create().complete(0,input);assert.equal(waited,1);assert.equal(result.message.content,'UNTRUSTED_REPLY');assert.equal(result.replyAvailable,true);assert.equal(h.store.read().privateBok.calls[0].response,undefined);assert.equal(h.store.read().privateBok.calls[0].responseDelivered,true);
+ const result=await h.create().complete(0,input);assert.equal(waited,1);assert.equal(result.message.content,'UNTRUSTED_REPLY');assert.equal(result.replyAvailable,true);assert.equal(h.store.read().privateBok.calls[0].response.content,'UNTRUSTED_REPLY');assert.equal(h.store.read().privateBok.calls[0].responseDelivered,true);
  await h.create().complete(0,input);assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);
 });
 test('retained response digest rejects changed payload before agent handoff',async()=>{
@@ -384,4 +384,26 @@ test('settled response not yet handed off rechecks canonical settlement before d
  await assert.rejects(h.create().complete(0,input),/handoff disk failure/);assert.equal(h.store.read().privateBok.calls[0].phase,'settled');assert(h.store.read().privateBok.calls[0].response);
  rejectHandoff=false;h.controls.inspectUnknown=true;await assert.rejects(h.create().resume(0),/operation unresolved/);assert.equal(h.counts.settle,1);
  h.controls.inspectUnknown=false;assert.equal((await h.create().resume(0)).message.content,'UNTRUSTED_REPLY');assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);
+});
+
+
+test('delivered response survives consumer interruption without another handoff and is purged only after canonical finish',async()=>{
+ const h=fixture();await h.create().complete(0,input);
+ const restarted=h.create();assert.equal((await restarted.resume(0)).replyAvailable,false);
+ assert.equal(h.store.read().privateBok.calls[0].response.content,'UNTRUSTED_REPLY');assert.equal(h.counts.execute,1);
+ h.controls.failBefore='finish';await assert.rejects(restarted.finish(),/unresolved/);
+ assert.equal(h.store.read().privateBok.calls[0].response.content,'UNTRUSTED_REPLY');
+ // Reconcile the already-recorded original finish, never send a second one.
+ const [id,op]=Object.entries(h.store.read().privateBok.operations).find(([,op])=>op.method==='finish');
+ h.r.refunded=h.r.available;h.r.available=0n;h.r.state=4;h.ops.set(id,{status:'succeeded',canonical:true,method:'finish',argsDigest:op.argsDigest});
+ await h.create().finish();assert.equal(h.store.read().privateBok.calls[0].response,undefined);
+ assert.equal(h.store.read().privateBok.calls[0].responseDelivered,true);assert.equal(h.counts.finish,1);assert.equal(h.counts.execute,1);
+});
+test('retained response budget rejects a new call before quote reserve or provider entry',async()=>{
+ const h=fixture();h.controls.execute=()=>{const billing=bill({providerId:'response-'+h.counts.execute});return {message:{role:'assistant',content:'x'.repeat(900000)},billing,charge:6n,receipt:billing.receipt};};
+ for(let id=0;id<4;id++)await h.create().complete(id,input);
+ const before=structuredClone(h.counts),saved=structuredClone(h.store.read());
+ await assert.rejects(h.create().complete(4,input),/Retained response capacity/);
+ assert.deepEqual(h.counts,before);assert.deepEqual(h.store.read(),saved);
+ await h.create().finish();assert(Object.values(h.store.read().privateBok.calls).every(call=>call.response===undefined));
 });
