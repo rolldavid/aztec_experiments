@@ -216,3 +216,40 @@ test('labelled decoded jobs: disabled Bok retains signed-account and fee require
  assert.throws(()=>validateRollingJob([circuits[0],circuits[2]],[decoded[0],decoded[2]],policy),/Private fee circuit/);
  assert.throws(()=>validateRollingJob([...circuits,{functionName:'PrivateBok:subtract_more'}],[...decoded,{inputs:context('2','2')}],policy),/disabled/);
 });
+
+
+test('funded bridge claim uses actual SDK claim mint pay payload and remains scope bound',async()=>{
+ const {PrivateClaimAndPayFeePaymentMethod}=await import('../shared/private-fee-payment.mjs');
+ const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
+ const {Fr}=await import('@aztec-labs/foundation/curves/bn254');
+ const {encode}=await import('@aztec-labs/entrypoints/encoding');
+ const raw=[JSON.parse(fs.readFileSync(new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))),JSON.parse(fs.readFileSync(new URL('../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url)))];
+ const selected=await rollingSelectors(raw),feeAddress=AztecAddress.fromBigIntUnsafe(30n),policy={...options,privateFeeAddress:'30',selectors:selected};
+ const payment=new PrivateClaimAndPayFeePaymentMethod(feeAddress,{amount:2n,secret:new Fr(7n),salt:new Fr(8n),leafIndex:new Fr(9n)},100n);
+ const execution=await payment.getExecutionPayload();
+ const {encodedFunctionCalls}=await encode(execution.calls);
+ const signed={inputs:context('4'),app_payload:{function_calls:encodedFunctionCalls.map(x=>({target_address:{inner:x.target_address.toString()},function_selector:{inner:x.function_selector.toString()},args_hash:x.args_hash.toString(),is_public:x.is_public,hide_msg_sender:x.hide_msg_sender,is_static:x.is_static}))}};
+ const names=['PrivateFPC:mint','PrivateFPC:pay_fee','SchnorrInitializerlessAccount:entrypoint'];
+ const circuits=names.map(functionName=>({functionName})),decoded=[{inputs:context('30')},{inputs:context('30')},signed];
+ // Installed normal artifact includes the mint circuit/VK before any proof job.
+ const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../apps/src/billboard/private_fee_artifact.json',import.meta.url))));assert(artifact.functions.find(f=>f.name==='mint')?.verificationKey);
+ validateRollingJob(circuits,decoded,policy);
+ // Aggregate claim adds exactly the board collateral and Bok deposit calls to
+ // the native three-call fee payload; no proof or witness fixture is needed.
+ const actualSelector=async(name,fn)=>BigInt((await FunctionSelector.fromNameAndParameters(loadContractArtifact(raw.find(a=>a.name===name)).functions.find(f=>f.name===fn))).toString());
+ const aggregate=structuredClone(signed);aggregate.app_payload.function_calls.push(call(1,await actualSelector('RollingBoard','claim_deposit')),call(2,await actualSelector('PrivateBok','claim')));
+ assert.equal(aggregate.app_payload.function_calls.length,5);
+ const fullCircuits=[...circuits,{functionName:'RollingBoard:claim_deposit'},{functionName:'PrivateBok:claim'}];
+ const fullDecoded=[decoded[0],decoded[1],aggregate,{inputs:context('1')},{inputs:context('2')}];
+ validateRollingJob(fullCircuits,fullDecoded,policy);
+ assert.throws(()=>validateRollingJob(fullCircuits,fullDecoded,{...policy,privateBokAddress:undefined}),/disabled/);
+ const bootstrap={functionName:'PrivateFPC:mint_and_pay_fee'};
+ assert.throws(()=>validateRollingJob([...circuits,bootstrap],[...decoded,{inputs:context('30')}],policy),/Unapproved/);
+ for(const modify of [p=>p.app_payload.function_calls[0].target_address.inner='99',p=>p.app_payload.function_calls[1].target_address.inner='99',p=>p.app_payload.function_calls[1].is_public=true,p=>p.app_payload.function_calls[1].hide_msg_sender=true,p=>p.app_payload.function_calls.splice(0,1),p=>p.app_payload.function_calls.splice(1,1),p=>p.app_payload.function_calls.splice(2,1),p=>p.app_payload.function_calls.push(p.app_payload.function_calls[1]),p=>p.app_payload.function_calls.reverse(),p=>p.inputs.tx_context.version='99']){
+  const invalid=structuredClone(signed);modify(invalid);assert.throws(()=>validateRollingJob(circuits,[decoded[0],decoded[1],invalid],policy));
+ }
+ assert.throws(()=>validateRollingJob(circuits, [{inputs:context('99')},decoded[1],signed],policy),/contract/);
+ assert.throws(()=>validateRollingJob(circuits.slice(0,2),decoded.slice(0,2),policy),/Signed/);
+ assert.throws(()=>validateRollingJob([circuits[0],circuits[2]],[decoded[0],signed],policy));
+ assert.throws(()=>validateRollingPayload(signed,policy),/Unapproved/);
+});
