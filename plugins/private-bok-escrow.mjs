@@ -269,6 +269,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     assert.deepEqual(latest.request,checkpoint.request,'Reservation changed after checkpoint');
     const request=checkpoint.request;
     assert(request.state===2&&request.sequence===original.args[1]&&request.reserved>=charge,'Original reservation required');
+    assert(BigInt(latest.anchor.timestamp)<request.deadline,'Settlement deadline reached');
     const reserve=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,original.args[1],String(request.reserved)]));
     assert(reserve,'Original reserve intent missing');
     const reserved=await inspectOne(reserve[0]);assert(reserved.status==='succeeded'&&reserved.canonical,'Original reserve not canonical');
