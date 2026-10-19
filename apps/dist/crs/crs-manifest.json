@@ -66,5 +66,17 @@
       "wasmSource": "node_modules/@aztec-foundation/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz",
       "wasmSha256": "e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d"
     }
+  },
+  "verifierG1": {
+    "name": "g1_verifier.dat",
+    "bytes": 128,
+    "numPoints": 2,
+    "format": "bn254-g1-uncompressed-64-byte",
+    "sha256": "c31e48521dee7e67349c230e835a69dd4afd6d306a4a3a2d94b8ad4d8726e6c2",
+    "derivation": {
+      "method": "verified-prefix-v1",
+      "inputName": "g1_uncompressed.dat",
+      "inputSha256": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac"
+    }
   }
 }
