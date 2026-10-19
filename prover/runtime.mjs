@@ -18,3 +18,13 @@ export async function prepareNativeRuntime(config){
  }
  return {bbPath,crsPath};
 }
+
+/** NativeUnixSocket inherits CRS_PATH when it spawns bb; unlike WASM, that
+ * backend does not consume the JS crsPath option. Bind only verified files,
+ * before creating an in-process hosted wallet/prover. Isolated workers retain
+ * their explicit child environment instead. */
+export async function prepareInProcessNativeRuntime(config={}){
+ const runtime=await prepareNativeRuntime({...config,crsPath:config.crsPath??process.env.CRS_PATH});
+ process.env.CRS_PATH=runtime.crsPath;
+ return runtime;
+}

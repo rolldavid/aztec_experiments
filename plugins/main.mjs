@@ -1,4 +1,4 @@
-import {prepareNativeRuntime} from '../prover/runtime.mjs';
+import {prepareInProcessNativeRuntime} from '../prover/runtime.mjs';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import fs from 'node:fs/promises';
 import {constants as fsConstants} from 'node:fs';
@@ -46,7 +46,7 @@ export async function runHostedService({config,env=process.env,onError=error=>co
   if(config.development&&String(info.l1ChainId)!=='31337')throw Error('Development mode requires a disposable local chain');
   if(String(info.l1ChainId)!==descriptor.scope.chainId||String(info.rollupVersion)!==descriptor.scope.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==descriptor.scope.rollupAddress)throw Error('Service network identity mismatch');
   const proverEnabled=provingEnabledForNode(info);
-  const wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled,...(proverEnabled?{proverOrOptions:{backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}}:{})}});
+  const wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled,...(proverEnabled?{proverOrOptions:{backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}}:{})}});
   let server,closed=false;
   async function close(){if(closed)return;closed=true;const failures=[];for(const cleanup of [()=>server?.close(),()=>wallet.stop()]){try{await cleanup();}catch(error){failures.push(error);}}if(failures.length)throw new AggregateError(failures,'Service cleanup failed');}
   try{
@@ -222,7 +222,7 @@ export async function runHostedBillingReconciliation({config,receiptFile,env=pro
   const [{jsonStringify},{loadRollingArtifacts},{createPrivateBokEscrow}]=await Promise.all([import('@aztec-labs/foundation/json-rpc'),import('../prover/rolling-artifacts.mjs'),import('./private-bok-escrow.mjs')]);
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
   const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
-  const actor=await readHostedActor(config),pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+  const actor=await readHostedActor(config),pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}));
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
   const [,bokRaw]=loadRollingArtifacts(),artifact=loadContractArtifact(bokRaw);
@@ -285,7 +285,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
   const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
   const actor=await readHostedActor(config);
-  const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+  const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}));
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');
   assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);

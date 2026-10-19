@@ -725,6 +725,14 @@ from the trusted service supervisor with those private environment values:
 node plugins/main.mjs /absolute/private/path/rolling-hosted.json
 ```
 
+For real-proof hosted wallets, set `CRS_PATH` to the service-readable pinned CRS
+cache when the default application cache is not suitable. Startup verifies its
+three files and binds that exact path into the native BB child environment;
+the NativeUnixSocket backend does not consume the JavaScript `crsPath` option.
+An already populated verified read-only cache is reusable. Keep `ProtectHome=yes`
+and the service's private runtime directory; do not grant access to a developer
+home or download unverified proving data to repair a permissions failure.
+
 The service acquires a no-stale-takeover lock, validates the network, loads the
 operator wallet, verifies isolated execution and App availability, then starts
 its two loopback listeners. The artifact reverse proxy must preserve its configured
