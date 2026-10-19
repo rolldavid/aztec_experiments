@@ -1309,3 +1309,14 @@ test('refund-only publication routes ordinary unlock to recovery import without 
  await page.getByText('Restore the existing account and its confirmed exit. Refund-only recovery cannot create an account or send another private exit.',{exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Create account and download recovery',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sessions),0);
 });
+
+for(const outcome of ['confirmed','failure'])test(`existing refund shows owned confirmation progress until ${outcome} without sending`,async t=>{
+ const {page}=await browserFixture(t);await openBalances(page);await page.getByRole('button',{name:'Review collateral exit',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();
+ await page.evaluate(outcome=>{test.hold='refund-check';test.refundFound=outcome==='confirmed';if(outcome==='failure')test.failure='refund-check';},outcome);
+ await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ const progress=page.getByText('Checking existing Ethereum refund; waiting for network confirmation.',{exact:true});assert(await progress.isVisible());
+ assert(await page.getByRole('button',{name:'Check existing refund',exact:true}).isDisabled());assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert.equal(await page.getByText(/Wait for Outbox settlement/).count(),0);
+ await page.evaluate(()=>test.release());
+ if(outcome==='confirmed')await page.getByText('The saved Ethereum refund is confirmed.',{exact:true}).waitFor();else await page.getByRole('alert').waitFor();
+ assert.equal(await progress.count(),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
+});
