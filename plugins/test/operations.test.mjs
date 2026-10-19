@@ -14,6 +14,8 @@ test('original hosted billing evidence is bounded owner-only regular input with 
  try{
   await fs.writeFile(evidenceFile,bytes,{mode:0o600});await write(input);
   const result=await readHostedBillingReceipt(receiptFile);assert.equal(result.evidenceSha256,input.evidenceSha256);assert.equal(Object.hasOwn(result,'evidenceFile'),false);assert(!JSON.stringify(result).includes('ORIGINAL_PRIVATE'));
+  for(const continuation of [{kind:'settlement-only'},{kind:'settlement-only',replacement:{operationId:'aa'.repeat(32),argsDigest:'bb'.repeat(32),originalTxHash:'0x'+'cc'.repeat(32)}}]){await write({...input,continuation});assert.deepEqual((await readHostedBillingReceipt(receiptFile)).continuation,continuation);}
+  for(const continuation of [{kind:'replay'},{kind:'settlement-only',extra:true},{kind:'settlement-only',replacement:{operationId:'bad',argsDigest:'bb'.repeat(32),originalTxHash:'0x'+'cc'.repeat(32)}}]){await write({...input,continuation});await assert.rejects(readHostedBillingReceipt(receiptFile));}
   for(const change of [{evidenceSha256:'cd'.repeat(32)},{callId:64},{inputDigest:'bad'},{extra:true},{schemaVersion:2}]){await write({...input,...change});await assert.rejects(readHostedBillingReceipt(receiptFile),error=>error.message==='Invalid original hosted billing receipt');}
   await write(input);await fs.chmod(evidenceFile,0o644);await assert.rejects(readHostedBillingReceipt(receiptFile));await fs.chmod(evidenceFile,0o600);
   const link=path.join(directory,'link');await fs.symlink(evidenceFile,link);await assert.rejects(readHostedPrivateFile(link));

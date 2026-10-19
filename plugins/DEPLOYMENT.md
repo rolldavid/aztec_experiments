@@ -821,7 +821,8 @@ applicable, but no provider credential, GitHub access, Docker runtime or public
 listener. Development remains native proof-disabled; testnet retains real proofs.
 
 The receipt file is a private JSON object with exactly `schemaVersion: 1`,
-`binding`, `callId`, `inputDigest`, `billing`, `evidenceFile` and `evidenceSha256`.
+`binding`, `callId`, `inputDigest`, `billing`, `evidenceFile` and `evidenceSha256`,
+plus the optional closed continuation instruction described below.
 Copy the original six-field `hostedPrivateBok.binding` from that private journal
 (`network`, `escrow`, `requestId`, `target`, `postId`, `pluginId`), its integer call
 ID and original input digest. Obtain the billing facts for that original provider
@@ -852,6 +853,24 @@ Git revision or publication is created. Normal service discovery does not turn
 this terminal accounting record into another agent run. Preserve the private
 receipt, request journal and operator config across restart. Local component
 checks do not qualify actual provider billing or testnet settlement.
+
+For an original **per-call** journal with a durably received provider result,
+the same local receipt may explicitly include `continuation: {"kind":
+"settlement-only"}`. This requires an active canonical request and settles only
+the original bill, returning `settled-for-original-reply` while leaving the
+request open. It does not recreate a result or run models/tools. The operator
+must separately recover retained source through normal validation and acceptance
+before publishing its original reply. Unknown provider outcomes and closed
+requests cannot use this continuation.
+
+Only a separately authorized same-intent settlement replacement may add
+`continuation.replacement` with exact `operationId`, `argsDigest`, and
+`originalTxHash`. These must match the original metering intent, signed escrow
+record, request and billing arguments. The trusted escrow adapter alone admits
+its one-use replacement lineage; a dropped status by itself is not proof of
+nonexecution. Preserve the original receipt and journal; repeating the exact
+instruction reconciles its lineage, never grants another replacement. Without
+this explicit continuation the default accounting-only close remains unchanged.
 
 ### Connecting an existing repository to a thread
 

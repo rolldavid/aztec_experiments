@@ -72,6 +72,40 @@ async function unknownBillingFixture(){
  const lease={assertHeld:async()=>assert(!x.control.leaseLost)};
  return {...x,receipt,recover:value=>reconcileHostedBilling({receipt:value??receipt,escrow:x.args.escrow,store:x.store,lease})};
 }
+async function receivedSettlementFixture(){
+ const x=fixture(),settle=x.args.escrow.settle;let original;
+ x.args.escrow.settle=async(...args)=>{
+  const operation=args.pop();original={args,operation};
+  const state=x.store.read();await x.store.write({...state,privateBokEscrow:{binding:{...state.privateBok.identity},operations:{[operation.operationId]:{method:'settle',argsDigest:operation.argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),txHash:f(88),transactionSha256:'ab'.repeat(32)}}}});
+  x.ops.set(operation.operationId,{status:'failed'});
+ };
+ await assert.rejects(x.run(),/Chain operation unresolved/);
+ const saved=x.store.read(),call=saved.privateBok.calls[0];
+ const receipt={schemaVersion:1,binding:saved.hostedPrivateBok.binding,callId:0,inputDigest:call.inputDigest,billing:call.billing,evidenceSha256:'ab'.repeat(32),continuation:{kind:'settlement-only',replacement:{operationId:original.operation.operationId,argsDigest:original.operation.argsDigest,originalTxHash:f(88)}}};
+ let replacements=0;
+ x.args.escrow.replaceDroppedOperation=async instruction=>{
+  assert.deepEqual(instruction,receipt.continuation.replacement);assert.deepEqual(x.store.read().hostedPrivateBok.billingRecovery.continuation,receipt.continuation);
+  if(x.ops.get(original.operation.operationId)?.status==='succeeded')return;
+  replacements++;x.ops.delete(original.operation.operationId);await settle(...original.args,original.operation);
+ };
+ return {...x,receipt,replacements:()=>replacements,recover:value=>reconcileHostedBilling({receipt:value??receipt,escrow:x.args.escrow,store:x.store,lease:{assertHeld:async()=>{}}})};
+}
+test('settlement-only continuation preserves original active request and never replays provider or finishes',async()=>{
+ const x=await receivedSettlementFixture();const result=await x.recover();
+ assert.equal(result.status,'settled-for-original-reply');assert.equal(result.replyAvailable,false);assert.equal(x.row.state,2);assert.equal(x.row.reserved,0n);assert.equal(x.row.charged,6n);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'running');assert.equal(x.store.read().privateBok.calls[0].phase,'settled');assert.equal(x.store.read().privateBok.finished,false);
+ assert.deepEqual(await x.recover(),result);assert.equal(x.replacements(),1);assert.deepEqual(x.events,['reserve','paid','settle']);assert.equal(x.current.replied,false);
+});
+test('settlement-only replacement binds exact original signed operation before saving authority',async()=>{
+ for(const mutate of [x=>x.receipt.continuation.replacement.originalTxHash=f(99),x=>x.receipt.continuation.replacement.operationId='cd'.repeat(32),x=>x.receipt.continuation.replacement.argsDigest='cd'.repeat(32),x=>x.receipt.billing.charge='5',x=>x.store.read().privateBokEscrow.binding.target=f(99),x=>x.store.read().privateBokEscrow.operations[x.receipt.continuation.replacement.operationId].args[2]='5',x=>x.row.state=3]){
+  const x=await receivedSettlementFixture();mutate(x);const before=structuredClone(x.store.read());await assert.rejects(x.recover());assert.deepEqual(x.store.read(),before);assert.equal(x.replacements(),0);assert.deepEqual(x.events,['reserve','paid']);
+ }
+});
+test('settlement-only continuation without replacement reconciles canonical original and rejects unknown provider',async()=>{
+ const x=await receivedSettlementFixture();await x.recover();const saved=x.store.read();delete saved.hostedPrivateBok.billingRecovery;await x.store.write(saved);delete x.receipt.continuation.replacement;
+ assert.equal((await x.recover()).status,'settled-for-original-reply');assert.equal(x.replacements(),1);
+ const unknown=await unknownBillingFixture();unknown.receipt.continuation={kind:'settlement-only'};const before=structuredClone(unknown.store.read());await assert.rejects(unknown.recover(),/received provider/);assert.deepEqual(unknown.store.read(),before);
+});
 test('trusted original billing closes accounting without reply or another provider call',async()=>{
  const x=await unknownBillingFixture();assert.equal(x.row.reserved,110n);assert.equal(x.row.refunded,890n);
  const result=await x.recover();assert.equal(result.status,'accounted-without-reply');assert.equal(result.replyAvailable,false);assert.equal(result.charge,'6');

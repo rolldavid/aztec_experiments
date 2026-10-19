@@ -20,11 +20,22 @@ export async function readHostedPrivateFile(file,maximumBytes=8388608){
  finally{await handle?.close();}
 }
 
+/** Closed local-only continuation authority. No provider input or HTTP surface. */
+export function hostedBillingContinuation(value){
+ if(!value||Array.isArray(value)||value.kind!=='settlement-only'||Object.keys(value).sort().join()!==(value.replacement===undefined?'kind':'kind,replacement'))throw Error('Invalid billing continuation');
+ if(value.replacement!==undefined){
+  const r=value.replacement;
+  if(!r||Array.isArray(r)||Object.keys(r).sort().join()!=='argsDigest,operationId,originalTxHash'||! /^[0-9a-f]{64}$/.test(r.operationId)||! /^[0-9a-f]{64}$/.test(r.argsDigest)||! /^0x[0-9a-f]{64}$/.test(r.originalTxHash))throw Error('Invalid settlement replacement');
+ }
+ return JSON.parse(JSON.stringify(value));
+}
+
 export async function readHostedBillingReceipt(file){
  try{
   const input=JSON.parse((await readHostedPrivateFile(file,65536)).toString('utf8'));
-  const keys=['schemaVersion','binding','callId','inputDigest','billing','evidenceFile','evidenceSha256'];
+  const keys=['schemaVersion','binding','callId','inputDigest','billing','evidenceFile','evidenceSha256',...(input?.continuation===undefined?[]:['continuation'])];
   if(!input||Array.isArray(input)||Object.keys(input).sort().join()!==keys.sort().join()||input.schemaVersion!==1||!Number.isSafeInteger(input.callId)||input.callId<0||input.callId>=64||! /^[0-9a-f]{64}$/.test(input.inputDigest)||! /^[0-9a-f]{64}$/.test(input.evidenceSha256))throw Error();
+  if(input.continuation!==undefined)input.continuation=hostedBillingContinuation(input.continuation);
   const evidence=await readHostedPrivateFile(input.evidenceFile,1048576);
   if(createHash('sha256').update(evidence).digest('hex')!==input.evidenceSha256)throw Error();
   const {evidenceFile,...receipt}=input;return receipt;

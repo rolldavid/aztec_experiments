@@ -2,6 +2,7 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {privateBokMetering,retainedBokResponse} from './private-bok-metering.mjs';
+import {hostedBillingContinuation} from './operations.mjs';
 import {packText} from './protocol.mjs';
 import {validateVeniceBilling} from './venice-metered.mjs';
 
@@ -22,7 +23,14 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits,
  const billing=validateVeniceBilling(receipt.billing,{...q,inputPrice:BigInt(q.inputPrice),outputPrice:BigInt(q.outputPrice),cachePrice:q.cachePrice===null?null:BigInt(q.cachePrice),maximum:BigInt(q.maximum)});
  if(call.billing)assert.deepEqual(call.billing,billing,'Original provider billing changed');
  assert(!Object.values(journal.calls).some(other=>other.id!==receipt.callId&&other.billing?.providerId===billing.providerId),'Provider response already accounted');
- const recovery={callId:receipt.callId,inputDigest:receipt.inputDigest,evidenceSha256:receipt.evidenceSha256,billing};
+ const continuation=receipt.continuation===undefined?undefined:hostedBillingContinuation(receipt.continuation);
+ if(continuation){
+  assert(saved.phase!=='accounted-without-reply','Closed accounting cannot resume a reply');
+  assert(!journal.accountingMode,'This continuation binds the original per-call settlement');
+  assert(['received','settled'].includes(call.phase)&&call.billing,'Original received provider result required');
+  const row=await escrow.request(identity.requestId);assert(row.canonical&&row.request.state===2,'Active original request required for reply continuation');
+ }
+ const recovery={callId:receipt.callId,inputDigest:receipt.inputDigest,evidenceSha256:receipt.evidenceSha256,billing,...(continuation?{continuation}:{})};
  if(saved.billingRecovery)assert.deepEqual(saved.billingRecovery,recovery,'Original billing recovery changed');
  const checkedStore={read:()=>store.read(),write:async value=>{await lease.assertHeld();await store.write(value);}};
  const deny=async()=>{throw Error('Provider calls forbidden during billing recovery');};
@@ -30,8 +38,29 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits,
  await metering.validateReconciliation(receipt.callId,billing);
  // Retain the original evidence before any chain action. The metering journal
  // independently persists exact reconciliation intents before their sole sends.
+ if(continuation?.replacement){
+  const r=continuation.replacement,args=[identity.requestId,receipt.callId,String(billing.charge),billing.receipt],digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  assert.equal(r.argsDigest,digest(args),'Replacement settlement arguments changed');
+  assert.equal(r.operationId,digest({identity,method:'settle',key:receipt.callId,argsDigest:r.argsDigest}),'Original settlement operation changed');
+  const operation=store.read().privateBok.operations[r.operationId],original=store.read().privateBokEscrow;
+  assert(operation?.method==='settle'&&operation.argsDigest===r.argsDigest,'Original metering settlement required');
+  for(const [name,value]of Object.entries(identity))assert.equal(original?.binding?.[name],value,'Original escrow binding changed');
+  const signed=original?.operations?.[r.operationId];
+  assert(signed?.method==='settle'&&signed.argsDigest===r.argsDigest&&signed.txHash===r.originalTxHash&&/^[0-9a-f]{64}$/.test(signed.transactionSha256??''),'Original signed settlement changed');
+  assert.deepEqual(signed.args,args,'Original settlement payload changed');
+  assert.equal(typeof escrow.replaceDroppedOperation,'function','Trusted settlement replacement unavailable');
+ }
+ // Persist only fully validated local authority. Bad replacement input cannot
+ // overwrite the original recovery record or poison a later exact correction.
  if(!saved.billingRecovery)await checkedStore.write({...original,hostedPrivateBok:{...saved,phase:'accounting-recovery',billingRecovery:recovery}});
+ if(continuation?.replacement){await lease.assertHeld();await escrow.replaceDroppedOperation(continuation.replacement);}
  const result=await metering.reconcile(receipt.callId,billing);assert.equal(result.replyAvailable,false);
+ if(continuation){
+  const row=await escrow.request(identity.requestId);assert(row.canonical&&row.request.state===2&&BigInt(row.request.reserved)===0n,'Active settled request required for original reply');
+  const current=store.read();assert(Object.values(current.privateBok.calls).every(c=>c.phase==='settled')&&!current.privateBok.finished,'Original billing must be settled and open');
+  await lease.assertHeld();await checkedStore.write({...current,hostedPrivateBok:{...current.hostedPrivateBok,phase:'running'}});
+  return {status:'settled-for-original-reply',replyAvailable:false,billingReceipt:billing.receipt,charge:billing.charge};
+ }
  await lease.assertHeld();await metering.finish();await lease.assertHeld();
  await checkedStore.write({...store.read(),hostedPrivateBok:{...store.read().hostedPrivateBok,phase:'accounted-without-reply'}});
  return {status:'accounted-without-reply',replyAvailable:false,billingReceipt:billing.receipt,charge:billing.charge};
