@@ -73,7 +73,7 @@ Normal exit, startup errors, SIGINT and SIGTERM trigger removal of both owned co
 | `--dry-run` | Off | Evaluate without submitting flags |
 | `--once` | Off | Exit after one polling iteration |
 
-Model memory defaults to 4096 MiB; the transport gets 512 MiB and one CPU. Operators must benchmark an actual pinned model within those bounds before release. The daemon refreshes an atomic onchain policy snapshot each poll and binds every flag to the reviewed policy version. It rejects local/default policy substitutes. Each unflagged post is evaluated under the current policy from the validated feed, including older posts after a policy change. Publication policy remains separate metadata. The collateral penalty deadline does not expire removal work. Missing policy content fails closed. Durable SQLite jobs retain decisions, leases, deadlines and receipt progress across restarts; completion requires a finalized successful receipt and its matching canonical flag event. See [the queue runbook](../docs/moderation-queue.md) for retry, backup, dry-run and attention-state procedures.
+Model memory defaults to 4096 MiB; the transport gets 512 MiB and one CPU. Operators must benchmark an actual pinned model within those bounds before release. The daemon refreshes an atomic onchain policy snapshot each poll and binds every flag to the reviewed policy version. It rejects local/default policy substitutes. Each unflagged post is evaluated under the current policy from the validated feed, including older posts after a policy change. Publication policy remains separate metadata. The collateral penalty deadline does not expire removal work. Missing policy content fails closed. Durable SQLite jobs retain decisions, leases, deadlines and receipt progress across restarts; completion requires a successful canonically included receipt (checkpointed, proven or finalized) and its matching canonical flag event. See [the queue runbook](../docs/moderation-queue.md) for retry, backup, dry-run and attention-state procedures.
 
 ## Tests
 
@@ -173,11 +173,11 @@ operator recovery decision. Do not delete a journal to clear the fence.
 
 Completion requires the canonical `PostRemoved` event with matching post,
 policy, reason, transaction and block. `penalized:false` is still a removal.
-Development may qualify checkpointed events; testnet requires finality. Receipt
+Both development and real-proof testnet accept successful canonical checkpointed
+or later receipts; canonical event, transaction and block identity must still match. Receipt
 or event reorgs reopen the original uncertainty fence. Full production acceptance
 still requires actual native-wallet/model runs, targeted real-proof testnet
-removal, current prompt evaluation, independent review and the elapsed workload
-trial. Unit fixtures explicitly do not satisfy these gates.
+removal, current prompt evaluation, independent review and bounded final reliability exercises. Unit fixtures explicitly do not satisfy these gates.
 
 
 Rolling automated moderation evaluates the authoritative main rules first, with

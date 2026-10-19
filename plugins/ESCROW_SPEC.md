@@ -1,3 +1,10 @@
+> Historical generic-plugin escrow design. This document does not define current
+> Rolling/PrivateBok behavior. Current deployment, accounting and recovery are in
+> [DEPLOYMENT.md](DEPLOYMENT.md) and [Rolling deployment](../docs/rolling-deployment.md).
+> Historical public-network finality waits and the two-hour send timeout are
+> superseded by the owner-approved canonical inclusion policy. Actual Outbox
+> consumability, exact accounting and uncertain-call fences remain mandatory.
+
 # Per-plugin Aztec escrow — implementation specification
 
 This replaces the fixed Ethereum payment protocol. Each plugin deploys its own

@@ -75,9 +75,10 @@ its single broadcast. Retained preparing, dropped, lost-response and unknown
 records only reconcile; even the same signed bytes are never retransmitted.
 An unresolved result is not permission to delete state or make another campaign.
 A pending command can be invoked later to observe the original transaction.
-Production requires finalized successful L2 receipts/effects and finalized L1
-inclusion; disposable development may observe checkpointed L2 / canonical latest
-L1. Reorgs, mismatched effects and unavailable reads remain unresolved. L1 HTTP
+Both real-proof testnet and explicit development use successful canonical
+checkpointed (or later) L2 receipts/effects and canonical mined L1 receipts.
+Actual Outbox witness availability and successful activation/redemption preflight
+remain required; no extra finalized-head wait is imposed. Reorgs, mismatched effects and unavailable reads remain unresolved. L1 HTTP
 redirects/throttling cannot trigger hidden transaction retries.
 
 The `status` result distinguishes canonical portal activation and current plugin
@@ -176,7 +177,8 @@ npm run plugin:operator -- config CONFIG.json STATE.json > SERVICE.json
 ```
 
 Setup sends return after checkpoint inclusion. Public activation/redemption require
-a successful finalized Aztec receipt and actual Outbox settlement. If it is not yet available, rerun
+the actual Outbox membership witness and a successful contract preflight. If
+settlement is unavailable, observe the same original operation by invoking
 `activate` later. No development root injection exists in this command. A dropped
 or reverted transaction is not treated as success. Reverted operations require
 inspection and a new operation state; never delete pending financial records.
@@ -252,7 +254,8 @@ before signing the burn; a signed burn is never changed automatically.
 
 Completion requires the source burn to match the configured route and amount,
 the destination nonce/body to match Circle's attested message, exact native-USDC
-mint and fee events, and destination finality. Unknown future standard-transfer
+mint and fee events, and a canonical mined destination receipt. Circle standard-transfer
+attestation and `finalityThresholdExecuted >= 2000` remain required. Unknown future standard-transfer
 fee schedules and ambiguous batched receipts are rejected. The current reference
 uses standard transfers; it does not trade assets or choose an alternative bridge.
 

@@ -277,7 +277,7 @@
         "current-moderator-fee-quote",
         "current-moderator-fee-amendment"
       ],
-      "remaining": "Current Rolling moderator evaluated five human posts and the authenticated Bok reply, all allowed, at checkpoint8986. Exact f3 catchup overlay and20FEE cap are now published; final resumed ingestion observation is in progress. Existing genuine removal/policy tests remain separately scoped; no current testnet removal is claimed.",
+      "remaining": "Resumed moderator ingestion is complete: existing native receipt4cc9b43f records checkpoint9011, six evaluated-ok, zero queued/leased/retryable-error/signing/finality counters and no alerts. Exact f3 overlay and20FEE cap are published. Current six outcomes are allowances; historical authentic removal/policy cases retain their separate scope. No current testnet removal or new moderation campaign is claimed.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -294,7 +294,7 @@
         "current-moderator-fee-quote",
         "current-moderator-fee-amendment"
       ],
-      "remaining": "Current Rolling moderator evaluated five human posts and the authenticated Bok reply, all allowed, at checkpoint8986. Exact f3 catchup overlay and20FEE cap are now published; final resumed ingestion observation is in progress. Existing genuine removal/policy tests remain separately scoped; no current testnet removal is claimed.",
+      "remaining": "Resumed moderator ingestion is complete: existing native receipt4cc9b43f records checkpoint9011, six evaluated-ok, zero queued/leased/retryable-error/signing/finality counters and no alerts. Exact f3 overlay and20FEE cap are published. Current six outcomes are allowances; historical authentic removal/policy cases retain their separate scope. No current testnet removal or new moderation campaign is claimed.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -395,7 +395,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Both genuine MetaMask and Phantom completed their original zero-ETH USDC funding transactions and their original ETH funding/private claims. Zero-ETH payer balances/nonces and relayer cost remain in separate USDC accounting receipts; ETH claims2e995ced/11984004 are canonical checkpointed successes8657/8652, each fee2.2522791103646FEE. No further payment or route campaign is required. Preserve actual prompts, route-specific signatures and historical failure/recovery evidence; this is testnet acceptance, not production clearance.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -452,7 +452,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Both genuine MetaMask and Phantom completed their original zero-ETH USDC funding transactions and their original ETH funding/private claims. Zero-ETH payer balances/nonces and relayer cost remain in separate USDC accounting receipts; ETH claims2e995ced/11984004 are canonical checkpointed successes8657/8652, each fee2.2522791103646FEE. No further payment or route campaign is required. Preserve actual prompts, route-specific signatures and historical failure/recovery evidence; this is testnet acceptance, not production clearance.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -474,7 +474,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Measured genuine-wallet ETH and zero-ETH USDC alternatives are retained with exact transaction/accounting evidence. The USDC relay route charges the disclosed3USDC fee and leaves payer ETH/nonce unchanged; it is not a claim that wallet signatures or later Aztec claims are absent. No unresolved funding-route alternative or fresh owner decision is identified by these completed receipts; preserve the existing scoped route/UX evidence.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -635,7 +635,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Original0cc4 completed eight settled calls and accepted revision4055ef22, normal isolated validation, actual page/button/source readback, authenticated reply226ef5d6 at8960 and finish0d2aaa36 at8961. Canonical checkpoint accounting:250000microUSDC=13944charged+236056refunded, zero available/reserved. Original model output was reused; the single generated-test identifier correction is explicitly operator-authored. Earlier09bad/136a remain honestly accounted-without-reply. Retained concurrency/summary/repository/recovery components keep their original scope; no repeated model campaign is required. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -654,7 +654,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Original0cc4 completed eight settled calls and accepted revision4055ef22, normal isolated validation, actual page/button/source readback, authenticated reply226ef5d6 at8960 and finish0d2aaa36 at8961. Canonical checkpoint accounting:250000microUSDC=13944charged+236056refunded, zero available/reserved. Original model output was reused; the single generated-test identifier correction is explicitly operator-authored. Earlier09bad/136a remain honestly accounted-without-reply. Retained concurrency/summary/repository/recovery components keep their original scope; no repeated model campaign is required. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -674,7 +674,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Original0cc4 completed eight settled calls and accepted revision4055ef22, normal isolated validation, actual page/button/source readback, authenticated reply226ef5d6 at8960 and finish0d2aaa36 at8961. Canonical checkpoint accounting:250000microUSDC=13944charged+236056refunded, zero available/reserved. Original model output was reused; the single generated-test identifier correction is explicitly operator-authored. Earlier09bad/136a remain honestly accounted-without-reply. Retained concurrency/summary/repository/recovery components keep their original scope; no repeated model campaign is required. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -713,7 +713,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Original0cc4 completed eight settled calls and accepted revision4055ef22, normal isolated validation, actual page/button/source readback, authenticated reply226ef5d6 at8960 and finish0d2aaa36 at8961. Canonical checkpoint accounting:250000microUSDC=13944charged+236056refunded, zero available/reserved. Original model output was reused; the single generated-test identifier correction is explicitly operator-authored. Earlier09bad/136a remain honestly accounted-without-reply. Retained concurrency/summary/repository/recovery components keep their original scope; no repeated model campaign is required. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -789,7 +789,7 @@
         "moderator-checkpoint-amendment",
         "bok-compute-stopped"
       ],
-      "remaining": "Both original interrupted claims and refunds, authority rotation, and current encrypted preservation are mapped. Apply separately preserved20FEE configuration amendment after core restore; final handover review remains.",
+      "remaining": "Original interrupted paid claims, finalized original collateral/Bok withdrawals, authority rotation and both encrypted snapshots are retained. The separate20FEE configuration amendment and f3 source overlay have already been applied and resumed ingestion at9011 is verified. Preserve these deltas with the earlier core snapshot so a future restore reapplies them; no live amendment or recovery rerun remains. Final source-bound handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -838,7 +838,7 @@
         "current-moderator-fee-quote",
         "current-moderator-fee-amendment"
       ],
-      "remaining": "Wallet, Bok output/accounting, public effects, static retention and actual moderator evaluation outcomes are recorded. Both encrypted snapshots and post-snapshot moderator config/source deltas are preserved. Final resumed ingestion observation, independent handover review and required CI remain; X1/X2 external.",
+      "remaining": "Wallet routes/claims/withdrawals, original Bok output/accounting, scoped public effects, static retention and actual moderator outcomes are complete. Native resumed ingestion is verified at9011; both encrypted snapshots and subsequent source/config deltas are preserved. Remaining internal work is final independent handover review, deterministic generated-consumer integration gate and required CI. X1/X2 remain external; no new journey, model, proof, backup or moderation campaign follows from stale pending wording.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -885,7 +885,7 @@
         "current-bok-page-readback",
         "current-bok-reply-readback"
       ],
-      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
+      "remaining": "Original0cc4 completed eight settled calls and accepted revision4055ef22, normal isolated validation, actual page/button/source readback, authenticated reply226ef5d6 at8960 and finish0d2aaa36 at8961. Canonical checkpoint accounting:250000microUSDC=13944charged+236056refunded, zero available/reserved. Original model output was reused; the single generated-test identifier correction is explicitly operator-authored. Earlier09bad/136a remain honestly accounted-without-reply. Retained concurrency/summary/repository/recovery components keep their original scope; no repeated model campaign is required. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -900,7 +900,7 @@
         "d7-conjunction",
         "d1-native-controls"
       ],
-      "remaining": "Bounded reliability/reorg/outage components retained; finish remaining affected ordinary journeys and final incident/source/budget conjunction. No fixed elapsed soak or accessibility gate. X1 qualified specialist audit and X2 current network suitability remain external, with mainnet separately authorized.",
+      "remaining": "Bounded reliability/reorg/outage components and completed original wallet/Bok/moderator outcomes retain their exact evidence and limitations. No further ordinary journey or elapsed soak is identified by this reconciliation. Final incident/source/budget handover review, normal integration gate and required CI remain internal. X1 qualified specialist audit and X2 network suitability remain external; mainnet requires separate authorization.",
       "assuranceDisposition": "external-release-gates-open"
     },
     {
@@ -1372,14 +1372,6 @@
   "remainingExecutable": [
     {
       "rows": [
-        "RC12",
-        "RC13",
-        "RC39"
-      ],
-      "action": "Finish reviewed f3 moderator catchup publication and observe resumed native ingestion; retain exact source/config deltas after core checkpoint."
-    },
-    {
-      "rows": [
         "RC37",
         "RC38",
         "RC39",
@@ -1389,7 +1381,7 @@
     }
   ],
   "updatedAt": "2026-10-19T21:27:21.067453+00:00",
-  "currentSourceNote": "Reviewed integration and current browser wallet34cc7252. Bok release791297f7 plus reviewed84a5 runtime overlay delivered original0cc4; exact live overlay provenance remains separately bound. Prover policy71d5 unchanged. Current moderator deployment and public static-origin retention in progress. Reviewed f3e23bf4 removes the moderator20-second catchup failure/idle cycle; actual current moderator process remains34cc until orderly publication, preserving its existing progress.",
+  "currentSourceNote": "Reviewed integrationf3; hosted wallet34cc, Bok791297f7 plus84a5 overlay, current moderator34cc plus exactf3 overlay. Original Bok0cc4 delivered page/source/reply/accounting; static artifact hosting independent of stopped Bok compute. Moderator resumed healthy9011 with originalPID and six evaluations. Exact evidence retains historical source boundaries; only final required CI, handover review and integration remain internally.",
   "accessibility_scope": {
     "required": false,
     "reason": "Owner removed all accessibility requirements for proof of concept on 19 October 2026 local time",
@@ -1398,14 +1390,6 @@
   },
   "engineeringTargetDisposition": "Individual remote proof target120s, median60s/10samples met by retained evidence. Browser540s/4GiB qualification is distinct. Current cold account-readiness240.255s; warm61.543s excluding human entry. SDK-only133s/405s observations are retained, with no invented120s SDK failure or peak-memory inference.",
   "remainingJourneyObservationsOnce": [
-    {
-      "rows": [
-        "RC12",
-        "RC13",
-        "RC39"
-      ],
-      "action": "Finish reviewed f3 moderator catchup publication and observe resumed native ingestion; retain exact source/config deltas after core checkpoint."
-    },
     {
       "rows": [
         "RC37",
