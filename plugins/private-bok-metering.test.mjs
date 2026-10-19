@@ -139,7 +139,7 @@ test('durable response survives restart before settlement without model call',as
   h.escrow.request=async()=>{if(crash&&store.read().privateBok?.calls[0]?.phase==='received')throw Error('process exit');return read();};
   await assert.rejects(h.create().complete(0,input));assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,0);
   crash=false;const restarted=h.create({store:await fileState(path)});const result=await restarted.resume(0);
-  assert.equal(result.replyAvailable,false);assert.equal(h.counts.execute,1);assert.equal(h.r.charged,6n);
+  assert.equal(result.replyAvailable,true);assert.equal(result.message.content,'UNTRUSTED_REPLY');assert.equal(h.counts.execute,1);assert.equal(h.r.charged,6n);assert.equal((await restarted.resume(0)).replyAvailable,false);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
 test('settlement send unknown does not repeat; later canonical receipt repairs journal',async()=>{
@@ -357,4 +357,31 @@ test('first quoted call resumes exact never-submitted reserve without requoting 
  const result=await h.create().complete(0,input);assert.equal(result.replyAvailable,true);
  assert.equal(h.counts.quote,1);assert.equal(h.counts.reserve,2);assert.equal(h.counts.execute,1);
  await h.create().complete(0,input);assert.equal(h.counts.execute,1);
+});
+
+
+test('native settlement observer retains the received response and never repeats provider or settlement',async()=>{
+ const h=fixture();let waited=0;
+ h.controls.after=method=>{if(method==='settle')h.controls.inspectUnknown=true;};
+ h.escrow.waitForOperation=async id=>{waited++;assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);assert.equal(h.store.read().privateBok.calls[0].response.content,'UNTRUSTED_REPLY');h.controls.inspectUnknown=false;return h.ops.get(id);};
+ const result=await h.create().complete(0,input);assert.equal(waited,1);assert.equal(result.message.content,'UNTRUSTED_REPLY');assert.equal(result.replyAvailable,true);assert.equal(h.store.read().privateBok.calls[0].response,undefined);assert.equal(h.store.read().privateBok.calls[0].responseDelivered,true);
+ await h.create().complete(0,input);assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);
+});
+test('retained response digest rejects changed payload before agent handoff',async()=>{
+ const h=fixture(),read=h.escrow.request;let interrupted=true;
+ h.escrow.request=async()=>{if(interrupted&&h.store.read().privateBok?.calls[0]?.phase==='received')throw Error('Read interrupted');return read();};
+ await assert.rejects(h.create().complete(0,input));h.store.read().privateBok.calls[0].response.content='changed';interrupted=false;
+ await assert.rejects(h.create().resume(0),/response changed/);assert.equal(h.counts.execute,1);assert.equal(h.store.read().privateBok.calls[0].responseDelivered,undefined);
+});
+test('oversized provider output settles actual billing but never exposes or retains the payload',async()=>{
+ const h=fixture();h.controls.execute=()=>{const billing=bill();return {message:{role:'assistant',content:'x'.repeat(1048577)},billing,charge:6n,receipt:billing.receipt};};
+ const result=await h.create().complete(0,input);assert.equal(result.finishReason,'invalid');assert.equal(result.message.content,null);assert.equal(h.r.charged,6n);assert(JSON.stringify(h.store.read()).length<10000);
+});
+
+test('settled response not yet handed off rechecks canonical settlement before delivery',async()=>{
+ const h=fixture(),write=h.store.write;let rejectHandoff=true;
+ h.store.write=async next=>{if(rejectHandoff&&next.privateBok?.calls[0]?.responseDelivered)throw Error('handoff disk failure');await write(next);};
+ await assert.rejects(h.create().complete(0,input),/handoff disk failure/);assert.equal(h.store.read().privateBok.calls[0].phase,'settled');assert(h.store.read().privateBok.calls[0].response);
+ rejectHandoff=false;h.controls.inspectUnknown=true;await assert.rejects(h.create().resume(0),/operation unresolved/);assert.equal(h.counts.settle,1);
+ h.controls.inspectUnknown=false;assert.equal((await h.create().resume(0)).message.content,'UNTRUSTED_REPLY');assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);
 });

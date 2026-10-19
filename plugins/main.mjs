@@ -16,7 +16,7 @@ import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {validateDescriptor} from './protocol.mjs';
 import {aztecBoardPort,rollingBoardPort} from './aztec.mjs';
 import {aztecEscrowPort} from './escrow.mjs';
-import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall} from './escrow-service.mjs';
+import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from './escrow-service.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
 import {createAgent} from './agent.mjs';
@@ -155,7 +155,7 @@ export async function hostedRequestDispatchable({request,directory,scope,pluginI
  assert(['running','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
  if(['reply-intent','reply-confirmed'].includes(saved.phase))return true;
  if(saved.phase!=='running')return false;
- if(hostedUnsubmittedFirstCall(original)||hostedSubmittedFirstCall(original))return true;
+ if(hostedUnsubmittedFirstCall(original)||hostedSubmittedFirstCall(original)||hostedReceivedFirstCall(original))return true;
  const journal=original.privateBok,calls=Object.values(journal?.calls??{});
  if(!journal||journal.finished||!calls.length||calls.some(call=>call.phase!=='settled'))return false;
  assert.deepEqual(journal.identity,identity,'Original metering identity changed');

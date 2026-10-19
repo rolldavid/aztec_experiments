@@ -1,7 +1,7 @@
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {privateBokMetering} from './private-bok-metering.mjs';
+import {privateBokMetering,retainedBokResponse} from './private-bok-metering.mjs';
 import {packText} from './protocol.mjs';
 import {validateVeniceBilling} from './venice-metered.mjs';
 
@@ -170,6 +170,21 @@ function hostedFirstCall(original,submitted){
 export const hostedUnsubmittedFirstCall=original=>hostedFirstCall(original,false);
 export const hostedSubmittedFirstCall=original=>hostedFirstCall(original,true);
 
+/** Only the first undelivered response can restart the agent: no preceding
+ * tools exist to replay. Later responses need their existing accepted-work path. */
+export function hostedReceivedFirstCall(original){
+ try{
+  const h=original.hostedPrivateBok,j=original.privateBok,c=j?.calls?.[0];
+  if(h?.phase!=='running'||!j||j.finished||Object.keys(j.calls).length!==1||c.id!==0||!['received','settled'].includes(c.phase)||c.responseDelivered||!c.response||!c.billing)return false;
+  const b=h.binding,identity={network:b.network,escrow:b.escrow,requestId:b.requestId,target:b.target};
+  assert.deepEqual(j.identity,identity);
+  const response=retainedBokResponse(c.response),hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  assert.equal(c.responseDigest,hash({inputDigest:c.inputDigest,billingReceipt:c.billing.receipt,message:response,finishReason:c.finishReason??null}));
+  const operations=Object.values(j.operations??{});assert(operations.length>0&&operations.every(op=>['reserve','settle'].includes(op.method)));
+  return true;
+ }catch{return false;}
+}
+
 export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation,admitThread}){
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
  const binding={...identity,postId:request.postId,pluginId:request.pluginId};
@@ -201,7 +216,8 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   const observed=await escrow.waitForOperation(operationId);
   assert(observed.status==='succeeded'&&observed.canonical===true&&observed.txHash===operation.txHash&&observed.method==='reserve'&&observed.argsDigest===operation.argsDigest,'Original reserve awaits canonical finality');
  }
- const resumeFirstCall=resumeUnsubmitted||resumeSubmitted;
+ const resumeReceived=hostedReceivedFirstCall(store.read()),resumeFirstCall=resumeUnsubmitted||resumeSubmitted||resumeReceived;
+ if(resumeReceived)await metering.validateReconciliation(0,store.read().privateBok.calls[0].billing);
  if(saved?.phase==='running'&&!resumeFirstCall&&typeof recoverAccepted==='function'){
   assert(current.usable&&!current.replied,'Invocation no longer usable');
   const journal=structuredClone(store.read().privateBok),calls=Object.values(journal?.calls??{});
@@ -226,7 +242,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  }else if(saved&&!resumeFirstCall&&!['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
  if(!saved||resumeFirstCall){
   assert(!current.replied&&current.usable,'Invocation no longer usable');
-  const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&(resumeSubmitted?row.request.sequence===0&&row.request.reserved===BigInt(store.read().privateBok.calls[0].quote.maximum):row.request.reserved===0n),'Active canonical request required');
+  const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&(resumeReceived?true:resumeSubmitted?row.request.sequence===0&&row.request.reserved===BigInt(store.read().privateBok.calls[0].quote.maximum):row.request.reserved===0n),'Active canonical request required');
   if(!resumeFirstCall&&admitThread!==undefined){
    assert(typeof admitThread==='function'&&typeof conversation?.load==='function','Trusted thread admission unavailable');
    const history=await conversation.load({postId:request.postId});
@@ -239,7 +255,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
    assert(fresh?.postId===request.postId&&fresh.usable&&!fresh.replied&&fresh.predecessorsClear===true&&fresh.requestId===request.requestId&&fresh.target===request.target&&fresh.pluginId===request.pluginId,'Invocation changed during thread admission');
    admittedHistory=history;
   }
-  saved=resumeSubmitted?{...saved,submittedReservationContinuationAttempted:true}:resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
+  saved=resumeReceived?saved:resumeSubmitted?{...saved,submittedReservationContinuationAttempted:true}:resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
   let call=0;
   result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');

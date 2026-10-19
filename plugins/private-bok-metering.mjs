@@ -12,6 +12,20 @@ const amount=value=>{
  if(typeof value!=='bigint'&&!(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)))throw Error('Invalid accounting amount');
  const n=BigInt(value);if(n<0n||n>=2n**128n)throw Error('Invalid accounting amount');return n;
 };
+// Private, bounded response data survives only until its single agent handoff.
+// It is never evidence of billing or authority to execute a tool.
+export function retainedBokResponse(value){
+ if(!value||value.role!=='assistant'||value.content!==undefined&&value.content!==null&&typeof value.content!=='string')throw Error('Invalid retained provider response');
+ const response={role:'assistant',content:value.content??null};
+ if(value.tool_calls!==undefined){
+  if(!Array.isArray(value.tool_calls)||value.tool_calls.length>64)throw Error('Invalid retained provider response');
+  response.tool_calls=value.tool_calls.map(call=>{
+   if(typeof call?.id!=='string'||call.id.length>128||call.type!==undefined&&call.type!=='function'||typeof call.function?.name!=='string'||call.function.name.length>128||typeof call.function.arguments!=='string')throw Error('Invalid retained provider response');
+   return {id:call.id,type:'function',function:{name:call.function.name,arguments:call.function.arguments}};
+  });
+ }
+ const serialized=JSON.stringify(response);if(Buffer.byteLength(serialized)>1048576)throw Error('Retained provider response too large');return JSON.parse(serialized);
+}
 const quoteJSON=q=>({...q,inputPrice:String(q.inputPrice),outputPrice:String(q.outputPrice),cachePrice:q.cachePrice===null?null:String(q.cachePrice),maximum:String(q.maximum)});
 function quoteRecord(value,available,requested,limits){
  const {modelId,inputBound,maxTokens,inputPrice,outputPrice,cachePrice,maximum}=value??{};
@@ -27,8 +41,8 @@ function quoteRecord(value,available,requested,limits){
 /** Request-centric G14 billing, NOT the G10 conversation/workspace runner.
  * Use one dedicated operations.fileState file per identity, under the service's
  * exclusive writer lease. Do not run two processes against this store. A copied
- * journal/changed limits are rejected. Messages are never persisted: recovered
- * results explicitly lack a reply, so they cannot masquerade as a completed bot post.
+ * journal/changed limits are rejected. Provider outputs are private bounded data, retained until the first agent
+ * handoff. Missing old outputs remain unavailable; billing never invents a reply.
  *
  * Frozen trusted chain port:
  * identity: {network, escrow}; request(id) -> {canonical:true, request:{state,
@@ -98,7 +112,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     try{await escrow.reserve(...args,{operationId,argsDigest});}catch{/* Inspect the retained exact operation below. */}
    }
   }
-  const observed=await escrow.inspectOperation(operationId);
+  let observed=await escrow.inspectOperation(operationId);
+  if(observed?.status==='pending'&&typeof escrow.waitForOperation==='function')observed=await escrow.waitForOperation(operationId);
   if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');
  };
  const qFor=c=>quoteRecord(c.quote,amount(c.before.available),c.requestedTokens,cap);
@@ -111,6 +126,15 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
  };
  const measured=c=>billingFor(c.id,c.billing);
  const outcome=c=>({callId:c.id,billing:measured(c),replyAvailable:false});
+ const deliver=async id=>{
+  const c=callRecord(id),result=outcome(c);if(!c.response||c.responseDelivered)return result;
+  const message=retainedBokResponse(c.response),responseDigest=hash({inputDigest:c.inputDigest,billingReceipt:c.billing.receipt,message,finishReason:c.finishReason??null});
+  if(responseDigest!==c.responseDigest)throw Error('Retained provider response changed');
+  // Persist the handoff fence before returning any tool call to the agent.
+  // A lost acknowledgement never authorizes another tool execution.
+  await setCall(id,{response:undefined,responseDelivered:true});
+  return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
+ };
  const fence=async id=>{
   const c=callRecord(id),r=await read();
   if(!reservedMatches(r,c)||![2,3].includes(r.state))throw Error('Unknown call reservation mismatch');
@@ -162,8 +186,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
  };
  const resume=async id=>{
   callId(id);const c=callRecord(id);if(!c)throw Error('No recorded call');
-  if(c.phase==='settled')return outcome(c);
-  if(c.phase==='received')return settle(id);
+  if(c.phase==='settled'){if(c.response&&!c.responseDelivered)await settle(id);return deliver(id);}
+  if(c.phase==='received'){await settle(id);return deliver(id);}
   if(c.phase==='possibly-sent'||c.phase==='fenced'){await fence(id);throw Error('Provider outcome unknown; original receipt required');}
   if(!['quoted','reserved'].includes(c.phase))throw Error('Invalid call journal phase');
   return {callId:id,readyForComplete:true,replyAvailable:false};
@@ -202,8 +226,10 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     const {billing,charge,receipt}=result??{};
     const b=billingFor(id,billing);
     if(charge!==BigInt(b.charge)||receipt!==b.receipt)throw Error('Provider result mismatch');
-    const finishReason=veniceFinishReason(result.finishReason);
-    await setCall(id,{phase:'received',billing:b,...(finishReason?{finishReason}:{})});
+    let finishReason=veniceFinishReason(result.finishReason),response;
+    try{response=retainedBokResponse(result.message);}catch{response={role:'assistant',content:null};finishReason='invalid';}
+    const responseDigest=hash({inputDigest,billingReceipt:b.receipt,message:response,finishReason});
+    await setCall(id,{phase:'received',billing:b,response,responseDigest,...(finishReason?{finishReason}:{})});
    }catch(error){
     if(callRecord(id).phase==='received')throw Error('Response retained; resume accounting');
     const diagnostic=getVeniceDiagnostic(error);
@@ -213,9 +239,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     finally{await fence(id);} // Diagnostic persistence must not skip uncertainty fencing.
     throw Error('Provider outcome unknown; original receipt required');
    }
-   const settled=await settle(id);
-   const finishReason=callRecord(id).finishReason;
-   return {...settled,replyAvailable:true,message:result.message,...(finishReason?{finishReason}:{})};
+   await settle(id);
+   return deliver(id);
   }),
   resume:exclusive(resume),
   validateReconciliation:exclusive(validateReconciliation),

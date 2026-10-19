@@ -1,7 +1,7 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall} from '../escrow-service.mjs';
+import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
@@ -647,4 +647,20 @@ test('submitted first reserve waits for exact canonical original hash before the
  await assert.rejects(x.run(),/awaits canonical finality/);assert.equal(x.store.read().hostedPrivateBok.submittedReservationContinuationAttempted,undefined);assert.deepEqual(x.events,['reserve']);
  waiting=false;e.reserve=async()=>assert.fail('Original submitted reserve must never be resent');
  assert.equal((await x.run()).status,'finished');assert.equal(waits,2);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
+});
+
+
+test('first received response resumes settlement and the original tool result without another provider call',async()=>{
+ const x=fixture(),read=x.args.escrow.request;let interrupted=true;
+ x.args.escrow.request=async(...args)=>{if(interrupted&&x.store.read().privateBok?.calls[0]?.phase==='received')throw Error('Canonical read interrupted');return read(...args);};
+ await assert.rejects(x.run(),/read interrupted/);const saved=structuredClone(x.store.read());assert(hostedReceivedFirstCall(saved));assert.deepEqual(x.events,['reserve','paid']);
+ for(const mutate of [v=>delete v.privateBok.calls[0].response,v=>v.privateBok.calls[0].responseDelivered=true,v=>v.privateBok.calls[0].response.content='changed',v=>v.privateBok.identity.target=f(99),v=>v.privateBok.calls[1]={...v.privateBok.calls[0],id:1},v=>v.privateBok.calls[0].phase='possibly-sent']){const changed=structuredClone(saved);mutate(changed);assert.equal(hostedReceivedFirstCall(changed),false);}
+ interrupted=false;x.args.provider.execute=async()=>assert.fail('Original paid call must not repeat');x.args.admitThread=async()=>assert.fail('Original thread admission must not repeat');
+ assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.store.read().privateBok.calls[0].response,undefined);
+});
+test('received result with no saved message remains accounting-only and cannot restart the agent',async()=>{
+ const x=fixture(),read=x.args.escrow.request;
+ x.args.escrow.request=async(...args)=>{if(x.store.read().privateBok?.calls[0]?.phase==='received')throw Error('Canonical read interrupted');return read(...args);};
+ await assert.rejects(x.run());const saved=x.store.read();delete saved.privateBok.calls[0].response;delete saved.privateBok.calls[0].responseDigest;
+ assert.equal(hostedReceivedFirstCall(saved),false);await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid']);
 });
