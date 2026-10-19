@@ -21,8 +21,8 @@ async function boundary(name){for(const row of state.refreshRecords?.[name]??[])
 const application={
  async readBalances({cursor}){state.balanceReads=(state.balanceReads??0)+1;state.balanceCursor=cursor;await boundary('balances');return state.balances;},
  async readBokAccounting({cursor}){(state.accountingReads??=[]).push(cursor);await boundary('accounting');return state.accountingPages.shift();},
- async readModeratorStatus(){await boundary('moderator');return {authorized:state.moderator===true};},
- async readBokStatus(){return {available:state.bokCredit!==undefined,...(state.bokCredit!==undefined?{availableCredit:state.bokCredit}:{})};},
+ async readModeratorStatus(){state.moderatorReads=(state.moderatorReads??0)+1;await boundary('moderator');return {authorized:state.moderator===true};},
+ async readBokStatus(){state.bokReads=(state.bokReads??0)+1;await boundary('bok');return {available:state.bokCredit!==undefined,...(state.bokCredit!==undefined?{availableCredit:state.bokCredit}:{})};},
  async prepareBokPost(id){state.bokContinues=(state.bokContinues??0)+1;await boundary('bok-continue');const prior=read();if(prior.intentId!==id||!['authorized','bok-post-reverted'].includes(prior.status))error();const next={...prior,intentId:'43',status:'prepared',maximumFee:'234',bok:{...prior.bok,phase:'post',authorizationTxHash:'0x'+'7'.repeat(64)}};write(next);return next;},
  async prepareBokRelease(id,input){await boundary('bok-release');const prior=read();if(prior.intentId!==id||!['authorized','bok-post-reverted','bok-release-reverted'].includes(prior.status))error();state.releaseInput={id,...input};const next={intentId:'44',action:{type:input.type,requestId:'0x'+'1'.repeat(64)},status:'prepared',maximumFee:'234',bokRelease:{sourceIntentId:id},releasePrior:prior};write(next);return next;},
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
@@ -92,7 +92,7 @@ async function browserFixture(t){
  return {page,requests};
 }
 async function open(page,defaults){if(defaults)await page.evaluate(value=>window.defaults=value,defaults);await page.getByRole('button',{name:'Open account',exact:true}).click();}
-async function unlock(page){await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();}
+async function unlock(page){await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Actions',exact:true}).waitFor();await page.getByRole('button',{name:'Actions',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();}
 async function prepare(page){await page.getByLabel('Message',{exact:true}).fill('Hello from the labelled UI double.');await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();}
 async function rulesBeforePrimary(page){
  assert(await page.getByRole('region',{name:'Current effective rules'}).evaluate(section=>{
@@ -157,7 +157,7 @@ test('explicit create, encrypted backup download, no automatic account creation 
  assert.equal(await page.evaluate(()=>test.creates),0);assert.equal(await page.evaluate(()=>test.imports),0);
  await page.getByLabel('Recovery password',{exact:true}).fill('a strong test-only password');const downloading=page.waitForEvent('download');await page.getByRole('button',{name:'Create account and download recovery'}).click();
  const download=await downloading;assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');const downloaded=JSON.parse(await fs.readFile(await download.path(),'utf8'));assert.equal(downloaded.kind,'aztec-billboard-encrypted-wallet');assert.equal(Object.hasOwn(downloaded,'secretKey'),false);
- await page.getByRole('button',{name:'Check action and review fee'}).waitFor();await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.failure='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.ended),0);
+ await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.failure='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.ended),0);
  await page.getByText('Backup and account security',{exact:true}).click();await page.getByLabel('New recovery password',{exact:true}).fill('a new test-only password');const exporting=page.waitForEvent('download');await page.getByRole('button',{name:'Download encrypted recovery'}).click();await exporting;assert.equal(await page.evaluate(()=>test.exports),1);
 });
 
@@ -177,7 +177,7 @@ test('plaintext recovery warning survives import and unavailable connection with
 
 test('encrypted recovery import retains backup guidance without a false plaintext warning',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Import recovery',exact:true}).waitFor();
- await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'disposable-encrypted-recovery.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).waitFor();
+ await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'disposable-encrypted-recovery.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();
  assert.equal(await page.getByText('This imported file contains an unencrypted key.',{exact:false}).count(),0);
  await page.getByText('Backup and account security',{exact:true}).click();await page.getByText(/A lost password cannot be reset/).waitFor();await page.getByText(/Download a fresh backup after funding or transaction recovery changes/).waitFor();
  assert.equal(await page.evaluate(()=>test.imports),1);assert.equal((await counts(page)).sends,0);
@@ -187,7 +187,7 @@ test('funding remains honest and unavailable connection has no action buttons or
  const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Connect private account'}).waitFor();
  assert.equal((await counts(page)).sessions,1);assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);assert.equal(await page.getByRole('button',{name:'Check action and review fee'}).count(),0);
  await page.evaluate(()=>{test.failure=null;test.fee='collateral-pending';});await page.getByRole('button',{name:'Connect private account'}).click();await page.getByText('No posting deposit was found.',{exact:true}).waitFor();
- assert(await page.getByRole('button',{name:'Recover funding',exact:true}).isVisible());await page.getByLabel('Message',{exact:true}).fill('No collateral');assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
+ assert(await page.getByRole('button',{name:'Recover funding',exact:true}).isVisible());await page.getByRole('button',{name:'Actions',exact:true}).click();await page.getByLabel('Message',{exact:true}).fill('No collateral');assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
  await page.getByLabel('Action').selectOption('subboard');await page.getByLabel('Permanent slug (3–40 lowercase letters, digits or single hyphens)').fill('small-tools');await page.getByLabel('Subboard name').fill('Small tools');await page.getByLabel('Description',{exact:true}).fill('Make useful things');
  await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.equal((await counts(page)).sends,0);
 });
@@ -209,7 +209,7 @@ test('funding recovery imports only on request and requires a separate claim con
 test('recovery import is explicit; quote, repost, like and unlike retain exact selected targets',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Import recovery',exact:true}).waitFor();
  await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'labelled-encrypted-double.json',mimeType:'application/json',buffer:Buffer.from('{}')});assert.equal(await page.evaluate(()=>test.imports),0);
- await page.getByLabel('Recovery password',{exact:true}).fill('test-only password');await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).waitFor();assert.equal(await page.evaluate(()=>test.imports),1);
+ await page.getByLabel('Recovery password',{exact:true}).fill('test-only password');await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.imports),1);
  for(const type of ['quote','repost','like','unlike']){
   await page.getByRole('button',{name:'Close account panel'}).click();await open(page,{type,reference:'22',post:'22'});await page.getByRole('button',{name:'Check action and review fee'}).waitFor();
   if(type==='quote')await page.getByLabel('Message',{exact:true}).fill('A quote');
@@ -562,7 +562,7 @@ test('new actions clear previous confirmation during preparation and submission'
 });
 test('completed refresh and import clear temporary checking messages',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}]};});
- await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'test-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});
+ await open(page,{type:'post'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'test-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});
  await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
  assert.equal(await page.getByText('Recovery imported. Checking retained transactions…',{exact:true}).count(),0);assert(await page.getByText('Recovery imported.',{exact:true}).isVisible());
  await page.getByRole('button',{name:'Refresh private account',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
@@ -982,9 +982,9 @@ test('refresh diagnostic survives connect sanitizer and retry then clears on acc
  const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'account-status/account-initialize');assert.equal(await page.getByRole('button',{name:'Check account recovery',exact:true}).isVisible(),true);
  assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')||s.includes('account-initialize')));
  await page.evaluate(()=>{test.failure='owned';test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}],owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'}]};});
- await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.waitForFunction(()=>test.owned===1&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Your names',exact:true}).click();await page.waitForFunction(()=>test.owned===1&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'});
- await page.evaluate(()=>{test.failure=null;test.refreshRecords={owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'complete',code:null}]};});await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).state,'complete');
+ await page.evaluate(()=>{test.failure=null;test.refreshRecords={owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'complete',code:null}]};});await page.getByRole('button',{name:'Load your names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).state,'complete');
  await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'failed',code:'unknown'});});assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);assert.equal((await counts(page)).sends,0);
 });
 
@@ -1355,4 +1355,44 @@ test('cold funding explains the native fee credit requirement without sending or
  await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();await page.getByRole('alert').waitFor();
  const text=await page.getByRole('alert').innerText();assert(text.includes('13.92375413638722 FEE'));assert(text.includes('No funding payment was sent'));assert(!text.includes('PRIVATE_SENTINEL'));
  assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+});
+
+test('account overview enables funding before any names or publishing reads',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='owned';});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();
+ assert(await page.getByLabel('Posting deposit (ETH)',{exact:true}).isVisible());
+ assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,0,0,0]);
+ await page.getByRole('button',{name:'Your names',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ assert(await page.getByRole('button',{name:'Fund your account',exact:true}).isDisabled());
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,1,0,0]);
+ await page.getByRole('button',{name:'Actions',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Posting identity').locator('option[value="7"]').textContent(),'River Lane');
+ await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Actions',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads,test.bokReads]),[1,1,1,1]);
+ await page.getByRole('button',{name:'Refresh private account',exact:true}).click();await page.waitForFunction(()=>test.bokReads===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads,test.bokReads]),[2,2,2,2]);
+});
+
+test('explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.hold='moderator';test.moderator=true;test.bokCredit='1000000';});
+ await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),false);
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Action',{exact:true}).inputValue(),'reply');assert.equal(await page.getByLabel('Posting identity').locator('option[value="7"]').count(),1);
+ assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),true);
+ await page.evaluate(()=>{test.hold='owned';test.release=null;});await page.getByRole('button',{name:'Refresh private account',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ await page.evaluate(()=>{test.rawAccount={address:'CHANGED_ACCOUNT'};test.options.onChange({invalidated:true});test.hold=null;test.release();});
+ await page.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor();assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),false);
+ assert.equal(await page.getByText('River Lane',{exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
+});
+
+test('failed lazy name read retains funding access and retries only the selected view',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.failure='owned';});await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByText('No registered names were found.',{exact:false}).count(),0);
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();assert(await page.getByLabel('Posting deposit (ETH)',{exact:true}).isVisible());
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,2,0,0]);
 });
