@@ -86,7 +86,12 @@ export function validateQueryNode(config) {
 export async function createPrivateQuery(options, observers) {
   if (options.queryNode === undefined) return undefined;
   const {inspectTrustedNode} = await import('../shared/trusted-private-node.mjs');
-  return createPrivateQueryWithInspector(options, inspectTrustedNode, observers);
+  const query = createPrivateQueryWithInspector(options, inspectTrustedNode, observers);
+  // Native Tx schemas decompress Chonk proofs synchronously. Initialize their
+  // SDK codec before exposing the listener; this does not allocate a proof job.
+  const {BarretenbergSync} = await import('@aztec-foundation/bb.js');
+  await BarretenbergSync.initSingleton({backend:'Wasm'});
+  return query;
 }
 
 // Inspector injection is only for labelled unit tests. Production composition

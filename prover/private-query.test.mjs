@@ -496,3 +496,37 @@ test('historical gateway: mixed pending receipt cannot bypass the absence final 
  const response=await f.post([call('aztec_getBlock',[8]),{...call('aztec_getTxReceipt',[historyHash(100)]),id:2}]);
  assert.equal(response.status,503);assert(f.inspected.length>=4);
 });
+
+
+test('query startup fails before returning a handler when the SDK proof codec cannot initialize',async t=>{
+ const {BarretenbergSync}=await import('@aztec-foundation/bb.js');
+ t.mock.method(BarretenbergSync,'initSingleton',async options=>{assert.deepEqual(options,{backend:'Wasm'});throw Error('codec unavailable');});
+ await assert.rejects(createPrivateQuery({queryNode:{url:'http://127.0.0.1:1',rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}),/codec unavailable/);
+});
+
+// Explicit retained-proof boundary check: the private journal stays outside the
+// repository. Local fake upstream only; no chain submission or proof generation.
+test('retained compressed transaction decodes and forwards unchanged through the query gateway',
+ {skip:!process.env.ROLLING_RETAINED_TX_STATE},async t=>{
+ const {readFile}=await import('node:fs/promises');
+ const {Tx}=await import('@aztec-labs/stdlib/tx');
+ const {BarretenbergSync}=await import('@aztec-foundation/bb.js');
+ const saved=JSON.parse(await readFile(process.env.ROLLING_RETAINED_TX_STATE,'utf8'));
+ const raw=Buffer.from(saved.operations['bootstrap-private-fee'].raw,'hex');
+ assert.throws(()=>Tx.fromBuffer(raw),/First call BarretenbergSync.initSingleton/);
+ await createPrivateQuery({queryNode:{url:'http://127.0.0.1:1',rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false});
+ t.after(()=>BarretenbergSync.destroySingleton());
+ const tx=Tx.fromBuffer(raw);assert(tx.toBuffer().equals(raw),'retained transaction bytes unchanged');
+ const body=JSON.parse(jsonStringify(call('aztec_isValidTx',[tx])));
+ let dispatched=0;
+ const f=await fixture(t,{operatorKey:queryOperatorKey,upstreamReply:(_req,res,batch)=>{
+  assert.equal(batch.length,1);assert.equal(batch[0].method,'aztec_isValidTx');
+  dispatched++;
+  res.setHeader('content-type','application/json');res.end(JSON.stringify([{jsonrpc:'2.0',id:batch[0].id,result:{result:'valid'}}]));
+ }});
+ const response=await f.post(body,{'x-aztec-api-key':queryOperatorKey});
+ assert.equal(response.status,200);assert.deepEqual((await response.json()).result,{result:'valid'});assert.equal(dispatched,1);
+ assert.equal(f.received[0].headers['x-aztec-api-key'],undefined);
+ const forwarded=await Tx.schema.parseAsync(f.received[0].body[0].params[0]);
+ assert(forwarded.toBuffer().equals(raw),'forwarded transaction bytes unchanged');
+});
