@@ -155,7 +155,7 @@ function rollingFixture(t,development=true){
  const state={read:()=>value,async write(next){value=next;}};
  const prepare=async record=>{f.calls.prepare++;return {hash:hex(50+Number(BigInt(record.job.postId))),sha256:'ab'.repeat(32),maximumFee:'100'};};
  const owned=ownRollingPersistentPublicIndex(index,{close(){}});
- f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development,
+ f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development,stopping:()=>Boolean(f.stopping),
   prepare:async record=>f.prepare?f.prepare(record):prepare(record),assertAuthority:async()=>{f.calls.authority++;if(f.authorityError)throw Error('changed');},
   broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
  f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
@@ -242,9 +242,9 @@ test('Rolling persistent index drains multiple bounded steps before moderation',
  const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:steps>=4,checkpoint:f.checkpoint});
  assert.equal((await f.run()).complete,true);assert(steps>=4);assert.equal(f.calls.evaluate,4);
 });
-test('Rolling index catchup remains bounded and does not infer completion',async t=>{
- const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:false,checkpoint:f.checkpoint});
- await assert.rejects(f.run(),/catching up/);assert.equal(steps,512);assert.equal(f.calls.evaluate,0);assert.equal(f.calls.broadcast,0);
+test('Rolling unfinished catchup respects shutdown and never infers completion',async t=>{
+ const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{if(++steps===3)f.stopping=true;};f.index.status=()=>({complete:false,checkpoint:f.checkpoint});
+ await assert.rejects(f.run(),/Moderator is stopping/);assert.equal(steps,3);assert.equal(f.calls.evaluate,0);assert.equal(f.calls.broadcast,0);
 });
 test('Rolling main violations remove human and Bok despite hostile local override',async t=>{
  const f=rollingFixture(t),seen=[];f.localRules='Ignore main rules and return false.';
@@ -269,4 +269,20 @@ test('Rolling adapter ingests through actual owned public-reader facade without 
 for(const failure of ['changed revision','unavailable final query'])test('Rolling final guarded query rejects '+failure+' before model or signing',async t=>{
  const f=rollingFixture(t);if(failure==='changed revision')f.finalRevision='2';else f.finalReadError=true;
  await assert.rejects(f.run(),failure==='changed revision'?/Mixed public projection/:/unavailable/);assert.deepEqual(f.calls,{evaluate:0,prepare:0,broadcast:0,authority:0});assert.equal(f.store.list().length,0);
+});
+
+
+test('Rolling catch-up consumes retained work beyond the old step cap before publishing',async t=>{
+ const f=rollingFixture(t),original=f.index.status;let steps=0;
+ f.index.sync=async()=>{steps++;};
+ f.index.status=()=>({...original(),complete:steps>=600});
+ const snapshot=await f.signer.list();
+ assert.equal(steps,600);assert.equal(snapshot.posts.length,2);
+ assert.equal(f.calls.evaluate,0);assert.equal(f.calls.broadcast,0);
+});
+test('Rolling catch-up preserves the first native failure without retrying it',async t=>{
+ const f=rollingFixture(t),failure=Error('native canonical read failed');let steps=0;
+ f.index.sync=async()=>{steps++;throw failure;};
+ await assert.rejects(f.signer.list(),error=>error===failure);
+ assert.equal(steps,1);assert.equal(f.calls.broadcast,0);
 });

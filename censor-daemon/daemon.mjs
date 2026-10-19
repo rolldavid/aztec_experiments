@@ -105,9 +105,9 @@ function persistModelIdentity(directory,runtime){
 }
 export async function runDaemon(argv = process.argv.slice(2), { startRuntime = startModelRuntime,createNode=publicNode } = {}) {
   assertNodeVersion();
-  const config=configuration(argv);let rolling;
-  const signer=config.rollingConfig?(rolling=await createRollingModerationService({configFile:config.rollingConfig,stateDirectory:config.stateDir})).signer:createSigner({cliPath:config.cliPath,censorWallet:config.censorWallet,portalAddress:config.portalAddress,aztecNodeUrl:config.aztecNodeUrl,privateFeeConfig:config.privateFeeConfig,ethRpcUrl:config.ethRpcUrl});
-  let runtime,store,storeScope,stopping=false;const wait=new AbortController(),worker=randomUUID();
+  const config=configuration(argv);let rolling,stopping=false;
+  const signer=config.rollingConfig?(rolling=await createRollingModerationService({configFile:config.rollingConfig,stateDirectory:config.stateDir,stopping:()=>stopping})).signer:createSigner({cliPath:config.cliPath,censorWallet:config.censorWallet,portalAddress:config.portalAddress,aztecNodeUrl:config.aztecNodeUrl,privateFeeConfig:config.privateFeeConfig,ethRpcUrl:config.ethRpcUrl});
+  let runtime,store,storeScope;const wait=new AbortController(),worker=randomUUID();
   const shutdown=()=>{stopping=true;wait.abort();};process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);
   try{
     log('Starting isolated model runtime and durable moderation queue.');

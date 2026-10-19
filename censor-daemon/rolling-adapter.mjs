@@ -33,17 +33,18 @@ export function rollingModerationInput(post,boardFeed,deadline){
 /** Canonical index + existing durable operations state, with a labelled seam for
  * focused chain/wallet fixtures. Production construction is below. No retry,
  * replacement, model output or application user can select another call target. */
-export function rollingModerationAdapter({index,node,scope,lease,state,deadline,prepare,assertAuthority,broadcast,development=false}){
+export function rollingModerationAdapter({index,node,scope,lease,state,deadline,prepare,assertAuthority,broadcast,development=false,stopping=()=>false}){
  let after=null,anchor=null,busy=false,poisoned=false;
  const held=async()=>{assert(!poisoned,'Moderation journal uncertain');await lease.assertHeld();};
  const saved=()=>{const value=state.read().rollingModeration;if(value){assert.equal(value.schemaVersion,1);assert(value.operations&&Object.getPrototypeOf(value.operations)===Object.prototype);assert.deepEqual(value.scope,scope);}return value??{schemaVersion:1,scope,operations:{}};};
  const persist=async(key,value)=>{await held();const prior=saved();try{await state.write({...state.read(),rollingModeration:{...prior,operations:{...prior.operations,[key]:value}}});}catch{poisoned=true;throw Error('Moderation journal persistence uncertain');}};
  const sync=async()=>{
-  // Same bounded drain as the existing Rolling plugin port: a persistent index
-  // sync advances one transaction/block/publication step, not the entire tip.
-  const until=Date.now()+20000;
-  for(let step=0;step<512&&Date.now()<until;step++){await held();await index.sync();if(index.status().complete)return;}
-  throw Error('Canonical index is catching up');
+  // Each sync authenticates retained work. Catch-up is progress, not a timed
+  // failure that should enter the daemon's idle/error polling interval.
+  do {
+   await held();assert(!stopping(),'Moderator is stopping');
+   await index.sync();
+  } while(!index.status().complete);
  };
  const current=async id=>{
   const query=index.query('post',{id:BigInt(id).toString(),limit:1});
@@ -109,7 +110,7 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
 
 /** Trusted native operator composition. Configuration only selects the native
  * devnet/PXE proof flags; application/contract behavior is identical on testnet. */
-export async function createRollingModerationService({configFile,stateDirectory,env=process.env}){
+export async function createRollingModerationService({configFile,stateDirectory,env=process.env,stopping=()=>false}){
  const [{readHostedPrivateFile,rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},
   {acquireHostedLease,readHostedActor,hostedIndexNode},{createAztecNodeClient},{EmbeddedWallet},
   {Fr},{AztecAddress},{Contract},{TxHash},{loadContractArtifact},{getContractClassFromArtifact},{deriveStorageSlotInMap},
@@ -156,7 +157,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
   const normalNode={async getTxReceipt(hash){const r=await node.getTxReceipt(TxHash.fromString(hash));return {txHash:String(r.txHash),status:r.status,executionResult:r.executionResult,blockNumber:Number(r.blockNumber),blockHash:String(r.blockHash),...(r.transactionFee===undefined?{}:{transactionFee:String(r.transactionFee)})};},async getBlockData(number){const b=await node.getBlock(number);return b?{blockHash:String(b.hash),header:b.header}:null;}};
   const state=await fileState(path.join(stateDirectory,'removals.json'));
   const prepare=record=>prepareRollingRemoval({record,contract,wallet,account,config,Fr});
-  const signer=rollingModerationAdapter({index,node:normalNode,scope,lease,state,development:config.development,assertAuthority,prepare,broadcast:record=>node.sendTx(record.tx),
+  const signer=rollingModerationAdapter({index,node:normalNode,scope,lease,state,development:config.development,stopping,assertAuthority,prepare,broadcast:record=>node.sendTx(record.tx),
    deadline:async(id,at)=>(await read(await deriveStorageSlotInMap(artifact.storageLayout.post_flag_deadline.slot,Fr.fromString(id)),at)).toBigInt().toString()});
   return {signer,node:normalNode,scope,development:config.development,publicConfig,close};
  }catch{try{await close();}catch{}throw Error('Rolling moderation startup failed; inspect private operator configuration and retained state');}
