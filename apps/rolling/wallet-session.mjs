@@ -153,22 +153,28 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   return abi(bok).encodeFunctionData('withdraw',[...(bok?[r.withdrawal.depositor,r.withdrawal.amount,r.withdrawal.nonce]:[]),epoch,count,index,path]).toLowerCase();
  }
  const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
- async function finalized(result){
+ async function finalized(result,{wait=true}={}){
   if(fixed.chainId!=='31337'){
    await contextGuard();
    // A mined refund remains owned while the provider observes finality. Do not
    // turn ordinary network progress into a failed or repeatable payment.
-   await own(async()=>waitForFundingFinality(getFinalityProvider?await getFinalityProvider():originalProvider,result.receipt.blockNumber));
+   if(wait)await own(async()=>waitForFundingFinality(getFinalityProvider?await getFinalityProvider():originalProvider,result.receipt.blockNumber));
+   else{
+    // Account observation must not subscribe to unrelated refund finality.
+    // Keep the original workflow fenced while exposing its current pending state.
+    const head=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(head?.number));
+    if(head.number<result.receipt.blockNumber)return false;
+   }
    await contextGuard();
    const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));
   }
+  return true;
  }
- async function verified(r,search=false){
+ async function verified(r,search=false,wait=true){
   const j=await journal(r),saved=await read(()=>j.inspectSummary());if(!saved||saved.kind!==(isBok(r)?'bok-withdraw':'withdraw'))return null;if(saved.outcome==='unknown'&&!search)return null;
   const result=await read(()=>j.recover({retry:false}));check(result?.request?.expected?.kind===(isBok(r)?'bok-withdraw':'withdraw')&&result.request.from===r.withdrawal.depositor&&result.request.to===exitScope(r).portal);
   if(result.request.expected.amount!==r.withdrawal.amount||result.request.data!==await membership(r)){check(['success','reverted'].includes(result.outcome));return null;}
-  await finalized(result);
-  return result;
+  return await finalized(result,{wait})?result:null;
  }
  // Reconciliation may advance only its search cursor or discover the hash.
  // These fields identify the original immutable request reviewed by the user.
@@ -180,7 +186,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
  }
  const capability={
   async inspect(){const r=await original();await membership(r);return r;},
-  async verify(record){const r=await original(record),result=await verified(r);return result?.outcome==='success';},
+  async verify(record){const r=await original(record),result=await verified(r,false,false);return result?.outcome==='success';},
   async recover(){const r=await original(),result=await verified(r,true);check(result);return {status:result.outcome==='success'?'refunded':result.outcome,txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};},
   async prepare({maximumGasWei}={}){
    quote=null;check(typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));

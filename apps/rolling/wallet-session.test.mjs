@@ -937,7 +937,7 @@ test('refund-only accepts native AztecAddress custody and rejects changed native
 
 // Full normal-session composition: actual encrypted journals/native membership
 // hashing, explicit chain/provider doubles, no connected Ethereum signer needed.
-test('normal private account restores a finalized refund through native provider events without wallet connection',async()=>{
+for(const pending of [false,true])test(`normal private account observes ${pending?'pending':'finalized'} refund without subscribing or wallet connection`,async()=>{
  const f=await sessionFixture({chainId:'11155111'}),w=await withdrawalFixture({chainId:'11155111',scopeOverride:{account:f.input.account.address,board:String(f.board.address)}});
  f.input.config.network.ethRpcUrl='https://ethereum.invalid/';
  Object.assign(w.opts,{storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt});
@@ -950,8 +950,13 @@ test('normal private account restores a finalized refund through native provider
  const on=w.opts.provider.on;w.opts.provider.on=async(...args)=>{subscriptions++;assert(f.state.active);return on(...args);};w.opts.provider.destroy=()=>{};
  f.input.ethers={...f.input.ethers,...w.opts.ethers,JsonRpcProvider:class{constructor(url){return ++opened===1?new Original(url):w.opts.provider;}}};
  f.input.captureFundingWallet=undefined;
+ if(pending)w.state.finalized=w.state.receipt.blockNumber-1;
  const session=await createRollingWalletSession(f.input);
- try{assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(subscriptions,1);assert.equal(w.state.finalityListener,null);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);}
+ try{
+  const status=await session.application.readAccountStatus();assert.equal(status.status,pending?'recovering':'fee-ready');
+  if(pending){assert.equal(status.intent.txHash,w.record.txHash);assert.equal(status.intent.status,'confirmed');}
+  assert.equal(subscriptions,0);assert.equal(w.state.finalityListener,null);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);
+ }
  finally{await session.close();}
 });
 
