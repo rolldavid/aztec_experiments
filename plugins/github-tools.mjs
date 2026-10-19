@@ -75,7 +75,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       if(workspace?.connection&&(!/^[A-Za-z0-9._/-]{1,240}$/.test(name)||name.split('/').some(p=>['.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(p.toLowerCase())||/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(p))))throw Error('Connected source path rejected');
       const target=path.resolve(work,name);if(!target.startsWith(work+path.sep))throw Error('Path outside repository');
       // Reject symlinks at every existing path component, including parent dirs.
-      let current=work;for(const part of path.relative(work,target).split(path.sep)){current=path.join(current,part);try{if((await fs.lstat(current)).isSymbolicLink())throw Error('Symlink access rejected');}catch(e){if(e.code!=='ENOENT')throw e;}}
+      let current=work;for(const part of path.relative(work,target).split(path.sep)){current=path.join(current,part);try{if((await fs.lstat(current)).isSymbolicLink())throw Object.assign(Error('Symlink access rejected'),{code:'BOK_UNSUPPORTED_PATH'});}catch(e){if(e.code!=='ENOENT')throw e;}}
       return target;
     };
     const definitions=[
@@ -96,7 +96,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         }
         if(name==='list_files'){
           if(typeof args.prefix!=='string'||args.prefix.length>240||/[\0\r\n]/.test(args.prefix))throw Error('Invalid file prefix');
-          await ensureFiles();
+          const oversized=await ensureFiles();
           // Read the index plus untracked files, not HEAD. Ignored files can be
           // deliberate tool writes too; sparse omitted/deleted files are absent.
           const listed=await runCommand('git',['ls-files','--cached','--others','-z'],{cwd:work,maxBuffer:4*1024*1024});
@@ -104,14 +104,18 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           for(const name of [...new Set(listed.stdout.split('\0').filter(Boolean))].sort()){
             if(!name.startsWith(args.prefix))continue;
             if(name.length>240||/[\0\r\n]/.test(name)||name.startsWith('/')||name.split('/').some(p=>!p||p==='.'||p==='..'))throw Error('Unsupported repository path');
-            const file=await safe(name);let stat;try{stat=await fs.lstat(file);}catch(error){if(error.code==='ENOENT')continue;throw error;}
-            if(!stat.isFile())throw Error('Unsupported repository entry');
+            if(oversized.has(pathKey(name)))continue;
+            let file;try{file=await safe(name);}catch(error){if(error.code==='BOK_UNSUPPORTED_PATH')continue;throw error;}
+            let stat;try{stat=await fs.lstat(file);}catch(error){if(error.code==='ENOENT')continue;throw error;}
+            // Listing is discovery, not permission to follow a link or read an
+            // omitted blob. Unsupported entries must not hide valid edits.
+            if(!stat.isFile()||stat.size>100000)continue;
             current.push(name);if(current.length>500)break;
           }
           return {files:current.slice(0,500),truncated:current.length>500};
         }
         if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
-        if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);return {written:args.path};}
+        if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path};}
         if(name==='read_pr'){
           if(workspace?.connection)throw Error('Connected repository PR reads are not exposed');
           if(!Number.isSafeInteger(args.number)||args.number<1)throw Error('Invalid PR');

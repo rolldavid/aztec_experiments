@@ -38,7 +38,7 @@ test('real filtered checkout excludes unreadable blobs and preserves edits and P
    if(args[0]==='clone'){clones++;work=args.at(-1);args=args.map(arg=>arg==='https://github.com/owner/project.git'?pathToFileURL(fixture).href:arg);}
    return exec(command,args,options);
   }}).open({postId:'0x1'});
-  const listed=await session.call('list_files',{prefix:''});assert.deepEqual(listed.files.sort(),entries.map(x=>x.path).sort());
+  const listed=await session.call('list_files',{prefix:''});assert.deepEqual(listed.files.sort(),entries.filter(x=>x.mode!=='120000'&&x.size<=100000).map(x=>x.path).sort());assert(!listed.files.includes('link'));assert(!listed.files.includes('large [*?] file.txt'));
   const large=entries.find(x=>x.size>100000);
   const assertLargeAbsent=()=>assert.rejects(exec('git',['cat-file','-e',large.sha],{cwd:work,env:{...process.env,GIT_NO_LAZY_FETCH:'1'}}));
   await assertLargeAbsent();
@@ -49,7 +49,7 @@ test('real filtered checkout excludes unreadable blobs and preserves edits and P
    await assert.rejects(session.call('read_file',{path:alias}),/too large/i);
    await assert.rejects(session.call('write_file',{path:alias,content:'replacement'}),/too large/i);
   }
-  await assert.rejects(session.call('read_file',{path:'link'}),/Symlink/);
+  await assert.rejects(session.call('read_file',{path:'link'}),/Symlink/);await assert.rejects(session.call('write_file',{path:'link',content:'no follow'}),/Symlink/);
   await assert.rejects(session.call('write_file',{path:'../escape',content:'bad'}),/outside/);
   await assert.rejects(session.call('read_file',{path:'.git/config'}),/Invalid/);
   await assert.rejects(session.call('read_file',{path:'.GIT/config'}),/Invalid/);

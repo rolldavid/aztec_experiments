@@ -126,17 +126,18 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    if(state.operations[invocationId])throw Error('Invocation already has an accepted revision');
    assert(new Set([...Object.keys(state.operations),...Object.keys(state.candidates??{})]).size<maxRevisions,'Thread revision limit reached');
    const readRevision=state.acceptedRevision;draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let accepted=null,acceptStarted=false;
-   let checked=null;
-   const prepare=async(forceCheck=false)=>{
+   let checked=null,snapshot=null;
+   const retain=async(force=false)=>{
     assert(!closed);await lease.assertHeld();
     const parent=(await git(['rev-parse','HEAD'],{cwd:work})).stdout.trim();assert(revision(parent));if(readRevision)assert.equal(parent,readRevision);
     const used=await size(root),scratch=await size(draft);assert(used+scratch<=maxBytes,'Thread storage limit reached');
     await git(['add','--all','--force','--','.'],{cwd:work});const tree=(await git(['write-tree'],{cwd:work})).stdout.trim();assert(revision(tree));
-    if(checked?.tree===tree&&checked.parent===parent&&(!forceCheck||checked.validation))return checked;
-    checked=null;const produced=(await git(['commit-tree',tree,'-p',parent,'-m',`Bok thread invocation ${invocationId}`],{cwd:work})).stdout.trim();assert(revision(produced));
+    if(snapshot?.tree===tree&&snapshot.parent===parent&&(!force||snapshot.retained))return snapshot;
+    const produced=(await git(['commit-tree',tree,'-p',parent,'-m',`Bok thread invocation ${invocationId}`],{cwd:work})).stdout.trim();assert(revision(produced));
     const unchanged=(startEmpty||connection)&&tree===(await git(['rev-parse',parent+'^{tree}'],{cwd:work})).stdout.trim();
-    if((!unchanged||forceCheck)&&validateRevision){
-     // Import immutable source before validation can fail or the draft closes.
+    if(!unchanged||force){
+     // Custody is independent of validation and acceptance. Successful tool
+     // writes survive a later billing/transport failure or process interruption.
      // Keep it distinct from accepted refs and ordinary recovery operations.
      const candidateRef=`refs/candidates/${invocationId.slice(2)}/${produced}`;
      await git(['fetch','--no-tags','--update-shallow',work,`${produced}:${candidateRef}`],{cwd:repo});
@@ -145,11 +146,18 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
      const candidate={threadId,invocationId,readRevision,producedRevision:produced,parent,tree};
      await store.write({...state,candidates:{...state.candidates,[invocationId]:candidate}});state=store.read();
     }
+    snapshot={tree,parent,produced,unchanged,retained:!unchanged||force};return snapshot;
+   };
+   const prepare=async(forceCheck=false)=>{
+    const {tree,parent,produced,unchanged}=await retain(forceCheck);
+    if(checked?.tree===tree&&checked.parent===parent&&(!forceCheck||checked.validation))return checked;
+    checked=null;
     const validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;
     if((!unchanged||forceCheck)&&validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
     checked={tree,parent,produced,validation,unchanged};return checked;
    };
    return Object.freeze({work,repositoryPath:repo,readRevision,startEmpty,connection,
+    retain:()=>{assert(!acceptStarted);return retain();},
     initialSource:connection?async()=>{const source=await connections.readConnected(threadId);assert.deepEqual(source.mapping,connection);return source.files;}:undefined,
     async check(){assert(!acceptStarted);assert(validateRevision,'Isolated revision validation unavailable');return (await prepare(true)).validation;},
     async accept(){
@@ -164,7 +172,18 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
      await git(['fsck','--connectivity-only','--no-dangling'],{cwd:repo});
      accepted=await acceptRecord({produced,validation,readRevision});return accepted;
     },
-    async close(){if(closed)return;closed=true;try{await fs.rm(draft,{recursive:true,force:true});}finally{release();}}
+    async close(){
+     if(closed)return;
+     try{
+      if(!state.operations[invocationId]){
+       let initialized=false;try{await fs.access(path.join(work,'.git'));initialized=true;}catch(error){if(error.code!=='ENOENT')throw error;}
+       // Direct workspace changes also retain custody. If the lease, Git import
+       // or journal write fails, leave the only scratch copy intact and fail.
+       if(initialized)await retain();
+      }
+      await fs.rm(draft,{recursive:true,force:true});
+     }finally{closed=true;release();}
+    }
    });
   }catch(error){release();throw error;}
  }

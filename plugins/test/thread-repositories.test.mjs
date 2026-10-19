@@ -31,7 +31,7 @@ test('restart reconciles exact accepted ref after lost acknowledgement without r
 });
 test('lease loss prevents acceptance; user paths and changed repository identity fail closed',async t=>{
  const h=await fixture(t);await assert.rejects(h.manager.open({threadId:'../x',invocationId:id(1),repository:'owner/project'}));
- const first=await h.open();await h.checkout(first);h.options.lease.assertHeld=async()=>{throw Error('lease lost');};await assert.rejects(first.accept(),/lease lost/);await first.close();
+ const first=await h.open();await h.checkout(first);h.options.lease.assertHeld=async()=>{throw Error('lease lost');};await assert.rejects(first.accept(),/lease lost/);await assert.rejects(first.close(),/lease lost/);assert.equal(await fs.readFile(path.join(first.work,'file.txt'),'utf8'),'initial');
  h.options.lease.assertHeld=async()=>{};await assert.rejects(h.manager.open({threadId:id(1),invocationId:id(2),repository:'different/project'}));
 });
 
@@ -58,7 +58,7 @@ test('failed validation cannot advance accepted source and cannot be retried in 
 test('bounded revision and storage budgets refuse new accepted source',async t=>{
  const h=await fixture(t),first=await h.open();await h.checkout(first);await first.accept();await first.close();
  await assert.rejects(h.open(2,1,threadRepositories({...h.options,maxRevisions:1})),/revision limit/);
- const next=await h.open(2,1,threadRepositories({...h.options,maxBytes:1024}));await h.checkout(next);await assert.rejects(next.accept(),/storage limit/);await next.close();
+ const next=await h.open(2,1,threadRepositories({...h.options,maxBytes:1024}));await h.checkout(next);await assert.rejects(next.accept(),/storage limit/);await assert.rejects(next.close(),/storage limit/);await fs.access(next.work);
 });
 
 test('model can check and repair an empty thread; acceptance reuses only the exact checked source',async t=>{
@@ -264,7 +264,7 @@ test('workspace listing reflects staged, untracked, ignored and deleted files wi
  assert.deepEqual((await session.call('list_files',{prefix:''})).files,['.gitignore','ignored.txt','index.html','new.js']);
  assert.deepEqual((await session.call('list_files',{prefix:'index'})).files,['index.html']);
  await fs.symlink('/etc/passwd',path.join(workspace.work,'unsafe.txt'));
- await assert.rejects(session.call('list_files',{prefix:'unsafe'}),/Symlink/);
+ assert.deepEqual(await session.call('list_files',{prefix:'unsafe'}),{files:[],truncated:false});await assert.rejects(session.call('read_file',{path:'unsafe.txt'}),/Symlink/);await assert.rejects(session.call('write_file',{path:'unsafe.txt',content:'no follow'}),/Symlink/);
  await fs.rm(path.join(workspace.work,'unsafe.txt'));
  await Promise.all(Array.from({length:501},(_,n)=>fs.writeFile(path.join(workspace.work,`bounded-${String(n).padStart(3,'0')}.txt`),'')));
  const bounded=await session.call('list_files',{prefix:'bounded-'});assert.equal(bounded.files.length,500);assert.equal(bounded.truncated,true);
@@ -281,4 +281,52 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
   if(content!==undefined)await session.call('write_file',{path:'package.json',content});
   const result=await session.call('check_workspace',{});assert.equal(result.passed,false);assert.equal(result.phase,'input');assert.equal(result.requirement.code,code);assert.match(result.requirement.message,expected);assert(!JSON.stringify(result).includes('PRIVATE_PARSE_SENTINEL'));
  }
+});
+
+test('successful tool writes retain latest unaccepted source when later billing fails before validation',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);let validations=0,publications=0,workspace;
+ const options={...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;assert.equal(await fs.readFile(path.join(sourceDirectory,'test.js'),'utf8'),'// exact test');return {passed:true,revision,testsPassed:true,buildPassed:true,sourceDigest:'a'.repeat(64),sourceArchiveSha256:'b'.repeat(64),artifactArchiveSha256:'c'.repeat(64)};},onAccepted:async()=>{publications++;return {published:true};}};
+ const manager=threadRepositories(options),session=await githubToolbox({repository:'owner/project',repositories:{open:async input=>(workspace=await manager.open(input))},api:async()=>assert.fail('No GitHub')}).open({threadId:id(1),id:id(1),postId:id(9)});
+ const files={'index.html':'<!doctype html><title>Retained</title>','package.json':'{"scripts":{"build":"node build.js"}}','build.js':'// exact build','test.js':'// exact test'};
+ for(const [file,content]of Object.entries(files))await session.call('write_file',{path:file,content});
+ const journal=path.join(path.dirname(workspace.repositoryPath),'revisions.json'),before=JSON.parse(await fs.readFile(journal));
+ assert(before.candidates?.[id(1)],'successful writes must already have immutable custody');
+ const candidate=before.candidates[id(1)];assert.equal(before.acceptedRevision,null);assert.deepEqual(before.operations,{});assert.equal(validations,0);assert.equal(publications,0);
+ // Agent finally closes after a later billing failure, before check_workspace.
+ await session.close();await assert.rejects(fs.access(workspace.work),{code:'ENOENT'});
+ for(const [file,content]of Object.entries(files))assert.equal((await repositoryGit(['show',candidate.producedRevision+':'+file],{cwd:workspace.repositoryPath})).stdout,content);
+ assert.equal(await manager.hasAcceptedRecovery({threadId:id(1),invocationId:id(1),repository:'owner/project'}),false);
+ const result=await threadRepositories(options).recoverCandidate({threadId:id(1),invocationId:id(1),repository:'owner/project',revision:candidate.producedRevision});assert.equal(result.acceptedRevision,candidate.producedRevision);assert.equal(validations,1);assert.equal(publications,1);
+});
+
+test('candidate custody failure rejects write and preserves scratch through exceptional close',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);let workspace,failImport=false;
+ const git=async(args,options)=>{if(failImport&&args[0]==='fetch'&&args.some(x=>String(x).includes(':refs/candidates/')))throw Error('Candidate import unavailable');return repositoryGit(args,options);};
+ const manager=threadRepositories({...h.options,startEmpty:true,git,validateRevision:()=>assert.fail('No execution'),onAccepted:()=>assert.fail('No publication')});
+ const session=await githubToolbox({repository:'owner/project',repositories:{open:async input=>(workspace=await manager.open(input))},api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});
+ await session.call('write_file',{path:'index.html',content:'first retained'});const journal=path.join(path.dirname(workspace.repositoryPath),'revisions.json'),before=await fs.readFile(journal,'utf8');failImport=true;
+ await assert.rejects(session.call('write_file',{path:'test.js',content:'last generated output'}),/Candidate import unavailable/);
+ await assert.rejects(session.close(),/Candidate import unavailable/);
+ assert.equal(await fs.readFile(path.join(workspace.work,'test.js'),'utf8'),'last generated output');assert.equal(await fs.readFile(journal,'utf8'),before);
+ assert.equal(await manager.hasAcceptedRecovery({threadId:id(1),invocationId:id(1),repository:'owner/project'}),false);
+ // Closing the failed owner releases its queue, but never deletes the retained scratch.
+ const next=await manager.open({threadId:id(1),invocationId:id(2),repository:'owner/project'});await next.close();assert.equal(await fs.readFile(path.join(workspace.work,'test.js'),'utf8'),'last generated output');
+});
+
+test('exceptional direct workspace close retains latest candidate without validation',async t=>{
+ const h=await fixture(t),manager=threadRepositories({...h.options,validateRevision:()=>assert.fail('No validation'),onAccepted:()=>assert.fail('No publication')});
+ const session=await h.open(1,1,manager);await h.checkout(session);await fs.writeFile(path.join(session.work,'file.txt'),'latest unvalidated bytes');await session.close();
+ const state=JSON.parse(await fs.readFile(path.join(path.dirname(session.repositoryPath),'revisions.json'))),candidate=state.candidates[id(1)];assert.equal(state.acceptedRevision,null);assert.deepEqual(state.operations,{});
+ assert.equal((await repositoryGit(['show',candidate.producedRevision+':file.txt'],{cwd:session.repositoryPath})).stdout,'latest unvalidated bytes');
+});
+
+test('candidate journal failure preserves scratch even after immutable Git import succeeds',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);let workspace;
+ const manager=threadRepositories({...h.options,startEmpty:true}),session=await githubToolbox({repository:'owner/project',repositories:{open:async input=>(workspace=await manager.open(input))},api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});
+ await session.call('write_file',{path:'index.html',content:'first'});
+ const journal=path.join(path.dirname(workspace.repositoryPath),'revisions.json');await fs.rename(journal,journal+'.retained');await fs.mkdir(journal);
+ await assert.rejects(session.call('write_file',{path:'test.js',content:'exact final bytes'}),{code:'STATE_PERSISTENCE_UNCERTAIN'});
+ await assert.rejects(session.close(),{code:'STATE_PERSISTENCE_UNCERTAIN'});
+ assert.equal(await fs.readFile(path.join(workspace.work,'test.js'),'utf8'),'exact final bytes');
+ const before=JSON.parse(await fs.readFile(journal+'.retained'));assert.equal(before.acceptedRevision,null);assert.deepEqual(before.operations,{});
 });
