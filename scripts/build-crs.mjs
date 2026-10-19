@@ -114,7 +114,27 @@ export function validateCrsManifest(manifest) {
       manifest.files[0].format !== 'bn254-g1-compressed-32-byte' || manifest.files[1].bytes !== 128 || manifest.files[1].format !== 'bn254-g2-uncompressed-128-byte') {
     throw new Error('Invalid derived G1 provenance');
   }
+  const verifier = manifest.verifierG1;
+  const verifierExpected = {
+    name: 'g1_verifier.dat', bytes: 128, numPoints: 2, format: expected.format,
+    sha256: 'c31e48521dee7e67349c230e835a69dd4afd6d306a4a3a2d94b8ad4d8726e6c2',
+  };
+  const prefix = { method: 'verified-prefix-v1', inputName: derived.name, inputSha256: derived.sha256 };
+  if (!verifier || Object.keys(verifier).sort().join() !== [...Object.keys(verifierExpected), 'derivation'].sort().join() ||
+      Object.entries(verifierExpected).some(([key, value]) => verifier[key] !== value) ||
+      !verifier.derivation || Object.keys(verifier.derivation).sort().join() !== Object.keys(prefix).sort().join() ||
+      Object.entries(prefix).some(([key, value]) => verifier.derivation[key] !== value)) {
+    throw new Error('Invalid pinned verifier CRS prefix');
+  }
   return manifest;
+}
+
+// Authenticate the entire derivation once at build time, then publish an
+// independently pinned complete verifier asset. Browsers never fetch the parent.
+export function deriveVerifierG1(manifest, source) {
+  validateCrsManifest(manifest);
+  verifyCrsBytes(source, manifest.derivedG1);
+  return verifyCrsBytes(source.subarray(0, manifest.verifierG1.bytes), manifest.verifierG1);
 }
 
 export function verifyDerivationWasm(manifest, bytes) {
@@ -167,6 +187,7 @@ export async function buildCrs(outputDirectory = path.join(ROOT, 'apps/dist/crs'
   }
   await atomicWriteVerified(target, bytes, derived);
   console.log(`Verified derived CRS ${derived.name}: ${derived.bytes} bytes, SHA-256 ${derived.sha256}`);
+  await atomicWriteVerified(path.join(output, manifest.verifierG1.name), deriveVerifierG1(manifest, bytes), manifest.verifierG1);
   await atomicWriteVerified(path.join(output, 'crs-manifest.json'), manifestBytes,
     { name: 'crs-manifest.json', bytes: manifestBytes.length, sha256: sha256(manifestBytes) });
   return manifest;

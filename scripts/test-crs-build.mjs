@@ -70,6 +70,10 @@ for (const [label, mutate] of [
   ['changed source URL', m => { m.files[2].url = 'https://example.invalid/data'; }],
   ['old schema', m => { m.schemaVersion = 1; }],
   ['missing derived asset', m => { delete m.derivedG1; }],
+  ['missing verifier asset', m => { delete m.verifierG1; }],
+  ['wrong verifier hash', m => { m.verifierG1.sha256 = '0'.repeat(64); }],
+  ['wrong verifier point count', m => { m.verifierG1.numPoints = 1; }],
+  ['wrong verifier parent', m => { m.verifierG1.derivation.inputSha256 = '0'.repeat(64); }],
   ['changed output pin', m => { m.derivedG1.sha256 = '0'.repeat(64); }],
   ['oversized derived output', m => { m.derivedG1.bytes++; }],
   ['wrong points', m => { m.derivedG1.numPoints--; }],
@@ -178,4 +182,12 @@ test('Grumpkin manifest pins two complete chunks without reducing prior capacity
   assert.equal(file.bytes,8388608);assert.equal(file.bytes,2*65536*64);
   assert.deepEqual(file.range,{start:0,end:8388607});
   assert.equal(file.sha256,'e703e36cfe4262d71180d9b8d0ae09ac154ff70bbba3d50d4d640356d01a9daf');
+});
+
+
+test('verifier prefix derivation rejects unauthenticated parent bytes',async()=>{
+ const {deriveVerifierG1}=await import('./build-crs.mjs');
+ assert.throws(()=>deriveVerifierG1(manifest,new Uint8Array(128)),/length mismatch/);
+ assert.throws(()=>deriveVerifierG1(manifest,new Uint8Array(manifest.derivedG1.bytes)),/checksum mismatch/);
+ assert.equal(manifest.verifierG1.bytes,128);assert.equal(manifest.verifierG1.numPoints,2);
 });

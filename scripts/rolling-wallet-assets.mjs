@@ -81,7 +81,7 @@ async function inventory(){
  for(const name of Object.keys(sdk.outputs))result['/wallet/'+name]='.build/sdk/'+name;
  // The browser consumes the pinned uncompressed derivation as well as the
  // downloaded CRS inputs. Validate every served file before publishing assets.
- const crsFiles=[...crs.files,crs.derivedG1];
+ const crsFiles=[...crs.files,crs.derivedG1,crs.verifierG1];
  for(const file of crsFiles)result['/crs/'+file.name]='apps/dist/crs/'+file.name;
  for(const file of crsFiles){const bytes=await fs.readFile(path.join(ROOT,result['/crs/'+file.name]));if(bytes.length!==file.bytes||sha(bytes)!==file.sha256)throw invalid();}
  return result;

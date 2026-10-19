@@ -46,7 +46,16 @@
       || provenance.wasmSha256 !== 'e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d') {
       throw new Error('Invalid pinned CRS entry: derivedG1');
     }
-    return { files, derivedG1: Object.freeze({ ...derived, derivation: Object.freeze({ ...provenance }) }) };
+    const verifier = manifest.verifierG1;
+    if (!hasKeys(verifier, ['name', 'bytes', 'numPoints', 'format', 'sha256', 'derivation'])
+      || verifier.name !== 'g1_verifier.dat' || verifier.bytes !== 128 || verifier.numPoints !== 2
+      || verifier.format !== derived.format || !/^[a-f0-9]{64}$/.test(verifier.sha256)
+      || !hasKeys(verifier.derivation, ['method', 'inputName', 'inputSha256'])
+      || verifier.derivation.method !== 'verified-prefix-v1' || verifier.derivation.inputName !== derived.name
+      || verifier.derivation.inputSha256 !== derived.sha256) {
+      throw new Error('Invalid pinned CRS entry: verifierG1');
+    }
+    return { files, verifierG1: Object.freeze({ ...verifier, derivation: Object.freeze({ ...verifier.derivation }) }), derivedG1: Object.freeze({ ...derived, derivation: Object.freeze({ ...provenance }) }) };
   }
 
   async function readResponse(response, file) {
@@ -81,12 +90,14 @@
     }
   }
 
-  async function loadVerified({ manifest, loadLocal, sha256, log = () => {} }) {
-    const { files, derivedG1 } = validateManifest(manifest);
+  async function loadVerified({ manifest, loadLocal, sha256, log = () => {}, verifierOnly = false }) {
+    if (typeof verifierOnly !== 'boolean') throw new Error('Invalid CRS verifier mode');
+    const { files, derivedG1, verifierG1 } = validateManifest(manifest);
+    const selectedG1 = verifierOnly ? verifierG1 : derivedG1;
     const loaded = {};
     // Runtime setup has one source: the deployment's verified local assets.
     // Do not switch representation or destination after a missing/corrupt file.
-    for (const file of [derivedG1, files.get('g2.dat'), files.get('grumpkin_g1.dat')]) {
+    for (const file of [selectedG1, files.get('g2.dat'), files.get('grumpkin_g1.dat')]) {
       const data = await loadLocal(file);
       if (!ArrayBuffer.isView(data) || data.BYTES_PER_ELEMENT !== 1 || data.byteLength !== file.bytes) {
         throw new Error('CRS size mismatch: ' + file.name);
@@ -95,7 +106,7 @@
       loaded[file.name] = data;
       log('Verified local ' + file.name, 'info');
     }
-    return { files, data: loaded, selectedG1: derivedG1 };
+    return { files, data: loaded, selectedG1 };
   }
 
   async function initialize(bb, options) {
@@ -104,7 +115,7 @@
     const { files, data, selectedG1 } = await loadVerified(options);
     const numPoints=requestedPoints===undefined?selectedG1.numPoints:requestedPoints;
     if(numPoints>selectedG1.numPoints)throw new Error('BN254 initialization exceeds verified source capacity');
-    // A prefix is usable only AFTER the complete pinned source has passed its
+    // A local-prover prefix is usable only AFTER the complete pinned source has passed its
     // size/hash verification. Match the exact count and wire format for BB.
     const bytesPerPoint=64;
     const pointsBuf=numPoints===selectedG1.numPoints?data[selectedG1.name]:data[selectedG1.name].subarray(0,numPoints*bytesPerPoint);

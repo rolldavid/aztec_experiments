@@ -20,11 +20,14 @@ const derivedPayload = new Uint8Array(75497472).fill(29);
 fixtureManifest.derivedG1.sha256 = hash(derivedPayload);
 fixtureManifest.derivedG1.derivation.inputSha256 = fixtureManifest.files.find(f => f.name === 'g1.dat').sha256;
 fixtureManifest.derivedG1.derivation.g2Sha256 = fixtureManifest.files.find(f => f.name === 'g2.dat').sha256;
+const verifierPayload=derivedPayload.subarray(0,128);
+fixtureManifest.verifierG1.sha256=hash(verifierPayload);
+fixtureManifest.verifierG1.derivation.inputSha256=fixtureManifest.derivedG1.sha256;
 
 function options(extra = {}) {
   return {
     manifest: structuredClone(fixtureManifest),
-    loadLocal: async file => file.name === 'g1_uncompressed.dat' ? derivedPayload : payloads[file.name],
+    loadLocal: async file => file.name === 'g1_uncompressed.dat' ? derivedPayload : file.name === 'g1_verifier.dat' ? verifierPayload : payloads[file.name],
     sha256: hash,
     fetch: async () => { throw new Error('Unexpected network request'); },
     ...extra,
@@ -33,7 +36,7 @@ function options(extra = {}) {
 
 function derivedOptions(extra = {}) {
   return options({
-    loadLocal: async file => file.name === 'g1_uncompressed.dat' ? derivedPayload : payloads[file.name],
+    loadLocal: async file => file.name === 'g1_uncompressed.dat' ? derivedPayload : file.name === 'g1_verifier.dat' ? verifierPayload : payloads[file.name],
     ...extra,
   });
 }
@@ -71,7 +74,7 @@ for (const name of ['g1_uncompressed.dat', 'g2.dat', 'grumpkin_g1.dat']) {
       await assert.rejects(CRS.initialize(bb, options({
         loadLocal: async file => {
           reads.push(file.name);
-          const data = file.name === 'g1_uncompressed.dat' ? derivedPayload : payloads[file.name];
+          const data = file.name === 'g1_uncompressed.dat' ? derivedPayload : file.name === 'g1_verifier.dat' ? verifierPayload : payloads[file.name];
           if (file.name !== name) return data;
           if (mode === 'missing') throw Error('Required local file missing');
           if (mode === 'truncated') return data.subarray(0, -1);
@@ -207,7 +210,7 @@ test('verified local derived bytes skip compressed reads and use the documented 
   const result = await CRS.initialize(bb, derivedOptions({ loadLocal: async file => {
     reads.push(file.name);
     if (file.name === 'g1.dat') throw new Error('Compressed data must not be read');
-    return file.name === 'g1_uncompressed.dat' ? derivedPayload : payloads[file.name];
+    return file.name === 'g1_uncompressed.dat' ? derivedPayload : file.name === 'g1_verifier.dat' ? verifierPayload : payloads[file.name];
   } }));
   assert.deepEqual(reads, ['g1_uncompressed.dat', 'g2.dat', 'grumpkin_g1.dat']);
   assert.equal(result.g1Format, 'bn254-g1-uncompressed-64-byte');
@@ -252,6 +255,7 @@ test('loader cannot replace the trusted metadata snapshot', async () => {
 test('mismatched derived content pin never accepts bytes through supplied cache metadata', async () => {
   const manifest = structuredClone(fixtureManifest);
   manifest.derivedG1.sha256 = '0'.repeat(64);
+  manifest.verifierG1.derivation.inputSha256 = manifest.derivedG1.sha256;
   const bb = stubProver();
   await assert.rejects(CRS.initialize(bb, derivedOptions({ manifest })), /SHA-256 mismatch/);
   assert.equal(bb.calls.length, 0);
@@ -327,3 +331,33 @@ for (const [label, change, expected] of [
     assert.deepEqual(hashSizes,label==='second chunk corruption'?[75497472,128,8388608]:[75497472,128]);
   });
 }
+
+
+test('remote verifier reads only its complete pinned two-point asset and retains Grumpkin verification capacity', async()=>{
+ const bb=stubProver(),reads=[];
+ await CRS.initialize(bb,options({verifierOnly:true,bn254NumPoints:2,loadLocal:async file=>{
+  reads.push(file.name);if(file.name==='g1_verifier.dat')return verifierPayload;
+  if(file.name==='g1_uncompressed.dat'||file.name==='g1.dat')throw Error('Prover asset must not load');
+  return payloads[file.name];
+ }}));
+ assert.deepEqual(reads,['g1_verifier.dat','g2.dat','grumpkin_g1.dat']);
+ assert.equal(bb.calls[0][1].numPoints,2);assert.equal(bb.calls[0][1].pointsBuf.byteLength,128);
+ assert.equal(bb.calls[1][1].numPoints,131072);
+});
+test('remote verifier rejects corruption and oversized capacity before native SRS calls',async()=>{
+ for(const mode of ['corrupt','truncated','capacity']){
+  const bb=stubProver();
+  await assert.rejects(CRS.initialize(bb,options({verifierOnly:true,bn254NumPoints:mode==='capacity'?524288:2,loadLocal:async file=>{
+   if(file.name!=='g1_verifier.dat')return payloads[file.name];
+   if(mode==='truncated')return verifierPayload.subarray(0,127);
+   if(mode==='corrupt'){const bytes=verifierPayload.slice();bytes[127]^=1;return bytes;}
+   return verifierPayload;
+  }})),/CRS|exceeds verified/);assert.equal(bb.calls.length,0);
+ }
+});
+test('verifier manifest binds its source, representation and exact count before reads',async()=>{
+ for(const mutate of [m=>delete m.verifierG1,m=>m.verifierG1.bytes++,m=>m.verifierG1.numPoints++,m=>m.verifierG1.derivation.inputSha256='0'.repeat(64)]){
+  const manifest=structuredClone(fixtureManifest);mutate(manifest);let reads=0;
+  await assert.rejects(CRS.loadVerified(options({manifest,verifierOnly:true,loadLocal:async()=>{reads++;}})),/CRS/);assert.equal(reads,0);
+ }
+});

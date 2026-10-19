@@ -49,3 +49,40 @@ test('PXE provenance binds original node and cached wrapper and rejects replacem
  pxe.node={};assert.equal(f.ctx.isPrivatePXEForNode(pxe,node),false);
  pxe.node=cached;assert.equal(f.ctx.isPrivatePXEForNode(pxe,node),true);
 });
+
+
+test('remote browser initializes verifier only and awaits upgrade before switching to local',async()=>{
+ const f=fixture();f.ctx.createRemoteProverClient=options=>({url:options.url});
+ const pxe=await f.ctx.createPXE({getNodeInfo:async()=>({realProofs:true,l1ChainId:11155111})},{},{remoteProver:{url:'https://board.example/prover'}});
+ const prover=f.calls[0][2].proverOrOptions,remote=prover.transport;
+ assert.equal(f.crsCalls[0].options.verifierOnly,true);assert.equal(f.crsCalls[0].options.bn254NumPoints,2);
+ let release;f.ctx.BillboardCRS.initialize=async(bb,options)=>{assert.equal(options.verifierOnly,false);assert.equal(options.bn254NumPoints,524288);await new Promise(resolve=>{release=resolve;});};
+ const change=pxe.setRemoteProver(undefined);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(prover.transport,remote);release();await change;assert.equal(prover.transport,null);
+ await pxe.setRemoteProver({url:'https://other.example/prover'});assert.equal(prover.transport.url,'https://other.example/prover');
+});
+test('failed local upgrade leaves remote routing intact; subsequent transitions remain ordered',async()=>{
+ const f=fixture();f.ctx.createRemoteProverClient=options=>({url:options.url});
+ const pxe=await f.ctx.createPXE({getNodeInfo:async()=>({realProofs:true})},{},{remoteProver:{url:'https://board.example/prover'}});
+ const prover=f.calls[0][2].proverOrOptions,remote=prover.transport;
+ f.ctx.BillboardCRS.initialize=async()=>{throw Error('bad local CRS');};
+ await assert.rejects(pxe.setRemoteProver(undefined),e=>e.code==='BB_BROWSER_PROVER_CONFIGURATION');assert.equal(prover.transport,remote);
+ let release;const capacities=[];f.ctx.BillboardCRS.initialize=async(bb,options)=>{capacities.push(options.bn254NumPoints);await new Promise(resolve=>{release=resolve;});};
+ const local=pxe.setRemoteProver(undefined),nextRemote=pxe.setRemoteProver({url:'https://next.example/prover'});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(prover.transport,remote);release();await Promise.all([local,nextRemote]);
+ assert.equal(prover.transport.url,'https://next.example/prover');assert.deepEqual(capacities,[524288]);
+});
+test('concurrent remote and local PXEs share ordered monotonic singleton capacity',async()=>{
+ for(const remoteFirst of [true,false]){
+  const f=fixture();f.ctx.createRemoteProverClient=()=>({remote:true});const capacities=[],releases=[];
+  f.ctx.BillboardCRS.initialize=async(bb,options)=>{capacities.push(options.bn254NumPoints);await new Promise(resolve=>releases.push(resolve));};
+  const node={getNodeInfo:async()=>({realProofs:true})};
+  const first=f.ctx.createPXE(node,{},remoteFirst?{remoteProver:{}}:{});
+  const second=f.ctx.createPXE(node,{},remoteFirst?{}:{remoteProver:{}});
+  await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(capacities,[remoteFirst?2:524288]);
+  releases.shift()();await new Promise(resolve=>setImmediate(resolve));
+  if(remoteFirst){assert.deepEqual(capacities,[2,524288]);releases.shift()();}
+  await Promise.all([first,second]);
+  await f.ctx.createPXE(node,{},{remoteProver:{}});assert.deepEqual(capacities,remoteFirst?[2,524288]:[524288]);
+ }
+});

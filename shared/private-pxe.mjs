@@ -42,7 +42,8 @@ export async function initializeCliProver(input) {
   }catch{cliProverInitialization=undefined;throw cliFailure();}
 }
 const browserFailure=()=>Object.assign(new Error('Browser proving setup could not be verified. Reload this page and check the locally hosted setup files.'),{code:'BB_BROWSER_PROVER_CONFIGURATION'});
-export async function initializeBrowserProver(supplied) {
+export async function initializeBrowserProver(supplied, {verifierOnly=false}={}) {
+  if(typeof verifierOnly!=='boolean')throw browserFailure();
   if(supplied!==undefined && (!supplied || typeof supplied!=='object' || Array.isArray(supplied) || typeof supplied.createChonkProof==='function'))throw browserFailure();
   const proverOrOptions={...supplied,backend:BackendType.WasmWorker,threads:1,skipSrsInit:true};
   try {
@@ -50,26 +51,28 @@ export async function initializeBrowserProver(supplied) {
     // and verified SRS must belong to this exact async singleton/worker heap.
     const singleton=await Barretenberg.initSingleton({...proverOrOptions,logger:discard});
     if(singleton.options.backend!==BackendType.WasmWorker || singleton.options.threads!==1 || singleton.options.skipSrsInit!==true)throw browserFailure();
-    let initialization=browserCrsInitializations.get(singleton);
-    if(!initialization){
-      initialization=(async()=>{
-        const crs=globalThis.BillboardCRS;
-        if(!crs)throw browserFailure();
-        await crs.initialize(singleton,{
-          manifest:globalThis.BILLBOARD_CRS_MANIFEST,
-          // Pinned BB 5.2.0 DEFAULT_BB_CRS_SIZE for client Chonk.
-          bn254NumPoints:524288,
-          loadLocal:async file=>crs.readResponse(await fetch('crs/'+file.name,{signal:AbortSignal.timeout(120000),credentials:'omit',redirect:'error'}),file),
-          // Browser deployment must serve the pinned local files. Never route
-          // fallback downloads around the deployment's local asset boundary.
-          fetch:async()=>{throw browserFailure();},
-          sha256:async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join(''),
-          log:discard,
-        });
-      })();
-      browserCrsInitializations.set(singleton,initialization);
-      initialization.catch(()=>{if(browserCrsInitializations.get(singleton)===initialization)browserCrsInitializations.delete(singleton);});
-    }
+    let state=browserCrsInitializations.get(singleton);
+    if(!state){state={numPoints:0,tail:Promise.resolve()};browserCrsInitializations.set(singleton,state);}
+    const requestedPoints=verifierOnly?2:524288;
+    // One worker heap: serialize initialization/upgrades and never replace a
+    // prover-capable SRS with the smaller verifier SRS from another PXE.
+    const initialization=state.tail.then(async()=>{
+      if(state.numPoints>=requestedPoints)return;
+      const crs=globalThis.BillboardCRS;
+      if(!crs)throw browserFailure();
+      state.numPoints=0;
+      await crs.initialize(singleton,{
+        manifest:globalThis.BILLBOARD_CRS_MANIFEST,
+        verifierOnly,
+        bn254NumPoints:requestedPoints,
+        loadLocal:async file=>crs.readResponse(await fetch('crs/'+file.name,{signal:AbortSignal.timeout(120000),credentials:'omit',redirect:'error'}),file),
+        fetch:async()=>{throw browserFailure();},
+        sha256:async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join(''),
+        log:discard,
+      });
+      state.numPoints=requestedPoints;
+    });
+    state.tail=initialization.catch(()=>{});
     await initialization;
     return proverOrOptions;
   }catch{throw browserFailure();}
@@ -93,8 +96,8 @@ export async function createPXE(node,config,options={}) {
   const info=await node.getNodeInfo();
   const proofsEnabled=provingEnabledForNode(info);
   if(info.realProofs===false && Number(info.l1ChainId)!==31337)throw Error('Disabled proofs require local devnet');
-  const transport=()=>remote?createRemoteProverClient({...remote,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;
-  const route=(simulator,proverOptions)=>new RoutedKernelProver(simulator,proverOptions,{proofsEnabled,transport:transport()});
+  const transport=value=>value?createRemoteProverClient({...value,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;
+  const route=(simulator,proverOptions)=>new RoutedKernelProver(simulator,proverOptions,{proofsEnabled,transport:transport(remote)});
   if(config?.proverEnabled===false && proofsEnabled && !readOnly)throw new Error('Proofs may only be disabled on the disposable local devnet');
   if(!proofsEnabled){
     // The SDK skips kernel witness generation and proving in its native disabled
@@ -102,9 +105,9 @@ export async function createPXE(node,config,options={}) {
     config={...config,proverEnabled:false};
     selected={...options};delete selected.proverOrOptions;delete selected.remoteProver;
   }else if(!readOnly && typeof window !== 'undefined') {
-    const proverOrOptions=await initializeBrowserProver(options.proverOrOptions);
+    const proverOrOptions=await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(remote)});
     const simulator=options.simulator??new WASMSimulator();
-    selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...proverOrOptions,logger:privateLogger},{proofsEnabled,transport:transport()})};
+    selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...proverOrOptions,logger:privateLogger},{proofsEnabled,transport:transport(remote)})};
   }else if(!readOnly && remote){
     const simulator=options.simulator??new WASMSimulator();selected={...options,simulator,proverOrOptions:route(simulator,options.proverOrOptions??{})};
   }else if(!readOnly && config?.proverEnabled===true){
@@ -118,6 +121,18 @@ export async function createPXE(node,config,options={}) {
   const pxe=await createSdkPXE(node,config,{...selected,loggers:{store:privateLogger,pxe:privateLogger,prover:privateLogger}});
   privatePXERoutes.set(pxe,{source:node,cached:pxe.node});
   if(readOnly)pxe.proveTx=async()=>{throw new Error('Read-only PXE cannot prove transactions');};
-  if(selected.proverOrOptions instanceof RoutedKernelProver)pxe.setRemoteProver=async value=>{remote=value;selected.proverOrOptions.setTransport(transport());};
+  if(selected.proverOrOptions instanceof RoutedKernelProver){
+    let routeChange=Promise.resolve();
+    pxe.setRemoteProver=value=>{
+      const change=routeChange.then(async()=>{
+        const next=transport(value);
+        if(typeof window!=='undefined')await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(next)});
+        selected.proverOrOptions.setTransport(next);
+        remote=value;
+      });
+      routeChange=change.catch(()=>{});
+      return change;
+    };
+  }
   return pxe;
 }
