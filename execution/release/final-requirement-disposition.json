@@ -10,7 +10,7 @@
     "clarifications": "../specification-clarifications.md",
     "deadline": "2026-10-21T15:25:57Z"
   },
-  "overall": "All 46 IDs retained. Both real wallets completed USDC and ETH funding/private claims and original withdrawals. Bok delivered its generated page/source, authenticated reply and exact charge/refund. The current automated moderator evaluated five human posts and that Bok reply under the live policy. Static hosting and Bok encrypted preservation are complete. Core checkpoint/restart, moderator fee-ceiling check and final handover are being closed. Historical evidence retains its original scope; X1/X2 remain external release gates.",
+  "overall": "All 46 IDs retained. Both real wallets completed USDC and ETH funding/private claims and original withdrawals. Bok delivered its generated page/source, authenticated reply and exact charge/refund. The current automated moderator evaluated five human posts and that Bok reply under the live policy. Static hosting and Bok encrypted preservation are complete. Core checkpoint/restart and moderator fee-ceiling correction are complete; same-process native ingestion resumed healthy at9011. Final CI and handover integration remain. Historical evidence retains its original scope; X1/X2 remain external release gates.",
   "rules": [
     "Evidence keeps its own original revision, runtime, real/mocked boundary and limitations; current target revision does not automatically relabel historical evidence.",
     "No source mutation, tests, services, proofs, model calls or financial actions performed for this draft.",
@@ -19,14 +19,14 @@
     "Functional presence and component review are separate from complete product/cryptographic assurance."
   ],
   "workGroupUpdates": {
-    "D1": "Current browser wallet34cc published; current moderator evaluated5human+1authenticatedBok posts on34cc, then restored with exact f3 catchup overlay and corrected20FEE cap. Final resumed native ingestion observation remains; current app HTTP200.",
+    "D1": "Current browser wallet34cc published; current moderator evaluated5human+1authenticatedBok posts on34cc, then restored with exact f3 catchup overlay and corrected20FEE cap. Same-process resumed native ingestion observed healthy at9011, six evaluated and zero pending/error/signing counters; transient failures retained; current app HTTP200.",
     "D2": "Both real-wallet funding routes, original private claims, collateral refunds and Phantom Bok-credit withdrawal complete. Original0cc4 Bok page/source/reply and accounting now complete; no further wallet/model campaign.",
     "D3": "Retain actual Phantom before-ack interruption\u2192same original ETH claim and MetaMask full-backup restored paid claim\u2192success. Append existing exact lineage/custody evidence; no new interruption matrix or payment.",
     "D4": "Final0cc4 read-only receipt/effect append complete:18 canonical included effects plus original dropped settlement preserved. Full retained Tx bodies exist only for reply/finish;16 historical bodies unavailable. Allowed public Bok identity observed; no exact known human address match in tested fields. This is limited evidence, not unlinkability assurance; X1 remains external.",
     "D5": "Retained ten-proof/capacity/UI/cold-warm observations unchanged. Actual authenticated reply is visible against chain8960, same checkpoint as reply receipt; current journey observation is recorded, no new polling/startup campaign.",
     "D6": "Separate funded Bok server completed0cc4: accepted4055 page/source, visible authenticated reply226e at8960, finish0d2a at8961.250000microUSDC=13944charged+236056refunded,0available/reserved,eight settled calls. Original model outputs reused; one generated-test identifier repair explicitly operator-authored. Earlier09bad/136a remain accounted-without-reply.",
     "D7": "Bounded incident/recovery components and current original-wallet/Bok outcomes retained; actual core/Bok final encrypted snapshots verified. No elapsed soak or repeat recovery campaign. Configuration and source deltas after snapshot are separately preserved.",
-    "D8": "Both final encrypted snapshots verified, public artifact routes retained independently of compute, and exact current source/runtime/operating limits documented. Final moderator resumed ingestion and independent handover review/required CI remain."
+    "D8": "Both final encrypted snapshots verified, public artifact routes retained independently of compute, and exact current source/runtime/operating limits documented. Final moderator resumed ingestion confirmed at9011. Independent handover review/required CI and integration remain."
   },
   "externalGates": [
     {
@@ -1356,6 +1356,10 @@
     "moderator-f3-readback-result": {
       "path": "../evidence/G09/current-moderator-20261019/f3-readback-result.json",
       "sha256": "5924ee737bf2808cb80dddefbb1203fa6486bc1378cafb4540d77ebce9609d9e"
+    },
+    "moderator-resumed-ingestion": {
+      "path": "../evidence/G09/current-moderator-20261019/resumed-ingestion.json",
+      "sha256": "50208719497fb682b0da0c1407ce45387a1d63c5fe5a5dc17ca8098bccae4f87"
     }
   },
   "inputs": {

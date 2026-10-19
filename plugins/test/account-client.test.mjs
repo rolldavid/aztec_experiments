@@ -54,17 +54,20 @@ test('request IDs are canonical fields usable by cancellation; results filter ot
  await pluginAccountAction(f.args);assert.equal(cancelled,result.requests[0].postId);
 });
 
-test('public redemption waits for finality without creating a submission intent',async()=>{
- const f=fixture({withdrawal:{txHash:'l2'}});f.args.action='redeem';
+test('checkpointed public redemption checks the Outbox witness without waiting for finality',async()=>{
+ const withdrawal={txHash:'l2'},f=fixture({withdrawal});f.args.action='redeem';
  f.args.descriptor.scope.chainId='11155111';f.args.signer.provider.getNetwork=async()=>({chainId:11155111n});
- f.args.handles.aztecNode.getTxEffect=async()=>{throw Error('Must not request proof before finality');};
- await assert.rejects(pluginAccountAction(f.args),/awaits network finality/);
- assert.deepEqual(f.state(),{withdrawal:{txHash:'l2'}});
+ const leaf={isZero:()=>false};let witnesses=0;
+ f.args.handles.aztecNode.getTxEffect=async hash=>{assert.equal(hash,'l2');return {data:{l2ToL1Msgs:[leaf]}};};
+ f.args.handles.aztecNode.getL2ToL1MembershipWitness=async(hash,message)=>{assert.equal(hash,'l2');assert.equal(message,leaf);witnesses++;return undefined;};
+ f.args.signer.sendTransaction=async()=>assert.fail('No withdrawal before its Outbox witness exists');
+ await assert.rejects(pluginAccountAction(f.args),/awaits network settlement/);
+ assert.equal(witnesses,1);assert.deepEqual(f.state(),{withdrawal});
 });
 
 test('failed redemption gas preflight does not poison the saved withdrawal',async()=>{
  const withdrawal={txHash:'l2',recipient,amount:'123',nonce:'0x'+'55'.repeat(32)},f=fixture({withdrawal});f.args.action='redeem';
- f.args.handles.aztecNode.getTxReceipt=async()=>({status:'finalized',executionResult:'success'});
+ f.args.handles.aztecNode.getTxReceipt=async()=>({status:'checkpointed',executionResult:'success'});
  f.args.handles.aztecNode.getTxEffect=async()=>({data:{l2ToL1Msgs:[{isZero:()=>false}]}});
  f.args.handles.aztecNode.getL2ToL1MembershipWitness=async()=>({epochNumber:1,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}});
  let estimates=0;f.args.signer.estimateGas=async()=>{estimates++;throw Error('Outbox is not yet usable');};

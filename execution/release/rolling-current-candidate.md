@@ -1,6 +1,6 @@
 # Rolling Chat development candidate — 19 October 2026
 
-Reviewed integration: `f3e23bf4a09ac6350ea2add12feb47b475a427a3`; current browser wallet: `34cc7252f6f90ea127b798cf885e7f3e8439d969`; [PR8](https://github.com/zac-williamson/aztec_experiments/pull/8). Bok's separate release791297f7 plus reviewed84a5 overlay delivered the original completed request. Current automated moderation processed six actual posts. Static retention and Bok preservation are complete; core preservation, fee-ceiling configuration and final handover are being closed.
+Reviewed integration: `f3e23bf4a09ac6350ea2add12feb47b475a427a3`; current browser wallet: `34cc7252f6f90ea127b798cf885e7f3e8439d969`; [PR8](https://github.com/zac-williamson/aztec_experiments/pull/8). Bok's separate release791297f7 plus reviewed84a5 overlay delivered the original completed request. Current automated moderation processed six actual posts. Static retention and Bok preservation are complete; core preservation and fee-ceiling configuration are complete. Native moderator ingestion resumed at9011 without intervention; final required CI and handover integration remain.
 
 ## Use the application
 

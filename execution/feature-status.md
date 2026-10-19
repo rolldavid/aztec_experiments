@@ -27,7 +27,7 @@ Request `0cc4` completed all eight paid calls. Reply `226ef5d6` was included at 
 
 ## Work being closed
 
-The moderator's configured 2 FEE ceiling was below the native SDK's current 13.923754 FEE maximum. Its existing funded balance is 39.965588 FEE. The ceiling is corrected to 20 FEE, retaining the spending guard. The app and moderator are restored after the final core checkpoint; the moderator is reauthenticating retained public history with its reviewed catch-up fix. This is configuration repair, without a new model or transaction campaign.
+The moderator's configured 2 FEE ceiling was below the native SDK's current 13.923754 FEE maximum. Its existing funded balance is 39.965588 FEE. The ceiling is corrected to 20 FEE, retaining the spending guard. The app and moderator are restored after the final core checkpoint; the moderator resumed healthy ingestion at checkpoint 9011 with six evaluated posts and no pending work or alerts. Transient catch-up failures were retained; recovery occurred without another restart or debugger attachment. This is configuration repair, without a new model or transaction campaign.
 
 Final handover binds the actual deployed versions, preserved state, service availability and requirement evidence. The [46-row requirement map](release/final-requirement-disposition.json) retains evidence scopes and limitations; there is no invented whole-spec completion percentage. Independent review found no additional concrete user-facing feature gap beyond these closure tasks. Specialist security/privacy audit and network release clearance remain separate external gates.
 

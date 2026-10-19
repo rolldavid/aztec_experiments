@@ -73,19 +73,19 @@ for(const name of ['deploy-escrow','deploy-portal','activate','bind','register']
 function ethereumFixture(){
  const receipt={hash:f(8),status:1,blockNumber:9,blockHash:f(9)};let effects=0;
  return {record:{phase:'submission-unknown',hash:f(8),raw:'abcd'},development:false,receipt,effects:()=>effects,
-  reads:{signed:async()=>true,receipt:async()=>receipt,block:async()=>({hash:f(9)}),head:async tag=>{assert.equal(tag,'finalized');return {number:10};},effect:async()=>{effects++;return true;}}};
+  reads:{signed:async()=>true,receipt:async()=>receipt,block:async()=>({hash:f(9)}),head:async tag=>{assert.equal(tag,'latest');return {number:10};},effect:async()=>{effects++;return true;}}};
 }
-test('L1 reconciliation requires exact retained bytes hash canonical receipt effect and finality',async()=>{
+test('L1 reconciliation requires exact retained bytes hash canonical mined receipt and effect',async()=>{
  const x=ethereumFixture(),r=await reconcileRollingEthereum(x);assert.equal(r.status,'succeeded');assert.equal(r.canonical,true);assert.equal(r.scope,'portal-registration');assert.equal(x.effects(),1);
 });
-for(const defect of ['unsigned','pending','wrong-hash','reverted','reorg','not-finalized','wrong-effect','unavailable'])test(`L1 reconciliation ${defect} preserves original record and never broadcasts`,async()=>{
+for(const defect of ['unsigned','pending','wrong-hash','reverted','reorg','head-behind-receipt','wrong-effect','unavailable'])test(`L1 reconciliation ${defect} preserves original record and never broadcasts`,async()=>{
  const x=ethereumFixture(),before=JSON.stringify(x.record);
  if(defect==='unsigned')x.reads.signed=async()=>false;
  if(defect==='pending')x.reads.receipt=async()=>null;
  if(defect==='wrong-hash')x.receipt.hash=f(10);
  if(defect==='reverted')x.receipt.status=0;
  if(defect==='reorg'){let n=0;x.reads.block=async()=>({hash:++n===1?f(9):f(10)});}
- if(defect==='not-finalized')x.reads.head=async()=>({number:8});
+ if(defect==='head-behind-receipt')x.reads.head=async()=>({number:8});
  if(defect==='wrong-effect')x.reads.effect=async()=>false;
  if(defect==='unavailable')x.reads.receipt=async()=>{throw Error('PRIVATE_UPSTREAM');};
  const r=await reconcileRollingEthereum(x);assert.equal(r.status,defect==='reverted'?'failed':'unresolved');assert(!JSON.stringify(r).includes('PRIVATE_UPSTREAM'));assert.equal(JSON.stringify(x.record),before);
