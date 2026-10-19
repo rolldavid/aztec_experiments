@@ -11,8 +11,17 @@ export function ingestModerationSnapshot(store,data,scope){
 const intentRequest=record=>({postId:record.intent.postId,policyVersion:record.intent.policyVersion,reason:record.intent.reason});
 const superseded=record=>record.job.state==='manual-review'&&['MODEL_SUPERSEDED','POLICY_SUPERSEDED'].includes(record.errorCode)&&!record.intent&&!record.job.transactionHash;
 const matches=(record,post)=>post&&post.postId===record.job.postId&&post.policyVersion===record.post.policyVersion&&post.text===record.post.text&&String(post.timestamp)===record.job.publishedAt&&post.flagDeadline===record.job.deadline;
+const completionOffsets=new WeakMap();
 export async function processModerationCycle({store,signer,node,scope,evaluate,worker,now=Date.now,log=()=>{},dryRun=false,maxJobs=10,stopping=()=>false}){
  let data=signer.list();ingestModerationSnapshot(store,data,scope);
+ // Revisit bounded prior completions: checkpoint inclusion can reorg. Retain
+ // the original hash/intent; invalidation only reopens canonical reconciliation.
+ const prior=store.list(),offset=completionOffsets.get(store)??0;
+ for(const record of prior.slice(offset,offset+64))if(record.job.state==='confirmed-flag'){
+  const outcome=await reconcileFlag({node,scope,postId:record.job.postId,policyVersion:record.job.policyVersion,transactionHash:record.job.transactionHash,flagEvent:data.posts.find(p=>p.postId===record.job.postId)?.flagEvent});
+  if(outcome.state!=='confirmed')store.invalidateCompletion(record.key);
+ }
+ completionOffsets.set(store,offset+64>=prior.length?0:offset+64);
  for(let count=0;count<maxJobs&&!stopping();count++){
   let record=store.leaseNext({worker});if(!record)break;
   const key=record.key,token=record.lease.token;
@@ -47,7 +56,7 @@ export async function processModerationCycle({store,signer,node,scope,evaluate,w
     if(record.job.transactionHash){
      const post=data.posts.find(p=>p.postId===record.job.postId);
      let outcome=await reconcileFlag({node,scope,postId:record.job.postId,policyVersion:record.job.policyVersion,transactionHash:record.job.transactionHash,flagEvent:post?.flagEvent});
-     if(['dropped','unknown','pending','awaiting-revert-finality'].includes(outcome.state)){
+     if(['dropped','unknown','pending'].includes(outcome.state)){
       // A replacement may have reached the chain before its child response was
       // lost. Recover its authenticated journal lineage even after the deadline;
       // never infer that the older queue hash is still the latest attempt.
@@ -61,7 +70,7 @@ export async function processModerationCycle({store,signer,node,scope,evaluate,w
        outcome=replacementOutcome;
       }
      }
-     if(outcome.state==='confirmed'){update({state:'confirmed-flag',receipt:outcome.receipt,flagEvent:outcome.flagEvent});timing('finality-observed',{transactionHash:record.job.transactionHash});log('Post '+record.post.orderIndex+' flag finalized.');continue;}
+     if(outcome.state==='confirmed'){update({state:'confirmed-flag',receipt:outcome.receipt,flagEvent:outcome.flagEvent});timing('canonical-inclusion-observed',{transactionHash:record.job.transactionHash});log('Post '+record.post.orderIndex+' flag canonically included.');continue;}
      if(outcome.state==='reverted'){update({state:'retryable-error',receipt:outcome.receipt,errorCode:'TRANSACTION_REVERTED'});continue;}
      if(['submitted','awaiting-event'].includes(outcome.state)){update({state:'submitted',transactionHash:record.job.transactionHash,receipt:outcome.receipt});release();continue;}
      if(outcome.state!=='dropped'){update({state:'reconciling',errorCode:'TRANSACTION_UNRESOLVED'});release();continue;}
@@ -82,9 +91,9 @@ export async function processModerationCycle({store,signer,node,scope,evaluate,w
    // its current canonical block and independently indexed flag event.
    data=signer.list();ingestModerationSnapshot(store,data,scope);
    const confirmed=await reconcileFlag({node,scope,postId:record.job.postId,policyVersion:record.job.policyVersion,transactionHash:newHash,flagEvent:data.posts.find(p=>p.postId===record.job.postId)?.flagEvent});
-   if(confirmed.state==='confirmed'){update({state:'confirmed-flag',receipt:confirmed.receipt,flagEvent:confirmed.flagEvent});timing('finality-observed',{transactionHash:newHash});log('Post '+record.post.orderIndex+' flag finalized.');}
+   if(confirmed.state==='confirmed'){update({state:'confirmed-flag',receipt:confirmed.receipt,flagEvent:confirmed.flagEvent});timing('canonical-inclusion-observed',{transactionHash:newHash});log('Post '+record.post.orderIndex+' flag canonically included.');}
    else if(confirmed.state==='reverted'){update({state:'retryable-error',receipt:confirmed.receipt,errorCode:'TRANSACTION_REVERTED'});}
-   else {if(!['submitted','awaiting-event'].includes(confirmed.state))update({state:'reconciling',errorCode:'TRANSACTION_UNRESOLVED'});release();log('Post '+record.post.orderIndex+' flag submitted; awaiting canonical finality.');}
+   else {if(!['submitted','awaiting-event'].includes(confirmed.state))update({state:'reconciling',errorCode:'TRANSACTION_UNRESOLVED'});release();log('Post '+record.post.orderIndex+' flag submitted; awaiting canonical receipt and flag event.');}
   }catch(error){
    const fresh=store.get(key);
    if(fresh?.lease?.token===token){
@@ -113,7 +122,7 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
  };
  const old=store.list(),offset=signer.reconcileOffset??0;
  const sweep=old.slice(offset,offset+64);
- for(const record of sweep)if(record.job.state==='confirmed-flag'&&(await signer.reconcileRemoval(record)).state!=='confirmed')store.invalidateRollingCompletion(record.key);
+ for(const record of sweep)if(record.job.state==='confirmed-flag'&&(await signer.reconcileRemoval(record)).state!=='confirmed')store.invalidateCompletion(record.key);
  const initial=await ingest(sweep.map(r=>r.job.postId));
  signer.reconcileOffset=offset+64>=old.length?0:offset+64;
  for(let count=0;count<maxJobs&&!stopping();count++){

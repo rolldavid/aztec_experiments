@@ -146,7 +146,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
     if(record.policy.context.subboard!=='0'){const slot=await deriveStorageSlotInMap(artifact.storageLayout.subboards.slot,Fr.fromString(field(record.policy.context.subboard)));assert.equal((await read(new Fr(slot.toBigInt()+4n),at)).toBigInt(),0n,'Subboard rejected');}
    }
    assert.equal(String((await node.getBlock(at.number))?.hash),at.hash);};
-  const tip=await node.getBlock(config.development?'checkpointed':'finalized'),checkpoint={number:Number(tip.number),hash:String(tip.hash)};await assertAuthority(checkpoint);
+  const tip=await node.getBlock('checkpointed'),checkpoint={number:Number(tip.number),hash:String(tip.hash)};await assertAuthority(checkpoint);
   const instance=await node.getContract(address,checkpoint);await wallet.registerContract(instance,artifact);const contract=await Contract.at(address,artifact,wallet);
   const portalValue=(await read(artifact.storageLayout.portal_address.slot,checkpoint)).toBigInt();assert(portalValue>0n&&portalValue<2n**160n);
   const scope={l1ChainId:config.chainId,rollupVersion:config.rollupVersion,rollupAddress:config.rollupAddress,portalAddress:'0x'+portalValue.toString(16).padStart(40,'0'),boardAddress:config.boardAddress};

@@ -12,9 +12,10 @@ function fixture({changeReceipt={},changeEvent={},node={}}={}){
 test('canonical finalized receipt and matching scoped flag are required to confirm',async()=>{
  const result=await reconcileFlag(fixture());assert.equal(result.state,'confirmed');assert.deepEqual(result.receipt,receipt);assert.deepEqual(result.flagEvent,event);
 });
-for(const status of ['checkpointed','proven'])test(status+' success remains submitted',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{status}}))).state,'submitted'));
+for(const status of ['checkpointed','proven'])test(status+' canonical success confirms',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{status}}))).state,'confirmed'));
 for(const [status,state] of [['pending','pending'],['proposed','pending'],['dropped','dropped'],['unknown','unknown']])test(status+' never confirms',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{status}}))).state,state));
 test('canonical revert remains reverted even with a matching event',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{executionResult:'reverted'}}))).state,'reverted'));
+for(const status of ['checkpointed','proven'])test(status+' canonical revert is observed without finality',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{status,executionResult:'reverted'}}))).state,'reverted'));
 for(const executionResult of [undefined,'unknown',null])test('unknown execution outcome remains unknown: '+executionResult,async()=>assert.equal((await reconcileFlag(fixture({changeReceipt:{executionResult}}))).state,'unknown'));
 test('canonical successful receipt without event awaits event',async()=>assert.equal((await reconcileFlag({...fixture(),flagEvent:null})).state,'awaiting-event'));
 for(const [label,changeReceipt] of [['wrong transaction',{txHash:id(21)}],['missing hash',{blockHash:undefined}],['invalid height',{blockNumber:'10'}]])test(label+' receipt fails closed',async()=>assert.equal((await reconcileFlag(fixture({changeReceipt}))).state,'unknown'));
@@ -33,9 +34,9 @@ import {reconcileRollingRemoval,validateRollingRemoval} from './flag-outcome.mjs
 const rollingRecord={job:{postId:id(2),transactionHash:id(20)},policy:{context:{policyIdentity:id(3)}},intent:{reason:'Spam'}};
 const removal={schemaVersion:1,scope,type:'PostRemoved',position:event.position,payload:{postId:id(2),policyVersion:id(3),reason:'Spam',penalized:false}};
 const rollingInput=()=>({node:fixture().node,scope,record:rollingRecord,event:removal});
-test('Rolling testnet completion waits for real finalized canonical PostRemoved',async()=>{
+test('Rolling testnet completion uses canonical checkpointed PostRemoved',async()=>{
  const input=rollingInput();input.node.getTxReceipt=async()=>({...receipt,status:'checkpointed'});
- assert.equal((await reconcileRollingRemoval(input)).state,'submitted');
+ assert.equal((await reconcileRollingRemoval(input)).state,'confirmed');
  assert.equal((await reconcileRollingRemoval({...input,development:true})).state,'confirmed');
  input.node.getTxReceipt=async()=>receipt;assert.equal((await reconcileRollingRemoval(input)).state,'confirmed');
 });
@@ -44,7 +45,7 @@ for(const field of ['reason','postId','policyVersion'])test('Rolling removal rej
  assert.equal((await reconcileRollingRemoval(input)).state,'unknown');
 });
 test('Rolling does not accept a legacy flag as removal evidence',()=>assert.throws(()=>validateRollingRemoval(event,scope,rollingRecord)));
-test('Rolling finality recheck rejects a reorg during receipt observation',async()=>{
+test('Rolling canonical recheck rejects a reorg during receipt observation',async()=>{
  const input=rollingInput();let calls=0;input.node.getBlockData=async()=>({blockHash:++calls===1?id(10):id(11),header:{globalVariables:{blockNumber:10}}});
  assert.equal((await reconcileRollingRemoval(input)).state,'unknown');
 });

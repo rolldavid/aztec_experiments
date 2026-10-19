@@ -16,9 +16,9 @@ const includedSuccess=record=>record.receipt?.executionResult==='success'&&['che
 const plain=value=>value&&typeof value==='object'&&!Array.isArray(value);
 function text(value,max,allowEmpty=false){if(typeof value!=='string'||!value.isWellFormed()||value.includes('\0')||Buffer.byteLength(value)>max||(!allowEmpty&&!value.length))throw fail('Invalid public job text');return value;}
 function decimal(value,bits){if(typeof value!=='string'||! /^(0|[1-9][0-9]*)$/.test(value)||value.length>78||BigInt(value)>=1n<<BigInt(bits))throw fail('Invalid job integer');return value;}
-function receipt(value,{finalized=true}={}){
+function receipt(value){
  if(!plain(value)||!hex(value.txHash)||!hex(value.blockHash)||!integer(Number(value.blockNumber))||Number(value.blockNumber)<1||
-   !(finalized?['finalized']:['checkpointed','proven','finalized']).includes(value.status)||!['success','reverted'].includes(value.executionResult))throw fail('Finalized transaction evidence required');
+   !['checkpointed','proven','finalized'].includes(value.status)||!['success','reverted'].includes(value.executionResult))throw fail('Included transaction evidence required');
  return {txHash:value.txHash,blockHash:value.blockHash,blockNumber:String(value.blockNumber),status:value.status,executionResult:value.executionResult};
 }
 
@@ -92,7 +92,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
      } else if(!old.intent&&(['MODEL_SUPERSEDED','POLICY_SUPERSEDED'].includes(old.errorCode)||(old.orphaned&&old.errorCode==='POST_ORPHANED'))){
       old.job=job;old.decision=null;old.errorCode=null;old.retryAt=0;old.lease=null;
      }
-     if(profile==='rolling'&&old.job.state==='confirmed-flag'&&!post.flagged){old.job.state='reconciling';old.receipt=null;old.flagEvent=null;old.lease=null;old.errorCode='REMOVAL_REORGED';old.retryAt=0;}
+     if(old.job.state==='confirmed-flag'&&!post.flagged){old.job.state='reconciling';old.receipt=null;old.flagEvent=null;old.lease=null;old.errorCode='REMOVAL_REORGED';old.retryAt=0;}
      old.post=post;old.orphaned=false;old.replacementInput=null;
      if(post.flagged&&!terminal.has(old.job.state)&&!(old.job.state==='submitted'&&includedSuccess(old))){old.job.state=signing.has(old.job.state)?'reconciling':'manual-review';old.errorCode='FLAG_ALREADY_PRESENT';old.lease=null;}
      put(old);
@@ -159,7 +159,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
    }
    if(change.state==='submitted'){
     if(!record.intent||!hex(change.transactionHash))throw fail('Durable exact transaction identity required');
-    const included=change.receipt===undefined?null:receipt(change.receipt,{finalized:false});
+    const included=change.receipt===undefined?null:receipt(change.receipt);
     if(included&&included.txHash!==change.transactionHash)throw fail('Submitted receipt identity mismatch');
     if(record.job.transactionHash&&record.job.transactionHash!==change.transactionHash){
      const evidence=change.replacement;
@@ -174,13 +174,13 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
     if(included)record.receipt=included;
    }
    if(change.state==='confirmed-flag'){
-    const proof=receipt(change.receipt,{finalized:!(profile==='rolling'&&development)}),event=profile==='rolling'?validateRollingRemoval(change.flagEvent,scope,record):validateFeedEvent(change.flagEvent,scope);
+    const proof=receipt(change.receipt),event=profile==='rolling'?validateRollingRemoval(change.flagEvent,scope,record):validateFeedEvent(change.flagEvent,scope);
     if(proof.executionResult!=='success'||!record.job.transactionHash||proof.txHash!==record.job.transactionHash||event.type!==(profile==='rolling'?'PostRemoved':'PostFlagged')||event.position.txHash!==proof.txHash||event.position.blockHash!==proof.blockHash||event.position.blockNumber!==proof.blockNumber||event.payload.postId!==record.job.postId||event.payload.policyVersion!==(profile==='rolling'?record.policy.context.policyIdentity:record.job.policyVersion)||event.payload.reason!==record.intent?.reason)throw fail('Canonical successful flag evidence mismatch');
     record.receipt=proof;record.flagEvent=event;
    }
    if(change.state==='retryable-error'&&signing.has(previous)){
     const proof=receipt(change.receipt);
-    if(proof.executionResult!=='reverted'||!record.job.transactionHash||proof.txHash!==record.job.transactionHash)throw fail('Finalized revert required before another signing attempt');
+    if(proof.executionResult!=='reverted'||!record.job.transactionHash||proof.txHash!==record.job.transactionHash)throw fail('Canonical included revert required before another signing attempt');
     record.receipt=proof;record.job.transactionHash=null;record.intent=null;
    }
    record.job.state=change.state;record.errorCode=change.errorCode??null;
@@ -190,8 +190,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
    put(record);return copy(record);
   });
  }
- function invalidateRollingCompletion(key){
-  if(profile!=='rolling')throw fail('Rolling completion invalidation only');
+ function invalidateCompletion(key){
   return transaction(()=>{const record=getRecord(key);if(record?.job.state!=='confirmed-flag'||record.lease)throw fail('Invalid completion invalidation');record.job.state='reconciling';record.errorCode='REMOVAL_REORGED';record.retryAt=0;put(record);return copy(record);});
  }
  function status(){
@@ -219,5 +218,5 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
    oldestDeadline:all.filter(r=>!terminal.has(r.job.state)).map(r=>r.job.deadline).sort((a,b)=>BigInt(a)<BigInt(b)?-1:1)[0]??null};
  }
 
- return Object.freeze({ingestSnapshot,invalidateRollingCompletion,leaseNext,renew,release,transition,get:key=>{const r=getRecord(key);return r?copy(r):null;},list:()=>copy(rows()),status,close:()=>db.close()});
+ return Object.freeze({ingestSnapshot,invalidateCompletion,leaseNext,renew,release,transition,get:key=>{const r=getRecord(key);return r?copy(r):null;},list:()=>copy(rows()),status,close:()=>db.close()});
 }
