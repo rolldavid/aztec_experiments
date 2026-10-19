@@ -143,6 +143,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   // This checkpoint is deliberately before the sole POST. Even a crash before
   // the request reaches the relay is status-only recovery, never an auto-retry.
   await read(()=>verifyFeeCredit(feeAmount));
+  await read(()=>sdk.validateAggregateFundingQuote(quote));
   await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request}}));
   await read(wallet.guard);
   let state;try{state=await read(()=>relay.submit(request.data));}catch{state=await read(()=>relay.status(tx.planHash));}
@@ -238,8 +239,8 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     await wallet.guard();check(ethereumNonce===nonce,'NONCE_CHANGED');await predecessor(current.saved.value);
     // Validate deadline again after any wallet consent interaction, before both
     // encrypted intent writes and the journal's one broadcast.
-    await read(()=>sdk.aggregateFundingTransaction(quote,consent));
     await read(()=>verifyFeeCredit(current.feeAmount));
+    await read(()=>sdk.aggregateFundingTransaction(quote,consent));
     const intent={from:tx.from,to:tx.to,chainId:tx.chainId,nonce:ethereumNonce,data:tx.data.toLowerCase(),value:tx.value,expected};
     sdk.validateAggregateFundingIntent(intent);
     await slot.write(current.saved,{...current.saved.value,intent});await contextGuard();await wallet.guard();

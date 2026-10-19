@@ -515,3 +515,11 @@ test('already-paid funding recovery does not rerun new-payment eligibility',asyn
  const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();const checks=f.state.creditChecks;
  f.state.creditRejected=true;const receipt=await funding.recover();assert(receipt.receipt.txHash);assert.equal(f.state.creditChecks,checks);assert.equal(f.state.sends,1);
 });
+
+for(const asset of ['ETH','USDC'])test(asset+' expiry during final credit check prevents payment dispatch',async()=>{
+ const f=asset==='ETH'?fixture():usdcWalletFixture();const verify=f.options.verifyFeeCredit;let checks=0;
+ f.options.verifyFeeCredit=async amount=>{await verify(amount);if(++checks===3)f.state.pendingTime=1121;};
+ const funding=await f.open();await funding.prepare(f.allocation);
+ await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});
+ assert.equal(checks,3);assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);assert.equal((await funding.inspect()).paymentSaved,false);
+});
