@@ -255,7 +255,6 @@ export async function bootstrapRollingDevnet({directory,ports,automineEnableProv
    const hash=TxHash.fromString(report.readyTxHash),effect=await net.node.getTxEffect(hash),leaf=effect?.data?.l2ToL1Msgs.find(x=>!x.isZero());
    if(!leaf)throw Error('Original Ready effect unavailable');
    await settleRollingDevelopmentMessage({net,txHash:hash,expectedLeaf:leaf});
-   await waitDevelopmentFinality({node:net.node,txHash:hash});
    // Original recorded transactions only; the existing engine reconciles them.
    await cli(args);report=await readDevnetRecord(reportPath);
   }

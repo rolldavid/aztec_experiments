@@ -1,6 +1,6 @@
 import {validateFeedEvent,scopeKey} from '../shared/protocol-schema.mjs';
 // Read-only canonical outcome check. A successful child process is not evidence
-// of finality; a current matching receipt AND emitted flag are required.
+// of canonical inclusion; a current matching receipt AND emitted flag are required.
 export async function reconcileFlag({node,scope,postId,policyVersion,transactionHash,flagEvent}){
  if(!/^0x[0-9a-f]{64}$/.test(transactionHash))return {state:'unknown'};
  try{
@@ -11,11 +11,11 @@ export async function reconcileFlag({node,scope,postId,policyVersion,transaction
   const block=await node.getBlockData(receipt.blockNumber);
   if(block?.blockHash!==receipt.blockHash||Number(block?.header?.globalVariables?.blockNumber)!==receipt.blockNumber)return {state:'unknown'};
   if(!['success','reverted'].includes(receipt.executionResult))return {state:'unknown'};
-  if(receipt.executionResult==='reverted')return {state:receipt.status==='finalized'?'reverted':'awaiting-revert-finality',receipt};
+  if(receipt.executionResult==='reverted')return {state:'reverted',receipt};
   if(!flagEvent)return {state:'awaiting-event',receipt};
   const event=validateFeedEvent(flagEvent,scope);
   if(event.type!=='PostFlagged'||event.payload.postId!==postId||event.payload.policyVersion!==policyVersion||event.position.txHash!==transactionHash||event.position.blockHash!==receipt.blockHash||Number(event.position.blockNumber)!==receipt.blockNumber)return {state:'unknown'};
-  return {state:receipt.status==='finalized'?'confirmed':'submitted',receipt,flagEvent:event};
+  return {state:'confirmed',receipt,flagEvent:event};
  }catch{return {state:'unknown'};}
 }
 
@@ -32,7 +32,7 @@ export function validateRollingRemoval(event,scope,record){
  if(record&&(event.payload.postId!==record.job.postId||event.payload.policyVersion!==record.policy.context.policyIdentity||event.payload.reason!==record.intent?.reason))throw Error('Rolling removal does not match intent');
  return structuredClone(event);
 }
-export async function reconcileRollingRemoval({node,scope,record,event,development=false}){
+export async function reconcileRollingRemoval({node,scope,record,event}){
  try{
   const hash=record.job.transactionHash;if(!hash)return {state:'unknown'};
   const receipt=await node.getTxReceipt(hash);
@@ -40,7 +40,7 @@ export async function reconcileRollingRemoval({node,scope,record,event,developme
   if(!['checkpointed','proven','finalized'].includes(receipt.status))return {state:'unknown'};
   const block=await node.getBlockData(receipt.blockNumber);
   if(block?.blockHash!==receipt.blockHash||Number(block?.header?.globalVariables?.blockNumber)!==Number(receipt.blockNumber))return {state:'unknown'};
-  // Do not automatically replay finalized failures either: exact original intent
+  // Do not automatically replay included failures: exact original intent
   // and fee accounting remain available for the operator's recovery procedure.
   if(receipt.executionResult!=='success')return {state:'unknown',receipt};
   if(!event)return {state:'awaiting-event',receipt};
@@ -48,6 +48,6 @@ export async function reconcileRollingRemoval({node,scope,record,event,developme
   if(checked.position.txHash!==hash||checked.position.blockHash!==receipt.blockHash||Number(checked.position.blockNumber)!==Number(receipt.blockNumber))return {state:'unknown'};
   const again=await node.getBlockData(receipt.blockNumber);
   if(again?.blockHash!==receipt.blockHash)return {state:'unknown'};
-  return {state:development||receipt.status==='finalized'?'confirmed':'submitted',receipt,flagEvent:checked};
+  return {state:'confirmed',receipt,flagEvent:checked};
  }catch{return {state:'unknown'};}
 }

@@ -59,7 +59,7 @@
         })]);
       } finally { clearTimeout(timer); }
     }
-    async function finalizedReceipt() {
+    async function includedReceipt() {
       const receipt = await read(() => node.getTxReceipt(hash));
       if (!receipt || receipt.status === 'pending') return null;
       if (receipt.txHash?.toString() !== hash.toString()) throw new Error('Ready receipt transaction hash mismatch');
@@ -72,24 +72,24 @@
         throw new Error('Ready transaction has incomplete inclusion metadata');
       }
       if (receipt.status === 'proposed') return null;
-      const tips = await read(() => node.getChainTips());
-      const finalizedNumber = tips?.finalized?.block?.number;
-      if (!Number.isSafeInteger(finalizedNumber) || finalizedNumber < 0) throw new Error('Invalid finalized chain tip');
-      if (finalizedNumber < receipt.blockNumber) return null;
       const block = await read(() => node.getBlock(receipt.blockNumber));
       if (!block || block.hash.toString() !== receipt.blockHash.toString()) return null;
       return receipt;
     }
-    const receipt = await finalizedReceipt();
+    const receipt = await includedReceipt();
     if (!receipt) return pending();
     const witness = await read(() => node.getL2ToL1MembershipWitness(hash, leaf));
     if (!witness) return pending();
-    // A witness obtained before a reorg cannot authorize activation.
-    const current = await finalizedReceipt();
-    if (!current || current.blockNumber !== receipt.blockNumber ||
-      current.blockHash.toString() !== receipt.blockHash.toString()) return pending();
     const args = [BigInt(witness.epochNumber), BigInt(witness.numCheckpointsInEpoch),
       BigInt(witness.leafIndex), witness.siblingPath.toBufferArray().map(bytes => ethers.hexlify(bytes))];
+    // Native witness availability alone does not establish that the L1 Outbox
+    // root is usable. Let the actual portal validate it before any wallet send.
+    try { await read(() => portal.activate.staticCall(...args)); }
+    catch(error) { if(error?.code==='CALL_EXCEPTION')return pending();throw error; }
+    // A witness obtained before a reorg cannot authorize activation.
+    const current = await includedReceipt();
+    if (!current || current.blockNumber !== receipt.blockNumber ||
+      current.blockHash.toString() !== receipt.blockHash.toString()) return pending();
     const activation = activate ? await activate(args) : await (await portal.activate(...args)).wait();
     deadline = Date.now() + timeoutMs;
     if (activation.status !== 1 || !await read(() => portal.depositsEnabled())) throw new Error('Portal activation failed');
