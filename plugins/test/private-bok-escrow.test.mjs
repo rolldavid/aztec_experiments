@@ -27,7 +27,7 @@ async function fixture(overrides={}){
   lastCall={name,to:new Field(address),selector:new Field(9),type:'public',isStatic:false,args:args.flat().map(x=>new Field(x instanceof Field?x.toBigInt():x))};
   return {calls:[lastCall]};
  }})});
- const sdk={Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
+ const sdk={waitForTx:async()=>receipt,Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
  const node={getNodeInfo:async()=>({l1ChainId:chainId,realProofs:nodeProofs,rollupVersion:1,l1ContractAddresses:{rollupAddress:rollup}}),
   getBlock:async tag=>typeof tag==='number'&&blockMismatch?{...block,hash:new Field(99)}:block,
   getContract:async()=>({currentContractClassId:new Field(actualClass)}),
@@ -40,7 +40,7 @@ async function fixture(overrides={}){
   pxe:{proverEnabled:real,proofCreator:{trusted:true},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
  const store={read:()=>saved,write:async next=>{if(writeFailure)throw Error('disk secret');saved=structuredClone(next);}};
  const lease={assertHeld:async()=>assert(held,'lost lease')};
- const options={node,wallet,artifact,address,operator,board,network:{chainId:real?11155111:31337,rollupVersion:1,rollupAddress:rollup},requestId:id,target,store,lease,development:true,proofMode:real?'real':'disabled',timeoutMs:3,pollMs:1,...overrides};
+ const options={node,wallet,artifact,address,operator,board,network:{chainId:real?11155111:31337,rollupVersion:1,rollupAddress:rollup},requestId:id,target,store,lease,development:true,proofMode:real?'real':'disabled',...overrides};
  if(overrides.development===false)chainId='11155111';
  const create=()=>createPrivateBokEscrowFactory(sdk)(options),port=await create();
  const op=(method,args,key=0)=>({operationId:digest([method,key]),argsDigest:digest(args.map(x=>typeof x==='bigint'?String(x):x))});
@@ -249,4 +249,51 @@ test('unit fake: native observer waits on original submitted hash then rechecks 
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);assert.deepEqual(f.counts(),{proofs:1,sends:1});
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);
  f.set('blockMismatch',true);await assert.rejects(f.port.waitForOperation(op.operationId),/mismatch/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+});
+
+
+test('unit fake: first settlement and reply remain owned until native finality, then inspect exact original effect',async()=>{
+ for(const development of [true,false])for(const method of ['settle','publish_reply']){
+  const f=await fixture({development}),fields=Array.from({length:32},(_,i)=>H(i===0?65:0));
+  const args=method==='settle'?[f.id,0,120n,H(88)]:[f.id,H(66),fields,1,1,0],op=f.op(method,args);
+  f.receipt.status='pending';let release,entered,completed=false;
+  const waiting=new Promise(resolve=>{entered=resolve;}),ready=new Promise(resolve=>{release=resolve;});
+  f.sdk.waitForTx=async(node,hash,options)=>{
+   assert.equal(node,f.options.node);assert.equal(String(hash),String(f.tx.getTxHash()));
+   assert.deepEqual(options,{waitForStatus:development?'checkpointed':'finalized',timeout:0,dontThrowOnRevert:true});
+   entered();await ready;return f.receipt;
+  };
+  const operation=f.port[method](...args,op).then(value=>{completed=true;return value;});
+  await waiting;assert.equal(completed,false);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+  await assert.rejects(f.port.inspectOperation(op.operationId),/already running/);
+  f.receipt.status=development?'checkpointed':'finalized';release();
+  const result=await operation;assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+  assert.equal(result.transactionFee,'7');assert.equal(f.journal().operations[op.operationId].includedHistory.length,1);
+  assert.equal((await (await f.create())[method](...args,op)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ }
+});
+
+test('unit fake: native observation preserves reverted or dropped outcomes and does not replay',async()=>{
+ for(const status of ['finalized','dropped']){
+  const f=await fixture({development:false}),op=f.op('settle',[f.id,0,120n,H(88)]);f.receipt.status='pending';
+  f.sdk.waitForTx=async(_node,_hash,options)=>{
+   assert.equal(options.dontThrowOnRevert,true);f.receipt.status=status;f.receipt.executionResult='reverted';
+   if(status==='dropped')throw Error('native dropped reason');return f.receipt;
+  };
+  const result=await f.port.settle(f.id,0,120n,H(88),op);
+  assert.equal(result.status,'failed');assert.equal(result.canonical,status==='finalized');
+  assert.equal(f.journal().operations[op.operationId].observation.transactionFee,'7');
+  assert.equal((await (await f.create()).settle(f.id,0,120n,H(88),op)).status,'failed');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ }
+});
+
+test('unit fake: lost native observation retains signed intent for state-driven continuation without another proof/send',async()=>{
+ const f=await fixture({development:false}),op=f.op('finish',[f.id]);f.receipt.status='pending';
+ f.sdk.waitForTx=async()=>{throw Error('secret transport detail');};
+ await assert.rejects(f.port.finish(f.id,op),/operation unresolved/);
+ const original=structuredClone(f.journal().operations[op.operationId]);assert.equal(original.phase,'submission-unknown');
+ assert.equal(original.txHash,String(f.tx.getTxHash()));assert(!JSON.stringify(original).includes('secret'));
+ f.sdk.waitForTx=async(_node,hash)=>{assert.equal(String(hash),original.txHash);f.receipt.status='finalized';return f.receipt;};
+ const result=await (await f.create()).finish(f.id,op);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+ assert.deepEqual(f.counts(),{proofs:1,sends:1});assert.equal(f.journal().operations[op.operationId].transactionSha256,original.transactionSha256);
 });

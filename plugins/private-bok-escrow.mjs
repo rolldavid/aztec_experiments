@@ -38,13 +38,11 @@ export async function createPrivateBokEscrow(options) {
  */
 export function createPrivateBokEscrowFactory(sdk) {
  return async function({node,wallet,artifact,address,operator,board,network,requestId,target,store,lease,
-  development=false,proofMode='real',timeoutMs=60000,pollMs=1000}) {
+  development=false,proofMode='real'}) {
   const {Contract,Fr,AztecAddress,TxHash,getContractClassFromArtifact,deriveStorageSlotInMap,getFunctionReturnType,isTrustedProver} = sdk;
   assert.equal(typeof lease?.assertHeld, 'function'); assert.equal(typeof store?.read, 'function'); assert.equal(typeof store?.write, 'function');
   assert.equal(typeof development, 'boolean'); assert(['real','disabled'].includes(proofMode));
   assert(proofMode === (development ? 'disabled' : 'real'), 'Native proof policy requires disabled development and real testnet');
-  assert(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 120000);
-  assert(Number.isSafeInteger(pollMs) && pollMs > 0 && pollMs <= timeoutMs);
   const chainId = String(integer(network.chainId, 64)), version = String(integer(network.rollupVersion, 64));
   assert(BigInt(chainId) > 0n && BigInt(version) > 0n); assert.equal(chainId, development ? '31337' : '11155111');
   const rollup = hex(String(network.rollupAddress).toLowerCase(),20); assert(BigInt(rollup)>0n,'Zero rollup address');
@@ -160,6 +158,24 @@ export function createPrivateBokEscrowFactory(sdk) {
     txHash:record.txHash,transactionFee:String(receipt.transactionFee),blockNumber:observation.blockNumber,blockHash:observation.blockHash};
    await update(operationId,{observation:{...observation,canonical:true},result});return result;
   };
+  const waitForOperation=async operationId=>{
+   const observed=await inspect(operationId);
+   if(observed.status==='succeeded'||observed.status==='failed')return observed;
+   const record=journal().operations[operationId];
+   assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
+   assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
+   try{
+    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0,dontThrowOnRevert:true});
+   }catch{
+    // A dropped transaction or a lost receipt response is not permission to send
+    // again. Preserve authoritative failure/fee evidence if it is now available.
+    const result=await inspect(operationId);
+    if(result.status==='succeeded'||result.status==='failed')return result;
+    throw Error('Escrow receipt observation unavailable; inspect original intent');
+   }
+   // The native waiter supplies progress, never canonical application authority.
+   return inspect(operationId);
+  };
   const usable=async(request,callId,maximum)=>{
    scope(request);sequence(callId);amount(maximum);
    // A finalized read alone is insufficient: require the exact recorded reserve transaction.
@@ -175,7 +191,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    scope(args[0]);const operationId=operation?.operationId,argsDigest=digest(args.map(v=>typeof v==='bigint'?String(v):v));
    assert(/^[0-9a-f]{64}$/.test(operationId));assert.equal(operation.argsDigest,argsDigest,'Operation arguments mismatch');
    const old=journal().operations[operationId];
-   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);if(!unsubmittedReserve(old))return inspect(operationId);assert.deepEqual(old.args,args.map(v=>typeof v==='bigint'?String(v):v),'Original reserve arguments changed');}
+   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);if(!unsubmittedReserve(old))return old.txHash?waitForOperation(operationId):inspect(operationId);assert.deepEqual(old.args,args.map(v=>typeof v==='bigint'?String(v):v),'Original reserve arguments changed');}
    assert(Object.keys(journal().operations).length<256,'Escrow operation limit');
    await anchored();
    await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode,...(old?{recoveryAttempted:true}:{})});
@@ -201,23 +217,13 @@ export function createPrivateBokEscrowFactory(sdk) {
     await held();
     // An exception may mean accepted-but-response-lost. Never send this action again.
     try{await node.sendTx(tx);}catch{await update(operationId,{submissionError:true});}
-    const end=Date.now()+timeoutMs;
-    do{const result=await inspect(operationId);if(result.status==='succeeded'||result.status==='failed')return result;
-     if(Date.now()>=end)break;await new Promise(resolve=>setTimeout(resolve,Math.min(pollMs,end-Date.now())));
-    }while(Date.now()<end);
-    return {status:'pending',canonical:false,method,argsDigest,txHash:hash};
+    return await waitForOperation(operationId);
    }catch{if(!poisoned)await update(operationId,{failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
   };
   const port={identity,mode:Object.freeze({proofMode,nodeVerifiesProofs:proofMode==='real',pxeProofMode:proofMode,finality,controlledSettlement:development}),
    request:exclusive(async value=>{scope(value);const {instance,...result}=await anchored();return result;}),
    assertUsable:exclusive(usable),inspectOperation:exclusive(inspect),
-   waitForOperation:exclusive(async operationId=>{
-    const observed=await inspect(operationId);if(observed.status==='succeeded'||observed.status==='failed')return observed;
-    const record=journal().operations[operationId];assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
-    assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
-    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0});
-    return inspect(operationId);
-   }),
+   waitForOperation:exclusive(waitForOperation),
    reserve:exclusive((request,callId,maximum,operation)=>send('reserve',[request,sequence(callId),amount(maximum)],operation)),
    settle:exclusive((request,callId,actual,receipt,operation)=>send('settle',[request,sequence(callId),amount(actual),hex(receipt)],operation)),
    close_uncertain:exclusive((request,operation)=>send('close_uncertain',[request],operation)),
