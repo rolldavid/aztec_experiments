@@ -705,7 +705,16 @@ intentionally cannot start a production service unchanged.
 Provide `VENICE_WALLET_PRIVATE_KEY` and production `PLUGIN_QUERY_API_KEY` through
 the trusted service environment, plus `VENICE_MODEL` if overriding the provider
 model. `summaryModelId` (or `VENICE_SUMMARY_MODEL`) must select a cheaper model;
-the metered provider verifies actual prices. History summaries retain their
+the metered provider verifies actual prices. Exact prior history whose JSON encoding
+is at most 8 KiB (UTF-8, including escaped characters) is passed directly to the
+primary model as explicitly untrusted data, before the separate latest request.
+This reversible plugin cost/context threshold avoids a paid summary for short
+threads; it is not a token estimate or a bypass of model admission. Larger history
+uses one cheaper summary excluding the latest request; the existing 60,000-byte
+history limit still rejects oversized input without truncation. Both paths retain
+bounded original-message retrieval and canonical-history guards. The full model
+request still passes the metered runner's 65,536-byte default input limit, live
+catalog price/context reservation and available-credit checks. History summaries retain their
 1,200-token cap and explicitly disable reasoning through Venice's
 `reasoning: {enabled: false}` request flag. Admission requires the live catalog
 to declare a nonreasoning model, or a reasoning model supporting `none` effort;
