@@ -37,3 +37,22 @@ export class PrivateMintAndPayFeePaymentMethod extends PrivateFeePaymentMethod {
     ],[],[],[],this.address);
   }
 }
+
+// A funded account can claim a small top-up without making that top-up pay its
+// entire transaction fee. Mint exactly once, then reserve existing private credit.
+export class PrivateClaimAndPayFeePaymentMethod extends PrivateFeePaymentMethod {
+  #claim;
+  constructor(address,{amount,secret,salt,leafIndex},reservation) {
+    super(address,reservation);
+    this.#claim={amount:BigInt(amount),secret:new Fr(secret.toBigInt()),salt:new Fr(salt.toBigInt()),leafIndex:new Fr(leafIndex.toBigInt())};
+  }
+  withReservation(reservation){return new PrivateClaimAndPayFeePaymentMethod(this.address,this.#claim,reservation);}
+  async getExecutionPayload() {
+    const {amount,secret,salt,leafIndex}=this.#claim;
+    return new ExecutionPayload([
+      await call('claim',ProtocolContractAddress.FeeJuice,'claim((Field),u128,Field,Field)',[this.address.toField(),new Fr(amount),secret,leafIndex]),
+      await call('mint',this.address,'mint(u128,Field,Field)',[new Fr(amount),salt,leafIndex]),
+      await call('pay_fee',this.address,'pay_fee(u128)',[new Fr(this.reservation)]),
+    ],[],[],[],this.address);
+  }
+}

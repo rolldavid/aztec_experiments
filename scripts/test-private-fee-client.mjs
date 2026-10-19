@@ -116,3 +116,31 @@ test('publication uses the same ownerless zero-salt canonical address',async()=>
  const published=await deployment.getInstance();
  assert(published.address.equals(instance.address));assert(published.deployer.isZero());assert(published.salt.isZero());
 });
+
+
+test('funded small top-up claims and mints once then pays from existing credit',async()=>{
+ const {input,state}=fixture();state.balance=5000n;input.claim={amount:'2',salt:new Fr(51),leafIndex:new Fr(9)};
+ const result=await preparePrivateFeePayment(input);assert.equal(result.availableCredit,5000n);assert.equal(state.reads,1);
+ const method=result.paymentMethod.withReservation(1300n),payload=await method.getExecutionPayload();
+ assert.deepEqual(payload.calls.map(c=>c.name),['claim','mint','pay_fee']);assert(payload.feePayer.equals(instance.address));
+ const secret=await derivePrivateFeeBridgeSecret({salt:new Fr(51),owner});
+ assert.deepEqual(payload.calls[0].args.map(String),[instance.address.toField(),new Fr(2),secret,new Fr(9)].map(String));
+ assert(payload.calls[0].to.equals(ProtocolContractAddress.FeeJuice));
+ assert(payload.calls[1].selector.equals(await FunctionSelector.fromSignature('mint(u128,Field,Field)')));
+ assert.deepEqual(payload.calls[1].args.map(String),[new Fr(2),new Fr(51),new Fr(9)].map(String));
+ assert.deepEqual(payload.calls[2].args.map(String),[new Fr(1300)].map(String));
+ assert(payload.calls.slice(1).every(c=>c.to.equals(instance.address)));assert(payload.calls.every(c=>c.type==='private'));
+ input.claim.amount='999';input.claim.salt=new Fr(99);
+ assert.deepEqual((await method.getExecutionPayload()).calls.map(c=>c.args.map(String)),payload.calls.map(c=>c.args.map(String)));
+ assert.equal(result.metadata.refundUnusedGas,true);assert.equal(result.metadata.maximumFee,'1300');
+});
+for(const balance of [0n,1299n])test('small top-up without independently sufficient credit retains bootstrap amount '+balance,async()=>{
+ const {input,state}=fixture();state.balance=balance;input.claim={amount:'2',salt:new Fr(51),leafIndex:new Fr(9)};
+ const result=await preparePrivateFeePayment(input);assert.equal(result.availableCredit,2n);assert.equal(state.reads,1);
+ assert.deepEqual((await result.paymentMethod.getExecutionPayload()).calls.map(c=>c.name),['claim','mint_and_pay_fee']);
+});
+test('small top-up cannot turn a balance lookup failure into bootstrap fallback',async()=>{
+ const {input}=fixture();input.claim={amount:'2',salt:new Fr(51),leafIndex:new Fr(9)};
+ input.wallet.executeUtility=async()=>{throw Error('PRIVATE_INPUT_MARKER');};
+ await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_PREPARATION_FAILED'});
+});
