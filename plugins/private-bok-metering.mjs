@@ -12,7 +12,7 @@ const amount=value=>{
  if(typeof value!=='bigint'&&!(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)))throw Error('Invalid accounting amount');
  const n=BigInt(value);if(n<0n||n>=2n**128n)throw Error('Invalid accounting amount');return n;
 };
-// Private, bounded response data survives handoff until terminal accounting.
+// Private, bounded response data survives handoff and checkpointed terminal accounting.
 // It is never evidence of billing or authority to execute a tool.
 export function retainedBokResponse(value){
  if(!value||value.role!=='assistant'||value.content!==undefined&&value.content!==null&&typeof value.content!=='string')throw Error('Invalid retained provider response');
@@ -41,7 +41,7 @@ function quoteRecord(value,available,requested,limits){
 /** Request-centric G14 billing, NOT the G10 conversation/workspace runner.
  * Use one dedicated operations.fileState file per identity, under the service's
  * exclusive writer lease. Do not run two processes against this store. A copied
- * journal/changed limits are rejected. Provider outputs are private bounded data, retained until terminal accounting. Missing old outputs remain unavailable; billing never invents a reply.
+ * journal/changed limits are rejected. Provider outputs are private bounded data, retained in completed private journals. Missing old outputs remain unavailable; billing never invents a reply.
  *
  * Frozen trusted chain port:
  * identity: {network, escrow}; request(id) -> {canonical:true, request:{state,
@@ -135,7 +135,7 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
   if(responseDigest!==c.responseDigest)throw Error('Retained provider response changed');
   // Persist the handoff fence before returning any tool call to the agent.
   // A lost acknowledgement never authorizes another tool execution. Keep the
-  // payload for diagnosis/reconciliation until canonical terminal accounting.
+  // payload for diagnosis/reconciliation even after checkpointed completion.
   await setCall(id,{responseDelivered:true});
   return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
  };
@@ -190,6 +190,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
  };
  const resume=async id=>{
   callId(id);const c=callRecord(id);if(!c)throw Error('No recorded call');
+  // Completed retention is evidence only, never another tool/model handoff.
+  if(journal().finished)return outcome(c);
   if(c.phase==='settled'){if(c.response&&!c.responseDelivered)await settle(id);return deliver(id);}
   if(c.phase==='received'){await settle(id);return deliver(id);}
   if(c.phase==='possibly-sent'||c.phase==='fenced'){await fence(id);throw Error('Provider outcome unknown; original receipt required');}
@@ -268,7 +270,9 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    else if(before.state!==4)throw Error('Request cannot finish');
    const after=await read();if(after.state!==4||after.available!==0n||after.reserved!==0n||after.charged!==before.charged||after.budget!==before.budget)throw Error('Finish accounting mismatch');
    // Refresh after operate wrote its transaction intent.
-   const terminal=journal();for(const call of Object.values(terminal.calls))delete call.response;
+   // Checkpoint inclusion can reorg. Retain bounded bodies/digests and delivery
+   // fences for reconciliation; completion never authorizes another handoff.
+   const terminal=journal();
    await save({...terminal,finished:true});return {finished:true};
   }),
  };

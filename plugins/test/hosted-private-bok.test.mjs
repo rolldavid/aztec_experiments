@@ -215,7 +215,7 @@ test('hosted filesystem lease rejects second owner and preserves a replaced lock
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 
-test('actual SDK board projection gates canonical plugin, moderation, anchor and native proof mode',async()=>{
+for(const development of [true,false])test('actual SDK board projection gates canonical plugin, moderation, checkpoint and native proof mode (development='+development+')',async()=>{
  const fs=await import('node:fs/promises');
  const {rollingBoardPort}=await import('../aztec.mjs');
  const {BarretenbergSync,BackendType}=await import('@aztec-foundation/bb.js');
@@ -227,19 +227,19 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
  await BarretenbergSync.initSingleton({backend:BackendType.Wasm,skipSrsInit:true});
  try{
   const artifact=loadContractArtifact(JSON.parse(await fs.readFile(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
-  const scope={chainId:'31337',rollupVersion:'3409706519',rollupAddress:'0x'+'1'.repeat(40),boardAddress:f(8),receiver:f(9)};
+  const scope={chainId:development?'31337':'11155111',rollupVersion:'3409706519',rollupAddress:'0x'+'1'.repeat(40),boardAddress:f(8),receiver:f(9)};
   const classId=String((await getContractClassFromArtifact(artifact)).id),pluginId=f(4);
   const pluginSlot=(await deriveStorageSlotInMap(artifact.storageLayout.plugins.slot,Fr.fromString(pluginId))).toBigInt();
   const flagged=(await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(1n))).toBigInt();
   const storage=new Map([[pluginSlot,9n],[pluginSlot+1n,1n],[flagged,0n],[artifact.storageLayout.main_version.slot.toBigInt(),1n]]);
-  const state={realProofs:false,anchor:f(99),currentClass:classId};
+  const state={realProofs:!development,anchor:f(99),currentClass:classId};
   const post={id:'1',text:'@bok hello',record:{subboard:'0',root:'1'},order:'1',position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
-  const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
-   getBlock:async tag=>({number:5,hash:BlockHash.fromString(tag==='checkpointed'?f(99):state.anchor)}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
+  const node={getNodeInfo:async()=>({l1ChainId:Number(scope.chainId),rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
+   getBlock:async tag=>{assert.notEqual(tag,'finalized','Finalized lag is not a request prerequisite');return {number:5,hash:BlockHash.fromString(tag==='checkpointed'?f(99):state.anchor)};},getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
   const index={scanPendingPredecessors:()=>({rows:[],nextAfter:null,revision:'one'}),sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
   let terminal=false;
-  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,true).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
+  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,development).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
   // A slow canonical prefix is retained across bounded pending scans. No
   // partial projection or generic poll failure is emitted while catching up.
@@ -277,7 +277,7 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   storage.set(subboard+4n,0n);storage.set(subboard,0n);assert.equal((await port.readRequest(f(1))).usable,false);post.record.subboard='0';
   state.currentClass=f(77);await assert.rejects(port.readRequest(f(1)));state.currentClass=classId;
   state.anchor=f(98);await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);
-  state.realProofs=true;await assert.rejects(port.readRequest(f(1)));
+  state.realProofs=development;await assert.rejects(port.readRequest(f(1)));
   await port.close();await assert.rejects(port.readRequest(f(1)),/admission closed/);await assert.rejects(port.pending(),/admission closed/);
  }finally{BarretenbergSync.destroySingleton();}
 });
@@ -333,12 +333,12 @@ test('conversation enabled request cannot execute provider without actual captur
  const x=fixture();x.args.conversation={load:()=>assert.fail('Must not silently load')};
  await assert.rejects(x.run(),/unknown/);assert(!x.events.includes('paid'));
 });
-test('production hosted projection selects finalized while development stays checkpointed',async()=>{
+test('hosted projection preserves native checkpointed and numbered selectors in both proof modes',async()=>{
  const {hostedIndexNode}=await import('../main.mjs');const calls=[];
  const node={getBlockData:async n=>{calls.push(n);return n;},getNodeInfo(){assert.equal(this,node);return 'same';}};
  const production=hostedIndexNode(node,false),development=hostedIndexNode(node,true);
  await production.getBlockData('checkpointed');await production.getBlockData(12);await development.getBlockData('checkpointed');
- assert.deepEqual(calls,['finalized',12,'checkpointed']);assert.equal(production.getNodeInfo(),'same');
+ assert.deepEqual(calls,['checkpointed',12,'checkpointed']);assert.equal(production.getNodeInfo(),'same');
 });
 for(const large of [false,true])test('actual agent uses guarded metering for '+(large?'large summarized':'small direct')+' history and current answer',async()=>{
  const {createAgent}=await import('../agent.mjs');const {bokRunner}=await import('../bok.mjs');
@@ -531,10 +531,10 @@ test('service shutdown drains the owned predecessor scan before closing resource
  assert.deepEqual(events,['terminal','board closed','service closed']);assert.equal(reads,2);assert.equal(admission.pending,null);
 });
 
-for(const development of [true,false])test('terminal node pins '+(development?'checkpointed':'finalized')+' reads and retains original canonical rechecks',async()=>{
+for(const development of [true,false])test('terminal node pins checkpointed reads and retains original canonical rechecks (development='+development+')',async()=>{
  const anchor={number:7,hash:f(77)},calls=[];let hash=anchor.hash;
  const node={getBlock:async function(selector){assert.equal(this,node);calls.push(selector);return {number:typeof selector==='number'?selector:9,hash:selector===7?hash:f(99)};},getNodeInfo(){assert.equal(this,node);return 'original';}};
- const port=hostedTerminalNode(node,anchor,development),selector=development?'checkpointed':'finalized';
+ const port=hostedTerminalNode(node,anchor,development),selector='checkpointed';
  assert.equal((await port.getBlock(selector)).number,7);assert.equal((await port.getBlock(selector)).hash,f(77));
  assert.equal(port.getNodeInfo(),'original');assert.deepEqual(calls,[7,7],'newer tip never supplies a terminal exemption');
  hash=f(88);await assert.rejects(port.getBlock(selector),/checkpoint changed/);
@@ -556,7 +556,7 @@ async function acceptedInterruptionFixture(){
 }
 test('accepted hosted recovery publishes once and finishes with settled original billing and no model replay',async()=>{
  const x=await acceptedInterruptionFixture(),calls=structuredClone(x.store.read().privateBok.calls);
- assert.deepEqual(await x.run(),{status:'finished',replayed:false});assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert(Object.values(x.store.read().privateBok.calls).every(call=>call.response===undefined));assert.deepEqual(x.store.read().privateBok.calls,Object.fromEntries(Object.entries(calls).map(([id,{response,...accounting}])=>[id,accounting])));assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,'b'.repeat(40));
+ assert.deepEqual(await x.run(),{status:'finished',replayed:false});assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.deepEqual(x.store.read().privateBok.calls,calls);assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,'b'.repeat(40));
  x.args.recoverAccepted=()=>assert.fail('Terminal revision cannot revive');await x.run();assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
 });
 test('accepted recovery fences mirror failures, unknown billing and canonical identity/accounting changes',async()=>{
@@ -624,7 +624,7 @@ test('explicit retained candidate validation feeds existing hosted recovery with
  const input={threadId:f(9),invocationId:x.args.request.requestId,repository:'owner/project'},repositories=threadRepositories(options),session=await repositories.open(input);await repositoryGit(['init',session.work]);await fs.writeFile(path.join(session.work,'app.txt'),'initial');await repositoryGit(['add','.'],{cwd:session.work});await repositoryGit(['commit','-m','initial'],{cwd:session.work});await fs.writeFile(path.join(session.work,'app.txt'),'exact generated candidate');await assert.rejects(session.check(),/setup failure/);await session.close();
  const billing=structuredClone(x.store.read().privateBok.calls);x.args.recoverAccepted=request=>recoverAcceptedHostedRevision({repositories,repository:'owner/project',request});
  await assert.rejects(x.run(),/Exact accepted invocation/);assert.equal(checks,1);assert.equal(x.events.filter(e=>e==='paid').length,1);
- ready=true;await repositories.recoverCandidate({...input,revision});assert.equal(checks,2);assert.equal((await x.run()).status,'finished');assert.equal(x.events.filter(e=>e==='paid').length,1);assert.equal(x.events.filter(e=>e==='publish_reply').length,1);assert.equal(x.events.filter(e=>e==='finish').length,1);assert(Object.values(x.store.read().privateBok.calls).every(call=>call.response===undefined));assert.deepEqual(x.store.read().privateBok.calls,Object.fromEntries(Object.entries(billing).map(([id,{response,...accounting}])=>[id,accounting])));assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,revision);
+ ready=true;await repositories.recoverCandidate({...input,revision});assert.equal(checks,2);assert.equal((await x.run()).status,'finished');assert.equal(x.events.filter(e=>e==='paid').length,1);assert.equal(x.events.filter(e=>e==='publish_reply').length,1);assert.equal(x.events.filter(e=>e==='finish').length,1);assert.deepEqual(x.store.read().privateBok.calls,billing);assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,revision);
 });
 
 test('hosted first quote resumes only its original unsubmitted reserve and consumes recovery before entering agent',async()=>{
@@ -666,7 +666,7 @@ test('first received response resumes settlement and the original tool result wi
  await assert.rejects(x.run(),/read interrupted/);const saved=structuredClone(x.store.read());assert(hostedReceivedFirstCall(saved));assert.deepEqual(x.events,['reserve','paid']);
  for(const mutate of [v=>delete v.privateBok.calls[0].response,v=>v.privateBok.calls[0].responseDelivered=true,v=>v.privateBok.calls[0].response.content='changed',v=>v.privateBok.identity.target=f(99),v=>v.privateBok.calls[1]={...v.privateBok.calls[0],id:1},v=>v.privateBok.calls[0].phase='possibly-sent']){const changed=structuredClone(saved);mutate(changed);assert.equal(hostedReceivedFirstCall(changed),false);}
  interrupted=false;x.args.provider.execute=async()=>assert.fail('Original paid call must not repeat');x.args.admitThread=async()=>assert.fail('Original thread admission must not repeat');
- assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.store.read().privateBok.calls[0].response,undefined);
+ assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.deepEqual(x.store.read().privateBok.calls[0].response,saved.privateBok.calls[0].response);assert.equal(x.store.read().privateBok.calls[0].responseDelivered,true);
 });
 test('received result with no saved message remains accounting-only and cannot restart the agent',async()=>{
  const x=fixture(),read=x.args.escrow.request;

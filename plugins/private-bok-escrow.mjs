@@ -52,7 +52,9 @@ export function createPrivateBokEscrowFactory(sdk) {
   const idField = Fr.fromString(id); Fr.fromString(invocation);
   assert.equal(artifact.name,'PrivateBok');
   const classId = (await getContractClassFromArtifact(artifact)).id.toString();
-  const finality = development ? 'checkpointed' : 'finalized';
+  // Ordinary Rolling progression uses native checkpoint inclusion in both modes.
+  // Proof verification remains real on testnet; checkpointed is not finalized.
+  const finality = 'checkpointed';
   const identity = Object.freeze({network:`eip155-${chainId}:aztec-${version}:${rollup}`,escrow:addr.toString()});
   const binding = {...identity,requestId:id,target:invocation,operator:op.toString(),board:boardAddress,classId,finality,proofMode};
   for (const name of ['operator','board','l1_chain','version','requests']) assert(artifact.storageLayout[name]?.slot, 'Missing pinned storage layout');
@@ -69,7 +71,13 @@ export function createPrivateBokEscrowFactory(sdk) {
   const held = async()=>{assert(!poisoned,'Store write outcome unresolved'); await lease.assertHeld();};
   const journal=()=>{
    const value=store.read().privateBokEscrow;
-   if(value){assert.equal(value.schemaVersion,1); assert.deepEqual(value.binding,binding,'Escrow journal identity mismatch');}
+   if(value){
+    assert.equal(value.schemaVersion,1);
+    // Known production policy evolution only. Preserve the original binding and
+    // operation history; a changed account/network/class/proof policy still fails.
+    const historicalFinalized=!development&&value.binding?.finality==='finalized';
+    assert.deepEqual(value.binding,historicalFinalized?{...binding,finality:'finalized'}:binding,'Escrow journal identity mismatch');
+   }
    return value ?? {schemaVersion:1,binding,operations:{}};
   };
   const save=async next=>{await held();try{await store.write({...store.read(),privateBokEscrow:next});}catch{poisoned=true;throw Error('Escrow journal persistence unresolved');}};
@@ -149,8 +157,8 @@ export function createPrivateBokEscrowFactory(sdk) {
     assert(history.length<8,'Included receipt history limit; retain journal for reconciliation');
     await update(operationId,{includedHistory:[...history,included]});
    }
-   if(finality==='finalized'?receipt.status!=='finalized':!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
-   const tip=await node.getBlock(finality);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Finality unavailable');
+   if(!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
+   const tip=await node.getBlock(finality);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
    // Recheck the configured class and state against the same required finality.
    await anchored();
    assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
@@ -178,9 +186,9 @@ export function createPrivateBokEscrowFactory(sdk) {
   };
   const usable=async(request,callId,maximum)=>{
    scope(request);sequence(callId);amount(maximum);
-   // A finalized read alone is insufficient: require the exact recorded reserve transaction.
+   // A checkpointed read alone is insufficient: require the exact recorded reserve transaction.
    const reservation=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,callId,String(maximum)]));
-   assert(reservation,'Reservation intent missing');assert.equal((await inspect(reservation[0])).status,'succeeded','Reservation not finalized');
+   assert(reservation,'Reservation intent missing');assert.equal((await inspect(reservation[0])).status,'succeeded','Reservation not checkpointed');
    const r=await anchored(),latest=await anchored('latest');
    for(const row of [r,latest])assert(row.request.state===2&&row.request.sequence===callId&&row.request.reserved===maximum&&maximum>0n,'Reservation not canonical');
    await held();const now=BigInt(Math.floor(Date.now()/1000)),chainTime=BigInt(latest.anchor.timestamp);

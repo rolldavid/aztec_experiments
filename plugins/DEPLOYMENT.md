@@ -60,6 +60,27 @@ separate checks. Earnings withdrawal commands remain legacy-only in this slice.
 Back up the private0600 journal in its private0700 directory; never publish its
 signed records. No runtime credentials are copied to artifacts or generated code.
 
+## Hosted Rolling request progression
+
+The hosted Rolling scanner, conversation, predecessor accounting and PrivateBok
+reserve/settle/reply/finish flows use the native SDK CHECKPOINTED receipt boundary.
+Successful receipts still require matching canonical block, effect, fee, request
+state and contract identity; proposed/pending receipts do not authorize progress.
+Testnet still uses real proofs and native node verification. Checkpoint inclusion
+is reported as checkpointed, never as finalized. Outbox redemption and the operator
+activation/withdrawal commands above retain their own settlement requirements.
+
+A pre-existing production escrow journal with the former finalized policy may
+reopen only if every other binding field matches exactly. Its original binding,
+transaction identities and observation history remain unchanged; the active port
+reports the current checkpointed policy. No journal is reset or transaction resent.
+Every later observation rechecks canonical anchors; a reorg or unavailable effect
+fences further accounting/inference until the original operation is reconciled.
+Completed private journals retain the already-bounded response bodies, digests and
+delivery fences; checkpointed finish no longer deletes them. This retained data
+does not authorize another model call or tool handoff, even when the original
+handoff was interrupted. No background purge or additional finality wait is added.
+
 ## Current private user accounting and exits
 
 Use the application's **Balances and withdrawals** view and the

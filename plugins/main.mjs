@@ -101,14 +101,11 @@ export async function readHostedActor(config){
  }catch{throw Error('Invalid private operator configuration');}
 }
 
-/** Keep the existing authenticated index/decoder, selecting the production
- * finalized tip at its existing checkpointed-tip read boundary. */
+/** Use the authenticated index's normal checkpointed tip in both proof modes.
+ * Never substitute finalized or latest for the index's requested block selector. */
 export function hostedIndexNode(node,development){
  assert.equal(typeof development,'boolean');
- return new Proxy(node,{get(target,key){
-  if(key==='getBlockData')return (number,...args)=>target.getBlockData(!development&&number==='checkpointed'?'finalized':number,...args);
-  const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
- }});
+ return node;
 }
 
 /** Both capabilities retain exact accepted-revision journals. A mirror failure
@@ -248,7 +245,7 @@ export function serializeHostedEscrow(port,walletOperation){
  * Numbered canonical rechecks and all other methods retain the original node. */
 export function hostedTerminalNode(node,anchor,development){
  assert(anchor&&Number.isSafeInteger(anchor.number)&&anchor.number>=0&&/^0x[0-9a-f]{64}$/.test(anchor.hash));assert.equal(typeof development,'boolean');
- const captured={...anchor},finality=development?'checkpointed':'finalized';
+ const captured={...anchor},finality='checkpointed';
  return new Proxy(node,{get(target,key){
   if(key==='getBlock')return async(selector,...args)=>{
    if(selector!==finality)return target.getBlock(selector,...args);

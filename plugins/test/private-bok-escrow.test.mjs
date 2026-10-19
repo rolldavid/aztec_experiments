@@ -120,16 +120,43 @@ test('unit fake: wrong proven public target is never submitted',async()=>{
 test('unit fake: lost lease or failed durable write prevents proving and sending',async()=>{
  for(const key of ['held','writeFailure']){const f=await fixture();f.set(key,key==='writeFailure');await assert.rejects(f.port.finish(f.id,f.op('finish',[f.id])));assert.deepEqual(f.counts(),{proofs:0,sends:0});}
 });
-test('unit fake: finalized production policy does not accept checkpointed receipts',async()=>{
- const f=await fixture({development:false});const op=f.op('reserve',[f.id,0,400n]);
- assert.equal((await f.port.reserve(f.id,0,400n,op)).status,'pending');f.receipt.status='finalized';assert.equal((await f.port.inspectOperation(op.operationId)).status,'succeeded');
- assert.equal(f.port.mode.finality,'finalized');assert.equal(f.port.mode.controlledSettlement,false);
+test('unit fake: real-proof production advances at checkpoint without waiting for finalized tip',async()=>{
+ const f=await fixture({development:false}),op=f.op('reserve',[f.id,0,400n]),tags=[];
+ const getBlock=f.options.node.getBlock;f.options.node.getBlock=async tag=>{tags.push(tag);assert.notEqual(tag,'finalized');return getBlock(tag);};
+ f.receipt.status='proposed';assert.equal((await f.port.reserve(f.id,0,400n,op)).status,'pending');
+ for(const status of ['checkpointed','proven','finalized']){
+  f.receipt.status=status;assert.equal((await f.port.inspectOperation(op.operationId)).status,'succeeded');
+  assert.equal(f.journal().operations[op.operationId].observation.status,status);
+ }
+ assert(tags.includes('checkpointed'));assert.equal(f.port.mode.finality,'checkpointed');assert.equal(f.port.mode.proofMode,'real');
+ assert.equal(f.port.mode.nodeVerifiesProofs,true);assert.equal(f.port.mode.controlledSettlement,false);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+});
+test('unit fake: historical finalized binding reopens exact original operation without rewriting history or resending',async()=>{
+ for(const status of ['pending','finalized']){
+ const f=await fixture({development:false}),op=f.op('reserve',[f.id,0,400n]);f.receipt.status=status;
+ await f.port.reserve(f.id,0,400n,op);
+ const saved=structuredClone(f.store.read());saved.privateBokEscrow.binding.finality='finalized';await f.store.write(saved);
+ const original=structuredClone(f.journal()),reopened=await f.create();assert.deepEqual(f.journal(),original);
+ f.receipt.status='checkpointed';assert.equal((await reopened.reserve(f.id,0,400n,op)).status,'succeeded');
+ assert.deepEqual(f.journal().binding,original.binding);
+ const history=original.operations[op.operationId].includedHistory??[];assert.deepEqual((f.journal().operations[op.operationId].includedHistory??[]).slice(0,history.length),history);
+ for(const key of ['txHash','transactionSha256','argsDigest','args','phase'])assert.deepEqual(f.journal().operations[op.operationId][key],original.operations[op.operationId][key]);
+ assert.deepEqual(f.counts(),{proofs:1,sends:1});f.set('blockMismatch',true);
+ await assert.rejects(reopened.reserve(f.id,0,400n,op),/mismatch/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ }
+});
+test('unit fake: policy evolution never admits changed identity or unrecognized confirmation policy',async()=>{
+ for(const [key,value] of [['operator',H(99)],['classId',H(99)],['proofMode','disabled'],['finality','latest']]){
+  const f=await fixture({development:false}),saved=structuredClone(f.store.read());saved.privateBokEscrow.binding.finality='finalized';saved.privateBokEscrow.binding[key]=value;
+  await f.store.write(saved);await assert.rejects(f.create(),/identity mismatch/);assert.deepEqual(f.counts(),{proofs:0,sends:0});
+ }
+ const f=await fixture(),saved=structuredClone(f.store.read());saved.privateBokEscrow.binding.finality='finalized';await f.store.write(saved);await assert.rejects(f.create(),/identity mismatch/);
 });
 test('unit fake: reservation, canonical receipt and 180-second margin required before inference',async()=>{
  const f=await fixture();const op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
  assert.equal((await f.port.assertUsable(f.id,0,400n)).canonical,true);
  f.row.deadline=BigInt(Math.floor(Date.now()/1000)+180);await assert.rejects(f.port.assertUsable(f.id,0,400n),/expiry/);
- f.row.deadline+=1000n;f.receipt.status='pending';await assert.rejects(f.port.assertUsable(f.id,0,400n),/finalized/);
+ f.row.deadline+=1000n;f.receipt.status='pending';await assert.rejects(f.port.assertUsable(f.id,0,400n),/checkpointed/);
 });
 test('unit fake: conservation, target and operation digest mismatches fail closed',async()=>{
  const f=await fixture();const op=f.op('finish',[H(80)]);await assert.rejects(f.port.finish(f.id,op),/arguments mismatch/);
@@ -244,15 +271,15 @@ test('unit fake: only first never-submitted reserve can continue once after proo
 
 test('unit fake: native observer waits on original submitted hash then rechecks canonical effect without proving or sending',async()=>{
  const f=await fixture({development:false}),op=f.op('reserve',[f.id,0,400n]);
- await f.port.reserve(f.id,0,400n,op);let waits=0;
- f.sdk.waitForTx=async(node,hash,options)=>{waits++;assert.equal(String(hash),String(f.receipt.txHash));assert.equal(options.waitForStatus,'finalized');assert.equal(options.timeout,0);f.receipt.status='finalized';return f.receipt;};
+ f.receipt.status='pending';await f.port.reserve(f.id,0,400n,op);let waits=0;
+ f.sdk.waitForTx=async(node,hash,options)=>{waits++;assert.equal(String(hash),String(f.receipt.txHash));assert.equal(options.waitForStatus,'checkpointed');assert.equal(options.timeout,0);f.receipt.status='finalized';return f.receipt;};
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);assert.deepEqual(f.counts(),{proofs:1,sends:1});
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);
  f.set('blockMismatch',true);await assert.rejects(f.port.waitForOperation(op.operationId),/mismatch/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
 });
 
 
-test('unit fake: first settlement and reply remain owned until native finality, then inspect exact original effect',async()=>{
+test('unit fake: first settlement and reply remain owned until native checkpoint, then inspect exact original effect',async()=>{
  for(const development of [true,false])for(const method of ['settle','publish_reply']){
   const f=await fixture({development}),fields=Array.from({length:32},(_,i)=>H(i===0?65:0));
   const args=method==='settle'?[f.id,0,120n,H(88)]:[f.id,H(66),fields,1,1,0],op=f.op(method,args);
@@ -260,13 +287,13 @@ test('unit fake: first settlement and reply remain owned until native finality, 
   const waiting=new Promise(resolve=>{entered=resolve;}),ready=new Promise(resolve=>{release=resolve;});
   f.sdk.waitForTx=async(node,hash,options)=>{
    assert.equal(node,f.options.node);assert.equal(String(hash),String(f.tx.getTxHash()));
-   assert.deepEqual(options,{waitForStatus:development?'checkpointed':'finalized',timeout:0,dontThrowOnRevert:true});
+   assert.deepEqual(options,{waitForStatus:'checkpointed',timeout:0,dontThrowOnRevert:true});
    entered();await ready;return f.receipt;
   };
   const operation=f.port[method](...args,op).then(value=>{completed=true;return value;});
   await waiting;assert.equal(completed,false);assert.deepEqual(f.counts(),{proofs:1,sends:1});
   await assert.rejects(f.port.inspectOperation(op.operationId),/already running/);
-  f.receipt.status=development?'checkpointed':'finalized';release();
+  f.receipt.status='checkpointed';release();
   const result=await operation;assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
   assert.equal(result.transactionFee,'7');assert.equal(f.journal().operations[op.operationId].includedHistory.length,1);
   assert.equal((await (await f.create())[method](...args,op)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});

@@ -18,8 +18,8 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
   assert.equal(revision,initial.revision);
   const info=await node.getNodeInfo();assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
   assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);assert.equal(info.realProofs,!development);
-  const confirmed=await node.getBlock(development?'checkpointed':'finalized');assert(confirmed&&Number.isSafeInteger(confirmed.number)&&/^0x[0-9a-f]{64}$/.test(String(confirmed.hash))); 
-  assert(Number.isSafeInteger(checkpoint.number)&&checkpoint.number<=confirmed.number,'Conversation publication is not finalized');
+  const confirmed=await node.getBlock('checkpointed');assert(confirmed&&Number.isSafeInteger(confirmed.number)&&/^0x[0-9a-f]{64}$/.test(String(confirmed.hash)));
+  assert(Number.isSafeInteger(checkpoint.number)&&checkpoint.number<=confirmed.number,'Conversation publication is not checkpointed');
   const check=async()=>{
    const current=status();assert(current.state==='ready'&&current.complete&&current.revision===revision);
    const block=await node.getBlockData(checkpoint.number);assert.equal(Number(block?.header?.globalVariables?.blockNumber),checkpoint.number);assert.equal(String(block?.blockHash),checkpoint.hash);
@@ -53,7 +53,7 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    // canonical. Newer posts do not silently enter the already-paid summary.
    const current=status();assert(current.state==='ready'&&current.complete===true&&JSON.stringify(current.scope)===expected);
    assert(Number.isSafeInteger(current.checkpoint.number)&&current.checkpoint.number>=checkpoint.number);
-   const head=await node.getBlock(development?'checkpointed':'finalized');assert(head&&current.checkpoint.number<=head.number);
+   const head=await node.getBlock('checkpointed');assert(head&&current.checkpoint.number<=head.number);
    for(const saved of captured){
     const result=query('post',{id:BigInt(saved.id).toString()}),post=result.post;
     assert(result.revision===current.revision&&post);

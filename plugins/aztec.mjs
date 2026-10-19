@@ -83,7 +83,7 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
  const requestFrom=async post=>{
   if(!post?.invocation)return null;const invocation=post.invocation;
   if(toField(invocation.adapter)!==scope.receiver||toField(invocation.pluginId)!==pluginId)return null;
-  await checkScope();const head=await node.getBlock(development?'checkpointed':'finalized');
+  await checkScope();const head=await node.getBlock('checkpointed');
   assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:String(head.hash)};
   const instance=await node.getContract(board,anchor);assert.equal(String(instance?.originalContractClassId),expectedClass);assert.equal(String(instance?.currentContractClassId),expectedClass);
   const read=slot=>node.getPublicStorageAt(anchor,board,slot);
