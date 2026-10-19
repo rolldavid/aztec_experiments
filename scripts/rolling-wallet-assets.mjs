@@ -46,7 +46,8 @@ function address(value,bytes){if(typeof value!=='string'||!new RegExp('^0x[0-9a-
 export function validateRollingWalletConfig(value,scope){
  keys(value,['config','trustedQuery','remoteProver','proofsEnabled']);
  const copy=structuredClone(value),{config:c,trustedQuery:q,remoteProver:r,proofsEnabled}=copy;
- keys(c,['network','board','privateFee',...(c.bok===undefined?[]:['bok']),...(c.aggregateFunding===undefined?[]:['aggregateFunding'])]);
+ keys(c,['network','board','privateFee',...(c.bok===undefined?[]:['bok']),...(c.aggregateFunding===undefined?[]:['aggregateFunding']),...(c.publicRefundRpcUrl===undefined?[]:['publicRefundRpcUrl']),...(c.refundOnly===undefined?[]:['refundOnly'])]);
+ if(c.refundOnly!==undefined&&(c.refundOnly!==true||c.publicRefundRpcUrl===undefined))throw invalid();
  if(c.aggregateFunding!==undefined){
   const a=c.aggregateFunding;keys(a,['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash',...(a.usdcRelayAddress===undefined?[]:['usdcRelayAddress','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash','usdcDomain'])]);
   if(a.usdcRelayAddress!==undefined){
@@ -69,6 +70,7 @@ export function validateRollingWalletConfig(value,scope){
  }
  keys(q,['url','allowLocalDev']);if(typeof q.allowLocalDev!=='boolean'||q.allowLocalDev&&!local)throw invalid();
  const origins=new Set([endpoint(c.network.ethRpcUrl,local),endpoint(q.url,q.allowLocalDev)]);
+ if(c.publicRefundRpcUrl!==undefined)origins.add(endpoint(c.publicRefundRpcUrl,local));
  if(r!==null){keys(r,['url','board','chainId','rollupVersion','proofsEnabled']);if(r.board!==c.board.contractAddress||r.chainId!==c.network.chainId||r.rollupVersion!==c.network.rollupVersion||r.proofsEnabled!==proofsEnabled)throw invalid();origins.add(endpoint(r.url,local));}
  return {value:copy,connectOrigins:[...origins].sort()};
 }

@@ -53,7 +53,8 @@ const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};c
  async inspect(){return {paymentSaved:local.paid,claim:local.claim??null,privateFeeCap:'1000',claimAction:kind==='bok'?'claim-bok':'claim-private-fee'};},
  async checkpointClaim(value){local.claim=value;},async recover(){return {receipt:{txHash:'0x'+'1'.repeat(64),amount:'300'}};},async reviewRevertedClaim(){local.claim=null;}
  };return [kind,cap];}));
-const runtime={selectPrivateViews,
+const runtime={selectPrivateViews,get refundOnly(){return state.refundOnly===true;},
+ async createRefundSession(){state.refundSessions=(state.refundSessions??0)+1;await boundary('refund-only');return {mode:'refund-only',application:{async readAccountStatus(){return {status:state.refunded?'refunded':'recovering',intent:state.refunded?null:read()};}},withdrawal:{async prepare(input){state.refundInput=input;return {amount:read().withdrawal.amount,maximumGasWei:input.maximumGasWei,walletName:'MetaMask'};},async confirm(){state.refundSends=(state.refundSends??0)+1;state.refunded=true;return {status:'refunded',amount:read().withdrawal.amount};},async cancel(){}},busy:false,async close(){state.closes++;}};},
  fundingWallets:()=>state.walletChoices??[],fundingWalletStatus:()=>state.fundingWallet??{connected:false},
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
  getAccount:()=>state.unlocked?state.rawAccount:null,
@@ -1283,4 +1284,28 @@ test('Moderator transfer reviews successor and loss of authority before sending'
  await page.getByText(`Transfer moderator authority to ${successor}. Your current key loses authority immediately. Only the successor can transfer it back.`,{exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'transfer-moderator',successor});
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+
+test('explicit refund-only recovery works after private connection failure without recreating account or private session',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='session';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'exit-1',action:{type:'withdraw',deposit:'1'},status:'confirmed',txHash:'0x'+'1'.repeat(64),withdrawal:{eligible:true,amount:'100000000000000000',depositor:'0x'+'1'.repeat(40)}}));});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Recover Ethereum refund only',exact:true}).click();
+ await page.getByText(/Refund-only recovery/).waitFor();assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>test.sessions),1);assert.equal(await page.evaluate(()=>test.creates),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
+ await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).click();await page.getByRole('button',{name:'Confirm Ethereum refund',exact:true}).click();
+ await page.getByText('The original Ethereum refund is confirmed. Your recovery records are retained.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.refundSends),1);assert.equal(await page.evaluate(()=>test.sessions),1);assert.equal(await page.evaluate(()=>test.sends),0);
+});
+test('direct refund-only entry never opens private session and never offers account creation',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);
+ await page.getByRole('button',{name:'Recover Ethereum refund only',exact:true}).click();
+ await page.getByText('Restore the existing account and its confirmed exit. Refund-only recovery cannot create an account or send another private exit.',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Create account and download recovery',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sessions),0);assert.equal(await page.evaluate(()=>test.creates),0);
+});
+
+test('refund-only publication routes ordinary unlock to recovery import without private connection',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.refundOnly=true;test.unlocked=false;});await open(page);
+ await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByText('Restore the existing account and its confirmed exit. Refund-only recovery cannot create an account or send another private exit.',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Create account and download recovery',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sessions),0);
 });

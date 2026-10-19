@@ -1,7 +1,7 @@
 import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 // This module is imported only after an explicit Unlock action. Public reading
 // never imports the SDK, opens private storage or makes personalized node calls.
-import {createRollingWalletSession} from './wallet-session.mjs';
+import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 // Fresh metadata/API requests retain a transport failure bound. Immutable asset
 // delivery ends on native completion/error or page cancellation, never elapsed time.
 const METADATA_LOAD_MS=30000;
@@ -97,7 +97,15 @@ async function load(signal){
   if(globalThis.walletState.aztec!==current||globalThis.walletState.invalidated)throw failed();
   return fundingWalletStatus();
  };
- return Object.freeze({account,selectPrivateViews,fundingWallets,fundingWalletStatus,connectFundingWallet,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
+ return Object.freeze({account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
+  if(session)return Promise.resolve(session);if(creating)return creating;
+  const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
+  const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
+  creating=createRollingRefundSession({sdk,ethers:globalThis.ethers,config,boardArtifact,bokArtifact,account:selected,contextGuard:guard,
+   captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId})}).then(value=>(session=value)).finally(()=>{creating=undefined;});
+  return creating;
+ }}:{}),fundingWallets,fundingWalletStatus,connectFundingWallet,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
+  if(config.refundOnly===true)return Promise.reject(failed());
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());

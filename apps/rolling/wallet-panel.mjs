@@ -84,7 +84,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let fundingQuote=null,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};
- let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
+ let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action',refundRequested=false;const previewURLs=new Set();
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
  const closeButton=button('Close account panel',()=>close());
@@ -169,6 +169,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);balances=null;bokAccounting=null;recoveryInspection=null;moderatorStatus=null;clearPreferences();blocked=true;
   const next=await session.application.readAccountStatus();
   checkAccount(epoch);status=next;intent=next.intent??null;
+  if(session.mode==='refund-only'){blocked=false;note('');return;}
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }else{
@@ -194,12 +195,16 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(view!=='preferences')await refresh();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
  }
- async function unlock(){await work(async()=>{
+ async function connectRefund(){
+  if(typeof runtime.createRefundSession!=='function')throw Error('Refund-only recovery is not configured');
+  const epoch=accountEpoch;if(!accountIdentity)accountIdentity=runtime.getAccount();session=await runtime.createRefundSession();checkAccount(epoch);await refresh();
+ }
+ async function unlock({refundOnly=false}={}){refundRequested=refundOnly;await work(async()=>{
   note('Loading private account tools…');
   if(!runtime){
    const loaded=await loadRuntime();
    if(!loaded?.account||typeof loaded.getAccount!=='function'||typeof loaded.createSession!=='function')throw Error('Invalid runtime');
-   runtime=loaded;
+   runtime=loaded;refundRequested=refundRequested||runtime.refundOnly===true;
    runtime.account.configure({requireEth:false,autoPasskey:false,canEndSession:()=>!session?.busy,
     // Custody's fixed import warning is safe product copy. Never forward
     // arbitrary account, SDK or exception messages into the private panel.
@@ -207,7 +212,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
      if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;recoveryAbort?.abort();clearPrivateView();note('The account changed. Preserve recovery and reload before continuing.');render();}
     }});
   }
-  if(unlocked())await connect();else note('Create an account or import your encrypted recovery file.');
+  if(unlocked())await (refundRequested?connectRefund():connect());else note(refundRequested?'Import your existing encrypted recovery file to recover the original refund.':'Create an account or import your encrypted recovery file.');
  });}
  function download(envelope){
   // Only the existing custody module's ciphertext envelope may leave the panel.
@@ -226,9 +231,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const restore=button('Import recovery',()=>{
    if(!file.files?.[0]){error='Choose your recovery file.';render();return;}
    const selected=file.files[0],value=password.value;password.value='';file.value='';
-   void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Recovery imported.';note('Checking retained transactions…');await connect();});
+   void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Recovery imported.';note('Checking retained transactions…');await (refundRequested?connectRefund():connect());});
   });
-  content.append(paragraph('Create a private account or restore an existing one. Creating an account does not fund it.'),paragraph(recoveryLimits),label('Recovery password (at least 12 characters for a new backup)',password),create,label('Encrypted backup or unencrypted account file',file),paragraph('An unencrypted account file contains a private key. Import only on a trusted device, then download an encrypted backup.'),restore);
+  content.append(paragraph(refundRequested?'Restore the existing account and its confirmed exit. Refund-only recovery cannot create an account or send another private exit.':'Create a private account or restore an existing one. Creating an account does not fund it.'),paragraph(recoveryLimits),label('Recovery password (at least 12 characters for a new backup)',password),...(refundRequested?[]:[create]),label('Encrypted backup or unencrypted account file',file),paragraph('An unencrypted account file contains a private key. Import only on a trusted device, then download an encrypted backup.'),restore);
  }
  function recovery(){
   const section=el('details',{},el('summary',{},'Backup and account security'));
@@ -810,10 +815,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(notice)content.append(el('p',{class:'notice','data-operation-feedback':''},notice));
   if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));
   if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload to unlock',()=>location.reload()));}
-  else if(!runtime)content.append(paragraph('Browsing needs no wallet. Unlock only when you want to manage your account or publish.'),button('Unlock',()=>void unlock(),true));
+  else if(!runtime)content.append(paragraph('Browsing needs no wallet. Unlock only when you want to manage your account or publish.'),button('Unlock',()=>void unlock(),true),button('Recover Ethereum refund only',()=>void unlock({refundOnly:true})));
   else if(!unlocked())custody();
   else{
-   if(!session)content.append(paragraph('Your account is unlocked. The verified private connection is not ready.'),button('Connect private account',()=>void work(connect),true));
+   if(!session){content.append(paragraph(runtime.refundOnly?'Restore the saved confirmed exit through public refund recovery.':'Your account is unlocked. The verified private connection is not ready.'),...(runtime.refundOnly?[]:[button('Connect private account',()=>void work(connect),true)]));
+    if(typeof runtime.createRefundSession==='function')content.append(paragraph('A confirmed private exit can be refunded using public chain records and the original Ethereum wallet. This does not connect private account tools or send another private exit.'),button('Recover Ethereum refund only',()=>void work(connectRefund)));
+   }
+   else if(session.mode==='refund-only'){content.append(paragraph('Refund-only recovery. Only public exit data is read from the configured public node. Private account actions are unavailable in this mode.'));if(intent)refundView();else content.append(paragraph('The original Ethereum refund is confirmed. Your recovery records are retained.'));}
    else if(intent)showIntent();
    else if(blocked&&view==='preferences'){
     content.append(paragraph('Recover saved choices without checking funds or preparing a transaction.'));preferencesView();

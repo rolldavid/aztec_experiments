@@ -2,7 +2,7 @@
 // and the caller's current-account guard. These are synthetic unit checks.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRollingWalletSession} from './wallet-session.mjs';
+import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 function options(){
  const accesses=[];return {accesses,input:{sdk:new Proxy({},{get(_target,key){accesses.push(key);throw Error('Unexpected SDK access');}}),
   routing:{},ethers:{},config:{network:{chainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40)}},
@@ -503,8 +503,8 @@ import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {TxHash,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {hexlify,AbiCoder,getBytes,encodeBytes32String} from 'ethers';
 import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
-async function withdrawalFixture({chainId='31337',bok=false}={}){
- const scope={account:hex(3),chainId,version:'1',rollup:eth(11),board:hex(1),portal:eth(22)},record={intentId:hex(8),action:{type:'withdraw',deposit:hex(9)},status:'confirmed',txHash:hex(77),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
+async function withdrawalFixture({chainId='31337',bok=false,scopeOverride={}}={}){
+ const scope={account:hex(3),chainId,version:'1',rollup:eth(11),board:hex(1),portal:eth(22),...scopeOverride},record={intentId:hex(8),action:{type:'withdraw',deposit:hex(9)},status:'confirmed',txHash:hex(77),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
  if(bok){record.action={type:'withdraw-bok',amount:'100',recipient:eth(33)};record.withdrawal={...record.withdrawal,kind:'bok',nonce:hex(55),bokScope:{portal:scope.portal,token:eth(66),recipient:scope.board}};}
  const content=sha256ToField([bok?Buffer.from(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','address','uint128','bytes32'],[encodeBytes32String('PLUGIN_EXIT_V1'),chainId,scope.portal,scope.board,1,eth(33),100,hex(55)]))):Buffer.from(encodeEscrowCommitment('exit',{l1ChainId:scope.chainId,rollupAddress:scope.rollup,rollupVersion:scope.version,boardAddress:scope.board,portalAddress:scope.portal},{amount:'100',depositor:eth(33)}))]);
  const leaf=computeL2ToL1MessageHash({l2Sender:new AztecAddress(new Fr(BigInt(scope.board))),l1Recipient:EthAddress.fromString(scope.portal),content,chainId:new Fr(BigInt(chainId)),rollupVersion:new Fr(1)});
@@ -865,4 +865,57 @@ test('funding continuation pauses finality without waiting for another block and
  const cap=createFundingContinuation(f.input),pending=cap.advanceClaim();await read;cap.pauseClaim();
  assert.deepEqual(await pending,{state:'paused'});assert.equal(f.busy,false);assert.equal(listeners.size,0);assert(!f.calls.some(c=>c[0]==='submit'||c[0]==='checkpoint'));
  finalized=7;assert.equal((await cap.advanceClaim()).state,'complete');assert.equal(f.calls.filter(c=>c[0]==='submit').length,1);
+});
+
+// Public-only recovery composition: real encrypted custody/journals and SDK
+// membership hashing; canonical RPC/contract reads are bounded unit doubles.
+async function publicRefundFixture(){
+ const d=await deploymentFixture(),f=await withdrawalFixture({scopeOverride:{board:String(d.board.address)}}),methods=[];
+ const scope=f.opts.scope,config={...d.options.config,publicRefundRpcUrl:'http://127.0.0.1:9900'};
+ const sourceNode={...d.node,...f.opts.node,getBlockData:n=>n==='checkpointed'||n===10?d.node.getBlockData(n):f.opts.node.getBlockData(n)};
+ const publicNode=Object.fromEntries(Object.entries(sourceNode).map(([name,fn])=>[name,(...args)=>{methods.push({name,args});return fn(...args);} ]));
+ const getterAbi=new Interface(Object.keys(d.immutables).map(name=>'function '+name+'() view returns(uint256)'));
+ const ordinaryCall=f.opts.provider.call;
+ const provider={...f.opts.provider,getCode:d.provider.getCode,destroy:d.provider.destroy,call:async request=>{try{const parsed=getterAbi.parseTransaction({data:request.data});if(parsed)return getterAbi.encodeFunctionResult(parsed.name,[d.immutables[parsed.name]]);}catch{}return ordinaryCall(request);}};
+ const slot=await createEncryptedJournalSlot({storage:f.opts.storage,walletSecret:f.opts.walletSecret,walletSalt:f.opts.walletSalt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ const record={...f.record,id:f.record.intentId};await slot.write(await slot.read(),record);
+ const sdk={...d.options.sdk,...f.opts.sdk,createBrowserJournalStorage:()=>f.opts.storage,createAztecNodeClient:()=>{f.state.clients=(f.state.clients??0)+1;return publicNode;},inspectTrustedNode:async(_node,opts)=>assert.deepEqual(opts,{expectedNetworkScope:{chainId:'31337',version:'1',rollup:scope.rollup},proofsEnabled:false})};
+ const input={sdk,ethers:{...f.opts.ethers,JsonRpcProvider:class{constructor(){return provider;}}},config,boardArtifact:artifact,account:{address:scope.account,secretKey:f.opts.walletSecret,salt:f.opts.walletSalt},contextGuard:f.opts.contextGuard,captureFundingWallet:f.opts.captureWallet,locks:{request:async(_name,_options,fn)=>fn({})}};
+ return {...f,input,slot,record,methods,d};
+}
+test('refund-only composition reopens encrypted confirmed exit without private SDK work and explicitly refunds once',async()=>{
+ const f=await publicRefundFixture(),session=await createRollingRefundSession(f.input);
+ assert.equal(session.mode,'refund-only');assert.equal((await session.application.readAccountStatus()).intent.txHash,f.record.txHash);
+ assert.equal(f.state.sends,0);assert.equal((await session.withdrawal.prepare({maximumGasWei:'1000'})).amount,'100');
+ assert.equal((await session.withdrawal.confirm()).status,'refunded');assert.equal(f.state.sends,1);
+ assert.deepEqual(await session.application.readAccountStatus(),{status:'refunded',intent:null});
+ assert.deepEqual((await f.slot.read()).value,f.record,'Original workflow is never rewritten');
+ assert(f.methods.every(call=>!JSON.stringify(call.args).includes(f.input.account.secretKey)));
+ assert(f.methods.every(call=>!JSON.stringify(call.args).includes(f.input.account.address)));
+ await session.close();assert.equal(f.d.state.destroyed,1);
+});
+for(const status of ['prepared','submitted','unknown','reverted'])test('refund-only rejects '+status+' instead of manufacturing confirmation',async()=>{
+ const f=await publicRefundFixture();await f.slot.write(await f.slot.read(),{...f.record,status});
+ await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.clients??0,0);assert.equal(f.state.sends,0);
+});
+test('refund-only retains unavailable membership and unsettled Outbox without sending or changing custody',async()=>{
+ const f=await publicRefundFixture();f.state.l2Fork=true;await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ f.state.l2Fork=false;const session=await createRollingRefundSession(f.input);f.state.settled=false;
+ await assert.rejects(session.withdrawal.prepare({maximumGasWei:'1000'}),/Outbox not settled/);assert.equal(f.state.sends,0);assert.deepEqual((await f.slot.read()).value,f.record);await session.close();
+});
+test('refund-only rejects concurrent custody, wrong account scope and wrong configured network before a refund',async()=>{
+ const f=await publicRefundFixture();f.input.locks.request=async(_n,_o,fn)=>fn(null);
+ await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_OTHER_TAB'});assert.equal(f.state.clients??0,0);
+ f.input.locks.request=async(_n,_o,fn)=>fn({});f.input.account.address=hex(999);
+ await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.clients??0,0);
+});
+test('refund-only reopened lost L1 reply reconciles original journal without a second send',async()=>{
+ const f=await publicRefundFixture(),session=await createRollingRefundSession(f.input);
+ await session.withdrawal.prepare({maximumGasWei:'1000'});f.state.unknown=true;
+ await assert.rejects(session.withdrawal.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});await session.close();
+ const reopened=await createRollingRefundSession(f.input);assert.equal((await reopened.withdrawal.recover()).status,'refunded');assert.equal(f.state.sends,1);await reopened.close();
+});
+test('refund-only rejects wrong canonical portal runtime without changing the original exit',async()=>{
+ const f=await publicRefundFixture();f.input.sdk.verifyPortalRuntime=()=>false;
+ await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,0);assert.deepEqual((await f.slot.read()).value,f.record);
 });

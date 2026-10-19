@@ -55,3 +55,15 @@ test('USDC wallet scope requires the complete pinned proxy implementation domain
  for(const key of ['usdcRelayAddress','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash','usdcDomain']){const bad=structuredClone(v);delete bad.config.aggregateFunding[key];assert.throws(()=>validateRollingWalletConfig(bad));}
  const bad=structuredClone(v);bad.config.aggregateFunding.usdcDomain.endpoint='https://untrusted';assert.throws(()=>validateRollingWalletConfig(bad));
 });
+
+test('explicit public refund endpoint adds only its origin without changing private query authority',()=>{
+ const v=fixture();v.config.publicRefundRpcUrl='https://public.example/node';
+ const result=validateRollingWalletConfig(v);assert(result.connectOrigins.includes('https://public.example'));assert.deepEqual(result.value.trustedQuery,v.trustedQuery);
+ for(const url of ['https://name:key@public.example','https://public.example?key=secret','http://remote.example','file:///tmp/node']){v.config.publicRefundRpcUrl=url;assert.throws(()=>validateRollingWalletConfig(v));}
+});
+
+test('refund-only publication requires explicit public endpoint and does not relax private configuration',()=>{
+ const v=fixture();v.config.refundOnly=true;assert.throws(()=>validateRollingWalletConfig(v));
+ v.config.publicRefundRpcUrl='https://public.example/node';assert.equal(validateRollingWalletConfig(v).value.config.refundOnly,true);
+ v.config.refundOnly='true';assert.throws(()=>validateRollingWalletConfig(v));
+});
