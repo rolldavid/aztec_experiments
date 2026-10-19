@@ -104,7 +104,7 @@ export function createUniformBokAccountingReader({fetcher=globalThis.fetch,origi
  };
 }
 // L2 workflow retains private exit identity; Ethereum journal owns refund sends.
-export function createCollateralWithdrawal({sdk,ethers,provider,node,application,scope,storage,walletSecret,walletSalt,captureWallet,contextGuard,resolveBokScope}){
+export function createCollateralWithdrawal({sdk,ethers,provider,node,application,scope,storage,walletSecret,walletSalt,captureWallet,contextGuard,resolveBokScope,getFinalityProvider}){
  const fixed=structuredClone(scope),abi=bok=>new ethers.Interface([bok?'function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)':'function withdraw(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)']);
  const isBok=r=>r.withdrawal?.kind==='bok';
  const exitScope=r=>isBok(r)?{...fixed,board:r.withdrawal.bokScope.recipient,portal:r.withdrawal.bokScope.portal,token:r.withdrawal.bokScope.token}:fixed;
@@ -143,7 +143,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    await contextGuard();
    // A mined refund remains owned while the provider observes finality. Do not
    // turn ordinary network progress into a failed or repeatable payment.
-   await own(()=>waitForFundingFinality(originalProvider,result.receipt.blockNumber));
+   await own(async()=>waitForFundingFinality(getFinalityProvider?await getFinalityProvider():originalProvider,result.receipt.blockNumber));
    await contextGuard();
    const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));
   }
@@ -420,7 +420,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     }
     return coldReader.read(options);
    };
-   withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute,resolveBokScope:funding.resolveBokWithdrawal});
+   withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute,resolveBokScope:funding.resolveBokWithdrawal,getFinalityProvider:async()=>{await guardRoute();return fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);}});
    emit('complete');
   }catch(error){failed(error);closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });}catch(error){failed(error);throw error;}

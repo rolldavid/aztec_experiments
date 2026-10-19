@@ -48,24 +48,24 @@ const feeArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../sr
 const metadata=JSON.parse(fs.readFileSync(new URL('../../shared/portal-runtime.json',import.meta.url)));
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),eth=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
 
-async function deploymentFixture(){
+async function deploymentFixture({chainId='31337'}={}){
  const deployer=AztecAddress.fromBigIntUnsafe(3n),rollup=eth(11),portal=eth(22);
- const board=await getContractInstanceFromInstantiationParams(artifact,{salt:new Fr(7),deployer,constructorArtifact:'init',constructorArgs:[Array(32).fill(0n),0,31337,rollup,1,100,200,60,2,120,3]});
+ const board=await getContractInstanceFromInstantiationParams(artifact,{salt:new Fr(7),deployer,constructorArtifact:'init',constructorArgs:[Array(32).fill(0n),0,Number(chainId),rollup,1,100,200,60,2,120,3]});
  const fee=await derivePrivateFeeInstance(feeArtifact),state={destroyed:0,guards:0,reads:[],ethReads:[],inspection:0,enabled:true};
- const config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:rollup,nodeUrl:'http://127.0.0.1:1',ethRpcUrl:'http://127.0.0.1:2'},
+ const config={network:{chainId,rollupVersion:'1',rollupAddress:rollup,nodeUrl:'http://127.0.0.1:1',ethRpcUrl:'http://127.0.0.1:2'},
   board:{contractAddress:String(board.address),portalAddress:portal},privateFee:{contractAddress:String(fee.address),gasSettings:{gasLimits:{daGas:'1000',l2Gas:'1000'},teardownGasLimits:{daGas:'1',l2Gas:'1'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}}}};
  const economics={minDeposit:'100',maxDeposit:'200',baseCooldown:'60',kMultiplier:'2',censorWindow:'120',maxSaveUp:'3'};
- const configHash=sha256ToField(Buffer.from(encodeConfigCommitment({l1ChainId:'31337',rollupVersion:'1',rollupAddress:rollup,boardAddress:String(board.address)},economics)));
- const immutables={MIN_DEPOSIT:100n,MAX_DEPOSIT:200n,L2_CONTRACT:BigInt(String(board.address)),ROLLUP:11n,INBOX:33n,OUTBOX:44n,VERSION:1n,L1_CHAIN_ID:31337n,CONFIG_HASH:configHash.toBigInt()};
- const storage=new Map([[1n,22n],...[31337n,11n,1n,100n,200n,60n,2n,120n,3n,3n].map((value,i)=>[3n+BigInt(i),value])]);
+ const configHash=sha256ToField(Buffer.from(encodeConfigCommitment({l1ChainId:chainId,rollupVersion:'1',rollupAddress:rollup,boardAddress:String(board.address)},economics)));
+ const immutables={MIN_DEPOSIT:100n,MAX_DEPOSIT:200n,L2_CONTRACT:BigInt(String(board.address)),ROLLUP:11n,INBOX:33n,OUTBOX:44n,VERSION:1n,L1_CHAIN_ID:BigInt(chainId),CONFIG_HASH:configHash.toBigInt()};
+ const storage=new Map([[1n,22n],...[BigInt(chainId),11n,1n,100n,200n,60n,2n,120n,3n,3n].map((value,i)=>[3n+BigInt(i),value])]);
  const node={getBlockData:async n=>({blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10}}}),
   getContract:async(address,reference)=>{state.reads.push(['instance',reference]);return address.equals(board.address)?board:fee;},
   getPublicStorageAt:async(reference,address,slot)=>{state.reads.push(['storage',reference]);return new Fr(storage.get(slot.toBigInt()));},
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
- const provider={getNetwork:async()=>({chainId:31337n}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
+ const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
  const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
  const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
-  isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId:'31337',version:'1',rollup});assert.equal(opts.proofsEnabled,state.proofsEnabled??true);}};
+  isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId,version:'1',rollup});assert.equal(opts.proofsEnabled,state.proofsEnabled??true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
  return {options,state,node,provider,board,fee,storage,immutables,configHash,economics};
 }
@@ -79,8 +79,8 @@ import {IDBFactory} from 'fake-indexeddb';
 import {createBrowserJournalStorage} from '../../shared/journal-indexeddb.mjs';
 import {createL2Journal,l2JournalScopeText} from '../../shared/l2-journal.mjs';
 const ownedIdString=value=>hex(value.toBigInt());
-async function sessionFixture(){
- const f=await deploymentFixture(),state={active:false,events:[],stops:0,closes:0,syncs:0,sends:0,registrations:0};
+async function sessionFixture({chainId='31337'}={}){
+ const f=await deploymentFixture({chainId}),state={active:false,events:[],stops:0,closes:0,syncs:0,sends:0,registrations:0};
  const registered=nameRegistration('River','Stone'),ownedId=await poseidon2HashWithSeparator(registered.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
  const available=nameRegistration('Fresh','Willow'),availableId=await poseidon2HashWithSeparator(available.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
  const nameSlots=new Map();for(const [id,value]of [[ownedId,1n],[availableId,0n]])nameSlots.set((await deriveStorageSlotInMap(artifact.storageLayout.registered_names.slot,id)).toBigInt(),value);
@@ -103,7 +103,7 @@ async function sessionFixture(){
   getPrivateEvents:async()=>{held('preference-events');if(state.waitEvents)await state.waitEvents;if(state.failEvents)throw Error('PRIVATE_SENTINEL');return [];},
   stop:async()=>{held('stop');state.stops++;if(state.waitStop)await state.waitStop;if(state.failStop)throw Error('stop failed');await store.close();}};
  const privateStore=createBrowserJournalStorage(new IDBFactory());
- const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
+ const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:Number(chainId),version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
  const sdk={...f.options.sdk,computeArtifactHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
@@ -933,4 +933,24 @@ test('refund-only accepts native AztecAddress custody and rejects changed native
  const session=await createRollingRefundSession(f.input);assert.equal((await session.application.readAccountStatus()).intent.txHash,f.record.txHash);
  f.input.account.address=new AztecAddress(new Fr(999));
  await assert.rejects(session.withdrawal.prepare({maximumGasWei:'1000'}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);await session.close();
+});
+
+// Full normal-session composition: actual encrypted journals/native membership
+// hashing, explicit chain/provider doubles, no connected Ethereum signer needed.
+test('normal private account restores a finalized refund through native provider events without wallet connection',async()=>{
+ const f=await sessionFixture({chainId:'11155111'}),w=await withdrawalFixture({chainId:'11155111',scopeOverride:{account:f.input.account.address,board:String(f.board.address)}});
+ f.input.config.network.ethRpcUrl='https://ethereum.invalid/';
+ Object.assign(w.opts,{storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt});
+ const cap=w.restart();await cap.prepare({maximumGasWei:'1000'});await cap.confirm();assert.equal(w.state.sends,1);
+ const id=w.record.intentId,workflow=await createEncryptedJournalSlot({storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(w.opts.scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ await workflow.write(await workflow.read(),{...w.record,id});
+ const originalBlock=f.node.getBlockData;Object.assign(f.node,{...w.opts.node,getBlockData:n=>n===1?w.opts.node.getBlockData(n):originalBlock(n)});
+ Object.assign(f.input.sdk,w.opts.sdk,{createL2Journal:async()=>({inspectOutcome:async()=>({operation:'ROLLING_WORKFLOW_V1:'+id,txHash:w.record.txHash,outcome:'success',receipt:{txHash:w.record.txHash,transactionFee:1n}}),confirmed:()=>{}})});
+ const Original=f.input.ethers.JsonRpcProvider;let opened=0,subscriptions=0;
+ const on=w.opts.provider.on;w.opts.provider.on=async(...args)=>{subscriptions++;assert(f.state.active);return on(...args);};w.opts.provider.destroy=()=>{};
+ f.input.ethers={...f.input.ethers,...w.opts.ethers,JsonRpcProvider:class{constructor(url){return ++opened===1?new Original(url):w.opts.provider;}}};
+ f.input.captureFundingWallet=undefined;
+ const session=await createRollingWalletSession(f.input);
+ try{assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(subscriptions,1);assert.equal(w.state.finalityListener,null);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);}
+ finally{await session.close();}
 });
