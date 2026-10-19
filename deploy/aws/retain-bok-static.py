@@ -68,6 +68,17 @@ class NoRedirect(HTTPRedirectHandler):
         raise ValueError('Artifact origin redirected')
 
 
+def check_destination(s3, bucket, prefix, wanted, complete=False):
+    found = set()
+    for page in s3.get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix + '/'):
+        for item in page.get('Contents', []):
+            key = item['Key']
+            assert key in wanted and key not in found, 'Unexpected objects in publication prefix'
+            found.add(key)
+    if complete:
+        assert found == wanted, 'Incomplete publication prefix'
+
+
 def stage(catalog, origin, bucket, prefix, s3):
     parsed = urlsplit(origin)
     assert parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password
@@ -75,6 +86,8 @@ def stage(catalog, origin, bucket, prefix, s3):
     assert re.fullmatch(r'[a-z0-9][a-z0-9-]{1,61}[a-z0-9]', bucket)
     assert re.fullmatch(r'published/[a-zA-Z0-9-]{1,80}', prefix)
     routes = public_routes(catalog)
+    wanted = {prefix + '/' + route for route in routes}
+    check_destination(s3, bucket, prefix, wanted)
     opener = build_opener(NoRedirect)
     # Read and authenticate every public byte before writing any destination.
     bodies = {}
@@ -114,6 +127,7 @@ def stage(catalog, origin, bucket, prefix, s3):
         assert all(observed.get(k) == v for k, v in headers.items())
         assert observed['ServerSideEncryption'] == 'AES256'
         inventory.append({'route': '/' + route, 'key': key, **item, 'bytes': len(body)})
+    check_destination(s3, bucket, prefix, wanted, complete=True)
     return {'schema': 1, 'bucket': bucket, 'prefix': prefix, 'catalogSha256': sha(json.dumps(catalog, sort_keys=True).encode()),
             'objects': inventory, 'bytes': total, 'distributionChanged': False}
 
