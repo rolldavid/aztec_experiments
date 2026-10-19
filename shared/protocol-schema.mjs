@@ -129,7 +129,7 @@ export function validateFeedEvent(event, expected) {
 
 // Inclusion status and execution result are deliberately independent. Unknown
 // results cannot become successful simply because a receipt is no longer pending.
-export function receiptDisposition(receipt, minimumInclusion = 'finalized') {
+export function receiptDisposition(receipt, minimumInclusion = 'checkpointed') {
   const ranks = { proposed: 0, checkpointed: 1, proven: 2, finalized: 3 };
   if (!Object.hasOwn(ranks, minimumInclusion)) throw new Error('Invalid confirmation policy');
   if (!receipt || typeof receipt !== 'object') return 'unknown';

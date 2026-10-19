@@ -8,9 +8,8 @@ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {unpackText} from './protocol.mjs';
 
 /** Reference implementation of the board port; workers import only its interface. */
-export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArtifact,operator,finality='finalized'}) {
+export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArtifact,operator,finality='checkpointed'}) {
   if(!['finalized','checkpointed'].includes(finality))throw Error('Invalid confirmation policy');
-  if(finality==='checkpointed'&&scope.chainId!=='31337')throw Error('Checkpointed execution is devnet-only');
   const instance=await node.getContract(AztecAddress.fromStringUnsafe(scope.boardAddress),'latest');if(!instance)throw Error('Board not deployed');await wallet.registerContract(instance,boardArtifact);
   const board=await Contract.at(AztecAddress.fromStringUnsafe(scope.boardAddress),boardArtifact,wallet);
   const read=async(name,...args)=>(await board.methods[name](...args).simulate({from:NO_FROM})).result;
@@ -28,7 +27,7 @@ export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArt
       return {text:unpackText(fields.map(String),Number(length)),receiver:receiver.toString(),enabled,flagged,
         replyPostId:BigInt(reply)===0n?null:new Fr(BigInt(reply)).toString(),
         // Compare the recorded publication block to the confirmed chain tip.
-        finalized:headNumber!==undefined&&BigInt(publishedBlock)>0n&&BigInt(publishedBlock)<=BigInt(headNumber)};
+        confirmed:headNumber!==undefined&&BigInt(publishedBlock)>0n&&BigInt(publishedBlock)<=BigInt(headNumber)};
     },
   };
 }

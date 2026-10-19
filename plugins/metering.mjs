@@ -27,7 +27,7 @@ export function quoteCall(spec,available,requestedTokens){
  return {inputBound,inputPrice,outputPrice,cachePrice,maxTokens,maximum:usageCharge(inputBound,maxTokens,boundPrice,outputPrice)};
 }
 
-/** One finalized on-chain budget for the whole invocation; no shared billing state. */
+/** One checkpointed on-chain budget for the whole invocation; no shared billing state. */
 export function meteredModel({provider,escrow,postId,onProgress=()=>{}}){
  let reservation=null,spent=0n,uncertain=false;
  const receipts=[];

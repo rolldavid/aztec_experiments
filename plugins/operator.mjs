@@ -111,14 +111,14 @@ export async function operatorCommand({command,config,statePath,actor,ethereumKe
   onProgress('read-portal');if(String(await portal.escrow())!==escrowAddress||(await portal.token()).toLowerCase()!==config.tokenAddress.toLowerCase())throw Error('Portal identity mismatch');
   if(command==='activate'){
    onProgress('activate-portal');
-   if(!await portal.active())await ethSend(command,await portal.activate.populateTransaction(...await outboxArguments(node,TxHash.fromString(store.read().operations.bind.hash),{requireFinalized:!config.development})));return {active:true};
+   if(!await portal.active())await ethSend(command,await portal.activate.populateTransaction(...await outboxArguments(node,TxHash.fromString(store.read().operations.bind.hash))));return {active:true};
   }
   const descriptor=validateDescriptor({protocol:API_VERSION,scope:{chainId:chain,rollupVersion:config.rollupVersion,rollupAddress:config.rollupAddress,boardAddress:config.boardAddress,receiver:escrowAddress},funding:{protocol:'aztec-escrow-usdc/v1',portalAddress,tokenAddress:config.tokenAddress},description:config.description||config.handle},{chainId:chain,rollupVersion:config.rollupVersion,rollupAddress:config.rollupAddress,boardAddress:config.boardAddress,receiver:escrowAddress});
   if(command==='config')return {descriptor,nodeUrl:config.nodeUrl,ethereumUrl:config.ethereumUrl,development:!!config.development,host:'127.0.0.1',port:8787,repository:config.repository,operatorFile:config.operatorFile};
   if(command==='redeem-earnings'){
    const w=store.read().withdrawal;if(!w)throw Error('No earnings withdrawal pending');
    const txHash=TxHash.fromString(store.read().operations['withdraw-'+w.nonce].hash);
-   await ethSend('redeem-'+w.nonce,await portal.withdraw.populateTransaction(w.recipient,parseUnits(w.amount,6),w.nonce,...await outboxArguments(node,txHash,{requireFinalized:!config.development})));
+   await ethSend('redeem-'+w.nonce,await portal.withdraw.populateTransaction(w.recipient,parseUnits(w.amount,6),w.nonce,...await outboxArguments(node,txHash)));
    await store.write({...store.read(),withdrawal:null});return {redeemedUSDC:w.amount};
   }
   if(!['bind','register','earnings','withdraw-earnings'].includes(command))throw Error('Unknown operator command');
@@ -215,10 +215,10 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
     if(Number(await tokenContract.decimals(tag))!==6)throw Error('Six decimal token required');
     return true;
    };
-   const canonicalHead=async()=>{const h=await provider.getBlock(config.development?'latest':'finalized');if(!h||!Number.isSafeInteger(h.number)||!h.hash)throw Error('L1 anchor unavailable');return h;};
+   const canonicalHead=async()=>{const h=await provider.getBlock('latest');if(!h||!Number.isSafeInteger(h.number)||!h.hash)throw Error('L1 anchor unavailable');return h;};
    const verifyCurrentPortal=async(active)=>{const h=await canonicalHead();await verifyPortal(portalAddress(),h.number,active);if((await provider.getBlock(h.number))?.hash!==h.hash)throw Error('L1 anchor changed');await checkNetwork();};
    const checkBok=async({portal,registered=false,unbound=false}={})=>{
-    await checkNetwork();const h=await node.getBlock(config.development?'checkpointed':'finalized');
+    await checkNetwork();const h=await node.getBlock('checkpointed');
     if(!h||!Number.isSafeInteger(h.number)||!h.hash)throw Error('L2 anchor unavailable');
     const anchor={number:h.number,hash:h.hash},current=await node.getContract(instance.address,anchor);
     for(const name of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(current?.[name])!==expected[name])throw Error('Bok instance changed');
@@ -288,7 +288,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
    if(command==='activate'){
     const result=await ethereumSend(command,async signer=>{
      await verifyCurrentPortal(false);await checkReady();
-     const args=await outboxArguments(node,TxHash.fromString(lifecycleRecord('bind').hash),{requireFinalized:!config.development});
+     const args=await outboxArguments(node,TxHash.fromString(lifecycleRecord('bind').hash));
      const data=factory.interface.encodeFunctionData('activate',args);return {transaction:{to:portalAddress(),data,value:0n},metadata:{from:signer.address.toLowerCase(),data:data.toLowerCase()}};
     });return {...result,portalReady:result.status==='succeeded',hostedServiceReady:false};
    }
@@ -444,8 +444,8 @@ export async function readSepoliaNonceSources({statePath,plan,resolution,success
 export async function verifyTestnetBootstrapDeposit({plan,provider,portal}){
  const intent={from:plan.depositFrom,to:plan.feePortal,nonce:plan.depositNonce,chainId:plan.chainId,value:'0',data:portal.interface.encodeFunctionData('depositToAztecPublic',[plan.actor,plan.claimAmount,plan.claimSecretHash]).toLowerCase(),expected:{kind:'fee-deposit',recipient:plan.actor,amount:plan.claimAmount,secretHash:plan.claimSecretHash}};
  const result=await verifyEthereumIntentReceipt(provider,intent,plan.depositTxHash);
- const head=await provider.getBlock('finalized');
- if(result?.outcome!=='success'||!head?.hash||head.number<result.receipt.blockNumber||String(result.event.key)!==plan.messageHash||String(result.event.index)!==plan.messageLeafIndex)throw Error('Current finalized FeeJuice deposit required');
+ const head=await provider.getBlock('latest');
+ if(result?.outcome!=='success'||!head?.hash||head.number<result.receipt.blockNumber||String(result.event.key)!==plan.messageHash||String(result.event.index)!==plan.messageLeafIndex)throw Error('Current canonical FeeJuice deposit required');
  const tag={blockTag:result.receipt.blockNumber};
  if((await portal.ROLLUP(tag)).toLowerCase()!==plan.rollupAddress||(await portal.UNDERLYING(tag)).toLowerCase()!==plan.feeToken||String(await portal.VERSION(tag))!==plan.rollupVersion||String(await portal.L2_TOKEN_ADDRESS(tag))!==ProtocolContractAddress.FeeJuice.toString()||(await provider.getBlock(result.receipt.blockNumber))?.hash!==result.receipt.blockHash)throw Error('FeeJuice deposit network mismatch');
  return result;
@@ -529,7 +529,7 @@ export async function deployTestnetFundingRouter({plan:input,statePath,keyFile,q
   const factory=new ContractFactory(artifact.abi,artifact.bytecode.object),creation=(await factory.getDeployTransaction(plan.collateralPortal,plan.feePortal,plan.bokPortal,plan.weth,plan.swapRouter,plan.privateFpc)).data.toLowerCase();
   const expectedAddress=getCreateAddress({from:plan.owner,nonce:plan.nonce}).toLowerCase();
   const checkScope=async()=>{
-   const [info,chain,broadcastChain,h,l2]=await Promise.all([node.getNodeInfo(),provider.getNetwork(),broadcaster.getNetwork(),provider.getBlock('finalized'),node.getBlock('finalized')]);
+   const [info,chain,broadcastChain,h,l2]=await Promise.all([node.getNodeInfo(),provider.getNetwork(),broadcaster.getNetwork(),provider.getBlock('latest'),node.getBlock('checkpointed')]);
    if(chain.chainId!==11155111n||broadcastChain.chainId!==11155111n||info.realProofs!==true||String(info.l1ChainId)!==plan.chainId||String(info.rollupVersion)!==plan.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==plan.rollupAddress||String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase()!==plan.feePortal||String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase()!==plan.feeToken||!h?.hash||!l2?.hash)throw Error('Current network identity unavailable');
    for(const [address,classId]of [[plan.boardAddress,boardClass],[plan.bokAddress,bokClass],[plan.privateFpc,String(feeInstance.currentContractClassId)]]){
     const instance=await node.getContract(AztecAddress.fromStringUnsafe(address),{number:l2.number,hash:String(l2.hash)});

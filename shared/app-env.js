@@ -222,7 +222,6 @@ function publicOperationFailure(error) {
     BB_SUBMISSION_UNKNOWN:'Submission outcome is unknown. Keep the transaction record and check its receipt before retrying.',
     PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN:'Fee funding outcome is unknown. Keep its recovery file and check the transaction before retrying.',
     BB_PRIVATE_FEE_AMOUNT:'Deposit more than the configured maximum claim fee.',
-    BB_TRANSACTION_FINALITY_PENDING:'The previous transaction failed and is awaiting network finality. Keep its saved record and try again once it is finalized.',
     BB_TRANSACTION_FAILED:'The transaction did not execute successfully. Check its receipt before trying again.',
     BB_STATE_CONFLICT:'Transaction state changed. Refresh the account before creating a new proof.',
     BB_NO_SAVED_ETHEREUM_TRANSACTION:'No saved Ethereum request exists for this wallet and portal.',

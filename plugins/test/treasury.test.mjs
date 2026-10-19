@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {concat,toBeHex,zeroPadValue,ZeroHash} from 'ethers';
-import {CCTP_ROUTES,FORWARD_HOOK,messengerAbi,transmitterAbi,forwardingFee,burnTransaction,verifyBurn,verifyForward,finalizedReceipt} from '../treasury-cctp.mjs';
+import {CCTP_ROUTES,FORWARD_HOOK,messengerAbi,transmitterAbi,forwardingFee,burnTransaction,verifyBurn,verifyForward,canonicalReceipt} from '../treasury-cctp.mjs';
 const route=CCTP_ROUTES.testnet,word=v=>toBeHex(v,32),addr=a=>zeroPadValue(a,32),u32=v=>toBeHex(v,4);
 const intent={sender:'0x1111111111111111111111111111111111111111',recipient:'0x2222222222222222222222222222222222222222',amount:'1000000',maxFee:'60000'};
 function body({fee=0n,recipient=intent.recipient,amount=1000000n,hook=FORWARD_HOOK}={}){return concat([u32(1),addr(route.sourceToken),addr(recipient),word(amount),addr(intent.sender),word(60000),word(fee),word(0),hook]);}
@@ -33,9 +33,10 @@ test('forwarding quote obeys fixed treasury fee ceiling and rejects unknown fee 
 test('identical transfers cannot substitute a different received nonce',()=>{
  assert.throws(()=>verifyForward(route,outer(body()),attested(body({fee:50000n}),13),destination()),/mismatch/);
 });
-test('destination receipt must be finalized and canonical',async()=>{
- const receipt={blockNumber:10,blockHash:word(10)};
- assert.equal(await finalizedReceipt({getBlock:async tag=>tag==='finalized'?{number:9}:{hash:word(10)}},receipt),false);
- assert.equal(await finalizedReceipt({getBlock:async tag=>tag==='finalized'?{number:10}:{hash:word(11)}},receipt),false);
- assert.equal(await finalizedReceipt({getBlock:async tag=>tag==='finalized'?{number:10}:{hash:word(10)}},receipt),true);
+test('destination completion uses mined canonical receipt without a finality wait',async()=>{
+ const receipt={status:1,blockNumber:10,blockHash:word(10)};
+ const provider={getBlock:async number=>{assert.equal(number,10);return {hash:word(10)};}};
+ assert.equal(await canonicalReceipt(provider,receipt),true);
+ assert.equal(await canonicalReceipt(provider,{...receipt,status:0}),false);
+ assert.equal(await canonicalReceipt({getBlock:async()=>({hash:word(11)})},receipt),false);
 });

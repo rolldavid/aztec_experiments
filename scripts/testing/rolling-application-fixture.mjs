@@ -1293,7 +1293,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }else{
             assert.equal(r.executionResult,'reverted');assert.equal(settled[i].error?.code,'BB_TRANSACTION_FAILED');assert.equal(reconciled.status,'reverted');events.push([]);
             assert.equal(boardLogs.at(-1).length,0);
-            if(r.status!=='finalized')await assert.rejects(actor.journal.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+            assert((await actor.journal.assertCanStart()).tx);
           }
           const head=await actor.application.ownedIdentities(),tail=await actor.application.ownedIdentities({cursor:8});ownership.push({head,tail});
           row.events=events.at(-1).map(e=>e.type);row.submission='included';await save();
@@ -1512,8 +1512,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
         assert.equal(reconciled.status,race&&before.outcome==='reverted'?'reverted':'confirmed');assert.equal(reconciled.txHash,before.txHash);
         assert.deepEqual(actor.activity(),activity);
-        if(race&&before.outcome==='reverted'&&before.receipt.status!=='finalized')await assert.rejects(actor.journal.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
-        else assert((await actor.journal.assertCanStart()).tx);
+        assert((await actor.journal.assertCanStart()).tx);
         assert.equal((await actor.journal.inspect()).txHash,before.txHash);
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }

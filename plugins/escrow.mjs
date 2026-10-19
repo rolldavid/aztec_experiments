@@ -16,7 +16,7 @@ export async function aztecEscrowPort({wallet,node,address,artifact,operator,dev
   const submitted=submissions.then(()=>c.methods[name](...args).send({from:operator,wait:NO_WAIT}));
   submissions=submitted.then(()=>{},()=>{});
   const {txHash}=await submitted;
-  return waitForTx(node,txHash,{timeout:development?180:7200,waitForStatus:!development&&name==='reserve'?TxStatus.FINALIZED:TxStatus.CHECKPOINTED});
+  return waitForTx(node,txHash,{timeout:180,waitForStatus:TxStatus.CHECKPOINTED});
  };
  const invocation=async post=>{const [account,state,call,reserved,charged,deadline]=await read('invocation',Fr.fromString(post));return {account,state:Number(state),call:Number(call),reserved:BigInt(reserved),charged:BigInt(charged),deadline:Number(deadline)};};
  const assertUsable=async(post,reservation)=>{

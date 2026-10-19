@@ -85,11 +85,11 @@ export async function recordedTransaction({store,name,identity,prepare,broadcast
  await broadcast(record);
  const receipt=await wait(record);return {record,receipt};
 }
-export async function outboxArguments(node,txHash,{requireFinalized=true}={}){
- if(requireFinalized){
+export async function outboxArguments(node,txHash){
+ {
   const receipt=await node.getTxReceipt(txHash);
   if(receipt.executionResult==='reverted'||receipt.status==='dropped')throw Error('Portal source transaction failed');
-  if(receipt.status!=='finalized'||receipt.executionResult!=='success')throw Error('Portal message awaits network finality; run this command again later');
+  if(!['checkpointed','proven','finalized'].includes(receipt.status)||receipt.executionResult!=='success')throw Error('Portal source transaction awaits checkpoint inclusion');
  }
  const effect=await node.getTxEffect(txHash),messages=effect?.data.l2ToL1Msgs.filter(x=>!x.isZero());
  if(messages?.length!==1)throw Error('Expected one portal message');
@@ -220,7 +220,7 @@ export async function reconcileRollingOperation({record,development,expected,rea
  try{
   if(record.phase!=='submission-unknown'||typeof record.raw!=='string'||! /^(?:[0-9a-f]{2})+$/.test(record.raw)||record.raw.length>16*1024**2||!await reads.signed(record.raw,record.hash))return unknown();
   const r=await reads.receipt(record.hash);
-  if(String(r?.txHash)!==record.hash||!['checkpointed','proven','finalized'].includes(r.status)||(!development&&r.status!=='finalized')||!['success','reverted'].includes(r.executionResult)||!Number.isSafeInteger(r.blockNumber)||r.blockNumber<1||typeof r.blockHash!=='string'||!/^0x[0-9a-f]{64}$/.test(r.blockHash))return unknown();
+  if(String(r?.txHash)!==record.hash||!['checkpointed','proven','finalized'].includes(r.status)||!['success','reverted'].includes(r.executionResult)||!Number.isSafeInteger(r.blockNumber)||r.blockNumber<1||typeof r.blockHash!=='string'||!/^0x[0-9a-f]{64}$/.test(r.blockHash))return unknown();
   const anchor={number:r.blockNumber,hash:r.blockHash};
   const block=await reads.block(anchor.number),effect=await reads.effect(record.hash);
   if(String(block?.hash)!==anchor.hash||String(effect?.l2BlockHash)!==anchor.hash||effect?.l2BlockNumber!==anchor.number||String(effect?.data?.txHash)!==record.hash||effect.data.revertCode.isOK()!==(r.executionResult==='success'))return unknown();
@@ -233,9 +233,9 @@ export async function reconcileRollingOperation({record,development,expected,rea
    };
    if(!await matchesInstance(anchor))return unknown();
    // PublicImmutable constructor fields survive pruning of the deployment's world-state
-   // snapshot. Bind their current value to a finalized instance and recheck that anchor;
+   // snapshot. Bind their current value to a checkpointed instance and recheck that anchor;
    // transaction inclusion/effects remain bound to the original receipt above.
-   const head=await reads.head(development?'checkpointed':'finalized');
+   const head=await reads.head('checkpointed');
    if(!Number.isSafeInteger(head?.number)||head.number<anchor.number||!/^0x[0-9a-f]{64}$/.test(String(head.hash)))return unknown();
    const immutableAnchor={number:head.number,hash:String(head.hash)};
    if(immutableAnchor.number!==anchor.number||immutableAnchor.hash!==anchor.hash){if(!await matchesInstance(immutableAnchor))return unknown();}
@@ -312,7 +312,7 @@ export function verifyPluginPortalRuntime(actual,deployed,immutableCount=6) {
  if(!observed.equals(template))throw rejected();return true;
 }
 /** No send path: authenticate retained signed L1 bytes, receipt, original block
- * and required finality before checking the operation's exact on-chain effect. */
+ * and canonical inclusion before checking the operation's exact on-chain effect. */
 export async function reconcileRollingEthereum({record,development,reads,scope='portal-registration'}) {
  if(!['portal-registration','aggregate-funding','liquidity-seed','funding-router'].includes(scope))throw rejected();
  const unknown=()=>({status:'unresolved',scope,canonical:false,...(typeof record?.hash==='string'?{transactionHash:record.hash}:{})});
@@ -322,7 +322,7 @@ export async function reconcileRollingEthereum({record,development,reads,scope='
   if(receipt?.hash!==record.hash||![0,1].includes(receipt.status)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||typeof receipt.blockHash!=='string'||!/^0x[0-9a-f]{64}$/.test(receipt.blockHash))return unknown();
   const anchor={number:receipt.blockNumber,hash:receipt.blockHash};
   if((await reads.block(anchor.number))?.hash!==anchor.hash)return unknown();
-  const head=await reads.head(development?'latest':'finalized');if(!Number.isSafeInteger(head?.number)||head.number<anchor.number)return unknown();
+  const head=await reads.head('latest');if(!Number.isSafeInteger(head?.number)||head.number<anchor.number)return unknown();
   if(receipt.status===1&&!await reads.effect(record,anchor,receipt))return unknown();
   if((await reads.block(anchor.number))?.hash!==anchor.hash)return unknown();
   return {status:receipt.status===1?'succeeded':'failed',scope,canonical:true,transactionHash:record.hash,blockNumber:anchor.number,blockHash:anchor.hash};

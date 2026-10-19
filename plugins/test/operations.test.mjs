@@ -30,10 +30,10 @@ test('saved signed transaction is reused after interruption before broadcast',as
  await assert.rejects(recordedTransaction(args),/offline/);await recordedTransaction(args);assert.equal(prepares,1);assert.equal(broadcasts,2);
  await assert.rejects(recordedTransaction({...args,identity:'another'}),/different/);
 });
-test('public portal operations require finalized successful source even when a witness is available',async()=>{
+test('public portal operations use successful inclusion and actual settled Outbox witness',async()=>{
  const {outboxArguments}=await import('../operations.mjs');let witnesses=0;
  const node={getTxReceipt:async()=>({status:'checkpointed',executionResult:'success'}),getTxEffect:async()=>({data:{l2ToL1Msgs:[{isZero:()=>false}]}}),getL2ToL1MembershipWitness:async()=>{witnesses++;return {epochNumber:1,numCheckpointsInEpoch:2,leafIndex:3n,siblingPath:{toBufferArray:()=>[]}};}};
- await assert.rejects(outboxArguments(node,'tx'),/finality/);assert.equal(witnesses,0);
+ assert.deepEqual(await outboxArguments(node,'tx'),[1n,2n,3n,[]]);assert.equal(witnesses,1);
  node.getTxReceipt=async()=>({status:'finalized',executionResult:'reverted'});await assert.rejects(outboxArguments(node,'tx'),/failed/);
  node.getTxReceipt=async()=>({status:'finalized',executionResult:'success'});assert.deepEqual(await outboxArguments(node,'tx'),[1n,2n,3n,[]]);
  node.getL2ToL1MembershipWitness=async()=>undefined;await assert.rejects(outboxArguments(node,'tx'),/settlement/);
@@ -116,7 +116,7 @@ test('rolling constructor success requires canonical effect class deployer and a
 });
 test('old deployment remains reconcilable after historical world-state pruning',async()=>{
  const f=reconciliation(),before=JSON.stringify(f.record),seen=[];
- f.reads.head=async tag=>{assert.equal(tag,'finalized');return {number:100,hash:field(100)};};
+ f.reads.head=async tag=>{assert.equal(tag,'checkpointed');return {number:100,hash:field(100)};};
  f.reads.block=async number=>({hash:field(number)});
  f.reads.instance=async(_,anchor)=>{seen.push(anchor.number);return f.expected;};
  f.reads.storage=async(_,key,anchor)=>{assert.deepEqual(anchor,{number:100,hash:field(100)});return f.expected.storage[key];};
@@ -135,8 +135,8 @@ test('current immutable anchor cannot predate deployment, change class, lose fin
  }
  const local=reconciliation();local.development=true;local.receipt.status='checkpointed';local.reads.head=async tag=>{assert.equal(tag,'checkpointed');return {number:8,hash:field(8)};};assert.equal((await reconcileRollingOperation(local)).status,'succeeded');
 });
-test('missing pending dropped nonfinalized and unavailable receipts never qualify or mutate record',async()=>{
- for(const status of ['pending','proposed','dropped','checkpointed','unknown']){const f=reconciliation();f.receipt.status=status;const before=JSON.stringify(f.record);assert.equal((await reconcileRollingOperation(f)).status,'unresolved');assert.equal(JSON.stringify(f.record),before);}
+test('missing pending dropped uncheckpointed and unavailable receipts never qualify or mutate record',async()=>{
+ for(const status of ['pending','proposed','dropped','unknown']){const f=reconciliation();f.receipt.status=status;const before=JSON.stringify(f.record);assert.equal((await reconcileRollingOperation(f)).status,'unresolved');assert.equal(JSON.stringify(f.record),before);}
  const f=reconciliation();f.reads.receipt=async()=>{throw Error('PRIVATE_PROVIDER_SENTINEL');};assert(!JSON.stringify(await reconcileRollingOperation(f)).includes('PRIVATE_PROVIDER'));
 });
 test('canonical reconciliation rejects wrong transaction effect block and reorg',async()=>{
@@ -148,9 +148,9 @@ test('constructor reconciliation rejects changed class owner address and every c
  for(const key of ['board','operator','owner','l1_chain','version']){const f=reconciliation();f.reads.storage=async(_,fieldName)=>fieldName===key?field(99):f.expected.storage[fieldName];assert.equal((await reconcileRollingOperation(f)).status,'unresolved');}
  const f=reconciliation();f.reads.address=async()=>field(99);assert.equal((await reconcileRollingOperation(f)).status,'unresolved');
 });
-test('reverted canonical transaction is failure and local checkpoint is development only',async()=>{
+test('reverted canonical transaction is failure and checkpoint succeeds on testnet and devnet',async()=>{
  const f=reconciliation();f.receipt.executionResult='reverted';f.effect.data.revertCode.isOK=()=>false;f.reads.instance=()=>assert.fail();assert.equal((await reconcileRollingOperation(f)).status,'failed');
- const local=reconciliation();local.receipt.status='checkpointed';assert.equal((await reconcileRollingOperation(local)).status,'unresolved');local.development=true;assert.equal((await reconcileRollingOperation(local)).status,'succeeded');
+ const local=reconciliation();local.receipt.status='checkpointed';assert.equal((await reconcileRollingOperation(local)).status,'succeeded');local.development=true;assert.equal((await reconcileRollingOperation(local)).status,'succeeded');
 });
 
 const rpcBody=[{jsonrpc:'2.0',id:1,method:'aztec_getNodeInfo',params:[]}];
@@ -335,7 +335,7 @@ test('Sepolia seed finalized mint after expiry retains bounded exact zero-allowa
   let value={seedLiquidity:{schemaVersion:1,binding:createHash('sha256').update(identity).digest('hex'),entered:[]},operations:{}};const receipts=new Map();
   async function sign(s){return (s.from===plan.owner?owner:inventory).signTransaction({type:2,chainId:11155111,nonce:s.nonce,to:s.to,data:s.data,value:s.value,gasLimit:s.gasLimit,maxFeePerGas:s.maxFeePerGas,maxPriorityFeePerGas:s.maxPriorityFeePerGas});}
   for(const step of steps.slice(0,steps.findIndex(s=>s.name==='revoke-fee'))){const raw=await sign(step),hash=keccak256(raw);value.seedLiquidity.entered.push(step.name);value.operations[step.name]={schemaVersion:1,policy:'reconcile-only',identity:identity+':'+step.name,phase:'submission-unknown',raw:raw.slice(2),hash};receipts.set(hash,{hash,status:step.pool?mintStatus:1,blockNumber:10,blockHash:'0x'+'a'.repeat(64)});}
-  let signed=0,sent=0;const store={read:()=>value,write:async n=>{value=structuredClone(n);}},ports={receipt:async h=>receipts.get(h)??null,block:async()=>({hash:'0x'+'a'.repeat(64)}),head:async tag=>{assert.equal(tag,'finalized');return{number:11};},effect:async()=>true,preflight:async()=>{},sign:async s=>{signed++;return sign(s);},broadcast:async()=>{sent++;}};
+  let signed=0,sent=0;const store={read:()=>value,write:async n=>{value=structuredClone(n);}},ports={receipt:async h=>receipts.get(h)??null,block:async()=>({hash:'0x'+'a'.repeat(64)}),head:async tag=>{assert.equal(tag,'latest');return{number:11};},effect:async()=>true,preflight:async()=>{},sign:async s=>{signed++;return sign(s);},broadcast:async()=>{sent++;}};
   const args={plan,stage:'revoke-fee',store,ports,now:()=>plan.expiresAt*1000+1};assert.equal((await runSepoliaLiquidityStage(args)).status,'unresolved');assert.deepEqual([signed,sent],[1,1]);
   assert.equal((await runSepoliaLiquidityStage({...args,now:()=>plan.cleanupExpiresAt*1000+1})).status,'unresolved');assert.deepEqual([signed,sent],[1,1]);
  }
@@ -354,7 +354,7 @@ async function seedResolutionFixture(){
   if(step.name!=='approve-usdc')receipts.set(hash,{hash,status:1,blockNumber:10,blockHash:anchor});
  }
  const resolution={schemaVersion:1,originalPlanSha256:binding,originalTransactionHash:original.operations['approve-usdc'].hash,expiresAt:plan.expiresAt+60};
- const ports={receipt:async h=>receipts.get(h)??null,block:async n=>({hash:blockHashes.get(n)??canonical}),head:async tag=>{assert.equal(tag,'finalized');return {number:finalized};},effect:async()=>validEffect,cancellationEffect:async()=>validEffect,
+ const ports={receipt:async h=>receipts.get(h)??null,block:async n=>({hash:blockHashes.get(n)??canonical}),head:async tag=>{assert.equal(tag,'latest');return {number:finalized};},effect:async()=>validEffect,cancellationEffect:async()=>validEffect,
   preflightCancellation:async()=>{preflights++;},preflightContinuation:async()=>{preflights++;},preflight:async()=>{preflights++;},sign:async s=>{signedSteps.push(s);return sign(s);},broadcast:async raw=>{broadcasts.push(raw);}};
  const args={plan,resolution,originalStore:{read:()=>original},store:{read:()=>saved,write:async value=>{saved=structuredClone(value);}},ports,now:()=>plan.expiresAt*1000};
  const continuation=()=>({...args,cancellationStore:args.store,store:{read:()=>remaining,write:async value=>{remaining=structuredClone(value);}},remainingPlan:{...plan,campaign:'sepolia-seed-resolved-controlled',ownerNonce:steps.find(s=>s.name==='approve-usdc').nonce+1,expiresAt:plan.expiresAt+600,cleanupExpiresAt:plan.cleanupExpiresAt+600}});
@@ -936,7 +936,7 @@ test('router reconciliation authenticates signed gas caps and finalized exact re
  const transaction={chainId:11155111n,nonce:20,type:2,to:null,value:0n,data:creation,gasLimit:2000000n,maxFeePerGas:2000000000n,maxPriorityFeePerGas:1000000n},raw=await wallet.signTransaction(transaction),record={phase:'submission-unknown',hash:Transaction.from(raw).hash,raw:raw.slice(2)};
  const match=r=>matchTestnetRouterSigned({record:r,plan,creation,parse:Transaction.from});assert.equal(match(record),true);
  for(const change of [{gasLimit:2000001n},{maxFeePerGas:2000000001n},{maxPriorityFeePerGas:1000001n},{nonce:21},{chainId:31337n},{data:'0x6001'},{value:1n},{accessList:[{address:wallet.address,storageKeys:[]}]}]){const changed=await wallet.signTransaction({...transaction,...change});assert.equal(match({phase:'submission-unknown',hash:Transaction.from(changed).hash,raw:changed.slice(2)}),false);}
- let head=49,effect=true,effects=0;const blockHash=field(25),reads={signed:async r=>match(r),receipt:async()=>({hash:record.hash,status:1,blockNumber:50,blockHash}),block:async()=>({hash:blockHash}),head:async tag=>{assert.equal(tag,'finalized');return {number:head};},effect:async()=>{effects++;return effect;}};
+ let head=49,effect=true,effects=0;const blockHash=field(25),reads={signed:async r=>match(r),receipt:async()=>({hash:record.hash,status:1,blockNumber:50,blockHash}),block:async()=>({hash:blockHash}),head:async tag=>{assert.equal(tag,'latest');return {number:head};},effect:async()=>{effects++;return effect;}};
  const run=()=>reconcileRollingEthereum({record,development:false,scope:'funding-router',reads});assert.equal((await run()).status,'unresolved');assert.equal(effects,0);head=50;assert.equal((await run()).status,'succeeded');effect=false;assert.equal((await run()).status,'unresolved');effect=true;reads.block=async()=>({hash:field(26)});assert.equal((await run()).status,'unresolved');
 });
 
@@ -962,14 +962,14 @@ test('bootstrap readiness is retryable without intent, but interrupted proof and
  assert.equal((await runTestnetBootstrap(args)).status,'unresolved');assert.equal(store.read().operations['bootstrap-private-fee'].phase,'preparing');
  await runTestnetBootstrap({...args,preflight:()=>assert.fail('reopened secret')});assert.equal(calls,1);
 });
-test('bootstrap deposit uses the installed portal ABI and rejects wrong leaf, unfinalized deposit and wrong rollup',async()=>{
+test('bootstrap deposit uses the installed portal ABI and rejects wrong leaf, inconsistent head and wrong rollup',async()=>{
  const {verifyTestnetBootstrapDeposit}=await import('../operator.mjs'),{Interface}=await import('ethers'),{FeeJuicePortalAbi}=await import('@aztec-foundation/l1-artifacts'),{ProtocolContractAddress}=await import('@aztec-labs/protocol-contracts');
  const plan=bootstrapPlan(),iface=new Interface(FeeJuicePortalAbi),event=iface.encodeEventLog(iface.getEvent('DepositToAztecPublic'),[plan.actor,plan.claimAmount,plan.claimSecretHash,plan.messageHash,plan.messageLeafIndex]);
  const tx={hash:plan.depositTxHash,from:plan.depositFrom,to:plan.feePortal,nonce:plan.depositNonce,chainId:11155111n,value:0n,data:iface.encodeFunctionData('depositToAztecPublic',[plan.actor,plan.claimAmount,plan.claimSecretHash])},receipt={hash:tx.hash,from:tx.from,to:tx.to,status:1,blockNumber:50,blockHash:field(30),logs:[{address:plan.feePortal,...event}]};
- let finalized=50,rollup=plan.rollupAddress;const provider={getTransactionReceipt:async()=>receipt,getTransaction:async()=>tx,getBlock:async n=>({number:n==='finalized'?finalized:n,hash:field(30)})},portal={interface:iface,ROLLUP:async()=>rollup,UNDERLYING:async()=>plan.feeToken,VERSION:async()=>plan.rollupVersion,L2_TOKEN_ADDRESS:async()=>ProtocolContractAddress.FeeJuice.toString()};
+ let finalized=50,rollup=plan.rollupAddress;const provider={getTransactionReceipt:async()=>receipt,getTransaction:async()=>tx,getBlock:async n=>({number:n==='latest'?finalized:n,hash:field(30)})},portal={interface:iface,ROLLUP:async()=>rollup,UNDERLYING:async()=>plan.feeToken,VERSION:async()=>plan.rollupVersion,L2_TOKEN_ADDRESS:async()=>ProtocolContractAddress.FeeJuice.toString()};
  assert.equal((await verifyTestnetBootstrapDeposit({plan,provider,portal})).outcome,'success');
- finalized=49;await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}),/finalized/);finalized=50;
- await assert.rejects(verifyTestnetBootstrapDeposit({plan:{...plan,messageLeafIndex:'13'},provider,portal}),/finalized/);
+ finalized=49;await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}),/canonical/);finalized=50;
+ await assert.rejects(verifyTestnetBootstrapDeposit({plan:{...plan,messageLeafIndex:'13'},provider,portal}),/canonical/);
  rollup='0x'+'ff'.repeat(20);await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}),/network/);rollup=plan.rollupAddress;
  receipt.logs.push({...receipt.logs[0]});await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}));
 });

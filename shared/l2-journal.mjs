@@ -75,12 +75,11 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       if(acknowledged!==previous.tx.getTxHash().toString())throw fail();
       // A previous display or cached receipt cannot authorize a replacement
       // after a reorg. This check intentionally does not regenerate stale proofs.
-      const receipt=await waitForCanonicalReceipt(node,previous.tx,waitOptions);
-      // The pinned PXE retains reverted sender-tagging ranges until finality.
-      // Acknowledging the failure cannot make its missing predecessor safe to use.
-      if(receipt.executionResult==='reverted' && receipt.status!=='finalized') {
-        throw transactionError('BB_TRANSACTION_FINALITY_PENDING','The previous transaction reverted. Wait for network finality before starting another action; keep its saved record.');
-      }
+      await waitForCanonicalReceipt(node,previous.tx,waitOptions);
+      // A canonical revert resolves this journal entry. The PXE owns any
+      // per-secret tagging dependency when preparing the next transaction;
+      // it must not become a wallet-wide finality lock.
+
     }
     return previous;
   }

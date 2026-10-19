@@ -122,7 +122,7 @@ export async function pluginAccountAction({action,input,descriptor,sdk:a,handles
    if(verified.outcome==='success'){store.write({...state(),withdrawal:null});return {transactionHash:verified.receipt.hash};}
    delete record.redemption;store.write({...state(),withdrawal:record});
   }
-  if(scope.chainId!=='31337'&&(l2Receipt.status!=='finalized'||l2Receipt.executionResult!=='success'))throw Error('Withdrawal awaits network finality. Try claiming later.');
+  if(!['checkpointed','proven','finalized'].includes(l2Receipt.status)||l2Receipt.executionResult!=='success')throw Error('Withdrawal awaits successful checkpoint inclusion.');
   const effect=await h.aztecNode.getTxEffect(txHash);
   const leaf=effect?.data.l2ToL1Msgs.find(x=>!x.isZero());if(!leaf)throw Error('Withdrawal message unavailable');
   const w=await h.aztecNode.getL2ToL1MembershipWitness(txHash,leaf);

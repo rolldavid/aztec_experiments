@@ -10,6 +10,7 @@ import {Wallet,Contract,JsonRpcProvider,parseEther,formatEther,Interface,keccak2
 import {fileState,recordedTransaction} from '../plugins/operations.mjs';
 import {createAztecNodeClient} from '../shared/aztec-node-client.mjs';
 import {TxHash} from '@aztec-labs/stdlib/tx';
+import {waitForTx} from '@aztec-labs/aztec.js/node';
 import {onboardMetaMask,unpackMetaMask,discoverTestMetaMask,observeMetaMaskTransactions,assertMetaMaskTransaction} from './t04-metamask.mjs';
 import {installBrowserErrorObserver} from './browser-error-observer.mjs';
 import {createPublicFeedSource} from '../shared/public-feed-source.mjs';
@@ -146,8 +147,7 @@ try{
  assert.equal(await page.evaluate(()=>application.operation().status),'complete');await page.locator('#composer').waitFor({state:'visible'});
  const completedClaim=await page.evaluate(async()=>{const operation=application.operation();if(operation.action==='onboarding')return {hash:operation.result.lastL2TxHash,resumed:false};const claim=(await application.readActivity()).find(item=>item.layer==='aztec'&&item.kind==='claim'&&item.status==='confirmed');return {hash:claim?.txHash,resumed:true};});
  assert(!completedClaim.resumed||resumeDeposit);report.claimHashes=[completedClaim.hash];assert.match(report.claimHashes[0],/^0x[0-9a-f]{64}$/);
- const verify=async hash=>{const deadline=Date.now()+stageTimeout;let receipt;
-  while(Date.now()<deadline){receipt=await node.getTxReceipt(TxHash.fromString(hash));if(['checkpointed','proven','finalized'].includes(receipt.status))break;assert(!['dropped','reverted'].includes(receipt.status));await new Promise(r=>setTimeout(r,5000));}
+ const verify=async hash=>{const receipt=await waitForTx(node,TxHash.fromString(hash),{waitForStatus:'checkpointed',timeout:stageTimeout/1000});
   assert.equal(receipt.executionResult,'success');assert(['checkpointed','proven','finalized'].includes(receipt.status));const block=await node.getBlock(receipt.blockNumber);assert.equal(block.hash.toString(),receipt.blockHash.toString());return {txHash:hash,status:receipt.status,blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toString(),transactionFee:String(receipt.transactionFee)};};
  if(resumeDeposit){report.ethereumNonceAfter=await provider.getTransactionCount(identity.address,'latest');assert.equal(report.ethereumNonceAfter,nonceBefore,'Resuming must not send another Ethereum payment');report.ethereumPendingNonceAfter=await provider.getTransactionCount(identity.address,'pending');assert.equal(report.ethereumPendingNonceAfter,nonceBefore,'Resuming must not leave a new pending Ethereum payment');assert.equal(await page.evaluate(()=>globalThis.__walletTestPending??null),null,'Resuming must not request another Ethereum payment');}
  if(resumeFunded){report.ethereumNonceAfter=await provider.getTransactionCount(identity.address,'latest');assert.equal(report.ethereumNonceAfter,nonceBefore+1,'Funding retry must send only the board deposit');assert.equal(await provider.getTransactionCount(identity.address,'pending'),nonceBefore+1);assert.equal(await page.evaluate(()=>globalThis.__walletTestPending??null),null);}

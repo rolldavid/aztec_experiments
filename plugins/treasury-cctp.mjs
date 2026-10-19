@@ -51,9 +51,8 @@ export function verifyForward(route,sourceMessage,attestedMessage,receipt){
  if(fee>maximum||fee>=amount||padded(mint.mintRecipient)!==slice(body,36,68)||!same(mint.mintToken,route.destinationToken)||mint.amount!==amount-fee||mint.feeCollected!==fee)throw Error('Circle destination mint mismatch');
  return {receivedMicroUSDC:String(amount-fee),feeMicroUSDC:String(fee),destinationTransaction:receipt.hash};
 }
-export async function finalizedReceipt(provider,receipt){
- const finalized=await provider.getBlock('finalized');
- if(!finalized||finalized.number<receipt.blockNumber)return false;
+export async function canonicalReceipt(provider,receipt){
+ if(receipt?.status!==1||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<0)return false;
  const canonical=await provider.getBlock(receipt.blockNumber);
  return !!canonical&&same(canonical.hash,receipt.blockHash);
 }

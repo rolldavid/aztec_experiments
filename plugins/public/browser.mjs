@@ -31,7 +31,6 @@ try{
  // Readiness checks are read-only and do not consume a test phase or open a wallet.
  if(phase==='post'&&!await node.getL1ToL2MessageMembershipWitness('latest',Fr.fromString(report.deposit.key))){console.log('AWAITING Inbox');process.exitCode=0;}
  else if(phase==='reply'&&!beforeState.reply){console.log('AWAITING reply');process.exitCode=0;}
- else if(phase==='redeem'&&(await node.getTxReceipt(TxHash.fromString(report.withdrawal.txHash))).status!=='finalized'){console.log('AWAITING withdrawal finality');process.exitCode=0;}
  else{
  report.running=phase;await save();
  let expectedReply,settledInvocation,remainingBalance;

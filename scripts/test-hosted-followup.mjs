@@ -56,7 +56,7 @@ try{
   }else{
    const withdrawal=await readJson(path.join(directory,'withdraw.json'));assert(withdrawal.passed);assert.equal(String(amount),withdrawal.amount);
    const receipt=await node.getTxReceipt(TxHash.fromString(withdrawal.exit.hash));
-   if(receipt.status!=='finalized'){report.awaiting='network-finality';report.exitStatus=receipt.status;}
+   if(!['checkpointed','proven','finalized'].includes(receipt.status)){report.awaiting='checkpoint-inclusion';report.exitStatus=receipt.status;}
    else{
     const args=await outboxArguments(node,TxHash.fromString(withdrawal.exit.hash));await portal.withdraw.staticCall(...args,{from:identity.address});
     const before={liability:await portal.totalDeposited(),portalBalance:await provider.getBalance(config.board.portalAddress),depositorBalance:await provider.getBalance(identity.address)};
@@ -106,7 +106,7 @@ try{
    }
   }else if(phase==='plugin-redeem'){
    const prior=await readJson(path.join(directory,'plugin-reply-withdraw.json'));assert(prior.passed);const record=prior.withdrawal,receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));
-   if(receipt.status!=='finalized')report.awaiting='network-finality';else{
+   if(!['checkpointed','proven','finalized'].includes(receipt.status))report.awaiting='checkpoint-inclusion';else{
     const args=[record.recipient,BigInt(record.amount),record.nonce,...await outboxArguments(node,TxHash.fromString(record.txHash))];await portal.withdraw.staticCall(...args,{from:identity.address});const before=await token.balanceOf(identity.address),expected=portal.interface.encodeFunctionData('withdraw',args);let request;
     mark('redeem-unused-plugin-credit');await action('Redeem',async()=>{request=await approve(r=>{assert.equal(r.to.toLowerCase(),descriptor.funding.portalAddress.toLowerCase());assert.equal(r.data,expected);assert.equal(BigInt(r.value??0),0n);});});assert.equal(await token.balanceOf(identity.address),before+BigInt(record.amount));assert.equal((await saved()).withdrawal,null);assert.equal(await provider.getTransactionCount(identity.address,'latest'),nonceBefore+1);const replayError=new Interface(['error Outbox__AlreadyNullified(uint256 epoch,uint256 leafIndex)']);await assert.rejects(portal.withdraw.staticCall(...args,{from:identity.address}),e=>e.code==='CALL_EXCEPTION'&&!!e.data&&replayError.parseError(e.data)?.name==='Outbox__AlreadyNullified');report.amount=record.amount;report.replayRejected=true;report.passed=true;await save();
    }

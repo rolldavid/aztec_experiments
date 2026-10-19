@@ -27,7 +27,7 @@ export interface EscrowPort {
  invocation(postId:string):Promise<Invocation>;
  start(postId:string):Promise<unknown>;
 }
-export interface BoardRequest {text:string;receiver:string;enabled:boolean;flagged:boolean;replyPostId:string|null;finalized:boolean}
+export interface BoardRequest {text:string;receiver:string;enabled:boolean;flagged:boolean;replyPostId:string|null;confirmed:boolean}
 export interface BoardPort {readRequest(postId:string):Promise<BoardRequest|null>}
 export interface Quote {maximum:bigint;maxTokens:number;modelId:string;inputBound:number;inputPrice:bigint;outputPrice:bigint;cachePrice:bigint|null}
 export interface MeteredProvider {

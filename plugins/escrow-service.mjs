@@ -111,7 +111,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
    for(const job of sameAccount)if((await escrow.invocation(job.post)).reserved===0n){deferred.add(index);return;}
   }
   const request=await board.readRequest(post);
-  if(!request||!request.finalized){deferred.add(index);return;}
+  if(!request||!request.confirmed){deferred.add(index);return;}
   if(request.flagged||!request.enabled||request.receiver!==descriptor.scope.receiver){deferred.delete(index);return;}
   deferred.delete(index);
   const job={post,account,promise:null};jobs.set(post,job);

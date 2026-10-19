@@ -117,9 +117,11 @@ test('job identity changes with policy/model revisions; a submitted job needs tr
 
 test('fixture dispositions preserve separate inclusion and execution outcomes', () => {
   for (const item of fixtures.receiptCases) assert.equal(receiptDisposition(item.receipt), item.disposition);
+  assert.equal(receiptDisposition({ status: 'checkpointed', executionResult: 'success' }), 'confirmed-success');
+  assert.equal(receiptDisposition({ status: 'checkpointed', executionResult: 'success' }, 'finalized'), 'pending');
   assert.equal(receiptDisposition({ status: 'finalized' }), 'unknown');
   assert.equal(receiptDisposition({ status: 'finalized', executionResult: 'unrecognized' }), 'unknown');
-  assert.equal(receiptDisposition({ status: 'proven', executionResult: 'reverted' }), 'pending');
+  assert.equal(receiptDisposition({ status: 'proven', executionResult: 'reverted' }), 'confirmed-revert');
   assert.equal(receiptDisposition({ status: 'proven', executionResult: 'success' }, 'proven'), 'confirmed-success');
 });
 

@@ -3,7 +3,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {JsonRpcProvider,Wallet,Contract,keccak256,parseUnits,getAddress} from 'ethers';
 import {fileState,recordedTransaction} from './operations.mjs';
-import {CCTP_ROUTES,forwardingFee,burnTransaction,verifyBurn,verifyForward,finalizedReceipt} from './treasury-cctp.mjs';
+import {CCTP_ROUTES,forwardingFee,burnTransaction,verifyBurn,verifyForward,canonicalReceipt} from './treasury-cctp.mjs';
 /** One journal per transfer. Re-running reconciles the exact signed burn; it never
  * chooses a new nonce or silently creates a replacement transfer. */
 export async function transferTreasury({config,statePath,privateKey,fetchImpl=fetch}){
@@ -41,7 +41,7 @@ export async function transferTreasury({config,statePath,privateKey,fetchImpl=fe
   const receipt=await destination.getTransactionReceipt(message.forwardTxHash);
   if(!receipt)return {status:'awaiting-destination',sourceTransaction:burn.hash};
   const verified=verifyForward(route,body,message.message,receipt);
-  if(!await finalizedReceipt(destination,receipt))return {status:'awaiting-destination-finality',sourceTransaction:burn.hash,destinationTransaction:receipt.hash};
+  if(!await canonicalReceipt(destination,receipt))return {status:'awaiting-canonical-destination',sourceTransaction:burn.hash,destinationTransaction:receipt.hash};
   await store.write({...store.read(),result:{status:'complete',sourceTransaction:burn.hash,...verified}});
   return store.read().result;
  }finally{source.destroy();destination.destroy();if(lock){await lock.close();await fs.unlink(statePath+'.lock');}}

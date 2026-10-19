@@ -55,7 +55,7 @@ export async function runHostedService({config,env=process.env,onError=error=>co
     if(await getFeeJuiceBalance(account.address,node)===0n)throw Error('Fund the operator public Fee Juice account before starting the service');
     const boardArtifact=loadContractArtifact(JSON.parse(await fs.readFile(new URL('../apps/src/billboard/billboard_artifact.json',import.meta.url),'utf8')));
     const adapterArtifact=loadContractArtifact(JSON.parse(await fs.readFile(new URL('./adapter_artifact.json',import.meta.url),'utf8')));
-    const board=await aztecBoardPort({node,wallet,scope:descriptor.scope,boardArtifact,adapterArtifact,operator:account.address,finality:config.development?'checkpointed':'finalized'});
+    const board=await aztecBoardPort({node,wallet,scope:descriptor.scope,boardArtifact,adapterArtifact,operator:account.address,finality:'checkpointed'});
     const escrow=await aztecEscrowPort({node,wallet,address:descriptor.scope.receiver,artifact:adapterArtifact,operator:account.address,development:config.development});
     const providerAdapter=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:env.VENICE_AUTO_TOP_UP==='true',maxTopUpUsd:Number(env.VENICE_MAX_TOP_UP_USD||5)});
     server=await startEscrowService({descriptor,escrow,board,host:config.host??'127.0.0.1',port:config.port??8787,onError,run:async(postId,text)=>{
