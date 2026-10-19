@@ -215,7 +215,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     const observed=await inspect(operationId);if(observed.status==='succeeded'||observed.status==='failed')return observed;
     const record=journal().operations[operationId];assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
     assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
-    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality});
+    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0});
     return inspect(operationId);
    }),
    reserve:exclusive((request,callId,maximum,operation)=>send('reserve',[request,sequence(callId),amount(maximum)],operation)),

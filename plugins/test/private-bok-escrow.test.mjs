@@ -245,7 +245,7 @@ test('unit fake: only first never-submitted reserve can continue once after proo
 test('unit fake: native observer waits on original submitted hash then rechecks canonical effect without proving or sending',async()=>{
  const f=await fixture({development:false}),op=f.op('reserve',[f.id,0,400n]);
  await f.port.reserve(f.id,0,400n,op);let waits=0;
- f.sdk.waitForTx=async(node,hash,options)=>{waits++;assert.equal(String(hash),String(f.receipt.txHash));assert.equal(options.waitForStatus,'finalized');f.receipt.status='finalized';return f.receipt;};
+ f.sdk.waitForTx=async(node,hash,options)=>{waits++;assert.equal(String(hash),String(f.receipt.txHash));assert.equal(options.waitForStatus,'finalized');assert.equal(options.timeout,0);f.receipt.status='finalized';return f.receipt;};
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);assert.deepEqual(f.counts(),{proofs:1,sends:1});
  assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);
  f.set('blockMismatch',true);await assert.rejects(f.port.waitForOperation(op.operationId),/mismatch/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
