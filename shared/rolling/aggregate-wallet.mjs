@@ -11,7 +11,7 @@ export const AGGREGATE_USDC_SCOPE_KEYS=Object.freeze([...AGGREGATE_SCOPE_KEYS,'u
 export function aggregateWalletScope(scope,network,board,owner){
  return JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',network.chainId,network.version,network.rollup,board,scope.router,owner,1]);
 }
-export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,reconcileClaim,verifyClaim,claimStore,relay}){
+export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,verifyFeeCredit,reconcileClaim,verifyClaim,claimStore,relay}){
  const captured=freeze(clone(scope)),n=freeze(clone(network));
  const usdc=captured?.usdcRelayAddress!==undefined;
  check(captured&&Object.keys(captured).sort().join()===Array.from(usdc?AGGREGATE_USDC_SCOPE_KEYS:AGGREGATE_SCOPE_KEYS).sort().join());
@@ -128,11 +128,11 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   await read(()=>claimStore.save({l1ChainId:n.chainId,rollupVersion:n.version,rollupAddress:n.rollup,boardAddress:board,portalAddress:s.collateralPortal,depositor:wallet.address},{schemaVersion:1,secret:collateralSecret.toString(),secretHash:collateralSecretHash}));
   const saved=await read(()=>slot.write(previous,{schemaVersion:1,kind:'usdc',depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:{...n,portal:s.bokPortal,recipient:bok,token:s.bokToken},privateFeeCap,claim:null,intent:null,previousTxHash:priorPayment?.txHash??null,
    aggregateCustody:{kind:'aggregate-usdc-custody-v1',planHash:quote.planHash,beneficiary:wallet.address,privateFeeSalt:privateFeeSalt.toString()},relay:{planHash:quote.planHash,submitted:false,request:null}}));
-  prepared={kind:'usdc',wallet,quote,saved,recheckScope};
+  prepared={kind:'usdc',wallet,quote,saved,recheckScope,feeAmount:values.feeAmount};
   return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:wallet.address,router:s.router,walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,relayer:terms.relayer,relayGasBudgetWei:terms.gasBudgetWei});
  }
- async function confirmUsdc({wallet,quote,saved,recheckScope}){
-  await read(wallet.guard);await read(()=>sdk.validateAggregateFundingQuote(quote));
+ async function confirmUsdc({wallet,quote,saved,recheckScope,feeAmount}){
+  await read(wallet.guard);await read(()=>verifyFeeCredit(feeAmount));await read(()=>sdk.validateAggregateFundingQuote(quote));
   const consent=await signConsent(wallet,quote.consent);
   await read(()=>sdk.validateAggregateFundingQuote(quote));
   const authorization=await signConsent(wallet,quote.authorization);
@@ -142,6 +142,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   sdk.validateAggregateFundingIntent(request);await read(wallet.guard);await predecessor(saved.value);
   // This checkpoint is deliberately before the sole POST. Even a crash before
   // the request reaches the relay is status-only recovery, never an auto-retry.
+  await read(()=>verifyFeeCredit(feeAmount));
   await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request}}));
   await read(wallet.guard);
   let state;try{state=await read(()=>relay.submit(request.data));}catch{state=await read(()=>relay.status(tx.planHash));}
@@ -184,7 +185,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  }
  return Object.freeze({
   async prepare(allocation){
-   const values=clone(allocation);prepared=null;const recheckScope=await read(verifyScope);check(typeof recheckScope==='function');
+   const values=clone(allocation);prepared=null;check(typeof verifyFeeCredit==='function','UNAVAILABLE');await read(()=>verifyFeeCredit(values.feeAmount));const recheckScope=await read(verifyScope);check(typeof recheckScope==='function');
    if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
    const previous=await stored(),priorPayment=await archivePrevious(previous);
    const wallet=await read(captureWallet);await read(wallet.guard);
@@ -205,7 +206,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    await read(wallet.guard);
    const bokScope={...n,portal:s.bokPortal,recipient:bok,token:s.bokToken};
    const saved=await read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null}));
-   prepared={wallet,quote,saved,nonce,recheckScope};
+   prepared={wallet,quote,saved,nonce,recheckScope,feeAmount:values.feeAmount};
    // Never return the original secrets or calldata to the renderer.
    return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:depositor,router:s.router,
     walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,consentNonce:quote.plan.nonce,ethereumNonce:nonce});
@@ -213,7 +214,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   async confirm(){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');
    if(current.kind==='usdc')return confirmUsdc(current);
-   const {wallet,quote,nonce}=current;await read(wallet.guard);await read(()=>sdk.validateAggregateFundingQuote(quote));
+   const {wallet,quote,nonce}=current;await read(wallet.guard);await read(()=>verifyFeeCredit(current.feeAmount));await read(()=>sdk.validateAggregateFundingQuote(quote));
    // Signature is requested only after explicit review. It is narrowly bound to
    // the captured portal consent nonce, which is NOT the derivation nonce.
    const consent=await signConsent(wallet,quote.consent);
@@ -238,6 +239,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     // Validate deadline again after any wallet consent interaction, before both
     // encrypted intent writes and the journal's one broadcast.
     await read(()=>sdk.aggregateFundingTransaction(quote,consent));
+    await read(()=>verifyFeeCredit(current.feeAmount));
     const intent={from:tx.from,to:tx.to,chainId:tx.chainId,nonce:ethereumNonce,data:tx.data.toLowerCase(),value:tx.value,expected};
     sdk.validateAggregateFundingIntent(intent);
     await slot.write(current.saved,{...current.saved.value,intent});await contextGuard();await wallet.guard();

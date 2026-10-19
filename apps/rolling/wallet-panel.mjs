@@ -36,8 +36,14 @@ function nameFailure(failure){
   return code.value==='ROLLING_NAME_INVALID'?'Enter a valid first and last name. Use 1–32 ASCII letters, spaces, apostrophes or hyphens in each part; start and end with a letter. Bok is reserved.':code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
  }catch{return null;}
 }
+function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
 function aggregateFundingFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')){
+  if(code.value==='ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'){
+   const minimum=Object.getOwnPropertyDescriptor(failure,'minimumFeeCredit');
+   if(minimum&&Object.hasOwn(minimum,'value')&&typeof minimum.value==='string'&&/^[1-9][0-9]{0,38}$/.test(minimum.value)&&BigInt(minimum.value)<1n<<128n)
+    return 'Increase Network fee credit to at least '+decimal(minimum.value,18)+' FEE to cover this deployment’s maximum claim fee, then get a fresh quote. No funding payment was sent.';
+  }
   const messages={
    ROLLING_FUNDING_SIGNATURE_CANCELLED:'Signature cancelled. No funding payment was sent. Your account remains unlocked; get a fresh quote when you are ready.',
    ROLLING_FUNDING_GAS_CHANGED:'Ethereum gas costs exceed your approved maximum. Change Maximum Ethereum gas cost (ETH) if you want to approve more, then get a fresh quote and confirm again. Your recovery records are preserved.',
@@ -703,7 +709,6 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(typeof value!=='string'||!new RegExp('^(0|[1-9][0-9]{0,30})(?:\\.[0-9]{1,'+decimals+'})?$').test(value))throw connectionFailure;
   const [whole,fraction='']=value.split('.');const result=BigInt(whole)*10n**BigInt(decimals)+BigInt(fraction.padEnd(decimals,'0'));if(result<=0n)throw connectionFailure;return result.toString();
  }
- function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
  async function advanceFunding(){
   const epoch=accountEpoch;checkAccount(epoch);
   const capability=fundingActiveCapability=fundingCapability();render();

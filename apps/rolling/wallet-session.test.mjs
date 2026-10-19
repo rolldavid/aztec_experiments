@@ -58,7 +58,7 @@ async function deploymentFixture({chainId='31337'}={}){
  const configHash=sha256ToField(Buffer.from(encodeConfigCommitment({l1ChainId:chainId,rollupVersion:'1',rollupAddress:rollup,boardAddress:String(board.address)},economics)));
  const immutables={MIN_DEPOSIT:100n,MAX_DEPOSIT:200n,L2_CONTRACT:BigInt(String(board.address)),ROLLUP:11n,INBOX:33n,OUTBOX:44n,VERSION:1n,L1_CHAIN_ID:BigInt(chainId),CONFIG_HASH:configHash.toBigInt()};
  const storage=new Map([[1n,22n],...[BigInt(chainId),11n,1n,100n,200n,60n,2n,120n,3n,3n].map((value,i)=>[3n+BigInt(i),value])]);
- const node={getBlockData:async n=>({blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10}}}),
+ const node={getCurrentMinFees:async()=>({feePerDaGas:1n,feePerL2Gas:1n}),getBlockData:async n=>({blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10}}}),
   getContract:async(address,reference)=>{state.reads.push(['instance',reference]);return address.equals(board.address)?board:fee;},
   getPublicStorageAt:async(reference,address,slot)=>{state.reads.push(['storage',reference]);return new Fr(storage.get(slot.toBigInt()));},
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
@@ -461,7 +461,7 @@ for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('ag
  if(defect==='fee-portal')f.node.getL1ContractAddresses=async()=>({rollupAddress:eth(11),inboxAddress:eth(33),outboxAddress:eth(44),feeJuicePortalAddress:eth(999)});
  if(defect==='token-decimals'){const original=f.provider.call;f.provider.call=async request=>request.to===f.scope.bokToken?'0x'+BigInt(18).toString(16).padStart(64,'0'):original(request);}
  const session=await createRollingWalletSession(f.input);try{
-  await assert.rejects(session.funding.prepare({}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
+  await assert.rejects(session.funding.prepare({feeAmount:'2000'}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
 test('USDC session exposes only explicitly pinned relay capability and retains authenticated custody ordering',async()=>{
@@ -469,7 +469,7 @@ test('USDC session exposes only explicitly pinned relay capability and retains a
  f.input.claimStore={save:async()=>{throw Error('must not reach storage before captured wallet');},load:async()=>null};f.input.fundingRelay={terms:async()=>{throw Error('must not query terms before wallet capture');}};
  const session=await createRollingWalletSession(f.input);try{
   assert.equal(session.funding.usdcAvailable,true);f.input.config.aggregateFunding.usdcRelayAddress=eth(99);
-  await assert.rejects(session.funding.prepare({asset:'USDC',collateralWei:'1',feeAmount:'2',bokAmount:'3',collateralPoolFee:3000,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'}),error=>error===f.expected);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
+  await assert.rejects(session.funding.prepare({asset:'USDC',collateralWei:'1',feeAmount:'2000',bokAmount:'3',collateralPoolFee:3000,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'}),error=>error===f.expected);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
 
@@ -964,4 +964,29 @@ for(const defect of ['none','native-reorg','l1-reorg','token-decimals','context'
  const before={...counts};changed=true;
  if(defect==='none'){await recheck();assert.equal(counts.native-before.native,1);assert.equal(counts.l1-before.l1,4);}else await assert.rejects(recheck());
  assert.equal(counts.inspection,1);assert.equal(counts.storage,1);
+});
+
+import {verifyRollingFundingCredit} from './wallet-session.mjs';
+for(const [incoming,existing,eligible]of [['2000',0n,true],['2',2000n,true],['2',1999n,false],['2',0n,false]])test('new funding native maximum admission '+incoming+'/'+existing,async()=>{
+ let reads=0,guards=0;const options={sdk:{normalizePrivateFeeGasSettings},node:{getCurrentMinFees:async()=>({feePerDaGas:1n,feePerL2Gas:1n})},gasSettings:{gasLimits:{daGas:'1000',l2Gas:'1000'},teardownGasLimits:{daGas:'100',l2Gas:'200'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}},incomingAmount:incoming,readExistingCredit:async()=>{reads++;return existing;},contextGuard:async()=>{guards++;}};
+ if(eligible)assert.equal(await verifyRollingFundingCredit(options),undefined);
+ else await assert.rejects(verifyRollingFundingCredit(options),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT',minimumFeeCredit:'2000'});
+ assert.equal(reads,incoming==='2000'?0:1);assert(guards>=2);
+});
+test('funding admission propagates private credit and context failures instead of admitting payment',async()=>{
+ const f=await deploymentFixture(),failure=Error('PRIVATE_SENTINEL');const options={sdk:f.options.sdk,node:f.node,gasSettings:f.options.config.privateFee.gasSettings,incomingAmount:'2',contextGuard:async()=>{},readExistingCredit:async()=>{throw failure;}};
+ await assert.rejects(verifyRollingFundingCredit(options),e=>e===failure);
+ options.readExistingCredit=async()=>2000n;options.contextGuard=async()=>{throw failure;};await assert.rejects(verifyRollingFundingCredit(options),e=>e===failure);
+});
+test('funding maximum uses native gas limit and rejects stale fee rates before credit reads',async()=>{
+ const f=await deploymentFixture();let reads=0;await assert.rejects(verifyRollingFundingCredit({sdk:f.options.sdk,node:{getCurrentMinFees:async()=>({feePerDaGas:2n,feePerL2Gas:1n})},gasSettings:f.options.config.privateFee.gasSettings,incomingAmount:'2000',contextGuard:async()=>{},readExistingCredit:async()=>{reads++;return 2000n;}}),{code:'PRIVATE_FEE_CAP_TOO_LOW'});assert.equal(reads,0);
+});
+test('aggregate session checks funded small credit under its private account lock with native displayed cap',async()=>{
+ const f=await aggregateSessionFixture();let calls=0;
+ f.input.sdk.preparePrivateFeePayment=async options=>{calls++;assert(f.state.active);assert.equal(options.claim,undefined);assert.equal(options.privateFeeArtifact,f.input.privateFeeArtifact);assert.equal(options.privateFeeAddress,f.input.config.privateFee.contractAddress);return {availableCredit:2000n};};
+ const session=await createRollingWalletSession(f.input);try{
+  assert.equal(session.funding.defaultPrivateFeeCap,'2000');
+  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2'}),e=>e===f.expected);
+  assert.equal(calls,1);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
 });

@@ -56,6 +56,7 @@ function fixture({chainId='31337'}={}){
  const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
   reconcileClaim:id=>state.workflow.open().reconcile(id),verifyClaim:async hash=>assert.equal(hash,h(70)),
+  verifyFeeCredit:async amount=>{assert.equal(typeof amount,'string');state.creditChecks=(state.creditChecks??0)+1;if(state.creditRejected)throw Object.assign(Error('Insufficient credit'),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT',minimumFeeCredit:'1000'});},
   captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>async()=>{}};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
 }
@@ -496,4 +497,21 @@ test('USDC consent delay cannot open an already expired authorization prompt',as
  const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);const sign=f.wallet.signer.signTypedData;
  f.wallet.signer.signTypedData=async(...args)=>{const value=await sign(...args);f.state.pendingTime=1121;return value;};
  await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});assert.equal(f.state.signatures,1);assert.equal(f.state.posts,0);assert.equal((await funding.inspect()).paymentSaved,false);
+});
+
+for(const asset of ['ETH','USDC'])test(asset+' funding rejects unaffordable new payment before quote RPC or signatures',async()=>{
+ const f=asset==='ETH'?fixture():usdcWalletFixture();f.state.creditRejected=true;
+ const funding=await f.open();await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'});
+ assert.equal(f.state.reads,0);assert.equal(f.state.signatures,0);assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);assert.equal(f.records.size,0);
+});
+for(const asset of ['ETH','USDC'])test(asset+' rechecks private credit before first signature and before dispatch',async()=>{
+ const f=asset==='ETH'?fixture():usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);
+ f.state.creditRejected=true;await assert.rejects(funding.confirm(),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'});assert.equal(f.state.signatures,0);
+ f.state.creditRejected=false;await funding.prepare(f.allocation);const sign=f.wallet.signer.signTypedData;
+ f.wallet.signer.signTypedData=async(...args)=>{const result=await sign(...args);f.state.creditRejected=true;return result;};
+ await assert.rejects(funding.confirm(),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'});assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);
+});
+test('already-paid funding recovery does not rerun new-payment eligibility',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();const checks=f.state.creditChecks;
+ f.state.creditRejected=true;const receipt=await funding.recover();assert(receipt.receipt.txHash);assert.equal(f.state.creditChecks,checks);assert.equal(f.state.sends,1);
 });
