@@ -191,6 +191,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
  const save=async value=>store.write({...store.read(),hostedPrivateBok:value});
  let saved=store.read().hostedPrivateBok;
+ const resumeReply=['reply-intent','reply-confirmed'].includes(saved?.phase);
  if(saved)assert.deepEqual(saved.binding,binding,'Hosted request identity changed');
  const current=await board.readRequest(request.postId);
  assert(current&&current.postId===request.postId&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId&&current.predecessorsClear===true,'Canonical invocation changed');
@@ -272,7 +273,12 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   try{await escrow.publish_reply(...args,saved.operation);}catch{/* Reconcile exact original operation below. */}
  }
  if(['reply-intent','reply-confirmed'].includes(saved.phase)){
-  const observed=await escrow.inspectOperation(saved.operation.operationId);
+  let observed=await escrow.inspectOperation(saved.operation.operationId);
+  if(resumeReply&&observed.status==='pending'){
+   assert.equal(typeof escrow.waitForOperation,'function','Native original-operation observer required');
+   await escrow.waitForOperation(saved.operation.operationId);
+   observed=await escrow.inspectOperation(saved.operation.operationId);
+  }
   assert(observed.status==='succeeded'&&observed.canonical&&observed.method==='publish_reply'&&observed.argsDigest===saved.operation.argsDigest,'Reply transaction unresolved');
   const published=await board.readRequest(request.postId);assert(published?.replied&&published.target===request.target,'Authenticated Rolling reply unavailable');
   saved={...saved,phase:'reply-confirmed'};await save(saved);

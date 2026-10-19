@@ -32,6 +32,7 @@ function fixture(){
  const store={read:()=>saved,write:async next=>{if(control.writeFailure?.(next))throw Error('disk');saved=structuredClone(next);}};
  const board={readRequest:async()=>({...current}),pending:async()=>({requests:[{...request,threadId:f(9)}],nextCursor:null})};
  const escrow={identity:{network:'eip155-31337:aztec-1:public',escrow:f(5)},request:async()=>({canonical:true,request:{...row},anchor:{number:7,hash:f(77)}}),assertUsable:async()=>{},inspectOperation:async id=>control.unknownReply&&ops.get(id)?.method==='publish_reply'?{status:'pending'}:ops.get(id)??{status:'absent'}};
+ escrow.waitForOperation=async id=>escrow.inspectOperation(id);
  for(const method of ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'])escrow[method]=async(...args)=>{
   const op=args.pop();events.push(method);assert(!ops.has(op.operationId),'No repeated mutator');
   if(method==='reserve'){row.available-=args[2];row.reserved=args[2];}
@@ -663,4 +664,40 @@ test('received result with no saved message remains accounting-only and cannot r
  x.args.escrow.request=async(...args)=>{if(x.store.read().privateBok?.calls[0]?.phase==='received')throw Error('Canonical read interrupted');return read(...args);};
  await assert.rejects(x.run());const saved=x.store.read();delete saved.privateBok.calls[0].response;delete saved.privateBok.calls[0].responseDigest;
  assert.equal(hostedReceivedFirstCall(saved),false);await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid']);
+});
+
+
+test('restored reply intent waits for the exact saved operation before canonical inspection and never reposts',async()=>{
+ const x=fixture();x.control.unknownReply=true;
+ await assert.rejects(x.run(),/Reply transaction unresolved/);
+ const original=structuredClone(x.store.read().hostedPrivateBok),before=[...x.events];
+ let release,entered;const waiting=new Promise(resolve=>{entered=resolve;}),ready=new Promise(resolve=>{release=resolve;});
+ x.args.escrow.waitForOperation=async id=>{assert.equal(id,original.operation.operationId);entered();await ready;x.control.unknownReply=false;};
+ let completed=false;const resumed=x.run().then(result=>{completed=true;return result;});
+ await waiting;assert.equal(completed,false);assert.deepEqual(x.events,before);
+ assert.deepEqual(x.store.read().hostedPrivateBok,original);
+ release();assert.equal((await resumed).status,'finished');
+ assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+
+test('restored reply cannot finish on a waiter result without a matching canonical original receipt',async()=>{
+ for(const failure of ['unavailable','absent','failed','wrong-digest','noncanonical']){
+  const x=fixture();x.control.unknownReply=true;await assert.rejects(x.run(),/Reply transaction unresolved/);
+  const original=structuredClone(x.store.read().hostedPrivateBok),inspect=x.args.escrow.inspectOperation;let after=false;
+  x.args.escrow.waitForOperation=async id=>{
+   assert.equal(id,original.operation.operationId);
+   if(failure==='unavailable')throw Error('Native observation unavailable');
+   after=true;return {status:'succeeded',canonical:true};
+  };
+  x.args.escrow.inspectOperation=async id=>{
+   if(!after)return inspect(id);
+   const valid=x.ops.get(id);
+   if(failure==='wrong-digest')return {...valid,argsDigest:'bad'};
+   if(failure==='noncanonical')return {...valid,canonical:false};
+   return {...valid,status:failure};
+  };
+  await assert.rejects(x.run(),/unavailable|Reply transaction unresolved/);
+  assert.deepEqual(x.store.read().hostedPrivateBok,original);assert.equal(x.row.refunded,0n);
+  assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);
+ }
 });
