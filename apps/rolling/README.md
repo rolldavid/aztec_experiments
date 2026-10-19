@@ -1,4 +1,13 @@
-# Rolling Chat clickable prototype
+# Rolling Chat application and design preview
+
+The connected application uses `live.html`, `reader.mjs` and the wallet modules.
+Start it with the [native development runner](../../docs/rolling-deployment.md#native-local-rolling-development)
+or the configured connected server described below. Native devnet and PXE proofs
+are disabled for development; final testnet acceptance uses real proofs.
+See the [current candidate](../../execution/release/rolling-current-candidate.md)
+for hosted access and outstanding acceptance work.
+
+## Separate design preview
 
 A Draft 3 design-stage deliverable, intentionally disconnected from wallets and
 production services. It is not the delivered chain application. All fixtures and
@@ -49,16 +58,11 @@ Browser acceptance procedure for the lead/reviewer:
 6. Open onboarding, review ETH/USDC choices and three steps. Completion must say
    no account was funded. Inspect withdrawal and recovery previews; no sensitive
    input or real connection should be requested.
-7. On a fresh Home load, press Tab then Enter: the skip link must focus main
-   content without changing the URL or rendering an unavailable-page view. In a
-   fresh tab load `/#/thread/first-tools/r3`: the Bok reply must receive focus and
-   scroll into view without first clicking another route. Repeat with a reload.
-   Use Tab/Shift-Tab and Escape in a modal. Focus stays inside until dismissal and
-   returns to its opener. At 390px, open/close the navigation menu by keyboard.
-8. Exercise loading, empty, pending and failure options in Design review. Retry
+7. Exercise loading, empty, pending and failure options in Design review. Retry
    restores the fixture feed. Open Quiet map thread to inspect a removed parent.
-9. Inspect at desktop and 390px, including focus rings, line lengths, action
-   wrapping and contrast. Record screenshots and source revision separately.
+8. Inspect at desktop and390px for readable text, visible controls and usable
+   action wrapping. Accessibility qualification was removed from this proof of
+   concept by the owner; do not run screen-reader or accessibility audits.
 
 The independent browser review is not claimed by the model and navigation unit checks.
 Production acceptance still needs real wallet/proof/social-chain integration,

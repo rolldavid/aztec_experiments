@@ -5,6 +5,17 @@ The current application is Rolling Chat (Draft 3), based on
 It is a proof of concept with connected development functionality; final
 real-proof testnet and privacy acceptance are not yet complete.
 
+The connected application includes public boards and threads, anonymous or named
+posting, replies, quotes, reposts, reactions, subboard rules, encrypted bookmarks
+and follows, wallet funding and withdrawals, and paid Bok conversations with
+isolated generated pages and source downloads. The
+[current candidate](execution/release/rolling-current-candidate.md) records
+deployment status and the remaining acceptance work.
+
+Read the [public testnet application](https://d30njln0kead8n.cloudfront.net/#/home)
+without a wallet. `node apps/rolling/serve.mjs` starts the separate design fixture
+on port4317; it does not start the connected wallet or chain application.
+
 Open the current local application at [Rolling Chat](http://127.0.0.1:8080/#/home)
 while its development runner is active. Browse without connecting a wallet;
 use the account panel for funding, posting, private views and balances.
@@ -48,8 +59,10 @@ nvm install
 nvm use
 npm ci --ignore-scripts
 npm ci --prefix billboard/portal --ignore-scripts
+npm run bootstrap:dependencies
 npm run bootstrap:noir
 npm run build
+node scripts/rolling-wallet-assets.mjs
 ```
 
 [TESTING.md](TESTING.md) describes the test hierarchy and application scenarios.
