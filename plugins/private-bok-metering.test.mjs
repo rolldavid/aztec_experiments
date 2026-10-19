@@ -348,3 +348,13 @@ for(const reason of ['length','PRIVATE_SENTINEL',null])test('paid incomplete res
  assert.equal((await h.create().resume(0)).replyAvailable,false);assert.equal(h.counts.execute,1);
  await metering.finish();assert.equal(h.r.refunded,994n);assert.equal(h.r.charged,6n);assert.equal(h.counts.close_uncertain,0);assert.equal(h.counts.finish,1);
 });
+
+test('first quoted call resumes exact never-submitted reserve without requoting or repeating provider work',async()=>{
+ const h=fixture();h.controls.failBefore='reserve';await assert.rejects(h.create().complete(0,input));
+ const [id,op]=Object.entries(h.store.read().privateBok.operations)[0];
+ h.ops.set(id,{status:'not-submitted',method:op.method,argsDigest:op.argsDigest,canonical:false});
+ delete h.controls.failBefore;
+ const result=await h.create().complete(0,input);assert.equal(result.replyAvailable,true);
+ assert.equal(h.counts.quote,1);assert.equal(h.counts.reserve,2);assert.equal(h.counts.execute,1);
+ await h.create().complete(0,input);assert.equal(h.counts.execute,1);
+});

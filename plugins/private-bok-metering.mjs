@@ -90,6 +90,13 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    if(before?.status!=='absent')throw Error('Operation already exists outside journal');
    j.operations[operationId]={method,argsDigest};await save(j);
    try{await escrow[method](...args,{operationId,argsDigest});}catch{/* Only canonical inspection may establish the outcome. */}
+  }else if(method==='reserve'&&key===0&&callRecord(0)?.phase==='quoted'){
+   const before=await escrow.inspectOperation(operationId);
+   if(before?.status==='not-submitted'&&before.method===method&&before.argsDigest===argsDigest){
+    // The escrow adapter alone authenticates its durable before-send fence.
+    // The same quote/input and operation id continue; unknown sends never do.
+    try{await escrow.reserve(...args,{operationId,argsDigest});}catch{/* Inspect the retained exact operation below. */}
+   }
   }
   const observed=await escrow.inspectOperation(operationId);
   if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');

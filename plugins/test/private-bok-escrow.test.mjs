@@ -226,3 +226,18 @@ test('unit fake: authenticated reply uses exact flattened ABI and cannot replay 
  await assert.rejects(f.port.publish_reply(f.id,H(66),fields.slice(1),1,1,0,op));
  await assert.rejects(fixture({development:true,proofMode:'real'}),/Native proof policy/);
 });
+
+test('unit fake: only first never-submitted reserve can continue once after proof preparation failure',async()=>{
+ const f=await fixture(),op=f.op('reserve',[f.id,0,400n]);f.set('proofFailed',true);
+ await assert.rejects(f.port.reserve(f.id,0,400n,op));
+ assert.equal((await f.port.inspectOperation(op.operationId)).status,'not-submitted');
+ f.set('proofFailed',false);const reopened=await f.create();
+ assert.equal((await reopened.reserve(f.id,0,400n,op)).status,'succeeded');
+ assert.equal(f.journal().operations[op.operationId].recoveryAttempted,true);
+ await reopened.reserve(f.id,0,400n,op);assert.deepEqual(f.counts(),{proofs:2,sends:1});
+ const failed=await fixture(),failedOp=failed.op('reserve',[failed.id,0,400n]);failed.set('proofFailed',true);
+ await assert.rejects(failed.port.reserve(failed.id,0,400n,failedOp));
+ await assert.rejects(failed.port.reserve(failed.id,0,400n,failedOp));
+ assert.equal((await failed.port.reserve(failed.id,0,400n,failedOp)).status,'pending');
+ assert.deepEqual(failed.counts(),{proofs:2,sends:0});
+});

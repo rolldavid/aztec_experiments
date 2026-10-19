@@ -112,6 +112,7 @@ export function createPrivateBokEscrowFactory(sdk) {
   };
   const initial=await anchored();await wallet.registerContract(initial.instance,artifact);
   const contract=await Contract.at(addr,artifact,wallet); if(!store.read().privateBokEscrow)await save(journal());else journal();
+  const unsubmittedReserve=record=>record.method==='reserve'&&record.args?.[1]===0&&record.proofMode===proofMode&&record.phase==='preparing'&&!['recoveryAttempted','txHash','transactionSha256','submissionError'].some(key=>Object.hasOwn(record,key));
   const inspect=async operationId=>{
    assert(/^[0-9a-f]{64}$/.test(operationId));await held();
    const record=journal().operations[operationId];if(!record){await checkNetwork();return {status:'absent'};}
@@ -121,7 +122,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    // never a substitute for receipt availability, canonicality or finality now.
    await update(operationId,{result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
    await checkNetwork();
-   if(!record.txHash)return {status:'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
+   if(!record.txHash)return {status:unsubmittedReserve(record)?'not-submitted':'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
    let receipt;
    try{receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));}
    catch{await update(operationId,{observation:{status:'unavailable'}});return {status:'pending',canonical:false};}
@@ -174,10 +175,10 @@ export function createPrivateBokEscrowFactory(sdk) {
    scope(args[0]);const operationId=operation?.operationId,argsDigest=digest(args.map(v=>typeof v==='bigint'?String(v):v));
    assert(/^[0-9a-f]{64}$/.test(operationId));assert.equal(operation.argsDigest,argsDigest,'Operation arguments mismatch');
    const old=journal().operations[operationId];
-   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);return inspect(operationId);}
+   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);if(!unsubmittedReserve(old))return inspect(operationId);assert.deepEqual(old.args,args.map(v=>typeof v==='bigint'?String(v):v),'Original reserve arguments changed');}
    assert(Object.keys(journal().operations).length<256,'Escrow operation limit');
    await anchored();
-   await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode});
+   await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode,...(old?{recoveryAttempted:true}:{})});
    try{
     const encoded=args.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(method==='publish_reply'&&i===1)||((method==='settle'||method==='reconcile')&&i===3)?Fr.fromString(v):v);
     const interaction=contract.methods[method](...encoded),payload=await interaction.request({from:op,additionalScopes:[]});

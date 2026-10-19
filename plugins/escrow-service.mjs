@@ -147,6 +147,23 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  * reruns an agent whose run intent exists; only its exact reply/finish may be
  * reconciled, or an exact already-accepted source revision recovered after all
  * billing settles. Ports are dependency seams, not client-supplied authority. */
+/** Only the original first quote with a durable pre-broadcast reserve may be
+ * resumed. No provider-entered, signed, or already attempted recovery qualifies. */
+export function hostedUnsubmittedFirstCall(original){
+ const h=original.hostedPrivateBok,j=original.privateBok,e=original.privateBokEscrow;
+ if(h?.phase!=='running'||Object.hasOwn(h,'preProviderRecoveryAttempted')||!j||j.finished||!e)return false;
+ const calls=Object.values(j.calls??{}),ops=Object.entries(j.operations??{});
+ if(calls.length!==1||calls[0].id!==0||calls[0].phase!=='quoted'||calls[0].billing||ops.length!==1||Object.keys(e.operations??{}).length!==1)return false;
+ const [id,op]=ops[0],record=e.operations[id],call=calls[0],b=h.binding;
+ if(!b||!record||op.method!=='reserve'||record.method!=='reserve'||record.phase!=='preparing'||['recoveryAttempted','txHash','transactionSha256','submissionError'].some(key=>Object.hasOwn(record,key)))return false;
+ const identity={network:b.network,escrow:b.escrow,requestId:b.requestId,target:b.target};
+ if(!j.identity||Object.keys(j.identity).length!==4||Object.entries(identity).some(([k,v])=>j.identity[k]!==v))return false;
+ if(Object.entries(identity).some(([k,v])=>e.binding?.[k]!==v))return false;
+ const args=[b.requestId,0,String(call.quote?.maximum)],hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+ if(!/^[0-9a-f]{64}$/.test(call.inputDigest??'')||!/^\d+$/.test(args[2])||BigInt(args[2])<=0n)return false;
+ return record.argsDigest===hash(args)&&op.argsDigest===record.argsDigest&&JSON.stringify(record.args)===JSON.stringify(args)&&id===hash({identity,method:'reserve',key:0,argsDigest:record.argsDigest});
+}
+
 export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation,admitThread}){
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
  const binding={...identity,postId:request.postId,pluginId:request.pluginId};
@@ -171,8 +188,8 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
- let result;
- if(saved?.phase==='running'&&typeof recoverAccepted==='function'){
+ let result;const resumeUnsubmitted=hostedUnsubmittedFirstCall(store.read());
+ if(saved?.phase==='running'&&!resumeUnsubmitted&&typeof recoverAccepted==='function'){
   assert(current.usable&&!current.replied,'Invocation no longer usable');
   const journal=structuredClone(store.read().privateBok),calls=Object.values(journal?.calls??{});
   assert(journal&&!journal.finished&&calls.length>0&&calls.every(call=>call.phase==='settled'),'Hosted request unresolved; provider billing must be settled');
@@ -193,11 +210,11 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   result=await recoverAccepted(current);
   assert.deepEqual(store.read().privateBok,journal,'Billing changed during accepted recovery');
   assert.deepEqual(store.read().hostedPrivateBok,saved,'Hosted recovery changed');
- }else if(saved&&!['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
- if(!saved){
+ }else if(saved&&!resumeUnsubmitted&&!['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
+ if(!saved||resumeUnsubmitted){
   assert(!current.replied&&current.usable,'Invocation no longer usable');
   const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&row.request.reserved===0n,'Active canonical request required');
-  if(admitThread!==undefined){
+  if(!resumeUnsubmitted&&admitThread!==undefined){
    assert(typeof admitThread==='function'&&typeof conversation?.load==='function','Trusted thread admission unavailable');
    const history=await conversation.load({postId:request.postId});
    assert(history?.canonical===true&&history.complete===true&&/^0x[0-9a-f]{64}$/.test(history.threadId)&&typeof history.assertCurrent==='function','Canonical thread admission unavailable');
@@ -209,7 +226,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
    assert(fresh?.postId===request.postId&&fresh.usable&&!fresh.replied&&fresh.predecessorsClear===true&&fresh.requestId===request.requestId&&fresh.target===request.target&&fresh.pluginId===request.pluginId,'Invocation changed during thread admission');
    admittedHistory=history;
   }
-  saved={binding,phase:'running'};await save(saved);
+  saved=resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
   let call=0;
   result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');

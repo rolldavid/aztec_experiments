@@ -1,7 +1,7 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply} from '../escrow-service.mjs';
+import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
@@ -615,4 +615,22 @@ test('explicit retained candidate validation feeds existing hosted recovery with
  const billing=structuredClone(x.store.read().privateBok.calls);x.args.recoverAccepted=request=>recoverAcceptedHostedRevision({repositories,repository:'owner/project',request});
  await assert.rejects(x.run(),/Exact accepted invocation/);assert.equal(checks,1);assert.equal(x.events.filter(e=>e==='paid').length,1);
  ready=true;await repositories.recoverCandidate({...input,revision});assert.equal(checks,2);assert.equal((await x.run()).status,'finished');assert.equal(x.events.filter(e=>e==='paid').length,1);assert.equal(x.events.filter(e=>e==='publish_reply').length,1);assert.equal(x.events.filter(e=>e==='finish').length,1);assert.deepEqual(x.store.read().privateBok.calls,billing);assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,revision);
+});
+
+test('hosted first quote resumes only its original unsubmitted reserve and consumes recovery before entering agent',async()=>{
+ const x=fixture(),escrow=x.args.escrow,reserve=escrow.reserve,inspect=escrow.inspectOperation;
+ escrow.reserve=async(...args)=>{
+  const op=args.at(-1),saved=x.store.read(),identity=saved.privateBok.identity;
+  await x.store.write({...saved,privateBokEscrow:{binding:identity,operations:{[op.operationId]:{method:'reserve',argsDigest:op.argsDigest,args:[args[0],args[1],String(args[2])],phase:'preparing',proofMode:'disabled'}}}});
+  throw Error('Native preparation failed before signing');
+ };
+ await assert.rejects(x.run(),/unresolved/);const before=structuredClone(x.store.read());assert(hostedUnsubmittedFirstCall(before));assert.deepEqual(x.events,[]);
+ for(const mutate of [v=>v.hostedPrivateBok.preProviderRecoveryAttempted=true,v=>v.privateBok.calls[0].phase='possibly-sent',v=>Object.values(v.privateBokEscrow.operations)[0].txHash=f(55),v=>Object.values(v.privateBokEscrow.operations)[0].transactionSha256='a'.repeat(64),v=>Object.values(v.privateBokEscrow.operations)[0].recoveryAttempted=true,v=>Object.values(v.privateBokEscrow.operations)[0].args[2]='999']){
+  const changed=structuredClone(before);mutate(changed);assert.equal(hostedUnsubmittedFirstCall(changed),false);
+ }
+ escrow.inspectOperation=async id=>{const result=await inspect(id);if(result.status!=='absent')return result;const op=x.store.read().privateBokEscrow.operations[id];return op?{status:'not-submitted',method:op.method,argsDigest:op.argsDigest,canonical:false}:result;};
+ escrow.reserve=async(...args)=>{assert.equal(x.store.read().hostedPrivateBok.preProviderRecoveryAttempted,true);return reserve(...args);};
+ x.args.admitThread=async()=>assert.fail('Original admission must not repeat');
+ assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
 });
