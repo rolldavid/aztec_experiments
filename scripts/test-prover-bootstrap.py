@@ -1706,6 +1706,54 @@ class ProverActivation(unittest.TestCase):
                 **{k:'0x'+str(i)*64 for i,k in enumerate(('board','privateFeeAddress','privateBokAddress','boardDeployer','bokOwner','bokOperator'),1)},
                 'portalAddress':'0x'+'7'*40,'checkpointNumber':101,'checkpointHash':'0x'+'8'*64}
 
+    def test_runtime_health_distinguishes_degraded_query_from_invalid_service(self):
+        from types import SimpleNamespace
+        queue={'jobs':0,'bytes':0,'running':False,'submitted':0,'completed':0,'failed':0}
+        def response(query,**changes):
+            body={'ready':True,'proofs':'real','queue':queue,'query':query,**changes}
+            stream=io.BytesIO(json.dumps(body).encode());stream.status=200
+            return SimpleNamespace(open=lambda *a,**kw:stream)
+        ready={'enabled':True,'ready':True}
+        with patch('urllib.request.build_opener',return_value=response(ready)):
+            self.assertEqual(b.activation_health(),queue)
+        for reason in ('busy','unavailable'):
+            query={'enabled':True,'ready':False,'reason':reason}
+            with self.subTest(reason=reason),patch('urllib.request.build_opener',return_value=response(query)):
+                self.assertEqual(b.activation_health(observation=True),{'queue':queue,'query':query})
+            with patch('urllib.request.build_opener',return_value=response(query)),self.assertRaisesRegex(b.Invalid,'Prover health'):
+                b.activation_health() # Initial activation and explicit recovery stay strict.
+        for query in ({'enabled':1,'ready':True},{'enabled':True,'ready':1},{'enabled':True,'ready':0},
+                      {'enabled':True,'ready':False},{'enabled':True,'ready':False,'reason':'unexpected'},
+                      {'enabled':True,'ready':True,'reason':'busy'}):
+            with self.subTest(query=query),patch('urllib.request.build_opener',return_value=response(query)),self.assertRaises(b.Invalid):
+                b.activation_health(observation=True)
+        for changes in ({'proofs':'disabled'},{'ready':1},{'queue':{**queue,'jobs':True}}):
+            with self.subTest(changes=changes),patch('urllib.request.build_opener',return_value=response(ready,**changes)),self.assertRaises(b.Invalid):
+                b.activation_health(observation=True)
+
+    def test_runtime_observe_reports_degraded_without_changing_activation_or_proof_qualification(self):
+        from contextlib import ExitStack
+        import time
+        with tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+            private=pathlib.Path(t);h={'PRIVATE':private,'PINS':{'manifest':'b'*64}}
+            intent={'schemaVersion':1,'scopeSha256':'a'*64,'manifestSha256':'b'*64,'startedAt':int(time.time()),'attempts':1}
+            result={'schemaVersion':1,'status':'active-loopback','manifestSha256':'b'*64,'uid':999,'gid':998,
+                    'configSha256':'c'*64,'traffic':{'ipv4UidMark':True,'ipv6UidMark':True,'fwmarkClass20':True,'aggregate50Mbps':True},
+                    'applicationProofQualified':False,'bokScope':'constructor-allowlist-only'}
+            (private/'prover-activation-intent.json').write_text(json.dumps(intent));(private/'prover-activation-result.json').write_text(json.dumps(result))
+            stack.enter_context(patch.object(b.os,'geteuid',return_value=0))
+            stack.enter_context(patch.object(b,'activation_private',side_effect=lambda p:json.loads(p.read_text())))
+            stack.enter_context(patch.object(b,'activation_traffic'));stack.enter_context(patch.object(b,'activation_service'))
+            degraded={'enabled':True,'ready':False,'reason':'unavailable'}
+            proxy=stack.enter_context(patch.object(b,'proxy_host_observe',return_value={'proxyPolicy':'active-private','proxyQuery':degraded}))
+            health=stack.enter_context(patch.object(b,'activation_health',return_value={'queue':{'submitted':0},'query':degraded}))
+            observed=b.prover_activation(h,'observe')
+            proxy.assert_called_once_with(h,runtime=True);health.assert_called_once_with(observation=True)
+            self.assertEqual(observed['proverAvailability'],'degraded');self.assertEqual(observed['proverQuery'],degraded)
+            self.assertTrue(observed['proverActivated']);self.assertFalse(observed['applicationProofQualified'])
+            self.assertEqual(json.loads((private/'prover-activation-intent.json').read_text()),intent)
+            self.assertEqual(json.loads((private/'prover-activation-result.json').read_text()),result)
+
     def test_proxy_scope_templates_and_actual_pinned_archive(self):
         record={'privateAddress':'172.31.6.145','originSecurityGroupId':'sg-0123456789abcdef0','viewerOrigin':'https://d30njln0kead8n.cloudfront.net'}
         self.assertEqual(b.proxy_host_record(record),record)

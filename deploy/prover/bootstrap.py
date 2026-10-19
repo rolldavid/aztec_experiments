@@ -1617,7 +1617,7 @@ def activation_identity(h, scope):
     if not 0<=now-ready['checkedAtSeconds']<=10:raise Invalid('Stale activation readiness')
     return ready
 
-def activation_health(url='http://127.0.0.1:8081/healthz'):
+def activation_health(url='http://127.0.0.1:8081/healthz', *, observation=False):
     import urllib.request
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):raise Invalid('Health redirect')
@@ -1626,10 +1626,18 @@ def activation_health(url='http://127.0.0.1:8081/healthz'):
         data=response.read(16385)
         if response.status!=200 or len(data)>16384:raise Invalid('Prover health')
     health=json.loads(data)
-    if type(health) is not dict or set(health)!={'ready','proofs','queue','query'} or health['ready'] is not True or health['proofs']!='real' or health['query']!={'enabled':True,'ready':True}:raise Invalid('Prover health')
+    if type(health) is not dict or set(health)!={'ready','proofs','queue','query'} or health['ready'] is not True or health['proofs']!='real':raise Invalid('Prover health')
+    query=health['query']
+    if type(query) is not dict or query.get('enabled') is not True or type(query.get('ready')) is not bool:raise Invalid('Prover health')
+    if query['ready']:
+        if set(query)!={'enabled','ready'}:raise Invalid('Prover health')
+    elif not observation or set(query)!={'enabled','ready','reason'} or query['reason'] not in ('busy','unavailable'):
+        raise Invalid('Prover health')
     q=health['queue']
     if type(q) is not dict or set(q)!={'jobs','bytes','running','submitted','completed','failed'} or type(q['running']) is not bool or any(type(q[k]) is not int or not 0<=q[k]<=2**53-1 for k in q if k!='running'):raise Invalid('Prover queue health')
-    return q
+    # Admission/recovery remains strict. Runtime availability is reported as
+    # degraded while each query continues to enforce native readiness itself.
+    return {'queue':q,'query':dict(query)} if observation else q
 
 def activation_paths(h, scope):
     """Create only dedicated public runtime/config paths, never widen PRIVATE."""
@@ -1688,7 +1696,7 @@ def proxy_files(h,r):
     unit=(release/'deploy/prover/board-prover-proxy.service').read_text().replace('[Service]','[Service]\nType=notify\nTimeoutStartSec=15\nTimeoutStopSec=5\nKillMode=control-group').replace('/usr/local/bin/caddy',str(release/'caddy/caddy'))
     return config,unit
 
-def proxy_host_observe(h):
+def proxy_host_observe(h, *, runtime=False):
     import time
     if not h['PINS'].get('proxyHost'):
         if any(h['PRIVATE'].glob('proxy-host-*.json')):raise Invalid('Unbound proxy state')
@@ -1720,8 +1728,8 @@ def proxy_host_observe(h):
     if len(status)>16384:raise Invalid('Proxy process status')
     for key,number in ((b'Uid:',owner['uid']),(b'Gid:',owner['gid'])):
         if [line.split()[1:] for line in status.splitlines() if line.startswith(key)]!=[[str(number).encode()]*4]:raise Invalid('Proxy process identity')
-    activation_health('http://'+r['privateAddress']+':8080/prover/healthz')
-    return {'proxyPolicy':'active-private','proxyViewerOrigin':r['viewerOrigin']}
+    health=activation_health('http://'+r['privateAddress']+':8080/prover/healthz',observation=runtime)
+    return {'proxyPolicy':'active-private','proxyViewerOrigin':r['viewerOrigin'],**({'proxyQuery':health['query']} if runtime else {})}
 
 def proxy_host_activate(h):
     import time
@@ -1825,9 +1833,10 @@ def prover_activation(h, operation, expected=None):
         keys={'schemaVersion','status','manifestSha256','uid','gid','configSha256','traffic','applicationProofQualified','bokScope'}
         traffic={'ipv4UidMark':True,'ipv6UidMark':True,'fwmarkClass20':True,'aggregate50Mbps':True}
         if type(result) is not dict or set(result)!=keys or type(result['schemaVersion']) is not int or result['schemaVersion']!=1 or result['status']!='active-loopback' or result['manifestSha256']!=h['PINS']['manifest'] or any(type(result[k]) is not int or not 0<result[k]<2**31 for k in ('uid','gid')) or type(result['configSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',result['configSha256']) or type(result['traffic']) is not dict or set(result['traffic'])!=set(traffic) or any(v is not True for v in result['traffic'].values()) or result['applicationProofQualified'] is not False or result['bokScope']!='constructor-allowlist-only':raise Invalid('Activation result')
-        proxy=proxy_host_observe(h);activation_traffic(h,result['uid'])
-        activation_service(h,result['uid'],result['gid'],result['configSha256']);activation_health()
-        return {'proverPolicy':'active-loopback','proverActivated':True,**proxy,'applicationScopeSha256':intent['scopeSha256'],
+        proxy=proxy_host_observe(h,runtime=True);activation_traffic(h,result['uid'])
+        activation_service(h,result['uid'],result['gid'],result['configSha256']);health=activation_health(observation=True)
+        return {'proverPolicy':'active-loopback','proverActivated':True,**proxy,'proverQuery':health['query'],
+                'proverAvailability':'ready' if health['query']['ready'] and proxy.get('proxyQuery',{}).get('ready',True) else 'degraded','applicationScopeSha256':intent['scopeSha256'],
                 'bokScope':'constructor-allowlist-only','applicationProofQualified':False}
     if type(expected) is not str or not re.fullmatch('[a-f0-9]{64}',expected):raise Invalid('Activation digest')
     with open(private/'prover-activation-lock','a') as lock:
