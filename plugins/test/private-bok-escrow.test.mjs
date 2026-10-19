@@ -32,12 +32,12 @@ async function fixture(overrides={}){
   getBlock:async tag=>typeof tag==='number'&&blockMismatch?{...block,hash:new Field(99)}:block,
   getContract:async()=>({currentContractClassId:new Field(actualClass)}),
   getPublicStorageAt:async(anchor,addr,slot)=>{readAnchors.push(anchor);const n=Number(slot.toBigInt());return new Field(n>=100?row[names[n-100]]:[0,BigInt(actualOperator),BigInt(board),BigInt(chainId),1n][n]);},
-  sendTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).some(r=>r.txHash===txHash&&r.phase==='submission-unknown'),'exact durable hash before send');sends++;if(sendLost)throw Error('Secret raw transport error');},
+  sendTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.txHash===txHash&&r.phase==='submission-unknown'),'exact durable hash before send');sends++;if(sendLost)throw Error('Secret raw transport error');},
   getTxReceipt:async()=>receipt,getTxEffect:async()=>effect};
  const tx={data:{feePayer:new Field(operator),constants:{txContext:{get chainId(){return new Field(chainId);},version:new Field(1)}}},getTxHash:()=>new Field(txHash),toBuffer:()=>Buffer.from('unit fake transaction'),
   getPublicCallRequestsWithCalldata:()=>[{request:{contractAddress:new Field(wrongCall?99:address),msgSender:new Field(operator)},functionSelector:lastCall.selector,args:lastCall.args}]};
  const wallet={registerContract:async()=>{},completeFeeOptions:async()=>({}),createTxExecutionRequestFromPayloadAndFee:async()=>({}),scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
-  pxe:{proverEnabled:real,proofCreator:{trusted:true},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
+  pxe:{proverEnabled:real,proofCreator:{trusted:true},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
  const store={read:()=>saved,write:async next=>{if(writeFailure)throw Error('disk secret');saved=structuredClone(next);}};
  const lease={assertHeld:async()=>assert(held,'lost lease')};
  const options={node,wallet,artifact,address,operator,board,network:{chainId:real?11155111:31337,rollupVersion:1,rollupAddress:rollup},requestId:id,target,store,lease,development:true,proofMode:real?'real':'disabled',...overrides};
@@ -323,4 +323,66 @@ test('unit fake: lost native observation retains signed intent for state-driven 
  f.sdk.waitForTx=async(_node,hash)=>{assert.equal(String(hash),original.txHash);f.receipt.status='finalized';return f.receipt;};
  const result=await (await f.create()).finish(f.id,op);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
  assert.deepEqual(f.counts(),{proofs:1,sends:1});assert.equal(f.journal().operations[op.operationId].transactionSha256,original.transactionSha256);
+});
+
+async function replacementFixture(){
+ const f=await fixture(),args=[f.id,7,'120',H(88)],operation=f.op('settle',args),reserve=f.op('reserve',[f.id,7,'400']);
+ const originalHash=H(101),reserveHash=H(102),saved=structuredClone(f.store.read());
+ saved.privateBokEscrow.operations[operation.operationId]={method:'settle',args,argsDigest:operation.argsDigest,phase:'submission-unknown',proofMode:'disabled',txHash:originalHash,transactionSha256:'ab'.repeat(32),submissionError:true};
+ saved.privateBokEscrow.operations[reserve.operationId]={method:'reserve',args:[f.id,7,'400'],argsDigest:reserve.argsDigest,phase:'submission-unknown',proofMode:'disabled',txHash:reserveHash,transactionSha256:'cd'.repeat(32)};
+ await f.store.write(saved);Object.assign(f.row,{state:2n,sequence:7n,reserved:400n,available:600n});
+ let originalStatus='dropped',missing=false;
+ const get=f.options.node.getTxReceipt;
+ f.options.node.getTxReceipt=async hash=>{
+  if(String(hash)===originalHash){if(missing)throw Error('unavailable');return{...f.receipt,txHash:new Field(originalHash),status:originalStatus};}
+  if(String(hash)===reserveHash)return{...f.receipt,txHash:new Field(reserveHash),status:'checkpointed'};
+  return get(hash);
+ };
+ f.options.node.getTxEffect=async hash=>({...f.effect,data:{...f.effect.data,txHash:new Field(hash)}});
+ return{...f,operation,originalHash,reserveHash,authority:{...operation,originalTxHash:originalHash},setOriginal:(status,unavailable=false)=>{originalStatus=status;missing=unavailable;}};
+}
+test('explicit dropped settlement replacement retains both hashes, canonical fees and one-use lineage',async()=>{
+ const f=await replacementFixture(),original=structuredClone(f.journal().operations[f.operation.operationId]);
+ const result=await f.port.replaceDroppedOperation(f.authority);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+ let saved=f.journal().operations[f.operation.operationId];
+ for(const key of ['txHash','args','argsDigest','transactionSha256','submissionError'])assert.deepEqual(saved[key],original[key]);
+ assert.equal(saved.replacement.originalTxHash,f.originalHash);assert.equal(saved.replacement.txHash,H(56));
+ assert.equal(saved.replacement.observation.transactionFee,'7');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ const reopened=await f.create();assert.equal((await reopened.replaceDroppedOperation(f.authority)).status,'succeeded');
+ assert.equal((await reopened.settle(f.id,7,120n,H(88),f.operation)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ f.setOriginal('checkpointed');assert.equal((await reopened.inspectOperation(f.operation.operationId)).txHash,f.originalHash);
+ saved=f.journal().operations[f.operation.operationId];assert.equal(saved.includedHistory[0].transactionFee,'7');assert.equal(saved.replacement.includedHistory[0].transactionFee,'7');
+});
+test('replacement never admits missing/pending receipts, wrong authority or changed reservation',async()=>{
+ for(const kind of ['pending','unavailable','hash','digest','sequence','amount','latest','reserve','proofPolicy','expired']){
+  const f=await replacementFixture(),authority={...f.authority};
+  if(kind==='pending')f.setOriginal('pending');if(kind==='unavailable')f.setOriginal('dropped',true);
+  if(kind==='hash')authority.originalTxHash=H(999);if(kind==='digest')authority.argsDigest='ef'.repeat(32);
+  if(kind==='sequence')f.row.sequence=8n;if(kind==='amount'){f.row.reserved=100n;f.row.available=900n;}
+  if(kind==='latest'){const get=f.options.node.getBlock;f.options.node.getBlock=async tag=>{if(tag==='latest')f.row.receipt=999n;return get(tag);};}
+  if(kind==='reserve'){const s=structuredClone(f.store.read());delete s.privateBokEscrow.operations[f.op('reserve',[f.id,7,'400']).operationId];await f.store.write(s);}
+  if(kind==='proofPolicy')f.set('nodeProofs',true);if(kind==='expired')f.row.deadline=BigInt(f.block.header.globalVariables.timestamp);
+  await assert.rejects(f.port.replaceDroppedOperation(authority));assert.deepEqual(f.counts(),{proofs:0,sends:0});
+ }
+});
+test('replacement admission consumed before proof; failure and unknown send never reprove or resend',async()=>{
+ for(const kind of ['proof','unknown','dropped']){
+  const f=await replacementFixture();
+  if(kind==='proof')f.set('proofFailed',true);
+  if(kind==='unknown'){f.set('sendLost',true);f.receipt.status='pending';}
+  if(kind==='dropped')f.receipt.status='dropped';
+  if(kind==='proof')await assert.rejects(f.port.replaceDroppedOperation(f.authority),/unresolved/);
+  else await f.port.replaceDroppedOperation(f.authority);
+  const before=f.counts();await (await f.create()).replaceDroppedOperation(f.authority);assert.deepEqual(f.counts(),before);
+  assert.equal(before.proofs,1);assert.equal(before.sends,kind==='proof'?0:1);
+ }
+});
+test('replacement rechecks reservation and late original inclusion after proof before broadcasting',async()=>{
+ for(const kind of ['changed','original-included','lease','expired']){
+  const f=await replacementFixture(),prove=f.options.wallet.pxe.proveTx;
+  f.options.wallet.pxe.proveTx=async(...args)=>{const result=await prove(...args);if(kind==='changed')f.row.receipt=999n;if(kind==='original-included')f.setOriginal('checkpointed');if(kind==='lease')f.set('held',false);if(kind==='expired')f.block.header.globalVariables.timestamp=f.row.deadline;return result;};
+  if(kind==='original-included')assert.equal((await f.port.replaceDroppedOperation(f.authority)).status,'succeeded');
+  else await assert.rejects(f.port.replaceDroppedOperation(f.authority));
+  assert.deepEqual(f.counts(),{proofs:1,sends:0});
+ }
 });

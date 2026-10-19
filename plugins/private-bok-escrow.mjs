@@ -119,30 +119,32 @@ export function createPrivateBokEscrowFactory(sdk) {
   const initial=await anchored();await wallet.registerContract(initial.instance,artifact);
   const contract=await Contract.at(addr,artifact,wallet); if(!store.read().privateBokEscrow)await save(journal());else journal();
   const unsubmittedReserve=record=>record.method==='reserve'&&record.args?.[1]===0&&record.proofMode===proofMode&&record.phase==='preparing'&&!['recoveryAttempted','txHash','transactionSha256','submissionError'].some(key=>Object.hasOwn(record,key));
-  const inspect=async operationId=>{
+  const inspectOne=async (operationId,replacement=false)=>{
+   const readRecord=()=>replacement?journal().operations[operationId]?.replacement:journal().operations[operationId];
+   const recordUpdate=changes=>replacement?update(operationId,{replacement:{...readRecord(),...changes}}):update(operationId,changes);
    assert(/^[0-9a-f]{64}$/.test(operationId));await held();
-   const record=journal().operations[operationId];if(!record){await checkNetwork();return {status:'absent'};}
+   const record=readRecord();if(!record){await checkNetwork();return {status:'absent'};}
    assert(methods.includes(record.method) && record.args?.[0]===id,'Invalid recorded operation');
    assert.equal(digest(record.args),record.argsDigest,'Recorded arguments changed');
    // Current authority expires before the new read. Historical rows are evidence,
    // never a substitute for receipt availability, canonicality or finality now.
-   await update(operationId,{result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
+   await recordUpdate({result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
    await checkNetwork();
    if(!record.txHash)return {status:unsubmittedReserve(record)?'not-submitted':'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
    let receipt;
    try{receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));}
-   catch{await update(operationId,{observation:{status:'unavailable'}});return {status:'pending',canonical:false};}
+   catch{await recordUpdate({observation:{status:'unavailable'}});return {status:'pending',canonical:false};}
    const observation={status:statuses.includes(receipt?.status)?receipt.status:'invalid',
     ...(typeof receipt?.transactionFee==='bigint'?{transactionFee:String(receipt.transactionFee)}:{}),
     ...(['success','reverted'].includes(receipt?.executionResult)?{executionResult:receipt.executionResult}:{})};
    // Preserve consumed fees and failure category before hash/finality assertions.
-   await update(operationId,{observation});
+   await recordUpdate({observation});
    assert.equal(String(receipt.txHash),record.txHash,'Receipt hash mismatch');assert(statuses.includes(receipt.status),'Invalid receipt status');
    if(['pending','dropped'].includes(receipt.status))return {status:receipt.status==='dropped'?'failed':'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
    const block=await node.getBlock(receipt.blockNumber),effect=await node.getTxEffect(TxHash.fromString(record.txHash));
    if(!block||!effect)return {status:'pending',canonical:false};
    observation.blockNumber=Number(receipt.blockNumber);observation.blockHash=String(receipt.blockHash);
-   observation.effectSha256=bytesHash(effect.data.toBuffer());await update(operationId,{observation});
+   observation.effectSha256=bytesHash(effect.data.toBuffer());await recordUpdate({observation});
    assert.equal(String(block.hash),String(receipt.blockHash),'Receipt block mismatch');
    assert.equal(String(effect.l2BlockHash),String(block.hash),'Effect block mismatch'); assert.equal(Number(effect.l2BlockNumber),Number(receipt.blockNumber));
    assert.equal(String(effect.data.txHash),record.txHash,'Effect hash mismatch');
@@ -151,11 +153,11 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert(['success','reverted'].includes(receipt.executionResult));assert.equal(effect.data.revertCode.isOK(),receipt.executionResult==='success','Effect result mismatch');
    assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
    const included={...observation,txHash:record.txHash,canonicalAtObservation:true};
-   const history=journal().operations[operationId].includedHistory??[];
+   const history=readRecord().includedHistory??[];
    if(!history.some(row=>digest(row)===digest(included))){
     // Stop on excessive distinct observations instead of silently dropping fees.
     assert(history.length<8,'Included receipt history limit; retain journal for reconciliation');
-    await update(operationId,{includedHistory:[...history,included]});
+    await recordUpdate({includedHistory:[...history,included]});
    }
    if(!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
    const tip=await node.getBlock(finality);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
@@ -164,12 +166,27 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
    const result={status:receipt.executionResult==='success'?'succeeded':'failed',canonical:true,method:record.method,argsDigest:record.argsDigest,
     txHash:record.txHash,transactionFee:String(receipt.transactionFee),blockNumber:observation.blockNumber,blockHash:observation.blockHash};
-   await update(operationId,{observation:{...observation,canonical:true},result});return result;
+   await recordUpdate({observation:{...observation,canonical:true},result});return result;
+  };
+  const inspect=async operationId=>{
+   const original=await inspectOne(operationId),record=journal().operations[operationId];
+   if(!record?.replacement)return original;
+   const replacement=record.replacement;
+   assert.equal(replacement.originalTxHash,record.txHash,'Replacement original hash changed');
+   assert.equal(replacement.argsDigest,record.argsDigest,'Replacement arguments changed');
+   assert.deepEqual(replacement.args,record.args,'Replacement arguments changed');
+   assert.equal(replacement.method,'settle');assert.equal(record.method,'settle');
+   const observed=await inspectOne(operationId,true);
+   // Observe both exact hashes: an original late inclusion is also authoritative,
+   // while each included transaction keeps its own fee/effect history.
+   const result=original.status==='succeeded'&&original.canonical?original:observed;
+   await update(operationId,{result});return result;
   };
   const waitForOperation=async operationId=>{
    const observed=await inspect(operationId);
    if(observed.status==='succeeded'||observed.status==='failed')return observed;
-   const record=journal().operations[operationId];
+   const original=journal().operations[operationId],record=original?.replacement??original;
+   if(record&&!record.txHash)return observed;
    assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
    assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
    try{
@@ -203,6 +220,11 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert(Object.keys(journal().operations).length<256,'Escrow operation limit');
    await anchored();
    await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode,...(old?{recoveryAttempted:true}:{})});
+   return perform(method,args,operationId);
+  };
+
+  const perform=async(method,args,operationId,replacement=false,beforeSend=null)=>{
+   const recordUpdate=changes=>replacement?update(operationId,{replacement:{...journal().operations[operationId].replacement,...changes}}):update(operationId,changes);
    try{
     const encoded=args.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(method==='publish_reply'&&i===1)||((method==='settle'||method==='reconcile')&&i===3)?Fr.fromString(v):v);
     const interaction=contract.methods[method](...encoded),payload=await interaction.request({from:op,additionalScopes:[]});
@@ -221,17 +243,54 @@ export function createPrivateBokEscrowFactory(sdk) {
     assert.equal(String(calls[0].functionSelector),String(call.selector));assert.deepEqual(calls[0].args.map(x=>x.toBigInt()),call.args.map(x=>x.toBigInt()));
     const hash=hex(tx.getTxHash());
     await anchored();await lease.assertHeld();
-    await update(operationId,{phase:'submission-unknown',txHash:hash,transactionSha256:bytesHash(tx.toBuffer())});
+    if(beforeSend&&!await beforeSend()){await recordUpdate({phase:'superseded-before-send'});return inspect(operationId);}
+    await recordUpdate({phase:'submission-unknown',txHash:hash,transactionSha256:bytesHash(tx.toBuffer())});
     await held();
     // An exception may mean accepted-but-response-lost. Never send this action again.
-    try{await node.sendTx(tx);}catch{await update(operationId,{submissionError:true});}
+    try{await node.sendTx(tx);}catch{await recordUpdate({submissionError:true});}
     return await waitForOperation(operationId);
-   }catch{if(!poisoned)await update(operationId,{failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
+   }catch{if(!poisoned)await recordUpdate({failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
+  };
+  const replaceDroppedOperation=async authority=>{
+   const {operationId,argsDigest,originalTxHash}=authority??{};
+   assert(/^[0-9a-f]{64}$/.test(operationId));hex(originalTxHash);
+   const original=journal().operations[operationId];
+   assert(original?.method==='settle'&&original.phase==='submission-unknown','Submitted settlement required');
+   assert.equal(original.argsDigest,argsDigest);assert.equal(digest(original.args),argsDigest);
+   assert.equal(original.txHash,originalTxHash);assert(/^[0-9a-f]{64}$/.test(original.transactionSha256));
+   assert.equal(original.args.length,4);scope(original.args[0]);sequence(original.args[1]);
+   const charge=integer(original.args[2],128);hex(original.args[3]);assert(charge>0n);
+   if(original.replacement)return waitForOperation(operationId);
+   const check=async()=>{
+    const observed=await inspectOne(operationId);
+    if(observed.canonical&&observed.status==='succeeded')return false;
+    assert.equal(journal().operations[operationId].observation?.status,'dropped','Explicit dropped receipt required');
+    const checkpoint=await anchored(),latest=await anchored('latest');
+    assert.deepEqual(latest.request,checkpoint.request,'Reservation changed after checkpoint');
+    const request=checkpoint.request;
+    assert(request.state===2&&request.sequence===original.args[1]&&request.reserved>=charge,'Original reservation required');
+    assert(BigInt(latest.anchor.timestamp)<request.deadline,'Settlement deadline reached');
+    const reserve=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,original.args[1],String(request.reserved)]));
+    assert(reserve,'Original reserve intent missing');
+    const reserved=await inspectOne(reserve[0]);assert(reserved.status==='succeeded'&&reserved.canonical,'Original reserve not canonical');
+    // Bind the exact reservation, cumulative budget and preceding receipt across
+    // proof construction. A changed request cannot authorize this replacement.
+    const retained=journal().operations[operationId].replacement?.reservation;
+    if(retained)assert.deepEqual(request,JSON.parse(retained,(_key,value)=>typeof value==='string'&&/^bigint:/.test(value)?BigInt(value.slice(7)):value),'Original reservation changed');
+    return checkpoint;
+   };
+   const admitted=await check();if(!admitted)return inspect(operationId);
+   await update(operationId,{replacement:{method:'settle',args:original.args,argsDigest,originalTxHash,
+    originalTransactionSha256:original.transactionSha256,proofMode,phase:'preparing',
+    reservation:JSON.stringify(admitted.request,(_key,value)=>typeof value==='bigint'?'bigint:'+value:value),anchor:admitted.anchor}});
+   // Admission is consumed before proving. Any failure or ambiguous submission
+   // can only inspect this lineage; it never produces another replacement.
+   return perform('settle',[id,original.args[1],charge,original.args[3]],operationId,true,check);
   };
   const port={identity,mode:Object.freeze({proofMode,nodeVerifiesProofs:proofMode==='real',pxeProofMode:proofMode,finality,controlledSettlement:development}),
    request:exclusive(async value=>{scope(value);const {instance,...result}=await anchored();return result;}),
    assertUsable:exclusive(usable),inspectOperation:exclusive(inspect),
-   waitForOperation:exclusive(waitForOperation),
+   waitForOperation:exclusive(waitForOperation),replaceDroppedOperation:exclusive(replaceDroppedOperation),
    reserve:exclusive((request,callId,maximum,operation)=>send('reserve',[request,sequence(callId),amount(maximum)],operation)),
    settle:exclusive((request,callId,actual,receipt,operation)=>send('settle',[request,sequence(callId),amount(actual),hex(receipt)],operation)),
    close_uncertain:exclusive((request,operation)=>send('close_uncertain',[request],operation)),
