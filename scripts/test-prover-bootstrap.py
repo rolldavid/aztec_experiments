@@ -1177,6 +1177,7 @@ base=pathlib.Path(sys.argv[2]);original=subprocess.Popen
 def spawn(args,**kw):
  return original([sys.executable,'-c',"import pathlib,sys,time;pathlib.Path(sys.argv[1]).write_text('ready');time.sleep(20)",str(base/'ready')],**kw)
 b.subprocess.Popen=spawn
+b.retire_stopped_node=lambda args,base:None # no Docker in this child-lifecycle fixture
 code=b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],base)
 if code<0:signal.signal(-code,signal.SIG_DFL);os.kill(os.getpid(),-code)
 raise SystemExit(code)
@@ -1215,9 +1216,13 @@ raise SystemExit(code)
                 def spawn(args,**kw):
                     calls.append(args)
                     return original([sys.executable,'-c',"import os,signal;print('Genesis archive root: PRIVATE_SENTINEL',flush=True);"+ending],**kw)
-                with patch.object(ns['subprocess'],'Popen',side_effect=spawn):
+                with patch.object(ns['subprocess'],'Popen',side_effect=spawn),patch.object(b,'retire_stopped_node'):
                     code=b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],ns['BASE'])
-                self.assertEqual(code,expected);self.assertEqual(len(calls),1)
+                    first=(ns['BASE']/'node-startup.json').read_bytes()
+                    self.assertEqual(b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],ns['BASE']),expected)
+                self.assertEqual(code,expected);self.assertEqual(len(calls),2)
+                archive=next(ns['BASE'].glob('node-startup-retired-*'))
+                self.assertEqual((archive/'node-startup.json').read_bytes(),first)
                 observed=b.node_startup_observation(ns['BASE']);self.assertTrue(observed['complete']);self.assertTrue(observed['available'])
                 self.assertIn('process-spawned',observed['stages']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(observed))
                 self.assertEqual(observed['exitCode'],7 if expected==7 else None);self.assertEqual(observed['signal'],15 if expected<0 else None)
@@ -1243,7 +1248,7 @@ raise SystemExit(code)
                     return original_fsync(fd)
                 started=time.monotonic()
                 try:
-                    with patch.object(b.subprocess,'Popen',side_effect=spawn),patch.object(b.os,'fsync',side_effect=fsync):
+                    with patch.object(b.subprocess,'Popen',side_effect=spawn),patch.object(b.os,'fsync',side_effect=fsync),patch.object(b,'retire_stopped_node'):
                         with self.assertRaises(OSError) as caught:b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],pathlib.Path(t))
                     self.assertIs(caught.exception,failure);self.assertLess(time.monotonic()-started,5)
                     self.assertGreaterEqual(post_spawn_syncs,1)
@@ -1268,13 +1273,59 @@ raise SystemExit(code)
             self.assertEqual(actual_files,b.STARTUP_SOURCES)
             self.assertFalse(any(p.name=='node_modules' for p in (base/'startup-code').rglob('*')))
             self.assertFalse(any('ROLLING_COMPACT_TIER=' in arg for arg in actual))
-            with self.assertRaises(FileExistsError):b.instrument_node_args(args,base)
+            (base/'startup-stages'/'prior-observation').write_text('retained')
+            self.assertEqual(b.instrument_node_args(args,base),actual)
+            archives=list(base.glob('node-startup-retired-*'));self.assertEqual(len(archives),1)
+            self.assertEqual((archives[0]/'startup-stages'/'prior-observation').read_text(),'retained')
+            self.assertEqual(list((base/'startup-stages').iterdir()),[])
         with tempfile.TemporaryDirectory() as t:
             base=pathlib.Path(t);prior=base/'startup-code';prior.mkdir(mode=0o700)
             marker=prior/'node_modules';marker.write_text('prior-owned-data')
-            with self.assertRaises(FileExistsError):b.instrument_node_args(args,base)
-            self.assertEqual(marker.read_text(),'prior-owned-data')
+            b.instrument_node_args(args,base)
+            archive=next(base.glob('node-startup-retired-*'))
+            self.assertEqual((archive/'startup-code'/'node_modules').read_text(),'prior-owned-data')
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);(base/'startup-code').symlink_to(ROOT)
+            with self.assertRaisesRegex(ValueError,'previous node startup'):b.instrument_node_args(args,base)
+            self.assertTrue((base/'startup-code').is_symlink())
         self.assertEqual(hashlib.sha256((pathlib.Path(b.__file__).parent/'startup-stages.mjs').read_bytes()).hexdigest(),b.STARTUP_HELPER_SHA)
+
+    def test_restart_retires_only_exact_stopped_container_and_serializes_writer(self):
+        import copy,fcntl
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);identifier='a'*64
+            args=['/usr/bin/docker','run','--name','rolling-node',b.IMAGE,'start','--node','--network','testnet']
+            record={'Id':identifier,'Name':'/rolling-node','Config':{'Image':b.IMAGE,'Entrypoint':['node'],
+                'Cmd':['--import','/usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs',*args[args.index(b.IMAGE)+1:]]},
+                'HostConfig':{'Binds':['/var/lib/rolling-node/data:/var/lib/data','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
+                    str(base/'startup-code')+':/usr/src/yarn-project/rolling:ro',str(base/'startup-stages')+':/rolling-startup']},
+                'State':{'Status':'exited','Running':False}}
+            for variant in ('absent','stopped','running','wrong-image','wrong-data','wrong-command','docker-error'):
+                with self.subTest(variant=variant):
+                    value=copy.deepcopy(record);calls=[]
+                    if variant=='running':value['State'].update(Status='running',Running=True)
+                    if variant=='wrong-image':value['Config']['Image']='unrelated'
+                    if variant=='wrong-data':value['HostConfig']['Binds'][0]='/unrelated:/var/lib/data'
+                    if variant=='wrong-command':value['Config']['Cmd']=['unrelated']
+                    def docker(command,**kw):
+                        calls.append(command)
+                        if variant=='docker-error':raise subprocess.CalledProcessError(1,command)
+                        output=('' if variant=='absent' else identifier) if command[2]=='ls' else json.dumps([value]) if command[2]=='inspect' else ''
+                        return subprocess.CompletedProcess(command,0,output,'')
+                    with patch.object(b.subprocess,'run',side_effect=docker):
+                        if variant in ('absent','stopped'):b.retire_stopped_node(args,base)
+                        else:
+                            with self.assertRaises((ValueError,subprocess.CalledProcessError)):b.retire_stopped_node(args,base)
+                    renames=[command for command in calls if command[2]=='rename']
+                    self.assertEqual(renames, [['/usr/bin/docker','container','rename',identifier,'rolling-node-retired-'+identifier]] if variant=='stopped' else [])
+            # No contender can rotate observations or touch Docker while this writer lives.
+            fd=os.open(base/'node-wrapper.lock',os.O_RDWR|os.O_CREAT,0o600)
+            try:
+                fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                with patch.object(b,'retire_stopped_node') as retire,patch.object(b,'instrument_node_args') as instrument:
+                    with self.assertRaises(BlockingIOError):b.node_wrapper(args,base)
+                retire.assert_not_called();instrument.assert_not_called()
+            finally:os.close(fd)
 
     def test_complete_source_closure_is_checked_before_any_mount_write(self):
         # Actual pinned files, not a synthetic helper graph. Requires reviewed

@@ -958,10 +958,54 @@ def startup_sources(root=None):
         finally:os.close(fd)
     return captured
 
+def archive_node_startup(base):
+    # A new start gets fresh bounded observations; previous runs remain intact.
+    import tempfile
+    previous=[]
+    for name in ('startup-stages','startup-code','node-startup.json'):
+        path=base/name
+        try:info=path.lstat()
+        except FileNotFoundError:continue
+        directory=name!='node-startup.json'
+        if info.st_uid!=os.getuid() or stat.S_IMODE(info.st_mode)!=(0o700 if directory else 0o600) or not (stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)):
+            raise ValueError('Invalid previous node startup path')
+        previous.append(path)
+    if not previous:return
+    archive=pathlib.Path(tempfile.mkdtemp(prefix='node-startup-retired-',dir=base))
+    for path in previous:path.rename(archive/path.name)
+    for path in (archive,base):
+        fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+
+
+def retire_stopped_node(args,base):
+    # Never remove a container or its persistent data. Docker errors fail closed.
+    if args.count('--name')!=1 or args[args.index('--name')+1]!='rolling-node':raise ValueError('Node container name')
+    def docker(*arguments):
+        return subprocess.run(['/usr/bin/docker',*arguments],check=True,capture_output=True,text=True,timeout=30).stdout.strip()
+    identifier=docker('container','ls','--all','--filter','name=^/rolling-node$','--no-trunc','--format','{{.ID}}')
+    if not identifier:return
+    if not re.fullmatch('[0-9a-f]{64}',identifier):raise ValueError('Node container identity')
+    values=json.loads(docker('container','inspect',identifier))
+    if type(values) is not list or len(values)!=1:raise ValueError('Node container inspection')
+    value=values[0]
+    expected_binds=['/var/lib/rolling-node/data:/var/lib/data','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
+        str(base/'startup-code')+':/usr/src/yarn-project/rolling:ro',str(base/'startup-stages')+':/rolling-startup']
+    expected_command=['--import','/usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs',*args[args.index(IMAGE)+1:]]
+    if (value.get('Id')!=identifier or value.get('Name')!='/rolling-node' or value.get('Config',{}).get('Image')!=IMAGE
+        or value.get('Config',{}).get('Entrypoint')!=['node'] or value.get('Config',{}).get('Cmd')!=expected_command
+        or sorted(value.get('HostConfig',{}).get('Binds') or [])!=sorted(expected_binds)
+        or value.get('State',{}).get('Status') not in ('exited','created') or value.get('State',{}).get('Running') is not False):
+        raise ValueError('Refusing unrelated or live node container')
+    docker('container','rename',identifier,'rolling-node-retired-'+identifier)
+
+
 def instrument_node_args(args,base):
     captured=startup_sources() # complete closure is checked before creating either directory
     i=args.index(IMAGE)
-    directory=base/'startup-stages';directory.mkdir(mode=0o700) # exclusive, retain failures/prior evidence
+    archive_node_startup(base)
+    directory=base/'startup-stages';directory.mkdir(mode=0o700)
     stage_directory(base)
     code=base/'startup-code';code.mkdir(mode=0o700)
     for rel,raw in captured.items():
@@ -1089,6 +1133,20 @@ def reap_failed_node(process):
 def node_wrapper(args,base):
     # Fixed generated systemd argv; never network/caller-selected commands.
     if args[:2]!=['/usr/bin/docker','run'] or args[-1]!='testnet' or IMAGE not in args:raise ValueError('Node command')
+    import fcntl
+    fd=os.open(base/'node-wrapper.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
+    try:
+        info=os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or stat.S_IMODE(info.st_mode)!=0o600:raise ValueError('Invalid node writer lock')
+        fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        startup_sources() # Fail before changing any retained container/evidence.
+        retire_stopped_node(args,base)
+        args=instrument_node_args(args,base)
+        return run_node_wrapper(args,base)
+    finally:os.close(fd)
+
+
+def run_node_wrapper(args,base):
     output=NodeOutput();saved=None;process=None;requested=None
     def persist():
         nonlocal saved
@@ -1111,7 +1169,6 @@ def node_wrapper(args,base):
     try:
         persist()
         if requested is not None:output.finish(-requested);persist();return -requested
-        args=instrument_node_args(args,base)
         process=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)
         output.value['stages'].append('process-spawned');persist()
         if requested is not None:stop(requested,None)
