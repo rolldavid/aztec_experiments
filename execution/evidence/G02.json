@@ -1,0 +1,212 @@
+{
+  "task_id": "G02",
+  "outcome": "pass",
+  "recorded_at": "2026-10-11T11:23:40.682369+00:00",
+  "source_fingerprint": "46f826f5defc6ba231cde9ffb4cc523e5edbae472fe266426ffcf256bad2715e",
+  "source_inventory": "evidence/G02/source-001.json",
+  "artifacts": [
+    {
+      "path": "evidence/G02/source-001.json",
+      "sha256": "f6dea3c9d6c8ceec7b8adb0881c3b9124a7ec862141015791561b12f6f7c46f5"
+    },
+    {
+      "path": "evidence/G02/baseline.md",
+      "sha256": "fcd3682c919e3758129f574c6ed3ca32f46ff4475560eb0cf3a0b220c37de501"
+    },
+    {
+      "path": "evidence/G02/legacy-driver-diagnosis.json",
+      "sha256": "1b795f256f9e137d5ecdd76705b8ac86616075b4758427c46ecf709e63497980"
+    },
+    {
+      "path": "evidence/G02/baseline-build.log",
+      "sha256": "8e2be9b860ca2cde19b400bbe7d457635f5883bb661d965129932743817b213b"
+    },
+    {
+      "path": "evidence/G02/baseline-harness.log",
+      "sha256": "75297997e99f7d0400cdb7e1a0ea675db0a015f71b8dc3204d590ed4659eb244"
+    },
+    {
+      "path": "evidence/G02/baseline-components.log",
+      "sha256": "e9c24037a922cb0dd13853fe9a8f0746bbe71ecefc7aa1242be246ef48b49402"
+    },
+    {
+      "path": "evidence/G02/offline-cli-fixed.log",
+      "sha256": "db8c4d15b0f7e97afeb5ff1320296341ebb367ea248c6b8ef441f82dd03f421f"
+    },
+    {
+      "path": "evidence/G02/offline-review.json",
+      "sha256": "d9dd224e095bffead7c5481eac52b864d84c4f937fd3bdb41a7ed2818f1dbce8"
+    },
+    {
+      "path": "evidence/G02/offline-integration.json",
+      "sha256": "2a898779c4301321f8a687cab82673beabc77810065dde6ef6bda3d509b3a652"
+    },
+    {
+      "path": "evidence/G02/clean-install.json",
+      "sha256": "df1aa5e4d1d9da8c46bc88b18f78d6ea6653c3eb1282d5fe81949d0f653ee38b"
+    },
+    {
+      "path": "evidence/G02/diagnostic-review.json",
+      "sha256": "67ce135e1e109455c430f1b157d6aa074edc769cd4eef842b162083c89a1064f"
+    },
+    {
+      "path": "evidence/G02/diagnostic-integration.json",
+      "sha256": "688eded5f0b50012b29aeb2278af15a828635b8a08d3d0bd13d0fc6b9a16a741"
+    },
+    {
+      "path": "evidence/G02/aws-prover-instances.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "evidence/G02/aws-volumes.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "evidence/G02/aws-addresses.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "evidence/G02/aws-costs.json",
+      "sha256": "a87c2ae10a64737563a041c67faf7d6099152e660bcfa80c3c755dd52388b069"
+    },
+    {
+      "path": "evidence/G02/plugin-health.json",
+      "sha256": "ffab1f4d79bcf88d5fd3dc76a39555dfa14e1bc11f72937b2a0d8f3848148020"
+    },
+    {
+      "path": "evidence/G02/prover-health-status.txt",
+      "sha256": "81549590044d2f7b62378afe7234c54599e8cb643c760be28492c36d1aa5d90f"
+    },
+    {
+      "path": "evidence/G03/interfaces-review.json",
+      "sha256": "daab9ecd60140b485d3cf426875b31c9228ab5baa8a98cce0d453f378d3315ff"
+    },
+    {
+      "path": "evidence/G02/infrastructure-baseline.json",
+      "sha256": "622d186169ec6b546a56178482383c31aa20cd8d9f5ce541cfa7dfa6ea592972"
+    },
+    {
+      "path": "evidence/T04/application-7359a4ca-c985-4037-b118-abb2023c3618.json",
+      "sha256": "786c67076fd1e22eacd7012f5686d9fb414b2f3c5e890445530b15391d9c0599"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G02-A01",
+      "result": "pass",
+      "summary": "Clean starting458724c verified; build78harness/371componenttests pass, offlinefixture repaired/reviewed; cleaninstall pass; MetaMask realbrowser attempts retainedfailed withcleanup. Independentdiagnosis obsolete driver, not productacceptance.",
+      "artifacts": [
+        "evidence/G02/baseline.md",
+        "evidence/G02/legacy-driver-diagnosis.json",
+        "evidence/G02/baseline-build.log",
+        "evidence/G02/baseline-harness.log",
+        "evidence/G02/baseline-components.log",
+        "evidence/G02/offline-cli-fixed.log",
+        "evidence/G02/offline-review.json",
+        "evidence/G02/offline-integration.json",
+        "evidence/G02/clean-install.json",
+        "evidence/G02/diagnostic-review.json",
+        "evidence/G02/diagnostic-integration.json",
+        "evidence/G02/aws-prover-instances.json",
+        "evidence/G02/aws-volumes.json",
+        "evidence/G02/aws-addresses.json",
+        "evidence/G02/aws-costs.json",
+        "evidence/G02/plugin-health.json",
+        "evidence/G02/prover-health-status.txt",
+        "evidence/G03/interfaces-review.json",
+        "evidence/G02/infrastructure-baseline.json",
+        "evidence/T04/application-7359a4ca-c985-4037-b118-abb2023c3618.json"
+      ]
+    },
+    {
+      "id": "G02-A02",
+      "result": "pass",
+      "summary": "ActuallocalAWS identity andempty historicalproverregion resourcechecks, pluginready andprover504 recorded; conservative108.28reserved/191.72headroom before complete newlaunchforecast. No paidcompute changes.",
+      "artifacts": [
+        "evidence/G02/baseline.md",
+        "evidence/G02/legacy-driver-diagnosis.json",
+        "evidence/G02/baseline-build.log",
+        "evidence/G02/baseline-harness.log",
+        "evidence/G02/baseline-components.log",
+        "evidence/G02/offline-cli-fixed.log",
+        "evidence/G02/offline-review.json",
+        "evidence/G02/offline-integration.json",
+        "evidence/G02/clean-install.json",
+        "evidence/G02/diagnostic-review.json",
+        "evidence/G02/diagnostic-integration.json",
+        "evidence/G02/aws-prover-instances.json",
+        "evidence/G02/aws-volumes.json",
+        "evidence/G02/aws-addresses.json",
+        "evidence/G02/aws-costs.json",
+        "evidence/G02/plugin-health.json",
+        "evidence/G02/prover-health-status.txt",
+        "evidence/G03/interfaces-review.json",
+        "evidence/G02/infrastructure-baseline.json",
+        "evidence/T04/application-7359a4ca-c985-4037-b118-abb2023c3618.json"
+      ]
+    },
+    {
+      "id": "G02-A03",
+      "result": "pass",
+      "summary": "PinnedV6 localdisabledproofnode/inclusion/portalactivation pass; realwallet baselinefails beforedeposit due obsolete selectors. Testnet realproof andnewonboarding remainG08/G13 mandatory.",
+      "artifacts": [
+        "evidence/G02/baseline.md",
+        "evidence/G02/legacy-driver-diagnosis.json",
+        "evidence/G02/baseline-build.log",
+        "evidence/G02/baseline-harness.log",
+        "evidence/G02/baseline-components.log",
+        "evidence/G02/offline-cli-fixed.log",
+        "evidence/G02/offline-review.json",
+        "evidence/G02/offline-integration.json",
+        "evidence/G02/clean-install.json",
+        "evidence/G02/diagnostic-review.json",
+        "evidence/G02/diagnostic-integration.json",
+        "evidence/G02/aws-prover-instances.json",
+        "evidence/G02/aws-volumes.json",
+        "evidence/G02/aws-addresses.json",
+        "evidence/G02/aws-costs.json",
+        "evidence/G02/plugin-health.json",
+        "evidence/G02/prover-health-status.txt",
+        "evidence/G03/interfaces-review.json",
+        "evidence/G02/infrastructure-baseline.json",
+        "evidence/T04/application-7359a4ca-c985-4037-b118-abb2023c3618.json"
+      ]
+    },
+    {
+      "id": "G02-A04",
+      "result": "pass",
+      "summary": "Node/archivercapacity andcost currentgaps recorded with officialV6 requirements; no retentionqualified. G07/G12/G13 retainmeasurements/bounded/reorg/rebuild acceptance.",
+      "artifacts": [
+        "evidence/G02/baseline.md",
+        "evidence/G02/legacy-driver-diagnosis.json",
+        "evidence/G02/baseline-build.log",
+        "evidence/G02/baseline-harness.log",
+        "evidence/G02/baseline-components.log",
+        "evidence/G02/offline-cli-fixed.log",
+        "evidence/G02/offline-review.json",
+        "evidence/G02/offline-integration.json",
+        "evidence/G02/clean-install.json",
+        "evidence/G02/diagnostic-review.json",
+        "evidence/G02/diagnostic-integration.json",
+        "evidence/G02/aws-prover-instances.json",
+        "evidence/G02/aws-volumes.json",
+        "evidence/G02/aws-addresses.json",
+        "evidence/G02/aws-costs.json",
+        "evidence/G02/plugin-health.json",
+        "evidence/G02/prover-health-status.txt",
+        "evidence/G03/interfaces-review.json",
+        "evidence/G02/infrastructure-baseline.json",
+        "evidence/T04/application-7359a4ca-c985-4037-b118-abb2023c3618.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "summary": "Baseline recording accepted at0e9bdb3; failure preserved, no productqualification. Designworker independentdiagnosis5f follows.",
+    "artifacts": [
+      "evidence/G03/interfaces-review.json",
+      "evidence/G02/legacy-driver-diagnosis.json"
+    ]
+  }
+}

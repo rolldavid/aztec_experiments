@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-18T11:20:54.739851+00:00",
+  "provider": "sepolia.gateway.tenderly.co",
+  "procedure": "One read-only standard JSON-RPC batch: chainId,nonce latest/pending,balance,threeoriginalreceipts",
+  "observations": {
+    "chain": "0xaa36a7",
+    "latestNonce": "0xf",
+    "pendingNonce": "0xf",
+    "balance": "0xd12c0614b14ba4",
+    "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746": null,
+    "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61": null,
+    "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62": null
+  },
+  "mutations": 0,
+  "disposition": "No absence implies permission to resend. Original uncertain operations preserved."
+}

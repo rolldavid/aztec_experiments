@@ -1,0 +1,86 @@
+{
+  "task": "G04-RC22 cursor review repair",
+  "commit": "14363ed0f2c0f747defeb2ad94c192f573306857",
+  "previous": "9f8913e4d41fa281cc3b9fdbc57ce09f94d111fe",
+  "source": [
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "9881a6104420579871349a99d8044eef8ddcdcb5b74ae3cd7d7a1a6c9045ee36"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "fd7076923bb2d385627c555484e18bd9c04884d389dbb411b34c3a2505252fe1"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "f3c358b33dfa04d488895cae2db613b3ab573759c99c296c6983e21ad49807f9"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "8a5202def9002a3e02f03bccb663d82c39de7e595aa7e30da59f8a2384d47a52"
+    }
+  ],
+  "finding": "Both previous validators rejected the actual persistent cursor with colons. Both now accept only the exact lowercase32hex:64hex:16hex grammar, retaining canonical snapshot/revision and parameter restrictions.",
+  "composition": "Actual persistent index + SQLite + processed ABI decoder ingest two anonymous posts on a labelled finite canonical-node double, produce a real114-character MAC token, and validate its continuation. A labelled Bok-envelope adapter carries that token through application output acceptance and uniform-fetch input acceptance unchanged; no owned IDs enter fetch. The actual Controls Bok endpoint is not yet composed here.",
+  "checks": [
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-real-cursor-focus.json",
+      "sha256": "79cb206278c1ddb86c296889852b50c001af1cedf2c9de8d2f8c47f13dcd5484",
+      "log": "execution/evidence/G07/native-social-wire/rc22-real-cursor-focus.log",
+      "logSha256": "8dbaff8dde2ad448cef9c5c69190b6c76f6692d28de790697bcc1978174a2657",
+      "exit": 1,
+      "elapsedMs": 1762,
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "linkRestored": true,
+        "tempRemoved": true
+      }
+    },
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-real-cursor-corrected.json",
+      "sha256": "dea4c2b799873308fb8ff166d97f8d25fdb16f4954597f1bda4ba5e4f1d6b985",
+      "log": "execution/evidence/G07/native-social-wire/rc22-real-cursor-corrected.log",
+      "logSha256": "c481000d171915af49df66cfec9d352759b4b2151b280f5c96f8dcc46f38dc0f",
+      "exit": 0,
+      "elapsedMs": 1459,
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "linkRestored": true,
+        "tempRemoved": true
+      }
+    },
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-bok-colon-cursor-final.json",
+      "sha256": "575a5b1b9a984b9d5260b21c4cfd3c15b1c0d7b29c6158cc1914836182f5beee",
+      "log": "execution/evidence/G07/native-social-wire/rc22-bok-colon-cursor-final.log",
+      "logSha256": "7512b537abafc562d7d7e37c4850c9af69ec65dfe8f2c4e85dc7efc82646c30d",
+      "exit": 0,
+      "elapsedMs": 2459,
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "linkRestored": true,
+        "tempRemoved": true
+      }
+    }
+  ],
+  "finalAffected": {
+    "pass": 102,
+    "fail": 0,
+    "elapsedMs": 2459
+  },
+  "priorCarry": {
+    "packet": "execution/evidence/G04/rc22-balances-withdrawals/bok-final-review.json",
+    "sha256": "308e1cf37a832215f6ab91bc8434d1de7437789c897d712d337ce6e13cca13e3",
+    "cumulativeDistinctOrdinary": 327,
+    "labelledBrowser": 3
+  },
+  "preservedFailures": [
+    "First new composition fixture used strings without the pinned SDK hash.equals/toBuffer shape and failed before wallet cursor handling. Fixed the test double only; original record retained.",
+    "Attempt to use existing historical rc22-cursor-final evidence name failed exclusive creation before tests; original21-case receipt/log remained unchanged. New unique name used for actual102."
+  ],
+  "limits": [
+    "No live chain, private withdrawal, real archive or new-class qualification.",
+    "No browser rerun: cursor repair does not change the panel; prior three UI cases carry.",
+    "Root normal SDK/wallet build and Controls utility/API composition remain separate."
+  ]
+}

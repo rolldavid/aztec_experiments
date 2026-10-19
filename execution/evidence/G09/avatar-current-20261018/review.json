@@ -1,0 +1,43 @@
+{
+  "revision": "d8513dae8389f38769fddc4a052e62b34440d265",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "scoped acceptance passed",
+  "scope": "Actual local avatar publication reconstructed from canonical node through independent production SQLite public index.",
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node .build/reviewer-evidence/avatar-current/verify.mjs",
+      "outcome": "Passed; 126 bounded index steps, 9.213 seconds. Separate 1.1 MiB evidence/cache directory; no listener or live index writes.",
+      "evidence": "observations.json"
+    }
+  ],
+  "observations": {
+    "checkpoint": {
+      "number": 67,
+      "hash": "0x00cb2f88cfbdb7581fdba18eb51750af3f6d97ae50ac16d5fa65a86b26fa3d13"
+    },
+    "avatar": {
+      "version": "1",
+      "length": "1895",
+      "width": "100",
+      "height": "100",
+      "digest": "15892730617459922572362217865760756242160945765521549797643556197903038999498",
+      "sha256": "27ddf27735c76bbd2d1cd5bb3f1350650ccb88300d83c6117358531bef007c5a",
+      "removal": null
+    },
+    "namedPostUsesCurrentAvatar": true,
+    "livePublicApiMatchesRebuiltBytes": true
+  },
+  "limitations": [
+    "Native local devnet proofs disabled; not real-proof testnet or release qualification.",
+    "8192-byte maximum boundary, moderation/removal/replacement and image-policy qualification not exercised.",
+    "profile.png under coordinator execution evidence is a screenshot, not the source or published image. The reviewer compared exact published bytes between fresh canonical reconstruction and live public API; no byte-equivalence claim to the original pre-normalized upload.",
+    "Source revision names the observed application behavior. No tracked edits or service/chain/model/Docker mutations."
+  ],
+  "evidenceHashes": {
+    "verify.mjs": "3bd8d363e8ed41fabb97ed3bdad2c551aeb0d8d7deaf41ac644a40656f67655b",
+    "observations.json": "097acb3ba138c152b3c7020c536630f2fd0a34981726ff2d337075cadbc217b6",
+    "published-avatar.png": "27ddf27735c76bbd2d1cd5bb3f1350650ccb88300d83c6117358531bef007c5a",
+    "focused.log": "807e53db86d4697c9d590055f90db2d3dbeea3d2f2439062382ad3d47b3c0e17"
+  }
+}

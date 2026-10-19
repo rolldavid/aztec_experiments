@@ -1,0 +1,62 @@
+{
+  "source": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+  "runtimeSource": "86adc375456235c1c9df20639cc012e70bb3468c",
+  "node": "native devnet realProofs:false",
+  "bok": "stopped",
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "352947746",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "boardAddress": "0x0ab4f3e5a900efff88dc892e4118f286e4b9c1fee5abea83ca106efb36692ee4",
+    "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+    "bok": {
+      "address": "0x05213d557acc4314c296af318376983d77a1af1dbcfa4d002f96aa9e8c3851d6",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x21425cea6ebf7f50501159d734765b66ee67e67c5e1c3015f0275c234b8c92f3",
+      "deployer": "0x21425cea6ebf7f50501159d734765b66ee67e67c5e1c3015f0275c234b8c92f3",
+      "salt": "0x2a1efa6fa0518fac6b9696763b5c82ef1ff2458b4688b606f4f57fb273105b5f",
+      "deployment": {
+        "blockNumber": 6,
+        "blockHash": "0x07f1294adbf3ca509a9ba95a8a15a7d383e3d7e2c27dcc766a9c152a740fe079",
+        "txHash": "0x301d8b692306a6922b71d2229b2511430b1ddc8d2c1117cdb7bb9062521327ad"
+      }
+    }
+  },
+  "routes": [
+    "feed?limit=20",
+    "home?limit=20",
+    "board?id=0",
+    "directory",
+    "thread?root=4729438060944817773885932501194730891419773741996909741267936884292185979896"
+  ],
+  "results": [
+    {
+      "label": "empty-cache rebuild",
+      "status": "pass",
+      "checkpoint": {
+        "number": 14,
+        "hash": "0x012c14da20771e3082b77305c0607cb31c55ab3e05133c9bed6628b831aa650c"
+      }
+    },
+    {
+      "label": "deleted-core-cache rebuild",
+      "status": "pass",
+      "checkpoint": {
+        "number": 14,
+        "hash": "0x012c14da20771e3082b77305c0607cb31c55ab3e05133c9bed6628b831aa650c"
+      }
+    },
+    {
+      "label": "retained-cache reopen",
+      "status": "pass",
+      "checkpoint": {
+        "number": 14,
+        "hash": "0x012c14da20771e3082b77305c0607cb31c55ab3e05133c9bed6628b831aa650c"
+      }
+    }
+  ],
+  "limitations": [
+    "Retained node/archiver required; this does not test loss of chain/archive data.",
+    "Simulated reorg and private-key restoration are separate checks."
+  ]
+}

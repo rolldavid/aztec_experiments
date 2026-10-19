@@ -1,0 +1,108 @@
+{
+  "task_id": "G01",
+  "outcome": "pass",
+  "recorded_at": "2026-10-11T10:31:17.030377+00:00",
+  "source_fingerprint": "e8fe87d1dbb9617a29b7b98936ca9ce7de60b680c83e35cea6724150c7d57a07",
+  "source_inventory": "evidence/G01/source-001.json",
+  "artifacts": [
+    {
+      "path": "evidence/G01/source-001.json",
+      "sha256": "168e7f0be25219d55922b02f7272e08a7070105143869907c65b508fd5465db8"
+    },
+    {
+      "path": "evidence/G01/gate-tests.log",
+      "sha256": "7ab981beb635d5942b116a8af06c96f3f4515aeff01b7943799566052073994a"
+    },
+    {
+      "path": "evidence/G01/controls-review.json",
+      "sha256": "eaf7505ea5ee470f3af387064880098019fc685044d3bce03fd3f170b2d07074"
+    },
+    {
+      "path": "evidence/G01/controls-integration.json",
+      "sha256": "2cd46a278f6666caaad59ecd2186b4e9483fc2773faad98d034d6a94d9b3b4ae"
+    },
+    {
+      "path": "evidence/G01/records-review.json",
+      "sha256": "754784c45d676fe244737b9cb902f7ab2bdcfa8a2a51f13b169c0f98a440def4"
+    },
+    {
+      "path": "evidence/G01/records-integration.json",
+      "sha256": "14831c67da1235fef80cd470121d0a80c8db1b2be176cc0034349c235124afe6"
+    },
+    {
+      "path": "evidence/G01/recovery-drill.json",
+      "sha256": "2fb50f51463140dc4cdc972fb4e1e3ea6e82ae665bcb96b5c5c24a301328476b"
+    },
+    {
+      "path": "evidence/G01/supervision.md",
+      "sha256": "592db694eb7d3496f2da351b103a0b5f1764e491c79a0b0e28088aab06740cd9"
+    },
+    {
+      "path": "evidence/G01/authority.md",
+      "sha256": "8e7dc0adb742511243a2bfbfc07e06e47bc2bdb9c0c312015c3d5eef2b0d9bd1"
+    },
+    {
+      "path": "evidence/G01/specification-checks.json",
+      "sha256": "1c12cc8ce87a6c92c7256709b88bf9f5c5c3e259671432bbfea3cebee460c8d8"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G01-A01",
+      "result": "pass",
+      "summary": "Exact-revision independently reviewed controls integrated94b5107;19 gate checks and missing/malformed requirement probes pass; actual ended-turn worker resumed, broader host survival explicitly unverified; commercial authority distinguished.",
+      "artifacts": [
+        "evidence/G01/gate-tests.log",
+        "evidence/G01/controls-review.json",
+        "evidence/G01/controls-integration.json",
+        "evidence/G01/records-review.json",
+        "evidence/G01/records-integration.json",
+        "evidence/G01/recovery-drill.json",
+        "evidence/G01/supervision.md",
+        "evidence/G01/authority.md",
+        "evidence/G01/specification-checks.json"
+      ]
+    },
+    {
+      "id": "G01-A02",
+      "result": "pass",
+      "summary": "Exact-revision independently reviewed controls integrated94b5107;19 gate checks and missing/malformed requirement probes pass; actual ended-turn worker resumed, broader host survival explicitly unverified; commercial authority distinguished.",
+      "artifacts": [
+        "evidence/G01/gate-tests.log",
+        "evidence/G01/controls-review.json",
+        "evidence/G01/controls-integration.json",
+        "evidence/G01/records-review.json",
+        "evidence/G01/records-integration.json",
+        "evidence/G01/recovery-drill.json",
+        "evidence/G01/supervision.md",
+        "evidence/G01/authority.md",
+        "evidence/G01/specification-checks.json"
+      ]
+    },
+    {
+      "id": "G01-A03",
+      "result": "pass",
+      "summary": "Exact-revision independently reviewed controls integrated94b5107;19 gate checks and missing/malformed requirement probes pass; actual ended-turn worker resumed, broader host survival explicitly unverified; commercial authority distinguished.",
+      "artifacts": [
+        "evidence/G01/gate-tests.log",
+        "evidence/G01/controls-review.json",
+        "evidence/G01/controls-integration.json",
+        "evidence/G01/records-review.json",
+        "evidence/G01/records-integration.json",
+        "evidence/G01/recovery-drill.json",
+        "evidence/G01/supervision.md",
+        "evidence/G01/authority.md",
+        "evidence/G01/specification-checks.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "summary": "Approved f27b959 gate and94b5107 records after hash repair; no product, billing audit or external specialist assurance.",
+    "artifacts": [
+      "evidence/G01/controls-review.json",
+      "evidence/G01/records-review.json"
+    ]
+  }
+}

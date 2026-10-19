@@ -1,0 +1,47 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T19:22:53.094831+00:00",
+  "sourceRevision": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "verdict": "approve_scoped_carryforward",
+  "findings": [],
+  "sourceBindings": {
+    "plugins/metering.mjs": {
+      "base": "6c01bb48",
+      "unchanged": true,
+      "sha256": "d2247b49e2bfa79477884b7ab209e9648db1511d589a074f4cde852d9f1dd4d6"
+    },
+    "plugins/private-bok-metering.mjs": {
+      "base": "6c01bb48",
+      "unchanged": true,
+      "sha256": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864"
+    },
+    "plugins/venice-metered.mjs": {
+      "base": "6c01bb48",
+      "unchanged": true,
+      "sha256": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28"
+    },
+    "plugins/escrow-service.mjs": {
+      "base": "f891dbaf",
+      "unchanged": true,
+      "sha256": "da885ef6d54c7a68dda501479be716cebe070f9e29d44e23c538af22e8efc3ff"
+    }
+  },
+  "checks": [
+    "Reviewed G14 reviewer-6c01-counter-reset-acceptance and underlying actual acceptance packet: two retained running journals with call1/call5 fences remained unchanged while separate genuine requests completed; unknown maximum297220 microUSD retained, no zero-charge inference.",
+    "Metering/private metering/Venice transport byte-identical to original actual evidence. Escrow including service dispatch byte-identical to reviewed f891. Main diff f891=>b27 only adds artifact API creation/cleanup/publication injection and agent instructions; durable hostedRequestDispatchable and accepted recovery/fence logic untouched.",
+    "Current actual accepted-before-reply window independently approved in accepted-before-reply/review-b27bec99.json complements historical unknown-call fence without another paid uncertain-call experiment."
+  ],
+  "limits": [
+    "Historical uncertain provider charges remain unresolved/fenced; scope is non-replay behavior, not retrospective settlement. No old stopped chain or terminal request revived.",
+    "Fresh-process health may say ready while durable fenced requests exist: this is a scoped interpretation limit, not an established mandatory feature gap. Ready does not mean all jobs completed.",
+    "No wholeD6 or final release acceptance inferred. No new model/chain/service actions or broad tests."
+  ],
+  "requirementClarification": {
+    "at": "2026-10-18T19:25:23.971181+00:00",
+    "classification": "observation_not_blocking_requirement_gap",
+    "section7": "Service restarts must preserve accepted workspace changes without repeating uncertain paid calls.",
+    "section8": "Include exact-transaction recovery, verification before accepting funds, monitoring, credential rotation and rollback instructions.",
+    "reason": "Neither RC37 nor RC41 explicitly requires historical fence reporting in /health. Existing private journals, documented operator inspection and --reconcile-billing expose original binding/call/billing evidence; public health is documented as operational status, not qualification. Canonical reserved/charged request state remains retained. No new health platform or implementation task justified by this caveat.",
+    "coordination": "Controls confirmed D7 uses existing moderator SQLite reopen/lease checks, not a new Bok health obligation."
+  }
+}

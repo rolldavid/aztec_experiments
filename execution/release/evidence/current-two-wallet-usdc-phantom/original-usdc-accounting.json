@@ -1,0 +1,94 @@
+{
+  "sourceRevision": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "observedAt": "2026-10-19T05:52:38.031Z",
+  "transactionHash": "0x4ca86e6abd984dc68ca4dd3ee02b5b69448ff905f40a8d8a03f3a5eb5f377417",
+  "planHash": "0xe535b8202cd18bf70da2e60cf0dc9ef6559f444728cd95eeec9ce93eedf7c2ab",
+  "chainId": 11155111,
+  "block": {
+    "number": 11946215,
+    "hash": "0x0cff2535cdadb75e167ebf116b85971dd6013e8d70db2e6cc91e0ba1ae364ab0"
+  },
+  "status": "mined-success",
+  "canonicalFinalized": false,
+  "finalized": {
+    "number": 11946135,
+    "hash": "0x9eb785006103607e26c428517140a92c2698cbcfb5377a7dfa502d7872ecab20"
+  },
+  "payer": "0x294f40accc74b3437d6e9e661b6e9c8b4e02289d",
+  "relayer": "0xe6c6f747c7f94ac3238a10f6ba4fd1d5367b2c4e",
+  "router": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+  "effects": {
+    "planHash": "0xe535b8202cd18bf70da2e60cf0dc9ef6559f444728cd95eeec9ce93eedf7c2ab",
+    "beneficiary": "0x294f40accc74b3437d6e9e661b6e9c8b4e02289d",
+    "refund": "531433",
+    "collateralUsdc": "51491235",
+    "feeUsdc": "1651961",
+    "relayFeeUsdc": "3000000",
+    "collateral": {
+      "amount": "1000000000000000",
+      "secretHash": "0x07a9d3fe35d55a227cf9a490228a92a665d0764618e494ef1be1e07062e5bb4f",
+      "messageKey": "0x00794bb9aa7d71f6f6644eafe153e1c0445f113acae7bdec9c3f10cbff773e5e",
+      "leafIndex": "114"
+    },
+    "privateFee": {
+      "amount": "128000000000000000000",
+      "secretHash": "0x2c4a2b6680f2e577cee39f10454e3f5e0910825804549adcdfa4e94fb98ca673",
+      "messageKey": "0x000867be03c5d5ff9502926322f094717121b5f082b6c4f61775542451c47ee9",
+      "leafIndex": "115"
+    },
+    "bok": {
+      "amount": "1000000",
+      "secretHash": "0x18d76e3a52fd5137aee6cb00c2cfec68f4f853d3a08677c9af6f9c73703bc99c",
+      "messageKey": "0x0099a433ee7244766d00e1d0bc9aed4671385b08aea444440e71e97ae9b610c2",
+      "leafIndex": "116",
+      "commitment": "0x04b17539dea050e190b29f59683f1a3d0ea53c98a1fd54c9d82bb3b9457427b5"
+    }
+  },
+  "accounting": {
+    "maximumUsdc": "57674629",
+    "actualUsdcSpent": "57143196",
+    "refundUsdc": "531433",
+    "payerUsdcBefore": "60000000",
+    "payerUsdcAfter": "2856804",
+    "payerEthBefore": "0",
+    "payerEthAfter": "0",
+    "payerNonceBefore": 0,
+    "payerNonceAfter": 0,
+    "relayerGasUsed": "1462759",
+    "relayerGasPriceWei": "16",
+    "relayerGasPaidWei": "23404144"
+  },
+  "publicUsdcTransfers": [
+    {
+      "from": "0x294f40accc74b3437d6e9e661b6e9c8b4e02289d",
+      "to": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "amount": "57674629"
+    },
+    {
+      "from": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "to": "0x6ce0896eae6d4bd668fde41bb784548fb8f59b50",
+      "amount": "51491235"
+    },
+    {
+      "from": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "to": "0xe7505a537cff2742059c0e6c06cd3939d3e73c85",
+      "amount": "1651961"
+    },
+    {
+      "from": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "to": "0x58075e0745668ffaee2cfcda5a219e70a71e0092",
+      "amount": "1000000"
+    },
+    {
+      "from": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "to": "0xe6c6f747c7f94ac3238a10f6ba4fd1d5367b2c4e",
+      "amount": "3000000"
+    },
+    {
+      "from": "0xe70e7a5f54b8c3ec97304e004d867893cfc26e1a",
+      "to": "0x294f40accc74b3437d6e9e661b6e9c8b4e02289d",
+      "amount": "531433"
+    }
+  ],
+  "scope": "Actual L1 atomic funding and zero-ETH payer accounting only; L2 bridge claims remain separate."
+}

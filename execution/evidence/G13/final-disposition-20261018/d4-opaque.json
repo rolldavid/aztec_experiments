@@ -1,0 +1,81 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+  "verdict": "bounded offline classification complete; missing payloads cannot be decoded",
+  "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/two-account-reader-20261018/native-trusted-boundary-observation.json",
+  "packetSha256": "daeea921e2422989c541f6a949c362b891cc75e613de146bb90c9f5ac7866536",
+  "opaqueObservationBreakdown": {
+    "aztec_simulatePublicCalls": 24,
+    "aztec_isValidTx": 12,
+    "aztec_sendTx": 3,
+    "eth_estimateGas": 3,
+    "eth_sendRawTransaction": 3
+  },
+  "opaqueTotal": 45,
+  "unknownMethods": {
+    "count": 27,
+    "leg": "public-l1",
+    "retainedLabel": "unsupported:unrecognized",
+    "originalNamesRetained": false
+  },
+  "byPhase": {
+    "b-name-1": {
+      "aztec_simulatePublicCalls": 8,
+      "aztec_isValidTx": 4,
+      "aztec_sendTx": 1,
+      "unsupported:unrecognized": 9,
+      "eth_estimateGas": 1,
+      "eth_sendRawTransaction": 1
+    },
+    "b-name-2": {
+      "aztec_simulatePublicCalls": 8,
+      "aztec_isValidTx": 4,
+      "aztec_sendTx": 1,
+      "unsupported:unrecognized": 9,
+      "eth_estimateGas": 1,
+      "eth_sendRawTransaction": 1
+    },
+    "recovery-a": {
+      "aztec_simulatePublicCalls": 8,
+      "aztec_isValidTx": 4,
+      "aztec_sendTx": 1,
+      "unsupported:unrecognized": 9,
+      "eth_estimateGas": 1,
+      "eth_sendRawTransaction": 1
+    }
+  },
+  "findings": [
+    "45 is a count of opaque RPC method observations, not45 unique transactions.39 are three SDK transaction methods:24 simulation,12 validation,3 broadcast.6 are L1 estimation/raw-broadcast observations. Each of three labelled phases contributes8simulations,4validations,1Aztec send,1L1estimate,1L1send. Repeated proof/simulation/validation observations must not be reported as45 financial actions.",
+    "All27 unknown-method observations occur on the public-L1 leg,9perphase. The observer deliberately replaces methods outside its fixed vocabulary with unrecognized. Neither method strings nor params can be reconstructed from that label. No claim these are harmless controls or private-data-bearing calls.",
+    "Observer source scripts/testing/rolling-wire-trace.mjs stores only method/role/size/phase/status aggregates and equality counts. Tx.data and chonkProof are recognized base64 but deliberately not decoded or saved; raw L1 transactions/calldata/blob bytes likewise discarded. Snapshot contains neither request hashes nor full request bytes.",
+    "Adjacent public-effects evidence contains six authenticated decoded-event summaries only. Its actual procedure calls production decoder then persists event type,payload keys and scalar-match counts; complete TxEffect/calldata/nullifiers/tags are not retained there. It concerns different transactions from this45-observation packet and cannot substitute.",
+    "No separately retained public transaction/effect payload for this exact observation was located in the adjacent public evidence. Name registration receipts retain hashes/blocks but not public payload. Protected journals were not decrypted, and no actor keys or wallet backups were opened for decoding.",
+    "The native-fetch packet itself has observerErrors0,unsupported0,truncated0. The separate725receiver errors are a distinct receiver coverage limitation, not evidence that the45opaque requests failed."
+  ],
+  "D2captureMapping": [
+    {
+      "category": "Current Aztec public transaction fields",
+      "captureDuring": "Already-required named/anonymous/cross-name/second-human and Bok testnet actions",
+      "minimum": "For each distinct submitted public Tx retain its hash and SDK-decoded public kernel inputs, public calls/calldata, fee payer/refund exposure, note hashes/nullifiers and log tags; pair with canonical finalized receipt/effect. Group repeated simulate/isValid/send observations by transaction hash. Never retain private witnesses or actor keys."
+    },
+    {
+      "category": "L1 funding and sequencer publication",
+      "captureDuring": "Already-required ETH/USDC funding and resulting rollup publication",
+      "minimum": "Use existing signed/public transaction records and receipts; decode transaction from/to/value/calldata selectors/arguments and distinguish user funding from sequencer blob publication. Bind to resulting claim without treating encrypted blobs as decoded anonymous evidence."
+    },
+    {
+      "category": "Unrecognized public-L1 method",
+      "captureDuring": "Same required D2 network observation window",
+      "minimum": "Retain the bounded method-name inventory or match observed methods against pinned SDK actions before sanitizing into a closed label. No need to replay oldphase or widen body/secret logging. If not captured, preserve unknown as an unresolved category."
+    }
+  ],
+  "notClaimed": [
+    "Full D4 acceptance",
+    "Cryptographic unlinkability",
+    "Absence of human identifiers inside discarded opaque bytes",
+    "Original names for27 unknown methods",
+    "45unique transactions"
+  ],
+  "actions": "Offline source and retained aggregate/public-evidence inspection only; no transaction/proof/model/service operation, no new harness or test run.",
+  "at": "2026-10-18T20:36:21.780421+00:00"
+}

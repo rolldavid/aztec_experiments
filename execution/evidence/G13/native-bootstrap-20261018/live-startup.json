@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-18T07:29:00.678812+00:00",
+  "candidate": "c8a287c4311a8fd66d4ace122fca4e7b4b09520f",
+  "environment": "Mac native Aztec6.0.0-rc.3; Node24.21.0; local chain31337",
+  "command": "NODE_BACKEND=js HARDWARE_CONCURRENCY=2 LOG_LEVEL=silent node plugins/devnet/start.mjs --app-port 4317 --node-port 8080 --ethereum-port 8545",
+  "url": "http://127.0.0.1:4317",
+  "runtimeDirectory": "../rolling-lead-bok/.build/rolling-devnet-37e19821-8e38-413e-afc0-aea197de988b",
+  "nativeProofs": false,
+  "pxeProverEnabled": false,
+  "deployment": "active",
+  "publicIndex": {
+    "state": "ready",
+    "complete": true,
+    "checkpoint": 8
+  },
+  "observed": [
+    "Actual class/board deployment, portal activation, FPC publication and Bok portal registration completed.",
+    "Real browser Home/directory/account tools loaded; fresh disposable account created and encrypted recovery downloaded.",
+    "Exactly Anonymous available before registration; reserved Bok name refused with editable fields and no transaction.",
+    "Visual inspection found feedback above current modal scroll; component repair assigned G05-visible-validation-feedback."
+  ],
+  "limits": [
+    "Fresh empty local chain, not full funded-user journey or testnet acceptance.",
+    "Bok model service not running; user fee balance and Bok credit unfunded.",
+    "Mac/runtime remains live dependency; no unattended service claim."
+  ]
+}

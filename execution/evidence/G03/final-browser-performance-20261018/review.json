@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "source": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "verdict": "approve_scoped",
+  "findings": [],
+  "scope": "Retained synthetic browser performance measurements and four-request browser-side public-reader observation only",
+  "evidence_sha256": {
+    "execution/evidence/G03/final-browser-performance-20261018/result.json": "af062303f984e0cacbf11ddd43cb60340c163e0b3b2117cabb8157c548d470ff",
+    "execution/evidence/G03/final-browser-performance-20261018/sha256.json": "68f58478d9b86a35fab7f7de22424078510e9ef97b50c753a926c8a2dd3ec050",
+    "execution/evidence/G03/final-browser-performance-20261018/source-binding.json": "b0ca1d57a7e686f034d45cee0eacb893c3c023aa0fad203ca6ae908aa9ac0599",
+    "execution/evidence/G03/final-browser-performance-20261018/summary.json": "2c8c5b0951350a7c3aee6bb64a27c179be2a21d124d5a257a9da6d963aa13536",
+    "execution/evidence/G13/browser-privacy-20261018/browser-public-request-observation-invalid-realm.json": "b3ed38b6884bfef41522b691144900f51a897db3c1c14b3f3ffc749bd9145792",
+    "execution/evidence/G13/browser-privacy-20261018/browser-public-request-observation.json": "401e1343d7d5419da9c1a8112c49e8f33eec994a35bd6bf2dc8130db110e6038",
+    "execution/evidence/G13/browser-privacy-20261018/procedure.md": "f8223049116cafce639effc69b04e655535a194652eb8b4d808b8a701d104676"
+  },
+  "independent_checks": [
+    {
+      "check": "Exact source and artifact binding",
+      "result": "All 13 worker artifacts match retained sha256.json; coordinator copies match originals; 11 source-binding file hashes independently recomputed from git show at exact source."
+    },
+    {
+      "check": "Retained dataset read-only SQLite count",
+      "result": "projection: posts=10000, boards=100, names=100. Seeder and retained result bind dataset revision 0b06c52afcf3c7344cf3af6aaefef7ebc9538965; fixture explicitly unauthenticated/synthetic."
+    },
+    {
+      "check": "Predeclared targets and measurement driver",
+      "result": "targets.md committed 0e9bdb38e558574627bb4375c7bcb7c3eb86074f on 2026-10-11 precedes measurements. Navigation/input/scroll numeric thresholds unchanged. Actual production reader/static server and SQLite query implementation are imported; synthetic index supplies cursor and status only."
+    },
+    {
+      "check": "Numerical recomputation",
+      "result": "Eight navigation samples, four search samples, four input groups, two >=30-second scroll traces meet recorded thresholds. One public API request per first page. 100 unique rendered posts, zero recorded append/return displacement, no overflow."
+    },
+    {
+      "check": "Procedure boundaries",
+      "result": "Navigation begins at document performance origin after about:blank, ends at correct DOM plus two animation frames. Search ends at query-matching heading plus two frames; input ends two frames after input event. Cold HTTP cache disabled/cleared, OS/database warm. Original search-observer timeout retained; corrected continuation preserves completed earlier desktop measures. Mobile directory screenshot visually agrees with actual production UI and synthetic Board 098."
+    },
+    {
+      "check": "Privacy observer/source/procedure and snapshot consistency",
+      "result": "Actual listener passes request URL/method/headersArray/postData with null-prototype input/header rows; private values are current recovered account address plus decimal in memory. Four GETs: three identical feed rows and one board row, 13 header pairs each; counts sum exactly, no private matches/invalid/overflow/pending/errors. Original four-invalid cross-realm attempt retained; focused null-prototype boundary was synthetic, not extra network evidence."
+    }
+  ],
+  "performance_limits": [
+    "One cold/warm sample per view and viewport; no navigation percentile, sustained load or supported-device population claim. Desktop Chromium uses a mobile viewport, not mobile hardware.",
+    "Two-animation-frame timings are rendering-opportunity proxies, not physical paint or hardware keyboard latency. Scroll percentile is from requestAnimationFrame intervals during programmatic scrolling.",
+    "Current directory search submits explicitly. Recorded <=500ms is submit-to-result, not proof of the predeclared 150ms automatic-debounce behavior. Warm search uses a different query against a warm process.",
+    "One browser API request is not a chain/RPC range budget measurement. Synthetic unauthenticated data/cursors do not qualify canonical refresh, authenticated rebuild, real-proof latency, wallet funding or all RC40 criteria."
+  ],
+  "privacy_limits": [
+    "Browser-side public-origin request window only; no paired server-ingress observation, response body inspection, trusted-query/upstream or other-origin coverage.",
+    "No match means no observed occurrence of the two configured account representations in captured URL/query/header strings; it is not a cryptographic unlinkability claim or exhaustive private-value leakage test.",
+    "One human/account and four reads; observer HMAC key and raw account values intentionally not retained. Procedure records provenance, but keyed tokens cannot independently reconstruct raw values."
+  ],
+  "review_actions": "Read-only source/evidence inspection; Python recomputed hashes, SQLite counts, result arithmetic and snapshot shape; viewed retained mobile screenshot. No browser measurement rerun, services, builds, chain actions or application changes."
+}

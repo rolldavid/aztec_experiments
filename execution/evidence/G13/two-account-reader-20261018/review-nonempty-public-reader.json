@@ -1,0 +1,27 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T18:19:42.467640+00:00",
+  "verdict": "approve_scoped_observation",
+  "artifact": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/two-account-reader-20261018/nonempty-public-reader.json",
+  "artifactSha256": "4ace16a44442f29ac2aaf7686fc6f530bea3a64aede94872302364e588f7e145",
+  "recordedSource": "86adc375",
+  "walletAssets": "0cf44274",
+  "findings": [],
+  "checks": [
+    {
+      "procedure": "Read observation implementation and serialized evidence; invoke existing assertRollingPublicReaderObservation against JSON-parsed browser and receiver records in one Node realm.",
+      "result": "Passed: 10 matching requests, 8 feed and 2 board; zero pending/invalid/overflow/private-value matches/observer errors; row issue arrays empty; keyed URL/query/header projections exactly equal."
+    }
+  ],
+  "acceptedScope": [
+    "This captured public-reader request window contains no configured private identifier matches and no browser-to-server projection mismatch.",
+    "JSON parsing in one realm is a valid normalization for this serialized evidence comparator; no field, count or issue was discarded.",
+    "Record reports two accounts with two names and distinct one-post bookmark views. These setup/UI claims were not independently replayed by reviewer and are not proven by request hashes alone."
+  ],
+  "limits": [
+    "Following, Notifications and Main board counts were sampled early per operator handoff and are not completed view-content assertions. Add that qualification beside views when presenting this record.",
+    "Private match detection is limited to configured values; the keyed binding cannot independently disclose which values were configured.",
+    "No full privacy, native upstream, response, cryptographic unlinkability, public-effects, real-proof or specialist audit acceptance follows from this result. Separate incomplete native capture remains incomplete.",
+    "Source record uses abbreviated revisions; final requirement matrix should resolve full revisions and carry this narrow scope."
+  ]
+}

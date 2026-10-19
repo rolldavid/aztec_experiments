@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-18T09:23:57.951797+00:00",
+  "sourceRevision": "582b2cdb95ddfa21cbd32c9c6ac965ea5782bdc1",
+  "environment": "Existing native local devnet/PXE flags false; same account and chain45",
+  "procedure": "Reload running application, import existing encrypted disposable backup, Balances and withdrawals > Check private balances > single Check all Bok requests",
+  "observed": "All owned Bok requests have been checked; no second Continue click",
+  "block": 45,
+  "requests": 2,
+  "closedRequests": 2,
+  "allocated": "0",
+  "reserved": "0",
+  "chargedUSDC": "0.010048",
+  "returnedUSDC": "0.339952",
+  "unallocatedUSDC": "0.989952",
+  "newTransactions": 0,
+  "screenshot": "live.png",
+  "limitation": "Local native disabled-proof development result, not realproof/testnet/wallet acceptance"
+}

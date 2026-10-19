@@ -1,0 +1,65 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "candidate": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+  "base": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "verdict": "approve",
+  "scope": "Combined native reorg configuration and canonical above-tip absence repair; scoped actual CLI reorg evidence",
+  "findings": [],
+  "source_sha256": {
+    "plugins/devnet/bootstrap.mjs": "bc1498c4bd162076236854fbd3ae2589375919fc6e79f3b5d43f923c7784494d",
+    "plugins/devnet/network.mjs": "266723a55f61842826a6284f50e8f2d76a54cbe99983b81e66106104f9ad45d7",
+    "plugins/devnet/operator-test.mjs": "42d874e61a09a88d81e4dde2648d1fdb6423df30a0aa2a1566b4b7763415027a",
+    "prover/private-query.mjs": "f145924694617da04bb266e8ec784f9357f041f5fc36ddccc800715d01316439",
+    "prover/private-query.test.mjs": "c1afb42874301ee9462af6c98765d2e28e837df57d8825d960a0d21e14500e38"
+  },
+  "evidence_sha256": {
+    "source-binding.json": "b1d1e8b2da35ab6a51e16b17844cc7906bd7cc0fa882807a3df606bcad5b1518",
+    "result.json": "7412cfe49076c19c20c2c3eefa03214d746f0d7e20e719168d76a7bc849350ab",
+    "run.mjs": "d62e2268ddca394ce0e6b881ff20b33123687f735dbc8b34310f019ab58d5b0e",
+    "run.log": "292f7eb55bce7c0723dfe56cab484b04990a33c462220231d7de8f2282c4a445",
+    "diagnosis.md": "c8f5d5f8027baf8f2e10c0c8ce1072f414d102f7625e8bd6ded12df3262536c7",
+    "before-gateway-repair.json": "7b58609b3935e6422ed9c1cbe0307b2eca3f6d834e8737512475b347630dbd4e",
+    "before-gateway-repair.log": "59398b6321ac00579cc95426bdc09846de503c09f164ab04074c1641cf1b9992",
+    "setup-attempt1.json": "492e064c878616353514d6406017732f7ff4aada20a27abd77a282fead167359",
+    "gateway-before.log": "8740e85a1389ac60da46cc80429ac72cc3b93cadbf9a20766eeea0068fc0cdba",
+    "gateway-after.log": "3266f2c8104600e97c27fbba14ef6ea79b66cb10de5b26508b4dc4afb3ca9ce6"
+  },
+  "checks": [
+    {
+      "command": "git diff --check 2db3a5422cdf91a1a0d4b0675f19385a63c51b40 ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+      "result": "pass; exactly five allowed source paths"
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='historical gateway:' prover/private-query.test.mjs",
+      "result": "40 passed, 0 failed/skipped; 1007.274666 ms. Includes real installed SDK block stream through production HTTP gateway and RPC serialization, positive optional absence and unchanged fail-closed/final-fence cases."
+    },
+    {
+      "check": "Retained configuration approval",
+      "result": "All three native files byte-identical to approved 2fd767345516484b0024dc4a4a832fd87ae7cd82; prior four config/lifecycle passes carried without rerun."
+    },
+    {
+      "check": "SDK and inspector semantics",
+      "result": "Pinned getBlock/getBlockData return schemas are optional. PXE stream adapter maps absent getBlock to undefined; L2BlockStream compares removed numeric heights above source proposed tip and emits chain-pruned. Proposed inspector independently requires synchronized world-state at proposed height/hash plus canonical, identity, proof-policy and public-network freshness checks."
+    },
+    {
+      "check": "Evidence binding and retained state",
+      "result": "All 11 worker source-binding hashes match originals; tracked application files match exact combined source, installed SDK sources match reviewer install. Retained private directory exists with 3 files totaling 130972 logical bytes (report allocation 139264 bytes). No private file contents exposed."
+    }
+  ],
+  "source_assessment": [
+    "Absence branch applies only to schema-validated getBlock/getBlockData numeric selectors strictly above initial world tip, with no hash selector. Fresh default/proposed readiness must confirm the requested height remains above tip and actual upstream result is undefined. A defined future result fails closed.",
+    "Absence is cached only within the request. Return schema still validates optional undefined; no fabricated blocks/state. A new proposed inspection after all work must match both captured tip number and hash. Mixed pending receipt escalation cannot skip this final absence fence.",
+    "In-range missing bodies/headers, unknown hashes, number+hash selectors and state/witness reads retain canonical/state limits. Existing record rechecks, bounded transport, generic failures and privacy policy are unchanged.",
+    "No production polling, retry, SDK edits, alternate sequencer or custom mining added. Native settlement-off configuration remains explicit and proof-disabled."
+  ],
+  "actual_evidence_assessment": [
+    "Worker exact-source 811edc315517ca8d71d774610af6cf5e2f4f64e0 transfers byte-identically for reviewed inputs. Retained run driver creates actual local network, deploys real board, submits retained follow and removable policy/notification updates, then invokes official EthCheatCodes reorgWithReplacement.",
+    "One corrected successful fork: L1 height40 depth2 same-height replacement, changed tip with retained ancestor; checkpoint5 rolls back to3, finalized0. Production public index main policy and production private preference reader compare deeply to nonempty retained baselines after same-store unwind and close/reopen.",
+    "Earlier setup/gateway failures remain retained. Final run stages reach passed in about35.7s; cleanup reports complete with no errors; realProofs/PXE proofs false and proofJobs zero."
+  ],
+  "limits": [
+    "Actual-fork review uses retained worker evidence and exact driver/source binding; reviewer did not start any node or repeat the fork.",
+    "CLI actor uses fake-indexeddb in memory and retained file journals; close/reopen is not a browser profile or process-restart qualification.",
+    "Public rollback covers main policy; private rollback covers followed board and notification setting. No orphaned post, read-marker reorg, full browser recovery, real-proof or whole RC acceptance claim."
+  ]
+}

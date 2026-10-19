@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-10-19T07:08:18.130Z",
+  "transactionHash": "0x4ca86e6abd984dc68ca4dd3ee02b5b69448ff905f40a8d8a03f3a5eb5f377417",
+  "status": "finalized-success",
+  "block": {
+    "number": 11946215,
+    "hash": "0x0cff2535cdadb75e167ebf116b85971dd6013e8d70db2e6cc91e0ba1ae364ab0"
+  },
+  "finalized": {
+    "number": 11946512,
+    "hash": "0x5706bdb3c1120f6240710b50cf24165f738142db398783396e8648f58d97fce0"
+  },
+  "canonicalFinalized": true,
+  "originalAccounting": "original-usdc-accounting.json"
+}

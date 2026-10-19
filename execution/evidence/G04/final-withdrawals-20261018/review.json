@@ -1,0 +1,64 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T16:49:50.687920+00:00",
+  "source": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "walletRuntime": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "currentReviewHead": "95cf33a6002d3e7f9b5343d87d0e5bb51c87394f",
+  "verdict": "approve_scoped_local_withdrawals",
+  "requirements": [
+    "RC22"
+  ],
+  "findings": [],
+  "bindings": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G04/final-withdrawals-20261018/browser-result.json": "e0d80d957eecc157b5f803b029cd4cac8acea1fa7a926a66129e985ac50f23e3",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G04/final-withdrawals-20261018/collateral-refund.png": "c82cba850220463a28af949827dadcd54f3ec8e1fcbda591865f28009ff731e6",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/final-withdrawal-effects/read.mjs": "ff71511e43cc95a066a62524bf3e8a49036e4435bdd60998293ad93c54b35dc4",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/final-withdrawal-effects/result.json": "6657d7797cd7017c8aca5eb8a3c883012ba61d9813e425e97b99db3aa842a98c",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-withdrawals/read.mjs": "f3641d98f5734a2736bac1f48509302a3d30c88ec6620f3c0255e13100fd82c4",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-withdrawals/result.json": "9331a0145099b4dcceb80414caf26597a1d0554608c90139cf1838229e827fe7"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp <pinned Node24.21.0> .build/reviewer-evidence/final-withdrawals/read.mjs",
+      "result": "exit0; independently executed existing recorded read-only receipt/effect assertions with only relative imports adjusted for reviewer directory; both full result rows and three production verifier source hashes exactly match worker packet."
+    },
+    {
+      "command": "Read recorded read.mjs before execution; inspect ethereum-journal verifier, protocol commitment encoder, RollingBoard/PrivateBok withdrawals and both Solidity portal withdrawal implementations",
+      "result": "Exact portal/call/chain/sender/value/nonce and unique events validated; canonical L1 receipts, single transaction per block and historical balances; exact L2 message hash bound to sender/recipient/content/network plus successful canonical L2 receipt/effect; outbox epoch/checkpoint/index/path-derived leaf ID and consumed state verified. Script contains no send/mine/prove calls."
+    },
+    {
+      "command": "Inspect actual retained collateral-refund.png and browser-result.json",
+      "result": "Displayed0.001ETH refund and separate0.00007066000346234ETH Ethereum gas;1.5USDC-backed private Bok credit; fee-token balance separately labelled. MetaMask version/once-only prompts are retained lead observations, not replayed by reviewer."
+    }
+  ],
+  "amounts": {
+    "bok": {
+      "refundedMicroUsdc": "500000",
+      "recipientUsdcDelta": "500000",
+      "ethereumGasWei": "97895006852650",
+      "recipientEthDeltaWei": "-97895006852650",
+      "privateL2Fee": "9007225900000",
+      "l1Block": 130,
+      "l2Block": 20,
+      "consumedLeafId": "34"
+    },
+    "collateral": {
+      "refundedWei": "1000000000000000",
+      "ethereumGasWei": "70660003462340",
+      "recipientEthDeltaWei": "929339996537660",
+      "privateL2Fee": "7578355200000",
+      "l1Block": 133,
+      "l2Block": 21,
+      "consumedLeafId": "35",
+      "depositRecordCleared": true
+    }
+  },
+  "replayAssessment": "Actual consumed outbox leaves corroborate one-use settlement; collateral portal also clears original deposit before consume/transfer and atomically reverts on failure. PrivateBok withdraw spends private balance/change and emits nonce-domain nullifier. No replay transaction was attempted and none is needed for this observation. Does not claim adversarial real-proof verification.",
+  "limits": [
+    "Local31337 native node/PXE proofs disabled; no testnet/real-proof/Phantom/fullwithdrawal-matrix assurance.",
+    "Only unused second collateral deposit withdrawn; earlier posted collateral still requires legitimate screening/cooldown. No clock or manual mining action by reviewer.",
+    "Recipient needed Ethereum gas: separate0.01ETH local gas fixture after prior zero-ETH funding acceptance; gasless initial USDC funding does not imply gasless withdrawals.",
+    "Private remaining1.5USDC is actual retained UI observation consistent with prior2USDC and0.5USDC withdrawal; reviewer did not decrypt keys/journals or independently query private balance.",
+    "Exact original saved intent not reopened; public transaction bound to recorded expected amounts/scope plus production receipt verifier. Existing source journal custody remains separately reviewed."
+  ]
+}

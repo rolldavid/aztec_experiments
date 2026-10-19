@@ -1,0 +1,79 @@
+{
+  "revision": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "requirements": [
+    "RC23",
+    "RC25"
+  ],
+  "verdict": "No new demonstrated application disclosure; independent-node privacy and production containment remain unqualified",
+  "priorEvidence": "execution/evidence/G07/reviewer-7ccf693-private-query-topology.json",
+  "sourceAssessment": [
+    {
+      "locations": [
+        "apps/rolling/wallet-session.mjs:165",
+        "apps/rolling/wallet-session.mjs:184",
+        "apps/rolling/wallet-session.mjs:186"
+      ],
+      "finding": "Account/PXE registration and private keys remain local; all session node work is bound to the captured trusted-query capability, with no ordinary-node fallback."
+    },
+    {
+      "locations": [
+        "shared/trusted-private-node.mjs:160",
+        "prover/private-query.mjs:125"
+      ],
+      "finding": "Client and upstream transports omit cookies, referrer and redirects; loopback upstream receives only fresh content-type headers, not client credentials/IP headers. This does not hide user RPC arguments from the trusted-query service or its node."
+    },
+    {
+      "locations": [
+        "prover/private-query.mjs:52",
+        "prover/private-query.mjs:76",
+        "deploy/prover/README.md:60"
+      ],
+      "finding": "Tag/nullifier/account-contract lookup payloads remain visible to the full node inside the explicitly required prover boundary. This is not an anonymity proxy and does not satisfy unlinkability against an independently operated node. Correct deployment must keep fullnode/archive/local log handling within the permitted witness trust; matching network metadata or loopback URL alone cannot establish operator ownership."
+    },
+    {
+      "locations": [
+        "apps/rolling/reader.mjs:140",
+        "apps/rolling/reader.mjs:179",
+        "shared/rolling/private-views.mjs:27",
+        "apps/rolling/wallet-session.mjs:43"
+      ],
+      "finding": "Following/bookmarks/notifications use a uniform public feed filtered locally; Bok accounting reads uniform pages. No API call takes the recovered owned-name/subscription/bookmark lists in these paths."
+    },
+    {
+      "locations": [
+        "shared/rolling/compact-client.mjs:17",
+        "shared/rolling/compact-client.mjs:95",
+        "apps/rolling/wallet-session.mjs:282"
+      ],
+      "finding": "Compact recovery selectors contain public schema/height/hash/tier only; recovered preferences and account key are not placed in selector/body/header. Batching derives limits from public body shape, preserving full-chain scan intent."
+    },
+    {
+      "locations": [
+        "apps/rolling/wallet-runtime.mjs:114"
+      ],
+      "finding": "Same-origin funding relay carries public Ethereum transaction calldata/plan hashes, not a human Aztec secret or owned-name list. Ethereum payer and IP/timing are observable; this is not an anonymous payment-channel claim."
+    }
+  ],
+  "actionableBoundary": "Before remote qualification, verify actual trusted operator ownership and local fullnode/archive ingestion with no user-specific external miss forwarding. A separately operated node here would be a concrete RC23/25 blocker; do not describe current gateway as hiding tags/account lookups from it. Existing topology/deployment evidence and observer tools suffice; no scanner/refactor justified by current source findings.",
+  "limitations": [
+    "Source review only; no new actual request capture, private record dump, service or provider call.",
+    "Current local same-operator routing is not proof of remote deployment containment, absence of all outbound traffic, or two-owned-name unlinkability in actual tag batches.",
+    "Public profile/thread navigation and IP/timing/content correlation remain observable. Cookies/referrer omission does not provide network anonymity.",
+    "Trusted prover receives private witnesses by specification; Bok own public identity is allowed. Neither exception expands to an arbitrary independent node or human identity disclosure.",
+    "Specialist privacy review and real-proof observer acceptance remain open."
+  ],
+  "sourceHashes": {
+    "shared/rolling/PRIVACY_DESIGN.md": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+    "shared/trusted-private-node.mjs": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+    "prover/private-query.mjs": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+    "shared/rolling/compact-client.mjs": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+    "shared/rolling/cold-preference-reader.mjs": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+    "shared/rolling/private-views.mjs": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+    "apps/rolling/wallet-session.mjs": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+    "apps/rolling/wallet-runtime.mjs": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+    "apps/rolling/reader.mjs": "332b10e60994372f1d267d77b8192c515630ec282cee0ac04249ff84e56c9a64",
+    "deploy/prover/README.md": "4701ece5073aab640f46ec3f882b9f254a4b5a28aa950a01cd98264656036735",
+    "plugins/devnet/network.mjs": "c876a3e90d9d31489a745c465303a3b6f5af5a12bbeec223a3780133a8f11539",
+    "plugins/devnet/bootstrap.mjs": "e68e2d2d7c1b11ce5459c49ceabf141ea3b8fdfc2ecebf10ad21d25ad30a6939"
+  }
+}

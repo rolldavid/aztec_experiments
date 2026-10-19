@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "packetSha256": "da2c1a5f5bbafde8f8de1a96bc928c4dcab2fc7193fba94620b08dd28cbfdf8c",
+  "verdict": "accept scoped actual normal-UI quote and blank-comment repost",
+  "requirements": [
+    "RC06 canonical parent/root/reference",
+    "RC08 quotes and reposts",
+    "RC12 inspectable publication policy",
+    "RC15 authenticated named identity"
+  ],
+  "checks": {
+    "linkedArtifacts": 21,
+    "allHashesAndLengthsMatch": true,
+    "procedureAndSourceReviewed": true,
+    "actualScreenshotsIndependentlyViewed": 2,
+    "preparedDispatchConfirmedIntentEquality": true,
+    "wireEffectFiles": "Hash/length verified; executing procedure verifies typed wire hash+bytes against encrypted journal and canonical effect. Reviewer did not rerun heavy SDK parse.",
+    "independentLiveCallsOrTests": false
+  },
+  "actual": [
+    {
+      "kind": "2",
+      "step": "13-quote",
+      "transactionHash": "0x057aed519169434065b2f390b8079f6a668aaed29844e8cf3115d0276e9269db",
+      "block": 876,
+      "parent": "0",
+      "ownRoot": true,
+      "reference": "3109230518034972853640518605994987186759313585510910494881784899134497775442",
+      "policy": "parent2/local1",
+      "comment": "A useful point in this conversation.",
+      "actualFee": "22235439000000",
+      "reviewedMaximumFee": "41366688017403",
+      "elapsedMs": 62313,
+      "sends": 1
+    },
+    {
+      "kind": "3",
+      "step": "14-repost",
+      "transactionHash": "0x115df950607193f66f222dcffa1401e5d86452130c801c70990e927e1066ec0c",
+      "block": 879,
+      "parent": "0",
+      "ownRoot": true,
+      "reference": "3109230518034972853640518605994987186759313585510910494881784899134497775442",
+      "policy": "parent2/local1",
+      "comment": "",
+      "actualFee": "22122402600000",
+      "reviewedMaximumFee": "41156133426513",
+      "elapsedMs": 51925,
+      "sends": 1
+    }
+  ],
+  "binding": "Both reference exact visible Anonymous reply688; quote/repost each are new root posts with parent0, not replies inheriting removed ancestor root. Both use owned River Canvas name and current board, parent2/local1. Repost has zero length and allzero encoded message fields.",
+  "onceOnlyAndCustody": "Exclusive fsynced invocation/prepared/dispatch slots; one armed send accepted per owned browser and raw request saved before forwarding. Exact prepared id/action and signed journal hash bound after confirmation. Repost predecessor is accepted quote. Original backup unchanged; no funding or new USDC wallet used.",
+  "ui": "Two screenshots show correct Quoted/Reposted from original-post link, correct own-thread navigation and policy versions; quote body is exact reviewed text, repost body blank. Procedure navigated original link and observed the still-visible Anonymous reply. Removed ancestor and removed advert bodies not copied.",
+  "cleanup": "Both contextClosed, sends1, blocked0, inspectionErrors0; supervisors ownedTreeAbsent and failures[]; total2 sends.",
+  "limits": [
+    "Development native/PXE proofs disabled; no real-proof/testnet qualification.",
+    "Read-only canonical node observer is outside browser route counters. This is not full-node ingress, extensionwide privacy, or general unlinkability evidence.",
+    "No moderation-model evaluation or post-publication policy quality claim.",
+    "Pre-action amount1e15 and successful normal posting review do not establish unpenalized collateral or withdrawal eligibility; observed withdrawalReason screening-required remains.",
+    "No fresh original1572 recovery claim. Related current863 original failed predicate and separate retained verifier remain distinct.",
+    "Only this exact visible-reference/blank-repost pair; not all adversarial reference/reorg cases."
+  ]
+}

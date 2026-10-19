@@ -1,0 +1,69 @@
+{
+  "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+  "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "task_id": "G09-message-preview-parity",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+      "task_id": "G09-message-preview-parity",
+      "id": "message-preview-parity",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing two focused browser cases; exact invocation in review",
+      "environment": "macOS Chromium component fixture",
+      "observed": "Independent2 cases pass2.47s; safe link parity, inert unsupported content, exact raw bytes preserved",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/message-preview-parity-20261018/review.json",
+          "sha256": "24653efe1ed58904d8ca7f92a48eb9cf881354b3dc90c58bb8992a3d5f703604"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+    "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+    "task_id": "G09-message-preview-parity",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G09/message-preview-parity-20261018/review.json",
+        "sha256": "24653efe1ed58904d8ca7f92a48eb9cf881354b3dc90c58bb8992a3d5f703604"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+      "task_id": "G09-message-preview-parity",
+      "id": "RC04-preview-parity",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/message-preview-parity-20261018/review.json",
+          "sha256": "24653efe1ed58904d8ca7f92a48eb9cf881354b3dc90c58bb8992a3d5f703604"
+        }
+      ]
+    },
+    {
+      "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+      "task_id": "G09-message-preview-parity",
+      "id": "RC07-safe-unchanged-content",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/message-preview-parity-20261018/review.json",
+          "sha256": "24653efe1ed58904d8ca7f92a48eb9cf881354b3dc90c58bb8992a3d5f703604"
+        }
+      ]
+    }
+  ]
+}

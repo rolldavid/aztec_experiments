@@ -1,0 +1,47 @@
+{
+  "revision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "reviewer": "reviewer_20261018",
+  "task": "G12-clean-operator-rehearsal",
+  "requirements": [
+    "RC36",
+    "RC38",
+    "G12-A01",
+    "G12-A07"
+  ],
+  "verdict": "approved_for_scoped_development_clean_operator_acceptance",
+  "findings": [],
+  "blockingFindings": [],
+  "checks": [
+    {
+      "procedure": "Inspect clean source checkout, pinned installation/build logs, cache records, bootstrap source and operator smoke procedure before worker conclusion",
+      "outcome": "Clean exact revision; native node realProofs:false and PXE proofsEnabled:false; random new operator/deployment scope with distinct network version and board; isolated app origin4318 and state; no old private application state copied in recorded procedure."
+    },
+    {
+      "procedure": "Independently SHA256 verify all sixteen referenced logs, four manifests, all recorded manifest inputs and SDK/apps outputs",
+      "outcome": "PASS: 2223 input hashes, eight SDK output hashes and ten apps output hashes match; SDK output paths resolved relative to .build/sdk.",
+      "evidence": "build-provenance.json"
+    },
+    {
+      "procedure": "Pinned Node24, NODE_BACKEND=js: readonly SDK getTxReceipt/getBlock(includeTransactions:true)/getTxEffect, canonical block recheck and public profile HTTP read",
+      "outcome": "PASS: successful operator transaction at block9; exact effect bytes included in canonical full block; repeated block hash and profile checkpoint/scope/name agree.",
+      "evidence": "live-observations.json"
+    }
+  ],
+  "assessment": [
+    "Pinned official Noir/Anvil archive reuse and standard native Solidity compiler cache are toolchain inputs, not carried application build outputs. Normal forced Noir/VK/Solidity and SDK/apps build logs plus matching manifests substantiate regeneration; build source passes force to compilation/VK processing. Tracked CRS inputs were verified, not misrepresented as newly generated setup material.",
+    "Independent Operator name publication uses genuine embedded wallet/contract transaction and production public-index reconstruction; operator uses disposable genesis fee inventory. Root browser observation corroborates rendering but was performed by lead, not this reviewer.",
+    "Worker reports incremental disk 2785796096 bytes below8GiB ceiling and free45127282688 above20GiB floor. This reviewer did not repeat a full filesystem scan. No additional build, deployment, private journal read or transaction was performed.",
+    "Worker setup corrections preserve abandoned state and avoid transaction replay; readonly index ingestion was resumed until ready. Reviewer corrected two readonly observation assumptions (SDK hash property, API identity shape) before final passing readback; no product failure resulted."
+  ],
+  "limitations": [
+    "Not browser Ethereum wallet/user funding, two-route funding, hosted Bok/model, real-proof testnet or full product acceptance.",
+    "Installation/build operations predate this review: assessed durable logs, source commands and exact artifact closure, without repeating expensive builds.",
+    "No claim that stopped disposable chain can restart or foreground service survives laptop sleep/session exit. Preserve retained journals and use a fresh short owned state directory for a later rehearsal.",
+    "Independent specialist review, fourteen-day soak, network clearance and production-release gates remain separate."
+  ],
+  "evidenceHashes": {
+    "build-provenance.json": "e0b694dc576119c1ddf96480237fbe83f9b185c4e5def55c490afedced145b38",
+    "live-observations.json": "8a979535faea68785542506ccc90a9d90f2ec8787cec4d37f5ff78f0fd38dde3"
+  },
+  "reviewedAt": "2026-10-18T11:42:27.553033+00:00"
+}

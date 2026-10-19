@@ -44,9 +44,11 @@ Rules apply to older posts too. Flagged posts are hidden from the default feed;
 a flag within the penalty window also increases the poster’s waiting period.
 Public blockchain data cannot be erased by hiding it in the application.
 
-Readers can browse public posts without a wallet. Posters connect their Ethereum
-wallet; the site automatically creates or unlocks their passkey-backed Aztec
-account. Account import and recovery are available from the Account menu. Private transaction fees are paid
+Readers can browse public posts without a wallet. In the Account panel, choose
+**Create account and download recovery** or **Import recovery** to restore an
+existing private account. Keep the encrypted recovery file and its password.
+Creating an account does not fund it; connect the original Ethereum wallet for
+funding or refund actions. Private transaction fees are paid
 from credit in the private fee contract, funded through Fee Juice. Funding amounts
 and timing remain public; see [privacy limitations](docs/privacy.md).
 

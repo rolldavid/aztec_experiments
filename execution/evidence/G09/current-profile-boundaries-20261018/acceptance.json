@@ -1,0 +1,151 @@
+{
+  "source": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "proofsEnabled": false,
+  "pxeProverEnabled": false,
+  "browserWalletAcceptance": false,
+  "transactions": [
+    {
+      "label": "bio",
+      "txHash": "0x14df141f21952bcb93f5edcf4fceb3374b1758691ee21904a3e06b4b8076018a",
+      "blockNumber": 85,
+      "blockHash": "0x150152cd1143eba43a24976dd455f2485ff28a45625efb20b99f6f64a6d383bf",
+      "status": "proven",
+      "events": [
+        "BioPublished"
+      ]
+    },
+    {
+      "label": "avatar-maximum",
+      "txHash": "0x15d79f6be7abee6ce7ad8605ccd5fa70e5c6de0f93f0ccbd4b8d5ff96a2fb501",
+      "blockNumber": 86,
+      "blockHash": "0x224fa3419a9b7b27ba6b5fce36b77d1c4ce2d115d3bc9e5e57e607f759b00fcb",
+      "status": "proven",
+      "events": [
+        "AvatarPublished"
+      ]
+    },
+    {
+      "label": "avatar-removal",
+      "txHash": "0x28c25c42a469c617cb5cdad3f4593070a9e081b08f0c43262087b79b9b37135a",
+      "blockNumber": 87,
+      "blockHash": "0x129ae7f9811e108fb9ebb08a0cebb2dfeb396a8daee495bcc878b90b330e8cbd",
+      "status": "proven",
+      "events": [
+        "AvatarRemoved"
+      ]
+    },
+    {
+      "label": "avatar-clear",
+      "txHash": "0x07b4968f0918afa9457c0b2ce73235a6ff462b568cf3b338a1f4a6f9f5511c24",
+      "blockNumber": 88,
+      "blockHash": "0x13efadc09887ddfffcaeb5c2c8fc1fa0f57e312911d5ae4314c0d25b30b0fd3a",
+      "status": "proven",
+      "events": [
+        "AvatarPublished"
+      ]
+    },
+    {
+      "label": "avatar-replacement",
+      "txHash": "0x25f8e2c63418fa571b48ca0d860ebac3e5113b6b292b77e8ba28515a32ee76a8",
+      "blockNumber": 89,
+      "blockHash": "0x1afaede32c7735555efb1a29e5ba18a4bb6d7f159eca15e3aecd4ac7a7c7a43e",
+      "status": "proven",
+      "events": [
+        "AvatarPublished"
+      ]
+    }
+  ],
+  "before": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "2206411196",
+      "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+      "boardAddress": "0x29547484f3864bd86dbdf2b13c535e51a4d75074027a03586c4d2fb4d161f4f3",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8"
+    },
+    "checkpoint": {
+      "number": 84,
+      "hash": "0x0a7bf5e946bac62b80f724b4c098e1425ec0d177a92194d4ccd3e6cd84a2fa8e"
+    },
+    "complete": true,
+    "revision": "68b2f969-515d-4768-b490-2740f051ea6d:9",
+    "authenticatedRanges": 9,
+    "totalRanges": 9,
+    "pages": 9
+  },
+  "profile": {
+    "expectedIdentity": {
+      "id": "20803498881110842529628587407796210692320552848919242082629523378614294898085",
+      "first": "River",
+      "last": "pzejiuez",
+      "profile": {
+        "bio": {
+          "version": "1",
+          "digest": "18208579789034508504779715606900473295167067979425444847493651534688852025521",
+          "length": "992",
+          "text": "A public profile with private ownership. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "avatar": {
+          "version": "3",
+          "digest": "6421286062288404360568085104746996684003428821653995381489147153555225461069",
+          "width": "100",
+          "height": "100",
+          "length": "416",
+          "encoding": "base64",
+          "data": "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAABZ0lEQVR42u3cu23EMBAFwC3FcOYW3MJV40quI3fl3Knh6MSflssBXkxBAwgSRO6L96+nvJhAAAsWLFiwYCGABQsWLFiw7r38z/fjas7CagBKAhebMt1CFlszLSaLAkzLyKIM0wKyqCc1zyvqMc0ji8JSw72ittRYrygvNdArTpAa5RWHSA3xinOk+r3iKKlOL1hLsDaV6vGKA6WavWBNxiog1eYFayZWGakGL1jTsIpJXfWCNQerpNQlr3VYbx+ff5NqtVxY/+6t8w7HrgbrVqyxT002rBe9YMHaGiv52zAdVoFPLViwYMGCBQsWLFiwYMGCBcuGRcoNC1iwFv4sHZV0WDM2eDJgZdy+Pw6rxysnVtIjRydiNXslxHJMMhmW08qwTFhkmLAwuwPLvGGSeUOTrGakTd/rddi110FjiC4aLUf6szbuz9LMpvNPm6SeUg24j+MacHUrwxJYsGDBggVLYMGClSy//x/NyLSQI/IAAAAASUVORK5CYII=",
+          "removal": null
+        }
+      }
+    },
+    "maximum": {
+      "bytes": 8192,
+      "pngSha256": "e4cffd6efa8a50239a2a3b37147c40f0f9684ee47edd769e0cae357ad71a9bc7",
+      "digest": "16907058964484155147008022769829578558864843935831531227893817709598819477217",
+      "version": "1"
+    },
+    "replacement": {
+      "bytes": 416,
+      "pngSha256": "c0dea019174c70e091bb00ada10e36139ef10130f1fed73e0d5f10baf116b800",
+      "digest": "6421286062288404360568085104746996684003428821653995381489147153555225461069",
+      "version": "3"
+    },
+    "removal": {
+      "version": "1",
+      "redacted": true
+    },
+    "clear": {
+      "version": "2",
+      "bytes": 0
+    },
+    "bio": {
+      "bytes": 992,
+      "version": "1"
+    },
+    "scope": "Genuine profile publication, moderator transaction and reconstruction. Fixed test moderation decision; no model image-policy qualification."
+  },
+  "after": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "2206411196",
+      "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+      "boardAddress": "0x29547484f3864bd86dbdf2b13c535e51a4d75074027a03586c4d2fb4d161f4f3",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8"
+    },
+    "checkpoint": {
+      "number": 89,
+      "hash": "0x1afaede32c7735555efb1a29e5ba18a4bb6d7f159eca15e3aecd4ac7a7c7a43e"
+    },
+    "complete": true,
+    "revision": "c86800d7-0e41-4e13-9125-867ce1b8747a:9",
+    "authenticatedRanges": 9,
+    "totalRanges": 9,
+    "pages": 9
+  },
+  "freshIndex": true,
+  "willowUnchanged": true,
+  "passed": true
+}

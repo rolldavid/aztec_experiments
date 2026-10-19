@@ -1,0 +1,216 @@
+{
+  "task_id": "G06",
+  "outcome": "pass",
+  "recorded_at": "2026-10-12T02:55:17.800980+00:00",
+  "source_fingerprint": "6171e8b8b4957eebcffb8accc1926f4c10ebdde4ef4f0bcacb2ec983e145b5a0",
+  "source_inventory": "evidence/G06/source-4c76.json",
+  "artifacts": [
+    {
+      "path": "evidence/G05/foundation-review.json",
+      "sha256": "38fb6de21524d1cf56dd4f9035ec6755f5f74849a2a2976ef5dea841a448c66b"
+    },
+    {
+      "path": "evidence/G05/owned-wire-e3-runtime-review.json",
+      "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+    },
+    {
+      "path": "evidence/G05/profile-build-txe-90a1-review.json",
+      "sha256": "47710ca31ab102784b4626e6a9262483ba515b6d9498e892e7afac639d76cb14"
+    },
+    {
+      "path": "evidence/G05/profile-full-txe.json",
+      "sha256": "df2c7bbd7112e8e5e59f041c68ea73285082110e731e333afc6b38b12137e557"
+    },
+    {
+      "path": "evidence/G05/profile-full-txe.log",
+      "sha256": "70a8523962eaea628799bc2d119bc8a10b4f1a06a572bd3399ba75813ddf65fa"
+    },
+    {
+      "path": "evidence/G06/account-reactions-b0b37-runtime-review.json",
+      "sha256": "bc843e12dcf345805558145739df4b5f532b2ae1a11996e07b10cb298f429839"
+    },
+    {
+      "path": "evidence/G06/anonymous-687-runtime-review.json",
+      "sha256": "1930ba249aaba3af6a28d9b65cfdfbd99b9c28566812a8dcd9bc989fb59906e9"
+    },
+    {
+      "path": "evidence/G06/application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json",
+      "sha256": "5b52a2dae88cb58a6506fabb63136d7e5bcce88421ce368d2e348cfac35fe391"
+    },
+    {
+      "path": "evidence/G06/component-sufficiency-4c76-review.json",
+      "sha256": "7fcd28caf0075b7e1c379dfce69d7f824dd41ddd8bebeae8c4a63f870ad2afd3"
+    },
+    {
+      "path": "evidence/G06/composer-7328-runtime-review.json",
+      "sha256": "c032b03455a0a2b7fccff62d4626c52c937caf76e0be6b8588e5412141b98447"
+    },
+    {
+      "path": "evidence/G06/final-source-4c76-composition.json",
+      "sha256": "7437ae13a23baf272aa2fff3f250c778de2984fa69461abebabc9f1cbe3cba5a"
+    },
+    {
+      "path": "evidence/G06/integration-4c76-evidence.json",
+      "sha256": "2d6bf4d5bb0bf550762ac6022aab12f383486d09fa995e99f6e4d728f8504fae"
+    },
+    {
+      "path": "evidence/G06/integration-4c76-result.json",
+      "sha256": "1a88bd1f4187e8acdd0358d44f0796304f181b875aee43be0e6fee65e5fff006"
+    },
+    {
+      "path": "evidence/G06/privacy-source-4c76-composition.json",
+      "sha256": "28052ea4e8748ddfc7733ec7f445dc9e34c5545473775181c8abc268f7671db7"
+    },
+    {
+      "path": "evidence/G06/reaction-97d-runtime-review.json",
+      "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+    },
+    {
+      "path": "evidence/G06/reply-e58-runtime-review.json",
+      "sha256": "deb333d192d9a23340dbf27263a4f6dc9c4f60674a48503bac201ca5b772923b"
+    },
+    {
+      "path": "evidence/G06/repost-e030-runtime-review.json",
+      "sha256": "4b7efc2591dde8be76a3a026c4437b4fd485bd7794a6f04d40d68282effff6ab"
+    },
+    {
+      "path": "evidence/G06/social-9745-runtime-review.json",
+      "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+    },
+    {
+      "path": "evidence/G06/source-4c76.json",
+      "sha256": "f603802b68c0a82f3738623311dca5641e1a5c22c319dd2794296d629632ae74"
+    },
+    {
+      "path": "evidence/G06/trusted-recovery-4c76-integration-review.json",
+      "sha256": "01d9ddc7c24352a67e090696eacd027797c5500b6c7a9af034ec855dae89ee44"
+    },
+    {
+      "path": "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+      "sha256": "c1d2cbe2ef43d7f62f4abcec75ec2ec72278b10d3b2763edfcafeb1cbd02acc1"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G06-A01",
+      "result": "pass",
+      "summary": "Genuine canonical named/Anonymous roots/replies/quotes/reposts, immutable post and one-active-like accounting verified by referenced actual campaigns; current contract inputs/artifact unchanged and independently reconciled.",
+      "artifacts": [
+        "evidence/G06/anonymous-687-runtime-review.json",
+        "evidence/G06/repost-e030-runtime-review.json",
+        "evidence/G06/account-reactions-b0b37-runtime-review.json",
+        "evidence/G06/reply-e58-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A02",
+      "result": "pass",
+      "summary": "Actual992UTF8 social publication and production composer992prepare/996reject preserve text without truncation; genuine tombstones retain root/parent/reference while hiding removedtext; publiceffects/source reasoning contain no reusable anonymous author field.",
+      "artifacts": [
+        "evidence/G06/anonymous-687-runtime-review.json",
+        "evidence/G06/composer-7328-runtime-review.json",
+        "evidence/G06/social-9745-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A03",
+      "result": "pass",
+      "summary": "Actual canonical reply parent/root, immutable author content and moderator tombstones survived authenticated reconstruction and cold SQLite reopen. Complete moderationmodel/UI remain separateG09 requirements.",
+      "artifacts": [
+        "evidence/G06/anonymous-687-runtime-review.json",
+        "evidence/G06/reply-e58-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A04",
+      "result": "pass",
+      "summary": "Actual composer and labelled DOM/pure tests enforce992UTF8bytes with character-oriented display and no truncation; sourcebound safeHTTP/HTTPS links and text-node rendering reject executable markup/unsafe schemes.",
+      "artifacts": [
+        "evidence/G06/composer-7328-runtime-review.json",
+        "evidence/G06/social-9745-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A05",
+      "result": "pass",
+      "summary": "Genuine authenticated likes/quotes/reposts, duplicate paid no-op/unlike and canonicalevents establish socialprotocol. Mandatory encryptedbookmarks/follows/notifications and fullUI remainG07/G09.",
+      "artifacts": [
+        "evidence/G06/repost-e030-runtime-review.json",
+        "evidence/G06/account-reactions-b0b37-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A06",
+      "result": "pass",
+      "summary": "Genuine two-account/two-names registration, coldPXE and encryptedjournalrecovery plus actualproductionbrowser ownnames/Anonymous/accountswitch verify private choices. Not browserpublication/onboarding acceptance.",
+      "artifacts": [
+        "evidence/G05/owned-wire-e3-runtime-review.json",
+        "evidence/G06/composer-7328-runtime-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json"
+      ]
+    },
+    {
+      "id": "G06-A07",
+      "result": "pass",
+      "summary": "Actual two-account social/reactionwire, decoded effects, privacy-source argument and liveunavailable/personalizeddenial/121sstale recovery pass supported-observer reconciliation, preserve state and producezero extra proof/send/publicfallback. Bounded engineering evidence; opaque/native/runtimeheaders, timing/content and operatedtopology requireG13specialist/finalqualification.",
+      "artifacts": [
+        "evidence/G06/social-9745-runtime-review.json",
+        "evidence/G06/reaction-97d-runtime-review.json",
+        "evidence/G06/privacy-source-4c76-composition.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json",
+        "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+        "evidence/G06/application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json"
+      ]
+    },
+    {
+      "id": "G06-A08",
+      "result": "pass",
+      "summary": "Actual same-account duplicate/unlike/across-name-independent account/posttag plus two-account separation; unchanged151TXE/circuit/namepolicy enforcecase/space normalizedASCII1-32, reservedBok, padding and unsupportedUnicode rejection. Concurrentgenuinename race remainsG05 acceptance.",
+      "artifacts": [
+        "evidence/G06/account-reactions-b0b37-runtime-review.json",
+        "evidence/G06/reaction-97d-runtime-review.json",
+        "evidence/G05/foundation-review.json",
+        "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "evidence/G06/final-source-4c76-composition.json",
+        "evidence/G06/component-sufficiency-4c76-review.json",
+        "evidence/G05/profile-build-txe-90a1-review.json",
+        "evidence/G05/profile-full-txe.json",
+        "evidence/G05/profile-full-txe.log"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "summary": "Exact4c76 againstef533 source/runtime/151TXE/artifact/render conjunction independentlyapproved for scopedG06component closure; integrationgate passed. Fullproduct/privacy/deployment/specialist/soak/network gates retained.",
+    "artifacts": [
+      "evidence/G06/trusted-recovery-4c76-integration-review.json",
+      "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+      "evidence/G06/component-sufficiency-4c76-review.json"
+    ]
+  },
+  "scope_limits": [
+    "Owned G06 engineeringcomponents only under specification-clarifications.md; no G05/G07/G09/G10 completion",
+    "Specialist cryptographic/privacy/compilerdiagnosticreview, deployedtopology,14daysoak and networkclearance remain mandatory",
+    "Historical failedf61 retained; no accepted-send/lostreceipt or fullbrowserpublication claim"
+  ]
+}

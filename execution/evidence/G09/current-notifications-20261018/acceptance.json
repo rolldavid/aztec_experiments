@@ -1,0 +1,111 @@
+{
+  "source": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "passed": true,
+  "requirements": [
+    "RC08",
+    "G09-A08"
+  ],
+  "transactions": [
+    {
+      "label": "follow-board",
+      "txHash": "0x15d2ab7a1f41889806bdfe55c88d467c6bdd594d60a17ae7c64457cebadfce46",
+      "blockNumber": 90,
+      "blockHash": "0x16e7eae4bea422f3be39531c7d007de532ad269dcba1327f7ef5fa917fa2ae61",
+      "status": "proven",
+      "events": []
+    },
+    {
+      "label": "follow-name",
+      "events": [],
+      "txHash": "0x15241a9d5bfb9cb5eaf4f5bf2af2f7b4e36c645a40b294fd0441b3f1bd222e51",
+      "status": "proven",
+      "executionResult": "success",
+      "blockNumber": 91,
+      "blockHash": "0x09fafd3919e430a9ad0c3b1c22c80d33a8cb0e0f9ddccda60ebdd558d85963ce"
+    },
+    {
+      "label": "subscribe-thread",
+      "txHash": "0x20a1940c515b891b8e2549d42b029fb64c5f2cbaa6990c2cca8848e9241494c1",
+      "blockNumber": 92,
+      "blockHash": "0x30318fde7b1f10d0ef701b6af161aefdcfabaeb2411d3a190d17c1337c72c141",
+      "status": "proven",
+      "events": []
+    },
+    {
+      "label": "mark-thread-read",
+      "txHash": "0x1abffca312d59f0fb9171b52da31cb04ebb7b68e2a5f3214abe80f8ed6cceaa6",
+      "blockNumber": 93,
+      "blockHash": "0x189d255a0ad6cdd334645092bdf235db9c22eeac12192f0595278816283b551f",
+      "status": "proven",
+      "events": []
+    }
+  ],
+  "checks": {
+    "followedBoardAndName": true,
+    "unreadExistingReply": true,
+    "canonicalReadMarker": true,
+    "notificationSuppressed": true,
+    "freshPrivateRecovery": true,
+    "bookmarksRetained": true,
+    "recoveryTransactions": 0,
+    "publicPreferenceEvents": 0
+  },
+  "proofsEnabled": false,
+  "pxeProverEnabled": false,
+  "currentCheckpoint": {
+    "number": 93,
+    "hash": "0x189d255a0ad6cdd334645092bdf235db9c22eeac12192f0595278816283b551f"
+  },
+  "confirmationRecovery": {
+    "passed": true,
+    "txHash": "0x15241a9d5bfb9cb5eaf4f5bf2af2f7b4e36c645a40b294fd0441b3f1bd222e51",
+    "status": "finalized",
+    "blockNumber": 91,
+    "sdkElapsedMs": 23.363124999999968,
+    "productionElapsedMs": 49.88079199999993,
+    "nativeProgressCalls": 0,
+    "nodeSends": 0,
+    "originalPreparedToFailureMs": 5500.90966796875,
+    "originalCause": "Underlying error unavailable: production receipt boundary intentionally replaced dependency errors; original generic stack retained. No evidence identifies native progress omission.",
+    "limits": "This read-only observation proves established success is accepted immediately; it does not reconstruct the original failed RPC observation."
+  },
+  "scope": "Retained disposable account; native proof-disabled application actions and canonical private recovery. Existing reply becomes unread on subscription, then is suppressed by authentic read marker. Historical separate two-account delivery and UI quote/repost evidence remain separate; no new incoming-reply/browser/real-proof/privacy-traffic claim.",
+  "artifacts": [
+    {
+      "path": "run.mjs",
+      "sha256": "f40c5b201a6617dd1579f783d8830a219e66c9a088b2f5cacae9ed4f2bce7952"
+    },
+    {
+      "path": "reconcile.mjs",
+      "sha256": "a2f4a692c2098009ea07a3b0567929b1286cbc1d0e1e0b1f0f17042187749b56"
+    },
+    {
+      "path": "continue.mjs",
+      "sha256": "e02d79d5efc13ee7df29000a99864c715b0c69a95b7b2d5d0db3fdaf3ade1b5b"
+    },
+    {
+      "path": "receipt-readback.mjs",
+      "sha256": "64033fe03102426608744b666cdf6c3ffde3979accd01a52eeb01d97ef24f8ba"
+    },
+    {
+      "path": "attempt-1/follow-board-receipt.json",
+      "sha256": "af041d3824891f6e3816837b08ba02da66928a5668152ce3e31a201780816d03"
+    },
+    {
+      "path": "reconcile-1/result.json",
+      "sha256": "9cc1400637462606e78599fe2733f8b9f6e1d01a6486424d69a6fa2362e23485"
+    },
+    {
+      "path": "continuation-1/result.json",
+      "sha256": "e23021279c785a19c6fd4085fd1c13e47f0f51e62e545938a7f967ec5a7d0f6e"
+    },
+    {
+      "path": "receipt-readback.json",
+      "sha256": "8d749bbe9ef440a4623e7a383421106c0838c0a6a1152ab1a712b0b44e7dc298"
+    },
+    {
+      "path": "name-follow-event-readback.json",
+      "sha256": "86a444a5e4c63fb03cb3b76e5041fd64d884a249defe49d815ec5729460c9e20"
+    }
+  ]
+}

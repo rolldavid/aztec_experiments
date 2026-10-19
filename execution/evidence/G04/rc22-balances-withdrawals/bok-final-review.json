@@ -1,0 +1,139 @@
+{
+  "task": "G04-RC22-bok-balances-withdrawal",
+  "commit": "9f8913e4d41fa281cc3b9fdbc57ce09f94d111fe",
+  "base": "266e1b78a32c0e63dd4e56ec23f657142d3e410d",
+  "source": [
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "522aebe4ad41a24a8bc2f94c6441fd4d04884ef0aacbc4591cc2afe89fc11e3c"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "sha256": "757ae9fd97eb3836c8dd5de09b5837ca251b870d613d7ad85436a3f8cdb2fc89"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "f833ef3047ec368a46846ff5054a8eabb2c439301a5b12bab841b379a9792239"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "902f697e5cf16acdd1ca7f698bfb94aef6556c2387688ce35f345523e9d6099f"
+    },
+    {
+      "path": "scripts/test-w03-ethereum-journal.mjs",
+      "sha256": "30f88376dc5a54df1691c46f71f3a3b97525fc5186ae987987515d2886a644a3"
+    },
+    {
+      "path": "shared/ethereum-journal.mjs",
+      "sha256": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "edc46d4ed6fc5d4a97283d5c568d02c6a3df8606b706039553199562f01b4801"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "f4c9e76d796b2067dededd8d946538bff72b0e812d5f89e0b5b1db002e2b9624"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "a46284a83b48e0f46f8c81b835dc67ea05f47579b596deda926d7088cd06bc50"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.test.mjs",
+      "sha256": "f1913045a295e6cd78b8b7687b0a1d88d763b98d6cdcc00a6683bf0a96aaddf5"
+    }
+  ],
+  "checks": [
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-bok-final-ordinary.json",
+      "receiptSha256": "31b2088d2d6eba657aed728c93d9f2b6c7d05677306fa3ae0ddffb99272f87c7",
+      "log": "execution/evidence/G07/native-social-wire/rc22-bok-final-ordinary.log",
+      "logSha256": "cdb6fa854d7483bcbae1a5fd9b39f81dd0db1f3536e4d71250cbe09b5b58b1e3",
+      "passed": 270,
+      "elapsedMs": 20805,
+      "sampledPeakKiB": 915440,
+      "command": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "apps/rolling/wallet-session.test.mjs",
+        "scripts/test-w03-ethereum-journal.mjs",
+        "shared/rolling/synchronized-application.test.mjs"
+      ],
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "tempRemoved": true,
+        "linkRestored": true
+      }
+    },
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-bok-final-app.json",
+      "receiptSha256": "d8f64d65c8c5d4663d0daff437f15cc3e340b095bbc3da368dc8b66594626e3d",
+      "log": "execution/evidence/G07/native-social-wire/rc22-bok-final-app.log",
+      "logSha256": "7079697e6df8f178a736dea1f48c5f9ed5cc4ba3284dd851ca2bdc236a0f9f1a",
+      "passed": 56,
+      "elapsedMs": 1894,
+      "sampledPeakKiB": 458960,
+      "command": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=RC22|[Bb]ok|private-fee",
+        "shared/rolling/application.test.mjs"
+      ],
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "tempRemoved": true,
+        "linkRestored": true
+      }
+    },
+    {
+      "receipt": "execution/evidence/G07/native-social-wire/rc22-bok-ui.json",
+      "receiptSha256": "f744f5ca53c1929a668d854861a1f0ba490cc89b66f4376a1d96446692dc9081",
+      "log": "execution/evidence/G07/native-social-wire/rc22-bok-ui.log",
+      "logSha256": "60b82822410d0d0f5a24310f39b0da40a6a72bac602dbfbf97068436f60e8e7b",
+      "passed": 3,
+      "elapsedMs": 1890,
+      "sampledPeakKiB": 507664,
+      "command": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=RC22 Bok panel",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ],
+      "cleanup": {
+        "ownedTreeAbsent": true,
+        "tempRemoved": true,
+        "linkRestored": true
+      }
+    }
+  ],
+  "counts": {
+    "ordinaryDistinct": 326,
+    "labelledChromiumDistinct": 3
+  },
+  "behavior": [
+    "Bounded session-local private owned_requests pages, then complete uniform same-origin public accounting pages; no owned request ID or human grouping leaves the wallet.",
+    "Exact canonical PXE checkpoint and public revision guard every page. Partial results never publish zero or partial totals. Full eight-ID ownership page requires a further page.",
+    "Free private balance, allocated available, reserved, charged and historical refunded displayed separately. Returned credit is already inside free balance and never added twice.",
+    "Owned WAITING/ACTIVE requests with zero reservations can prepare existing cancel after explicit private-fee review. Fenced/reserved records show blocking conditions.",
+    "Bok withdraw uses the actual current private ABI and a saved amount/recipient/nonce/portal/token. L2 outcome blocks workflow replacement until an exact canonical L1 refund is verified.",
+    "Saved recipient reviews separate Ethereum gas; existing encrypted token-scoped journal sends once and recovers exact calldata plus PluginPortal Withdrawn event, canonical inclusion and testnet finality. Unknown/reorg/wrong wallet/scope changes cannot authorize a duplicate."
+  ],
+  "dependencies": {
+    "ownedRequestsSource": "08793a575c91ad45caee2de88920e04a466f613c",
+    "uniformPublicApiSource": "391ef1394adc8d6bcc43278aef02dfb19bc4b601",
+    "build": "Root normal SDK/wallet build required after composition; new PrivateBok utility class/artifact and authenticated scope.bok plus public endpoint must also be composed."
+  },
+  "limits": [
+    "Application tests use labelled private/public dependencies and a labelled new owned_requests ABI shape; actual current withdraw/cancel ABI is used. No claim of installed new-class utility acceptance.",
+    "Chromium tests are labelled DOM doubles with no live wallet, chain, proof or financial send.",
+    "Live uniform archive acquisition, actual private exit and settled PluginPortal refund remain unqualified.",
+    "Fee credits remain spend-only under actual FeeJuice protocol; no nonexistent redemption introduced.",
+    "Bok refund currently requires the saved receiving Ethereum wallet to pay gas; no gasless refund relay claimed.",
+    "Previously cancelled requests from old classes cannot be retroactively reconstructed by the new ownership utility."
+  ],
+  "sourceNote": "Only API documentation was added after final runtime checks; no behavior changed. Full unrelated application tests were not repeated; 56 selected affected Bok/private-fee/RC22 cases ran, and session, Ethereum journal and synchronized-application suites ran in full."
+}

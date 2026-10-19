@@ -1,0 +1,58 @@
+{
+  "schema": "independent-scoped-actual-review-v1",
+  "sourceRevision": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "runtimeSha256": "6eb53e9a9fc848fb382fb273a2cadf5c811a4e8de676c760942a3062c05b84f5",
+  "verdict": "accept-scoped-development-human-post-model-removal",
+  "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/attempt3/normal-post-model-outcome-packet.json",
+  "packetSha256": "f448771d55c75128fff153ba3c97045544f8ceb4241b6c51d436673f0b6a6445",
+  "independentChecks": {
+    "linkedFilesVerified": 13,
+    "rootPrivateReceiptsVerified": 3,
+    "exactTypedTransactionWireAndJournal": {
+      "bytes": 123492,
+      "sha256": "9ceaba606c453f362b955158d208bab1fdf5eae9fcc507bb5d26a94187d956a0",
+      "transactionHash": "0x105b0a82716c1ec30edb261cbd684d475882f88472bdb76b0d3b8e291f3fd62f"
+    },
+    "modelIdentityTranscript": true,
+    "publicPostAndUnionPolicyIdentity": true,
+    "procedureReviewed": true,
+    "moderatorWorkerAdapterAndCanonicalReconcilerReviewed": true,
+    "noLiveRequestsOrTransactions": true
+  },
+  "accepted": {
+    "oneExplicitHumanPost": true,
+    "reviewedMaximumFee": "40863084272367",
+    "authorizedCeiling": "1000000000000000",
+    "samePreparedAndConfirmedIntentActionNonce": true,
+    "durableExclusiveIntentBeforeConfirm": true,
+    "wireSavedBeforeForward": true,
+    "originalBackupUnchanged": true,
+    "modelVersion": "0xcc373fe217f094208d2558ff8be336da10b9f2b0b863dc002a9085f97173f861",
+    "storedDecisionViolation": true,
+    "postBlock": 597,
+    "removalBlock": 598,
+    "removalTransaction": "0x1eb6847a3027233bf8a31384892b8cc4d65a3f7b0353ff483e6aeadf919459ad",
+    "removalFinalizedSuccess": true,
+    "penalized": true,
+    "publicTombstoneCheckpoint": 600,
+    "browserContextClosed": true,
+    "supervisorOwnedTreeAbsent": true,
+    "browserSendCount": 1,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "preservedFailures": [
+    "Initial ECONNREFUSED preflight failed before browser/dispatch marker; retained separately.",
+    "Earlier 80-second funding observation and export failures remain failed; this later read observes the original claim confirmed without resubmission."
+  ],
+  "limitations": [
+    "Single actual human main-board development case, native/PXE proofs disabled.",
+    "Application observer elapsed 144946ms is not a cold-recovery 120-second result or an independent model-latency measurement.",
+    "Model provenance is bound by persisted identity, live daemon/runtime health and saved job; this review did not rerun inference or independently audit model weights.",
+    "Removal canonicality reviewed through captured finalized receipt plus authenticated-index event/public projection and existing reconciler source; no fresh network read or independently exported removal TxEffect was performed.",
+    "Observer covers routed application-context traffic, not all extension/host egress.",
+    "No authentic Bok parity, parent/local union adversarial quality, full corpus/capacity, privacy unlinkability, real-proof or testnet/release qualification.",
+    "Successful public tombstone API observation does not independently demonstrate all reader keyboard/mobile UI behavior."
+  ],
+  "findings": []
+}

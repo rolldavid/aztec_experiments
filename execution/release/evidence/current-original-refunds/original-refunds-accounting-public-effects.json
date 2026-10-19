@@ -1,0 +1,93 @@
+{
+  "scope": "Retained original receipt/event reconciliation only; no network reads or sends.",
+  "metamask": {
+    "failedAutomaticWrapper": {
+      "hash": "0x243b7893572cbd60b92c31b071c95ab6f6e6708d59bd301b294bf14d7aff01d9",
+      "blockNumber": 11947330,
+      "nonce": 0,
+      "to": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "status": 0,
+      "refundWei": "0",
+      "gasUsed": "308443",
+      "gasPriceWei": "16",
+      "gasCostWei": "4935088",
+      "withdrawnEvents": 0,
+      "evidence": {
+        "file": "metamask-acceptance-20261019/original-refund-submission-scan.json",
+        "sha256": "0fd9c1828e8abcc72a3895d0b126c1116796b357a1225afa9f0d47c413c35313"
+      },
+      "finality": "Lead reports canonical finalized rejection11947331; this review independently observes retained status0/no logs only"
+    },
+    "successfulExplicitDirect": {
+      "hash": "0x03d2e3ca65d93e6902230ae8fc9eefc9aae636a9734a2a32fd459294881c23b3",
+      "blockNumber": 11947417,
+      "blockHash": "0x750769367f6b8f146b4b7e752703c6618b43acc033a75b14f7c1deb97c261bad",
+      "status": 1,
+      "nonce": 2,
+      "type": "0x2",
+      "recipient": "0x22E1d7949898d91be06c4aE0bC1a5E713441EFf2",
+      "refundWei": "1000000000000000",
+      "gasUsed": "110328",
+      "gasPriceWei": "16",
+      "gasCostWei": "1765248",
+      "matchingOriginalExitLeaf": "0x00a71f6bc6d1201304a3e000f203e8ca1bdeaa08353e36a3f300a90ea6247657",
+      "finality": "Canonical finalized independently read-only observed at 2026-10-19T10:11:47.794Z",
+      "evidence": {
+        "file": "metamask-acceptance-20261019/direct-refund-receipt.json",
+        "sha256": "a585d8655de0c8e931c2dbeac6bf01f3a2899e937443e06e247583eec22e1ceb"
+      },
+      "finalityEvidence": {
+        "file": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/metamask-acceptance-20261019/direct-refund-finalized.json",
+        "sha256": "a61afaf703f9da37ba278349997f7494fbf38b796d9a7fc10396d380f83599cd",
+        "finalizedBlock": 11947426,
+        "finalizedHash": "0x8750c48d047a88643d2acf05ba111b55d9c520924a4944a253a73d80513c4692"
+      },
+      "uiCompletion": {
+        "at": "2026-10-19T10:09:41.443Z",
+        "sha256": "72727f078b786eeb33ae09714fbf47efd1d6b9d0dafb158894a107645c8ee16a",
+        "message": "The saved Ethereum refund is confirmed."
+      }
+    },
+    "totalRefundAttemptGasWei": "6700336",
+    "refundMinusBothAttemptGasWei": "999999993299664"
+  },
+  "phantom": {
+    "successfulDirect": {
+      "hash": "0x225f3b17c314e076b699482500d1af6169a8d4ce8a2c92ea35702e37bd59deb1",
+      "blockNumber": 11947336,
+      "blockHash": "0xcc0bfc59c8d9174da32cd744b9230d671aa068d690508465412ee5ce75a57235",
+      "status": 1,
+      "nonce": 0,
+      "type": 2,
+      "recipient": "0x294F40accC74b3437D6E9e661b6e9C8B4e02289d",
+      "refundWei": "1000000000000000",
+      "gasUsed": "186211",
+      "gasPriceWei": "17",
+      "gasCostWei": "3165587",
+      "matchingOriginalExitLeaf": "0x006a7cbab913ffa1d581e0a6845b52523eda750d3358a69dfc62911af8017e09",
+      "finality": "Canonical finalized per retained native observation at 2026-10-19T09:59:19.063Z",
+      "evidence": {
+        "file": "phantom-acceptance-20261019/original-refund-receipt.json",
+        "sha256": "5c659105e9aa56a6bbe780c0001f7505b76f5937b6c4d65050d58d91c197e6ef"
+      },
+      "finalityEvidence": {
+        "file": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/phantom-acceptance-20261019/original-refund-finalized.json",
+        "sha256": "ea79f3e4ef8732d876edc81cea1e429e24e313991133ead09aba058a5b3e8aad",
+        "finalizedBlock": 11947362
+      },
+      "uiCompletion": {
+        "at": "2026-10-19T09:57:25.409Z",
+        "sha256": "bf11068eb540d45e26b0eefabb0ad75d8c302e9a72b056f0c7cf2ee0f42f9e3e",
+        "message": "The saved Ethereum refund is confirmed."
+      }
+    },
+    "refundMinusAttemptGasWei": "999999996834413"
+  },
+  "privacy": "Both successful portal Withdrawn events reveal original recipient and .001ETH amount; both Outbox logs contain the exactly matched original public exit leaf. No private Aztec identity/name linkage inferred.",
+  "limits": [
+    "Gas excludes earlier funding/delegation-independent actions; this is refund-attempt accounting only.",
+    "No wallet balance claim; original .001ETH refund amount is not net wallet balance.",
+    "Prior reverted wrapper is not a second successful refund; explicit direct nonce2 is separately accounted.",
+    "Both successful original portal refunds now have canonical finalized observations and UI completion evidence; no broader journey acceptance inferred."
+  ]
+}

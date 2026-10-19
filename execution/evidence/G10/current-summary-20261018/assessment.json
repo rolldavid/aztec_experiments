@@ -1,0 +1,118 @@
+{
+  "source": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "scope": [
+    "RC29",
+    "RC30",
+    "RC41"
+  ],
+  "actions": "Read-only history/source/public-chain evidence; zero model, chain or service mutations.",
+  "historicalEvidence": {
+    "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/counter-reset-6c01/acceptance.json",
+    "sha256": "6e5131db4d10f726e67826012e37de52b28e0e4695470e92213d69e10b7c6b47",
+    "review": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+    "settledCalls": 16,
+    "recomputedCrossThreadOverlaps": [
+      {
+        "requests": [
+          "crepair",
+          "dreset"
+        ],
+        "calls": [
+          0,
+          0
+        ],
+        "nanoseconds": "4528394000"
+      },
+      {
+        "requests": [
+          "crepair",
+          "dreset"
+        ],
+        "calls": [
+          3,
+          4
+        ],
+        "nanoseconds": "8506470416"
+      },
+      {
+        "requests": [
+          "crepair",
+          "dreset"
+        ],
+        "calls": [
+          5,
+          6
+        ],
+        "nanoseconds": "6315238958"
+      },
+      {
+        "requests": [
+          "crepair",
+          "dreset"
+        ],
+        "calls": [
+          6,
+          7
+        ],
+        "nanoseconds": "1862939667"
+      }
+    ],
+    "chargedMicroUsdc": "32218",
+    "refundedMicroUsdc": "567782",
+    "actualBrowser": "counter0->2->4->6 and converter1.25/125->2/200->Reset1.25/125",
+    "disposition": "Retain scoped actual evidence; do not repeat historical two-thread campaign merely due age."
+  },
+  "moduleEquivalence": {
+    "plugins/agent.mjs": {
+      "unchanged": false,
+      "historicalSha256": "28fec68ee8c60782834d01186a1105827d0f5558fc9c7d4074861d87fb1aad02",
+      "currentSha256": "76c83d3af3f89994845678265179d1351e360f109f5176f56d833b6c15aa35cc"
+    },
+    "plugins/conversation.mjs": {
+      "unchanged": true,
+      "historicalSha256": "55579dcaccbaf25a993db1fe94cb1c5a32296b612c2781553fa3818177401452",
+      "currentSha256": "55579dcaccbaf25a993db1fe94cb1c5a32296b612c2781553fa3818177401452"
+    },
+    "plugins/private-bok-metering.mjs": {
+      "unchanged": true,
+      "historicalSha256": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864",
+      "currentSha256": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864"
+    },
+    "plugins/escrow-service.mjs": {
+      "unchanged": false,
+      "historicalSha256": "1746cbc380e9f972a78b999a81ce9ba1fa595e8003b1e0e7be1a423c09874118",
+      "currentSha256": "da885ef6d54c7a68dda501479be716cebe070f9e29d44e23c538af22e8efc3ff"
+    },
+    "plugins/thread-repositories.mjs": {
+      "unchanged": false,
+      "historicalSha256": "17ac9cbdfc91fde0d92a073e7764417374df55c87a58fbd94743f2526ba1e7be",
+      "currentSha256": "886fcfcac043ba4df04da1ee5b1add26ee215fcebf2074c3d072a7c160268e92"
+    },
+    "plugins/main.mjs": {
+      "unchanged": false,
+      "historicalSha256": "7a8419cd29998dc5987e45fa3f181fac2143b343015bdffd175996a77e525fa8",
+      "currentSha256": "6328a2081c4f7f83b393703b2adf664a4ccb9052220a3c08c376468b7043f284"
+    },
+    "plugins/venice.mjs": {
+      "unchanged": true,
+      "historicalSha256": "a49ab070e2a1c04f13ed0bdf92723e8b6a012217043d8820c2b5afc0da964fbf",
+      "currentSha256": "a49ab070e2a1c04f13ed0bdf92723e8b6a012217043d8820c2b5afc0da964fbf"
+    },
+    "plugins/venice-metered.mjs": {
+      "unchanged": true,
+      "historicalSha256": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28",
+      "currentSha256": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28"
+    }
+  },
+  "changedBehavior": "Queue now skips fenced work before setup; admission uses selected repository pool; exact accepted recovery and prevalidation candidate retention added. Agent change only deterministic host publication text. Core conversation, summary construction, metering and provider implementation unchanged. These new paths require their current exact-source focused/actual evidence, not blanket historical certification.",
+  "currentActualEvidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/local-bok-service/current-garden-complete-public.json",
+  "currentSummaryEvidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-bok-recovery/.build/g10-current-acceptance-gap/current-summary-retention.json",
+  "nextGap": {
+    "requirement": "RC30",
+    "kind": "measurement gap, no demonstrated product defect",
+    "proven": "Original qwen3 paid summary input reconstructed from four prior canonical messages and matches journal digest exactly; latest excluded, stop completion,536/194 tokens,226microUSDC charged.",
+    "missing": "Actual summary output and provider duration were not retained. Instructions/decisions/unresolved issues/repository-reference preservation and current-model latency cannot be scored.",
+    "smallestContinuation": "One bounded summary-only qualification using current configured model and existing createAgent/veniceMeteredProvider interfaces and existing conversation fixture; capture only public fixture input/output, exact receipt and monotonic duration. Establish coverage assertions for instructions, decisions, unresolved issues, repo refs before that call. No deployment, funding, multi-user campaign or new framework; no claim controlled main reply is real end-to-end."
+  },
+  "remainingFinalGate": "RC41 combined final-candidate evidence still needs reviewed conjunction of current admission/recovery/static behavior and retained proven concurrency/isolation; independent audit, real-proof testnet and14-day soak remain separate."
+}

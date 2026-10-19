@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "candidate": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "base": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+  "scope": "G03 final focus contrast / RC40 focus indicator criterion",
+  "verdict": "approve",
+  "findings": [],
+  "sourceSha256": "91e9baf5630f9fe5330109d050276f175bd2af88d8ec2c0e522e65e743648faa",
+  "checks": [
+    {
+      "procedure": "Inspect exact stylesheet diff and surrounding dark/light/focusable backgrounds before worker conclusions.",
+      "result": "Only focus colour changes: violet default on light surfaces; inherited lavender override on rail/topbar. Existing3px solid outline and3px offset retained. No JS, navigation, dialog or layout behavior edits."
+    },
+    {
+      "procedure": "Pinned Node24 +Playwright Chromium, inline labelled fixture with exact candidate stylesheet; focus14 actual control/surface combinations and independently compute sRGB luminance contrast against adjacent parent surface.",
+      "result": {
+        "passed": 14,
+        "failed": 0,
+        "minimumContrast": 4.703836808144122,
+        "outlineWidth": "3px",
+        "outlineOffset": "3px",
+        "focusVisible": true
+      },
+      "evidence": "contrast.json"
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-name-pattern='public reader: navigation|public opening is SDK-free|dialog selections and view changes' apps/rolling/reader.browser.test.mjs apps/rolling/wallet-panel.browser.test.mjs",
+      "result": "3 passed,0 failed/skipped;1002.118875ms. Narrow keyboard navigation, dialog focus trap/return and meaningful selection/view focus preserved."
+    },
+    {
+      "procedure": "Recompute worker CSS repair hash and five source binding hashes.",
+      "result": "Exact candidate stylesheet matches measured worker repair; unchanged reader/panel/navigation tests/source match worker bindings. Historical pre-repair measurements correctly show original failure and are not treated as final state."
+    }
+  ],
+  "assessment": [
+    "Rail/topbar controls retain light indicator against dark surrounding surface; button fill is separated from outline by3px gap. Light paper/white/banner/notice/error/success/removed/dialog/form surfaces exceed3:1 in independent checks.",
+    "Single CSS token repair resolves the reported below3:1 focus indicator without changing outline size/offset or requiring application rebuild. Worker live accessibility observations remain scoped to their stated candidate and coverage."
+  ],
+  "limits": [
+    "Scoped focus repair and representative control checks only; no full WCAG conformance, assistive-technology user acceptance or exhaustive combinations claimed.",
+    "Independent contrast fixture uses exact CSS with solid backgrounds; no live service, wallet, chain, recovery or build action performed. Normal integration gate remains."
+  ]
+}

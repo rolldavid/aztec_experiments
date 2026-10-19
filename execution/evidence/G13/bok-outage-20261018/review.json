@@ -1,0 +1,53 @@
+{
+  "reviewer": "reviewer_20261018",
+  "revision": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "task": "D6-current-quiescent-Bok-backup-outage-restart",
+  "requirements": [
+    "RC28",
+    "RC29",
+    "RC33",
+    "RC34",
+    "RC37",
+    "RC38",
+    "RC39",
+    "RC41"
+  ],
+  "verdict": "approved_for_scoped_actual_quiescent_backup_restore_core_outage_and_terminal_restart",
+  "findings": [],
+  "checks": [
+    {
+      "procedure": "Verify six packet hashes and saved archive; independently compare167 manifest entries/types/modes and108 file hashes to preserved original/restored state, without emitting private contents",
+      "outcome": "Original exactly matches; restored matches107 files and all types/modes, with only expected public-index/rolling-public-v3.sqlite changed by rebuild. Five original/restored request journals have exact identical hashes. Archive9386496 bytes hash matches. Manifest digest is semantic Python json.dumps(parsed,sort_keys=True) hash, not raw file hash.",
+      "evidence": "manifest-observations.json"
+    },
+    {
+      "procedure": "Compare before billing count/identity records with exact unchanged journal hashes and canonical accounting decoded using actual node and production decoder",
+      "outcome": "Five terminal requests;20 saved calls unchanged; all state4/reserved0 and charged+refunded=budget. Canonical retained effects match every recorded accounting field. No new journalled provider activity.",
+      "evidence": "canonical-observations.json"
+    },
+    {
+      "procedure": "Decode actual block98 full transaction effect with current production decoder, recheck canonical block; inspect lead CUA saved observation and worker empty public-index rebuild result",
+      "outcome": "Successful named ordinary post is exactly present under policy3. Worker reconstructed98 in187 steps/12.842s while ports8797/8798 closed. Lead observed actual ordinary UI posting during outage; reviewer independently corroborates canonical result, not historical port timing."
+    },
+    {
+      "procedure": "Read restored static artifact manifest and source archive, then independently HTTP fetch original accepted index.html/source.json",
+      "outcome": "Served1497byte index hash79fbb3f98f309a8462a0d6e8fd8cd2d9622a174907239c6a9c3c46d7919b09d6 equals exact index manifest entry;6815byte source hash84a9fb6c83aacf9f423c32362d5505d3c7a83b3c2875a558fadc5a61267a4395 equals accepted archive. Aggregate artifact digest is correctly not compared to single index file."
+    }
+  ],
+  "carryForward": [
+    "Current exact accepted-recovery/candidate/fenced-dispatch source approvals remain valid per prior source-carryforward.json. No Bok execution/recovery code changed since the respective reviewed revisions.",
+    "Actual quiescent archive/extract plus terminal restart now closes the previously missing supported Bok-state restoration and core read/post/rebuild outage scenarios at this scope. Private original state and backup are preserved; recreated public cache is intentionally mutable.",
+    "Historical two-thread provider campaign and uncertain-call fences remain original-source evidence; this exercise supplements them without replaying any payment or model request."
+  ],
+  "limits": [
+    "All five requests were already terminal before shutdown. This does not demonstrate process failure between accepted commit and pending reply, or interruption of an active paid call. Such exact accepted-state/uncertain cases remain scoped component evidence unless another actual record qualifies them.",
+    "No independent provider ledger was queried; no additional provider calls is supported by unchanged durable journals and idle terminal service, not universal network observation.",
+    "Quiescent consistent backup only, not backup of a live writer. No stopped native-chain recovery, cross-host full operator migration, credential rotation or unattended supervisor qualification.",
+    "Worker records original service stop/restart and port outage; reviewer did not repeat service operations. Source/UI claims bound to477096, native proof flags false; real-proof/testnet/external-wallet and release gates remain."
+  ],
+  "evidenceHashes": {
+    "canonical-observations.json": "66e19389ab52bc7426473d3e4b083fd0c020a2624143968b079effb1d84ae56c",
+    "manifest-observations.json": "2cf527ab853eca139583c4a3a06d4c8646781627b36f3da373b30693d46d51b8"
+  },
+  "packetSha256": "34ea32b8847f86ede5fc5fb9927608eb526445f467ab4db1b05284a25809ad7a"
+}

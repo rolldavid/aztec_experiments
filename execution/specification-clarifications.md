@@ -72,3 +72,19 @@ Core/Bok recovery runbooks and repository/artifact backups remain final handover
 ## Owner delivery deadline — 18 October 2026
 
 The owner explicitly removes the fixed14-day/336-hour soak. Complete implementation and acceptance within72hours of2026-10-18T15:25:57Z (deadline2026-10-21T15:25:57Z). T06 now requires bounded representative reliability and failure/recovery exercises on the final candidate, with real observed outcomes and incident accounting, without a minimum elapsed waiting period. Acceptance is assigned implementation work and must continue autonomously; its outstanding status is not a stopping condition. Preserve source-bound evidence, real-proof testnet acceptance, independent specialist review and network clearance; record any specific external prerequisite honestly. This amendment supersedes older duration instructions, including in the attached PDF, while retaining historical evidence. It does not change contract penalty/cooldown durations.
+
+## Owner instruction — no VoiceOver activation
+
+The owner explicitly prohibits turning on VoiceOver on this Mac (19 October 2026 local time). Do not enable it or change system accessibility settings for testing. This restriction is superseded in scope by the removal of all accessibility requirements below. VoiceOver was verified off after the interruption.
+
+## Owner scope amendment — 19 October 2026: proof of concept, no accessibility qualification
+
+The owner removes all accessibility items from this proof-of-concept specification and acceptance task list. This supersedes the attached Draft 3 wording about keyboard navigation, focus, readable contrast and screen-reader status announcements, and related engineering targets or inferred assistive-technology requirements. Do not schedule or run accessibility qualification, including VoiceOver, screen-reader announcements, keyboard/focus audits or WCAG contrast checks. These are removed requirements, not passed checks. Ordinary working navigation, readable application content and honest visible loading/error/transaction states remain functional product behavior. Existing UI improvements and historical evidence need not be deleted. Do not enable VoiceOver or change the Mac’s accessibility settings.
+
+## 19 October 2026 — authenticated rebuild measurement scope
+
+Independent source review confirms Draft3 pages6/9 require authenticated reconstruction, cold/warm measurements and disclosed dataset size; they do not require10,000 authentic onchain posts. The authenticated10k threshold was a reversible lead-created engineering target, not an owner requirement. Retire that unvalidated corpus assumption without claiming it passed. Measure representative retained real posts/threads/identities/policies, preserve the10k synthetic UI evidence as synthetic and retain the explicit layered >1000-record C04 check. Do not generate2,500 transactions solely to satisfy the invented corpus gate. This corrects the implementation interpretation; it does not remove authenticated recovery or performance reporting.
+
+## 19 October 2026 — infrastructure ceiling
+
+Owner explicitly raises the cumulative infrastructure ceiling to USD500 ("I approve a $500 ceiling"). This supersedes USD300, not USD500 additional. Retain all resource reconciliation, spending buffers, independent shutdown controls and other scope/release restrictions. The first reviewed use is the same host through10:45UTC and endpoints10:50UTC, complete forecastUSD312.267094, reservationUSD315. No new server is implied.

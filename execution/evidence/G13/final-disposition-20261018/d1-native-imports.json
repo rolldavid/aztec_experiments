@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+  "scope": "replacement host initial controls and native package commissioning only",
+  "verdict": "approved-initial-controls-and-native-stage; workload-admission-pending-native-failure-exercises",
+  "instanceId": "i-042331bb699a44e4c",
+  "fleetId": "fleet-e100bebb-2421-45b0-bfc8-b760f0caffd8",
+  "evidence": [
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/initial-controls-readback.json",
+      "sha256": "33af59e928a0b4c257e98c2904cc8b851d41e9d71d93aafbf8a739df43025c09"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/stage-native-result.json",
+      "sha256": "731488430c7a8e9134152bcca14ab7e6bf091f027d77dbd30d30746f44e8ee05"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/stage-observation.json",
+      "sha256": "173bdf4b175a5930e7b14720ed2c296a736e48c2c9dd6f8b31171f1993f8d408"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/stage-command.intent.json",
+      "sha256": "43eb47ce37507f7800cbb94690e2d0f16cbdd7ded973128e99dfcb5acdc19143"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/create-fleet.intent.json",
+      "sha256": "364496e12a9699e933c526b8b3172d9286d14cc3ad9d40fadc1283a34454a765"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/create-fleet.response.json",
+      "sha256": "c99b4366877b8e74b3210c90718fb5283fcb973258f910dc4d7f3308f27a8727"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/launch-template-data.json",
+      "sha256": "2d15b4bdef366ad2b23421745be71adba83917de5a1ca1d0a717c0540a3072f8"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/fleet-live.json",
+      "sha256": "875b6b15e4c4fbe369a5af49138fddc84ffac846d0aa47477d3fe40270e2f377"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/replacement-fb247649/instance-live.json",
+      "sha256": "9aee516484af499d584bee4082fbdbe9ea8145b3654ae3290d73bde79d576eea"
+    }
+  ],
+  "observations": [
+    "Initial SSM receipt Success/0 shows budget and commissioning timers plus egress service active; deadlines 2026-10-19T00:51:57Z and 2026-10-18T20:33:29Z; four workload services masked. Physical enp39s0 HTB parent rate/ceil 50Mbit and pinned iproute2 6.1.0-1ubuntu6.4.",
+    "Native stage command e6033913-c5d4-40fe-b642-843f5a6cf1a2 Success/0 emitted ROLLING_COMMISSION_NATIVE_READY. Its nested decoded generated payload contains the exact approved stage-host.py SHA256 2af921915cf53889618cbe9f914cc21e194cacdf67fd4170888dd0e6629efae7. No private payload is copied into this review.",
+    "Stage observation read back native manifest 4726ef857d8ce67c282bc17dfda58047bb7d55469b66c2812288f75473c2d942, Node24.21.0, BB6.0.0-rc.6, nativeImports/controlsVerified/workloadsMasked true; physical egress 28731 to1552181 bytes.",
+    "Stage observer status Failed/1 is preserved: its final optional cat of absent diagnostic.json returns1. Native stage status remains independent Success/0; no general command-pass claim.",
+    "Actual describe-fleets readback confirms active fleet-e100bebb-2421-45b0-bfc8-b760f0caffd8 expires 2026-10-19T00:51:57+00:00 with TerminateInstancesWithExpiration=true and capacity1. Describe-instances confirms matching running instance with attached vol-0178896f341e1a80c and vol-029b31e56c6afc212, both DeleteOnTermination=true, campaign SG sg-0291bb6302b0e1273."
+  ],
+  "limitations": [
+    "No node sync, prover runtime or transaction proof claimed.",
+    "Actual native shaper-loss/hung-monitor exercises and preserved production controls are still required before native workload and node network admission.",
+    "No new deadline, spend, cloud mutation or test run performed by reviewer."
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "review": "Actual named-human parent/local moderation union",
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "packetSha256": "5f0ea2ec0b638e159c6e55e2ba1738d5b0ee9d00b3a5610e5901fc1616ba3e8a",
+  "verdict": "accept_scoped_development_human_moderation_evidence",
+  "fullRequirementClosure": false,
+  "verifiedReferences": {
+    "total": 49,
+    "uniquePaths": 48,
+    "scope": "Top packet plus advert and parent-operator subpacket references; prior social batch already reviewed separately."
+  },
+  "sourceHashes": {
+    "censor-daemon/rolling-adapter.mjs": "a81e76e3bb36c493e217c11945c857ebceb14b586e71f21067b5bc78a7ecf103",
+    "censor-daemon/worker.mjs": "b5dbd2569f9af73141e4fc4173abca5f4d66d7d9a3c4aa186d8e115743ce9fdf",
+    "censor-daemon/moderation.mjs": "5448100e0686f613ac93c72fd5b8132bd760ac2150a6328087ff0274156f6dca",
+    "censor-daemon/flag-outcome.mjs": "776245f2cdf5e0dc5e106a490de487ff8d49aaa995c273f42646afe87500edb1",
+    "apps/rolling/reader.mjs": "fa10dcc9e94594c5a574735ad508ed14fd71368045101751679b2dd86ee5f737",
+    "scripts/testing/rolling-notification-fixture.mjs": "04cbd4126abca72049570af649287ff37c62dff2663617f23ae7f5167f650f97"
+  },
+  "actualOutcome": [
+    {
+      "publicationBlock": "682",
+      "removalBlock": "801",
+      "removalTxHash": "0x12b03591d47ebd7e063c1303c8f002d5e64cca2b37a8d25818ab8aeddf1ece75",
+      "policy": "4294967298",
+      "penalized": false,
+      "attempt": "1",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+    },
+    {
+      "publicationBlock": "788",
+      "removalBlock": "790",
+      "removalTxHash": "0x0e5987d99d1394098b516ca2714d78ae727a35cefae0af0c993e58f0cfe1df9e",
+      "policy": "4294967297",
+      "penalized": true,
+      "attempt": "1",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+    }
+  ],
+  "parentPolicyUpdate": {
+    "block": 794,
+    "version": "2",
+    "singleSend": true,
+    "exactSavedSignedBytesAndEffectHashesVerified": true,
+    "path": "Existing trusted moderator public/genesis helper, not moderator UI"
+  },
+  "checks": [
+    "Read actual normal-post and parent-policy procedure before outcome assessment; fixed action/authority/network/proof flags, durable once-only entry/signed bytes, original wallet workflow and fee ceiling preserved.",
+    "One new named advert send; one explicit trusted parent-policy send; two distinct canonical daemon removals. Prior apricot/subboard transactions not replayed.",
+    "Advert live job is confirmed-flag for parent1/local1, matching exact PostRemoved reason/tx/block and penalized=true.",
+    "Original apricot publication remains at682 under1/1, previous model job evaluated-ok; new parent2/local1 job confirmed-flag at801 with same post identity and penalized=false.",
+    "Actual UI public-only observation at804: both original publication policies and respective removal policies visible, body omitted, reason and thread navigation retained. Both screenshots inspected independently.",
+    "Safe final model records match outcome packets; final daemon exit0, no model containers or leases retained.",
+    "All49 linked reference size/SHA checks pass; binary wire/effect bytes retained private and hashed only."
+  ],
+  "requirementDisposition": {
+    "RC12_G09_A09": "Supports actual parent/local union and changed-parent reevaluation of existing named human content with inspectable version history. Hostile-local override remains separate.",
+    "RC13_G09_A10": "Supports actual authorized named-human removals, reasons, redaction and stable thread/history. Does not close authentic Bok, withdrawal, private-owner unlinkability or proof-enabled acceptance."
+  },
+  "privacy": "Source moderator input is public post/policy data and has no private human-owner lookup. Actual PostRemoved projections contain post/policy/reason/penalty/position, and screenshots reveal public River Canvas identity only. This is source and scoped public-output evidence, not complete ingress/process/egress or cryptographic unlinkability qualification. Removal reasons may repeat public content; redaction does not erase historical public chain data.",
+  "preservedOutcomes": {
+    "anonymousReply": "Actual parent2/local1 decision isViolation=false/evaluated-ok, not a corpus correctness or quality conclusion.",
+    "alreadyRemovedAdvert": "New parent2 job manual-review FLAG_ALREADY_PRESENT, attempt0/transaction null; no duplicate removal.",
+    "oldObserverFailure": "Prior decimal-name versus hexadecimal-UI assertion failure preserved in social packet, followed by separate zero-send UI confirmation; no replay.",
+    "startupCatchup": "Prior bounded canonical-index startup failures remain distinct from successful same-daemon ingestion/model outcomes."
+  },
+  "limitations": [
+    "Native and PXE proof flags false; development receipt proven/finalized labels do not establish real-proof qualification.",
+    "No independent offline SDK reparsing, new RPC receipt read, model invocation or browser run by reviewer; canonical authenticity evaluated through source-inspected runtime observer and mutually matching retained records.",
+    "ModelVersion a8618917\u2026 is consistently bound in ready/job records, weights SHA03b74727\u2026 recorded; this review did not independently hash model weights or replay inference.",
+    "No full model quality or <=10-second latency qualification; no assumption an observed non-violation decision is correct.",
+    "No authentic Bok moderation, adversarial hostile-local policy run, withdrawal consequence, current collateral balance or full privacy/release claim.",
+    "Parent rules updated using trusted supported public/genesis helper rather than a tested moderator UI."
+  ],
+  "blockingFindings": [],
+  "execution": "Read-only code/artifact/hash/assertion and captured-image review; no heavy tests/services/network/model/wallet actions."
+}

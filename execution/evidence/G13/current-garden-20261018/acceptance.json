@@ -1,0 +1,126 @@
+{
+  "source": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+  "observedAt": "2026-10-18T10:50:37.755Z",
+  "environment": "Native devnet; proofs disabled; genuine provider calls and GitHub publication",
+  "requestId": "0x216084c2931fe7fe592a24075f7983eda3fb19232200c64319b1f2041757291c",
+  "target": "0x22dd9c94e206d60988502d3d010e0184f55c97fe411ab44eae99360d17e2b3e1",
+  "canonical": {
+    "anchor": {
+      "number": 84,
+      "hash": "0x0a7bf5e946bac62b80f724b4c098e1425ec0d177a92194d4ccd3e6cd84a2fa8e"
+    },
+    "state": 4,
+    "sequence": 6,
+    "budget": "250000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "9941",
+    "refunded": "240059",
+    "transactions": [
+      {
+        "method": "publish_reply",
+        "txHash": "0x20955c6a69b032dc1e97b84e8d52b09ab4018f1758458b54d3a9a78a02fddc13",
+        "status": "finalized",
+        "blockNumber": 83,
+        "blockHash": "0x1c533e111353ab5be42b46a52a003bd4d5f288305a9cbec30e900ef702a53ec2"
+      },
+      {
+        "method": "finish",
+        "txHash": "0x2920d53aa3e91f388a5537a60c824427b2e88023cb53c8ae54d0951826a6dccf",
+        "status": "proven",
+        "blockNumber": 84,
+        "blockHash": "0x0a7bf5e946bac62b80f724b4c098e1425ec0d177a92194d4ccd3e6cd84a2fa8e"
+      }
+    ],
+    "replyId": "14001091191515716824823141259697727200332648635935589528064650195568225908956",
+    "authenticatedReply": true
+  },
+  "provider": {
+    "finished": true,
+    "hostedPhase": "finished",
+    "calls": [
+      {
+        "id": 0,
+        "phase": "settled",
+        "providerId": "chatcmpl-a033cd13fa2b0a084c7b131909f54899",
+        "modelId": "qwen3-235b-a22b-instruct-2507",
+        "charge": "226",
+        "receipt": "0x17950fc9dce2078a339962f488c58f59116d6400c5e496f9d07aa34bc7c9bedb"
+      },
+      {
+        "id": 1,
+        "phase": "settled",
+        "providerId": "chatcmpl-c3a40c5ec5850ec2d59e4e8e1d7aa8ee",
+        "modelId": "kimi-k2-5",
+        "charge": "1285",
+        "receipt": "0x302fc8a7c9fa1c1197e6617cbcdd4c5754288f77c55b07665a896a606b594b61"
+      },
+      {
+        "id": 2,
+        "phase": "settled",
+        "providerId": "chatcmpl-a9c2ce5bab25d0172ecdcbd1487be177",
+        "modelId": "kimi-k2-5",
+        "charge": "829",
+        "receipt": "0x00c21baf3323c647abf35566178722d6e5804928f06b510fdaf2dbd9d9f00d01"
+      },
+      {
+        "id": 3,
+        "phase": "settled",
+        "providerId": "chatcmpl-924b2df0e88152d4856d2a4d2b54da97",
+        "modelId": "kimi-k2-5",
+        "charge": "4681",
+        "receipt": "0x0584b1c806570392724a01bf545c3a6a004bd69f52f863e04ad0fb58411a1a49"
+      },
+      {
+        "id": 4,
+        "phase": "settled",
+        "providerId": "chatcmpl-7798e47a96886293b41575b86ac2e1cb",
+        "modelId": "kimi-k2-5",
+        "charge": "1275",
+        "receipt": "0x09544af9d4627d63e39c0f41fde784eea9e4f29828f56b477108cb8cd7a621bb"
+      },
+      {
+        "id": 5,
+        "phase": "settled",
+        "providerId": "chatcmpl-57ead5dd944a55149f61f5bb9c819fc8",
+        "modelId": "kimi-k2-5",
+        "charge": "1645",
+        "receipt": "0x00e51ea0aaf68548db10bab546dbe6d4ac0ab1ca59a775abf4d7a527e39605b8"
+      }
+    ],
+    "totalCharge": "9941",
+    "journalUnchangedDuringObservation": true
+  },
+  "publication": {
+    "acceptedRevision": "99aea4e4b31ece0de3e19e97e3a7e548778c8f68",
+    "sourceDigest": "2e6de58c8f0e508427f7b7b6bb3b67f773aa53e61c2a786ab888705467b77df3",
+    "sourceArchiveSha256": "84a9fb6c83aacf9f423c32362d5505d3c7a83b3c2875a558fadc5a61267a4395",
+    "artifactArchiveSha256": "b45cadba3e2914000c2a829380cc9f660e21a0448d6a8793f3c98614fde6f174",
+    "artifactSha256": "bcaaad4304a89589568f0946cdbf63d70982a549ed3f3f3e166eed34e11bd56e",
+    "isolatedTestsPassed": true,
+    "isolatedBuildPassed": true,
+    "testCount": 1,
+    "exactServedSourceBytes": true,
+    "exactServedArtifactBytes": true,
+    "artifactUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/r/99aea4e4b31ece0de3e19e97e3a7e548778c8f68/files/index.html",
+    "sourceUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/r/99aea4e4b31ece0de3e19e97e3a7e548778c8f68/source.json"
+  },
+  "github": {
+    "passed": true,
+    "repositoryId": 1424177099,
+    "repository": "zac-williamson/bok-54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c",
+    "private": true,
+    "appId": 5317701,
+    "installationId": 171412624,
+    "actionsDisabled": true,
+    "acceptedRevision": "99aea4e4b31ece0de3e19e97e3a7e548778c8f68",
+    "remoteCommit": "000206d6c212ac79f6684b64c513978f0e458143",
+    "remoteTree": "f1642976a7ff388f1c83286cffb5e7f5b2859425",
+    "exactSourceFiles": 4,
+    "exactRemoteBytes": true
+  },
+  "limitations": [
+    "Development integration evidence only; external-wallet, real-proof testnet and final release gates remain.",
+    "Existing authenticated reply contains model-invented external links; these were not fetched. Host deterministic reply repair is separate."
+  ]
+}

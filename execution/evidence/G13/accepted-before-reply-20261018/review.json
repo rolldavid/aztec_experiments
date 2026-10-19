@@ -1,0 +1,34 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T19:08:20.503948+00:00",
+  "sourceRevision": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "verdict": "approve_scoped_acceptance",
+  "scope": "G13/D6 actual accepted-before-reply crash and recovery on native devnet/PXE proofs disabled",
+  "findings": [],
+  "evidenceDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/g13-accepted-restart-20261019",
+  "evidenceSha256": {
+    "before-crash.json": "b86feb5280c6969e350f973e1074738a380a8fdd32ac2eba4f8da2e4f2dc7ebb",
+    "crash-and-lock-recovery.json": "98aee132f23acecd0c4cc6c2c7398158986b5dfb826624ff14ba7a678fd45c7e",
+    "recovery-result.json": "d486b6bef136590da8851c697d787ccb847c637037f5625b497c69a2b301496a",
+    "after-canonical-publication.json": "432bd908c21d74a4b22eab13945f7589492c5ccf64048092c3008d47b56c0fb3",
+    "remote-mirror-readback.json": "dea24b9fffc0fd6d9fdecda9a6f355c0502abd74c46b22294ccb1b6c7972753f",
+    "observe-accepted.mjs": "eb94a1e828aa519c3cde2e5d81b98dc671a909f898af6880e0c215c21163ed7b",
+    "boundary-check.mjs": "e677de266aa1aa1783c9a8c4e328a9dc0551aa6b8d818a6951320f9b16ff5140",
+    "observe-recovery.mjs": "692a2859f5ef6a2792a5e8b5127a74a84ef9c1318c1a7224545b0f667c8ffe30",
+    "after-check.mjs": "a1b267d1e22a543712597df6dfaf21cc592695b01021fa46fac594969b62938a",
+    "restart-process.json": "45333a04531c822f3ae158dea658bdc9a6861d4c804b1cb855f256aaa022012c",
+    "restart-diagnostic.mjs": "f33007bdd7e7dfa816abd145d3812ab4c4c707f08667b857094060b07336aa83"
+  },
+  "checks": [
+    "Read exact production acceptRecord boundary: breakpoint zero-based71 occurs after fsynced accepted record/update-ref and before publish. Reviewed observer and boundary-check procedures; actual current network/escrow class/anchor bound, request active/reserved0, five settled real provider call records, no reply/finish intent and no other request.",
+    "Crash receipt records SIGKILL owned PID1471 and inode236139767 lock removal only after process death, preserving chain/config/state. Restart procedure uses original private env references, auto-topup false; first environment mismatch failed before service startup and was repaired without model/funding replay.",
+    "Recovery observer is filesystem-event driven with failure deadline only; requires unchanged full calls digest, same accepted revision, exactly one reply and finish, successful reconciliation. After-check independently reads canonical request state4 at block24 and balances5299 charged+494701 refunded=500000 budget.",
+    "Independently reread live actual journal: full privateBok.calls SHA256 exactly equals before-crash digest4c324e58233b08d94260758bbd45a996c0d04826424c18cc888201d298508b28; hosted binding identical.",
+    "Independent GitHub read-only commit/tree/blob reads corroborated remote commit24aeebdcf101e5c9152c7788ea237bf71fc34563, exact three accepted source files and hashes. Independently fetched actual served index.html; bytes match accepted artifact SHA2563b54a4289b14f2d6260e728bcf2499147ee70ad9d5f6423186ae60d073afffc8."
+  ],
+  "limits": [
+    "Closes accepted-commit-before-reply process restart window only. Does not claim whole D6, real-proof testnet acceptance, fresh uncertain paid call experiment, cross-machine recovery or unrelated outage scenarios.",
+    "Existing historical unknown-paid-call fence evidence carries separately; no replay of historical unresolved calls performed.",
+    "Five real model call settlements and mutable devnet state are recorded, not proof-enabled network acceptance. No source/transaction/model/service mutation performed by reviewer."
+  ]
+}

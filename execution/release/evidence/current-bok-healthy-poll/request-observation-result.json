@@ -1,0 +1,22 @@
+{
+    "CommandId": "cf5f814d-4086-414b-885c-db08072f0679",
+    "InstanceId": "i-09e2dbeea10854dc8",
+    "Comment": "",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-19T08:18:40.157Z",
+    "ExecutionElapsedTime": "PT0.076S",
+    "ExecutionEndDateTime": "2026-10-19T08:18:40.157Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "{\"control\": {\"generation\": \"5\", \"revision\": \"701\", \"checkpoint\": {\"number\": \"8302\", \"hash\": \"0x036d6a38de16d2421082dbe4e980937cab211e802a04cb691b018408aa63de6d\"}, \"cursor\": {\"blockNumber\": \"8303\", \"nextTxIndex\": \"0\", \"block\": null}}, \"health\": {\"status\": \"ready\", \"active\": 0, \"lastFailure\": null, \"lastSuccess\": null}, \"requestJournals\": [], \"liveProcess\": \"76571\"}\n",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}

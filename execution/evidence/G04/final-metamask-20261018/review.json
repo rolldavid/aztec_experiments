@@ -1,0 +1,86 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "verdict": "approve_scoped_local_observation",
+  "findings": [],
+  "scope": "Genuine installed MetaMask local ETH then USDC funding on same private account after ordinary post; proof-disabled chain31337",
+  "packet_sha256": {
+    "browser-result.json": "0d116a38ba0539ac0f0552160a1d3a9c4bb75ed598b12ce88d968dcfd6f01b4d",
+    "current-claim.json": "e26c5b257a4e85c9c1bd7e19b305d751f399ed0de0bf4c36ae17e1a59ae7c1ac",
+    "environment.json": "62aea9336792a59f759833fed0c5d6a035374faabcb1892a261aa1182adbcf22",
+    "eth-complete.png": "7770b188e0b2a818e5ac3b385d50762a90c90c68fddd160dc7552f6e314132dd",
+    "l1-effects.json": "41483980a814a5498bcf64725920bff8274e856cd8f090b8be753efead8015b1",
+    "l2-blocks.json": "075e8f2584ca13fc5443f11ba1947e786ae8443cb5a8cb4ab712c633ed21c5c6",
+    "procedure.md": "314466d203fc6c66d488e38ffb902c90ba2530848b6b8d549d9528915c746b78",
+    "read-l1-effects.mjs": "abf2a8d17efe7d4d46dee3351a20ef502dcba0205b3d40bde95be2844c413225",
+    "usdc-complete.png": "532726c628ec8b4178ebca77c6bcefc6562a7f2644d9d47cc52573893bad7242"
+  },
+  "independent_evidence_sha256": {
+    "read-l1-effects.mjs": "9cbd436d34613b9536c28af3a359e1bc4516e6f8a602f3e512b66414276fae00",
+    "result.json": "aebc5ca5a9be6b269aba897347d3d58ee0c8aaece0a526ab219efbb409344708",
+    "l2-readback.json": "4fd1186e77e4043b9501238b86e8f48ebd65baaf7778ca33d199f5dec62e127f",
+    "earlier-l2-readback.json": "22253ff0337a3ed1d97e4c50b410bfe1e629b536a324c7d62524de04586aa24b"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp <pinned Node v24.21.0> .build/reviewer-evidence/final-metamask/read-l1-effects.mjs",
+      "result": "Pass. Existing retained script copied only to correct relative import paths/output location; read-only exact transaction lookups, official production Ethereum intent/effect verification and account balances. Independent output equals all retained transaction and final-accounting rows."
+    },
+    {
+      "check": "Actual L2 receipts, block hashes and trusted readiness",
+      "result": "Read-only installed SDK client queried exact three transaction hashes and canonical block numbers16/17/19. ETH claim and ordinary post finalized/success; USDC claim proven/success. Block hashes match retained l2-blocks packet; current proposed/checkpointed tip19 is synchronized, network identity matches actual local config, node realProofs=false."
+    },
+    {
+      "check": "No repeated payer transaction observations",
+      "result": "ETH payer latest/pending nonce1 after original nonce0 payment. USDC user ETH balance0 and latest nonce0; relayer latest/pending nonce1 after nonce0 transaction. Both payment blocks contain exactly one transaction. No mutation, replay or scan by reviewer."
+    },
+    {
+      "check": "Source/runtime/environment binding",
+      "result": "Three verifier source hashes match exact candidate. Prior repeat-aggregate review verified same candidate SDK/wallet closure; final environment sourceManifest matches current wallet manifest. Installed extension manifest SHA/version matches MetaMask13.49.0.0 packet. Persistent isolated developer profile and native extension signatures are lead-observed procedure evidence; reviewer did not open or interact with browser."
+    },
+    {
+      "check": "Retained backup",
+      "result": "Final encrypted backup exists at recorded private path,1058625bytes,0600; seven-field encrypted-wallet envelope/PBKDF2-SHA256/600000 iterations verified without decrypting. SHA256 82f8c1f7f0c7b6478ddee475c4398399aa6a97914261870fc966e5fe1e15b4bc. Export via production account API after browser-download crash; no claim interrupted browser download succeeded."
+    },
+    {
+      "check": "Visible completion",
+      "result": "Viewed both retained completion screenshots; private fee/Bok balances and selected MetaMask account agree with recorded completion text."
+    }
+  ],
+  "accounting": {
+    "ETH": {
+      "collateralWei": "1000000000000000",
+      "privateFeeTokenBaseUnits": "10000000000000000000",
+      "bokMicroUsdc": "1000000",
+      "sentWei": "163396665871624588",
+      "refundWei": "1607887780907176",
+      "netFundingWei": "161788778090717412",
+      "gasWei": "555512307753648",
+      "actualPayerDecreaseWei": "162344290398471060"
+    },
+    "USDC": {
+      "collateralWei": "1000000000000000",
+      "privateFeeTokenBaseUnits": "10000000000000000000",
+      "bokMicroUsdc": "1000000",
+      "authorizedMicroUsdc": "2299744802",
+      "refundMicroUsdc": "20670206",
+      "spentMicroUsdc": "2279074596",
+      "includedRelayFeeMicroUsdc": "211054005",
+      "relayerGasWei": "681196132152024",
+      "userEthBeforeAndAfterWei": "0",
+      "userEthereumNonce": 0
+    }
+  },
+  "assessment": [
+    "Both native L1 payments are canonical and production verification binds exact calldata/plan/router bytecode and all three portal effects. ETH net funding plus gas equals payer balance decrease. USDC authorized minus refund equals token decrease, including displayed relay fee; relayer paid Ethereum gas.",
+    "Exact canonical successful L2 claim receipts bracket the intervening ordinary post and final USDC claim. Together with retained UI procedure and prior exact-source tests this supports the repaired later-workflow repeat-funding path without another original payment.",
+    "Automatic bridge/claim progress and native extension prompt counts are lead-recorded observations, corroborated by canonical receipts and UI completion, not independently repeated by reviewer."
+  ],
+  "limits": [
+    "This is local chain31337 with native/PXE proofs disabled. A receipt labelled proven/finalized here does not establish cryptographic real-proof or public-testnet acceptance.",
+    "Synthetic local liquidity/USDC inventory and public Anvil accounts were used. USDC account was seeded and ETH set to zero before the route; prices/costs are exact local transaction amounts, not market-price or production-provider economics.",
+    "One45-second UI observation wait expired before eventual USDC completion; it is not a passed latency target and did not trigger a replay.",
+    "Chrome for Testing SIGSEGV interrupted an updated encrypted download. Same profile/original keys and retained journals were reused and later export used production API; interrupted browser download is a recorded failure, not successful download acceptance.",
+    "Encrypted backup contents were not decrypted/restored in this review. No full wallet interruption/recovery matrix, Phantom, broad privacy, deployment, full RC18-22 or whole-spec qualification claimed."
+  ]
+}

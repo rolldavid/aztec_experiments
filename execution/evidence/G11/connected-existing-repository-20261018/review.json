@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T18:42:38.062954+00:00",
+  "requirements": [
+    "RC32",
+    "RC41",
+    "RC46"
+  ],
+  "verdict": "approve_scoped_connected_repository_evidence",
+  "findings": [],
+  "artifactHashes": {
+    "qualify-connected.mjs": "6ee289dcc3fc4962beca248381f102394c5a7f30c9f47d5e316d01309013f1ce",
+    "connected-result.json": "98240b510007d5233b0311077d3a1227444c6538fec7899e36a6eedb1a7fea1f",
+    "connected-cleanup.json": "e7c79e46c36a2b1a88c1e69b1d396d2d96b58372978f03f702b0584129ecb509"
+  },
+  "candidate": "35ce657c",
+  "recordedSource": "5fad773c78a927c5518f6fc96c2dac83ff68a8fd",
+  "checks": [
+    {
+      "procedure": "Inspect actual qualification procedure, retained accepted-source validation/snapshot and connected broker mapping/token/publication boundaries. Compare broker source at recorded and integration candidate.",
+      "result": "Broker source byte-identical. Retained accepted operation has tests/build passed, one test, four-file source snapshot whose SHA256 matches retained validation."
+    },
+    {
+      "procedure": "Read GitHub PR1, main ref, Actions permission and removed work ref independently using existing gh identity.",
+      "result": "PR closed, unmerged, draft; head5478309150f91d9522fb21c93fe15fb237cdfd57; main remains30ac0bd3537c1a30bcd10030608127e202352f20; Actions disabled; owned work ref404."
+    },
+    {
+      "procedure": "Read retained remote commit and complete recursive tree; compute Git blob hashes from retained accepted snapshot bytes.",
+      "result": "All four remote blobs equal accepted snapshot bytes. Tree e11db21a0a2451617133f48e24b7544b45391d87, not truncated."
+    }
+  ],
+  "acceptedScope": [
+    "Real GitHub connected-repository broker read base source and published retained validated source to its mapped work branch/draft PR, preserving main and observed repository settings.",
+    "Actual recorded App token scope selects only repository1420006121 with contents/pull_requests write; recorded token request to another selected repository returned404.",
+    "Procedure explicitly verifies rejected unmapped thread, changed work branch and repository before broker network access; repeated accepted publication produces no additional mutating repository requests.",
+    "Owned PR closed and branch removed after publication; independent current GitHub readback corroborates cleanup and retained commit."
+  ],
+  "limits": [
+    "Branch restriction is enforced by trusted broker mapping, not GitHub installation token; the repository-scoped token itself can write other branches in that same repository.",
+    "Reviewer did not mint/use an installation token or repeat publication; token-denial and repeat-no-mutation facts are reviewed actual capture/procedure, while remote resulting state/source are independently corroborated.",
+    "This reuses previously accepted source rather than demonstrating a new connected-repository model editing turn. It performs no new model calls, chain transactions or build.",
+    "No accepted-before-reply, uncertain paid-call restart, concurrency, full D6, final release or specialist-audit closure is claimed."
+  ]
+}

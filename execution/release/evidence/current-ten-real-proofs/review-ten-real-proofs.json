@@ -1,0 +1,156 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "at": "2026-10-19T08:20:15.253876+00:00",
+  "verdict": "passes declared ten-sample remote proof count and latency targets within client-observed scope",
+  "browserSource": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "integratedSource": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+  "publicIndexSource": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+  "target": {
+    "countAtLeast": 10,
+    "individualSecondsAtMost": 120,
+    "medianSecondsAtMost": 60
+  },
+  "result": {
+    "count": 10,
+    "minimumSeconds": 18.794284912109376,
+    "maximumSeconds": 33.56544775390625,
+    "medianSeconds": 25.141643798828127,
+    "allIndividualPass": true,
+    "medianPass": true
+  },
+  "measurements": [
+    {
+      "source": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+      "operation": "original MetaMask aggregate private claim",
+      "submittedAt": "2026-10-19T05:52:21.816Z",
+      "observedCompletedAt": "2026-10-19T05:52:49.666Z",
+      "clientObservedMilliseconds": 27850.968994140625,
+      "scope": "Real remote proof completion observed by normal application GET; includes upload and status observation; browser verification and chain confirmation still pending",
+      "wallet": "metamask"
+    },
+    {
+      "wallet": "metamask",
+      "operation": "name-registration",
+      "submittedAt": "2026-10-19T06:03:53.595Z",
+      "observedCompletedAt": "2026-10-19T06:04:12.389Z",
+      "clientObservedMilliseconds": 18794.284912109375,
+      "mode": "real"
+    },
+    {
+      "wallet": "phantom",
+      "operation": "original-aggregate-claim",
+      "submittedAt": "2026-10-19T07:20:46.123Z",
+      "observedCompletedAt": "2026-10-19T07:21:19.688Z",
+      "clientObservedMilliseconds": 33565.44775390625,
+      "mode": "real"
+    },
+    {
+      "wallet": "metamask",
+      "operation": "create-subboard",
+      "submittedAt": "2026-10-19T07:22:35.295Z",
+      "observedCompletedAt": "2026-10-19T07:22:55.258Z",
+      "clientObservedMilliseconds": 19963.326904296875,
+      "mode": "real"
+    },
+    {
+      "wallet": "phantom",
+      "operation": "second-account-name",
+      "submittedAt": "2026-10-19T07:27:32.573Z",
+      "observedCompletedAt": "2026-10-19T07:27:53.882Z",
+      "clientObservedMilliseconds": 21309.86279296875,
+      "mode": "real"
+    },
+    {
+      "wallet": "metamask",
+      "operation": "named-post",
+      "submittedAt": "2026-10-19T07:39:26.461Z",
+      "observedCompletedAt": "2026-10-19T07:39:53.160Z",
+      "clientObservedMilliseconds": 26699.954833984375,
+      "mode": "real"
+    },
+    {
+      "wallet": "phantom",
+      "operation": "anonymous-post",
+      "submittedAt": "2026-10-19T07:46:16.425Z",
+      "observedCompletedAt": "2026-10-19T07:46:43.488Z",
+      "clientObservedMilliseconds": 27063.81298828125,
+      "mode": "real"
+    },
+    {
+      "wallet": "metamask",
+      "operation": "bok-authorization",
+      "submittedAt": "2026-10-19T07:48:09.247Z",
+      "observedCompletedAt": "2026-10-19T07:48:32.830Z",
+      "clientObservedMilliseconds": 23583.332763671875,
+      "mode": "real"
+    },
+    {
+      "wallet": "metamask",
+      "operation": "bok-publication",
+      "submittedAt": "2026-10-19T08:07:26.954Z",
+      "observedCompletedAt": "2026-10-19T08:07:53.734Z",
+      "clientObservedMilliseconds": 26780.9248046875,
+      "mode": "real"
+    },
+    {
+      "wallet": "phantom",
+      "operation": "cross-account-like",
+      "submittedAt": "2026-10-19T08:09:06.029Z",
+      "observedCompletedAt": "2026-10-19T08:09:26.142Z",
+      "clientObservedMilliseconds": 20113.760986328125,
+      "mode": "real"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/current-testnet-20261019/private/current-proof-measurements.json",
+      "sha256": "d90f11a1bb68dde1ca8b8a7266c2839f8101944d5b83556042b3f03857ca2f30"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/metamask-acceptance-20261019/original-claim-proof-timing.json",
+      "sha256": "cbf7385e3483b5b440788953d75c067e1dd43dfd83e14d21b11161d829b99654"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/ten-original-receipts.json",
+      "sha256": "6b7df0ec4f9f41a71677f5dff41d50cb06ce98b29880427b8f805590f7eeddcb"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/metamask-acceptance-20261019/original-public-transactions.json",
+      "sha256": "04433e7a962aaea582eee4fd12960db82ac0e7e5a33e68152f056bcddb634f26"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/phantom-acceptance-20261019/original-public-transactions.json",
+      "sha256": "a5678154d3f2679f492a431058c7cbf819465e6b148c9f780e64ad90a70981b4"
+    }
+  ],
+  "receiptObservation": {
+    "at": "2026-10-19T08:19:43.360Z",
+    "method": "Existing bounded no-retry SDK capture client; ten original getTxReceipt calls via public /prover/v1/node, maxbatch3; no sends or finality waiter.",
+    "allSuccessful": true,
+    "finalized": 5,
+    "proven": 5,
+    "receiptFile": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/ten-original-receipts.json"
+  },
+  "acceptedScope": [
+    "Both original private claims and both names finalized; subboard finalized. Named/anonymous posts, Bok authorization/publication and cross-account like successful proven at observation.",
+    "Ten distinct captured transactions corroborate ten distinct necessary action samples; no synthetic/repeated proof added for count.",
+    "Remote timing measures normal client observation including upload/status; it excludes browser verification, confirmation/finality and whole onboarding. Native source gates browser verification before submission, but no separate verification-duration measurement is asserted."
+  ],
+  "remaining": {
+    "D1": "Existing deployment/admission satisfied within recorded scope; preserve actual source/runtime distinction.",
+    "D2": "Remaining ETH wallet cells and withdrawals, plus actual Bok reply/charge/release/artifact. Human anonymous post and like now have successful proven receipts. No additional proof run needed solely to fill count.",
+    "D3": "Required ETH before-ack and bridge-pending original-payment interruption; retain prior USDC/L2 recovery.",
+    "D4": "Classify real captures and actual observer/trust topology; receipt success and ten samples do not prove unlinkability.",
+    "D5": "Proof sample count/latency target now met; cold/warm full wallet readiness and any absent final freshness observation remain. Reuse earlier rebuild/capacity/UI measurements.",
+    "D6": "Current Bok invocation completion/artifact remains; prior broad component conjunction reusable.",
+    "D7": "Consolidate actual outages/repairs and original-payment outcome; no extra broad drill.",
+    "D8": "Final precise source/runtime/receipt/retention and shutdown handover; no blanket acceptance."
+  },
+  "limits": [
+    "No pure server CPU/prover compute claim; no full application latency or population percentile claim.",
+    "Proof file captured at08:18; timing and receipt files keep their separate timestamps.",
+    "Proven is not finalized; no arbitrary finality upgrade.",
+    "No private witness/key/raw transaction bytes copied into this review.",
+    "Specialist/network release gates remain external."
+  ]
+}

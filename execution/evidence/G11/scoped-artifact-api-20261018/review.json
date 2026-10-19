@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "lead": "lead-20261011",
+  "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+  "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+  "scope": "G11 scoped artifact API / RC35; seven changed files",
+  "verdict": "approve",
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test plugins/test/artifact-api.test.mjs",
+      "result": "5 passed, 0 failed, 0 skipped; 254.405834 ms"
+    },
+    {
+      "command": "BOK_PUBLICATION_BROWSER_TESTS=1 NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='actual browser runs generated|published thread API discovery|moderation change during' plugins/test/static-publication.test.mjs",
+      "result": "3 passed, 0 failed, 0 skipped; 1844.014375 ms"
+    },
+    {
+      "command": "git diff --check 8c2596eb..274aef85; git status --short; git rev-parse HEAD",
+      "result": "Diff check passed; tracked tree clean; exact candidate unchanged"
+    }
+  ],
+  "review": [
+    "Inspected all seven changed files and existing fileState/lease implementation before running checks. Optional facility defaults off; fixed HTTPS GET URL and bearer are operator configuration only. Caller inputs cannot select upstream URL, request headers or body. Public metadata contains alias/method/relative route only; authoring guidance exposes no operator configuration.",
+    "Finite lifetime allowance is durably reserved before each dispatch; failed or uncertain calls remain consumed. Serialized ownership rejects concurrent calls. Existing identity prevents URL/reference/limit edits replenishing the allowance; removed/readded aliases retain usage; initialized missing ledger fails closed. Marker and ledger live outside publication filesystem.",
+    "Exact repository/thread publication binding and current non-disabled catalog checks fence dispatch and returned results. Public visitors share allowance; CORS is not represented as authentication. No redirects, automatic retry or upstream headers/cookies forwarded. JSON streaming bounded to 64 KiB with timeout/abort and credential-echo rejection.",
+    "Close aborts and drains the owned upstream request before artifact HTTP server and hosted lease close. Persistence uncertainty poisons the facility. Lease rechecks surround reservation and response.",
+    "Independent actual browser case demonstrated external HTTPS script/CSS, public API and scoped local API; window.origin remained null, cookie/storage access blocked and no cookies created. HTTP test established no HEAD spend, rejection of supplied query/body routes, independent thread configuration, moderation fencing and retained exhaustion."
+  ],
+  "limits": [
+    "Upstream transport is a synthetic injected provider; no real provider configured, no external paid call, no cost claim.",
+    "Request count bounds calls, not dollar cost; operator must choose public-data endpoint, dedicated restricted credential and provider-side spending limit. Arbitrarily encoded secrets from a misconfigured upstream are not made safe by literal echo checks.",
+    "This approval covers the focused feature source and tests. Normal integration gate and final privacy/recovery/real-proof/application acceptance remain separate."
+  ]
+}

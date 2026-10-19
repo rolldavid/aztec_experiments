@@ -1,0 +1,39 @@
+{
+  "revision": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve_scoped_evidence",
+  "scope": "G13-live-social-review; partial local G05-A10/RC16 and G13-A06/RC39 evidence. No full criterion closure.",
+  "acceptanceCriteriaRead": {
+    "G05-A10": "Recovery restores ownership; profiles show bio/history/current avatar and distinguish authentic bot identity",
+    "G13-A06": "Executable source-bound social/moderation/funding/privacy/reorg/outage acceptance; actual proofs, wallets, exact funds"
+  },
+  "findings": [],
+  "blockingFindings": [],
+  "checks": [
+    "Read-only SDK getBlock(number,{includeTransactions:true}) for17,19,20; matched every returned transaction against actual receipt, canonical block data and full tx-effect bytes/anchor. All three current receipts are FINALIZED and SUCCESS.",
+    "Used production createRollingEventDecoder against current deployed scope and actual artifacts. Authenticated BioPublished at17 and PostPublished at20, including receipt/effect/class/canonical checks; exact requested bio/post text and named profile association matched.",
+    "Current public profile resolves Willow Green, exact latest bio and posted item in its history. Public post resolves exact expected post ID, text and selected public name.",
+    "Original collateral Ethereum receipt independently checked on chain31337: successful tx, canonical block123, exact0.001ETH value, configured portal destination and matching Deposited amount/message key/index. No sender/account association copied to report.",
+    "Source revision72fe6e7 differs from7ea580d0 only in bounded browser-check heap allowance; the relevant application/contract behavior is unchanged. Native local node reports proofsfalse; no real-proof claim."
+  ],
+  "limitations": [
+    "Block19 is a successful canonical transaction with no Rolling public event. Public evidence alone cannot establish its private claim semantics; lead observed the GUI import/claim and owns that evidence.",
+    "Profile ownership recovery, current-avatar lifecycle, bot identity distinction and complete G05-A10 acceptance were not established by this narrow public review.",
+    "L1 collateral used a development signer, not an authenticated browser Ethereum wallet. Real-proof testnet, privacy/reorg/outage/recovery qualification and final release requirements remain open.",
+    "An initial unguarded post query returned no post object; original response/status was not retained. Immediate independent GET returned200, and final checked-status queries matched expected data. No conclusion about its transient cause; no product acceptance was inferred from the failed read.",
+    "No transactions, mining/proving, services, source writes or private account/key/backup files accessed. Only sanitized review outputs written."
+  ],
+  "observedAt": "2026-10-18T08:30:40.085001+00:00",
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/live-social/public-observations.json",
+      "sha256": "2cf5925c09fd002d69078416e7805d00fa5d1486facc9ecad2e63791edc9891d",
+      "bytes": 2972
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-collateral/collateral-public-receipt.json",
+      "sha256": "0e8542283f0aefae0f59b1a192dafb744d6ff906147324aa382b09a77f564fde",
+      "bytes": 465
+    }
+  ]
+}

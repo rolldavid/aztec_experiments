@@ -2,7 +2,7 @@
   "source": {
     "title": "Rolling Chat Contractor Specification Draft 3",
     "sha256": "af9c151b8605fdad7053b8eb25da1f9e96d8d36f33fc43f2cd0bf8b16e16b402",
-    "source_path": "/Users/zac/Rolling Chat Contractor Specification Draft 3.pdf",
+    "source_path": "Owner-supplied PDF retained outside Git",
     "pages": 11,
     "baseline_commit": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
     "authority": "2026-10-11 implementation mandate; Draft 3 supersedes earlier product drafts; production gates retained"
@@ -23,9 +23,13 @@
       ],
       "evidence": [
         "evidence/G02.json",
-        "evidence/G08.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G02.json",
+        "evidence/G08.json"
+      ]
     },
     {
       "id": "RC02",
@@ -58,9 +62,13 @@
       ],
       "evidence": [
         "evidence/G03.json",
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC04",
@@ -77,15 +85,19 @@
       ],
       "evidence": [
         "evidence/G03.json",
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC05",
       "pdf_page": 2,
       "authority": "mandatory",
-      "requirement": "Continuous feed, stable links, return scroll, no duplicates/jumps; accessible loading/empty/pending/removed/error states",
+      "requirement": "Continuous feed, stable links, return scroll, no duplicates/jumps; clear loading/empty/pending/removed/error states",
       "tasks": [
         "G09"
       ],
@@ -93,9 +105,12 @@
         "G09-A05"
       ],
       "evidence": [
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC06",
@@ -112,9 +127,13 @@
       ],
       "evidence": [
         "evidence/G06.json",
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G06.json",
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC07",
@@ -131,9 +150,13 @@
       ],
       "evidence": [
         "evidence/G06.json",
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G06.json",
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC08",
@@ -152,10 +175,14 @@
       ],
       "evidence": [
         "evidence/G06.json",
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G06.json",
         "evidence/G07.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC09",
@@ -171,10 +198,13 @@
         "G12-A03"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G12.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC10",
@@ -190,10 +220,13 @@
         "G07-A04"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G07.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC11",
@@ -209,10 +242,13 @@
         "G07-A05"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G07.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC12",
@@ -228,10 +264,13 @@
         "G09-A09"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC13",
@@ -247,10 +286,13 @@
         "G09-A10"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC14",
@@ -264,9 +306,12 @@
         "G05-A08"
       ],
       "evidence": [
-        "evidence/G05.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G05.json"
+      ]
     },
     {
       "id": "RC15",
@@ -284,11 +329,15 @@
         "G09-A11"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json",
+        "evidence/G06.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G06.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC16",
@@ -304,10 +353,13 @@
         "G09-A12"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G05.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC17",
@@ -324,9 +376,13 @@
       ],
       "evidence": [
         "evidence/G03.json",
-        "evidence/G09.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
+        "evidence/G09.json"
+      ]
     },
     {
       "id": "RC18",
@@ -340,9 +396,12 @@
         "G04-A03"
       ],
       "evidence": [
-        "evidence/G04.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G04.json"
+      ]
     },
     {
       "id": "RC19",
@@ -358,10 +417,13 @@
         "G08-A04"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G04.json",
         "evidence/G08.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC20",
@@ -375,9 +437,12 @@
         "G04-A05"
       ],
       "evidence": [
-        "evidence/G04.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G04.json"
+      ]
     },
     {
       "id": "RC21",
@@ -391,9 +456,12 @@
         "G04-A06"
       ],
       "evidence": [
-        "evidence/G04.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G04.json"
+      ]
     },
     {
       "id": "RC22",
@@ -409,10 +477,22 @@
         "G08-A05"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "sourceRevision": "05cdbcef22fdc282dd4208ddf0aeeceb3c06e5eb",
+          "result": "verified-development-custody-guidance-component",
+          "evidence": "execution/evidence/G07/custody-diagnostics/result.json",
+          "review": "execution/evidence/G07/reviewer-05cdbce-custody-diagnostics.json",
+          "scope": "Rawaccountimport warning and encryptedbackup/password/claimsecret limits visible; correctcollateralwei; full114DOM labelledcustodydoubles and286affectedtestsPASS. Doesnotreplace genuinewalletrestore/testnet/fullrequirementacceptance."
+        }
+      ],
+      "plannedEvidence": [
         "evidence/G04.json",
         "evidence/G08.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC23",
@@ -437,13 +517,18 @@
       ],
       "evidence": [
         "evidence/G03.json",
+        "release/final-requirement-disposition.json",
+        "evidence/G06.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
         "evidence/G05.json",
         "evidence/G06.json",
         "evidence/G10.json",
         "evidence/G13.json",
         "evidence/G14.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC24",
@@ -459,10 +544,13 @@
         "G14-A04"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G10.json",
         "evidence/G14.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC25",
@@ -478,10 +566,13 @@
         "G13-A04"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G07.json",
         "evidence/G13.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC26",
@@ -495,9 +586,28 @@
         "G07-A07"
       ],
       "evidence": [
-        "evidence/G07.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+          "status": "partial-development-evidence",
+          "evidence": "evidence/G07/reviewer-624aa008-incomplete-closure.json",
+          "observed": "Generatedclosureverified; actualnonzero cursor resumes acrosscanonicaladvance. Freshfullrecoveryfailedatblock292withnodeUNSYNCED503; notcomplete.",
+          "remaining": "Complete clean keys-only recovery, boundedperformance and finalcandidatequalification."
+        },
+        {
+          "sourceRevision": "05cdbcef22fdc282dd4208ddf0aeeceb3c06e5eb",
+          "result": "verified-development-custody-guidance-component",
+          "evidence": "execution/evidence/G07/custody-diagnostics/result.json",
+          "review": "execution/evidence/G07/reviewer-05cdbce-custody-diagnostics.json",
+          "scope": "Rawaccountimport warning and encryptedbackup/password/claimsecret limits visible; correctcollateralwei; full114DOM labelledcustodydoubles and286affectedtestsPASS. Doesnotreplace genuinewalletrestore/testnet/fullrequirementacceptance."
+        }
+      ],
+      "plannedEvidence": [
+        "evidence/G07.json"
+      ]
     },
     {
       "id": "RC27",
@@ -516,10 +626,14 @@
       ],
       "evidence": [
         "evidence/G02.json",
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G02.json",
         "evidence/G07.json",
         "evidence/G12.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC28",
@@ -537,11 +651,14 @@
         "G13-A05"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G07.json",
         "evidence/G10.json",
         "evidence/G13.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC29",
@@ -555,9 +672,23 @@
         "G10-A06"
       ],
       "evidence": [
-        "evidence/G10.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+          "status": "verified-development-component",
+          "evidence": "evidence/G14/counter-reset-6c01/acceptance.json",
+          "independent_review": "evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+          "browser_evidence": "evidence/G10/two-user-current/browser-6c01.json",
+          "observed": "Two existing threads updated accepted source;16actualmodel responses matchedsettledbilling, primaryrequests overlapped8.506s, canonical32218charge/567782refund, actualcounter0/2/4/6andconverterResetPASS.",
+          "remaining": "Whole-requirement final-candidate acceptance, testnet real proofs and any complementary requirement-specific criteria remain open."
+        }
+      ],
+      "plannedEvidence": [
+        "evidence/G10.json"
+      ]
     },
     {
       "id": "RC30",
@@ -571,9 +702,23 @@
         "G10-A07"
       ],
       "evidence": [
-        "evidence/G10.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+          "status": "verified-development-component",
+          "evidence": "evidence/G14/counter-reset-6c01/acceptance.json",
+          "independent_review": "evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+          "browser_evidence": "evidence/G10/two-user-current/browser-6c01.json",
+          "observed": "Two existing threads updated accepted source;16actualmodel responses matchedsettledbilling, primaryrequests overlapped8.506s, canonical32218charge/567782refund, actualcounter0/2/4/6andconverterResetPASS.",
+          "remaining": "Whole-requirement final-candidate acceptance, testnet real proofs and any complementary requirement-specific criteria remain open."
+        }
+      ],
+      "plannedEvidence": [
+        "evidence/G10.json"
+      ]
     },
     {
       "id": "RC31",
@@ -589,16 +734,19 @@
         "G11-A03"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G10.json",
         "evidence/G11.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC32",
       "pdf_page": 7,
       "authority": "mandatory",
-      "requirement": "Dedicated organization GitHub App plus operator broker; isolated generated-code execution without chain/provider/GitHub/hosting credentials",
+      "requirement": "Owner-selected personal zac-williamson GitHub account with dedicated scoped App plus operator broker; isolated generated-code execution without chain/provider/GitHub/hosting credentials (13 October clarification supersedes organization requirement)",
       "tasks": [
         "G11"
       ],
@@ -606,9 +754,21 @@
         "G11-A04"
       ],
       "evidence": [
-        "evidence/G11.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "sourceRevision": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+          "result": "verified-development-existing-selected-repository-mirror",
+          "evidence": "execution/evidence/G11/current-c-mirror/c-mirror-a029-verified.json",
+          "review": "execution/evidence/G11/reviewer-current-c-mirror.json",
+          "scope": "ExistingC1419512819 acceptedlatestsourcea029 mirrored sequentially tobb9809e,4blobsexact/private/Actionsfalse. Automaticnewpersonalrepositoryprovisioning stillunqualified."
+        }
+      ],
+      "plannedEvidence": [
+        "evidence/G11.json"
+      ]
     },
     {
       "id": "RC33",
@@ -626,11 +786,25 @@
         "G14-A05"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+          "status": "verified-development-component",
+          "evidence": "evidence/G14/counter-reset-6c01/acceptance.json",
+          "independent_review": "evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+          "browser_evidence": "evidence/G10/two-user-current/browser-6c01.json",
+          "observed": "Two existing threads updated accepted source;16actualmodel responses matchedsettledbilling, primaryrequests overlapped8.506s, canonical32218charge/567782refund, actualcounter0/2/4/6andconverterResetPASS.",
+          "remaining": "Whole-requirement final-candidate acceptance, testnet real proofs and any complementary requirement-specific criteria remain open."
+        }
+      ],
+      "plannedEvidence": [
         "evidence/G10.json",
         "evidence/G11.json",
         "evidence/G14.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC34",
@@ -644,9 +818,23 @@
         "G11-A06"
       ],
       "evidence": [
-        "evidence/G11.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+          "status": "verified-development-component",
+          "evidence": "evidence/G14/counter-reset-6c01/acceptance.json",
+          "independent_review": "evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+          "browser_evidence": "evidence/G10/two-user-current/browser-6c01.json",
+          "observed": "Two existing threads updated accepted source;16actualmodel responses matchedsettledbilling, primaryrequests overlapped8.506s, canonical32218charge/567782refund, actualcounter0/2/4/6andconverterResetPASS.",
+          "remaining": "Whole-requirement final-candidate acceptance, testnet real proofs and any complementary requirement-specific criteria remain open."
+        }
+      ],
+      "plannedEvidence": [
+        "evidence/G11.json"
+      ]
     },
     {
       "id": "RC35",
@@ -660,9 +848,12 @@
         "G11-A07"
       ],
       "evidence": [
-        "evidence/G11.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G11.json"
+      ]
     },
     {
       "id": "RC36",
@@ -676,9 +867,12 @@
         "G12-A05"
       ],
       "evidence": [
-        "evidence/G12.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G12.json"
+      ]
     },
     {
       "id": "RC37",
@@ -692,9 +886,12 @@
         "G12-A06"
       ],
       "evidence": [
-        "evidence/G12.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G12.json"
+      ]
     },
     {
       "id": "RC38",
@@ -708,9 +905,12 @@
         "G12-A07"
       ],
       "evidence": [
-        "evidence/G12.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G12.json"
+      ]
     },
     {
       "id": "RC39",
@@ -726,16 +926,19 @@
         "G13-A06"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
         "evidence/G08.json",
         "evidence/G13.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC40",
       "pdf_page": 9,
       "authority": "mandatory",
-      "requirement": "Predeclare feed/thread/scroll/search/index/rebuild/request/proof/cost targets; cold/warm measurements with dataset/hardware; keyboard/focus/contrast/status",
+      "requirement": "Predeclare feed/thread/scroll/search/index/rebuild/request/proof/cost targets; cold/warm measurements with dataset/hardware",
       "tasks": [
         "G03",
         "G13"
@@ -746,9 +949,13 @@
       ],
       "evidence": [
         "evidence/G03.json",
-        "evidence/G13.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
+        "evidence/G13.json"
+      ]
     },
     {
       "id": "RC41",
@@ -766,17 +973,31 @@
         "G13-A08"
       ],
       "evidence": [
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "component_evidence": [
+        {
+          "revision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+          "status": "verified-development-component",
+          "evidence": "evidence/G14/counter-reset-6c01/acceptance.json",
+          "independent_review": "evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+          "browser_evidence": "evidence/G10/two-user-current/browser-6c01.json",
+          "observed": "Two existing threads updated accepted source;16actualmodel responses matchedsettledbilling, primaryrequests overlapped8.506s, canonical32218charge/567782refund, actualcounter0/2/4/6andconverterResetPASS.",
+          "remaining": "Whole-requirement final-candidate acceptance, testnet real proofs and any complementary requirement-specific criteria remain open."
+        }
+      ],
+      "plannedEvidence": [
         "evidence/G10.json",
         "evidence/G11.json",
         "evidence/G13.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC42",
       "pdf_page": 10,
       "authority": "release-gate",
-      "requirement": "Independent expert audit, target-network clearance, 14-day soak; mainnet needs separate authorization",
+      "requirement": "Independent expert audit, target-network clearance, bounded final reliability qualification; mainnet needs separate authorization",
       "tasks": [
         "G13"
       ],
@@ -784,9 +1005,12 @@
         "G13-A09"
       ],
       "evidence": [
-        "evidence/G13.json"
+        "release/final-requirement-disposition.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G13.json"
+      ]
     },
     {
       "id": "RC43",
@@ -821,10 +1045,14 @@
       ],
       "evidence": [
         "evidence/G03.json",
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
         "evidence/G05.json",
         "evidence/G09.json"
-      ],
-      "status": "unverified"
+      ]
     },
     {
       "id": "RC45",
@@ -843,10 +1071,15 @@
       ],
       "evidence": [
         "evidence/G03.json",
-        "evidence/G05.json",
+        "release/final-requirement-disposition.json",
         "evidence/G06.json"
       ],
-      "status": "unverified"
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
+        "evidence/G05.json",
+        "evidence/G06.json"
+      ]
     },
     {
       "id": "RC46",
@@ -865,10 +1098,21 @@
       ],
       "evidence": [
         "evidence/G03.json",
+        "release/final-requirement-disposition.json"
+      ],
+      "status": "unverified",
+      "plannedEvidence": [
+        "evidence/G03.json",
         "evidence/G07.json",
         "evidence/G11.json"
-      ],
-      "status": "unverified"
+      ]
     }
-  ]
+  ],
+  "accessibility_scope": {
+    "required": false,
+    "reason": "Owner removed all accessibility requirements for proof of concept on 19 October 2026 local time",
+    "authority": "execution/specification-clarifications.md",
+    "voiceover_prohibited": true
+  },
+  "evidenceInterpretation": "Original task-summary placeholders are planning references. Current acceptance and portable evidence are in release/final-requirement-disposition.json."
 }

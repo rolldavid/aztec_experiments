@@ -1,0 +1,103 @@
+{
+  "revision": "a2c08af364df9788cee13165bc533e02025f97b2",
+  "driverSourceRevision": "289fd11d65156469ea8748e439c00047f378eac2",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve_scoped_evidence",
+  "scope": "G05-A02/A04/A08 actual local fee-only name/subboard contract boundary; independent public corroboration of two additional lead-driven GUI actions. Not whole-product or real-proof acceptance.",
+  "findings": [],
+  "blockingFindings": [],
+  "command": "NODE_BACKEND=js LOG_LEVEL=silent ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node .build/g05-live-fee-only/run.mjs '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-cce1b42c-0818-453c-852f-4f6274419bff' '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1' > .build/g05-live-fee-only/attempt-1-native.log 2>&1",
+  "runtimeBinding": {
+    "workingDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+    "workerReportedProcess": 90756,
+    "workerReportedExitCode": 0,
+    "commandSource": "Original implementation session confirmed exact invocation; successful fixed stage markers independently read from native log."
+  },
+  "checks": [
+    "Inspected complete driver before implementer conclusion. Explicit local node chain31337/realProofsfalse and PXE proverEnabledfalse; no application proof implementation change. Actual EmbeddedWallet, production private-fee preparation/estimation/funding helpers and actual contract interactions.",
+    "Fresh disposable account, zero public FeeJuice balance and no deposit IDs are asserted before funding and after standalone private fee, name registration and subboard creation. Final passed result follows all assertions; positive private fee credit verified. No catch suppresses failures or produces a passing result.",
+    "Three protected saved receipts exactly match result records and current canonical node receipts/effect block anchors/fees. All three are now FINALIZED and SUCCESS. Public index ready; exact name under SDK-derived canonical ID and exact subboard exist.",
+    "Relevant source bytes unchanged between driver checkout289fd11d and applicationa2c08af3. Driver and result/receipt hashes recorded; account-private and backup files were not opened.",
+    "Independently read canonical receipts/effects for two additional lead-reported real GUI actions at blocks15/16; status FINALIZED/PROVEN, both SUCCESS. Public index contains their exact name and subboard. Browser observation itself belongs to lead evidence, not this review."
+  ],
+  "publicObservations": {
+    "driverCanonicalReceipts": 3,
+    "driverNameAndSubboardIndexed": true,
+    "additionalGuiCanonicalReceipts": 2,
+    "additionalGuiNameAndSubboardIndexed": true,
+    "chainId": 31337,
+    "nativeProofs": false
+  },
+  "limitations": [
+    "Driver exercises actual contract and private-fee boundary directly, not createRollingApplication/browser-wallet flow. Lead separately exercised real GUI and must retain its interaction evidence.",
+    "Reviewer did not recreate private PXE session or independently inspect secret-scoped collateral state. Zero-collateral evidence is the retained driver assertions and successful result, corroborated by actual public transactions.",
+    "L1 fee funding used development Node signer; authentic browser-wallet L1 funding, real-proof testnet acceptance and remaining product/release gates remain open.",
+    "Read-only review only: no transactions, native mining/proving, services or source changes performed. First directory comparison used hex-vs-decimal field strings and failed; corrected numeric ID comparison succeeded with no state mutation."
+  ],
+  "sourceBinding": {
+    "applicationRevision": "a2c08af364df9788cee13165bc533e02025f97b2",
+    "driverCheckoutRevision": "289fd11d65156469ea8748e439c00047f378eac2",
+    "unchangedRelevantPaths": [
+      "shared/private-fee-client.mjs",
+      "shared/private-fee-estimation.mjs",
+      "scripts/w01-private-funding.mjs",
+      "shared/rolling/name-policy.mjs",
+      "plugins/protocol.mjs",
+      "billboard/rolling_contract/src/main.nr"
+    ],
+    "files": [
+      {
+        "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/run.mjs",
+        "sha256": "d5eb5cf5399c79127875c8270a2e2164775e1452d239ccf157aa5272b8ebde88",
+        "mode": "0o600",
+        "bytes": 9141
+      },
+      {
+        "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1/result.json",
+        "sha256": "49233d4b9c94e87ab71161a77cda51c0e6ac2acf5c3ad9e53cfa914e9cbe484a",
+        "mode": "0o600",
+        "bytes": 1076
+      },
+      {
+        "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1/standalone-private-fee-receipt.json",
+        "sha256": "6994e50fd0c35bc1987808542c8fc40c8aec0a44dbebc8409c5a4601ded1b2de",
+        "mode": "0o600",
+        "bytes": 234
+      },
+      {
+        "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1/register-name-receipt.json",
+        "sha256": "2e8cfbfcd106d56fd855b63291e89ce16899120944fb7067ed691477f0b9a4bc",
+        "mode": "0o600",
+        "bytes": 225
+      },
+      {
+        "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1/create-subboard-receipt.json",
+        "sha256": "872a30137e52033f58a957def63705a7300da467d1f859f921fac6d420d735ad",
+        "mode": "0o600",
+        "bytes": 227
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/live-fee-only/source-binding.json",
+      "sha256": "18c11cac2cdf995177a29ab10680d27a57e088852735db597c991c58b9bb7180",
+      "bytes": 1823
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/live-fee-only/public-observations.json",
+      "sha256": "5027d3707de52e13d252a135f3e7d06a2cde8bda6465c3fb6fa5ef4a8fbcbb7e",
+      "bytes": 1976
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/live-fee-only/browser-public-observations.json",
+      "sha256": "71a64b762e01c79a40e92ce02041542f01423cbd25eb39f643b2261861a8ec3d",
+      "bytes": 1221
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g05-live-fee-only/attempt-1-native.log",
+      "sha256": "be28f9260eae1552ccdd31a6bbfc518ee8f3971e04226fcb226f4ea0e157e31d",
+      "bytes": 157
+    }
+  ]
+}

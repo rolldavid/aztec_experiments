@@ -1,0 +1,29 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "d976d254aa9dd09d0ff3016cf573de9215d8b15d",
+  "verdict": "approved-scoped-native-moderator-rotation",
+  "checks": [
+    "Read exact procedure before assertions; native node realProofs false and EmbeddedWallet PXE proverEnabled false.",
+    "Independently used installed SDK and production decoder against current node: successful canonical full receipt/effect/block/class checks yield transfer11, successor policy12 and reverse transfer13 with exact previous/successor addresses.",
+    "Independently reread current canonical moderator slot; original authority restored.",
+    "Read-only SQLite: exact three independently decoded event objects are retained in current persistent public index.",
+    "Inspected pre/post config/policy/count assertions and original Only moderator simulation failure; former key rejection occurs before broadcast, successor update increments policy.",
+    "Retained initial procedure failures reconciled original bridge and claim identities before continuation; no repeat requested by reviewer."
+  ],
+  "limits": [
+    "Actual embedded operator/successor wallets and native disabled proofs; not external Ethereum browser wallet or real-proof testnet.",
+    "Old-key refusal corroborated by original simulation failure/source/log, not a deliberately submitted reverting transaction.",
+    "Configuration/post count unchanged and no policy change during transfer; no funded-user collateral withdrawal exercise claimed.",
+    "No full browser moderator signing journey; prior browser/application source tests remain separate."
+  ],
+  "evidenceHashes": {
+    "live.mjs": "eddd0b5b3cf20ea3101b6bebaefbb30e9da3195e3e8299cd6e7f6403dfcf38e2",
+    "live-result.json": "10425dd7f79fc1f31959721fcef68dc85fb15411ccc5978bea90b62811add85f",
+    "live-after-claim.log": "f74f6318c40c0cd3e7b997631dd82eff5c4f4fef4ee987fb6448282d772a6f49",
+    "transfer-authority-receipt.json": "f03c2154636fcb0795779e953b1c2b2af6331d7b9455cd699a5484c866b24e70",
+    "successor-policy-receipt.json": "ed2ffa84bfcc81d234513b3c880f6ef0ae4fe8a2466fe9483de65ed842b8eba5",
+    "restore-authority-receipt.json": "b1297b96284eef01b1f6575be252a8dd7906e13824a7203db21c5209ee98abc6"
+  },
+  "independentReadback": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/moderator-rotation/live-canonical-readback.json",
+  "reviewedAt": "2026-10-18T19:51:58.449348+00:00"
+}

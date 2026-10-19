@@ -1,0 +1,301 @@
+{
+  "task_id": "G03",
+  "outcome": "pass",
+  "recorded_at": "2026-10-11T11:22:39.933484+00:00",
+  "source_fingerprint": "46f826f5defc6ba231cde9ffb4cc523e5edbae472fe266426ffcf256bad2715e",
+  "source_inventory": "evidence/G03/source-001.json",
+  "artifacts": [
+    {
+      "path": "evidence/G03/source-001.json",
+      "sha256": "f6dea3c9d6c8ceec7b8adb0881c3b9124a7ec862141015791561b12f6f7c46f5"
+    },
+    {
+      "path": "evidence/G03/interfaces-review.json",
+      "sha256": "daab9ecd60140b485d3cf426875b31c9228ab5baa8a98cce0d453f378d3315ff"
+    },
+    {
+      "path": "evidence/G03/interfaces-integration.json",
+      "sha256": "06c80c98bf2df1d48091342104fd54c6b9be41eb3c1cbfdb7075e7d74fdd028f"
+    },
+    {
+      "path": "evidence/G03/name-policy-tests.log",
+      "sha256": "d8b3a35f37587b433a9a788953a279ed6425c2ab6783365eac792815ffd05896"
+    },
+    {
+      "path": "evidence/G03/defaults.md",
+      "sha256": "d43b4b7caeaea61a388402a6fb0737b57af75f827ca943d50392e427f9ce313a"
+    },
+    {
+      "path": "evidence/G03/targets-original-20261011.md",
+      "sha256": "d372cc6e9cae74de8a5dd0a5bbf1a0adfd9c3b79f81e61f0f61b3150caba373e"
+    },
+    {
+      "path": "evidence/G03/prototype-browser.json",
+      "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+    },
+    {
+      "path": "evidence/G03/prototype-review.json",
+      "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+    },
+    {
+      "path": "evidence/G03/prototype-integration.json",
+      "sha256": "01c0f8af295f565f2ce13bd2c21c6bd82a9346d4e047bc0349d9d1478ed745f9"
+    },
+    {
+      "path": "evidence/G03/avatar-review.json",
+      "sha256": "0e78b5b1ed4e516714f1124248b6f0e2c6be9687d42b8f2e18ac8bbe47d76080"
+    },
+    {
+      "path": "evidence/G03/avatar-integration.json",
+      "sha256": "62fc0b7fd85a4d3022850a9bab14ba904836e86c1193318b8fab667e1cf8849f"
+    },
+    {
+      "path": "evidence/G03/avatar-measurement-summary.json",
+      "sha256": "21555633946588e6f0fee35844a08d0627158d7ab8550aa632489a1616aa8cd7"
+    },
+    {
+      "path": "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json",
+      "sha256": "7ae1f5eacd57dbb4bffac97d85af2163b486a3770060ebffff33fb467959b172"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G03-A01",
+      "result": "pass",
+      "summary": "Original labelled fixture prototypea23 independently reviewed; actual desktop/mobile navigation, byte limits, safe links, focus, deep links and return scroll inspected. No chain-qualified UI claim.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A02",
+      "result": "pass",
+      "summary": "At0e9bdb3 component/API authority and observers specified in shared/rolling; targets predeclared for feed/thread/scroll/search/index/rebuild/request/proof/cost. Independent design review approves.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A03",
+      "result": "pass",
+      "summary": "Avatar6f actual localchain3transactions with416/8188byte images, authenticated log reconstruction/currentstate verified in67.1s; gas/payload/inclusion measured. Proofs disabled; realproof/archive/uploadquality remain downstream.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A04",
+      "result": "pass",
+      "summary": "Chain authority/index API/wallet intents/prover trust/Bok ports documented; bounded pages and canonical anchors specified. No compatibility obligation or authority inferred from cache.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A05",
+      "result": "pass",
+      "summary": "Original desktop-first design and clickable screens independently reviewed and inspected at1280x900 and390x844. Fixture only.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A06",
+      "result": "pass",
+      "summary": "Prototype covers main/directory/subboard/thread/composer/profile/names/bookmarks/follows/notifications/onboarding/balance/recovery/moderation; empty/rejected/error/focus states reviewed.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A07",
+      "result": "pass",
+      "summary": "Bounded avatar encoding/authenticated logs/state version and reconstruction measured. Safe metadata stripping decoder tested; actualupload compression/moderation/durablearchive remainG09/G13 implementation.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A08",
+      "result": "pass",
+      "summary": "Observer/trust matrix and falsification scenarios specify private note ownership, perpostlike tags, privateescrow, publicBok and realtrace review; explicitly no privacy assurance before implementation/proofs/expertreview.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A09",
+      "result": "pass",
+      "summary": "Numeric dataset/hardware/request/performance/accessibility/cost targets recorded before application finalmeasurements; missing target remains failure, not retroactive relaxation.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A10",
+      "result": "pass",
+      "summary": "Proposed reversible ranking3likes+2replies+reposts withstableties, chronologicalfollowing, immutableASCIIslug and rejectiontombstone recorded.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A11",
+      "result": "pass",
+      "summary": "Proposed account/postlike uniqueness and unlike; canonicalASCII names casefold/whitespace/bounds/reservedBok mapped to circuit packing.3tests andindependentadversarialprobes pass; actualNoir enforcement remainsG05.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    },
+    {
+      "id": "G03-A12",
+      "result": "pass",
+      "summary": "Inappnotifications/encryptedpreferences, nonownerBokthread, automaticcommits/atomiclatestpublication matchingdownload specified. G07 must define readmarker restoration beforeacceptance.",
+      "artifacts": [
+        "evidence/G03/interfaces-review.json",
+        "evidence/G03/interfaces-integration.json",
+        "evidence/G03/name-policy-tests.log",
+        "evidence/G03/defaults.md",
+        "evidence/G03/targets-original-20261011.md",
+        "evidence/G03/prototype-browser.json",
+        "evidence/G03/prototype-review.json",
+        "evidence/G03/prototype-integration.json",
+        "evidence/G03/avatar-review.json",
+        "evidence/G03/avatar-integration.json",
+        "evidence/G03/avatar-measurement-summary.json",
+        "evidence/G03/application-06050680-2f94-44bb-991d-a0df006f360e.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "summary": "Exact0e9bdb3 design-stage approval plus exactprototype/avatarreviews; no fullproductqualification",
+    "artifacts": [
+      "evidence/G03/interfaces-review.json",
+      "evidence/G03/prototype-review.json",
+      "evidence/G03/avatar-review.json"
+    ]
+  }
+}

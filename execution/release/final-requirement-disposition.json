@@ -1,0 +1,1221 @@
+{
+  "schemaVersion": 1,
+  "kind": "final-requirement-disposition-in-progress",
+  "sourceRevision": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "createdAt": "2026-10-18T19:49:25.236635+00:00",
+  "specification": {
+    "document": "Rolling Chat Contractor Specification Draft 3.pdf",
+    "sha256": "af9c151b8605fdad7053b8eb25da1f9e96d8d36f33fc43f2cd0bf8b16e16b402",
+    "availability": "Owner-supplied PDF retained outside Git; extracted requirement catalog is ../draft3-requirements.md.",
+    "clarifications": "../specification-clarifications.md",
+    "deadline": "2026-10-21T15:25:57Z"
+  },
+  "overall": "All46 requirement IDs retained. Connected functionality and scoped acceptance are distinct. Both genuine zero-ETH USDC payments/private claims, names/social actions and original collateral refunds succeeded. Both ETH payments succeeded; private claims are pending. Original Bok billing closed without output or model replay; a new ordinary generated-output journey remains. No whole-spec acceptance percentage or release approval is asserted.",
+  "rules": [
+    "Evidence keeps its own original revision, runtime, real/mocked boundary and limitations; current target revision does not automatically relabel historical evidence.",
+    "No source mutation, tests, services, proofs, model calls or financial actions performed for this draft.",
+    "Only affected failures or uncovered mandatory boundaries warrant additional execution; no repeated general backup, clean-deployment or model campaign.",
+    "The prior fixed14-day gate is removed. Bounded reliability remains assigned work, not an excuse to stop.",
+    "Functional presence and component review are separate from complete product/cryptographic assurance."
+  ],
+  "workGroupUpdates": {
+    "D1": "Recorded engineering deployment/admission passed; native/query/prover/application live. Owner500 ceiling, samehost18:00/endpoints18:05UTC19Oct; forecast359.850284/reservation365. Appbbcf and Bokee973 deployed preserving original journals. No production or indefinite hosting claim.",
+    "D2": "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open.",
+    "D3": "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
+    "D4": "All-category observer mapping independently approved. Both successful original Ethereum refunds canonically finalized with exact originalrecipient,0.001ETH and corresponding Outbox leaf; failed MetaMask7702 wrapper gas separately retained. See evidence/G13/final-privacy-20261019/original-refunds-accounting-public-effects.json. Current Bok settlement/remainingETHfunding effects append only; no blanketunlinkability or specialist-audit claim.",
+    "D5": "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
+    "D6": "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral.",
+    "D7": "Retain bounded recovery/outage/reorg/rotation and actual Mac-sleep/query/index incidents with reviewed repairs. Finish D3/D5 dependencies and final account outcomes. No additional broad destructive recovery or elapsed soak.",
+    "D8": "Assemble exact46-row checklist, source/runtime manifests, runnable local devnet instructions, current/expired hosted access, adopted defaults, no-replay journal references, USD500 ceiling/18:00shutdown/retained-state plan, and concrete resume entry. Carry specialist audit/network gates separately. No new test campaign."
+  },
+  "externalGates": [
+    {
+      "id": "X1",
+      "requirements": [
+        "RC15",
+        "RC23",
+        "RC24",
+        "RC25",
+        "RC32",
+        "RC35",
+        "RC39",
+        "RC42"
+      ],
+      "kind": "external specialist release gate",
+      "nextAction": "Obtain qualified independent security/privacy audit and remediate blocking findings, with final-delta review.",
+      "reuse": [
+        "Existing internal design and agent reviews are inputs only"
+      ],
+      "completionBoundary": "No agent code review substitutes for the required specialist."
+    },
+    {
+      "id": "X2",
+      "requirements": [
+        "RC01",
+        "RC39",
+        "RC42"
+      ],
+      "kind": "external network release gate",
+      "nextAction": "Obtain current target-network suitability/clearance and required fresh official/network observations.",
+      "reuse": [
+        "Historical network/input packets retained within their dates"
+      ],
+      "completionBoundary": "Successful local or current testnet execution alone is not release clearance; mainnet still needs separate authorization."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RC01",
+      "authority": "mandatory",
+      "requirement": "Aztec V6 matching local devnet flow; proofs disabled only for development, real-wallet testnet acceptance",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Compatible native V6 devnet and PXE configuration; identical application path with development proofs disabled.",
+      "acceptedComponentEvidence": "Native local journeys demonstrated; exact current Linux node/prover package reviewed.",
+      "evidence": [
+        "native",
+        "linux-package",
+        "d1-native-imports",
+        "d1-native-controls",
+        "current-testnet-bootstrap",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "Both original ETH payments succeeded; their private claims and current Bok output/withdrawal combination remain. Original collateral refunds and ten real-proof observations exist. X1/X2 remain separate.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC02",
+      "authority": "mandatory",
+      "requirement": "Clear API boundaries among contracts, frontend, backend, prover and plugin; no migration compatibility obligation",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Separate contract, wallet, public index, prover and Bok APIs.",
+      "acceptedComponentEvidence": "Existing interface design and connected development journey.",
+      "evidence": [
+        "interfaces",
+        "protocol"
+      ],
+      "remaining": "D8 publish exact current interface/build manifest; no new isolated feature gap identified.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC03",
+      "authority": "mandatory",
+      "requirement": "Original design system and clickable desktop-first prototype before complete UI; usable mobile core flows",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Original desktop design and clickable prototype; responsive mobile navigation.",
+      "acceptedComponentEvidence": "Reviewed prototype, retained desktop/mobile rendering and navigation; focus repair accepted.",
+      "evidence": [
+        "prototype",
+        "mobile",
+        "browser-performance",
+        "focus",
+        "current-accessibility"
+      ],
+      "remaining": "D8 final UI/source disposition; do not repeat passed navigation or scroll samples.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC04",
+      "authority": "mandatory",
+      "requirement": "All required feed, board, directory/search, thread, composer, profile/name, social, onboarding/balance/recovery/moderator screens",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Home/board/directory/thread/composer/profile/name/private social/funding/recovery/moderator screens connected.",
+      "acceptedComponentEvidence": "Retained current UI, authentic funding, offline backup, profile and private-view observations.",
+      "evidence": [
+        "mobile",
+        "profiles",
+        "preferences",
+        "metamask",
+        "offline-backup",
+        "rotation",
+        "current-accessibility",
+        "current-testnet-wallet-mode",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "D2 remaining ETH/withdrawal/Bok cells and D3 two original ETH interruption windows; required name/board/named+anonymous/like screens now used on actual testnet. Keep prior local UI coverage.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC05",
+      "authority": "mandatory",
+      "requirement": "Continuous feed, stable links, return scroll, no duplicates/jumps; clear loading/empty/pending/removed/error states",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Bounded continuous feed, stable links, return position, tombstones and state handling.",
+      "acceptedComponentEvidence": "Synthetic 10k public dataset gives unique posts and unchanged append/return anchors; keyboard/focus checks retained.",
+      "evidence": [
+        "browser-performance",
+        "focus",
+        "current-accessibility"
+      ],
+      "remaining": "D8 final UI/source disposition; do not repeat passed navigation or scroll samples.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC06",
+      "authority": "mandatory",
+      "requirement": "Canonical reply parent/root; immutable author posts; moderation tombstones preserve navigation without text",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Canonical parent/root replies; immutable post content; removal tombstones preserve navigation.",
+      "acceptedComponentEvidence": "Actual anonymous reply parent/root and historical authenticated removals retained.",
+      "evidence": [
+        "social",
+        "quotes",
+        "moderation",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "D8 retain canonical reply/root and moderation component evidence; current human named/anonymous testnet posts successful. Actual current Bok reply still outstanding under D2/D6.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC07",
+      "authority": "mandatory",
+      "requirement": "992-byte UTF8 limit, character-oriented allowance, no silent truncation; safe URLs/labelled links and markup",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "UTF8 byte-aware composer, pre-spend validation and safe links/markup preview.",
+      "acceptedComponentEvidence": "Protocol and preview-parity component acceptance retained.",
+      "evidence": [
+        "protocol",
+        "preview"
+      ],
+      "remaining": "D8 bind retained byte/link boundary evidence to final UI. No new defect identified in this review.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC08",
+      "authority": "mandatory",
+      "requirement": "Onchain likes, quotes and reposts; bookmarks/follows/reply notifications; derived ranking and delivery only",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Onchain likes/quotes/reposts; private bookmarks/follows/read markers and derived notifications.",
+      "acceptedComponentEvidence": "Actual like/reply, social reference checks and nonempty private restoration/public-reader observation.",
+      "evidence": [
+        "social",
+        "quotes",
+        "preferences",
+        "core-rebuild",
+        "nonempty-reader",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "Current cross-account like successful; retain existing quotes/reposts/private-preferences evidence. D4 remaining receiver/public-effect reasoning and D8 conjunction; no repeated social-feature campaign.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC09",
+      "authority": "mandatory",
+      "requirement": "One curated top board, independent operator boards use own hosting; no automatic inclusion",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Single curated board; independent deployment uses separate operator/frontend scope.",
+      "acceptedComponentEvidence": "Fresh isolated operator deployment demonstrated.",
+      "evidence": [
+        "clean-operator-review",
+        "fee-only"
+      ],
+      "remaining": "D8 final deployment/hosting records; no automatic federation feature required.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC10",
+      "authority": "mandatory",
+      "requirement": "Any account creates immediate authentic subboard for fees without collateral; no nesting/rename/archive/transfer; directory/search no Home promotion",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Fee-only immediate subboard creation; immutable nonnested IDs; directory/search distinct from Home inclusion.",
+      "acceptedComponentEvidence": "Actual fee-only creation and reader/search component evidence.",
+      "evidence": [
+        "fee-only",
+        "search",
+        "protocol",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "D8 retain no-collateral/immutable constraints and current source binding; no new creation replay required.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC11",
+      "authority": "mandatory",
+      "requirement": "Chain-reconstructible names/descriptions/immutable IDs/links/status; reject contradictory local rules after publication",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Authenticated board metadata, IDs, rules, rejection status and discoverable links are indexed.",
+      "acceptedComponentEvidence": "Protocol/index and isolated database reconstruction demonstrate retained public state.",
+      "evidence": [
+        "protocol",
+        "core-rebuild",
+        "moderation"
+      ],
+      "remaining": "D8 map final rejection/metadata reconstruction assertions; no repeat general rebuild.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC12",
+      "authority": "mandatory",
+      "requirement": "Effective policy is parent/local union, parent changes propagate; hostile rules are data; decision policy versions inspectable",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Current parent/local union shown before posting; policy version rechecks and parent-priority model input.",
+      "acceptedComponentEvidence": "Actual parent policy publication plus hostile local text evaluator and composer evidence.",
+      "evidence": [
+        "policy",
+        "moderation",
+        "human-model"
+      ],
+      "remaining": "D8 preserve precise distinction: hostile rules evaluator fixture is not an additional onchain hostile-subboard scenario.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC13",
+      "authority": "mandatory",
+      "requirement": "Authorized onchain rejection/removal for humans and Bok, reason visible, private ownership hidden and withdrawals preserved",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Authorized human/Bok removal and subboard rejection with reasons, hidden private owner and recoverable collateral.",
+      "acceptedComponentEvidence": "Historical authentic human/Bok removals, penalty/screening/refund and current policy review retained.",
+      "evidence": [
+        "moderation",
+        "withdrawals"
+      ],
+      "remaining": "D8 current affected-source disposition; D2 testnet withdrawal scope remains. Historical fixed-content Bok removal is not a new paid model removal.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC14",
+      "authority": "mandatory",
+      "requirement": "Multiple global first+last unique names, random suggestion and availability, atomic concurrent uniqueness, no retirement",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Multiple global first/last names, suggestions, availability and atomic uniqueness; no retirement.",
+      "acceptedComponentEvidence": "Name protocol and retained actual profile/name flows.",
+      "evidence": [
+        "protocol",
+        "profiles",
+        "fee-only",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "D8 retain exact concurrent-uniqueness evidence mapping; D4 cross-name privacy assurance remains separate.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC15",
+      "authority": "mandatory",
+      "requirement": "Composer lists own names plus exactly Anonymous; authenticate names without public owner grouping or reusable anonymous ID",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Own-name selector plus exactly Anonymous; private ownership authentication.",
+      "acceptedComponentEvidence": "Actual named and anonymous posts; two accounts with two names in reader observation.",
+      "evidence": [
+        "social",
+        "nonempty-reader",
+        "protocol",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts",
+        "current-six-public-effects"
+      ],
+      "remaining": "D4 public effects and trusted-boundary observer closure, then X1 specialist privacy review; no cryptographic pass from missing cleartext addresses.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC16",
+      "authority": "mandatory",
+      "requirement": "Recovery restores ownership; profiles show bio/history/current avatar and distinguish authentic bot identity",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Key-restored identity ownership, bios/history/current avatars and authenticated bot presentation.",
+      "acceptedComponentEvidence": "Actual bio/history, current avatar reconstruction and restored private account observations.",
+      "evidence": [
+        "social",
+        "profiles",
+        "avatar-current",
+        "core-rebuild"
+      ],
+      "remaining": "D4 correlation/privacy scope and D8 final identity/profile evidence conjunction; do not repeat accepted avatar publication.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC17",
+      "authority": "mandatory",
+      "requirement": "Compressed safe raster avatar 100x100 preview <=8192 bytes; authenticated onchain bytes/hash/version, metadata stripped, moderation and archive retrieval Measured prototype covers gas, latency, image quality and archival retrieval.",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Safe raster normalization/metadata stripping/100x100 preview/8192-byte cap; authenticated avatar bytes and current version.",
+      "acceptedComponentEvidence": "Measured prototype plus actual 1895-byte current avatar canonical reconstruction.",
+      "evidence": [
+        "avatar-prototype",
+        "avatar-current",
+        "profiles"
+      ],
+      "remaining": "D5 retain inspected-image quality limits and exact maximum/pre-spend/removal cases from existing components; no claim one 1895-byte image proves every 8192-byte boundary.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC18",
+      "authority": "mandatory",
+      "requirement": "No sponsorship; noncustodial ETH/USDC origins, one initial funding transaction where wallet route permits, simple cost breakdown",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Noncustodial aggregate ETH/USDC funding separates admission, private fees and Bok credit without app subsidy.",
+      "acceptedComponentEvidence": "Genuine local MetaMask ETH route and same-account zero-ETH USDC route, accounting independently checked.",
+      "evidence": [
+        "metamask",
+        "withdrawals",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts",
+        "current-two-wallet-usdc-mm",
+        "current-two-wallet-usdc-phantom",
+        "current-mm-usdc-finality",
+        "current-phantom-usdc-finality"
+      ],
+      "remaining": "Both zero-ETH USDC wallet cells and exact three-way accounting observed; both genuine ETH-route cells still outstanding. Existing-deposit rejection requires exiting current collateral before those cells, not new accounts.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC19",
+      "authority": "mandatory",
+      "requirement": "Automatic asynchronous bridge/setup, one progress view, interruption/reload recovery without duplicate payments; Ready means post+Bok usable",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Automatic bridge/setup through SDK state waiters, one progress flow, saved-operation recovery and truthful ready state.",
+      "acceptedComponentEvidence": "Local automatic claim/posting and funded backup export/reopen accepted.",
+      "evidence": [
+        "metamask",
+        "offline-backup",
+        "current-testnet-wallet-mode",
+        "d7-conjunction",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts",
+        "current-two-wallet-usdc-mm",
+        "current-two-wallet-usdc-phantom",
+        "current-mm-usdc-finality",
+        "current-phantom-usdc-finality",
+        "current-mm-eth",
+        "current-phantom-eth",
+        "current-original-refunds"
+      ],
+      "remaining": "Continue both saved ETH payments without another send. Complete the original Phantom before-ack interruption and bridge-pending recovery. Both USDC private claims and original collateral refunds succeeded. Current Bok output remains.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC20",
+      "authority": "mandatory",
+      "requirement": "MetaMask and Phantom Ethereum compatibility matrix, chain selection, prompts/transaction counts, USDC gas resolution before funds",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "MetaMask/Phantom adapters, chain selection and pre-fund route admission are implemented.",
+      "acceptedComponentEvidence": "Authentic local MetaMask evidence; installed Phantom supports Sepolia rather than local31337.",
+      "evidence": [
+        "metamask",
+        "testnet",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts",
+        "current-two-wallet-usdc-mm",
+        "current-two-wallet-usdc-phantom",
+        "current-mm-usdc-finality",
+        "current-phantom-usdc-finality",
+        "current-mm-eth",
+        "current-phantom-eth",
+        "current-original-refunds"
+      ],
+      "remaining": "Both genuine zero-ETH USDC payments/private claims and both ETH payments succeeded. The ETH private claims and final prompt/transaction accounting remain; a payment alone does not complete onboarding.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC21",
+      "authority": "owner-reserved",
+      "requirement": "Impossible or unsupported one-transaction route requires measured alternative for owner decision; no silent requirement dilution",
+      "functionalDisposition": "owner-reserved-feasibility-decision",
+      "implementedBehavior": "Unsupported routes fail before funds; alternatives remain owner-reserved if measured impossibility arises.",
+      "acceptedComponentEvidence": "No permission to dilute one-initial-transaction objective; local USDC relay route demonstrated.",
+      "evidence": [
+        "metamask",
+        "current-mm-eth",
+        "current-phantom-eth",
+        "current-original-refunds"
+      ],
+      "remaining": "Both original collateral exits/refunds finalized, permitting subsequent ETH funding. Both ETH payments succeeded; resume their existing private claims. Do not substitute fresh accounts or replay payments.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC22",
+      "authority": "mandatory",
+      "requirement": "Separate refundable collateral/fees/conversion/Bok credit, available/reserved balances, exact withdrawals/additional funding and encrypted recovery",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Separate collateral/fees/conversion/Bok available/reserved balances, exact withdrawal and encrypted custody.",
+      "acceptedComponentEvidence": "Genuine local 0.5-USDC Bok withdrawal and unused 0.001-ETH collateral refund; full funded encrypted payload round-trip.",
+      "evidence": [
+        "withdrawals",
+        "offline-backup",
+        "accounting-ui",
+        "d7-conjunction",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts",
+        "current-two-wallet-usdc-mm",
+        "current-two-wallet-usdc-phantom",
+        "current-mm-usdc-finality",
+        "current-phantom-usdc-finality",
+        "current-mm-eth",
+        "current-phantom-eth",
+        "current-original-refunds"
+      ],
+      "remaining": "Both USDC allocations and original0.001ETH collateral refunds are observed. Both subsequent ETH payments succeeded; their private claims, Bok withdrawal and complete network/model fee accounting remain.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC23",
+      "authority": "mandatory",
+      "requirement": "Cryptographic unlinkability of humans across anonymous posts/names/account; analyze backend/node observers, prover witness trust allowed",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Private identity/note/nullifier/fee design and explicit trusted witness boundary implemented.",
+      "acceptedComponentEvidence": "Internal protocol reasoning and scoped public-reader traces exist.",
+      "evidence": [
+        "privacy",
+        "privacy-reasoning",
+        "nonempty-reader",
+        "d4-current",
+        "d4-opaque",
+        "current-six-public-effects"
+      ],
+      "remaining": "D4 actual deployed trust topology, uncovered human receiver categories and complete current public-effect/funding/Bok correlation classification remain; use retained effects or required D2 captures. X1 independent specialist review remains. Existing partial traces/source reasoning are not cryptographic acceptance.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC24",
+      "authority": "mandatory",
+      "requirement": "Replace human account-to-Bok-request disclosure; public authenticated Bok identity allowed per owner clarification",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Private Bok request/payment replaces public human account callback; authenticated bot identity remains public by owner instruction.",
+      "acceptedComponentEvidence": "Private escrow model/accounting and public reply observations retained.",
+      "evidence": [
+        "garden",
+        "paid-fence",
+        "accepted-crash",
+        "privacy-reasoning",
+        "d4-current",
+        "d4-opaque",
+        "current-six-public-effects"
+      ],
+      "remaining": "D4 actual deployed trust topology, uncovered human receiver categories and complete current public-effect/funding/Bok correlation classification remain; use retained effects or required D2 captures. X1 independent specialist review remains. Existing partial traces/source reasoning are not cryptographic acceptance.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC25",
+      "authority": "mandatory",
+      "requirement": "No account/name-list cache API disclosure or linkable subscriptions; inspect traces plus protocol reasoning and residual timing/content limits",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Private names/preferences stay in private client paths; public feed requests do not personalize by account.",
+      "acceptedComponentEvidence": "Two nonempty accounts: browser/server 10 matching requests, 8 feed, no configured private identifiers.",
+      "evidence": [
+        "nonempty-reader",
+        "privacy-reasoning",
+        "d4-current",
+        "d4-opaque",
+        "current-six-public-effects"
+      ],
+      "remaining": "D4 deployed trust topology and missing human receiver/public-effect categories remain. Controlled forwarding/header stripping is accepted but does not establish human unlinkability.45opaque observations are39Aztec simulation/validation/send plus6L1 estimate/send, not45transactions; discarded payloads and27L1-only unknown method names cannot be recovered. Capture missing categories during required D2, not a new campaign.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC26",
+      "authority": "mandatory",
+      "requirement": "All core state authenticated-chain/archive reconstructible including encrypted bookmarks/follows/preferences with keys; derived cache not authority",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Authenticated public index/archive and encrypted onchain preference recovery with user keys.",
+      "acceptedComponentEvidence": "Isolated database deletion/rebuild, nonempty key-only preference/read-marker restoration, actual native reorg/reopen accepted.",
+      "evidence": [
+        "core-rebuild",
+        "reorg",
+        "offline-backup"
+      ],
+      "remaining": "D8 carry exact source/network scopes; archive capacity retained under RC27. No routine repeat of complete deletion/rebuild required.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC27",
+      "authority": "mandatory",
+      "requirement": "Operated-node/archiver capacity and costs measured; bounded incremental paginated shared/reorg-safe ingestion and complete retention",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Incremental bounded paginated/reorg-safe public ingestion and archive-backed recovery; operated node plan.",
+      "acceptedComponentEvidence": "Native reconstruction/reorg and current Linux runtime closure reviewed.",
+      "evidence": [
+        "core-rebuild",
+        "reorg",
+        "linux-package",
+        "component-performance",
+        "current-index-reuse",
+        "d1-native-controls"
+      ],
+      "remaining": "Operated node/archive readiness and measured nonempty index/cost/capacity evidence retained. D5 final freshness observation if missing and D8 precise lifetime/resource ledger remain; no new full rebuild or invented10k corpus.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC28",
+      "authority": "mandatory",
+      "requirement": "Bok workspace/source/summaries excluded from core recovery; authenticated board replies core; reading/posting/rebuild survive Bok outage",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Core chain data independent of Bok workspace storage; reading/posting/rebuild tolerate Bok outage.",
+      "acceptedComponentEvidence": "Actual Bok ports closed while ordinary post and empty index rebuild succeed; exact terminal restore retained.",
+      "evidence": [
+        "outage"
+      ],
+      "remaining": "D8 retained unchanged core/Bok boundary disposition only; no new general outage campaign indicated.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC29",
+      "authority": "mandatory",
+      "requirement": "Plugin owns model/budget/summarization strategy; persistent repo/workspace per thread, serialization within, concurrency across, revision records",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Plugin-owned strategy, persistent per-thread Git/workspace, serialized same-thread and concurrent separate threads.",
+      "acceptedComponentEvidence": "Retained actual cross-thread overlaps and ordered updates, current selected-App allocation, accepted-state crash recovery.",
+      "evidence": [
+        "concurrency-retention",
+        "github",
+        "accepted-crash",
+        "d6-conjunction",
+        "current-bok-healthy-poll"
+      ],
+      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
+      "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
+    },
+    {
+      "id": "RC30",
+      "authority": "mandatory",
+      "requirement": "Entire conversation retrievable; cheaper paid summary excludes latest message, main gets summary+latest; measured quality/cost/latency Summary quality covers instructions, decisions, unresolved issues and repository references; full history includes earlier Bok calls/replies.",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Retrievable full conversation; cheaper paid prior-only summary plus latest message to main model.",
+      "acceptedComponentEvidence": "Historical real summary routing and current predeclared four-point summary quality sample,92microUSDC,2.892s.",
+      "evidence": [
+        "summary",
+        "concurrency-retention",
+        "d6-conjunction"
+      ],
+      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
+      "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
+    },
+    {
+      "id": "RC31",
+      "authority": "mandatory",
+      "requirement": "Open Bok participation, untrusted content, automatic thread commits/publish; existing repo permission boundaries persist First participant gets no formal owner permission; implicit thread rules are not product copy.",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Open participation, untrusted content, automatic accepted thread commits/publish; connected repository authority retained.",
+      "acceptedComponentEvidence": "Actual pool allocation/publication and connected private draft PR through broker, unchanged main.",
+      "evidence": [
+        "github",
+        "connected-repo",
+        "accepted-crash",
+        "d6-conjunction"
+      ],
+      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
+      "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
+    },
+    {
+      "id": "RC32",
+      "authority": "mandatory",
+      "requirement": "Owner-selected personal zac-williamson GitHub account with dedicated scoped App plus operator broker; isolated generated-code execution without chain/provider/GitHub/hosting credentials (13 October clarification supersedes organization requirement)",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Dedicated App under owner-selected personal account; trusted broker and credential-isolated execution.",
+      "acceptedComponentEvidence": "Selected repository allocation and other-repository denial; branch restrictions enforced by broker, not token-level branch ACL.",
+      "evidence": [
+        "github",
+        "connected-repo",
+        "artifact-api",
+        "d6-conjunction"
+      ],
+      "remaining": "D6 source conjunction accepted; D8 final privilege/isolation handover and X1 specialist security review remain. Repository-scoped installation token is not branch-scoped; branch restrictions are trusted broker enforcement.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC33",
+      "authority": "mandatory",
+      "requirement": "Per-plugin available/reserved/charge/release exact accounting; execution/request/storage limits; uncertain paid calls never silently replay",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Exact plugin balances/reserves/charges/refunds, durable uncertain-call fence and execution/storage/request ceilings.",
+      "acceptedComponentEvidence": "Five settled calls unchanged across accepted crash; exact5299charge+494701refund; retained unknown-call nonreplay.",
+      "evidence": [
+        "accepted-crash",
+        "paid-fence",
+        "outage",
+        "artifact-api",
+        "d6-conjunction",
+        "d7-conjunction",
+        "current-bok-healthy-poll"
+      ],
+      "remaining": "Current original Bok request authorization0.25USDC/publication observed, but actual reserve/charge/release/reply still pending. Retain uncertain-paid-call fences; final withdrawal/accounting and D3 interruptions remain.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC34",
+      "authority": "mandatory",
+      "requirement": "Stable latest static link, atomic revision publish, matching source download, internal history; latest hosted indefinitely",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Stable latest artifact URL, atomic revision publication, matching source download and internal Git history.",
+      "acceptedComponentEvidence": "Actual accepted source/static bytes and Git commit corroborated after crash; completed archive restore retains artifact.",
+      "evidence": [
+        "publication",
+        "accepted-crash",
+        "outage",
+        "d6-conjunction",
+        "current-bok-healthy-poll"
+      ],
+      "remaining": "Prior atomic latest/source publication is scoped evidence. Current testnet generated artifact/source retrieval remains; paid hosting stops2026-10-19T18:00Z. Temporary URLs do not establish indefinite retention.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC35",
+      "authority": "mandatory",
+      "requirement": "Separate artifact origin no wallet/cookies/credentials, public APIs/assets allowed, scoped secret APIs; abuse/storage/backups/moderation policy",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Separate opaque artifact origin, public HTTPS assets/APIs and finite scoped secret-API broker; moderation/storage controls.",
+      "acceptedComponentEvidence": "Reviewed browser isolation/public assets; synthetic configured upstream allowance and restoration; default paid secret API disabled.",
+      "evidence": [
+        "artifact-api",
+        "outage",
+        "d6-conjunction"
+      ],
+      "remaining": "D6 current isolation/API/backup conjunction accepted within real/synthetic packet limits. D8 operator policy/retention/ledger handover and X1 specialist security review remain; no real paid API call is required for the default-disabled facility.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC36",
+      "authority": "mandatory",
+      "requirement": "Independent deployment AI skill with own credentials, prerequisites/costs/versions/domains/roles/funding/build/deploy/fee/moderator/node/indexer/optional prover+Bok",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Independent operator skill with costs/roles/credentials, native setup and optional prover/Bok deployment commands.",
+      "acceptedComponentEvidence": "Fresh isolated clean checkout/build/operator publication on native proof-disabled deployment.",
+      "evidence": [
+        "clean-operator-review",
+        "runbook",
+        "linux-package",
+        "d1-native-imports",
+        "d1-native-controls",
+        "current-runbook"
+      ],
+      "remaining": "Existing deployment/readiness satisfied within recorded scope. D8 distributable manifest, source/runtime distinction and current/expired endpoints/roles/ownership remain; no new clean deployment.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC37",
+      "authority": "mandatory",
+      "requirement": "Exact transaction recovery/pre-fund verification/monitoring/rotation/rollback, secrets outside source, explicit operator spending approval, no audit claim",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Saved exact transaction recovery, pre-fund checks, monitoring, outside-source secrets and spending gates; moderator authority transfer now implemented.",
+      "acceptedComponentEvidence": "Funding lineage source reviews, clean operator rehearsal and exact d976 rotation TXE/application/index review. Actual native transfer/old-key refusal/successor policy/rollback independently canonical-checked and retained in SQLite.",
+      "evidence": [
+        "rotation",
+        "runbook",
+        "offline-backup",
+        "d7-focused",
+        "live-rotation",
+        "d1-native-controls",
+        "current-runbook",
+        "d7-conjunction"
+      ],
+      "remaining": "D3 two ETH interruption windows and D8 actual outage/recovery/accounting handover remain. Current native services operated successfully; no repeated rotation/backup drill.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC38",
+      "authority": "mandatory",
+      "requirement": "Clean independent deployment fresh identities/origin without hidden contractor state; schemas/service defs/locks/runbooks/core+Bok backups",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Reproducible source/locks/schemas/services and separate core/Bok recovery/backup guidance.",
+      "acceptedComponentEvidence": "Fresh disposable operator origin/name publication; public/private core rebuild and exact quiescent Bok archive restoration.",
+      "evidence": [
+        "clean-operator-review",
+        "core-rebuild",
+        "outage",
+        "d1-native-imports",
+        "d1-native-controls",
+        "current-runbook"
+      ],
+      "remaining": "Existing clean independent deployment plus current engineering service qualification retained. D8 exact artifacts/runbooks/ownership and temporary hosting disposition remain; no repeat deployment.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC39",
+      "authority": "mandatory",
+      "requirement": "Executable source-bound social/moderation/funding/privacy/reorg/outage acceptance; actual proofs, wallets, exact funds",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Executable acceptance surfaces exist; retained social/funding/privacy/reorg/outage cases have scoped reviews.",
+      "acceptedComponentEvidence": "Numerous local real contract/wallet/model results; no whole-spec claim.",
+      "evidence": [
+        "metamask",
+        "reorg",
+        "outage",
+        "accepted-crash",
+        "core-rebuild",
+        "d6-conjunction",
+        "d7-conjunction",
+        "d4-current",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "D2 ETH/withdrawal/Bok completion; D3 two ETH windows; D4 remaining actual public-effect/receiver/topology scope; D5 full cold/warm wallet/freshness if absent; D8 final assembly. Ten real-proof count/latency met. X1/X2 remain external.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC40",
+      "authority": "mandatory",
+      "requirement": "Predeclare feed/thread/scroll/search/index/rebuild/request/proof/cost targets; cold/warm measurements with dataset/hardware",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Targets predeclared; browser search/navigation/scroll/focus metrics and bounded index facilities implemented.",
+      "acceptedComponentEvidence": "Reviewed synthetic10k browser results, fourteen focus surfaces, clarified actual submit search36.4\u201343.7ms<=500.",
+      "evidence": [
+        "targets",
+        "browser-performance",
+        "focus",
+        "search",
+        "current-accessibility",
+        "current-index-reuse",
+        "current-ten-real-proofs",
+        "current-ten-original-receipts"
+      ],
+      "remaining": "Ten necessary real proofs satisfy declared count/latency target within client-observed scope. Retain earlier nonempty index/large-note/capacity/UI evidence. D5 complete cold/warm full wallet readiness and final freshness if absent; no further proof solely for count.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC41",
+      "authority": "mandatory",
+      "requirement": "Bok two users same repo ordered, two threads concurrent, summary/code/tests/static update, restart accepted commit and uncertain call, real charge match/isolation",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Persistent/concurrent Bok, summaries, code/tests/static update, metering and restart recovery implemented.",
+      "acceptedComponentEvidence": "Retained real cross-thread/same-thread evidence, current summary, connected PR, accepted-before-reply crash and historical unknown-paid nonreplay.",
+      "evidence": [
+        "concurrency-retention",
+        "summary",
+        "connected-repo",
+        "accepted-crash",
+        "paid-fence",
+        "d6-conjunction",
+        "d7-conjunction",
+        "current-bok-healthy-poll"
+      ],
+      "remaining": "D6 current-source conjunction accepted: no additional broad model/concurrency/crash/repository execution gap identified. D2 combined testnet/proof scope and D8 final account/incident/source handover remain. Historical uncertain calls stay fenced and unresolved, never replayed.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC42",
+      "authority": "release-gate",
+      "requirement": "Independent expert audit, target-network clearance, bounded final reliability qualification; mainnet needs separate authorization",
+      "functionalDisposition": "release-policy",
+      "implementedBehavior": "Production release policy separates audit, target-network clearance, mainnet authorization and bounded reliability.",
+      "acceptedComponentEvidence": "Owner removed fixed14-day soak; current source review is not an audit.",
+      "evidence": [
+        "rotation",
+        "d7-conjunction",
+        "d1-native-controls"
+      ],
+      "remaining": "D7 representative reliability components accepted; complete remaining D3/D5 dependencies and D8 final actual incident/interval/budget conjunction. No elapsed14-day gate. X1 qualified specialist audit and X2 current network clearance remain external; mainnet requires separate authorization.",
+      "assuranceDisposition": "external-release-gates-open"
+    },
+    {
+      "id": "RC43",
+      "authority": "commercial",
+      "requirement": "Eight-week milestones, two-engineer staffing and USD15000 bid target are commercial context, not purchase or hiring authority",
+      "functionalDisposition": "commercial-context",
+      "implementedBehavior": "Commercial staffing/eight-week/USD15000 bid context is not executable product scope.",
+      "acceptedComponentEvidence": "Owner superseded delivery timing with72-hour deadline; no hiring/purchase authorization inferred.",
+      "evidence": [],
+      "remaining": "Commercial context only; infrastructure is separately authorized up to cumulativeUSD500. Current reservationUSD365, forecastUSD359.850284, host shutdown18:00UTC19October.",
+      "assuranceDisposition": "not-applicable"
+    },
+    {
+      "id": "RC44",
+      "authority": "proposed-default",
+      "requirement": "Deterministic Home rank and chronological Following; immutable unique slug, rejection tombstone/stop posting Week-one design resolves rule tightening/rejection reversal/local moderators/appeals; no implicit creator authority.",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "Deterministic Home/chronological Following; immutable slugs/rejection tombstone and blocked posting; no implicit creator authority.",
+      "acceptedComponentEvidence": "Protocol/reader/moderation defaults and return-position behavior retained.",
+      "evidence": [
+        "protocol",
+        "browser-performance",
+        "moderation"
+      ],
+      "remaining": "D8 document adopted reversible defaults and local-rule/rejection/appeal decisions; no missing feature inferred from proposed defaults alone.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC45",
+      "authority": "proposed-default",
+      "requirement": "One active like/account/post across names, unlike; normalized case-insensitive full names immutable/reserved bots with specified Unicode bounds Supported characters, normalization, reserved bot handles and maximum lengths are mandatory predeployment definitions; particular case/whitespace choices remain defaults.",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "One private account like per post with unlike; normalized immutable unique names and reserved bots.",
+      "acceptedComponentEvidence": "Contract protocol and current social/name fixtures; actual like and two-name observations.",
+      "evidence": [
+        "protocol",
+        "social",
+        "profiles",
+        "nonempty-reader",
+        "current-six-public-effects"
+      ],
+      "remaining": "D4 account-linkage reasoning and D8 exact normalization/character/length deployment definitions; retain uniqueness tests without another registration campaign.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    },
+    {
+      "id": "RC46",
+      "authority": "proposed-default",
+      "requirement": "In-app replies, private recovery/read markers; automatic thread commits/publishing; only latest publicly hosted",
+      "functionalDisposition": "implemented-in-source-with-scoped-observations",
+      "implementedBehavior": "In-app private reply notifications/read markers; automatic accepted commits/latest publish; connected repo approval policies.",
+      "acceptedComponentEvidence": "Private restoration, notifications, connected draft PR and accepted-source publication.",
+      "evidence": [
+        "preferences",
+        "core-rebuild",
+        "connected-repo",
+        "accepted-crash",
+        "d6-conjunction"
+      ],
+      "remaining": "D6 notification/publication conjunction accepted within retained scope. D8 final policy/handover remains; no email/push subsystem or repeated model campaign required.",
+      "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
+    }
+  ],
+  "evidenceRegistry": {
+    "accepted-crash": {
+      "path": "../evidence/G13/accepted-before-reply-20261018/review.json",
+      "sha256": "2a9321e54b3f4665f2048cf3160207a8a53aa39a941a597e0167689566de8737"
+    },
+    "accounting-ui": {
+      "path": "../evidence/G07/bok-accounting-continuation-20261018/live.json",
+      "sha256": "4726c2119c97bf05a38f31aaf50fe8199768cee7052ae87de37c544c61ec296e"
+    },
+    "artifact-api": {
+      "path": "../evidence/G11/scoped-artifact-api-20261018/review.json",
+      "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+    },
+    "avatar-current": {
+      "path": "../evidence/G09/avatar-current-20261018/review.json",
+      "sha256": "bc7a895c751e22783881b6c2e03a92433b192c05f99fafa84c263ea98fb05f2b"
+    },
+    "avatar-prototype": {
+      "path": "../evidence/G03/avatar-measurement-summary.json",
+      "sha256": "21555633946588e6f0fee35844a08d0627158d7ab8550aa632489a1616aa8cd7"
+    },
+    "browser-performance": {
+      "path": "../evidence/G03/final-browser-performance-20261018/review.json",
+      "sha256": "744af858fffdb396a966d4a2d35aa8e2dfae883b4fa29292d24d7fd0a3101a68"
+    },
+    "clean-operator-review": {
+      "path": "../evidence/G12/clean-operator-20261018/review.json",
+      "sha256": "bc78d6834806402f6f93e6401eac7147d1987fb25a91130bb7f03187a4af8f0a"
+    },
+    "component-performance": {
+      "path": "evidence/component-performance/packet.json",
+      "sha256": "c846b54bc59af5b906e26857b3cb9c776e70e1edd66c549f9c15cb231dfedab5"
+    },
+    "concurrency-retention": {
+      "path": "../evidence/G10/current-summary-20261018/assessment.json",
+      "sha256": "289b45f63d969b49ff8c65549eee6b3d40768d0cad546917033437dbd1cdaede"
+    },
+    "connected-repo": {
+      "path": "../evidence/G11/connected-existing-repository-20261018/review.json",
+      "sha256": "a85f0aec9419c393d86be3b9e3d1c406e37f0c352cbdb3942097c77e83049f80"
+    },
+    "core-rebuild": {
+      "path": "../evidence/G07/final-core-private-20261018/core-rebuild.json",
+      "sha256": "a3cf70f3f696449ca73ccc3b512dd4d332550df12852d720bbb106488552be35"
+    },
+    "current-accessibility": {
+      "path": "../evidence/G13/final-disposition-20261018/current-accessibility.json",
+      "sha256": "16d5c6649299a2e42a62a2294b05ceb0bda5ce8b3d4f325ed9c1f87a7a685017"
+    },
+    "current-bok-healthy-poll": {
+      "path": "evidence/current-bok-healthy-poll/request-observation-result.json",
+      "sha256": "0c7c0063b00157786a4784031398c067d698a86638cdd702fa7259a65dc40eda"
+    },
+    "current-index-reuse": {
+      "path": "../evidence/G13/final-disposition-20261018/current-index-reuse.json",
+      "sha256": "64aa595198a0cc350d9225e0ae5cd0f5d697e192c775c0040902136036ef5fb5"
+    },
+    "current-mm-usdc-finality": {
+      "path": "evidence/current-mm-usdc-finality/original-usdc-finalized.json",
+      "sha256": "68d4dd93d96607e46015f292122aca0bac7badf6cb88553edc42559632e6d808"
+    },
+    "current-phantom-usdc-finality": {
+      "path": "evidence/current-phantom-usdc-finality/original-usdc-finalized.json",
+      "sha256": "f5f5712b1ae5b023d6014216b9769d9c9d6cca12689b34b2b909bcbca306c7a2"
+    },
+    "current-runbook": {
+      "path": "../evidence/G13/final-disposition-20261018/current-runbook.json",
+      "sha256": "44f6f233b163c5ba68e8bb8edcc7a01dc5fc8a56be4d209d56ddd7c03c21b5e0"
+    },
+    "current-six-public-effects": {
+      "path": "evidence/current-six-public-effects/retained-public-footprint-classified.json",
+      "sha256": "68eeafcefdbc9f60c773d8c89d3804a3b57b8bb6b146fe83cd51a6ca0dd7a7aa"
+    },
+    "current-ten-original-receipts": {
+      "path": "evidence/current-ten-original-receipts/ten-original-receipts.json",
+      "sha256": "6b7df0ec4f9f41a71677f5dff41d50cb06ce98b29880427b8f805590f7eeddcb"
+    },
+    "current-ten-real-proofs": {
+      "path": "evidence/current-ten-real-proofs/review-ten-real-proofs.json",
+      "sha256": "6c6d6663895f9eee028ef62468741d31119a5864af621b4c2ffdb8edd82b1480"
+    },
+    "current-testnet-bootstrap": {
+      "path": "../evidence/G13/final-disposition-20261018/current-testnet-bootstrap.json",
+      "sha256": "e197ef2f0920756ea8af4d61d186881f967f75cd46baf590d615023f5c31e308"
+    },
+    "current-testnet-wallet-mode": {
+      "path": "../evidence/G13/final-disposition-20261018/current-testnet-wallet-mode.json",
+      "sha256": "5c120c275db7d96cc302d7c7b06584a61800e282a4a2440973ab76ab6625c409"
+    },
+    "current-two-wallet-usdc-mm": {
+      "path": "evidence/current-two-wallet-usdc-mm/original-usdc-accounting.json",
+      "sha256": "f6cc73c704d1db9035dc132af653819bd5efbe673629a952f17ad67886ef1e66"
+    },
+    "current-two-wallet-usdc-phantom": {
+      "path": "evidence/current-two-wallet-usdc-phantom/original-usdc-accounting.json",
+      "sha256": "1f44660bc83f992afb15cb488b58f5e972da0d960d3e5a2e3ddd957c5018903d"
+    },
+    "d1-native-controls": {
+      "path": "../evidence/G13/final-disposition-20261018/d1-native-controls.json",
+      "sha256": "9dcbf5f813007d0a5e6c4a3cb6df5a5dc329de87d3eb1553ebf54e71a47d2a00"
+    },
+    "d1-native-imports": {
+      "path": "../evidence/G13/final-disposition-20261018/d1-native-imports.json",
+      "sha256": "0a96813bfbefca2b4b682bc119e3d5e3be70b8dcca83bfb738c28d686edb8341"
+    },
+    "d4-current": {
+      "path": "../evidence/G13/final-disposition-20261018/d4-current.json",
+      "sha256": "552ef74e3ba42ae0606cbcd01d5686682e5110a4b94f99e85b290e0aa4466499"
+    },
+    "d4-opaque": {
+      "path": "../evidence/G13/final-disposition-20261018/d4-opaque.json",
+      "sha256": "b15a3eecbed622662700711999b6d3253af2a78e7bccf237e83778fe4b798d49"
+    },
+    "d6-conjunction": {
+      "path": "../evidence/G13/final-disposition-20261018/d6-conjunction.json",
+      "sha256": "0beabc1cf08f8401b0a214c55557d4a2c8e4e76b9738ec1cf9d08b4960ec9ce8"
+    },
+    "d7-conjunction": {
+      "path": "../evidence/G13/final-disposition-20261018/d7-conjunction.json",
+      "sha256": "f48ae1c0b6df04009da76a09ca30969603b80412a9249c96ad1b40796caa0ce1"
+    },
+    "d7-focused": {
+      "path": "evidence/d7-focused/focused-checks.log",
+      "sha256": "2cf3f919ff277fbed54cc7411f344d13e465258d9e020ca63dbcc7abd5750be1"
+    },
+    "fee-only": {
+      "path": "../evidence/G05/live-fee-only-20261018/review.json",
+      "sha256": "492bfe4a9669d3510abeca881257c369d85177cf1a0c536844b68858ef6fccf1"
+    },
+    "focus": {
+      "path": "../evidence/G03/final-focus-20261018/review.json",
+      "sha256": "6687f93f6e05011e4418c2ea778366f51872c0932e8175cdbf6b46cfd4df3af9"
+    },
+    "garden": {
+      "path": "../evidence/G13/current-garden-20261018/acceptance.json",
+      "sha256": "57e5850b26a9f13c15a89b2fb3ffb306936fc341fc6418ebe25e6adf9b202c44"
+    },
+    "github": {
+      "path": "../evidence/G11/thread-pool-20261018/review.json",
+      "sha256": "974a4e3021c06cf7758c9c268d44659de8773f966b51c3e3966d86ba94c34321"
+    },
+    "human-model": {
+      "path": "../evidence/G09/current-post-model/review.json",
+      "sha256": "cae4a810b627a06dcb722795d89edfb210d3e4a29e7ce4699ec722dcd4c00d50"
+    },
+    "interfaces": {
+      "path": "../evidence/G03.json",
+      "sha256": "f18ac629dc16820f299f3d3288c9cdc124a099429a255ab51e3725b62b732ec8"
+    },
+    "linux-package": {
+      "path": "evidence/linux-package/review-linux-package-d976d254.json",
+      "sha256": "a5337b90f6d6ddd425af019cb59b6b8f310055733263cbe74ab0f6d6e61e93b6"
+    },
+    "live-rotation": {
+      "path": "evidence/live-rotation/review-live-rotation.json",
+      "sha256": "f18ae11b76905acbfbd4c94f8a907ae0c2b0930eb00aafbb002db2e6f81acb77"
+    },
+    "metamask": {
+      "path": "../evidence/G04/final-metamask-20261018/review.json",
+      "sha256": "90092d41ab4905b2ccbfb445bfd3d416e1808660c1cacaf56f6e27efc888ad42"
+    },
+    "mobile": {
+      "path": "../evidence/G09/mobile-navigation-20261018/observations.json",
+      "sha256": "8675cd35b599d97849e51e9ce87286b0f97a59544fd2ce5f1438fd620e9ea6f9"
+    },
+    "moderation": {
+      "path": "../evidence/G09/current-moderation-20261018/review.json",
+      "sha256": "fbe78d57db9ceb2c12c39b1208f3fa4d391f7c98d857c6f33852a7e4fa7caa28"
+    },
+    "native": {
+      "path": "../evidence/G13/native-bootstrap-20261018/live-startup.json",
+      "sha256": "e325e5b4b63d2162f485cc12f7a16916259fc9394cec7e7b1451d8b1c55408a7"
+    },
+    "nonempty-reader": {
+      "path": "../evidence/G13/two-account-reader-20261018/review-nonempty-public-reader.json",
+      "sha256": "b2a3c258d67f1506245faa91ef0cf079483958d8cc29af8366671586130de140"
+    },
+    "offline-backup": {
+      "path": "../evidence/G13/offline-backup-and-paid-fence-20261018/review-offline-backup-b27bec99.json",
+      "sha256": "6dc307bf6ec628112ffdfe422d17fb6b03016b6f5d99ca50624ad8a55e69c3d9"
+    },
+    "outage": {
+      "path": "../evidence/G13/bok-outage-20261018/review.json",
+      "sha256": "4f627140ab7d41724f83efb15f722c12799b4840acded044672dabc977083809"
+    },
+    "paid-fence": {
+      "path": "../evidence/G13/offline-backup-and-paid-fence-20261018/review-paid-fence-b27bec99.json",
+      "sha256": "c5048f85a9c1d587ab4d7f61fd3c7b84036d4f4eb087c51441e08cb7098ee2d9"
+    },
+    "policy": {
+      "path": "../evidence/G09/current-policy-union/review.json",
+      "sha256": "9368e77b10b9da567588c152a2aa8b094a3c2c12a4f1629c574f2b07781f947d"
+    },
+    "preferences": {
+      "path": "../evidence/G09/current-notifications-20261018/acceptance.json",
+      "sha256": "6fc6b25c53719ba0b4e0d85b858002d4fe0da67a22deeb28094e1003dce50d05"
+    },
+    "preview": {
+      "path": "../evidence/G09/message-preview-parity-20261018/evidence.json",
+      "sha256": "60882ed8b2b3b441e04377d38203d67a10a4bfeb145127208ef214cf2af1d817"
+    },
+    "privacy": {
+      "path": "../evidence/G07/reviewer-e9a0df2-privacy-boundary.json",
+      "sha256": "8255e1af27d25dce69064be2fccac9b21ed3999a20ce5275b8d9fef9ebcc6a3e"
+    },
+    "privacy-reasoning": {
+      "path": "../evidence/G13/final-privacy-reasoning/review.json",
+      "sha256": "1e9723862074f115658ad50e48545eb259a1d3f98a207b033e3d645243a95f3e"
+    },
+    "profiles": {
+      "path": "../evidence/G09/current-profile-boundaries-20261018/acceptance.json",
+      "sha256": "1a8e560bca6e63bbd37de0a15101ed2f1a309dd7425d87f6066a6ed7cdd1df73"
+    },
+    "protocol": {
+      "path": "../evidence/G06.json",
+      "sha256": "3832e34b4fc56f2c855c16d35dbfa160556577bac1aeee719f650e8ce6829ecd"
+    },
+    "prototype": {
+      "path": "../evidence/G03/prototype-review.json",
+      "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+    },
+    "publication": {
+      "path": "../evidence/G11/verified-publication-reply-20261018/evidence.json",
+      "sha256": "0bde04e38e42d90fb172c9b504d2c8180c824a4fc992433d6d81f817f3ee9f2e"
+    },
+    "quotes": {
+      "path": "../evidence/G09/current-social-references/review.json",
+      "sha256": "27e87fa0c00948216d5bfe896bf1096ce8c4d4f1af6842612d23211963f7a5bd"
+    },
+    "reorg": {
+      "path": "../evidence/G07/final-native-reorg-20261018/review.json",
+      "sha256": "8391c5f5a1497c92931f4e9c5f01a5e029add169be416653d651794b13d298a7"
+    },
+    "rotation": {
+      "path": "evidence/rotation/review-d976d254.json",
+      "sha256": "d9697539017177606948787d7f1290657802cff8af1fdea6e47ef588f57e7ab1"
+    },
+    "runbook": {
+      "path": "../evidence/G12/native-runbook-20261018/review.json",
+      "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5"
+    },
+    "search": {
+      "path": "evidence/search/review-search-current.json",
+      "sha256": "5fbf592eb9ecb9badd9970a87493ec59ab9b892c18e78fcc30f5c8e7eec0622b"
+    },
+    "social": {
+      "path": "../evidence/G13/live-social-20261018/review.json",
+      "sha256": "21b3cc09eb8657d3c8066f18a7093eab57a534d180ce742a9a1fe4f4496cff7d"
+    },
+    "summary": {
+      "path": "../evidence/G10/current-summary-20261018/review.json",
+      "sha256": "8e88e369ae3dc04b4ef573f28ccfc23f0130bcee876cca7794326364957d7209"
+    },
+    "targets": {
+      "path": "evidence/targets-original.md",
+      "sha256": "0b131a6e71aaa5b17456e6426747822ac5032625793ba14da0856aebc79553d8",
+      "scope": "Historical targets with exact original hash; current owner amendments override accessibility and authenticated10k assumptions."
+    },
+    "testnet": {
+      "path": "../evidence/G04/testnet-prerequisite-20261018.json",
+      "sha256": "76d6fdee991421ad140375c3c15149526d007bf9b41d3360b1317cde7d31fc81"
+    },
+    "withdrawals": {
+      "path": "../evidence/G04/final-withdrawals-20261018/review.json",
+      "sha256": "b202044f29e9bd53e14260bbb39da1799cd4c11c0d4eaab80b4461a2f5476a76"
+    },
+    "current-mm-eth": {
+      "path": "evidence/current-mm-eth/original-eth-accounting.json",
+      "sha256": "cefbd7bdd4ed5997988ed246bc10c28a48a8899be9bc4cb239c8ed7ad84f8e2c"
+    },
+    "current-phantom-eth": {
+      "path": "evidence/current-phantom-eth/original-eth-accounting.json",
+      "sha256": "2f0ad2204b446cdf7b34c606ed94be98cc61458914f97314212bcd74a2c6d524"
+    },
+    "current-original-refunds": {
+      "path": "evidence/current-original-refunds/original-refunds-accounting-public-effects.json",
+      "sha256": "6275f9e148569d46ed3bc71a3848c3956b11fef46d53ce4cbb0c6e5cbe0f2af0"
+    }
+  },
+  "inputs": {
+    "../draft3-requirements.json": "52800f3f07e058d080b22b2cf1ca81eabf65a14333a0f97598cf8293305a666d",
+    "../draft3-requirements.md": "17a52993870327f41439b89a982349044d67fe773889af62f16396d2d7407b1c",
+    "../specification-clarifications.md": "f72fdf24b326d5194c1d47dcd62984217f060a556384c26675f02982ff8f709c",
+    "../evidence/G03/targets.md": "79758b5f74edb4885c27e585f6b42cb4232ee3c1bf457778e1da16b8e20203a4"
+  },
+  "followupSource": "See artifact-manifest.json for current integrated source, published application and separately admitted runtime bindings.",
+  "remainingExecutable": [
+    "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open.",
+    "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
+    "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
+    "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral.",
+    "Assemble exact46-row checklist, source/runtime manifests, runnable local devnet instructions, current/expired hosted access, adopted defaults, no-replay journal references, USD500 ceiling/18:00shutdown/retained-state plan, and concrete resume entry. Carry specialist audit/network gates separately. No new test campaign."
+  ],
+  "updatedAt": "2026-10-19T12:51:09.607742+00:00",
+  "currentSourceNote": "Integrated6382a970; liveappbbcf43dc, original Bok durability deltaee973, separately admitted native/query/prover source5ebeff1c with retained original runtime processes. SDK edge-cache repair is integrated but not published. Both ETH payments succeeded; private claims remain. Original Bok billing closed at finalized8528 with no output. Host18:00/endpoints18:05, reservation365/ceiling500.",
+  "accessibility_scope": {
+    "required": false,
+    "reason": "Owner removed all accessibility requirements for proof of concept on 19 October 2026 local time",
+    "authority": "execution/specification-clarifications.md",
+    "voiceover_prohibited": true
+  },
+  "engineeringTargetDisposition": {
+    "authenticated10kPosts": "retired unvalidated engineering assumption; not passed",
+    "authority": "Draft3 pages6/9 and execution/specification-clarifications.md",
+    "preserved": "Real nonempty authenticated reconstruction, measured cold/warm performance/cost and explicit layered C04 requirements."
+  },
+  "remainingJourneyObservationsOnce": [
+    {
+      "id": "J1",
+      "work": [
+        "D2",
+        "D3"
+      ],
+      "action": "Resume original Phantom ETH808d3091 and MetaMask ETH73520e90 payments to their private claims; retain original before-ack interruption and no-replay records."
+    },
+    {
+      "id": "J2",
+      "work": [
+        "D2",
+        "D4"
+      ],
+      "action": "Retain successful human actions; finish current withdrawal accounting and classify the four additional captured public transaction effects with actual observer topology. No human social replay needed."
+    },
+    {
+      "id": "J3",
+      "work": [
+        "D2",
+        "D4",
+        "D6"
+      ],
+      "action": "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral."
+    },
+    {
+      "id": "J4",
+      "work": [
+        "D5"
+      ],
+      "action": "Keep accepted ten-proof count/latency. Fill only absent complete cold/warm wallet readiness or final index freshness observation, using retained current journey measurements."
+    }
+  ],
+  "preparedBy": "controls_resume2 portable handover",
+  "proposalOnly": false,
+  "priorDispositionReviewer": "/root/reviewer_resume2",
+  "proposalReviewStatus": "Portable package pending independent review; underlying original evidence retains its own reviews and limitations.",
+  "adoptedBy": "lead-20261011",
+  "evidencePathBase": "Paths in evidenceRegistry and inputs are relative to this file. Nested paths inside unchanged evidence are historical operator references, not portable dependencies.",
+  "historicalInputBindings": {
+    "sourceDispositionSha256": "3fa5a110001b905ef47d45920bf47e555083afee1fa567a6acb1d9e57debfa84",
+    "meaning": "Previous input hashes describe the earlier disposition, not the current amended catalog. No evidence was relabelled.",
+    "inputs": {
+      "draft3-requirements.json": "797ee464bdb52539eb5d5c7a6d3865d2019c0254dd6ff8e6ecfab55fdecd7ca3",
+      "final-acceptance-remaining-20261018.json": "60d327c26d49952c3d2c67fe894a5065a04efd7fb409bd2c368e8ab3a1f04caf",
+      "final-requirement-disposition.json": "37e00685df32d8eaca3de709f6726e07c1b982cf000654d516626eb7f8b66a89"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+  "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "task_id": "G11-verified-publication-reply",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+      "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "task_id": "G11-verified-publication-reply",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='verified publication|published app links|successful answer|plain replies|connected private source|bounded .* exit|app workspace step-limit|balance failure during acceptance' plugins/test/model.test.mjs plugins/test/github.test.mjs",
+      "environment": "macOS Node24, existing agent component fixtures; no chain/model/Docker",
+      "observed": "19passed,0failed,0skipped;149.9ms",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/verified-publication-reply-20261018/review.json",
+          "sha256": "23407fcdfc785b55569851959f3cd27ea02dca030bcd699cd8941605105bfd4f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+    "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+    "task_id": "G11-verified-publication-reply",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G11/verified-publication-reply-20261018/review.json",
+        "sha256": "23407fcdfc785b55569851959f3cd27ea02dca030bcd699cd8941605105bfd4f"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+      "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "task_id": "G11-verified-publication-reply",
+      "id": "RC29-trusted-completion",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/verified-publication-reply-20261018/review.json",
+          "sha256": "23407fcdfc785b55569851959f3cd27ea02dca030bcd699cd8941605105bfd4f"
+        }
+      ]
+    },
+    {
+      "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+      "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "task_id": "G11-verified-publication-reply",
+      "id": "RC31-verified-publication-links",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/verified-publication-reply-20261018/review.json",
+          "sha256": "23407fcdfc785b55569851959f3cd27ea02dca030bcd699cd8941605105bfd4f"
+        }
+      ]
+    }
+  ]
+}

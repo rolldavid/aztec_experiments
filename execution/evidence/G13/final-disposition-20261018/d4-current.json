@@ -1,0 +1,112 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+  "verdict": "source-bound partial D4 reconciliation; full observer acceptance remains open",
+  "authority": [
+    "Draft3 page6 explicitly requires observer/trust model, public transaction/note/nullifier/refund/name/like/follow/notification/Bok/index/recovery analysis; prover witness trust permitted; node/backend relationship-disclosing requests cannot be called private.",
+    "Owner clarification permits public Bok identity, not disclosure of the invoking human account."
+  ],
+  "sourceInventory": {
+    "billboard/rolling_contract/src/main.nr": {
+      "sha256": "7e3201dac1e7062ebb83c26ad05810cb4c1d86da84573a7975e6e6db2c505d14",
+      "unchangedFromPriorReasoning": false
+    },
+    "billboard/rolling_contract/src/posting.nr": {
+      "sha256": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+      "unchangedFromPriorReasoning": true
+    },
+    "experiments/private-bok/escrow/src/main.nr": {
+      "sha256": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260",
+      "unchangedFromPriorReasoning": true
+    },
+    "apps/rolling/reader.mjs": {
+      "sha256": "ca6034f8d13425e5d9b7d2ff4702f75af51fe98276760c7bf1cd8923596fbaf0",
+      "unchangedFromPriorReasoning": true
+    },
+    "apps/rolling/reader-client.mjs": {
+      "sha256": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+      "unchangedFromPriorReasoning": true
+    },
+    "apps/rolling/wallet-session.mjs": {
+      "sha256": "9b692aba6430fabce728e3ac0f3d9de113cea76aef662180790e65953ffd9ec4",
+      "unchangedFromPriorReasoning": true
+    },
+    "shared/rolling/application.mjs": {
+      "sha256": "97464b3849f092a396716ebac606349eb072096ca04a42a0ce19fbb942215e3d",
+      "unchangedFromPriorReasoning": false
+    },
+    "prover/private-query.mjs": {
+      "sha256": "f145924694617da04bb266e8ec784f9357f041f5fc36ddccc800715d01316439",
+      "unchangedFromPriorReasoning": true
+    }
+  },
+  "sourceDisposition": [
+    "Posting, PrivateBok, reader/client, wallet-session and gateway match prior privacy reasoning exactly. Main contract/application differences are public moderator transfer and empty saved-intent guard; inspected complete delta, no new human private routing path.",
+    "Current gateway permits only fixed loopback upstream, fresh content-type-only headers, no redirects/cookies/referrer; private client uses credentials omit/no-referrer/no-store. This prevents forwarding browser identity headers, not disclosure of account/tag arguments to trusted upstream.",
+    "Installed current node getContract delegates to contractDataSource, tag reads to logsSource, nullifier lookups to committed world-state. Factory constructs local archiver/world-state. Bootstrap starts this full node locally with public L1/consensus/blob/P2P sources; actual deployed configuration/source hashes are still needed to bind that architecture to the live service.",
+    "Public moderator previous/successor fields are intentional public authority, not private author mappings. Existing user notice discloses trusted prover/query visibility; no assurance from that notice itself."
+  ],
+  "retainedObservations": [
+    {
+      "packet": "G13/two-account-reader-20261018/nonempty-public-reader.json",
+      "accepted": "Two human accounts, two names each, distinct nonempty bookmarks; matching actual browser/server window10requests8feed, no configured private IDs.",
+      "limit": "Nonbookmark counts sampled early; no full-view/pagination/subscription/cryptographic claim."
+    },
+    {
+      "packet": "G13/two-account-reader-20261018/native-trusted-boundary-observation.json",
+      "accepted": "10128 completed fetch observations:8207trusted-upstream and1921public-L1; two actual account getContract scalar matches for human roles a/b.",
+      "limit": "45opaque transactions,27unknown methods,725receiver observer errors; native/undici/other-process coverage excluded. Cannot equate receiver counts to complete request coverage."
+    },
+    {
+      "packet": "G13/current-observer-20261018/reconciliation.json",
+      "accepted": "One human/two names,288fetches;285trusted,2public-node preflights,1uniform feed. Positive trusted account lookup and private-tag/nullifier methods retained.",
+      "limit": "No complete ingress/full-body/real-proof capture. Bok operator is not second human."
+    },
+    {
+      "packet": ".build/reviewer-evidence/moderator-rotation/review-controlled-query-observation.json",
+      "accepted": "Later exact argument forwarding and marker/cookie/auth stripping across query/upstream observed; hooks restored.",
+      "limit": "Operator/successor roles, both explicitnull outputs;12fetches4unsupported. Not human unlinkability or account existence."
+    },
+    {
+      "packet": "G13/current-observer-20261018/public-effects.json",
+      "accepted": "Production decoder authenticated six retained transactions: four preference transactions no decoded app events, Garden reply/finish three public events without exact human scalar in decodedpayload. Procedure inspected directly.",
+      "limit": "Procedure serializes only decoded payload keys/match counts. No retained full calldata/nullifier/commitment/tag absence claim."
+    },
+    {
+      "packet": "T03/qualification-049.md",
+      "accepted": "Retain historical genuine two-author three-post shared-payer comparison and no repeated nonzero commitments/nullifiers/tags in inspected SDK fields.",
+      "limit": "Historical contract/runtime/source scope, not current Rolling names/preferences/Bok proof acceptance. No new full proof campaign warranted solely to repeat it."
+    }
+  ],
+  "remainingCases": [
+    {
+      "id": "D4-topology",
+      "needed": "Bind actual running query/prover/native-fullnode/archive configuration and fixed upstream identity to final source. Confirm no account/tag cache-miss delegation to independently operated nodes. Include frontend/CDN and operator processors in disclosed trust boundary.",
+      "execution": "Read existing deployment/config/transport records; capture only missing receiver boundary when healthy. No extra service restart proposed."
+    },
+    {
+      "id": "D4-receiver",
+      "needed": "Account for725observer errors,27unknown methods and opaque request categories; no negative claim for unobserved fields. Missing required human read/recovery/name/Bok-accounting pagination/subscription categories need narrow actual capture, not replay of passed publicreaderwindow.",
+      "execution": "Reuse existing observation hooks and frozen transport inventory; no new framework."
+    },
+    {
+      "id": "D4-public-effects",
+      "needed": "Current authenticated named/anonymous/same-human-cross-name/second-human effects must classify public calls/calldata, sharedfee/refund fields, note commitments/nullifiers/tags and L1 funding/Bokrequest links, rather than only decoded app events.",
+      "execution": "Use retained full effect data where available, or capture during required D2 actions. If full raw effects were not retained from a stopped chain, retain that evidence gap; do not invent reauthentication."
+    },
+    {
+      "id": "D4-proof",
+      "needed": "Witness proof-job boundary and final current testnet cryptographic path remain D2 plus independent specialistX1; local proof-disabled observations cannot close them.",
+      "execution": "Capture alongside required real-proof acceptance, not another paid model/proof campaign."
+    }
+  ],
+  "newConcretePrivacyLeakDemonstrated": false,
+  "notClaimed": [
+    "Cryptographic unlinkability",
+    "Anonymity against trusted prover/query operators",
+    "No IP/content/timing/unique amount correlations",
+    "Complete network inventory from fetch interception"
+  ],
+  "actions": "Read-only source/PDF/retained-evidence reconciliation; no requests, secrets, services, tests, model/proof/financial actions.",
+  "at": "2026-10-18T20:25:34.293032+00:00"
+}

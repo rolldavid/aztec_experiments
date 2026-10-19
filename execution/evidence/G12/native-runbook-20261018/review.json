@@ -1,0 +1,52 @@
+{
+  "revision": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+  "baseRevision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approved",
+  "sourceVerdict": "approved",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": [
+    "RC36",
+    "RC38",
+    "G12-A05",
+    "G12-native-runbook"
+  ],
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='current development defaults|development flags reject|selected state and separate|default development directories' plugins/devnet/operator-test.mjs",
+      "outcome": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 2841.41525
+      },
+      "evidence": "focused.log"
+    },
+    {
+      "command": "git diff --check 0fd3683e..03acd93e -- docs/rolling-deployment.md",
+      "outcome": "passed"
+    }
+  ],
+  "review": [
+    "Read exact doc-only diff and current start/network/bootstrap lifecycle. Default Rolling profile and UUID directory, explicit ports, proof-env rejection, private canonical directory admission and rejection of old network/cache/journals match implementation.",
+    "Native SDK startAnvil/createLocalNetwork, realProofs:false, native node mining/proving, 6000ms block geometry and query1800/server600 configuration match source and installed SDK gas-capacity comment. PXE flags remain configuration; no claim of application proof bypass.",
+    "Runbook now correctly removes stopped-chain reopening, persistent snapshots/rotation and idle clock claims. Reusing a healthy live scope and preserving original unresolved state are consistent with current implementation. New invocation requires new scope.",
+    "Cleanup order corresponds to startDevelopment and bootstrap/network ownership. Failure record/retained lease behavior and stopped native record are accurately distinguished; terminal/laptop sleep is not represented as autonomous recovery.",
+    "Ready effect/Outbox witness verification and finality state observation match native helpers; no elapsed-time success or resubmission instruction added. Production/testnet real-proof, independent audit, network clearance and14-day qualification gates remain."
+  ],
+  "limitations": [
+    "Documentation/configuration review only; no service launch/stop, deployment, Docker, model or live chain operation.",
+    "No new independent installation, production backup/restore or same-chain restart qualification. The native runner intentionally does not support stopped-chain reopening."
+  ],
+  "sourceHashes": {
+    "docs/rolling-deployment.md": "63e86634817f29caa55cb1df00a74ca682df9141f35debcd56c20b0f185f95ba",
+    "plugins/devnet/start.mjs": "b8c0c92fc1f0fb7f2b8724564fa25c2ecd22c43696c6a35a8408061c2c6c44ab",
+    "plugins/devnet/network.mjs": "adb1ecb65eca305bdcabff1b535a5e7fbc16509b147cad268e9b53165b2e5a53",
+    "plugins/devnet/bootstrap.mjs": "eb31a0750e8ed6c282a77d8a0471089a6fa08dbafc9eaf4d9b0900c48f110c9f"
+  },
+  "evidenceHashes": {
+    "focused.log": "e5a716bfbba1cc9ad4ed08dc1b29f55ef88283b5451345c9b0426ffe77730a62"
+  }
+}

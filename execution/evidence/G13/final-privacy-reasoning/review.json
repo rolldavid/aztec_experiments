@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T16:48:33.070921+00:00",
+  "applicationRevision": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "deploymentCandidate": "95cf33a6002d3e7f9b5343d87d0e5bb51c87394f",
+  "verdict": "source_bound_reasoning_and_capture_requirements; full_RC23_RC25_acceptance_not_established",
+  "scope": "Read-only existing source/evidence; no tests, services, account access, wallet operations or chain actions.",
+  "sourceHashes": {
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+    "experiments/private-bok/escrow/src/main.nr": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260",
+    "apps/rolling/reader.mjs": "ca6034f8d13425e5d9b7d2ff4702f75af51fe98276760c7bf1cd8923596fbaf0",
+    "apps/rolling/reader-client.mjs": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+    "apps/rolling/wallet-session.mjs": "9b692aba6430fabce728e3ac0f3d9de113cea76aef662180790e65953ffd9ec4",
+    "shared/rolling/application.mjs": "53762dfc457de3960b4d5445733c771a2479b410ad82f5f6ad3484a771d35d78",
+    "prover/private-query.mjs": "f145924694617da04bb266e8ec784f9357f041f5fc36ddccc800715d01316439"
+  },
+  "supportedFindings": [
+    "RollingBoard register_name retains ownership in Owned private notes and enqueues only selected name components; _assert_name_owner privately consumes/recreates ownership. Public profiles intentionally refer to one selected name. No public account-to-name list in inspected paths.",
+    "PostDraft/PostRecord expose public content/name/thread/reference/policy; anonymous name_id=0. post/post_with_bok privately enforce ownership/admission. _publish enqueues callback on_invocation(Field,Field) with request ID and derived invocation hash, not human address. Public Bok identity and linked reply/request accounting are permitted.",
+    "PrivateBok uses fixed Owned private balances/control notes, fresh salted domain-bound recipient commitment for L1 credit and two distinct partial refund channels. Public Request/accounting has request target/budget/state/refund commitments, not human owner. Legacy plugin_adapter still has account callback but is not the selected Rolling PrivateBok implementation; deployment artifact/config binding remains essential.",
+    "Per-post like tag includes authenticated NHK and post/chain/version/board domain, so repeated like/unlike on one post is intentionally linkable; no same-tag cross-post construction. Preferences emit encrypted owner delivery rather than decoded public preference events. These source observations do not analyze every protocol commitment/ciphertext.",
+    "Public reader transports only closed GET routes with credentials omitted; private Home alternatives use uniform feed then local filtering. ownedIdentities reads private records through scoped PXE. Bok status scans all public accounting pages then intersects owned request IDs locally. Public profile/thread fetches expose public interest, not a claim of ownership.",
+    "Session constructs PXE and wallet with the same branded trusted node and verifies bindings; private-query forwards admitted payloads to fixed loopback upstream with new headers/no redirects and does not hide lookup arguments from that upstream."
+  ],
+  "evidenceLimits": [
+    "G13/current-observer-20261018: one human with two names, public Bok operator not second human;288requests,285trusted,2public-node preflights(public board getContract and getNodeInfo),1feed; explicit requestCoverageComplete=false and opaque simulation. Trusted getContract has positive human-address match.",
+    "G13/browser-privacy-20261018: four actual browser public requests and actual headers;3uniform feed+1board, no exact known address matches. One human, no service-side/upstream observation, no write/proof/model traffic. Invalid cross-realm capture retained separately.",
+    "Existing decoded public-effects packet reauthenticated6original txs but absence scope is decoded application event fields:4preference txs no such events,3Bok reply/finish events. Ciphertexts, note hashes, nullifiers, calldata/public execution requests and statistical correlations are not covered by that negative claim."
+  ],
+  "requiredBoundedCaptureCategories": [
+    "Two real human accounts with distinct owned identities and private preferences, same public checkpoint/route/limit/cursor conditions. Record actor identity only as local role labels/HMAC tokens, not raw secrets. Distinguish same-account cross-name actions from cross-account actions.",
+    "Public backend: actual browser URL/method/query/body/headers (including Cookie/Authorization/Referer), cold and warm private views/recovery, owned-name load, selected profile, uniform Bok accounting. Include all pages, early-stop behavior and subscription/WebSocket/EventSource attempts. Separate intentionally public profile/thread interest from automatic owned-name/list disclosure.",
+    "Trusted query/proof: categorize destination/method/argument shapes and known-role/name/request/preference matches, including account getContract, private-log tags, nullifier/note witnesses, serialized simulate/sendTx and witness jobs when actually exercised. Mark opaque/unparsed payloads as incomplete, not absent.",
+    "Gateway and upstream boundary: use existing receiver/transport observation at authorized deployment start or retained exact topology/config evidence to reconcile where personalized requests terminate. Ordinary independent public node/archive providers must receive only public sync data, never account/tag/list lookup misses. Co-located loopback alone does not prove every external fallback path. No extra service restart requested by this review.",
+    "Public effects: for retained same-human/different-name/anonymous and second-human transactions inspect authenticated full public calls/calldata, storage/events, fee payer, note commitments, nullifiers, delivery tags and L1 funding/withdrawal/request fields. Classify repeated values and intended per-name/per-post/request links; zero exact scalar matches alone cannot establish cryptographic unlinkability."
+  ],
+  "blockersAndQualification": [
+    "No newly demonstrated plaintext public-owner leak in inspected current application paths. Actual positive trusted lookup is within declared trusted-node/prover boundary only if deployed upstream shares that explicitly disclosed trust; an independently operated node receiving it remains a concrete requirement failure. Witness trust does not turn every external backend into a trusted witness processor.",
+    "Two-account public-only read observation can close a narrow RC25 request-shape check, not G13-A03 complete cryptographic unlinkability. Real-proof/source-provenance and independent specialist cryptographic review remain separately required; local proofs-disabled samples cannot qualify cryptographic acceptance.",
+    "Retain disclosed IP/session/timing/content/unique funding amount and same-name correlations. They limit practical anonymity and must not be mislabeled protocol owner mappings. No assurance against global network/content observers."
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "revision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "single-fixture summary measurement accepted",
+  "scope": [
+    "RC30",
+    "Predeclared public summary quality/cost/latency measurement"
+  ],
+  "findings": [],
+  "criteria": [
+    {
+      "id": "instructions",
+      "passed": true,
+      "observation": "Keep app.ts and revision abc123 remain explicit."
+    },
+    {
+      "id": "decisions",
+      "passed": true,
+      "observation": "Keep blue remains the decision."
+    },
+    {
+      "id": "unresolved",
+      "passed": true,
+      "observation": "Add tests is explicitly unresolved, not completed."
+    },
+    {
+      "id": "repositoryReferences",
+      "passed": true,
+      "observation": "Exact app.ts and abc123 strings preserved."
+    }
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node .build/reviewer-evidence/current-summary-measurement/verify.mjs",
+      "outcome": "Local saved-evidence validation passed; exact fixture source hash, immutable input hash, prior-message equality/latest exclusion, received output parity, usage charge and receipt recomputed. No provider requests.",
+      "evidence": "observations.json"
+    }
+  ],
+  "review": [
+    "Read public prior messages and predeclared criteria before actual output/implementer assessment. Output preserves all four criteria; no invented completed work. Earlier Bok results correctly labelled not specified.",
+    "One exclusive intent file precedes the single provider.execute call; pre-existing intent prevents re-entry, exclusive file creation prevents competing calls, and failure persists an uncertain outcome without replay. Reviewed provider transport has no automatic spending retry. One received provider ID/response and corresponding receipt are recorded.",
+    "247 input tokens,72 output,0 cached: ceil((247*150000000+72*750000000)/1e9)=92 microUSDC. Existing validator recomputes receipt hash. Identical-token main pricing computes391 microUSDC. All summary token rates are lower than recorded main rates.",
+    "Measured provider duration2891.905333ms; latest sentinel excluded from both provider input and output. Receipt and output saved before quality interpretation. Auto-topup false, one-call operation ceiling25000 microUSDC; reserved maximum20100. No main-model comparison call or chain transaction.",
+    "Prepared fixture file still labels the old quote-ceiling blocker; later exclusive intent and received record establish successful authorized measurement. This stale preparation label is not treated as current status."
+  ],
+  "limitations": [
+    "Single short public fixture, not statistical summary-quality qualification or full main-model application journey.",
+    "391 microUSDC comparison uses identical-token arithmetic at recorded rates, not a second paid call. No relative main-model latency claim.",
+    "92 microUSDC is rounded application accounting; quoted unrounded usage91.05 microUSD and reported provider balance reduction91.04 microUSD are not asserted identical.",
+    "One-call conclusion is source/intent/received-record evidence, not independent access to a full provider-side request ledger. No new model, infrastructure, topup or chain operation performed."
+  ],
+  "evidenceHashes": {
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-fixture.json": "040b596a55d8d41641a827c8615b0f0b837804c623a52edca4d8231458c52ac1",
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-measurement-intent.json": "5b093e68003826daee6937a58edf19bf2be2a8b0fa0ba86bcc65ee29d01e3feb",
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-measurement-received.json": "0f1efca0689613820b006bd4fa0a7641ab3310bd6584f8d9bfb35ffc9f4ba1c0",
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-measurement-public.json": "ef60e2dba68ecdae1717777a9baabeec49e8084143dc000bfe4dfb7d7e0ca8e3",
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-quality-assessment.json": "53980d28b10edee7b504a9722e5ac4147b4a16f446ebac5ff6ab99425594735e",
+    "../rolling-bok-recovery/.build/g10-current-acceptance-gap/summary-measurement.mjs": "f73380b03c1c0b4cfaf5a5bf2ada86726c282eb268b6266a227177d295ad9ea6",
+    ".build/reviewer-evidence/current-summary-measurement/verify.mjs": "76715e094dfca1ae75f6323f3b8851c28a75166a43abcbce4d1dca8cabb2bd3d",
+    ".build/reviewer-evidence/current-summary-measurement/observations.json": "9296e57150d0b02a6362f41aec964df9bc55309d6b6df2407dd8b686f1fe0d18",
+    ".build/reviewer-evidence/current-summary-measurement/focused.log": "2570025cd36a6f51f24375af4d92f201df1c1e9295d3506f044a4b6a1bb0dae5"
+  }
+}

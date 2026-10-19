@@ -1,0 +1,53 @@
+{
+  "reviewer": "reviewer_20261018",
+  "revision": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "task": "G09-current-moderation-acceptance",
+  "requirements": [
+    "RC04",
+    "RC12",
+    "RC13",
+    "RC39"
+  ],
+  "verdict": "approved_for_scoped_moderation_model_policy_and_historical_carryforward",
+  "blockingFindings": [],
+  "checks": [
+    {
+      "procedure": "Inspect production moderation union and model driver/recorded inputs before conclusions; verify12 current packet evidence hashes",
+      "outcome": "PASS: three predeclared public-text cases,four genuine local model calls, all expected. Threat rejected by main rule before hostile local override is considered; neutral evaluated under both. Role labels are not model inputs or separate onchain actors."
+    },
+    {
+      "procedure": "Independently git-show historical4f6 and final477096 SHA256 for46 listed tree entries, plus three historical evidence packet hashes",
+      "outcome": "PASS. Includes unchanged Rolling contract and four moderation execution modules; count46 also contains documentation/tests/logs and must not be advertised as46 independent runtime modules."
+    },
+    {
+      "procedure": "Readonly installed SDK receipts, full-block effects, production decoder and repeated canonical block checks for95/96/97",
+      "outcome": "PASS: private fee claim95 succeeded; policy96 version2 exact text and digest; policy97 version3 restores No threats. Both authentic policy events retain canonical identities.",
+      "evidence": "canonical-observations.json"
+    },
+    {
+      "procedure": "Readonly Ethereum eth_getTransactionReceipt/eth_getBlockByNumber for recorded local funding transaction",
+      "outcome": "PASS: success at281 with transaction included in canonical block.",
+      "evidence": "l1-funding-observation.json"
+    }
+  ],
+  "qualifiedScope": [
+    "Current local production evaluator enforces main-rule priority for the bounded threat/neutral fixture. Local hostile text does not relax main rules. Four calls are model observations, not a complete corpus or role-authentication test.",
+    "Current policy publication through lead-observed normal moderator UI is independently corroborated by canonical version2 then version3 events. Version2 text is No threats. Do not publish outdated budget estimates.; version3 text is No threats. Original immutable publication version remains historical.",
+    "Genuine local operator private fee funding is corroborated by successful canonical L1 deposit and L2 claim. Driver uses existing fee helper, private balance simulation and native disabled proofs, with exclusive intent and retained send identity; no replay by reviewer.",
+    "Historical4f6 authentic fixed-content Bok/human removals, timely penalty and private screening/withdrawal/refund remain valid scoped evidence of unchanged contract/moderator code. Late human/Bok removals correctly had no penalty; timely human removal15s inside60s carried one flag/k2; later separate L1 refund packet confirms original depositor/amount/liabilities and repeat rejection."
+  ],
+  "limits": [
+    "Historical chain unavailable: original receipts were not reread now; retained canonical packets/hashes reviewed. No silent transfer of old withdrawal evidence to later browser-wallet/native SDK whole journey.",
+    "Current authenticated Bok post read is not a new removal. Historical authentic Bok reply was fixed content, not a fresh paid model-generated moderation case. Current text fixtures only label roles and use identical public text; claim semantic parity at evaluator boundary, not two new onchain removals.",
+    "Hostile local rules were not submitted to an onchain subboard. This qualifies bounded production union evaluation, not the entire adversarial subboard/moderator transaction journey.",
+    "Native node/PXE proofs disabled, local signer funding; no authentic external Ethereum wallet or real-proof testnet acceptance.",
+    "Lead observed displayed current policy requires reload after confirmation. This report establishes canonical publication/restoration, not automatic UI refresh latency. Keep freshness/UI disposition visible.",
+    "Full model corpus/quality/capacity, privacy observers, specialist audit, soak and release clearance remain separate."
+  ],
+  "reviewerActions": "Read-only source/evidence and canonical queries only; no models, transactions, builds, services or private credential files. Initial text display used wrong maximum-byte argument; corrected to992 using exported signature, final decoder/receipt checks passed.",
+  "evidenceHashes": {
+    "canonical-observations.json": "b0ba934b01d38edf39fad0b333ceca9018846af633094a2ce406ad304d65f8fa",
+    "l1-funding-observation.json": "0b89602092c1953d71f2daee9866c0f7fd2758e3f460c5f67c5a71c392d19e36"
+  },
+  "packetHash": "06d20cfbf1bf58d6768123947f8c9bde17515dcec1c73e0baad1fc2dc2f9707d"
+}

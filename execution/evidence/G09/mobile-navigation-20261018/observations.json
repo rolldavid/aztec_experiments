@@ -1,0 +1,26 @@
+{
+  "source": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "at": "2026-10-18T11:09:30.242240+00:00",
+  "environment": "Actual running IAB local application; native disabled-proof devnet89",
+  "viewport": {
+    "requestedWidth": 390,
+    "height": 844,
+    "actualWindowWidth": 390,
+    "documentClientWidth": 375,
+    "documentScrollWidth": 375
+  },
+  "checks": [
+    "No horizontal document overflow",
+    "Mobile menu moves focus into navigation",
+    "Directory link closes menu and focuses page heading",
+    "Search Garden returns only matching Garden notes subboard",
+    "Board renders clear empty state",
+    "Expanded rules show current parent v1 plus immutable local rules",
+    "Escape closes menu and restores Open navigation focus",
+    "Viewport reset after verification"
+  ],
+  "limitations": [
+    "Focused navigation/search/policy/empty-state inspection, not full mobile authoring or assistive-technology qualification"
+  ],
+  "screenshot": "rules.png"
+}

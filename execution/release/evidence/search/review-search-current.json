@@ -1,0 +1,63 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "verdict": "approved-scoped-search-measurement",
+  "sourceRevision": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "applicableRevision": "d976d254aa9dd09d0ff3016cf573de9215d8b15d",
+  "requirement": "RC40 predeclared search latency, scoped directory interaction",
+  "targetMs": 500,
+  "measurementExecutedAt": "2026-10-18T19:31:31.810899+00:00",
+  "targetDecisionAt": "2026-10-18T19:29:42.634518+00:00",
+  "samples": [
+    {
+      "viewport": 1280,
+      "temperature": "cold",
+      "submitToVisibleMs": 39.69999998807907,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 1280,
+      "temperature": "warm",
+      "submitToVisibleMs": 43.69999998807907,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 390,
+      "temperature": "cold",
+      "submitToVisibleMs": 36.40000003576279,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 390,
+      "temperature": "warm",
+      "submitToVisibleMs": 42.80000001192093,
+      "targetMs": 500,
+      "passed": true
+    }
+  ],
+  "checks": [
+    "Inspected exact executed narrowed browser call from retained private runtime history; no raw transcript copied.",
+    "Matched coordinator result byte-for-byte to original output.",
+    "Inspected actual b27-admitted server, its ready receipt and all six API request records; four query requests returned one matching row.",
+    "Actual capture-phase submit starts before route work; exact matching result and two animation frames determine completion. No debounce subtraction or response-only timing.",
+    "Target clarification predates actual measurement.",
+    "Relevant reader/start/SQLite source unchanged b27..d976; changed moderation ingestion and wallet controls are outside this synthetic search query path."
+  ],
+  "hashes": {
+    "serve-reader.mjs": "ffa1a51fe22840b2db89762b3d20f974c72ad3b196ff3073f8d598470e0587fb",
+    "browser-ready.json": "b62760759edd0648df6e4664832f99349847f06c3271573e5850a47b7641ccbd",
+    "browser-api-requests.jsonl": "a51ade38f4da1e406e84495c257049e17669aa1af1face4ff76c5272bdfc2123",
+    "search-result.json": "19c5712207b28cfdda03ae864aaf02cc06a69e2cceec60bea2ee1604411a59c1"
+  },
+  "limits": [
+    "One cold/warm sample each viewport, not percentile.",
+    "Fresh context and HTTP cache clear/disable; OS/SQLite remain warm.",
+    "Synthetic unauthenticated dataset; not a complete D5 or chain/RPC qualification.",
+    "Height was 900 for both measured viewport widths; no narrower device claim.",
+    "Render timing is two animation-frame opportunities, not physical paint instrumentation."
+  ],
+  "procedure": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/performance/search-current-procedure.md",
+  "reviewedAt": "2026-10-18T19:45:52.081052+00:00"
+}

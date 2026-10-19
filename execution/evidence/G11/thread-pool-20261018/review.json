@@ -1,0 +1,59 @@
+{
+  "revision": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+  "baseRevision": "519b0b072a51b019f8d5cec26ec842c2e08118be",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": "G11-preprovisioned-thread-repositories RC29/RC31/RC32",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-concurrency=1 --test-name-pattern='pool|allocation|thread admission|existing entered|accepted.*recovery|recovered reply|trusted accepted reply' plugins/test/github-app-broker.test.mjs plugins/test/hosted-private-bok.test.mjs plugins/test/thread-repositories.test.mjs plugins/test/static-publication.test.mjs",
+      "outcome": "46passed,0failed,0skipped;16736ms",
+      "evidence": "focused.log"
+    },
+    {
+      "command": "git diff --check 519b0b07..8c70150d; git status --short",
+      "outcome": "pass;clean,8authorizedpaths"
+    },
+    {
+      "procedure": "Independent gh GET commit/tree/ref/metadata/Actions plus local accepted source SHA256/Git blob hashes",
+      "outcome": "3exact accepted revisions in2unique repositories, parent chain and13file entries verified; all4slots private/Actions disabled,2remaining genesis",
+      "evidence": "remote-readback.json"
+    }
+  ],
+  "review": [
+    "Inspected changed source and tests before worker conclusions. Pool authority is explicit and append-only; fresh slots require selected numeric App token, owner/private/marker/genesis identity and Actions disabled. Connected and legacy repository identities cannot be adopted into pool.",
+    "Single owned broker operation persists allocation before acknowledgement; restart/lost acknowledgement retains it. Concurrent reservations cannot allocate same slot. Pool exhaustion occurs before hosted running intent or any paid provider call, including summary; later replenishment does not revive already-entered running requests.",
+    "New writes require disabled Actions; token scope remains one slot and minimum read/write permissions for each capability. No developer credentials or repository-creation/settings operations are exposed to the generated-code tool surface.",
+    "Uncertain Git mutations reconcile only exact existing objects/ref; no replay on missing response. Nonforced head predecessor checks remain. Pool publication supports512file bound with corresponding1064request ceiling;120soverall/8sper-request remain.",
+    "Existing exact accepted-revision recovery, terminal accounting fence and retained-artifact verification were included in focused checks. Original checks were extended without removing core assertions.",
+    "Inspected controlled real transport driver and initial/update traces. Separate processes79660/80001 preserved allocations and updated only first thread revision; no model/chain APIs in driver. Existing accepted source journals remain exact hash-equal. Independent remote readback confirms commit parents, all source blob hashes, unique heads and unused genesis slots."
+  ],
+  "limitations": [
+    "Real transport qualifies selected-App allocation/mirroring/restart using previously accepted source; it is not a fresh complete model/onchain journey or proof acceptance.",
+    "Finite pool requires operator replenishment. Qualification state and used slots must remain preserved; lead confirmed live service will admit only untouched1420006279/1420006365 rather than reuse qualification slots.",
+    "No full product/privacy-specialist/soak or release certification. Normal integration gate remains required."
+  ],
+  "sourceHashes": {
+    "plugins/DEPLOYMENT.md": "d94163626b5ef9e0057ee449723a4a2332c7042e4c978ed2212da13526880d3e",
+    "plugins/escrow-service.mjs": "aa80cd10af3016f5bf34d72a3602b70f0858b89808b796b0c892d98b5b6ce74c",
+    "plugins/github-app-broker.mjs": "7343366a78c90968437123906ee0ab760d2a48475198204004b0bb898adc6719",
+    "plugins/main.mjs": "cb3ae2e3c351fb58ad41b6acb5e7c7affcf6170f8a783c724d2aaaa9dc4d7bd0",
+    "plugins/test/github-app-broker.test.mjs": "f26d38404f53a3f68e0359b93123dea6176252fbffb697af01b89c524284dade",
+    "plugins/test/hosted-private-bok.test.mjs": "6e1b07e203274c09e2da0274a1e74669b1fb8a7cdc7a5439ceb0479a5dcb035c",
+    "plugins/test/thread-repositories.test.mjs": "7b22366b136da1a092243e1db00fe2df6b4f53b30810a68a35e832976f94fcd0",
+    "plugins/thread-repositories.mjs": "be799621b93a96e322375ea11beec0fe58c04a75ef73bc220ed6319e7842389d"
+  },
+  "evidence": {
+    "focused.log": "1f86d05e7501248f08b040039024baa6dc3fabcf542679837084dcf8133c8f17",
+    "remote-readback.json": "2f5b5a429ba7dc254f3164ff390bd5e7147afb4e1fc3a8a0bd0bcaa17d33b8a0",
+    "../aztec_experiments/.build/g11-repository-pool/transport-initial-result.json": "a21cffcfa8e1ec392b80fab9b10d3e3200f414c0f95baa6ff8d1d738e8f96df7",
+    "../aztec_experiments/.build/g11-repository-pool/transport-update-result.json": "188bb1fc0a80f60340eb212a2f8125effdd70f5d88156a182328a550c1a9bbe1",
+    "../aztec_experiments/.build/g11-repository-pool/remote-verified.json": "d68a5b497613f2345440f19d3e9f7bb61031188525ef46dffe1ae61fee960c8d",
+    "../aztec_experiments/.build/g11-repository-pool/transport.mjs": "f220d3b3aa40eaa598619d9af5b01b595e8078ff7e195d4cc7e9f422d8b30ae5",
+    "../aztec_experiments/.build/g11-repository-pool/verify-transport.mjs": "383ae01643f3ed03cd217a6bfddf9861549678ad9749a41bdb2ae3f26c0f4a42"
+  }
+}

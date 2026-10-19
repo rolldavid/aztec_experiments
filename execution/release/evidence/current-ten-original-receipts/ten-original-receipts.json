@@ -1,0 +1,126 @@
+{
+  "observedAt": "2026-10-19T08:19:43.360Z",
+  "scope": "One finite native SDK receipt observation for ten captured original transactions; no send/proof/finality waiter",
+  "receipts": [
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x1f8b33ad21f8ef4a3982588fc9b2a2579b01cf980cfe5696c4ac53225f32a598",
+      "receipt": {
+        "txHash": "0x1f8b33ad21f8ef4a3982588fc9b2a2579b01cf980cfe5696c4ac53225f32a598",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 8217,
+        "blockHash": "0x10537dc0098b3d8a94b04c0e34d854b73d15bdfec2f17f7d157c1e86f3302078",
+        "transactionFee": "1274481453917000000"
+      }
+    },
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x0aa3995a5379205f2b25ce399a2ecb514e33e94ecf304950829326c1b7b6f255",
+      "receipt": {
+        "txHash": "0x0aa3995a5379205f2b25ce399a2ecb514e33e94ecf304950829326c1b7b6f255",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 8227,
+        "blockHash": "0x2d1a9c7727cd75da333f459ff093cce3902e8152bbce87fce7197b71d61009a7",
+        "transactionFee": "1334853963576600000"
+      }
+    },
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x199c4581bfe930130a2e6a7a18c035a1c55ae96efccf0808341f18a17f75e53f",
+      "receipt": {
+        "txHash": "0x199c4581bfe930130a2e6a7a18c035a1c55ae96efccf0808341f18a17f75e53f",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 8292,
+        "blockHash": "0x218a3021aa65d8aec9305160f0ca87b91fa514a94898c9b19076230adced424f",
+        "transactionFee": "2777296694367400000"
+      }
+    },
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x2db5cd358411fe764fe6e043b7d6c818081bfbdfc55e4e56a14b2d8dd1cce9a4",
+      "receipt": {
+        "txHash": "0x2db5cd358411fe764fe6e043b7d6c818081bfbdfc55e4e56a14b2d8dd1cce9a4",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 8307,
+        "blockHash": "0x29c2f922c7e5d40285cf9e328b3cbe09bfc8fe59af73cb9240e89d9759ee9781",
+        "transactionFee": "2751219190195000000"
+      }
+    },
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x15343fe6862c7b628c5e733df940b2fc00b0435a6f0c0fcced90cb351c0fdf10",
+      "receipt": {
+        "txHash": "0x15343fe6862c7b628c5e733df940b2fc00b0435a6f0c0fcced90cb351c0fdf10",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 8314,
+        "blockHash": "0x2e45348d8470dbcc6f92c036b872a7a737a359a9c70e5cdececf871829ecb563",
+        "transactionFee": "1784161535465800000"
+      }
+    },
+    {
+      "wallet": "metamask-acceptance-20261019",
+      "hash": "0x29e2e5433ea2d383f485ad606ad88377b427118d4eeaf9c9618cf5b934bab353",
+      "receipt": {
+        "txHash": "0x29e2e5433ea2d383f485ad606ad88377b427118d4eeaf9c9618cf5b934bab353",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 8330,
+        "blockHash": "0x0f60986ebcf750f0942f3dea4adf4630335d2c1e02f483ad966be62b76415b0a",
+        "transactionFee": "3794749357159800000"
+      }
+    },
+    {
+      "wallet": "phantom-acceptance-20261019",
+      "hash": "0x21531e9250ce84033ac59568760fab20c7e5218f833d10f247547f0245919975",
+      "receipt": {
+        "txHash": "0x21531e9250ce84033ac59568760fab20c7e5218f833d10f247547f0245919975",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 8291,
+        "blockHash": "0x0ddc70ce4ce309cc34726d7f5cd4d95d2ccdfb371992ddae5f3581213b6a63f4",
+        "transactionFee": "1274481453917000000"
+      }
+    },
+    {
+      "wallet": "phantom-acceptance-20261019",
+      "hash": "0x2a6df998391ac4361ef8cdf9f1c58201f9392cdc79daefd6bee6472574549a1e",
+      "receipt": {
+        "txHash": "0x2a6df998391ac4361ef8cdf9f1c58201f9392cdc79daefd6bee6472574549a1e",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 8297,
+        "blockHash": "0x1730777ff3fad52c66f817033350ff5fd28e372e83f049336bac259546f71201",
+        "transactionFee": "1334853963576600000"
+      }
+    },
+    {
+      "wallet": "phantom-acceptance-20261019",
+      "hash": "0x2e720651a9992a63cfb55d6062a9648d108b200c11971ccd62496010bf97be00",
+      "receipt": {
+        "txHash": "0x2e720651a9992a63cfb55d6062a9648d108b200c11971ccd62496010bf97be00",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 8312,
+        "blockHash": "0x11e8345d2e1579527ee2b8c8fccb6887e1de8c0a9fb98ad5b89767238581f75c",
+        "transactionFee": "2652824174451800000"
+      }
+    },
+    {
+      "wallet": "phantom-acceptance-20261019",
+      "hash": "0x08d993586ce6597a0e71672fa3725c1cb3d9e1915671caf32232fd72af10cfeb",
+      "receipt": {
+        "txHash": "0x08d993586ce6597a0e71672fa3725c1cb3d9e1915671caf32232fd72af10cfeb",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 8331,
+        "blockHash": "0x298fed43f55b2732e005ffbe3190ae7f94af46a4e2bae263d6ca04024b8ed41e",
+        "transactionFee": "1024221413875400000"
+      }
+    }
+  ]
+}
