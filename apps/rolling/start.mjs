@@ -84,10 +84,11 @@ export function createRollingReaderAssetHandler(wallet){
      }
     }
    }
+   // Only hash-verified, account-independent SDK bytes may be shared by an edge cache.
    const outgoing=req.method==='HEAD'?0:body.length;
    if(responseBytes+outgoing>MAX_RESPONSE_BYTES){res.setHeader('Retry-After','1');reply(503);return;}
    responseBytes+=outgoing;
-   const response=sendAsset(res,200,{...selectedHeaders,...(pinned?{'Cache-Control':'private, max-age=31536000, immutable'}:{}),'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
+   const response=sendAsset(res,200,{...selectedHeaders,...(pinned?{'Cache-Control':`${url.pathname==='/wallet/aztec_bundle.js'?'public':'private'}, max-age=31536000, immutable`}:{}),'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
    // The read/compressor has finished. Response bytes remain owned until the
    // socket finishes/closes/errors; elapsed transfer time does not truncate assets.
    release();released=true;await response;return;
