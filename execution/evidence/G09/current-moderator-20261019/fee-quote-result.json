@@ -1,0 +1,36 @@
+{
+  "CommandId": "bf93b16c-b0e0-4986-adf6-51bc781207ba",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Read native SDK default moderator fee ceiling and public balance; no proof or transaction",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T21:15:19.744Z",
+  "ExecutionElapsedTime": "PT1.254S",
+  "ExecutionEndDateTime": "2026-10-19T21:15:20.744Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"nativeSdk\":\"6.0.0-rc.3\",\"method\":\"BaseWallet.completeFeeOptions\",\"maximumFee\":\"13923754136387220000\",\"configuredCeiling\":\"2000000000000000000\",\"balance\":\"39965588394494400000\",\"capFits\":false,\"balanceFits\":true,\"gasLimits\":{\"daGas\":117624,\"l2Gas\":6540000},\"maxFeesPerGas\":{\"feePerDaGas\":\"0\",\"feePerL2Gas\":\"2129014393943\"}}\n\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "6e66116e-f702-40fe-a322-578fe1cd54dc",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 21:15:30 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1039",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "6e66116e-f702-40fe-a322-578fe1cd54dc",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

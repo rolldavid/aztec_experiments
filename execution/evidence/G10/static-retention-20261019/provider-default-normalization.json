@@ -1,0 +1,6 @@
+{
+  "field": "Origins.Items[0].S3OriginConfig.OriginReadTimeout",
+  "providerAddedValue": 30,
+  "allOtherConfigurationExact": true,
+  "noRepeatedUpdate": true
+}

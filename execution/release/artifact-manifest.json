@@ -2,66 +2,69 @@
   "schemaVersion": 1,
   "kind": "rolling-chat-engineering-candidate-provenance",
   "algorithm": "sha256",
-  "sourceRevision": "d188738461dc6358b3c679703c24353b997dba90",
+  "sourceRevision": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
   "acceptance": "in-progress; not production release approval",
   "application": {
-    "publishedSourceRevision": "bbcf43dc9fb3603343e2e3a717d8184d027cef61",
-    "publicationCommandId": "3bdb206d-e2f1-4a71-97ad-b992569c10a5",
-    "serviceUnitSha256": "c3cf0a4a1cf03485cb7831dea4e39b51d13651d89652320c5e4129d393944fba",
-    "publicationDeltaSha256": "cca353751af518a8220205b7a65329c864f45e655b411f8b61fdd9fd3fc1e400",
+    "publishedSourceRevision": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+    "publicationCommandId": "e98a7b30-53de-4788-9c57-ccdc3334aab2",
+    "serviceUnitSha256": "4bf19aad180e4d062ab90836de559ea23c34f0163b970de12b1d358a582155ad",
+    "publicationDeltaSha256": "701faba61c2346819bc2a69cfaa90b1dd06cd71dcb42841b1730adb0545b5d8d",
     "changedFiles": [
       {
         "path": ".build/rolling-wallet/manifest.json",
         "bytes": 15887,
-        "sha256": "e2a11ca2ef41b8796153a71d1b344454df65e6656b7d1419f54b47c14ccdd1db"
+        "sha256": "d7ff58d7163c38b5e53690d79651cfa9d5b9327a37fab02f6e6cb06f39d9aa9e"
       },
       {
         "path": ".build/rolling-wallet/runtime.mjs",
-        "bytes": 318331,
-        "sha256": "5b1bb695d2f7212d65b2eeb2cc8eee79f8b350c5dbb4a3fa3a600d9715adb981"
+        "bytes": 319396,
+        "sha256": "8f9f221413d0b4ef165b98e8278f6ea1546d1f672c200e3600c595426c4d3b4a"
       },
       {
         "path": ".build/sdk/aztec_bundle.js",
-        "bytes": 63238176,
-        "sha256": "c372d1a68615c144e166d3ad54cc72392be8b9213f9c5b8d53569c568f1ba294"
+        "bytes": 63238873,
+        "sha256": "a020e2b7b685579b5b896345a04b73c8d4d61a0176876ec0f986571beb1e033a"
       },
       {
         "path": ".build/sdk/sdk-manifest.json",
         "bytes": 288295,
-        "sha256": "33e6e5122d2b6cf481874e3c7f371311d3f8e2ca4ad427c413181b903d960cfa"
-      },
-      {
-        "path": "apps/rolling/wallet-panel.mjs",
-        "bytes": 107266,
-        "sha256": "7fe804a8dd2d942b7e307c2144d44203d20e56f43b46b87617ee01b034d74198"
+        "sha256": "7a7a714c1f3c9d48ddd32458cf8d00012c22abd1b60e71c72da9aca4263eeaa9"
       },
       {
         "path": "apps/rolling/wallet-session.mjs",
-        "bytes": 54098,
-        "sha256": "4430747c8aca935949070a662b399d7129d11e17291ad0ce2d32be570d19f36c"
+        "bytes": 53689,
+        "sha256": "985410bd2c664dd25198a3f62ea26ccf29f377e18b3e68a09a95cc4fac367008"
       },
       {
-        "path": "shared/private-fee-estimation.mjs",
-        "bytes": 7296,
-        "sha256": "2d06b6674afd53f8b4369a30f1c65f60db34cfc3f7f85b8aace25a34b59ade59"
+        "path": "shared/l2-journal.mjs",
+        "bytes": 21012,
+        "sha256": "e0084d0ceccab9fa9d537945c7fb4f7eed34a4529ed3a0a236dd490da4cc3c30"
       },
       {
-        "path": "shared/rolling/aggregate-funding.mjs",
-        "bytes": 21551,
-        "sha256": "2d0a7a2eaa3dc8904d603f63e7dc77f5b48ef4eb4f6bc513fb02707aed7b575d"
+        "path": "shared/protocol-schema.mjs",
+        "bytes": 8080,
+        "sha256": "0f5f67ffc1f62be6af5c3ad9c87921db912b3af42cb903494fe9b7dbb461872b"
+      },
+      {
+        "path": "shared/rolling/aggregate-recovery.mjs",
+        "bytes": 6135,
+        "sha256": "bbe35b9e4cc4c986d2b9cfc02ca97762aa1eef5e7f0910717c2fa3209091bc27"
       },
       {
         "path": "shared/rolling/aggregate-wallet.mjs",
-        "bytes": 49605,
-        "sha256": "622654279726491d3d8eedc5b66762b08c177557a97f2548737324774e15636d"
+        "bytes": 49591,
+        "sha256": "6c5647f60150669999a68668ec34ffae6df053a9075d60213182c46a6ad3b1b9"
       },
       {
-        "path": "shared/sdk-entry.mjs",
-        "bytes": 5892,
-        "sha256": "83ceb2496a443f16a27bff28cb9bb0ea583eca9b4a84edd49e4dd6b3cafb5189"
+        "path": "shared/rolling/funding-receipts.mjs",
+        "bytes": 20482,
+        "sha256": "a2699814f3acad0cc9740d8bcb4ba8f5e4432eeabf7d32fcb363b84457119b84"
       }
     ],
-    "meaning": "Actual bounded publication; omitted unchanged dependencies retain the existing complete verified release. This delta is not a standalone install archive."
+    "walletManifestSha256": "d7ff58d7163c38b5e53690d79651cfa9d5b9327a37fab02f6e6cb06f39d9aa9e",
+    "sdkManifestSha256": "7a7a714c1f3c9d48ddd32458cf8d00012c22abd1b60e71c72da9aca4263eeaa9",
+    "sdkBundleSha256": "a020e2b7b685579b5b896345a04b73c8d4d61a0176876ec0f986571beb1e033a",
+    "meaning": "Actual authenticated ten-file wallet publication; other processes and funding journals preserved. See current-publication evidence."
   },
   "admittedRuntime": {
     "source": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
@@ -73,28 +76,35 @@
     "deltaSha256": "bd12cf545f63416d51c462e9adab843f7fdbedb8c1dec2662eb45729b2232b07",
     "archiveSha256": "277e94caca0667270aee1ac48e782e9d994a17194533553c0e4024f32e1bc808",
     "packageMetadataSha256": "8308d64a8c3c79f057e4da09de42c114ac4ab3c4ac2f4e80e75c45b4b1183a8a",
-    "meaning": "Last admitted bootstrap/monitor package; existing native/query/prover processes preserve their individual original activation identities. It is not the application Git HEAD."
+    "meaning": "Last admitted bootstrap/monitor package; existing native/query/prover processes preserve their individual original activation identities. It is not the application Git HEAD.",
+    "currentProverPolicy": {
+      "manifestSha256": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+      "sourceRevision": "95baf36dece76a09504ff80cb0e7771a167cd82a",
+      "promotionCommandId": "a13abb3f-388f-4ccf-a863-37489e05553c",
+      "meaning": "Exact reviewed prover policy delta; native/query services preserve their original admission provenance."
+    }
   },
   "bok": {
-    "durabilityDeltaRevision": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
-    "meaning": "Original isolated release plus reviewed retained-response durability patch; original lost response is not reconstructed or replayed."
-  },
-  "generatedBuildInputs": {
-    ".build/contracts-manifest.json": {
-      "sha256": "68f81c73443b2729976a8c4704cc27fd68feaf1a9b0c25c06782af7a616885e7",
-      "bytes": 6771,
-      "availability": "Generated by documented build; retained operator copy, not included."
+    "publishedSourceRevision": "791297f7e0b075f85201a923c9603c228368ab9a",
+    "instance": "i-0a56b0bc2dd7727b2",
+    "operatorAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+    "artifactOrigin": "https://dy2q03rao3se7.cloudfront.net",
+    "oldWriterMasked": true,
+    "meaning": "Separate funded server delivered original0cc4 authenticated reply and completed charge/refund; precise overlay provenance separate from frontend source.",
+    "reviewedRuntimeOverlay": "84a5c525077de41fba86376f48e6a0d3bc60f9a4",
+    "runtimeOverlaySha256": "6e66e4bec52642d03188e6af481bba0e15ebaee6d9c8db0e178e34ab638d147f",
+    "overlayFiles": {
+      "escrow-service.mjs": "97aa9f708c4c2307115cf8c54f2fc5cb6be605c117d86dd70d3531bbaaec655b",
+      "github-tools.mjs": "b623f09c35312be399444b54f104e42abc3b375d77c000910336ae1766cadac9",
+      "isolated-execution.mjs": "495b205d3be4c02b930f874ddbc91d9385253d04f9780e7bd2852eebdb881bd4",
+      "main.mjs": "74080ce1c932917fd55d44cb93fd79c65566bd7f27f49d98760a97efb56496f4",
+      "operations.mjs": "79eeba8c43a4aaf449c132121659308581d5ffc2753dd1a34d1d5bf5a6e4dab2",
+      "private-bok-escrow.mjs": "5b77bfa277298e851a272738f28a428a2c37baade99e9d0a2ecb4c6e2c845b3c",
+      "private-bok-metering.mjs": "5bf2fd3e598b445749e3133ef964202ab59e4923360fd430893669ae04949ce1",
+      "thread-repositories.mjs": "7dad42f38022ca73db14b8b83264333f0fa75da0d2963c97000f6ef836156cf1"
     },
-    ".build/sdk/sdk-manifest.json": {
-      "sha256": "33e6e5122d2b6cf481874e3c7f371311d3f8e2ca4ad427c413181b903d960cfa",
-      "bytes": 288295,
-      "availability": "Generated by documented build; retained operator copy, not included."
-    },
-    ".build/rolling-wallet/manifest.json": {
-      "sha256": "e2a11ca2ef41b8796153a71d1b344454df65e6656b7d1419f54b47c14ccdd1db",
-      "bytes": 15887,
-      "availability": "Generated by documented build; retained operator copy, not included."
-    }
+    "overlayPublicationCommand": "41991055-7582-4e44-afc4-1bb3524b953e",
+    "availability": "Compute stopped21:09UTC after completed accounting and encrypted preservation; new requests require documented resume. Static page/source remains available."
   },
   "evidence": {
     "accepted-crash": {
@@ -373,6 +383,118 @@
     "current-original-refunds": {
       "path": "evidence/current-original-refunds/original-refunds-accounting-public-effects.json",
       "sha256": "6275f9e148569d46ed3bc71a3848c3956b11fef46d53ce4cbb0c6e5cbe0f2af0"
+    },
+    "current-metamask-eth-claim": {
+      "path": "../evidence/G13/current-claims-20261019/metamask-eth-claim.json",
+      "sha256": "56f5276c649aa2dab368722ace1a050f2bdcdf15f18916426677e8fa2828a9ef"
+    },
+    "current-phantom-eth-claim": {
+      "path": "../evidence/G13/current-claims-20261019/phantom-eth-claim.json",
+      "sha256": "57905d72e69f5ad92d7d838d1d7ba5800b89273c5bd3608c7e0897b69a1abafb"
+    },
+    "current-phantom-bok-refund": {
+      "path": "../evidence/G13/current-claims-20261019/phantom-bok-refund.json",
+      "sha256": "73bb5d5152d1c5cd2484f2e0d5b473d4a18843e563157e4b70b67e2e19a6ecd9"
+    },
+    "warm-account-readiness": {
+      "path": "../evidence/G13/current-claims-20261019/warm-account-readiness.json",
+      "sha256": "be2185751963b6da44bba83a58baa7f2bbef010a4f18f4c0c58158fa39acfc96"
+    },
+    "review-cold-start-target-authority": {
+      "path": "../evidence/G13/current-claims-20261019/review-cold-start-target-authority.json",
+      "sha256": "6b358ae573e01d94d6a188d838938df69cfa3a67f97d4df497eabbc8343146b2"
+    },
+    "cold-account-readiness": {
+      "path": "../evidence/G13/current-claims-20261019/cold-account-readiness.json",
+      "sha256": "a12e4d5bf47af745483734a4e8923420d5bb29cf4cfd13d6af2978b1131698a8"
+    },
+    "current-eth-claim-footprints": {
+      "path": "../evidence/G13/current-claims-20261019/current-eth-claim-footprints.json",
+      "sha256": "d02fa2f90556246929f75a8abd50128b6b91bd40b52431d6d32021769c7968ec"
+    },
+    "current-eth-claims-bok-refund-public-append": {
+      "path": "../evidence/G13/current-claims-20261019/current-eth-claims-bok-refund-public-append.json",
+      "sha256": "7952bc2e10f3a049501d652ff0d77b8f5b46d6a80ca699f6689856c6ff8b4897"
+    },
+    "review-current-warm-and-retained-cold": {
+      "path": "../evidence/G13/current-claims-20261019/review-current-warm-and-retained-cold.json",
+      "sha256": "dbafe38bd5bdcb61c55faac92af359451e493c589085c9ca422a8af8291ae812"
+    },
+    "current-original-bok-completed": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/original-bok-completed.json",
+      "sha256": "4f3c03b2dbd91623987a0278a137da8416779e6001d6615c033d6dad2372876d"
+    },
+    "current-bok-page-readback": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-page-readback.json",
+      "sha256": "f0695dae9554305b77594fb17b9ff4521bbe7f7d046078e81098c4c2cefe4258"
+    },
+    "current-bok-reply-readback": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-reply-readback.json",
+      "sha256": "89406b2efe916c76dd99db34044c0d1f359fbaf7f1c1787c76bb8501e8c2ec8a"
+    },
+    "current-publication": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/publication.json",
+      "sha256": "f98f75decd3ef1fe4c5f26e3daac11113abb960b1ef9477d4063b9df1fb1246f"
+    },
+    "current-bok-runtime-publication": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-runtime-publication.json",
+      "sha256": "6e66e4bec52642d03188e6af481bba0e15ebaee6d9c8db0e178e34ab638d147f"
+    },
+    "static-public-retention-verified": {
+      "path": "../evidence/G10/static-retention-20261019/public-retention-verified.json",
+      "sha256": "75bea1c8c032207d82f6bf8fadf18771d9c7d43bd11d1dbe602c3dbe6066035b"
+    },
+    "static-browser-interaction": {
+      "path": "../evidence/G10/static-retention-20261019/browser-interaction.json",
+      "sha256": "ee9d74338eb54f34ee048ab1bc4ee64a92c25579f840971efe56cd837385df05"
+    },
+    "current-bok-final-public-effects": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/current-bok-final-public-effects.json",
+      "sha256": "29b59651145656ca58bc9ee8877a3dafe333fd16fd014920dd4529682f25d923"
+    },
+    "state-driven-moderator-catchup": {
+      "path": "../evidence/G09/state-driven-catchup-20261020/review.json",
+      "sha256": "d67554636dc771da06b46193b27170feb4269e8f20cd9e2cc6d89e35b297911b"
+    },
+    "bok-preservation": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-preservation.json",
+      "sha256": "c02cda14094b65f329afc2aaad97258b46d3049017a0520eb656b3ba3a6d35c1"
+    },
+    "bok-resume": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-resume.json",
+      "sha256": "75567787dd9958c0d53fe19691212310a8b7bd2a6a166cdd345eea6aeb68508f"
+    },
+    "bok-compute-stopped": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-compute-stopped.json",
+      "sha256": "6d2e4dd77a329dac06ccca68950a2c59f53c1611fe9ff292d536a33665f6ec73"
+    },
+    "current-moderator-live": {
+      "path": "../evidence/G09/current-moderator-20261019/live-readback.json",
+      "sha256": "573cdb87fd1d5de800c76e3087727acdad14048c17db8d398c2d353a6af830d7"
+    },
+    "current-moderator-fee-quote": {
+      "path": "../evidence/G09/current-moderator-20261019/fee-quote-result.json",
+      "sha256": "ef30a7756fdc3d10672c237baef39db77e60fb71cfc4f95eddf0d2fe0cb5fc96"
+    },
+    "current-moderator-fee-amendment": {
+      "path": "../evidence/G09/current-moderator-20261019/fee-amendment-result.json",
+      "sha256": "7cc71c9bec72542f3ad498fffa0a2da79c8631ce5e2be737089d04ce56e105d2"
+    },
+    "core-preservation": {
+      "path": "../evidence/G12/final-preservation-20261019/core-preservation.json",
+      "sha256": "d4f815837a89b996cc32ce07572d6d4a4f7f0df19dcd7a47bfab03ff6a7516d6"
+    },
+    "moderator-checkpoint-amendment": {
+      "path": "../evidence/G12/final-preservation-20261019/moderator-config-after-checkpoint.json",
+      "sha256": "cf4a876b0bb1bb209ba88b88540099d7b0f771cb3e581c36fb318469cf76d184"
+    },
+    "moderator-f3-publish-result": {
+      "path": "../evidence/G09/current-moderator-20261019/f3-publish-result.json",
+      "sha256": "de49668e461f1df3ef3f49ec928ee6f37b7a797bdab1dcb5b0eabe1c5e9c7cd2"
+    },
+    "moderator-f3-readback-result": {
+      "path": "../evidence/G09/current-moderator-20261019/f3-readback-result.json",
+      "sha256": "5924ee737bf2808cb80dddefbb1203fa6486bc1378cafb4540d77ebce9609d9e"
     }
   },
   "historicalManifest": {
@@ -387,7 +509,6 @@
   },
   "limitations": [
     "Generated binaries, node_modules, private keys, financial/model journals and full archives are not committed. Use BUILDING.md and deployment runbook; hashes are content provenance, not secret access or completion proof.",
-    "The candidate source includes an unpublished SDK edge-cache configuration repair; live browsers are on the explicitly recorded application revision.",
     "Current final requirement disposition remains in progress."
   ],
   "catalogEvidence": {
@@ -407,5 +528,95 @@
       "path": "../evidence/G06.json",
       "sha256": "3832e34b4fc56f2c855c16d35dbfa160556577bac1aeee719f650e8ce6829ecd"
     }
+  },
+  "updatedAt": "2026-10-19T21:27:21.067453+00:00",
+  "historicalGeneratedBuildInputs": {
+    ".build/contracts-manifest.json": {
+      "sha256": "68f81c73443b2729976a8c4704cc27fd68feaf1a9b0c25c06782af7a616885e7",
+      "bytes": 6771,
+      "availability": "Historical generated build input retained for provenance, not the current hosted manifest. Current hosted hashes are in application; retained operator copy, not included."
+    },
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "33e6e5122d2b6cf481874e3c7f371311d3f8e2ca4ad427c413181b903d960cfa",
+      "bytes": 288295,
+      "availability": "Historical generated build input retained for provenance, not the current hosted manifest. Current hosted hashes are in application; retained operator copy, not included."
+    },
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "e2a11ca2ef41b8796153a71d1b344454df65e6656b7d1419f54b47c14ccdd1db",
+      "bytes": 15887,
+      "availability": "Historical generated build input retained for provenance, not the current hosted manifest. Current hosted hashes are in application; retained operator copy, not included."
+    }
+  },
+  "persistentPublicArtifacts": {
+    "status": "published-and-readback-verified",
+    "bucket": "rolling-bok-public-052665140763-20261019",
+    "originAccessControl": "E2RGFIH4QOOQVL",
+    "responseHeadersPolicy": "cff4c5ff-a069-45f6-b998-09c016449de5",
+    "prefix": "published/final-20261019",
+    "distribution": "E1M12FHGQ0S5ST",
+    "publicObjectsStaged": true,
+    "liveOriginUnchanged": false,
+    "sourceRevision": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+    "objectCount": 5,
+    "bokInteractiveService": "stopped-after-terminal-request; live-origin/sole-writer resume required for new requests"
+  },
+  "historicalPublicationBindings": [
+    {
+      "application": {
+        "publishedSourceRevision": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+        "publicationCommandId": "2b2d338f-31f2-479a-a288-74250516b3ea",
+        "serviceUnitSha256": "fa6ebf63c47b28b3ed2723301304bc4e091c19daba3bc71fd75c97abed483a3f",
+        "publicationDeltaSha256": "8ee55d5ce5ba286aa7fa733352db00b4b31e421e372dbbd720a14d167e956aa0",
+        "changedFiles": [
+          {
+            "path": "apps/rolling/wallet-panel.mjs",
+            "sha256": "239443b8765f7b71d332ab142474059643133633ccea45fe4e95489092efd0c4"
+          }
+        ],
+        "walletManifestSha256": "94ed930f9f5b1c585dcc625df2c28d281b15409cc4afc20f1cdd892f228fcb05",
+        "sdkManifestSha256": "26361af8dc87fe33d7da8f61fb160285a3d7aff9e307e7c71acae45fc9aac17a",
+        "sdkBundleSha256": "2cd8acf54283cd16dce47b45b9ec8b96144ab08c2519aca91ecea5c83769b09a",
+        "meaning": "Current bounded one-file publication over verified ccc292 release. Unchanged dependencies retain their existing verified closure. Not a standalone install archive."
+      },
+      "bok": {
+        "publishedSourceRevision": "791297f7e0b075f85201a923c9603c228368ab9a",
+        "instance": "i-0a56b0bc2dd7727b2",
+        "operatorAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+        "artifactOrigin": "https://dy2q03rao3se7.cloudfront.net",
+        "oldWriterMasked": true,
+        "meaning": "Separate funded server delivered original0cc4 authenticated reply and completed charge/refund; precise overlay provenance separate from frontend source.",
+        "reviewedRuntimeOverlay": "84a5c525077de41fba86376f48e6a0d3bc60f9a4"
+      }
+    }
+  ],
+  "generatedConsumers": {
+    "sourceRevision": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+    "method": "Existing apps/build.mjs; repeated build produced identical output hashes",
+    "files": {
+      "aztec_bundle.js": "a020e2b7b685579b5b896345a04b73c8d4d61a0176876ec0f986571beb1e033a",
+      "censor.html": "64d598d6f79457a5e89cc02d50ad3f88675a3a7bb36d26647e5fa88a6756a845",
+      "deploy.html": "f712c246ee3f446c20729045fa5d9331dc658d1babbf2c00ec271bdf0a3a310e",
+      "fee-juice.html": "d64fa095db6ed67c92e8e8140da8c17f2beb2531bf53f8b1f4d6c09bc06e7161",
+      "plugins.js": "28ae59de046b59811921af4ce5fe7a29a81f1d1f8092427d73db0922abb98df0",
+      "sdk-manifest.json": "7a7a714c1f3c9d48ddd32458cf8d00012c22abd1b60e71c72da9aca4263eeaa9",
+      "user.html": "b832c4b3442539299ecbdb8c1ebfdd25b2a46e185fd7eac7534d4b329cb47abe"
+    }
+  },
+  "moderator": {
+    "baseSourceRevision": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+    "reviewedCatchupRevision": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+    "operatorAddress": "0x2c8a8c02a4b70118ce06ca7f789f497349ad464a8439368d4db2bfd7a5577cf9",
+    "instance": "i-09e2dbeea10854dc8",
+    "observedEvaluations": {
+      "human": 5,
+      "authenticatedBok": 1,
+      "allAllowed": true,
+      "checkpoint": 8986
+    },
+    "maxTransactionFeeFEE": "20",
+    "nativeDefaultMaximumFeeAtConfigurationFEE": "13.92375413638722",
+    "feeBalanceAtConfigurationFEE": "39.9655883944944",
+    "note": "Exact f3 daemon/adapter overlay published over34cc; source readback verified. Existing fee guard retained; no current testnet removal transaction claimed.",
+    "publicationCommand": "d34cc2e8-f68f-4954-9e7c-849416259714"
   }
 }

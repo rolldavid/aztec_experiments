@@ -45364,7 +45364,7 @@ if (typeof module !== 'undefined' && module.exports) {
         })]);
       } finally { clearTimeout(timer); }
     }
-    async function finalizedReceipt() {
+    async function includedReceipt() {
       const receipt = await read(() => node.getTxReceipt(hash));
       if (!receipt || receipt.status === 'pending') return null;
       if (receipt.txHash?.toString() !== hash.toString()) throw new Error('Ready receipt transaction hash mismatch');
@@ -45377,24 +45377,24 @@ if (typeof module !== 'undefined' && module.exports) {
         throw new Error('Ready transaction has incomplete inclusion metadata');
       }
       if (receipt.status === 'proposed') return null;
-      const tips = await read(() => node.getChainTips());
-      const finalizedNumber = tips?.finalized?.block?.number;
-      if (!Number.isSafeInteger(finalizedNumber) || finalizedNumber < 0) throw new Error('Invalid finalized chain tip');
-      if (finalizedNumber < receipt.blockNumber) return null;
       const block = await read(() => node.getBlock(receipt.blockNumber));
       if (!block || block.hash.toString() !== receipt.blockHash.toString()) return null;
       return receipt;
     }
-    const receipt = await finalizedReceipt();
+    const receipt = await includedReceipt();
     if (!receipt) return pending();
     const witness = await read(() => node.getL2ToL1MembershipWitness(hash, leaf));
     if (!witness) return pending();
-    // A witness obtained before a reorg cannot authorize activation.
-    const current = await finalizedReceipt();
-    if (!current || current.blockNumber !== receipt.blockNumber ||
-      current.blockHash.toString() !== receipt.blockHash.toString()) return pending();
     const args = [BigInt(witness.epochNumber), BigInt(witness.numCheckpointsInEpoch),
       BigInt(witness.leafIndex), witness.siblingPath.toBufferArray().map(bytes => ethers.hexlify(bytes))];
+    // Native witness availability alone does not establish that the L1 Outbox
+    // root is usable. Let the actual portal validate it before any wallet send.
+    try { await read(() => portal.activate.staticCall(...args)); }
+    catch(error) { if(error?.code==='CALL_EXCEPTION')return pending();throw error; }
+    // A witness obtained before a reorg cannot authorize activation.
+    const current = await includedReceipt();
+    if (!current || current.blockNumber !== receipt.blockNumber ||
+      current.blockHash.toString() !== receipt.blockHash.toString()) return pending();
     const activation = activate ? await activate(args) : await (await portal.activate(...args)).wait();
     deadline = Date.now() + timeoutMs;
     if (activation.status !== 1 || !await read(() => portal.depositsEnabled())) throw new Error('Portal activation failed');
@@ -46285,7 +46285,6 @@ function publicOperationFailure(error) {
     BB_SUBMISSION_UNKNOWN:'Submission outcome is unknown. Keep the transaction record and check its receipt before retrying.',
     PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN:'Fee funding outcome is unknown. Keep its recovery file and check the transaction before retrying.',
     BB_PRIVATE_FEE_AMOUNT:'Deposit more than the configured maximum claim fee.',
-    BB_TRANSACTION_FINALITY_PENDING:'The previous transaction failed and is awaiting network finality. Keep its saved record and try again once it is finalized.',
     BB_TRANSACTION_FAILED:'The transaction did not execute successfully. Check its receipt before trying again.',
     BB_STATE_CONFLICT:'Transaction state changed. Refresh the account before creating a new proof.',
     BB_NO_SAVED_ETHEREUM_TRANSACTION:'No saved Ethereum request exists for this wallet and portal.',

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "final-requirement-disposition-in-progress",
-  "sourceRevision": "d188738461dc6358b3c679703c24353b997dba90",
+  "sourceRevision": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
   "createdAt": "2026-10-18T19:49:25.236635+00:00",
   "specification": {
     "document": "Rolling Chat Contractor Specification Draft 3.pdf",
@@ -10,7 +10,7 @@
     "clarifications": "../specification-clarifications.md",
     "deadline": "2026-10-21T15:25:57Z"
   },
-  "overall": "All46 requirement IDs retained. Connected functionality and scoped acceptance are distinct. Both genuine zero-ETH USDC payments/private claims, names/social actions and original collateral refunds succeeded. Both ETH payments succeeded; private claims are pending. Original Bok billing closed without output or model replay; a new ordinary generated-output journey remains. No whole-spec acceptance percentage or release approval is asserted.",
+  "overall": "All 46 IDs retained. Both real wallets completed USDC and ETH funding/private claims and original withdrawals. Bok delivered its generated page/source, authenticated reply and exact charge/refund. The current automated moderator evaluated five human posts and that Bok reply under the live policy. Static hosting and Bok encrypted preservation are complete. Core checkpoint/restart, moderator fee-ceiling check and final handover are being closed. Historical evidence retains its original scope; X1/X2 remain external release gates.",
   "rules": [
     "Evidence keeps its own original revision, runtime, real/mocked boundary and limitations; current target revision does not automatically relabel historical evidence.",
     "No source mutation, tests, services, proofs, model calls or financial actions performed for this draft.",
@@ -19,14 +19,14 @@
     "Functional presence and component review are separate from complete product/cryptographic assurance."
   ],
   "workGroupUpdates": {
-    "D1": "Recorded engineering deployment/admission passed; native/query/prover/application live. Owner500 ceiling, samehost18:00/endpoints18:05UTC19Oct; forecast359.850284/reservation365. Appbbcf and Bokee973 deployed preserving original journals. No production or indefinite hosting claim.",
-    "D2": "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open. Phantom0.1USDC Bok exit confirmed on Aztec, private fee2.0169865727178; original Ethereum claim pending, no completed withdrawal claim.",
-    "D3": "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
-    "D4": "All-category observer mapping independently approved. Both successful original Ethereum refunds canonically finalized with exact originalrecipient,0.001ETH and corresponding Outbox leaf; failed MetaMask7702 wrapper gas separately retained. See evidence/G13/final-privacy-20261019/original-refunds-accounting-public-effects.json. Current Bok settlement/remainingETHfunding effects append only; no blanketunlinkability or specialist-audit claim.",
-    "D5": "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
-    "D6": "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral.",
-    "D7": "Retain bounded recovery/outage/reorg/rotation and actual Mac-sleep/query/index incidents with reviewed repairs. Finish D3/D5 dependencies and final account outcomes. No additional broad destructive recovery or elapsed soak.",
-    "D8": "Assemble exact46-row checklist, source/runtime manifests, runnable local devnet instructions, current/expired hosted access, adopted defaults, no-replay journal references, USD500 ceiling/18:00shutdown/retained-state plan, and concrete resume entry. Carry specialist audit/network gates separately. No new test campaign."
+    "D1": "Current browser wallet34cc published; current moderator evaluated5human+1authenticatedBok posts on34cc, then restored with exact f3 catchup overlay and corrected20FEE cap. Final resumed native ingestion observation remains; current app HTTP200.",
+    "D2": "Both real-wallet funding routes, original private claims, collateral refunds and Phantom Bok-credit withdrawal complete. Original0cc4 Bok page/source/reply and accounting now complete; no further wallet/model campaign.",
+    "D3": "Retain actual Phantom before-ack interruption\u2192same original ETH claim and MetaMask full-backup restored paid claim\u2192success. Append existing exact lineage/custody evidence; no new interruption matrix or payment.",
+    "D4": "Final0cc4 read-only receipt/effect append complete:18 canonical included effects plus original dropped settlement preserved. Full retained Tx bodies exist only for reply/finish;16 historical bodies unavailable. Allowed public Bok identity observed; no exact known human address match in tested fields. This is limited evidence, not unlinkability assurance; X1 remains external.",
+    "D5": "Retained ten-proof/capacity/UI/cold-warm observations unchanged. Actual authenticated reply is visible against chain8960, same checkpoint as reply receipt; current journey observation is recorded, no new polling/startup campaign.",
+    "D6": "Separate funded Bok server completed0cc4: accepted4055 page/source, visible authenticated reply226e at8960, finish0d2a at8961.250000microUSDC=13944charged+236056refunded,0available/reserved,eight settled calls. Original model outputs reused; one generated-test identifier repair explicitly operator-authored. Earlier09bad/136a remain accounted-without-reply.",
+    "D7": "Bounded incident/recovery components and current original-wallet/Bok outcomes retained; actual core/Bok final encrypted snapshots verified. No elapsed soak or repeat recovery campaign. Configuration and source deltas after snapshot are separately preserved.",
+    "D8": "Both final encrypted snapshots verified, public artifact routes retained independently of compute, and exact current source/runtime/operating limits documented. Final moderator resumed ingestion and independent handover review/required CI remain."
   },
   "externalGates": [
     {
@@ -78,9 +78,15 @@
         "d1-native-controls",
         "current-testnet-bootstrap",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "Both original ETH payments succeeded; their private claims and current Bok output/withdrawal combination remain. Original collateral refunds and ten real-proof observations exist. X1/X2 remain separate.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -94,7 +100,7 @@
         "interfaces",
         "protocol"
       ],
-      "remaining": "D8 publish exact current interface/build manifest; no new isolated feature gap identified.",
+      "remaining": "Current API/build/runtime inventory is in artifact-manifest.json. Final handover review remains; no additional interface implementation identified.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -111,7 +117,7 @@
         "focus",
         "current-accessibility"
       ],
-      "remaining": "D8 final UI/source disposition; do not repeat passed navigation or scroll samples.",
+      "remaining": "Retained desktop/mobile UI evidence is mapped to its source; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -131,9 +137,15 @@
         "current-accessibility",
         "current-testnet-wallet-mode",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D2 remaining ETH/withdrawal/Bok cells and D3 two original ETH interruption windows; required name/board/named+anonymous/like screens now used on actual testnet. Keep prior local UI coverage.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -148,7 +160,7 @@
         "focus",
         "current-accessibility"
       ],
-      "remaining": "D8 final UI/source disposition; do not repeat passed navigation or scroll samples.",
+      "remaining": "Retained feed/scroll/navigation results and their dataset limits are mapped; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -163,9 +175,12 @@
         "quotes",
         "moderation",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D8 retain canonical reply/root and moderation component evidence; current human named/anonymous testnet posts successful. Actual current Bok reply still outstanding under D2/D6.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -179,7 +194,7 @@
         "protocol",
         "preview"
       ],
-      "remaining": "D8 bind retained byte/link boundary evidence to final UI. No new defect identified in this review.",
+      "remaining": "Retained composer byte/link validation and preview evidence is mapped; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -198,7 +213,7 @@
         "current-ten-real-proofs",
         "current-ten-original-receipts"
       ],
-      "remaining": "Current cross-account like successful; retain existing quotes/reposts/private-preferences evidence. D4 remaining receiver/public-effect reasoning and D8 conjunction; no repeated social-feature campaign.",
+      "remaining": "Actual cross-account like plus retained quotes/reposts/private-state evidence and observer reasoning mapped; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -212,7 +227,7 @@
         "clean-operator-review",
         "fee-only"
       ],
-      "remaining": "D8 final deployment/hosting records; no automatic federation feature required.",
+      "remaining": "Independent operator deployment and current bounded hosting are documented; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -229,7 +244,7 @@
         "current-ten-real-proofs",
         "current-ten-original-receipts"
       ],
-      "remaining": "D8 retain no-collateral/immutable constraints and current source binding; no new creation replay required.",
+      "remaining": "Fee-only creation and immutable constraints retained with source binding; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -244,7 +259,7 @@
         "core-rebuild",
         "moderation"
       ],
-      "remaining": "D8 map final rejection/metadata reconstruction assertions; no repeat general rebuild.",
+      "remaining": "Authenticated metadata, rejection and reconstruction evidence mapped; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -257,9 +272,12 @@
       "evidence": [
         "policy",
         "moderation",
-        "human-model"
+        "human-model",
+        "current-moderator-live",
+        "current-moderator-fee-quote",
+        "current-moderator-fee-amendment"
       ],
-      "remaining": "D8 preserve precise distinction: hostile rules evaluator fixture is not an additional onchain hostile-subboard scenario.",
+      "remaining": "Current Rolling moderator evaluated five human posts and the authenticated Bok reply, all allowed, at checkpoint8986. Exact f3 catchup overlay and20FEE cap are now published; final resumed ingestion observation is in progress. Existing genuine removal/policy tests remain separately scoped; no current testnet removal is claimed.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -271,9 +289,12 @@
       "acceptedComponentEvidence": "Historical authentic human/Bok removals, penalty/screening/refund and current policy review retained.",
       "evidence": [
         "moderation",
-        "withdrawals"
+        "withdrawals",
+        "current-moderator-live",
+        "current-moderator-fee-quote",
+        "current-moderator-fee-amendment"
       ],
-      "remaining": "D8 current affected-source disposition; D2 testnet withdrawal scope remains. Historical fixed-content Bok removal is not a new paid model removal.",
+      "remaining": "Current Rolling moderator evaluated five human posts and the authenticated Bok reply, all allowed, at checkpoint8986. Exact f3 catchup overlay and20FEE cap are now published; final resumed ingestion observation is in progress. Existing genuine removal/policy tests remain separately scoped; no current testnet removal is claimed.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -288,9 +309,12 @@
         "profiles",
         "fee-only",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D8 retain exact concurrent-uniqueness evidence mapping; D4 cross-name privacy assurance remains separate.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -306,9 +330,12 @@
         "protocol",
         "current-ten-real-proofs",
         "current-ten-original-receipts",
-        "current-six-public-effects"
+        "current-six-public-effects",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 public effects and trusted-boundary observer closure, then X1 specialist privacy review; no cryptographic pass from missing cleartext addresses.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -322,9 +349,12 @@
         "social",
         "profiles",
         "avatar-current",
-        "core-rebuild"
+        "core-rebuild",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 correlation/privacy scope and D8 final identity/profile evidence conjunction; do not repeat accepted avatar publication.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -357,9 +387,15 @@
         "current-two-wallet-usdc-mm",
         "current-two-wallet-usdc-phantom",
         "current-mm-usdc-finality",
-        "current-phantom-usdc-finality"
+        "current-phantom-usdc-finality",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "Both zero-ETH USDC wallet cells and exact three-way accounting observed; both genuine ETH-route cells still outstanding. Existing-deposit rejection requires exiting current collateral before those cells, not new accounts.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -382,9 +418,12 @@
         "current-phantom-usdc-finality",
         "current-mm-eth",
         "current-phantom-eth",
-        "current-original-refunds"
+        "current-original-refunds",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund"
       ],
-      "remaining": "Continue both saved ETH payments without another send. Complete the original Phantom before-ack interruption and bridge-pending recovery. Both USDC private claims and original collateral refunds succeeded. Current Bok output remains.",
+      "remaining": "Both original interrupted paid claims recovered successfully without new payment. Original0cc4 now demonstrates usable Bok output/accounting. Retain exact interruption lineage and narrower bridge-pending limitations; no repeat payment campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -405,9 +444,15 @@
         "current-phantom-usdc-finality",
         "current-mm-eth",
         "current-phantom-eth",
-        "current-original-refunds"
+        "current-original-refunds",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "Both genuine zero-ETH USDC payments/private claims and both ETH payments succeeded. The ETH private claims and final prompt/transaction accounting remain; a payment alone does not complete onboarding.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -421,9 +466,15 @@
         "metamask",
         "current-mm-eth",
         "current-phantom-eth",
-        "current-original-refunds"
+        "current-original-refunds",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "Both original collateral exits/refunds finalized, permitting subsequent ETH funding. Both ETH payments succeeded; resume their existing private claims. Do not substitute fresh accounts or replay payments.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -446,9 +497,12 @@
         "current-phantom-usdc-finality",
         "current-mm-eth",
         "current-phantom-eth",
-        "current-original-refunds"
+        "current-original-refunds",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund"
       ],
-      "remaining": "Both original0.001ETH collateral refunds completed. Both later ETH payments succeeded; their private claims remain pending. Phantom0.1USDC Bok exit is confirmed on Aztec with private fee2.0169865727178; its original Ethereum claim is still pending, so Bok withdrawal completion is not claimed. Complete remaining fee and withdrawal accounting.",
+      "remaining": "Both original0.001ETH collateral refunds are finalized. Phantom0.1USDC Bok exit1c4fc8c8 at8570 and original L1refundcd5e9eab at11948666 are complete; L1 finalized head11948686, transfer100000USDC units to original recipient, gas4107915wei, L2exit fee2.0169865727178FEE. Phantom original ETH private claim8652 charged2.2522791103646FEE; balance117.7143033542888+2-2.2522791103646=117.4620242439242. MetaMask original ETH claim2e995ced at8657 charged2.2522791103646FEE:112.3009087381458+2-2.2522791103646=112.0486296277812. Original0cc4 final accounting completed at8961:0.013944USDCcharged+0.236056USDCrefunded=0.25USDCbudget;zero available/reserved. Keep canonical checkpointed versus finalized labels exact.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -464,9 +518,12 @@
         "nonempty-reader",
         "d4-current",
         "d4-opaque",
-        "current-six-public-effects"
+        "current-six-public-effects",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 actual deployed trust topology, uncovered human receiver categories and complete current public-effect/funding/Bok correlation classification remain; use retained effects or required D2 captures. X1 independent specialist review remains. Existing partial traces/source reasoning are not cryptographic acceptance.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -483,9 +540,12 @@
         "privacy-reasoning",
         "d4-current",
         "d4-opaque",
-        "current-six-public-effects"
+        "current-six-public-effects",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 actual deployed trust topology, uncovered human receiver categories and complete current public-effect/funding/Bok correlation classification remain; use retained effects or required D2 captures. X1 independent specialist review remains. Existing partial traces/source reasoning are not cryptographic acceptance.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -500,9 +560,12 @@
         "privacy-reasoning",
         "d4-current",
         "d4-opaque",
-        "current-six-public-effects"
+        "current-six-public-effects",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 deployed trust topology and missing human receiver/public-effect categories remain. Controlled forwarding/header stripping is accepted but does not establish human unlinkability.45opaque observations are39Aztec simulation/validation/send plus6L1 estimate/send, not45transactions; discarded payloads and27L1-only unknown method names cannot be recovered. Capture missing categories during required D2, not a new campaign.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -517,7 +580,7 @@
         "reorg",
         "offline-backup"
       ],
-      "remaining": "D8 carry exact source/network scopes; archive capacity retained under RC27. No routine repeat of complete deletion/rebuild required.",
+      "remaining": "Real core/archive/key reconstruction and reorg evidence retains exact source/network scope; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -533,9 +596,13 @@
         "linux-package",
         "component-performance",
         "current-index-reuse",
-        "d1-native-controls"
+        "d1-native-controls",
+        "warm-account-readiness",
+        "review-cold-start-target-authority",
+        "cold-account-readiness",
+        "review-current-warm-and-retained-cold"
       ],
-      "remaining": "Operated node/archive readiness and measured nonempty index/cost/capacity evidence retained. D5 final freshness observation if missing and D8 precise lifetime/resource ledger remain; no new full rebuild or invented10k corpus.",
+      "remaining": "Current2803 cold original-account startup measured240.255s; warm61.543s native work (75.996s including recovery-file entry). Both reached actual funding/account controls, without sending transactions. These are full account-ready observations, not peak-memory or full-journey qualification. Retain existing public UI/load metrics; actual Bok reply readback8960 matches canonical receipt8960; no later finality wait. Preserve startup and scope limitations.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -548,7 +615,7 @@
       "evidence": [
         "outage"
       ],
-      "remaining": "D8 retained unchanged core/Bok boundary disposition only; no new general outage campaign indicated.",
+      "remaining": "Existing core-without-Bok evidence retained; current core remains independent while Bok compute is stopped. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -563,9 +630,12 @@
         "github",
         "accepted-crash",
         "d6-conjunction",
-        "current-bok-healthy-poll"
+        "current-bok-healthy-poll",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -579,9 +649,12 @@
       "evidence": [
         "summary",
         "concurrency-retention",
-        "d6-conjunction"
+        "d6-conjunction",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -596,9 +669,12 @@
         "github",
         "connected-repo",
         "accepted-crash",
-        "d6-conjunction"
+        "d6-conjunction",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D6 current-source conjunction approved; no additional model/concurrency/repository/crash campaign identified. D8 adopt scoped original evidence and current policies; D2 combined current-testnet Bok/proof journey remains where applicable.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification",
       "appendAcceptedComponentEvidence": "Current D6 conjunction retains independently scoped real concurrency/summary/repository/recovery packets; relevant runtime modules unchanged through837375d0."
     },
@@ -632,9 +708,12 @@
         "artifact-api",
         "d6-conjunction",
         "d7-conjunction",
-        "current-bok-healthy-poll"
+        "current-bok-healthy-poll",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "Original testnet Bok accounting is complete:250000microUSDC reserved=5664charged+244336returned, reserved0, all canonical at finalized8528. Original output was lost and is not replayed. A new ordinary request must demonstrate reply/generated output plus accounting; remaining withdrawals and D3 interruptions stay open.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -651,7 +730,7 @@
         "d6-conjunction",
         "current-bok-healthy-poll"
       ],
-      "remaining": "Prior atomic latest/source publication is scoped evidence. Current testnet generated artifact/source retrieval remains; paid hosting stops2026-10-19T18:00Z. Temporary URLs do not establish indefinite retention.",
+      "remaining": "Same hostname now serves all five latest/revision/page/source routes from private S3/OAC after quiet authenticated staging; exact bytes/headers and actual browser interaction verified. No compute dependency for retained artifacts. Budgeted storage/delivery and explicit live-generation resume procedure remain operating obligations.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -684,7 +763,7 @@
         "d1-native-controls",
         "current-runbook"
       ],
-      "remaining": "Existing deployment/readiness satisfied within recorded scope. D8 distributable manifest, source/runtime distinction and current/expired endpoints/roles/ownership remain; no new clean deployment.",
+      "remaining": "Existing clean independent deployment, exact runtime/build inventory and bounded hosting instructions mapped; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -702,9 +781,15 @@
         "live-rotation",
         "d1-native-controls",
         "current-runbook",
-        "d7-conjunction"
+        "d7-conjunction",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "core-preservation",
+        "moderator-checkpoint-amendment",
+        "bok-compute-stopped"
       ],
-      "remaining": "D3 two ETH interruption windows and D8 actual outage/recovery/accounting handover remain. Current native services operated successfully; no repeated rotation/backup drill.",
+      "remaining": "Both original interrupted claims and refunds, authority rotation, and current encrypted preservation are mapped. Apply separately preserved20FEE configuration amendment after core restore; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -720,9 +805,12 @@
         "outage",
         "d1-native-imports",
         "d1-native-controls",
-        "current-runbook"
+        "current-runbook",
+        "core-preservation",
+        "moderator-checkpoint-amendment",
+        "bok-compute-stopped"
       ],
-      "remaining": "Existing clean independent deployment plus current engineering service qualification retained. D8 exact artifacts/runbooks/ownership and temporary hosting disposition remain; no repeat deployment.",
+      "remaining": "Clean independent deployment and both actual final encrypted snapshots are retained with exact source/runtime distinctions. Final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -742,9 +830,15 @@
         "d7-conjunction",
         "d4-current",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "current-metamask-eth-claim",
+        "current-phantom-eth-claim",
+        "current-phantom-bok-refund",
+        "current-moderator-live",
+        "current-moderator-fee-quote",
+        "current-moderator-fee-amendment"
       ],
-      "remaining": "D2 ETH/withdrawal/Bok completion; D3 two ETH windows; D4 remaining actual public-effect/receiver/topology scope; D5 full cold/warm wallet/freshness if absent; D8 final assembly. Ten real-proof count/latency met. X1/X2 remain external.",
+      "remaining": "Wallet, Bok output/accounting, public effects, static retention and actual moderator evaluation outcomes are recorded. Both encrypted snapshots and post-snapshot moderator config/source deltas are preserved. Final resumed ingestion observation, independent handover review and required CI remain; X1/X2 external.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -762,9 +856,13 @@
         "current-accessibility",
         "current-index-reuse",
         "current-ten-real-proofs",
-        "current-ten-original-receipts"
+        "current-ten-original-receipts",
+        "warm-account-readiness",
+        "review-cold-start-target-authority",
+        "cold-account-readiness",
+        "review-current-warm-and-retained-cold"
       ],
-      "remaining": "Ten necessary real proofs satisfy declared count/latency target within client-observed scope. Retain earlier nonempty index/large-note/capacity/UI evidence. D5 complete cold/warm full wallet readiness and final freshness if absent; no further proof solely for count.",
+      "remaining": "Current2803 cold original-account startup measured240.255s; warm61.543s native work (75.996s including recovery-file entry). Both reached actual funding/account controls, without sending transactions. These are full account-ready observations, not peak-memory or full-journey qualification. Retain existing public UI/load metrics; actual Bok reply readback8960 matches canonical receipt8960; no later finality wait. Preserve startup and scope limitations.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -782,9 +880,12 @@
         "paid-fence",
         "d6-conjunction",
         "d7-conjunction",
-        "current-bok-healthy-poll"
+        "current-bok-healthy-poll",
+        "current-original-bok-completed",
+        "current-bok-page-readback",
+        "current-bok-reply-readback"
       ],
-      "remaining": "D6 current-source conjunction accepted: no additional broad model/concurrency/crash/repository execution gap identified. D2 combined testnet/proof scope and D8 final account/incident/source handover remain. Historical uncertain calls stay fenced and unresolved, never replayed.",
+      "remaining": "Original0cc4 accepted4055 page/source and authenticated reply8960 are visible; finish8961 reconciles250000microUSDC=13944charged+236056refunded, zero available/reserved. No repeated model/payment; one operator-authored test identifier correction recorded. Current moderation evaluated six actual posts; static retention is complete. Both final snapshots and fee configuration are preserved; final source handover/review is tracked separately.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -799,7 +900,7 @@
         "d7-conjunction",
         "d1-native-controls"
       ],
-      "remaining": "D7 representative reliability components accepted; complete remaining D3/D5 dependencies and D8 final actual incident/interval/budget conjunction. No elapsed14-day gate. X1 qualified specialist audit and X2 current network clearance remain external; mainnet requires separate authorization.",
+      "remaining": "Bounded reliability/reorg/outage components retained; finish remaining affected ordinary journeys and final incident/source/budget conjunction. No fixed elapsed soak or accessibility gate. X1 qualified specialist audit and X2 current network suitability remain external, with mainnet separately authorized.",
       "assuranceDisposition": "external-release-gates-open"
     },
     {
@@ -810,7 +911,7 @@
       "implementedBehavior": "Commercial staffing/eight-week/USD15000 bid context is not executable product scope.",
       "acceptedComponentEvidence": "Owner superseded delivery timing with72-hour deadline; no hiring/purchase authorization inferred.",
       "evidence": [],
-      "remaining": "Commercial context only; infrastructure is separately authorized up to cumulativeUSD500. Current reservationUSD365, forecastUSD359.850284, host shutdown18:00UTC19October.",
+      "remaining": "Commercial context only. Owner cumulative ceilingUSD500; reservation480, complete forecast479.248472398 including4USD moderator staging and20USD public retention. Both compute cutoffs03:00UTC20October/endpoints03:05 remain.",
       "assuranceDisposition": "not-applicable"
     },
     {
@@ -825,7 +926,7 @@
         "browser-performance",
         "moderation"
       ],
-      "remaining": "D8 document adopted reversible defaults and local-rule/rejection/appeal decisions; no missing feature inferred from proposed defaults alone.",
+      "remaining": "Adopted reversible ranking/name/local-policy defaults remain recorded in existing design/decisions; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -840,9 +941,12 @@
         "social",
         "profiles",
         "nonempty-reader",
-        "current-six-public-effects"
+        "current-six-public-effects",
+        "current-eth-claim-footprints",
+        "current-eth-claims-bok-refund-public-append",
+        "current-bok-final-public-effects"
       ],
-      "remaining": "D4 account-linkage reasoning and D8 exact normalization/character/length deployment definitions; retain uniqueness tests without another registration campaign.",
+      "remaining": "Final0cc4 public-effect append complete with18 included canonical effects and two available full Tx bodies;16 historical Tx bodies unavailable. Permitted public Bok identity and explicit human-linkage limits recorded. Final source handover and external specialistX1 remain; no repeat campaign.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -859,7 +963,7 @@
         "accepted-crash",
         "d6-conjunction"
       ],
-      "remaining": "D6 notification/publication conjunction accepted within retained scope. D8 final policy/handover remains; no email/push subsystem or repeated model campaign required.",
+      "remaining": "Notifications/private recovery and accepted publication evidence retained; final handover review remains.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     }
   ],
@@ -1140,67 +1244,172 @@
     "current-original-refunds": {
       "path": "evidence/current-original-refunds/original-refunds-accounting-public-effects.json",
       "sha256": "6275f9e148569d46ed3bc71a3848c3956b11fef46d53ce4cbb0c6e5cbe0f2af0"
+    },
+    "current-metamask-eth-claim": {
+      "path": "../evidence/G13/current-claims-20261019/metamask-eth-claim.json",
+      "sha256": "56f5276c649aa2dab368722ace1a050f2bdcdf15f18916426677e8fa2828a9ef"
+    },
+    "current-phantom-eth-claim": {
+      "path": "../evidence/G13/current-claims-20261019/phantom-eth-claim.json",
+      "sha256": "57905d72e69f5ad92d7d838d1d7ba5800b89273c5bd3608c7e0897b69a1abafb"
+    },
+    "current-phantom-bok-refund": {
+      "path": "../evidence/G13/current-claims-20261019/phantom-bok-refund.json",
+      "sha256": "73bb5d5152d1c5cd2484f2e0d5b473d4a18843e563157e4b70b67e2e19a6ecd9"
+    },
+    "warm-account-readiness": {
+      "path": "../evidence/G13/current-claims-20261019/warm-account-readiness.json",
+      "sha256": "be2185751963b6da44bba83a58baa7f2bbef010a4f18f4c0c58158fa39acfc96"
+    },
+    "review-cold-start-target-authority": {
+      "path": "../evidence/G13/current-claims-20261019/review-cold-start-target-authority.json",
+      "sha256": "6b358ae573e01d94d6a188d838938df69cfa3a67f97d4df497eabbc8343146b2"
+    },
+    "cold-account-readiness": {
+      "path": "../evidence/G13/current-claims-20261019/cold-account-readiness.json",
+      "sha256": "a12e4d5bf47af745483734a4e8923420d5bb29cf4cfd13d6af2978b1131698a8"
+    },
+    "current-eth-claim-footprints": {
+      "path": "../evidence/G13/current-claims-20261019/current-eth-claim-footprints.json",
+      "sha256": "d02fa2f90556246929f75a8abd50128b6b91bd40b52431d6d32021769c7968ec"
+    },
+    "current-eth-claims-bok-refund-public-append": {
+      "path": "../evidence/G13/current-claims-20261019/current-eth-claims-bok-refund-public-append.json",
+      "sha256": "7952bc2e10f3a049501d652ff0d77b8f5b46d6a80ca699f6689856c6ff8b4897"
+    },
+    "review-current-warm-and-retained-cold": {
+      "path": "../evidence/G13/current-claims-20261019/review-current-warm-and-retained-cold.json",
+      "sha256": "dbafe38bd5bdcb61c55faac92af359451e493c589085c9ca422a8af8291ae812"
+    },
+    "current-original-bok-completed": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/original-bok-completed.json",
+      "sha256": "4f3c03b2dbd91623987a0278a137da8416779e6001d6615c033d6dad2372876d"
+    },
+    "current-bok-page-readback": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-page-readback.json",
+      "sha256": "f0695dae9554305b77594fb17b9ff4521bbe7f7d046078e81098c4c2cefe4258"
+    },
+    "current-bok-reply-readback": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-reply-readback.json",
+      "sha256": "89406b2efe916c76dd99db34044c0d1f359fbaf7f1c1787c76bb8501e8c2ec8a"
+    },
+    "current-publication": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/publication.json",
+      "sha256": "f98f75decd3ef1fe4c5f26e3daac11113abb960b1ef9477d4063b9df1fb1246f"
+    },
+    "current-bok-runtime-publication": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/bok-runtime-publication.json",
+      "sha256": "6e66e4bec52642d03188e6af481bba0e15ebaee6d9c8db0e178e34ab638d147f"
+    },
+    "static-public-retention-verified": {
+      "path": "../evidence/G10/static-retention-20261019/public-retention-verified.json",
+      "sha256": "75bea1c8c032207d82f6bf8fadf18771d9c7d43bd11d1dbe602c3dbe6066035b"
+    },
+    "static-browser-interaction": {
+      "path": "../evidence/G10/static-retention-20261019/browser-interaction.json",
+      "sha256": "ee9d74338eb54f34ee048ab1bc4ee64a92c25579f840971efe56cd837385df05"
+    },
+    "current-bok-final-public-effects": {
+      "path": "../evidence/G10/checkpoint-flow-20261020/current-bok-final-public-effects.json",
+      "sha256": "29b59651145656ca58bc9ee8877a3dafe333fd16fd014920dd4529682f25d923"
+    },
+    "state-driven-moderator-catchup": {
+      "path": "../evidence/G09/state-driven-catchup-20261020/review.json",
+      "sha256": "d67554636dc771da06b46193b27170feb4269e8f20cd9e2cc6d89e35b297911b"
+    },
+    "bok-preservation": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-preservation.json",
+      "sha256": "c02cda14094b65f329afc2aaad97258b46d3049017a0520eb656b3ba3a6d35c1"
+    },
+    "bok-resume": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-resume.json",
+      "sha256": "75567787dd9958c0d53fe19691212310a8b7bd2a6a166cdd345eea6aeb68508f"
+    },
+    "bok-compute-stopped": {
+      "path": "../evidence/G12/final-preservation-20261019/bok-compute-stopped.json",
+      "sha256": "6d2e4dd77a329dac06ccca68950a2c59f53c1611fe9ff292d536a33665f6ec73"
+    },
+    "current-moderator-live": {
+      "path": "../evidence/G09/current-moderator-20261019/live-readback.json",
+      "sha256": "573cdb87fd1d5de800c76e3087727acdad14048c17db8d398c2d353a6af830d7"
+    },
+    "current-moderator-fee-quote": {
+      "path": "../evidence/G09/current-moderator-20261019/fee-quote-result.json",
+      "sha256": "ef30a7756fdc3d10672c237baef39db77e60fb71cfc4f95eddf0d2fe0cb5fc96"
+    },
+    "current-moderator-fee-amendment": {
+      "path": "../evidence/G09/current-moderator-20261019/fee-amendment-result.json",
+      "sha256": "7cc71c9bec72542f3ad498fffa0a2da79c8631ce5e2be737089d04ce56e105d2"
+    },
+    "core-preservation": {
+      "path": "../evidence/G12/final-preservation-20261019/core-preservation.json",
+      "sha256": "d4f815837a89b996cc32ce07572d6d4a4f7f0df19dcd7a47bfab03ff6a7516d6"
+    },
+    "moderator-checkpoint-amendment": {
+      "path": "../evidence/G12/final-preservation-20261019/moderator-config-after-checkpoint.json",
+      "sha256": "cf4a876b0bb1bb209ba88b88540099d7b0f771cb3e581c36fb318469cf76d184"
+    },
+    "moderator-f3-publish-result": {
+      "path": "../evidence/G09/current-moderator-20261019/f3-publish-result.json",
+      "sha256": "de49668e461f1df3ef3f49ec928ee6f37b7a797bdab1dcb5b0eabe1c5e9c7cd2"
+    },
+    "moderator-f3-readback-result": {
+      "path": "../evidence/G09/current-moderator-20261019/f3-readback-result.json",
+      "sha256": "5924ee737bf2808cb80dddefbb1203fa6486bc1378cafb4540d77ebce9609d9e"
     }
   },
   "inputs": {
     "../draft3-requirements.json": "52800f3f07e058d080b22b2cf1ca81eabf65a14333a0f97598cf8293305a666d",
     "../draft3-requirements.md": "17a52993870327f41439b89a982349044d67fe773889af62f16396d2d7407b1c",
-    "../specification-clarifications.md": "f72fdf24b326d5194c1d47dcd62984217f060a556384c26675f02982ff8f709c",
+    "../specification-clarifications.md": "7d7376b6e1f31a11af8ba70060cea99b31e2dc1ae562811821eccb562a65fc15",
     "../evidence/G03/targets.md": "79758b5f74edb4885c27e585f6b42cb4232ee3c1bf457778e1da16b8e20203a4"
   },
-  "followupSource": "See artifact-manifest.json for current integrated source, published application and separately admitted runtime bindings.",
+  "followupSource": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
   "remainingExecutable": [
-    "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open. Phantom0.1USDC Bok exit confirmed on Aztec, private fee2.0169865727178; original Ethereum claim pending, no completed withdrawal claim.",
-    "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
-    "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
-    "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral.",
-    "Assemble exact46-row checklist, source/runtime manifests, runnable local devnet instructions, current/expired hosted access, adopted defaults, no-replay journal references, USD500 ceiling/18:00shutdown/retained-state plan, and concrete resume entry. Carry specialist audit/network gates separately. No new test campaign."
+    {
+      "rows": [
+        "RC12",
+        "RC13",
+        "RC39"
+      ],
+      "action": "Finish reviewed f3 moderator catchup publication and observe resumed native ingestion; retain exact source/config deltas after core checkpoint."
+    },
+    {
+      "rows": [
+        "RC37",
+        "RC38",
+        "RC39",
+        "RC42"
+      ],
+      "action": "Independent final handover review, normal integration gate and required CI after deterministic generated-consumer alignment. External X1/X2 remain separate."
+    }
   ],
-  "updatedAt": "2026-10-19T12:57:19.287276+00:00",
-  "currentSourceNote": "Integratedd1887384; liveappbbcf43dc, original Bok durability deltaee973, separately admitted native/query/prover source5ebeff1c with retained original runtime processes. SDK edge-cache repair is integrated but not published. Both ETH payments succeeded; private claims remain. Original Bok billing closed at finalized8528 with no output. Host18:00/endpoints18:05, reservation365/ceiling500. Phantom0.1USDC Bok exit confirmed on Aztec; Ethereum claim pending.",
+  "updatedAt": "2026-10-19T21:27:21.067453+00:00",
+  "currentSourceNote": "Reviewed integration and current browser wallet34cc7252. Bok release791297f7 plus reviewed84a5 runtime overlay delivered original0cc4; exact live overlay provenance remains separately bound. Prover policy71d5 unchanged. Current moderator deployment and public static-origin retention in progress. Reviewed f3e23bf4 removes the moderator20-second catchup failure/idle cycle; actual current moderator process remains34cc until orderly publication, preserving its existing progress.",
   "accessibility_scope": {
     "required": false,
     "reason": "Owner removed all accessibility requirements for proof of concept on 19 October 2026 local time",
     "authority": "execution/specification-clarifications.md",
     "voiceover_prohibited": true
   },
-  "engineeringTargetDisposition": {
-    "authenticated10kPosts": "retired unvalidated engineering assumption; not passed",
-    "authority": "Draft3 pages6/9 and execution/specification-clarifications.md",
-    "preserved": "Real nonempty authenticated reconstruction, measured cold/warm performance/cost and explicit layered C04 requirements."
-  },
+  "engineeringTargetDisposition": "Individual remote proof target120s, median60s/10samples met by retained evidence. Browser540s/4GiB qualification is distinct. Current cold account-readiness240.255s; warm61.543s excluding human entry. SDK-only133s/405s observations are retained, with no invented120s SDK failure or peak-memory inference.",
   "remainingJourneyObservationsOnce": [
     {
-      "id": "J1",
-      "work": [
-        "D2",
-        "D3"
+      "rows": [
+        "RC12",
+        "RC13",
+        "RC39"
       ],
-      "action": "Resume original Phantom ETH808d3091 and MetaMask ETH73520e90 payments to their private claims; retain original before-ack interruption and no-replay records."
+      "action": "Finish reviewed f3 moderator catchup publication and observe resumed native ingestion; retain exact source/config deltas after core checkpoint."
     },
     {
-      "id": "J2",
-      "work": [
-        "D2",
-        "D4"
+      "rows": [
+        "RC37",
+        "RC38",
+        "RC39",
+        "RC42"
       ],
-      "action": "Retain successful human actions; finish current withdrawal accounting and classify the four additional captured public transaction effects with actual observer topology. No human social replay needed."
-    },
-    {
-      "id": "J3",
-      "work": [
-        "D2",
-        "D4",
-        "D6"
-      ],
-      "action": "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral."
-    },
-    {
-      "id": "J4",
-      "work": [
-        "D5"
-      ],
-      "action": "Keep accepted ten-proof count/latency. Fill only absent complete cold/warm wallet readiness or final index freshness observation, using retained current journey measurements."
+      "action": "Independent final handover review, normal integration gate and required CI after deterministic generated-consumer alignment. External X1/X2 remain separate."
     }
   ],
   "preparedBy": "controls_resume2 portable handover",
@@ -1217,5 +1426,33 @@
       "final-acceptance-remaining-20261018.json": "60d327c26d49952c3d2c67fe894a5065a04efd7fb409bd2c368e8ab3a1f04caf",
       "final-requirement-disposition.json": "37e00685df32d8eaca3de709f6726e07c1b982cf000654d516626eb7f8b66a89"
     }
-  }
+  },
+  "currentBindings": {
+    "integrated": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+    "hostedApp": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+    "appPublicationCommand": "e98a7b30-53de-4788-9c57-ccdc3334aab2",
+    "appUnitSha256": "4bf19aad180e4d062ab90836de559ea23c34f0163b970de12b1d358a582155ad",
+    "sdkManifestSha256": "7a7a714c1f3c9d48ddd32458cf8d00012c22abd1b60e71c72da9aca4263eeaa9",
+    "proverManifestSha256": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+    "proverPolicySource": "95baf36dece76a09504ff80cb0e7771a167cd82a",
+    "proverPromotionCommand": "a13abb3f-388f-4ccf-a863-37489e05553c",
+    "proverPIDAtPromotion": 118716,
+    "proverQualification": "Genuine prior query qualification carried forward with exact unchanged-component provenance; no new full qualification claimed. Actual policy canary, readiness and activation observation succeeded.",
+    "hostStop": "2026-10-20T03:00:00Z",
+    "endpointCleanup": "2026-10-20T03:05:00Z",
+    "ownerCeilingUSD": 500,
+    "reservationUSD": 480,
+    "forecastUSD": 479.248472398,
+    "bokSource": "791297f7e0b075f85201a923c9603c228368ab9a",
+    "bokInstance": "i-0a56b0bc2dd7727b2",
+    "coreInstance": "i-09e2dbeea10854dc8",
+    "bokOperatorAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+    "bokReviewedRuntimeOverlay": "84a5c525077de41fba86376f48e6a0d3bc60f9a4",
+    "artifactHosting": "private-S3-via-OAC; exact five public routes verified",
+    "bokServiceState": "stopped-after-terminal-request; new requests require operator resume",
+    "bokComputeState": "stopped at21:09UTC; encrypted volume retained until03UTC termination",
+    "moderatorSource": "34cc base with exact f3 daemon/adapter overlay",
+    "moderatorPublicationCommand": "d34cc2e8-f68f-4954-9e7c-849416259714"
+  },
+  "snapshotNote": "This document is the pre-integration handover snapshot. Later source-bound review, CI and final runtime readiness outcomes are recorded by the integration gate; pending here never means passed."
 }

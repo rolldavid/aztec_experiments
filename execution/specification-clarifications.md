@@ -88,3 +88,12 @@ Independent source review confirms Draft3 pages6/9 require authenticated reconst
 ## 19 October 2026 — infrastructure ceiling
 
 Owner explicitly raises the cumulative infrastructure ceiling to USD500 ("I approve a $500 ceiling"). This supersedes USD300, not USD500 additional. Retain all resource reconciliation, spending buffers, independent shutdown controls and other scope/release restrictions. The first reviewed use is the same host through10:45UTC and endpoints10:50UTC, complete forecastUSD312.267094, reservationUSD315. No new server is implied.
+
+
+## 19 October 2026 — independently operated Bok
+
+The owner requires Bok to run on a separate server as an independently operated plugin, with an explicitly funded Aztec account that signs and pays for its board replies. Preserve that account and pending transaction identity when moving the service; do not use the requesting user’s account or give generated applications access to signing or developer credentials. A running process alone is not acceptance: the actual request must produce its authenticated board reply and the promised usable artifact/source. The earlier permission to reveal Bok’s public identity remains unchanged.
+
+## Owner correction — transaction progress, 20 October 2026
+
+Ordinary application and plugin operations advance on canonical checkpointed Aztec success or a canonical mined Ethereum receipt, not full network finality. Funding claims require actual message consumability at the consuming PXE's configured tip; withdrawals require the native Outbox witness and successful portal preflight. Do not add a second finalized-head gate. Preserve original transaction identity, reorg checks and native per-secret PXE dependencies; do not lock unrelated wallet actions behind a reverted transaction's finality. Use native state waiters and local mining/settlement controls. Canonical inclusion must never be labelled finalized. This owner direction supersedes older blanket finality requirements in the specification, fixtures and operating notes.

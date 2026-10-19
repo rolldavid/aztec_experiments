@@ -1,0 +1,20 @@
+{
+  "verifiedAt": "2026-10-19T20:55:23.386462+00:00",
+  "commandId": "b7c3e3e8-7692-42ce-8943-73ea1b47ec8c",
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "key": "checkpoints/rolling-final-20261018-c71ecfaa7e/i-0a56b0bc2dd7727b2-final-0300-20261020.cms",
+  "versionId": "ygQ8WPOhNUloqGQaRSn71eOKC9vBPDFd",
+  "bytes": 1145682,
+  "sha256": "db9a116578427637514ffeb1f29b1c2e664c3dc05a7b12a884f4d8c88f53a16e",
+  "exactVersionDownloaded": true,
+  "cmsDecryptSucceeded": true,
+  "inventoryVerified": true,
+  "files": 167,
+  "directories": 81,
+  "symlinks": 0,
+  "originalCompletedJournalPreserved": true,
+  "sourceBinding": "live84a5c525-eight-file-overlay",
+  "interactiveBokService": "deliberately-stopped",
+  "publicArtifactRetention": "verified-separately",
+  "restoreExercisePerformed": false
+}

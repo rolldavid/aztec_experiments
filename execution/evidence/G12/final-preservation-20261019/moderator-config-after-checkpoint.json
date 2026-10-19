@@ -1,0 +1,18 @@
+{
+  "applicationProfile": "rolling",
+  "development": false,
+  "nodeUrl": "https://d30njln0kead8n.cloudfront.net/v1/node",
+  "ethereumUrl": "https://ethereum-sepolia-rpc.publicnode.com/",
+  "chainId": "11155111",
+  "rollupVersion": "3409706519",
+  "rollupAddress": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+  "boardAddress": "0x186d5c5e5a9bcd6d971b5e6c2a5dfb1afb58a103ee1715f7ce9997cce0c199a6",
+  "operatorAddress": "0x2c8a8c02a4b70118ce06ca7f789f497349ad464a8439368d4db2bfd7a5577cf9",
+  "operatorFile": "/run/rolling-moderator/operator.json",
+  "deployment": {
+    "txHash": "0x0b199fa8c525cb243f8968e0853b3e9cd5160b1de1c10d2d91b32798b52b0088",
+    "blockNumber": 7956,
+    "blockHash": "0x0c9ce8f6febc93397ea49720997c342d7dbcd1849ab7ea6c86b248ad5a7ca129"
+  },
+  "maxTransactionFee": "20000000000000000000"
+}

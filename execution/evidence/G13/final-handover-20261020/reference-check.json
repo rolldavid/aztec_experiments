@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-10-19T21:27:21.067453+00:00",
+  "requirements": 46,
+  "evidenceFiles": 97,
+  "hashMismatches": [],
+  "method": "Resolve each existing evidenceRegistry relative path and compare SHA256; every requirement evidence key exists.",
+  "scope": "Reference integrity only; semantic evidence is independently reviewed."
+}

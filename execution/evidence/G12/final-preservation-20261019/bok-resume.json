@@ -1,0 +1,55 @@
+{
+  "status": "prepared only; not executed",
+  "at": "2026-10-19T20:49:23.745744+00:00",
+  "currentAvailability": {
+    "generatedPageAndSource": "available independently from private S3 through existing CloudFront hostname",
+    "interactiveBok": "deliberately stopped; no new request processing",
+    "coreReader": "separate service remains live under existing shutdown controls",
+    "shutdown": "2026-10-20T03:00:00Z",
+    "endpointCleanup": "2026-10-20T03:05:00Z",
+    "dedicatedCompute": "stopped at2026-10-19T21:09:45Z; encrypted128GiB gp3 volume retained"
+  },
+  "preservedRuntime": {
+    "instance": "i-0a56b0bc2dd7727b2",
+    "service": "rolling-bok-testnet.service",
+    "proxyService": "rolling-bok-artifact-proxy.service",
+    "release": "/opt/rolling-app/releases/791297f7",
+    "sourceOverlay": "84a5c525",
+    "configReference": "/etc/rolling-bok-testnet/config.json",
+    "configSha256": "b25fdcb6de29354975fa67f9ed2ada9184ad36a62385f939d3bd9715ea5f81c2",
+    "stateDirectory": "/var/lib/rolling-bok-testnet",
+    "lease": "absent after natural drain; never recreate or delete an uncertain live lease",
+    "computeStopReceipt": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/checkpoint-20261019/deadline-0300-20261020-two-hosts/bok/compute-stopped-verified.json"
+  },
+  "resumePreconditions": [
+    "Dedicated EC2 i-0a56b0bc2dd7727b2 is stopped. Any resumption requires explicit authorized StartInstances within the existing budget and03:00UTC20October deadline, with the independent termination controls preserved. Native instance_running and status_ok waiters must establish compute readiness. Enabled services may start at boot: reconcile actual sole-writer PID and lease before any manual service start, never launch a duplicate.",
+    "Existing host and its original encrypted state/credential providers must still be available and inside the independently enforced deadline/budget. After host termination this is a prerequisite, not authorization to launch new capacity.",
+    "Keep new request authorization paused until complete restoration. Confirm sole writer, MainPID0/inactive/exit0 and absent hosted.lock; inspect every journal terminal/all calls settled. Original0cc4 must remain finished with canonical reply8960/finish8961 and its original account.",
+    "Verify unchanged config/unit/source overlay against preserved runtime84a5 receipt and original current unit. No recovery override should exist. Do not rerun restore helper, accounting CLI, model, settlement replacement, claim or payments.",
+    "Core query/native/prover dependencies must be available for normal startup. Retention does not preserve dynamic services or grant new credentials."
+  ],
+  "existingOperationsInOrder": [
+    "After authorized compute restart and native readiness, inspect the normal service state first. If already active from boot, use that sole writer. Only if inactive and no writer/lease exists, start the original normal service once: systemctl start rolling-bok-testnet.service. Reconcile actual PID/health and no original-operation replay; diagnose failure before another action.",
+    "After normal startup, start the unchanged companion once: systemctl start rolling-bok-artifact-proxy.service. Verify exact accepted4055 page/source on its existing private origin and preserve journal hashes.",
+    "Read fresh CloudFront config+ETag. Require current S3 config equals switch-deployed.json (including observed provider default OriginReadTimeout30). Save a fresh restore intent, then update distributionE1M12FHGQ0S5ST with DistributionConfig from distribution-before-switch.json and fresh IfMatch. Do not replay an uncertain update.",
+    "Wait with native distribution_deployed waiter; read actual config and existing page/source bytes/security headers through dy2q03rao3se7.cloudfront.net. Only then allow new requests. The preserved S3 snapshot remains immutable; no automatic dynamic S3 publication is introduced."
+  ],
+  "evidence": [
+    "drain-result.json",
+    "capture-quiet-result.json",
+    "public-retention-verified.json",
+    "distribution-before-switch.json",
+    "switch-deployed.json",
+    "object-versions.json"
+  ],
+  "mutationsPerformedByThisProcedure": false,
+  "encryptedPreservation": {
+    "verifiedReceipt": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/checkpoint-20261019/deadline-0300-20261020-two-hosts/bok/preservation-verified.json",
+    "versionId": "ygQ8WPOhNUloqGQaRSn71eOKC9vBPDFd",
+    "ciphertextSha256": "db9a116578427637514ffeb1f29b1c2e664c3dc05a7b12a884f4d8c88f53a16e",
+    "bytes": 1145682,
+    "inventoryVerified": true,
+    "restoreExercisePerformed": false
+  },
+  "retainedStorageCost": "Existing128GiB encrypted volume continues storage charges until original03:00 termination; already included within479.248 forecast/480 reservation, no added capacity or extension."
+}

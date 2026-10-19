@@ -391671,10 +391671,6 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       };
       await checkL1();
       requireThat(receipt2.status === 0 || receipt2.status === 1, "UNKNOWN");
-      const finalized = await provider.getBlock("finalized");
-      requireThat(finalized && Number.isSafeInteger(finalized.number) && finalized.number >= 0, "UNKNOWN");
-      hex14(lower3(finalized.hash));
-      if (finalized.number < r.blockNumber) return frozen({ status: "waiting", reason: "l1-finality" });
       const tx = await provider.getTransaction(r.txHash);
       requireThat(tx, "UNKNOWN");
       requireThat(equal3(tx.hash, r.txHash) && equal3(tx.from, r.sender) && String(tx.nonce) === r.nonce && String(tx.chainId) === s.chainId && equal3(receipt2.from, r.sender) && equal3(receipt2.to, tx.to));
@@ -391795,10 +391791,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       requireThat(index === 0n && root.toString() === a.root);
       await checkL1();
       await checkL2();
-      const finalAgain = await provider.getBlock(finalized.number);
-      requireThat(finalAgain && equal3(finalAgain.hash, finalized.hash), "REORG");
       await read2(() => Promise.resolve());
-      return frozen({ status: "claim-ready", claim: claim2, evidence: { kind, txHash: r.txHash, l1: { number: r.blockNumber, hash: r.blockHash }, finalizedL1: { number: finalized.number, hash: lower3(finalized.hash) }, l2: { number: a.number, hash: a.hash }, messageKey: r.messageKey, leafIndex: r.leafIndex, content } });
+      return frozen({ status: "claim-ready", claim: claim2, evidence: { kind, txHash: r.txHash, l1: { number: r.blockNumber, hash: r.blockHash }, l2: { number: a.number, hash: a.hash }, messageKey: r.messageKey, leafIndex: r.leafIndex, content } });
     } catch (error312) {
       if (failures2.has(error312)) throw error312;
       let mismatch = false;
@@ -448751,10 +448745,7 @@ ${context.join("\n")}`;
           return previous;
         }
         if (acknowledged !== previous.tx.getTxHash().toString()) throw fail8();
-        const receipt2 = await waitForCanonicalReceipt(node2, previous.tx, waitOptions);
-        if (receipt2.executionResult === "reverted" && receipt2.status !== "finalized") {
-          throw transactionError("BB_TRANSACTION_FINALITY_PENDING", "The previous transaction reverted. Wait for network finality before starting another action; keep its saved record.");
-        }
+        await waitForCanonicalReceipt(node2, previous.tx, waitOptions);
       }
       return previous;
     }

@@ -1,0 +1,36 @@
+{
+  "CommandId": "d34cc2e8-f68f-4954-9e7c-849416259714",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Publish reviewed two-file moderator catchup repair",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T21:22:29.212Z",
+  "ExecutionElapsedTime": "PT0.107S",
+  "ExecutionEndDateTime": "2026-10-19T21:22:29.212Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"sourceOverlay\": \"f3e23bf4a09ac6350ea2add12feb47b475a427a3\", \"baseSource\": \"34cc7252\", \"files\": {\"daemon.mjs\": \"161fc78c9a8b1c2080a6ea6fe3b575f9d545fe16c6cfcca666b6b49999e4fc48\", \"rolling-adapter.mjs\": \"1d0ba5f1ba9690e13404a9470f6564f47a08382a9d2750c2ba4ec28aa7259380\"}, \"preservedPids\": {\"rolling-application\": \"171494\", \"rolling-query\": \"56573\", \"board-prover\": \"118716\"}, \"deadline\": \"2026-10-20T03:00:00Z\", \"startRequested\": true}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "a4f9f3b3-c2bc-4723-8b5b-3138791b6eae",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 21:22:44 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1107",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "a4f9f3b3-c2bc-4723-8b5b-3138791b6eae",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

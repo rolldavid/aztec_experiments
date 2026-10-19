@@ -1,0 +1,36 @@
+{
+  "CommandId": "b2b37072-5a81-44c4-addc-a5a28f66d244",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Correct moderator fee cap; restore unchanged app and moderator after checkpoint",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T21:17:02.909Z",
+  "ExecutionElapsedTime": "PT0.09S",
+  "ExecutionEndDateTime": "2026-10-19T21:17:02.909Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"configSha256\": \"cf4a876b0bb1bb209ba88b88540099d7b0f771cb3e581c36fb318469cf76d184\", \"maxTransactionFee\": \"20000000000000000000\", \"onlyConfigFieldChanged\": \"maxTransactionFee\", \"applicationAndModeratorStartDispatched\": true, \"source\": \"34cc7252\", \"queryPid\": \"56573\", \"proverPid\": \"118716\", \"deadline\": \"2026-10-20T03:00:00Z\"}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "953754d2-b1e3-4797-9d4f-8c342748d830",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 21:17:23 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1018",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "953754d2-b1e3-4797-9d4f-8c342748d830",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

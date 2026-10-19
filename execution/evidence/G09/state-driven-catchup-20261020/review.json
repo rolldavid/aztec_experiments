@@ -1,0 +1,50 @@
+{
+  "candidate": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+  "base": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+  "verdict": "approved",
+  "scope": [
+    "censor-daemon/daemon.mjs",
+    "censor-daemon/rolling-adapter.mjs",
+    "censor-daemon/test_worker.mjs"
+  ],
+  "requirements": [
+    "RC12",
+    "RC27",
+    "RC40",
+    "State-driven canonical index catch-up with daemon shutdown ownership"
+  ],
+  "sourceAssessment": [
+    "Adapter awaits each existing index.sync step serially until status.complete; removes only20-second/512-step catch-up abandonment. Native step canonical/network/deployment/storage/revision checks and bounded transaction/page work remain unchanged.",
+    "The production index exposes sync:step, and the owned wrapper preserves that contract. Native failures propagate directly without adapter retry; no partial publication is inferred.",
+    "Daemon supplies its existing stopping closure. While catch-up is incomplete, shutdown is checked before each subsequent step; an in-flight native step remains owned until it settles. Existing worker stopping checks prevent model/signing jobs after shutdown.",
+    "No wallet journal, submission, receipt reconciliation, model isolation or replay policy changed. Legacy non-Rolling signer composition is unchanged."
+  ],
+  "independentValidation": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned Node24.21.0 --test censor-daemon/test_worker.mjs",
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 424.66475,
+    "log": ".build/reviewer-evidence/final-testnet-plan/review-f3e23bf4-tests.log",
+    "sha256": "87275dc7777a239c0f70e2afd516d2769696bf07e1a36e766915b23bbdba7e87",
+    "meaningfulCases": [
+      "600 finite native index steps complete beyond old cap",
+      "unfinished index shutdown after3steps performs no evaluation or broadcast",
+      "first exact native error is propagated after one step",
+      "existing final guarded query rejects changed revision/unavailable query before model/signing",
+      "existing worker journal/reorg/replay safeguards"
+    ]
+  },
+  "limitations": [
+    "Tests use labelled component fixtures; no live model/proof/chain/service operation performed.",
+    "Shutdown is cooperative between native steps; this change does not abort an in-flight RPC or change its existing transport boundary.",
+    "The old whole-initial-sync fixture was correctly replaced with state-driven shutdown, not treated as a required elapsed-time failure. Parent first cancelled obsolete-fixture run is not a pass claim."
+  ],
+  "sourceHashes": {
+    "censor-daemon/daemon.mjs": "161fc78c9a8b1c2080a6ea6fe3b575f9d545fe16c6cfcca666b6b49999e4fc48",
+    "censor-daemon/rolling-adapter.mjs": "1d0ba5f1ba9690e13404a9470f6564f47a08382a9d2750c2ba4ec28aa7259380",
+    "censor-daemon/test_worker.mjs": "afa57b48d9da6ad8e09390ca7b6a42a8dc17c0c74cabf2899c49c3839169ecb4"
+  },
+  "dirtyDossierExcluded": true,
+  "blockers": []
+}

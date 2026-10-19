@@ -1,0 +1,13 @@
+{
+  "verified": true,
+  "instance": "i-09e2dbeea10854dc8",
+  "versionId": "ufq2Yiq5Tr1kWo0Qd5GPi0g308.RfEeM",
+  "bytes": 6990930,
+  "ciphertextSha256": "c68379f1aecf9ed9ff09cf621c716d449c3d9e1a5ec0fe38508e4da7d6eac17b",
+  "inventory": {
+    "files": 110,
+    "directories": 12,
+    "links": 0
+  },
+  "activeModerationSource": "34cc7252f6f90ea127b798cf885e7f3e8439d969"
+}

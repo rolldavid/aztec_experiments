@@ -1,0 +1,18 @@
+{
+  "instanceId": "i-0a56b0bc2dd7727b2",
+  "state": "stopped",
+  "verifiedAt": "2026-10-19T21:09:45.113721+00:00",
+  "volumes": [
+    {
+      "volumeId": "vol-03207e708c4034c81",
+      "state": "in-use",
+      "sizeGiB": 128,
+      "encrypted": true,
+      "type": "gp3"
+    }
+  ],
+  "deadlineUnchanged": "2026-10-20T03:00:00Z",
+  "existingTerminationControlsPreserved": true,
+  "coreUntouched": true,
+  "storageCostDisposition": "Existing retained volume remains within prior full-runtime/storage forecast; no added resource or retention extension."
+}

@@ -1,0 +1,44 @@
+{
+  "source": "84a5c525",
+  "changedFiles": [
+    "plugins/escrow-service.mjs",
+    "plugins/github-tools.mjs",
+    "plugins/isolated-execution.mjs",
+    "plugins/main.mjs",
+    "plugins/operations.mjs",
+    "plugins/private-bok-escrow.mjs",
+    "plugins/private-bok-metering.mjs",
+    "plugins/thread-repositories.mjs"
+  ],
+  "sourceBefore": {
+    "escrow-service.mjs": "da91d3f0297ac79b05492ec9f047b8774d7286bdacd41373173d57efd3d329d3",
+    "github-tools.mjs": "7653ad3b3798edb8f15cfebd56cc20d603a877a62ae67ffc9dff7001f3de1a46",
+    "isolated-execution.mjs": "9c79bd73cea5196bdfc44b0b7e6e42a95ae9a299de0bc8958c6f1ff32c19dc8d",
+    "main.mjs": "4a7909556993f87ca914cebf35eee2ebfe619d26e9e2302e61b8e38000508284",
+    "operations.mjs": "4e172f02fa85bd7676367d165396afa4b3f021f13b296f47a2305c0a4c334ca2",
+    "private-bok-escrow.mjs": "39994aeabc6887da7cf61081a80055d1537875ce3dc3a7322b0702bd9e051a52",
+    "private-bok-metering.mjs": "979255fc396fb821d2d16088e74fde1a662bd39ed45c6a95b4bc80ccdb87e0d4",
+    "thread-repositories.mjs": "886fcfcac043ba4df04da1ee5b1add26ee215fcebf2074c3d072a7c160268e92"
+  },
+  "sourceAfter": {
+    "escrow-service.mjs": "97aa9f708c4c2307115cf8c54f2fc5cb6be605c117d86dd70d3531bbaaec655b",
+    "github-tools.mjs": "b623f09c35312be399444b54f104e42abc3b375d77c000910336ae1766cadac9",
+    "isolated-execution.mjs": "495b205d3be4c02b930f874ddbc91d9385253d04f9780e7bd2852eebdb881bd4",
+    "main.mjs": "74080ce1c932917fd55d44cb93fd79c65566bd7f27f49d98760a97efb56496f4",
+    "operations.mjs": "79eeba8c43a4aaf449c132121659308581d5ffc2753dd1a34d1d5bf5a6e4dab2",
+    "private-bok-escrow.mjs": "5b77bfa277298e851a272738f28a428a2c37baade99e9d0a2ecb4c6e2c845b3c",
+    "private-bok-metering.mjs": "5bf2fd3e598b445749e3133ef964202ab59e4923360fd430893669ae04949ce1",
+    "thread-repositories.mjs": "7dad42f38022ca73db14b8b83264333f0fa75da0d2963c97000f6ef836156cf1"
+  },
+  "originalRequest": "0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238",
+  "frozenJournalSha256": "db19efc58bef7479dbf56df6d937324002b11cde787f5d68edf680a4edb5cd88",
+  "sameAccountConfig": true,
+  "statePreserved": true,
+  "serviceStarted": false,
+  "accountingClosurePerformed": false,
+  "commandId": "41991055-7582-4e44-afc4-1bb3524b953e",
+  "status": "Success",
+  "baseRelease": "791297f7e0b075f85201a923c9603c228368ab9a",
+  "sourceRevision": "84a5c525077de41fba86376f48e6a0d3bc60f9a4",
+  "originalReceiptSha256": "166b8cbfa3cc7bf9d01408f2953c7c75ba4b9119a65c73ac92c703352907edfc"
+}

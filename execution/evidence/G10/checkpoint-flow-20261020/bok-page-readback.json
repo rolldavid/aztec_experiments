@@ -1,0 +1,36 @@
+{
+  "revision": "4055ef22dbf2e9971676d2c22706885d6884d3e4",
+  "pageUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/files/index.html",
+  "sourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/source.json",
+  "sourceStatus": 200,
+  "sourceBytes": 8967,
+  "sourceFiles": [
+    {
+      "path": "build.js",
+      "sha256": "afd50f9c521f15bcc898c20fac60e76d8196e0110827fcb35c952544d6ff460e",
+      "bytes": 263
+    },
+    {
+      "path": "index.html",
+      "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+      "bytes": 3441
+    },
+    {
+      "path": "package.json",
+      "sha256": "d01d60611ea48a0567ec86de20be7292d557d30098726910a4dfa808991ecf35",
+      "bytes": 199
+    },
+    {
+      "path": "test.js",
+      "sha256": "ff46eee14e02af8ddb6e72bffcd27422615729892a495e01bb46d151b170211f",
+      "bytes": 2062
+    }
+  ],
+  "promptStates": [
+    "🌿 Quiet Garden Prompts\n\nWhat is a moment of stillness you've treasured recently? What made it restorative?\n\nAnother Prompt\nPrompt 1 of 3",
+    "🌿 Quiet Garden Prompts\n\nIf you could plant one seed of change in your life right now, what would it be?\n\nAnother Prompt\nPrompt 2 of 3",
+    "🌿 Quiet Garden Prompts\n\nDescribe a conversation that shifted how you see the world. What changed?\n\nAnother Prompt\nPrompt 3 of 3",
+    "🌿 Quiet Garden Prompts\n\nWhat is a moment of stillness you've treasured recently? What made it restorative?\n\nAnother Prompt\nPrompt 1 of 3"
+  ],
+  "observed": "Actual public browser click cycles all3 prompts and wraps to first. Public source matches original HTML/build/package and attributed one-line test repair. Authenticated board reply not yet observed."
+}

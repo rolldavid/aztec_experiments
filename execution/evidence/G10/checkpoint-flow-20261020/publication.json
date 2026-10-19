@@ -1,0 +1,22 @@
+{
+  "candidate": "34cc7252f6f90ea127b798cf885e7f3e8439d969",
+  "commandId": "e98a7b30-53de-4788-9c57-ccdc3334aab2",
+  "status": "Success",
+  "result": {
+    "published": "/opt/rolling-app/releases/34cc7252",
+    "unitSha256": "4bf19aad180e4d062ab90836de559ea23c34f0163b970de12b1d358a582155ad",
+    "files": 10,
+    "walletAssetsVerified": true,
+    "verifierBytes": 128,
+    "originalFundingJournalPreserved": true,
+    "otherServicePidsPreserved": true,
+    "source": "34cc7252f6f90ea127b798cf885e7f3e8439d969"
+  },
+  "publicReadback": {
+    "publicManifestMatches": true,
+    "publicRuntimeMatches": true,
+    "scripts": 9,
+    "source": "34cc7252f6f90ea127b798cf885e7f3e8439d969"
+  },
+  "scope": "Actual Rolling browser wallet assets only. Does not claim deployment of inactive moderator/legacy operator paths."
+}

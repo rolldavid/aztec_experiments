@@ -1,0 +1,36 @@
+{
+  "CommandId": "47b28443-9d06-4156-8a97-b615f0af887d",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Read restored app and moderator availability with unchanged query/prover and shutdown",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T21:17:58.090Z",
+  "ExecutionElapsedTime": "PT0.052S",
+  "ExecutionEndDateTime": "2026-10-19T21:17:58.090Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "MainPID=171494\nExecMainStatus=0\nId=rolling-application.service\nActiveState=active\n\nMainPID=171507\nExecMainStatus=0\nId=rolling-moderator.service\nActiveState=active\n\nMainPID=56573\nExecMainStatus=0\nId=rolling-query.service\nActiveState=active\n\nMainPID=118716\nExecMainStatus=0\nId=board-prover.service\nActiveState=active\nrolling-moderator.service: Consumed 1min 2.554s CPU time, 669.3M memory peak, 0B memory swap peak.\nStarting rolling-moderator.service - Current Rolling automated moderation...\nStarted rolling-moderator.service - Current Rolling automated moderation.\n[2026-10-19T21:17:06.904Z] [info] Starting isolated model runtime and durable moderation queue.\n[2026-10-19T21:17:54.459Z] [error] {\"type\":\"billboard-moderation-health-v1\",\"stateCounts\":{\"queued\":0,\"leased\":0,\"evaluated-ok\":6,\"submit-intent\":0,\"submitted\":0,\"reconciling\":0,\"retryable-error\":0,\"confirmed-flag\":0,\"expired\":0,\"manual-review\":0},\"severity\":\"critical\",\"checkpointHeight\":8987,\"lastSuccessfulIngestAgeMs\":315861,\"counts\":{\"retryableErrors\":0,\"unresolvedSigning\":0,\"manualSigningFences\":0,\"awaitingFinality\":0,\"expiredObligations\":0,\"manualAttention\":0,\"unsignedPending\":0},\"alerts\":[{\"code\":\"CYCLE_FAILED\",\"action\":\"Check feed, model and signer availability. Preserve saved work and reconcile unknown submissions before retrying.\"},{\"code\":\"INGESTION_STALE\",\"action\":\"Check daemon progress and feed connectivity; this is ingestion age, not measured chain lag.\"}],\"diagnostic\":\"MODERATION_FAILED\"}\nHTTP/1.1 200 OK\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nContent-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: https://aztec-testnet.drpc.org https://d30njln0kead8n.cloudfront.net https://ethereum-sepolia-rpc.publicnode.com; worker-src 'self' blob:; img-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nContent-Type: text/html; charset=utf-8\r\nDate: Mon, 19 Oct 2026 21:17:58 GMT\r\nConnection: keep-alive\r\nKeep-Alive: timeout=5\r\n\r\nbillboard-model-f4ace6ba-9a23-4de5-9725-782d024197a5-proxy Up 36 seconds\nbillboard-model-f4ace6ba-9a23-4de5-9725-782d024197a5 Up 36 seconds (healthy)\nNextElapseUSecRealtime=Tue 2026-10-20 03:00:00 UTC\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "fe2df174-2fe2-41c3-8c5b-8eb629457739",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 21:18:08 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "3175",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "fe2df174-2fe2-41c3-8c5b-8eb629457739",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

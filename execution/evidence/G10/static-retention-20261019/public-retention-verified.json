@@ -1,0 +1,95 @@
+{
+  "at": "2026-10-19T20:48:42.054605+00:00",
+  "complete": true,
+  "distribution": "E1M12FHGQ0S5ST",
+  "hostname": "dy2q03rao3se7.cloudfront.net",
+  "origin": "private regional S3 REST via OAC",
+  "catalogSha256": "6e24dc67d6b3080e5088b3a19fc8a707b1fd5085c2b2c362218e99b7afc4fb02",
+  "objects": [
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/latest/index.html",
+      "status": 200,
+      "bytes": 3441,
+      "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+      "headers": {
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": null
+      }
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/files/index.html",
+      "status": 200,
+      "bytes": 3441,
+      "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+      "headers": {
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": null
+      }
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/latest/",
+      "status": 200,
+      "bytes": 3441,
+      "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+      "headers": {
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": null
+      }
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/source.json",
+      "status": 200,
+      "bytes": 8967,
+      "sha256": "30ed61c77f0def38de656206ee6d4d0249347b32f227e91a97a6712ad7091b46",
+      "headers": {
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Content-Disposition": "attachment; filename=\"source-4055ef22dbf2e9971676d2c22706885d6884d3e4.json\""
+      }
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/source.json",
+      "status": 200,
+      "bytes": 8967,
+      "sha256": "30ed61c77f0def38de656206ee6d4d0249347b32f227e91a97a6712ad7091b46",
+      "headers": {
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Content-Disposition": "attachment; filename=\"source-4055ef22dbf2e9971676d2c22706885d6884d3e4.json\""
+      }
+    }
+  ],
+  "unsignedBucketReadStatus": 403,
+  "bokComputeStopped": true,
+  "noNewResource": true,
+  "interactiveBokService": "deliberately stopped; static availability does not imply new-request generation",
+  "resumeGuidance": "frozen-service-resume-guidance.json"
+}

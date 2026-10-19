@@ -1,0 +1,125 @@
+{
+  "requestId": "0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238",
+  "originalCandidate": "7521dd0185544b4ae57fc15ed37191fbf9a2e737",
+  "operatorRepair": {
+    "schemaVersion": 1,
+    "authorship": "operator correction of generated test; no model replay",
+    "originalCandidate": "7521dd0185544b4ae57fc15ed37191fbf9a2e737",
+    "path": "test.js",
+    "originalSha256": "3da999b932879cf86a3fd6962f1209c99bea3d9c9c594c94175902af022995d5",
+    "repairedSha256": "ff46eee14e02af8ddb6e72bffcd27422615729892a495e01bb46d151b170211f",
+    "change": "Require btnEl.addEventListener, matching existing HTML button binding; HTML unchanged."
+  },
+  "acceptedRevision": "4055ef22dbf2e9971676d2c22706885d6884d3e4",
+  "sourceDigest": "5b9aaa57aeca57c232f5e1b2ab17017eba1c2b0b1aac0c3a73a82f466dff15e0",
+  "publication": {
+    "published": true,
+    "repositoryId": "d22376191be1282c3e3ceb7512e52c160182ae41bf2fdb570333ed06fd2f0e13",
+    "threadId": "0x229f9ce180aae35e0f7ea7eade37375e19b6254ceb06a904d13115dc91950a3a",
+    "acceptedRevision": "4055ef22dbf2e9971676d2c22706885d6884d3e4",
+    "publicationId": "54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d",
+    "artifactUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/files/index.html",
+    "sourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/source.json",
+    "latestUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/latest/",
+    "latestSourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/source.json"
+  },
+  "normalIsolatedValidation": "passed",
+  "publicationCommandId": "7307ca90-a4c7-4d5f-ba5c-175540bb41bd",
+  "normalDaemonPid": 28448,
+  "artifactProxyPid": 28778,
+  "publicReadback": {
+    "status": 200,
+    "bytes": 3441,
+    "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a"
+  },
+  "authenticatedBoardReply": {
+    "requestId": "0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238",
+    "method": "publish_reply",
+    "txHash": "0x226ef5d67dcd99fbb87030fcdf1fcd24543ac4186ad6b24d6d779ba92709364e",
+    "status": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 8960,
+    "blockHash": "0x261946bf3cbc14c124098a50214ee7a58312fa72d25b73665fe77aaee390d012",
+    "transactionFee": "2815962950554000000",
+    "observedAt": "2026-10-19T20:38:14.107Z",
+    "canonical": true
+  },
+  "requestFinalAccounting": "canonical-complete",
+  "requestFinish": {
+    "requestId": "0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238",
+    "method": "finish",
+    "txHash": "0x0d2aaa362d90a046f781303885342585ec646b90ebeec1fb481c2a1b764eb6ca",
+    "status": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 8961,
+    "blockHash": "0x28d8e73586030439145ef354ad68c2d11fb9445ce187d7c7ab974cef34c3de58",
+    "transactionFee": "1404598974735800000",
+    "observedAt": "2026-10-19T20:39:41.380Z",
+    "canonical": true
+  },
+  "canonicalAccounting": {
+    "passed": true,
+    "anchor": {
+      "number": 8961,
+      "hash": "0x28d8e73586030439145ef354ad68c2d11fb9445ce187d7c7ab974cef34c3de58"
+    },
+    "canonical": true,
+    "request": {
+      "state": "4",
+      "sequence": "8",
+      "deadline": "1792523292",
+      "budget": "250000",
+      "available": "0",
+      "reserved": "0",
+      "charged": "13944",
+      "refunded": "236056"
+    },
+    "charge": "13944",
+    "billingReceipt": "0x03f7068e20617ea151628f3ff7b5fb7435e46bb256ee7143de5c71500f1bcde8",
+    "canonicalBillingReceipt": "0x03f7068e20617ea151628f3ff7b5fb7435e46bb256ee7143de5c71500f1bcde8",
+    "targetMatches": true,
+    "conservation": true
+  },
+  "normalService": {
+    "mainPid": "28448",
+    "health": {
+      "status": "ready",
+      "active": 0,
+      "lastFailure": null,
+      "lastSuccess": "2026-10-19T20:39:28.128Z"
+    },
+    "journals": [
+      {
+        "requestId": "0x136a80a61a995719f5c4bb4243d5e50883c792b0f3758376fdba30435b89f09a",
+        "phase": "accounted-without-reply",
+        "finished": true,
+        "callCount": 3,
+        "allSettled": true,
+        "responseBodiesRemaining": 3,
+        "sha256": "5707997e908cf69f0a66420c9a37a8d913052d48d6f2672fa199eecd852fb777"
+      },
+      {
+        "requestId": "0x09bad583819dd957bc80a691290be5a8569d8b88518ccd9ae95c87c73220d6be",
+        "phase": "accounted-without-reply",
+        "finished": true,
+        "callCount": 1,
+        "allSettled": true,
+        "responseBodiesRemaining": 0,
+        "sha256": "2177f95c9a5d256f22322df7e171c8c7391047816def16f73c272d1b80b51ef3"
+      },
+      {
+        "requestId": "0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238",
+        "phase": "finished",
+        "finished": true,
+        "callCount": 8,
+        "allSettled": true,
+        "responseBodiesRemaining": 8,
+        "sha256": "dd7f93fbd587e104cb5a082b12c085571110cbcae27d63b3d600218e9b0df9f8"
+      }
+    ]
+  },
+  "completionKind": "checkpointed canonical success; no claim of finalized finality",
+  "modelReplay": false,
+  "retainedSourceSha256": "e08fbe50ef66bdfe2946e563e1aed18db49b19102b421857deea7262de748b7f",
+  "evidenceNote": "Public outcome summary; original private operator receipt retained. Canonical accounting supersedes stale pending summary field in original packet."
+}
