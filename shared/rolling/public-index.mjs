@@ -209,6 +209,14 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
   let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
   let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null;
+  // A rejected native read invalidates this publication, not durable ownership.
+  // Track the actual transport boundary even when the ABI decoder sanitizes it.
+  // Schema/identity/storage failures never acquire this recovery permission.
+  let upstreamFailed=false;const upstream=node;
+  node=Object.fromEntries(['getNodeInfo','getContract','getBlockData','getBlock','getTxReceipt','getTxEffect','getPublicStorageAt'].map(name=>[name,async(...args)=>{
+    check(typeof upstream[name]==='function');
+    try{return await upstream[name](...args);}catch(error){upstreamFailed=true;throw error;}
+  }]));
   const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
     scope,complete:ready,authenticationEpoch:epoch,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
     checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':'complete'):'pending'});
@@ -284,7 +292,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   }
   async function step(){
     check(!failed,'ROLLING_PUBLIC_REOPEN_REQUIRED');
-    check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;const deadline=Date.now()+timeoutMs;
+    check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;upstreamFailed=false;const deadline=Date.now()+timeoutMs;
     // Expired work stays owned until the SDK call settles. No detached race,
     // retries, parallel fanout or writes from a timed-out continuation.
     const read=async fn=>{check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');const v=await fn();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');return v;};
@@ -397,7 +405,11 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       // A final publication recheck happens on a separate bounded step. It
       // includes a fresh target; a tip advance cannot yield a partial ready view.
       return state();
-    }catch(e){currentBlock=null;unavailable=true;ready=false;failed=true;const code=e&&Object.getOwnPropertyDescriptor(e,'code')?.value;
+    }catch(e){currentBlock=null;unavailable=true;ready=false;const code=e&&Object.getOwnPropertyDescriptor(e,'code')?.value;
+      // Next sync rechecks network, deployment, anchors and exact storage CAS
+      // before continuing. A completed commit remains authoritative only after
+      // those checks; no stale publication or automatic reopen is permitted.
+      failed=!upstreamFailed&&code!=='ROLLING_PUBLIC_TIMEOUT';
       throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_TIMEOUT','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
     finally{busy=false;}
   }

@@ -401,7 +401,9 @@ test('persistent deadline retains exclusive lease until the actual SDK promise s
  const f=await persistentFixture(t),a=await f.open(undefined,{timeoutMs:15});let release,settled=false;
  f.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const pending=a.index.step();pending.then(()=>{settled=true;},()=>{settled=true;});
  await new Promise(resolve=>setTimeout(resolve,25));assert.equal(settled,false);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_BUSY'});assert.equal(a.storage.inspect().control,null);
- release({});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(a.storage.inspect().control,null);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
+ release({});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(a.storage.inspect().control,null);
+ f.node.getNodeInfo=async()=>({l1ChainId:1});await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_INVALID'});
+ await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
 });
 
 test('persistent shorter canonical tip rebuilds retained orphan coverage without treating missing historical data as a fork',async t=>{
@@ -614,4 +616,38 @@ for(const persistent of [false,true])test(`moderator transfer is ingested from a
  for(const key of ['posts','names','boards'])assert.deepEqual(after[key],before[key]);
  assert.deepEqual(index.query('directory').boards,directory.boards);assert.equal(String((persistent?index.publication():index.status()).checkpoint.number),'4');assert.notEqual(after.revision,before.revision);
  f.put(5,[await log('MainPolicyPublished',{schema:1,version:2,digest:await digest('Changed',32),length:7,rules:pack('Changed',32)})]);f.setHead(5);await sync();assert.equal(index.query('directory').boards[0].mainRules,'Changed');
+});
+
+test('persistent native read interruption resumes the same owned index without trusting unavailable data',async t=>{
+ const f=await persistentFixture(t),a=await f.open(),getInfo=f.node.getNodeInfo;
+ f.node.getNodeInfo=async()=>{throw Error('labelled transient transport interruption');};
+ await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_UNAVAILABLE'});assert.equal(a.index.status().state,'unavailable');assert.equal(a.storage.inspect().control,null);assert.throws(()=>a.index.query('feed'));
+ f.node.getNodeInfo=getInfo;await f.drain(a.index);assert.equal(a.index.publication().checkpoint.number,'3');
+ assert.equal(f.projection(a.storage,'posts','10').text,'Hello');
+});
+test('persistent post-commit native read interruption retains committed cursor and resumes fresh checks',async t=>{
+ for(const reopen of [false,true]){
+ const f=await persistentFixture(t);let a=await f.open();if(reopen){await f.drain(a.index);a.storage.close();a=await f.open();}
+ const getInfo=f.node.getNodeInfo;let failed=false;
+ f.node.getNodeInfo=async()=>{if(!failed&&a.storage.inspect().control?.segmentCount==='1'){failed=true;throw Error('labelled post-commit transport interruption');}return getInfo();};
+ await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_UNAVAILABLE'});assert(failed);assert.equal(a.storage.inspect().control.segmentCount,'1');assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.publication());
+ await f.drain(a.index);assert.equal(a.storage.inspect().control.segmentCount,'6');assert.equal(a.index.publication().checkpoint.number,'3');
+ assert.equal(f.projection(a.storage,'posts','10').text,'Hello');
+ }
+});
+test('persistent recovered transport cannot hide changed identity or competing storage ownership',async t=>{
+ for(const failure of ['identity','ownership']){
+  const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);const getInfo=f.node.getNodeInfo;
+  f.node.getNodeInfo=async()=>{throw Error('labelled transient transport interruption');};await assert.rejects(a.index.step());
+  f.node.getNodeInfo=failure==='identity'?async()=>({l1ChainId:1}):getInfo;
+  if(failure==='ownership'){const control=a.storage.inspect().control;a.storage.startGeneration({expectedControl:control,origin:{number:'0',hash:hex(1000)}});}
+  await assert.rejects(a.index.step());assert.throws(()=>a.index.publication());await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
+ }
+});
+
+test('persistent native rejection inside the canonical decoder resumes without weakening ABI validation',async t=>{
+ const f=await persistentFixture(t),a=await f.open(),getReceipt=f.node.getTxReceipt;let failed=false;
+ f.node.getTxReceipt=async(...args)=>{if(!failed){failed=true;throw Error('labelled decoder transport interruption');}return getReceipt(...args);};
+ await assert.rejects(a.index.step());assert(failed);assert.throws(()=>a.index.publication());await f.drain(a.index);
+ assert.equal(a.index.publication().checkpoint.number,'3');assert.equal(f.projection(a.storage,'posts','10').text,'Hello');
 });
