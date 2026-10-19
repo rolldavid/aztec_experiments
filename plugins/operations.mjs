@@ -215,11 +215,21 @@ export async function reconcileRollingOperation({record,development,expected,rea
   if(String(block?.hash)!==anchor.hash||String(effect?.l2BlockHash)!==anchor.hash||effect?.l2BlockNumber!==anchor.number||String(effect?.data?.txHash)!==record.hash||effect.data.revertCode.isOK()!==(r.executionResult==='success'))return unknown();
   if(expected&&r.executionResult==='success'){
    if(JSON.stringify(record.deployment)!==JSON.stringify(expected))return unknown();
-   const instance=await reads.instance(expected.address,anchor);
-   for(const field of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(instance?.[field])!==expected[field])return unknown();
-   if(instance.version!==expected.version||await reads.address(instance)!==expected.address)return unknown();
-   // Actual public immutable constructor values, including derived owner, at receipt anchor.
-   for(const [field,value] of Object.entries(expected.storage))if(await reads.storage(expected.address,field,anchor)!==value)return unknown();
+   const matchesInstance=async at=>{
+    const instance=await reads.instance(expected.address,at);
+    for(const field of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(instance?.[field])!==expected[field])return false;
+    return instance.version===expected.version&&await reads.address(instance)===expected.address;
+   };
+   if(!await matchesInstance(anchor))return unknown();
+   // PublicImmutable constructor fields survive pruning of the deployment's world-state
+   // snapshot. Bind their current value to a finalized instance and recheck that anchor;
+   // transaction inclusion/effects remain bound to the original receipt above.
+   const head=await reads.head(development?'checkpointed':'finalized');
+   if(!Number.isSafeInteger(head?.number)||head.number<anchor.number||!/^0x[0-9a-f]{64}$/.test(String(head.hash)))return unknown();
+   const immutableAnchor={number:head.number,hash:String(head.hash)};
+   if(immutableAnchor.number!==anchor.number||immutableAnchor.hash!==anchor.hash){if(!await matchesInstance(immutableAnchor))return unknown();}
+   for(const [field,value] of Object.entries(expected.storage))if(await reads.storage(expected.address,field,immutableAnchor)!==value)return unknown();
+   if(String((await reads.block(immutableAnchor.number))?.hash)!==immutableAnchor.hash)return unknown();
   }
   if(String((await reads.block(anchor.number))?.hash)!==anchor.hash)return unknown();
   return {status:r.executionResult==='success'?'succeeded':'failed',scope:'constructor-only',canonical:true,transactionHash:record.hash,blockNumber:anchor.number,blockHash:anchor.hash,...(expected&&r.executionResult==='success'?{escrow:expected.address,portalReady:false,registrationReady:false,hostedServiceReady:false}:{})};

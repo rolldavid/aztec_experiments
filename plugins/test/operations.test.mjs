@@ -105,12 +105,33 @@ function reconciliation(){
  const record={...signed,phase:'submission-unknown',deployment:structuredClone(expected)};
  const receipt={txHash:signed.hash,status:'finalized',executionResult:'success',blockNumber:8,blockHash:field(8)};
  const effect={l2BlockHash:field(8),l2BlockNumber:8,data:{txHash:signed.hash,revertCode:{isOK:()=>true}}};
- const reads={signed:async()=>true,receipt:async()=>receipt,effect:async()=>effect,block:async()=>({hash:field(8)}),instance:async()=>expected,address:async()=>expected.address,storage:async(_,key)=>expected.storage[key]};
+ const reads={signed:async()=>true,receipt:async()=>receipt,effect:async()=>effect,block:async()=>({hash:field(8)}),head:async()=>({number:8,hash:field(8)}),instance:async()=>expected,address:async()=>expected.address,storage:async(_,key)=>expected.storage[key]};
  return {record,expected,receipt,effect,reads,development:false};
 }
 test('rolling constructor success requires canonical effect class deployer and all immutable values',async()=>{
  const f=reconciliation(),result=await reconcileRollingOperation(f);assert.equal(result.status,'succeeded');assert.equal(result.escrow,f.expected.address);
  assert.equal(result.portalReady,false);assert.equal(result.registrationReady,false);assert.equal(result.hostedServiceReady,false);
+});
+test('old deployment remains reconcilable after historical world-state pruning',async()=>{
+ const f=reconciliation(),before=JSON.stringify(f.record),seen=[];
+ f.reads.head=async tag=>{assert.equal(tag,'finalized');return {number:100,hash:field(100)};};
+ f.reads.block=async number=>({hash:field(number)});
+ f.reads.instance=async(_,anchor)=>{seen.push(anchor.number);return f.expected;};
+ f.reads.storage=async(_,key,anchor)=>{assert.deepEqual(anchor,{number:100,hash:field(100)});return f.expected.storage[key];};
+ assert.equal((await reconcileRollingOperation(f)).status,'succeeded');assert.deepEqual(seen,[8,100]);assert.equal(JSON.stringify(f.record),before);
+});
+test('current immutable anchor cannot predate deployment, change class, lose finality, or reorg',async()=>{
+ for(const defect of ['older','missing','invalid','changed-class','changed-anchor','original-reorg']){
+  const f=reconciliation();f.reads.head=async()=>({number:100,hash:field(100)});f.reads.block=async n=>({hash:field(n)});
+  if(defect==='older')f.reads.head=async()=>({number:7,hash:field(7)});
+  if(defect==='missing')f.reads.head=async()=>undefined;
+  if(defect==='invalid')f.reads.head=async()=>({number:100,hash:'invalid'});
+  if(defect==='changed-class')f.reads.instance=async(_,at)=>({...f.expected,...(at.number===100?{currentContractClassId:field(99)}:{})});
+  if(defect==='changed-anchor')f.reads.block=async n=>({hash:field(n===100?101:n)});
+  if(defect==='original-reorg'){let reads=0;f.reads.block=async n=>({hash:field(n===8&&++reads>1?9:n)});}
+  assert.equal((await reconcileRollingOperation(f)).status,'unresolved',defect);
+ }
+ const local=reconciliation();local.development=true;local.receipt.status='checkpointed';local.reads.head=async tag=>{assert.equal(tag,'checkpointed');return {number:8,hash:field(8)};};assert.equal((await reconcileRollingOperation(local)).status,'succeeded');
 });
 test('missing pending dropped nonfinalized and unavailable receipts never qualify or mutate record',async()=>{
  for(const status of ['pending','proposed','dropped','checkpointed','unknown']){const f=reconciliation();f.receipt.status=status;const before=JSON.stringify(f.record);assert.equal((await reconcileRollingOperation(f)).status,'unresolved');assert.equal(JSON.stringify(f.record),before);}

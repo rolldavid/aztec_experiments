@@ -181,7 +181,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
    await checkNetwork();
    return reconcileRollingOperation({record,development:config.development,expected:constructor?expected:undefined,reads:{
     signed:async(raw,hash)=>{const tx=Tx.fromBuffer(Buffer.from(raw,'hex'));return tx.getTxHash().toString()===hash&&String(tx.data.constants.txContext.chainId)===new Fr(BigInt(config.chainId)).toString()&&String(tx.data.constants.txContext.version)===new Fr(BigInt(config.rollupVersion)).toString();},
-    receipt:async hash=>projectRollingReceipt(await node.getTxReceipt(TxHash.fromString(hash))),block:number=>node.getBlock(number),effect:hash=>node.getTxEffect(TxHash.fromString(hash)),
+    receipt:async hash=>projectRollingReceipt(await node.getTxReceipt(TxHash.fromString(hash))),block:number=>node.getBlock(number),effect:hash=>node.getTxEffect(TxHash.fromString(hash)),head:tag=>node.getBlock(tag),
     instance:(address,anchor)=>node.getContract(AztecAddress.fromStringUnsafe(address),anchor),address:async value=>(await computeContractAddressFromInstance(value)).toString(),
     storage:async(address,field,anchor)=>String(await node.getPublicStorageAt(anchor,AztecAddress.fromStringUnsafe(address),artifact.storageLayout[field].slot)),
    }});
