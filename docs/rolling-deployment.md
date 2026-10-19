@@ -103,6 +103,24 @@ documented version and archive checksum. Preserve that provenance separately
 from generated application outputs; copying another deployment's generated
 outputs or mutable state does not qualify a clean rehearsal.
 
+## Serve wallet assets with negotiated compression
+
+The reader already supports gzip for wallet assets and retains decoded-byte
+manifest/SRI checks. Preserve `Accept-Encoding` negotiation through the front
+proxy; serving the SDK bundle uncompressed can exceed the browser's existing
+load deadline. Do not extend that deadline or rebuild unchanged assets to repair
+missing proxy negotiation.
+
+For CloudFront, use a `/wallet/*` behavior cloned from the application's existing
+behavior, with gzip enabled in its cache policy. Minimum/default TTL0 and maximum
+TTL1 preserve the origin's explicit `Cache-Control: no-store`; the origin performs
+compression, so CloudFront's automatic-compression object-size limit does not
+apply. Preserve all query strings, security headers, origin and other behaviors.
+Do not add `Accept-Encoding` to the custom origin-request header allowlist:
+CloudFront forwards the normalized supported encoding through the cache policy.
+Confirm origin and viewer gzip headers with HEAD, then resume the affected browser
+flow. No API/prover policy, application bytes or service restart is required.
+
 ## Network and deployment
 
 Before loading signing material, compare the intended chain ID, rollup address,
