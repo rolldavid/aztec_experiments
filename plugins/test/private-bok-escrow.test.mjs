@@ -44,7 +44,7 @@ async function fixture(overrides={}){
  if(overrides.development===false)chainId='11155111';
  const create=()=>createPrivateBokEscrowFactory(sdk)(options),port=await create();
  const op=(method,args,key=0)=>({operationId:digest([method,key]),argsDigest:digest(args.map(x=>typeof x==='bigint'?String(x):x))});
- return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,counts:()=>({proofs,sends}),
+ return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,sdk,counts:()=>({proofs,sends}),
   journal:()=>saved.privateBokEscrow,set:(key,value)=>{
    if(key==='nodeProofs')nodeProofs=value;if(key==='pxeEnabled')wallet.pxe.proverEnabled=value;if(key==='proverMode')wallet.pxe.proofCreator.proofsEnabled=value;if(key==='proverTrusted')wallet.pxe.proofCreator.trusted=value;
    if(key==='sendLost')sendLost=value;if(key==='proofFailed')proofFailed=value;if(key==='wrongCall')wrongCall=value;if(key==='held')held=value;
@@ -240,4 +240,13 @@ test('unit fake: only first never-submitted reserve can continue once after proo
  await assert.rejects(failed.port.reserve(failed.id,0,400n,failedOp));
  assert.equal((await failed.port.reserve(failed.id,0,400n,failedOp)).status,'pending');
  assert.deepEqual(failed.counts(),{proofs:2,sends:0});
+});
+
+test('unit fake: native observer waits on original submitted hash then rechecks canonical effect without proving or sending',async()=>{
+ const f=await fixture({development:false}),op=f.op('reserve',[f.id,0,400n]);
+ await f.port.reserve(f.id,0,400n,op);let waits=0;
+ f.sdk.waitForTx=async(node,hash,options)=>{waits++;assert.equal(String(hash),String(f.receipt.txHash));assert.equal(options.waitForStatus,'finalized');f.receipt.status='finalized';return f.receipt;};
+ assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ assert.equal((await f.port.waitForOperation(op.operationId)).status,'succeeded');assert.equal(waits,1);
+ f.set('blockMismatch',true);await assert.rejects(f.port.waitForOperation(op.operationId),/mismatch/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
 });

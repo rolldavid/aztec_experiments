@@ -1,7 +1,7 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall} from '../escrow-service.mjs';
+import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
@@ -633,4 +633,18 @@ test('hosted first quote resumes only its original unsubmitted reserve and consu
  x.args.admitThread=async()=>assert.fail('Original admission must not repeat');
  assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
  await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
+});
+
+test('submitted first reserve waits for exact canonical original hash before the first provider call without resending',async()=>{
+ const x=fixture(),e=x.args.escrow,reserve=e.reserve,inspect=e.inspectOperation;
+ let waiting=true,waits=0;
+ e.reserve=async(...args)=>{await reserve(...args);const op=args.at(-1),saved=x.store.read();await x.store.write({...saved,privateBokEscrow:{binding:saved.privateBok.identity,operations:{[op.operationId]:{method:'reserve',argsDigest:op.argsDigest,args:[args[0],args[1],String(args[2])],phase:'submission-unknown',txHash:f(66),transactionSha256:'a'.repeat(64),recoveryAttempted:true}}}});};
+ e.inspectOperation=async id=>{const value=await inspect(id);return waiting&&value.method==='reserve'?{status:'pending',canonical:false}:value;};
+ await assert.rejects(x.run(),/unresolved/);const saved=x.store.read();saved.hostedPrivateBok.preProviderRecoveryAttempted=true;
+ assert(hostedSubmittedFirstCall(saved));assert.equal(hostedUnsubmittedFirstCall(saved),false);assert.deepEqual(x.events,['reserve']);
+ for(const mutate of [v=>v.privateBok.calls[0].phase='possibly-sent',v=>v.hostedPrivateBok.submittedReservationContinuationAttempted=true,v=>Object.values(v.privateBokEscrow.operations)[0].txHash='bad',v=>Object.values(v.privateBokEscrow.operations)[0].args[2]='9']){const copy=structuredClone(saved);mutate(copy);assert.equal(hostedSubmittedFirstCall(copy),false);}
+ e.waitForOperation=async id=>{waits++;assert.deepEqual(x.events,['reserve']);return {...await inspect(id),txHash:f(66),canonical:!waiting};};
+ await assert.rejects(x.run(),/awaits canonical finality/);assert.equal(x.store.read().hostedPrivateBok.submittedReservationContinuationAttempted,undefined);assert.deepEqual(x.events,['reserve']);
+ waiting=false;e.reserve=async()=>assert.fail('Original submitted reserve must never be resent');
+ assert.equal((await x.run()).status,'finished');assert.equal(waits,2);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
 });

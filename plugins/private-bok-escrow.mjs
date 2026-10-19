@@ -16,14 +16,14 @@ const requestFields = ['state','invocation_hash','sequence','deadline','budget',
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
 export async function createPrivateBokEscrow(options) {
- const [{Contract}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
+ const [{Contract}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
   import('@aztec-labs/aztec.js/contracts'), import('@aztec-labs/foundation/curves/bn254'),
   import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'),
-  import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'),
+  import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'), import('@aztec-labs/aztec.js/node'),
   import('@aztec-labs/bb-prover/client/bundle'), import('@aztec-labs/bb-prover/client/lazy'),
  ]);
  return createPrivateBokEscrowFactory({Contract, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
-  isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
+  waitForTx,isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
 }
 
 /** Dependency seam for labelled unit fakes. Production callers use createPrivateBokEscrow.
@@ -211,6 +211,13 @@ export function createPrivateBokEscrowFactory(sdk) {
   const port={identity,mode:Object.freeze({proofMode,nodeVerifiesProofs:proofMode==='real',pxeProofMode:proofMode,finality,controlledSettlement:development}),
    request:exclusive(async value=>{scope(value);const {instance,...result}=await anchored();return result;}),
    assertUsable:exclusive(usable),inspectOperation:exclusive(inspect),
+   waitForOperation:exclusive(async operationId=>{
+    const observed=await inspect(operationId);if(observed.status==='succeeded'||observed.status==='failed')return observed;
+    const record=journal().operations[operationId];assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
+    assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
+    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality});
+    return inspect(operationId);
+   }),
    reserve:exclusive((request,callId,maximum,operation)=>send('reserve',[request,sequence(callId),amount(maximum)],operation)),
    settle:exclusive((request,callId,actual,receipt,operation)=>send('settle',[request,sequence(callId),amount(actual),hex(receipt)],operation)),
    close_uncertain:exclusive((request,operation)=>send('close_uncertain',[request],operation)),
