@@ -434,11 +434,11 @@ test('explicit recovery abort waits for the original private call and does not p
 });
 
 // Actual production DOM and driver; account/RPC behavior remains a labelled UI double.
-test('preference lock driver waits for delayed reopen refresh before expanding security',async t=>{
+test('preference lock driver waits for explicit delayed refresh before expanding security',async t=>{
  const {lockRollingPreferencePanel}=await import('../../scripts/testing/rolling-preference-browser.mjs');
  const {page}=await browserFixture(t);await open(page);await unlock(page);
  await page.getByRole('button',{name:'Close account panel',exact:true}).click();
- await page.evaluate(()=>test.hold='status');await open(page);
+ await page.evaluate(()=>test.hold='status');await open(page);await page.getByRole('button',{name:'Refresh private account',exact:true}).click();
  await page.waitForFunction(()=>typeof test.release==='function');
  const dialog=page.getByRole('dialog'),deadline=Date.now()+3000;
  const locking=lockRollingPreferencePanel({dialog,remaining:()=>Math.max(1,deadline-Date.now())});
@@ -446,7 +446,6 @@ test('preference lock driver waits for delayed reopen refresh before expanding s
  // outlive this test or become an unhandled rejection during browser teardown.
  const result=locking.then(value=>({value}),error=>({error}));let observationError;
  try{
-  await page.waitForTimeout(200);
   assert.equal(await dialog.getByText('Backup and account security',{exact:true}).evaluate(node=>node.parentElement.open),false,'Security must stay closed while refresh owns the panel');
  }catch(error){observationError=error;}finally{await page.evaluate(()=>{test.hold=null;test.release();});}
  const outcome=await result;if(observationError)throw observationError;if(outcome.error)throw outcome.error;assert.equal(outcome.value,'ready');
@@ -1404,4 +1403,32 @@ test('failed lazy name read retains funding access and retries only the selected
  await page.getByRole('button',{name:'Fund your account',exact:true}).click();assert(await page.getByLabel('Posting deposit (ETH)',{exact:true}).isVisible());
  await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,2,0,0]);
+});
+
+
+test('reopening an unlocked composer loads only missing view data and preserves explicit refresh',async t=>{
+ const {page}=await browserFixture(t);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Actions',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();await page.evaluate(()=>test.failure='status');
+ await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Action',{exact:true}).inputValue(),'reply');
+ const reads=()=>page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]);assert.deepEqual(await reads(),[1,1,1,1]);
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{type:'reply',parent:'11',root:'1',subboard:'3'});
+ assert(await page.getByLabel('Message',{exact:true}).isEnabled());assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'false');assert.deepEqual(await reads(),[1,1,1,1]);
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Refresh private account',exact:true}).click();await page.waitForFunction(()=>test.bokReads===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(await reads(),[2,2,2,2]);assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
+});
+
+test('reopening a blocked account reconciles retained intent before a new draft',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByLabel('Message',{exact:true}).fill('Original draft');await page.evaluate(()=>test.failure='prepare');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Check account recovery',exact:true}).waitFor();
+ const before=await page.evaluate(()=>test.statusReads);await page.getByRole('button',{name:'Close account panel',exact:true}).click();await page.evaluate(()=>test.failure=null);await open(page,{type:'like',post:'99'});
+ await page.getByRole('button',{name:'Cancel prepared action',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.statusReads),before+1);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),'Original draft');assert.equal((await counts(page)).sends,0);
+});
+
+test('reopening after an unnoticed account replacement clears cached private views',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ const before=await page.evaluate(()=>test.statusReads);await page.evaluate(()=>test.rawAccount={address:'REPLACED_ACCOUNT'});await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});
+ await page.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
+ assert.equal(await page.getByText('River Lane',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.statusReads),before);assert.equal((await counts(page)).sends,0);
 });

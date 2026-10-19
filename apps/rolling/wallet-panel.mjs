@@ -890,6 +890,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  render();
  return Object.freeze({open(defaults={}){
   if(busy)return;
+  if(session)unlocked(); // Detect replaced custody before rendering cached account data.
   if(!intent){clearOperationFeedback();view=defaults.view==='preferences'?'preferences':Object.hasOwn(TYPES,defaults.type)?'action':'overview';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:''};
    for(const key of IDS)if(field(defaults[key]))next[key]=defaults[key];
    if(next.type==='moderate-avatar'&&field(defaults.name))next.name=defaults.name;
@@ -897,6 +898,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}
   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
-  if(session&&unlocked()&&view!=='preferences')void work(refresh);
+  if(session&&unlocked()&&view!=='preferences'){
+   // Reopening a draft does not change the account. Preserve the last completed
+   // observation; preparation/submission still authenticate current state.
+   if(blocked||status===null)void work(refresh);
+   else if(!intent&&!viewReady())void work(loadView);
+  }
  },close,moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
 }
