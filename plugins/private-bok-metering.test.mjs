@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs,{mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {privateBokMetering} from './private-bok-metering.mjs';
+import {privateBokMetering,bokReceiptClaims} from './private-bok-metering.mjs';
 import {validateVeniceBilling,veniceMeteredProvider} from './venice-metered.mjs';
 import {fileState} from './operations.mjs';
 import {veniceDiagnosticError,getVeniceDiagnostic} from './venice-diagnostics.mjs';
@@ -418,4 +418,58 @@ test('completed accounting retains an undelivered response without authorizing a
  await h.create().finish();assert.deepEqual(h.store.read().privateBok.calls[0],call);
  assert.equal((await h.create().resume(0)).replyAvailable,false);assert.equal((await h.create().complete(0,input)).replyAvailable,false);
  assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,1);assert.equal(h.counts.finish,1);
+});
+
+
+function invocation(h,options={}){return h.create({accountingMode:'invocation-v1',claimReceipt:bokReceiptClaims({readJournals:async()=>[h.store.read()]}),...options});}
+test('invocation accounting reserves once and aggregates measured calls before finish',async()=>{
+ const h=fixture(),m=invocation(h);
+ for(let i=0;i<3;i++){assert.equal((await m.complete(i,input)).replyAvailable,true);assert.equal(h.r.sequence,0);assert.equal(h.counts.settle,0);}
+ assert.equal(h.counts.reserve,1);assert.equal(h.r.reserved,1000n);assert.equal(h.r.charged,0n);
+ assert.equal(h.store.read().privateBok.accountingMode,'invocation-v1');assert(Object.values(h.store.read().privateBok.calls).every(c=>c.phase==='received'&&c.responseDelivered));
+ const result=await m.settle();assert.equal(result.charge,'18');assert.equal(h.r.sequence,1);assert.equal(h.counts.settle,1);assert.equal(h.r.reserved,0n);
+ await m.finish();assert.equal(h.r.refunded,982n);assert.equal(h.r.charged,18n);
+ await invocation(h).finish();assert.equal(h.counts.settle,1);assert.equal(h.counts.finish,1);assert.equal((await invocation(h).resume(2)).replyAvailable,false);
+ assert(Object.values(h.store.read().privateBok.calls).every(c=>c.response));
+});
+test('invocation accounting bounds each paid quote against remaining allowance',async()=>{
+ const h=fixture(),m=invocation(h,{limits:{maxReservation:115n}});await m.complete(0,input);
+ await assert.rejects(m.complete(1,input),/quote maximum/);assert.equal(h.counts.execute,1);assert.equal(h.r.reserved,115n);
+ await m.finish();assert.equal(h.r.refunded,994n);assert.equal(h.counts.reserve,1);
+});
+test('invocation accounting unknown later provider fences whole allowance and reconciles exact cumulative billing',async()=>{
+ const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.execute=()=>{throw Error('lost');};
+ await assert.rejects(m.complete(1,input),/outcome unknown/);assert.equal(h.r.state,3);assert.equal(h.r.reserved,1000n);
+ await assert.rejects(invocation(h).complete(2,input),/sequence/);await assert.rejects(invocation(h).resume(1),/outcome unknown/);assert.equal(h.counts.execute,2);
+ const b=bill({providerId:'fixture-response-2'});await invocation(h).reconcile(1,b);assert.equal(h.r.charged,12n);assert.equal(h.r.refunded,988n);assert.equal(h.counts.reconcile,1);assert.equal(h.counts.settle,0);assert.equal(h.counts.execute,2);
+ await invocation(h).finish();assert.equal(h.r.state,4);
+});
+test('invocation accounting retains aggregate intent through unresolved settlement without provider or transaction replay',async()=>{
+ const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.failBefore='settle';await assert.rejects(m.settle(),/unresolved/);
+ const snapshot=structuredClone(h.store.read().privateBok.aggregate);delete h.controls.failBefore;
+ await assert.rejects(invocation(h).settle(),/unresolved/);assert.equal(h.counts.settle,1);assert.equal(h.counts.execute,1);assert.deepEqual(h.store.read().privateBok.aggregate,snapshot);
+});
+test('invocation accounting recovers acknowledged settlement from its exact receipt only',async()=>{
+ const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.after=method=>{if(method==='settle')h.controls.inspectUnknown=true;};
+ await assert.rejects(m.settle(),/unresolved/);assert.equal(h.r.sequence,1);delete h.controls.after;h.controls.inspectUnknown=false;
+ await invocation(h).settle();assert.equal(h.counts.settle,1);assert.equal(h.counts.execute,1);
+ h.r.receipt=f(444);await assert.rejects(invocation(h).settle(),/mismatch/);assert.equal(h.counts.settle,1);
+});
+test('invocation accounting rejects reorg reservation before another paid send',async()=>{
+ const h=fixture(),m=invocation(h);await m.complete(0,input);h.r.sequence=1;await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
+});
+test('invocation accounting preserves historical per-call mode and original limits',async()=>{
+ const h=fixture();await h.create().complete(0,input);const before=structuredClone(h.store.read());
+ const reopened=invocation(h);assert.equal(reopened.settle,undefined);await reopened.complete(1,input);assert.equal(h.counts.reserve,2);assert.equal(h.counts.settle,2);assert.equal(h.store.read().privateBok.accountingMode,undefined);assert.deepEqual(h.store.read().privateBok.limits,before.privateBok.limits);
+});
+test('invocation accounting shared receipt claims serialize across requests and retain historical ownership',async()=>{
+ const states=[],guard=bokReceiptClaims({readJournals:async()=>states});let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r);const billing=bill();
+ const first=guard({identity,callId:0,billing},async()=>{entered();await gate;states.push({privateBok:{identity,calls:{0:{id:0,billing}}}});});
+ await started;let secondEntered=false;const second=guard({identity:{...identity,requestId:f(9)},callId:0,billing},async()=>{secondEntered=true;});
+ release();await first;await assert.rejects(second,/already owned/);assert.equal(secondEntered,false);
+ await guard({identity,callId:0,billing},async()=>{});
+ await assert.rejects(guard({identity,callId:1,billing},async()=>assert.fail('duplicate')),/already owned/);
+});
+test('invocation accounting requires shared receipt ownership and keeps fresh coding default separate from old limits',()=>{
+ const h=fixture();assert.throws(()=>h.create({accountingMode:'invocation-v1'}),/Serialized receipt/);
 });

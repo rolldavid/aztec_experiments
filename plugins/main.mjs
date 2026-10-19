@@ -17,6 +17,7 @@ import {validateDescriptor} from './protocol.mjs';
 import {aztecBoardPort,rollingBoardPort} from './aztec.mjs';
 import {aztecEscrowPort} from './escrow.mjs';
 import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from './escrow-service.mjs';
+import {bokReceiptClaims} from './private-bok-metering.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
 import {createAgent} from './agent.mjs';
@@ -149,12 +150,12 @@ export async function hostedRequestDispatchable({request,directory,scope,pluginI
  if(!saved)return true;
  const identity={network:`eip155-${scope.chainId}:aztec-${scope.rollupVersion}:${scope.rollupAddress}`,escrow:scope.receiver,requestId:request.requestId,target:request.target};
  assert.deepEqual(saved.binding,{...identity,postId:request.postId,pluginId});assert.equal(request.pluginId,pluginId);
- assert(['running','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
- if(['reply-intent','reply-confirmed'].includes(saved.phase))return true;
+ assert(['running','result-ready','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
+ if(['result-ready','reply-intent','reply-confirmed'].includes(saved.phase))return true;
  if(saved.phase!=='running')return false;
  if(hostedUnsubmittedFirstCall(original)||hostedSubmittedFirstCall(original)||hostedReceivedFirstCall(original))return true;
  const journal=original.privateBok,calls=Object.values(journal?.calls??{});
- if(!journal||journal.finished||!calls.length||calls.some(call=>call.phase!=='settled'))return false;
+ if(!journal||journal.finished||!calls.length||calls.some(call=>journal.accountingMode==='invocation-v1'?!['received','settled'].includes(call.phase):call.phase!=='settled'))return false;
  assert.deepEqual(journal.identity,identity,'Original metering identity changed');
  return repositories.hasAcceptedRecovery({threadId:request.threadId,invocationId:request.requestId,repository});
 }
@@ -182,7 +183,7 @@ export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
     const bytes=Buffer.alloc(stat.size+1);const {bytesRead}=await handle.read(bytes,0,bytes.length,0);assert.equal(bytesRead,stat.size);
     saved=JSON.parse(bytes.subarray(0,bytesRead).toString('utf8')).hostedPrivateBok;
    }catch{throw Error('Invalid hosted recovery journal');}finally{await handle?.close();}
-   if(!saved||!['reply-intent','reply-confirmed'].includes(saved.phase))continue;
+   if(!saved||!['result-ready','reply-intent','reply-confirmed'].includes(saved.phase))continue;
    const b=saved.binding;assert(b&&b.network===network&&b.escrow===scope.receiver&&b.pluginId===pluginId&&field(b.requestId)&&field(b.target)&&field(b.postId),'Hosted recovery identity changed');
    const id=createHash('sha256').update(JSON.stringify({scope,requestId:b.requestId,target:b.target})).digest('hex');
    assert.equal(entry.name,id+'.json','Hosted recovery filename changed');
@@ -198,6 +199,16 @@ export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
 
 /** One local billing reconciliation with the same stopped-service lease and
  * operator. No provider, repository, container or public listener is opened. */
+function hostedReceiptClaims(directory,lease){
+ return bokReceiptClaims({assertHeld:()=>lease.assertHeld(),readJournals:async function*(){
+  const {readHostedPrivateFile}=await import('./operations.mjs');let count=0;
+  for await(const entry of await fs.opendir(directory)){
+   assert(++count<=8192,'Hosted journal directory bound');if(!/^[0-9a-f]{64}\.json$/.test(entry.name))continue;
+   yield JSON.parse((await readHostedPrivateFile(path.join(directory,entry.name))).toString('utf8'));
+  }
+ }});
+}
+
 export async function runHostedBillingReconciliation({config,receiptFile,env=process.env}){
  let lease,wallet,result,failed=false,cleanupFailed=false;
  try{
@@ -225,7 +236,7 @@ export async function runHostedBillingReconciliation({config,receiptFile,env=pro
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
   const [,bokRaw]=loadRollingArtifacts(),artifact=loadContractArtifact(bokRaw);
   const escrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:String(account.address),board:scope.boardAddress,network:scope,requestId:b.requestId,target:b.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'});
-  result=await reconcileHostedBilling({receipt,escrow,store,lease,limits:config.limits});
+  result=await reconcileHostedBilling({receipt,escrow,store,lease,limits:original.privateBok?.limits??config.limits,claimReceipt:hostedReceiptClaims(config.stateDirectory,lease)});
  }catch{failed=true;}
  finally{for(const close of [()=>wallet?.stop(),()=>lease?.close()])try{await close();}catch{cleanupFailed=true;}}
  if(failed||cleanupFailed)throw Error(cleanupFailed?'Hosted billing recovery failed; owned cleanup requires attention':'Hosted billing recovery unresolved; preserve original receipt and journal');
@@ -294,7 +305,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   // A request owns its own billing journal. Only shared wallet operations and
   // canonical index snapshots serialize; unrelated model calls may overlap.
   const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
-  const indexed=lane(),walletOperation=lane(),generatedExecution=lane(),publicationOperation=lane();
+  const indexed=lane(),walletOperation=lane(),generatedExecution=lane(),publicationOperation=lane(),claimReceipt=hostedReceiptClaims(config.stateDirectory,lease);
   const isTerminalWithoutReply=async(request,anchor)=>{
    await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
    const file=path.join(config.stateDirectory,id+'.json');
@@ -349,8 +360,9 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
     const escrow=serializeHostedEscrow(rawEscrow,walletOperation);
-    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits:config.limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
-     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,maxTokens:config.limits?.maxTokens??1500,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use check_workspace to run isolated tests and builds and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. Published dist code runs in a browser, where CommonJS module, exports, require and Node globals are unavailable. Test browser entry scripts and registered handlers without supplying those globals. Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
+    const limits=store.read().privateBok?.limits??{maxTokens:4096,...config.limits};
+    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
+     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:limits.maxCalls??8,maxTokens:limits.maxTokens??4096,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use check_workspace to run isolated tests and builds and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. Published dist code runs in a browser, where CommonJS module, exports, require and Node globals are unavailable. Test browser entry scripts and registered handlers without supplying those globals. Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
    }});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,
    setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};

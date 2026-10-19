@@ -7,7 +7,7 @@ import {validateVeniceBilling} from './venice-metered.mjs';
 
 /** Trusted local operator capability; not an HTTP action. The service must be
  * stopped and its original exclusive lease held throughout this one-shot call. */
-export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}){
+export async function reconcileHostedBilling({receipt,escrow,store,lease,limits,claimReceipt}){
  await lease.assertHeld();
  const original=store.read(),saved=original.hostedPrivateBok,journal=original.privateBok;
  assert(saved&&['running','accounting-recovery','accounted-without-reply'].includes(saved.phase),'No unresolved hosted billing');
@@ -26,7 +26,7 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}
  if(saved.billingRecovery)assert.deepEqual(saved.billingRecovery,recovery,'Original billing recovery changed');
  const checkedStore={read:()=>store.read(),write:async value=>{await lease.assertHeld();await store.write(value);}};
  const deny=async()=>{throw Error('Provider calls forbidden during billing recovery');};
- const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits});
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits,claimReceipt});
  await metering.validateReconciliation(receipt.callId,billing);
  // Retain the original evidence before any chain action. The metering journal
  // independently persists exact reconciliation intents before their sole sends.
@@ -50,7 +50,7 @@ export async function isHostedTerminalWithoutReply({request,escrow,store,anchor}
  const deny=async()=>{throw Error('Terminal admission is read only');};let observation;
  const readOnlyEscrow={identity:escrow.identity,request:async id=>{assert.equal(observation,undefined);observation=await escrow.request(id);return observation;}};
  for(const method of ['assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])readOnlyEscrow[method]=deny;
- const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits});
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits,claimReceipt:deny});
  const last=calls.at(-1);await metering.validateReconciliation(last.id,last.billing);
  assert.equal(observation.anchor?.number,anchor?.number,'Terminal checkpoint changed');assert.equal(observation.anchor?.hash,anchor?.hash,'Terminal checkpoint changed');
  assert(anchor&&Number.isSafeInteger(anchor.number)&&typeof anchor.hash==='string','Terminal checkpoint required');
@@ -152,6 +152,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  * Neither path admits provider-entered calls or a repeated agent continuation. */
 function hostedFirstCall(original,submitted){
  const h=original.hostedPrivateBok,j=original.privateBok,e=original.privateBokEscrow;
+ if(j?.accountingMode==='invocation-v1')return false;
  if(h?.phase!=='running'||Object.hasOwn(h,'submittedReservationContinuationAttempted')||(!submitted&&Object.hasOwn(h,'preProviderRecoveryAttempted'))||!j||j.finished||!e)return false;
  const calls=Object.values(j.calls??{}),ops=Object.entries(j.operations??{});
  if(calls.length!==1||calls[0].id!==0||calls[0].phase!=='quoted'||calls[0].billing||ops.length!==1||Object.keys(e.operations??{}).length!==1)return false;
@@ -175,6 +176,7 @@ export const hostedSubmittedFirstCall=original=>hostedFirstCall(original,true);
 export function hostedReceivedFirstCall(original){
  try{
   const h=original.hostedPrivateBok,j=original.privateBok,c=j?.calls?.[0];
+  if(j?.accountingMode==='invocation-v1')return false;
   if(h?.phase!=='running'||!j||j.finished||Object.keys(j.calls).length!==1||c.id!==0||!['received','settled'].includes(c.phase)||c.responseDelivered||!c.response||!c.billing)return false;
   const b=h.binding,identity={network:b.network,escrow:b.escrow,requestId:b.requestId,target:b.target};
   assert.deepEqual(j.identity,identity);
@@ -185,7 +187,7 @@ export function hostedReceivedFirstCall(original){
  }catch{return false;}
 }
 
-export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation,admitThread}){
+export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation,admitThread,accountingMode,claimReceipt}){
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
  const binding={...identity,postId:request.postId,pluginId:request.pluginId};
  const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -207,10 +209,13 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   if(conversation){assert(historyGuard,'Conversation must be captured before billing');await historyGuard();}
   return provider.execute(...args);
  }};
- const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits});
+ const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits,accountingMode,claimReceipt});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
- let result;const resumeUnsubmitted=hostedUnsubmittedFirstCall(store.read()),resumeSubmitted=hostedSubmittedFirstCall(store.read());
+ const invocation=(store.read().privateBok?.accountingMode??(store.read().privateBok?'per-call':accountingMode))==='invocation-v1';
+ let result=saved?.phase==='result-ready'?saved.result:undefined;
+ if(saved?.phase==='result-ready')assert(invocation&&result&&typeof result.replyText==='string'&&saved.resultDigest===digest(result),'Saved result binding unavailable');
+ const resumeUnsubmitted=hostedUnsubmittedFirstCall(store.read()),resumeSubmitted=hostedSubmittedFirstCall(store.read());
  if(resumeSubmitted){
   const [operationId,operation]=Object.entries(store.read().privateBokEscrow.operations)[0];
   assert.equal(typeof escrow.waitForOperation,'function','Native original-operation observer required');
@@ -219,7 +224,10 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  }
  const resumeReceived=hostedReceivedFirstCall(store.read()),resumeFirstCall=resumeUnsubmitted||resumeSubmitted||resumeReceived;
  if(resumeReceived)await metering.validateReconciliation(0,store.read().privateBok.calls[0].billing);
- if(saved?.phase==='running'&&!resumeFirstCall&&typeof recoverAccepted==='function'){
+ if(saved?.phase==='running'&&!resumeFirstCall&&invocation&&typeof recoverAccepted==='function'){
+  const calls=Object.values(store.read().privateBok.calls);assert(calls.length&&calls.every(c=>['received','settled'].includes(c.phase)),'Hosted request unresolved; original billing required');
+  await metering.settle();result=await recoverAccepted(current);
+ }else if(saved?.phase==='running'&&!resumeFirstCall&&typeof recoverAccepted==='function'){
   assert(current.usable&&!current.replied,'Invocation no longer usable');
   const journal=structuredClone(store.read().privateBok),calls=Object.values(journal?.calls??{});
   assert(journal&&!journal.finished&&calls.length>0&&calls.every(call=>call.phase==='settled'),'Hosted request unresolved; provider billing must be settled');
@@ -240,7 +248,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   result=await recoverAccepted(current);
   assert.deepEqual(store.read().privateBok,journal,'Billing changed during accepted recovery');
   assert.deepEqual(store.read().hostedPrivateBok,saved,'Hosted recovery changed');
- }else if(saved&&!resumeFirstCall&&!['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
+ }else if(saved&&!resumeFirstCall&&!['reply-intent','reply-confirmed','result-ready'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
  if(!saved||resumeFirstCall){
   assert(!current.replied&&current.usable,'Invocation no longer usable');
   const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&(resumeReceived?true:resumeSubmitted?row.request.sequence===0&&row.request.reserved===BigInt(store.read().privateBok.calls[0].quote.maximum):row.request.reserved===0n),'Active canonical request required');
@@ -262,6 +270,10 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
   }}});
+ }
+ if(result&&invocation){
+  if(saved?.phase!=='result-ready'){packText(result.replyText);assert(Buffer.byteLength(JSON.stringify(result))<=65536,'Hosted result bound');saved={binding,phase:'result-ready',result,resultDigest:digest(result)};await save(saved);}
+  await metering.settle();
  }
  if(result){
   const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target&&fresh.requestId===request.requestId&&fresh.pluginId===request.pluginId&&fresh.threadId===current.threadId&&fresh.predecessorsClear===true,'Invocation changed before reply');

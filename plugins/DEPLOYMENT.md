@@ -6,6 +6,33 @@
 
 # Deploying a plugin
 
+## Hosted invocation accounting
+
+New hosted Rolling requests use `invocation-v1`: one canonical reservation holds
+an invocation allowance while individually quoted model calls are durably metered
+locally. Before every paid call, the original reservation/deadline and canonical
+invocation are rechecked; accumulated charges plus that call's worst-case quote
+must fit the allowance. Original billing receipts are claimed under the service's
+shared serialized writer across retained request journals, including historical
+per-call records. Preserve those journals when moving the same operator.
+
+The agent can validate and accept its generated source before settlement. Its
+bounded final result is then saved before one aggregate settlement, authenticated
+board reply and finish/refund. The aggregate receipt commits to request identity,
+reservation sequence, ordered original billing receipts/input digests and actual
+charges. A failed chain operation retains its original transaction identity and
+result; recovery cannot send it again or rerun paid work. An unknown provider
+outcome blocks later calls and fences the whole outstanding allowance until the
+original receipt resolves it; unknown usage is never treated as zero.
+
+Existing request journals retain their original per-call accounting mode and
+limits. They are never converted to the invocation mode. Fresh requests default
+to 4,096 output tokens; explicit operator limits still override that default and
+normal price quotes, request credit and input/output limits remain enforced.
+The existing stopped-service `--reconcile-billing` path can settle aggregate
+original usage and release unused credit without a model/tool replay. Completed
+journals retain billing ownership, response data and delivery fences.
+
 ## Current Rolling / PrivateBok operator
 
 Select `applicationProfile: "rolling"` in the private operator config. The example

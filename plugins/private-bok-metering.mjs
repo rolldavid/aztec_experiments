@@ -63,16 +63,20 @@ function quoteRecord(value,available,requested,limits){
  * Provider quote/execute follow veniceMeteredProvider, including validated billing.
  * Store read/write must preserve atomic durable snapshots; no secret/raw error data.
  */
-export function privateBokMetering({provider,escrow,store,identity,limits={}}){
+export function privateBokMetering({provider,escrow,store,identity,limits={},accountingMode='per-call',claimReceipt}){
  const binding={network:identity?.network,escrow:identity?.escrow,requestId:identity?.requestId,target:identity?.target};
  if(typeof binding.network!=='string'||!/^[A-Za-z0-9._:-]{1,96}$/.test(binding.network)||
   !field(binding.escrow)||!field(binding.requestId)||!field(binding.target))throw Error('Invalid request identity');
  if(escrow?.identity?.network!==binding.network||escrow?.identity?.escrow!==binding.escrow)throw Error('Chain port identity mismatch');
  for(const method of ['request','assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])if(typeof escrow[method]!=='function')throw Error('Canonical chain port required');
- const cap={maxCalls:limits.maxCalls??8,maxInputBytes:limits.maxInputBytes??65536,maxTokens:limits.maxTokens??1500,
+ const savedMode=store.read().privateBok;
+ const mode=savedMode?(savedMode.accountingMode??'per-call'):accountingMode;
+ if(!['per-call','invocation-v1'].includes(mode))throw Error('Unsupported accounting mode');
+ const cap={maxCalls:limits.maxCalls??8,maxInputBytes:limits.maxInputBytes??65536,maxTokens:limits.maxTokens??(mode==='invocation-v1'?4096:1500),
   maxReservation:amount(limits.maxReservation??1000000n),maxBudget:amount(limits.maxBudget??1000000n)};
  if(!uint(cap.maxCalls,64)||!cap.maxCalls||!uint(cap.maxInputBytes,1048576)||!cap.maxInputBytes||!uint(cap.maxTokens,1000000)||!cap.maxTokens||!cap.maxReservation||!cap.maxBudget)throw Error('Invalid request limits');
  const savedCaps={...cap,maxReservation:String(cap.maxReservation),maxBudget:String(cap.maxBudget)};
+ if(mode==='invocation-v1')return invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimReceipt});
  let busy=false;
  const exclusive=fn=>async(...args)=>{if(busy)throw Error('Request operation already running');busy=true;try{return await fn(...args);}finally{busy=false;}};
  const journal=()=>{
@@ -239,7 +243,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     let finishReason=veniceFinishReason(result.finishReason),response;
     try{response=retainedBokResponse(result.message);}catch{response={role:'assistant',content:null};finishReason='invalid';}
     const responseDigest=hash({inputDigest,billingReceipt:b.receipt,message:response,finishReason});
-    await setCall(id,{phase:'received',billing:b,response,responseDigest,...(finishReason?{finishReason}:{})});
+    const persist=()=>setCall(id,{phase:'received',billing:b,response,responseDigest,...(finishReason?{finishReason}:{})});
+    if(claimReceipt)await claimReceipt({identity:binding,callId:id,billing:b},persist);else await persist();
    }catch(error){
     if(callRecord(id).phase==='received')throw Error('Response retained; resume accounting');
     const diagnostic=getVeniceDiagnostic(error);
@@ -261,7 +266,7 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    // onchain. Only the exact original record may continue its original intent.
    if(c.billing&&hash(b)!==hash(measured(c)))throw Error('Original provider billing changed');
    if(['received','settled'].includes(c.phase))return settle(id);
-   await fence(id);await setCall(id,{phase:'received',billing:b});return settle(id);
+   await fence(id);const persist=()=>setCall(id,{phase:'received',billing:b});if(claimReceipt)await claimReceipt({identity:binding,callId:id,billing:b},persist);else await persist();return settle(id);
   }),
   finish:exclusive(async()=>{
    const j=journal();if(Object.values(j.calls).some(c=>c.phase!=='settled'))throw Error('Unresolved provider call');
@@ -274,6 +279,175 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    // fences for reconciliation; completion never authorizes another handoff.
    const terminal=journal();
    await save({...terminal,finished:true});return {finished:true};
+  }),
+ };
+}
+
+/** One writer-wide serialization lane protects receipt ownership across request
+ * journals, including historical per-call receipts. Persistence is inside that
+ * lane: concurrent requests cannot both observe an unclaimed provider receipt. */
+export function bokReceiptClaims({readJournals,assertHeld=async()=>{}}){
+ let tail=Promise.resolve();
+ return (owner,persist)=>{
+  const next=tail.then(async()=>{
+   await assertHeld();
+   for await(const state of await readJournals()){
+    const j=state.privateBok;if(!j)continue;
+    for(const c of Object.values(j.calls??{})){
+     if(!c.billing||c.billing.receipt!==owner.billing.receipt&&c.billing.providerId!==owner.billing.providerId)continue;
+     if(hash(j.identity)!==hash(owner.identity)||c.id!==owner.callId||hash(c.billing)!==hash(owner.billing))throw Error('Provider receipt already owned by another call');
+    }
+   }
+   await assertHeld();return persist();
+  });tail=next.catch(()=>{});return next;
+ };
+}
+
+// Fresh requests only. The deployed contract's sequence identifies this whole
+// reservation; local call IDs never advance it. Historical journals retain the
+// original per-call implementation above and original operation identities.
+function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimReceipt}){
+ if(typeof claimReceipt!=='function')throw Error('Serialized receipt ownership required');
+ let busy=false;
+ const exclusive=fn=>async(...args)=>{if(busy)throw Error('Request operation already running');busy=true;try{return await fn(...args);}finally{busy=false;}};
+ const journal=()=>{
+  const j=store.read().privateBok;
+  if(!j)return {version:2,accountingMode:'invocation-v1',identity:binding,limits:savedCaps,calls:{},operations:{},finished:false};
+  if(j.version!==2||j.accountingMode!=='invocation-v1'||hash(j.identity)!==hash(binding)||hash(j.limits)!==hash(savedCaps))throw Error('Request journal identity or limits mismatch');
+  return copy(j);
+ };
+ const save=async j=>{const next={...store.read(),privateBok:copy(j)};if(Buffer.byteLength(JSON.stringify(next))>8388608)throw Error('Private request journal capacity exceeded');await store.write(next);};
+ const setCall=async(id,changes)=>{const j=journal();j.calls[id]={...j.calls[id],...changes};await save(j);};
+ const callId=id=>{if(!uint(id,cap.maxCalls-1))throw Error('Request call limit');};
+ const read=async()=>{
+  const result=await escrow.request(binding.requestId);if(result?.canonical!==true)throw Error('Canonical request required');
+  const {state,sequence,invocation_hash,budget,available,reserved,charged,refunded,receipt}=result.request??{};
+  if(![1,2,3,4].includes(state)||!uint(sequence)||invocation_hash!==binding.target)throw Error('Canonical request identity mismatch');
+  const r={state,sequence,invocation_hash,budget:amount(budget),available:amount(available),reserved:amount(reserved),charged:amount(charged),refunded:amount(refunded),receipt};
+  if(!r.budget||r.budget>cap.maxBudget||r.available+r.reserved+r.charged+r.refunded!==r.budget)throw Error('Request conservation or budget failure');return r;
+ };
+ const operate=async(method,args)=>{
+  const argsDigest=hash(args.map(x=>typeof x==='bigint'?String(x):x)),operationId=hash({identity:binding,accountingMode:'invocation-v1',method,argsDigest});
+  const j=journal();if(!j.operations[operationId]){
+   if((await escrow.inspectOperation(operationId))?.status!=='absent')throw Error('Operation already exists outside journal');
+   j.operations[operationId]={method,argsDigest};await save(j);
+   try{await escrow[method](...args,{operationId,argsDigest});}catch{/* Only the exact original receipt can establish success. */}
+  }
+  let observed=await escrow.inspectOperation(operationId);
+  if(observed?.status==='pending'&&typeof escrow.waitForOperation==='function')observed=await escrow.waitForOperation(operationId);
+  if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');
+ };
+ const reservationMatches=r=>{
+  const b=journal().reservation;if(!b)return false;
+  return r.sequence===b.sequence&&r.reserved===amount(b.maximum)&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)&&r.available+r.refunded===amount(b.before.available)+amount(b.before.refunded)-r.reserved;
+ };
+ const quoteFor=c=>quoteRecord(c.quote,amount(c.available),c.requestedTokens,cap);
+ const billingFor=(id,value)=>{
+  const j=journal(),c=j.calls[id];if(!c)throw Error('Missing original call');const b=validateVeniceBilling(value,quoteFor(c));
+  if(Object.values(j.calls).some(x=>x.id!==id&&(x.billing?.providerId===b.providerId||x.billing?.receipt===b.receipt)))throw Error('Provider response already accounted');return b;
+ };
+ const measured=c=>billingFor(c.id,c.billing);
+ const outcome=c=>({callId:c.id,billing:measured(c),replyAvailable:false});
+ const total=()=>Object.values(journal().calls).reduce((n,c)=>n+(c.billing?BigInt(measured(c).charge):0n),0n);
+ const reserved=async()=>{const r=await read();if(r.state!==2||!reservationMatches(r))throw Error('Reservation changed');const b=journal().reservation;await escrow.assertUsable(binding.requestId,b.sequence,amount(b.maximum));return r;};
+ const deliver=async id=>{
+  const c=journal().calls[id],result=outcome(c);if(journal().finished||!c.response||c.responseDelivered)return result;
+  const message=retainedBokResponse(c.response);if(hash({inputDigest:c.inputDigest,billingReceipt:c.billing.receipt,message,finishReason:c.finishReason??null})!==c.responseDigest)throw Error('Retained provider response changed');
+  // Tools may run against durably metered work under the same live reservation;
+  // board publication still waits for aggregate canonical settlement.
+  await reserved();await setCall(id,{responseDelivered:true});return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
+ };
+ const fence=async id=>{
+  const r=await read();if(![2,3].includes(r.state)||!reservationMatches(r))throw Error('Unknown call reservation mismatch');
+  if(r.state===2||Object.values(journal().operations).some(o=>o.method==='close_uncertain'))await operate('close_uncertain',[binding.requestId]);
+  const after=await read();if(after.state!==3||after.available!==0n||!reservationMatches(after))throw Error('Uncertain call not fenced');await setCall(id,{phase:'fenced'});
+ };
+ const aggregate=()=>{
+  const j=journal(),calls=Object.values(j.calls);if(!calls.length||calls.some((c,i)=>c.id!==i||!['received','settled'].includes(c.phase)))throw Error('Unresolved provider call');
+  const receipts=calls.map(c=>({callId:c.id,inputDigest:c.inputDigest,receipt:measured(c).receipt,charge:c.billing.charge}));
+  const charge=String(total());if(BigInt(charge)>amount(j.reservation.maximum))throw Error('Invocation allowance exceeded');
+  const facts={domain:'rolling-bok-invocation-v1',identity:binding,sequence:j.reservation.sequence,maximum:j.reservation.maximum,receipts,charge};
+  const receipt='0x'+(BigInt('0x'+hash(facts))%FIELD).toString(16).padStart(64,'0');if(!field(receipt))throw Error('Invalid aggregate receipt');return {facts,charge,receipt};
+ };
+ const settlementMatches=(r,a)=>{
+  const b=journal().reservation;return r.sequence===b.sequence+1&&r.reserved===0n&&r.receipt===a.receipt&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)+BigInt(a.charge)&&[2,4].includes(r.state)&&r.available+r.refunded===amount(b.before.available)+amount(b.before.refunded)-BigInt(a.charge);
+ };
+ const settle=async()=>{
+  let j=journal();if(!j.reservation)return {settled:true};
+  const a=aggregate();if(j.aggregate&&hash(j.aggregate)!==hash(a))throw Error('Aggregate billing changed');
+  if(!j.aggregate){j.aggregate=a;await save(j);}
+  let r=await read(),method;
+  if(reservationMatches(r)&&[2,3].includes(r.state)){
+   method=r.state===3?'reconcile':'settle';
+   if(method==='reconcile')for(const [id,op]of Object.entries(journal().operations))if(op.method==='settle'){
+    const prior=await escrow.inspectOperation(id);if(prior?.status!=='failed'||prior.canonical!==true||prior.method!==op.method||prior.argsDigest!==op.argsDigest)throw Error('Original settlement unresolved');
+   }
+  }else{
+   if(!settlementMatches(r,a))throw Error('Aggregate settlement state mismatch');
+   method=Object.values(journal().operations).some(o=>o.method==='reconcile')?'reconcile':'settle';
+   if(!Object.values(journal().operations).some(o=>o.method===method))throw Error('Settlement intent missing');
+  }
+  await operate(method,[binding.requestId,j.reservation.sequence,BigInt(a.charge),a.receipt]);r=await read();
+  if(!settlementMatches(r,a))throw Error('Aggregate settlement accounting mismatch');
+  j=journal();for(const c of Object.values(j.calls))c.phase='settled';await save(j);return {settled:true,charge:a.charge,receipt:a.receipt};
+ };
+ const validateReconciliation=async(id,value)=>{
+  callId(id);const j=journal(),calls=Object.values(j.calls),c=j.calls[id];
+  if(!c||id!==calls.length-1||calls.some((x,i)=>x.id!==i||i<id&&!['received','settled'].includes(x.phase))||!['possibly-sent','fenced','received','settled'].includes(c.phase))throw Error('No current unknown provider call');
+  const b=billingFor(id,value);if(c.billing&&hash(c.billing)!==hash(b))throw Error('Original provider billing changed');
+  const r=await read();if(!([2,3].includes(r.state)&&reservationMatches(r))&&!(j.aggregate&&settlementMatches(r,aggregate())))throw Error('Current reconciliation sequence or accounting mismatch');return b;
+ };
+ const resume=async id=>{
+  callId(id);const c=journal().calls[id];if(!c)throw Error('No recorded call');if(journal().finished)return outcome(c);
+  if(['received','settled'].includes(c.phase))return c.phase==='settled'?outcome(c):deliver(id);
+  if(['possibly-sent','fenced'].includes(c.phase)){await fence(id);throw Error('Provider outcome unknown; original receipt required');}
+  if(!['quoted','reserved'].includes(c.phase))throw Error('Invalid call journal phase');return {callId:id,readyForComplete:true,replyAvailable:false};
+ };
+ return {
+  settle:exclusive(settle),validateReconciliation:exclusive(validateReconciliation),resume:exclusive(resume),
+  complete:exclusive(async(id,input)=>{
+   callId(id);const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Error('Request input limit');
+   const frozen=JSON.parse(serialized);if(!uint(frozen.maxTokens,cap.maxTokens)||!frozen.maxTokens)throw Error('Request output limit');const inputDigest=hash(frozen);let j=journal(),c=j.calls[id];
+   if(c&&c.inputDigest!==inputDigest)throw Error('Call input changed');if(c&&!['quoted','reserved'].includes(c.phase))return resume(id);
+   if(!c){
+    const calls=Object.values(j.calls);if(j.finished||j.aggregate||calls.length!==id||calls.some(x=>!['received'].includes(x.phase)||!x.responseDelivered))throw Error('Request call sequence');
+    if(calls.reduce((n,c)=>n+(c.response?Buffer.byteLength(JSON.stringify(c.response)):0),0)+1048576>4194304)throw Error('Retained response capacity reached; finish or reconcile the existing request');
+    let available;if(!j.reservation){
+     const r=await read();if(r.state!==2||r.sequence!==0||r.reserved!==0n||r.charged!==0n)throw Error('Fresh invocation required');
+     const maximum=r.available<cap.maxReservation?r.available:cap.maxReservation;
+     j.reservation={sequence:r.sequence,maximum:String(maximum),before:{budget:String(r.budget),available:String(r.available),charged:String(r.charged),refunded:String(r.refunded)}};available=maximum;
+    }else{await reserved();available=amount(j.reservation.maximum)-total();}
+    if(available<=0n)throw Object.assign(Error('Invocation budget exhausted'),{code:'INSUFFICIENT_BALANCE'});
+    const q=quoteRecord(await provider.quote(frozen,available),available,frozen.maxTokens,cap);
+    c={id,phase:'quoted',inputDigest,requestedTokens:frozen.maxTokens,quote:quoteJSON(q),available:String(available)};j.calls[id]=c;await save(j);
+   }
+   const reservation=journal().reservation;
+   if(id===0&&c.phase==='quoted')await operate('reserve',[binding.requestId,reservation.sequence,amount(reservation.maximum)]);
+   await reserved();if(total()+amount(c.quote.maximum)>amount(reservation.maximum))throw Error('Invocation allowance exceeded');
+   await setCall(id,{phase:'possibly-sent'});await reserved();
+   try{
+    const result=await provider.execute(frozen,quoteFor(c)),b=billingFor(id,result?.billing);
+    if(result.charge!==BigInt(b.charge)||result.receipt!==b.receipt)throw Error('Provider result mismatch');
+    let finishReason=veniceFinishReason(result.finishReason),response;try{response=retainedBokResponse(result.message);}catch{response={role:'assistant',content:null};finishReason='invalid';}
+    const responseDigest=hash({inputDigest,billingReceipt:b.receipt,message:response,finishReason:finishReason??null});
+    await claimReceipt({identity:binding,callId:id,billing:b},()=>setCall(id,{phase:'received',billing:b,response,responseDigest,...(finishReason?{finishReason}:{})}));
+   }catch(error){
+    if(journal().calls[id].phase==='received')throw Error('Response retained; resume accounting');
+    const diagnostic=getVeniceDiagnostic(error);try{if(diagnostic)await setCall(id,{providerDiagnostic:diagnostic});}finally{await fence(id);}
+    throw Error('Provider outcome unknown; original receipt required');
+   }
+   return deliver(id);
+  }),
+  reconcile:exclusive(async(id,value)=>{
+   const b=await validateReconciliation(id,value),c=journal().calls[id];
+   if(!c.billing){await fence(id);await claimReceipt({identity:binding,callId:id,billing:b},()=>setCall(id,{phase:'received',billing:b}));}
+   await settle();return outcome(journal().calls[id]);
+  }),
+  finish:exclusive(async()=>{
+   await settle();const before=await read();if(before.reserved!==0n)throw Error('Unresolved reservation');
+   if(before.state===2||Object.values(journal().operations).some(o=>o.method==='finish'))await operate('finish',[binding.requestId]);else if(before.state!==4)throw Error('Request cannot finish');
+   const after=await read();if(after.state!==4||after.available!==0n||after.reserved!==0n||after.charged!==before.charged||after.budget!==before.budget)throw Error('Finish accounting mismatch');
+   await save({...journal(),finished:true});return {finished:true};
   }),
  };
 }

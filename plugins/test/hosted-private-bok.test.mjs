@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from '../escrow-service.mjs';
+import {bokReceiptClaims} from '../private-bok-metering.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
@@ -709,4 +710,57 @@ test('restored reply cannot finish on a waiter result without a matching canonic
   assert.deepEqual(x.store.read().hostedPrivateBok,original);assert.equal(x.row.refunded,0n);
   assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);
  }
+});
+
+
+function invocationFixture(){
+ const x=fixture();x.args.accountingMode='invocation-v1';x.args.claimReceipt=bokReceiptClaims({readJournals:async()=>[x.store.read()]});let count=0;
+ x.args.provider.execute=async()=>{x.events.push('paid');assert(Object.values(x.store.read().privateBok.calls).some(c=>c.phase==='possibly-sent'));if(x.control.timeout)throw Error('unknown provider');
+  const q={modelId:'fixture',inputBound:100,maxTokens:10,inputPrice:1000000000n,outputPrice:1000000000n,cachePrice:null,maximum:110n};
+  const billing=validateVeniceBilling({providerId:'invocation-'+(++count),modelId:'fixture',promptTokens:4,completionTokens:2,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'6'},q);
+  return {message:{role:'assistant',content:'public reply'},billing,charge:6n,receipt:billing.receipt};};return x;
+}
+test('hosted invocation accounting meters multiple calls under one reserve and settles before authenticated reply',async()=>{
+ const x=invocationFixture();x.args.runAgent=async({model})=>{
+  for(let i=0;i<3;i++){await model.complete({messages:[{role:'user',content:'same canonical invocation'}],maxTokens:10});assert.equal(x.row.reserved,1000n);assert.equal(x.row.sequence,0);}
+  return {replyText:'accepted public result',revision:{acceptedRevision:'a'.repeat(40)}};
+ };
+ await x.run();assert.deepEqual(x.events,['reserve','paid','paid','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,18n);assert.equal(x.row.refunded,982n);
+ assert.equal(x.store.read().privateBok.accountingMode,'invocation-v1');await x.run();assert.equal(x.events.filter(v=>v==='paid').length,3);
+});
+test('hosted invocation accounting retains produced result across unsettled chain operation and resumes without agent',async()=>{
+ const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;let pending=true,agents=0;
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ const agent=x.args.runAgent;x.args.runAgent=async input=>{agents++;return agent(input);};
+ await assert.rejects(x.run(),/unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'result-ready');assert.equal(x.row.charged,6n);assert.equal(x.row.reserved,0n);
+ pending=false;await x.run();assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+test('hosted invocation accounting preserves accepted revision recovery without replaying paid calls',async()=>{
+ const x=invocationFixture();let agents=0;
+ x.args.runAgent=async({model})=>{agents++;await model.complete({messages:[],maxTokens:10});throw Error('accepted result acknowledgement lost');};
+ await assert.rejects(x.run(),/acknowledgement/);assert.equal(x.store.read().privateBok.calls[0].phase,'received');
+ x.args.recoverAccepted=async()=>({replyText:'Application published. Original accepted source.'});await x.run();
+ assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+test('hosted invocation accounting closes unknown original provider without a model or tool replay',async()=>{
+ const x=invocationFixture();x.control.timeout=true;await assert.rejects(x.run(),/unknown/);const original=x.store.read(),c=original.privateBok.calls[0];
+ const q={...c.quote,inputPrice:BigInt(c.quote.inputPrice),outputPrice:BigInt(c.quote.outputPrice),cachePrice:null,maximum:BigInt(c.quote.maximum)};
+ const billing=validateVeniceBilling({providerId:'original-reconciled',modelId:'fixture',promptTokens:4,completionTokens:2,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'6'},q);
+ const receipt={schemaVersion:1,binding:original.hostedPrivateBok.binding,callId:0,inputDigest:c.inputDigest,evidenceSha256:'e'.repeat(64),billing};
+ const result=await reconcileHostedBilling({receipt,escrow:x.args.escrow,store:x.store,lease:{assertHeld:async()=>{}},claimReceipt:x.args.claimReceipt});
+ assert.equal(result.status,'accounted-without-reply');assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+ assert.equal(await isHostedTerminalWithoutReply({request:x.args.request,escrow:x.args.escrow,store:x.store,anchor:{number:7,hash:f(77)}}),true);
+});
+
+test('hosted invocation result-ready is discoverable after restart without model admission',async t=>{
+ const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;
+ x.args.escrow.inspectOperation=async id=>x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ await assert.rejects(x.run(),/unresolved/);
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-invocation-restart-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},request={...x.args.request,threadId:f(9)},id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
+ await fs.writeFile(path.join(directory,id+'.json'),JSON.stringify(x.store.read()),{mode:0o600});
+ const lease={assertHeld:async()=>{}};
+ assert.equal(await hostedRequestDispatchable({request,directory,scope,pluginId:request.pluginId,lease,repositories:{hasAcceptedRecovery:()=>assert.fail('Saved result needs no agent')},repository:'owner/project'}),true);
+ const scanner=hostedRecoveryScanner({directory,scope,pluginId:request.pluginId,lease,board:{readRequest:async()=>({...x.current,threadId:f(9)})}});
+ try{assert.equal((await scanner())[0].requestId,request.requestId);}finally{await scanner.close();}
 });
