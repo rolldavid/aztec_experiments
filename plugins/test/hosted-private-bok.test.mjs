@@ -240,6 +240,23 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   let terminal=false;
   const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,true).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
+  // A slow canonical prefix is retained across bounded pending scans. No
+  // partial projection or generic poll failure is emitted while catching up.
+  const readySync=index.sync,readyStatus=index.status,readyScan=index.scanPosts;
+  let catchupSteps=0,catchupScans=0;
+  index.sync=async()=>{catchupSteps++;};index.status=()=>({state:catchupSteps<65?'syncing':'ready'});
+  index.scanPosts=(...args)=>{catchupScans++;return readyScan(...args);};
+  const savedCursor={after:'1',anchor:{number:5,hash:f(99)}};
+  assert.deepEqual(await port.pending(savedCursor),{requests:[],nextCursor:savedCursor});
+  assert.equal(catchupSteps,32);assert.equal(catchupScans,0);
+  assert.deepEqual(await port.pending(null),{requests:[],nextCursor:null});
+  assert.equal(catchupSteps,64);assert.equal(catchupScans,0);
+  assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal(catchupSteps,65);assert.equal(catchupScans,1);
+  index.status=()=>({state:'syncing'});await assert.rejects(port.readRequest(f(1)),/index not ready/);assert.equal(catchupScans,1);
+  const unavailable=Object.assign(Error('native read unavailable'),{code:'ROLLING_PUBLIC_UNAVAILABLE'});
+  index.sync=async()=>{throw unavailable;};await assert.rejects(port.pending(null),error=>error===unavailable);
+  index.sync=readySync;index.status=readyStatus;index.scanPosts=readyScan;
+
   index.scanPendingPredecessors=id=>{assert.equal(id,'1');return {rows:[{postId:'7',threadId:'1',order:'0',requestId:'7',target:'8',pluginId:'4',adapter:'9'}],nextAfter:null,revision:'one'};};assert.equal((await port.readRequest(f(1))).usable,false);assert.equal((await port.pending(null)).requests.length,0);
   terminal=true;assert.equal((await port.readRequest(f(1))).usable,true,'actual SDK hash admits a canonically terminal predecessor');terminal=false;
   post.invocation.reply={postId:'2'};assert.equal((await port.readRequest(f(1))).usable,false,'replied recovery still respects an earlier unresolved invocation');index.scanPendingPredecessors=()=>({rows:[],nextAfter:null,revision:'one'});assert.equal((await port.readRequest(f(1))).usable,true);post.invocation.reply=null;

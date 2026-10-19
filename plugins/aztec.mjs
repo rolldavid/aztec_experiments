@@ -107,11 +107,18 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
    text:post.text,replied:invocation.reply!==null,mainVersion,localVersion:post.record.subboard==='0'?0:1,
    usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&String(adapter)===scope.receiver&&enabled.toBigInt()===1n&&BigInt(post.position.blockNumber)<=BigInt(head.number)&&predecessorsClear};
  };
- const syncReady=async()=>{assert(!admission.closed,'Canonical predecessor admission closed');const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
+ // Catch-up is ordinary retained index work, not an elapsed-time failure.
+ // Yield after a bounded batch so service shutdown and other canonical reads
+ // can proceed. Never publish a scan until the index authenticates its full tip.
+ const syncReady=async()=>{for(let steps=0;steps<32;steps++){
+  assert(!admission.closed,'Canonical predecessor admission closed');
+  await index.sync();if(index.status().state==='ready')return true;
+ }return false;};
  return {
   async close(){admission.closed=true;await admission.pending?.catch(()=>{});},
   async pending(cursor){
-   await syncReady();let after=null;
+   if(!await syncReady())return {requests:[],nextCursor:cursor??null};
+   let after=null;
    if(cursor){
     assert(cursor&&typeof cursor==='object'&&typeof cursor.after==='string'&&Number.isSafeInteger(cursor.anchor?.number));
     const block=await node.getBlockData(cursor.anchor.number);
@@ -127,6 +134,6 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
    }
    return {requests,nextCursor:page.nextAfter===null?null:{after:page.nextAfter,anchor:page.checkpoint}};
   },
-  async readRequest(postId){await syncReady();return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post);},
+  async readRequest(postId){assert(await syncReady(),'Canonical public index not ready');return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post);},
  };
 }
