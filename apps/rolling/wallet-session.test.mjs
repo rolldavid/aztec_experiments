@@ -842,3 +842,27 @@ test('funding continuation recovers a lost private submit response by exact hash
  f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'success',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
  assert.equal((await createFundingContinuation(f.input).advanceClaim()).state,'complete');assert.equal(sends,1);assert.equal(reconciles,2);
 });
+
+test('funding finality remains pending across elapsed time and advances only on native finalized state',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ let listener,entered;const read=new Promise(resolve=>entered=resolve),calls=[];
+ const provider={on:async(tag,fn)=>{assert.equal(tag,'finalized');listener=fn;},off:async(tag,fn)=>{assert.equal(fn,listener);calls.push('off');},getBlock:async()=>{entered();return {number:6};}};
+ const pending=waitForFundingFinality(provider,7);await read;
+ t.mock.timers.tick(120001);listener(6);listener(7);await pending;
+ assert.deepEqual(calls,['off']);
+});
+for(const initialReadPending of [false,true])test('funding finality pause releases its listener and drains an owned initial read: '+initialReadPending,async()=>{
+ let listener,entered,release;const read=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve),calls=[];
+ const provider={on:async(tag,fn)=>{listener=fn;},off:async(tag,fn)=>{assert.equal(fn,listener);calls.push('off');},getBlock:async()=>{entered();if(initialReadPending)await gate;return {number:6};}};
+ const controller=new AbortController(),pending=waitForFundingFinality(provider,7,{signal:controller.signal}),rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_PAUSED'});
+ await read;controller.abort();if(initialReadPending){assert.deepEqual(calls,[]);release();}await rejected;assert.deepEqual(calls,['off']);
+});
+test('funding continuation pauses finality without waiting for another block and resumes the saved payment',async()=>{
+ const f=continuationFixture();let finalized=6,entered;const read=new Promise(resolve=>entered=resolve),listeners=new Set();
+ const provider={on:async(tag,fn)=>{listeners.add(fn);},off:async(tag,fn)=>{listeners.delete(fn);},getBlock:async()=>{entered();return {number:finalized};}};
+ f.input.getProvider=async()=>provider;const prepare=f.input.application.prepare;
+ f.input.application.prepare=async action=>{if(finalized<7)throw Object.assign(Error('pending finality'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l1-finality'});return prepare(action);};
+ const cap=createFundingContinuation(f.input),pending=cap.advanceClaim();await read;cap.pauseClaim();
+ assert.deepEqual(await pending,{state:'paused'});assert.equal(f.busy,false);assert.equal(listeners.size,0);assert(!f.calls.some(c=>c[0]==='submit'||c[0]==='checkpoint'));
+ finalized=7;assert.equal((await cap.advanceClaim()).state,'complete');assert.equal(f.calls.filter(c=>c[0]==='submit').length,1);
+});

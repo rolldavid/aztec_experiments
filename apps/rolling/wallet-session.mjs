@@ -16,35 +16,39 @@ function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDe
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
-// The provider owns finality observation. This promise retains its listener and
-// any initial read until cleanup; a deadline reports failure, never progress.
-export async function waitForFundingFinality(provider,blockNumber,timeoutMs=120000){
- let complete,reject,timer;
+// The provider owns finality observation. Pending finality is normal network
+// state, not an elapsed-time failure. Pause releases the subscription; any
+// initial RPC read remains owned until it settles before the account lock exits.
+export async function waitForFundingFinality(provider,blockNumber,{signal}={}){
+ let complete,reject;
  const observed=new Promise((yes,no)=>{complete=yes;reject=no;});observed.catch(()=>{});
  const listener=number=>{if(number>=blockNumber)complete();};
+ const abort=()=>reject(fail('ROLLING_FUNDING_PAUSED'));
+ signal?.addEventListener('abort',abort,{once:true});
  try{
+  if(signal?.aborted)throw fail('ROLLING_FUNDING_PAUSED');
   await provider.on('finalized',listener);
-  timer=setTimeout(()=>reject(fail('ROLLING_FUNDING_FINALITY_TIMEOUT')),timeoutMs);
+  if(signal?.aborted)throw fail('ROLLING_FUNDING_PAUSED');
   const finalized=await provider.getBlock('finalized');
   if(!Number.isSafeInteger(finalized?.number))throw fail('ROLLING_FUNDING_INVALID');
   listener(finalized.number);await observed;
- }finally{clearTimeout(timer);await provider.off('finalized',listener);}
+ }finally{signal?.removeEventListener('abort',abort);await provider.off('finalized',listener);}
 }
 
 export function createFundingContinuation({application,funding,sdk,node,getProvider,contextGuard,locked,onProgress}){
  let active=null;
  return Object.freeze({
-  pauseClaim(){if(active)active.paused=true;},
+  pauseClaim(){if(active){active.paused=true;active.abort.abort();}},
   async advanceClaim(){
    if(active)throw fail('ROLLING_BUSY');
-   const run=active={paused:false};
+   const run=active={paused:false,abort:new AbortController()};
    const fence=async()=>{await contextGuard();if(run.paused)throw fail('ROLLING_FUNDING_PAUSED');};
    try{return await locked(()=>advanceAggregateClaim({application,funding,contextGuard,onProgress,paused:()=>run.paused,waits:{
     async bridge(receipts,reason){
      const legs=['receipt','feeReceipt','bokReceipt'].filter(key=>receipts[key]).map(key=>receipts[key]);
      await fence();
      if(reason==='l1-finality'){
-      await waitForFundingFinality(await getProvider(),Math.max(...legs.map(receipt=>receipt.blockNumber)));
+      await waitForFundingFinality(await getProvider(),Math.max(...legs.map(receipt=>receipt.blockNumber)),{signal:run.abort.signal});
       await fence();
      }
      for(const receipt of legs){
