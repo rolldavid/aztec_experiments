@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "final-requirement-disposition-in-progress",
-  "sourceRevision": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "sourceRevision": "d188738461dc6358b3c679703c24353b997dba90",
   "createdAt": "2026-10-18T19:49:25.236635+00:00",
   "specification": {
     "document": "Rolling Chat Contractor Specification Draft 3.pdf",
@@ -20,7 +20,7 @@
   ],
   "workGroupUpdates": {
     "D1": "Recorded engineering deployment/admission passed; native/query/prover/application live. Owner500 ceiling, samehost18:00/endpoints18:05UTC19Oct; forecast359.850284/reservation365. Appbbcf and Bokee973 deployed preserving original journals. No production or indefinite hosting claim.",
-    "D2": "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open.",
+    "D2": "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open. Phantom0.1USDC Bok exit confirmed on Aztec, private fee2.0169865727178; original Ethereum claim pending, no completed withdrawal claim.",
     "D3": "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
     "D4": "All-category observer mapping independently approved. Both successful original Ethereum refunds canonically finalized with exact originalrecipient,0.001ETH and corresponding Outbox leaf; failed MetaMask7702 wrapper gas separately retained. See evidence/G13/final-privacy-20261019/original-refunds-accounting-public-effects.json. Current Bok settlement/remainingETHfunding effects append only; no blanketunlinkability or specialist-audit claim.",
     "D5": "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
@@ -448,7 +448,7 @@
         "current-phantom-eth",
         "current-original-refunds"
       ],
-      "remaining": "Both USDC allocations and original0.001ETH collateral refunds are observed. Both subsequent ETH payments succeeded; their private claims, Bok withdrawal and complete network/model fee accounting remain.",
+      "remaining": "Both original0.001ETH collateral refunds completed. Both later ETH payments succeeded; their private claims remain pending. Phantom0.1USDC Bok exit is confirmed on Aztec with private fee2.0169865727178; its original Ethereum claim is still pending, so Bok withdrawal completion is not claimed. Complete remaining fee and withdrawal accounting.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -634,7 +634,7 @@
         "d7-conjunction",
         "current-bok-healthy-poll"
       ],
-      "remaining": "Current original Bok request authorization0.25USDC/publication observed, but actual reserve/charge/release/reply still pending. Retain uncertain-paid-call fences; final withdrawal/accounting and D3 interruptions remain.",
+      "remaining": "Original testnet Bok accounting is complete:250000microUSDC reserved=5664charged+244336returned, reserved0, all canonical at finalized8528. Original output was lost and is not replayed. A new ordinary request must demonstrate reply/generated output plus accounting; remaining withdrawals and D3 interruptions stay open.",
       "assuranceDisposition": "scoped-evidence-not-whole-requirement-certification"
     },
     {
@@ -1150,14 +1150,14 @@
   },
   "followupSource": "See artifact-manifest.json for current integrated source, published application and separately admitted runtime bindings.",
   "remainingExecutable": [
-    "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open.",
+    "Both original zero-ETH USDC wallet cells, private claims, names, social actions and collateral exits/refunds succeeded. Original Phantom ETH808d payment and MetaMask ETH73520e90 (nonce3, block11948236) both succeeded for .001ETH/2FEE/.1USDC. OriginalPh before-ack interruption retained; neither new ETH private claim is accepted yet. Ph preproof simulation failed three times, latest native cause protocol address3; independent diagnosis in progress, no further trial pending cause. MM paid claim paused with encrypted recovery to avoid repeating the shared failure. OriginalBok accounting closed, remaining actualnewoutput/Bokwithdrawals/completefeeaccounting open. Phantom0.1USDC Bok exit confirmed on Aztec, private fee2.0169865727178; original Ethereum claim pending, no completed withdrawal claim.",
     "Phantom original ETH payment808d3091 returned its hash11:29:27 before application acknowledgement; fault-injected acknowledgement hold retained exacthash. Offline11:31:12 and browser-control reset interrupted page; same persistent profile reopened, same-key initial empty-record backup confirmed and imported without altering newer local journals. Same-payment reconciliation and bridge-pending continuation remain; no resend. Existing USDC and L2 interruption evidence retained.",
     "Ten distinct necessary real remote proof samples independently accepted:18.794\u201333.565seconds, median25.142seconds, meets count>=10/each<=120/median<=60. Browser verification/finality excluded from this timing metric. Retain nonempty authenticated29-block/6-post index pair and earlier layered large-note/capacity/UI evidence. Still reconcile cold/warm complete wallet readiness and any absent final<=2checkpoint freshness observation; do not rerun count/capacity/rebuild campaigns.",
     "Original lost-response accounting complete: original reserve/settle/finish all canonically finalized. Budget250000=charged5664+refunded244336, available/reserved0; exactbillingreceipt matched at finalized8528. NormalBok restored26e561e0 and readyactive0; originaloutputunavailable, neverreplayed. Newordinaryrequest stillrequired afterfundingclaim restorescollateral.",
     "Assemble exact46-row checklist, source/runtime manifests, runnable local devnet instructions, current/expired hosted access, adopted defaults, no-replay journal references, USD500 ceiling/18:00shutdown/retained-state plan, and concrete resume entry. Carry specialist audit/network gates separately. No new test campaign."
   ],
-  "updatedAt": "2026-10-19T12:51:09.607742+00:00",
-  "currentSourceNote": "Integrated6382a970; liveappbbcf43dc, original Bok durability deltaee973, separately admitted native/query/prover source5ebeff1c with retained original runtime processes. SDK edge-cache repair is integrated but not published. Both ETH payments succeeded; private claims remain. Original Bok billing closed at finalized8528 with no output. Host18:00/endpoints18:05, reservation365/ceiling500.",
+  "updatedAt": "2026-10-19T12:57:19.287276+00:00",
+  "currentSourceNote": "Integratedd1887384; liveappbbcf43dc, original Bok durability deltaee973, separately admitted native/query/prover source5ebeff1c with retained original runtime processes. SDK edge-cache repair is integrated but not published. Both ETH payments succeeded; private claims remain. Original Bok billing closed at finalized8528 with no output. Host18:00/endpoints18:05, reservation365/ceiling500. Phantom0.1USDC Bok exit confirmed on Aztec; Ethereum claim pending.",
   "accessibility_scope": {
     "required": false,
     "reason": "Owner removed all accessibility requirements for proof of concept on 19 October 2026 local time",

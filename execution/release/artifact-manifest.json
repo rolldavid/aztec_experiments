@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "rolling-chat-engineering-candidate-provenance",
   "algorithm": "sha256",
-  "sourceRevision": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "sourceRevision": "d188738461dc6358b3c679703c24353b997dba90",
   "acceptance": "in-progress; not production release approval",
   "application": {
     "publishedSourceRevision": "bbcf43dc9fb3603343e2e3a717d8184d027cef61",

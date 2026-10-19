@@ -1,6 +1,6 @@
 # Rolling Chat engineering candidate — 19 October 2026
 
-Implementation is connected; final acceptance is in progress. Integrated source is `6382a97017b2cf4a33ae1c133194c7ca4515f085` on `codex/rolling-chat-draft3` ([PR8](https://github.com/zac-williamson/aztec_experiments/pull/8)). The live application is `bbcf43dc9fb3603343e2e3a717d8184d027cef61`; the integrated SDK edge-cache change is not published. [Content provenance](artifact-manifest.json) records application, build and separately admitted service versions without pretending they are one revision.
+Implementation is connected; final acceptance is in progress. Integrated source is `d188738461dc6358b3c679703c24353b997dba90` on `codex/rolling-chat-draft3` ([PR8](https://github.com/zac-williamson/aztec_experiments/pull/8)). The live application is `bbcf43dc9fb3603343e2e3a717d8184d027cef61`; the integrated SDK edge-cache change is not published. [Content provenance](artifact-manifest.json) records application, build and separately admitted service versions without pretending they are one revision.
 
 ## Use the application
 
@@ -20,7 +20,7 @@ Both genuine MetaMask and Phantom zero-ETH USDC payments and private claims succ
 
 Both subsequent ETH payments also succeeded, each allocating0.001ETH collateral,2FEE and0.1USDC. Their private claims remain pending while the common native simulation failure is diagnosed. Preserve Phantom’s original before-ack interruption and MetaMask’s paid-pending recovery. No original payment is replayed.
 
-The original Bok response was charged5664microUSDC but lost before publication. Its original accounting is now closed:250000microUSDC budget=5664charged+244336returned, reserved0. The lost output is unavailable and the model call is never replayed. A new ordinary request must still demonstrate reply, generated page, source download and accounting together; Bok withdrawal and complete fee accounting remain.
+The original Bok response was charged5664microUSDC but lost before publication. Its original accounting is now closed:250000microUSDC budget=5664charged+244336returned, reserved0. The lost output is unavailable and the model call is never replayed. A new ordinary request must still demonstrate reply, generated page, source download and accounting together; Phantom’s0.1USDC Bok exit is now confirmed on Aztec, with private fee2.0169865727178; its Ethereum claim remains pending. This is not a completed withdrawal. Remaining Bok withdrawal and complete fee accounting stay open.
 
 Retain the completed scoped recovery, archive/key reconstruction/reorg, model/repository/failure and layered capacity observations. Do not repeat those campaigns. Remaining measurements concern complete cold/warm wallet readiness and any absent final index freshness observation. Accessibility requirements and the fixed14-day soak were removed by the owner; bounded reliability remains. Never enable VoiceOver.
 
