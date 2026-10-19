@@ -1499,7 +1499,7 @@ const s=JSON.parse(process.argv[1]);
 const network={chainId:s.chainId,version:s.rollupVersion,rollup:s.rollupAddress};
 const options={url:'http://127.0.0.1:8082/',expectedNetworkScope:network,proofsEnabled:true,allowLocalDev:true,maxLagSeconds:120};
 const num=x=>BigInt(x.toString()),same=(a,b)=>num(a)===num(b);
-const address=x=>AztecAddress.fromString(x),field=x=>new Fr(BigInt(x));
+const address=x=>AztecAddress.fromStringUnsafe(x),field=x=>new Fr(BigInt(x));
 const node=await createTrustedPrivateNode(options);
 const reference={hash:s.checkpointHash};
 async function anchor(){const b=await node.getBlockData(s.checkpointNumber);check(b?.blockHash.toString()===s.checkpointHash&&b.header.globalVariables.blockNumber===s.checkpointNumber);}

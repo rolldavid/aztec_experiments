@@ -2036,9 +2036,10 @@ class ProverActivation(unittest.TestCase):
     def test_sdk_scope_check_uses_release_artifacts_and_canonical_portal_and_bok_checks(self):
         source=b.ACTIVATION_CHECK
         for token in ('loadRollingArtifacts()','originalContractClassId','currentContractClassId','computeContractAddressFromInstance',
-                      'getPublicStorageAt','depositsEnabled()','verifyPortalRuntime','getContractInstanceFromInstantiationParams','await anchor();const ready=',
+                      'AztecAddress.fromStringUnsafe(x)','getPublicStorageAt','depositsEnabled()','verifyPortalRuntime','getContractInstanceFromInstantiationParams','await anchor();const ready=',
                       "bokScope:'constructor-allowlist-only'","redirect:'error'",'calls<=7'):
             self.assertIn(token,source)
+        self.assertNotIn('AztecAddress.fromString(',source)
         self.assertNotIn('process.env',source);self.assertNotIn('sendTx',source);self.assertNotIn('wallet',source)
 
     def test_live_scope_response_requires_fresh_readiness_and_exact_checkpoint(self):
