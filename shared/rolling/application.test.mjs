@@ -1605,10 +1605,56 @@ for(const loss of ['missing','restored','unsupported'])test(`positive pre-proof 
  const before=[...f.values];await assert.rejects(app.prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);
  if(loss==='missing')assert.equal(await f.options.privateStore.readRecoveryEpoch(),null,'inspection must not initialize authority');
 });
+for(const loss of ['missing','restored','unsupported'])test(`positive pre-proof ${loss} provenance with a completed predecessor remains inspectable and closed`,async()=>{
+ const f=await preproofFixture(),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const p=await f.app.prepare({type:'unlike',post:'5'});f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId));
+ if(loss==='missing')f.setEpoch(null);if(loss==='restored')await f.options.privateStore.rotateRecoveryEpoch();if(loss==='unsupported')delete f.options.accountSession.preproofRecovery;
+ const before=[...f.values],app=await f.restartJournal(),view=await app.inspectRecovery(p.intentId);
+ assert.equal(view.status,'unknown');assert.equal(view.currentTxHash,null);assert.deepEqual(view.attempts,[]);assert.equal(view.exactResume.status,'empty');
+ await assert.rejects(app.prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,1);
+});
 for(const phase of ['journal','signed'])test(`positive pre-proof signed bytes win after ${phase} interruption`,async()=>{
  const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.interrupt=phase;await assert.rejects(f.app.submitPrepared(p.intentId));
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);const before=[...f.values];
  await assert.rejects(f.restart().prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);assert.equal(f.state.proofs,1);
+});
+async function aggregateInterruptedFixture(usdc=false,{legacy=false,interrupt='proof'}={}){
+ const f=await preproofFixture(aggregateClaimFixture(usdc));
+ const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const p=await f.app.prepare(f.action);f.state.interrupt=interrupt;await assert.rejects(f.app.submitPrepared(p.intentId));
+ const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+ const slot=await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ if(legacy){const before=await slot.read(),next={...before.value};delete next.fundingFee;await slot.write(before,next);}
+ await f.options.privateStore.rotateRecoveryEpoch();const app=await f.restartJournal();return {...f,p,slot,app};
+}
+for(const usdc of [false,true])test(`restored ${usdc?'USDC':'ETH'} aggregate pre-proof claim renews only original bridged payment and preserves predecessor`,async()=>{
+ const f=await aggregateInterruptedFixture(usdc,{legacy:!usdc}),before=await f.slot.read();
+ assert.equal((await f.app.inspectRecovery(f.p.intentId)).status,'aggregate-claim-review');
+ const journal=await f.options.accountSession.preproofRecovery.checkpoint();
+ f.state.fee=25n;const review=await f.app.prepareInterrupted(f.p.intentId),after=await f.slot.read();
+ assert.equal(review.maximumFee,'25');assert.deepEqual(review.action,f.p.action);assert.equal(review.nonce,f.p.nonce);
+ assert.deepEqual(after.value.preproofHistory,[before.value.preproof]);assert.equal(after.value.preproofReview.epoch,await f.options.privateStore.readRecoveryEpoch());
+ assert.equal(after.value.preproofReview.predecessor,before.value.preproof.predecessor);assert.deepEqual(await f.options.accountSession.preproofRecovery.checkpoint(),journal);
+ assert.deepEqual(after.value.fundingFee,{amount:'200',salt:hex(90),leafIndex:'3'});assert.equal(f.state.sends,1);
+ f.state.interrupt=null;assert.equal((await f.app.submitPrepared(f.p.intentId)).status,'confirmed');assert.equal(f.state.sends,2);
+ assert(f.state.payments.slice(2).every(row=>row.claim?.amount==='200'&&row.claim.salt===hex(90)&&row.claim.leafIndex==='3'));
+});
+for(const change of ['signed','missing-custody','wrong-kind','mixed-receipt','changed-claim','changed-fee','spent-bridge','predecessor-reorg','epoch-during-estimate'])test(`restored aggregate pre-proof ${change} cannot renew or send`,async()=>{
+ const f=await aggregateInterruptedFixture(false,{interrupt:change==='signed'?'journal':'proof'});
+ if(change==='missing-custody')f.state.missingContext=true;
+ if(change==='wrong-kind')f.retained.intent.expected.kind='deposit';
+ if(change==='mixed-receipt'){const before=await f.slot.read();await f.slot.write(before,{...before.value,action:{...before.value.action,feeReceipt:{...before.value.action.feeReceipt,txHash:hex(99)}}});}
+ if(change==='changed-claim')f.state.changedClaim=true;
+ if(change==='changed-fee'){const original=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{const out=await original(input);if(input.kind==='private-fee')out.claim.bridgeClaim.salt=hex(99);return out;};}
+ if(change==='spent-bridge'){f.options.sdk.estimatePrivateFeeTransaction=async input=>{assert(input.prepared);throw Object.assign(Error('native duplicate setup nullifier'),{code:'PRIVATE_FEE_PREPARATION_FAILED'});};}
+ if(change==='predecessor-reorg')f.receipts.clear();
+ if(change==='epoch-during-estimate'){const original=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{const out=await original(input);f.setEpoch('d'.repeat(64));return out;};}
+ const before=[...f.values];await assert.rejects(f.app.prepareInterrupted(f.p.intentId));assert.deepEqual([...f.values],before);assert.equal(f.state.sends,1);
+});
+test('restored aggregate pre-proof renewed review retains bridge identity through final submission',async()=>{
+ const f=await aggregateInterruptedFixture();await f.app.prepareInterrupted(f.p.intentId);const before=[...f.values];
+ const original=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{const out=await original(input);if(input.kind==='private-fee')out.claim.bridgeClaim.leafIndex='99';return out;};
+ f.state.interrupt=null;await assert.rejects(f.app.submitPrepared(f.p.intentId),{code:'ROLLING_FUNDING_MISMATCH'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,1);
 });
 test('positive pre-proof predecessor stays exact and canonically acknowledged after reload',async()=>{
  const f=await preproofFixture(),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);

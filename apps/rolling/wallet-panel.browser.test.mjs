@@ -1184,6 +1184,15 @@ test('positive pre-proof review is explicit, preserves draft, and requires renew
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),action.content);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.sends),1);
 });
+test('restored aggregate claim review explains original payment and requires separate confirmation',async t=>{
+ const {page}=await browserFixture(t),action={type:'claim-deposit',receipt:{txHash:'0x'+'44'.repeat(32)}};
+ await seedSavedResume(page,{action});await page.evaluate(()=>{test.recoverySnapshot={status:'aggregate-claim-review',attempts:[],exactResume:{status:'empty'},inclusionHistory:[]};});
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Review interrupted action',exact:true}).waitFor();
+ assert(await page.getByText(/No new Ethereum payment is needed/).isVisible());assert(await page.getByText(/one-time fee claim/).isVisible());
+ assert.equal(await page.getByText(/This device retained an interrupted attempt/).count(),0);assert.equal(await page.evaluate(()=>test.sends),0);
+ await page.getByRole('button',{name:'Review interrupted action',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.interruptedReviews),1);assert(await page.getByText(/Maximum network fee: 456/).isVisible());
+});
 test('positive pre-proof failed renewed review never exposes a send or resets unknown recovery',async t=>{
  const {page}=await browserFixture(t);await seedSavedResume(page,{action:{type:'post',deposit:'9',content:'Keep me',name:'0',subboard:'0'}});
  await page.evaluate(()=>{test.recoverySnapshot={status:'pre-proof-review',attempts:[],exactResume:{status:'empty'}};test.failure='interrupted-review';});

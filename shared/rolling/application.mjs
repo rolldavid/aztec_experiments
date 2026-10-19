@@ -238,7 +238,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const verified=await fundingClaim('private-fee',receipt);
       check(verified.contract===fixed.fee&&verified.kind==='private-fee-bridge','ROLLING_FUNDING_MISMATCH');
       claim=verified.bridgeClaim;
-      if(action.type==='claim-private-fee'&&record){
+      if(record){
         if(record.fundingFee)check(same(plain(claim),record.fundingFee),'ROLLING_FUNDING_MISMATCH');
         else record.fundingFee=plain(claim);
       }
@@ -368,22 +368,39 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const bytes=new TextEncoder().encode(JSON.stringify(prior.encoded));
     return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
   }
-  async function preproofAvailable(saved){
+  async function preproofAvailable(saved,aggregateRenewal=false){
     const record=saved.value,p=record.preproof;
     if(!localPreproof||record.status!=='pre-proof'||!p||p.version!==1||
       !/^[0-9a-f]{64}$/.test(p.epoch)||!/^0x[0-9a-f]{64}$/.test(p.attempt)||!/^[0-9a-f]{64}$/.test(p.predecessor))return false;
     // Signed bytes always win, even when publication of the signed fence failed.
     const tx=await session.journal.inspect();if(tx?.operation===operation(record.id)&&tx.txHash!==record.predecessor?.txHash)return false;
-    if(await privateStore.readRecoveryEpoch()!==p.epoch)return false;
+    const epoch=await privateStore.readRecoveryEpoch();
+    if(!/^[0-9a-f]{64}$/.test(epoch??''))return false;
+    if(aggregateRenewal){
+      const a=record.action;
+      if(record.txHash||a.type!=='claim-deposit'||!record.fundingBok||!loadAggregate||
+        !a.receipt?.txHash||a.receipt.txHash!==a.feeReceipt?.txHash||a.receipt.txHash!==a.bokReceipt?.txHash)return false;
+      const custody=await loadAggregate(a.receipt.txHash);
+      if(!['aggregate-funding','aggregate-usdc-funding'].includes(custody?.intent?.expected?.kind))return false;
+    }else if(epoch!==p.epoch)return false;
     if(record.predecessor)acknowledge(await session.journal.inspectOutcome(),record.predecessor);
     if(await journalCommitment()!==p.predecessor)return false;
     await guard();check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');
-    return await privateStore.readRecoveryEpoch()===p.epoch;
+    return await privateStore.readRecoveryEpoch()===epoch;
   }
   async function recoverySnapshot(saved){
     const record=saved.value;
-    if(await preproofAvailable(saved))return {intent:summary(record),status:'pre-proof-review',attempts:[],requireMissingAnchor:true,
-      head:null,marker:null,originalPreferenceHead:clone(record.originalPreferenceHead??null),originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:null,exactResume:{status:'empty',txHash:null}};
+    const withoutSignedAttempt=status=>({intent:summary(record),status,attempts:[],requireMissingAnchor:true,
+      head:null,marker:null,originalPreferenceHead:clone(record.originalPreferenceHead??null),originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:null,exactResume:{status:'empty',txHash:null}});
+    if(await preproofAvailable(saved))return withoutSignedAttempt('pre-proof-review');
+    if(await preproofAvailable(saved,true))return withoutSignedAttempt('aggregate-claim-review');
+    // A completed predecessor is not a signed attempt of this workflow. Lost
+    // local provenance cannot turn it into replacement or resend authority.
+    const current=await session.journal.inspect();
+    if(current&&current.operation!==operation(record.id)){
+      await guard();check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');
+      return withoutSignedAttempt('unknown');
+    }
     const inspected=await session.journal.inspectReplacement(operation(record.id),{requireMissingAnchor:true});
     const head=preferenceAction(record)?await preferenceHead():null,marker=await markerContext(record);await guard();
     const exactResume=await exactResumeSnapshot(record,inspected.txHash,head,marker);
@@ -856,16 +873,23 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       });
     },
     async prepareInterrupted(id){return exclusive(async()=>{
-      await guard();const saved=await savedIntent(id);check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');
-      const record=saved.value;await session.wallet.pxe.sync();await checkActionSubmission(record);await checkActionRecoveryContext(record);await checkPreproofPreferenceContext(record);
+      await guard();const saved=await savedIntent(id),local=await preproofAvailable(saved);
+      const aggregateRenewal=!local&&await preproofAvailable(saved,true);check(local||aggregateRenewal,'ROLLING_RECOVERY_REQUIRED');
+      const epoch=await privateStore.readRecoveryEpoch(),record=clone(saved.value);await session.wallet.pxe.sync();await checkActionSubmission(record);await checkActionRecoveryContext(record);await checkPreproofPreferenceContext(record);
       const selected=await interaction(await selectedContract(record),record);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(record.action,record),from:session.owner,guard});
       await checkPreproofPreferenceContext(record,{synchronize:true});
-      check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');await guard();
+      check(await preproofAvailable(saved,aggregateRenewal)&&await privateStore.readRecoveryEpoch()===epoch,'ROLLING_RECOVERY_REQUIRED');await guard();
       // Exact CAS revokes the old attempt. A late proof must fail its lifecycle
       // guard before journal.prepare, and again before any broadcast.
-      const next={...record,status:'prepared',maximumFee:estimated.maximumFee.toString(),preproofReview:record.preproof};delete next.preproof;
+      // Aggregate renewal consumes the same original FPC bridge in setup in
+      // either native fee mode. Its one-time nullifier prevents two canonical
+      // charges even if an older unknown attempt reached application execution.
+      // Fresh custody/receipt/witness verification and simulation above remain
+      // mandatory; a spent bridge must never fall back to balance-only fees.
+      const next={...record,status:'prepared',maximumFee:estimated.maximumFee.toString(),preproofReview:{...record.preproof,epoch},
+        ...(aggregateRenewal?{preproofHistory:[...(record.preproofHistory??[]),record.preproof]}:{})};delete next.preproof;
       await (await slot()).write(saved,next);return summary(next);
     });},
     async prepareReplacement(id,input){
