@@ -313,16 +313,22 @@ test('canonical reverted ETH payment archives the original before explicit fresh
  const next=await f.open();await next.prepare(f.allocation);const send=f.wallet.signer.sendTransaction;f.wallet.signer.sendTransaction=async request=>{const sent=await send(request);reverted=false;return sent;};await next.confirm();assert.equal(f.state.sends,2);
 });
 test('reverted payment successor rejects reorg, replacement, missing finality and archive persistence failure',async()=>{
- for(const mode of ['reorg','replacement','unfinalized','archive']){
-  const f=fixture({chainId:mode==='unfinalized'?'1':'31337'}),get=f.options.provider.getTransactionReceipt;
+ for(const mode of ['reorg','replacement','archive']){
+  const f=fixture(),get=f.options.provider.getTransactionReceipt;
   f.options.provider.getTransactionReceipt=async(...args)=>{const r=await get(...args);return r?{...r,status:0,logs:[]}:r;};
   const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm());
   if(mode==='reorg'){const getBlock=f.options.provider.getBlock;let calls=0;f.options.provider.getBlock=async n=>({...await getBlock(n),...(n===17&&++calls>1?{hash:h(999)}:{})});}
   if(mode==='replacement'){const getTx=f.options.provider.getTransaction;f.options.provider.getTransaction=async(...a)=>({...await getTx(...a),data:'0x1234'});}
-  if(mode==='unfinalized'){const getBlock=f.options.provider.getBlock;f.options.provider.getBlock=async n=>n==='finalized'?{number:16,hash:h(16)}:getBlock(n);}
   if(mode==='archive'){const cas=f.options.storage.compareAndSwap;f.options.storage.compareAndSwap=async(key,...args)=>{if(!f.records.has(key))throw Error('archive unavailable');return cas(key,...args);};}
   await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(f.state.sends,1);assert.equal((await funding.inspect()).paymentSaved,true);
  }
+});
+test('canonical mined reverted payment permits fresh review without finalized head',async()=>{
+ const f=fixture({chainId:'1'}),get=f.options.provider.getTransactionReceipt,block=f.options.provider.getBlock;
+ f.options.provider.getTransactionReceipt=async(...args)=>{const r=await get(...args);return r?{...r,status:0,logs:[]}:r;};
+ f.options.provider.getBlock=async n=>{assert.notEqual(n,'finalized');return block(n);};
+ const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm());
+ assert(await (await f.open()).prepare(f.allocation));assert.equal(f.state.sends,1);
 });
 test('USDC canonical revert permits only a fresh reviewed plan and keeps the failed original encrypted',async()=>{
  const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();f.state.usdcReceipt.status=0;f.state.usdcReceipt.logs=[];

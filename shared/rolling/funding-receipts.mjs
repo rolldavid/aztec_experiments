@@ -75,8 +75,8 @@ function validated(input) {
  * USDC additionally requires private aggregateCustody bound to the original plan;
  * collateral must load its saved secret under the beneficiary (never the relayer),
  * and FPC uses the encrypted retained random salt. Public receipt sender/nonce stay unchanged.
- * Finalized L1 is a reversible engineering default for this slice, not a new product
- * latency requirement. Absence, pending finality/delivery, mismatch, reorg and unknown
+ * A canonical mined L1 receipt and native L2 message membership determine readiness.
+ * Absence, pending native delivery, mismatch, reorg and unknown
  * remain distinct. No polling/retry, nullifier query, automatic claim or transaction API.
  * Returned claim contains SECRETS: keep it in the private workflow, never public evidence.
  * Private-fee returns the established bridgeClaim input for preparePrivateFeePayment,
@@ -110,7 +110,7 @@ export async function prepareFundingClaim(input) {
       catch {readFailed=true;throw fail('UNKNOWN');}
     };
     // Recovery helpers share exact immutable transaction/receipt/code reads in
-    // this invocation only. Canonical block and finalized-anchor checks stay
+    // this invocation only. Canonical L1 receipt and L2 anchor checks stay
     // fresh, including the explicit rechecks after the witness verification.
     const immutable=new Map();
     const provider=Object.fromEntries(providerMethods.map(name=>[name,(...args)=>read(()=>{
@@ -130,9 +130,6 @@ export async function prepareFundingClaim(input) {
     const checkL1=async()=>{const b=await provider.getBlock(r.blockNumber);requireThat(b && equal(b.hash,r.blockHash),'REORG');};
     await checkL1();
     requireThat(receipt.status===0 || receipt.status===1,'UNKNOWN');
-    const finalized=await provider.getBlock('finalized');
-    requireThat(finalized && Number.isSafeInteger(finalized.number) && finalized.number>=0,'UNKNOWN');hex(lower(finalized.hash));
-    if(finalized.number<r.blockNumber)return frozen({status:'waiting',reason:'l1-finality'});
     const tx=await provider.getTransaction(r.txHash);requireThat(tx,'UNKNOWN');
     requireThat(equal(tx.hash,r.txHash) && equal(tx.from,r.sender) && String(tx.nonce)===r.nonce && String(tx.chainId)===s.chainId && equal(receipt.from,r.sender) && equal(receipt.to,tx.to));
     if(receipt.status===0){await checkL1();return frozen({status:'reverted'});}
@@ -211,9 +208,8 @@ export async function prepareFundingClaim(input) {
     for(const sibling of path){root=await poseidon2HashWithSeparator(index&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);index>>=1n;}
     requireThat(index===0n && root.toString()===a.root);
     await checkL1();await checkL2();
-    const finalAgain=await provider.getBlock(finalized.number);requireThat(finalAgain && equal(finalAgain.hash,finalized.hash),'REORG');
     await read(()=>Promise.resolve());
-    return frozen({status:'claim-ready',claim,evidence:{kind,txHash:r.txHash,l1:{number:r.blockNumber,hash:r.blockHash},finalizedL1:{number:finalized.number,hash:lower(finalized.hash)},l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
+    return frozen({status:'claim-ready',claim,evidence:{kind,txHash:r.txHash,l1:{number:r.blockNumber,hash:r.blockHash},l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
   } catch(error) {
     if(failures.has(error))throw error;
     // Existing private-fee verifier emits fixed codes only. Never propagate its

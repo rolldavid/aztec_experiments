@@ -597,17 +597,13 @@ test('RC22 timeout retains ownership of the original provider read before return
  let settled=false;const result=f.restart().prepare({maximumGasWei:'1000'}).catch(error=>{assert.equal(error,original);settled=true;});
  await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);release();await result;assert.equal(settled,true);assert.equal(f.state.sends,0);
 });
-for(const outcome of ['finalized','reorg','context'])test(`RC22 testnet refund native finality event preserves original send: ${outcome}`,async()=>{
- const f=await withdrawalFixture({chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;
- let observed;const read=new Promise(resolve=>observed=resolve);f.state.onFinalityRead=observed;
- let completed=false;const pending=f.cap.confirm();pending.then(()=>completed=true,()=>{});
- await read;assert.equal(completed,false);assert.equal(f.state.sends,1);assert.equal(typeof f.state.finalityListener,'function');
- f.state.finalityListener(f.state.head-1);assert.equal(completed,false);
+for(const outcome of ['mined','reorg','context'])test(`RC22 testnet refund canonical mined receipt preserves original send: ${outcome}`,async()=>{
+ const f=await withdrawalFixture({chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=0;
+ f.opts.provider.on=async()=>assert.fail('No finality subscription');const get=f.opts.provider.getBlock;f.opts.provider.getBlock=async n=>{assert.notEqual(n,'finalized');return get(n);};
+ assert.equal((await f.cap.confirm()).status,'refunded');assert.equal(f.state.sends,1);
  if(outcome==='reorg')f.state.fork=true;if(outcome==='context')f.state.guard=false;
- f.state.finalized=f.state.head;f.state.finalityListener(f.state.head);
- if(outcome==='finalized'){assert.equal((await pending).status,'refunded');assert.equal((await f.restart().recover()).status,'refunded');}
- else await assert.rejects(pending,outcome==='reorg'?{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'}:undefined);
- assert.equal(f.state.finalityListener,null);assert.equal(f.state.sends,1);
+ if(outcome==='mined')assert.equal((await f.restart().recover()).status,'refunded');else await assert.rejects(f.restart().recover());
+ assert.equal(f.state.finalityListener,undefined);assert.equal(f.state.sends,1);
 });
 
 for(const phase of ['lock','context','pxe-sync','account-initialize','method'])test('refresh diagnostic preserves exact failure at '+phase,async()=>{
@@ -683,11 +679,11 @@ for(const change of ['wallet','scope','kind','nonce','l2-fork','gas','settlement
  if(change==='wallet')f.state.connected=eth(44);if(change==='scope')f.record.withdrawal.bokScope.token=eth(99);if(change==='kind')f.record.action.type='withdraw';if(change==='nonce')f.record.withdrawal.nonce=hex(0);if(change==='l2-fork')f.state.l2Fork=true;if(change==='gas')f.state.price=100n;if(change==='settlement')f.state.settled=false;if(change==='cancel')f.cap.cancel();
  await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
 });
-test('RC22 Bok refund finalized receipt remains necessary after an explicit send',async()=>{
- const f=await withdrawalFixture({bok:true,chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;
- let observed;const read=new Promise(resolve=>observed=resolve);f.state.onFinalityRead=observed;const pending=f.cap.confirm();await read;assert.equal(f.state.sends,1);
- f.state.finalized=f.state.head;f.state.finalityListener(f.state.head);assert.equal((await pending).status,'refunded');
- assert.equal(await f.restart().verify(f.record),true);f.state.fork=true;await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
+test('RC22 Bok refund completes on canonical mined receipt and still rejects reorg',async()=>{
+ const f=await withdrawalFixture({bok:true,chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=0;
+ f.opts.provider.on=async()=>assert.fail('No finality subscription');const get=f.opts.provider.getBlock;f.opts.provider.getBlock=async n=>{assert.notEqual(n,'finalized');return get(n);};
+ assert.equal((await f.cap.confirm()).status,'refunded');assert.equal(await f.restart().verify(f.record),true);
+ f.state.fork=true;await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
 });
 
 test('RC22 expiry selection passes through existing session synchronization and refuses absent owned accounting before send',async()=>{
@@ -800,7 +796,7 @@ for(const mode of ['hidden-pending','interrupted-retry'])test(`saved refund ${mo
  assert.equal(observed.nonce,before.nonce);assert.equal(observed.data,before.data);assert.equal(observed.to,before.to);assert.equal(observed.value,0n);
 });
 
-import {createFundingContinuation,waitForFundingFinality} from './wallet-session.mjs';
+import {createFundingContinuation} from './wallet-session.mjs';
 import {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 import {waitForTx} from '@aztec-labs/aztec.js/node';
 function continuationFixture(){
@@ -834,45 +830,12 @@ test('attempted funding claim waits for its exact hash with installed SDK and re
  f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'reverted',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
  const cap=createFundingContinuation(f.input);assert.equal((await cap.advanceClaim()).state,'reverted');assert.equal(reconciles,2);assert(!f.calls.some(c=>c[0]==='submit'));
 });
-test('funding finality registers before its current-state read and removes the listener on completion or failed read',async()=>{
- for(const immediate of [true,false]){
-  let listener;const calls=[];
-  const provider={on:async(tag,fn)=>{assert.equal(tag,'finalized');calls.push('on');listener=fn;},off:async(tag,fn)=>{assert.equal(tag,'finalized');assert.equal(fn,listener);calls.push('off');},getBlock:async tag=>{assert.equal(tag,'finalized');calls.push('read');if(!immediate)listener(7);return {number:immediate?7:6};}};
-  await waitForFundingFinality(provider,7);assert.deepEqual(calls,['on','read','off']);
-  provider.getBlock=async()=>{throw Error('read failed');};await assert.rejects(waitForFundingFinality(provider,7),/read failed/);assert.equal(calls.at(-1),'off');
- }
-});
-
 test('funding continuation recovers a lost private submit response by exact hash without resubmitting',async()=>{
  const f=continuationFixture(),txHash=TxHash.fromString(hex(87));let sends=0,reconciles=0;
  f.input.application.submitPrepared=async()=>{sends++;throw Error('lost private response');};
  f.input.application.reconcile=async()=>({...f.prepared,txHash:txHash.toString(),status:++reconciles===1?'unknown':'confirmed'});
  f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'success',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
  assert.equal((await createFundingContinuation(f.input).advanceClaim()).state,'complete');assert.equal(sends,1);assert.equal(reconciles,2);
-});
-
-test('funding finality remains pending across elapsed time and advances only on native finalized state',async t=>{
- t.mock.timers.enable({apis:['setTimeout']});
- let listener,entered;const read=new Promise(resolve=>entered=resolve),calls=[];
- const provider={on:async(tag,fn)=>{assert.equal(tag,'finalized');listener=fn;},off:async(tag,fn)=>{assert.equal(fn,listener);calls.push('off');},getBlock:async()=>{entered();return {number:6};}};
- const pending=waitForFundingFinality(provider,7);await read;
- t.mock.timers.tick(120001);listener(6);listener(7);await pending;
- assert.deepEqual(calls,['off']);
-});
-for(const initialReadPending of [false,true])test('funding finality pause releases its listener and drains an owned initial read: '+initialReadPending,async()=>{
- let listener,entered,release;const read=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve),calls=[];
- const provider={on:async(tag,fn)=>{listener=fn;},off:async(tag,fn)=>{assert.equal(fn,listener);calls.push('off');},getBlock:async()=>{entered();if(initialReadPending)await gate;return {number:6};}};
- const controller=new AbortController(),pending=waitForFundingFinality(provider,7,{signal:controller.signal}),rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_PAUSED'});
- await read;controller.abort();if(initialReadPending){assert.deepEqual(calls,[]);release();}await rejected;assert.deepEqual(calls,['off']);
-});
-test('funding continuation pauses finality without waiting for another block and resumes the saved payment',async()=>{
- const f=continuationFixture();let finalized=6,entered;const read=new Promise(resolve=>entered=resolve),listeners=new Set();
- const provider={on:async(tag,fn)=>{listeners.add(fn);},off:async(tag,fn)=>{listeners.delete(fn);},getBlock:async()=>{entered();return {number:finalized};}};
- f.input.getProvider=async()=>provider;const prepare=f.input.application.prepare;
- f.input.application.prepare=async action=>{if(finalized<7)throw Object.assign(Error('pending finality'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l1-finality'});return prepare(action);};
- const cap=createFundingContinuation(f.input),pending=cap.advanceClaim();await read;cap.pauseClaim();
- assert.deepEqual(await pending,{state:'paused'});assert.equal(f.busy,false);assert.equal(listeners.size,0);assert(!f.calls.some(c=>c[0]==='submit'||c[0]==='checkpoint'));
- finalized=7;assert.equal((await cap.advanceClaim()).state,'complete');assert.equal(f.calls.filter(c=>c[0]==='submit').length,1);
 });
 
 // Public-only recovery composition: real encrypted custody/journals and SDK
@@ -937,7 +900,7 @@ test('refund-only accepts native AztecAddress custody and rejects changed native
 
 // Full normal-session composition: actual encrypted journals/native membership
 // hashing, explicit chain/provider doubles, no connected Ethereum signer needed.
-for(const pending of [false,true])test(`normal private account observes ${pending?'pending':'finalized'} refund without subscribing or wallet connection`,async()=>{
+for(const pending of [false,true])test(`normal private account observes mined refund with ${pending?'lagging':'current'} finalized head without subscribing or wallet connection`,async()=>{
  const f=await sessionFixture({chainId:'11155111'}),w=await withdrawalFixture({chainId:'11155111',scopeOverride:{account:f.input.account.address,board:String(f.board.address)}});
  f.input.config.network.ethRpcUrl='https://ethereum.invalid/';
  Object.assign(w.opts,{storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt});
@@ -953,9 +916,8 @@ for(const pending of [false,true])test(`normal private account observes ${pendin
  if(pending)w.state.finalized=w.state.receipt.blockNumber-1;
  const session=await createRollingWalletSession(f.input);
  try{
-  const status=await session.application.readAccountStatus();assert.equal(status.status,pending?'recovering':'fee-ready');
-  if(pending){assert.equal(status.intent.txHash,w.record.txHash);assert.equal(status.intent.status,'confirmed');}
-  assert.equal(subscriptions,0);assert.equal(w.state.finalityListener,null);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);
+  const status=await session.application.readAccountStatus();assert.equal(status.status,'fee-ready');
+  assert.equal(subscriptions,0);assert.equal(w.state.finalityListener,undefined);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);
  }
  finally{await session.close();}
 });
