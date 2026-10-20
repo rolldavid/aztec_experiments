@@ -1,0 +1,139 @@
+{
+  "task_id": "G16",
+  "outcome": "pass",
+  "recorded_at": "2026-10-20T11:00:45.578217+00:00",
+  "source_fingerprint": "0be741ef56dee96dd168d89ba5b829e757d296997c8f8dee4e05461438190e80",
+  "source_inventory": "evidence/G16/signup/source-completed.json",
+  "artifacts": [
+    {
+      "path": "evidence/G16/signup/source-completed.json",
+      "sha256": "a5798cfc5f8d4f71f1efdb93be1362637b840e76f4bc1a377872707402d30173"
+    },
+    {
+      "path": "evidence/G16/signup/verification.md",
+      "sha256": "94ce765e81ad819c3cc31a0ddcdc5a5c9a171d030f599a02419d031b78720ad9"
+    },
+    {
+      "path": "evidence/G16/signup/signup-ui-independent-review.md",
+      "sha256": "3e5b775a978ca2606dd9fae93fefb7b634b66ee9fdab85e3e248da13c3b63d85"
+    },
+    {
+      "path": "evidence/G16/signup/signup-timeout-independent-review.md",
+      "sha256": "e2405147cb5298a8be095d38f4bc2197b5cf3c328b17e50d660e8230e277bf50"
+    },
+    {
+      "path": "evidence/G16/signup/backend-final.log",
+      "sha256": "1339ab6c4caeb194876b120d7948f1ec844c4acfc473d55b3dd979962d1507b4"
+    },
+    {
+      "path": "evidence/G16/signup/session-tests.log",
+      "sha256": "37d34628c55246769ae0fa50ebdd89f0f5a0a43c385b991517f2bea52e7e597c"
+    },
+    {
+      "path": "evidence/G16/signup/ui-fixed.log",
+      "sha256": "9893112364622fdeb16570eca9b5f5345f98a6ae1abb77a3e4a14dcf29dfb690"
+    },
+    {
+      "path": "evidence/G16/signup/replacement-tests.log",
+      "sha256": "63ba42f280ae0f76a5a72c9343559da076b1dd05d4e13e2b0031b47ee00a0c36"
+    },
+    {
+      "path": "evidence/G16/signup/index-tests.log",
+      "sha256": "e9997dfcef34365e17f1ec15c2ac518b590dfc38be1db5849a55a5e9e2e99f70"
+    },
+    {
+      "path": "evidence/T04/signup-live-20261020-5.json",
+      "sha256": "f1eedd87c0f02f8977576967275d62399690f8a53ee9002404ffaf9541b0d32c"
+    },
+    {
+      "path": "evidence/G16/signup/publication/harness-review.md",
+      "sha256": "2cff6fc7bbdf1c00e67fd42ea670f72c4f72ba28a4f4f3a4c81d2d9861ab267d"
+    },
+    {
+      "path": "evidence/G16/signup/publication/final-publication-review.md",
+      "sha256": "7cd1f846a4abbd31bdb86de1da35ba47e25e1cbc223c0df5828cfadebff95bf2"
+    },
+    {
+      "path": "evidence/G16/signup/publication/signup-core-health-review.md",
+      "sha256": "ced2a71b9f44a66447c64418c4031844822e069c785add6a1066f7dbf2e2277a"
+    },
+    {
+      "path": "evidence/G16/signup/publication/final-public-readback.json",
+      "sha256": "31dcc96df1f05c0766cac4571d4c8c815119ab8253f7cdb30e25ebf835be4667"
+    },
+    {
+      "path": "evidence/G16/signup/publication/publication.md",
+      "sha256": "a115b26d93cc58be3a2205df3c32004b5a4cb1dfc46b84cc9bbd167f3f7910c3"
+    },
+    {
+      "path": "evidence/G16/signup/publication/gate-result.json",
+      "sha256": "1e8aa13b5e62c4a485935ce92af6d9989fbb8236d8a3517496e27cd2c4a7265c"
+    },
+    {
+      "path": "evidence/G16/signup/publication/price-readback.json",
+      "sha256": "84ce3c80b445a432ef10f58d5fecc0ebc6410542af2e48f5f5a47bd5d619a452"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G16-A01",
+      "result": "pass",
+      "summary": "Published simpler password\u2192wallet\u2192automatic quote\u2192explicit payment flow, automatic amounts and ETH/USD costs. Fresh real MetaMask Sepolia payment, canonical bridge effects, real-proof private claim and first post visible on Home passed on deployed c9c850df.",
+      "artifacts": [
+        "evidence/G16/signup/source-completed.json",
+        "evidence/G16/signup/verification.md",
+        "evidence/G16/signup/signup-ui-independent-review.md",
+        "evidence/G16/signup/signup-timeout-independent-review.md",
+        "evidence/G16/signup/backend-final.log",
+        "evidence/G16/signup/session-tests.log",
+        "evidence/G16/signup/ui-fixed.log",
+        "evidence/G16/signup/replacement-tests.log",
+        "evidence/G16/signup/index-tests.log",
+        "evidence/T04/signup-live-20261020-5.json",
+        "evidence/G16/signup/publication/harness-review.md",
+        "evidence/G16/signup/publication/final-publication-review.md",
+        "evidence/G16/signup/publication/signup-core-health-review.md",
+        "evidence/G16/signup/publication/final-public-readback.json",
+        "evidence/G16/signup/publication/publication.md",
+        "evidence/G16/signup/publication/gate-result.json",
+        "evidence/G16/signup/publication/price-readback.json"
+      ]
+    },
+    {
+      "id": "G16-A02",
+      "result": "pass",
+      "summary": "Focused UI, pricing, Ethereum replacement/cancellation, prover, moderator, canonical index and broker checks pass; independent source/harness/publication reviews approved. Arbitrary completion deadlines removed without changing contract identities or stored state. Live proof queue completed two jobs, zero failures, and all six previous posts remain.",
+      "artifacts": [
+        "evidence/G16/signup/source-completed.json",
+        "evidence/G16/signup/verification.md",
+        "evidence/G16/signup/signup-ui-independent-review.md",
+        "evidence/G16/signup/signup-timeout-independent-review.md",
+        "evidence/G16/signup/backend-final.log",
+        "evidence/G16/signup/session-tests.log",
+        "evidence/G16/signup/ui-fixed.log",
+        "evidence/G16/signup/replacement-tests.log",
+        "evidence/G16/signup/index-tests.log",
+        "evidence/T04/signup-live-20261020-5.json",
+        "evidence/G16/signup/publication/harness-review.md",
+        "evidence/G16/signup/publication/final-publication-review.md",
+        "evidence/G16/signup/publication/signup-core-health-review.md",
+        "evidence/G16/signup/publication/final-public-readback.json",
+        "evidence/G16/signup/publication/publication.md",
+        "evidence/G16/signup/publication/gate-result.json",
+        "evidence/G16/signup/publication/price-readback.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/ux_review; /root/funding_investigation; /root/publication_prepare",
+    "summary": "Approved scoped UI, operation waits, native replacement handling, harness and publication; live post and healthy services confirmed. Does not replace external security or production network gates.",
+    "artifacts": [
+      "evidence/G16/signup/signup-ui-independent-review.md",
+      "evidence/G16/signup/signup-timeout-independent-review.md",
+      "evidence/G16/signup/publication/harness-review.md",
+      "evidence/G16/signup/publication/final-publication-review.md",
+      "evidence/G16/signup/publication/signup-core-health-review.md"
+    ]
+  }
+}

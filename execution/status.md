@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 24/54.
+Objective state: **running**. Completed packages: 25/54.
 
 ## In progress
 
-- **Simple account creation and guided funding (G16)** — Source c9c850df integrated and pushed. Browser/app, native prover, moderator and Bok updates published preserving contracts/state.319 backend,197 session,9 finalUI,6 replacement cases pass; realMetaMask fresh payment/claim/firstpost native development passed. Public assets exact hashes; existing feed6/originalthread4 preserved. Final hosted realproof fresh account qualification ongoing; first attempts ended before payment on harness load/navigation limits, corrected to overall owner budget. Independent source/publication review retained. Moderator health diagnosis ongoing.
+None.
 
 ## Ready internal work
 

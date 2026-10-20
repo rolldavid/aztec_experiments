@@ -1,0 +1,7 @@
+{
+  "chain": "Sepolia",
+  "amountWei": "1000000000000000",
+  "usdEstimate": "2.39",
+  "source": "Live Chainlink read through fundingUsdEstimate; positive complete fresh round, same block decimals and price",
+  "observedAt": "2026-10-20"
+}

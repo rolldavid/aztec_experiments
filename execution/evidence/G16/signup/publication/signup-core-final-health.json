@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-hosted-core-observation",
+  "date": "2026-10-20",
+  "source": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+  "instance": "i-0a9b5b9ba55815cda",
+  "mutationsPerformed": false,
+  "app": {
+    "commandId": "dd2d6af1-139d-4446-8ef2-b2d7b754e937",
+    "service": "rolling-application.service",
+    "pid": 39799,
+    "workingDirectory": "/opt/rolling-app/releases/signup-c9c850df1e51",
+    "active": true,
+    "restartCount": 0,
+    "localStatus": {
+      "http": 200,
+      "seconds": 0.03,
+      "state": "ready",
+      "complete": true,
+      "cacheComparison": "complete",
+      "checkpoint": 9655
+    },
+    "localHome": {
+      "http": 200,
+      "seconds": 0.07,
+      "responseBytes": 1137
+    },
+    "localWalletRuntime": {
+      "http": 200,
+      "seconds": 0.03,
+      "responseBytes": 4194
+    }
+  },
+  "moderator": {
+    "commandId": "16a88989-aa30-4497-b9bf-7f972434c6cb",
+    "observedAtUtc": "2026-10-20T10:48:17.379508+00:00",
+    "healthLoggedAtUtc": "2026-10-20T10:47:53.307Z",
+    "service": "rolling-moderator.service",
+    "workingDirectory": "/opt/rolling-moderator/releases/signup-c9c850df1e51",
+    "severity": "ok",
+    "checkpointHeight": 9668,
+    "lastSuccessfulIngestAgeMs": 10,
+    "stateCounts": {
+      "queued": 0,
+      "leased": 0,
+      "evaluated-ok": 12,
+      "submit-intent": 0,
+      "submitted": 0,
+      "reconciling": 0,
+      "retryable-error": 0,
+      "confirmed-flag": 0,
+      "expired": 0,
+      "manual-review": 0
+    },
+    "counts": {
+      "retryableErrors": 0,
+      "unresolvedSigning": 0,
+      "manualSigningFences": 0,
+      "awaitingFinality": 0,
+      "expiredObligations": 0,
+      "manualAttention": 0,
+      "unsignedPending": 0
+    },
+    "alerts": [],
+    "diagnostic": null,
+    "index": {
+      "generation": "3",
+      "revision": "4724",
+      "checkpoint": 9668,
+      "nextBlock": 9669
+    }
+  },
+  "preservedServices": {
+    "nodePid": 4287,
+    "queryPid": 10004,
+    "proverPidAfterIntentionalUpgrade": 39278,
+    "allObservedActive": true,
+    "restartCounts": 0
+  },
+  "investigation": {
+    "durableReplayCheckpoints": [
+      8589,
+      9332,
+      9460,
+      9667,
+      9668
+    ],
+    "authenticatedRpcReadSecondsRange": [
+      0.065,
+      0.073
+    ],
+    "fixedHistoricalBlockFailureObserved": false,
+    "initialModeratorHealth": [
+      "CYCLE_FAILED",
+      "INGESTION_STALE"
+    ],
+    "recoveredWithoutRestartOrStateWrite": true,
+    "exactUnderlyingTransientException": "Not established: application logs deliberately sanitize errors."
+  },
+  "limitations": [
+    "Read-only health and canonical public feed observations; these do not prove fresh browser signup or native proof completion.",
+    "App and moderator observations were taken at separate times, explicitly recorded above."
+  ]
+}

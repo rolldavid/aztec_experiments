@@ -5,7 +5,7 @@ This is the current handover for a fresh checkout. Read this before historical e
 ## Branch and current scope
 
 - Work from **`codex/rolling-chat-draft3`** in `zac-williamson/aztec_experiments`. The default branch is not the delivery reference.
-- Accepted application: `f4eb6515e4f55330e07e10ec348b3bd3532199cb`.
+- Current published application: `c9c850df1e514197f6577bd7a12df8c0970fc315` (signup and operation completion fixes). Fresh real MetaMask payment, bridging, real-proof account claim and first public post passed; see [verification](execution/evidence/G16/signup/verification.md). Earlier accepted application: `f4eb6515e4f55330e07e10ec348b3bd3532199cb`.
 - Reviewed persistent-hosting control update: `0205d08b52d23b0167cc91b11463ee80b0fc403d`. This handover adds documentation and archived evidence without replacing accepted application code.
 - [PR 8](https://github.com/zac-williamson/aztec_experiments/pull/8). [Functional status](execution/feature-status.md), [requirement disposition](execution/release/final-requirement-disposition.json), [engineering acceptance](execution/release/engineering-handover-20261020.md).
 - This is the owner's testnet proof of concept. Specialist security/privacy audit X1 and production-network clearance X2 remain external release gates. No mainnet release is authorized.
@@ -19,7 +19,7 @@ This is the current handover for a fresh checkout. Read this before historical e
 
 On 20 October, the restored app, query and prover were healthy; the real browser displayed the preserved human conversation, authenticated Bok reply and generated page. Bok's separate service was ready with no active job or reported failure, and its three original terminal journals were unchanged. No payment, proof or model call was replayed to demonstrate restoration.
 
-**Remaining concrete verification:** the current moderator process started successfully and is boot-enabled, but its ingestion readiness was not observed before work was stopped. Last observation: 07:56:39 UTC, PID 13994, running, startup log only. Do not equate process startup with working moderation. On explicit resume, inspect that existing service's health/ingestion and queue first; do not create another model-call campaign. Historical successful moderation evidence remains historical.
+**Latest verification, 20 October:** moderator completed canonical replay and reports healthy ingestion with no alerts. The published signup test completed two real proofs and its new post appears on Home. All six earlier posts remain. See [publication evidence](execution/evidence/G16/signup/publication/publication.md).
 
 ## Running services
 
@@ -37,7 +37,7 @@ Main VPC origins: app port 4319 `vo_B9DnVYF8QMyD8Oicgnf6yB`; query port 8083 `vo
 
 Bok signs using its own preserved public Aztec identity `0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e`. Its public identity is owner-approved; its private keys are not public. Bok uses authenticated `/v1/node` and its own native prover, not the core HTTP prover. Generated code receives neither these keys nor the operator AWS account.
 
-Core native runtime manifest: `71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9`, release `/opt/board-prover/releases/rolling-71d5e83614a05c42`. Bok native manifest: `05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e`. Browser/app runtime is the complete `34cc7252` source closure; moderator adds the exact two `f3e23bf4` runtime files, already present in accepted source. Bok includes eight exact `84a5c525` runtime files. Persistent control module is pinned separately at `/usr/local/lib/rolling-control/deploy/prover/bootstrap.py`, SHA256 `475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38`.
+Core native runtime manifest: `b6291cca0855496d7a08974451d31729f86671880453c9fde4fb4ef40b9908e0`, release `/opt/board-prover/releases/rolling-b6291cca0855496d`. Previous manifest71d5e836 is retained. Bok native manifest remains `05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e`. App, moderator and Bok source releases now use c9c850df1e51; contract identities and persistent state remain unchanged. Persistent control module is pinned separately at `/usr/local/lib/rolling-control/deploy/prover/bootstrap.py`, SHA256 `475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38`.
 
 ## Persistent hosting and cost
 

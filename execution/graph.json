@@ -9136,7 +9136,7 @@
       "title": "Simple account creation and guided funding",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "done",
       "depends_on": [],
       "requirements": [
         "REQ03"
@@ -9169,7 +9169,7 @@
       "evidence": "evidence/G16.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Source c9c850df integrated and pushed. Browser/app, native prover, moderator and Bok updates published preserving contracts/state.319 backend,197 session,9 finalUI,6 replacement cases pass; realMetaMask fresh payment/claim/firstpost native development passed. Public assets exact hashes; existing feed6/originalthread4 preserved. Final hosted realproof fresh account qualification ongoing; first attempts ended before payment on harness load/navigation limits, corrected to overall owner budget. Independent source/publication review retained. Moderator health diagnosis ongoing.",
+      "checkpoint": "Published c9c850df app, native prover, moderator and Bok preserving contracts/state. Focused tests and independent reviews pass. Hosted fresh real MetaMask ETH payment\u2192three bridges\u2192real-proof private claim\u2192first public Home post passed, two real proofs completed, zero failures. All six original posts preserved. Moderator healthy after canonical replay. Final evidence evidence/G16.json. No unrelated campaign resumed.",
       "execution_lane": "UX",
       "owner": "ux-20261020",
       "branch": "codex/rolling-chat-draft3",
