@@ -1,0 +1,7 @@
+{
+  "CommandId": "ede19073-8348-4228-b923-1feb507cdee0",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"source\": \"c9c850df1e514197f6577bd7a12df8c0970fc315\", \"published\": \"/opt/rolling-app/releases/signup-c9c850df1e51\", \"existingTargetVerified\": true, \"sourcePreserved\": true, \"privateConfigsPreserved\": true, \"artifactProxyRestartedByNativeDependency\": true, \"unitSha256\": \"35792b2552e4bcbc7fd7ace44ef037caa29d75b581a7dcdf7902ce328a109b6c\", \"started\": true, \"healthReadbackStillRequired\": true}\n",
+  "StandardErrorContent": ""
+}

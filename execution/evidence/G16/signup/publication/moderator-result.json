@@ -1,0 +1,7 @@
+{
+  "CommandId": "443bc135-f96b-4627-9695-a9f457400482",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"published\": \"/opt/rolling-moderator/releases/signup-c9c850df1e51\", \"source\": \"c9c850df1e514197f6577bd7a12df8c0970fc315\", \"kind\": \"moderator\", \"files\": 24, \"sourcePreserved\": true, \"privateConfigsPreserved\": true, \"otherServicePidsPreserved\": true, \"unitSha256\": \"86a4e46b9af380d95bedb284797c5f19623b5746b16d71f7473e15453e7e45d9\", \"started\": true, \"applicationReadbackStillRequired\": true}\n",
+  "StandardErrorContent": ""
+}

@@ -1,0 +1,7 @@
+{
+  "CommandId": "12105442-b6a1-4b07-9f92-3caf9f46fd1c",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"published\": \"/opt/rolling-app/releases/signup-c9c850df1e51\", \"source\": \"c9c850df1e514197f6577bd7a12df8c0970fc315\", \"kind\": \"app\", \"files\": 27, \"sourcePreserved\": true, \"privateConfigsPreserved\": true, \"otherServicePidsPreserved\": true, \"unitSha256\": \"2e6fc6b4cf6fd23f8ea372006ad0e2b270158db6132ecc3ffac789436b528513\", \"started\": true, \"applicationReadbackStillRequired\": true}\n",
+  "StandardErrorContent": ""
+}

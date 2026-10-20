@@ -1,0 +1,44 @@
+{
+  "source": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+  "sourceRoot": "/opt/rolling-app/releases/signup-c9c850df1e51",
+  "services": {
+    "rolling-bok-testnet.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "22891",
+      "WorkingDirectory": "/opt/rolling-app/releases/signup-c9c850df1e51",
+      "BindsTo": "",
+      "Result": "success",
+      "ExecMainStatus": "0"
+    },
+    "rolling-bok-artifact-proxy.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "22892",
+      "WorkingDirectory": "",
+      "BindsTo": "rolling-bok-testnet.service",
+      "Result": "success",
+      "ExecMainStatus": "0"
+    }
+  },
+  "ownership": {
+    "lockHeldByCurrentProcess": true,
+    "processWorkingDirectoryMatches": true
+  },
+  "targetFilesVerified": true,
+  "privateConfigHashesPreserved": true,
+  "unitSha256": "35792b2552e4bcbc7fd7ace44ef037caa29d75b581a7dcdf7902ce328a109b6c",
+  "proxyUnitSha256": "5ed75ee5eafaff581c58d4dbcd6ed44e79f429d7103d0aa329c223ac6f56b248",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null
+  },
+  "artifactProxy": {
+    "httpStatus": 200,
+    "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+    "originalArtifactPreserved": true
+  },
+  "passed": true,
+  "readOnlySsmCommandId": "bfcc101c-32cd-47ba-9be8-13f5bc45622d"
+}

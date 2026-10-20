@@ -105,9 +105,19 @@ export async function configureMetaMaskLocalNetwork(options){
  assert.equal(await chain(),'0x7a69');return 'selected';
 }
 
-export async function configureMetaMaskTestnetNetwork({page,mark}){
+export async function configureMetaMaskTestnetNetwork({page,walletPage,extensionId,mark}){
+ if(await page.evaluate(()=>globalThis.__testMetaMask.request({method:'eth_chainId'}))==='0xaa36a7')return 'already-selected';
  mark('switch-sepolia-network');
- await page.evaluate(()=>globalThis.__testMetaMask.request({method:'wallet_switchEthereumChain',params:[{chainId:'0xaa36a7'}]}));
+ await Promise.all([
+  page.evaluate(()=>globalThis.__testMetaMask.request({method:'wallet_switchEthereumChain',params:[{chainId:'0xaa36a7'}]})),
+  (async()=>{
+   await walletPage.goto('chrome-extension://'+extensionId+'/sidepanel.html');
+   await walletPage.getByText('Review permissions',{exact:true}).waitFor();
+   await walletPage.getByText('Sepolia',{exact:true}).waitFor();
+   assert((await walletPage.locator('body').innerText()).includes(new URL(page.url()).hostname));
+   await walletPage.getByRole('button',{name:'Confirm',exact:true}).click();
+  })(),
+ ]);
  assert.equal(await page.evaluate(()=>globalThis.__testMetaMask.request({method:'eth_chainId'})),'0xaa36a7');return 'selected';
 }
 

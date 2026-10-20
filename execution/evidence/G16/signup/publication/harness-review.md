@@ -1,0 +1,7 @@
+# Independent hosted-harness timing review
+
+Reviewer /root/ux_review approved the exact two-line timing diff (SHA256033b1da87b6e45c838895f0fb1ed353c48ec7f6eb17877048802f6dbc16aa752). Password runtime loading and aggregate page navigation use the existing supervisor absolute deadline instead of nested60s/10s limits. No retry, extra payment, weakened success check or product change. Overall Supervisor deadline remains enforced. Subsequent MetaMask network confirmation handling is a separate change requiring review.
+
+Reviewer /root/ux_review separately approved the native Sepolia permission handler reproduced in the actual extension. Exact hashes: t04-metamask.mjs45155af14af3025acfe7f1b6e1d09b0d1e2d484bc7f633f44de6f8ad8c72cf97 and run-bounded-browser-check.mjs9ae70ce6abefd9e49682edb43056fabd2d49f151e0c09903dd704d28341b13ce. The handler awaits the real switch request, verifies Review permissions, Sepolia and requesting hostname, clicks native Confirm, and verifies actual selected chain. Progress output contains only stage names. No payment simulation or additional send was introduced.
+
+Hosted attempt4 created the new account and stopped before wallet connection at the inherited10s selector default while verified session initialization was still reading board-instance. The aggregate application page default now shares the existing overall supervisor budget as well; no production source changed. Attempt5 uses this final harness. All earlier hosted attempts sent zero payments and zero L2 submissions.

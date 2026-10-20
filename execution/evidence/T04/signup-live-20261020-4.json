@@ -1,0 +1,934 @@
+{
+  "script": "scripts/test-wallet-extension-browser.mjs",
+  "args": [
+    "--wallet=metamask",
+    "--aggregate-testnet=ETH"
+  ],
+  "passed": false,
+  "observations": [
+    {
+      "passed": false,
+      "scope": "Current Sepolia/Aztec testnet aggregate funding and genuine private claim with native proofs enabled.",
+      "privateRecoveryRetained": true,
+      "browserVersion": "155.0.8059.79",
+      "browserLifecycle": {
+        "contextClosed": true,
+        "disconnected": true,
+        "pageCrashed": false
+      },
+      "localNetwork": "selected",
+      "aggregatePermission": {
+        "entered": false,
+        "resolved": false,
+        "rejected": false
+      },
+      "aggregateConnection": {
+        "entered": null,
+        "resolved": null,
+        "rejected": null
+      },
+      "aggregateAttempts": {
+        "userSends": 0,
+        "relayPosts": 0,
+        "signatures": 0,
+        "paymentHashObserved": false
+      },
+      "failure": {
+        "stage": "aggregate-connect-wallet",
+        "errorClass": "TimeoutError",
+        "browserLifecycle": {
+          "contextClosed": false,
+          "disconnected": false,
+          "pageCrashed": false
+        },
+        "location": "t04-metamask.mjs:341:106"
+      },
+      "initialization": {
+        "stage": "session-initialization",
+        "step": "deployment",
+        "deploymentStep": "board-instance",
+        "state": "started",
+        "code": null
+      },
+      "privatePanelControls": {
+        "Recover funding": false,
+        "Connect private account": false,
+        "Check account recovery": false,
+        "Import recovery": false
+      },
+      "applicationState": {
+        "ethereumConnected": false,
+        "snapshotConnected": false,
+        "selectedMetaMask": false,
+        "selectedLocalChain": false,
+        "aztecLoaded": true,
+        "setupError": false,
+        "feeAddressReady": false,
+        "invalidated": false
+      },
+      "walletSurfaces": [
+        {
+          "path": "/sidepanel.html",
+          "route": "#/",
+          "controls": {
+            "confirm-btn": false,
+            "parent-selector-confirmation-page": false,
+            "confirm-footer-button": false,
+            "parent-selector-template-confirmation-page": false,
+            "confirmation-submit-button": false,
+            "confirmation-cancel-button": false,
+            "account-menu-icon": true
+          }
+        }
+      ],
+      "publicObservation": {
+        "file": "/private/tmp/rolling-signup-live-URzwMm/browser4/public-observation-fd8bd4df9fa27465.json",
+        "requests": 10,
+        "completed": 9,
+        "errors": 0,
+        "canonicalObservationError": false,
+        "transactions": 0,
+        "scope": "Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded"
+      },
+      "cleanupComplete": true,
+      "blockedRequests": 0,
+      "blockedDetails": [],
+      "proofRequests": 0,
+      "l2Submissions": 0,
+      "extensionStartupDocuments": 34
+    }
+  ],
+  "deadlineMs": 3600000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2430688,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 423424
+    },
+    {
+      "elapsedMs": 2017,
+      "rssKiB": 443136
+    },
+    {
+      "elapsedMs": 3055,
+      "rssKiB": 415296
+    },
+    {
+      "elapsedMs": 4091,
+      "rssKiB": 828848
+    },
+    {
+      "elapsedMs": 5109,
+      "rssKiB": 1663008
+    },
+    {
+      "elapsedMs": 6128,
+      "rssKiB": 1827008
+    },
+    {
+      "elapsedMs": 7148,
+      "rssKiB": 2038272
+    },
+    {
+      "elapsedMs": 8176,
+      "rssKiB": 1821328
+    },
+    {
+      "elapsedMs": 9199,
+      "rssKiB": 2430688
+    },
+    {
+      "elapsedMs": 10223,
+      "rssKiB": 2403056
+    },
+    {
+      "elapsedMs": 11304,
+      "rssKiB": 2097376
+    },
+    {
+      "elapsedMs": 12337,
+      "rssKiB": 2041520
+    },
+    {
+      "elapsedMs": 13362,
+      "rssKiB": 2070048
+    },
+    {
+      "elapsedMs": 14395,
+      "rssKiB": 2083488
+    },
+    {
+      "elapsedMs": 15428,
+      "rssKiB": 1974912
+    },
+    {
+      "elapsedMs": 16450,
+      "rssKiB": 2030144
+    },
+    {
+      "elapsedMs": 17523,
+      "rssKiB": 2280960
+    },
+    {
+      "elapsedMs": 18547,
+      "rssKiB": 2112512
+    },
+    {
+      "elapsedMs": 19581,
+      "rssKiB": 2108080
+    },
+    {
+      "elapsedMs": 20600,
+      "rssKiB": 1983328
+    },
+    {
+      "elapsedMs": 21618,
+      "rssKiB": 1789616
+    },
+    {
+      "elapsedMs": 22659,
+      "rssKiB": 1770480
+    },
+    {
+      "elapsedMs": 23689,
+      "rssKiB": 1774448
+    },
+    {
+      "elapsedMs": 24717,
+      "rssKiB": 1672368
+    },
+    {
+      "elapsedMs": 25751,
+      "rssKiB": 1496992
+    },
+    {
+      "elapsedMs": 26786,
+      "rssKiB": 1599344
+    },
+    {
+      "elapsedMs": 27820,
+      "rssKiB": 1598688
+    },
+    {
+      "elapsedMs": 28856,
+      "rssKiB": 1590896
+    },
+    {
+      "elapsedMs": 29881,
+      "rssKiB": 1605440
+    },
+    {
+      "elapsedMs": 30900,
+      "rssKiB": 1631712
+    },
+    {
+      "elapsedMs": 31919,
+      "rssKiB": 1536576
+    },
+    {
+      "elapsedMs": 32950,
+      "rssKiB": 1498800
+    },
+    {
+      "elapsedMs": 33985,
+      "rssKiB": 1491776
+    },
+    {
+      "elapsedMs": 35016,
+      "rssKiB": 1794688
+    },
+    {
+      "elapsedMs": 36037,
+      "rssKiB": 1789136
+    },
+    {
+      "elapsedMs": 37060,
+      "rssKiB": 1796720
+    },
+    {
+      "elapsedMs": 38081,
+      "rssKiB": 1950784
+    },
+    {
+      "elapsedMs": 39117,
+      "rssKiB": 1965808
+    },
+    {
+      "elapsedMs": 40137,
+      "rssKiB": 1840592
+    },
+    {
+      "elapsedMs": 41155,
+      "rssKiB": 1641776
+    },
+    {
+      "elapsedMs": 42176,
+      "rssKiB": 1431296
+    },
+    {
+      "elapsedMs": 43203,
+      "rssKiB": 1448256
+    },
+    {
+      "elapsedMs": 44225,
+      "rssKiB": 1590480
+    },
+    {
+      "elapsedMs": 45244,
+      "rssKiB": 1598384
+    },
+    {
+      "elapsedMs": 46266,
+      "rssKiB": 1604752
+    },
+    {
+      "elapsedMs": 47288,
+      "rssKiB": 1651872
+    },
+    {
+      "elapsedMs": 48309,
+      "rssKiB": 1650016
+    },
+    {
+      "elapsedMs": 49336,
+      "rssKiB": 1551680
+    },
+    {
+      "elapsedMs": 50360,
+      "rssKiB": 1748480
+    },
+    {
+      "elapsedMs": 51383,
+      "rssKiB": 1677984
+    },
+    {
+      "elapsedMs": 52417,
+      "rssKiB": 1683520
+    },
+    {
+      "elapsedMs": 53440,
+      "rssKiB": 1670208
+    },
+    {
+      "elapsedMs": 54461,
+      "rssKiB": 1670256
+    },
+    {
+      "elapsedMs": 55478,
+      "rssKiB": 1699440
+    },
+    {
+      "elapsedMs": 56499,
+      "rssKiB": 1699360
+    },
+    {
+      "elapsedMs": 57522,
+      "rssKiB": 1660576
+    },
+    {
+      "elapsedMs": 58547,
+      "rssKiB": 1568928
+    },
+    {
+      "elapsedMs": 59566,
+      "rssKiB": 1638768
+    },
+    {
+      "elapsedMs": 60595,
+      "rssKiB": 1642768
+    },
+    {
+      "elapsedMs": 61623,
+      "rssKiB": 1612496
+    },
+    {
+      "elapsedMs": 62661,
+      "rssKiB": 1580928
+    },
+    {
+      "elapsedMs": 63679,
+      "rssKiB": 1485344
+    },
+    {
+      "elapsedMs": 64708,
+      "rssKiB": 1505248
+    },
+    {
+      "elapsedMs": 65729,
+      "rssKiB": 1544048
+    },
+    {
+      "elapsedMs": 66755,
+      "rssKiB": 1533232
+    },
+    {
+      "elapsedMs": 67780,
+      "rssKiB": 1545872
+    },
+    {
+      "elapsedMs": 68799,
+      "rssKiB": 1886400
+    },
+    {
+      "elapsedMs": 69895,
+      "rssKiB": 1892544
+    },
+    {
+      "elapsedMs": 70919,
+      "rssKiB": 1720096
+    },
+    {
+      "elapsedMs": 71943,
+      "rssKiB": 1714944
+    },
+    {
+      "elapsedMs": 72968,
+      "rssKiB": 1583184
+    },
+    {
+      "elapsedMs": 73998,
+      "rssKiB": 1542128
+    },
+    {
+      "elapsedMs": 75021,
+      "rssKiB": 1636416
+    },
+    {
+      "elapsedMs": 76046,
+      "rssKiB": 1653248
+    },
+    {
+      "elapsedMs": 77080,
+      "rssKiB": 1658848
+    },
+    {
+      "elapsedMs": 78106,
+      "rssKiB": 1692256
+    },
+    {
+      "elapsedMs": 79145,
+      "rssKiB": 1686400
+    },
+    {
+      "elapsedMs": 80183,
+      "rssKiB": 1709664
+    },
+    {
+      "elapsedMs": 81256,
+      "rssKiB": 1622464
+    },
+    {
+      "elapsedMs": 82297,
+      "rssKiB": 1551792
+    },
+    {
+      "elapsedMs": 83316,
+      "rssKiB": 1450928
+    },
+    {
+      "elapsedMs": 84335,
+      "rssKiB": 1438144
+    },
+    {
+      "elapsedMs": 85372,
+      "rssKiB": 1459072
+    },
+    {
+      "elapsedMs": 86402,
+      "rssKiB": 1459568
+    },
+    {
+      "elapsedMs": 87430,
+      "rssKiB": 1422304
+    },
+    {
+      "elapsedMs": 88472,
+      "rssKiB": 1457568
+    },
+    {
+      "elapsedMs": 89572,
+      "rssKiB": 1571152
+    },
+    {
+      "elapsedMs": 90592,
+      "rssKiB": 1587360
+    },
+    {
+      "elapsedMs": 91616,
+      "rssKiB": 1631360
+    },
+    {
+      "elapsedMs": 92641,
+      "rssKiB": 1546704
+    },
+    {
+      "elapsedMs": 93679,
+      "rssKiB": 1487072
+    },
+    {
+      "elapsedMs": 94715,
+      "rssKiB": 1497552
+    },
+    {
+      "elapsedMs": 95755,
+      "rssKiB": 1499696
+    },
+    {
+      "elapsedMs": 96787,
+      "rssKiB": 1479184
+    },
+    {
+      "elapsedMs": 97837,
+      "rssKiB": 1469840
+    },
+    {
+      "elapsedMs": 98869,
+      "rssKiB": 1662960
+    },
+    {
+      "elapsedMs": 99898,
+      "rssKiB": 1674128
+    },
+    {
+      "elapsedMs": 100927,
+      "rssKiB": 1671472
+    },
+    {
+      "elapsedMs": 101961,
+      "rssKiB": 1642992
+    },
+    {
+      "elapsedMs": 102987,
+      "rssKiB": 1667776
+    },
+    {
+      "elapsedMs": 104011,
+      "rssKiB": 1676672
+    },
+    {
+      "elapsedMs": 105035,
+      "rssKiB": 1597600
+    },
+    {
+      "elapsedMs": 106056,
+      "rssKiB": 1532144
+    },
+    {
+      "elapsedMs": 107077,
+      "rssKiB": 1481840
+    },
+    {
+      "elapsedMs": 108097,
+      "rssKiB": 1478176
+    },
+    {
+      "elapsedMs": 109118,
+      "rssKiB": 1486784
+    },
+    {
+      "elapsedMs": 110137,
+      "rssKiB": 1560112
+    },
+    {
+      "elapsedMs": 111156,
+      "rssKiB": 1547920
+    },
+    {
+      "elapsedMs": 112175,
+      "rssKiB": 1618896
+    },
+    {
+      "elapsedMs": 113197,
+      "rssKiB": 1466704
+    },
+    {
+      "elapsedMs": 114216,
+      "rssKiB": 1493952
+    },
+    {
+      "elapsedMs": 115236,
+      "rssKiB": 1504880
+    },
+    {
+      "elapsedMs": 116256,
+      "rssKiB": 1462048
+    },
+    {
+      "elapsedMs": 117277,
+      "rssKiB": 1445232
+    },
+    {
+      "elapsedMs": 118298,
+      "rssKiB": 1460656
+    },
+    {
+      "elapsedMs": 119319,
+      "rssKiB": 1584576
+    },
+    {
+      "elapsedMs": 120348,
+      "rssKiB": 1597760
+    },
+    {
+      "elapsedMs": 121371,
+      "rssKiB": 1620912
+    },
+    {
+      "elapsedMs": 122399,
+      "rssKiB": 1634368
+    },
+    {
+      "elapsedMs": 123416,
+      "rssKiB": 1582720
+    },
+    {
+      "elapsedMs": 124439,
+      "rssKiB": 1599680
+    },
+    {
+      "elapsedMs": 125463,
+      "rssKiB": 1997056
+    },
+    {
+      "elapsedMs": 126495,
+      "rssKiB": 1899472
+    },
+    {
+      "elapsedMs": 127528,
+      "rssKiB": 1811568
+    },
+    {
+      "elapsedMs": 128553,
+      "rssKiB": 2111344
+    },
+    {
+      "elapsedMs": 129656,
+      "rssKiB": 1916704
+    },
+    {
+      "elapsedMs": 130689,
+      "rssKiB": 2223744
+    },
+    {
+      "elapsedMs": 131716,
+      "rssKiB": 1748336
+    },
+    {
+      "elapsedMs": 132748,
+      "rssKiB": 1650912
+    },
+    {
+      "elapsedMs": 133771,
+      "rssKiB": 1614208
+    },
+    {
+      "elapsedMs": 134794,
+      "rssKiB": 1692896
+    },
+    {
+      "elapsedMs": 135824,
+      "rssKiB": 1678416
+    },
+    {
+      "elapsedMs": 136861,
+      "rssKiB": 1639760
+    },
+    {
+      "elapsedMs": 137893,
+      "rssKiB": 1673120
+    },
+    {
+      "elapsedMs": 138912,
+      "rssKiB": 1661696
+    },
+    {
+      "elapsedMs": 139947,
+      "rssKiB": 1626672
+    },
+    {
+      "elapsedMs": 140970,
+      "rssKiB": 175440
+    }
+  ],
+  "failures": [
+    {
+      "stage": "ui-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "ui",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-wallet-extension-browser.mjs": "033b1da87b6e45c838895f0fb1ed353c48ec7f6eb17877048802f6dbc16aa752",
+    "apps/rolling/wallet-panel.mjs": "f97dd20f64ced3954110ba7c52f9def28ed60a5632ad819346eb48dc5a00e6c1",
+    "scripts/t04-metamask.mjs": "45155af14af3025acfe7f1b6e1d09b0d1e2d484bc7f633f44de6f8ad8c72cf97",
+    "scripts/t04-phantom.mjs": "a8187d1a6f83b89eda7833b06b438482918f49c03a00c55cb84ccda636cee1b0",
+    "shared/rolling/aggregate-funding.mjs": "68c4e1bee0b6b4bd6b234e6087a0163c22c7c0813576c7997f83df519d506a14",
+    "shared/rolling/aggregate-recovery.mjs": "bbe35b9e4cc4c986d2b9cfc02ca97762aa1eef5e7f0910717c2fa3209091bc27",
+    "shared/ethereum-journal.mjs": "df19db475e6875d6d645facf56c2667550a54cf340b177fa6bf0a5d16eb323dd",
+    ".build/metamask-13.49.0/metamask-chrome-13.49.0.zip": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "/private/tmp/rolling-signup-live-URzwMm/control4.json": "c0c780006995e14f50862289aa207f08dbc62504e545bdf585053b80c236d4ea",
+    "scripts/run-bounded-browser-check.mjs": "9ae70ce6abefd9e49682edb43056fabd2d49f151e0c09903dd704d28341b13ce",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d"
+  },
+  "peakMemory": {
+    "elapsedMs": 9199,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 82275,
+        "ppid": 9658,
+        "rssKiB": 56512
+      },
+      {
+        "role": "ui",
+        "pid": 82287,
+        "ppid": 82275,
+        "rssKiB": 162560
+      },
+      {
+        "role": "ui",
+        "pid": 82296,
+        "ppid": 82287,
+        "rssKiB": 261168
+      },
+      {
+        "role": "ui",
+        "pid": 82304,
+        "ppid": 82296,
+        "rssKiB": 136160
+      },
+      {
+        "role": "ui",
+        "pid": 82305,
+        "ppid": 82296,
+        "rssKiB": 97104
+      },
+      {
+        "role": "ui",
+        "pid": 82306,
+        "ppid": 82296,
+        "rssKiB": 61280
+      },
+      {
+        "role": "ui",
+        "pid": 82309,
+        "ppid": 82296,
+        "rssKiB": 129088
+      },
+      {
+        "role": "ui",
+        "pid": 82311,
+        "ppid": 82296,
+        "rssKiB": 98256
+      },
+      {
+        "role": "ui",
+        "pid": 82312,
+        "ppid": 82296,
+        "rssKiB": 795296
+      },
+      {
+        "role": "ui",
+        "pid": 82315,
+        "ppid": 82296,
+        "rssKiB": 150368
+      },
+      {
+        "role": "ui",
+        "pid": 82317,
+        "ppid": 82296,
+        "rssKiB": 145840
+      },
+      {
+        "role": "ui",
+        "pid": 82322,
+        "ppid": 82296,
+        "rssKiB": 115216
+      },
+      {
+        "role": "ui",
+        "pid": 82323,
+        "ppid": 82296,
+        "rssKiB": 196448
+      },
+      {
+        "role": "ui",
+        "pid": 82326,
+        "ppid": 82296,
+        "rssKiB": 25392
+      }
+    ]
+  },
+  "walletStages": [
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-extension",
+      "pages": {
+        "application": 0,
+        "extensionHome": 0,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 0
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-import-method",
+      "pages": {
+        "application": 0,
+        "extensionHome": 1,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-import",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-password",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-passkey",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-privacy",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-completion",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-application-open",
+      "pages": {
+        "application": 1,
+        "extensionHome": 1,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 2
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "switch-sepolia-network",
+      "pages": {
+        "application": 1,
+        "extensionHome": 1,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 2
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-private-account",
+      "pages": {
+        "application": 1,
+        "extensionHome": 0,
+        "extensionSidepanel": 1,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 2
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-initial-recovery-saved",
+      "pages": {
+        "application": 1,
+        "extensionHome": 0,
+        "extensionSidepanel": 1,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 2
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-connect-wallet",
+      "pages": {
+        "application": 1,
+        "extensionHome": 0,
+        "extensionSidepanel": 1,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 2
+      }
+    }
+  ],
+  "elapsedMs": 142008,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

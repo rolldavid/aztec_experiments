@@ -1,0 +1,141 @@
+{
+  "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+  "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+  "task_id": "G16",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "onboarding-e2e",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "command": "node scripts/run-bounded-browser-check.mjs scripts/test-wallet-extension-browser.mjs execution/evidence/T04/signup-post-20261020-5.json --wallet=metamask --aggregate-devnet=ETH",
+      "environment": "macOS arm64 pinned Node24.21.0; TMPDIR=/private/tmp; actual Chromium155 MetaMask13.49; native development proofs disabled",
+      "exit_code": 0,
+      "observed": "Passed; exact outcomes and counts are recorded in hash-bound artifacts.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/T04/signup-post-20261020-5.json",
+          "sha256": "3454075b3e77d554ff455c88e887df12c105bfdf2a53008a7766a3edcbead146"
+        },
+        {
+          "path": "execution/evidence/G16/signup/verification.md",
+          "sha256": "5001acd68e1d392ae270f403dde106ca69a206a9b195689412ea2c49f9fc710b"
+        }
+      ]
+    },
+    {
+      "id": "operation-boundaries",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "command": "node --test scripts/test-remote-prover.mjs scripts/test-remote-prover-client.mjs censor-daemon/test_worker.mjs censor-daemon/test_moderation.mjs shared/rolling/public-events.test.mjs shared/rolling/public-index.test.mjs; focused Ethereum replacement tests",
+      "environment": "macOS arm64 pinned Node24.21.0; TMPDIR=/private/tmp; actual Chromium155 MetaMask13.49; native development proofs disabled",
+      "exit_code": 0,
+      "observed": "Passed; exact outcomes and counts are recorded in hash-bound artifacts.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/signup/backend-final.log",
+          "sha256": "1339ab6c4caeb194876b120d7948f1ec844c4acfc473d55b3dd979962d1507b4"
+        },
+        {
+          "path": "execution/evidence/G16/signup/replacement-tests.log",
+          "sha256": "63ba42f280ae0f76a5a72c9343559da076b1dd05d4e13e2b0031b47ee00a0c36"
+        },
+        {
+          "path": "execution/evidence/G16/signup/github-tests.log",
+          "sha256": "e340ade2ad6cd6262b0382a8d95a22fe5a2e20fbe94445dcd4b05043a68f9431"
+        },
+        {
+          "path": "execution/evidence/G16/signup/avatar-tests.log",
+          "sha256": "58dc76b644d550bb170dfc74981faf2a6e4b0c48d8d44c63779bc4e8e2887c62"
+        }
+      ]
+    },
+    {
+      "id": "ui-and-price",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "command": "node --test apps/rolling/wallet-session.test.mjs; node --test --test-name-pattern=\"guided onboarding|funding retains|funding confirmation|USDC funding UI|funding completion\" apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "macOS arm64 pinned Node24.21.0; TMPDIR=/private/tmp; actual Chromium155 MetaMask13.49; native development proofs disabled",
+      "exit_code": 0,
+      "observed": "Passed; exact outcomes and counts are recorded in hash-bound artifacts.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/signup/ui-fixed.log",
+          "sha256": "9893112364622fdeb16570eca9b5f5345f98a6ae1abb77a3e4a14dcf29dfb690"
+        },
+        {
+          "path": "execution/evidence/G16/signup/session-tests.log",
+          "sha256": "37d34628c55246769ae0fa50ebdd89f0f5a0a43c385b991517f2bea52e7e597c"
+        }
+      ]
+    },
+    {
+      "id": "wallet-build",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "command": "node scripts/rolling-wallet-assets.mjs; SDK build",
+      "environment": "macOS arm64 pinned Node24.21.0; TMPDIR=/private/tmp; actual Chromium155 MetaMask13.49; native development proofs disabled",
+      "exit_code": 0,
+      "observed": "Passed; exact outcomes and counts are recorded in hash-bound artifacts.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/signup/wallet-final4.log",
+          "sha256": "986cc14f88075ff25075174a1e1d37bee2cb18a490dbb79d75868bfcb3b0894f"
+        },
+        {
+          "path": "execution/evidence/G16/signup/sdk-final.log",
+          "sha256": "7905f93c299be18cb2a5dfed404c53a96e4ae86b1ffff1a5615379ce75fe8d5f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+    "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "/root/ux_review + /root/funding_investigation",
+    "implementer": "signup-root",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G16/signup/signup-ui-independent-review.md",
+        "sha256": "3e5b775a978ca2606dd9fae93fefb7b634b66ee9fdab85e3e248da13c3b63d85"
+      },
+      {
+        "path": "execution/evidence/G16/signup/signup-timeout-independent-review.md",
+        "sha256": "e2405147cb5298a8be095d38f4bc2197b5cf3c328b17e50d660e8230e277bf50"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G16-A01",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/signup/verification.md",
+          "sha256": "5001acd68e1d392ae270f403dde106ca69a206a9b195689412ea2c49f9fc710b"
+        }
+      ]
+    },
+    {
+      "id": "G16-A02",
+      "candidate": "c9c850df1e514197f6577bd7a12df8c0970fc315",
+      "base": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/signup/verification.md",
+          "sha256": "5001acd68e1d392ae270f403dde106ca69a206a9b195689412ea2c49f9fc710b"
+        }
+      ]
+    }
+  ]
+}

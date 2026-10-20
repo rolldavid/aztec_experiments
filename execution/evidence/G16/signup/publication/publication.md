@@ -1,0 +1,9 @@
+# Published signup and operation completion changes
+
+Product source c9c850df1e514197f6577bd7a12df8c0970fc315 passed the integration gate and was pushed to origin/codex/rolling-chat-draft3 and origin/codex/rolling-chat-account-ux. The browser/application, native prover, moderator and Bok source updates are live. No contracts were redeployed. Existing configuration, journals, chain identities and source releases were retained.
+
+Live readback verified exact panel, reader and wallet-runtime hashes, ready public index, feed6 and original thread4. Native prover reports real proof support and ready query, preserving node PID4287 and query PID10004. Bok final health verifies ready/active0/no failure, correct source and exclusive owner, and unchanged original artifact served through its proxy.
+
+Publication issues: native stage inherited077 umask and promotion rejected the five new files at0400 before service mutation. The reviewed repair restored0440 only on verified distinct single-link new inodes, then promotion succeeded with original packet bytes. Bok's intentionally bound artifact proxy restarted with its service; the original preserve-PID assertion rolled back safely. A reviewed corrected cutover validated proxy unit/config instead of retaining its PID and succeeded. Exact results and repair scripts are retained here.
+
+Hosted fresh-account qualification remains in progress. First attempts ended before account creation/payment because the test driver retained short nested load/navigation limits. Standalone live browser diagnostic showed a correctly loaded password form and no errors. The test now uses its existing overall owner budget for network navigation and runtime loading. Native proof-disabled fresh payment, automatic bridge/claim and first post were already verified; those results do not stand in for real-proof testnet acceptance.

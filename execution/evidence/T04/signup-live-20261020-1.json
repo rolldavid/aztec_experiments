@@ -1,0 +1,585 @@
+{
+  "script": "scripts/test-wallet-extension-browser.mjs",
+  "args": [
+    "--wallet=metamask",
+    "--aggregate-testnet=ETH"
+  ],
+  "passed": false,
+  "observations": [
+    {
+      "passed": false,
+      "scope": "Current Sepolia/Aztec testnet aggregate funding and genuine private claim with native proofs enabled.",
+      "privateRecoveryRetained": true,
+      "browserVersion": "155.0.8059.79",
+      "browserLifecycle": {
+        "contextClosed": true,
+        "disconnected": true,
+        "pageCrashed": false
+      },
+      "failure": {
+        "stage": "aggregate-application-open",
+        "errorClass": "TimeoutError",
+        "browserLifecycle": {
+          "contextClosed": false,
+          "disconnected": false,
+          "pageCrashed": false
+        },
+        "location": "test-wallet-extension-browser.mjs:218:142"
+      },
+      "initialization": null,
+      "privatePanelControls": {
+        "Recover funding": false,
+        "Connect private account": false,
+        "Check account recovery": false,
+        "Import recovery": false
+      },
+      "applicationState": {
+        "ethereumConnected": false,
+        "snapshotConnected": false,
+        "selectedMetaMask": false,
+        "selectedLocalChain": false,
+        "aztecLoaded": false,
+        "setupError": false,
+        "feeAddressReady": false,
+        "invalidated": false
+      },
+      "walletSurfaces": [
+        {
+          "path": "/home.html",
+          "route": "#/",
+          "controls": {
+            "confirm-btn": false,
+            "parent-selector-confirmation-page": false,
+            "confirm-footer-button": false,
+            "parent-selector-template-confirmation-page": false,
+            "confirmation-submit-button": false,
+            "confirmation-cancel-button": false,
+            "account-menu-icon": true
+          }
+        }
+      ],
+      "publicObservation": {
+        "file": "/private/tmp/rolling-signup-live-URzwMm/browser/public-observation-4383fbd9e22aecaf.json",
+        "requests": 0,
+        "completed": 0,
+        "errors": 0,
+        "canonicalObservationError": false,
+        "transactions": 0,
+        "scope": "Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded"
+      },
+      "cleanupComplete": true,
+      "blockedRequests": 0,
+      "blockedDetails": [],
+      "proofRequests": 0,
+      "l2Submissions": 0,
+      "extensionStartupDocuments": 2
+    }
+  ],
+  "deadlineMs": 3600000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2328608,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 424048
+    },
+    {
+      "elapsedMs": 2021,
+      "rssKiB": 332080
+    },
+    {
+      "elapsedMs": 3038,
+      "rssKiB": 364384
+    },
+    {
+      "elapsedMs": 4059,
+      "rssKiB": 856832
+    },
+    {
+      "elapsedMs": 5076,
+      "rssKiB": 1629776
+    },
+    {
+      "elapsedMs": 6109,
+      "rssKiB": 1633872
+    },
+    {
+      "elapsedMs": 7130,
+      "rssKiB": 1948944
+    },
+    {
+      "elapsedMs": 8149,
+      "rssKiB": 1785776
+    },
+    {
+      "elapsedMs": 9167,
+      "rssKiB": 2328608
+    },
+    {
+      "elapsedMs": 10186,
+      "rssKiB": 2251504
+    },
+    {
+      "elapsedMs": 11206,
+      "rssKiB": 2111440
+    },
+    {
+      "elapsedMs": 12225,
+      "rssKiB": 2119488
+    },
+    {
+      "elapsedMs": 13251,
+      "rssKiB": 2051744
+    },
+    {
+      "elapsedMs": 14511,
+      "rssKiB": 1810736
+    },
+    {
+      "elapsedMs": 15536,
+      "rssKiB": 1904304
+    },
+    {
+      "elapsedMs": 16567,
+      "rssKiB": 2118512
+    },
+    {
+      "elapsedMs": 17594,
+      "rssKiB": 2154016
+    },
+    {
+      "elapsedMs": 18612,
+      "rssKiB": 1696192
+    },
+    {
+      "elapsedMs": 19631,
+      "rssKiB": 1803088
+    },
+    {
+      "elapsedMs": 20649,
+      "rssKiB": 1946112
+    },
+    {
+      "elapsedMs": 21670,
+      "rssKiB": 2008240
+    },
+    {
+      "elapsedMs": 22714,
+      "rssKiB": 2047360
+    },
+    {
+      "elapsedMs": 23731,
+      "rssKiB": 2172480
+    },
+    {
+      "elapsedMs": 24749,
+      "rssKiB": 2206608
+    },
+    {
+      "elapsedMs": 25769,
+      "rssKiB": 2148672
+    },
+    {
+      "elapsedMs": 26792,
+      "rssKiB": 2048352
+    },
+    {
+      "elapsedMs": 27810,
+      "rssKiB": 2015920
+    },
+    {
+      "elapsedMs": 28834,
+      "rssKiB": 2023856
+    },
+    {
+      "elapsedMs": 29857,
+      "rssKiB": 1938288
+    },
+    {
+      "elapsedMs": 30879,
+      "rssKiB": 1968416
+    },
+    {
+      "elapsedMs": 31898,
+      "rssKiB": 1985216
+    },
+    {
+      "elapsedMs": 32922,
+      "rssKiB": 1945792
+    },
+    {
+      "elapsedMs": 33940,
+      "rssKiB": 2091088
+    },
+    {
+      "elapsedMs": 34959,
+      "rssKiB": 2103008
+    },
+    {
+      "elapsedMs": 35976,
+      "rssKiB": 1861488
+    },
+    {
+      "elapsedMs": 36994,
+      "rssKiB": 1863328
+    },
+    {
+      "elapsedMs": 38020,
+      "rssKiB": 1967392
+    },
+    {
+      "elapsedMs": 39043,
+      "rssKiB": 1913008
+    },
+    {
+      "elapsedMs": 40066,
+      "rssKiB": 1889152
+    },
+    {
+      "elapsedMs": 41094,
+      "rssKiB": 1913184
+    },
+    {
+      "elapsedMs": 42117,
+      "rssKiB": 1916880
+    },
+    {
+      "elapsedMs": 43144,
+      "rssKiB": 1910096
+    },
+    {
+      "elapsedMs": 44175,
+      "rssKiB": 1889664
+    },
+    {
+      "elapsedMs": 45208,
+      "rssKiB": 1821472
+    },
+    {
+      "elapsedMs": 46249,
+      "rssKiB": 1801184
+    },
+    {
+      "elapsedMs": 47269,
+      "rssKiB": 1786304
+    },
+    {
+      "elapsedMs": 48295,
+      "rssKiB": 1686672
+    },
+    {
+      "elapsedMs": 49311,
+      "rssKiB": 1606960
+    },
+    {
+      "elapsedMs": 50333,
+      "rssKiB": 1565104
+    },
+    {
+      "elapsedMs": 51353,
+      "rssKiB": 1509024
+    },
+    {
+      "elapsedMs": 52374,
+      "rssKiB": 1571696
+    },
+    {
+      "elapsedMs": 53399,
+      "rssKiB": 1572688
+    },
+    {
+      "elapsedMs": 54422,
+      "rssKiB": 1535344
+    },
+    {
+      "elapsedMs": 55450,
+      "rssKiB": 1545136
+    },
+    {
+      "elapsedMs": 56485,
+      "rssKiB": 1519872
+    },
+    {
+      "elapsedMs": 57515,
+      "rssKiB": 1520656
+    },
+    {
+      "elapsedMs": 58537,
+      "rssKiB": 1524848
+    },
+    {
+      "elapsedMs": 59574,
+      "rssKiB": 1375568
+    },
+    {
+      "elapsedMs": 60597,
+      "rssKiB": 1393040
+    },
+    {
+      "elapsedMs": 61630,
+      "rssKiB": 1351056
+    },
+    {
+      "elapsedMs": 62662,
+      "rssKiB": 1362896
+    },
+    {
+      "elapsedMs": 63686,
+      "rssKiB": 1374144
+    },
+    {
+      "elapsedMs": 64721,
+      "rssKiB": 1516896
+    },
+    {
+      "elapsedMs": 65746,
+      "rssKiB": 1511072
+    },
+    {
+      "elapsedMs": 66774,
+      "rssKiB": 1529632
+    },
+    {
+      "elapsedMs": 67802,
+      "rssKiB": 1745856
+    },
+    {
+      "elapsedMs": 68818,
+      "rssKiB": 1760912
+    },
+    {
+      "elapsedMs": 69840,
+      "rssKiB": 1769216
+    },
+    {
+      "elapsedMs": 70874,
+      "rssKiB": 1748976
+    },
+    {
+      "elapsedMs": 71903,
+      "rssKiB": 1377200
+    }
+  ],
+  "failures": [
+    {
+      "stage": "ui-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "ui",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-wallet-extension-browser.mjs": "65abbc14baac96f00ed97a7aadd238f428712a05c40652e85c5c25fde712e295",
+    "apps/rolling/wallet-panel.mjs": "f97dd20f64ced3954110ba7c52f9def28ed60a5632ad819346eb48dc5a00e6c1",
+    "scripts/t04-metamask.mjs": "7dc2f1ea5fb930ba74eb4bedd96301aca75e6f716fee4f05d3071efdcde85053",
+    "scripts/t04-phantom.mjs": "a8187d1a6f83b89eda7833b06b438482918f49c03a00c55cb84ccda636cee1b0",
+    "shared/rolling/aggregate-funding.mjs": "68c4e1bee0b6b4bd6b234e6087a0163c22c7c0813576c7997f83df519d506a14",
+    "shared/rolling/aggregate-recovery.mjs": "bbe35b9e4cc4c986d2b9cfc02ca97762aa1eef5e7f0910717c2fa3209091bc27",
+    "shared/ethereum-journal.mjs": "df19db475e6875d6d645facf56c2667550a54cf340b177fa6bf0a5d16eb323dd",
+    ".build/metamask-13.49.0/metamask-chrome-13.49.0.zip": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "/private/tmp/rolling-signup-live-URzwMm/control.json": "dcd4db7a014e283d919778610a8b48bbbdde83fba71683c81312003dc9a81361",
+    "scripts/run-bounded-browser-check.mjs": "6d8f3467ad92458da884c2cc70c545606f2371db4719bcf13d28f611192967a0",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d"
+  },
+  "peakMemory": {
+    "elapsedMs": 9167,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 79006,
+        "ppid": 9658,
+        "rssKiB": 59728
+      },
+      {
+        "role": "ui",
+        "pid": 79017,
+        "ppid": 79006,
+        "rssKiB": 159600
+      },
+      {
+        "role": "ui",
+        "pid": 79048,
+        "ppid": 79017,
+        "rssKiB": 252944
+      },
+      {
+        "role": "ui",
+        "pid": 79057,
+        "ppid": 79048,
+        "rssKiB": 138160
+      },
+      {
+        "role": "ui",
+        "pid": 79058,
+        "ppid": 79048,
+        "rssKiB": 90992
+      },
+      {
+        "role": "ui",
+        "pid": 79060,
+        "ppid": 79048,
+        "rssKiB": 60960
+      },
+      {
+        "role": "ui",
+        "pid": 79063,
+        "ppid": 79048,
+        "rssKiB": 130208
+      },
+      {
+        "role": "ui",
+        "pid": 79065,
+        "ppid": 79048,
+        "rssKiB": 96480
+      },
+      {
+        "role": "ui",
+        "pid": 79067,
+        "ppid": 79048,
+        "rssKiB": 771456
+      },
+      {
+        "role": "ui",
+        "pid": 79080,
+        "ppid": 79048,
+        "rssKiB": 122272
+      },
+      {
+        "role": "ui",
+        "pid": 79082,
+        "ppid": 79048,
+        "rssKiB": 238336
+      },
+      {
+        "role": "ui",
+        "pid": 79084,
+        "ppid": 79048,
+        "rssKiB": 107280
+      },
+      {
+        "role": "ui",
+        "pid": 79085,
+        "ppid": 79048,
+        "rssKiB": 100192
+      }
+    ]
+  },
+  "walletStages": [
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-extension",
+      "pages": {
+        "application": 0,
+        "extensionHome": 0,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 0
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-import-method",
+      "pages": {
+        "application": 0,
+        "extensionHome": 1,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-import",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-password",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-passkey",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-privacy",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "wallet-completion",
+      "pages": {
+        "application": 0,
+        "extensionHome": 2,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-application-open",
+      "pages": {
+        "application": 1,
+        "extensionHome": 1,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    }
+  ],
+  "elapsedMs": 72894,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}
