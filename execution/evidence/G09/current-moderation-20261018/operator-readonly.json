@@ -1,9 +1,0 @@
-{
-  "address": "0x05d944fb0e5ed510b1ec4090c2f3ea2db49ef976cbc908c182c769eb83c16e27",
-  "browserDerivationMatches": true,
-  "privateFeeBalance": "0",
-  "nodeRealProofs": false,
-  "pxeProverEnabled": false,
-  "privateFile": "operator-browser-private.json",
-  "chainWrites": 0
-}

@@ -1,4 +1,0 @@
-2026-10-12 08:53:14 +0100 Assertions          	PID 46014(caffeinate) Summary PreventUserIdleSystemSleep "caffeinate command-line tool" 00:03:18  id:0x0x10000a77c [System: PrevIdle DeclUser SRPrevSleep kCPU kDisp]
-2026-10-12 08:53:19 +0100 Sleep               	Entering Sleep state due to 'Clamshell Sleep':TCPKeepAlive=active Using Batt (Charge:100%) 378 secs
-2026-10-12 08:59:37 +0100 DarkWake            	DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty/ Using BATT (Charge:100%) 45 secs
-2026-10-12 08:59:38 +0100 Assertions          	PID 46014(caffeinate) ClientDied PreventUserIdleSystemSleep "caffeinate command-line tool" 00:09:42  id:0x0x10000a77c [System: PrevIdle DeclUser PushSrvc SRPrevSleep IPushSrvc kCPU kDisp]

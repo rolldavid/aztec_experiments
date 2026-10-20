@@ -1,8 +1,0 @@
-{
-  "at": "2026-10-14T16:09:19.719394+00:00",
-  "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/sqlite-6763-node_modules-successor",
-  "allocatedBytes": 1845809152,
-  "reason": "Unused duplicate dependencies; worker retargeted ignored wrappers to existing physical lead tree; no tracked files or active handles; original source/journals untouched",
-  "status": "verified",
-  "cleanupNote": "Finder recreated only .DS_Store during removal; exact sole metadata file removed after inspection. Directory now absent."
-}

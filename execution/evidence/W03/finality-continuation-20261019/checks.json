@@ -1,9 +1,0 @@
-{
-  "revision": "e03bc65678d0260e179f6d058b563978085b5e66",
-  "command": "node-v24.21.0 --test --test-name-pattern=funding apps/rolling/wallet-session.test.mjs",
-  "result": "passed",
-  "tests": 13,
-  "failures": 0,
-  "durationMs": 2879.845708,
-  "scope": "Native finalized subscription and abort ownership; existing funding continuation tests; no proofs or transactions."
-}

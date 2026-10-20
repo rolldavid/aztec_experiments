@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "sourceHelperSha256": "0003808f7230d09096cfd63db3488e643c96ccf78fdffef55e8e0dc28050dc0e",
-  "successorHelperSha256": "95880ab38dbe065a6eb852274417c12f67b0bdf3365f97fa991b77613f49792c",
-  "grantSha256": "68c0ef1f76ca32df1f393b380f0e83663c8cea300635aa429f740fa318f50feb",
-  "changes": "08 privatepaths/IDs/names,evidence,review/payloadpins,absoluteapproveddeadlines,currentledger200.28 and exactgrant hash only",
-  "preserved": "Same exclusivefsyncedintents/clienttokens/AWS_MAX_ATTEMPTS1/no-overlap/plugin/SG/AMI/template/noIAM/noSSH/encryptedDOT checks and actualreadbacks; fixedcommission-minus20mincutoff",
-  "noExecutionYet": true
-}

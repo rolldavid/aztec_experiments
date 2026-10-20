@@ -1,7 +1,0 @@
-{
-  "source": "89d0da366ccf190a48e5c93dbd88342b40ddaf8f",
-  "time": "2026-10-11T15:57:35.693Z",
-  "method": "Actual sandbox-exec open of configured private file; no bytes read",
-  "privateConfigReadDenied": true,
-  "code": "EPERM"
-}

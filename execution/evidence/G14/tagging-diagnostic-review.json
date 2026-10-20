@@ -1,7 +1,0 @@
-{
-  "revision": "1b8f36c4e74ec2e46aa5ae7c3a9c8d0e45554383",
-  "reviewer": "reviewer-20261011",
-  "verdict": "approved diagnostics only",
-  "checks": "14 independently passing wire/boundary tests; installedSDKmessage/sourceverified; publictips andfixedcategory only",
-  "pending": "actualcause andsuccessfulbothcaseacceptance"
-}

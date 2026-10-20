@@ -1,7 +1,0 @@
-{
-  "projectorSha256": "ffdea3bc5f96bc84e4c027a13c081a837bc292c9c9619114f150c07f10a3da4a",
-  "passed": 9,
-  "failed": 0,
-  "networkCalls": 0,
-  "scope": "Fixed instrumentation adapter/helper/history plus package binding. No actual runtime receipt exists yet."
-}

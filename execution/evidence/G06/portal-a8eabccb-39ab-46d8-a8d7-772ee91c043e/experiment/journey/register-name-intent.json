@@ -1,9 +1,0 @@
-{
-  "txHash": "0x103f86710ff69ea22e8abbf6d41fb9d9195b5d424cfe7f76291f4a153f64e5c1",
-  "sourceRevision": "f8f00c402d80b5f007278fc58a10af9c7d2ca17f",
-  "artifactHashes": {
-    "billboard/target/rolling_contract-RollingBoard.json": "5efc8d3063717355bf04f81bfac568f5cf58e1c7a7ee5c17d00eef814815abe8",
-    "experiments/private-bok/target/private_bok-PrivateBok.json": "4975cf4699f75a030007fe5b1dc752609675b07c1e1cdd6b9fdfa37e363cbc16",
-    "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497"
-  }
-}

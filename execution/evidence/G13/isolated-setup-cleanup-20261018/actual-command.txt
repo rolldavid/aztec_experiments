@@ -1,3 +1,0 @@
-Exact command for actual-isolated (evidence.json command label was abbreviated):
-BOK_STATIC_CONTAINER_TESTS=1 NODE_BACKEND=js TMPDIR=/private/tmp /Users/zac/Documents/ChatGPT/Anonymous\ Message\ Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='^actual isolated Node tests and build return exact handoff without developer capabilities$' plugins/test/isolated-execution.test.mjs
-Working directory: ../rolling-bok-recovery at83110466

@@ -1,0 +1,13 @@
+{
+  "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "candidate": "262a805517748e7e936a49212295866704616e3f",
+  "task_id": "G12-publish-handover",
+  "graph": "VALID: 53 packages, 269 criteria; dependency, plan and completed-evidence checks passed.",
+  "secretScan": {
+    "files": 9451,
+    "bytes": 203446807,
+    "findings": [],
+    "scope": "Pattern scan of proposed published files. No absolute claim of absence of secrets."
+  },
+  "scope": "Documentation, public evidence and historical operational templates; accepted application code unchanged. Historical whitespace retained to preserve evidence hashes."
+}

@@ -1,9 +1,0 @@
-{
-  "at": "2026-10-13T08:03:38.837712+00:00",
-  "decision": "Initial reorg only outer585000/inner570000",
-  "rationale": "Actual401356ms prefork consumes525000inner leaving123636<150000; counterfactual570000 leaves168636, no timing/pass guarantee. Preserve independent150000reserve and user hard<600000 total. Reduce semantic risk versus altering protocol genesis clock.",
-  "authority": "Routine engineering decision under user mandate.540/525 are proposed operational defaults, not owner requirement.",
-  "unchanged": "All proof, accounting, privacy, cold45/suffix15, memory, teardown and other scenario bounds.",
-  "attemptBudget": 1,
-  "onFailure": "Record actual; independently diagnose any new failure, no unchanged retry."
-}

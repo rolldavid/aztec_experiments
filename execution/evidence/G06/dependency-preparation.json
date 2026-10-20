@@ -1,8 +1,0 @@
-{
-  "worker_source": "c944ba016f1036ec9762e98cde39497bb38a0df0",
-  "rolling_embedded_source_count": 129,
-  "unchanged_pinned_packages": 8,
-  "bok_artifact_sha256": "f8bea66c1673579ad66943d899f15d391e3deb88ceeba82ed44ff7fb7eb907ee",
-  "artifact_origin": "root normal processed build; unchanged source and dependency hash guards verified",
-  "owner": "lead-20261011"
-}

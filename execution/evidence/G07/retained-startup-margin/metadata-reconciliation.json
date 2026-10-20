@@ -1,9 +1,0 @@
-{
-  "at": "2026-10-14T23:55:37.988697+00:00",
-  "deadOwner": 57638,
-  "portsAbsent": true,
-  "snapshotHash": "34d2a80baddcc3347f5838c1e8d3ac378a893067bfc5df7b9939fb689aef71a8",
-  "originalBackups": ".build/g07-recovery-cost/failed-qualified-retry-private",
-  "metadataChange": "phaseonly to stopped; deadlease/failurearchived",
-  "basis": "Originalexactheadqualified08c; failedruns neverreachedRPC/node andownprocessesabsent; native startupwillrehash and verifyallcanonicalstate."
-}

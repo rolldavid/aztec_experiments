@@ -1,8 +1,0 @@
-{
-  "label": "provider-recovery",
-  "sourceRevision": "f5c7f6a3796ef5149f8fcf048d966b45962c9f20",
-  "proofMode": "proofs-disabled",
-  "requestId": "0x0094757dbdaceedd8086a716c2e49d9a4db1533b8f716a98d3e56c3b80b0d1d1",
-  "target": "0x25501978897f88523e0dd189749186f57f1f3801ed868a318c14ffff205b79a6",
-  "budget": "1000000"
-}

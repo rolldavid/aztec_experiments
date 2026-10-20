@@ -1,5 +1,0 @@
-
-> test:e2e
-> node scripts/test-c01-application.mjs browser-metamask-journey
-
-{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/T04/application-0e54fcab-22e1-4a90-8ea7-1e03d98db83b.json","passed":false,"scenario":"browser-metamask-journey"}

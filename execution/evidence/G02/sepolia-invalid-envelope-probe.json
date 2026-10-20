@@ -1,8 +1,0 @@
-{
-  "at": "2026-10-14T09:58:47.448589+00:00",
-  "scope": "Single invalid-envelope RPC capability probe. No signed transaction, no valid transaction, no financial retry.",
-  "endpoint": "https://sepolia.gateway.tenderly.co",
-  "rpcCode": -32602,
-  "invalidEnvelopeRejected": true,
-  "message": "typed transaction too short"
-}

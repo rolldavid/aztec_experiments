@@ -1,9 +1,0 @@
-{
-  "time": "2026-10-19T01:26:40.170793+00:00",
-  "pid": 32866,
-  "config": "/private/tmp/rolling-rotation-q0fmwljc/bok-service.json",
-  "state": "/private/tmp/rolling-rotation-q0fmwljc/bok-state",
-  "action": "SIGTERM idle owned development service for exclusive pool transfer",
-  "repositoryId": 1424760976,
-  "rule": "Preserve state and config. Do not restart old configuration while current testnet owns its pool."
-}

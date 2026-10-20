@@ -1,8 +1,0 @@
-{
-  "at": "2026-10-14T23:42:27.051769+00:00",
-  "purpose": "Read-only refresh of existing personal-account provisioning blocker; no new OAuth/repository/permission/API mutation",
-  "githubCom": "https://docs.github.com/en/rest/apps/installations?apiVersion=2026-03-10",
-  "enterpriseCloud": "https://docs.github.com/en/enterprise-cloud%40latest/rest/apps/installations?apiVersion=2022-11-28",
-  "observed": "GitHub.com docs still restrict add-repository endpoint to classic PAT repo scope; Enterprise docs show App-installation-repository permission. Enterprise wording does not qualify personal github.com installation tokens. Existing installed broad20permissions remains unchanged.",
-  "decision": "No new provider hypothesis; retain selected dedicated repositories and trusted App-only runtime boundary. Existing accepted mirrors remain valid; automatic selection unresolved."
-}

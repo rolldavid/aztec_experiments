@@ -1,9 +1,0 @@
-{
-  "CommandId": "4bbf8bb8-c140-458a-9e1a-ee72ce186fea",
-  "Status": "Success",
-  "ResponseCode": 0,
-  "ExecutionStartDateTime": "2026-10-19T13:03:30.591Z",
-  "ExecutionEndDateTime": "2026-10-19T13:03:37.591Z",
-  "StandardOutputContent": "{\"published\": \"/opt/rolling-app/releases/d1887384\", \"unitSha256\": \"acec5bf97b0140efa7c08f075fe1299a9a9380038840de729fcbb33474713d59\", \"files\": 6, \"walletAssetsVerified\": true, \"verifierBytes\": 128, \"originalFundingJournalPreserved\": true, \"otherServicePidsPreserved\": true, \"source\": \"d188738461dc6358b3c679703c24353b997dba90\"}\n",
-  "StandardErrorContent": ""
-}

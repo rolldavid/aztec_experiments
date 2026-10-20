@@ -1,9 +1,0 @@
-{
-  "CommandId": "a8d3ea01-0076-4070-bf08-e428f820fc3d",
-  "Status": "Success",
-  "ResponseCode": 0,
-  "ExecutionStartDateTime": "2026-10-15T02:52:19.064Z",
-  "ExecutionEndDateTime": "2026-10-15T02:52:25.064Z",
-  "StandardOutputContent": "{\"bucket\": \"anonymous-message-board-testnet-backups-nvdhcyurtoga\", \"files\": [{\"name\": \"evaluation-16t.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-f0688e32f2f3483e8cc465d61bd6d140/evaluation-16t.json\", \"bytes\": 40352, \"sha256\": \"28003d0e8dd356c294d55218cc933ccc72b440e31f29e98b99e70e0dc18b977b\", \"versionId\": \"mh74CIyEgutQVVB2FMGUfFv_O2OSJzmI\"}, {\"name\": \"evaluation-ecc3f0c.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-f0688e32f2f3483e8cc465d61bd6d140/evaluation-ecc3f0c.json\", \"bytes\": 31618, \"sha256\": \"c0705c51452b0f051a1ec3e03e1e440960a0fc04f5e7e4588c1fed0de604b65f\", \"versionId\": \"3wI6jhDqpBp14ACmXDSwyvc8QDEUxHNK\"}, {\"name\": \"load-08c88-observed-result.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-f0688e32f2f3483e8cc465d61bd6d140/load-08c88-observed-result.json\", \"bytes\": 7631, \"sha256\": \"8a529b450e7343c6351b5b585f26803d8793cbbff6f8fcbb915b5157c86f5833\", \"versionId\": \"vqZclOAC5FyM7K7ogp4sjv3vjUai8L9x\"}, {\"name\": \"native-cleanup-result.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-f0688e32f2f3483e8cc465d61bd6d140/native-cleanup-result.json\", \"bytes\": 767, \"sha256\": \"addf96b956e8649a6d223f90207057fdf48f336078e3789bfca1665ea1df2c2c\", \"versionId\": \"4F9NwWJMfYGMtsp1PSL_6wMuTVyaL.0U\"}], \"totalBytes\": 80368, \"deleteBy\": \"2026-11-14\", \"withinExisting20GBReservation\": true}\n",
-  "StandardErrorContent": ""
-}

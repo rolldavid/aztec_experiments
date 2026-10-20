@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "exitCode": 0,
-  "elapsedSeconds": 0.95,
-  "receiptPresent": true,
-  "receiptSha256": "23f5598fe1a8c3777342ef2afb4bf85f4ca6334fbc399c458a8c2b572e0a0311",
-  "operatorRetried": false,
-  "noPaidAction": true
-}

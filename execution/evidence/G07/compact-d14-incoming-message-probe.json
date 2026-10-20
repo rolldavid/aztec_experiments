@@ -1,9 +1,0 @@
-{
-  "label": "Actual pinned Node IncomingMessage with labelled socket; no listener, SDK or native cryptography",
-  "complete": true,
-  "readableEnded": true,
-  "requestDestroyed": true,
-  "requestAborted": false,
-  "socketDestroyCalls": 0,
-  "socketDestroyed": false
-}

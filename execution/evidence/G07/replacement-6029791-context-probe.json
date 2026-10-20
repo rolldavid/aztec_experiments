@@ -1,7 +1,0 @@
-{
-  "revision": "60297919a9b5586e9fe714637bb6adac78d2c593",
-  "label": "actual SDK Tx/AEAD, labelled storage suspension and node replies",
-  "guardCalls": 2,
-  "accountInvalidatedDuringLastAwaitedAuthenticatedRead": true,
-  "sendsAfterInvalidation": 1
-}

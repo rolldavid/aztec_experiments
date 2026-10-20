@@ -1,0 +1,42 @@
+{
+  "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "candidate": "262a805517748e7e936a49212295866704616e3f",
+  "task_id": "G12-publish-handover",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    ".gitignore",
+    "AGENTS.md",
+    "README.md",
+    "START_HERE.md",
+    "deploy/INFRASTRUCTURE_ACCESS.md",
+    "deploy/restoration-20261020",
+    "docs/specifications",
+    "skills/aztec-app-development",
+    "execution"
+  ],
+  "required_checks": [
+    "publication-integrity"
+  ],
+  "requirements": [
+    "owner-portable-public-handover"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G12-publish-handover",
+      "paths": [
+        ".gitignore",
+        "AGENTS.md",
+        "README.md",
+        "START_HERE.md",
+        "deploy/INFRASTRUCTURE_ACCESS.md",
+        "deploy/restoration-20261020",
+        "docs/specifications",
+        "skills/aztec-app-development",
+        "execution"
+      ]
+    }
+  ]
+}

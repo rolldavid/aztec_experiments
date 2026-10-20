@@ -1,1 +1,0 @@
-{"passed": 2, "results": [{"label": "pure process double", "persistentDiscoveryFailure": false, "acceptedCleanup": true, "groupSignalledTwice": true, "rootReaped": true}, {"label": "pure process double", "persistentDiscoveryFailure": true, "acceptedCleanup": false, "groupSignalledTwice": true, "rootReaped": true}], "processesLaunched": 0, "nativeExecuted": false}

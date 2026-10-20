@@ -1,5 +1,0 @@
-{
-  "exit_code": 0,
-  "stdout": "{\"status\": \"pass\", \"mode\": \"integrate\", \"candidate\": \"8342b4527278445f14c65046ae3cd1484d4667c5\", \"base\": \"d9f1480a8bf075eb0944dfd83c9757062aaea3f1\", \"ref\": \"refs/heads/codex/rolling-chat-draft3\"}\n",
-  "stderr": ""
-}

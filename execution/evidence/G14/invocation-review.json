@@ -1,9 +1,0 @@
-{
-  "candidate": "0370cbbdcf468f8e578d38ed0adeea8082511595",
-  "base": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
-  "reviewer": "/root/reviewer",
-  "verdict": "approve",
-  "findings": [],
-  "checks": "6 pinned tests;8messageboundaries;50invalidfields;installedFr.MODULUS equality;Unicode byte distinction;45field schema matches unfrozenNoir source (not executed)",
-  "scope": "Encodinginterface only. Actualboardauth/canonicaltarget stillrequired beforeG14acceptance."
-}

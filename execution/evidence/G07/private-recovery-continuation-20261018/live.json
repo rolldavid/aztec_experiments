@@ -1,7 +1,0 @@
-{
-  "revision": "878a79455fae08184a4e61a4b7a745213bf71402",
-  "procedure": "Reloaded only application static UI, imported existing encrypted development account, one Recover private views click, inspected completed state then closedpanel",
-  "observed": "Recovered complete authenticated private preferences; Bookmarks displays exact namedrootpost9008266914914523338611243683523197246666355866198777485404400346165069884831 with Unbookmark control atchain26. No manualContinueclicks or transaction duringrecovery.",
-  "environment": "Same native31337 node/PXE proofsdisabled; no node restart/build",
-  "limitations": "Actual local recovery only; largehistory performance, realproof, observerprivacy and finalgates remainopen."
-}

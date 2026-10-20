@@ -1,0 +1,64 @@
+{
+  "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "candidate": "262a805517748e7e936a49212295866704616e3f",
+  "task_id": "G12-publish-handover",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "candidate": "262a805517748e7e936a49212295866704616e3f",
+      "task_id": "G12-publish-handover",
+      "id": "publication-integrity",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 execution/graph.py validate; proposed-file capability scan; independent source/path review",
+      "environment": "Local filesystem; no service changes or acceptance reruns",
+      "observed": "53 packages/269 criteria valid; 9451 files scanned, no strong credential findings; application source preserved",
+      "artifacts": [
+        {
+          "path": ".build/publication-gate-20261020/checks.json",
+          "sha256": "edad5fdc5af6e7813b5a59603f9d65dad18bf36ebfce744c6c8131367e44cf85"
+        },
+        {
+          "path": ".build/publication-review-20261020.json",
+          "sha256": "6fe93bb30dfb9a500fd90e20468ebe1ccb8a2ef3c7d577d9cd7c6cbeeaf045ff"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+    "candidate": "262a805517748e7e936a49212295866704616e3f",
+    "task_id": "G12-publish-handover",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "restore_review",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": ".build/publication-review-20261020.json",
+        "sha256": "6fe93bb30dfb9a500fd90e20468ebe1ccb8a2ef3c7d577d9cd7c6cbeeaf045ff"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "candidate": "262a805517748e7e936a49212295866704616e3f",
+      "task_id": "G12-publish-handover",
+      "id": "owner-portable-public-handover",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": ".build/publication-review-20261020.json",
+          "sha256": "6fe93bb30dfb9a500fd90e20468ebe1ccb8a2ef3c7d577d9cd7c6cbeeaf045ff"
+        },
+        {
+          "path": ".build/publication-gate-20261020/checks.json",
+          "sha256": "edad5fdc5af6e7813b5a59603f9d65dad18bf36ebfce744c6c8131367e44cf85"
+        }
+      ]
+    }
+  ]
+}

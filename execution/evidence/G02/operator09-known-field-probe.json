@@ -1,6 +1,0 @@
-{
-  "label": "Synthetic JSON fixture; no real receipt or private values",
-  "knownFieldArbitraryTextRetained": true,
-  "knownFieldLongStringRetained": true,
-  "passedExistingProjection": true
-}

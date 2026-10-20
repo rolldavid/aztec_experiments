@@ -1,3 +1,0 @@
-Command: pinned nargo compile --force from billboard/rolling_contract
-Exit 1: Selected package `rolling_contract` was not found
-Lead expanded declared ownership to billboard/Nargo.toml; append rolling_contract before next compile.

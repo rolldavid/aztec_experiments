@@ -1,0 +1,6 @@
+{
+  "files": 9451,
+  "bytes": 203446807,
+  "findings": [],
+  "scope": "Pattern scan of proposed published files. No absolute claim of absence of secrets."
+}

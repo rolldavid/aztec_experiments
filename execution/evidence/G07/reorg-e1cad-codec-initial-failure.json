@@ -1,1 +1,0 @@
-{"passed":false,"reason":"Tx.fromBuffer requires BarretenbergSync singleton for compressed ChonkProof; no singleton initialized; effect decoding completed but not persisted before exception","sourceOrEvidenceChanged":false}

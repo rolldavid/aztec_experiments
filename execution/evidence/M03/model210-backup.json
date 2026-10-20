@@ -1,7 +1,0 @@
-{
-  "CommandId": "22cedf08-2cde-41b7-8111-cf6035b9e444",
-  "Status": "Success",
-  "ResponseCode": 0,
-  "StandardOutputContent": "{\"bucket\": \"anonymous-message-board-testnet-backups-nvdhcyurtoga\", \"files\": [{\"name\": \"evaluation-ecc3f0c.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-0855fc3a043e42b8a0c0956f814b2eb3/evaluation-ecc3f0c.json\", \"bytes\": 77227, \"sha256\": \"f608c58905e00d7461ceb78b41281a58fc06b134cfab95ab0061774a633e25ce\", \"versionId\": \"VNiFUBEwPOwaXp4lt0Iz__bTf.OkHl.A\"}, {\"name\": \"stop-order-probe-live-result.json\", \"key\": \"releases/rolling-shared-20261015-072358c88e68/checkpoint-0855fc3a043e42b8a0c0956f814b2eb3/stop-order-probe-live-result.json\", \"bytes\": 2451, \"sha256\": \"c1b72341d5ad2930483d8ac6bf81f1e7dd8da6856bb79967cda4aa73c6f351c3\", \"versionId\": \"rD7IU.9YYmrfBQe3nm2LGGm97H6IaOZs\"}], \"totalBytes\": 79678, \"deleteBy\": \"2026-11-14\", \"withinExisting20GBReservation\": true}\n",
-  "StandardErrorContent": ""
-}

@@ -1,9 +1,0 @@
-
-> check:artifacts
-> node scripts/check-artifacts.mjs
-
-{
-  "privateFeeSha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
-  "noirSha256": "5c53cc0e8b1db0d6b9b9442f2232d2da4a6fe904e78a3a7c5809b88e7338e5c6",
-  "portalBytecodeSha256": "11d3b4a006ca0233b933e0d40b1c8422ccba9eb612d1d28c502ff8dc0fe01630"
-}
