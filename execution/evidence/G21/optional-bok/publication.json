@@ -1,0 +1,10 @@
+{
+  "published": "/opt/rolling-app/releases/ux-ab6744b8cdd1",
+  "source": "ab6744b8cdd1ea1d07e0a3b84ed06dfc20e1662f",
+  "files": 78,
+  "nativePidsPreserved": true,
+  "boardConfigurationPreserved": true,
+  "oldJournalsPreserved": true,
+  "router": "0x3ad8b725db4761beb8062e6d6689f4cbffe0ccdc",
+  "readbackRequired": true
+}

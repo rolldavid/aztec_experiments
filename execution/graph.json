@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "21October optional-Bok implementation verified: core ETH/USDC signup defaults0Bok, lazy plugin verification/artifact. SDK browser initial16.6MB vs63.25MB;56manifest-bound lazy modules.26Solidity,160funding,582client,116artifact,12runtime-browser,5panelbrowser pass; actual kernel/WASM browser imports pass. Broad legacy panel suite exposed preexisting stale expectations and was stopped. No further browser launches per response to owner concern. Independent crossreview and live app/router-only publication in progress; current board/portal/posts/native runtime preserved.",
+      "checkpoint": "21October optional-Bok and lazy SDK code ab6744b8 reviewed, integrated, pushed and published. New router0x3ad8b725db4761beb8062e6d6689f4cbffe0ccdc; appux-ab6744b8cdd1. Board/portal/posts and native service identities preserved.26Solidity,160funding,582client,116artifact,12runtimebrowser,5panelbrowser pass; kernel/WASM imports pass. Browser startup16.60MB raw/3.68MBgzip vs63.25MB/28.07MB. No further browser launches after owner concern. Public readback passes: new router, exact16.6MB SDK hash, hashed lazy module, unchanged board/portal and the original post on Home. Full index startup replay completed. Existing architecture restarts index with frontend, so UI publication creates a cold replay delay; next fix is decoupling these lifecycles while retaining canonical cache verification. G21 is not final production qualification.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

@@ -1,0 +1,26 @@
+{
+  "source": "ab6744b8cdd1ea1d07e0a3b84ed06dfc20e1662f",
+  "site": "https://d30njln0kead8n.cloudfront.net",
+  "board": {
+    "contractAddress": "0x23c068961909d0e5efa212041e25768baff08b55e074b9a03a4deb99d5b29852",
+    "portalAddress": "0xd865bd41ff9d36102a086d0410ffb95a1f73566f"
+  },
+  "router": "0x3ad8b725db4761beb8062e6d6689f4cbffe0ccdc",
+  "routerCodeHash": "0x90f0d152f3d5d09b9a1ed988735bbde950813abb55be719ed4d858e919876f87",
+  "homePostIds": [
+    "11695066481375879443592569792409484297007522125569809889902211644127507585237"
+  ],
+  "boardAndPostsPreserved": true,
+  "sdk": {
+    "bytes": 16603225,
+    "transferBytes": 3713012,
+    "sha256": "ec6f16866970ee5a7dc05158def7f55525441fd47b303f6db7f7a450c2bc20e6",
+    "immutable": true
+  },
+  "lazyChunk": {
+    "name": "sdk-lazy-01ec437bf80a758d77d02156dd945a9a4b4f899fb8ffa52369e36ea3465ab3cc.mjs",
+    "bytes": 212404,
+    "hashVerified": true
+  },
+  "browserLaunched": false
+}

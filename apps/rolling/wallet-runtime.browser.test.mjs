@@ -325,5 +325,5 @@ test('G19 real account tools prepare during reading and reuse cached assets on a
   await page.goto('about:blank');
  }
  assert.deepEqual(errors,[]);assert.equal(requests.some(r=>r.method==='POST'),false);assert.equal(requests.some(r=>r.path.includes('/v1/')),false);
- await fs.writeFile('execution/evidence/G19/local-cold-warm.json',JSON.stringify(results,null,2)+'\n');
+ await fs.writeFile('.build/G19-local-cold-warm.json',JSON.stringify(results,null,2)+'\n');
 });

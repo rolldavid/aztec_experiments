@@ -4,7 +4,10 @@
     "beforeBytes": 63251437,
     "initialBrowserBytes": 16603225,
     "lazyModules": 56,
-    "browserKernelAndWasmImports": "pass"
+    "browserKernelAndWasmImports": "pass",
+    "initialBrowserGzipBytes": 3681660,
+    "previousGzipBytes": 28065572,
+    "observedHostedTransferBytes": 3713012
   },
   "checks": {
     "funding": 160,
@@ -19,5 +22,5 @@
     "Broad legacy panel run exposed stale preexisting selectors/expectations and was stopped. Focused changed-flow browser checks passed.",
     "No more browser launches after owner query about repeated Chrome startup."
   ],
-  "publication": "pending"
+  "publication": "Live app/router publication succeeded; native PIDs unchanged and public readback verified same board, portal and post."
 }

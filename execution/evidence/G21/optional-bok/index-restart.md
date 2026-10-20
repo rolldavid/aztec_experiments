@@ -1,0 +1,7 @@
+The existing public index performs a complete canonical replay from board deployment on every process start (shared/rolling/public-index.mjs, initialization at deploymentBlock-1). The previous cached generation is retained for comparison, not served before authentication. Each transaction step reads canonical block data and revalidates network/class/origin/target. scripts/rolling-public-server.mjs freshRead waits for the shared sync cycle to finish catch-up, so /api/home stays open while /api/status remains responsive.
+
+After this app-only publication, all native process identities were unchanged. The index progressed from checkpoint10901 to10993 while cacheComparison remained pending; the pre-publication checkpoint was11345. Two bounded operator HTTP reads expired while the background replay continued. This is startup reauthentication, not a missing post or changed board. No second app restart was performed.
+
+Next architecture fix: separate the persistent index from frontend asset/service updates so a UI publication cannot trigger full replay. Preserve canonical cache-authentication/reorg requirements; do not silently treat unauthenticated cached projection rows as verified.
+
+The existing replay subsequently completed. The public Home API returned the identical original post ID with the same board and collateral portal. Exact SDK/router/lazy-module readback passed without launching a browser.
