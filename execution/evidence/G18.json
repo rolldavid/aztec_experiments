@@ -1,0 +1,85 @@
+{
+  "task_id": "G18",
+  "outcome": "pass",
+  "recorded_at": "2026-10-20T12:16:44.161805+00:00",
+  "source_fingerprint": "44dd1fa373296cad8a9584e671835dad5f05ee3d7613b70996a0f96ffe1e7540",
+  "source_inventory": "evidence/G18/source-published.json",
+  "artifacts": [
+    {
+      "path": "evidence/G18/source-published.json",
+      "sha256": "712fee6b7461c6729ac5ff8905339dc097fd7d37f978b55e2d987b575030ed44"
+    },
+    {
+      "path": "evidence/G18/verification.md",
+      "sha256": "83878edbc2a7319c2fd4343be2518f63cbd41f5ad22309f6d2f64decec1a91ce"
+    },
+    {
+      "path": "evidence/G18/independent-review.md",
+      "sha256": "1d4f65cc280a1e718efde57d961856219772267b6f828e323e8fba54cfe2ea6b"
+    },
+    {
+      "path": "evidence/G18/browser-final.log",
+      "sha256": "66561a8319f65a78ac3e124f4b9bc8282ec0c48539aad5955a75352aa2021af8"
+    },
+    {
+      "path": "evidence/G18/gate-result.json",
+      "sha256": "de90430cc0981ca18135eeed09a00f3e44ec15a06f0274d967ce7322b39b974d"
+    },
+    {
+      "path": "evidence/G18/publication.md",
+      "sha256": "341f025c2196775ff7057ac7a9a5baa35a5293a7d23d4e4e96047ccb06bf3b79"
+    },
+    {
+      "path": "evidence/G18/publication-result.json",
+      "sha256": "74140ee9b6c1d67779cdfbf6c946d5787de942fe34f0f6f3629d77d9bb7f7226"
+    },
+    {
+      "path": "evidence/G18/live-readback.json",
+      "sha256": "e5babda73abf3aa592f8df06758524af552971b1a275befe94a3f07e7a6eb7e1"
+    },
+    {
+      "path": "evidence/G18/live-1440.png",
+      "sha256": "47eb9dda6c5a82083922f7889562ff597f16c5a159af8921f2ecb58488b92894"
+    },
+    {
+      "path": "evidence/G18/live-390.png",
+      "sha256": "9d729be2ff9862a2efb5b6bdf2740cda9d11af5b94daa84fefc6d2a8e88f5c89"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G18-A01",
+      "result": "pass",
+      "summary": "Main-page names and inline registration preserve verified ownership, drafts and explicit spend consent.23browser cases pass including7new cases.",
+      "artifacts": [
+        "evidence/G18/source-published.json",
+        "evidence/G18/verification.md",
+        "evidence/G18/independent-review.md",
+        "evidence/G18/browser-final.log",
+        "evidence/G18/gate-result.json",
+        "evidence/G18/publication.md",
+        "evidence/G18/publication-result.json",
+        "evidence/G18/live-readback.json",
+        "evidence/G18/live-1440.png",
+        "evidence/G18/live-390.png"
+      ]
+    },
+    {
+      "id": "G18-A02",
+      "result": "pass",
+      "summary": "Independent source/harness/publisher review approved. Three frontend files published; live desktop/mobile and guest inline entry pass;7posts and board identity unchanged.",
+      "artifacts": [
+        "evidence/G18/source-published.json",
+        "evidence/G18/verification.md",
+        "evidence/G18/independent-review.md",
+        "evidence/G18/browser-final.log",
+        "evidence/G18/gate-result.json",
+        "evidence/G18/publication.md",
+        "evidence/G18/publication-result.json",
+        "evidence/G18/live-readback.json",
+        "evidence/G18/live-1440.png",
+        "evidence/G18/live-390.png"
+      ]
+    }
+  ]
+}

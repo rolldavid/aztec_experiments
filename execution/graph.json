@@ -9227,7 +9227,7 @@
       "title": "Inline posting name selection and creation",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "review",
+      "status": "done",
       "depends_on": [
         "G17"
       ],
@@ -9259,7 +9259,7 @@
       "evidence": "evidence/G18.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "23 focused browser checks pass; independent source/harness/publisher review approved. Ready for three-file frontend publication.",
+      "checkpoint": "Frontend4545fb03 published and pushed.23focused browser checks and independent source/harness/publisher review pass. Live desktop/mobile selector, inline guest entry and asset readback pass;7posts preserved; no contract/backend changes or live financial actions.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

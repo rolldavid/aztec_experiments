@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 26/56.
+Objective state: **running**. Completed packages: 27/56.
 
 ## In progress
 
-- **Inline posting name selection and creation (G18)** — 23 focused browser checks pass; independent source/harness/publisher review approved. Ready for three-file frontend publication.
+None.
 
 ## Ready internal work
 
