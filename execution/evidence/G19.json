@@ -1,0 +1,105 @@
+{
+  "task_id": "G19",
+  "outcome": "pass",
+  "recorded_at": "2026-10-20T13:01:40.978221+00:00",
+  "source_fingerprint": "d0fc58772f2f44c238420b9fbb347f5ac74954628f6fbb5938edcd5219094b25",
+  "source_inventory": "evidence/G19/source-published.json",
+  "artifacts": [
+    {
+      "path": "evidence/G19/source-published.json",
+      "sha256": "c58703f01988d2f706716229b4d95f6dc6d5536ea4001d0abc97b48e80ba1136"
+    },
+    {
+      "path": "evidence/G19/verification.md",
+      "sha256": "5b5150fdcb029b062ca9cb910590ba30b38c22c2263356fc19a550be228493f0"
+    },
+    {
+      "path": "evidence/G19/independent-review.md",
+      "sha256": "5a37c7a4c54a973afb28245d71eed350e175fe52a25cba2f2f6319c138f9d4ab"
+    },
+    {
+      "path": "evidence/G19/assets-tests.log",
+      "sha256": "c841f6b35dde13196ed55534f0b9e46d98a0a414a28d0b4fa5aec7c4b19ce795"
+    },
+    {
+      "path": "evidence/G19/loader-tests.log",
+      "sha256": "b93bbc1dfdd8b2174a9e186b0a12d97a9c9b1680d1a1649706af78a5515063fc"
+    },
+    {
+      "path": "evidence/G19/runtime-browser-final.log",
+      "sha256": "1e88a6aad67755da912079fa985735ca5f3bf97a2f65004627e28b0fefa69fd0"
+    },
+    {
+      "path": "evidence/G19/local-cold-warm.json",
+      "sha256": "c17a4527c70f34f9274ec3b804c56d3802c2bc449b5b0c95af9d25e22c9cca2b"
+    },
+    {
+      "path": "evidence/G19/gate-result.json",
+      "sha256": "474f4d62a664cea291172a6120b71dba4ec45c5272d1fcc77be272a384bcc432"
+    },
+    {
+      "path": "evidence/G19/publication.md",
+      "sha256": "b03d3f31d787122afcdc24b98a42a5f916c6cb244c734d967c39b434f295e709"
+    },
+    {
+      "path": "evidence/G19/publication-result.json",
+      "sha256": "620b120e6ffc45ed51ad748a57cbda1d3ea627696bd31cc0185b1de097e6af2f"
+    },
+    {
+      "path": "evidence/G19/live-readback.json",
+      "sha256": "9718c5493f3b9712facaf489903216cf09eb5b3c2b662488c9f2d6bd351284c9"
+    },
+    {
+      "path": "evidence/G19/live-cold-warm.json",
+      "sha256": "201920e20cb85658e1db7193aa45f6f4a4b7a6bb2c7b5923a11c543a3c958987"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G19-A01",
+      "result": "pass",
+      "summary": "Background parallel public preparation;25 focused checks pass without account/session creation.",
+      "artifacts": [
+        "evidence/G19/source-published.json",
+        "evidence/G19/verification.md",
+        "evidence/G19/independent-review.md",
+        "evidence/G19/assets-tests.log",
+        "evidence/G19/loader-tests.log",
+        "evidence/G19/runtime-browser-final.log",
+        "evidence/G19/local-cold-warm.json",
+        "evidence/G19/gate-result.json",
+        "evidence/G19/publication.md",
+        "evidence/G19/publication-result.json",
+        "evidence/G19/live-readback.json",
+        "evidence/G19/live-cold-warm.json"
+      ]
+    },
+    {
+      "id": "G19-A02",
+      "result": "pass",
+      "summary": "Independent review and normal gate pass; live cold36.2s and browser-restarted2.7s with zero public asset network requests; published same deployment.",
+      "artifacts": [
+        "evidence/G19/source-published.json",
+        "evidence/G19/verification.md",
+        "evidence/G19/independent-review.md",
+        "evidence/G19/assets-tests.log",
+        "evidence/G19/loader-tests.log",
+        "evidence/G19/runtime-browser-final.log",
+        "evidence/G19/local-cold-warm.json",
+        "evidence/G19/gate-result.json",
+        "evidence/G19/publication.md",
+        "evidence/G19/publication-result.json",
+        "evidence/G19/live-readback.json",
+        "evidence/G19/live-cold-warm.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/ux_review",
+    "summary": "Approved source and harness; focused asset/security/lifecycle checks passed.",
+    "artifacts": [
+      "evidence/G19/independent-review.md"
+    ]
+  }
+}

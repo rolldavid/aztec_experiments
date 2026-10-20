@@ -1,0 +1,1 @@
+{"published": "/opt/rolling-app/releases/ux-73d92a9f79cd", "source": "73d92a9f79cd1269d9193d90c48653f475615d9d", "kind": "app", "files": 7, "sourcePreserved": true, "privateConfigsPreserved": true, "otherServicePidsPreserved": true, "unitSha256": "00c80ead805a0e8ed7f48bdb5980d7f265973b4b65a35b49de9554ecc079c681", "started": true, "applicationReadbackStillRequired": true}

@@ -9272,7 +9272,7 @@
       "title": "Background account preparation and reusable public assets",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "done",
       "depends_on": [
         "G18"
       ],
@@ -9303,7 +9303,7 @@
       "evidence": "evidence/G19.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Tracing sequential loader and pinned-asset browser caching; root implements, independent agents investigate/review.",
+      "checkpoint": "Published73d92a9f79cd;25 focused checks and independent review pass. Live browser restart reuses all13public assets with zero downloads;2.7s navigation-to-password.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

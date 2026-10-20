@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 27/57.
+Objective state: **running**. Completed packages: 28/57.
 
 ## In progress
 
-- **Background account preparation and reusable public assets (G19)** — Tracing sequential loader and pinned-asset browser caching; root implements, independent agents investigate/review.
+None.
 
 ## Ready internal work
 

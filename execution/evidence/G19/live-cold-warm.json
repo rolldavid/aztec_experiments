@@ -1,0 +1,28 @@
+[
+  {
+    "visit": "cold",
+    "navigationToPasswordMs": 36191,
+    "publicAssetNetworkRequests": [
+      "/wallet/ethers.js",
+      "/wallet/claim-secret-store.js",
+      "/wallet/account.js",
+      "/wallet/engine.js",
+      "/wallet/aztec_bundle.js",
+      "/wallet/crs-client.js",
+      "/wallet/wallet-providers.js",
+      "/wallet/passkey-wallet.js",
+      "/crs/crs-manifest.json",
+      "/wallet/board.json",
+      "/wallet/wallet-backup.js",
+      "/wallet/private-fee.json",
+      "/wallet/bok.json"
+    ],
+    "accountCreated": false
+  },
+  {
+    "visit": "browser-restarted",
+    "navigationToPasswordMs": 2706,
+    "publicAssetNetworkRequests": [],
+    "accountCreated": false
+  }
+]

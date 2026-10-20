@@ -1,0 +1,23 @@
+{
+  "source": "73d92a9f79cd1269d9193d90c48653f475615d9d",
+  "assets": {
+    "/reader.mjs": {
+      "sha256": "8d0ea1dcb69123e8f36c45ac36ae5a762d5897df69c5d0beb2f76e1ab2222873",
+      "matches": true
+    },
+    "/wallet-panel.mjs": {
+      "sha256": "6443991f118c342bb5b6344a6e25948b5de44f46187a5198ad8cf058efa1555d",
+      "matches": true
+    },
+    "/wallet-cache-worker.mjs": {
+      "sha256": "ecd650cecf0acde6cb0ea2ad76eacd6b4190d4ee6c87c0ddb0eb9eb7c09c07eb",
+      "matches": true
+    },
+    "/wallet/runtime.mjs": {
+      "sha256": "668d87fa7818353e5a6f979048ece2bc4fed664b009d9e471fe65c50ca46c95c",
+      "matches": true
+    }
+  },
+  "feedPosts": 7,
+  "boardAddress": "0x186d5c5e5a9bcd6d971b5e6c2a5dfb1afb58a103ee1715f7ce9997cce0c199a6"
+}
