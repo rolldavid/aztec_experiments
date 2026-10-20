@@ -53,6 +53,23 @@ contract RollingFundingRouterTest {
  function submit(RollingFundingRouter.Plan memory p) private {bytes memory signature=sign(p);vm.prank(alice);router.fund{value:1 ether+10000}(p,signature);}
  function reject(RollingFundingRouter.Plan memory p) private {bytes memory signature=sign(p);vm.expectRevert();vm.prank(alice);router.fund{value:1 ether+10000}(p,signature);}
  function empty() private view {require(portal.getDeposit(alice)==0 && portal.depositNonces(alice)==0,"Collateral not reverted");require(fee.amount()==0 && usdc.balanceOf(address(bok))==0,"Token legs not reverted");require(address(router).balance==0 && weth.balanceOf(address(router))==0,"Principal retained");require(feeToken.balanceOf(address(dex))==10000 && usdc.balanceOf(address(dex))==10000,"Swap not reverted");}
+ function testZeroBokFundsRequiredLegsWhilePluginInactive() public {
+ PluginPortal inactive=new PluginPortal(address(rollup),bytes32(uint256(4)),1,address(usdc));
+ router=new RollingFundingRouter(address(portal),address(fee),address(inactive),address(weth),address(dex),bytes32(uint256(3)));
+ RollingFundingRouter.Plan memory p=plan(alice);p.bok=RollingFundingRouter.Swap(0,0,0);p.bokCommitment=bytes32(0);p.bokSecretHash=bytes32(0);
+ usdc.seed(address(router),17);bytes memory consent=sign(p);vm.prank(alice);router.fund{value:1 ether+5000}(p,consent);
+ require(portal.getDeposit(alice)==1 ether && fee.amount()==100 && alice.balance==9 ether-1000,"Core funding mismatch");
+ require(usdc.balanceOf(address(inactive))==0 && usdc.balanceOf(address(dex))==10000 && usdc.balanceOf(address(router))==17,"Optional token touched");
+ require(address(router).balance==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0,"Principal retained");
+ require(weth.allowance(address(router),address(dex))==0 && feeToken.allowance(address(router),address(fee))==0 && usdc.allowance(address(router),address(inactive))==0,"Approval retained");
+ }
+ function testZeroBokRejectsHiddenBudgetOrCustody() public {
+ for(uint256 i=0;i<4;i++){
+ RollingFundingRouter.Plan memory p=plan(alice);p.bok=RollingFundingRouter.Swap(0,0,0);p.bokCommitment=bytes32(0);p.bokSecretHash=bytes32(0);
+ if(i==0)p.bok.maxEth=1;else if(i==1)p.bok.poolFee=500;else if(i==2)p.bokCommitment=bytes32(uint256(1));else p.bokSecretHash=bytes32(uint256(1));
+ bytes memory consent=sign(p);vm.expectRevert();vm.prank(alice);router.fund{value:1 ether+5000+p.bok.maxEth}(p,consent);empty();
+ }
+ }
  function testExactThreeDepositsRefundAndZeroApprovals() public {
  submit(plan(alice));require(portal.getDeposit(alice)==1 ether && portal.getDeposit(address(router))==0,"Wrong owner");require(alice.balance==9 ether-3000,"Wrong exact cost/refund");require(fee.amount()==100 && fee.recipient()==bytes32(uint256(3)),"Wrong private FPC");require(usdc.balanceOf(address(bok))==200,"Wrong Bok allocation");
  require(address(router).balance==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0 && usdc.balanceOf(address(router))==0,"Retained principal");require(weth.allowance(address(router),address(dex))==0 && feeToken.allowance(address(router),address(fee))==0 && usdc.allowance(address(router),address(bok))==0,"Retained approval"); }
@@ -109,6 +126,19 @@ contract RollingUsdcFundingRouterTest {
  require(usdc.balanceOf(alice)==100 ether && usdc.balanceOf(relayer)==0 && !usdc.authorizationState(alice,router.usdcAuthorizationNonce(p)),"Auth/payment not atomic");
  require(portal.getDeposit(alice)==0 && portal.depositNonces(alice)==0 && fee.amount()==0 && usdc.balanceOf(address(bok))==0,"Deposits not atomic");
  require(address(router).balance==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0 && usdc.balanceOf(address(router))==0,"Retained principal"); }
+ function testZeroBokUsdcFundsCoreWithInactivePluginAndBoundReimbursement() public {
+ PluginPortal inactive=new PluginPortal(address(portal.ROLLUP()),bytes32(uint256(4)),1,address(usdc));
+ router=new RollingFundingRouter(address(portal),address(fee),address(inactive),address(weth),address(dex),bytes32(uint256(3)));
+ RollingFundingRouter.UsdcPlan memory p=plan();p.bokAmount=0;p.bokCommitment=bytes32(0);p.bokSecretHash=bytes32(0);usdc.seed(address(router),17);submit(p);
+ require(portal.getDeposit(alice)==1 ether && fee.amount()==100 && alice.balance==0,"Core funding mismatch");
+ require(usdc.balanceOf(alice)==90 ether-1050 && usdc.balanceOf(relayer)==50 && usdc.balanceOf(address(inactive))==0,"Payment mismatch");
+ require(usdc.balanceOf(address(router))==17 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0 && address(router).balance==0,"Principal retained");
+ require(usdc.authorizationState(alice,router.usdcAuthorizationNonce(p)) && usdc.allowance(address(router),address(inactive))==0 && usdc.allowance(address(router),address(dex))==0,"Authority mismatch");
+ }
+ function testZeroBokUsdcRejectsHiddenCustodyAndRollsBackAuthorization() public {
+ RollingFundingRouter.UsdcPlan memory p=plan();p.bokAmount=0;p.bokCommitment=bytes32(0);p.bokSecretHash=bytes32(uint256(1));
+ (bytes memory c,bytes memory a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);
+ }
  function testZeroEthBeneficiaryPaysExactUsdcIncludingRelayerAndRefund() public {
  RollingFundingRouter.UsdcPlan memory p=plan();submit(p);require(alice.balance==0 && portal.getDeposit(alice)==1 ether && portal.getDeposit(relayer)==0);
  require(usdc.balanceOf(alice)==90 ether-1250 && usdc.balanceOf(relayer)==50 && usdc.balanceOf(address(bok))==200 && fee.amount()==100,"Exact allocation/refund mismatch");

@@ -65,6 +65,7 @@ function fixture(t) {
   inputs['node_modules/@aztec-labs/pxe/'+PREFERENCE_PAGE_RECOVERY_PIN.generated]=preferenceRecoverySource();
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
+    'aztec_browser.js': '// synthetic browser bundle',
     'bb-main.worker.js': '// synthetic main worker',
     'bb-thread.worker.js': '// synthetic thread worker',
     'sqlite.worker.js': '// synthetic sqlite worker',
@@ -103,6 +104,7 @@ for (const [label, filename, error] of [
   ['toolchain helper', 'scripts/toolchain.mjs', /SDK input changed/],
   ['runtime asset source', 'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js_bg.wasm', /SDK input changed/],
   ['bundle output', '.build/sdk/aztec_bundle.js', /SDK output changed/],
+  ['browser output', '.build/sdk/aztec_browser.js', /SDK output changed/],
   ['worker output', '.build/sdk/bb-thread.worker.js', /SDK output changed/],
   ['runtime asset output', '.build/sdk/sqlite3.wasm', /SDK output changed/],
 ]) {

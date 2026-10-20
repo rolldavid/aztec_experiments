@@ -104,3 +104,22 @@ test('fresh ETH and USDC signup remain available to a wallet with an earlier dep
   assert(!f.calls.some(call => call.method === 'eth_call' && call.params[0].to === f.input.scope.collateralPortal && p.parseTransaction(call.params[0])?.name === 'getDeposit'));
  }
 });
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])test(`${asset} zero Bok funding skips plugin availability and quotes only required assets`,async()=>{
+ const f=make();Object.assign(f.input.allocation,{bokAmount:'0',bokCommitment:field(0),bokSecretHash:field(0),...(asset==='ETH'?{bokPoolFee:0}:{})});
+ const original=f.provider.request;f.provider.request=async c=>{assert(!(c.method==='eth_call'&&c.params[0].to===f.input.scope.bokPortal),'No optional portal call');return original(c);};
+ const result=await f.prepare();assert.deepEqual(result.requiredClaims,['collateral','private-fee']);
+ assert.equal(asset==='ETH'?result.value:result.maximumUsdc,asset==='ETH'?'1001010':'10101060');
+ if(asset==='ETH')assert.deepEqual(result.plan.bok,{amount:'0',maxEth:'0',poolFee:0});
+ else assert.equal(result.plan.bokAmount,'0');
+ assert.equal(f.calls.filter(c=>c.method==='eth_call'&&c.params[0].to===f.input.scope.quoter).length,asset==='ETH'?1:2);
+ const tx=asset==='ETH'?await aggregateFundingTransaction(result,'0x12'):await aggregateUsdcFundingTransaction(result,'0x12','0x34');assert.equal(tx.planHash,result.planHash);
+});
+for(const make of [fixture,usdcFixture])test('zero Bok rejects nonzero disabled custody before any read',async()=>{
+ const f=make();Object.assign(f.input.allocation,{bokAmount:'0',...(f.input.allocation.asset==='ETH'?{bokPoolFee:0}:{})});
+ await assert.rejects(f.prepare(),{code:'AGGREGATE_INVALID'});assert.equal(f.calls.length,0);
+});
+test('zero Bok USDC still authenticates the payment token implementation',async()=>{
+ const f=usdcFixture({badImplementation:true});Object.assign(f.input.allocation,{bokAmount:'0',bokCommitment:field(0),bokSecretHash:field(0)});
+ await assert.rejects(f.prepare(),{code:'AGGREGATE_USDC_IMPLEMENTATION'});
+});

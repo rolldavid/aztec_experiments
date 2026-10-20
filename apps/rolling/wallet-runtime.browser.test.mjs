@@ -17,7 +17,7 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  const wallet=await loadRollingWalletAssets({config,trustedQuery:{url:'http://127.0.0.1:1/v1/node',allowLocalDev:true},remoteProver:null,proofsEnabled:true},scope);
  const index={sync:async()=>{},status:()=>({schemaVersion:1,state:'ready'}),query:()=>({schemaVersion:1,scope,complete:true,checkpoint:{number:1,hash:'public'},revision:'1',posts:[],names:{},boards:{},nextCursor:null})};
  const server=await startRollingReader({index,wallet});t.after(()=>server.close());
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());
+ const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());
  const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true}),requests=[],errors=[];
  page.on('request',request=>requests.push({url:request.url(),method:request.method()}));page.on('pageerror',()=>errors.push('pageerror'));
  await page.goto(server.url);await page.getByRole('heading',{name:'A little quiet here'}).waitFor();
@@ -28,7 +28,7 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.getByRole('button',{name:'Create account',exact:true}).click();
  await page.getByLabel('Password',{exact:true}).waitFor({timeout:30000});
  assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/aztec_bundle.js').length,1);
- assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/bok.json').length,1);
+ assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/bok.json').length,0);
  const bokServed=await wallet.read('/wallet/bok.json');assert.equal(JSON.parse(bokServed.body).name,'PrivateBok');assert.equal(createHash('sha256').update(bokServed.body).digest('hex'),wallet.runtime.artifacts.bok.sha256);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
@@ -293,7 +293,7 @@ test('native browser reuses immutable hash-addressed bytes while runtime metadat
   if(path==='/wallet/board.json'){assets++;return {body,type:'application/json'};}
   if(path==='/wallet/runtime.json'){metadata++;return {body:Buffer.from('{}'),type:'application/json'};}return null;
  }}});t.after(()=>server.close());
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage();
+ const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const page=await browser.newPage();
  const read=()=>page.evaluate(async hash=>{
   const response=await fetch('/wallet/board.json?sha256='+hash,{cache:'default',credentials:'omit'}),bytes=await response.arrayBuffer();
   await fetch('/wallet/runtime.json',{cache:'no-store',credentials:'omit'});
@@ -318,7 +318,8 @@ test('G19 real account tools prepare during reading and reuse cached assets on a
   const ready=await page.evaluate(async()=>{const start=performance.now();const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const [a,b]=await Promise.all([loadRollingWalletRuntime(),loadRollingWalletRuntime()]);return {readyMs:performance.now(),remainingMs:performance.now()-start,same:a===b,account:!!a.getAccount(),sessionReads:performance.getEntriesByType('resource').filter(r=>r.name.includes('/v1/')).length};});
   assert.equal(ready.same,true);assert.equal(ready.account,false);assert.equal(ready.sessionReads,0);assert.equal(await page.locator('dialog[open]').count(),0);
   const resources=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>/\/(wallet|crs)\//.test(r.name)).map(r=>({path:new URL(r.name).pathname,pinned:new URL(r.name).searchParams.has('sha256'),transfer:r.transferSize,encoded:r.encodedBodySize,decoded:r.decodedBodySize,start:r.startTime,end:r.responseEnd})));
-  for(const a of [...wallet.runtime.scripts,...Object.values(wallet.runtime.artifacts),wallet.runtime.crs]){const rows=resources.filter(r=>r.path===a.url);assert.equal(rows.length,1,a.url+' must load once');assert.equal(rows[0].decoded,a.bytes);if(visit==='warm'){assert.equal(rows[0].transfer,0,a.url+' should reuse browser cache');assert.equal(assetReads.get(a.url),1,a.url+' must not be fetched from the server again');}}
+  assert.equal(resources.some(r=>r.path==='/wallet/bok.json'),false);assert.equal(assetReads.get('/wallet/bok.json')??0,0);
+  for(const a of [...wallet.runtime.scripts,wallet.runtime.artifacts.board,wallet.runtime.artifacts.privateFee,wallet.runtime.crs]){const rows=resources.filter(r=>r.path===a.url);assert.equal(rows.length,1,a.url+' must load once');assert.equal(rows[0].decoded,a.bytes);if(visit==='warm'){assert.equal(rows[0].transfer,0,a.url+' should reuse browser cache');assert.equal(assetReads.get(a.url),1,a.url+' must not be fetched from the server again');}}
   const sdk=resources.find(r=>r.path==='/wallet/aztec_bundle.js'),board=resources.find(r=>r.path==='/wallet/board.json'),fee=resources.find(r=>r.path==='/wallet/private-fee.json');assert(sdk.start<board.end,'SDK preload overlaps contract downloads');assert(fee.start<board.end,'contract fetches overlap');
   const opened=Date.now();await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByLabel('Password',{exact:true}).waitFor();results.push({visit,...ready,openToPasswordMs:Date.now()-opened,resources});
   await page.goto('about:blank');

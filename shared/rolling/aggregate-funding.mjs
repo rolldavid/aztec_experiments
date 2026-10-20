@@ -21,6 +21,7 @@ const portal = new Interface(['function depositNonces(address) view returns(uint
   'function getDeposit(address) view returns(uint128)','function MIN_DEPOSIT() view returns(uint256)','function MAX_DEPOSIT() view returns(uint256)']);
 const bok = new Interface(['function active() view returns(bool)']);
 const quoter = new Interface(['function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256 amountIn,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)']);
+const ZERO_FIELD='0x'+'0'.repeat(64);
 const P=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 const prepared=new WeakMap();
 function fail(code){throw Object.assign(new Error('Aggregate funding is unavailable.'),{code:`AGGREGATE_${code}`});}
@@ -69,10 +70,12 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   for(const k of ['routerCodeHash','quoterCodeHash'])hex(s[k]);field(s.privateFpc);
   const a=record(x.allocation,['asset','collateralWei','feeAmount','bokAmount','feePoolFee','bokPoolFee','slippageBps','collateralSecretHash','feeSecretHash','bokCommitment','bokSecretHash']);
   check(a.asset==='ETH','USDC_GAS_ROUTE_UNQUALIFIED');
-  for(const k of ['collateralWei','feeAmount','bokAmount'])check(uint(a[k],k==='collateralWei'?96:128)>0n);
-  for(const k of ['feePoolFee','bokPoolFee'])check([100,500,3000,10000].includes(a[k]));
+  for(const k of ['collateralWei','feeAmount'])check(uint(a[k],k==='collateralWei'?96:128)>0n);
+  const hasBok=uint(a.bokAmount,128)>0n;
+  check([100,500,3000,10000].includes(a.feePoolFee));check(hasBok?[100,500,3000,10000].includes(a.bokPoolFee):a.bokPoolFee===0);
   check(Number.isSafeInteger(a.slippageBps) && a.slippageBps>=0 && a.slippageBps<=500);
-  for(const k of ['collateralSecretHash','feeSecretHash','bokCommitment','bokSecretHash'])field(a[k]);
+  for(const k of ['collateralSecretHash','feeSecretHash'])field(a[k]);
+  for(const k of ['bokCommitment','bokSecretHash']){if(hasBok)field(a[k]);else check(a[k]===ZERO_FIELD);}
   const w=record(x.wallet,['address','chainId','canSendTransaction','canSignTypedData','gasBudgetWei']);hex(w.address,20);uint(w.chainId,64);
   check(w.chainId===s.chainId && w.canSendTransaction===true && w.canSignTypedData===true,'WALLET_CAPABILITY');check(uint(w.gasBudgetWei)>0n,'USER_GAS_REQUIRED');
   check(provider && typeof provider.request==='function');
@@ -85,7 +88,7 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   }
   const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
   for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE');
-  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true && (await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');
+  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true && (!hasBok || (await call(s.bokPortal,bok,'active'))[0]===true),'PORTAL_NOT_READY');
   const minimum=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0], maximum=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0];
   check(BigInt(a.collateralWei)>=minimum && BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
   const nonce=(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString();
@@ -93,7 +96,7 @@ export async function prepareAggregateFunding(input,{provider}={}) {
     const q=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.weth,token,amount,poolFee,0]]))[0];
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
   };
-  const fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee), credit=await quote(s.bokToken,a.bokAmount,a.bokPoolFee);
+  const fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee), credit=hasBok?await quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'};
   const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash && current.timestamp===block.timestamp,'QUOTE_REORG');
   const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
@@ -106,7 +109,7 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   const result=freeze({kind:'rolling-aggregate-eth-v1',scope:s,plan,value,quoteAnchor:{number:tag,hash:block.hash,timestamp:block.timestamp},
     breakdown:{collateralWei:plan.collateral,fee:fee,bok:credit,gasBudgetWei:w.gasBudgetWei,maximumTotalWei:(BigInt(value)+BigInt(w.gasBudgetWei)).toString()},consent,
     consentDigest:TypedDataEncoder.hash(consent.domain,consent.types,consent.value),planHash:keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction('fund').inputs[0]],[plan])),
-    ready:false,requiredClaims:['collateral','private-fee','bok']});await validState(request,result,false);prepared.set(result,request);return result;
+    ready:false,requiredClaims:['collateral','private-fee',...(hasBok?['bok']:[])]});await validState(request,result,false);prepared.set(result,request);return result;
 }
 /** Recheck the original quote before opening a wallet signature prompt. This
  * reads canonical/pending Ethereum state; browser clocks are not authority. */
@@ -140,9 +143,11 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   for(const key of ['routerCodeHash','quoterCodeHash','usdcCodeHash','usdcImplementationCodeHash'])hex(s[key]);field(s.privateFpc);
   s.usdcDomain=record(s.usdcDomain,['name','version']);for(const key of ['name','version'])check(typeof s.usdcDomain[key]==='string' && /^[A-Za-z0-9 .-]{1,64}$/.test(s.usdcDomain[key]));
   const a=record(x.allocation,['asset','collateralWei','feeAmount','bokAmount','collateralPoolFee','feePoolFee','slippageBps','collateralSecretHash','feeSecretHash','bokCommitment','bokSecretHash','authorizationSalt']);check(a.asset==='USDC');
-  for(const key of ['collateralWei','feeAmount','bokAmount'])check(uint(a[key],key==='collateralWei'?96:128)>0n);
+  for(const key of ['collateralWei','feeAmount'])check(uint(a[key],key==='collateralWei'?96:128)>0n);
+  const hasBok=uint(a.bokAmount,128)>0n;
   for(const key of ['collateralPoolFee','feePoolFee'])check([100,500,3000,10000].includes(a[key]));check(Number.isSafeInteger(a.slippageBps)&&a.slippageBps>=0&&a.slippageBps<=500);
-  for(const key of ['collateralSecretHash','feeSecretHash','bokCommitment','bokSecretHash'])field(a[key]);hex(a.authorizationSalt);
+  for(const key of ['collateralSecretHash','feeSecretHash'])field(a[key]);
+  for(const key of ['bokCommitment','bokSecretHash']){if(hasBok)field(a[key]);else check(a[key]===ZERO_FIELD);}hex(a.authorizationSalt);
   const w=record(x.wallet,['address','chainId','canSignTypedData']);hex(w.address,20);check(w.chainId===s.chainId&&w.canSignTypedData===true,'WALLET_CAPABILITY');
   const relay=record(x.relay,['address','feeUsdc','gasBudgetWei']);hex(relay.address,20);check(relay.address!==w.address&&relay.address!==s.router,'RELAY_SCOPE');check(uint(relay.feeUsdc,128)>0n&&uint(relay.gasBudgetWei)>0n,'RELAY_BUDGET');
   check(provider&&typeof provider.request==='function');
@@ -156,7 +161,7 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE');
   check(String((await call(s.bokToken,usdcAbi,'implementation'))[0]).toLowerCase()===s.usdcImplementation,'USDC_IMPLEMENTATION');
   const domain={...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken};check((await call(s.bokToken,usdcAbi,'DOMAIN_SEPARATOR'))[0]===TypedDataEncoder.hashDomain(domain),'USDC_DOMAIN');
-  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true&&(await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');
+  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true&&(!hasBok||(await call(s.bokPortal,bok,'active'))[0]===true),'PORTAL_NOT_READY');
   check(BigInt(a.collateralWei)>=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0]&&BigInt(a.collateralWei)<=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],'COLLATERAL_BOUNDS');
   const nonce=String((await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0]);
   const quote=async(token,amount,poolFee)=>{const quoted=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.bokToken,token,amount,poolFee,0]]))[0];check(quoted>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxUsdc:((quoted*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedUsdc:quoted.toString()};};
@@ -178,7 +183,7 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   const result=freeze({kind:'rolling-aggregate-usdc-v1',scope:s,plan,planHash,value:'0',maximumUsdc,authorizationNonce,quoteAnchor:{number:tag,hash:block.hash,timestamp:block.timestamp},consent,authorization,
     consentDigest:TypedDataEncoder.hash(consent.domain,consent.types,consent.value),authorizationDigest:TypedDataEncoder.hash(domain,authorization.types,authorization.value),
     breakdown:{collateral,fee,bokAmount:a.bokAmount,relayFeeUsdc:relay.feeUsdc,maximumUsdc},relayGasBudgetWei:relay.gasBudgetWei,
-    ready:false,requiredClaims:['collateral','private-fee','bok'],relayPreflightRequired:true,failureGasRisk:'relayer-unreimbursed-on-revert'});await validState(request,result,true);preparedUsdc.set(result,request);return result;
+    ready:false,requiredClaims:['collateral','private-fee',...(hasBok?['bok']:[])],relayPreflightRequired:true,failureGasRisk:'relayer-unreimbursed-on-revert'});await validState(request,result,true);preparedUsdc.set(result,request);return result;
 }
 export async function aggregateUsdcFundingTransaction(preparation,collateralConsent,authorization){
   check(preparedUsdc.has(preparation),'UNVERIFIED_QUOTE');

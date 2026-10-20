@@ -187,7 +187,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(view==='action'&&!['like','unlike','preference','read-marker'].includes(draft.type)&&!actionsLoaded){
    note('Checking publishing options…');
    moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():null;checkAccount(epoch);
-   await loadBok();checkAccount(epoch);actionsLoaded=true;onPrivateChange();
+   if(draft.type==='bok')await loadBok();checkAccount(epoch);actionsLoaded=true;onPrivateChange();
   }
   if(view==='overview'&&moderatorStatus===null){moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():{authorized:false};checkAccount(epoch);onPrivateChange();}
   note('');
@@ -429,6 +429,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=value;}),true));return;}
   content.append(paragraph('Posting balance: '+decimal(balances.fee.available,18)+' credits (FEE).'));
   if(balances.fee.pendingReservation)content.append(paragraph('A saved transaction has an unresolved fee reservation, up to '+decimal(balances.fee.pendingReservation.maximumFee,18)+' FEE. It is not subtracted again from the balance above.'));
+  if(!balances.bok&&session.bokConfigured===true)content.append(button('Show Bok balance',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0,includeBok:true});checkAccount(epoch);balances=value;})));
   if(balances.bok){content.append(paragraph('Available Bok credit: '+decimal(balances.bok.available,6)+' USDC.'));
    if(bokAccounting?.complete){
     content.append(paragraph('Complete owned-request accounting at block '+bokAccounting.anchor.blockNumber+'. Allocated '+decimal(bokAccounting.totals.available,6)+', reserved '+decimal(bokAccounting.totals.reserved,6)+', charged '+decimal(bokAccounting.totals.charged,6)+', returned '+decimal(bokAccounting.totals.refunded,6)+' USDC. Returned credit is already part of your unallocated balance; it is not added again.'));
@@ -453,7 +454,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const review=button('Withdraw deposit',()=>void work(async()=>{intent=await session.application.prepare({type:'withdraw',deposit:d.id});refundQuote=null;}),true);review.dataset.unavailable=String(!d.eligible);area.append(review);content.append(area);
   }
   if(!balances.collateral.deposits.length)content.append(paragraph('No refundable deposits on this page.'));
-  if(balances.collateral.nextCursor!==null)content.append(button('More deposits',()=>void work(async()=>{const epoch=accountEpoch;const page=await session.application.readBalances({cursor:balances.collateral.nextCursor});checkAccount(epoch);balances=page;})));
+  if(balances.collateral.nextCursor!==null)content.append(button('More deposits',()=>void work(async()=>{const epoch=accountEpoch;const page=await session.application.readBalances({cursor:balances.collateral.nextCursor,includeBok:!!balances.bok});checkAccount(epoch);balances=page;})));
   content.append(button('Refresh balances',()=>void work(async()=>{balances=null;bokAccounting=null;const epoch=accountEpoch;const page=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=page;})));
  }
  function refundView(){
@@ -658,9 +659,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function preferenceDescription(action){return actionLabel(action)+'. Only you can see your saved choices.';}
  function form(){
   if(MODERATOR_TYPES.has(draft.type)&&moderatorStatus?.authorized!==true)draft={type:'post',subboard:'0',content:''};
-  if(['post','reply','bok'].includes(draft.type)&&bokStatus?.available===true){
+  if(['post','reply','bok'].includes(draft.type)&&(session.bokConfigured===true||bokStatus?.available===true)){
    const ask=el('input',{type:'checkbox','aria-label':'Ask Bok to reply'});ask.checked=draft.type==='bok';
-   ask.addEventListener('change',()=>{draft={...draft,type:ask.checked?'bok':replyContext(draft)?'reply':'post'};if(ask.checked&&draft.parent===undefined)Object.assign(draft,{parent:'0',root:'0'});render();});
+   ask.addEventListener('change',()=>{const selected=ask.checked;if(!selected){draft={...draft,type:replyContext(draft)?'reply':'post'};render();return;}void work(async()=>{await loadBok();if(bokStatus?.available!==true)throw connectionFailure;draft={...draft,type:'bok'};if(draft.parent===undefined)Object.assign(draft,{parent:'0',root:'0'});});});
    content.append(label('Ask Bok to reply',ask));
   }
   const fields=new Map();
@@ -812,11 +813,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const capability=fundingActiveCapability=fundingCapability();render();
   let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
   if(result.state==='complete'){
-   stopFunding();await refresh();checkAccount(epoch);await loadBok();checkAccount(epoch);
+   const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();await refresh();checkAccount(epoch);if(bokTopup){await loadBok();checkAccount(epoch);}
    if(view==='topup')notice='Top-up and private claim confirmed. Your posting collateral is unchanged.';
    else{
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
-    const credit=bokStatus?.available&&/^(0|[1-9][0-9]*)$/.test(bokStatus.availableCredit)?'Bok credit: '+decimal(bokStatus.availableCredit,6)+' USDC.':'Bok credit could not be verified.';
     notice=status?.status==='fee-ready'?'Payment confirmed. Your posting balance is set up.':'Payment confirmed. Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
    }
   }
@@ -862,7 +862,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(el('h3',{},'Set up posting'),
     fundingSummary('Refundable deposit',deposit+currency,'Discourages spam. Withdraw after your posts have been checked and the wait between posts has ended. Rule-breaking posts extend the wait.'),
     fundingSummary('Posting balance',posting+currency,'Pays the network each time you post or update your account.'),
-    fundingSummary('Bok assistant',assistant+currency,'1 USDC of credit for Bok, the AI assistant you can ask to help in a thread.'),
+    ...(BigInt(isUsdc?b.bokAmount:b.bok.amount)>0n?[fundingSummary('Bok assistant',assistant+currency,decimal(isUsdc?b.bokAmount:b.bok.amount,6)+' USDC of credit for requests to Bok.')]:[]),
     fundingSummary(isUsdc?'Payment fee':'Ethereum fee limit',decimal(isUsdc?b.relayFeeUsdc:b.gasBudgetWei,isUsdc?6:18)+currency,isUsdc?'Included in your USDC payment.':'You pay the actual network fee, up to this limit.'),
     el('div',{class:'funding-total'},el('span',{},'Maximum total'),el('strong',{},decimal(isUsdc?b.maximumUsdc:b.maximumTotalWei,isUsdc?6:18)+currency)),
     paragraph(isUsdc?'≈ $'+Number(decimal(b.maximumUsdc,6)).toFixed(2)+' USD':q.usdEstimate?'≈ $'+q.usdEstimate+' USD':'USD estimate unavailable'),

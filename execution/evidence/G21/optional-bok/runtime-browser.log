@@ -1,0 +1,20 @@
+✔ funding runtime captures named custody and rechecks chain/account without signature or send (1.290208ms)
+✔ funding runtime invalidates chain during custody read (0.171792ms)
+✔ funding runtime invalidates account during custody read (0.106ms)
+✔ funding runtime invalidates transport during custody read (0.079084ms)
+✔ funding runtime invalidates provider during custody read (0.091042ms)
+✔ funding runtime invalidates invalidated during custody read (0.084083ms)
+✔ public asset loader uses pinned native cache and waits for load/error without replay (10.2585ms)
+✔ public artifact loading cancels on page exit rather than elapsed transfer time (1.742ms)
+✔ public script loading cancels on page exit without replay (1.497875ms)
+✔ public artifact digest mismatch fails before any script executes (1.206875ms)
+✔ native browser reuses immutable hash-addressed bytes while runtime metadata stays fresh (687.452ms)
+✔ G19 real account tools prepare during reading and reuse cached assets on a second visit (3000.43675ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3947.587291

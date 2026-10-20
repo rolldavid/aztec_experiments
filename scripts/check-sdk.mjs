@@ -13,7 +13,7 @@ export const SDK_ASSETS = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm', 'sqlite3.wasm'],
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
-const requiredOutputs = ['aztec_bundle.js', 'bb-main.worker.js', 'bb-thread.worker.js', 'sqlite.worker.js', ...SDK_ASSETS.map(([, output]) => output)];
+const requiredOutputs = ['aztec_bundle.js', 'aztec_browser.js', 'bb-main.worker.js', 'bb-thread.worker.js', 'sqlite.worker.js', ...SDK_ASSETS.map(([, output]) => output)];
 const preferenceInputs = [
   ...PREFERENCE_PAGE_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.after]),
   ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>['node_modules/@aztec-labs/pxe/'+pin.generated,pin.sha256]),

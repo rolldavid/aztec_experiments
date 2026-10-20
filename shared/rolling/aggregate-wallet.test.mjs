@@ -50,7 +50,7 @@ function fixture({chainId='31337'}={}){
     log(scope.router,router,'Funded',[address,expectedHash,p.collateral,p.fee.amount,p.bok.amount,p.fee.maxEth,p.bok.maxEth,0]),
     log(scope.collateralPortal,portal,'Deposited',[address,p.collateral,p.collateralSecretHash,h(30),1]),
     log(scope.feePortal,fee,'DepositToAztecPublic',[scope.privateFpc,p.fee.amount,p.feeSecretHash,h(31),2]),
-    log(scope.bokPortal,bok,'Deposited',[p.bokCommitment,p.bok.amount,h(32),3])
+    ...(p.bok.amount>0n?[log(scope.bokPortal,bok,'Deposited',[p.bokCommitment,p.bok.amount,h(32),3])]:[])
    ]};if(state.unknown)throw Error('Lost acknowledgement');state.landed=true;return {hash:h(20)};
   }}};
  const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
@@ -532,9 +532,9 @@ for(const asset of ['ETH','USDC'])test(asset+' expiry during final credit check 
 test('starter funding derives the minimum deposit and funds the claim plus another action',async()=>{
  const {starterFundingAllocation}=await import('./aggregate-wallet.mjs');let reads=0;
  const eth=await starterFundingAllocation({asset:'ETH',minDeposit:'123456789',privateFeeCap:'700',provider:{async getFeeData(){reads++;return {maxFeePerGas:2n,gasPrice:1n};}}});
- assert.deepEqual(eth,{asset:'ETH',collateralWei:'123456789',feeAmount:'1400',bokAmount:'1000000',feePoolFee:3000,slippageBps:100,privateFeeCap:'700',bokPoolFee:3000,gasBudgetWei:'10000000'});assert.equal(reads,1);
+ assert.deepEqual(eth,{asset:'ETH',collateralWei:'123456789',feeAmount:'1400',bokAmount:'0',feePoolFee:3000,slippageBps:100,privateFeeCap:'700',bokPoolFee:0,gasBudgetWei:'10000000'});assert.equal(reads,1);
  const usdc=await starterFundingAllocation({asset:'USDC',minDeposit:'400',privateFeeCap:'11',provider:{getFeeData(){throw Error('USDC must use relay pricing');}}});
- assert.equal(usdc.feeAmount,'22');assert.equal(usdc.collateralWei,'400');assert.equal(usdc.gasBudgetWei,undefined);assert.equal(usdc.collateralPoolFee,3000);
+ assert.equal(usdc.bokAmount,'0');assert.equal(usdc.feeAmount,'22');assert.equal(usdc.collateralWei,'400');assert.equal(usdc.gasBudgetWei,undefined);assert.equal(usdc.collateralPoolFee,3000);
  await assert.rejects(starterFundingAllocation({asset:'ETH',minDeposit:'1',privateFeeCap:'1',provider:{async getFeeData(){return {maxFeePerGas:null,gasPrice:null};}}}),{code:'ROLLING_FUNDING_GAS_UNAVAILABLE'});
 });
 
@@ -542,4 +542,21 @@ test('direct top-up derives fee ceiling from actual transaction and rejects a ch
  const f=topupFixture(),cap=await f.open();const {gasBudgetWei,...input}=f.allocation;
  const quote=await cap.prepare(input);assert.equal(quote.gasBudgetWei,'400');assert.equal(f.state.sends,0);
  f.options.provider.getFeeData=async()=>({maxFeePerGas:3n});await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,0);
+});
+
+
+test('zero Bok aggregate payment retains two exact receipts without any Bok secret or claim',async()=>{
+ const f=fixture(),scopes=[];f.options.bok=undefined;
+ f.options.verifyScope=async value=>{scopes.push(value);return async()=>{};};
+ f.options.sdk.poseidon2HashWithSeparator=()=>{throw Error('Zero Bok must not derive plugin custody');};
+ const app=await f.open();await app.prepare({...f.allocation,bokAmount:'0',bokPoolFee:0});
+ assert.deepEqual(scopes,[{includeBok:false,asset:'ETH'}]);
+ const receipts=await app.confirm();assert.deepEqual(Object.keys(receipts).sort(),['feeReceipt','receipt']);
+ const reopened=await f.open(),custody=await reopened.loadAggregate(receipts.receipt.txHash);
+ assert.equal(custody.bokScope,null);assert.equal(custody.recipientSalt,null);assert.equal(custody.bridgeSecret,null);
+ assert.deepEqual(await reopened.recover(),receipts);assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
+ await reopened.checkpointClaim({intentId:h(100),attempted:false});
+ await reopened.checkpointSubmission(h(100),{type:'claim-deposit',...receipts});
+ await assert.rejects(reopened.checkpointSubmission(h(100),{type:'claim-deposit',receipt:receipts.receipt}),{code:'ROLLING_FUNDING_MISMATCH'});
+ await assert.rejects(reopened.checkpointSubmission(h(100),{type:'claim-deposit',...receipts,bokReceipt:receipts.feeReceipt}),{code:'ROLLING_FUNDING_MISMATCH'});
 });

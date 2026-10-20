@@ -43,7 +43,8 @@ test('aggregate wallet metadata requires an explicit exact router/quoter scope a
  const v=fixture();v.config.bok={contractAddress:address(5),operatorAddress:address(6),pluginId:address(7)};
  v.config.aggregateFunding={chainId:'31337',router:eth(8),routerCodeHash:address(9),collateralPortal:v.config.board.portalAddress,feePortal:eth(10),bokPortal:eth(11),weth:eth(12),swapRouter:eth(13),feeToken:eth(14),bokToken:eth(15),privateFpc:v.config.privateFee.contractAddress,quoter:eth(16),quoterCodeHash:address(17)};
  assert.deepEqual(validateRollingWalletConfig(v).value.config.aggregateFunding,v.config.aggregateFunding);
- for(const mutate of [x=>delete x.config.bok,x=>x.config.aggregateFunding.chainId='1',x=>x.config.aggregateFunding.privateFpc=address(99),x=>x.config.aggregateFunding.collateralPortal=eth(99),x=>x.config.aggregateFunding.quoterCodeHash='',x=>x.config.aggregateFunding.secret='PRIVATE_SENTINEL']){
+ const core=structuredClone(v);delete core.config.bok;assert.deepEqual(validateRollingWalletConfig(core).value.config.aggregateFunding,v.config.aggregateFunding);
+ for(const mutate of [x=>x.config.aggregateFunding.chainId='1',x=>x.config.aggregateFunding.privateFpc=address(99),x=>x.config.aggregateFunding.collateralPortal=eth(99),x=>x.config.aggregateFunding.quoterCodeHash='',x=>x.config.aggregateFunding.secret='PRIVATE_SENTINEL']){
   const bad=structuredClone(v);mutate(bad);assert.throws(()=>validateRollingWalletConfig(bad));
  }
 });
@@ -52,6 +53,7 @@ test('USDC wallet scope requires the complete pinned proxy implementation domain
  const v=fixture();v.config.bok={contractAddress:address(5),operatorAddress:address(6),pluginId:address(7)};
  v.config.aggregateFunding={chainId:'31337',router:eth(8),routerCodeHash:address(9),collateralPortal:v.config.board.portalAddress,feePortal:eth(10),bokPortal:eth(11),weth:eth(12),swapRouter:eth(13),feeToken:eth(14),bokToken:eth(15),privateFpc:v.config.privateFee.contractAddress,quoter:eth(16),quoterCodeHash:address(17),usdcRelayAddress:eth(18),usdcCodeHash:address(19),usdcImplementation:eth(20),usdcImplementationCodeHash:address(21),usdcDomain:{name:'USDC',version:'2'}};
  assert.deepEqual(validateRollingWalletConfig(v).value.config.aggregateFunding,v.config.aggregateFunding);
+ const core=structuredClone(v);delete core.config.bok;assert.deepEqual(validateRollingWalletConfig(core).value.config.aggregateFunding,v.config.aggregateFunding);
  for(const key of ['usdcRelayAddress','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash','usdcDomain']){const bad=structuredClone(v);delete bad.config.aggregateFunding[key];assert.throws(()=>validateRollingWalletConfig(bad));}
  const bad=structuredClone(v);bad.config.aggregateFunding.usdcDomain.endpoint='https://untrusted';assert.throws(()=>validateRollingWalletConfig(bad));
 });

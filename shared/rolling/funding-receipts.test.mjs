@@ -332,3 +332,14 @@ test('cancellation pending bridge stays pending; a later canonical witness permi
  f.state.witness = witness;
  assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
 });
+
+for(const kind of ['collateral','private-fee','bok'])test(`zero Bok aggregate ${kind} keeps native core claims and rejects absent optional claim`,async()=>{
+ const f=await aggregateFixture(kind),abi=f.routerAbi,r=f.input.receipt;
+ Object.assign(f.plan,{bok:{amount:'0',maxEth:'0',poolFee:0},bokCommitment:h(0),bokSecretHash:h(0)});
+ const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fund').inputs[0]],[f.plan]));
+ const data=abi.encodeFunctionData('fund',[f.plan,'0x1234']).toLowerCase();
+ Object.assign(f.state.tx,{data,value:5100n});Object.assign(f.input.aggregateIntent,{data,value:'5100'});f.input.aggregateIntent.expected.planHash=planHash;
+ f.state.receipt.logs.pop();f.state.receipt.logs[0]={address:addr(63),...abi.encodeEventLog(abi.getEvent('Funded'),[r.sender,planHash,5000,5000,0,50,0,50])};
+ if(kind==='bok'){await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));}
+ else assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
+});

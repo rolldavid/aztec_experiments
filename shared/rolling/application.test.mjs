@@ -1624,8 +1624,10 @@ for(const phase of ['journal','signed'])test(`positive pre-proof signed bytes wi
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);const before=[...f.values];
  await assert.rejects(f.restart().prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);assert.equal(f.state.proofs,1);
 });
-async function aggregateInterruptedFixture(usdc=false,{legacy=false,interrupt='proof'}={}){
- const f=await preproofFixture(aggregateClaimFixture(usdc));
+async function aggregateInterruptedFixture(usdc=false,{legacy=false,interrupt='proof',includeBok=true}={}){
+ const base=aggregateClaimFixture(usdc);
+ if(!includeBok){delete base.action.bokReceipt;delete base.options.deployment.bok;delete base.retained.bokScope;delete base.retained.recipientSalt;delete base.retained.bridgeSecret;base.options.resolveBok=async()=>assert.fail('Two-leg claim must not resolve Bok');}
+ const f=await preproofFixture(base);
  const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
  const p=await f.app.prepare(f.action);f.state.interrupt=interrupt;await assert.rejects(f.app.submitPrepared(p.intentId));
  const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
@@ -1633,8 +1635,8 @@ async function aggregateInterruptedFixture(usdc=false,{legacy=false,interrupt='p
  if(legacy){const before=await slot.read(),next={...before.value};delete next.fundingFee;await slot.write(before,next);}
  await f.options.privateStore.rotateRecoveryEpoch();const app=await f.restartJournal();return {...f,p,slot,app};
 }
-for(const usdc of [false,true])test(`restored ${usdc?'USDC':'ETH'} aggregate pre-proof claim renews only original bridged payment and preserves predecessor`,async()=>{
- const f=await aggregateInterruptedFixture(usdc,{legacy:!usdc}),before=await f.slot.read();
+for(const usdc of [false,true])for(const includeBok of [false,true])test(`restored ${usdc?'USDC':'ETH'} ${includeBok?'three':'two'}-leg aggregate pre-proof claim renews only original bridged payment and preserves predecessor`,async()=>{
+ const f=await aggregateInterruptedFixture(usdc,{legacy:!usdc,includeBok}),before=await f.slot.read();
  assert.equal((await f.app.inspectRecovery(f.p.intentId)).status,'aggregate-claim-review');
  const journal=await f.options.accountSession.preproofRecovery.checkpoint();
  f.state.fee=25n;const review=await f.app.prepareInterrupted(f.p.intentId),after=await f.slot.read();
@@ -1642,6 +1644,7 @@ for(const usdc of [false,true])test(`restored ${usdc?'USDC':'ETH'} aggregate pre
  assert.deepEqual(after.value.preproofHistory,[before.value.preproof]);assert.equal(after.value.preproofReview.epoch,await f.options.privateStore.readRecoveryEpoch());
  assert.equal(after.value.preproofReview.predecessor,before.value.preproof.predecessor);assert.deepEqual(await f.options.accountSession.preproofRecovery.checkpoint(),journal);
  assert.deepEqual(after.value.fundingFee,{amount:'200',salt:hex(90),leafIndex:'3'});assert.equal(f.state.sends,1);
+ if(!includeBok){assert.equal(after.value.fundingBok,undefined);assert.equal(after.value.action.bokReceipt,undefined);assert(f.state.claimReads.every(row=>['collateral','private-fee'].includes(row.kind)));}
  f.state.interrupt=null;assert.equal((await f.app.submitPrepared(f.p.intentId)).status,'confirmed');assert.equal(f.state.sends,2);
  assert(f.state.payments.slice(2).every(row=>row.claim?.amount==='200'&&row.claim.salt===hex(90)&&row.claim.leafIndex==='3'));
 });
@@ -1795,4 +1798,16 @@ test('stuck deposit cancellation uses the new account, revalidates the public re
  assert.equal(f.state.sent.payload.name,'cancel_deposit');
  assert.equal(checks,2);
  assert.equal((await app.readWithdrawal()).withdrawal.depositId,receipt.depositId);
+});
+
+
+test('lazy Bok resolver is not needed for account status or ordinary post preparation',async()=>{
+ const f=bokFixture(),verified=f.options.deployment.bok;delete f.options.deployment.bok;let resolutions=0;
+ f.options.resolveBok=async()=>{resolutions++;throw Error('Optional plugin unavailable');};
+ let app=f.restart();assert.equal((await app.readAccountStatus()).status,'fee-ready');
+ await app.prepare({type:'post',deposit:'9',content:'An ordinary post',name:'0',subboard:'0'});assert.equal(resolutions,0);assert.equal(f.state.sends,0);
+ await assert.rejects(app.readBokStatus(),/Optional plugin unavailable/);assert.equal(resolutions,1);
+ f.options.resolveBok=async()=>{resolutions++;return verified;};app=f.restart();
+ assert.equal((await app.readBokStatus()).available,true);assert.equal(resolutions,2);
+ assert.equal((await app.readBokStatus()).available,true);assert.equal(resolutions,2);
 });

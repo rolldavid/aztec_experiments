@@ -461,7 +461,7 @@ for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('ag
  if(defect==='fee-portal')f.node.getL1ContractAddresses=async()=>({rollupAddress:eth(11),inboxAddress:eth(33),outboxAddress:eth(44),feeJuicePortalAddress:eth(999)});
  if(defect==='token-decimals'){const original=f.provider.call;f.provider.call=async request=>request.to===f.scope.bokToken?'0x'+BigInt(18).toString(16).padStart(64,'0'):original(request);}
  const session=await createRollingWalletSession(f.input);try{
-  await assert.rejects(session.funding.prepare({feeAmount:'2000'}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
+  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2000',bokAmount:'1'}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
 test('USDC session exposes only explicitly pinned relay capability and retains authenticated custody ordering',async()=>{
@@ -717,9 +717,9 @@ test('RC22 Bok refund completes on canonical mined receipt and still rejects reo
 });
 
 test('RC22 expiry selection passes through existing session synchronization and refuses absent owned accounting before send',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);const before=f.state.syncs;
+ const f=await aggregateSessionFixture(),session=await createRollingWalletSession(f.input);const before=f.state.syncs;
  await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
- assert.equal(f.state.syncs,before+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ assert.equal(f.state.syncs,before+2);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  await session.close();await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);
 });
 
@@ -983,7 +983,7 @@ test('aggregate session checks funded small credit under its private account loc
  f.input.sdk.preparePrivateFeePayment=async options=>{calls++;assert(f.state.active);assert.equal(options.claim,undefined);assert.equal(options.privateFeeArtifact,f.input.privateFeeArtifact);assert.equal(options.privateFeeAddress,f.input.config.privateFee.contractAddress);return {availableCredit:2000n};};
  const session=await createRollingWalletSession(f.input);try{
   assert.equal(session.funding.defaultPrivateFeeCap,'2000');
-  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2'}),e=>e===f.expected);
+  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2',bokAmount:'0'}),e=>e===f.expected);
   assert.equal(calls,1);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
@@ -1022,4 +1022,39 @@ test('collateral withdrawal binds calldata and canonical receipt to the selected
 test('changing the selected deposit after withdrawal review prevents signing',async()=>{
  const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});f.record.withdrawal.depositId=hex(57);
  await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
+});
+
+
+test('configured Bok artifact and unavailable plugin are absent from core account reads',async()=>{
+ const f=await aggregateSessionFixture();let artifacts=0,pluginReads=0;
+ delete f.input.bokArtifact;f.input.getBokArtifact=async()=>{assert(f.state.active);artifacts++;return bokArtifact;};
+ const get=f.node.getPublicStorageAt,blocked=Error('Optional plugin is unavailable');
+ f.node.getPublicStorageAt=(reference,address,slot)=>{if(String(address)===f.b.input.config.contractAddress){pluginReads++;throw blocked;}return get(reference,address,slot);};
+ const session=await createRollingWalletSession(f.input);
+ try{
+  assert.equal(session.bokConfigured,true);assert.equal(artifacts,0);assert.equal(pluginReads,0);
+  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(artifacts,0);assert.equal(pluginReads,0);
+  await assert.rejects(session.application.readBokStatus(),error=>error===blocked);
+  assert.equal(artifacts,1);assert.equal(pluginReads,1);assert.equal(f.state.sends,0);assert.equal(f.captures(),0);
+  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(pluginReads,1);
+ }finally{await session.close();}
+});
+test('Bok topup registers the verified plugin once under the owning account lease',async()=>{
+ const f=await aggregateSessionFixture();let artifacts=0,registered=0;
+ delete f.input.bokArtifact;f.input.getBokArtifact=async()=>{assert(f.state.active);artifacts++;return bokArtifact;};
+ const register=f.pxe.registerContract;f.pxe.registerContract=async instance=>{if(String(instance.address)===f.b.input.config.contractAddress)registered++;return register(instance);};
+ const session=await createRollingWalletSession(f.input);
+ try{
+  assert.equal(artifacts,0);assert.equal(registered,0);assert(session.topup.bok);
+  for(let i=0;i<2;i++)await assert.rejects(session.topup.bok.prepare({amount:'1',privateFeeCap:'1000'}),error=>error===f.expected);
+  assert.equal(artifacts,1);assert.equal(registered,1);assert.equal(f.captures(),2);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
+});
+for(const asset of ['ETH','USDC'])test('zero Bok '+asset+' scope avoids plugin reads while validating its payment token',async()=>{
+ const scope={feePortal:eth(1),bokPortal:eth(2),feeToken:eth(3),bokToken:eth(4)},calls=[];
+ const abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
+ const node={getL1ContractAddresses:async()=>({feeJuicePortalAddress:scope.feePortal}),getBlockData:()=>{throw Error('No plugin anchor');},getPublicStorageAt:()=>{throw Error('No plugin storage');}};
+ const provider={getBlock:async()=>({number:20,hash:hex(20)}),call:async request=>{assert.equal(request.blockTag,20);assert.notEqual(request.to,scope.bokPortal);const name=abi.parseTransaction(request).name;calls.push([request.to,name]);return abi.encodeFunctionResult(name,[name==='UNDERLYING'?scope.feeToken:request.to===scope.feeToken?18:6]);}};
+ const recheck=await verifyRollingAggregateScope({sdk:{Fr,inspectTrustedNode:async()=>{}},ethers:{Interface},node,provider,scope,network:{},proofsEnabled:false,contextGuard:async()=>{},includeBok:false,asset});
+ await recheck();assert.equal(calls.length,asset==='USDC'?6:4);assert.equal(calls.some(([address])=>address===scope.bokToken),asset==='USDC');
 });

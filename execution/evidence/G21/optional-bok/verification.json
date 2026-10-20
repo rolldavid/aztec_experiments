@@ -1,0 +1,23 @@
+{
+  "functionalChange": "Core signup buys no Bok credit; plugin validation/assets load only on explicit use. ETH and USDC payments preserve same account ownership.",
+  "sdk": {
+    "beforeBytes": 63251437,
+    "initialBrowserBytes": 16603225,
+    "lazyModules": 56,
+    "browserKernelAndWasmImports": "pass"
+  },
+  "checks": {
+    "funding": 160,
+    "solidity": 26,
+    "client": 582,
+    "artifact": 116,
+    "browserRuntime": 12,
+    "browserPanel": 5
+  },
+  "limitations": [
+    "Fresh hosted signup/post already passed previous ca11/query36 version; this change uses focused boundary checks, not another whole real-proof signup.",
+    "Broad legacy panel run exposed stale preexisting selectors/expectations and was stopped. Focused changed-flow browser checks passed.",
+    "No more browser launches after owner query about repeated Chrome startup."
+  ],
+  "publication": "pending"
+}

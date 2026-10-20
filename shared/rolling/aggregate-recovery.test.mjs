@@ -89,3 +89,26 @@ for(const [kind,make] of [['ETH',fixture],['USDC',usdcFixture]])test(kind+' unkn
  f.receipt.blockNumber=13;f.receipt.blockHash=h(23);
  const result=await recovered.recover({retry:true});assert.equal(result.outcome,'success');assert.equal(sends,1);
 });
+
+function zeroBokFixture(usdc=false){
+ const f=usdc?usdcFixture():fixture();Object.assign(f.p,{bokCommitment:h(0),bokSecretHash:h(0),...(usdc?{bokAmount:'0'}:{bok:{amount:'0',maxEth:'0',poolFee:0}})});
+ const method=usdc?'fundUsdc':'fund';f.record.expected.planHash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction(method).inputs[0]],[f.p]));
+ f.record.data=abi.encodeFunctionData(method,[f.p,...(usdc?['0x12','0x34']:['0x12'])]);f.record.value=usdc?'0':'120';Object.assign(f.tx,f.record);
+ f.receipt.logs.pop();f.receipt.logs[0]=usdc?f.event(a(2),abi,'UsdcFunded',[a(1),f.record.expected.planHash,a(7),100,200,0,15,25,5,10]):f.event(a(2),abi,'Funded',[a(1),f.record.expected.planHash,100,200,0,15,0,5]);return f;
+}
+for(const usdc of [false,true]){
+ test(`${usdc?'USDC':'ETH'} zero Bok receipt recovers exactly collateral and private fee`,async()=>{
+  const f=zeroBokFixture(usdc),result=await verifyEthereumIntentReceipt(f.provider,f.record,h(20));assert.equal(result.outcome,'success');
+  assert.equal(result.event.collateral.amount,'100');assert.equal(result.event.privateFee.amount,'200');assert.equal(Object.hasOwn(result.event,'bok'),false);
+ });
+ test(`${usdc?'USDC':'ETH'} zero Bok rejects unexpected plugin deposit`,async()=>{
+  const f=zeroBokFixture(usdc);f.receipt.logs.push(f.event(a(5),bok,'Deposited',[h(10),1,h(14),3]));await assert.rejects(verifyEthereumIntentReceipt(f.provider,f.record,h(20)));
+ });
+ for(const index of [1,2])test(`${usdc?'USDC':'ETH'} zero Bok still requires unique core receipt ${index}`,async()=>{
+  const missing=zeroBokFixture(usdc);missing.receipt.logs.splice(index,1);await assert.rejects(verifyEthereumIntentReceipt(missing.provider,missing.record,h(20)));
+  const duplicate=zeroBokFixture(usdc);duplicate.receipt.logs.push(duplicate.receipt.logs[index]);await assert.rejects(verifyEthereumIntentReceipt(duplicate.provider,duplicate.record,h(20)));
+ });
+}
+test('zero Bok ETH rejects charged plugin cost despite correct core deposits',async()=>{
+ const f=zeroBokFixture();f.receipt.logs[0]=f.event(a(2),abi,'Funded',[a(1),f.record.expected.planHash,100,200,0,15,1,4]);await assert.rejects(verifyEthereumIntentReceipt(f.provider,f.record,h(20)));
+});

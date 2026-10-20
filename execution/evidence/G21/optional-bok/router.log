@@ -1,0 +1,43 @@
+Compiling 2 files with Solc 0.8.27
+Solc 0.8.27 finished in 2.45s
+Compiler run successful with warnings:
+Warning (5159): "selfdestruct" has been deprecated. Note that, starting from the Cancun hard fork, the underlying opcode no longer deletes the code and data associated with an account and only transfers its Ether to the beneficiary, unless executed in the same transaction in which the contract was created (see EIP-6780). Any use in newly deployed contracts is strongly discouraged even if the new behavior is taken into account. Future changes to the EVM might further reduce the functionality of the opcode.
+  --> test/RollingFundingRouter.t.sol:39:64:
+   |
+39 | contract FundingForce {constructor(address payable a) payable {selfdestruct(a);}}
+   |                                                                ^^^^^^^^^^^^
+
+
+Ran 13 tests for test/RollingFundingRouter.t.sol:RollingUsdcFundingRouterTest
+[PASS] testAuthorizationCannotCrossRouterOrChain() (gas: 2703279)
+[PASS] testAuthorizationNonceBindsMutatedAllocationAndRelayer() (gas: 206862)
+[PASS] testDirectAuthorizationFrontRunCannotConsumeRouterPayeeNonce() (gas: 603041)
+[PASS] testDonationsAreNeverUserRefundOrFee() (gas: 630170)
+[PASS] testFeeFailureRevertsAuthorizationAndNoRelayReimbursement() (gas: 528677)
+[PASS] testLastLegRevertRestoresAuthorizationSwapCollateralAndFee() (gas: 580721)
+[PASS] testNoLiquidityOrSlippageDoesNotConsumeAuthorization() (gas: 338092)
+[PASS] testReplayAndExpiredAuthorizationRejected() (gas: 622028)
+[PASS] testWrongCollateralConsentRollsBackAuthorizedDebit() (gas: 303260)
+[PASS] testWrongExecutorCannotTakeSignedRelayFee() (gas: 91126)
+[PASS] testZeroBokUsdcFundsCoreWithInactivePluginAndBoundReimbursement() (gas: 4022275)
+[PASS] testZeroBokUsdcRejectsHiddenCustodyAndRollsBackAuthorization() (gas: 92702)
+[PASS] testZeroEthBeneficiaryPaysExactUsdcIncludingRelayerAndRefund() (gas: 598116)
+Suite result: ok. 13 passed; 0 failed; 0 skipped; finished in 10.81ms (19.00ms CPU time)
+
+Ran 13 tests for test/RollingFundingRouter.t.sol:RollingFundingRouterTest
+[PASS] testCannotStealBeneficiaryOrReplayConsent() (gas: 677904)
+[PASS] testContractBeneficiaryConsentAndRejectedRefundAtomicity() (gas: 1445293)
+[PASS] testDonationRemainsSurplusAndCannotBeRefundedToUser() (gas: 552135)
+[PASS] testExactThreeDepositsRefundAndZeroApprovals() (gas: 546162)
+[PASS] testExpiredConsentAndChangedChainFail() (gas: 106250)
+[PASS] testFeeLegFailureRollsBackCollateralAndSwaps() (gas: 508563)
+[PASS] testInstalledFeeJuicePortalReceivesExactPaidTokens() (gas: 3424642)
+[PASS] testLastLegFailureRevertsAllSwapsDepositNonceAndFee() (gas: 561504)
+[PASS] testMisreportedSwapOutputCannotSpendDonatedTokens() (gas: 243205)
+[PASS] testSlippageCapRollsBack() (gas: 174046)
+[PASS] testUnavailableLiquidityRejectsWithoutPrincipal() (gas: 194776)
+[PASS] testZeroBokFundsRequiredLegsWhilePluginInactive() (gas: 3945413)
+[PASS] testZeroBokRejectsHiddenBudgetOrCustody() (gas: 162448)
+Suite result: ok. 13 passed; 0 failed; 0 skipped; finished in 10.82ms (48.37ms CPU time)
+
+Ran 2 test suites in 16.20ms (21.63ms CPU time): 26 tests passed, 0 failed, 0 skipped (26 total tests)

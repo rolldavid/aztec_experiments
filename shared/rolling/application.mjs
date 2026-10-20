@@ -150,7 +150,7 @@ const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove
  * receipt remains in this workflow until the captured session refund verifier
  * confirms the separate original-depositor Ethereum journal outcome.
  */
-export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,funding,onProgress=()=>{},contextGuard}){
+export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,resolveBok,funding,onProgress=()=>{},contextGuard}){
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
@@ -166,7 +166,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
-  const bok=deployment?.bok&&{address:deployment.bok.address.toString(),operator:deployment.bok.operator.toString(),pluginId:field(deployment.bok.pluginId,true)};
+  let bok=deployment?.bok&&{address:deployment.bok.address.toString(),operator:deployment.bok.operator.toString(),pluginId:field(deployment.bok.pluginId,true)};
+  async function ensureBok(){
+    await localGuard();
+    if(!bok&&typeof resolveBok==='function'){
+      const verified=await resolveBok();
+      if(verified){deployment.bok=verified;bok={address:verified.address.toString(),operator:verified.operator.toString(),pluginId:field(verified.pluginId,true)};}
+    }
+    await localGuard();return bok;
+  }
   const scope=session&&fixed&&{account:owner,chainId:String(fixed.network.chainId),version:String(fixed.network.version),
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
@@ -206,15 +214,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function fundingClaim(kind,metadata){
     check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
+    if(kind==='bok')await ensureBok();
     const cancellation = kind === 'collateral-cancel';
     const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash',...(cancellation ? ['depositId'] : [])]);
     await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await localGuard();
     const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
-    const aggregate=!cancellation&&loadAggregate?await loadAggregate(receipt.txHash):null;await localGuard();
+    const aggregate=!cancellation&&loadAggregate?await loadAggregate(receipt.txHash,kind):null;await localGuard();
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
     let secrets=cancellation ? undefined : {walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
-      check(bok&&aggregate?.bokScope,'ROLLING_FUNDING_UNAVAILABLE');
+      await ensureBok();check(bok&&aggregate?.bokScope,'ROLLING_FUNDING_UNAVAILABLE');
       claimScope=exactData(aggregate.bokScope,['chainId','version','rollup','portal','recipient','token']);
       check(claimScope.recipient===bok.address&&['chainId','version','rollup'].every(key=>claimScope[key]===fixed.network[key]),'ROLLING_FUNDING_MISMATCH');
       secrets={recipientSalt:field(aggregate.recipientSalt,true),bridgeSecret:field(aggregate.bridgeSecret,true)};
@@ -266,15 +275,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     return {scope:clone(bok),args:plain(claim.args)};
   }
   async function bokFundingClaim(action){
-    check(bok&&action.feeReceipt&&action.bokReceipt&&action.receipt.txHash===action.feeReceipt.txHash&&action.receipt.txHash===action.bokReceipt.txHash,'ROLLING_FUNDING_MISMATCH');
+    await ensureBok();check(bok&&action.feeReceipt&&action.bokReceipt&&action.receipt.txHash===action.feeReceipt.txHash&&action.receipt.txHash===action.bokReceipt.txHash,'ROLLING_FUNDING_MISMATCH');
     return privateBokClaim(action.bokReceipt);
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
-  function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
-  async function savedIntent(id){const saved=await (await slot()).read();check(saved.value&&saved.value.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
+  async function checkBokRecord(record){const scopes=[record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope];if(scopes.some(Boolean)||record?.withdrawal?.kind==='bok')await ensureBok();for(const savedScope of scopes)if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
+  async function savedIntent(id){const saved=await (await slot()).read();check(saved.value&&saved.value.id===id,'ROLLING_INTENT_NOT_FOUND');await checkBokRecord(saved.value);return saved;}
   function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
       ['success','reverted'].includes(found.outcome)&&found.receipt?.txHash?.toString()===found.txHash,'ROLLING_RECOVERY_REQUIRED');
@@ -283,7 +292,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     session.journal.confirmed(found.receipt);
   }
   async function outcome(saved){
-    checkBokRecord(saved.value);
+    await checkBokRecord(saved.value);
     const found=await session.journal.inspectOutcome();
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
@@ -384,8 +393,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(!/^[0-9a-f]{64}$/.test(epoch??''))return false;
     if(aggregateRenewal){
       const a=record.action;
-      if(record.txHash||a.type!=='claim-deposit'||!record.fundingBok||!loadAggregate||
-        !a.receipt?.txHash||a.receipt.txHash!==a.feeReceipt?.txHash||a.receipt.txHash!==a.bokReceipt?.txHash)return false;
+      if(record.txHash||a.type!=='claim-deposit'||!loadAggregate||
+        !a.receipt?.txHash||a.receipt.txHash!==a.feeReceipt?.txHash||
+        (a.bokReceipt!==undefined ? !record.fundingBok||a.receipt.txHash!==a.bokReceipt.txHash : !!record.fundingBok))return false;
       const custody=await loadAggregate(a.receipt.txHash);
       if(!['aggregate-funding','aggregate-usdc-funding'].includes(custody?.intent?.expected?.kind))return false;
     }else if(epoch!==p.epoch)return false;
@@ -442,7 +452,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(record.bok?.phase==='post')await waitingBok(record);
   }
   async function checkActionRecoveryContext(record){
-    await guard();checkBokRecord(record);await checkActionSubmission(record);
+    await guard();await checkBokRecord(record);await checkActionSubmission(record);
     // A fresh proof may renew its anchor and fees, never the saved action's
     // screening hints, policy versions, profile version or funded Bok target.
     if(['post','reply','quote','repost','screen'].includes(record.action.type)){
@@ -591,10 +601,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const current=await moderationArguments(record.action,await contract());
     check(same(current.args,record.args)&&same(current.review,record.moderation),'ROLLING_MODERATION_TARGET_CHANGED');
   }
-  const bokContract=()=>{check(bok,'ROLLING_BOK_UNAVAILABLE');return sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(bok.address))),deployment.bok.artifact,session.wallet);};
+  const bokContract=async()=>{await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');return sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(bok.address))),deployment.bok.artifact,session.wallet);};
   const uint128=value=>{check(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)&&BigInt(value)<(1n<<128n));return BigInt(value);};
   async function bokContext(){
-    check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
+    await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
     const plugin=await utility(await contract(),'get_plugin',[bok.pluginId]);
     check(plugin?.enabled===true&&field(plugin.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
     await guard();return bokContract();
@@ -614,7 +624,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // The encrypted original authorization is the ownership/identity source for
   // this narrow recovery. No public accounting query receives a human's IDs.
   async function checkBokRelease(source,type){
-    checkBokRecord(source);
+    await checkBokRecord(source);
     check(source.action.type==='bok'&&['authorize','post'].includes(source.bok?.phase)&&
       ['cancel-bok-request','expire-bok-request'].includes(type),'ROLLING_RECOVERY_UNSUPPORTED');
     const hash=source.bok.authorizationTxHash??source.txHash;
@@ -646,7 +656,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const abi=[...selectedArtifact.functions,...(selectedArtifact.nonDispatchPublicFunctions??[])].find(f=>f.name===record.method);check(abi,'ROLLING_ABI_MISMATCH');
     let encoded=sdk.encodeArguments(abi,record.args).map(f=>f.toString());
     if(record.action.type==='claim-deposit'&&record.action.bokReceipt!==undefined){
-      checkBokRecord(record);check(record.fundingBok&&typeof sdk.BatchCall==='function','ROLLING_FUNDING_UNAVAILABLE');
+      await checkBokRecord(record);check(record.fundingBok&&typeof sdk.BatchCall==='function','ROLLING_FUNDING_UNAVAILABLE');
       const bokAbi=deployment.bok.artifact.functions.find(f=>f.name==='claim');check(bokAbi,'ROLLING_ABI_MISMATCH');
       encoded=[encoded,sdk.encodeArguments(bokAbi,record.fundingBok.args).map(f=>f.toString())];
       call=new sdk.BatchCall(session.wallet,[call,(await bokContract()).methods.claim(...record.fundingBok.args)]);
@@ -681,7 +691,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       return outcome(saved);
     });},
     async readBokAccounting({cursor=0}={}){return exclusive(async()=>{
-      check(bok&&readAccountingPage,'ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
+      await ensureBok();check(bok&&readAccountingPage,'ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
       const anchor=await balanceAnchor();
       if(cursor===0){accountingScan={token:crypto.randomUUID(),anchor,offset:0,owned:new Set(),phase:'owned-requests',publicCursor:null,revision:null,descriptor:null,lastId:0n,matched:new Map()};completedAccounting=null;}
       else check(typeof cursor==='string'&&accountingScan?.token===cursor&&same(anchor,accountingScan.anchor),'ROLLING_BALANCE_CURSOR_INVALID');
@@ -719,7 +729,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         return {complete:true,phase:'complete',anchor,nextCursor:null,available,requests,totals,refundedMeaning:'already-returned-to-unallocated-balance'};
       }catch(error){accountingScan=null;completedAccounting=null;throw error;}
     });},
-    async readBalances({cursor=0}={}){return exclusive(async()=>{
+    async readBalances({cursor=0,includeBok=false}={}){return exclusive(async()=>{
+      check(typeof includeBok==='boolean');if(includeBok)await ensureBok();
       const continuation=balanceContinuation;check(cursor===0||typeof cursor==='string'&&continuation?.token===cursor,'ROLLING_BALANCE_CURSOR_INVALID');
       const offset=cursor===0?0:continuation.offset;check(offset<=0xffffffff-10);const anchor=await balanceAnchor(),board=await contract();
       if(cursor!==0)check(same(anchor,continuation.anchor),'ROLLING_BALANCE_CURSOR_INVALID');
@@ -728,7 +739,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       for(const value of ids){const id=field(value);if(BigInt(id)===0n){empty=true;continue;}check(!empty&&!seen.has(id),'ROLLING_INVALID_RESPONSE');seen.add(id);deposits.push(await collateralInfo(id,board,BigInt(anchor.timestamp)));}
       const feeContract=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
       const fee=chainValue(await utility(feeContract,'balance_of',[session.owner],deployment.privateFee.artifact));check(fee<(1n<<128n),'ROLLING_INVALID_RESPONSE');
-      let credit=null;if(bok){const current=await bokContract(),available=chainValue(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');
+      let credit=null;if(includeBok&&bok){const current=await bokContract(),available=chainValue(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');
         credit={available:String(available),token:'USDC',availableMeaning:'unallocated-private-credit',requestsComplete:false,requests:[]};
 
       }
@@ -738,12 +749,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         collateral:{deposits,complete:empty,nextCursor:balanceContinuation?.token??null}};
     });},
     async readModeratorStatus(){return exclusive(moderatorStatus);},
-    async readBokStatus(){return exclusive(async()=>{if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
+    async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
     async readAccountStatus(){
       if(!session)return {status:'locked'};
       return exclusive(async()=>{await guard();const saved=await (await slot()).read();
         if(saved.value&&saved.value.status!=='cancelled'){
-          checkBokRecord(saved.value);
+          await checkBokRecord(saved.value);
           if(!['confirmed','reverted'].includes(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
           const canonical=await outcome(saved);if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
         }
@@ -786,6 +797,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
+      if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');}
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
       const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};

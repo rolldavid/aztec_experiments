@@ -68,15 +68,15 @@ async function load(signal){
   const link=document.createElement('link');link.rel='preload';link.as='script';link.href=assetURL(asset);
   link.integrity='sha256-'+btoa(String.fromCharCode(...asset.sha256.match(/../g).map(x=>parseInt(x,16))));link.crossOrigin='anonymous';link.referrerPolicy='no-referrer';document.head.append(link);return link;
  });
- let boardRaw,feeRaw,bokRaw;
+ const bokAsset=config.bok?structuredClone(descriptor(metadata.artifacts.bok)):undefined;
+ let boardRaw,feeRaw;
  try{
   const values=await Promise.all([
    boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs,{signal}),
    boundedJSON(descriptor(metadata.artifacts.board).url,32*1024*1024,metadata.artifacts.board,{signal}),
-   boundedJSON(descriptor(metadata.artifacts.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal}),
-   config.bok?boundedJSON(descriptor(metadata.artifacts.bok).url,32*1024*1024,metadata.artifacts.bok,{signal}):undefined
+   boundedJSON(descriptor(metadata.artifacts.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal})
   ]);
-  [globalThis.BILLBOARD_CRS_MANIFEST,boardRaw,feeRaw,bokRaw]=values;
+  [globalThis.BILLBOARD_CRS_MANIFEST,boardRaw,feeRaw]=values;
   globalThis._getPublicConfig=()=>structuredClone(config);
   // Evaluate in dependency order; downloads are already running through preload.
   for(const asset of metadata.scripts)await script(asset,signal);
@@ -84,7 +84,18 @@ async function load(signal){
  const sdk=globalThis.__aztec,account=globalThis.BillboardAccount,routing=globalThis.BillboardPrivateFeeRouting;
  if(!sdk?.createTrustedPrivateNode||!account?.configure||!routing?.isPrivateWalletForNode||!globalThis.ethers)throw failed();
  globalThis.BillboardCRS.validateManifest(globalThis.BILLBOARD_CRS_MANIFEST);
- const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw),bokArtifact=bokRaw?sdk.loadContractArtifact(bokRaw):undefined;
+ const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
+ let bokLoading;
+ const getBokArtifact=()=>{
+  if(!bokAsset)return Promise.resolve(undefined);
+  if(!bokLoading){
+   const controller=new AbortController(),cancel=()=>controller.abort();
+   globalThis.addEventListener('pagehide',cancel,{once:true});
+   bokLoading=boundedJSON(bokAsset.url,32*1024*1024,bokAsset,{signal:controller.signal})
+    .then(raw=>sdk.loadContractArtifact(raw)).finally(()=>globalThis.removeEventListener('pagehide',cancel));
+  }
+  return bokLoading;
+ };
  let session,creating;
  // Only metadata leaves provider discovery. The selected transport stays inside
  // existing custody, which verifies the configured chain and invalidates changes.
@@ -111,7 +122,7 @@ async function load(signal){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  creating=createRollingRefundSession({sdk,ethers:globalThis.ethers,config,boardArtifact,bokArtifact,account:selected,contextGuard:guard,
+  creating=createRollingRefundSession({sdk,ethers:globalThis.ethers,config,boardArtifact,getBokArtifact,account:selected,contextGuard:guard,
    captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId})}).then(value=>(session=value)).finally(()=>{creating=undefined;});
   return creating;
  }}:{}),fundingWallets,fundingWalletStatus,connectFundingWallet,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
@@ -120,7 +131,7 @@ async function load(signal){
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account:selected,
+  creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,getBokArtifact,account:selected,
    trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
    fundingRelay:createRollingFundingRelay({contextGuard:guard}),
    captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId}),

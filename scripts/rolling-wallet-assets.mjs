@@ -12,7 +12,7 @@ import {ARTIFACT as bokArtifactPath,MANIFEST as bokManifestPath,buildInputs as b
 const out='.build/rolling-wallet',sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const scripts={
  'ethers.js':'node_modules/ethers/dist/ethers.umd.min.js',
- 'aztec_bundle.js':'.build/sdk/aztec_bundle.js',
+ 'aztec_bundle.js':'.build/sdk/aztec_browser.js',
  'crs-client.js':'shared/crs-client.js',
  'wallet-providers.js':'shared/wallet-providers.js',
  'passkey-wallet.js':'shared/passkey-wallet.js',
@@ -54,7 +54,7 @@ export function validateRollingWalletConfig(value,scope){
    address(a.usdcRelayAddress,20);address(a.usdcImplementation,20);address(a.usdcCodeHash,32);address(a.usdcImplementationCodeHash,32);
    keys(a.usdcDomain,['name','version']);for(const value of Object.values(a.usdcDomain))if(typeof value!=='string'||!/^[-A-Za-z0-9 .]{1,64}$/.test(value))throw invalid();
   }
-  if(!c.bok||a.chainId!==c.network.chainId||a.collateralPortal!==c.board.portalAddress||a.privateFpc!==c.privateFee.contractAddress)throw invalid();
+  if(a.chainId!==c.network.chainId||a.collateralPortal!==c.board.portalAddress||a.privateFpc!==c.privateFee.contractAddress)throw invalid();
   for(const name of ['router','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','quoter'])address(a[name],20);
   for(const name of ['routerCodeHash','quoterCodeHash','privateFpc'])address(a[name],32);
  }
@@ -80,7 +80,7 @@ async function inventory(){
  const bokBytes=await fs.readFile(bokArtifactPath),bokManifest=JSON.parse(await fs.readFile(bokManifestPath,'utf8')),bokRaw=JSON.parse(bokBytes);
  if(JSON.stringify(bokInputs())!==JSON.stringify(bokManifest.inputs)||sha(bokBytes)!==bokManifest.artifactSha256||bokRaw.name!=='PrivateBok'||bokRaw.transpiled!==true||!bokRaw.functions.filter(f=>f.custom_attributes?.includes('abi_private')).every(f=>f.verification_key))throw invalid();
  checkNoirEmbeddedSources(bokRaw);
- for(const name of Object.keys(sdk.outputs))result['/wallet/'+name]='.build/sdk/'+name;
+ for(const name of Object.keys(sdk.outputs)){const url='/wallet/'+name;if(!Object.hasOwn(result,url))result[url]='.build/sdk/'+name;}
  // The browser consumes the pinned uncompressed derivation as well as the
  // downloaded CRS inputs. Validate every served file before publishing assets.
  const crsFiles=[...crs.files,crs.derivedG1,crs.verifierG1];

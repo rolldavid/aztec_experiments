@@ -23,7 +23,7 @@ interface FundingSwapRouter {
     struct ExactOutputSingleParams { address tokenIn; address tokenOut; uint24 fee; address recipient; uint256 amountOut; uint256 amountInMaximum; uint160 sqrtPriceLimitX96; }
     function exactOutputSingle(ExactOutputSingleParams calldata) external payable returns (uint256);
 }
-/// @notice One ETH-funded or user-authorized USDC transaction, three exact L1 deposits. Cross-chain claims remain asynchronous.
+/// @notice One ETH-funded or user-authorized USDC transaction, two required L1 deposits and optional Bok credit. Cross-chain claims remain asynchronous.
 /// @dev Fresh fixed-scope deployments only. No custody/sweep/admin, arbitrary calls, token mint or gas subsidy.
 contract RollingFundingRouter is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -71,13 +71,14 @@ contract RollingFundingRouter is ReentrancyGuard {
     }
     function fund(Plan calldata p, bytes calldata consent) external payable nonReentrant {
         require(block.chainid==chainId && p.beneficiary==msg.sender && block.timestamp<=p.deadline,"Invalid funding owner/deadline");
-        require(p.fee.amount>0 && p.fee.amount<=type(uint128).max && p.bok.amount>0 && p.bok.amount<=type(uint128).max,"Invalid allocation");
+        require(p.fee.amount>0 && p.fee.amount<=type(uint128).max && p.bok.amount<=type(uint128).max,"Invalid allocation");
+        if(p.bok.amount==0)require(p.bok.maxEth==0 && p.bok.poolFee==0 && p.bokCommitment==bytes32(0) && p.bokSecretHash==bytes32(0),"Nonempty disabled Bok leg");
         require(msg.value==p.collateral+p.fee.maxEth+p.bok.maxEth,"Invalid funding value");
         uint256 baseline=address(this).balance-msg.value;
         uint256 wrappedBefore=weth.balanceOf(address(this));
         weth.deposit{value:p.fee.maxEth+p.bok.maxEth}();
         uint256 feeEth=_buy(feeToken,p.fee);
-        uint256 bokEth=_buy(bokToken,p.bok);
+        uint256 bokEth=p.bok.amount==0 ? 0 : _buy(bokToken,p.bok);
         collateralPortal.depositFor{value:p.collateral}(p.beneficiary,p.collateralSecretHash,p.nonce,p.deadline,consent);
         uint256 beforeFee=feeToken.balanceOf(address(this));
         uint256 portalFeeBefore=feeToken.balanceOf(address(feePortal));
@@ -85,11 +86,13 @@ contract RollingFundingRouter is ReentrancyGuard {
         feePortal.depositToAztecPublic(privateFpc,p.fee.amount,p.feeSecretHash);
         feeToken.forceApprove(address(feePortal),0);
         require(feeToken.balanceOf(address(this))==beforeFee-p.fee.amount && feeToken.balanceOf(address(feePortal))==portalFeeBefore+p.fee.amount,"Fee debit mismatch");
-        uint256 beforeBok=bokToken.balanceOf(address(this));
-        bokToken.forceApprove(address(bokPortal),p.bok.amount);
-        bokPortal.deposit(p.bokCommitment,uint128(p.bok.amount),p.bokSecretHash);
-        bokToken.forceApprove(address(bokPortal),0);
-        require(bokToken.balanceOf(address(this))==beforeBok-p.bok.amount,"Bok debit mismatch");
+        if(p.bok.amount>0) {
+            uint256 beforeBok=bokToken.balanceOf(address(this));
+            bokToken.forceApprove(address(bokPortal),p.bok.amount);
+            bokPortal.deposit(p.bokCommitment,uint128(p.bok.amount),p.bokSecretHash);
+            bokToken.forceApprove(address(bokPortal),0);
+            require(bokToken.balanceOf(address(this))==beforeBok-p.bok.amount,"Bok debit mismatch");
+        }
         uint256 refund=p.fee.maxEth+p.bok.maxEth-feeEth-bokEth;
         require(weth.balanceOf(address(this))==wrappedBefore+refund,"Wrapped balance mismatch");
         if(refund>0) { weth.withdraw(refund); (bool ok,)=msg.sender.call{value:refund}(""); require(ok,"Refund rejected"); }
@@ -107,8 +110,9 @@ contract RollingFundingRouter is ReentrancyGuard {
         require(block.chainid==chainId && msg.sender==p.relayer && p.beneficiary!=address(0)
             && p.beneficiary!=address(this) && p.relayer!=address(this),"Invalid USDC owner/executor");
         require(block.timestamp>p.validAfter && block.timestamp<p.deadline && p.authorizationSalt!=bytes32(0),"Invalid USDC validity");
-        require(p.fee.amount>0 && p.fee.amount<=type(uint128).max && p.bokAmount>0 && p.bokAmount<=type(uint128).max
+        require(p.fee.amount>0 && p.fee.amount<=type(uint128).max && p.bokAmount<=type(uint128).max
             && p.collateral.amount>0 && p.relayFeeUsdc>0,"Invalid USDC allocation");
+        if(p.bokAmount==0)require(p.bokCommitment==bytes32(0) && p.bokSecretHash==bytes32(0),"Nonempty disabled Bok leg");
         UsdcAccounting memory state;
         state.usdcBefore=bokToken.balanceOf(address(this)); state.ethBefore=address(this).balance;
         state.wethBefore=weth.balanceOf(address(this)); state.feeBefore=feeToken.balanceOf(address(this));
@@ -122,9 +126,11 @@ contract RollingFundingRouter is ReentrancyGuard {
         feePortal.depositToAztecPublic(privateFpc,p.fee.amount,p.feeSecretHash);
         feeToken.forceApprove(address(feePortal),0);
         require(feeToken.balanceOf(address(this))==state.feeBefore && feeToken.balanceOf(address(feePortal))==portalFeeBefore+p.fee.amount,"Fee debit mismatch");
-        bokToken.forceApprove(address(bokPortal),p.bokAmount);
-        bokPortal.deposit(p.bokCommitment,uint128(p.bokAmount),p.bokSecretHash);
-        bokToken.forceApprove(address(bokPortal),0);
+        if(p.bokAmount>0) {
+            bokToken.forceApprove(address(bokPortal),p.bokAmount);
+            bokPortal.deposit(p.bokCommitment,uint128(p.bokAmount),p.bokSecretHash);
+            bokToken.forceApprove(address(bokPortal),0);
+        }
         state.refund=p.collateral.maxUsdc+p.fee.maxUsdc-state.collateralSpent-state.feeSpent;
         _payUsdc(p.relayer,p.relayFeeUsdc);
         if(state.refund>0)_payUsdc(p.beneficiary,state.refund);

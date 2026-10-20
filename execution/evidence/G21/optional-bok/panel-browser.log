@@ -1,0 +1,13 @@
+✔ guided onboarding has one decision per screen at 390px (654.968542ms)
+✔ guided onboarding has one decision per screen at 1280px (621.51075ms)
+✔ G17 focused reply preserves target, anonymous default, draft and explicit spending consent (696.317917ms)
+✔ G17 Bok invitation retains reply ancestry and message when toggled (963.627834ms)
+✔ optional Bok failure leaves an ordinary reply editable and never reads again automatically (1385.188208ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4505.098917

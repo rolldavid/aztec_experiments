@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Fresh hosted run tkKh3I passed with same Ethereum owner nonce2/existing deposits, new private account, one ETH transaction, canonical deposit, real private claim and first post visible on Home;886934ms cold fullrun. Appca11/query36bc/harnessf859. Functional evidence fresh-signup-success.json + independent Home API readback. Supplementary public trace has2capture errors/canonicalObservationError; no privacy qualification claimed. Earlier init read failure remains unexplained; immediate failure/status diagnostics now integrated. Remaining architecture: mandatoryBok router/client coupling and63MB cold SDK. Keep acceptance truthful; no new board redeploy needed for optionalBok.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October optional-Bok implementation verified: core ETH/USDC signup defaults0Bok, lazy plugin verification/artifact. SDK browser initial16.6MB vs63.25MB;56manifest-bound lazy modules.26Solidity,160funding,582client,116artifact,12runtime-browser,5panelbrowser pass; actual kernel/WASM browser imports pass. Broad legacy panel suite exposed preexisting stale expectations and was stopped. No further browser launches per response to owner concern. Independent crossreview and live app/router-only publication in progress; current board/portal/posts/native runtime preserved.
 
 ## Ready internal work
 

@@ -68,6 +68,47 @@ const main = await build({ ...options, entryPoints: ['shared/sdk-entry.mjs'],
   define: { ...options.define, 'import.meta.url': '__aztecBundleUrl' },
   banner: { js: 'var __aztecBundleUrl = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
 });
+// Keep the synchronous CLI bundle above unchanged. Browser builds preserve the
+// SDK's existing lazy artifact imports rather than embedding every circuit and
+// both WASM variants into the account tools' initial download.
+const lazyAssets = new Map();
+const lazyInputs = new Set();
+const circuitImporter = path.join(root, 'node_modules/@aztec-labs/noir-protocol-circuits-types/dest/client_artifacts_helper.js');
+const circuitDirectory = path.join(root, 'node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts');
+const wasmImporter = path.join(root, bb, 'fetch_code/browser/index.js');
+const browserLazyAssets = {
+  name: 'aztec-browser-lazy-assets',
+  setup(builder) {
+    builder.onResolve({filter: /\.(?:json|js)$/}, async args => {
+      if (args.kind !== 'dynamic-import') return;
+      const circuit = args.importer === circuitImporter && /^\.\.\/artifacts\/[a-z0-9_]+\.json$/.test(args.path);
+      const wasm = args.importer === wasmImporter && ['./barretenberg.js', './barretenberg-threads.js'].includes(args.path);
+      if (!circuit && !wasm) return;
+      const filename = path.resolve(path.dirname(args.importer), args.path);
+      if (circuit && path.dirname(filename) !== circuitDirectory) throw new Error('Unexpected SDK circuit asset');
+      const original = await fs.readFile(filename, 'utf8');
+      // JSON becomes an ordinary ESM default export, exactly matching the
+      // existing dynamic-import consumer without requiring JSON import attributes.
+      const contents = circuit ? 'export default ' + original + ';\n' : original;
+      const digest = sha(contents);
+      const name = 'sdk-lazy-' + digest + '.mjs';
+      lazyAssets.set(name, contents);
+      lazyInputs.add(path.relative(root, filename).split(path.sep).join('/'));
+      return {path: './' + name + '?sha256=' + digest, external: true};
+    });
+  },
+};
+const browser = await build({ ...options, entryPoints: ['shared/sdk-entry.mjs'],
+  plugins: [browserLazyAssets, ...options.plugins],
+  format: 'iife', globalName: '__aztec', outfile: path.join(out, 'aztec_browser.js'),
+  define: { ...options.define, 'import.meta.url': '__aztecBundleUrl' },
+  banner: { js: 'var __aztecBundleUrl = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
+});
+if (![...lazyInputs].some(name => name.startsWith(path.relative(root, circuitDirectory).split(path.sep).join('/') + '/')) ||
+    !['barretenberg.js', 'barretenberg-threads.js'].every(name => lazyInputs.has(bb + '/fetch_code/browser/' + name))) {
+  throw new Error('Expected native SDK lazy boundaries were not preserved');
+}
+for (const [name, contents] of lazyAssets) await fs.writeFile(path.join(out, name), contents);
 const workers = await build({ ...options, format: 'esm', outdir: out,
   entryPoints: {
     'bb-main.worker': `${bb}/barretenberg_wasm_main/factory/browser/main.worker.js`,
@@ -83,7 +124,7 @@ const assets = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
-const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(workers.metafile.inputs),
+const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
@@ -104,7 +145,7 @@ for (const filename of inputs) {
 }
 for(const [name,expected] of preferenceLiteralInputs)if(inputHashes[name]!==expected)throw new Error('SDK preference page patch changed during build: '+name);
 const outputs = {};
-const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest)))].sort();
+const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(browser.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest), [...lazyAssets.keys()]))].sort();
 for (const name of emitted) outputs[name] = sha(await fs.readFile(path.join(out, name)));
 await fs.writeFile(path.join(out, 'sdk-manifest.json'), JSON.stringify({
   aztecVersion: pins.aztec, lockfile: sha(await fs.readFile(path.join(root, 'package-lock.json'))),

@@ -155,7 +155,7 @@ export async function prepareFundingClaim(input) {
       requireThat(verified?.outcome==='success' && verified.receipt.blockNumber===r.blockNumber && equal(verified.receipt.blockHash,r.blockHash));
       if(aggregateCustody)requireThat(verified.event.beneficiary===aggregateCustody.beneficiary);
       aggregate=verified.event[kind==='private-fee'?'privateFee':kind];
-      requireThat(aggregate.amount===r.amount && aggregate.secretHash===r.secretHash && aggregate.messageKey===r.messageKey && aggregate.leafIndex===r.leafIndex);
+      requireThat(aggregate && aggregate.amount===r.amount && aggregate.secretHash===r.secretHash && aggregate.messageKey===r.messageKey && aggregate.leafIndex===r.leafIndex);
     }
     const call=async(to,abi,name)=>abi.decodeFunctionResult(name,await provider.call({to,data:abi.encodeFunctionData(name),blockTag:r.blockNumber}))[0];
     const boardScope={l1ChainId:s.chainId,rollupAddress:s.rollup,rollupVersion:s.version,boardAddress:s.recipient,portalAddress:s.portal};

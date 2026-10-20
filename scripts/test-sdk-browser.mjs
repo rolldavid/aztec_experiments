@@ -11,9 +11,12 @@ assertNodeVersion();
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const withCrs = process.argv.includes('--with-crs');
+const sdkBundle = process.argv.includes('--browser') ? 'aztec_browser.js' : 'aztec_bundle.js';
 const directory = path.resolve(ROOT, process.argv.slice(2).find(arg => !arg.startsWith('--')) || '.build/sdk');
+const circuitSource=sdkBundle==='aztec_browser.js'?await fs.readFile(path.join(ROOT,'node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init.json'),'utf8'):null;
+const lazyCircuit=circuitSource?'sdk-lazy-'+createHash('sha256').update('export default '+circuitSource+';\n').digest('hex')+'.mjs':null;
 const crsManifest = withCrs ? JSON.parse(await fs.readFile(path.join(ROOT, 'crs-manifest.json'), 'utf8')) : null;
-const observedSources = [path.join(directory, 'aztec_bundle.js'), path.join(ROOT, 'scripts/test-sdk-browser.mjs'),
+const observedSources = [path.join(directory, sdkBundle), path.join(ROOT, 'scripts/test-sdk-browser.mjs'),
   ...(withCrs ? ['crs-manifest.json', 'shared/crs-client.js', 'shared/aztec-lib.js', 'shared/app-env.js'].map(name => path.join(ROOT, name)) : [])];
 const sourceHashes = Object.fromEntries(await Promise.all(observedSources.map(async name => [
   path.relative(ROOT, name), createHash('sha256').update(await fs.readFile(name)).digest('hex'),
@@ -56,7 +59,7 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   if (name === '/') {
     res.setHeader('Content-Type', 'text/html');
-    const html = '<!doctype html><title>SDK build smoke</title>' + scriptTag('sdk', '/aztec_bundle.js') +
+    const html = '<!doctype html><title>SDK build smoke</title>' + scriptTag('sdk', '/' + sdkBundle) +
       (withCrs ? `<script>window.BILLBOARD_CRS_MANIFEST=${JSON.stringify(crsManifest)};function log(){}</script>` +
         scriptTag('crs-client', '/crs-client.js') + scriptTag('shared-library', '/aztec-lib.js') + scriptTag('engine-adapter', '/app-env.js') : '');
     bodyBytes = Buffer.byteLength(html);
@@ -137,7 +140,7 @@ async function qualifyConsumer(consumer) {
       browser.close().catch(() => {});
     }, 120000);
     timeout.unref();
-    const result = await page.evaluate(async consumer => {
+    const result = await page.evaluate(async ({consumer,lazyCircuit}) => {
       const bn254Inputs = [];let initializedCrsInstance;
       const stage = async (name, action) => {
         const start = performance.now();
@@ -181,6 +184,7 @@ async function qualifyConsumer(consumer) {
         if (typeof a[name] !== 'function') throw new Error('Bundled private fee export missing: '+name);
       }
       if (!a) throw new Error('SDK global missing');
+      if(lazyCircuit){const module=await stage('lazy-kernel-artifact',()=>import('/'+lazyCircuit));if(!module.default?.abi||!module.default?.bytecode)throw Error('Lazy kernel artifact missing');}
       await stage('sync-primitives-init', () => a.BarretenbergSync.initSingleton());
       if (window.BILLBOARD_CRS_MANIFEST) {
         if (consumer === 'shared-library') await stage('shared-crs-adapter', () => initCRS());
@@ -207,7 +211,7 @@ async function qualifyConsumer(consumer) {
       await stage('async-singleton-cleanup',()=>a.Barretenberg.destroySingleton());
       await stage('sync-singleton-cleanup',()=>a.BarretenbergSync.destroySingleton());
       return { crs: window.BILLBOARD_CRS_MANIFEST ? 'verified and initialized through ' + consumer : 'skipped', bn254Inputs, legacyBuffer: compatibilityBuffer, exports: Object.keys(a).length, crossOriginIsolated, poseidon: hashed.toString(), sqlite: value, workers: 'actual CRS singleton or no-CRS standalone probe; explicit singleton cleanup', actualCrsSingletonVerified:!!initializedCrsInstance };
-    }, consumer);
+    }, {consumer,lazyCircuit});
     clearTimeout(timeout);
     assert.equal(result.sqlite, 'value');
     assert.equal(result.crossOriginIsolated, true);

@@ -39,13 +39,13 @@ const application={
  async cancelPrepared(){state.cancels++;write(read().releasePrior??{...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const funding={async prepareStarter({asset}){return this.prepare({asset,collateralWei:'100000000000000000',feeAmount:'2000',bokAmount:'1000000',privateFeeCap:'1000',slippageBps:100,feePoolFee:3000,...(asset==='USDC'?{collateralPoolFee:3000}:{bokPoolFee:3000,gasBudgetWei:state.gasBudget??'3000000000000000'})});},get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',pauseClaim:()=>{state.fundingPaused=true;},advanceClaim:()=>{state.fundingPaused=false;return advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row),paused:()=>state.fundingPaused});},
- async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(state.fundingQuoteFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.fundingQuoteFailure,minimumFeeCredit:state.minimumFeeCredit});if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:'7100000'}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
+const funding={async prepareStarter({asset}){return this.prepare({asset,collateralWei:'100000000000000000',feeAmount:'2000',bokAmount:'0',privateFeeCap:'1000',slippageBps:100,feePoolFee:3000,...(asset==='USDC'?{collateralPoolFee:3000}:{bokPoolFee:0,gasBudgetWei:state.gasBudget??'3000000000000000'})});},get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',pauseClaim:()=>{state.fundingPaused=true;},advanceClaim:()=>{state.fundingPaused=false;return advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row),paused:()=>state.fundingPaused});},
+ async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(state.fundingQuoteFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.fundingQuoteFailure,minimumFeeCredit:state.minimumFeeCredit});if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:(6100000n+BigInt(input.bokAmount)).toString()}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:input.bokAmount==='0'?'0':'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+1000n+(input.bokAmount==='0'?0n:2000n)+BigInt(input.gasBudgetWei)).toString()}};},
  async confirm(){state.fundingConfirms=(state.fundingConfirms??0)+1;if(state.fundingSignatureCancelled)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_SIGNATURE_CANCELLED'});if(state.fundingGasChanged)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_GAS_CHANGED'});state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
  async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null,explicitClaimReview:state.explicitClaimReview===true};},
  async checkpointClaim(value){state.fundingClaim=value;},
  async reviewRevertedClaim(){if(!['reverted','cancelled'].includes(read()?.status))error();state.fundingClaim=null;state.explicitClaimReview=true;},
- async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},bokReceipt:{txHash:'0x'+'1'.repeat(64)}};}
+ async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},...(state.fundingAllocation?.bokAmount==='0'?{}:{bokReceipt:{txHash:'0x'+'1'.repeat(64)}})};}
 };
 const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};const cap={defaultPrivateFeeCap:'1000',pauseClaim:()=>{local.paused=true;},advanceClaim:()=>{local.paused=false;return advanceAggregateClaim({application,funding:cap,onProgress:row=>state.sessionProgress(row),paused:()=>local.paused});},
  async prepare(input){input={gasBudgetWei:'3000000000000000',...input};state.topupReview={kind,...input};await boundary('topup-review');local.phase=local.approved?'deposit':'approval';return {kind,phase:local.phase,...input,walletName:'MetaMask'};},
@@ -59,7 +59,7 @@ const runtime={selectPrivateViews,get refundOnly(){return state.refundOnly===tru
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
  getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;if(state.importWarning)state.options.onMessage(state.importWarning,'warn');},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
- async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,depositRefunds:state.depositRefundEnabled?{
+ async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,bokConfigured:state.bokConfigured===true||state.bokCredit!==undefined,depositRefunds:state.depositRefundEnabled?{
  async list(input){state.depositRefundList=input;return {owner:'0x'+'3'.repeat(40),deposits:[{depositId:'0x'+'4'.repeat(64),amount:'1000000000000000',status:'available'}],nextOffset:null};},
  async request(id){state.depositRefundId=id;await boundary('deposit-refund-request');return {depositId:id,sender:'0x'+'3'.repeat(40),amount:'1000000000000000'};},
  async prepare(receipt){await boundary('deposit-refund-bridge');const intent={intentId:'refund-1',action:{type:'cancel-deposit',receipt},status:'prepared',maximumFee:'123',withdrawal:{kind:'cancelled-collateral',depositor:receipt.sender,amount:receipt.amount,depositId:receipt.depositId,eligible:true}};write(intent);return intent;},
@@ -1463,7 +1463,7 @@ for(const width of [390,1280])test(`guided onboarding has one decision per scree
  if(process.env.ROLLING_UX_SCREENSHOTS)await page.screenshot({path:`${process.env.ROLLING_UX_SCREENSHOTS}/wallet-${width}.png`});
  await page.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
  for(const name of ['Posting deposit (ETH)','Network fee credit (fee tokens)','Bok credit (USDC)','Maximum Ethereum gas cost (ETH)','Slippage limit (%)'])assert.equal(await page.getByLabel(name,{exact:true}).count(),0);
- await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Review cost',exact:true}).count(),0);await page.getByLabel('Pay with').selectOption('USDC');await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.fundingAllocation.bokAmount),'0');assert.equal(await page.getByText('Bok assistant',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.bokReads??0),0);assert.equal(await page.getByRole('button',{name:'Review cost',exact:true}).count(),0);await page.getByLabel('Pay with').selectOption('USDC');await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  for(const text of await page.locator('.funding-line>strong').allTextContents())assert.match(text,/USDC$/);
  assert.equal(await page.getByText('Account settings',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
  const dimensions=await page.getByRole('dialog').evaluate(d=>({width:d.clientWidth,scroll:d.scrollWidth}));assert(dimensions.scroll<=dimensions.width);
@@ -1515,7 +1515,9 @@ for(const [defaults,expected,label]of [
 });
 test('G17 Bok invitation retains reply ancestry and message when toggled',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000000');await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
+ assert.equal(await page.evaluate(()=>test.bokReads??0),0);
  await page.getByLabel('Message',{exact:true}).fill('Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).check();
+ await page.waitForFunction(()=>test.bokReads===1&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).uncheck();
  assert.equal(await page.getByRole('heading',{name:'Reply',exact:true}).count(),1);await page.getByLabel('Ask Bok to reply',{exact:true}).check();
  await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
@@ -1649,4 +1651,18 @@ test('G21 unfinished signup refund uses the connected wallet without an old acco
  await page.getByText(/Ethereum refund confirmed/).waitFor();
  assert.equal(await page.evaluate(()=>test.refundSends),1);
  assert.equal(await page.evaluate(()=>test.imports),0);
+});
+
+
+test('optional Bok failure leaves an ordinary reply editable and never reads again automatically',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokConfigured=true;test.failure='bok';});
+ await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
+ assert.equal(await page.evaluate(()=>test.bokReads??0),0);await page.getByLabel('Message',{exact:true}).fill('A reply without the assistant');
+ await page.getByLabel('Ask Bok to reply',{exact:true}).click();await page.getByRole('alert').waitFor();
+ assert.equal(await page.evaluate(()=>test.bokReads),1);assert.equal(await page.getByLabel('Ask Bok to reply',{exact:true}).isChecked(),false);
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'A reply without the assistant');
+ await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
+ const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);
+ assert.equal(action.type,'reply');assert.equal(action.parent,'10');assert.equal(action.root,'1');assert.equal(action.content,'A reply without the assistant');
+ assert.equal(await page.evaluate(()=>test.bokReads),1);assert.equal((await counts(page)).sends,0);
 });
