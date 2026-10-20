@@ -1,0 +1,31 @@
+✔ G17 primary posting stays above the feed on desktop and mobile; policy details stay out of the message (3290.912166ms)
+✔ G17 account loading failures are visible and offer an explicit retry (1866.104375ms)
+✔ G17 signed-in saved feeds load automatically through the existing private reader (2181.463916ms)
+✔ G18 real reader retains the name selector across navigation and opens creation inline (2183.3915ms)
+✔ G17 focused reply preserves target, anonymous default, draft and explicit spending consent (3220.981625ms)
+✔ G17 contextual like automatically reviews cost without editable IDs or unrelated reads (2052.734917ms)
+✔ G17 contextual preference automatically reviews cost without editable IDs or unrelated reads (1917.518041ms)
+✔ G17 contextual read-marker automatically reviews cost without editable IDs or unrelated reads (1681.189917ms)
+✔ G17 Bok invitation retains reply ancestry and message when toggled (1713.931459ms)
+✔ G17 saved items load on opening and technical progress stays in details (1374.59525ms)
+✔ G17 composer rejects overlong content and presents readable desktop and mobile review (1604.159083ms)
+✔ G17 balances load without a second check and show withdrawal time as a date (1444.594875ms)
+✔ G17 a failed contextual cost check does not automatically retry or send (1236.72175ms)
+✔ G17 saved feed loading waits for the current account action before reading (1299.864333ms)
+✔ G17 account starts a new post after another action and exposes verified moderator settings (1564.705542ms)
+✔ G17 restored reply returns to editing with its saved content and ancestry (1386.766625ms)
+✔ G17 quote source opens the selected post and closes the idle composer (1382.188542ms)
+✔ G18 main-page names carry to posts and replies without a selection dialog (1637.998708ms)
+✔ G18 creates a name entirely inline, waits for confirmation and selects verified ownership (1488.006292ms)
+✔ G18 inline name failure preserves the draft without sending and cancel stays on page (1376.961542ms)
+✔ G18 guest inline name entry can create an account and obtain a funding quote (1396.910542ms)
+✔ G18 an incomplete names page can be explicitly retried without changing the posting identity (1444.487916ms)
+✔ G18 completed ownership refresh explicitly resets a name that is no longer owned (1479.150375ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30948.253042

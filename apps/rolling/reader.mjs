@@ -12,11 +12,13 @@ function privateChanged(){
  if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
  else for(const node of app.querySelectorAll('[data-private-setting]'))node.textContent=preferenceLabel(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);
 }
+async function accountPanel(){
+ return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
+   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
+}
 async function openWallet(defaults={}){
  try{
-  walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
-  (await walletPanel).open(defaults);
+  (await accountPanel()).open(defaults);
  }catch{walletPanel=null;const message='Account tools could not load. Check your connection and try again.';announce(message);main?.querySelector('[data-account-error]')?.remove();main?.prepend(el('div',{class:'notice error',role:'alert','data-account-error':''},message,button('Try again',()=>openWallet(defaults))));}
 }
 const narrow=matchMedia('(max-width:700px)');
@@ -101,6 +103,8 @@ function shell(title,{boardId=null}={}){
  rail.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();if(event.key==='Tab'&&rail.classList.contains('open')){const targets=[...rail.querySelectorAll('a,button')],first=targets[0],last=targets.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},title==='Home'?'Conversations from the main board and featured boards.':title==='Conversation'?'Join in with a reply.':'A place for anonymous conversation.'))));
  if(boardId!==null||route==='/home')main.querySelector('.page-head').append(button('Write a post',()=>openWallet({type:'post',subboard:boardId??'0'}),{class:'button primary',...(boardId!==null?{'data-board-compose':'',disabled:''}:{})}));
+ const postingName=el('div',{class:'posting-name','data-posting-name':''});main.insertBefore(postingName,main.querySelector('.page-head').nextSibling);
+ void accountPanel().then(panel=>{if(postingName.isConnected)panel.attachIdentityControls(postingName);}).catch(()=>{walletPanel=null;postingName.append(button('Load posting names',()=>render()));});
  const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Your place to talk'),el('p',{},'Start a conversation, join a board, or reply to someone. Post anonymously or use a name you choose.'),link('Find a board','/directory',{class:'button'})),el('section',{class:'context-help'},el('h2',{},'Meet Bok'),el('p',{},'Bok is an AI assistant. Invite it when writing a post or reply and choose how much to spend.')));
  app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore boards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
  return main;

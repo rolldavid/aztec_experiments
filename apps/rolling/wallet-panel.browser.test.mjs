@@ -30,7 +30,7 @@ const application={
  async prepareInterrupted(id){state.interruptedReviews=(state.interruptedReviews??0)+1;await boundary('interrupted-review');if(read().intentId!==id)error();const next={...read(),status:'prepared',maximumFee:'456'};write(next);return next;},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
  async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.depositIds??(state.fee==='fee-ready'?['9']:[])};},
- async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
+ async ownedIdentities({cursor}){state.owned++;if(state.ownedFailureCursor===cursor)error();const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
@@ -1546,4 +1546,57 @@ test('G17 restored reply returns to editing with its saved content and ancestry'
 });
 test('G17 quote source opens the selected post and closes the idle composer',async t=>{
  const {page}=await browserFixture(t);await open(page,{type:'quote',subboard:'0',reference:'10'});await page.getByRole('link',{name:'View original post',exact:true}).click();assert.equal(await page.evaluate(()=>location.hash),'#/post/10');assert.equal(await page.getByRole('dialog').isVisible(),false);assert.equal((await counts(page)).sends,0);
+});
+
+async function inlineNames(page){
+ await page.evaluate(()=>{const host=document.createElement('div');host.id='posting-names';document.querySelector('#reader').append(host);panel.attachIdentityControls(host);});
+}
+test('G18 main-page names carry to posts and replies without a selection dialog',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);
+ assert.equal((await counts(page)).loads,0);
+ await open(page);await page.waitForFunction(()=>test.owned===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ const select=page.locator('#posting-names select');assert.deepEqual(await select.locator('option').allTextContents(),['Anonymous','River Lane','Ellis Moss','Create a name…']);
+ await select.selectOption('8');assert.equal(await page.locator('dialog[open]').count(),0);
+ for(const type of ['post','reply']){
+  await open(page,{type,subboard:'3',parent:'10',root:'1'});await page.locator('[data-action-review]').waitFor();assert.equal(await page.getByLabel('Posting identity').inputValue(),'8');
+  await page.getByLabel('Message',{exact:true}).fill('Selected name works');await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
+  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.name),'8');assert.equal((await counts(page)).sends,0);
+  await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ }
+ await select.selectOption('0');await open(page,{type:'post'});await page.locator('[data-action-review]').waitFor();assert.equal(await page.getByLabel('Posting identity').inputValue(),'0');
+});
+test('G18 creates a name entirely inline, waits for confirmation and selects verified ownership',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);const select=page.locator('#posting-names select');await select.selectOption('create');
+ await page.getByLabel('First name',{exact:true}).fill(' Quinn ');await page.getByLabel('Last name',{exact:true}).fill('Stone');await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
+ assert.equal(await page.locator('dialog[open]').count(),0);assert.equal((await counts(page)).sends,0);
+ await page.evaluate(()=>{test.hold='submit';});await page.locator('[data-action-confirm]').click();await page.waitForFunction(()=>test.submitCalls===1);
+ assert.equal(await select.locator('option[value="55"]').count(),0);assert.equal(await select.isDisabled(),true);
+ await page.evaluate(()=>{test.namesPages={0:{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8},8:{identities:['55'],records:[{id:'55',first:'Quinn',last:'Stone'}],nextCursor:null}};test.hold=null;test.release();});
+ await page.waitForFunction(()=>document.querySelector('#posting-names select').value==='55');assert.equal(await page.locator('dialog[open]').count(),0);assert.equal(await page.locator('.inline-name').isVisible(),false);assert.equal((await counts(page)).sends,1);
+ await page.evaluate(()=>{const replacement=document.createElement('div');replacement.id='posting-names';document.querySelector('#posting-names').replaceWith(replacement);panel.attachIdentityControls(replacement);});assert.equal(await select.inputValue(),'55');
+ await open(page,{type:'reply',subboard:'3',parent:'10',root:'1'});await page.locator('[data-action-review]').waitFor();assert.equal(await page.getByLabel('Posting identity').inputValue(),'55');
+});
+test('G18 inline name failure preserves the draft without sending and cancel stays on page',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);await page.locator('#posting-names select').selectOption('create');
+ await page.getByLabel('First name',{exact:true}).fill('Quinn');await page.getByLabel('Last name',{exact:true}).fill('Stone');await page.evaluate(()=>{test.nameFailure='ROLLING_NAME_TAKEN';});await page.locator('[data-action-review]').click();await page.getByRole('alert').waitFor();
+ assert.equal(await page.getByLabel('First name',{exact:true}).inputValue(),'Quinn');assert.equal((await counts(page)).sends,0);assert.equal(await page.locator('dialog[open]').count(),0);
+ for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:`execution/evidence/G18/inline-${width}.png`});}
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();assert.equal(await page.locator('.inline-name').isVisible(),false);assert.equal(await page.locator('dialog[open]').count(),0);
+});
+test('G18 guest inline name entry can create an account and obtain a funding quote',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.fee='fee-needed';test.aggregateEnabled=true;});await inlineNames(page);await page.locator('#posting-names select').selectOption('create');
+ await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+ assert.equal(await page.locator('dialog[open]').count(),0);assert.equal(await page.evaluate(()=>test.fundingPrepares),1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
+ await page.evaluate(()=>{test.fee='fee-ready';});await page.getByRole('button',{name:'Confirm payment',exact:true}).click();await page.getByLabel('First name',{exact:true}).waitFor();assert.equal(await page.locator('dialog[open]').count(),0);assert.equal(await page.evaluate(()=>test.fundingPayments),1);
+});
+test('G18 an incomplete names page can be explicitly retried without changing the posting identity',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);await open(page);await page.waitForFunction(()=>test.owned===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();await page.locator('#posting-names select').selectOption('8');
+ await page.evaluate(()=>{test.ownedFailureCursor=8;});await open(page);await page.getByText('Account settings',{exact:true}).click();await page.getByRole('button',{name:'Refresh account',exact:true}).click();await page.getByRole('alert').waitFor();await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ assert.equal(await page.locator('#posting-names select').inputValue(),'8');assert.equal(await page.locator('#posting-names select').isDisabled(),true);
+ await page.evaluate(()=>{test.ownedFailureCursor=null;});await page.getByRole('button',{name:'Load names',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#posting-names select').disabled);assert.equal(await page.locator('#posting-names select').inputValue(),'8');assert.equal((await counts(page)).sends,0);
+});
+test('G18 completed ownership refresh explicitly resets a name that is no longer owned',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);await open(page);await page.waitForFunction(()=>test.owned===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();await page.locator('#posting-names select').selectOption('8');
+ await page.evaluate(()=>{test.namesPages={0:{identities:[],records:[],nextCursor:null}};});await open(page);await page.getByText('Account settings',{exact:true}).click();await page.getByRole('button',{name:'Refresh account',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ assert.equal(await page.locator('#posting-names select').inputValue(),'0');assert(await page.locator('#posting-names').getByText('Your previous posting name is no longer available. Posting as Anonymous.',{exact:true}).isVisible());assert.equal(await page.locator('#posting-names option[value="8"]').count(),0);
 });

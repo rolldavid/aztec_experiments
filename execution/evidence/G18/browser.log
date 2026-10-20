@@ -1,0 +1,27 @@
+✔ G17 primary posting stays above the feed on desktop and mobile; policy details stay out of the message (3745.556791ms)
+✔ G17 account loading failures are visible and offer an explicit retry (1812.889375ms)
+✔ G17 signed-in saved feeds load automatically through the existing private reader (1746.765583ms)
+✔ G17 focused reply preserves target, anonymous default, draft and explicit spending consent (3646.736917ms)
+✔ G17 contextual like automatically reviews cost without editable IDs or unrelated reads (1950.429125ms)
+✔ G17 contextual preference automatically reviews cost without editable IDs or unrelated reads (1496.73175ms)
+✔ G17 contextual read-marker automatically reviews cost without editable IDs or unrelated reads (1288.513917ms)
+✔ G17 Bok invitation retains reply ancestry and message when toggled (1411.595542ms)
+✔ G17 saved items load on opening and technical progress stays in details (1171.108125ms)
+✔ G17 composer rejects overlong content and presents readable desktop and mobile review (1244.969959ms)
+✔ G17 balances load without a second check and show withdrawal time as a date (1688.493875ms)
+✔ G17 a failed contextual cost check does not automatically retry or send (1360.545042ms)
+✔ G17 saved feed loading waits for the current account action before reading (1168.030542ms)
+✔ G17 account starts a new post after another action and exposes verified moderator settings (1573.325708ms)
+✔ G17 restored reply returns to editing with its saved content and ancestry (1375.866125ms)
+✔ G17 quote source opens the selected post and closes the idle composer (1215.352458ms)
+✔ G18 main-page names carry to posts and replies without a selection dialog (1569.76525ms)
+✔ G18 creates a name entirely inline, waits for confirmation and selects verified ownership (1266.36025ms)
+✔ G18 inline name failure preserves the draft without sending and cancel stays on page (1439.394792ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25205.324167

@@ -726,3 +726,5 @@ G16 final review: ux_review independently reviews product, funding safeguards, h
 2026-10-20 G16 follow-up: root implements fresh onboarding; funding_investigation read-only diagnoses receipt wait/wallet simulation; ux_review independently reviews candidate. No owner transaction recovery.
 
 20 October G17: root owns all source and service actions. ux_review audited/reviewed reader, composer and browser harness; funding_investigation audited/reviewed account semantics and publication safeguards. publication_prepare proposed app-only publisher/inventory/packet scripts under /tmp. Agents are read-only on repository and services. No new hosting or contract deployment.
+
+20 October G18: root owns inline posting-name source, checks, integration and publication. ux_review independently reviews source and existing browser harness; publication_prepare adapts the reviewed app-only scripts under /tmp. Both read-only on repository/services.

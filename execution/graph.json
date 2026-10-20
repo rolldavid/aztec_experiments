@@ -2225,7 +2225,8 @@
         "O02",
         "V06",
         "G16",
-        "G17"
+        "G17",
+        "G18"
       ],
       "requirements": [
         "REQ01",
@@ -9217,6 +9218,50 @@
       "checkpoint": "Frontend5c7b79c4 published and pushed; exactly3files updated.16focused browser and12reader/content checks pass; independent source/harness/publisher review approved. Live desktop/mobile/signup pass, assethashes match and all7posts preserved. Completion evidence evidence/G17.json. No contract/backend/financial actions.",
       "execution_lane": "UX",
       "owner": "ux-20261020",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
+      "priority": 0
+    },
+    {
+      "id": "G18",
+      "title": "Inline posting name selection and creation",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "review",
+      "depends_on": [
+        "G17"
+      ],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "scripts/test-wallet-extension-browser.mjs",
+        "execution/",
+        "START_HERE.md",
+        "scripts/t04-metamask.mjs"
+      ],
+      "plan": "tasks/G18.md",
+      "actions": [
+        "Add main-page posting identity selector and inline registration using the existing account operation owner; verify and publish."
+      ],
+      "acceptance": [
+        {
+          "id": "G18-A01",
+          "description": "Main-page name selection and inline registration preserve account ownership and explicit spending consent; selection carries to posts and replies."
+        },
+        {
+          "id": "G18-A02",
+          "description": "Focused checks and independent review pass; frontend published without changing contracts or existing posts."
+        }
+      ],
+      "evidence": "evidence/G18.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "23 focused browser checks pass; independent source/harness/publisher review approved. Ready for three-file frontend publication.",
+      "execution_lane": "UX",
+      "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
       "priority": 0

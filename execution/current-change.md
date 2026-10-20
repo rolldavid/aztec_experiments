@@ -1,7 +1,5 @@
-# Everyday social UX — 20 October 2026
+# Inline posting names
 
-G17 reviews the full reader/account/composer journey against the owner's feedback: remove unexplained implementation concepts, unnecessary clicks and misleading states. The three runtime files changed are reader.mjs, wallet-panel.mjs and style.css. Contract, wallet-runtime, proof, bridge, feed selection and backend behavior are unchanged.
+G18 adds a main-page Post as selector and inline name registration. The existing account session, operation lock, name availability check, cost review and explicit submission remain the only transaction owner. Name IDs are accepted from verified ownership; selection persists across routes and feeds into posts/replies, and clears on account invalidation. Registration selects the confirmed owned ID, including normalized input and later ownership pages. Guest setup runs inline and returns to name creation.
 
-Implemented: mobile-visible compose entry, contextual action forms without editable IDs, automatic cost review for reactions/private settings, explicit named confirmation, human message/identity previews and readable posting credit amounts, optional Bok invitation retaining reply context, automatic saved-item and balance loading, readable withdrawal dates, useful empty/error states, details for policy/chain metadata, plain backup/profile/name copy. Exact saved action and maximum fees remain authoritative.
-
-Independent review found and resolved saved-loading serialization, stale action on Write a post, moderator discovery, missing preference context, restored draft editing and original-post navigation. Focused browser checks exercise those cases. App-only publication follows the reviewed source-cutover procedure; live results are recorded in evidence/G17.
+23 focused browser checks pass, including existing G17 journeys, new name creation/selection, normalized input, pagination failure/retry, guest setup through funding, real reader route changes and account invalidation. Independent review and app-only publication are in progress. No contracts/backend or proof settings changed.
