@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Same-owner contracts and ca11b9f app published; seven prior posts archived. Fresh MetaMask payment verified, then claim aborted before proof at checkpoint bridge query. Reproduced gateway503 with actual SDK predicate; narrow checkpoint routing fix passes89 query tests plus existing receipt tests and independent review. Integrate and publish query-only repair, then fresh account through first post. No abandoned account restoration; hosted acceptance incomplete.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Same-owner app/contracts ca11 and query36bc are published. Second fresh signup failed before payment in Bok public-storage initialization; exact HTTP/transport cause remains unproven. Independent public Bok verification subsequently passed. Harness now immediately rejects declared initialization failure and records HTTP vs transport completion; 5 browser and110 transport checks pass, independently reviewed. Next fresh run preparation stopped because macOS cannot resolve configured Sepolia RPC (normal curl/getaddrinfo fail; DNS queries and TLS-pinned read-only chainId succeed). No third browser run/payment started. Resume fresh signup after normal resolver works; do not restore abandoned accounts or claim acceptance.
 
 ## Ready internal work
 

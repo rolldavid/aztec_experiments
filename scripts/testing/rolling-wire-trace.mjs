@@ -231,7 +231,7 @@ export function createRollingPublicTxCapture({queryUrl,l1Url}) {
  const endpoints=new Map([[new URL(queryUrl).href,'query'],[new URL(l1Url).href,'l1']]);
  assert.equal(endpoints.size,2);
  for(const value of endpoints.keys()){const u=new URL(value);assert(['http:','https:'].includes(u.protocol)&&!u.username&&!u.password&&!u.hash);}
- const methods={},transactions=new Map();let requests=0,completed=0,failed=0,errors=0,truncated=0,unrecognized=0,storedBytes=0;
+ const methods={},completionStatuses={},transactions=new Map();let requests=0,completed=0,failed=0,errors=0,truncated=0,unrecognized=0,storedBytes=0;
  const known=new Set([...nodeMethods,...l1Methods,...diagnosticMethods,...captureClientMethods]);
  const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
  return Object.freeze({
@@ -263,7 +263,11 @@ export function createRollingPublicTxCapture({queryUrl,l1Url}) {
     }
    } catch { errors++; } // Never retain exception text or original request data.
   },
-  complete(status){completed++;if(!Number.isInteger(status)||status<200||status>=300)failed++;},
+  complete(status){
+   completed++;if(!Number.isInteger(status)||status<200||status>=300)failed++;
+   const key=Number.isInteger(status)&&status>=100&&status<=599?String(status):'transport-failure';
+   completionStatuses[key]=(completionStatuses[key]??0)+1;
+  },
   qualify(hash,{receipt,effect,block,roles}) {
    const entry=transactions.get(hash);assert(entry,'Canonical transaction was not captured');
    assert((entry.methods.node_sendTx??0)+(entry.methods.aztec_sendTx??0)>0,'No captured submission');
@@ -281,7 +285,7 @@ export function createRollingPublicTxCapture({queryUrl,l1Url}) {
     missingRoles:T03_PUBLIC_ROLES.filter(role=>roles?.[role]==null)};
   },
   snapshot(){return {schemaVersion:1,scope:'Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded',
-   requests,completed,pending:requests-completed,failed,errors,truncated,unrecognized,methods:{...methods},privacyAcceptance:'not-evaluated',
+   requests,completed,pending:requests-completed,failed,errors,truncated,unrecognized,methods:{...methods},completionStatuses:{...completionStatuses},privacyAcceptance:'not-evaluated',
    transactions:[...transactions].map(([hash,e])=>({hash,methods:{...e.methods},proofStrippedTxBase64:e.bytes.toString('base64'),proofStrippedTxSha256:digest(e.bytes),proofs:[...e.proofs.values()].map(p=>({...p})),canonical:e.canonical?structuredClone(e.canonical):null})),
    limits:'Only pinned method names retained; unknown names redacted and counted. Public kernel outputs and encrypted effect logs remain public data, not witnesses or plaintext notes. Equality checks do not establish unlinkability.'};},
  });

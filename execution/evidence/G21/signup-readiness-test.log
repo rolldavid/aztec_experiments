@@ -1,0 +1,14 @@
+▶ signup observes completion or declared failure without waiting for a missing button
+  ✔ ready (48.895833ms)
+  ✔ diagnostic-failure (27.262875ms)
+  ✔ alert-failure (25.0565ms)
+  ✔ failure-with-button (25.167959ms)
+✔ signup observes completion or declared failure without waiting for a missing button (940.465958ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1514.161084

@@ -341,7 +341,8 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));mark('aggregate-initial-recovery-saved');
   }
   const dialog=page.getByRole('dialog');if(continueUnfunded||unsignedContinuation)await dialog.getByRole('button',{name:'Set up posting',exact:true}).click({timeout:remaining()});
-  mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
+  await waitForMetaMaskSignupConnection(page,remaining);
+  mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click({timeout:remaining()});
   report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId,permission,observe:state=>{report.accountSelectionState=state;}});
   await page.waitForFunction(()=>walletState.ethAccount!==null,{},{timeout:remaining()});
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
@@ -501,6 +502,12 @@ export async function exportMetaMaskUnsignedRecovery({page,control,mark,report})
 }
 
 // A retained disposable profile may diagnose initialization without admitting any payment.
+export async function waitForMetaMaskSignupConnection(page,remaining){
+ const dialog=page.getByRole('dialog'),connect=dialog.getByRole('button',{name:'Connect MetaMask',exact:true});
+ const failed=page.locator(`dialog[data-rolling-initialization*='"state":"failed"']`),alert=dialog.getByRole('alert');
+ await connect.or(failed).or(alert).first().waitFor({timeout:remaining()});
+ assert(!(await failed.isVisible())&&!(await alert.isVisible()),'Private account initialization failed');
+}
 export async function inspectMetaMaskAggregateReadiness({page,control,mark,allowPrepared=false,recoveryFile,keysOnly=false,refundOnly=false,remaining}){
  if(keysOnly)assert.equal(recoveryFile,undefined,'Keys-only unlock cannot import a historical journal export');
  mark('aggregate-retained-readiness');await page.getByRole('button',{name:'Your account',exact:true}).click();const dialog=page.getByRole('dialog');

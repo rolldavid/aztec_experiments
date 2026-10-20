@@ -1,0 +1,10 @@
+{
+  "source": "36bc680ecabbc484a69e1161b5f87213c1aaee35",
+  "command": "node .build/g21-bridge-public-readback.mjs",
+  "checkpoint": 10540,
+  "hash": "0x2feb9fc688ef024c1ec7ccf9a46b731b023ecc57514f2c9e1858bbc209098695",
+  "messageLeaves": 148,
+  "fixedCanonicalHeaderMatched": true,
+  "absentMessagePending": true,
+  "freshSignupAcceptance": false
+}

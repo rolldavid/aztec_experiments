@@ -738,3 +738,5 @@ G21 same-owner implementation checkpoint: root owns all edits and tests. funding
 G21 publication boundary: complete same-owner application and contracts are verified. Root remains sole source/cloud writer. ux_review reviews exact candidate; publication_prepare and funding_investigation cross-review host publication proposals read-only. New board/Bok contracts are deployed awaiting native bridge settlement; existing service configuration remains unchanged.
 
 G21 bridge acceptance repair: root owns edits, focused checks, integration and cloud operations. funding_investigation proposed checkpoint query fix and reviews publisher; ux_review independently approves query source/test hashes and investigates disposable test-funding custody read-only; publication_prepare proposes narrow native/query updater. No contract/app re-deployment for this repair.
+
+G21 current signup failure: funding_investigation investigates trusted-read boundary read-only; ux_review reviews immediate terminal-failure observation in the browser harness. Root alone writes source and runs services/tests.

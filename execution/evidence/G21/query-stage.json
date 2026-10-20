@@ -1,0 +1,44 @@
+{
+  "staged": true,
+  "source": "36bc680ecabbc484a69e1161b5f87213c1aaee35",
+  "qualificationReexecuted": false,
+  "nodePreserved": true,
+  "manifest": "f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27",
+  "affectedCheck": {
+    "passed": true,
+    "coverage": "bound-affected-tests-native-syntax-and-existing-query-boundary",
+    "policy": {
+      "affectedChecksSha256": "ad5dc60c47b5e7f4702aace9af1635c473bdcd07b355d9fd78b992f2f6c3707d",
+      "nativeSyntaxPassed": true,
+      "proofJobs": 0
+    },
+    "manifestSha256": "f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27",
+    "bootstrapSha256": "9501b3d7316203729124ae727bf105e4fb7a3554c3148f646a3bee8c77110c6b",
+    "observation": {
+      "proverPolicy": "active-loopback",
+      "proverActivated": true,
+      "proxyPolicy": "active-private",
+      "proxyViewerOrigin": "https://d30njln0kead8n.cloudfront.net",
+      "proxyQuery": {
+        "enabled": true,
+        "ready": true
+      },
+      "proverQuery": {
+        "enabled": true,
+        "ready": true
+      },
+      "proverAvailability": "ready",
+      "applicationScopeSha256": "a1123879b3cfc743b84f4037064e5ad2304cf7aa411c2643dd32590075310e2d",
+      "bokScope": "constructor-allowlist-only",
+      "applicationProofQualified": false
+    },
+    "proverProcess": {
+      "pid": 90850,
+      "startTicks": "3120089",
+      "exe": "/opt/board-prover/releases/rolling-56d35b565341244a/node/bin/node",
+      "cwd": "/opt/board-prover/releases/rolling-56d35b565341244a"
+    },
+    "activationReexecuted": false,
+    "qualificationReexecuted": false
+  }
+}

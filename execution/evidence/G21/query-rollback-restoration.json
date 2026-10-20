@@ -1,0 +1,55 @@
+{
+  "restored": true,
+  "manifest": "56d35b565341244a827864fc743d262a66bc084be7b9af881897646a7aab84ee",
+  "markerSha256": "29c0e0067033635a824428375d3875d7e16e017d9c4cd3a681f5629f23407076",
+  "observation": {
+    "proverPolicy": "active-loopback",
+    "proverActivated": true,
+    "proxyPolicy": "active-private",
+    "proxyViewerOrigin": "https://d30njln0kead8n.cloudfront.net",
+    "proxyQuery": {
+      "enabled": true,
+      "ready": true
+    },
+    "proverQuery": {
+      "enabled": true,
+      "ready": true
+    },
+    "proverAvailability": "ready",
+    "applicationScopeSha256": "a1123879b3cfc743b84f4037064e5ad2304cf7aa411c2643dd32590075310e2d",
+    "bokScope": "constructor-allowlist-only",
+    "applicationProofQualified": false
+  },
+  "services": {
+    "rolling-node.service": {
+      "MainPID": "4287",
+      "WorkingDirectory": "",
+      "ActiveState": "active"
+    },
+    "rolling-application.service": {
+      "MainPID": "91788",
+      "WorkingDirectory": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09",
+      "ActiveState": "active"
+    },
+    "rolling-moderator.service": {
+      "MainPID": "98293",
+      "WorkingDirectory": "/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09",
+      "ActiveState": "active"
+    },
+    "rolling-query.service": {
+      "MainPID": "98231",
+      "WorkingDirectory": "/opt/board-prover/releases/rolling-56d35b565341244a",
+      "ActiveState": "active"
+    },
+    "board-prover.service": {
+      "MainPID": "98232",
+      "WorkingDirectory": "/opt/board-prover/current",
+      "ActiveState": "active"
+    },
+    "board-prover-proxy.service": {
+      "MainPID": "98273",
+      "WorkingDirectory": "",
+      "ActiveState": "active"
+    }
+  }
+}

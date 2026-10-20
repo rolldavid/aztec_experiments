@@ -442,6 +442,15 @@ test('public capture retains installed wallet RPC names but never arbitrary meth
  }
  assert.equal(capture.snapshot().unrecognized,0);assert(!JSON.stringify(capture.snapshot()).includes('PRIVATE_SENTINEL'));
 });
+test('public capture distinguishes HTTP rejection from transport failure without retaining exception text',async()=>{
+ const {createRollingPublicTxCapture}=await import('./rolling-wire-trace.mjs');
+ const capture=createRollingPublicTxCapture({queryUrl:origin+'/v1/node',l1Url:origin+'/l1'});
+ for(const status of [200,503,429,null,'PRIVATE_SENTINEL',700])capture.complete(status);
+ const seen=capture.snapshot();
+ assert.deepEqual(seen.completionStatuses,{'200':1,'503':1,'429':1,'transport-failure':3});
+ assert.equal(seen.failed,5);assert(!JSON.stringify(seen).includes('PRIVATE_SENTINEL'));
+ seen.completionStatuses['503']=500;assert.equal(capture.snapshot().completionStatuses['503'],1);
+});
 test('public capture SDK reads use one bounded silent request and respect the owner deadline',async()=>{
  const {createRollingCaptureNode}=await import('./rolling-wire-trace.mjs');let requests=0,expired=false;
  const node=createRollingCaptureNode({url:origin,remaining(){if(expired)throw Error('deadline');return 1000;},fetchImpl:async(url,options)=>{

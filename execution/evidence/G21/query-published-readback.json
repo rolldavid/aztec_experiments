@@ -1,0 +1,62 @@
+{
+  "applicationObserverState": "inactive",
+  "manifest": "f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27",
+  "moderatorBinarySha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+  "moderatorDeclaredExecutable": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+  "moderatorOwnershipVerified": true,
+  "moderatorResolvedExecutable": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+  "observation": {
+    "applicationProofQualified": false,
+    "applicationScopeSha256": "bcc2b2a2102d476686f2cc476566d3d105b7719cd0fef099e12e4685fb68993c",
+    "bokScope": "constructor-allowlist-only",
+    "proverActivated": true,
+    "proverAvailability": "ready",
+    "proverPolicy": "active-loopback",
+    "proverQuery": {
+      "enabled": true,
+      "ready": true
+    },
+    "proxyPolicy": "active-private",
+    "proxyQuery": {
+      "enabled": true,
+      "ready": true
+    },
+    "proxyViewerOrigin": "https://d30njln0kead8n.cloudfront.net"
+  },
+  "processes": {
+    "board-prover.service": {
+      "cwd": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec",
+      "exe": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec/node/bin/node",
+      "pid": 100561,
+      "startTicks": "3349496"
+    },
+    "rolling-application.service": {
+      "cwd": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09",
+      "exe": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+      "pid": 91788,
+      "startTicks": "3137040"
+    },
+    "rolling-moderator.service": {
+      "cwd": "/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09",
+      "exe": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+      "pid": 100720,
+      "startTicks": "3350816"
+    },
+    "rolling-node.service": {
+      "cwd": "/",
+      "exe": "/usr/bin/python3.12",
+      "pid": 4287,
+      "startTicks": "60557"
+    },
+    "rolling-query.service": {
+      "cwd": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec",
+      "exe": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec/node/bin/node",
+      "pid": 100560,
+      "startTicks": "3349495"
+    }
+  },
+  "source": "36bc680ecabbc484a69e1161b5f87213c1aaee35",
+  "verified": true,
+  "applicationObserverStateAfterFinalization": "active",
+  "finalizationCommandId": "82c647d7-ecca-40ce-a950-ba37e6155685"
+}

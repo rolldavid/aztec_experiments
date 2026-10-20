@@ -1,0 +1,73 @@
+{
+  "outcome": "initialization-failed-before-payment",
+  "run": {
+    "passed": false,
+    "scope": "Current Sepolia/Aztec testnet aggregate funding and genuine private claim with native proofs enabled.",
+    "privateRecoveryRetained": true,
+    "browserVersion": "155.0.8059.79",
+    "browserLifecycle": {
+      "contextClosed": true,
+      "disconnected": true,
+      "pageCrashed": false
+    },
+    "localNetwork": "selected",
+    "aggregatePermission": {
+      "entered": false,
+      "resolved": false,
+      "rejected": false
+    },
+    "aggregateConnection": {
+      "entered": null,
+      "resolved": null,
+      "rejected": null
+    },
+    "aggregateAttempts": {
+      "userSends": 0,
+      "relayPosts": 0,
+      "signatures": 0,
+      "paymentHashObserved": false
+    },
+    "failure": {
+      "stage": "aggregate-connect-wallet",
+      "errorClass": "Error",
+      "browserLifecycle": {
+        "contextClosed": false,
+        "disconnected": false,
+        "pageCrashed": false
+      },
+      "location": "t04-metamask.mjs:344:106"
+    },
+    "walletSurfaces": [
+      {
+        "path": "/sidepanel.html",
+        "route": "#/",
+        "controls": {
+          "confirm-btn": false,
+          "parent-selector-confirmation-page": false,
+          "confirm-footer-button": false,
+          "parent-selector-template-confirmation-page": false,
+          "confirmation-submit-button": false,
+          "confirmation-cancel-button": false,
+          "account-menu-icon": true
+        }
+      }
+    ],
+    "cleanupComplete": true,
+    "blockedRequests": 0,
+    "blockedDetails": [],
+    "proofRequests": 0,
+    "l2Submissions": 0,
+    "extensionStartupDocuments": 14
+  },
+  "elapsedMs": 675691,
+  "observedInitialization": {
+    "stage": "session-initialization",
+    "step": "deployment",
+    "deploymentStep": null,
+    "state": "failed",
+    "code": "BB_TRUSTED_NODE_UNAVAILABLE"
+  },
+  "diagnosis": "Public trace records 14 storage reads (11 board plus first three Bok reads), three node-info calls and one failed HTTP/transport completion. Exact failed status was not retained, so cause remains unproven. Same public Bok verification subsequently passed all four storage reads.",
+  "termination": "Root closed the test page after inspecting the declared failure; harness cleaned up normally. This is a failed run, not acceptance.",
+  "next": "Observe terminal initialization failure immediately and preserve HTTP versus transport outcome; execute next fresh run with unchanged deployed app/native runtime."
+}

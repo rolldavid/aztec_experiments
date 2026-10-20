@@ -1,0 +1,16 @@
+{
+  "status": "canonical",
+  "transactionHash": "0x57187d408b311137f7c87fffeb68bfc420b5ddb08e2c2efbc1064a2572dc49e6",
+  "from": "0xe6c6f747c7f94ac3238a10f6ba4fd1d5367b2c4e",
+  "to": "0x8d83fed116a7542934ca2e968055555317f91ca4",
+  "valueWei": "1200000000000000",
+  "blockNumber": 11956415,
+  "blockHash": "0x5a83abb7e2295dd826b40b9c8c380abe0718462c1b53c31c0bfe2fbbda661ba8",
+  "relayBalanceWei": "799978946958208",
+  "targetBalanceWei": "1551207700113860",
+  "relayNonce": 3,
+  "relayFilesPreserved": true,
+  "purpose": "Fresh same-owner testnet account acceptance; no old private account restored",
+  "helperSha256": "ffc27be82ed80839e52ebb0ab3b48811ac9711feb197929a27cf3c1586b52ca0",
+  "independentReviewer": "/root/ux_review"
+}
