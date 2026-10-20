@@ -1,0 +1,15 @@
+✔ G17 focused reply preserves target, anonymous default, draft and explicit spending consent (1828.232833ms)
+✔ G17 contextual like automatically reviews cost without editable IDs or unrelated reads (483.729333ms)
+✔ G17 contextual preference automatically reviews cost without editable IDs or unrelated reads (460.453125ms)
+✔ G17 contextual read-marker automatically reviews cost without editable IDs or unrelated reads (566.3115ms)
+✔ G17 Bok invitation retains reply ancestry and message when toggled (678.705667ms)
+✔ G17 saved items load on opening and technical progress stays in details (440.347792ms)
+✔ G17 composer rejects overlong content and presents readable desktop and mobile review (659.916125ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5329.249833

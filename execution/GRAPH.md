@@ -109,6 +109,7 @@ flowchart TD
     O02 --> R04
     V06 --> R04
     G16 --> R04
+    G17 --> R04
     A02["A02: Resolve production dependency advisories"]
     P04 --> A02
     U02["U02: Open each board directly without user configuration"]
@@ -152,6 +153,8 @@ flowchart TD
     G15["G15: Reviewed names and subboard protocol foundation"]
     G03 --> G15
     G16["G16: Simple account creation and guided funding"]
+    G17["G17: Everyday social journeys without transaction-console UX"]
+    G16 --> G17
 ```
 
 ## Work packages
@@ -191,7 +194,7 @@ flowchart TD
 | [T06](tasks/T06.md) | Complete bounded final reliability and operator failure exercises | T05, O01 | internal |
 | [X03](tasks/X03.md) | Verify current target-network production suitability | P02 | external |
 | [O02](tasks/O02.md) | Confirm operator ownership and production configuration | O01, D01 | external |
-| [R04](tasks/R04.md) | Sign off the production-ready release package | T05, T06, X02, X03, O02, V06, G16 | internal |
+| [R04](tasks/R04.md) | Sign off the production-ready release package | T05, T06, X02, X03, O02, V06, G16, G17 | internal |
 | [A02](tasks/A02.md) | Resolve production dependency advisories | P04 | internal |
 | [U02](tasks/U02.md) | Open each board directly without user configuration | U01 | internal |
 | [U03](tasks/U03.md) | Browse and discover boards | U02 | internal |
@@ -212,3 +215,4 @@ flowchart TD
 | [G14](tasks/G14.md) | Private Bok escrow interface and feasibility | G03 | internal |
 | [G15](tasks/G15.md) | Reviewed names and subboard protocol foundation | G03 | internal |
 | [G16](tasks/G16.md) | Simple account creation and guided funding | none | internal |
+| [G17](tasks/G17.md) | Everyday social journeys without transaction-console UX | G16 | internal |

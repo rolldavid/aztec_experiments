@@ -724,3 +724,5 @@ Root ux-20261020 owns edits. funding_investigation performs read-only funding/de
 G16 final review: ux_review independently reviews product, funding safeguards, harness structure and the exact deployment script; funding_investigation independently verifies contract defaults and app-only cutover. Both read-only. Root is sole source writer and service operator.
 
 2026-10-20 G16 follow-up: root implements fresh onboarding; funding_investigation read-only diagnoses receipt wait/wallet simulation; ux_review independently reviews candidate. No owner transaction recovery.
+
+20 October G17: root owns all source and service actions. ux_review audited/reviewed reader, composer and browser harness; funding_investigation audited/reviewed account semantics and publication safeguards. publication_prepare proposed app-only publisher/inventory/packet scripts under /tmp. Agents are read-only on repository and services. No new hosting or contract deployment.

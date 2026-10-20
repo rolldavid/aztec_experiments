@@ -1,0 +1,28 @@
+{
+  "kind": "app",
+  "unit": "/etc/systemd/system/rolling-application.service",
+  "unitSha256": "2e6fc6b4cf6fd23f8ea372006ad0e2b270158db6132ecc3ffac789436b528513",
+  "source": "/opt/rolling-app/releases/signup-c9c850df1e51",
+  "active": "active",
+  "pid": "39799",
+  "sourceReferences": [
+    "WorkingDirectory=/opt/rolling-app/releases/signup-c9c850df1e51"
+  ],
+  "privateHashes": {
+    "/etc/rolling-app/public.json": "14e9bee1f2d44e8082913533c669a4511b88965ea6f72d6bc880e40fd38329a4",
+    "/etc/rolling-app/relay.json": "f329e94d8df6302b77d450d31681945bfcec7786e28e8ab5b20ea596311c54df",
+    "/etc/rolling-app/wallet.json": "6529f9151e1818be109085766782c117203202954a91b0bc32acc79a91375bc3",
+    "/var/lib/rolling-bootstrap-private/app-publication/funding-relay-signer.json": "73a5ad07aa5c03a4e50979ee3e0d416ab48e8f13421e994a3bbf3c7a7b5a2976"
+  },
+  "buildHashes": {
+    ".build/sdk/sdk-manifest.json": "57a03123364220604507a775d67f43033a4ae98531a615b6eac4f555fa4402cb",
+    ".build/rolling-wallet/manifest.json": "7550e6558ea0c20b14eb57bf390b97b585b93af80bd84cd7af977a81609b75b4"
+  },
+  "idle": true,
+  "fileHashes": {
+    "apps/rolling/reader.mjs": "49574f6694097c2946ad55ef2c07de1f7e0c440be4108667636dd9d53faa833b",
+    "apps/rolling/wallet-panel.mjs": "f97dd20f64ced3954110ba7c52f9def28ed60a5632ad819346eb48dc5a00e6c1",
+    "apps/rolling/style.css": "c8a3146dc4570b39be40d88e1ef380fd14db7a12b7520c811132c50bc5ecb32c"
+  },
+  "absentCandidates": []
+}

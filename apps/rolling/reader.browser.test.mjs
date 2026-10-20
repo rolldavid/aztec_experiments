@@ -333,7 +333,7 @@ export async function loadRollingWalletRuntime(){return {selectPrivateViews,getA
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
- await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Your saved conversations'}).waitFor();return {page,requests,feed,state};
+ await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Your bookmarks',exact:true}).waitFor();return {page,requests,feed,state};
 }
 async function recoverPrivateView(page){await page.getByRole('button',{name:'Open your account'}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Load saved items',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
 test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
@@ -533,4 +533,27 @@ test('keyboard sparse directory paging retains its button then focuses the exhau
  await page.waitForFunction(()=>document.activeElement.textContent==='Load more'&&!document.activeElement.disabled);
  await page.keyboard.press('Enter');await page.getByText('No more subboards.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>document.activeElement.textContent),'No more subboards.');
+});
+
+// G17 keeps social context in the reader while hiding implementation metadata.
+test('G17 primary posting stays above the feed on desktop and mobile; policy details stay out of the message',async t=>{
+ const {page}=await socialFixture(t);
+ for(const width of [1440,390]){
+  await page.setViewportSize({width,height:900});const compose=page.locator('.page-head').getByRole('button',{name:'Write a post',exact:true});
+  assert(await compose.isVisible());const c=await compose.boundingBox(),post=await page.locator('#post-10').boundingBox();assert(c.y+c.height<=post.y);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.equal(await page.locator('#post-10').getByText('Published under policy: parent v2 · local v0',{exact:true}).isVisible(),false);
+  await page.screenshot({path:`execution/evidence/G17/reader-${width}.png`});
+ }
+ await page.locator('.page-head').getByRole('button',{name:'Write a post',exact:true}).click();await page.waitForFunction(()=>window.recordedActions?.length===1);
+ assert.deepEqual(await page.evaluate(()=>window.recordedActions),[{type:'post',subboard:'0'}]);
+ await page.locator('#post-10 .post-more > summary').click();await page.locator('#post-10 .post-provenance > summary').click();assert(await page.getByText('Published under policy: parent v2 · local v0',{exact:true}).isVisible());
+});
+test('G17 account loading failures are visible and offer an explicit retry',async t=>{
+ const {page}=await socialFixture(t,{wallet:'missing'});await page.locator('#post-10').getByRole('button',{name:'Reply',exact:true}).click();
+ const error=page.locator('[data-account-error]');await error.waitFor();assert(await error.isVisible());assert(await error.getByRole('button',{name:'Try again',exact:true}).isVisible());assert.match(await error.innerText(),/Check your connection/);
+});
+test('G17 signed-in saved feeds load automatically through the existing private reader',async t=>{
+ const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('button',{name:'Close account panel'}).waitFor();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel'}).click();
+ await page.getByRole('link',{name:'Following',exact:true}).click();await page.waitForFunction(()=>window.privateTest.reads===1);await page.getByRole('heading',{name:'Find your people',exact:true}).waitFor();assert.equal(await page.getByText('Your saved items could not load.',{exact:true}).count(),0);assert.equal(await page.getByRole('dialog').isVisible(),false);assert(feed.length>0);
 });

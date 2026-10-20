@@ -1,0 +1,10 @@
+✔ G17 primary posting stays above the feed on desktop and mobile; policy details stay out of the message (1417.663416ms)
+✔ G17 account loading failures are visible and offer an explicit retry (647.803292ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2236.557666

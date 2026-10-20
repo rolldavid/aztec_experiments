@@ -2224,7 +2224,8 @@
         "X03",
         "O02",
         "V06",
-        "G16"
+        "G16",
+        "G17"
       ],
       "requirements": [
         "REQ01",
@@ -9174,6 +9175,50 @@
       "owner": "ux-20261020",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Focused unit/boundary and browser checks plus independent review.",
+      "priority": 0
+    },
+    {
+      "id": "G17",
+      "title": "Everyday social journeys without transaction-console UX",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "active",
+      "depends_on": [
+        "G16"
+      ],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "scripts/test-wallet-extension-browser.mjs",
+        "execution/",
+        "START_HERE.md",
+        "scripts/t04-metamask.mjs"
+      ],
+      "plan": "tasks/G17.md",
+      "actions": [
+        "Review full reader/account/composer/settings journeys; replace technical controls with contextual actions and useful states; verify and publish UI-only changes."
+      ],
+      "acceptance": [
+        {
+          "id": "G17-A01",
+          "description": "Reading, posting, replying and saving have focused controls, plain copy, visible mobile entry points and contextual identifiers."
+        },
+        {
+          "id": "G17-A02",
+          "description": "Focused browser regression checks and independent review pass; published UI preserves contract identities, existing posts and explicit payment consent."
+        }
+      ],
+      "evidence": "evidence/G17.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "Implemented focused action dialogs, reader/mobile entry points, plain previews/costs, automatic saved-item/balance loading, contextual errors and dates. Independent reviewers approved runtime source. Focused browser cases pass; completing harness selector maintenance and app-only publication.",
+      "execution_lane": "UX",
+      "owner": "ux-20261020",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
       "priority": 0
     }
   ],

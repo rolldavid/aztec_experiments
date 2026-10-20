@@ -5,7 +5,7 @@ import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
-let walletPanel,privatePanel;
+let walletPanel,privatePanel,savedItemsLoad;
 const privateViews=new Set(['following','bookmarks','notifications']);
 function privateChanged(){
  for(const node of app.querySelectorAll('[data-moderator-action]'))showModeratorButton(node);
@@ -17,7 +17,7 @@ async function openWallet(defaults={}){
   walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
    loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
   (await walletPanel).open(defaults);
- }catch{announce('Account tools could not load. Reload the page before trying again.');}
+ }catch{walletPanel=null;const message='Account tools could not load. Check your connection and try again.';announce(message);main?.querySelector('[data-account-error]')?.remove();main?.prepend(el('div',{class:'notice error',role:'alert','data-account-error':''},message,button('Try again',()=>openWallet(defaults))));}
 }
 const narrow=matchMedia('(max-width:700px)');
 const el=(tag,attrs={},...children)=>{
@@ -59,9 +59,9 @@ function postCard(post,data){
  const author=isBot?'Bok':r.name_id==='0'?'Anonymous':named?`${text(named.first)} ${text(named.last)}`:'Registered name';
  const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author});
  const who=isBot||r.name_id==='0'?el('span',{class:'author'},author):link(author,'/profile/'+r.name_id,{class:'author'});
- article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'Authenticated bot'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
- const authoredPolicy=policyLabel('Published under policy',post.mainVersion,post.localVersion);if(authoredPolicy)article.append(authoredPolicy);
- if(Array.isArray(data.policies)){const policy=data.policies.find(p=>p.version===post.mainVersion);if(policy&&policyVersion(policy.version))article.append(el('details',{},el('summary',{},'Parent rules at publication · v'+policy.version),richText(policy.text)));}
+ article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'AI assistant'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
+ const provenance=el('details',{class:'post-provenance'},el('summary',{},'Post details'));const authoredPolicy=policyLabel('Published under policy',post.mainVersion,post.localVersion);if(authoredPolicy)provenance.append(authoredPolicy);
+ if(Array.isArray(data.policies)){const policy=data.policies.find(p=>p.version===post.mainVersion);if(policy&&policyVersion(policy.version))provenance.append(el('details',{},el('summary',{},'Parent rules at publication · v'+policy.version),richText(policy.text)));}
  if(field(r.parent)&&r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
  const unlike=()=>button('Unlike',()=>openWallet({type:'unlike',post:post.id}));
@@ -80,29 +80,29 @@ function postCard(post,data){
    if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
    if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
   }
-  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),threadControls())));return article;
+  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),threadControls(),provenance)));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
   button('Like',()=>openWallet({type:'like',post:post.id})),preferenceButton('Bookmark',1,post.id),
   more(unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
-   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),threadControls())));
+   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),threadControls(),provenance)));
  article.append(moderatorButton('Remove this post',{type:'moderate-post',post:post.id}));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
 function shell(title,{boardId=null}={}){
  document.title=title+' · Rolling Chat';
- const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
+ const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore boards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
  for(const entry of rail.querySelectorAll('nav a'))if(entry.hash.slice(1)===route||entry.hash==='#/directory'&&route.startsWith('/directory/')){entry.setAttribute('aria-current','page');entry.classList.add('active');}
  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
  rail.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();if(event.key==='Tab'&&rail.classList.contains('open')){const targets=[...rail.querySelectorAll('a,button')],first=targets[0],last=targets.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
- main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},'A place for anonymous conversation.'))));
- const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Join the conversation'),el('p',{},'Posts and reactions are recorded onchain. Named identities and authenticated Bok replies are shown with their conversations.'),
-  button('Write a post',()=>openWallet({type:'post',...(boardId!==null?{subboard:boardId}:{})}),boardId!==null?{'data-board-compose':'',disabled:''}:{}),button('Register a name',()=>openWallet({type:'name'})),button('Create a subboard',()=>openWallet({type:'subboard'}))));
- app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore subboards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
+ main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},title==='Home'?'Conversations from the main board and featured boards.':title==='Conversation'?'Join in with a reply.':'A place for anonymous conversation.'))));
+ if(boardId!==null||route==='/home')main.querySelector('.page-head').append(button('Write a post',()=>openWallet({type:'post',subboard:boardId??'0'}),{class:'button primary',...(boardId!==null?{'data-board-compose':'',disabled:''}:{})}));
+ const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Your place to talk'),el('p',{},'Start a conversation, join a board, or reply to someone. Post anonymously or use a name you choose.'),link('Find a board','/directory',{class:'button'})),el('section',{class:'context-help'},el('h2',{},'Meet Bok'),el('p',{},'Bok is an AI assistant. Invite it when writing a post or reply and choose how much to spend.')));
+ app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore boards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
  return main;
 }
 function boardCard(board){
@@ -135,7 +135,7 @@ async function render(){
  const restoreSignal=signal,saved=positions.get(route);loadedPages=1;
  const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
  if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
- else if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
+ else if(parts[0]==='directory'){api='directory';title='Explore boards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
  else if(parts[0]==='board'){if(parts.length!==2||!field(parts[1])){shell('Page not found',{boardId:''});return;}api='board';parameters={id:parts[1],limit:30};title=parts[1]==='0'?'Main board':'Subboard';}
  else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
   if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
@@ -143,17 +143,24 @@ async function render(){
  else if(parts[0]!=='home'){shell('Page not found');return;}
  shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
-  main.querySelector('.intro').textContent='Conversations you follow and posts you save appear here.';
-  main.append(button('Saved items settings',()=>openWallet({view:'preferences'})));
+  main.querySelector('.intro').textContent={following:'Posts from the people and boards you follow.',bookmarks:'Posts you saved for later.',notifications:'Updates from conversations you follow.'}[privateView];
   if(privatePanel?.privateStatus?.()!=='complete'){
-   main.append(el('div',{class:'empty'},el('h2',{},'Your saved conversations'),el('p',{},'Sign in to load your follows, bookmarks and notifications.'),button('Open your account',()=>openWallet({view:'preferences'}))));
+   const signedIn=privatePanel?.privateStatus?.()==='recovering';
+   if(signedIn&&typeof privatePanel.loadSavedItems==='function'){
+    const state=el('div',{class:'empty',role:'status'},el('p',{},'Loading your '+title.toLowerCase()+'…'));main.append(state);
+    savedItemsLoad??=Promise.resolve().then(()=>privatePanel.loadSavedItems()).finally(()=>{savedItemsLoad=null;});
+    void savedItemsLoad.then(ok=>{if(current!==sequence||signal.aborted||ok)return;state.replaceChildren(el('p',{},'Your saved items could not load.'),button('Try again',()=>render()));});
+    return;
+   }
+   main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.',notifications:'Sign in to see updates to your conversations.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet({view:'preferences',accountMode:'signin'}))));
    focusRoute(route,positions.get(route),current===1);
    announce(title+': sign in to see your saved conversations.');return;
   }
  }
  const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
  if(api==='directory'){
-  const input=el('input',{type:'search',value:parameters.query,placeholder:'Search names, descriptions or slugs','aria-label':'Search subboards',maxlength:120});
+  main.querySelector('.intro').textContent='Find a community around something you care about.';main.append(button('Create a board',()=>openWallet({type:'subboard'})));
+  const input=el('input',{type:'search',value:parameters.query,placeholder:'Find a topic or board','aria-label':'Search boards',maxlength:120});
   const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));main.insertBefore(form,loading);
  }
  const container=el('section',{class:'feed','aria-label':title});let data;
@@ -199,7 +206,13 @@ async function render(){
   }
   if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
   document.title=main.querySelector('h1').textContent+' · Rolling Chat';
-  if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?(cursor?'No matches in this page. Continue searching.':'No subboards match this search.'):'No posts to show yet.')));
+  if(!container.childElementCount){
+   const copy=privateView?{following:['Find your people','Follow a board or a named author to see their posts here.'],bookmarks:['Save something worth returning to','Select Bookmark on a post to keep it here.'],notifications:['You’re all caught up','Follow a conversation to see new replies here.']}[privateView]:api==='directory'?['Find a board',cursor?'No matches on this page. Check the next page or try another search.':'No boards match. Try another topic or create a board.']:['Start the conversation','There are no posts here yet.'];
+   const empty=el('div',{class:'empty'},el('h2',{},copy[0]),el('p',{},copy[1]));
+   if(privateView)empty.append(link(privateView==='following'?'Explore boards':'Browse conversations',privateView==='following'?'/directory':'/home',{class:'button'}));
+   else if(api==='home'||api==='board'&&!data.board?.rejected)empty.append(button('Write the first post',()=>openWallet({type:'post',subboard:api==='board'?parameters.id:'0'}),{class:'button primary'}));
+   container.append(empty);
+  }
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
   let observer,inFlight=false,stopped=false;
@@ -230,7 +243,7 @@ async function render(){
    }
   }
   if(cursor)main.append(more);
-  main.append(el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??'')));
+  main.append(el('details',{class:'feed-details'},el('summary',{},'About this feed'),el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??''))));
   focusRoute(route,positions.get(route),current===1);
   // One request owner serves both automatic and keyboard paging. Re-observation
   // after each page fills short viewports, but never creates parallel requests.
@@ -239,7 +252,7 @@ async function render(){
    observer.observe(more);
   }
 
- }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
+ }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},error.code==='READER_SYNCING'?'The feed is catching up with new posts. Try again shortly.':error.code==='READER_NOT_FOUND'?'This link does not point to an available '+({board:'board',profile:'profile',post:'post',thread:'conversation'}[api]??'page')+'.':'Check your connection, then try loading the conversations again.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
 }
 addEventListener('pagehide',()=>{sequence++;controller?.abort();});
 addEventListener('pageshow',event=>{if(event.persisted)render();});

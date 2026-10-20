@@ -383,9 +383,9 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   const message='Fresh account onboarding check '+crypto.randomUUID();
   await dialog.getByRole('button',{name:'Write a post',exact:true}).click({timeout:remaining()});
   await dialog.getByLabel('Message',{exact:true}).fill(message,{timeout:remaining()});
-  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();
-  await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
-  await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});
+  await dialog.locator('[data-action-review]').click();
+  await dialog.locator('[data-action-confirm]').click({timeout:remaining()});
+  await dialog.getByText('Post: done.',{exact:true}).waitFor({timeout:remaining()});
   await dialog.getByRole('button',{name:'Close account panel',exact:true}).click();
   await page.goto(c.origin+'/#/home');
   await page.locator('main article.post').getByText(message,{exact:true}).waitFor({timeout:remaining()});

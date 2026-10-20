@@ -1,0 +1,20 @@
+✔ 992-byte boundary rejects oversized input without truncating (12.665625ms)
+✔ posted links only accept http and https (0.111041ms)
+✔ Home is deterministic and new subboards do not enter curated Home (0.42675ms)
+✔ Following includes only subscribed boards or identities in time order (0.06375ms)
+✔ directory includes rejected tombstones and searches case insensitively (0.07875ms)
+✔ every fixture reply has a canonical parent and existing root (0.080167ms)
+✔ each selectable name has its own public profile with no ownership grouping (0.057625ms)
+✔ public HTTP reader sends no account credentials and encodes untrusted query values (12.11625ms)
+✔ reader rejects unready, oversized, nonJSON and malformed responses (0.711625ms)
+✔ streaming size gate cancels before reading an unbounded response (0.342208ms)
+✔ Home has its own public route and rejects caller-supplied curation (0.285791ms)
+✔ board reader uses public id and cursor without private parameters (0.152666ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.891625

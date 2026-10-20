@@ -1479,3 +1479,71 @@ test('an existing deposit with depleted fees offers posting top-up, including af
  await navigateAccount(page,'Write a post');await page.getByRole('button',{name:'Add posting credit',exact:true}).click();
  assert.equal(await page.getByLabel('Top-up credit').inputValue(),'private-fee');assert.equal(await page.getByLabel('Fee token top-up amount').inputValue(),'0.000000000000002');assert.equal(await page.getByRole('button',{name:'Review cost',exact:true}).count(),0);assert.equal((await counts(page)).sends,0);
 });
+
+// G17 exercises user journeys through the real panel with labelled private-session doubles.
+test('G17 focused reply preserves target, anonymous default, draft and explicit spending consent',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.namesPages={0:{identities:[],records:[],nextCursor:null}};});
+ await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});
+ const review=page.locator('[data-action-review]');await review.waitFor();
+ assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);assert.equal(await page.getByLabel('Posting collateral').count(),0);
+ assert.equal(await page.getByRole('heading',{name:'Reply',exact:true}).count(),1);
+ assert(await page.getByText('Posting as Anonymous',{exact:true}).isVisible());
+ await page.getByLabel('Message',{exact:true}).fill('A useful reply');await review.click();await page.locator('[data-action-confirm]').waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'reply',content:'A useful reply',name:'0',deposit:'9',subboard:'3',parent:'10',root:'1'});
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.locator('[data-action-confirm]').textContent(),'Reply');
+ assert(await page.locator('.preview-body').getByText('A useful reply',{exact:true}).isVisible());
+ assert.equal(await page.getByText(/fee-juice units/).count(),0);
+ await page.getByRole('button',{name:'Back to editing',exact:true}).click();await review.waitFor();assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'A useful reply');
+ await review.click();await page.locator('[data-action-confirm]').click();await page.waitForFunction(()=>test.effects===1);assert.equal((await counts(page)).sends,1);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+});
+for(const [defaults,expected,label]of [
+ [{type:'like',post:'10'},{type:'like',post:'10'},'Like post'],
+ [{type:'preference',kind:1,target:'10',enabled:true},{type:'preference',kind:1,target:'10',enabled:true,expectedRevision:'4'},'Save bookmark'],
+ [{type:'read-marker',thread:'10',throughBlock:'22'},{type:'read-marker',thread:'10',throughBlock:'22',expectedRevision:'4'},'Mark as read']
+])test('G17 contextual '+defaults.type+' automatically reviews cost without editable IDs or unrelated reads',async t=>{
+ const {page}=await browserFixture(t);await open(page,defaults);await page.locator('[data-action-confirm]').waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),expected);
+ assert.equal(await page.locator('[data-action-confirm]').textContent(),label);assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.getByRole('textbox').count(),0);assert.equal(await page.getByRole('combobox').count(),0);
+ assert.equal(await page.evaluate(()=>test.owned+(test.bokReads??0)+(test.moderatorReads??0)),0);
+ await page.locator('[data-action-confirm]').click();await page.waitForFunction(()=>test.effects===1);assert.equal((await counts(page)).sends,1);
+});
+test('G17 Bok invitation retains reply ancestry and message when toggled',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000000');await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
+ await page.getByLabel('Message',{exact:true}).fill('Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).check();
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).uncheck();
+ assert.equal(await page.getByRole('heading',{name:'Reply',exact:true}).count(),1);await page.getByLabel('Ask Bok to reply',{exact:true}).check();
+ await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
+ const a=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(a.type,'bok');assert.equal(a.parent,'10');assert.equal(a.root,'1');assert.equal(a.subboard,'3');assert.equal(a.content,'Help me with this');assert.equal(a.budget,'250000');assert.equal((await counts(page)).sends,0);
+});
+test('G17 saved items load on opening and technical progress stays in details',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByText('Your saved choices are ready.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.prepares),0);
+});
+test('G17 composer rejects overlong content and presents readable desktop and mobile review',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'post'});await page.locator('[data-action-review]').waitFor();
+ await page.getByLabel('Message',{exact:true}).fill('😀'.repeat(249));assert(await page.locator('[data-action-review]').isDisabled());assert(await page.getByText('Your message is too long. Shorten it before continuing.',{exact:true}).isVisible());
+ await page.getByLabel('Message',{exact:true}).fill('What are you reading this week?');await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
+ for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:`execution/evidence/G17/composer-${width}.png`});}
+});
+test('G17 balances load without a second check and show withdrawal time as a date',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.balances={fee:{available:'1000000000000000000'},bok:null,collateral:{deposits:[{id:'9',amount:'1000000000000000',reason:'time-locked',nextAllowedTime:'1792530000',eligible:false}],nextCursor:null}});await open(page);await navigateAccount(page,'Balance and withdrawals');await page.getByText('Posting balance: 1 credits (FEE).',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.balanceReads),1);assert(await page.getByText(/Available to withdraw after/).isVisible());assert.equal(await page.getByText(/chain time/).count(),0);assert(await page.getByRole('button',{name:'Withdraw deposit',exact:true}).isDisabled());
+});
+test('G17 a failed contextual cost check does not automatically retry or send',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='prepare');await open(page,{type:'like',post:'10'});await page.getByRole('alert').waitFor();assert.equal((await counts(page)).prepares,1);assert.equal((await counts(page)).sends,0);assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
+});
+test('G17 saved feed loading waits for the current account action before reading',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'like',post:'10'});await page.locator('[data-action-confirm]').waitFor();await page.evaluate(()=>test.hold='submit');await page.locator('[data-action-confirm]').click();await page.waitForFunction(()=>test.submitCalls===1);
+ await page.evaluate(()=>{window.savedResult='waiting';void panel.loadSavedItems().then(value=>window.savedResult=value);});assert.equal(await page.evaluate(()=>window.savedResult),'waiting');assert.equal(await page.evaluate(()=>test.preferenceReads),0);
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.waitForFunction(()=>window.savedResult===true);assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal((await counts(page)).sends,1);
+});
+test('G17 account starts a new post after another action and exposes verified moderator settings',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.moderator=true);await open(page,{type:'like',post:'10'});await page.locator('[data-action-confirm]').waitFor();await page.getByRole('button',{name:'Back to editing',exact:true}).click();await navigateAccount(page,'Write a post');await page.getByLabel('Message',{exact:true}).waitFor();assert.equal(await page.getByRole('heading',{name:'Write a post',exact:true}).count(),1);
+ await navigateAccount(page,'Transfer moderator authority');await page.getByLabel('Successor Aztec address').waitFor();assert.equal((await counts(page)).sends,0);
+});
+test('G17 restored reply returns to editing with its saved content and ancestry',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'prepared',maximumFee:'123',action:{type:'reply',content:'Retained reply after reload',name:'7',deposit:'9',parent:'10',root:'1',subboard:'3'}})));await open(page);await page.locator('[data-action-confirm]').waitFor();await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.locator('[data-action-review]').waitFor();assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Retained reply after reload');await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();const a=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(a.type,'reply');assert.equal(a.parent,'10');assert.equal(a.root,'1');assert.equal(a.subboard,'3');assert.equal(a.name,'7');assert.equal((await counts(page)).sends,0);
+});
+test('G17 quote source opens the selected post and closes the idle composer',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'quote',subboard:'0',reference:'10'});await page.getByRole('link',{name:'View original post',exact:true}).click();assert.equal(await page.evaluate(()=>location.hash),'#/post/10');assert.equal(await page.getByRole('dialog').isVisible(),false);assert.equal((await counts(page)).sends,0);
+});
