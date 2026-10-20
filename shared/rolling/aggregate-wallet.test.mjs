@@ -104,16 +104,15 @@ test('matching aggregate pending or corrupted context is never treated as an unr
  await assert.rejects(app.loadAggregate(h(20)));assert.equal(f.state.sends,1);
  const key=[...f.records.keys()][0];const envelope=JSON.parse(f.records.get(key));envelope.data='00'+envelope.data.slice(2);f.records.set(key,JSON.stringify(envelope));await assert.rejects(app.loadAggregate(h(81)));
 });
-test('archive is durable before a successor quote; active collateral prevents overwrite and original secrets survive later draft',async()=>{
+test('an earlier deposit does not block a successor quote and original payment records remain intact',async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
  const workflow=durableClaimApplication(f,app);await advanceAggregateClaim({application:workflow.open(),funding:app});const original=await app.loadAggregate(h(20));
  const send=f.options.provider.send;f.options.provider.send=async(method,params)=>{
   if(method==='eth_call'&&params[0].to===f.options.scope.collateralPortal&&portal.parseTransaction({data:params[0].data}).name==='getDeposit')return portal.encodeFunctionResult('getDeposit',[100]);
   return send(method,params);
  };
- await assert.rejects(app.prepare(f.allocation),{code:'AGGREGATE_EXISTING_DEPOSIT'});
  assert.equal((await app.inspect()).paymentSaved,true);
- f.options.provider.send=send;const reopened=await f.open();await reopened.prepare(f.allocation);assert.equal((await reopened.inspect()).paymentSaved,false);
+ const reopened=await f.open();await reopened.prepare(f.allocation);assert.equal((await reopened.inspect()).paymentSaved,false);
  assert.deepEqual(await reopened.loadAggregate(h(20)),original);assert.equal(f.state.sends,1);
  const foreign=await createAggregateWallet({...f.options,owner:h(77)});assert.equal(await foreign.loadAggregate(h(20)),null);
 });

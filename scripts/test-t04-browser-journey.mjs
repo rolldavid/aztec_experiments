@@ -240,7 +240,7 @@ test('MetaMask aggregate modes require an explicit asset and do not change legac
 test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership',async t=>{
  const {Wallet}=await import('ethers');const {validateMetaMaskAggregateControl,readMetaMaskAggregateControl}=await import('./t04-metamask.mjs');
  const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
- const directory=await fs.mkdtemp(path.join(os.tmpdir(),'t04-aggregate-'));await fs.chmod(directory,0o700);t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const directory=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'t04-aggregate-')));await fs.chmod(directory,0o700);t.after(()=>fs.rm(directory,{recursive:true,force:true}));
  const scope={chainId:'31337',router:a(1),routerCodeHash:h(1),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:h(2),usdcRelayAddress:a(11),usdcCodeHash:h(3),usdcImplementation:a(12),usdcImplementationCodeHash:h(4),usdcDomain:{name:'Local USD Coin',version:'2'}};
  const c={schemaVersion:1,asset:'USDC',origin:'http://127.0.0.1:8080',ethereumUrl:'http://127.0.0.1:8545',walletConfig:{proofsEnabled:false,config:{network:{chainId:'31337',ethRpcUrl:'http://127.0.0.1:8545'},board:{portalAddress:a(2)},aggregateFunding:scope}},mnemonic:Wallet.createRandom().mnemonic.phrase,password:'disposable-test-password',recoveryDirectory:directory,runtimeSha256:'a'.repeat(64),allocation:{collateralWei:'1',feeAmount:'2',bokAmount:'3',gasBudgetWei:'4',maximumPaymentWei:'5',maximumUsdc:'6',slippageBps:100}};
  assert.deepEqual(validateMetaMaskAggregateControl(c,'USDC'),c);
@@ -270,7 +270,8 @@ test('MetaMask aggregate typed consent binds exact local scope, allocation, nonc
  const {TypedDataEncoder}=await import('ethers');const wire=TypedDataEncoder.getPayload(consent.domain,consent.types,consent.message);assert.equal(assertMetaMaskAggregateTypedData({...input,data:wire}).value.nonce,'7');
  const publicConsent=structuredClone(consent);publicConsent.domain.chainId='11155111';assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data:publicConsent}));assert.equal(assertMetaMaskAggregateTypedData({...input,data:publicConsent,expectedChainId:'11155111'}).domain.chainId,'11155111');
  const invalidDomain=structuredClone(wire);invalidDomain.types.EIP712Domain=[];assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data:invalidDomain}));
- for(const change of [d=>d.domain.chainId='1',d=>d.domain.verifyingContract=a(9),d=>d.message.beneficiary=a(9),d=>d.message.executor=a(9),d=>d.message.amount='101',d=>d.message.nonce='0',d=>d.message.deadline='999',d=>d.message.deadline='1121',d=>d.message.extra='secret',d=>d.primaryType='Permit']){const data=structuredClone(consent);change(data);assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data}));}
+ for(const change of [d=>d.domain.chainId='1',d=>d.domain.verifyingContract=a(9),d=>d.message.beneficiary=a(9),d=>d.message.executor=a(9),d=>d.message.amount='101',d=>d.message.nonce='0',d=>d.message.deadline='999',d=>d.message.deadline='1901',d=>d.message.extra='secret',d=>d.primaryType='Permit']){const data=structuredClone(consent);change(data);assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data}));}
+ const expiryBoundary=structuredClone(consent);expiryBoundary.message.deadline='1900';assert.equal(assertMetaMaskAggregateTypedData({...input,data:expiryBoundary}).value.deadline,'1900');
  const authorization={domain:{name:'Local USD Coin',version:'2',chainId:'31337',verifyingContract:a(4)},types:usdcAuthorizationTypes,primaryType:'ReceiveWithAuthorization',message:{from:account,to:a(2),value:'200',validAfter:'999',validBefore:'1100',nonce:h}};
  assert.equal(assertMetaMaskAggregateTypedData({...input,data:authorization,index:1,asset:'USDC'}).value.value,'200');
  for(const change of [x=>x.asset='ETH',x=>x.index=2,x=>x.data.message.value='201',x=>x.data.message.to=a(9),x=>x.data.domain.name='Other Coin',x=>x.data.message.validAfter='1000']){const bad=structuredClone({...input,data:authorization,index:1,asset:'USDC'});change(bad);assert.throws(()=>assertMetaMaskAggregateTypedData(bad));}
@@ -357,7 +358,7 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
 
 test('paid recovery surface projects only closed visible notices and controls',async()=>{
  const {inspectMetaMaskPaidRecoverySurface}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
- const notice={'claim-confirmed':'Transaction confirmed on the verified chain.','claim-confirmed-feed-unavailable':'Transaction confirmed on the verified chain. Public feed refresh is unavailable; the transaction remains confirmed.',success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.','review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',review:'The private claim needs a new review. No additional Ethereum payment will be sent.',reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.','waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',pending:'Checking the saved private claim. It will not be submitted again.'};
+ const notice={'claim-confirmed':'Transaction confirmed on the verified chain.','claim-confirmed-feed-unavailable':'Transaction confirmed on the verified chain. Public feed refresh is unavailable; the transaction remains confirmed.',success:'Payment confirmed. Your posting balance is set up.','review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',review:'The private claim needs a new review. No additional Ethereum payment will be sent.',reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.','waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',pending:'Checking the saved private claim. It will not be submitted again.'};
  const node=(textContent,shown=true,disabled=false)=>({textContent,disabled,getClientRects:()=>shown?[{}]:[]});
  function inspect({text='PRIVATE_SENTINEL',busy=false,alert=false,hidden=false,confirm=false,settledOnly=false}={}){
   const dialog={getAttribute:key=>{assert.equal(key,'aria-busy');return String(busy);},querySelectorAll:selector=>selector==='.notice'?[node(text,!hidden)]:selector==='[role="alert"]'?alert?[node('PRIVATE_SENTINEL')]:[]:[node('Pause bridge checks',true,busy),node('Confirm and send',confirm),node('PRIVATE_SENTINEL')]};
@@ -367,6 +368,7 @@ test('paid recovery surface projects only closed visible notices and controls',a
  assert.equal(inspect({alert:true}).state,'error');assert.equal(inspect({confirm:true}).state,'review');assert.equal(inspect({settledOnly:true}),null);
  for(const input of [{},{alert:true},{text:notice.success,alert:true}])assert(!JSON.stringify(inspect(input)).includes('PRIVATE_SENTINEL'));
  assert.equal(inspect({text:notice.success,alert:true}).state,'error');
+ assert.equal(inspect({text:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.'}).state,'unknown');
 });
 
 for(const state of ['success','review','review-saved','reverted','error','waiting-bridge','pending','timeout'])test('paid recovery observes one classified advance without new approval: '+state,async()=>{
@@ -559,11 +561,11 @@ test('restored prepared confirmation still requires explicit mode and original-r
  await confirm(args);assert.deepEqual(events,['capture','consume','Confirm and send']);await assert.rejects(confirm(args));assert.equal(events.length,3);
 });
 
-test('existing browser owner grants application budget only to explicit aggregate Bok continuation',async()=>{
+test('existing browser owner distinguishes aggregate application, testnet and wallet-only budgets',async()=>{
  const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8');
  const body=source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','');const choose=runInNewContext('('+body+')');
  assert.equal(choose({walletExtension:true,aggregate:true,testnet:true}),3600000);for(const bad of [{testnet:true},{walletExtension:true,testnet:true},{walletExtension:true,aggregate:true,testnet:true,retainedBok:'true'}])assert.throws(()=>choose(bad));
- assert.equal(choose({walletExtension:true,aggregate:true}),120000);assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'false'}),120000);
+ assert.equal(choose({walletExtension:true,aggregate:true}),540000);assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'false'}),540000);assert.equal(choose({walletExtension:true}),120000);
  assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'true'}),540000);assert.equal(choose({passkey:true}),60000);assert.equal(choose({}),540000);
  for(const input of [{retainedBok:'true'},{walletExtension:true,retainedBok:'true'},{walletExtension:true,aggregate:true,retainedBok:'1'}])assert.throws(()=>choose(input));
  assert(source.includes('T04_BROWSER_DEADLINE_AT:String(browserDeadlineAt)'));assert(source.includes('Date.now()+deadlineMs-15000'));

@@ -1,0 +1,231 @@
+✔ rendezvous accepts only fixed stages and bounded unique public transaction identifiers (5.819625ms)
+✔ atomic rendezvous cannot overwrite a prior stage or accept an unverified release (5.945125ms)
+✔ missing release respects remaining parent budget (0.541709ms)
+✔ canonical exit rejects wrong leaf, duplicate leaf, wrong nullifier and ineligible anchor (573.756167ms)
+✔ aborted lifecycle terminates a rendezvous even with a clamped legacy time callback (102.737875ms)
+✔ browser modes roundtrip strictly across the real handoff boundary (13.28ms)
+✔ journey diagnostic outputs fixed milestones and allowlisted exception only (0.309709ms)
+✔ actual browser journey stops after one deposit action when claim reports an error (1.045292ms)
+✔ partial canonical progress is ordered, bounded, public-only and copied (0.476541ms)
+✔ non-Chromium lifecycle scenarios retain one explicit engine and existing bounds (1.695334ms)
+✔ cold funding driver never claims or deposits again after a failed deposit (1.466167ms)
+✔ handoff accepts actual SDK whole-token formatting and rejects invalid amounts (0.992833ms)
+✔ MetaMask is accepted only for explicit Chromium lifecycle and funding (0.226959ms)
+✔ MetaMask request observation preserves provider result and refuses overlapping transactions (55.331417ms)
+✔ request guard attributes blank extension iframes without exempting application requests (0.203292ms)
+✔ MetaMask confirmation guard binds exact account, chain, target, amount and calldata (10.887833ms)
+✔ Phantom mode is explicit signature-only and leaves the original MetaMask mode unchanged (1.531958ms)
+✖ Phantom package pin rejects a modified official package before extracting any files (0.654334ms)
+✔ Phantom exact G04 typed payloads verify distinct domains and reject mutation or a different signer (47.260041ms)
+✔ Phantom signature-only request admission denies financial sends and arbitrary signing (0.169459ms)
+✔ Phantom onboarding acknowledges discovered accounts before the password form (0.247583ms)
+✔ Phantom completion prefers the offered defer control (0.203083ms)
+✔ Phantom completion uses only a disposable username and records remote retention (0.115333ms)
+✔ MetaMask aggregate admission binds one exact local ETH payment and its gas ceiling (8.821958ms)
+✔ MetaMask aggregate modes require an explicit asset and do not change legacy or Phantom modes (0.2385ms)
+✖ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (20.585625ms)
+✖ MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering (1.455208ms)
+✔ MetaMask aggregate observer counts every actual configured root RPC send and rejects malformed batches (0.388833ms)
+✔ MetaMask retained readiness denies all payment/proof requests without substituting reads (0.623875ms)
+✔ MetaMask retained readiness imports the existing encrypted recovery through actual accessible input names only (0.313584ms)
+✔ MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe (0.549625ms)
+✔ MetaMask unfunded continuation rejects any saved journal or prior Ethereum/consent nonce (0.1755ms)
+✔ paid MetaMask recovery binds encrypted scope, exact payment and all claim legs (10.459667ms)
+✖ paid recovery surface projects only closed visible notices and controls (1.563ms)
+✔ paid recovery observes one classified advance without new approval: success (0.191375ms)
+✔ paid recovery observes one classified advance without new approval: review (0.043834ms)
+✔ paid recovery observes one classified advance without new approval: review-saved (0.052791ms)
+✔ paid recovery observes one classified advance without new approval: reverted (0.03225ms)
+✔ paid recovery observes one classified advance without new approval: error (0.033583ms)
+✔ paid recovery observes one classified advance without new approval: waiting-bridge (0.047583ms)
+✔ paid recovery observes one classified advance without new approval: pending (0.032042ms)
+✔ paid recovery observes one classified advance without new approval: timeout (0.047833ms)
+✔ paid recovery diagnostic failures cannot replace the original wait failure (0.080333ms)
+✔ paid recovery permits only the exact non-signing MetaMask account permission (0.54125ms)
+✔ paid recovery account selection retains original provider rejection (0.25525ms)
+✔ paid recovery waits for authentic MetaMask account selection: delayed-connect (1.478667ms)
+✔ paid recovery waits for authentic MetaMask account selection: other-confirmation (0.158041ms)
+✔ paid recovery waits for authentic MetaMask account selection: warning-confirmation (0.085125ms)
+✔ paid recovery waits for authentic MetaMask account selection: missing-prompt (0.060959ms)
+✔ MetaMask startup cache worker permits only pinned static reads after a verified frame (0.1855ms)
+✔ retained readiness waits for actual account surface: delayed-unlock (0.225084ms)
+✔ retained readiness waits for actual account surface: already-loaded (0.067417ms)
+✔ retained readiness waits for actual account surface: load-failure (0.05625ms)
+✔ retained Bok opt-in defaults to no action and bounds exact approval before launch (0.905042ms)
+✔ retained Bok thread approval requires both exact public IDs and rejects mixed root/reply modes (0.501375ms)
+✔ retained Bok approval file requires private regular owned input (1.757208ms)
+✔ retained Bok saved workflow keeps private identifiers in page until confirmed public post (3.664292ms)
+✔ retained Bok UI confirms only two exact saved reviews and stops before any invalid confirmation (0.431667ms)
+✔ retained Bok public discovery uses only public post IDs and uniform bounded accounting pages (0.505625ms)
+✔ retained Bok canonical event checks reject wrong reply linkage and unfinished or dishonest accounting (1.366875ms)
+✔ retained Bok discovery fails closed on mixed snapshots, duplicate matches and pagination exhaustion (1.083708ms)
+✔ explicit prepared claim review flag is default-off and paid-recovery-only (0.152ms)
+✔ prepared claim review binds original encrypted records, three receipts, empty journal and saved cap (7.724709ms)
+✔ prepared claim confirms exactly once through existing UI after two original-record checks (0.351334ms)
+✔ explicit retained readiness recognizes restored prepared surface: false (0.14625ms)
+✔ explicit retained readiness recognizes restored prepared surface: true (0.06825ms)
+✔ restored prepared confirmation still requires explicit mode and original-record checks (0.113667ms)
+✖ existing browser owner grants application budget only to explicit aggregate Bok continuation (0.8315ms)
+✔ Bok canonical phases consume one original deadline rather than restarting wait budgets (0.116209ms)
+✔ Bok deadline expiring during authorize inspection prevents its confirmation (0.148833ms)
+✔ Bok deadline expiring during post inspection prevents its confirmation (0.166416ms)
+✔ installed Playwright async false predicate is a truthy Promise; awaited discovery does not finish early (7.963666ms)
+✔ read-only Bok observation accepts only exact original public identifiers and cannot authorize expired approval (1.53ms)
+✔ fatal wallet diagnostics retain only closed fields without intercepting errors or invoking getters (0.309958ms)
+✔ fresh automatic three-leg claim waits for Ready and binds original saved consent without another action (0.706584ms)
+✔ automatic claim surface keeps waiting states pending without interacting with the application (0.622792ms)
+✔ wallet stage memory observations contain only page classes and cannot replace execution failures (0.187417ms)
+✔ aggregate account permission observation preserves pending, resolved and rejected provider behavior (2.346583ms)
+✔ aggregate selection accepts the exact completed account without a redundant Connect click (101.970375ms)
+✔ aggregate completed selection rejects mismatched accountMatches (0.214084ms)
+✔ aggregate completed selection rejects mismatched chainMatches (0.063583ms)
+✔ aggregate completed selection rejects mismatched walletMatches (0.0605ms)
+✔ aggregate completed selection rejects mismatched invalidated (0.055833ms)
+✔ aggregate selection retains exact visible prompt guard: Connect (0.086125ms)
+✔ aggregate selection retains exact visible prompt guard: Continue at your own risk (0.066ms)
+✔ aggregate selection does not infer completion from a stale account or rejected permission (101.467708ms)
+✔ aggregate selection stops on fixed application failure without a confirmation click (0.301083ms)
+✔ aggregate connection failure projection preserves provider errors and excludes private fields (1.471792ms)
+✔ retained MetaMask network setup handles selected, registered and missing local network without payment (1.7825ms)
+✔ network-only extension probe uses sixty seconds and cannot request Bok continuation (0.981083ms)
+✔ unsigned export checks original scoped custody and complete ciphertext records without modifying them (1.850917ms)
+✔ encrypted download failure records only a fixed category and preserves original error (1.472ms)
+✔ unsigned export mode remains a sixty second non-Bok owner (0.719333ms)
+﹣ pinned Chromium pure blob download survives persistent profile reopen (0.069625ms) # SKIP
+✔ test browser override is explicit and rejects unpinned executables (2.755209ms)
+✔ retained unsigned continuation requires explicit USDC export hash and exclusive mode (1.758167ms)
+✔ retained unsigned admission rejects nonzero nonces and incomplete original custody (0.266084ms)
+✔ aggregate relay status waits for the sole original POST response without another mutation (0.37825ms)
+✔ retained release and withdrawal approvals are separate finite capabilities; neither authorizes post or gas funding (1.548208ms)
+✔ retained recovery inputs bind exact private export bytes and refuse existing outputs before launch (1.772084ms)
+✔ actual retained release inspector preserves original draft and authorization across fee cancellation and reload (1.833583ms)
+✔ retained balance assertions keep returned credit out of available totals and preserve closed request history (0.3145ms)
+✔ actual saved PluginPortal refund guard permits one exact journal send and fences replay, funding and changed gas/recipient (6.378708ms)
+✔ refund guard consumes its sole send authority after invalid admission before any wallet call (0.395667ms)
+✔ existing release driver reloads the new export and cancels review without a second send when re-review fails (2.053916ms)
+✔ withdrawal inspection requires the actual saved recipient, portal, amount and charged fee below its separate cap (0.996125ms)
+✔ composed paid outer guard admits only the once journal-bound Bok refund and observes teardown denials in Node (11.648ms)
+✔ current Ready export unlock accepts keys only and refuses stale recovery journals before import (2.629417ms)
+✔ Ready export original claim requires exact current network receipt and canonical block (1.26725ms)
+✔ cold retained account wait uses the original finite owner remainder without extending it (0.204125ms)
+✔ keys-only retained unlock rejects any historical journal file before opening the profile UI (0.086125ms)
+✔ refund-only approval binds the exact existing withdrawal and preserves prior recovery files (0.429ms)
+✔ refund-only reopened workflow waits for existing refund surface, not missing funding navigation (0.75475ms)
+✔ readonly refund guard refuses sends even with an otherwise authorized original account (0.316042ms)
+✔ actual refund preparation projection never calls confirm and clears quote on success and finite failure (0.516ms)
+✔ readonly refund owner uses120 seconds only in explicitly selected retained aggregate mode (0.526791ms)
+✔ refund readiness stops immediately at a visible initialization failure without retrying account creation (0.929458ms)
+✔ latest full refund export reopens through ordinary import with readonly guard and unchanged accounting (0.3765ms)
+✔ full backup import paid guard reports denied signatures to the same Node refund owner before the later guard is installed (0.502958ms)
+✔ readiness-only runner forwards its original owner deadline to the actual initialization helper (0.708292ms)
+✔ retained Bok reply uses the real thread Reply action and immutable conversation context (0.276667ms)
+✔ retained Bok reply saved review binds approved thread before any authorization (0.710958ms)
+✔ paid recovery forwards owner deadline and records original private binding before resume (0.824708ms)
+✔ post-only approval binds a fresh private observer file and rejects financial reuse (14.165625ms)
+✔ post-only canonical checks retain exact invocation, content and approved thread without claiming a reply (0.494583ms)
+✔ existing Bok driver saves post observation before verification and selects only explicitly approved post-only mode (0.730584ms)
+✔ paid recovery accepts current spent balance while retaining exact original payment and claim checks (0.6105ms)
+✔ entered Bok approval survives interrupted confirmation and rejects a second financial invocation (12.141625ms)
+✔ Ready continuity authenticates original encrypted claim without restoring stale journals (29.191334ms)
+✔ Ready continuity input requires the exact immutable private export and rejects aliases (1.870333ms)
+✔ Ready continuation observes existing custody and canonical claim without opening saved funding (0.529625ms)
+✔ failed observation fsync leaves an exclusive blocker before any confirmation (1.476083ms)
+✔ Bok authorize preparation error stops before confirmation without waiting the full deadline (0.2605ms)
+✔ Bok post preparation error stops before confirmation without waiting the full deadline (0.132708ms)
+✔ Bok authorize confirmation error stops without replay or a full-deadline wait (0.203583ms)
+✔ Bok post confirmation error stops without replay or a full-deadline wait (0.105709ms)
+✔ retained withdrawal connection uses its supplied control in readonly and sending paths (1.204708ms)
+ℹ tests 137
+ℹ suites 0
+ℹ pass 131
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 1235.403333
+
+✖ failing tests:
+
+test at scripts/test-t04-browser-journey.mjs:166:1
+✖ Phantom package pin rejects a modified official package before extracting any files (0.654334ms)
+  Error: ENOENT: no such file or directory, open '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/phantom-20261014-acquisition/package.crx'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Object.readFile (node:internal/fs/promises:1996:14)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:168:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/phantom-20261014-acquisition/package.crx'
+  }
+
+test at scripts/test-t04-browser-journey.mjs:240:1
+✖ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (20.585625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/t04-aggregate-aOADRb'
+  - '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/t04-aggregate-aOADRb'
+  
+      at readMetaMaskAggregateControl (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/t04-metamask.mjs:211:9)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:253:122)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/t04-aggregate-aOADRb',
+    expected: '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/t04-aggregate-aOADRb',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test-t04-browser-journey.mjs:265:1
+✖ MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering (1.455208ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:273:357)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at scripts/test-t04-browser-journey.mjs:358:1
+✖ paid recovery surface projects only closed visible notices and controls (1.563ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'unknown'
+  - 'success'
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:366:87)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown',
+    expected: 'success',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test-t04-browser-journey.mjs:562:1
+✖ existing browser owner grants application budget only to explicit aggregate Bok continuation (0.8315ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  540000 !== 120000
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:566:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 540000,
+    expected: 120000,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

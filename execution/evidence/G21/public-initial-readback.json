@@ -1,0 +1,79 @@
+{
+  "/wallet/runtime.json": {
+    "status": 200,
+    "sha256": "69fc6ab51d6304dc91126ca40d1405d6accde064cab55fde16c8058016fcc22b",
+    "board": {
+      "contractAddress": "0x23c068961909d0e5efa212041e25768baff08b55e074b9a03a4deb99d5b29852",
+      "portalAddress": "0xd865bd41ff9d36102a086d0410ffb95a1f73566f"
+    },
+    "router": "0x8a5b2f15bf4f660ea53285e81bb4a3b522801540",
+    "proofsEnabled": true
+  },
+  "/api/home": {
+    "status": 200,
+    "sha256": "b8c3a266e01ac1959447eb4b312fa84cea867852d2f16d2f1d38bb638a24372b",
+    "keys": [
+      "schemaVersion",
+      "scope",
+      "checkpoint",
+      "complete",
+      "posts",
+      "names",
+      "boards",
+      "nextCursor",
+      "revision"
+    ],
+    "counts": {
+      "posts": 0
+    }
+  },
+  "/api/feed": {
+    "status": 200,
+    "sha256": "b8c3a266e01ac1959447eb4b312fa84cea867852d2f16d2f1d38bb638a24372b",
+    "keys": [
+      "schemaVersion",
+      "scope",
+      "checkpoint",
+      "complete",
+      "posts",
+      "names",
+      "boards",
+      "nextCursor",
+      "revision"
+    ],
+    "counts": {
+      "posts": 0
+    }
+  },
+  "/archive/snapshot.json": {
+    "status": 200,
+    "sha256": "d82e4762a3cef5efa3c589f9b7679aba65aa4ab7ad3790ebd817d23a7b028910",
+    "posts": 7,
+    "keys": [
+      "schemaVersion",
+      "capturedAt",
+      "source",
+      "response"
+    ]
+  },
+  "/prover/healthz": {
+    "status": 200,
+    "sha256": "6a5f078da010e82d87fbb8f495db4815a8ac42049cd4bded2b724dc885ed79eb",
+    "health": {
+      "ready": true,
+      "proofs": "real",
+      "queue": {
+        "jobs": 0,
+        "bytes": 0,
+        "running": false,
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0
+      },
+      "query": {
+        "enabled": true,
+        "ready": true
+      }
+    }
+  }
+}

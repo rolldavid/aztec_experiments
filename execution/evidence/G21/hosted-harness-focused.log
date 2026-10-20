@@ -1,0 +1,43 @@
+✔ MetaMask is accepted only for explicit Chromium lifecycle and funding (4.076375ms)
+✔ MetaMask request observation preserves provider result and refuses overlapping transactions (284.411792ms)
+✔ MetaMask confirmation guard binds exact account, chain, target, amount and calldata (12.438875ms)
+✔ Phantom mode is explicit signature-only and leaves the original MetaMask mode unchanged (4.502542ms)
+✔ MetaMask aggregate admission binds one exact local ETH payment and its gas ceiling (10.194917ms)
+✔ MetaMask aggregate modes require an explicit asset and do not change legacy or Phantom modes (0.275334ms)
+✔ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (79.861917ms)
+✔ MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering (2.774625ms)
+✔ MetaMask aggregate observer counts every actual configured root RPC send and rejects malformed batches (0.473083ms)
+✔ MetaMask retained readiness denies all payment/proof requests without substituting reads (0.677917ms)
+✔ MetaMask retained readiness imports the existing encrypted recovery through actual accessible input names only (0.27725ms)
+✔ MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe (0.230292ms)
+✔ MetaMask unfunded continuation rejects any saved journal or prior Ethereum/consent nonce (0.189375ms)
+✔ paid MetaMask recovery binds encrypted scope, exact payment and all claim legs (7.52625ms)
+✔ paid recovery surface projects only closed visible notices and controls (6.72125ms)
+✔ paid recovery observes one classified advance without new approval: success (0.183375ms)
+✔ paid recovery observes one classified advance without new approval: review (0.056667ms)
+✔ paid recovery observes one classified advance without new approval: review-saved (0.041666ms)
+✔ paid recovery observes one classified advance without new approval: reverted (0.036375ms)
+✔ paid recovery observes one classified advance without new approval: error (0.030584ms)
+✔ paid recovery observes one classified advance without new approval: waiting-bridge (0.046208ms)
+✔ paid recovery observes one classified advance without new approval: pending (0.031959ms)
+✔ paid recovery observes one classified advance without new approval: timeout (0.059917ms)
+✔ paid recovery diagnostic failures cannot replace the original wait failure (0.074084ms)
+✔ paid recovery permits only the exact non-signing MetaMask account permission (0.517209ms)
+✔ paid recovery account selection retains original provider rejection (0.243292ms)
+✔ paid recovery waits for authentic MetaMask account selection: delayed-connect (1.720709ms)
+✔ paid recovery waits for authentic MetaMask account selection: other-confirmation (0.210458ms)
+✔ paid recovery waits for authentic MetaMask account selection: warning-confirmation (0.155417ms)
+✔ paid recovery waits for authentic MetaMask account selection: missing-prompt (0.130708ms)
+✔ MetaMask startup cache worker permits only pinned static reads after a verified frame (1.038167ms)
+✔ existing browser owner distinguishes aggregate application, testnet and wallet-only budgets (1.154834ms)
+✔ retained MetaMask network setup handles selected, registered and missing local network without payment (1.832708ms)
+✔ paid recovery forwards owner deadline and records original private binding before resume (6.140167ms)
+✔ paid recovery accepts current spent balance while retaining exact original payment and claim checks (0.979375ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 699.063833

@@ -1,0 +1,31 @@
+{
+  "services": {
+    "rolling-application.service": {
+      "ActiveState": "active",
+      "MainPID": "91788",
+      "WorkingDirectory": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09"
+    },
+    "rolling-moderator.service": {
+      "ActiveState": "active",
+      "MainPID": "91793",
+      "WorkingDirectory": "/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09"
+    },
+    "board-prover.service": {
+      "ActiveState": "active",
+      "MainPID": "90850",
+      "WorkingDirectory": "/opt/board-prover/current"
+    },
+    "rolling-query.service": {
+      "ActiveState": "active",
+      "MainPID": "10004",
+      "WorkingDirectory": "/opt/board-prover/releases/rolling-56d35b565341244a"
+    },
+    "rolling-node.service": {
+      "ActiveState": "active",
+      "MainPID": "4287",
+      "WorkingDirectory": ""
+    }
+  },
+  "controlSourceSha256": "9501b3d7316203729124ae727bf105e4fb7a3554c3148f646a3bee8c77110c6b",
+  "moderationHealth": []
+}

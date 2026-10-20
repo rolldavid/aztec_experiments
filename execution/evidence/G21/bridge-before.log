@@ -1,0 +1,175 @@
+✖ checkpoint bridge: native SDK absent predicate survives proposed synchronization gap (76.668875ms)
+✖ checkpoint bridge: native SDK not consumed predicate survives proposed synchronization gap (4.938375ms)
+✖ checkpoint bridge: native SDK consumed predicate survives proposed synchronization gap (4.128542ms)
+✖ checkpoint bridge: symbolic header resolves captured number and hash, never forwards moving tag (2.203833ms)
+✖ checkpoint bridge: actual SDK fixed witness parameters preserve tuple and absence (4.493916ms)
+✔ checkpoint bridge: unavailable or mismatched witness selector 0 rejected before witness (1.626833ms)
+✔ checkpoint bridge: unavailable or mismatched witness selector 8 rejected before witness (1.049292ms)
+✔ checkpoint bridge: unavailable or mismatched witness selector {"number":7,"hash":"0x0000000000000000000000000000000000000000000000000000000000000063"} rejected before witness (1.161458ms)
+✔ checkpoint bridge: final anchor reorg rejects getL1ToL2MessageIndex (2.382292ms)
+✔ checkpoint bridge: final anchor reorg rejects getL1ToL2MessageMembershipWitness (1.675917ms)
+✔ checkpoint bridge: final anchor reorg rejects getBlockData (1.12375ms)
+✔ checkpoint bridge: mixed latest batch remains strictly gated before forwarding (1.180791ms)
+[21:17:14.525] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {
+      "generatedMessage": true,
+      "code": "ERR_ASSERTION",
+      "actual": 503,
+      "expected": 200,
+      "operator": "strictEqual",
+      "diff": "simple"
+    }
+[21:17:14.534] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {
+      "generatedMessage": true,
+      "code": "ERR_ASSERTION",
+      "actual": 503,
+      "expected": 200,
+      "operator": "strictEqual",
+      "diff": "simple"
+    }
+[21:17:14.539] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {
+      "generatedMessage": true,
+      "code": "ERR_ASSERTION",
+      "actual": 503,
+      "expected": 200,
+      "operator": "strictEqual",
+      "diff": "simple"
+    }
+[21:17:14.545] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {
+      "generatedMessage": true,
+      "code": "ERR_ASSERTION",
+      "actual": 503,
+      "expected": 200,
+      "operator": "strictEqual",
+      "diff": "simple"
+    }
+ℹ tests 12
+ℹ suites 0
+ℹ pass 7
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 646.692
+
+✖ failing tests:
+
+test at prover/private-query.test.mjs:546:120
+✖ checkpoint bridge: native SDK absent predicate survives proposed synchronization gap (76.668875ms)
+  Error: Expected values to be strictly equal:
+  
+  503 !== 200
+  
+      at request (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:169:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async isL1ToL2MessageReady (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/aztec.js/dest/utils/cross_chain.js:24:26)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:550:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    [cause]: {
+      code: -32000,
+      data: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+      
+      503 !== 200
+      
+          at fetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:543:10)
+          at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+          at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43),
+      message: 'Expected values to be strictly equal:\n\n503 !== 200\n'
+    }
+  }
+
+test at prover/private-query.test.mjs:546:120
+✖ checkpoint bridge: native SDK not consumed predicate survives proposed synchronization gap (4.938375ms)
+  Error: Expected values to be strictly equal:
+  
+  503 !== 200
+  
+      at request (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:169:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async isL1ToL2MessageReady (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/aztec.js/dest/utils/cross_chain.js:24:26)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:550:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    [cause]: {
+      code: -32000,
+      data: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+      
+      503 !== 200
+      
+          at fetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:543:10)
+          at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+          at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43),
+      message: 'Expected values to be strictly equal:\n\n503 !== 200\n'
+    }
+  }
+
+test at prover/private-query.test.mjs:546:120
+✖ checkpoint bridge: native SDK consumed predicate survives proposed synchronization gap (4.128542ms)
+  Error: Expected values to be strictly equal:
+  
+  503 !== 200
+  
+      at request (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:169:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async isL1ToL2MessageReady (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/aztec.js/dest/utils/cross_chain.js:24:26)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:550:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    [cause]: {
+      code: -32000,
+      data: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+      
+      503 !== 200
+      
+          at fetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:543:10)
+          at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+          at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43),
+      message: 'Expected values to be strictly equal:\n\n503 !== 200\n'
+    }
+  }
+
+test at prover/private-query.test.mjs:555:1
+✖ checkpoint bridge: symbolic header resolves captured number and hash, never forwards moving tag (2.203833ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  503 !== 200
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:557:82)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 503,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at prover/private-query.test.mjs:561:1
+✖ checkpoint bridge: actual SDK fixed witness parameters preserve tuple and absence (4.493916ms)
+  Error: Expected values to be strictly equal:
+  
+  503 !== 200
+  
+      at request (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:169:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:566:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    [cause]: {
+      code: -32000,
+      data: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+      
+      503 !== 200
+      
+          at fetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/prover/private-query.test.mjs:543:10)
+          at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+          at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43),
+      message: 'Expected values to be strictly equal:\n\n503 !== 200\n'
+    }
+  }

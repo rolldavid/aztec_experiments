@@ -1,0 +1,152 @@
+{
+  "passed": false,
+  "scope": "Current Sepolia/Aztec testnet aggregate funding and genuine private claim with native proofs enabled.",
+  "privateRecoveryRetained": true,
+  "browserVersion": "155.0.8059.79",
+  "browserLifecycle": {
+    "contextClosed": true,
+    "disconnected": true,
+    "pageCrashed": false
+  },
+  "localNetwork": "selected",
+  "aggregatePermission": {
+    "entered": true,
+    "resolved": true,
+    "rejected": false
+  },
+  "aggregateConnection": {
+    "entered": "eth_chainId",
+    "resolved": "eth_chainId",
+    "rejected": null
+  },
+  "accountSelection": "prompt-confirmed",
+  "payer": {
+    "initialEthereumNonce": 1,
+    "sameOwnerDepositVerified": true,
+    "depositId": "0x1806dacced9b3b1bc6cd2b177bc426357223d7dad3f40829a2a367fba9bdc7d3"
+  },
+  "aggregate": {
+    "asset": "ETH",
+    "transactionHash": "0x6e4fcb5bbfd27e8f8b6cfaaf9cc438f6e0fbc766130a8d24c70cb1073f16e39a",
+    "planHash": "0x756cdd925c4aa6cd38245956f3dcc9429e50385b2023cfb58da3cd91f7f8a15c",
+    "userSends": 1,
+    "relayPosts": 0,
+    "signatures": 1,
+    "canonicalEffectsVerified": true,
+    "collateral": "1000000000000000",
+    "privateFee": "27847508272774440000",
+    "bok": "1000000",
+    "privateClaimQualified": false,
+    "postQualified": false
+  },
+  "automaticClaim": {
+    "surface": {
+      "state": "error",
+      "busy": false,
+      "notices": [],
+      "buttons": {
+        "pause": {
+          "visible": false,
+          "enabled": false
+        },
+        "resume": {
+          "visible": false,
+          "enabled": false
+        },
+        "confirm": {
+          "visible": false,
+          "enabled": false
+        },
+        "check": {
+          "visible": false,
+          "enabled": false
+        },
+        "reviewAgain": {
+          "visible": false,
+          "enabled": false
+        }
+      }
+    },
+    "saved": {
+      "paymentMatches": true,
+      "claimMatches": false,
+      "claimConfirmed": false,
+      "claimTxHash": null,
+      "paymentSaved": true,
+      "claimPresent": false,
+      "attempted": false,
+      "workflowPrepared": false,
+      "workflowStatus": "absent",
+      "feeWithinSavedCap": null,
+      "explicitClaimReview": false
+    }
+  },
+  "aggregateAttempts": {
+    "userSends": 1,
+    "relayPosts": 0,
+    "signatures": 1,
+    "paymentHashObserved": true
+  },
+  "failure": {
+    "stage": "aggregate-automatic-private-claim",
+    "errorClass": "AssertionError",
+    "browserLifecycle": {
+      "contextClosed": false,
+      "disconnected": false,
+      "pageCrashed": false
+    },
+    "location": "t04-metamask.mjs:662:10"
+  },
+  "initialization": {
+    "stage": "funding-claim",
+    "step": "prepare",
+    "deploymentStep": null,
+    "state": "failed",
+    "code": "BB_TRUSTED_NODE_UNAVAILABLE"
+  },
+  "privatePanelControls": {
+    "Recover funding": false,
+    "Connect private account": false,
+    "Check account recovery": false,
+    "Import recovery": false
+  },
+  "applicationState": {
+    "ethereumConnected": true,
+    "snapshotConnected": true,
+    "selectedMetaMask": true,
+    "selectedLocalChain": false,
+    "aztecLoaded": true,
+    "setupError": false,
+    "feeAddressReady": false,
+    "invalidated": false
+  },
+  "walletSurfaces": [
+    {
+      "path": "/sidepanel.html",
+      "route": "#/",
+      "controls": {
+        "confirm-btn": false,
+        "parent-selector-confirmation-page": false,
+        "confirm-footer-button": false,
+        "parent-selector-template-confirmation-page": false,
+        "confirmation-submit-button": false,
+        "confirmation-cancel-button": false,
+        "account-menu-icon": true
+      }
+    }
+  ],
+  "publicObservation": {
+    "requests": 406,
+    "completed": 406,
+    "errors": 0,
+    "canonicalObservationError": false,
+    "transactions": 0,
+    "scope": "Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded"
+  },
+  "cleanupComplete": true,
+  "blockedRequests": 0,
+  "blockedDetails": [],
+  "proofRequests": 0,
+  "l2Submissions": 0,
+  "extensionStartupDocuments": 34
+}

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Contract/client implementation and coherent builds complete: 71 Solidity tests,9 native TXE,425 wallet/journal,395 shared,14 discovery,2 focused browser,13 prover-policy and2 archive checks pass. Deployment checks92/93 then the corrected artifact-mutation fixture passes its focused rerun. New board/portal and Bok escrow/portal deployed; board and Bok binding await native settlement. Current site unchanged,7 original posts retained in static archive. Exact-candidate integration review and coordinated hosted publication/fresh signup acceptance remain.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Same-owner contracts and ca11b9f app published; seven prior posts archived. Fresh MetaMask payment verified, then claim aborted before proof at checkpoint bridge query. Reproduced gateway503 with actual SDK predicate; narrow checkpoint routing fix passes89 query tests plus existing receipt tests and independent review. Integrate and publish query-only repair, then fresh account through first post. No abandoned account restoration; hosted acceptance incomplete.
 
 ## Ready internal work
 

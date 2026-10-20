@@ -1,0 +1,1 @@
+Follow-on test-only correction: reviewer /root/ux_review approved aggregate-wallet.test.mjs SHA2563bea4023bf96d1a2090d779a6d06c057804821a7d2860942ed71070cb807db3b. It retains the existing-deposit stub across a successor quote, preserves original encrypted payment custody and verifies no extra send. The affected file passes88 tests. Application candidate bytes remain unchanged.

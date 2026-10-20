@@ -294,10 +294,10 @@ test('service carries readiness observer internally without extending serialized
 // Fixed historical dispatch uses actual installed argument/response schemas;
 // canonical block contents below are labelled fixtures, not chain evidence.
 const historyHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
-async function historyFixture(t,{strict=false,change,inspectChange}={}){
+async function historyFixture(t,{strict=false,change,inspectChange,messageIndex,messageLeaves=0,messageWitness}={}){
  const inspected=[],operations=[];let final=false;
  const ready={ready:true,latestBlockNumber:7,latestBlockHash:historyHash(7),readinessTier:'checkpointed',readinessBlockNumber:7,readinessBlockHash:historyHash(7),oldestHistoricBlockNumber:1};
- const block=n=>({header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:n}),txEffectsTreeRoot:new Fr(77)}),archive:AppendOnlyTreeSnapshot.empty(),blockHash:historyHash(n),checkpointNumber:1,indexWithinCheckpoint:0});
+ const block=n=>{const header=BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:n}),txEffectsTreeRoot:new Fr(77)});header.state.l1ToL2MessageTree=new AppendOnlyTreeSnapshot(new Fr(88),messageLeaves);return {header,archive:AppendOnlyTreeSnapshot.empty(),blockHash:historyHash(n),checkpointNumber:1,indexWithinCheckpoint:0};};
  const mined={txHash:historyHash(100),status:'checkpointed',executionResult:'success',transactionFee:'0',blockHash:historyHash(6),blockNumber:6,slotNumber:1,txIndexInBlock:0,epochNumber:0};
  const f=await fixture(t,{compactBlocks:{tier:'checkpointed',origins:[]},inspect:async(_node,opts)=>{
   inspected.push(opts.readinessTier??'proposed');if(inspectChange)await inspectChange(opts,inspected);if(!opts.readinessTier&&strict)throw Error('strict unavailable');
@@ -308,6 +308,8 @@ async function historyFixture(t,{strict=false,change,inspectChange}={}){
     else if(method==='getTxReceipt')result={...mined};
     else if(method==='getTxEffectMembershipWitness')result={blockNumber:6,root:new Fr(77),categoriesHash:new Fr(1),leafIndex:0n,siblingPath:new SiblingPath(0,[])};
     else if(method==='getBlockHashMembershipWitness')result=undefined;
+    else if(method==='getL1ToL2MessageIndex')result=messageIndex;
+    else if(method==='getL1ToL2MessageMembershipWitness')result=messageWitness;
     else if(method==='getWorldStateSyncStatus')result={latestBlockNumber:7,latestBlockHash:historyHash(7),finalizedBlockNumber:3,oldestHistoricBlockNumber:1,treesAreSynched:true};
     else result=7;
     if(change)result=await change({method,result,row,final,operations});values.push({jsonrpc:'2.0',id:row.id,result:result??null});}
@@ -529,4 +531,55 @@ test('retained compressed transaction decodes and forwards unchanged through the
  assert.equal(f.received[0].headers['x-aztec-api-key'],undefined);
  const forwarded=await Tx.schema.parseAsync(f.received[0].body[0].params[0]);
  assert(forwarded.toBuffer().equals(raw),'forwarded transaction bytes unchanged');
+});
+
+
+// Actual SDK bridge predicate/serialization over the local gateway. The fake
+// inspector explicitly rejects proposed readiness but admits its checkpoint.
+async function bridgeClient(f){
+ const {createAztecNodeClient}=await import('@aztec-labs/aztec.js/node');
+ return createAztecNodeClient(f.url+'/v1/node',{maxBatchSize:1,fetch:async(host,body,headers)=>{
+  const response=await fetch(host,{method:'POST',headers:{...headers,'content-type':'application/json'},body:jsonStringify(body)});
+  assert.equal(response.status,200);return {response:await response.json(),headers:response.headers};
+ }});
+}
+for(const [label,messageIndex,expected] of [['absent',undefined,false],['not consumed',8n,false],['consumed',7n,true]])test('checkpoint bridge: native SDK '+label+' predicate survives proposed synchronization gap',async t=>{
+ const {isL1ToL2MessageReady}=await import('@aztec-labs/aztec.js/messaging');
+ const f=await historyFixture(t,{strict:true,messageIndex,messageLeaves:8});
+ const node=await bridgeClient(f);
+ assert.equal(await isL1ToL2MessageReady(node,new Fr(19),'checkpointed'),expected);
+ assert(f.inspected.length>=2&&f.inspected.every(tier=>tier==='checkpointed'));
+ assert.equal(f.operations.filter(name=>name==='getL1ToL2MessageIndex').length,1);
+ assert.equal((await f.privateQuery.health()).ready,false,'The proposed health gate remains strict');
+});
+test('checkpoint bridge: symbolic header resolves captured number and hash, never forwards moving tag',async t=>{
+ const seen=[];const f=await historyFixture(t,{strict:true,change:({method,result,row})=>{if(method==='getBlockData')seen.push(row.params[0]);return result;}});
+ const response=await f.post(call('aztec_getBlockData',['checkpointed']));assert.equal(response.status,200);
+ const result=(await response.json()).result;assert.equal(result.blockHash,historyHash(7));assert.equal(result.header.state.l1ToL2MessageTree.root,new Fr(88).toString());
+ assert(seen.length>0&&seen.every(selector=>selector===7));assert(f.inspected.every(tier=>tier==='checkpointed'));
+});
+test('checkpoint bridge: actual SDK fixed witness parameters preserve tuple and absence',async t=>{
+ const {BlockHash}=await import('@aztec-labs/stdlib/block');const {L1_TO_L2_MSG_TREE_HEIGHT}=await import('@aztec-labs/constants');
+ const witness=[7n,new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array.from({length:L1_TO_L2_MSG_TREE_HEIGHT},()=>Buffer.alloc(32)))];
+ for(const messageWitness of [undefined,witness]){
+  const f=await historyFixture(t,{strict:true,messageWitness,messageLeaves:8});const node=await bridgeClient(f);
+  const result=await node.getL1ToL2MessageMembershipWitness({number:7,hash:BlockHash.fromString(historyHash(7))},new Fr(19));
+  if(messageWitness){assert.equal(result[0],7n);assert.equal(result[1].pathSize,L1_TO_L2_MSG_TREE_HEIGHT);assert.deepEqual(result[1].toFields().map(f=>f.toString()),witness[1].toFields().map(f=>f.toString()));}
+  else assert.equal(result,undefined);
+  assert.equal(f.operations.filter(name=>name==='getL1ToL2MessageMembershipWitness').length,1);assert(f.inspected.every(tier=>tier==='checkpointed'));
+ }
+});
+for(const selector of [0,8,{number:7,hash:historyHash(99)}])test('checkpoint bridge: unavailable or mismatched witness selector '+JSON.stringify(selector)+' rejected before witness',async t=>{
+ const f=await historyFixture(t,{strict:true});const response=await f.post(call('aztec_getL1ToL2MessageMembershipWitness',[selector,historyHash(19)]));
+ assert.equal(response.status,503);assert(!f.operations.includes('getL1ToL2MessageMembershipWitness'));
+});
+for(const method of ['getL1ToL2MessageIndex','getL1ToL2MessageMembershipWitness','getBlockData'])test('checkpoint bridge: final anchor reorg rejects '+method,async t=>{
+ const f=await historyFixture(t,{strict:true,messageIndex:7n,messageLeaves:8,change:({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result});
+ const args=method==='getL1ToL2MessageIndex'?[historyHash(19)]:method==='getBlockData'?['checkpointed']:[{number:7,hash:historyHash(7)},historyHash(19)];
+ const response=await f.post(call('aztec_'+method,args));assert.equal(response.status,503);assert((await response.json()).error);
+});
+test('checkpoint bridge: mixed latest batch remains strictly gated before forwarding',async t=>{
+ const f=await historyFixture(t,{strict:true});
+ const response=await f.post([call('aztec_getL1ToL2MessageIndex',[historyHash(19)]),{...call('aztec_getBlockData',['latest']),id:2}]);
+ assert.equal(response.status,503);assert.deepEqual(f.operations,[]);assert.deepEqual(f.inspected,['proposed']);
 });

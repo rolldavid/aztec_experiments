@@ -172,15 +172,19 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
   };
   // Historical readiness is an explicit closed read policy, never inferred for
   // an arbitrary SDK method. Arguments have already passed the official schema.
-  const metadataReads=new Set(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp']);
+  // Message discovery is a public archiver read; the native bridge waiter
+  // separately tests its leaf index against the checkpointed message tree.
+  const metadataReads=new Set(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getL1ToL2MessageIndex']);
   const selectorIndex=new Map(['getBlockData','getBlock','findLeavesIndexes','getNullifierMembershipWitness','getLowNullifierMembershipWitness','getPublicDataWitness','getBlockHashMembershipWitness','getNoteHashMembershipWitness','getPublicStorageAt'].map(name=>[name,0]));
   selectorIndex.set('getContract',1);
+  selectorIndex.set('getL1ToL2MessageMembershipWitness',0);
   const txReads=new Set(['getTxReceipt','getTxEffectMembershipWitness']);
   const fixedSelector=value=>Number.isSafeInteger(value)&&value>=0 || value instanceof BlockHash ||
     (!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length>0&&Object.keys(value).every(k=>k==='number'||k==='hash')&&
       (value.number===undefined||Number.isSafeInteger(value.number)&&value.number>=0)&&(value.hash===undefined||value.hash instanceof BlockHash));
+  const checkpointedHeader=call=>compact?.tier==='checkpointed'&&call.method==='getBlockData'&&call.args[0]==='checkpointed';
   const historicalKind=call=>metadataReads.has(call.method)?'metadata':txReads.has(call.method)?'transaction':
-    selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
+    checkpointedHeader(call)||selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
   const canonicalRecord=async(selector,ready,records,limit=ready.readinessBlockNumber,stateful=true)=>{
     const requestedNumber=typeof selector==='number'?selector:selector?.number;
     const requestedHash=(selector instanceof BlockHash?selector:selector?.hash)?.toString();
@@ -250,6 +254,9 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           for(const call of prepared){
             const kind=historicalKind(call);
             if(kind==='selector'){
+              // Resolve this one SDK bridge tag to the inspector's captured
+              // checkpoint. Never forward a moving tag after the readiness check.
+              if(checkpointedHeader(call))call.args[0]={number:ready.readinessBlockNumber,hash:BlockHash.fromString(ready.readinessBlockHash)};
               // Public headers and bodies authenticate the world's own height;
               // stateful reads remain bounded by the selected readiness tier.
               // Archiver headers/bodies (including PXE genesis) do not depend

@@ -5,7 +5,7 @@ This is the current handover for a fresh checkout. Read this before historical e
 ## Branch and current scope
 
 - Work from **`codex/rolling-chat-draft3`** in `zac-williamson/aztec_experiments`. The default branch is not the delivery reference.
-- Current published frontend: `c04ac3f7a02ac1cb56efae57afe74fda868d7255` (prominent account creation progress; background account preparation, persistent public-asset cache and main-page posting names). Transaction/prover backend remains `c9c850df1e514197f6577bd7a12df8c0970fc315` (signup and operation completion fixes); app asset serving and browser loading are included in the current frontend release. See [UX review](execution/evidence/G17/ux-review.md). Fresh real MetaMask payment, bridging, real-proof account claim and first public post passed; see [verification](execution/evidence/G16/signup/verification.md). Earlier accepted application: `f4eb6515e4f55330e07e10ec348b3bd3532199cb`.
+- Current published application: `ca11b9fcaf0958cfe2345d18ea75944854dfd1e9`. G21 replaces the board and collateral portal with same-owner independent deposits and optional stuck-deposit refunds. The same Ethereum wallet funds, owns and receives refunds; signup does not restore an abandoned private account. Source is integrated and pushed. **Fresh hosted signup acceptance is incomplete:** the new payment passed MetaMask and canonical same-owner deposit checks, but bridge preparation stopped on `BB_TRUSTED_NODE_UNAVAILABLE` before proof submission. The checkpointed bridge-query boundary is being corrected. See [G21 development verification](execution/evidence/G21/development-verification.md) and [publication review](execution/evidence/G21/publication-review.md).
 - Reviewed persistent-hosting control update: `0205d08b52d23b0167cc91b11463ee80b0fc403d`. This handover adds documentation and archived evidence without replacing accepted application code.
 - [PR 8](https://github.com/zac-williamson/aztec_experiments/pull/8). [Functional status](execution/feature-status.md), [requirement disposition](execution/release/final-requirement-disposition.json), [engineering acceptance](execution/release/engineering-handover-20261020.md).
 - This is the owner's testnet proof of concept. Specialist security/privacy audit X1 and production-network clearance X2 remain external release gates. No mainnet release is authorized.
@@ -14,12 +14,12 @@ This is the current handover for a fresh checkout. Read this before historical e
 ## Current application and actual observations
 
 [Open Rolling Chat](https://d30njln0kead8n.cloudfront.net/#/home).
-[Original conversation with authenticated Bok reply](https://d30njln0kead8n.cloudfront.net/#/thread/15660648287099192392566570599913171983157817601529053133981747474837257128506).
+[Original conversation with authenticated Bok reply](https://d30njln0kead8n.cloudfront.net/archive/#post-15660648287099192392566570599913171983157817601529053133981747474837257128506).
 [Generated page](https://dy2q03rao3se7.cloudfront.net/t/54f74bcaa3f0f1a59b0358a11dd85dcb885bf5aaec7f26e23b6c81c56db3ca1d/r/4055ef22dbf2e9971676d2c22706885d6884d3e4/files/index.html).
 
-On 20 October, the restored app, query and prover were healthy; the real browser displayed the preserved human conversation, authenticated Bok reply and generated page. Bok's separate service was ready with no active job or reported failure, and its three original terminal journals were unchanged. No payment, proof or model call was replayed to demonstrate restoration.
+The seven posts from the previous board remain available through **Earlier conversations** at [/archive/](https://d30njln0kead8n.cloudfront.net/archive/), including the authenticated Bok reply and generated-page links. They are a read-only snapshot; the new contract has its own feed. Old contract/state records remain untouched.
 
-**Latest verification, 20 October:** moderator completed canonical replay and reports healthy ingestion with no alerts. The published signup test completed two real proofs and its new post appears on Home. All six earlier posts remain. See [publication evidence](execution/evidence/G16/signup/publication/publication.md).
+The G21 app, moderator, native prover and Bok service were activated on 20 October. Bok's existing global GitHub repository-allocation record was preserved after its fresh state initially attempted to re-admit a used repository; its health is now ready and the original generated page returns HTTP 200. No old board billing or model call was replayed. A fresh browser payment succeeded; private claim and first-post acceptance remain outstanding as described above.
 
 ## Running services
 
@@ -37,7 +37,9 @@ Main VPC origins: app port 4319 `vo_B9DnVYF8QMyD8Oicgnf6yB`; query port 8083 `vo
 
 Bok signs using its own preserved public Aztec identity `0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e`. Its public identity is owner-approved; its private keys are not public. Bok uses authenticated `/v1/node` and its own native prover, not the core HTTP prover. Generated code receives neither these keys nor the operator AWS account.
 
-Core native runtime manifest: `b6291cca0855496d7a08974451d31729f86671880453c9fde4fb4ef40b9908e0`, release `/opt/board-prover/releases/rolling-b6291cca0855496d`. Previous manifest71d5e836 is retained. Bok native manifest remains `05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e`. App source release is `/opt/rolling-app/releases/ux-c04ac3f7a02a`; moderator and Bok source releases remain c9c850df1e51; contract identities and persistent state remain unchanged. Persistent control module is pinned separately at `/usr/local/lib/rolling-control/deploy/prover/bootstrap.py`, SHA256 `475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38`.
+Core native runtime manifest: `56d35b565341244a827864fc743d262a66bc084be7b9af881897646a7aab84ee`, release `/opt/board-prover/releases/rolling-56d35b565341244a`. The former b629 release is preserved. Bok native binaries remain on manifest `05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e`. App and Bok source releases are `/opt/rolling-app/releases/lifecycle-ca11b9fcaf09`; moderator is `/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09`. New-board state lives under a board-address child of each original state directory. Persistent control module `/usr/local/lib/rolling-control/deploy/prover/bootstrap.py` is SHA256 `9501b3d7316203729124ae727bf105e4fb7a3554c3148f646a3bee8c77110c6b`; only its artifact-catalog literal changed from the previous control source.
+
+Current board: `0x23c068961909d0e5efa212041e25768baff08b55e074b9a03a4deb99d5b29852`; collateral portal: `0xd865bd41ff9d36102a086d0410ffb95a1f73566f`; aggregate payment router: `0x8a5b2f15bf4f660ea53285e81bb4a3b522801540`. Bok escrow: `0x2fc1682096b9042c7a760158a5c2ddacab8ebc2892b1b339044916ca41126ab9`; Bok portal: `0x5fc4622b680daa007a6ef903f69455b35fc567e7`.
 
 ## Persistent hosting and cost
 

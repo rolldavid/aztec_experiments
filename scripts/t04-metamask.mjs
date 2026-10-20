@@ -247,12 +247,15 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  assert([null,'ethereum-before-ack','bridge-pending'].includes(interruptAt));if(interruptAt==='ethereum-before-ack')assert.equal(control.asset,'ETH');
  const remaining=retainedBokRemaining(deadlineAt,Date.now,control.walletConfig.proofsEnabled?3600000:525000);
  const c=control,chainId=c.walletConfig.config.network.chainId,scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
- const portal=new Interface(['function depositNonces(address) view returns(uint256)']);
+ const portal=new Interface(['function depositNonces(address) view returns(uint256)','function getDeposit(address owner,bytes32 depositId) view returns(tuple(uint128 amount,bytes32 secretHash,bytes32 key,uint256 index,bool refundRequested,uint256 refundBlock))']);
  const consentNonce=portal.decodeFunctionResult('depositNonces',await provider.call({to:scope.collateralPortal,data:portal.encodeFunctionData('depositNonces',[account])}))[0];
  assert(['31337','11155111'].includes(chainId));assert.equal((await provider.getNetwork()).chainId,BigInt(chainId));
  const initialBalance=await provider.getBalance(account);if(c.asset==='USDC')assert.equal(initialBalance,0n);else assert(initialBalance>=BigInt(a.maximumPaymentWei)+BigInt(a.gasBudgetWei));
  if(c.asset==='USDC'){const token=new Interface(['function balanceOf(address) view returns(uint256)']);const balance=token.decodeFunctionResult('balanceOf',await provider.call({to:scope.bokToken,data:token.encodeFunctionData('balanceOf',[account])}))[0];assert(balance>=BigInt(a.maximumUsdc));}
- const initialNonce=await provider.getTransactionCount(account,'pending');assert.equal(initialNonce,0,'Fresh disposable user only');
+ // The private account is fresh; its Ethereum payer may have earlier transactions.
+ const initialNonce=await provider.getTransactionCount(account,'pending');
+ assert(Number.isSafeInteger(initialNonce)&&initialNonce>=0);
+ assert.equal(initialNonce,await provider.getTransactionCount(account,'latest'),'Resolve the payer’s pending Ethereum transaction before starting');
  let unsignedApproved=unsignedContinuation===null;let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],errors=[];
  const prompts=Array.from({length:2},()=>Promise.withResolvers()),payment=Promise.withResolvers(),failure=Promise.withResolvers(),interrupted=Promise.withResolvers();let promptIndex=0;
  failure.promise.catch(()=>{});const observe=promise=>Promise.race([promise,failure.promise]);
@@ -365,6 +368,15 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   const receipt=await observe(provider.waitForTransaction(hash,1,remaining()));assert(receipt,'Original payment remains unresolved');
   const tx=await provider.getTransaction(hash);assert(tx);if(c.asset==='USDC')intent={...intent,nonce:tx.nonce};
   const verified=await verifyEthereumIntentReceipt(provider,intent,hash);assert.equal(verified.outcome,'success');
+  // V2 records remain under the actual payer, keyed by this payment's claim commitment.
+  const collateral=verified.event.collateral;
+  const stored=portal.decodeFunctionResult('getDeposit',await provider.call({to:scope.collateralPortal,data:portal.encodeFunctionData('getDeposit',[account,collateral.secretHash]),blockTag:receipt.blockNumber}))[0];
+  assert.equal(String(stored.amount),collateral.amount);assert.equal(stored.secretHash,collateral.secretHash);
+  assert.equal(stored.key,collateral.messageKey);assert.equal(String(stored.index),collateral.leafIndex);
+  assert.equal(stored.refundRequested,false);assert.equal(stored.refundBlock,0n);
+  assert.equal((await provider.getBlock(receipt.blockNumber)).hash,receipt.blockHash);
+  assert.equal(await provider.getTransactionCount(account,'latest'),initialNonce+(c.asset==='ETH'?1:0));
+  report.payer={initialEthereumNonce:initialNonce,sameOwnerDepositVerified:true,depositId:collateral.secretHash};
   assert.equal(signatures.length,c.asset==='ETH'?1:2);assert.equal(confirmedSignatures,signatures.length);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);
   if(c.asset==='USDC')assert.equal(await provider.getBalance(account),0n);
   report.aggregate={asset:c.asset,transactionHash:hash,planHash:intent.expected.planHash,userSends,relayPosts,signatures:signatures.length,canonicalEffectsVerified:true,collateral:verified.event.collateral.amount,privateFee:verified.event.privateFee.amount,bok:verified.event.bok.amount,privateClaimQualified:false,postQualified:false};
@@ -378,7 +390,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   }
   mark('aggregate-automatic-private-claim');
   await observe(waitMetaMaskAutomaticClaim({page,binding:{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash:hash},report,timeout:remaining()}));
-  if(c.asset==='USDC'){assert.equal(await provider.getBalance(account),0n);assert.equal(await provider.getTransactionCount(account,'pending'),0);}
+  if(c.asset==='USDC'){assert.equal(await provider.getBalance(account),0n);assert.equal(await provider.getTransactionCount(account,'pending'),initialNonce);}
   mark('aggregate-first-post');
   const message='Fresh account onboarding check '+crypto.randomUUID();
   await dialog.getByRole('button',{name:'Write a post',exact:true}).click({timeout:remaining()});
@@ -389,6 +401,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   await dialog.getByRole('button',{name:'Close account panel',exact:true}).click();
   await page.goto(c.origin+'/#/home');
   await page.locator('main article.post').getByText(message,{exact:true}).waitFor({timeout:remaining()});
+  assert.equal(await provider.getTransactionCount(account,'pending'),initialNonce+(c.asset==='ETH'?1:0));
   report.aggregate.postQualified=true;report.aggregate.postVisibleOnHome=true;
   return ()=>{assert.equal(errors.length,0);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);assert.equal(signatures.length,c.asset==='ETH'?1:2);};
  }finally{await Promise.allSettled([...routeTasks]);report.aggregateAttempts={userSends,relayPosts,signatures:signatures.length,paymentHashObserved:hash!==null};}

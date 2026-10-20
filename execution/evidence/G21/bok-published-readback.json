@@ -1,0 +1,15 @@
+{
+  "services": {
+    "rolling-bok-testnet.service": {
+      "ActiveState": "active",
+      "MainPID": "48663",
+      "WorkingDirectory": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09"
+    }
+  },
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  }
+}
