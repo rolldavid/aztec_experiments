@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 25/55.
+Objective state: **running**. Completed packages: 26/55.
 
 ## In progress
 
-- **Everyday social journeys without transaction-console UX (G17)** — Implemented focused action dialogs, reader/mobile entry points, plain previews/costs, automatic saved-item/balance loading, contextual errors and dates. Independent reviewers approved runtime source. Focused browser cases pass; completing harness selector maintenance and app-only publication.
+None.
 
 ## Ready internal work
 

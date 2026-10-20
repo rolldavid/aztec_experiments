@@ -9182,7 +9182,7 @@
       "title": "Everyday social journeys without transaction-console UX",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "done",
       "depends_on": [
         "G16"
       ],
@@ -9214,7 +9214,7 @@
       "evidence": "evidence/G17.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Implemented focused action dialogs, reader/mobile entry points, plain previews/costs, automatic saved-item/balance loading, contextual errors and dates. Independent reviewers approved runtime source. Focused browser cases pass; completing harness selector maintenance and app-only publication.",
+      "checkpoint": "Frontend5c7b79c4 published and pushed; exactly3files updated.16focused browser and12reader/content checks pass; independent source/harness/publisher review approved. Live desktop/mobile/signup pass, assethashes match and all7posts preserved. Completion evidence evidence/G17.json. No contract/backend/financial actions.",
       "execution_lane": "UX",
       "owner": "ux-20261020",
       "branch": "codex/rolling-chat-draft3",

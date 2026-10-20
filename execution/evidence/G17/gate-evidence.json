@@ -1,0 +1,93 @@
+{
+  "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+  "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+  "task_id": "G17",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+      "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+      "id": "focused-browser",
+      "status": "pass",
+      "command": "node --test --test-name-pattern=G17 apps/rolling/wallet-panel.browser.test.mjs apps/rolling/reader.browser.test.mjs",
+      "environment": "Pinned Node24.21.0 Chromium155 macOS arm64; labelled browser doubles",
+      "exit_code": 0,
+      "observed": "Passed; source and output committed in candidate.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G17/browser-final.log",
+          "sha256": "f7ae0efb4444f484e3afaf186329dc0379e525422bf5bf3200fd4f2655d13ac4"
+        }
+      ]
+    },
+    {
+      "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+      "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+      "id": "model-reader",
+      "status": "pass",
+      "command": "node --test apps/rolling/model.test.mjs apps/rolling/reader-client.test.mjs",
+      "environment": "Pinned Node24.21.0 Chromium155 macOS arm64; labelled browser doubles",
+      "exit_code": 0,
+      "observed": "Passed; source and output committed in candidate.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G17/model-reader-tests.log",
+          "sha256": "baaea5d9254f95a7832a4aab7b2b5e09723d2de21be479692c135e02e5361cf8"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+    "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "/root/ux_review + /root/funding_investigation",
+    "implementer": "ux-root",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G17/independent-review.md",
+        "sha256": "7dbf528d7765eed60087238aa384f74a94fc038ff953abe41c54fa656a8b21ba"
+      },
+      {
+        "path": ".build/G17-gate/harness-review.md",
+        "sha256": "133a51bec62b2d4be3b8560e73b54f382a6e90506b333120f95ac1cdf6363e67"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+      "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+      "id": "G17-A01",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G17/verification.md",
+          "sha256": "ed90c7103643107d79673001f12260f19e0a8325147e9245b1bef7da7e62d351"
+        },
+        {
+          "path": "execution/evidence/G17/browser-final.log",
+          "sha256": "f7ae0efb4444f484e3afaf186329dc0379e525422bf5bf3200fd4f2655d13ac4"
+        }
+      ]
+    },
+    {
+      "candidate": "5c7b79c4179457ba23e583a313d4182d785b0877",
+      "base": "e9245983e7148a5afa29e2823c7480d6c83bb657",
+      "id": "G17-A02",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G17/verification.md",
+          "sha256": "ed90c7103643107d79673001f12260f19e0a8325147e9245b1bef7da7e62d351"
+        },
+        {
+          "path": "execution/evidence/G17/browser-final.log",
+          "sha256": "f7ae0efb4444f484e3afaf186329dc0379e525422bf5bf3200fd4f2655d13ac4"
+        }
+      ]
+    }
+  ]
+}

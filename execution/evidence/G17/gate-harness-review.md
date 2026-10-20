@@ -1,0 +1,1 @@
+/root/ux_review approves exact three-line fresh-account harness change at script SHA2560455c5bf23251fcbbe1539bc57311ab6e170e4f37990b745ff27fbb72b4ec478. No hidden retry or weakened confirmation/chain/public post assertions. Historical retained/recovery modes excluded. Runtime source review approved unchanged files bound in committed independent-review.md.

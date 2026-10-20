@@ -1,0 +1,118 @@
+{
+  "task_id": "G17",
+  "outcome": "pass",
+  "recorded_at": "2026-10-20T11:41:42.022605+00:00",
+  "source_fingerprint": "be6a520a675baa363319069c3a66444ecb844035d19a9019025988538ecac230",
+  "source_inventory": "evidence/G17/source-published.json",
+  "artifacts": [
+    {
+      "path": "evidence/G17/source-published.json",
+      "sha256": "291e56c603315ef27929aff64bf1923afb189ffcd6f304322bd764d493c326c4"
+    },
+    {
+      "path": "evidence/G17/ux-review.md",
+      "sha256": "93a10e31f03f967f614b7f0b701fcb9d36d89441112dac33969b5723c58da782"
+    },
+    {
+      "path": "evidence/G17/verification.md",
+      "sha256": "ed90c7103643107d79673001f12260f19e0a8325147e9245b1bef7da7e62d351"
+    },
+    {
+      "path": "evidence/G17/browser-final.log",
+      "sha256": "f7ae0efb4444f484e3afaf186329dc0379e525422bf5bf3200fd4f2655d13ac4"
+    },
+    {
+      "path": "evidence/G17/model-reader-tests.log",
+      "sha256": "baaea5d9254f95a7832a4aab7b2b5e09723d2de21be479692c135e02e5361cf8"
+    },
+    {
+      "path": "evidence/G17/independent-review.md",
+      "sha256": "7dbf528d7765eed60087238aa384f74a94fc038ff953abe41c54fa656a8b21ba"
+    },
+    {
+      "path": "evidence/G17/gate-harness-review.md",
+      "sha256": "133a51bec62b2d4be3b8560e73b54f382a6e90506b333120f95ac1cdf6363e67"
+    },
+    {
+      "path": "evidence/G17/gate-result.json",
+      "sha256": "81b5946a2d31573cd21ebedaeed30c1b28f79e62b7313a31a1e0dd0f0d15b657"
+    },
+    {
+      "path": "evidence/G17/publication.md",
+      "sha256": "b4129d2de65bb5d9c9676f318b9f7f858a72e3bd20fdcf3eea3f2228248099f8"
+    },
+    {
+      "path": "evidence/G17/publication-result.json",
+      "sha256": "58b6f8ea9483ddd8e44fa1eb5618a68a007834e3248164470cde833b9169fb20"
+    },
+    {
+      "path": "evidence/G17/live-readback.json",
+      "sha256": "2f94cdee8243e25d725c20157c4f328ced79e823e1a1d4fd4dbc8ecb6c0542a3"
+    },
+    {
+      "path": "evidence/G17/live-1440.png",
+      "sha256": "fdda8468bdf9ed56f499204390ce3a9fe00c8e8f48e085f02cb90ee073b19e8f"
+    },
+    {
+      "path": "evidence/G17/live-390.png",
+      "sha256": "9ab31a97ce838fda0a18c5c318a29e2402e24594ebb056a5dc0e6b3ffb5b6ceb"
+    },
+    {
+      "path": "evidence/G17/live-signup.png",
+      "sha256": "6ead4847e91659ab1cf7da3c7571be71f2277cf555578f31fcea91efe39271bb"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G17-A01",
+      "result": "pass",
+      "summary": "Focused social actions hide editable contextual IDs; human previews and cost consent, optional Bok, automatic saved items/balances, mobile compose entry and plain states verified with16browser checks.",
+      "artifacts": [
+        "evidence/G17/source-published.json",
+        "evidence/G17/ux-review.md",
+        "evidence/G17/verification.md",
+        "evidence/G17/browser-final.log",
+        "evidence/G17/model-reader-tests.log",
+        "evidence/G17/independent-review.md",
+        "evidence/G17/gate-harness-review.md",
+        "evidence/G17/gate-result.json",
+        "evidence/G17/publication.md",
+        "evidence/G17/publication-result.json",
+        "evidence/G17/live-readback.json",
+        "evidence/G17/live-1440.png",
+        "evidence/G17/live-390.png",
+        "evidence/G17/live-signup.png"
+      ]
+    },
+    {
+      "id": "G17-A02",
+      "result": "pass",
+      "summary": "12reader/content checks and independent source/harness/publisher reviews pass. Frontend5c7b79c4 is published with exactthreefile hashes, live desktop/mobile/signup checks and allsevenexistingposts preserved. No contract/backend change or financial transaction.",
+      "artifacts": [
+        "evidence/G17/source-published.json",
+        "evidence/G17/ux-review.md",
+        "evidence/G17/verification.md",
+        "evidence/G17/browser-final.log",
+        "evidence/G17/model-reader-tests.log",
+        "evidence/G17/independent-review.md",
+        "evidence/G17/gate-harness-review.md",
+        "evidence/G17/gate-result.json",
+        "evidence/G17/publication.md",
+        "evidence/G17/publication-result.json",
+        "evidence/G17/live-readback.json",
+        "evidence/G17/live-1440.png",
+        "evidence/G17/live-390.png",
+        "evidence/G17/live-signup.png"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/ux_review; /root/funding_investigation",
+    "summary": "Approved source, focused harness and frontend-only publication after resolving async saved-loading, moderator access, retained draft and modal navigation findings.",
+    "artifacts": [
+      "evidence/G17/independent-review.md",
+      "evidence/G17/gate-harness-review.md"
+    ]
+  }
+}
