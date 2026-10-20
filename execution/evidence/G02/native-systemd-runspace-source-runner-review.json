@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "writtenAt": "2026-10-13T05:26:04.320968+00:00",
+  "candidateSource": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourcePacketSha256": "aa751c307dfccb360ded0e30f290d980b924226b00a59175bff00269c53fbe67",
+  "controlledPacketSha256": "45151af7bf1cb06fa9a4059a7f49b1e3b0d3e1a010cc845ffc15639aedca0200",
+  "verdict": "RUNSPACE_SOURCE_AND_ONE43_CONTROLLED_RUN_ELIGIBLE",
+  "sourceFiles": {
+    "boot-bound.py": "a979204b30205c6f456d23e3b4ada92a37247fe8c4b069b5b0339dee2e60ae38",
+    "boot-template.py": "2e3f04821124e9e672e7e13c63c795efeefb745feed7950099a71f663a04c3ea",
+    "driver.py": "47666a77c3ea81d0ea0adbede2639b153977698fd17a54faf66fba8fb96970e7",
+    "driver.py.diff": "9f533c77ecc8ac5afb268eba9b07375aae0e8b753ea7327655dc51d034e8cecd",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176",
+    "receipt-reader.py": "4971d13b9c73d7366b87f6e5ff80455b78eb1ef5b5310a808c78b4949b13ae29",
+    "run.py": "0445bac92202071f463bd040a2a9992cd3721f74439d3a4c00a8f3f666cb7f9e",
+    "run.py.diff": "6ba2a3d4ad2130a2500f354e4f3adee053540c564e4e382022e3b000d1b06dc5",
+    "test-runner.py": "f06ae5946a2ea261decc8363399ccf9161cb8546e03a160abb06dec59f8bee05",
+    "test-runner.py.diff": "b7d30db68a98030c1ea4e0924b7c5d720ee6c86d81ad9ce6bd16cefa74544d6c"
+  },
+  "controlledFiles": {
+    "run.mjs": "8491da0910adcf742a6b93149c045fd6e995462f9165a82301cac50c32492ba9",
+    "suite.py": "19aa80b4f77a10393d3f13d9698c492ce2591a445d1a9302025203b39e745ae0",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "preparation.json": "00b5b81fdfca81ee78308d27c5ba2ae90321d897f4a53a47f5f2217fd03af0f8",
+    "before-source.json": "eb307a4687b17f8976e1e5ca975686866f12557512626188bbd581e4dbad97d0"
+  },
+  "sourceAssessment": [
+    "Only/run32m and/var/lib16m replace16m/32m; summedtmpfs67MiB and512MiBmemory,2CPU,60s43work17cleanup are unchanged. All other hostguards and helperfunctions ASTidentical; mainchanges onlynewinvocationname and repinnedpublicbytes.",
+    "Added check_reload_space uses fixed/run/systemd statvfs, exactintegers and boundedpowers-of-two blocksize, finitefree<=total<=32MiB, >=16MiBfree floor; observations limited5 fixedlabels. No raw exception/text/privatepath output.",
+    "Same existingreload calls and original production native subset/capture/classifier remain. Before initialreload and before each4case reload/reference path, finiteguard failsclosed without invoking original command on insufficientspace.",
+    "Sourceestablished environmentincompatibility independentlyverified in Ubuntu255.4 originaldbus-manager source and exact255.4-1ubuntu8.17 Debianarchive. Both archivehashes match officialdsc; extractedfile matches upstream; no downstreampatch/rule containsgatefunction references. This is source linkage, not observedhistoricalstderr; dsc signature not independently verified.",
+    "Harmless StateDirectory workload is tiny relative16MiB; no privatebinary/nativeprovider activity added. Actual capacity and reload/retention outcomes still unrun."
+  ],
+  "tests": {
+    "count": 43,
+    "baseline": 37,
+    "new": 6,
+    "inventoryASTMatches": true,
+    "meaningfulNegatives": [
+      "Exact16MiB floor succeeds; old16MiBtotal withusedblocks and32MiBtotalbelowfloor reject.",
+      "Badtypes/power-of-two/overflow/free>total/unknownstat failures reject without coercion.",
+      "Actual outer driverflow refuses originalreload and cases when freefloor fails.",
+      "Exacttmpfsreallocation and aggregate preserved; unexpectedmap variants stillfailconfined.",
+      "At most5 observations; sixthattemptrejects."
+    ],
+    "runtime": "UNRUN"
+  },
+  "controlledRunner": {
+    "runnerSha256": "8491da0910adcf742a6b93149c045fd6e995462f9165a82301cac50c32492ba9",
+    "pinsRehashed": 888,
+    "mismatchCount": 0,
+    "exact43Collector": true,
+    "bounds": {
+      "deadlineMs": 60000,
+      "rssLimitKiB": 2097152
+    },
+    "unchangedChild": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "sameSupervisor": true,
+    "positiveOwnedTreeAndInodeTmpCleanup": true,
+    "sourceCleanPrecondition": true
+  },
+  "eligibility": {
+    "oneControlledRun": true,
+    "parentGrantAndSerializedSlotRequired": true,
+    "waitForLeadWallet93868Cleanup": true,
+    "actualOfflineRun": false,
+    "actualOfflineRequiresIndependent43ReceiptAndGrant": true
+  },
+  "limitations": [
+    "No Linuxretention/nativeBB qualification, activepinpromotion, provideraction or paidgrant.",
+    "Existing failed runs remainfailed; no historicalexactmessage invented.",
+    "Reviewer performedonly read/hash/AST/archive inspection, no tests/imports/Docker."
+  ]
+}

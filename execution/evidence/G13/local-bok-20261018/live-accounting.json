@@ -1,0 +1,16 @@
+{
+  "revision": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "environment": "Native node/PXE proofsdisabled, sameaccount/chain45",
+  "procedure": "Existing encrypted backup imported; Balances and withdrawals -> Check private balances -> Check all Bok requests -> Continue checking Bok requests. No new transaction.",
+  "observed": {
+    "available": "0.989952",
+    "allocated": "0",
+    "reserved": "0",
+    "charged": "0.010048",
+    "returned": "0.339952",
+    "firstRequestReturned": "0.1",
+    "secondRequestReturned": "0.239952",
+    "bothRequests": "closed"
+  },
+  "limitations": "Actual local private ownership and uniform public accounting recovery; no authentic Ethereum wallet/testnetproof claim. Current accounting uses two explicit bounded reads."
+}

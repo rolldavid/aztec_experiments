@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "c6bbe0d5db2a734758c790c6a6aa880ef3b04a73",
+  "verdict": "accept-isolated-real-encrypted-ACIR-regression-evidence-only",
+  "sourceEligibility": "execution/evidence/G07/preference-page-c6bbe-source-eligibility-review.json",
+  "independentBindings": {
+    "sourceFiles": 4,
+    "sdkFiles": 12,
+    "allCurrentHashesMatch": true,
+    "artifactSha256": "799b44cd8901140dfda8c3fbd80fa11ebe708417afbd000d44eb92d39eafa781",
+    "summarySha256": "ffe1ff70f07a5ef8eef79458bc91c2ace6a5d2f4ffa81f9907c98fc95258a343",
+    "receiptSha256": "b519435e28a4298feee73b77d2df84a5d355c89b982866a3c3b89579f412784f",
+    "logSha256": "caa1663e9f470e8eb8c9764b0e14d152cde77c0af8340f013d592d88cf97739e",
+    "runnerSha256": "6c960cc3cf7b1ab24b14ed7069946e59becf6cc06d202533451d13d5acef0c8b"
+  },
+  "execution": {
+    "selected": 8,
+    "parentTests": 1,
+    "subtests": 7,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 6596,
+    "peakRssBytes": 739508224,
+    "deadlineSeconds": 180,
+    "rssLimitBytes": 4294967296,
+    "allOwnedGroupGone": true,
+    "fixtureDirectoriesRemoved": true
+  },
+  "sourceAssessment": [
+    "The actual normal-processed set_preference ACIR runs in the original ContractFunctionSimulator with derived account keys, standard HandshakeRegistry and original oracle/store services, generating encrypted private logs and note/nullifier outputs. Test input does not inject a decoded event into the recovery validator.",
+    "The exact generated page method executes actual recover_preference_page utility ACIR through original simulator, uses LMDB staged NoteService/EventService, OperationQueue and StagedWriteCoordinator; the thin bridge deliberately omits only production error-enrichment behavior.",
+    "Missing keys, registered-address-without-key, and empty execution scope reject. Positive test stores exactly one scoped preference event and one owner head note; event eight fields, owner, note size/schema/revision are asserted. No extra tag discovery and no contract synced flag.",
+    "Late account lock and changed canonical header are injected after actual utility decryption staged one head; both note/event stores remain empty. Contributor veto after the final page guard likewise discards staged records and drains original queue lifecycle.",
+    "Runner checks exact commit/clean source and source/SDK/artifact hashes before one process group, bounds time/memory, captures exit/log hash, and verifies group and fixture-directory cleanup."
+  ],
+  "limitations": [
+    "Canonical chain registration, initialization membership, block/effect/receipt inclusion, transaction hash and fee are synthetic boundaries. This is not a genuine proof, mined transaction, fee, network or production recovery acceptance.",
+    "Eight includes one parent plus seven subtests; earlier34 tests and two loader tests were not rerun here. Their prior evidence remains separate.",
+    "Positive test checks head schema/revision/owner/size and exact event fields, not a full independently folded preference-state completion proof.",
+    "Final canonical/account guards occur before asynchronous contributor settlement/commit. Contributor-veto rollback is demonstrated; canonical-at-commit atomicity is not.",
+    "Authenticated complete page enumeration/frontier, multi-page cold discovery, reorg continuation, normal head/action sync bounds and raw compiler constraint diagnostics remain open. Shared PXE was not patched."
+  ],
+  "nextPrerequisites": [
+    "Define complete authenticated enumeration and bounded continuation separately from this successful one-page decryption experiment.",
+    "Preserve official queue/validator/rollback semantics and add a reviewed commit-boundary strategy before claiming atomic account/canonical validity.",
+    "Any genuine deployed/proven acceptance requires new explicit source/artifact integration and bounded runtime evidence."
+  ],
+  "reviewExecution": "Read-only source, JSON/log and SHA checks. No new SDK/native/browser/provider execution."
+}

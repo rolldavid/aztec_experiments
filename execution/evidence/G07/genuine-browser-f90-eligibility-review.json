@@ -1,0 +1,63 @@
+{
+  "reviewer": "reviewer-20261011",
+  "time": "2026-10-13T03:56:58.272212+00:00",
+  "candidate": "f90fec9eb94bb479fbe688bbeb71c1e153034e91",
+  "verdict": "eligible for one changed measured genuine rolling-preference-browser investigation after parent once-grant and final approved-launch binding; no acceptance outcome inferred",
+  "findings": [],
+  "packetSha256": "1e7dcb901edf531ba9e7482b8c123dddbe1ee983bb00af4ee794f73c2a859335",
+  "preparationSha256": "af4c2c7c32057a4c08cfd58ac6c5ae8c0a4bb8d3bf708f6db837e432b50e4abd",
+  "launcherSha256": "ade9380980a378ee6ade2964db93b9b3c68ad6d2be2eb67006ba11baf55ad9b8",
+  "closureSha256": "afaf9730aa951105cfe06ee2c86d67d68d3b628260b64db17d182ecfff6a59d7",
+  "componentRuntimeReviewSha256": "0b703cf98eaf3eba4e38d1b7559bb255576b8e6d41488f846933b4aa44b1a058",
+  "feasibilityNoteSha256": "19b73446afaf677101dd8d3785940df3871eeb0fc70493d26c6c50fa913319cd",
+  "beforeBindingsSha256": "f8bb3358201794a37f34ffd530163750a42163e6632cec53a2d4b34b733f3338",
+  "bindingsIndependentlyRehashed": 3158,
+  "manifests": {
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "6d163b9c1b3aa12c209c63a39ec16d1d5deec87d5764198e98cf127b79acbcc1",
+      "entriesRehashed": 2060
+    },
+    ".build/apps-manifest.json": {
+      "sha256": "690bcf0936358d6723aa54c48940a7d9d8c41172fefd33b2dfd111683e6a5aed",
+      "entriesRehashed": 107
+    },
+    ".build/contracts-manifest.json": {
+      "sha256": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36",
+      "entriesRehashed": 53
+    },
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "c1b1fb57e5ffcd8ca1c72d7571db3c56fcbc44ce299b8907207c759564a0ac50",
+      "entriesRehashed": 108
+    }
+  },
+  "sourceAssessment": [
+    "Exact four-file following-first composition and combined229 actual cases accepted; actor80 carries from exact e718/c4d bytes.",
+    "Browser alone defers setup posting-only eligibility. Funded fee-ready setup, real-wall readiness, actual private posting eligibility and checkpoint drain remain before root.",
+    "Follow revision0 then authenticated following-only revision1, original anonymous root, bookmark revision1, exact combined revision2. Three genuine jobs; financial, public, keys-only, cold privacy and lock assertions retained.",
+    "First proof admission is124s engineering work allowance plus uncovered cooldown and150s browser reserve; immediately rechecked after persistence. Actual browser admission separately requires150s, driver120s.",
+    "Launcher differs from reviewed a189 only evidence directory and closure location. Original ownership, clean-source/hash checks, exclusive intent/log, real proofs/local mode remain."
+  ],
+  "bounds": {
+    "outerMs": 540000,
+    "applicationMs": 525000,
+    "aggregateKiB": 4194304,
+    "firstProofLatestMsWithoutExtraCooldown": 251000,
+    "actualBrowserLatestMs": 375000,
+    "applicationBBThreads": 2,
+    "nodeBBThreads": 1,
+    "worldState": "SDK default min(16, cpus); prior observed12, no all-process2 claim"
+  },
+  "timingInterpretation": "Changed order can overlap fee-only work with posting cooldown and avoids driving setup to the posting timestamp before wall readiness. Exact savings/readiness remain unmeasured. Early admission refusal is a failed/limited measured investigation, never browser success. No unchanged replay or threshold lowering.",
+  "acceptanceLimits": [
+    "No fullG07, generic capacity, incremental/reorg genuine, specialist privacy, provider/Linux, compiler-diagnostic or release qualification.",
+    "Full actual result must verify3 paid writes, exactfees/conservation, fresh Chromium recovery, tag0/compact reconciliation/no read effects, final checks and cleanup.",
+    "Design pending-combined wording is historical; accepted combined229 now supplies that prerequisite."
+  ],
+  "remainingLaunchConditions": [
+    "Parent explicit once-grant and sole heavy slot.",
+    "Approved-launch must bind exact reviewhash, candidate,3158 bindings and preparation; revalidate at launch.",
+    "Freeze sources/dependencies/artifacts; preserve refusals/failures and cleanup."
+  ],
+  "reviewerVerificationNote": "First independent manifest loop used repository root for SDK flat output names and stopped before report write. Corrected to the documented .build/sdk output base; no product/build mutation or rerun occurred.",
+  "runtimeExecutedByReviewer": false
+}

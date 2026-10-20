@@ -1,0 +1,82 @@
+✔ control fixture restores original interval null (1.677458ms)
+✔ control fixture restores original interval 60 (0.214417ms)
+✔ control fixture rejects malformed interval undefined (0.62275ms)
+✔ control fixture rejects malformed interval NaN (0.118042ms)
+✔ control fixture rejects malformed interval 60 (0.161583ms)
+✔ control fixture rejects malformed interval -1 (0.152ms)
+✔ control fixture rejects malformed interval 0 (0.210208ms)
+✔ control fixture rejects malformed interval 1.5 (0.118958ms)
+✔ control fixture rejects malformed interval Infinity (0.100583ms)
+✔ control fixture rejects an interval still enabled while paused (0.434583ms)
+▶ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining
+  ✖ automine=true, interval=null (7.553166ms)
+  ✖ automine=true, interval=60 (5.458792ms)
+  ✔ automine=false, interval=null (9.094584ms)
+  ✔ automine=false, interval=60 (8.709459ms)
+✖ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining (146.524ms)
+✔ control fixture persists intent before one same-height replacement and verifies restoration (0.412416ms)
+✔ control fixture refuses invalid boundary: changed-l1 (0.481083ms)
+✔ control fixture refuses invalid boundary: changed-l2 (0.140708ms)
+✔ control fixture refuses invalid boundary: finalized (0.063375ms)
+✔ control fixture refuses invalid boundary: empty-suffix (0.05325ms)
+✔ control fixture refuses invalid boundary: unpublished (0.053333ms)
+✔ control fixture refuses invalid boundary: pending-l1 (0.067417ms)
+✔ control fixture refuses active miner or exhausted admission before touching Anvil (0.143667ms)
+✔ failed durable intent prevents mutation; uncertain RPC is never replayed (0.236417ms)
+✔ SDK swallowed restore failure is independently rejected (0.240041ms)
+✔ control fixture requires actual replacement effect: height (0.174083ms)
+✔ control fixture requires actual replacement effect: hash (0.097208ms)
+✔ control fixture requires actual replacement effect: rollup (0.109708ms)
+✔ control fixture requires actual replacement effect: pending-l1 (0.108208ms)
+✔ original failure and final write failure retain successful restoration without another write (0.15925ms)
+✔ original, readback and final write failures are preserved together with no mutation retry (0.179459ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 28
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3695.563333
+
+✖ failing tests:
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=true, interval=null (7.553166ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:53:64)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=true, interval=60 (5.458792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:53:64)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

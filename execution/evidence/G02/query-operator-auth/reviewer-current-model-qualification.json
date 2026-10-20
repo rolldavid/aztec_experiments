@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T12:52:40.505535+00:00",
+  "source": "2e481871278e040128bd19ad5e85d44442fecc7e",
+  "requirements": [
+    "RC12",
+    "RC13",
+    "RC39",
+    "M03"
+  ],
+  "evidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G08/rolling-adapter/model-assessment.json",
+  "evidenceSha256": "e0c383539f7427bca33542c2f032ec6727d1e0c20caa08023ebee5d6d00e636f",
+  "verdict": "qualification rejection confirmed",
+  "checks": [
+    "Verified assessment and both linked actual result hashes; inspected existing evaluate-model.mjs gate expressions and retained thresholds."
+  ],
+  "findings": [],
+  "assessment": [
+    "Complete actual 332 attempted cases: 25/159 FP (15.72%) and 23/160 FN (14.38%) exceed unchanged 2% and 5% targets; two errors independently prevent pass.",
+    "Numerical p95 2385.0565ms is below 10000ms, but existing latencyPass also requires no errors; false is correct.",
+    "Eight pre-reviewed provisional contextual cases reveal three local advertising misses; human/Bok repeated identical inputs establish no native parity. Synthetic labels and language review limitations remain.",
+    "Single-worker capacity estimate is not elapsed end-to-end exercise; actual flag submission latency missing.",
+    "Reject current model qualification; unchanged full corpus repetition offers no new evidence. A separately identity-verified alternate model may receive focused diagnosis, then full frozen evaluation if viable."
+  ],
+  "performedActions": "Read only; no model calls, wallet, service or financial operations."
+}

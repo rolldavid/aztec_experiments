@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-18T09:48:42.180750+00:00",
+  "sourceRevision": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+  "currentPid": 81629,
+  "rootExecSession": 52663,
+  "health": "ready active0 before newrequest",
+  "launchdAttempt": "EX_CONFIG78 posix_spawn Operation not permitted for executable under Documents; stopped retries, originalplist restored, legacyservice remainsunloaded",
+  "limitation": "Current foregroundprocess lifetime depends on host runtime; not unattended recovery. Durable deployment requires matchingSDKrc3 rather than existingLibraryrc1.",
+  "newRequest": "New Windowgarden viaUI, budgetauthorization clicked once; observe receipts, neverreplay"
+}

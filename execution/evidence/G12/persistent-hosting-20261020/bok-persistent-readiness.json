@@ -1,0 +1,36 @@
+{
+  "CommandId": "a98801b3-74fa-4b9b-86cc-44286fdd063f",
+  "InstanceId": "i-0a7d9957f2b3d7f19",
+  "Comment": "Restore original Bok persistent-readiness",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-20T07:51:53.826Z",
+  "ExecutionElapsedTime": "PT0.213S",
+  "ExecutionEndDateTime": "2026-10-20T07:51:53.826Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"units\": {\"rolling-bok-testnet.service\": {\"ActiveState\": \"active\", \"SubState\": \"running\", \"MainPID\": \"7372\"}, \"rolling-bok-artifact-proxy.service\": {\"ActiveState\": \"active\", \"SubState\": \"running\", \"MainPID\": \"7373\"}}, \"operatorAddress\": \"0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e\", \"persistentHosting\": {\"budgetName\": \"Rolling Chat ongoing hosting\", \"budgetReadbackSha256\": \"5636c869ccf55306314c6b495c8c13c84f4101b384dd717e9bd50b9cbc74be40\", \"monthlyUsd\": 1500, \"schemaVersion\": 1}, \"health\": {\"status\": \"ready\", \"active\": 0, \"lastFailure\": null, \"lastSuccess\": null}, \"journals\": {\"1939117d069084c9abbb1374c3133c620638a72e40a69aff61b84b7be7ece6f6.json\": {\"hashUnchanged\": true, \"phase\": \"accounted-without-reply\", \"finished\": true, \"calls\": 3, \"requestId\": \"0x136a80a61a995719f5c4bb4243d5e50883c792b0f3758376fdba30435b89f09a\"}, \"09ddf25ed1099f85c80ea78f26e977fea03473f03290f8f329816959381e701f.json\": {\"hashUnchanged\": true, \"phase\": \"accounted-without-reply\", \"finished\": true, \"calls\": 1, \"requestId\": \"0x09bad583819dd957bc80a691290be5a8569d8b88518ccd9ae95c87c73220d6be\"}, \"f2918c87fad42f72ba7caf5bdbb525f354130acb3b6293da16ff7e7c2d29ffd6.json\": {\"hashUnchanged\": true, \"phase\": \"finished\", \"finished\": true, \"calls\": 8, \"requestId\": \"0x0cc4af01bd8129e2efdea608edea0755d1d375d9cedf03cdb0356cf79ad1d238\"}}, \"artifacts\": {\"latest/\": {\"status\": 200, \"sha256\": \"cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a\", \"originalMatches\": true}, \"source.json\": {\"status\": 200, \"sha256\": \"30ed61c77f0def38de656206ee6d4d0249347b32f227e91a97a6712ad7091b46\", \"originalMatches\": true}}}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "6e828496-2c93-4961-b254-654b28b4982e",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Tue, 20 Oct 2026 07:52:07 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "2372",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "6e828496-2c93-4961-b254-654b28b4982e",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

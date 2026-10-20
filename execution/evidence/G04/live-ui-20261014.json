@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-14T03:27:11.819469+00:00",
+  "runtimeSource": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "environment": "Local real native devnet/PXE proof flags false; original campaign retained",
+  "procedure": "CUA tab5 navigate Home -> Explore subboards -> Following -> Home, accessibility trees and screenshot inspected",
+  "observed": [
+    "Home renders canonical empty feed, block479",
+    "Explore renders labelled subboard search and empty directory",
+    "Following requires explicit private recovery, no public follows shown",
+    "Navigation/header/buttons readable at1280x720; homeheading/content and skiplink exposed"
+  ],
+  "limits": "No real user post/claim/withdrawal qualification; fresh campaign remains empty; no account created inIAB"
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "604f9783142d9ce0db4d809cda4b93e41068a90a",
+  "scope": "Source-backed race timing feasibility, not runtime acceptance",
+  "verdict": "recommend-narrow-admission-change",
+  "inputs": {
+    "source": "Lead supplied actual latest wire action stage timestamps; not independently re-audited as full runtime acceptance",
+    "campaignMs": 540000,
+    "applicationDeadlineMs": 525000,
+    "firstActionStartMs": 297984,
+    "firstActionEndMs": 321341,
+    "confirmationCutoffMs": 435000,
+    "remainingSecondAdmissionMs": 113659
+  },
+  "recommendation": "Keep90s post-confirmation reserve and existing120s real remote prover timeout; lower race proof admission allowance only from120s to90s. Name it admission allowance, not a guaranteed proof deadline. Preserve pre-submit cutoff guard, saved proved journal, awaiting all original writers and bounded both-actor outcome collection.",
+  "rationale": [
+    "Current120s threshold rejects at measured second-action start despite first action taking23.357s.",
+    "A proof finishing after earlier confirmation cutoff must fail before send and retain proved journal; slower proving cannot obtain a pass by bypassing cutoff.",
+    "Moving cutoff to end-minus60s underestimates send-error path: submitOnceWithReconciliation can consume20s send +20s receipt +two20s dropped classification reads =80s before confirmation, followed by outcome collection.",
+    "Remote client timeout only aborts HTTP request/polling; no cancellation endpoint is invoked. Shortening it does not prove the underlying service job stopped. Preserve existing timeout and lifecycle rather than claiming cancellation."
+  ],
+  "source_refs": [
+    "shared/remote-prover-client.mjs createRemoteProverClient.prove AbortSignal/POST/GET loop",
+    "shared/transaction-outcomes.mjs submitOnceWithReconciliation/classifyDroppedTransaction",
+    "scripts/testing/rolling-application-actor.mjs beforeSubmit expiry + lazy confirmation timeout",
+    "scripts/testing/rolling-application-fixture.mjs requireRollingRaceProofBudget + actual writer settlement"
+  ],
+  "required_validation": [
+    "Boundary regression admits90s and rejects less; measured113659ms second-start allowed.",
+    "Actual engine long proof after cutoff still saves proved journal and sendszero; retained actor test applies.",
+    "No change540s/4GiB, twoactualpending barrier, genuineproof mode or canonical loser classification.",
+    "Final exact source review needed after amendment; no actualrace should launch known-doomed120s candidate."
+  ]
+}

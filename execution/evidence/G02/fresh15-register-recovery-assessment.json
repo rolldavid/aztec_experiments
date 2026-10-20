@@ -1,0 +1,92 @@
+{
+  "scope": "One expressly authorized exact-signed local-devnet register rebroadcast followed by read-only canonical reconciliation; not a general retry policy",
+  "sourceRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "network": "Disposable local31337; native/PXE proofs disabled",
+  "transaction": {
+    "hash": "0x0df79c4081d486909001628f8cb72fb000fd88aee9fe227e5e8b8216ddd66058",
+    "anchorBlockNumber": 9,
+    "expirationTimestamp": "1792106117",
+    "chainId": "0x0000000000000000000000000000000000000000000000000000000000007a69",
+    "version": "0x0000000000000000000000000000000000000000000000000000000096bdc19b"
+  },
+  "rawBytesSha256": "bd6f32571657ae5bf60b1fcacba7af8275f71945a357541db1ae1d374269aeac",
+  "preconditionsVerified": true,
+  "nullifierCount": 1,
+  "validation": {
+    "result": "valid"
+  },
+  "transactionSends": 1,
+  "broadcast": {
+    "state": "returned"
+  },
+  "canonicalResult": {
+    "status": "proven",
+    "executionResult": "success",
+    "blockNumber": 17,
+    "blockHash": "0x269ab4b6feaa8a2c4fee8f1d23f2bd30941a3f26ca9323f7f087652b35287077",
+    "canonical": true
+  },
+  "operator": {
+    "register": {
+      "status": "succeeded",
+      "scope": "portal-registration",
+      "canonical": true,
+      "transactionHash": "0x0df79c4081d486909001628f8cb72fb000fd88aee9fe227e5e8b8216ddd66058",
+      "blockNumber": 17,
+      "blockHash": "0x269ab4b6feaa8a2c4fee8f1d23f2bd30941a3f26ca9323f7f087652b35287077",
+      "hostedServiceReady": false,
+      "portalReady": true,
+      "registrationReady": true
+    },
+    "status": {
+      "status": "succeeded",
+      "scope": "portal-registration",
+      "canonical": true,
+      "escrow": "0x15b4402f1c7243006cfaec74a009360ff00f8265b52e2207394783da434cdf68",
+      "portal": "0xbec4491eff1688cf35e8cdceede9bd0a67f6a81a",
+      "pluginId": "0x0000000000000000000000000000000000000000000000000000000000626f6b",
+      "portalReady": true,
+      "registrationReady": true,
+      "hostedServiceReady": false
+    }
+  },
+  "originalJournalUnchanged": true,
+  "originalJournalSha256": "816fe420f086a22e96c646b1cbf5719eda2fefbf6f2d60b358b31f0dbca3d203",
+  "onceOnlyRecoveryIntentSha256": "3643f71a19d4682158e8b09307f16a4301b86ffc74c1e737bd5a669679ca47ee",
+  "recoveryIntentPolicy": "Exclusive wx private file and directory fsynced before sole dispatch. All future work is reconciliation only.",
+  "cleanupComplete": true,
+  "supervisorFailures": [],
+  "children": [
+    {
+      "role": "exact-signed-recovery",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "elapsedMs": 35860,
+  "snapshotAfter": {
+    "phase": "stopped",
+    "snapshotFile": "anvil-recovery-452d82c6-14fb-4bb0-991c-19d4367969e6.json",
+    "snapshotHash": "5b6f7a32cc09ebd4e58bf79e0c4b82680b26cc05eed2d1138559a5eacd413e1d",
+    "snapshotHead": {
+      "number": "0x59",
+      "hash": "0xbaaf8b2640b23249ba216c09f62d8d491d9b82840c75fabedd008ec82403071a",
+      "pending": "17",
+      "proven": "17"
+    }
+  },
+  "limitations": [
+    "Original admission/rejection cause was not retained and remains unclassified.",
+    "Current valid + successful exact rebroadcast does not prove original network delivery.",
+    "Hosted service remains off; full fresh-bootstrap application readiness still pending.",
+    "Original long1572 chain, its wallets, preferences and journals were untouched."
+  ],
+  "evidence": {
+    "fresh15-register-recovery-child.mjs": "4e0e02c860ac62f6df1d93f47d739c51bfbd378ad69fb938552107239619e8d9",
+    "fresh15-register-recovery-result.json": "fd3f5f0e85e67d6f21b82d7d5687fa25bba5c83c837058def8d0386ba8d9a1e5",
+    "fresh15-register-recovery-supervisor.mjs": "c69701a2da17d0b069ece32d6ee199a8d901dae8c4f4e3d4010125a961493713",
+    "fresh15-register-recovery-supervisor-result.json": "5c9b2fca8da6e2e943051f81c0cd2b6725f37523ededc0069e76d44b3e98842e"
+  }
+}

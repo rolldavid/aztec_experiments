@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T13:04:06.124111+00:00",
+  "verdict": "ELIGIBLE_FOR_SEPARATELY_GRANTED_READINESS_THEN_ONE_BASE_BUILD",
+  "source": "ae1a220b2d5694ba84ff6875d36882e4d97eceaf",
+  "packetSha256": "cc9e7ff32ba671fd847e1c45dc0465849e1c2a86720735da066a94506fcec6a4",
+  "runnerSha256": "c865d940c2f247ec2d2f1a63f8215ef92854edf9a6b17e39f88b9d0e0c09b311",
+  "scope": "Source/preparation review only; no reviewer execution. Four fixed version checks first, stop on failure, then one normal BASE build and audit. No follow-on builders authorized by this review.",
+  "verified": [
+    "Exact clean target HEAD and all packet file hashes",
+    "4106 protected bindings, 111 current generated files and preserved backups, seven historical raw snapshots independently rehashed during review",
+    "Child byte-identical qualified template; runner mechanically adapts paths, current source/tool/backup gates and Python3.14 while retaining descendant Supervisor",
+    "Generated write claim, exclusive intent, owned-process cleanup, post-build nonoutput and embedded source/dependency/portal audit retained"
+  ],
+  "bounds": {
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "concurrentBuilders": 1,
+    "hardwareConcurrency": 1
+  },
+  "readinessBounds": {
+    "totalSeconds": 30,
+    "perCommandSeconds": 8
+  },
+  "environmentBoundary": "HOME=/Users/zac is deliberately inherited for the existing verified Nargo/Foundry compiler caches. This is a trusted normal compiler/cache build, not an isolated HOME or a credential-isolated untrusted build. Explicit environment allowlist and pinned executables are retained; no credential discovery or transmission is authorized.",
+  "conditions": [
+    "Lead grants and serializes readiness/build; no replay after unknown or failed outcome",
+    "Preserve all old generated and raw diagnostic evidence; audit actual generated outputs before any downstream use",
+    "Rolling raw outputs require later normal Rolling/Avatar/Bok and SDK/CRS/frontend/wallet/catalog refresh; no stale manifest reuse",
+    "260 historical compiler-bug-labelled diagnostics remain unresolved; silence-warnings does not clear that hold"
+  ],
+  "blockingFindings": []
+}

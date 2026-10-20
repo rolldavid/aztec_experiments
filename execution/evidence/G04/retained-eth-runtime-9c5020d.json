@@ -1,0 +1,15 @@
+{
+  "source": "9c5020d",
+  "at": "2026-10-14T03:05:42.531958+00:00",
+  "originalControlPreserved": true,
+  "changedFields": [
+    "runtimeSha256",
+    "walletConfig.config.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas"
+  ],
+  "originalFeeQuote": "98983939397",
+  "currentNormalFeeQuote": "17272731",
+  "oldRuntimeSha256": "6df1be94c7adfd12169853846508e46b1fededd61b4094ac29ced5df09bd8214",
+  "runtimeSha256": "4fbf4a2b4f3b968402abdcf14cfd2732fd459e0fead3a5d81d5b803aa0242416",
+  "financialOperations": 0,
+  "unchanged": "All identities/allocations/config other than current gas quote; original encrypted backups, signed Ethereum payment, calldata, expected effects, saved privateFeeCap and prepared maximumFee unchanged. Source-reviewed scopes exclude gas quote; existing bounds remain."
+}

@@ -1,0 +1,61 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "cd42ae26511531201119def695ff85338fec7240",
+  "base": "7c5af1dd515d8401ab55596da7340d43a15b2758",
+  "verdict": "eligible-one-isolated-component-and-actual-ACIR-experiment",
+  "findings": [],
+  "packetSHA256": "6db6cee469cd6b5760210c27cdba6b87494e20be11d9262947927f5709a4de87",
+  "independentAuditSHA256": "462e56732a97dc2ea4f5a927730d105f5fa15ac55a8740cc24b200f9e45d8741",
+  "sourceHashes": [
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "sha256": "79e6b2cbc63a81c01ce42523ed176fbb24c662d0ae2ffc1214830d1a807a870b"
+    },
+    {
+      "path": "scripts/test-pxe-preference-page.mjs",
+      "sha256": "058f4e261959ede6cfc239909a00c72a391262204184243478f24058c98907d7"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "sha256": "d81afcb9517b07ba00bffc639dbdff5b8836b3706122d117add6ae88012777dc"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.test.mjs",
+      "sha256": "aae97c13e4458ef76549d24186d2a618e54099c1221a7a550cdc6b90963b8d4f"
+    }
+  ],
+  "sourceAssessment": [
+    "Generated recovery store is inserted once into the existing PXE stagedStores array shared by original BlockSynchronizer and StagedWriteCoordinator. Progress and last delivery flush in the same original atomic transaction as note/event stores; rollback changes generation, making old scoped rows non-authoritative without claiming contract-sync completion.",
+    "Physical cursor starts at block1, accepts only its next block/log and one exact sequence, authenticates the complete compact block against canonical header/root, and processes at most eight physical ciphertexts from one transaction. Empty/foreign logs advance physical work; tx-local original EventService indexes determine sorted delivery only after the whole transaction is scanned. Pending record cap64 and helper state cap256KiB are explicit.",
+    "Page authority remains original scoped ACIR dispatcher, NoteService/EventService validation and independently authenticated ordinal/receipt/effect. Snapshot of staged event/note/emission bytes is rechecked after contributor settlement; canonical network/class/anchor checks and account guard repeat before original atomic commit. External mutation after the final guard cannot be made impossible; consumer postcommit checks remain mandatory.",
+    "Exact-nullifier NoteStore branch uses original staged-precedence note and emission reads, starts both before awaiting, and preserves original decoder/status/owner/slot/scope filtering and sorting. Added explicit contract-address check closes index-bypass cross-contract access. Absent direct key is normal absence; original broad-index missing row still throws corruption.",
+    "Active-head candidate is selected only from original authenticated staged notes checked at the final anchor. A different active candidate is rejected, never chosen as latest by fiat. Final head utility retains owner-key/NHK gate and original utility execution with a bounded exact-nullifier view. Missing expected head rejects; initialized/empty head consistency is checked.",
+    "Reader encrypts prefix and mailbox identity under full owner/network/board/class/artifact/tier/domain scope; database/epoch/anchor changes restart physical enumeration. Lost reply/CAS failure consumes durable mailbox once. No partial choices are published: final head/digest equality and canonical marker checks precede publication, with canonical and mailbox readback after encrypted CAS. Pending work retains busy ownership through abort until settlement.",
+    "New meaningful ACIR cases explicitly require second actual simulation to spend the old head, record the old-head emission at final block5, reject two active heads with unchanged cursor/mailbox/notes/events/emissions, reject missing head, and scan dense genuine foreign-encrypted envelopes. Event-order case clearly substitutes a labelled page callback but uses original EventService. Existing page validation and rollback cases remain; no original acceptance assertion removed to make a failure pass."
+  ],
+  "independentChecks": {
+    "staticTransformCount": 8,
+    "exactGeneratedOutputPins": true,
+    "generatedRecoveryHelperSHA256": "d1431574e4c00686f7f50d6b782e8d2bef4db310bca65019612503b651384360",
+    "actualProcessedArtifactSHA256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+    "diffCheckClean": true,
+    "workingTreeClean": true,
+    "sdkNativeAcirExecutedByReviewer": false,
+    "pureReaderWorkerEvidence": "17 labelled SDK/chain double cases with real AEAD/fold; not independently rerun this source-only turn"
+  },
+  "experimentConditions": [
+    "One parent-authorized serialized <=180s/4GiB owned-process run with both ROLLING_PREFERENCE_PAGE_NATIVE=1 and ROLLING_PREFERENCE_PAGE_ACIR=1, NODE_BACKEND=js, exact candidate/artifact hashes and all cases; no filters/skips or shared SDK mutation.",
+    "Borrow rc3 dependency tree read-only as explicitly authorized, restore original link and verify shared package/source hashes afterward; isolated prototype installer must remain outside node_modules. Existing repaired IndexedDB pins e71b52/e6efed mandatory.",
+    "Use actual openPXEStore with labelled Node fake-indexeddb and preserve original scoped validator/ACIR assertions. Synthetic canonical receipts and block inclusion remain labelled; no real-chain/browser/full-cold claim.",
+    "Before any production integration, configure a dedicated recovery PXE with supported autoSync:false and explicit initial tips-only sync. Current SDK runSynced autoSync otherwise moves the selected anchor between pages, resetting this deliberately restart-on-new-anchor cursor. Experiment already sets autoSync:false.",
+    "Capture first failure, no blind retry, and require all owned child processes and run-owned package/IDB/temp directories absent before releasing slot."
+  ],
+  "openQualification": [
+    "Actual new SDK/ACIR experiment remains unrun at review time; this is source eligibility, not runtime approval.",
+    "No actual PXE factory/browser/session/backup integration or endpoint registration is enabled. Generated factory binding is source-checked; extracted-method component execution does not alone qualify full real construction.",
+    "New encrypted cache domain requires reviewed backup/session handling; caller exclusive account lease and cleanup/lifetime ownership remain required.",
+    "Full recovery wallet creation must not trigger eager simulation/owned-name discovery. Initial synchronization, original nullifier semantics, deep rollback cost and actual authenticated discovery remain genuine qualification items.",
+    "Each compact block root verification is protocol-bounded but maximum CPU/memory and state-sized encrypted CAS still need measurement. New anchor requires full rescan; no history-independent incremental or large-history capacity claim.",
+    "260 compiler diagnostics and soundness/TXE/production-release holds remain unchanged."
+  ]
+}

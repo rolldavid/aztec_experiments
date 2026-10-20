@@ -1,0 +1,40 @@
+{
+  "candidate": "bd90d8fced55e330577df6070d83e230dafeeeed",
+  "scenario": "rolling-preference-reorg-initial",
+  "recordedAt": "2026-10-12T09:25:08.623838+00:00",
+  "status": "finished-failed",
+  "attempt": 3,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/reorg-interval-bd90-source-review.json",
+  "reviewSha256": "695c42be441e265bbd7fa90bb7645275f1f04137be90bd3fb51844973b536129",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-reorg-initial",
+  "changesSinceAttempt2": [
+    "ActualpinnedSDK/Anvil reproduced nullable interval and official pause semantics; helperbd90 repaired, independentreview695c,30tests passing.",
+    "Prior hostsleep failure retained; freshlidopen. No changes to proof/time/RSS limits or application assertions."
+  ],
+  "lidOpen": true,
+  "scope": "Three genuine LOCAL private proof jobs; real disposable L1 fork/naturalarchiver/PXE rollback/explicitreplacement. No persistenttestnet or paid operation.",
+  "execSession": 28713,
+  "exitCode": 1,
+  "finishedAt": "2026-10-12T09:32:03.707Z",
+  "evidence": "execution/evidence/G07/application-1b908b53-3a42-4072-a953-78defaf1c696.json",
+  "evidenceSha256": "cba7ca10fd4e77ffa19da5cf7199271ca658315ff93bf7b9dac95437f0fc4b60",
+  "elapsedMs": 414775,
+  "peakTreeRSSKiB": 1794544,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "failure": {
+    "stage": "rolling-application:preference-real-archiver-unwind",
+    "errorClass": "AssertionError",
+    "code": null,
+    "frames": [
+      "w01-private-fee-flow.mjs:38:14",
+      "rolling-application-fixture.mjs:606:15",
+      "c01-client-mining.mjs:81:12",
+      "rolling-application-fixture.mjs:573:13"
+    ]
+  },
+  "nextAction": "Independent source diagnosis of restored private balance mismatch, exact w01-private-fee-flow38 assertion; retain actualfork and exactpreference rollback partialevidence. No replacement send occurred. No unchangedretry."
+}

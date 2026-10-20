@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T21:36:59.725382+00:00",
+  "source": "4628b9916842f6cf0ab946cb329f1e4b0723cc51",
+  "environment": "retained native devnet1531; native/PXE proof flags false",
+  "procedure": "Read public api/status; inspect existing browser home and Try again after canonical index ready",
+  "outcome": {
+    "initial": "syncing719 then1372, honest503 home; no account/transaction changed",
+    "final": "ready complete canonical1538; Home restored with authentic Bok labels, policy versions, existing posts and conversation links"
+  },
+  "limitations": [
+    "Read-only public UI inspection only",
+    "Hosted18788 still intentionally stopped for core-without-Bok acceptance"
+  ]
+}

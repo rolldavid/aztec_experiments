@@ -1,0 +1,542 @@
+diff --git a/apps/rolling/reader.browser.test.mjs b/apps/rolling/reader.browser.test.mjs
+index 7e0422f..e1df095 100644
+--- a/apps/rolling/reader.browser.test.mjs
++++ b/apps/rolling/reader.browser.test.mjs
+@@ -94,9 +94,9 @@ test('labelled social records: removed navigation, literal reasons and distinct
+  assert.equal(await page.locator('article img, article script, article a[href^="javascript:"]').count(),0);
+  assert(!(await page.locator('body').innerText()).includes('REMOVED_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('REJECTED_BOARD_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('VERSION_SENTINEL'));
+  for(const id of ['11','12','13']){
+-  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike']);assert.equal(await post.locator('.post-body').count(),0);
++  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await post.locator('.post-body').count(),0);
+  }
+- assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost']);
++ assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost','Bookmark','Subscribe to thread']);
+  assert(!requests.some(value=>value.includes('wallet')||value.includes('aztec')));
+  await page.locator('#post-10').getByRole('button',{name:'Unlike',exact:true}).click();
+  await card.getByRole('button',{name:'Unlike',exact:true}).click();
+@@ -258,7 +258,7 @@ test('main and subboard routes use exact board API, contextual composer, directo
+ test('rejected board remains discoverable and navigable without new posting controls',async t=>{
+  const {page}=await boardFixture(t,{rejected:true});await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
+  assert(await page.getByText('Rejection reason: <script>rejected()</script>',{exact:true}).isVisible());assert.equal(await page.locator('main script').count(),0);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
+- const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
++ const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
+  await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
+  await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
+ });
+@@ -272,3 +272,62 @@ test('unknown or malformed board route has no generic-feed fallback',async t=>{
+  const {page,state}=await boardFixture(t);await page.evaluate(()=>location.hash='/board/999');await page.getByRole('heading',{name:'Board not found',exact:true}).waitFor();const count=state.calls.length;
+  await page.evaluate(()=>location.hash='/board/20/extra');await page.getByRole('heading',{name:'Page not found',exact:true}).waitFor();assert.equal(state.calls.length,count);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
+ });
++
++// Labelled private-session/public-HTTP doubles, real panel/reader/pure filter.
++// No proof, paid action or encrypted-chain recovery is represented by this fixture.
++async function privateViewFixture(t,{mutation=null}={}){
++ const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs','wallet-panel.mjs']);
++ const scope={chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.padStart(64,'0')},hash='0x'+'a'.repeat(64);
++ const make=(id,block)=>({id,record:{root:'10',parent:id==='10'?'0':'10',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public content '+id,timestamp:'1',likes:'0',position:{blockNumber:String(block),txIndexWithinBlock:'0',logIndexWithinTx:'0',blockHash:hash}});
++ const requests=[],feed=[],state={hold:false,pending:[]};
++ const server=http.createServer(async(req,res)=>{
++  const url=new URL(req.url,'http://localhost');requests.push(url.pathname+url.search);
++  if(url.pathname.startsWith('/api/')){
++   const next=url.searchParams.has('cursor');if(url.pathname==='/api/feed')feed.push(url.pathname+url.search);
++   const posts=next?[make(mutation==='duplicate'?'10':'11',mutation==='order'?4:2)]:[make('10',3)];
++   const data={schemaVersion:1,scope,complete:true,checkpoint:{number:4,hash},revision:mutation==='snapshot'&&next?'changed':'one',names:{},boards:{},posts,nextCursor:next?null:'page2'};
++   if(state.hold&&url.pathname==='/api/feed')await new Promise(resolve=>state.pending.push(resolve));
++   res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));return;
++  }
++  if(url.pathname==='/wallet/runtime.mjs'){
++   res.writeHead(200,{'content-type':'text/javascript'});res.end(`import {selectPrivateViews} from '/private-views.mjs';
++const raw={},prefs={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'2',digest:'42'},bookmarks:['11'],followedBoards:[],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
++window.privateTest={reads:0,partial:false,options:null,prepare:[],head:0};
++export async function loadRollingWalletRuntime(){return {selectPrivateViews,getAccount:()=>raw,account:{configure:o=>privateTest.options=o},createSession:async()=>({busy:false,close:async()=>{},application:{readAccountStatus:async()=>({status:'collateral-pending',privateFeeCredit:'2',depositIds:[]}),ownedIdentities:async()=>({identities:[],records:[],nextCursor:null}),readPreferences:async()=>{privateTest.reads++;return privateTest.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:100}}:{status:'complete',complete:true,preferences:prefs};},readPreferenceHead:async()=>{privateTest.head++;return prefs.head;},prepare:async action=>{privateTest.prepare.push(action);return {intentId:'one',status:'prepared',action,maximumFee:'3'};}}})};}`);return;
++  }
++  if(url.pathname==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
++  if(url.pathname==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
++  const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
++  res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
++ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
++ const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
++ await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();return {page,requests,feed,state};
++}
++async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
++test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
++ const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));
++ await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
++ await page.getByRole('button',{name:'Load more',exact:true}).focus();await page.keyboard.press('Enter');await page.locator('#post-11').waitFor();assert.equal(await page.getByRole('article').count(),1);assert.equal(await page.getByRole('heading',{name:'A little quiet here'}).count(),0);
++ assert.deepEqual(feed,['/api/feed?limit=30','/api/feed?limit=30&cursor=page2']);assert(!requests.some(p=>/bookmarks=|nameId=|owner=|subscriptions=/.test(p)));
++ await page.locator('#post-11').getByRole('button',{name:'Unbookmark',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'preference',kind:1,target:'11',enabled:false,expectedRevision:'2'}]);
++});
++for(const mutation of ['duplicate','order','snapshot'])test('private page validation rejects '+mutation+' even across locally filtered rows',async t=>{
++ const {page}=await privateViewFixture(t,{mutation});await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByRole('article').count(),0);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
++});
++test('account invalidation synchronously removes private DOM and partial recovery never requests public pages',async t=>{
++ const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Recover private views'}).click();await page.getByRole('button',{name:'Continue private recovery'}).waitFor();assert.equal(feed.length,0);
++ await page.evaluate(()=>privateTest.partial=false);await page.getByRole('button',{name:'Continue private recovery'}).click();await page.getByRole('button',{name:'Close account panel'}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();
++ assert.equal(await page.evaluate(()=>{privateTest.options.onChange({invalidated:true});return document.querySelectorAll('article').length;}),0);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
++});
++
++test('a delayed ordinary page cannot restore private content after account invalidation',async t=>{
++ const {page,state}=await privateViewFixture(t);await recoverPrivateView(page);state.hold=true;await page.getByRole('button',{name:'Load more',exact:true}).click();
++ const until=Date.now()+2000;while(!state.pending.length&&Date.now()<until)await new Promise(resolve=>setTimeout(resolve,10));assert.equal(state.pending.length,1);
++ await page.evaluate(()=>privateTest.options.onChange({invalidated:true}));state.hold=false;for(const resolve of state.pending)resolve();await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
++ assert.equal(await page.getByRole('article').count(),0);
++});
++test('Following and Notifications use only ordinary feed parameters and explicit subscription filtering',async t=>{
++ const {page,feed}=await privateViewFixture(t);await recoverPrivateView(page);await page.getByRole('link',{name:'Following',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByText('Checked against chain block 4',{exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
++ await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-10').count(),0);assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
++ await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
++});
+diff --git a/apps/rolling/reader.mjs b/apps/rolling/reader.mjs
+index ad67d4e..3e56679 100644
+--- a/apps/rolling/reader.mjs
++++ b/apps/rolling/reader.mjs
+@@ -5,11 +5,16 @@ import {focusRoute,skipToContent} from './navigation.mjs';
+ 
+ const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
+ let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
+-let walletPanel;
++let walletPanel,privatePanel;
++const privateViews=new Set(['following','bookmarks','notifications']);
++function privateChanged(){
++ if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
++ else for(const node of app.querySelectorAll('[data-private-setting]'))node.textContent=preferenceLabel(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);
++}
+ async function openWallet(defaults={}){
+  try{
+   walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
+-   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render()}));
++   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
+   (await walletPanel).open(defaults);
+  }catch{announce('Account tools could not load. Reload the page before trying again.');}
+ }
+@@ -45,6 +50,10 @@ function removalPolicy(value){
+  if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value)||BigInt(value)>0xffffffffffffffffn)return null;
+  const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
+ }
++function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabled?.(kind,target)===true?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label;}
++function preferenceButton(label,kind,target){
++ return button(preferenceLabel(label,kind,target),()=>openWallet({type:'preference',kind,target,enabled:privatePanel?.preferenceEnabled?.(kind,target)!==true}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
++}
+ function postCard(post,data){
+  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
+  const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
+@@ -68,17 +77,18 @@ function postCard(post,data){
+    if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
+    if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
+   }
+-  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike()));return article;
++  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike(),preferenceButton('Bookmark',1,post.id)));return article;
+  }
+  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
+   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
+   button('Like',()=>openWallet({type:'like',post:post.id})),unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
+-  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))));
++  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),preferenceButton('Bookmark',1,post.id),preferenceButton('Subscribe to thread',4,r.root),
++  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?button('Mark thread read',()=>openWallet({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null));
+  return article;
+ }
+ function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
+ function shell(title,{boardId=null}={}){
+- const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
++ const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
+  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
+  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
+  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
+@@ -115,20 +125,29 @@ async function render(){
+  // Back navigation reloads the same number of pages against the current index.
+  // The whole restoration has one deadline, rather than an unbounded request chain.
+  const restoreSignal=AbortSignal.any([signal,AbortSignal.timeout(20000)]),saved=positions.get(route);loadedPages=1;
+- const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot;
+- if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
++ const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
++ if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
++ else if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
+  else if(parts[0]==='board'){if(parts.length!==2||!field(parts[1])){shell('Page not found',{boardId:''});return;}api='board';parameters={id:parts[1],limit:30};title=parts[1]==='0'?'Main board':'Subboard';}
+  else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
+   if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
+  }
+  else if(parts[0]!=='home'){shell('Page not found');return;}
+- shell(title,{boardId:api==='board'?parameters.id:null});const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
++ shell(title,{boardId:api==='board'?parameters.id:null});
++ if(privateView){
++  main.querySelector('.intro').textContent='Filtered privately on this device from the ordinary public feed.';
++  main.append(button('Manage private views',()=>openWallet({view:'preferences'})));
++  if(privatePanel?.privateStatus?.()!=='complete'){main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Complete authenticated recovery is required. Your choices are not sent to the public reader.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));return;}
++ }
++ const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
+  if(api==='directory'){
+   const input=el('input',{type:'search',value:parameters.query,placeholder:'Search names, descriptions or slugs','aria-label':'Search subboards',maxlength:120});
+   const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));main.insertBefore(form,loading);
+  }
+  const container=el('section',{class:'feed','aria-label':title});let data;
+- const seenIds=new Set(),seenCursors=new Set();
++ const seenIds=new Set(),seenCursors=new Set();let lastPosition=null,lastPositionHash=null;
++ const position=p=>['blockNumber','txIndexWithinBlock','logIndexWithinTx'].map(key=>{const v=p?.position?.[key];if(typeof v!=='string'||!/^(0|[1-9][0-9]*)$/.test(v))throw Error('Invalid position');return BigInt(v);});
++ const descending=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]>b[i];}return false;};
+  function append(response){
+   if(typeof response.revision!=='string'||response.revision!==data.revision||response.scope.boardAddress!==data.scope.boardAddress||
+    response.checkpoint?.number!==data.checkpoint?.number||response.checkpoint?.hash!==data.checkpoint?.hash)throw Error('Changed public snapshot');
+@@ -142,7 +161,14 @@ async function render(){
+   if(next!==null&&next!==undefined&&(typeof next!=='string'||!next.length||next.length>4096||seenCursors.has(next)||!items.length))throw Error('Invalid next cursor');
+   const ids=new Set();for(const item of items){if(!field(item?.id)||seenIds.has(item.id)||ids.has(item.id))throw Error('Duplicate public item');ids.add(item.id);}
+   // Validate/build the whole page before changing visible content or paging state.
+-  const nodes=items.map(item=>api==='directory'?boardCard(item):postCard(item,response));
++  let visible=items,nextPosition=lastPosition,nextPositionHash=lastPositionHash;
++  if(privateView){
++   // Inspect all rows before filtering, including cross-page order and duplicates.
++   for(const item of items){const at=position(item);if(nextPosition&&(!descending(nextPosition,at)||nextPosition[0]===at[0]&&nextPositionHash!==item.position.blockHash))throw Error('Public order changed');nextPosition=at;nextPositionHash=item.position.blockHash;}
++   visible=privatePanel.filterPrivatePage(privateView,response).posts;
++  }
++  const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
++  if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
+   container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
+  }
+ 
+@@ -156,10 +182,10 @@ async function render(){
+   }
+   loading.remove();
+   if(api==='board'){
+-   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data));
++   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
+    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
+   }
+-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}));}
++  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId));}
+   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
+   main.append(container);
+   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
+diff --git a/apps/rolling/wallet-panel.browser.test.mjs b/apps/rolling/wallet-panel.browser.test.mjs
+index ab52431..9244de0 100644
+--- a/apps/rolling/wallet-panel.browser.test.mjs
++++ b/apps/rolling/wallet-panel.browser.test.mjs
+@@ -7,8 +7,9 @@ import http from 'node:http';
+ import fs from 'node:fs/promises';
+ import {chromium} from 'playwright';
+ const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
++import {selectPrivateViews} from '/private-views.mjs';
+ const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
+-window.test=state;
++window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.headReads=0;state.revision='4';state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
+ state.previewBlobs=new Map();state.revoked=[];const createURL=URL.createObjectURL.bind(URL),revokeURL=URL.revokeObjectURL.bind(URL);
+ URL.createObjectURL=blob=>{const url=createURL(blob);state.previewBlobs.set(url,blob);return url;};URL.revokeObjectURL=url=>{state.revoked.push(url);state.previewBlobs.delete(url);revokeURL(url);};
+ const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBKDF2-SHA256',iterations:600000,salt:'aa'.repeat(16),iv:'bb'.repeat(12),ciphertext:'cc'.repeat(16)};
+@@ -19,23 +20,27 @@ async function boundary(name){if(state.hold===name)await new Promise(resolve=>st
+ const application={
+  async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
+  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
++ async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
++ async readPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:80,processedRevision:'2',targetRevision:'4',markersChecked:0,markersTotal:0}}:{status:'complete',complete:true,preferences:state.preferences};},
+  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
+  async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
+  async submitPrepared(id){state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??'confirmed'};write(intent);return intent;},
+  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
+  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
+ };
+-const runtime={getAccount:()=>state.unlocked?{secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'}:null,
++const runtime={selectPrivateViews,getAccount:()=>state.unlocked?state.rawAccount:null,
+  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
+  async createSession(){state.sessions++;await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
+ };
+-window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;}});
++window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
+ document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
+ window.ready=true;`;
+ async function browserFixture(t){
+  const server=http.createServer(async(req,res)=>{
+   if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
+   if(req.url==='/fixture.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(fixture);return;}
++  if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
++  if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
+   if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
+   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
+  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+@@ -266,3 +271,48 @@ for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+in
+  await page.evaluate(kind=>test.namesPages={8:kind==='duplicate'?{identities:['7'],records:[{id:'7',first:'Forged',last:'Label'}],nextCursor:null}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:8}},invalidPage);
+  await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('alert').waitFor();assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);assert.equal(await page.evaluate(()=>test.owned),2);assert.equal((await counts(page)).sends,0);
+ });
++
++// Labelled presentation doubles: production replay, wallet proofs and storage are
++// independently qualified; these tests assert explicit UI boundaries only.
++test('private recovery is explicit, one bounded step, and never exposes partial preferences',async t=>{
++ const {page}=await browserFixture(t);await open(page,{view:'preferences'});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');
++ await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
++ assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>test.partial=true);
++ await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
++ assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),1);
++ await page.evaluate(()=>test.partial=false);await page.getByRole('button',{name:'Continue private recovery',exact:true}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();
++ assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),true);assert.equal(await page.evaluate(()=>test.sends),0);
++ await page.getByRole('button',{name:'Close account panel'}).click();await page.evaluate(()=>{test.rawAccount={};});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
++});
++test('every preference and read marker captures a fresh head and requires maximum-fee confirmation',async t=>{
++ const {page}=await browserFixture(t);await open(page);await unlock(page);
++ for(const [i,action]of [{type:'preference',kind:1,target:'10',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'preference',kind:3,target:'7',enabled:true},{type:'preference',kind:4,target:'10',enabled:false},{type:'preference',kind:5,target:'0',enabled:false},{type:'read-marker',thread:'10',throughBlock:'12'}].entries()){
++  await page.getByRole('button',{name:'Close account panel'}).click();await open(page,action);await page.getByRole('button',{name:'Check action and review fee'}).waitFor();await page.evaluate(i=>test.revision=String(i+20),i);
++  await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();
++  assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{...action,expectedRevision:String(i+20)});
++  assert(await page.getByText(/Sending records an encrypted onchain update/).isVisible());assert.equal(await page.evaluate(()=>test.sends),0);
++  await page.getByRole('button',{name:'Cancel prepared action'}).click();await page.getByRole('button',{name:'Check action and review fee'}).waitFor();
++ }
++ assert.equal(await page.evaluate(()=>test.headReads),6);
++});
++test('account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result',async t=>{
++ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
++ await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);
++ await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
++ await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
++});
++test('preference head failure does not prepare and recovery failure never implies an empty successful view',async t=>{
++ const {page}=await browserFixture(t);await open(page,{type:'preference',kind:1,target:'10',enabled:false});await unlock(page);await page.evaluate(()=>test.failure='head');
++ await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.prepares),0);
++ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Check account recovery'}).click();await page.getByRole('button',{name:'Private views',exact:true}).click();await page.evaluate(()=>test.failure='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
++});
++test('locking clears recovered private capability before asynchronous session cleanup settles',async t=>{
++ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();
++ await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.hold='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.waitForFunction(()=>test.release);assert.notEqual(await page.evaluate(()=>panel.privateStatus()),'complete');await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();
++});
++test('explicit recovery abort waits for the original private call and does not publish its late complete result',async t=>{
++ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
++ await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);await page.getByRole('button',{name:'Stop private recovery'}).click();
++ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');
++ await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.sends),0);
++});
+diff --git a/apps/rolling/wallet-panel.mjs b/apps/rolling/wallet-panel.mjs
+index 2a73e24..c21584d 100644
+--- a/apps/rolling/wallet-panel.mjs
++++ b/apps/rolling/wallet-panel.mjs
+@@ -1,7 +1,7 @@
+ // Presentation only. No SDK import or account access before explicit Unlock.
+ import {allowance} from './model.mjs';
+ import {prepareAvatarUpload} from './avatar-upload.mjs';
+-const TYPES={bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
++const TYPES={preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
+ const IDS=['subboard','parent','root','reference','post'];
+ const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
+ const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;};
+@@ -16,25 +16,50 @@ const message='This operation could not be completed. Recovery records were pres
+  * Workflow restoration is the production application's encrypted journal, not DOM
+  * state or localStorage. A replaced page discovers it through readAccountStatus.
+  * Profile edits capture readProfile versions only on explicit selection/check.
++ * Complete authenticated preferences live only in this closure. Page filtering
++ * checks the current account on every call; no preference arrays are exported.
++ * Recovery takes one explicit bounded step. Abort never releases the busy/SDK
++ * account lock before the original operation settles.
+  * Uploaded bytes come from immutable previewBlob; recovery validates the saved
+  * raster but displays its ORIGINAL Blob, never the validator's re-encoded bytes.
+  */
+-export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+- if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function')throw Error('Wallet panel configuration unavailable.');
++export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPrivateChange=()=>{}}){
++ if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function'||typeof onPrivateChange!=='function')throw Error('Wallet panel configuration unavailable.');
+  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
+  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
+  let status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
++ let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null;
+  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
+  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
+  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
+  const closeButton=button('Close account panel',()=>close());
+  const content=el('div'),live=el('p',{role:'status','aria-live':'polite',class:'quiet'});
+- dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names, posts and actions are public.'),live,content);
++ dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names and posts are public. Private preferences remain encrypted.'),live,content);
+  document.body.append(dialog);
+  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
+  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
+- function clearPrivateView(){accountEpoch++;status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
++ function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
++ function clearPrivateView(){accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
++ function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
++ function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
++ async function recoverPreferences(){
++  const epoch=accountEpoch;checkAccount(epoch);clearPreferences();
++  const abort=recoveryAbort=new AbortController();controlsBusy(true);
++  let result;try{result=await session.application.readPreferences({signal:abort.signal});}finally{recoveryAbort=null;}checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
++  if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){preferences=result.preferences;preferenceProgress=null;notice='Private preferences recovered and checked against the chain.';}
++  else if(result?.status==='recovering'&&result.complete===false){preferenceProgress=result.progress;notice='Private recovery is incomplete. Continue when ready; no partial private feed is shown.';}
++  else throw connectionFailure;
++  onPrivateChange();
++ }
++ function preferencesView(){
++  content.append(el('h3',{},'Private views'),paragraph('Following, bookmarks and reply notifications are filtered on this device. Public requests do not contain your saved choices. Recovering is read-only; changing a setting needs fee confirmation.'));
++  if(preferences){content.append(paragraph('Complete authenticated preferences are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
++  else if(preferenceProgress){const p=preferenceProgress;for(const key of ['scannedThrough','anchorBlock','processedRevision','targetRevision','markersChecked','markersTotal'])if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(key+': '+p[key]));}
++  const stop=button('Stop private recovery',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
++  content.append(button(preferences?'Refresh private views':preferenceProgress?'Continue private recovery':'Recover private views',()=>void work(recoverPreferences),true));
++ }
++ function choosePreference(value){if(busy||intent||blocked)return;view='action';draft={...value};render();}
+  function ownedLabel(id){const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
+  function acceptNames(page,append=false){
+   if(!Array.isArray(page.identities)||!Array.isArray(page.records)||page.identities.length!==page.records.length)throw Error('Private name records unavailable');
+@@ -66,15 +91,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+   const raw=atob(data);if(btoa(raw)!==data||raw.length>8192||!raw.length||action.width!==100||action.height!==100)throw Error('Invalid avatar');
+   const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const type=bytes[0]===137?'image/png':bytes[0]===255?'image/jpeg':bytes[0]===82?'image/webp':null;if(!type)throw Error('Invalid avatar');return new Blob([bytes],{type});
+  }
+- function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=value||node.dataset.unavailable==='true';}
++ function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:value||node.dataset.unavailable==='true';}
+  function note(text){live.textContent=text;}
+  async function work(fn){
+   if(busy)return;busy=true;error='';controlsBusy(true);
+-  try{await fn();}catch(failure){note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render();}
++  try{await fn();}catch(failure){clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render();}
+  }
+- function unlocked(){return runtime&&!invalidated&&!reloadRequired&&!!runtime.getAccount();}
++ function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
+  async function refresh(){
+-  const epoch=accountEpoch;checkAccount(epoch);blocked=true;
++  const epoch=accountEpoch;checkAccount(epoch);clearPreferences();blocked=true;
+   const next=await session.application.readAccountStatus();
+   checkAccount(epoch);status=next;intent=next.intent??null;
+   if(next.status==='recovering'){
+@@ -86,6 +111,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+  }
+  async function connect(){
+   try{
++  if(!accountIdentity)accountIdentity=runtime.getAccount();
+   if(!session)session=await runtime.createSession({onProgress:progress=>{
+    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
+    note(stages[progress?.stage]??'Checking the private account…');
+@@ -101,7 +127,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+    runtime=loaded;
+    runtime.account.configure({requireEth:false,autoPasskey:false,canEndSession:()=>!session?.busy,
+     onMessage:()=>{},onSetupError:()=>{error=message;},onChange:value=>{
+-     if(value?.invalidated===true){invalidated=true;clearPrivateView();note('The account changed. Preserve recovery and reload before continuing.');render();}
++     if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;recoveryAbort?.abort();clearPrivateView();note('The account changed. Preserve recovery and reload before continuing.');render();}
+     }});
+   }
+   if(unlocked())await connect();else note('Create an account or import your encrypted recovery file.');
+@@ -134,7 +160,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+    if(!password.reportValidity())return;const value=password.value;password.value='';
+    void work(async()=>{download(await runtime.account.exportRecovery(value));notice='Encrypted recovery downloaded.';});
+   }),button('Lock account',()=>void work(async()=>{
+-   blocked=true;
++   blocked=true;clearPrivateView();render();
+    if(session){await session.close();session=null;}
+    await runtime.account.endSession();reloadRequired=true;clearPrivateView();note('Account locked. Reload before unlocking again.');
+   })));
+@@ -157,13 +183,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+    if(intent.action.data==='')avatarArea.append(paragraph('Clear avatar. No image bytes will be published.'));
+   }
+   let confirm;
++  const privateAction=['preference','read-marker'].includes(intent.action?.type);
++  if(privateAction){content.append(paragraph(intent.action.type==='read-marker'?'Mark this thread read through block '+intent.action.throughBlock:preferenceDescription(intent.action)));}
+   if(prepared){
+    confirm=button('Confirm and send',()=>void work(async()=>{
+     if(!avatarReady)throw Error('Avatar preview not verified');
+     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
+     try{await receive(await session.application.submitPrepared(id));}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
+    }),true);confirm.dataset.unavailable=String(!avatarReady);
+-   content.append(paragraph('Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm,button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
++   content.append(paragraph(privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm,button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
+   }else{
+    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
+   }
+@@ -177,6 +205,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+  }
+  async function receive(result){
+   intent=result;blocked=false;
++  if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
+   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
+   if(result.status==='confirmed'){
+    notice='Transaction confirmed on the verified chain.';
+@@ -203,6 +232,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+   if(identityRecords.length)content.append(list);else content.append(paragraph('No registered names were found. You can still post as Anonymous when your account is funded.'));
+   if(cursor!==null)content.append(button('Load more owned names',()=>void work(()=>loadNames(true))));
+  }
++ function preferenceDescription(action){const labels={1:'bookmark',2:'board follow',3:'name follow',4:'thread subscription',5:'reply notifications'};return `${action.enabled?'Enable':'Disable'} ${labels[action.kind]??'private setting'}${action.kind===5?'':' for '+action.target}. This preference is encrypted, not a public ownership list.`;}
+  function form(){
+   const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
+   type.addEventListener('change',()=>{clearProfileDraft();draft={type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
+@@ -212,7 +242,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+    node.addEventListener('input',()=>{draft[name]=node.value;validate();});fields.set(name,node);content.append(label(text,node));return node;
+   }
+   const kind=draft.type;
+-  if(kind==='bio'||kind==='avatar'){
++  if(kind==='preference'||kind==='read-marker'){
++   if(kind==='preference'){
++    const select=el('select',{'aria-label':'Preference'});for(const [value,text]of [[1,'Bookmark'],[2,'Follow board'],[3,'Follow name'],[4,'Subscribe to thread'],[5,'Reply notifications']]){const option=el('option',{value:String(value)},text);option.selected=draft.kind===value;select.append(option);}draft.kind=Number(select.value);select.addEventListener('change',()=>{draft.kind=Number(select.value);if(draft.kind===5)draft.target='0';render();});content.append(label('Preference',select));
++    if(draft.kind!==5)input('target','Public target ID');else draft.target='0';
++    const enabled=el('input',{type:'checkbox','aria-label':'Enabled'});enabled.checked=draft.enabled!==false;draft.enabled=enabled.checked;enabled.addEventListener('change',()=>draft.enabled=enabled.checked);content.append(label('Enabled',enabled));
++    content.append(paragraph(preferenceDescription(draft)));
++   }else{input('thread','Thread ID');input('throughBlock','Read through chain block');content.append(paragraph('Only replies through this canonical block are marked read. A private proof derives the block hash; no hash is supplied here.'));}
++  }else if(kind==='bio'||kind==='avatar'){
+    const names=el('select',{'aria-label':'Profile name'},el('option',{value:''},'Choose an owned name'));
+    for(const record of identityRecords)names.append(el('option',{value:record.id},`${record.first} ${record.last}`));
+    names.value=identities.includes(draft.name)?draft.name:'';draft.name=names.value;
+@@ -265,9 +302,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+    const action={type:kind};for(const [key,node]of fields)action[key]=node.value;
+    if(kind==='bio'||kind==='avatar'){action.name=draft.name;action.expectedVersion=profileSnapshot[kind==='bio'?'bioVersion':'avatarVersion'];}
+    else if(fields.has('content'))Object.assign(action,{name:draft.name,deposit:draft.deposit});
++   if(kind==='preference')Object.assign(action,{kind:draft.kind,target:draft.kind===5?'0':action.target,enabled:draft.enabled});
+    const selectedAvatar=avatarDraft;
+    void work(async()=>{if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
+-    blocked=true;try{intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
++    blocked=true;try{if(kind==='preference'||kind==='read-marker'){const epoch=accountEpoch;checkAccount(epoch);const head=await session.application.readPreferenceHead();checkAccount(epoch);if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;action.expectedRevision=head.revision;}intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
+   },true);
+   content.append(review);
+   function validate(){
+@@ -280,6 +318,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
+    }
+    if(kind==='bio'||kind==='avatar')valid=valid&&!!profileSnapshot&&identities.includes(draft.name)&&BigInt(profileSnapshot.name)===BigInt(draft.name)&&(kind!=='avatar'||!!avatarDraft);
++   if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
++   if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
+    if(kind==='subboard')valid=valid&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(fields.get('slug').value);
+    review.dataset.unavailable=String(!valid);review.disabled=busy||!valid;return valid;
+   }
+@@ -303,8 +343,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(`Private fee credit: ${status.privateFeeCredit} fee-juice units.`));
+     content.append(paragraph('Funding is not connected in this panel yet. No funds are requested here.'));
+     if(status?.status!=='locked'){
+-     content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>{view='action';render();}),button('Your names',()=>{view='names';render();})));
+-     if(view==='names')namesView();else form();
++     content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>{view='action';render();}),button('Your names',()=>{view='names';render();}),button('Private views',()=>{view='preferences';render();})));
++     if(view==='names')namesView();else if(view==='preferences')preferencesView();else form();
+     }
+     content.append(button('Refresh private account',()=>void work(refresh)));
+    }
+@@ -327,10 +367,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
+  render();
+  return Object.freeze({open(defaults={}){
+   if(busy)return;
+-  if(!intent){view='action';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:''};
++  if(!intent){view=defaults.view==='preferences'?'preferences':'action';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:''};
+    for(const key of IDS)if(field(defaults[key]))next[key]=defaults[key];
++   if(next.type==='preference'&&Number.isInteger(defaults.kind)&&defaults.kind>=1&&defaults.kind<=5&&field(defaults.target)&&typeof defaults.enabled==='boolean')Object.assign(next,{kind:defaults.kind,target:defaults.target,enabled:defaults.enabled});
++   if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
+    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}
+   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
+   if(session&&unlocked())void work(refresh);
+- },close});
++ },close,privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
+ }
+diff --git a/apps/rolling/wallet-runtime.browser.test.mjs b/apps/rolling/wallet-runtime.browser.test.mjs
+index 5e5d6a4..1c54852 100644
+--- a/apps/rolling/wallet-runtime.browser.test.mjs
++++ b/apps/rolling/wallet-runtime.browser.test.mjs
+@@ -28,6 +28,8 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
+  await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
+  assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
+  assert.equal(requests.some(r=>r.method==='POST'),false);
++ const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
++ assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','createSession','getAccount','selectPrivateViews']);
+  // Actual browser worker and pinned local CRS initialization, even when the
+  // application uses a remote prover. This previously failed on a missing G1
+  // derivation route; a public/config double cannot hide that asset failure.
+diff --git a/apps/rolling/wallet-runtime.mjs b/apps/rolling/wallet-runtime.mjs
+index f382ace..7410548 100644
+--- a/apps/rolling/wallet-runtime.mjs
++++ b/apps/rolling/wallet-runtime.mjs
+@@ -1,3 +1,4 @@
++import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
+ // This module is imported only after an explicit Unlock action. Public reading
+ // never imports the SDK, opens private storage or makes personalized node calls.
+ import {createRollingWalletSession} from './wallet-session.mjs';
+@@ -57,7 +58,7 @@ async function load(){
+  globalThis.BillboardCRS.validateManifest(crs);
+  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
+  let session,creating;
+- return Object.freeze({account,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
++ return Object.freeze({account,selectPrivateViews,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
+   if(session)return Promise.resolve(session);if(creating)return creating;
+   const selected=globalThis.walletState.aztec;
+   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());

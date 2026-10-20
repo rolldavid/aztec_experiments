@@ -1,0 +1,48 @@
+{
+  "candidate": "1641b313791b557cb140acc0bfc77cf24e58f7f7",
+  "passed": true,
+  "sourceOnly": true,
+  "runtimeHelperOnlyTwoPinChanges": true,
+  "sixReversibleTransforms": [
+    {
+      "path": "/usr/src/yarn-project/aztec/dest/cli/cmds/start_node.js",
+      "source": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+      "transformed": "ef7ff270e55bd2b5a134d0176231cd27530769e85e9914e442161e62740280cb"
+    },
+    {
+      "path": "/usr/src/yarn-project/aztec-node/dest/factory.js",
+      "source": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5",
+      "transformed": "0657e808ae228f71a4d45e1de18374ff6cbea0cabfca45cda4aa589945f4347c"
+    },
+    {
+      "path": "/usr/src/yarn-project/aztec/dest/cli/aztec_start_action.js",
+      "source": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+      "transformed": "963071497ef98b5843831068262d2b4f68a9170f144e3f9f4c13106cf34a35e6"
+    },
+    {
+      "path": "/usr/src/yarn-project/archiver/dest/factory.js",
+      "source": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+      "transformed": "93628d43e4c2c225776e2b850a26e39fa537f7284b9670b350e7090e8e2ff48a"
+    },
+    {
+      "path": "/usr/src/yarn-project/archiver/dest/archiver.js",
+      "source": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+      "transformed": "071ef21e83cac0b9b4cacc0450cdd902fd71487a9bff55a5bd5efd5d5bc3305e"
+    },
+    {
+      "path": "/usr/src/yarn-project/archiver/dest/modules/l1_synchronizer.js",
+      "source": "595956f62d7476709058cf327dc0b43d4e1b31eb2e18803cd8eaf9cf0a7da924",
+      "transformed": "3d3a40316efd14ec2ddded521f8f7bfed37b07268c1e972628e5291cfb7f5579"
+    }
+  ],
+  "evidence": {
+    "elapsedMs": 764,
+    "tests": 20,
+    "cleanup": true,
+    "memoryMeasured": false
+  },
+  "sourceHashes": {
+    "deploy/prover/startup-stages.mjs": "fa9aa09dd1cdf1bd11c2f031308fd6246a4fceaf1659553ed22529b8d5405d85",
+    "deploy/prover/startup-stages.test.mjs": "e4b5bd1f91aacb90b1e7dc7677cd44e11373c945184c8f8ffcf1d3b035753124"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "provisional_static_review_no_blocking_source_defect_identified",
+  "revision": null,
+  "uncommittedSnapshots": {
+    "apps/rolling/avatar-upload.mjs": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+    "apps/rolling/avatar-upload.browser.test.mjs": "3328b16a1fc8bd63f1521703497645780d7039dd0994b1f4a2533da214e366dd"
+  },
+  "checks": [
+    "Read both complete files against Draft3 avatar byte/size/metadata/preview requirements",
+    "Pinned Node24 syntax checks pass for both files; no Chromium or heavy work"
+  ],
+  "acceptanceGaps": [
+    "Exercise WebP EXIF/XMP/ICCP metadata and VP8X flags, animation/malformed chunks and alpha preservation",
+    "Exercise correctly typed small alpha-losing encoder output; current refusal case primarily oversized/type mismatch",
+    "Exercise actual JPEG output sanitizer: ordinary input metadata cases normally return PNG"
+  ],
+  "observations": [
+    "Bounded input size, dimensions and chunk/marker counts before native decode",
+    "Canvas center crop and sRGB100x100 output, fixed compression candidates, no original byte passthrough",
+    "Sanitized final bytes decoded again, exact alpha equality checked and immutable preview Blob created from same bytes",
+    "Late native bitmaps closed on abort/timeout; canvas buffers zeroed on success/failure",
+    "Deadline is not cancellation or a hard memory sandbox, stated explicitly"
+  ],
+  "integrationConditions": [
+    "Publisher must use immutable previewBlob bytes or verify exact hash/length because returned Uint8Array is mutable",
+    "Native browser codec acceptance, visual quality, moderation, canonical publication and archive reconstruction remain unqualified",
+    "No exact-revision verdict until committed source and browser tests reviewed"
+  ]
+}

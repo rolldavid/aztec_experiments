@@ -1,0 +1,47 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "cf84551e0a424494b7b7c1d4f4ecff355864e117",
+  "base": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "verdict": "changes requested before strict preference replacement integration",
+  "sourceHashes": {
+    "shared/l2-journal.mjs": "48fbf86b6142c5e0f0287de1ce0a61e0a935b95ae839086a791d3b023ea06ea8",
+    "scripts/test-w03-proof-replacement.mjs": "3ef402badd04d4e0648def7c39b682a1babfca7cbad8c8e6abc1d99060ab4982",
+    "scripts/test-w03-journal.mjs": "dc251aada34f75002872447bc30f96fe8cee53c6001ebe7ed305b7f054064c7b"
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "file": "shared/l2-journal.mjs",
+      "line": 145,
+      "title": "Recovery resend bypasses persisted predecessor policy",
+      "scenario": "After a strict missing-anchor replacement is durably saved and reopened, an older attempt reappears pending while the current candidate is dropped but valid. inspectReplacement reports pending and assertReplacementPredecessors rejects, yet recover/reconcilePrevious use recoverSaved, validate only the current candidate, and broadcast it. This is realistic before either competing attempt is included and violates the planned no-resend-while-any-prior-live fence.",
+      "reproduction": "execution/evidence/G07/replacement-cf84551-recover-probe.json uses actual SDK Tx bytes and AEAD with labelled node replies; one send observed despite pending predecessor, ciphertext unchanged.",
+      "repair": "For persisted strict replacement records, recheck every predecessor immediately before recovery broadcast, bind exact operation/current hash/ciphertext and recheck wallet context. Do not reject read-only reconciliation of an already canonical current transaction. Preserve legacy non-strict behavior. Cover recover and reconcilePrevious after restart, pending/canonical/unknown/changed-reason predecessors and CAS during validation; no sends and original encrypted history retained."
+    }
+  ],
+  "independentTests": {
+    "command": "NODE_BACKEND=js <pinned Node24.21> --test --test-concurrency=1 scripts/test-w03-proof-replacement.mjs scripts/test-w03-journal.mjs",
+    "cwd": "rolling-preference-actor at exact cf84551",
+    "tests": 100,
+    "passed": 100,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 27693.717959,
+    "log": "/tmp/reviewer-replacement-cf84551-tests.log",
+    "logSha256": "d5449d4b71e6847c0d24e543c582304da649d0a0170a0a9f6ad65992557c3759"
+  },
+  "positiveDisposition": [
+    "Read-only inspection is detached/frozen and does not write/acknowledge/authorize; canonical predecessor is separately identified, not declared current success.",
+    "All exact predecessor/current Tx bytes authenticated and re-encoded; full operation/current hash/CAS checked; eight predecessor cap retained.",
+    "Strict only-missing-anchor mode persisted after prepare and cannot be downgraded by omitted/false options on the new inspection/authorization/guard methods.",
+    "Prepare rereads authenticated prior state instead of trusting caller-mutated decoded fields; same operation/application-nullifier legacy validation retained.",
+    "Time-bounded inspection disables follow-up reads after expiry; unknown transport/schema failures never grant authority and raw diagnostics are suppressed.",
+    "Existing finality guard and portable encrypted journal tests retained."
+  ],
+  "requiredLaterIntegration": [
+    "Production application must retain original expectedRevision and immutable business input, require explicit marker-context and fee review, and consume strict prior guard in the real existing beforeSubmit path.",
+    "Bounded paid inclusion/fee history must remain recoverable across reorg; new journal API alone does not establish this history.",
+    "Fresh authenticated preference replay, reorg/pool invalidation/reinclusion, cold restore and same-revision contract uniqueness need actual integrated evidence; labelled random proofs do not establish them.",
+    "Advanced-head/concurrent-device recovery remains separate and unresolved."
+  ]
+}

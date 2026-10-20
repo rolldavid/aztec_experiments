@@ -1,0 +1,36 @@
+{
+  "reviewer": "reviewer-20261011",
+  "kind": "completed coherent component source and runtime review",
+  "candidate": "0b6d66dc36d7e2b0feb30b00ac5257f0834f62a6",
+  "base": "4d9198d1ad3e874b23feb90c7e2a8d42e3c7a644",
+  "designSource": "dcb41813c8d540572a57677fce33baa0b3f1292d",
+  "operatorSource": "b4b68b582d4f392a762d2c6c169910fd863a26f3",
+  "verdict": "PASS scoped components and native-disabled operator wallet/constructor; final combined integration awaits affected normal wallet build and actual browser/social-wire outcomes",
+  "blockingFindings": [],
+  "independentChecks": [
+    "All 14 Design source blob SHA256 values match handoff and exact combined candidate; four operator fixture blobs match b4 and combined candidate; exact total 18 changed paths.",
+    "Design handoff and all three receipt/log pairs rehashed; final TAP has exactly 421 passing cases and zero failure/cancel/skip/todo. Supervisor 60s/2GiB, 27064ms, sampled peak649712KiB; positive recorded child/tree/temp/link cleanup.",
+    "Reviewed native PXE flag propagation, strict boolean/local31337 restriction/defaulttrue, captured mode, exact false-mode zero outbound/receiver proof counts, real-mode original counts; canonical transactions, send phases, fees, public/private checks retained.",
+    "Operator four actual application receipts and closed public constructor receipt rehashed; public constructor source hashes match b4. Current focused regression log hash and 13 passing labels verified.",
+    "Actual wallet30035 36437ms zero sends, current constructor67940 46216ms one send, native PXE false, canonical constructor and same-journal repeated reconciliation. Actual parent/worker cleanup and singleton stop recorded positive.",
+    "Retained private journal hash and0600/file0700/parent verified without outputting its contents.",
+    "Operator URL repair only canonicalizes already validated loopback root URL; existing warped disposable miner used without public freshness claim. Outer120s and reconciliation wall deadline remain; unknown journal outcomes are not resubmitted."
+  ],
+  "historicalFailuresRetained": [
+    "Design notifications-focused fixture alias mutation 9pass1fail",
+    "operator13679 URL projection",
+    "operator45759 real-wall deadline"
+  ],
+  "provenanceLimits": [
+    "Design simplified completed-test runner does not record a whole dependency pre/post hash sweep; no such sweep is inferred. Its source handoff matches independently inspected commit and final blob bindings.",
+    "421 component tests use labelled callbacks and do not qualify actual Chromium/native PXE journeys.",
+    "Wallet30035 precedes constructor-only mining/diagnostic repair; final67940 also repeats the same actual no-send wallet preflight.",
+    "Combined source has Design changes to rolling-application-fixture; operator actual used earlier version. Operator uses unchanged startNodeRpc export; no blanket claim of whole combined-runtime execution."
+  ],
+  "openAcceptance": [
+    "Normal wallet rebuild and actual notification-browser/social-wire on combined current source",
+    "Portal/registration/hosted Bok service",
+    "Real-proof testnet qualification",
+    "Public wall-clock freshness, full archive/dense-wire/operated capacity"
+  ]
+}

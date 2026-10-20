@@ -1,0 +1,33 @@
+{
+  "revision": "c8b4a1276e22e16bcdfbf8d3974372884a5ebc50",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded development evidence",
+  "evidence": [
+    "application-5557eb8b-8365-4868-81ed-7f886bd43b00.json",
+    "portal-cd587a7f-b77f-40be-8a6a-493269ca1ecb/fixture.json",
+    "portal-cd587a7f-b77f-40be-8a6a-493269ca1ecb/experiment/measurement.json"
+  ],
+  "checks": [
+    "114 outer/15driver/14build/2portal hashes match; driver matches exactGit revision",
+    "all11raw TxEffects decoded with installedSDK; hashes,size,txhash,success,actualfee,counts,withdrawalleaves match",
+    "owner actualfees31676997600000 + Bstandalone32871024000000; each1e21 funding; remaining sum1999999935451978400000 equals FPCpool",
+    "zero humanpublicFeeJuice verified; all11exactpublicfield summaries omit humanaddresses",
+    "all3negative guards match exactpublicassertion",
+    "600budget reserves400 charges120 refunds480;880user+120operator actualredemptions",
+    "255442ms/1213216KiB; allownedcleanup verified"
+  ],
+  "findings": [
+    {
+      "severity": "P3",
+      "blocking": false,
+      "description": "Outer controlledSettlement false from included-board fixture label conflicts with correctlylabelled nested true/3settlement records; repair metadata after frozenrun."
+    }
+  ],
+  "limitations": [
+    "Proofdisabled",
+    "Syntheticproviderreceipt",
+    "Controlledlocalsettlement",
+    "ProbeBoard not Rolling product integration",
+    "Exactfieldsmoke not fullprivacyqualification"
+  ]
+}

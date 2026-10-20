@@ -1,0 +1,29 @@
+{
+  "candidate": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+  "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "at": "2026-10-14T12:40:00.575265+00:00",
+  "checks": [
+    {
+      "command": "Exact599baseline CI command in .github/workflows/build.yml",
+      "sourceRevision": "12c90c145b87d8f93d16349edb637629ef1b735d",
+      "pass": 599,
+      "fail": 0,
+      "skip": 0,
+      "elapsedMs": 50327.927542,
+      "log": ".build/rolling-devnet-diagnostics/w02-baseline-after.log"
+    },
+    {
+      "command": "bash censor-daemon/run_tests.sh",
+      "sourceRevision": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+      "pass": 421,
+      "fail": 0,
+      "skip": 0,
+      "counts": "77+130+24directdaemon+190; ordinary doubles/SQLite, not actual model or chain",
+      "log": ".build/rolling-devnet-diagnostics/ca4-moderation.log"
+    }
+  ],
+  "limitations": [
+    "Actual native model/moderation and realproof testnet pending.",
+    "Current source remote CI pending; preceding442 cleanbuild and byte-identical rebuild passed but baseline5fixtures failed, preserved."
+  ]
+}

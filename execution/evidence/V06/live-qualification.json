@@ -1,0 +1,106 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T15:39:58.005539+00:00",
+  "network": "Aztec6.0.0-rc.1 / Sepolia11155111 / rollup2914217885",
+  "fundingPostingModeration": {
+    "onboarding": "hosted-result.json",
+    "moderation": "moderation-finalized-flag.json"
+  },
+  "plugin": {
+    "request": "plugin-request.json",
+    "reply": "plugin-canonical-reply.json",
+    "chargedMicroUSDC": "348",
+    "unusedMicroUSDC": "999652",
+    "exit": {
+      "hash": "0x11fd9f0d422af2e5891a349727dba787181994db8e287617499aaf3f6a77a3f4",
+      "status": "finalized",
+      "blockNumber": 15545,
+      "blockHash": "0x06f9320865b6d4bb97237dcaa65a4c805214219f7fc7996ce9969002bbc66ff5",
+      "transactionFee": "1519565243130400000"
+    },
+    "refundTransaction": {
+      "hash": "0xbf32ef99658d9e4109d6156cecde8997b616cd2415f8527bc7ae5a23670e97ed",
+      "nonce": 7,
+      "requestedTo": "0x62126e7be3695809b1f9f40df3b1ab2a99f10ed8",
+      "minedTo": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "wrapped": true,
+      "gasLimit": "725520",
+      "uiGasLimit": "725770",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "518397",
+      "blockNumber": 11885461,
+      "blockHash": "0xd9f97895e1f171556ccd614f7baa8a3e3161650adda1b6242d3b163d5443800f",
+      "status": 1,
+      "exactContractEffect": true
+    },
+    "replayRejected": true
+  },
+  "board": {
+    "exit": {
+      "hash": "0x195cf29c310c001b4479aebe727f661c1f72dd0b59d7e2b4d7e2856a57b1f3d6",
+      "status": "finalized",
+      "blockNumber": 15548,
+      "blockHash": "0x1a4904ac511e54520299d253fa8c01e220865593ad260faa6064e7183ee59113",
+      "transactionFee": "903720144595200000"
+    },
+    "amountWei": "10000000000000",
+    "exitReconciliation": "board-exit-reconciliation.json",
+    "originalBrowserExitRunPassed": false,
+    "refund": {
+      "passed": true,
+      "txHash": "0xf562b397d431b56e2ea45564ccdf8a114df69d7765c534ea463699d77d517df2",
+      "amount": "10000000000000",
+      "gasWei": "2596484414016"
+    },
+    "refundTransaction": {
+      "hash": "0xf562b397d431b56e2ea45564ccdf8a114df69d7765c534ea463699d77d517df2",
+      "nonce": 8,
+      "requestedTo": "0xe664b6b5fd7575616653f75374d5fc7e8544b982",
+      "minedTo": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "wrapped": true,
+      "gasLimit": "416378",
+      "uiGasLimit": "416957",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "259648",
+      "blockNumber": 11885476,
+      "blockHash": "0x815706590ceee6c5ee88e5a772844aebd1caf9bcb9e4001c3f0457e2e89799d8",
+      "status": 1,
+      "exactContractEffect": true
+    },
+    "replayRejected": true,
+    "fullPrincipalAndLiabilityAndWalletNetGasVerified": true
+  },
+  "phaseOrder": [
+    "plugin-reply-withdraw",
+    "board withdraw/pause",
+    "normal network finality",
+    "plugin-redeem",
+    "refund"
+  ],
+  "finalEthereumNonce": 9,
+  "boundedBrowserPhases": {
+    "plugin-reply-withdraw": {
+      "report": "plugin-reply-withdraw-supervisor-1791644332731.json",
+      "elapsedMs": 177078,
+      "peakTreeRSSKiB": 2962096,
+      "ownedTreeAbsent": true
+    },
+    "plugin-redeem": {
+      "report": "plugin-redeem-supervisor-1791646367858.json",
+      "elapsedMs": 67296,
+      "peakTreeRSSKiB": 3111728,
+      "ownedTreeAbsent": true
+    },
+    "refund": {
+      "report": "refund-supervisor-1791646515925.json",
+      "elapsedMs": 99178,
+      "peakTreeRSSKiB": 3218400,
+      "ownedTreeAbsent": true
+    }
+  },
+  "health": "progress-final.json",
+  "operations": "operations-final-review.json",
+  "productionGateWaived": false
+}

@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-14T23:34:24.913065+00:00",
+  "manifest": "disk-safe-second-20261015.json",
+  "removedEntries": 15,
+  "allocatedBytesRemoved": 6750199808,
+  "allAbsent": true,
+  "preservedSourceJournalsSnapshotsEvidence": true,
+  "firstAttempt": "Stopped during firstnode_modules because Finder recreated @aztec-labs/.DS_Store; exactremainderinspected, nootherconsumer. Tenfirstentriesalreadyabsent.",
+  "continuation": "Fresh exactinode/livehandlechecks; removedonlyremaining5manifestentries, handlesnewENOTEMPTY onlywhenexactsole.DS_Store",
+  "finderMetadataRemoved": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/viem/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@reown/appkit/node_modules/@walletconnect/utils/node_modules/viem/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils/node_modules/viem/_esm/chains/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils/node_modules/viem/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@reown/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@opentelemetry/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/@aztec-labs/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-runtime-mac/node_modules/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils/node_modules/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@reown/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/board-plugins/.build/node/node-v24.21.0-darwin-arm64/include/node/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/board-plugins/.build/node/node-v24.21.0-darwin-arm64/include/.DS_Store",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/board-plugins/.build/node/node-v24.21.0-darwin-arm64/.DS_Store"
+  ],
+  "restoration": "LocalSHAcopies and exactversionS3GETreadbacks verified beforeinitialdeletion"
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "repositoryId": 1420006121,
+    "fullName": "zac-williamson/rolling-chat-bok-pool-20261015-01",
+    "ownerId": 1476668,
+    "marker": "Bok thread pool 5f2031b7-62a4-419a-88bf-d9c67f99c04b",
+    "defaultBranch": "main",
+    "genesisCommit": "96cd2f97d25464e0cb123cc7c6b08df2fd64fa7d",
+    "genesisTree": "9db0878f06a3b7747a3474561153c032414bae27"
+  },
+  {
+    "repositoryId": 1420006205,
+    "fullName": "zac-williamson/rolling-chat-bok-pool-20261015-02",
+    "ownerId": 1476668,
+    "marker": "Bok thread pool 0166b06c-c7d2-4f36-91d6-48f357123794",
+    "defaultBranch": "main",
+    "genesisCommit": "68da5c4ce0230181cd1dbfb5baa1f6434e29af42",
+    "genesisTree": "9db0878f06a3b7747a3474561153c032414bae27"
+  },
+  {
+    "repositoryId": 1420006279,
+    "fullName": "zac-williamson/rolling-chat-bok-pool-20261015-03",
+    "ownerId": 1476668,
+    "marker": "Bok thread pool 16d0a5e2-0fc8-43b6-9c34-fc89f28b6469",
+    "defaultBranch": "main",
+    "genesisCommit": "f7427999c32ee1ae5bd5bac35f0e1af523e70afe",
+    "genesisTree": "9db0878f06a3b7747a3474561153c032414bae27"
+  },
+  {
+    "repositoryId": 1420006365,
+    "fullName": "zac-williamson/rolling-chat-bok-pool-20261015-04",
+    "ownerId": 1476668,
+    "marker": "Bok thread pool d165129f-ee76-421e-be13-f5e40fc6f10c",
+    "defaultBranch": "main",
+    "genesisCommit": "8294899bd0ac15fbe3d90ef19fcde62ab6b9a109",
+    "genesisTree": "9db0878f06a3b7747a3474561153c032414bae27"
+  }
+]

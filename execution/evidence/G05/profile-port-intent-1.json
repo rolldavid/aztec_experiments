@@ -1,0 +1,12 @@
+{
+  "createdAt": "2026-10-11T21:59:15.936330+00:00",
+  "source": "55e07721498cd87c781c05ea9508794bdc8da79c",
+  "scenario": "rolling-profile-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "profile-campaign-55e0772-review.json",
+  "scope": "Real name,992bytebio,8192byteavatar,publicmoderatorremoval,clear,replacement,journalreopen and canonicalHTTP/SQLite rebuild; fixed moderation decision; no image-model/browser-funded/testnet claim",
+  "status": "launching once",
+  "serialization": "all browser/build jobs ended; shared inputs frozen"
+}

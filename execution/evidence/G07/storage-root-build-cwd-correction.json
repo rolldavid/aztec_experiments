@@ -1,0 +1,8 @@
+{
+  "error": "First frontend command used root cwd, not isolated worktree",
+  "effect": "Root frontend outputs rebuilt from its unchanged SDK; two formerly clean tracked generated files preserved then restored exactly to HEAD. Root ignored apps manifest regenerated; do not reuse root build closure without regeneration.",
+  "receipt": "storage-97655-frontend.json",
+  "correctedReceipt": "storage-97655-isolated-frontend.json",
+  "sdkDependenciesMutated": false,
+  "backup": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/storage-root-front-build-preserved"
+}

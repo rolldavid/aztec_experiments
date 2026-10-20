@@ -1,0 +1,61 @@
+{
+  "task_id": "G02-bok-index-catchup",
+  "candidate": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+  "base": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "focused-bok",
+      "candidate": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+      "base": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js pinned Node --test --test-name-pattern=\"actual SDK board projection\" plugins/test/hosted-private-bok.test.mjs",
+      "environment": "macOS pinned Node24; SDK fixture, no proof or paid service",
+      "observed": "Existing focused SDK check passed; reviewer independently repeated",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bok-index-catchup-20261019/review.json",
+          "sha256": "4e77591081cc6a40cdbc4f0bea8c6345b97598cf681036b3eb95802b08d0de27"
+        },
+        {
+          "path": "evidence/G02/bok-index-catchup-20261019/focused.log",
+          "sha256": "faa1c745907a5f5db12961ef032ebf6694c76db3d0403e909b71a200337d85e8"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+    "base": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G02/bok-index-catchup-20261019/review.json",
+        "sha256": "4e77591081cc6a40cdbc4f0bea8c6345b97598cf681036b3eb95802b08d0de27"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G02-retained-canonical-Bok-catchup",
+      "candidate": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+      "base": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bok-index-catchup-20261019/review.json",
+          "sha256": "4e77591081cc6a40cdbc4f0bea8c6345b97598cf681036b3eb95802b08d0de27"
+        },
+        {
+          "path": "evidence/G02/bok-index-catchup-20261019/focused.log",
+          "sha256": "faa1c745907a5f5db12961ef032ebf6694c76db3d0403e909b71a200337d85e8"
+        }
+      ]
+    }
+  ]
+}

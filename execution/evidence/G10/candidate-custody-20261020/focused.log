@@ -1,0 +1,43 @@
+✔ real filtered checkout excludes unreadable blobs and preserves edits and PR base tree (491.901458ms)
+✔ connected snapshot initialization uses no credentialed clone and preserves executable source mode (204.996583ms)
+✔ actual accepted commit survives restart; failed invocation leaves previous source intact (967.381208ms)
+✔ same-thread operations wait; a different thread opens independently (104.250792ms)
+✔ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (574.777625ms)
+✔ lease loss prevents acceptance; user paths and changed repository identity fail closed (115.312375ms)
+✔ existing toolbox edits and accepts actual thread source across independent invocations (875.789541ms)
+✔ failed validation cannot advance accepted source and cannot be retried in same session (620.699791ms)
+✔ bounded revision and storage budgets refuse new accepted source (376.485958ms)
+✔ model can check and repair an empty thread; acceptance reuses only the exact checked source (1463.398ms)
+✔ a text-only empty thread can answer without creating a fake static application (61.779083ms)
+✔ publication lost acknowledgement reconciles the exact accepted receipt without model or validation replay (611.803ms)
+﹣ actual isolated repair becomes the exact durable thread revision (0.178167ms) # SKIP
+﹣ actual accepted Git and isolated artifact publish matching source over separate HTTP origin (0.044417ms) # SKIP
+✔ connected thread keeps exact operator mapping and accepted source across participants; other threads stay empty (1481.639167ms)
+✔ agent step-limit exit retains the exact checked actual Git revision and publication (851.783792ms)
+✔ agent output-limit exit retains the exact checked actual Git revision and publication (646.422834ms)
+✔ agent balance exit retains the exact checked actual Git revision and publication (627.149084ms)
+✔ agent terminal acceptance refuses invalid actual source, changed after check=false (391.795833ms)
+✔ agent terminal acceptance refuses invalid actual source, changed after check=true (543.873083ms)
+✔ accepted recovery reuses exact Git objects and validation, requires publication, creates no draft (690.781708ms)
+✔ accepted recovery refuses absent and unaccepted source without executing validation or creating storage (336.097792ms)
+✔ trusted allocation precedes every paid call, including summary=false (62.754792ms)
+✔ trusted allocation precedes every paid call, including summary=true (47.808208ms)
+✔ invalid or changed local identity cannot consume a remote pool slot (70.530875ms)
+✔ connected thread never consumes an empty-thread pool slot (47.425875ms)
+✔ accepted recovery hint reads actual durable acceptance without publication or execution and survives restart (338.942834ms)
+✔ failed validation retains exact candidate across draft cleanup and explicit continuation accepts without replay (793.440459ms)
+✔ retained candidate refuses failed tests, source mutation, stale base and changed Git binding (653.883959ms)
+✔ workspace listing reflects staged, untracked, ignored and deleted files without adopting HEAD (1041.151875ms)
+✔ workspace prerequisite feedback identifies repair without leaking arbitrary source errors (835.013ms)
+✔ successful tool writes retain latest unaccepted source when later billing fails before validation (1364.269541ms)
+✔ candidate custody failure rejects write and preserves scratch through exceptional close (400.022792ms)
+✔ exceptional direct workspace close retains latest candidate without validation (249.12125ms)
+✔ candidate journal failure preserves scratch even after immutable Git import succeeds (517.168292ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 17833.303833

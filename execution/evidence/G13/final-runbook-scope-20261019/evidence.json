@@ -1,0 +1,56 @@
+{
+  "base": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "candidate": "791297f7e0b075f85201a923c9603c228368ab9a",
+  "task_id": "G13-final-runbook-scope",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+      "candidate": "791297f7e0b075f85201a923c9603c228368ab9a",
+      "task_id": "G13-final-runbook-scope",
+      "id": "documentation-scope",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "git diff --check and sole-path comparison; independent authority/claim review",
+      "environment": "Local repository; no runtime tests warranted for documentation-only change",
+      "observed": "Only authorized runbook changed; owner amendments and genuine-wallet acceptance accurately stated",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/final-runbook-scope-20261019/review.json",
+          "sha256": "bf9f1d6253a44b454accffecc0f698ea78d59a2be7f7fa2aa147cf2dcfdd939c"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+    "candidate": "791297f7e0b075f85201a923c9603c228368ab9a",
+    "task_id": "G13-final-runbook-scope",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/final-runbook-scope-20261019/review.json",
+        "sha256": "bf9f1d6253a44b454accffecc0f698ea78d59a2be7f7fa2aa147cf2dcfdd939c"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+      "candidate": "791297f7e0b075f85201a923c9603c228368ab9a",
+      "task_id": "G13-final-runbook-scope",
+      "id": "RC41-owner-scope",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/final-runbook-scope-20261019/review.json",
+          "sha256": "bf9f1d6253a44b454accffecc0f698ea78d59a2be7f7fa2aa147cf2dcfdd939c"
+        }
+      ]
+    }
+  ]
+}

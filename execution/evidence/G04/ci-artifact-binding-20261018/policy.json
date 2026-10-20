@@ -1,0 +1,26 @@
+{
+  "base": "72a7019a002657e089d29d13f6c81ded58113152",
+  "candidate": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+  "task_id": "G04-ci-artifact-binding",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "plugins/test/operations.test.mjs"
+  ],
+  "required_checks": [
+    "current-build-constructor"
+  ],
+  "requirements": [
+    "RC36-current-build-binding"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G04-ci-artifact-binding",
+      "paths": [
+        "plugins/test/operations.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "removed": true,
+  "cache": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/anvil-cache-ddc8b148-6724-4113-86cc-16a1c0423236",
+    "dev": 16777232,
+    "ino": 233553392
+  },
+  "dump": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/anvil-recovery-0cd9e1e3-27ee-46a1-b9ac-acd579bf1750.json",
+    "dev": 16777232,
+    "ino": 233553391
+  },
+  "dumpBytes": 0,
+  "processAbsent": true,
+  "sourceSnapshotUntouched": true,
+  "postLoadSourceHashVerified": false
+}

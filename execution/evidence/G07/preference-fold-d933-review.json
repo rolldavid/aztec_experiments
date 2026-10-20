@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-12T03:56:14.233763+00:00",
+  "verdict": "approved bounded source; actual authenticated integration pending",
+  "findings": [],
+  "independentTests": {
+    "command": "NODE_BACKEND=js pinned Node v24.21.0 --test --test-concurrency=1 immutable extracted preferences.test.mjs preference-events.test.mjs",
+    "log": "/tmp/reviewer-g07-d933-093-tests.log",
+    "logSha256": "24986edfba5aa1ad07f8c09fca38f88c925fb46143366684fa8910b993119fc4",
+    "passed": 147,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1119.674917,
+    "extraction": "/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/reviewer-g07-fold-events-q0p5rs72",
+    "artifactSha256": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431",
+    "rootArtifactChanged": false
+  },
+  "genuineAcceptanceClaimed": false,
+  "candidate": "d933036442fac747bcd0bb50155b393fe171db73",
+  "base": "dffbf8dc74a3ffb03b96f3dacd5cd00fa5b249f2",
+  "requirements": [
+    "G07-A02",
+    "G07-A08",
+    "G07 preference recovery decision"
+  ],
+  "sourceHashes": {
+    "shared/rolling/preferences.mjs": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+    "shared/rolling/preferences.test.mjs": "ee37752376c1313766fd42a8cccaa25b181226a612014cbd483090ead6fb29d3"
+  },
+  "checks": [
+    "Read shared digest/state interpretation refactor and all new fold/resume methods before tests. Original 81 replay tests retained; 132 total preference tests independently passed.",
+    "One exact digest encoding shared with full replay and pinned Noir. Scope/head captured immutably, append snapshots at most512 events before hash await, enforces strict contiguous revision, previous digest and final target digest; no sorting/dedup/skipped event fallback.",
+    "Only current derived relationship sets/read markers and one bounded input batch retained, no event-history list. Snapshot/finish copies and sorts current state; repeated toggle history does not accumulate stored events.",
+    "Any invalid input, async hash failure, overlapping append/checkpoint/finish poisons the instance; original awaited hashing remains owned and cannot publish after overlap. finish alone verifies exact final head and returns complete snapshot. Earlier detached checkpoint remains immutable.",
+    "Resume strictly validates detached prefix and exact canonical field/count/scope constraints before external verifier; verifier capability captured once and must return literal true. Tests use actual AES-GCM and actual Poseidon but canonicality/account authority are explicitly labelled boundary doubles. Forged derived sets with matching digest fail verifier. Reorg requires verified ancestor or fresh fold."
+  ],
+  "limitations": [
+    "verifyAuthenticatedPrefix is a trusted security capability, not a convenience callback. Integration must bind the exact full prefix to authenticated encrypted CAS, owner/account/class/domain and still-canonical checkpoint; digest/head equality alone never authenticates derived sets.",
+    "The fold itself cannot authenticate events, recipient, head, block hashes, prefix age or chain finality. These remain the planned reader responsibilities.",
+    "512 limits per append work only. Current relationship count and checkpoint serialization/copy/sort remain proportional to current state, without a total feature cap; capacity measurements pending.",
+    "No SDK paging, persistent store, lifecycle, timeout/cancellation or UI publication is owned here. Genuine full/cold/incremental/reorg recovery and privacy trace remain pending."
+  ]
+}

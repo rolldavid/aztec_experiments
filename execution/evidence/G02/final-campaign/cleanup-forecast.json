@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "task": "G02-final-campaign-cleanup-forecast",
+  "preparedAt": "2026-10-15T13:22:21.051272+00:00",
+  "campaign": "rolling-shared-20261015-4a1c3edd3114",
+  "status": "final proposed cleanup reconciliation; ready for lead ledger update, not invoice",
+  "budgetUsd": 300,
+  "priorBoundUsdPreserved": 279.3,
+  "existingCampaignReservationUsd": 20.5,
+  "ledgerRecordedCumulativeUsd": 299.8,
+  "observations": {
+    "instanceId": "i-0f2cb1f319adf8376",
+    "state": "terminated",
+    "launchTime": "2026-10-15T11:13:11+00:00",
+    "stateTransitionReason": "User initiated (2026-10-15 13:12:33 GMT)",
+    "absoluteExpiry": "2026-10-15T13:12:28Z",
+    "rootFinalReadbackTimeReported": "2026-10-15T13:16Z",
+    "volumesAbsent": [
+      "vol-0e7573157b420acc9",
+      "vol-0c8d929ffa5d14f53"
+    ],
+    "fleetState": "deleted_terminating",
+    "fleetFulfilledCapacity": 0,
+    "noRuntimeOrApplicationActionStarted": "lead-reported; source build/assets/original1572 restore passed, current626 restore EXDEV before runtime",
+    "financial626AuthorityUnchanged": true,
+    "backupTimerNotEnabled": "lead-reported; no dirty financial state"
+  },
+  "costBasis": {
+    "computeRateUsdHour": 0.92736,
+    "computeStorageIPv4HoursRetained": 2.5,
+    "volumeGiB": 168,
+    "dataThroughputExtraMiBps": 375,
+    "storageRateUsdGiBMonth": 0.08,
+    "throughputRateUsdMiBpsMonth": 0.06,
+    "conservativeHoursPerMonth": 720,
+    "ipv4UsdHour": 0.005,
+    "egressUsdGB": 0.195,
+    "freeTierCreditsAssumed": false,
+    "storageDeletionReconciliation": "Only24h orphan allowance released after both volumes absent; retain2.5h resource charges. No prior campaign allowance or10USD current delayed buffer released."
+  },
+  "costComponentsUsd": {
+    "compute2_5h": 2.3184,
+    "encryptedGp3Storage168GiB2_5h": 0.04666666666666667,
+    "extraThroughput375MiBps2_5h": 0.078125,
+    "publicIPv4_2_5h": 0.0125,
+    "crossRegion": 1.0,
+    "retained20GB30Days": 1.0,
+    "requestsMonitoring": 0.5,
+    "taxAndUnpriced20Percent": 1.0301383333333334,
+    "delayedBillingBufferPreserved": 10.0,
+    "egressReconciled1GB": 0.195
+  },
+  "calculatedCampaignUpperForecastUsd": 16.18083,
+  "proposedRoundedCampaignBoundUsd": 17.0,
+  "proposedRoundedCumulativeUsd": 296.3,
+  "proposedRemainingUsd": 3.7,
+  "conditionalReleasedReservationUsd": 3.5,
+  "networkSensitivityNotReconciled": [
+    {
+      "egressGB": 12,
+      "calculatedCampaignUsd": 18.75483,
+      "remainingBeforeRoundingUsd": 1.94517
+    },
+    {
+      "egressGB": 5,
+      "calculatedCampaignUsd": 17.11683,
+      "remainingBeforeRoundingUsd": 3.58317
+    },
+    {
+      "egressGB": 1,
+      "calculatedCampaignUsd": 16.18083,
+      "remainingBeforeRoundingUsd": 4.51917
+    },
+    {
+      "egressGB": 0,
+      "calculatedCampaignUsd": 15.94683,
+      "remainingBeforeRoundingUsd": 4.75317
+    }
+  ],
+  "nextHostFeasibility": {
+    "comparable20_50CampaignFits": false,
+    "zeroEgressBestCaseHeadroomUsd": 4.75317,
+    "newIndependentDelayedBufferUsd": 10,
+    "evenNewBufferAloneExceedsBestCaseHeadroom": true,
+    "existingBufferIsNotFreedOrReused": true,
+    "decision": "Final rounded remaining3.70USD is insufficient for a separate10USD delayed buffer alone, before any compute/storage/network. No new paid campaign.",
+    "finalRoundedHeadroomUsd": 3.7
+  },
+  "retainedStorage": {
+    "knownCurrent626UploadBytes": 2079991906,
+    "sourceArchiveBytes": 214345395,
+    "retainedAllowancePreservedUsd": 1,
+    "allowanceBasis": "Keep full20GB/30day1USD allowance despite actual2,294,366,998B/4versions and zero multipart. No storage allowance released.",
+    "original1572AndEarlierFinancialBackups": "preserved under prior bound",
+    "actualVersionCount": 4,
+    "actualRetainedBytes": 2294366998,
+    "multipartUploads": 0
+  },
+  "skillRead": {
+    "path": "/Users/zac/.codex/skills/aztec-app-development/SKILL.md",
+    "sha256": "ff53bc3559dabe67646893d53cc15f984fb36019912deb21dced8a8ca644c98d",
+    "appliedPrinciple": "Avoid turning infrastructure repair into a platform project; no unnecessary paid repeat, fixture framework or broad testing."
+  },
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/infrastructure-ledger.json",
+      "sha256": "6bda0fa97f657a2e0a5573fe7cc746e618bed5ba09b55148fd84fa71eb426334"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/g07-shared-host/pricing-refresh.json",
+      "sha256": "46e3accb4f1cf43a123751e03554baf3e581d7e1ddc0da182fb61eb5bcf204b9"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/fresh-config.json",
+      "sha256": "e3a4ea9a3f61b34b91d0deeae291de2aab72d23fed4194c0b2b9efe4314bcb35"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-instances.json",
+      "sha256": "fb72675be6aba9d9f44232b43c7056ecb253c6d6cd3fa2283741f56157209589"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-volumes.json",
+      "sha256": "5bb1ef67ec6cda7a24020d0c0ddfa919d96f348d36e16bd083f5960efd321a3e"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-fleet.json",
+      "sha256": "f6414dc06812890ec7123b5b1f29a7aba38b70d917273ba571a6791a845ebd10"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/volume-readback.json",
+      "sha256": "9efebe4cff8bedbe0e882adb961a19ae4f35945a76788fab7e4da1a19bfb6390"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/current626-upload-complete.json",
+      "sha256": "c4943a05feb389ddcf036c202773b76c735a1bb05ea300dcc384c5e103f51650"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/source-upload-receipt.json",
+      "sha256": "2a846bc121d8f6f8a3693fc80508113e9b308f8c2b9aece81a0ff0b3df8895e4"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/assets-mask-restore-final.json",
+      "sha256": "385fe22c8275cea521edbf832fb7c2cbc1f0db7ea3bf42a947cba8974a6f832a"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-networkout.json",
+      "sha256": "66ccd94bdaef02d39fd89fa4a2215cd9bd22687ecd9f4f28167f3717232e08c7"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-s3-versions.json",
+      "sha256": "9d8a7956a17d717be09111eaba1280d763e58c7326e9b760fd05d95864f4f18a"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-s3-multipart.json",
+      "sha256": "b8c7208cc7bc1d9ea89d811909e8c9496b17668488def2a142452bc42efa50b2"
+    }
+  ],
+  "awsCallsByWorker": 0,
+  "paidActionsByWorker": 0,
+  "sourceOrLedgerEdits": 0,
+  "reconciledAt": "2026-10-15T13:25:04.949232+00:00",
+  "supersedesForecastSha256": "2ba0306b2e6f9a8c9548db7c3673a30bd29ced36ad7eec49a43e4f7f475297a1",
+  "networkReconciliation": {
+    "observedBytes": 70835900,
+    "metricPoints": 25,
+    "periodSeconds": 300,
+    "lastTimestampUTC": "2026-10-15T13:10:00+00:00",
+    "conservativeLagSeconds": 600,
+    "lagAt10MbpsBytes": 750000000,
+    "observedPlusLagBytes": 820835900,
+    "roundedUpperBoundBytes": 1000000000,
+    "basis": "Observed70,835,900B plus full10min10Mbps allowance750,000,000B =820,835,900B<1GB. Absolute expiry13:12:28Z and termination/volume absence verified; no continued source of host egress."
+  }
+}

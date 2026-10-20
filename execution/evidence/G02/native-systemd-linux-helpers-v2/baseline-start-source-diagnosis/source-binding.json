@@ -1,0 +1,28 @@
+{
+  "origArchiveSha256": "96e75bd08c57ad401677456fb88ef54a9f05bb1695693013bc6ecce839640fd5",
+  "debianArchiveSha256": "4695ff34f83b1f7e6e02bf3cfac2e2a44ac76b6cfc5a38c0081bac6919d547bb",
+  "files": [
+    {
+      "path": "src/systemctl/systemctl-start-unit.c",
+      "bytes": 18392,
+      "sha256": "67dd55f8e127e89c3c0a9ed1aa2fc35052671ca0a780d76899ae99e6a79d6c88"
+    },
+    {
+      "path": "src/systemctl/systemctl-util.c",
+      "bytes": 33490,
+      "sha256": "1c2d28c16b51df98d0c982d186cc13122b7485cdeba3ea02c96a4d50751586d2"
+    },
+    {
+      "path": "src/shared/bus-util.c",
+      "bytes": 22255,
+      "sha256": "5c840f09bd2fb5a416a6a1d339c96e7815ed3d1c7423041a64f0503802ef890b"
+    },
+    {
+      "path": "src/libsystemd/sd-bus/sd-bus.c",
+      "bytes": 137365,
+      "sha256": "919ee3b6e6f0b7ee17a908fbc6095b51f325a3c35f2bfc90f77fdb0b4e9a0c18"
+    }
+  ],
+  "touchingPatches": [],
+  "systemdControlParagraph": "Package: systemd\nArchitecture: linux-any\nMulti-Arch: foreign\nPriority: important\nRecommends: default-dbus-system-bus | dbus-system-bus,\n            networkd-dispatcher,\n            systemd-timesyncd | time-daemon,\n            systemd-resolved,\nSuggests: systemd-container,\n          systemd-homed,\n          systemd-userdbd,\n          systemd-boot,\n          libfido2-1,\n          libip4tc2,\n          libkmod2,\n          libp11-kit0,\n          libqrencode4,\n          libtss2-esys-3.0.2-0,\n          libtss2-mu-4.0.1-0,\n          libtss2-rc0,\n          libtss2-tcti-device0,\n          polkitd,\nPre-Depends: ${shlibs:Pre-Depends},\n             ${misc:Pre-Depends}\nDepends: ${shlibs:Depends},\n         ${misc:Depends},\n         libsystemd0 (= ${binary:Version}),\n         systemd-dev (>= ${source:Version}),\n         mount,\nReplaces: systemd-repart (<< 250.2-3~)\nConflicts: consolekit,\n           libpam-ck-connector,\n           systemd-shim,\n           opensysusers,\nBreaks: less (<< 563),\n        sicherboot (<< 0.1.6),\n        systemd-repart (<< 250.2-3~),\n        dracut (<< 059-5),\nProvides: systemd-sysusers (= ${binary:Version}),\n          systemd-tmpfiles (= ${binary:Version}),\n          systemd-repart (= ${binary:Version}),\nDescription: system and service manager\n systemd is a system and service manager for Linux. It provides aggressive\n parallelization capabilities, uses socket and D-Bus activation for starting\n services, offers on-demand starting of daemons, keeps track of processes using\n Linux control groups, maintains mount and automount points and implements an\n elaborate transactional dependency-based service control logic.\n .\n Installing the systemd package will not switch your init system unless you\n boot with init=/lib/systemd/systemd or install systemd-sysv in addition."
+}

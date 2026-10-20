@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-15T08:38:47.163306+00:00",
+  "state": "ready",
+  "complete": true,
+  "checkpoint": {
+    "number": 1598,
+    "hash": "0x2deef5009f36d4b607c9f4786fdc4a198bc59c4d0c49d97acda7c5f488eada60"
+  },
+  "priorAdmissionPreserved": true,
+  "soleRun": true
+}

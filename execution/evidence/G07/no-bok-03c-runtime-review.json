@@ -1,0 +1,57 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:33:24.624315+00:00",
+  "source": "03c4db3015d67381474b928edd8eed8370491e83",
+  "actualPacketSha256": "4d4de3a4273b6bb2884be73612c549ceb1ce1972409a3dbb7684946f70e36a31",
+  "resultSha256": "828b50e1a9f6285f677b2f62d6ae85fe76eb2330aa763e0f3839fe287e0ca410",
+  "logSha256": "0010a67a4442444919db4e4136edd07e15f1fe675d98281a86ac597962b097ba",
+  "verdict": "Accept exact169 affected component result; candidate eligible for preparation of a separately reviewed changed genuine browser investigation",
+  "independentChecks": {
+    "allPacketFileHashesMatch": true,
+    "exact169ExpectedActualLabelMultiset": true,
+    "tests": 169,
+    "pass": 169,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "elapsedMs": 4835,
+    "peakTreeRSSKiB": 880528,
+    "all3235CurrentBindingsMatch": true,
+    "workingTreeClean": true,
+    "ownedTreeAbsent": true,
+    "tempRemoved": true,
+    "sixSourceBlobsPreviouslyComparedToFc784": true
+  },
+  "carry": [
+    {
+      "count": 83,
+      "scope": "recovery module and tests byte-identical to f90 accepted229 source",
+      "anchor": "f90fec9eb94bb479fbe688bbeb71c1e153034e91",
+      "reviewSha256": "0b703cf98eaf3eba4e38d1b7559bb255576b8e6d41488f846933b4aa44b1a058"
+    },
+    {
+      "count": 80,
+      "scope": "actor module and tests byte-identical to e718 accepted285 source",
+      "anchor": "e7188da78b3677545c445e6e739d96ac07844d8a",
+      "reviewSha256": "0775e28bf549a29f331cf7ca7fdc6ddb49c4c40adbdd2647b73a2d8d2c805969"
+    }
+  ],
+  "closure": {
+    "file": "execution/evidence/G07/no-bok-03c-components/current-closure.json",
+    "sha256": "87143333f84853393f1a90a7e56fd17dc4399b233fd3a0130aadf6e91384df25",
+    "currentProtectedBindingsRehashed": true
+  },
+  "meaningfulNewActuals": [
+    "Actual harmless production worker environment omits undefined Bok even with hostile parent variable",
+    "Mutation during first awaited startup retains captured disabled and full scope",
+    "ABI-derived selectors and labelled decoded payloads reject Bok circuits/actions while preserving ordinary board/fee/network/account checks",
+    "Fixture dispatch omits Bok deployment only on exact three named scenarios and records undeployed scope honestly"
+  ],
+  "limits": [
+    "Component tests are not actual native proof or genuine browser acceptance.",
+    "No timing saving measured and no threshold reduction authorized.",
+    "Full Bok deployment/actions remain separately mandatory.",
+    "Any genuine launch needs exact source/artifact/launcher acceptance and parent serialized grant."
+  ]
+}

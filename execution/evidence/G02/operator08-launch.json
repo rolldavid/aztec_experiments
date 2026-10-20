@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-08",
+  "startedAt": "2026-10-12T09:01:46.162772+00:00",
+  "passed": true,
+  "publicRoutingUnchanged": true,
+  "proverJobsAuthorized": false,
+  "preflight": {
+    "at": "2026-10-12T09:01:50.879236+00:00",
+    "identityVerified": true,
+    "instances": 0,
+    "volumes": 0,
+    "activeFleets": 0,
+    "pluginReady": true,
+    "pluginActive": 0,
+    "sshIngressAbsent": true
+  },
+  "amiVerified": {
+    "id": "ami-0fa5967347d08d2df",
+    "state": "available",
+    "owner": "099720109477",
+    "arch": "x86_64",
+    "root": "ebs"
+  },
+  "launchTemplate": {
+    "id": "lt-057cd5d25c629d872",
+    "version": "1"
+  },
+  "fleetId": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+  "createErrors": [],
+  "cloudControls": {
+    "type": "request",
+    "validUntil": "2026-10-12T09:54:55+00:00",
+    "terminateWithExpiration": true,
+    "state": "submitted",
+    "activity": "pending_fulfillment"
+  },
+  "hostControls": "pending boot attestation",
+  "finishedAt": "2026-10-12T09:01:58.170501+00:00"
+}

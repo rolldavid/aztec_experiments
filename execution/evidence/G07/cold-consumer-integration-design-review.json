@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T21:37:06.813770+00:00",
+  "designPacketSha256": "83e3f8e5bfa9d9ddd20b8a545d63950a572f51bc918ecbeb5595e90f41a5b45e",
+  "requirements": [
+    "G07-A01",
+    "G07-A02",
+    "G07-A06",
+    "G07-A07",
+    "G07-A08"
+  ],
+  "verdict": "transport_chunk_eligible_with_design_correction; full_cold_acceptance_open",
+  "findings": [
+    {
+      "priority": "P2",
+      "scope": "Design initial synchronization claim",
+      "source": [
+        "installed pxe BlockSynchronizer.createBlockStream lines35-40",
+        "installed stdlib L2BlockStream.work line134 (rc1 and rc3)"
+      ],
+      "finding": "Both installed SDK revisions already configure tipsOnly:true. Fresh genesis-to-tip synchronization skips the historical block download loop. Treating initial sync as necessarily linear metadata replay would motivate unnecessary synchronization machinery.",
+      "requiredDisposition": "Keep normal supported initial sync. Measure its actual tip/header requests on a fresh store first. Do not add an initial-sync paging platform. Retained-store fork walk-back, rollback rows and full contract discovery remain separate history-sensitive work."
+    }
+  ],
+  "minimumTransportChunk": {
+    "paths": [
+      "prover/private-query.mjs",
+      "prover/private-query.test.mjs",
+      "shared/rolling/compact-client.mjs",
+      "shared/rolling/compact-client.test.mjs"
+    ],
+    "interface": "Constructor captures exact trusted endpoint/network/proof policy/tier/context capability. read accepts only detached own-data number/hash plus separately reviewed cancellation/deadline controls. Tier is not a per-request override.",
+    "disabledByDefault": true,
+    "rules": [
+      "Exact fixed route only, no query string or caller URL/headers/account/tag/selector/filter fields. No change to generic RPC schema or padded getBlock fallback.",
+      "Request <=1024 bytes and decoded response stream <=2MiB before JSON/SDK decoding. Reject bad content-type/UTF-8/shape/count/duplicate input ambiguity, oversize declared and streamed sizes; cancel and drain rejected streams.",
+      "Gateway enforces exact allowed Origin before stripping it for fixed loopback native forwarding. Preserve service trust configuration; CORS is not user authentication and no new bearer/identity claim is inferred. Native route registration remains a separate parent-owned change.",
+      "Readiness and exact expected network/proofs/tier before and after upstream read. Client failure/context/abort must suppress output, retain ownership until all underlying promises/stream work settle and release the single-flight slot only then. No retries, redirects, cookies or arbitrary response/error text.",
+      "Client response is untrusted transport data; downstream authenticateCompactBlock against an independently canonical header is mandatory. Fixed route/TLS/JSON shape do not authenticate ordinal or root.",
+      "Tests should exercise actual stream byte caps and error drainage, late account switch, wrong origin/path/network/tier, redirects, aborted response, blocked concurrency and no underlying SDK/padded call. No production registration in this four-file chunk."
+    ]
+  },
+  "sdkCursorAndHeadSeam": {
+    "assessment": "Feasible as a narrowly fixed scoped capability over the existing queue/coordinator. Avoid a second general orchestration platform.",
+    "requirements": [
+      "One SDK-owned epoch per exact account/network/rollup/class/artifact/database incarnation/target anchor; caller cursor fields alone cannot authorize resumed progress.",
+      "Gap-free physical block/transaction/log scan including empty/unrelated positions. At most8 ciphertexts per utility operation; full block authentication remains protocol-bounded and needs cost measurement. Reuse only an immutable verified-block capability with canonical rechecks.",
+      "Atomic SDK checkpoint and page note/event commit, using one coordinator transaction. Lost response and same-store restart must recover committed position/records without duplicate fold or unearned advancement; fresh-store backup cannot carry an ahead cursor.",
+      "Return only records original EventService authenticated and actually committed. Use SDK tx ordinal/eventIndex metadata for deterministic replay; do not equate physical log position or admitted count with event order/durable success. Bounded transaction-local buffering is sufficient if a page splits an event sequence.",
+      "A fixed head utility after complete scan may avoid generic ensureContractSynced only for this exact authenticated class and scope; preserve NHK key gate and original validators. Legitimate fully scanned uninitialized state differs from initialized/missing head. Dense revision/digest fold must equal authenticated final active head.",
+      "Existing block-range query limits cannot paginate inside a dense block and may inspect unrelated scoped records. Use exact committed page-record positions at the SDK boundary instead of repeatedly querying full blocks or exposing raw stores to application code.",
+      "For incremental epochs refresh only exact preference-head candidates under original anchored nullifier validation, in bounded batches. Do not call generic syncNoteNullifiers over all active contract notes, omit nullifiers, or discard historical nullified-note provenance needed for reorg de-nullification.",
+      "Recovery checkpoint must roll back or invalidate with both note/event stores on orphaning. After commit, fold CAS and before publication recheck canonical target/account generation; no external-chain atomicity claim.",
+      "A recovery-only production entry must defer constructor simulation, account status/deposit/names reads that trigger normal contract discovery. Keep ordinary financial paths unchanged and never globally mark contract synced."
+    ]
+  },
+  "remainingBoundedness": {
+    "freshInitialSync": "Supported tips-only mechanism exists; measure before changing.",
+    "retainedReorg": "Walk-back can scale with fork depth; event/note rollback currently gathers orphan rows. Do not claim strict per-step latency for these paths without measured bounds or reviewed incremental semantics.",
+    "headNullifiers": "Current validateAndStoreNotes checks recovered heads at real anchor and preserves spent metadata; anchor advancement requires bounded candidate refresh.",
+    "materializedPreferences": "Fold state/encrypted snapshot naturally scales with current preferences. Explicitly measure/report this separately from bounded page work; no permanent preference-count cap or silent truncation.",
+    "capacity": "Whole-block root hashing and actual encrypted ACIR cold ingestion need independent measures. Existing warm1k/10k/50k query results do not qualify either."
+  },
+  "mergeReview": {
+    "revision": "3589864121f0f5b5f6401264cd34c4d56071b361",
+    "parents": [
+      "536c068c1764192edf8380da0f953eaa8e62c633",
+      "9f9df3ffc085e2451d814c37605313efca9d2fee"
+    ],
+    "mergeBase": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+    "verdict": "exact_source_union_accepted_not_runtime_qualified",
+    "all8ComponentsPreserved": true,
+    "onlyDualChangedFile": "package.json",
+    "packageResolution": "All scripts exactly536c, all non-script fields exactlyControls9f9, preserving atomic IndexedDB -> private-event-query -> reorg-anchor bootstrap order. All other tree blobs are the exact unambiguous three-way parent union.",
+    "limits": "Old canonical generated artifacts remain historical for their sources. Combined new Noir+rc3 source requires fresh complete normal build/catalog/SDK/runtime qualification. Queue pin repair is separately owned and not approved by this merge check."
+  },
+  "audit": {
+    "path": "execution/evidence/G07/cold-consumer-design-independent-audit.json",
+    "sha256": "bf1e531c328eb671bdd78a87cc261cda3731335f3620162c10ad53814a4a5ee9"
+  },
+  "execution": "Read-only source and hashing only. No heavy tests, dependency mutation, endpoint registration or production edits."
+}

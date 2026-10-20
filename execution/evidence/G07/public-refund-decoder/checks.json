@@ -1,0 +1,21 @@
+{
+  "source": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js HARDWARE_CONCURRENCY=1 pinnedNode --test shared/rolling/public-events.test.mjs",
+      "tests": 43,
+      "pass": 43,
+      "fail": 0,
+      "elapsedMs": 3373.392084,
+      "log": ".build/rolling-devnet-diagnostics/refund-public-events-tests.log"
+    },
+    {
+      "command": "Existing canonical decoder read-only original authorization/post/reply/finish",
+      "pass": true,
+      "elapsedSeconds": 0.805,
+      "evidence": "execution/evidence/G14/retained-bok-original-canonical-events.json"
+    }
+  ],
+  "previousFailure": "original-failure.json",
+  "scope": "Native proof-disabled development, not real-proof/testnet or specialist privacy acceptance"
+}

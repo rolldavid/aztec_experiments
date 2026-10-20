@@ -1,0 +1,30 @@
+{
+  "candidate": "915710519b3ba29979c616f2ef9fe6bd072f3d6a",
+  "predecessor": "20729d31a8cfaf3d0b1e79cbc7cf6c2b9dffac18",
+  "verdict": "PASS_SCOPED_COMPONENT",
+  "sources": {
+    "plugins/static-publication.mjs": "3f72867a0ae5b420c389fb74344f39463d1f12272ecc93bc5f22095bc167d1fa",
+    "plugins/test/static-publication.test.mjs": "71cc0476deb0a6e8e2ac3017487a58b8b9c8f0dd336144a94f8dc90ec73657f2",
+    "plugins/DEPLOYMENT.md": "37f5d9564e27241f7fc8a732f91d47aa3492b6f104b60c1f339c63a22770d34c"
+  },
+  "resolvedFinding": "Unaccounted immutable revision directories now block unrelated publication. Only the sole exact pending receipt can reconcile; its archives/metadata/content are verified and charged before clearing orphan state. Same-process rename adds orphan immediately. Multiple orphans require explicit reconciliation. Prior reproduced20729 quota failure retained.",
+  "reviewedBoundaries": [
+    "Exact accepted revision/source/artifact receipts and positive executor cleanup; immutable synced copy then durable catalog advancement.",
+    "Idempotent exact receipt recovery and prior published revision compare; old public artifact/source routes unavailable after latest advances.",
+    "Private retained history, finite quota/files/revisions/reads, metadata hidden.",
+    "No public mutation endpoint; private host moderation persists and in-flight reads recheck catalog.",
+    "Separate origin with restrictive sandbox/CSP, credential-bearing inbound requests rejected; no credentials supplied by service. Browser sandbox is not universal ambient fetch credential stripping; docs now explicit."
+  ],
+  "evidence": {
+    "finalLog": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G11/isolated-generated-execution/publication-recovery-tests.log",
+    "sha256": "83cbafbb44b037091581ef0887fe2bfe7bdb339d467ca36c7bf62258f4ac66a6",
+    "actual": "21 filesystem/HTTP pass,1 named opt-in browser skip,1011.535083ms. Earlier actual browser1 unchangedHTTP/CSP carry; no browser rerun.",
+    "reviewerFocused": "Actual current source byte-equal915: existing exact-recovery and orphan-quota tests2PASS,302.260917ms,tool56b7d7. Local temporary filesystem/HTTP only; no source changes or external calls."
+  },
+  "limitations": [
+    "No external HTTPS routing or live public deployment.",
+    "Actual repository+isolated-build+publication end-to-end fixture94715 remains FAILED setup timeout; no completed combined acceptance inferred.",
+    "Main hook/serving/moderation integration is separately reviewed on final frozen source.",
+    "Backup restore and operator orphan reconciliation campaign unrun."
+  ]
+}

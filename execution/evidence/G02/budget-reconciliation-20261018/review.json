@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "verdict": "approve_scoped_reconciliation",
+  "scope": "Evidence and arithmetic review of closed-campaign reserve release; no invoice assurance, ledger edit or financial action",
+  "packet_sha256": {
+    "ce-01-daily-service-region.json": "6db096e002aeaa01d0d2a1f07b27869bdf34f4afa042df28db3d0d73cf66eb3e",
+    "ce-02-daily-usage-region.json": "fe670dfece2976f6cf8d5ef5fc65dbe8c69c005705d1a095e3e4b1abf9b89ab2",
+    "ce-03-daily-campaign-region.json": "1673f61065a8f310458c90cc3041e7c7286811d23a5f719d9c24c03996692853",
+    "current-resources-storage.json": "bd451a7959604fa4248c0278581d22e8d740e7489e1ec1c1165db20400aa2e46",
+    "london-instances.json": "11e2aef87fddc0e4a7e09664b710ebb70873467947780310a866441419800748",
+    "london-lightsail.json": "a705678cd50ac4a832a63836f064cc910eb64feb01dfe9fa1ec5dcb6a6a1b6af",
+    "recommendation.json": "c7900e38cff27eb7bdd92693cbea10505c84ab054d996a7ff7c5b26d4de86f2a",
+    "summary.md": "a9fcba7a99757cbbe1b5c0ed5226d3adb18bf5e58536f71dd16f413ef9795510"
+  },
+  "ledger_before_sha256": "f70bbc1b8d59637d64843311e7ace13c5f48521d2885ccc0e16cdd62fa820ffb",
+  "arithmetic": {
+    "oldReservedUsd": "296.33",
+    "accountOct11Through17Usd": "82.1693457467",
+    "excludedLondonComputeUsd": "42.3024",
+    "excludedLightsailUsd": "18.9672",
+    "countedPostOct11Usd": "20.8997457467",
+    "historicalBoundRetainedUsd": "83.27",
+    "taxAllowanceUsd": "4.17994914934",
+    "delayCleanupReserveUsd": "20",
+    "retentionRoutineNetworkReserveUsd": "10",
+    "threeNewCostExplorerQueriesUsd": "0.03",
+    "calculatedUsd": "138.37969489604",
+    "roundedClosedBoundUsd": "140",
+    "reserveReleasedUsd": "156.33",
+    "availableForNewFullyForecastWorkUsd": "160"
+  },
+  "checks": [
+    "Independently recomputed Decimal sums from all three raw CE responses: service/region, usage/region and campaign-tag/region daily totals agree exactly for Oct11-17; no pagination token; every period remains estimated.",
+    "Confirmed 168 billed hours each of preexisting London m6a.xlarge moderator and t2.medium arena-backend. Fresh sanitized inventory identifies purposes and pre-campaign launches; Lightsail axolotl-backend dates from April. Existing authorization/ledger scopes exclude moderator and unrelated service costs. Only their compute/bundle charges are subtracted; all other post11Oct account charges remain counted.",
+    "Historical V06 budget preserves49.47 prior allowance +28.80 Oct10 revival maximum +5 ancillary =83.27. This retains pre11Oct spending and unused projected time through13Oct, even where that conservatively overlaps newly counted Oct11 usage. No pre11Oct savings deducted.",
+    "Fresh16:20UTC worker inventory reports zero instances, volumes, fleets, addresses and self-owned snapshots in recorded campaign region us-east-1. Read retained termination receipts and verified source hashes; final private instance receipts show terminated and volume list empty. Intermediate deleted_terminating fleets are superseded by current empty fleet list.",
+    "Whole backup bucket inventory covers445 STANDARD versions/33234165811bytes, including Oct18 newest objects, and zero multipart uploads. Existing30-day current/7-day noncurrent/1-day multipart lifecycle retained. Observed CE storage unit rate is approximately0.024 USD/GB-month; holding entire present inventory another month is about0.79762USD before tax using decimal GB.",
+    "Oct18 is outside CE end-exclusiveOct18 coverage. Current-day retention, routine requests/transfer and three new CE calls are not represented as zero: 10USD future storage/network reserve,20USD billing-delay/cleanup reserve and0.03USD explicit query allowance remain.",
+    "All recommendation source hashes verified against retained files. Starting-reserve arithmetic correction from296.30/156.30 to296.33/156.33 completed during review. No application source, ledger, resource, credentials or services changed by reviewer."
+  ],
+  "limits": [
+    "140USD is a conservative working bound backed by estimated billing, not final invoice or exact per-instance allocation. Empty Campaign tags preclude exact campaign invoice attribution.",
+    "Resource absence is us-east-1 only; separate London services remain running. No all-account zero-cost or all-region absence claim.",
+    "No unrestricted future archive downloads, new storage growth, indefinite retention, new paid API usage or a proposed deployment is covered by the closed-campaign estimate. Any new run must be separately forecast within160USD including rates, overlap, shutdown, tax, storage/network and buffer, and adopted by lead before spending.",
+    "Technical prover/node/synchronization and production-release gates are unaffected. Budget release alone does not establish feasibility or authorize replay of unknown transactions."
+  ],
+  "resolved_findings": [
+    {
+      "severity": "minor",
+      "issue": "Recommendation initially cited296.30 old reservation; current ledger is296.33.",
+      "resolution": "Packet updated to296.33 starting bound and156.33 release;140closed/160remaining unchanged."
+    }
+  ]
+}

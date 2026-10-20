@@ -1,0 +1,254 @@
+{
+  "status": "testnet-live",
+  "region": "eu-west-2",
+  "stack": "anonymous-message-board-testnet",
+  "instance": "i-0cb8555882d6cfecc",
+  "machine": "m6a.xlarge",
+  "ramGiB": 16,
+  "diskGiB": 64,
+  "website": "https://d30njln0kead8n.cloudfront.net",
+  "baseMonthlyEstimateUsd": 158.3104,
+  "baseMonthlyEstimateWithAssumed20PercentTaxUsd": 189.97248,
+  "operatorPackageInstalled": true,
+  "boardDeployed": true,
+  "moderatorLive": true,
+  "fundingClaim": {
+    "txHash": "0x0367343cc9fd765fc547c89cfa2e8f7424b8969dc71003d3e4c933b90502bb05",
+    "receiptStatus": "checkpointed",
+    "elapsedMs": 110392,
+    "peakTreeRSSKiB": 798608
+  },
+  "model": {
+    "weights": "unsloth/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf",
+    "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "memoryLimitMiB": 8192,
+    "firstThreeAllowedCasesMs": [
+      32399.611457,
+      25197.896626,
+      24337.801557
+    ],
+    "qualityQualified": false,
+    "combinedProofMemoryMeasured": false,
+    "balancedSmoke": {
+      "cases": [
+        "bb-eval-0001",
+        "bb-eval-0101",
+        "bb-eval-0261",
+        "bb-eval-0291",
+        "bb-eval-0204"
+      ],
+      "allFiveMatchedLabels": true,
+      "decisionMs": [
+        32313.896065,
+        29066.647543,
+        24380.034544,
+        27606.527126,
+        27459.249103
+      ],
+      "runtimeVerified": true,
+      "cleanup": "complete",
+      "totalMs": 165658.307889
+    },
+    "deployedPolicySmokeCommand": "7f18d9b1-65e8-46e2-8b0c-ef5ad2d9c6dc",
+    "deployedPolicySmoke": {
+      "commandId": "06e89495-95a3-44f4-921e-24681c11480a",
+      "allThreeDecisionsMatched": true,
+      "decisionMs": [
+        22080.024124,
+        17116.043889,
+        14441.049228
+      ],
+      "runtimeVerified": true,
+      "cleanup": "complete",
+      "productionQualified": false,
+      "exitCode": 2,
+      "exitExplanation": "Three-case smoke does not satisfy production corpus coverage or 10second latency target. No model execution errors.",
+      "initialAttemptError": "Evaluator path incorrectly pointed at operator runtime package, which excludes evaluation tools. Corrected to source evaluator after matching production model-runtime/moderation file bytes; no harness source changes."
+    }
+  },
+  "deploymentInvestigation": {
+    "diagnosis": "Padded L2 gas 7389320 exceeds public network maximum 6540000. Failure occurred before proof or transaction submission.",
+    "fix": "Publish class in its own transaction through the SDK public API; instance publication and initialization remain atomic.",
+    "focusedTestsPassed": 25,
+    "reviewers": [
+      "aws_stack_review",
+      "testnet_deployment_readiness"
+    ],
+    "classPublicationGas": 599500,
+    "classPublicationDAGas": 56356,
+    "liveRunCommandId": "1f26ba6b-1e47-41a2-bd48-f9a4342ede3e",
+    "liveRunStatus": "L2 deployed; portal Ethereum submission needs diagnosis",
+    "attemptsForSplit": 1,
+    "maxAttemptsForSplit": 1
+  },
+  "boardAddress": "0x08625a7e4ad04c8e5121257e0214fa59d01cdf2403d38936dc15cc3050f03ed1",
+  "boardDeployment": {
+    "txHash": "0x07de0817a33e22a69a44ff9ca1148a264db2ef496f4abc0591b88f5b980d4d4d",
+    "status": "checkpointed",
+    "block": 89648,
+    "proofSeconds": 42,
+    "declaredL2Gas": 6207943
+  },
+  "portalActive": true,
+  "moderatorFunding": {
+    "bridgeTx": "0xa85e7323f37e924b5170b100f15dc78cb576526601f3414d8af619b21111da5c",
+    "bridgeStatus": "confirmed",
+    "claimCommand": "dab1cbca-8cfa-4eed-8abd-449bb2f90e36",
+    "claimStatus": "checkpointed",
+    "claimExecutionResult": "success",
+    "claimTx": "0x0ea1818e7849b8f3c26652ea02322fdf8fc73e6d5d36e86d7fce05c50047c9fd",
+    "proofMs": 12613.845,
+    "freshWalletBalanceVerified": true,
+    "privateBalance": "96841211668565578992"
+  },
+  "portalFunding": {
+    "balanceWei": "22780445651543121",
+    "latestEstimateMaximumCostWei": "6213614819023892",
+    "nonce": 3,
+    "pendingNonce": 3,
+    "portalHasCode": false,
+    "additionalFreeEthTransactions": [
+      "0x0c4bf486014425fff6d31ba03940835b9a7bbfd4518410bc50ef9e14e26c11a6",
+      "0xb81faccdc8916cf01d7efc6d1fc657bdba664562bb5142dd6fedafdd524cb5b1"
+    ],
+    "userTransferConfirmed": true
+  },
+  "moderatorService": {
+    "unit": "board-moderator.service",
+    "installationCommand": "a3c3f7a8-9012-4c5f-92df-6cf3efb2d080",
+    "enabled": false,
+    "reason": "Portal activation awaits public network finality; actual flag gas still needs measurement after a real post.",
+    "installationVerified": true,
+    "independentReview": "claim_send_review: no blocking unit issue"
+  },
+  "websiteAssetsUpdated": true,
+  "ethereumRecoveryFix": {
+    "problem": "Recovery scanned old Ethereum blocks until its20second deadline despite confirmed nonce showing saved request had never executed.",
+    "change": "Use confirmed nonce at explicit head block; verify head hash unchanged before advancing search cursor. Preserve receipt/reorg checks and exact same-nonce explicit retry.",
+    "testsPassed": 51,
+    "reviewer": "ethereum_recovery_review",
+    "buildPassed": true,
+    "deploymentCommand": "28c79eaf-59ae-474a-87b0-78c30d6e5f32"
+  },
+  "portalDeployed": true,
+  "portalBinding": {
+    "txHash": "0x2a57ecfe09f8c75c5e0671af6c938afa27c6898ffbe6a7e182aca8838e850112",
+    "block": 89755,
+    "status": "proven",
+    "proofSeconds": 43,
+    "activation": "active",
+    "epochSeconds": 2304,
+    "activationCommand": "42df1519-4dd8-4526-82de-5d73ecd3f71f"
+  },
+  "authorFunding": {
+    "bridgeTx": "0xc23585b0f491977a3fad46610ba70c188c8b8b18b7c0f199c92665639a6fd1d2",
+    "claimTx": "0x122b5cf85ce125b222da20177fe32a7c9228535da5b2e42f5e0ea9603775a5d3",
+    "claimStatus": "checkpointed",
+    "claimExecutionResult": "success",
+    "proofMs": 10855.621018
+  },
+  "publicFeedFix": {
+    "failure": "First public-testnet list stopped at block200 despite boardinitialized89648. Repeated tinyblockscan unnecessary because node indexeslogs bycontract/tag.",
+    "change": "One indexed multi-tag query skips emptyblockspans; retains50activeblock batches, event/page/time caps and canonical/reorgchecks.",
+    "focusedTestsPassed": 72,
+    "builtBrowserSmokePassed": true,
+    "reviewer": "ethereum_recovery_review",
+    "remoteCheckCommand": "cbcd6de7-2a13-4916-b38f-eb66c9e61b80",
+    "remoteCheckPassed": true,
+    "remoteElapsedSeconds": 2.31,
+    "hostedBrowser": {
+      "url": "https://d30njln0kead8n.cloudfront.net",
+      "verifiedCheckpoint": 89771,
+      "walletRequired": false,
+      "posts": 0
+    }
+  },
+  "moderationIntegrationTest": {
+    "policy": "For this deployment test, posts containing the exact marker BOARD_MODERATION_TEST are prohibited. All other posts are allowed.",
+    "policyMeasurementCommand": "b0a28748-0461-4736-99bb-1b347824d4f2",
+    "policyMeasurementSeconds": 7.597,
+    "policyMeasurementPeakMiB": 446.4,
+    "setPolicyCommand": "6a2c55c9-a018-42ee-8183-b39f531ec2b8",
+    "setPolicyTx": "0x2d374410dffc4fc0881810694c3da9cfea518ff6357d90eea4a653c6d09ccdb9",
+    "setPolicyProofSeconds": 44,
+    "sequencingError": "Temporary test policy was set before deployment activation. Deployment resume verifies original manifest policy. Restore original before resuming; no checks will be bypassed.",
+    "restoreMeasurementCommand": "9321c2f1-f30a-448d-a9e4-9cbcb1b9007d",
+    "originalPolicyRestored": false,
+    "restoreTx": "0x074ed56b29996829b2d0a77e18618de5dc2a9818e35ee9080c038002cc8dbaf2",
+    "restoreProofSeconds": 43,
+    "testPolicyReappliedTx": "0x268b7bfa7e3279250bf8f4d53550ea983fd68901f175b734fec7020f86adf0c1"
+  },
+  "authorDepositCommand": "6d877ea8-2c66-4e62-8f3c-918c71f54623",
+  "authorDeposit": {
+    "txHash": "0x6d7ad0bb72897f54a69302a63510c601fe68c164752fcab31cda6d88e39fab1a",
+    "confirmed": true,
+    "amountWei": "10000000000000",
+    "messageIncluded": true,
+    "claimMeasurementCommand": "ca725ca1-1f0e-4d67-a9e5-c51f7e2b2485",
+    "claimMeasurementSeconds": 9.439,
+    "claimCommand": "4489c152-4626-454f-9a65-149a9c95e76e",
+    "claimTx": "0x26ac5d9c3017379f0ac8059131199c2141cd5b39c7ae1a540a4b685b19080602",
+    "claimConfirmed": true,
+    "claimProofSeconds": 55
+  },
+  "claimCodecFix": {
+    "failureCommand": "4489c152-4626-454f-9a65-149a9c95e76e",
+    "failureBeforeProof": true,
+    "cause": "Node Buffer passed to bundled SDK serializer, reproduced by actual CLI loader and frozen protocol vectors.",
+    "fix": "Hash unchanged ABI bytes with ethers.sha256 and shift right 8 bits into Fr; no protocol or contract changes.",
+    "regressionBeforeFailedAsExpected": true,
+    "realCliLoaderBothLanesPassed": true,
+    "focusedTestsPassed": 21,
+    "buildSeconds": 1.263,
+    "reviewer": "ethereum_recovery_review",
+    "packagingFailures": "macOS archive added AppleDouble source and HTML metadata files; removed metadata from source inventory, full package verification then passed. Future archives must exclude filesystem metadata.",
+    "installedPackage": "/srv/board/operator-claim-codec",
+    "claimRetryCommand": "405b4702-b63c-4a0e-8dde-2db0659bb6c7"
+  },
+  "liveApplicationTest": {
+    "activation": "active",
+    "deposit": "0x6d7ad0bb72897f54a69302a63510c601fe68c164752fcab31cda6d88e39fab1a",
+    "collateralClaim": "0x26ac5d9c3017379f0ac8059131199c2141cd5b39c7ae1a540a4b685b19080602",
+    "markerPost": "0x2a743b81098c9126abb99bd323a951096e383bd3c12a6ebc7b0891c547d863b0",
+    "allowedPost": "0x1d3aab18772353b2f71454a763a7e99e9e3e04e94c8475a0d0584e7a01222f54",
+    "flag": "0x0b762b06a45e22db0c7fad927f7b6fd92dc83e31e03995ae73d30635958dfe61",
+    "flagBlock": 89818,
+    "flagStatus": "included; service still reconciling finality",
+    "originalPolicyRestored": "0x02bebd38176ceaad2e5e84e67d32adab6fa09da09e84e60226da5c59ad16a8e9",
+    "claimProofSeconds": 55,
+    "postProofSeconds": [
+      60,
+      60
+    ],
+    "readerVerified": true
+  },
+  "serviceLifecycle": {
+    "failure": "Stopping wrapper left model containers running",
+    "fix": "execve replaces wrapper; KillMode=mixed; runtime cleanup in nested finally",
+    "beforeRegression": ".build/aws-testnet/lifecycle-before.log",
+    "afterRegression": ".build/aws-testnet/lifecycle-after.log",
+    "launcherTestsPassed": 13,
+    "daemonAssertionsPassed": 24,
+    "reviewer": "ethereum_recovery_review",
+    "awsStopRestartCommand": "dbb9f735-f736-49dc-bbaa-0b1bd8ff66ea",
+    "exactContainersAndNetworksRemoved": true,
+    "enabled": true,
+    "active": true,
+    "sourceHashes": {
+      "scripts/operator-launch.mjs": "6b35c2ea087042cd72281537c1199d5d512ebba183eb2361a73dc8a947c4bf53",
+      "scripts/test-operator-launch.mjs": "9fab7e99f3da6d388b588969d901c329838e7f3d418077835375892bd7b5c198",
+      "censor-daemon/daemon.mjs": "847a0bbca2fe14822892b16b9d43fb17ecf6cde7e0cd7a4d096bcf450a2388e5",
+      "deploy/aws/board-moderator.service": "a60ba6477f3b5596e9da6918a4415aa7ee7a6deaef8336375f57fff7e419420c"
+    }
+  },
+  "moderatorTopup": {
+    "amountFeeJuice": 100,
+    "claim": "0x1641eb64294a287d7c652f88d82f8f6a5f48ddd75d1070a7ffc239a27113c044",
+    "status": "checkpointed",
+    "executionResult": "success",
+    "proofSeconds": 10.852,
+    "freshWalletBalance": "100650791591899059184",
+    "balanceVerificationCommand": "b231ffeb-b7a1-4f4d-b691-a217160e5e65"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "revision": "4b31efaa4b1c1e3f39cae816c0fad8bc85d95e28",
+  "baseRevision": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "requirements": [
+    "RC22",
+    "RC37",
+    "RC39",
+    "W03"
+  ],
+  "sourceVerdict": "approve_source_with_validation_pending",
+  "integrationVerdict": "not_yet_qualified",
+  "blockingSourceFindings": [],
+  "review": [
+    "Exactly six claimed paths. Reuses encrypted journal validation/CAS, existing explicit recover retry and existing UI work/account locks; no new lifecycle, transport or retry framework.",
+    "inspectRequest authenticates existing saved intent and returns detached data, no send authority. Immutable review binding includes version/sender/to/chain/nonce/data/value/expected/startBlock/startHash; only search cursor/discovered hash may change.",
+    "prepareSaved validates exact confirmed L2 exit, original recipient, collateral/Bok kind/amount and Bok exit nonce/scope; reconcile-only first. Canonical success returns without send; reverted/replaced or wrong identity rejects.",
+    "Explicit review plus separate confirm retains original sender nonce/calldata/value/chain. Normal prepare and Check existing refund remain fenced/read-only. Null tx hash is never interpreted as no broadcast.",
+    "Confirmation consumes quote, rereads current exit/wallet/membership, checks saved journal before recover and again inside signer after fresh fee/membership checks. Sender request fields match the reviewed immutable request. Current gas ceiling and account-lock/context/drain behavior remain.",
+    "UI states request may still be pending, allows cancel, exposes separate saved-confirm control; does not claim exact signed bytes when wallet may sign a new same-nonce transaction.",
+    "Tests cover collateral/Bok continuation, canonical winner at review/confirm, changed wallet/chain/leaf/gas/settlement/context/cancel/amount/recipient/exit, authenticated journal replacement before/inside signer, hidden pending nonce and interrupted retry. These are labelled doubles, not live chain qualification."
+  ],
+  "evidence": {
+    "packetSha256": "948218b65d97447aeb0ea046765a5e137b49336d50a80d0b8b309e694a85d716",
+    "referencesVerified": 17,
+    "workerFullNode": {
+      "pass": 310,
+      "fail": 0,
+      "skip": 0
+    },
+    "workerFinalFocused": {
+      "pass": 32,
+      "fail": 0,
+      "skip": 0
+    },
+    "UI": "HARNESS_SAMPLING_GAP; interrupted, unqualified, cleanup retained",
+    "independentRuntimeChecks": "Not run: lead explicitly stopped further tests during repeated clamshell interruptions. Independent static source/tests/hash review completed."
+  },
+  "remaining": [
+    "Stable-awake focused panel/UI checks including new saved controls and cancellation/account invalidation",
+    "Normal SDK/apps/wallet closure: shared Ethereum journal new inspectRequest must be present in generated consumer",
+    "Final combined revision/source mapping and integration gate",
+    "Actual explicit saved-refund continuation remains unresolved; no send authorized/performed by this review"
+  ],
+  "preservation": "Original actual failures, encrypted intent and canonical L2 exit remain unchanged; no manual clearing, new nonce or automatic retry.",
+  "sourceHashes": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-session.mjs",
+      "sha256": "59692f40abf8535ab4557a0dc5a58c02afbf61f8f59ee8c315ef9f067fbf1266",
+      "bytes": 42965
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-session.test.mjs",
+      "sha256": "6be418137cb56e99ce412f7524d47aa50abf0fa85e5da3ad72a5b8b8e8f3772c",
+      "bytes": 85379
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-panel.mjs",
+      "sha256": "bb97aa275102f3fcb84d3299bfba6e6a6673e4d196a9fa42deda9875aa34cc4e",
+      "bytes": 92292
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "2c77a0b6e0872075c4d566ec4bc698aa2fcdbb7ec3e7cffefc74edef9f75c3be",
+      "bytes": 157960
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/shared/ethereum-journal.mjs",
+      "sha256": "19a9dfa3fc400fd4d3afe772ffbc25549a240c816b80084e09360674a81cb62e",
+      "bytes": 22816
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/test-w03-ethereum-journal.mjs",
+      "sha256": "f319fadaa0cbcb3da07dfb5b8e2568b7cbb3fc74c850c16a8d66c0e90dd08af0",
+      "bytes": 24853
+    }
+  ]
+}

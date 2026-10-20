@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:30:04.435604+00:00",
+  "procedureSha256": "22a917e37586af2f50788c08387a1711ea669f3a73cd717b9196160caecfa4bb",
+  "sourceContext": "dd3e2bc4e4cf9fe37bf5269deae108d0c4d89d7a",
+  "authority": "Lead standing read-only target diagnosis grant; one bounded liveness snapshot",
+  "command": [
+    "caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/operator09-target-liveness-procedure.mjs",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator09-target-liveness-live-1.json"
+  ],
+  "maxRequests": 16,
+  "maxMs": 59000,
+  "httpAttemptsEach": 1,
+  "responseBytesMax": 65536,
+  "paidActions": 0,
+  "provider": "fixed-public-Tenderly-Sepolia",
+  "ABIsha256": {
+    "RegistryAbi.js": "48c07e940e5d5dbf9bec95a62ab74ea2583172e92bc8ce2d2385729810f33257",
+    "RollupAbi.js": "e3b4a6023a5f63fff638c4ac856f40cb785cc270f780f0d7def5af31cf34c2eb"
+  }
+}

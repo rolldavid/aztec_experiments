@@ -1,0 +1,100 @@
+{
+  "revision": "d9e533d3d065141ee37aebcd162f689689955263",
+  "packetSha256": "3938ea3aaebb666eaafc369fb75662ac48fe6ddf7527c7c2421634bb257cff5e",
+  "paths": [
+    "shared/rolling/compact-block.mjs",
+    "shared/rolling/compact-block.test.mjs"
+  ],
+  "source": {
+    "shared/rolling/compact-block.mjs": {
+      "sha256": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+      "matches": true,
+      "checkoutMatches": true
+    },
+    "shared/rolling/compact-block.test.mjs": {
+      "sha256": "ee8ccaabf52d711945a114a302a0dd1689b6fd048366262d2f57d4feb9ed39f9",
+      "matches": true,
+      "checkoutMatches": true
+    }
+  },
+  "installed": {
+    "node_modules/@aztec-labs/constants/src/constants.gen.ts": {
+      "sha256": "0f7c3d388e26e3c3b11c831acaaa2a04f75a7cb25babb6eefe05232e1a4020a8",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/blob-lib/src/encoding/tx_blob_data.ts": {
+      "sha256": "138549430f2e6456f4aad9f98263e12c0bc9d1f3f57572001edbc99298e1367a",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/blob-lib/src/encoding/tx_start_marker.ts": {
+      "sha256": "8213a31c14613ecbb756f9091ab6a60480808d3492f0f466846ac86a32320f00",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/blob-lib/src/encoding/block_blob_data.ts": {
+      "sha256": "21139427b88988ec35355706ebc35b0514eaab3a9dc6354dd7686bbe953bf9a1",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/blob-lib/src/encoding/block_end_marker.ts": {
+      "sha256": "81543e1ece638fbf485fa88a5245348f383f166c58d3e515609a68d29097392e",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/blob-lib/src/encoding/block_end_state_field.ts": {
+      "sha256": "67d6b3606559bcff153d8b8b56cb7568b5a2a270d419e91aef4a2c1243e243d6",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/stdlib/src/tx/block_header.ts": {
+      "sha256": "13a2e7952da96311a4bcb10601b35ce83d540fad18eb0528efc1599b204515eb",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/stdlib/src/tx/tx_effect.ts": {
+      "sha256": "0a7982f1d0d6b6eef1658d89e1547fa23f24c20b72a9432e6ccb4affd4935ca2",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/stdlib/src/tx/tx_effect_membership.ts": {
+      "sha256": "a9b05e9408c2e19bb4180547a2e12709fc4478d4bc9df6adee9948fbf3f0645a",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/foundation/src/trees/unbalanced_merkle_tree_root.ts": {
+      "sha256": "30bfb368e964d9d49dadf9baad0c375a155555f12c4b5b6bd97bbc31ecaeab0d",
+      "matches": true
+    },
+    "node_modules/@aztec-labs/foundation/src/trees/balanced_merkle_tree_root.ts": {
+      "sha256": "36239464ace847ac28099f82cc4a1ac2d989ede698dba8150387c3f64c6308bd",
+      "matches": true
+    }
+  },
+  "workerLog": {
+    "sha256": "4b2f284100990ac1c66329d22949155d22e051c535edf4d3b566535c0a739eec",
+    "matches": true,
+    "tail": [
+      "\u2714 SDK differential: only one expanded effect is alive across leaf awaits (2.387083ms)",
+      "\u2714 SDK differential: hash failure releases no partial descriptors (1.446417ms)",
+      "\u2139 tests 40",
+      "\u2139 suites 0",
+      "\u2139 pass 40",
+      "\u2139 fail 0",
+      "\u2139 cancelled 0",
+      "\u2139 skipped 0",
+      "\u2139 todo 0",
+      "\u2139 duration_ms 1180.51425",
+      "        1.30 real         0.70 user         0.19 sys",
+      "           232685568  maximum resident set size",
+      "                   0  average shared memory size",
+      "                   0  average unshared data size",
+      "                   0  average unshared stack size",
+      "               15218  page reclaims",
+      "                2887  page faults",
+      "                   0  swaps",
+      "                   0  block input operations",
+      "                   0  block output operations",
+      "                2266  messages sent",
+      "                 672  messages received",
+      "                   0  signals received",
+      "                2156  voluntary context switches",
+      "                2951  involuntary context switches",
+      "           549811060  instructions retired",
+      "           242438790  cycles elapsed",
+      "            17533160  peak memory footprint"
+    ]
+  }
+}

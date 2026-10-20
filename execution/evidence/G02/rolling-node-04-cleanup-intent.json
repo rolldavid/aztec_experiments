@@ -1,0 +1,10 @@
+{
+  "createdAt": "2026-10-11T22:14:56.036781+00:00",
+  "fleet": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+  "instance": "i-0dc273607f11cedb7",
+  "action": "delete-fleets terminate-instances once",
+  "reason": "Authenticated final receipt readiness-failed; node and container exited1; no proofjobs or public service qualification. No retained application workload. Runtime sources retained locally; node used log-driver none.",
+  "evidence": "rolling-node-04-readonly-221236.json",
+  "reservationRetainedUntilCleanupVerified": 105,
+  "status": "outcome unknown before dispatch"
+}

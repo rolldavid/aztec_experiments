@@ -1,0 +1,29 @@
+{
+  "base": "39dbff586a5092349c32d93b721d5417733e3532",
+  "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-funding-progress-copy",
+  "implementer": "controls-resume-20261014",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "focused-progress-ui",
+    "unchanged-wallet-closure"
+  ],
+  "requirements": [
+    "G13-RC19-funding-progress-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-resume-20261014",
+      "task_id": "G13-funding-progress-copy",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

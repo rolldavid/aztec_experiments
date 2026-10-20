@@ -1,0 +1,14 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "3bfc7f60b6bb214860dade02b05a1236c457c871",
+  "verdict": "PASS normal wallet build73509 only",
+  "actualPacketSha256": "549870c2d631d4e83dbc3898abc6a353d43b8fc065350af604308a93a4dcf978",
+  "elapsedMs": 973,
+  "rssMeasurement": "unmeasured",
+  "checks": [
+    "Packet/result/log/intent bindings verified; exit0 and owned tree absent",
+    "All3156 protected inputs independently rehashed; normal wallet84 inputs/24 served files verified against actualbytes",
+    "Fresh integration closure3157 bindings and all SDK/frontend/contracts/wallet input-output hashes independently verified"
+  ],
+  "scope": "Normal generated asset provenance; no live browser, deployment, or proof qualification."
+}

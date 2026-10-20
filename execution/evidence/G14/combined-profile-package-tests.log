@@ -1,0 +1,17 @@
+.E.
+======================================================================
+ERROR: test_pending_artifacts_cannot_enter_package (__main__.PackagePreflight.test_pending_artifacts_cannot_enter_package)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/scripts/test-prover-package.py", line 31, in test_pending_artifacts_cannot_enter_package
+    package.rolling_resources(self.root, self.node)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/deploy/prover/package.py", line 8, in rolling_resources
+    if subprocess.check_output([node,'--version'],text=True).strip()!='v'+pins['node']:raise RuntimeError('Pinned validation Node required')
+                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Pinned validation Node required
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.060s
+
+FAILED (errors=1)

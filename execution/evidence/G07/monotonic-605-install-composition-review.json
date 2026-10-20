@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "6054711b7fe958e0a02f9e0126429a68640bb377",
+  "verdict": "COMBINED_SOURCE_AND_EXPLICIT_INSTALLED_CLOSURE_ACCEPTED_FOR_AFFECTED_COMPONENT_CHECKS_AND_NORMAL_BUILDS",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/patch-pxe-preference-page.mjs": "6c26c1e76d2957fde483604fc9a2f5ab4010ea15eaa85d6539ccdd79d10aecc8",
+    "scripts/test-pxe-preference-page.mjs": "508c6f3863088e03494d942e4c15e5c04c6edbd8a38564ad050c6f3a9182d34a",
+    "shared/rolling/cold-preference-reader.mjs": "51cba1368e538e83a8b1af74d2dcc1d2454ffda15b6cd5205e549c3ff715a189",
+    "shared/rolling/cold-preference-reader.test.mjs": "77aaaaa44ba73320d3d828a8dcfc1a9619f86e71dbaf91bae18266f1dcca157b",
+    "scripts/testing/rolling-application-fixture.mjs": "f0b779d306972eece9be5b53b1a3ed0d2312bfda1851a1916df0c8e3fd5922a0",
+    "scripts/testing/rolling-application-fixture.test.mjs": "700e24c6cc4f540f4347df4dd29028f97bc978812dc4f6e58ac3c723c2394f07"
+  },
+  "exactChangedPathsAgainst14b": [
+    "scripts/patch-pxe-preference-page.mjs",
+    "scripts/test-pxe-preference-page.mjs",
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs",
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs"
+  ],
+  "installed": {
+    "src/pxe.ts": "0349e8ed792382a5094389b468424189cb277e432a35a49fcbe0f89d3dbe4040",
+    "dest/pxe.js": "f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b",
+    "src/operation_queue.ts": "d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db",
+    "dest/operation_queue.js": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360",
+    "src/operation_lifecycle.ts": "52211b30b977c07b7ed4ea8fe074aa8a35c879ea195a29182e9746305f98eb99",
+    "dest/operation_lifecycle.js": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7",
+    "src/storage/note_store/note_store.ts": "1840f842b22b3adff161bc402a2b4bdf32d0d02fde93495d3d1a976e71ec74af",
+    "dest/storage/note_store/note_store.js": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478",
+    "rolling-preference-compact.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "rolling-preference-recovery.mjs": "b88264df9cde252a1558991b668aee2b349ac8bf118184ab48f560fec8a42c54"
+  },
+  "changedInstalledPaths": [
+    "rolling-preference-recovery.mjs"
+  ],
+  "independentVerification": {
+    "exactD22FourBlobsAndE71TwoBlobsMatched": true,
+    "physicalOwnDependencyTree": true,
+    "allInstalledTargetNlink1": true,
+    "tenPredecessorBackupsMatched": true,
+    "eightOriginalBackupsMatched": true,
+    "protectedBindingsTotal": 1151,
+    "currentProtectedBindingsMatched": 1149,
+    "currentGeneratedDifferences": {
+      "apps/dist/aztec_bundle.js": "63be88510d8a751f355cd09411d2d544e3bed06e375401a5abb6a265c2845f9e",
+      "apps/dist/sdk-manifest.json": "6d163b9c1b3aa12c209c63a39ec16d1d5deec87d5764198e98cf127b79acbcc1"
+    },
+    "unexpectedSourceOrDependencyChanges": [],
+    "preparationAndApplyHashesMatchPostcheck": true
+  },
+  "evidenceHashes": {
+    "preparation.json": "4e895cabfd399c2928366f6d23c248e04abcdd234276bf0762d8dba0c3313d87",
+    "postcheck.json": "5dec1aa5812d5dca32a72640750f59ff1916c7df92a95733b0cc270d901cc67c",
+    "apply-result.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apply-result-corrected.json": "37d7de56097f84a053387b3e41830bcfcfb95a081b2c66e6e2fd7e20eaeb95de",
+    "failed-invocation.json": "07a17928cca9a37a15a58a2a69ca43e36608e4af2ee3bc749bde1dd3f8feb374"
+  },
+  "temporalQualification": "Historical install postcheck records1151 unchanged. Current review matches1149; SDK bundle and manifest now differ, consistent with subsequent normal generation. Those outputs are not accepted by this install review; actual normal build receipts and all output closure remain separate. Parent notified immediately.",
+  "invocationFailureDisposition": "First invocation omitted explicit CLI root and rejected usage before mutation. Empty output and failure record retained. Restored pristine8/helpersabsent was valid; corrected explicit owning-root application now independently verifies complete8+2 patched closure. Not a hidden failed patch or mixed closure.",
+  "carry": [
+    "Exact four d22 blobs carry reviewed169 component count-corrected evidence and finite matched HTTP2pass9explicit-skips result; neither implies installed distribution by itself.",
+    "Exact two e71 blobs retain original cold/public check bodies and subsequent accounting/cleanup with boundedCold public-first scheduling only.",
+    "All14b native/bootstrap and other tracked source bytes unchanged by six-path composition."
+  ],
+  "requiredNext": [
+    "Affected combined fixture/cold-reader/actor checks including eight ordering tests on this exact installed candidate.",
+    "Normal SDK, frontend and wallet builds and complete source/output/served/artifact/catalog rehashes; old manifests cannot qualify d22.",
+    "Exact final generated candidate and launcher review before one unchanged540s4GiB/default1 genuine relationships run.",
+    "Fresh final accounting/conservation and all original five effects/public/cold/privacy/cleanup assertions remain mandatory."
+  ],
+  "limits": [
+    "No genuine execution authorized by this source/install review.",
+    "No monotonic extension/reorg HTTP or whole-history capacity acceptance.",
+    "No native cloud qualification, compiler diagnostic clearance or production approval."
+  ]
+}

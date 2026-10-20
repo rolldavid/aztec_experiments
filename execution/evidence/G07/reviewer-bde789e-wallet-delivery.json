@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "candidate": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "base": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+  "originalCandidate": "bde789ec719a9703514ef452434d9c11f32e54bd",
+  "verdict": "approve exact source and normal generated wallet closure; actual cold acceptance pending",
+  "requirements": [
+    "RC26",
+    "RC40",
+    "G07-A08"
+  ],
+  "sourceHashes": {
+    "apps/rolling/start.mjs": "797f2227ee3a1dab3d73bc7610754d4240829a7c0ed48bc197b3642aa7d97a0e",
+    "apps/rolling/start.test.mjs": "e4db1b983923a83b8046d8fbcf05035a006435a87912e23eb8e0132aa2abc16d",
+    "apps/rolling/wallet-runtime.mjs": "89e906b46ad801d54d5cf40d466fc586119ccf2422787cf9be8297391e24b500",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "c29d1c185672dec32226d9a3dbe49493ad18c43900dfa37651bf6c3ea0a74e67"
+  },
+  "findings": [],
+  "assessment": [
+    "Public scripts and integrity-bound JSON artifacts have finite 60000ms loader deadlines; runtime metadata and funding relay requests retain 30000ms deadlines. Failed loading remains cached and requires explicit reload; no fallback or hidden retry was added.",
+    "Expected decoded sizes, SHA-256/SRI, redirect refusal, omitted credentials, strict JSON decoding, CSP/COOP/COEP/CORP and the original canonical/account guards are unchanged.",
+    "Server preserves one read/compressor owner with bounded 32 waiters and independent 128MiB outgoing byte ownership. Read/compressor ownership releases before socket delivery; bytes release on finish, close, error or the finite 60000ms delivery deadline. The deadline begins after asset read/compression and is not an end-to-end server request guarantee.",
+    "The 31-worker burst and paused identity-client regression pass. 128MiB per-asset and aggregate outgoing limits and bounded gzip cache remain unchanged.",
+    "Final 6b169 differs from bde789 only in the corrected 60s explanatory comment; all four changed paths are accounted for."
+  ],
+  "independentChecks": [
+    {
+      "kind": "existing HTTP server tests",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 131.620416,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-delivery-budget/reviewer-server.log",
+      "sha256": "b702de5bd17d168c8dba3fdb71641a14c6f318832c32889316345c8881b8ee84"
+    },
+    {
+      "kind": "existing selected funding and production-loader controlled DOM/fetch/timer tests",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 180.491666,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-delivery-budget/reviewer-runtime.log",
+      "sha256": "b2ccefb17a5e940f012e4a1efb780b0b473852d3d32afc9260451e164b3c4c59"
+    }
+  ],
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-delivery-budget/packet-final.json",
+    "sha256": "91c30d19f715993b0d78f077c09eb330529775096a39b78ed552093bed5e4922",
+    "sourceAndPriorLogHashesVerified": true
+  },
+  "limits": [
+    "No Chrome, native service, cloud operation, generated build or full cold-recovery run was performed by the reviewer.",
+    "60s is per public asset. Sequential assets can exceed the unchanged 120s whole-cold requirement; settings and controlled tests do not qualify RC40 performance.",
+    "Original worker before-regression failures are preserved, not reclassified as passing."
+  ],
+  "cleanup": {
+    "temporaryDependencyLinkRemoved": true,
+    "noInstalledDependencyMutation": true
+  },
+  "generatedClosure": {
+    "leadSource": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+    "manifestSha256": "f17ed446e45fc77d3c68dbcf727b154d0ecb64056640f614dfaa46f8fc3f3148",
+    "inputsIndependentlyVerified": 97,
+    "filesIndependentlyVerified": 25,
+    "runtimeSha256": "fe1e40b9b34adaad744b269123bb8e0b5ee54a264b29deb618bf6c725768c652",
+    "runtimeBytes": 289359,
+    "leadStaticLoaderEvidence": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/wallet-delivery-integration/generated-closure.json",
+      "sha256": "2b0f3124022c8e569534f79ed576e017c5b94fe3c89691e6bf7e0f5a4ef1d7de",
+      "scripts": 9,
+      "proofsEnabled": false
+    },
+    "buildLog": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/wallet-delivery-integration/wallet-build.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    },
+    "noReviewerBuild": true
+  }
+}

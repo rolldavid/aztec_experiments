@@ -1,0 +1,58 @@
+✖ reviewer current a699 late predecessor head must prevent replacement broadcast (1361.916083ms)
+✖ reviewer current a699 late predecessor marker must prevent replacement broadcast (1252.565083ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3994.767958
+
+✖ failing tests:
+
+test at .build/reviewer-a699-replacement-probe.mjs:786:41
+✖ reviewer current a699 late predecessor head must prevent replacement broadcast (1361.916083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   rejected: false,
+  +   sendDelta: 1
+  -   rejected: true,
+  -   sendDelta: 0
+    }
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/reviewer-a699-replacement-probe.mjs:801:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { rejected: false, sendDelta: 1 },
+    expected: { rejected: true, sendDelta: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at .build/reviewer-a699-replacement-probe.mjs:786:41
+✖ reviewer current a699 late predecessor marker must prevent replacement broadcast (1252.565083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   rejected: false,
+  +   sendDelta: 1
+  -   rejected: true,
+  -   sendDelta: 0
+    }
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/reviewer-a699-replacement-probe.mjs:801:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { rejected: false, sendDelta: 1 },
+    expected: { rejected: true, sendDelta: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

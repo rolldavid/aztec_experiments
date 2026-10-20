@@ -1,0 +1,9 @@
+{
+  "CommandId": "a5389980-9e22-4b0f-b093-711b6a251fed",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-15T03:01:51.037Z",
+  "ExecutionEndDateTime": "2026-10-15T03:01:51.037Z",
+  "StandardOutputContent": "MainPID=0\nExecMainStatus=1\nActiveState=failed\n\n{\"passed\": false, \"failure\": null, \"cleanupComplete\": false, \"nativePortsReleased\": null, \"leaseReleased\": null, \"elapsedMs\": 586405, \"cleanup\": [{\"stage\": \"reader\", \"passed\": true}, {\"stage\": \"index-before-reader\", \"passed\": true}, {\"stage\": \"query\", \"passed\": true}, {\"stage\": \"native\", \"passed\": false, \"name\": \"AggregateError\"}, {\"stage\": \"barretenberg\", \"passed\": true}, {\"stage\": \"barretenberg-sync\", \"passed\": true}]}\n{\"passed\": false, \"failure\": {\"stage\": \"validate-wallet-assets\", \"name\": \"Error\", \"code\": \"ENOENT\"}, \"cleanupComplete\": true, \"nativePortsReleased\": true, \"leaseReleased\": true, \"elapsedMs\": 131903, \"cleanup\": [{\"stage\": \"reader\", \"passed\": true}, {\"stage\": \"index-before-reader\", \"passed\": true}, {\"stage\": \"query\", \"passed\": true}, {\"stage\": \"native\", \"passed\": true}, {\"stage\": \"barretenberg\", \"passed\": true}, {\"stage\": \"barretenberg-sync\", \"passed\": true}]}\n{\"walletManifestExists\": true, \"sdkManifestExists\": true}\n",
+  "StandardErrorContent": ""
+}

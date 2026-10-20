@@ -1,0 +1,36 @@
+{
+  "type": "read-only conditional restoration assessment",
+  "sourceRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "verdict": "isolated_matching_backup_is_sound_subject_to_baseline_verification",
+  "sourceBasis": [
+    {
+      "path": "plugins/devnet/network.mjs:285-296",
+      "finding": "Persistent startup validates stopped metadata/toolchain/funding identity/ports and writes starting in the selected directory; metadata is not proof of native database consistency."
+    },
+    {
+      "path": "plugins/devnet/network.mjs:327-342",
+      "finding": "Native snapshot load is hash-bound before and after load; exact L1 head and pending/proven are compared before normal operation."
+    },
+    {
+      "path": "plugins/devnet/network.mjs:379-384",
+      "finding": "The native node consumes directory/node plus development world-state configuration from the same directory. Swapping only L1 snapshot or flipping running to stopped can mix checkpoint generations."
+    }
+  ],
+  "conditions": [
+    "Use a NEW private isolated destination populated solely from the original complete stopped1572 backup, with matching native/world-state/archive databases and original metadata. Validate complete inventory/path/hash/mode provenance; never overlay onto failed1575/advancedDB.",
+    "Preserve the advanced1575-run directory, dumps, journals, metadata and failure receipts unchanged for recovery/audit. Name this a restored baseline copy, not recovered latest state.",
+    "Reconcile exact process/cgroup/port ownership with fresh evidence before opening either directory. Apply destination-only path/port adaptations already reviewed; no lease reclaim based on age.",
+    "Verify original1572 snapshot hash/head/protocol and canonical accepted effects, including original preference revisions3 at1517\u20131519, against the retained backup evidence and normal existing startup checks. Confirm required native world-state/archive consistency; no manufactured metadata/cursor.",
+    "Establish that work after1572 contains no accepted wallet/payment/model effects needed by this cold-recovery acceptance. If later effects exist or cannot be accounted for, preserve them and do not use baseline as current authoritative state or replay later intents.",
+    "Run only existing bounded normal retained startup/read-only cold acceptance, with actual owner as systemd MainPID, verified mixed signal ordering, awaited cleanup and fixed stage diagnostics. Preserve failclosed behavior and existing setup/product deadlines.",
+    "Cold outcome applies to this explicit1572 baseline plus normal subsequent progression, with exact source/runtime bindings. It cannot establish successful recovery of the failed1575 advanced state."
+  ],
+  "notPerformed": [
+    "No remote reads/writes, native loads, backup transfer, database validation or transactions by reviewer",
+    "No new harness or independent repeat qualifier required solely for this recommendation"
+  ],
+  "limits": [
+    "Conditional approval does not claim backup inventory/nativeDB contents already independently validated here",
+    "If original full matching backup provenance cannot be established, restoration remains blocked; a phase flip is not a substitute"
+  ]
+}

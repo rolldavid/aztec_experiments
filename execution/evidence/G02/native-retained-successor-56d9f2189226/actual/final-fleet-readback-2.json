@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T07:15:13.466370+00:00",
+  "fleetId": "fleet-8f167360-a3df-4a04-89c7-9d7d28e83c0c",
+  "fleetState": "deleted",
+  "terminateInstancesWithExpiration": true,
+  "resources": {
+    "instances": [
+      {
+        "id": "i-05ca1ad4ebeaf06f8",
+        "state": "terminated",
+        "controlsVerified": false,
+        "rootMappingVerified": false,
+        "shutdownReadback": "not-applicable-terminated",
+        "volumes": [],
+        "rootVolumeObserved": false
+      }
+    ],
+    "volumes": [],
+    "instancesTerminated": true,
+    "volumesAbsent": true
+  },
+  "readOnly": true,
+  "deleteRepeated": false
+}

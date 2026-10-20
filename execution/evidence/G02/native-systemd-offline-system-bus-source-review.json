@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourcePacketSha256": "5e7c25e8aa2a490ec3be7926bafca67e692ae0b009ed1e62b9bec0ea639d102a",
+  "runnerSha256": "636ca1e3f93ddb6fd8d30075fc24701b22eef0fa3ade30d9851ce182217cff7a",
+  "verdict": "eligible-for-controlled46-runner-preparation",
+  "checks": {
+    "packetFileHashes": true,
+    "inventory46Exact": true,
+    "driverEqualsReviewedAndControlledBusCandidate": true,
+    "embeddedDriverAndSubsetExact": true,
+    "priorRunspaceFunctionsUnchangedExceptMainImageSizeBinding": true,
+    "priorDriverFunctionsUnchanged": true,
+    "threeNewTestsMeaningful": true
+  },
+  "image": "sha256:b1e7de12ba7c3261f8b8283f807ed56153f31e46fce16a8decfb31b84f0d456a",
+  "imageClosureSha256": "23251cfcfe792455235cfeffd5e13c699fd1fb098e4f06568ccbeed4d1210e31",
+  "scope": [
+    "Only actual image/size/closure/source pins and already-reviewed bus gate composition change.",
+    "Old 43 phase-unit tests explicitly isolate the separately controlled bus helper; three new tests bind actual image, gate order and failure halting.",
+    "Original production subset/case/classifier, confinement, receipt reader, cleanup and bounds preserved."
+  ],
+  "bounds": {
+    "seconds": 60,
+    "workSeconds": 43,
+    "cleanupSeconds": 17,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "aggregateTmpfsMiB": 67,
+    "network": "none"
+  },
+  "remainingGates": [
+    "Exact controlled runner review and parent grant",
+    "Actual 46-case receipt review",
+    "Separate parent grant for one offline run"
+  ],
+  "limitations": [
+    "No tests or Docker executed by reviewer",
+    "No native BB or paid qualification"
+  ]
+}

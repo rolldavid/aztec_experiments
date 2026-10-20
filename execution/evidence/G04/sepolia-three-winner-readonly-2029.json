@@ -1,0 +1,137 @@
+{
+  "at": "2026-10-14T20:26:54.240Z",
+  "scope": "Read-only three known Sepolia nonce winners; zero signing or transport mutations",
+  "providerHost": "sepolia.gateway.tenderly.co",
+  "sourceRevision": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+  "beforeHashes": {
+    "plan.json": "391165e4efe54834c89255b35baf52a0ecd6152798b0c0e18e140aea7f305437",
+    "state.json": "7018443d3e1ca35baa8817dbc07d17ccc590d63a8d191dd028122feedf423229",
+    "nonce15-resolution.json": "7985a4903d421157220b02353314f36b5b5b7d8110fdba2cfafb21239ff96fec",
+    "state.json.cancel-approve-usdc.json": "1fe7f30769019127174410ef89cdf33e9ff9a4c077b1164e14931a8238565d54",
+    "nonce15-successor.json": "ddd147001d1654fa940753c0ebd4dfe7ad52e1cd73481e6fd270273fcd566f70",
+    "state.json.successor-cancel-approve-usdc.json": "b7cb05dce15ebe7ed825e5f7a691d089117fc7d61a7e8e76f1a2f0260cf70be1"
+  },
+  "transactions": {
+    "original": {
+      "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+      "signedIdentityValid": true,
+      "transaction": "absent",
+      "receipt": "absent",
+      "broadcast": null
+    },
+    "first": {
+      "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+      "signedIdentityValid": true,
+      "transaction": "absent",
+      "receipt": "absent",
+      "broadcast": null
+    },
+    "next": {
+      "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+      "signedIdentityValid": true,
+      "transaction": "absent",
+      "receipt": "absent",
+      "broadcast": null
+    }
+  },
+  "observations": {
+    "network": {
+      "ok": true,
+      "elapsedMs": 129
+    },
+    "latest": {
+      "ok": true,
+      "elapsedMs": 313
+    },
+    "nonceLatest": {
+      "ok": true,
+      "elapsedMs": 727
+    },
+    "finalized": {
+      "ok": true,
+      "elapsedMs": 738
+    },
+    "noncePending": {
+      "ok": true,
+      "elapsedMs": 1000
+    },
+    "balance": {
+      "ok": true,
+      "elapsedMs": 1319
+    },
+    "originalTx": {
+      "ok": true,
+      "elapsedMs": 234
+    },
+    "originalReceipt": {
+      "ok": true,
+      "elapsedMs": 436
+    },
+    "firstTx": {
+      "ok": true,
+      "elapsedMs": 394
+    },
+    "firstReceipt": {
+      "ok": true,
+      "elapsedMs": 591
+    },
+    "nextTx": {
+      "ok": true,
+      "elapsedMs": 613
+    },
+    "nextReceipt": {
+      "ok": true,
+      "elapsedMs": 820
+    },
+    "usdcBalance": {
+      "ok": true,
+      "elapsedMs": 240
+    },
+    "usdcAllowance": {
+      "ok": true,
+      "elapsedMs": 436
+    },
+    "feeBalance": {
+      "ok": true,
+      "elapsedMs": 403
+    },
+    "feeAllowance": {
+      "ok": true,
+      "elapsedMs": 608
+    },
+    "anchorStable": {
+      "ok": true,
+      "elapsedMs": 405
+    }
+  },
+  "chainId": "11155111",
+  "latest": {
+    "number": 11915640,
+    "hash": "0x3a569b1013c9b7e84a9fbd665b51b20d0c1aa220eff6385dc3ed0b8025830e5b",
+    "timestamp": 1792009608,
+    "baseFeePerGas": "18"
+  },
+  "finalized": {
+    "number": 11915562,
+    "hash": "0xd159014157ab2e8ed948db92ff1e61ef99101c4460478ad1f0923b8b4bef1250",
+    "timestamp": 1792008660
+  },
+  "nonce": {
+    "latest": 15,
+    "pending": 15
+  },
+  "balanceWei": "58876674761116580",
+  "inventory": {
+    "usdc": {
+      "balance": "48000",
+      "allowance": "0"
+    },
+    "fee": {
+      "balance": "500000000000000000000",
+      "allowance": "10000000000000000000"
+    }
+  },
+  "anchorStable": true,
+  "readonly": true,
+  "originalFilesUnchanged": true
+}

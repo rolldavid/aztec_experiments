@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "planOnly": true,
+  "private07DirectoryCreated": false,
+  "capabilitiesCreated": false,
+  "uploadSent": false,
+  "launchAllowed": false,
+  "budget": {
+    "reservedUsd": 25,
+    "cumulativeUsd": 185.28,
+    "remainingUsd": 114.72
+  },
+  "sourceCommit": "96825e16271baf7d81442415565fe51b1533737e",
+  "archive": {
+    "archive": "/private/tmp/rolling-prover-release-startup07-20261012.tar.gz",
+    "archiveBytes": 383879773,
+    "archiveSha256": "fc290658514a36c88bf194c9cfc156f75a402fe42f1d5e493476e6ff2fb10ee4",
+    "manifestSha256": "628a51cff3337a3588abb923d5902cc568f24b9da98067cc03390f6c22fbf5da",
+    "bootstrapSha256": "68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af",
+    "startupStageHelperSha256": "cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49"
+  },
+  "configurationReferences": {
+    "proposedPrivateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-07",
+    "priorTemplate": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-06/launch-template-reference.json",
+    "historicalPrivateConfiguration": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-06/bootstrap.json",
+    "qualificationAndNetworkDefaults": "Reviewed bootstrap.py QUALIFICATION/NETWORK constants; do not copy old generated deadlines/capabilities",
+    "provider": "message-board-deploy via existing AWS CLI or @aws-sdk/credential-provider-node defaultProvider; no credential values copied",
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "bucketRegion": "eu-west-2",
+    "expectedOwner": "052665140763",
+    "proposedArchiveKey": "releases/rolling-96825e-20261012-07/runtime.tar.gz",
+    "proposedReceiptKey": "receipts/rolling-node-20261012-07/final.json"
+  },
+  "existingReviewedHelpersToAdaptNotExecute": {
+    "prepare06-local.py": "687f235a928c763a7c7a95a75766805c33b8b76ccaed34e08276e20fb32ce004",
+    "prepare06-upload.py": "c5baee0b0d197bd69d7e65f9729e39ae354d3bcbb6ffe844c1e98c550ef40759",
+    "prepare06-capabilities.mjs": "e67af7a503b595086b88deee60c0724ca6b7eddff1b45cbdf7745350dbc80d20",
+    "verify06-payload.py": "15119b600ce0bedb30d80d6a25fe182e911dd3baacc97372999985544bc3267c",
+    "launch06.py": "a5bd10e5294a07914763458e94a0efe3d1eace017f0f4cd6a166632310100418"
+  },
+  "stepsAfterScopedGrants": [
+    "After package review, create fresh private07 directory0700; exclusive O_NOFOLLOW0600 records with file and parent fsync. Copy only validated nonsecret template fields; derive source constants from reviewed968 bootstrap. Local upload-intent binds exact immutable key, source, archive hash/bytes/manifest, expected owner and attemptsAllowed1. No old campaign helper executes unchanged.",
+    "Before upload, rehash archive and check package review, current185.28ledger reservation, source pins, fresh STS account, no instances/volumes/active Fleets, pluginready active0. Read immutable-key absence. Persist exclusive upload-send-intent BEFORE single retry-disabled AWS PutObject, IfNoneMatch*, AES256, full SHA256 checksum and ExpectedBucketOwner. On unknown outcome reconcile exact key/checksum/version only; never replay. Save returned version/checksum then exact-version HEAD verify full bytes/checksum/encryption.",
+    "After verified upload, use existing provider in memory and silent logger to sign exact-version GET and exact receipt PUT only. Credential expiry must exceed budgetStop+60sec; capability lifetime covers all deadlines within provider expiry. No actualreceiptPUT probe required: existing scoped format succeeded in05 and06. Range GET bytes0-1023 must206, expected Content-Range, exact version and local archive prefix; redirects:error.",
+    "Only now choose fresh integralUTC createdAt. budgetStop=created+3600sec,commissioningStop=created+1800sec; qualifier deadline=min(budgetStop-60sec,created+105min)=created+59min; readiness=min(qualifierDeadline-900sec,created+90min)=created+44min. Fleet request ValidUntil exactly budgetStop with TerminateInstancesWithExpiration=true; no extension. Store fullprivate config0600 without printing URLs.",
+    "Generate actual gzip from reviewed bootstrap and private config; require<=16384bytes. Independently gzip/LZMA decode, shell syntax/Python parse and exact regeneration; CONFIG equality, SOURCE/PINS bootstrap68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af/catalog1c01/stagehelpercc13/manifest628a allbind. Assert exact split ordinary/debug env, strict trace/blob/realproof, 50Mbps, persistent timers, dedicated admin capability, source masking, no restart. Secret capabilities absent from root attestor. Return only hashes/size/public deadlines for independent review. If oversized/stale stop; no truncation or control removal.",
+    "After separate exact-payload launch grant, fresh preflight including live SG/AMI/non-userdata template fields, noIAM/noSSH and current capability/deadline margin. Persist exclusive launch-template intent with uniqueclienttoken/name/inputhash before one create. Verify returned template exact bytes/permissions. Persist independent Fleet intent/clienttoken/requesthash before one create-fleet. AWS_MAX_ATTEMPTS1. Unknown outcome reconciles token/name; no recreation.",
+    "Immediate actual Fleet request type/ValidUntil/termination readback, exact instance shutdownterminate, encrypted volumesDOT, no instanceprofile/extraingress. Verify host persistent budget/commissioning timers50Mbps and exactpins from sanitizedreceipt. No publicroute/proverjobs. Bounded projectedmonitor only; terminalfailure/controlfailure/deadline triggers authorized owned cleanup, exactlyonce intents. Verifyterminated instance, volumesabsent,Fleetdeleted; preserve finalstage/qualification receipts and reconcile actualcostbound lead-only."
+  ],
+  "pendingActualChecks": [
+    "New07 upload/version/checksum",
+    "Actual private capability lengths/expiry and gzip<=16384",
+    "Absolute deadlines and independent payload review",
+    "Actual cloud/host readbacks; no current07resource exists"
+  ],
+  "readback": {
+    "path": "operator07-preparation-plan-readback.json",
+    "sha256": "c0c1af576a7e52584d90e3d59973545e4847c95e274bd5efee7872b12c658531"
+  },
+  "limitations": "Plan does not grant mutation. Archive immutable; no source, generated assets, shared services, prior private journals or ledger changed."
+}

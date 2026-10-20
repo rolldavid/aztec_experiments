@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "a9ef118898a48fac0b381fe6e46f6c6c6e16322d",
+  "base": "eec415995a35d9653c0a1fb6dc5c7c038e1325bf",
+  "disposition": "Source eligible for bounded affected reader and actual SDK/ACIR component checks after parent grant; no runtime or integration acceptance",
+  "scope": "Exact immutable Git blobs, not current diagnostic worktree edits; source-only review with no process/native execution",
+  "packetSha256": "f5b011ab6eb5b43f74a0db11e8b8bbc104c2693b90ceb752f1e1a8aa41580532",
+  "bindings": {
+    "scripts/patch-pxe-preference-page.mjs": "5e9ae85728104fb63cf01726e6608375312704acbd9947d6142407508f62d328",
+    "scripts/test-pxe-preference-page.mjs": "797f20aa3bb6adf7e6c2d5c811cc23ddb0d19d092f5592fc19ad687e77d25a17",
+    "shared/rolling/cold-preference-reader.mjs": "51cba1368e538e83a8b1af74d2dcc1d2454ffda15b6cd5205e549c3ff715a189",
+    "shared/rolling/cold-preference-reader.test.mjs": "77aaaaa44ba73320d3d828a8dcfc1a9619f86e71dbaf91bae18266f1dcca157b"
+  },
+  "generatedRecoverySha256": "a0ec8db84b8148873319dde6bbb5c438b9104420e06577a930c11127918de283",
+  "unchangedEightTransformSection": true,
+  "assessment": [
+    "Promotion is separate from suffix scanning and bounded to the persisted physical page locator of at most8 logs, retaining ordered compact authentication and original page/NoteService validators at the new anchor.",
+    "Old canonical anchor must remain canonical at status and final commit. Same database/generation plus complete scan and no pending records required; older format or fork/incomplete state resets honestly.",
+    "Fresh empty staging is required before replay and exact former nullifier/slot/owner/contract/tx/block metadata must be staged afterward; committed-note presence alone cannot authorize promotion. Original NoteService re-computes hashes, verifies effect membership and refreshes nullifier status at new anchored block.",
+    "Original NoteStore reuses existing keyed notes on addNotes; this is safe here only because validation occurs first and empty-stage-to-exact-former check proves the original page reached validator. Replay events are DB-idempotent and excluded from new mailbox records.",
+    "Former candidate remains only while original validated status is active. Suffix cannot silently choose among different active candidates. Exact-nullifier lookup retains contract/owner/scope/slot boundary and original active/nullifier filtering.",
+    "Sequence0 previous checkpoint binds exact prior complete database/epoch/sequence/anchor/head. Reader validates decrypted prefix against its complete checkpoint, resets marker classification and resumes only after exact match; missing cache restarts.",
+    "Lost promotion response returns persisted sequence0 without a second utility; subsequent sequence/CAS/mailbox/canonical guards remain. Contributor-settle snapshots and original all-store commit/rollback are preserved."
+  ],
+  "requiredRuntime": [
+    "Execute all original SDK/ACIR semantic cases plus new monotonic cases without skips.",
+    "Actual consumed former head must gain new-anchor nullifier emission; exact new head and suffix event order must complete.",
+    "Unspent former head on empty append must remain unchanged with no duplicate event fold.",
+    "Zero-admitted replay, wrong locator/block, two-active-head response, contributor veto and late canonical/context invalidation must fail with cursor/note/event/emission rollback.",
+    "Reader real AEAD/CAS tests must cover lost reply, lost CAS, absent predecessor, mismatched epoch/sequence/head/anchor, markers and post-CAS invalidation."
+  ],
+  "limits": [
+    "Tests are currently unrun; source review is not evidence of passing candidate.",
+    "Actual ACIR tests retain labelled canonical chain/node and fake IndexedDB; not genuine chain or Chromium.",
+    "Not a fix for initial57c timeout; that needs separate production HTTP/SDK reader measurement.",
+    "No installation or normal SDK build approved by this report. Changed generated helper requires current literal-pinned build/manifests and exact owning-tree installation review before consumer use.",
+    "Full cold capacity, deep fork/retention, O(current choices) AEAD cost, authentication audit/compiler260 holds remain."
+  ],
+  "recommendedBound": "Affected pure reader suite then one parent-scheduled actual SDK/ACIR opt-in <=180s/4GiB, isolated source/dependencies/outputs, before any full application retry."
+}

@@ -1,0 +1,69 @@
+{
+  "base": "289fd11d65156469ea8748e439c00047f378eac2",
+  "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+  "task_id": "G13-native-operator-rpc",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "289fd11d65156469ea8748e439c00047f378eac2",
+      "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+      "task_id": "G13-native-operator-rpc",
+      "id": "native-operator-rpc",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js Node24 --test --test-concurrency=1 --test-name-pattern=\"development native RPC|development operator RPC|development compact shutdown\" plugins/devnet/operator-test.mjs",
+      "environment": "macOS, installed SDK6.0.0-rc.3, actual SDK transport with labelled native delegates",
+      "observed": "Three independent focused RPC checks pass2.34s; actual chain check separately pending",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/native-operator-rpc-20261018/review.json",
+          "sha256": "8e819064471e034d34a607a565088ffb1fc4e68974bebebaa755971fb00b512e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "289fd11d65156469ea8748e439c00047f378eac2",
+    "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+    "task_id": "G13-native-operator-rpc",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "controls-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/native-operator-rpc-20261018/review.json",
+        "sha256": "8e819064471e034d34a607a565088ffb1fc4e68974bebebaa755971fb00b512e"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "289fd11d65156469ea8748e439c00047f378eac2",
+      "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+      "task_id": "G13-native-operator-rpc",
+      "id": "RC01-native-operator-controls",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/native-operator-rpc-20261018/review.json",
+          "sha256": "8e819064471e034d34a607a565088ffb1fc4e68974bebebaa755971fb00b512e"
+        }
+      ]
+    },
+    {
+      "base": "289fd11d65156469ea8748e439c00047f378eac2",
+      "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+      "task_id": "G13-native-operator-rpc",
+      "id": "RC38-development-isolation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/native-operator-rpc-20261018/review.json",
+          "sha256": "8e819064471e034d34a607a565088ffb1fc4e68974bebebaa755971fb00b512e"
+        }
+      ]
+    }
+  ]
+}

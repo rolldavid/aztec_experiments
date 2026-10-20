@@ -1,0 +1,20 @@
+✔ complete paginated thread includes earlier Bok reply and excludes later messages (2.940542ms)
+✔ changed revision never returns partial history (4.767958ms)
+✔ reorg never returns partial history (0.914083ms)
+✔ unconfirmed never returns partial history (0.1125ms)
+✔ projection ahead of finality despite old posts never returns partial history (0.112292ms)
+✔ missing root never returns partial history (0.208167ms)
+✔ duplicate never returns partial history (0.37625ms)
+✔ reordered never returns partial history (0.212375ms)
+✔ wrong root never returns partial history (0.45125ms)
+✔ removed prior post is a tombstone without hidden text (0.212333ms)
+✔ retained paid-context guard fences changes after summary and reservation (2.039166ms)
+✔ own reservation may advance complete projection without replacing original context (0.156208ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.688584

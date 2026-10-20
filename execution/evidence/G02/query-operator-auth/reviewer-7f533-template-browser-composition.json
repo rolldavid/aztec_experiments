@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "candidate": "7f5331051544695ed706f9a5d04c5dd3a61cad8b",
+  "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "verdict": "approved",
+  "findings": [],
+  "requirements": [
+    "RC32",
+    "RC40",
+    "G11 source mirror",
+    "W02 browser verification"
+  ],
+  "scope": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/github-app-broker.mjs",
+    "plugins/test/github-app-broker.test.mjs",
+    "scripts/test-w02-browser.mjs"
+  ],
+  "sourceSha256": {
+    "plugins/DEPLOYMENT.md": "537a0831ca1e2fae048f42cf5fd25cdbce751060bf733349c348b534994a71eb",
+    "plugins/github-app-broker.mjs": "b0b761df8ad257891793fd5a8c793b1df35fd6c70a56f92a969a3df727540ecb",
+    "plugins/test/github-app-broker.test.mjs": "19520b4024363303c7d9b0a7520debf60ce3be5da5ef319ed719826dc962efa4",
+    "scripts/test-w02-browser.mjs": "a9bb36f010c69854e9b69cdc0d40edad39754c61e368846543236321f5aa1ecc"
+  },
+  "checksPerformed": [
+    "Verified all three GitHub component blobs exactly match independently reviewed1afdd0fd; carried forward scoped-token, Actions-disabled, source capture and durable uncertain-no-replay findings/checks.",
+    "Read only browser change and surrounding existing wallet assertions: optional CHROME_PATH is forwarded as a literal executablePath, otherwise installed Playwright chromium default; no shell interpolation, test deletion or changed pass condition.",
+    "Confirmed current CI installs matching Playwright Chromium using npx --no-install playwright install --with-deps chromium before existing bounded W02 invocation.",
+    "Read combined broker log:68 passed,0 failed,0 skipped,6863.016ms. No competing browser or live API operations performed."
+  ],
+  "evidence": {
+    "componentReview": "execution/evidence/G02/query-operator-auth/reviewer-1af-template-broker.json",
+    "combinedBrokerLog": ".build/rolling-devnet-diagnostics/github-template-combined.log",
+    "combinedBrokerLogSha256": "ee2839a4483e95a1d4dd125a168ec7df3cee825a43d0c03393446b96e4a34433",
+    "browserVerification": "Pending actual bounded run at review time; missing/pending is not pass."
+  },
+  "limitations": [
+    "Approval covers exact source composition. Integration must still require actual W02 result and normal candidate-bound gate; no browser pass is asserted by this report.",
+    "Actual template generation reportedly returned422 after creating an empty private repository. This review does not establish automatic provisioning or mirror success; preserve original intent and reconcile without a second POST.",
+    "User-authorized selected-repository installation update and any assisted initialization require separately recorded actual evidence. No broad permissions or real-proof release gates are changed."
+  ]
+}

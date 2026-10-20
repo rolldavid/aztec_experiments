@@ -1,0 +1,185 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "contractInputRevision": "90a1b3e9783c9984fcd6810969fa213225b64c6c",
+  "currentApplicationRevision": "05ccd65803ef9860c54ad075e36416faf5bf3ce9",
+  "verdict": "normal_build_and_TXE_evidence_verified_not_cryptographic_assurance",
+  "evidenceHashes": {
+    "execution/evidence/G05/profile-canonical-build.json": "d74e3d85dda6c8e97a2b04cdab53d61c22ce64ab61b6821e40574115808713a6",
+    "execution/evidence/G05/profile-canonical-build.log": "b34a8f3c7dc53a7e2dcb83124dd48096202bb63f1fa1c6ad7242761b7bc0be47",
+    "execution/evidence/G05/profile-rolling-build.json": "755f394346743b45b96c58df08d41c8d00c566a929acbaaccebd26f3cbe074b9",
+    "execution/evidence/G05/profile-rolling-build.log": "1de316850313573cbcc1da27ab14d78d681d9acc554ec36e0262abc8ae45753b",
+    "execution/evidence/G05/profile-full-txe.json": "df2c7bbd7112e8e5e59f041c68ea73285082110e731e333afc6b38b12137e557",
+    "execution/evidence/G05/profile-full-txe.log": "70a8523962eaea628799bc2d119bc8a10b4f1a06a572bd3399ba75813ddf65fa",
+    "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+    "execution/evidence/G06/bok-reply-build-1.log": "d09703c89a892f992c95ebcec6b38460c12f787160cc80768f8c8ddccd136233",
+    "execution/evidence/G06/bok-reply-txe-1.log": "a47e9e04792ddd022a8800956448804fd9e7caf56d0287da1e84fb24fa9bc29e"
+  },
+  "findings": [],
+  "builds": {
+    "canonical-build": {
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 2427248,
+      "failures": [],
+      "children": [
+        {
+          "role": "canonical-build",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "elapsedMs": 92925,
+      "ownedTreeAbsent": true,
+      "passed": true
+    },
+    "rolling-build": {
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 1975360,
+      "failures": [],
+      "children": [
+        {
+          "role": "rolling-build",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "elapsedMs": 115003,
+      "ownedTreeAbsent": true,
+      "passed": true
+    },
+    "full-txe": {
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 1341440,
+      "failures": [],
+      "children": [
+        {
+          "role": "rolling-txe",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "elapsedMs": 150143,
+      "ownedTreeAbsent": true,
+      "passed": true
+    }
+  },
+  "sourceBinding": "Five embedded local contract modules exactly match90a1 git source. Later05ccd changes application JS only; contract inputs remain unchanged.",
+  "verificationKeys": [
+    "authenticate_name",
+    "claim_deposit",
+    "create_subboard",
+    "post",
+    "post_with_bok",
+    "register_name",
+    "screen",
+    "set_avatar",
+    "set_bio",
+    "set_like",
+    "update_portal",
+    "withdraw"
+  ],
+  "tests": {
+    "uniqueSucceeded": 151,
+    "previous106AllRetained": true,
+    "omittedPrevious": [],
+    "newCount": 45,
+    "claim": "Actual uninstrumented complete TXE log; no heavy retest performed"
+  },
+  "compiledStorageSlots": {
+    "portal_address": 1,
+    "config": 3,
+    "deposits": 14,
+    "posts": 15,
+    "post_count": 16,
+    "post_id_by_order": 17,
+    "post_exists": 18,
+    "post_time": 19,
+    "post_flag_deadline": 20,
+    "post_flagged": 21,
+    "post_policy_version": 22,
+    "post_records": 23,
+    "post_reason": 24,
+    "plugins": 25,
+    "moderator": 26,
+    "main_version": 28,
+    "main_rules": 29,
+    "registered_names": 30,
+    "names": 31,
+    "subboards": 32,
+    "like_state": 33,
+    "invocation_state": 34,
+    "profile_state": 35,
+    "avatar_moderation_state": 36
+  },
+  "storageContinuity": {
+    "sourcePrefix": "Entire43f9 Storage declaration exactly equals90a1 after removing only appended profile_state/avatar_moderation_state. Existing fields/types/order retained; current compiled roots35/36 follow invocation34.",
+    "limit": "No preserved pre-profile full compiled artifact compared in this review; continuity established from exact old source prefix/current compiled layout and unchanged pinned storage macros, not claimed old/new artifact byte comparison."
+  },
+  "diagnostics": {
+    "baseline": {
+      "occurrences": 83,
+      "classes": {
+        "Brillig function call isn't properly covered by a manual constraint": 75,
+        "Input to Brillig function is in a separate subgraph to output": 8
+      },
+      "sites": {
+        "messages/encryption/aes128.nr:356": 5,
+        "nullifier/utils.nr:18": 10,
+        "context/private_context.nr:561": 8,
+        "messages/encryption/aes128.nr:260": 6,
+        "note/note_getter.nr:173": 7,
+        "keys/getters/mod.nr:27": 6,
+        "messages/delivery/tag_derivation.nr:88": 6,
+        "oracle/get_contract_instance.nr:18": 10,
+        "context/private_context.nr:1188": 5,
+        "context/private_context.nr:829": 2,
+        "state_vars/public_immutable.nr:327": 8,
+        "messaging.nr:35": 1,
+        "history/storage.nr:26": 6,
+        "history/note.nr:46": 3
+      }
+    },
+    "current": {
+      "occurrences": 99,
+      "classes": {
+        "Brillig function call isn't properly covered by a manual constraint": 91,
+        "Input to Brillig function is in a separate subgraph to output": 8
+      },
+      "sites": {
+        "keys/getters/mod.nr:27": 8,
+        "context/private_context.nr:561": 10,
+        "oracle/get_contract_instance.nr:18": 12,
+        "messages/encryption/aes128.nr:260": 8,
+        "nullifier/utils.nr:18": 12,
+        "messages/delivery/tag_derivation.nr:88": 8,
+        "context/private_context.nr:829": 4,
+        "context/private_context.nr:1188": 7,
+        "note/note_getter.nr:173": 9,
+        "state_vars/public_immutable.nr:327": 8,
+        "messaging.nr:35": 1,
+        "history/storage.nr:26": 6,
+        "messages/encryption/aes128.nr:356": 3,
+        "history/note.nr:46": 3
+      }
+    },
+    "disposition": "99 compiler bug diagnostics at same14 pinned SDK locations as83baseline;91manual-constraint and8separate-subgraph. Occurrence counts changed with expanded private entrypoints. All remain open soundness/privacy assurance obligations. No suppression, no assertion that no new ACIR reachability exists.",
+    "existingRegisters": [
+      "execution/evidence/G14/constraint-disposition.json",
+      "execution/evidence/T01/compiler-diagnostic-coverage-001.md"
+    ]
+  },
+  "remaining": [
+    "Final artifact/inventory/catalog/profile permission pins and affected actual ABI/browser checks",
+    "Genuine new-profile/8192-byte avatar/moderation/replacement/fresh-recovery measurement",
+    "Specialist cross-circuit/compiler-diagnostic disposition, privacy and release gates"
+  ]
+}

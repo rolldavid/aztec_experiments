@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T05:01:50.944718+00:00",
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "verdict": "eligible-for-one-controlled37-run-subject-to-parent-slot-grant",
+  "sourcePacketSha256": "9b611391d9be73b0735cde04a6db7e513fb00f546520ba39a643c1681f2260ac",
+  "controlledPreparationPacketSha256": "5b08e00026dd71e2f1eb793b0b6fced1034395331378650178f12679e529630d",
+  "runtimePreparationSha256": "fa67623f5b7e6a8bd4e6db0feaa2ab5352be1d2026630933da396323fdbe8665",
+  "offlineRunnerSha256": "b05af6fb211fec58fa7048f7bf4ea2ffd7c53533d05994523aeff1eba2d4a1a6",
+  "driverSha256": "5f9c15a2addb767f5c306470b936694ad94fcf773ed965c2df0914d12c89c8fe",
+  "controlledRunnerSha256": "1eb02394af91b216e87e4f185a657ecd561cf9370048f309eb4eba6cad16feab",
+  "independentChecks": {
+    "allPacketFilesMatch": true,
+    "originalDriverFunctionsAstUnchanged": true,
+    "productionSubsetReaderBootTemplateByteIdentical": true,
+    "hostRuntimeOnlyFreshNameDeltaBeyondPins": true,
+    "exactAstInventory": 37,
+    "all31PriorLabelsRetained": true,
+    "protectedInputsRehashed": 864,
+    "mismatches": 0,
+    "controlledRunnerDirectoryOnlyDelta": true,
+    "childUnchanged": true,
+    "controlsSourceClean": true
+  },
+  "assessment": [
+    "Exact stdlib exception type identity avoids unknown subclass hooks; only own dictionary primitive returncode/timeout is inspected, no message or command/output data.",
+    "Return code admits exact int -255..255, excluding bool/coercions; timeout admits finite positive exact numeric values at most120. Other or malformed fields produce category-only output. OSError subclasses intentionally remain unknown.",
+    "Original outer exception is projected before the separately guarded failure observation; original failed outcome and atomic-save finally preserved. No extra systemctl command or replay introduced.",
+    "Six new groups include actual outer catch flow for original nonzero/timeout/OS/unknown exceptions with secondary diagnostic failure, plus hostile subclasses/scalars and privacy checks. Existing31 remain."
+  ],
+  "bounds": {
+    "controlledSeconds": 60,
+    "controlledRssKiB": 2097152,
+    "offlineSeconds": 60,
+    "offlineWorkSeconds": 43,
+    "offlineCleanupSeconds": 17,
+    "offlineMemoryMiB": 512,
+    "offlineCpu": 2
+  },
+  "findings": [],
+  "conditions": [
+    "Parent must explicitly grant sole serialized controlled slot.",
+    "Require actual37/no skips,864 protected hashes and positive owned-tree/temp cleanup.",
+    "Any actual offline container attempt remains separately gated by controlled outcome review and parent one-shot grant."
+  ],
+  "limits": [
+    "Source eligibility only; no reviewer runtime tests, Docker, systemd or provider actions.",
+    "Historical20680 is localized to timer reload but original failure class remains unknown; new diagnostic is not a retrospective root-cause claim.",
+    "Harmless fixture cannot qualify production AMD64BB or promote active Linux pin."
+  ]
+}

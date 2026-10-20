@@ -1,0 +1,130 @@
+▶ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining
+  ✖ automine=true, interval=null (9.820375ms)
+  ✖ automine=true, interval=60 (4.246833ms)
+  ✖ automine=false, interval=null (3.938167ms)
+  ✖ automine=false, interval=60 (7.9405ms)
+✖ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining (140.096042ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3771.024042
+
+✖ failing tests:
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=true, interval=null (9.820375ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  AssertionError [ERR_ASSERTION]: Mining interval must be readable before mutation
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Mining interval must be readable before mutation
+        at replaceRollingL1Suffix (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.mjs:25:51)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=true, interval=60 (4.246833ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 60
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:53:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 60,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=false, interval=null (3.938167ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  AssertionError [ERR_ASSERTION]: Mining interval must be readable before mutation
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Mining interval must be readable before mutation
+        at replaceRollingL1Suffix (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.mjs:25:51)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=false, interval=60 (7.9405ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 0
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    null !== 0
+    
+        at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.mjs:29:56
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async EthCheatCodes.execWithPausedAnvil (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/node_modules/@aztec-labs/ethereum/dest/test/eth_cheat_codes.js:568:20)
+        at async replaceRollingL1Suffix (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.mjs:28:3)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:56:4)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+        at async Test.run (node:internal/test_runner/test:1409:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }

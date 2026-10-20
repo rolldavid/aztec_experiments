@@ -1,0 +1,14 @@
+{
+  "sourceRevision": "b140728d9c933eab5502d14d467900d020e10626",
+  "passed": true,
+  "command": "loadRollingWalletAssets(savedFreshPublicConfiguration, scope)",
+  "sdkInputs": 2057,
+  "sdkOutputs": 8,
+  "walletInputs": 97,
+  "walletFiles": 25,
+  "proofsEnabled": false,
+  "manifestSha256": "350af65c09ccc6da2fdfd303c309937a9678726674f83c0fcfb3eee6e656fbb5",
+  "limitations": [
+    "Static actual generated asset validation; stopped chain, no live transaction or interruption acceptance."
+  ]
+}

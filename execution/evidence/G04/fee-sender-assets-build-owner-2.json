@@ -1,0 +1,89 @@
+{
+  "source": "435750278e742deace48f20d641b3154f664be58",
+  "purpose": "Normal SDK apps wallet build for official FeeJuice sender",
+  "passed": true,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1096960,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 328416
+    },
+    {
+      "elapsedMs": 2019,
+      "rssKiB": 348544
+    },
+    {
+      "elapsedMs": 3036,
+      "rssKiB": 369536
+    },
+    {
+      "elapsedMs": 4053,
+      "rssKiB": 495392
+    },
+    {
+      "elapsedMs": 5070,
+      "rssKiB": 1096960
+    },
+    {
+      "elapsedMs": 6087,
+      "rssKiB": 760416
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "apps/build.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "scripts/rolling-wallet-assets.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 5070,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 99046,
+        "ppid": 59636,
+        "rssKiB": 59360
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 99056,
+        "ppid": 99046,
+        "rssKiB": 45536
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 99057,
+        "ppid": 99056,
+        "rssKiB": 122304
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 99173,
+        "ppid": 99057,
+        "rssKiB": 869760
+      }
+    ]
+  },
+  "elapsedMs": 7092,
+  "ownedTreeAbsent": true
+}

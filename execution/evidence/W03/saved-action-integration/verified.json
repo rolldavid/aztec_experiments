@@ -1,0 +1,14 @@
+{
+  "source": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "build": "node scripts/rolling-wallet-assets.mjs",
+  "validation": "loadRollingWalletAssets original retained fresh scope",
+  "inputs": 97,
+  "files": 25,
+  "manifestSha256": "2cbf42430c35b62458a8a4facb4d5b23471f97024029f131a75726de99182aa0",
+  "runtimeJsonSha256": "ebcb57c33d618df6eea921f994872de44837c440e0bb2a2d374549933720c94b",
+  "bundleSha256": "19d1d3a16690f4512d33b6625defbaf4863b67b952ceb88b733e620861aefb0e",
+  "applicationSha256": "e80112d4879fffea8296b3af72bc737c08e6fba65e4b7a2c3c816eb3a51afb24",
+  "proofsEnabled": false,
+  "sdkManifestSha256": "a7043e0716466c519488da38db7b564aac964bb002d9f9e8823d184c7f0b38c0",
+  "passed": true
+}

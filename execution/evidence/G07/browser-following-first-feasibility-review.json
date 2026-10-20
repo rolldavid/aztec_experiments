@@ -1,0 +1,28 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:17:12.845866+00:00",
+  "baseline": "a18973f53bffc4c2b7b54c8c227b759e17a87290",
+  "proposalSha256": "4f021632cfc271f548efee957766ba80dc31a8bfbd0312ca2e3160967a0120c4",
+  "verdict": "SOURCE_FEASIBILITY_SUPPORTED for narrow browser-only implementation; no source candidate or genuine execution acceptance",
+  "sourceFindings": [
+    "a189 fixture drives collateral posting eligibility during setup before real-wall catchup and all application work.",
+    "Actual set_preference validates kind/target and writes authenticated private preference head/event; no collateral or posting cooldown call. FOLLOW_BOARD allows Main target0.",
+    "readAccountStatus fee-ready is based on positive private fee credit and nonzero collateral ID, not nextAllowedTime; keep its actual assertion.",
+    "Existing waitPostAdmission still queries actual private deposit state, compares actual PXE header timestamp, mines through existing real-wall loop and drains canonical checkpoints. Preserve it before any root post."
+  ],
+  "requiredImplementation": [
+    "Limit setup eligibility deferral to preference-browser; preserve funding/claim/replay/Bok/clock catchup/trusted readiness.",
+    "New narrow browser sequencing helper: follow Main expectedRevision0; complete authenticated initial revision1 with exactly following-only choices, no bookmarks; real parent callback waits exact posting eligibility then submits/collects canonical root; bookmark actual root expectedRevision1; complete authenticated incremental revision2 with both choices.",
+    "Both read windows retain unchanged proof/submission/transport counters and actual canonical anchor progression. Three real jobs total; no concurrent financial writes or HTTP gates.",
+    "Do not weaken existing general relationships/notifications helper guards or introduce placeholder root for first read.",
+    "Preserve actual canonical fee/effect/public content, journal reopen, public fresh/reopen checks, same-account key-only browser restoration, view/lock/reload/trace constraints.",
+    "150s admission/120s browser/525s inner/540s outer/4GiB unchanged. Report appBB2/nodeBB1 separately from SDK-default WSDB."
+  ],
+  "budgetBoundary": [
+    "Actual previous deficit14925ms; existing initial+incremental reads and public work alone cannot cover it.",
+    "Moving setup eligibility may overlap useful follow proof with cooldown; exact savings not measured. Old21.823s eligibility duration cannot simply be subtracted.",
+    "Capture actual pre-eligibility checkpoint timestamp, deposit nextAllowedTime, real-wall readiness and first-follow start; use declared conservative remaining stage allowances before first paid preference.",
+    "No unchanged retry or guarantee from illustrative367.563s estimate. Review final source/components before deciding whether a changed one-shot genuine run is justified."
+  ],
+  "runtime": "No checks executed by reviewer; no source edits or dependency changes."
+}

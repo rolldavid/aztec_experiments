@@ -1,0 +1,65 @@
+{
+  "task_id": "W03-lazy-account",
+  "candidate": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+  "base": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+      "base": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+      "id": "focused-views",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Focused account browser cases and normal wallet asset build",
+      "environment": "Pinned Node24; labeled component doubles, no proof/payment",
+      "observed": "Independent3 focused cases passed, exact transferred source blobs;26asset files/97inputs build passed. No live latency claim.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/lazy-account-20261019/independent.log",
+          "sha256": "598d687a07dfec27b0abb62e24d71f6165f170abfe5792d7b164fe3e36e6031a"
+        },
+        {
+          "path": "evidence/W03/lazy-account-20261019/assets.log",
+          "sha256": "986cc14f88075ff25075174a1e1d37bee2cb18a490dbb79d75868bfcb3b0894f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+    "base": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/lazy-account-20261019/review.json",
+        "sha256": "78cfd3db33da921a28a2ffa5cb770633c6cae6e0c9f5281b8f180e510a2eed60"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+      "base": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+      "id": "RC18-lazy-account-views",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/lazy-account-20261019/independent.log",
+          "sha256": "598d687a07dfec27b0abb62e24d71f6165f170abfe5792d7b164fe3e36e6031a"
+        },
+        {
+          "path": "evidence/W03/lazy-account-20261019/assets.log",
+          "sha256": "986cc14f88075ff25075174a1e1d37bee2cb18a490dbb79d75868bfcb3b0894f"
+        },
+        {
+          "path": "evidence/W03/lazy-account-20261019/review.json",
+          "sha256": "78cfd3db33da921a28a2ffa5cb770633c6cae6e0c9f5281b8f180e510a2eed60"
+        }
+      ]
+    }
+  ]
+}

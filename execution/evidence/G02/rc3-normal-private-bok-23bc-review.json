@@ -1,0 +1,56 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+  "verdict": "approve-bounded-normal-private-bok-artifact-processing",
+  "findings": [],
+  "method": "Independent pure Python inventory/hash/base64 audit; no build, SDK or proof execution.",
+  "acceptance": {
+    "actualNormalBuilder": "experiments/private-bok/build.mjs: Nargo compile --force --silence-warnings then shared processArtifact for PrivateBok and publicOnly InvocationProbeBoard; manifest written from actual outputs.",
+    "actualRuntime": {
+      "elapsedMs": 17003,
+      "peakTreeRSSKiB": 746976,
+      "ownedTreeAbsent": true
+    },
+    "privateVKs": 6,
+    "publicProbeVKs": 0,
+    "decodedVKBytesEach": 4832,
+    "artifactHashes": {
+      "PrivateBok": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "InvocationProbeBoard": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb"
+    },
+    "manifestSha256": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6",
+    "manifestInputs": 14,
+    "protectedOutputsUnchanged": 154,
+    "historicalRawArtifactsUnchanged": 7,
+    "root28FilesUnchanged": true
+  },
+  "sourceDisposition": {
+    "runSource": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+    "sourceSnapshotCount": 1028,
+    "currentLaterChanges": [
+      "shared/portal-runtime.json"
+    ],
+    "explanation": "shared/portal-runtime.json is a later generated frontend/portal output, not one of the 14 PrivateBok build inputs or embedded Noir sources. Historical build qualification binds the frozen 23bc source/evidence; it does not assert the entire present checkout still equals that snapshot. All 14 build input bytes and all embedded dependency/local source bytes still match."
+  },
+  "evidence": {
+    "audit": {
+      "path": "execution/evidence/G02/rc3-normal-private-bok-23bc-independent-audit.json",
+      "sha256": "cce6b49cc7aed94fc247bee9dbe2974d2761bd310f3d0d88550ee8dba945b968"
+    },
+    "build": {
+      "handoff.json": "71fa5aaf4a457ae25c57d6e6b448008f4ce1b5ea653b06832fc66ef2250e53ef",
+      "result.json": "40720a445ea6428620dfe94a6f766c95977faf94dc780ae3a95aaf7f0901087f",
+      "build.log": "0fd08e3a291770f64f8ea73586cd1a63a7fed1f8b6a7ee9c55cda47b46d03485",
+      "execution-intent.json": "dfc1cb4f67a62aec8d5966f6ea8b7a3838b367a97918a29211d5726578410a93",
+      "preparation.json": "1808df3dea06c3520461b2ac24fce9701be54031f2cb8c229cf72be7f3360113",
+      "PrivateBok.processed.json": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "InvocationProbeBoard.processed.json": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb",
+      "private-bok-build.json": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6"
+    }
+  },
+  "limitations": [
+    "Original 260 bug-labelled raw compiler diagnostic soundness hold remains open, including 52 PrivateBok lines. Normal silence-warnings does not clear it.",
+    "Six fresh verification keys establish normal processing, not proof execution, TXE/application acceptance, cryptographic assurance or target-network qualification.",
+    "No SDK/catalog/frontend/deployment qualification from this build. Subsequent composed candidate must bind all current outputs and manifests."
+  ]
+}

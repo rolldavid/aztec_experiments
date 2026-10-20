@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "488afc9d82a495b7430201b17edecd06c32ce33d",
+  "preparationPacketSha256": "00fc376b732a8827309d2661a6b9b9cf1c86621c3f22a9905cc0f13825fb9428",
+  "verdict": "Eligible one whole360 controlled run after lead grant",
+  "delta": "Only primitive proofsEnabled:real property moved within original helper call object to retain unchanged fixture source assertion. Helper/test files and focused7actual unchanged. No assertion removal.",
+  "carry": "e8cbd437fed874443d0321e919a3849805351f0b735718425b9b8295e7af986b",
+  "verified": "All packet artifacts,3310pins,exact prior360label list,cleanHEAD; previous whole prep unrun retained",
+  "limits": "Same60s2GiB owner and child; no chain/proof run",
+  "runtimePerformed": false
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "8edab0ed9c20d78cc99b22bed149b3aad1fcb611",
+  "base": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "scope": "G06 public event decoder/projection; source and labelled fake tests only",
+  "verdict": "changes-requested",
+  "findings": [
+    {
+      "id": "G06-PROJECTION-P1-SDK-BODY",
+      "severity": "P1",
+      "path": "shared/rolling/public-events.mjs",
+      "line": 114,
+      "scenario": "Every real decodeTransaction asks SDK node.getBlock without includeTransactions. Installed NodeBlockProvider routes default to blockResponseFromBlockData, which returns header/hash metadata without body. The next line reads block.body.txEffects and fails, so real history ingestion cannot succeed. Current fake always returns body and conceals this.",
+      "repair": "Request includeTransactions:true. Add regression using installed NodeBlockProvider/response projection or schema-faithful fixtures that omit body unless explicitly requested; preserve exact full-effect byte binding and reorg checks.",
+      "evidence": [
+        "node_modules/@aztec-labs/aztec-node/dest/modules/node_block_provider.js:15",
+        "node_modules/@aztec-labs/aztec-node/dest/aztec-node/block_response_helpers.js:3"
+      ]
+    },
+    {
+      "id": "G06-PROJECTION-P2-QUADRATIC-UNDO",
+      "severity": "P2",
+      "path": "shared/rolling/public-projection.mjs",
+      "line": 15,
+      "scenario": "Every stage copies all seven Maps and order; retained undo closures capture both full states. At 20,000 one-post checkpoints, retained posts Map entries alone total approximately 200,010,000, with equivalent order slots and further names/likes/etc. Event cap 50,000 does not prevent quadratic retained state.",
+      "repair": "Use incremental touched-entry before/after deltas and appended-order length, following existing public-feed-projection approach; preserve atomic staging, stale-stage, reverse/single-use undo checks. Add multi-range rebuild/undo equivalence and bounded retention regression."
+    }
+  ],
+  "checks": [
+    {
+      "command": "ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json NODE_BACKEND=js <pinned Node24.21.0> --test shared/rolling/public-events.test.mjs shared/rolling/public-projection.test.mjs",
+      "result": "29 passed, 0 failed; fixtures do not cover real getBlock options or large retained history"
+    },
+    {
+      "procedure": "Read all four changed source/test files; compare event constraints and projection transitions to pinned RollingBoard source; inspect actual SDK BlockResponse/NodeBlockProvider",
+      "result": "Findings above; hash property is correct on BlockResponse, unlike raw L2Block.hash()"
+    }
+  ],
+  "integrationRequirements": [
+    "validateRollingEvent/isRollingEvent is schema/digest branding only. Persisted JSON plus matching block anchor does not authenticate its event payload. Cache/API owner must re-decode canonical transactions or equivalent authenticated retained bytes.",
+    "No source approval until P1/P2 repair and re-review; no real chain rebuild, privacy or full product acceptance claimed."
+  ],
+  "sourceHashes": {
+    "shared/rolling/public-events.mjs": "8b67d70d2b8e77df1d2ade4e08feec99ca889f3073d5f065a75750af56cb6068",
+    "shared/rolling/public-events.test.mjs": "9ec6b02e97be98111dc686c4b98fcf62dc2fd32c978ea466209ae8c8aebf1186",
+    "shared/rolling/public-projection.mjs": "d2c6ecca74c6de33847e4c49275c796d8fe2044777bf5ce4ec2f0d4b39a137f1",
+    "shared/rolling/public-projection.test.mjs": "a42b6c8e02151e60b75393433f22c25726b94ac7bd56e47e200d392f6ffcf093"
+  }
+}

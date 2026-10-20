@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "499c42a9074872451b3c66bbb497c32cdb0099fb",
+  "base": "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+  "verdict": "approved source for one explicitly selected bounded config-history diagnostic",
+  "findings": [],
+  "sources": {
+    "deploy/prover/l1-config-diagnostic.mjs": "0cc0812365f2d5803958b963d2ff4b625ecf4c8672bc3fc9267aba2e9fb88b1c",
+    "deploy/prover/l1-config-diagnostic.test.mjs": "5721f546d6ab2f70295aefc73a09a52cfeb9fb986ed2e7a5d473a13430a04ca4"
+  },
+  "independentChecks": [
+    "Changed source read before packet; original Tenderly-only mode/default and historical429 evidence preserved. New mode fixes PublicNode configuration and Tenderly history without arbitraryURL/response-driven fallback.",
+    "Actual installed SDK collectAddresses and complete getL1ContractsConfig use the same PublicNode client. Actual RollupContract.getOwnershipTransferredEventsAtDeploy uses Tenderly getL1StartBlock plus exact fromBlock=toBlock logs; no copied subset configuration implementation.",
+    "Both chain identities and shared finalized number/hash/timestamp verified before config/history; both providers rechecked at that exact anchor afterward. Deployment block number/hash and nonremoved rollup OwnershipTransferred events bind actual history to config startBlock.",
+    "Unknown/malformed/empty/oversized decoded log arrays fail. Safe output records fixed provider/stage labels, numeric config/errors and public canonical block/hash only, no raw provider errors or data.",
+    "Inherited source pins, numeric typed error capture, exclusive fsynced0600/16KiB receipt,59s child deadline+250msTERM grace/reap retained; supervisor binds selected mode/provider labels.",
+    "Independent21 tests pass, including actual installed SDK through offline fetch doubles verifying complete PublicNode calls and exactlyTenderly history call/log sequence; real disposable child timeout/cleanup."
+  ],
+  "tests": {
+    "command": "NODE_BACKEND=js pinnedNode24.21.0 --test --test-concurrency=1 deploy/prover/l1-config-diagnostic.test.mjs",
+    "pass": 21,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 1478.495083,
+    "log": "/tmp/reviewer-config-history-499-tests.log",
+    "sha256": "6f1ee6c0d18ad6db30fb58bceba000e8304a3f0084bf832b089a73db7096dca6"
+  },
+  "conditions": [
+    "Lead may run one fresh selected diagnostic with outer60s ownership deadline and retain partial/error receipt; reviewer made no live call."
+  ],
+  "limits": [
+    "Explicit diagnostic routing is not a stock SDK startup configuration, deployment adaptation or fullnode qualification.",
+    "Latest SDK reads/default retries retained; shared finalized continuity is not atomic config snapshot or proof of all RPC data.",
+    "128 bound applies to decoded result cardinality,16KiB to persisted receipt; this does not add a network response-stream byte cap to the unchanged SDK.",
+    "Prior Tenderly429 and remote07 failed startup remain historical failures; no cause-fixed claim."
+  ]
+}

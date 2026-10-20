@@ -1,0 +1,50 @@
+{
+  "scope": "Normal current-chain Mac preview restored from exact finalLinux601 snapshot; no financial action or replay requested.",
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "owner": "lead-20261011",
+  "sessionId": 86149,
+  "pid": 34438,
+  "normalStopNoLaterThan": "2026-10-15T09:03:59.739346+00:00",
+  "cleanupAllowanceSeconds": 120,
+  "stateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state",
+  "sourceSnapshotSha256": "25a0168b65d51e8996cc17d1dd1b748da12497d6a1bb8e69960e4e8b744588fa",
+  "original507Preserved": true,
+  "files": [
+    {
+      "path": "small-restore.json",
+      "sha256": "83d6b09fd596d1c0667cccbf69ecd993dc2c33351445a040ffe977dd2df91a70"
+    },
+    {
+      "path": "metadata-adaptation-result.json",
+      "sha256": "d5909b8ce33f0c82fbfe623ae911319311b6109045769abcf339d24719b033a8"
+    },
+    {
+      "path": "snapshot-move.json",
+      "sha256": "2fc8209ebca73c656840a0144f457c22e94c711f9e30f85004ce36a71bef666f"
+    },
+    {
+      "path": "launch-receipt.json",
+      "sha256": "f61aca102c71ed27ef91647239d5d63bd581a4ee1560600f83c9d2fad9e769e5"
+    },
+    {
+      "path": "served-binding.json",
+      "sha256": "5e95d5f7f79e9e6c4a1a59622b0a9c7706a0445fac2d0c58036f438fc6d1f89d"
+    },
+    {
+      "path": "predecessor-preservation.json",
+      "sha256": "8900ab8e88446cc8bcd8e006c59591931529826d26761a2fdf8e932702ffa4b4"
+    },
+    {
+      "path": "disk-observation.json",
+      "sha256": "cc77c5c56f568141194889cb89402632c70d3ca3862bc597acc7e3a674bad349"
+    }
+  ],
+  "runtimeOwnedByLead": true,
+  "constraints": [
+    "No old financial backup restore; attempt3 wallet profile remains authoritative.",
+    "No source/dependency/build changes.",
+    "Original predecessor exact hash/inode verified before hardlink and after normal destination-only unlink.",
+    "Both proof flags remainfalse; release/realproof gates remain.",
+    "Normal startup performs existing retained-operation reconciliation; no new deployment/funding/sign action requested."
+  ]
+}

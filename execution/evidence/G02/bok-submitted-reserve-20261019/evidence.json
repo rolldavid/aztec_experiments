@@ -1,0 +1,77 @@
+{
+  "task_id": "G02-original-submitted-reserve",
+  "candidate": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+  "base": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "original-reserve-continuation",
+      "candidate": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+      "base": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing focused private Bok and hosted service tests; amended native timeout:0 case",
+      "environment": "Node24 component boundary, labelled doubles, no new live proof or transaction",
+      "observed": "Independent4 focused checks plus repaired native-waiter check; exact component blobs preserved across disjoint rebase",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-63d0d9cb.json",
+          "sha256": "977f080e86a37c092db5fc1e33dc2e16a2aa59ea6a92c265ccfa1604fd75a605"
+        },
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-17d17c5d.json",
+          "sha256": "6fd1a4ae0a35def0e50a1300ddcab18d45cff55e72ae00d03e1edfbad1a28b02"
+        },
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-88e337df.json",
+          "sha256": "93322ecd5a76928576ef83f92e2ec6d0c6f80d6c8aa71990bb8d78243facae31"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+    "base": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G02/bok-submitted-reserve-20261019/review-63d0d9cb.json",
+        "sha256": "977f080e86a37c092db5fc1e33dc2e16a2aa59ea6a92c265ccfa1604fd75a605"
+      },
+      {
+        "path": "evidence/G02/bok-submitted-reserve-20261019/review-17d17c5d.json",
+        "sha256": "6fd1a4ae0a35def0e50a1300ddcab18d45cff55e72ae00d03e1edfbad1a28b02"
+      },
+      {
+        "path": "evidence/G02/bok-submitted-reserve-20261019/review-88e337df.json",
+        "sha256": "93322ecd5a76928576ef83f92e2ec6d0c6f80d6c8aa71990bb8d78243facae31"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "RC41-original-reserve-continuation-component",
+      "candidate": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+      "base": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-63d0d9cb.json",
+          "sha256": "977f080e86a37c092db5fc1e33dc2e16a2aa59ea6a92c265ccfa1604fd75a605"
+        },
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-17d17c5d.json",
+          "sha256": "6fd1a4ae0a35def0e50a1300ddcab18d45cff55e72ae00d03e1edfbad1a28b02"
+        },
+        {
+          "path": "evidence/G02/bok-submitted-reserve-20261019/review-88e337df.json",
+          "sha256": "93322ecd5a76928576ef83f92e2ec6d0c6f80d6c8aa71990bb8d78243facae31"
+        }
+      ]
+    }
+  ]
+}

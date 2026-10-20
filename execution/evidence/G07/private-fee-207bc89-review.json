@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "207bc89359da15885e79513f1f426070b95dc84f",
+  "base": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+  "verdict": "source approved for diagnostic accounting integration; no fee rollback fix or genuine reorg acceptance",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/testing/assets.mjs": "799ecea3e40dd5d952e072f187933d7dad00a09e977a92da9a1cd743cdfc700a",
+    "scripts/testing/private-fee-verification.mjs": "e34a698c4e4afe946c4ebf25be1ba936e563d57c9618b268ef54db4cde24db7e",
+    "scripts/testing/private-fee-verification.test.mjs": "2f95225ca5ceec907a90783d0988d4b92ac2d9ffb82633c5ba0f652adee0f56f",
+    "scripts/testing/rolling-application-fixture.mjs": "78e5dbc2edda73f2eea74dc6a2fde07ed0936556269ed7269ffb0a669a37fc48",
+    "scripts/w01-private-fee-flow.mjs": "95a340b81ecf0611a2b28cd6461841348b373192bb99a5467a5127367da7aa5b"
+  },
+  "inspection": [
+    "Exact five paths; fee calculation unchanged including standalone fee and other-pool delta. All three original balance equalities retained.",
+    "One existing PXE sync, no retry/cache clear/reopen/new lifecycle. Official getSyncedBlockHeader uses operationQueue and returns actual header; canonical getBlockData reads compare complete hash.",
+    "Captures canonical checkpoint target, before/after achieved PXE anchor; canonical membership and anchor>=target checked before private utility. Same private anchor and canonical target checked after all balances.",
+    "Prior passed flag cleared before verification; new lastVerification stage/expected/actual values retained before equality assertions; errors propagate by identity. Three read results acquired before any balance equality assertion.",
+    "Both source inventories bind new helper. No protocol/app/catalog/generated changes."
+  ],
+  "checks": {
+    "independent": {
+      "command": "pinned Node24 --test --test-concurrency=1 --test-timeout=20000 scripts/testing/private-fee-verification.test.mjs",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 58.181958,
+      "log": "private-fee-207bc89-independent-tests.log",
+      "sha256": "2833dc97a6917c2f21e6d023ddd9b9b745fd0ae4d5c579b123f296c1d02262e3"
+    },
+    "lead": {
+      "passed": 67,
+      "scope": "helper and existing fixture regressions",
+      "independentRerun": "Only new helper10 rerun; source inventory deltas inspected directly."
+    }
+  },
+  "limits": [
+    "Control/node/amount test doubles; no actual FPC balance or reorg in this review.",
+    "New canonical-before check intentionally refuses stale achieved anchor before private read, so a sparse-anchor failure may have header evidence without new balance values.",
+    "If an individual balance read throws, subsequent reads are not attempted; partial earlier results and exact stage preserved. No claim every unavailable balance is measured.",
+    "The three balance calls are sequential, not a common on-chain public-state snapshot; original exact equalities remain fail-closed under concurrent state changes.",
+    "Reorg initial/marker stay held pending SDK defect repair and genuine acceptance; historical missing balance cannot be reconstructed from this change."
+  ]
+}

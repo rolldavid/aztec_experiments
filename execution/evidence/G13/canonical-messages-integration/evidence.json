@@ -1,0 +1,69 @@
+{
+  "candidate": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+  "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+  "task_id": "G10-canonical-message-composition",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+      "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+      "id": "canonical-message-and-generated-composition",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-d9f-composition-review.json",
+          "sha256": "bfce35ed05bb03aacb457bcb64248a6a1b335d63f964167cfa226e8f03be6534"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-f195-canonical-message-retrieval-review.json",
+          "sha256": "326d9fcb347a018daf3d63688f9b69782018d491b3079c62fcdaddcd8ae430e6"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/canonical-message-combined.log",
+          "sha256": "0e0c11935b2d271321f34e6c0d7158793807b840640a3cf7d02de8742d953c54"
+        }
+      ],
+      "command": "node --test plugins/test/model.test.mjs; existing checkSdk and manifest/source equality",
+      "environment": "PinnedNode24.21.0; controlled model clients, no provider calls",
+      "observed": "34fullmodelPASS218.07ms; independent34PASS282.68ms;68distinct staged componentcases. Generated SDK2057inputs/8outputs match normalbuild. Canonical immutable originalhistory bounded retrieval available; realprovideracceptance remainsopen.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+      "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+      "id": "RC30-canonical-original-message-retrieval-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-d9f-composition-review.json",
+          "sha256": "bfce35ed05bb03aacb457bcb64248a6a1b335d63f964167cfa226e8f03be6534"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-f195-canonical-message-retrieval-review.json",
+          "sha256": "326d9fcb347a018daf3d63688f9b69782018d491b3079c62fcdaddcd8ae430e6"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/canonical-message-combined.log",
+          "sha256": "0e0c11935b2d271321f34e6c0d7158793807b840640a3cf7d02de8742d953c54"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+    "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-d9f-composition-review.json",
+        "sha256": "bfce35ed05bb03aacb457bcb64248a6a1b335d63f964167cfa226e8f03be6534"
+      }
+    ]
+  }
+}

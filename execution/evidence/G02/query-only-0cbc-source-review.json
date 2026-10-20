@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "0cbcc1b8b7b3158ebf7ec83c9293b6ff7310635c",
+  "verdict": "CHANGES REQUESTED: primitive query identity guard before coercive legacy validators",
+  "sourceHashes": {
+    "prover/private-query.integration.test.mjs": "c94e9f5398957a7bee88359689e9bccb1abe145c016811a9d42ebe6e954f27db",
+    "prover/qualify-runtime.mjs": "69b574d582f8f198e58898ca1e4befe5eb11b17f3b2fc92140a13ae649e4f6d7",
+    "prover/qualify-runtime.test.mjs": "987466ccc845b9528febf7e3eddb04e9a61ef01ddc9c9ef08e49014034a32f1b",
+    "prover/server.mjs": "e6876f78cbdc31fc3abe7c64e62a70a47be95e4eec67366d3b528835baabb3c4",
+    "prover/service.mjs": "ada0c4bd62a3427e7862da9dd80fd520fb6859ff171a79b28bbbd9446985e4ef",
+    "prover/start.mjs": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+    "scripts/test-prover-service.mjs": "524c8356183085729c222def0799c74180efae06bdf9660ae105df700a9d5187",
+    "scripts/test-remote-prover.mjs": "57f78fc421238cd682cfbd59ab8ccbe5511c523a34272ee74816f62a2ac0d193"
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "paths": [
+        "prover/service.mjs:44",
+        "prover/qualify-runtime.mjs:78"
+      ],
+      "scenario": "Own data queryNode.url or rollupAddress may itself be an object. validateQueryNode passes url to new URL, rollupAddress to regex.test and BigInt, then returns raw rollupAddress. Thus user-defined coercion can run and a mutable nested identity can survive frozen normalized configuration. Qualifier likewise regex/BigInt/loopback-coerces those fields before passing scope to report.",
+      "requiredRepair": "Require primitive strings for URL and rollup address before calling coercive URL/regex/BigInt validators in both new query-only validator and qualification validator. Add throwing/changing toString/valueOf/Symbol.toPrimitive sentinel negatives showing zero calls, zero allocation and fixed rejection. Retain actual valid canonical configuration and detached normalized values."
+    }
+  ],
+  "positiveSourceAssessment": [
+    "Explicit closed mode branches before proof-only imports/runtime/catalog/queue/directory/worker creation; ordinary defaults preserved. Query-only rejects proof lifecycle options rather than fabricating board/queue.",
+    "Actual createPrivateQuery still uses original inspector and RPC schema. Query-only health explicitly separates proofs not-offered from upstream nodeProofs real, queue null. All job routes reject before body decoding or queue access.",
+    "Server tracks admitted handler promises; close stops listener and connections, awaits all captured handlers including upstream work after downstream disconnect; ordinary worker/queue and directory cleanup runs in finally.",
+    "Qualifier still independently checks Linux/node/native binary/Rolling catalog, healthy composition, wrong identity/proof floor, actual stale/resume, missing helper, manifest and cleanup. Structural topology check replaces fake zero queue counters.",
+    "New tests exercise forbidden proof module imports/filesystem allocation, held body early rejection, failed bind, official client/inspector, held upstream and disconnected downstream. They have not executed on this candidate."
+  ],
+  "limits": [
+    "No heavy/native/provider run by reviewer. Existing source-only syntax evidence does not establish HTTP lifecycle behavior.",
+    "Unchanged RPC schema includes sendTx: query-only means no proof-generation service, not generally read-only network access.",
+    "Bootstrap/config/projection/schema wiring and actual Linux qualification remain separate; old bootstrap config is intentionally incompatible until separately reviewed.",
+    "No deployment, release, full cold recovery or overall integration approval."
+  ]
+}

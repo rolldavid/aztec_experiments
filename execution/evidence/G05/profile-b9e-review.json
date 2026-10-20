@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "b9e0ea518b5f9150a9a82ec8a60b16cb40b73325",
+  "verdict": "approved_source_only",
+  "requirements": [
+    "Draft3 p4 profiles, readable private owned usernames, authenticated current 8KiB avatar",
+    "G05-A09",
+    "G05-A10",
+    "G05-A11 / RC23 component only"
+  ],
+  "files": {
+    "billboard/rolling_contract/src/main.nr": "50f56336fd566001423234f60e95ce2f178c3c284e19f7ebc0f1bc06f1a26e3c",
+    "billboard/rolling_contract/src/profiles.nr": "c0dcdf6b85e18342ea7567d92d51c713f0fef8e6680dbc1af492ccd9f5160e0a",
+    "billboard/rolling_contract/src/profiles_tests.nr": "cabcbce4d91b7148dab25f2e19911554082fa2b3f79662901dd12707097711ea",
+    "billboard/rolling_contract/src/tests.nr": "66a5c4c5dc00aee6c89700acfbf58b113609a9b9c598abc8f43a36a41590b488"
+  },
+  "findings": [],
+  "checks": [
+    "Read full four-file change and name/text encoding dependencies; git diff --check clean",
+    "OwnedNameRecord constructor and validation use existing circuit-constrained normalized name hash; eight-field note getter/viewer types and generated offset regressions updated",
+    "Ownership pop/reinsert retains exact readable metadata; selected-name callbacks only_self and require registered name; no public owner/list field",
+    "Separate bio/avatar expected versions prevent stale replay and preserve other profile fields; overflow rejected before increment",
+    "Avatar 265x31 fields, 8192 byte bound, top-byte and right-padding checks, 100x100 presentation metadata; explicit zero-byte clear requires zero dimensions and all-zero bytes",
+    "Digest binds schema, selected name, version, lengths, dimensions and actual bytes; bio reuses strict UTF-8 validation",
+    "Appended one-slot ProfileStorageRoot keeps previous ordered storage declarations and their types intact; same established custom root/map pattern",
+    "Reviewed tests for two owners/multiple names, preserved case, repeated authentication, cross-owner/only_self rejection, version/clear limits and actual full-size callback"
+  ],
+  "compileEvidence": {
+    "source": "b9e0ea518b5f9150a9a82ec8a60b16cb40b73325",
+    "exitCode": 0,
+    "logSha256": "94eb54899696b27ce17a348a3fb22cb2e910215088618941d4b4060559ecd5c6",
+    "reviewerRanCompiler": false,
+    "qualification": "Raw compilation only; 99 reported dependency Brillig diagnostics remain assurance work, not a passing proof/TXE verdict"
+  },
+  "requiredNextChecks": [
+    "Normal artifact processing/private VK generation/inventory and catalog pins; inspect compiled storage slots and event ABI",
+    "Run all existing plus new TXE tests; verify no existing acceptance cases lost",
+    "Real genuine owner-authenticated 8192-byte publish, canonical effect/log retrieval, fee/write/size/latency measurements and independent decode/hash equality",
+    "Fresh PXE/key recovery restores readable own-name records; ordinary backend receives no per-owned-name lookup",
+    "Real stale update rollback preserves private ownership note and current profile state; reorg reconstruction and current-avatar presentation on earlier posts",
+    "Client safe raster decode/crop/compress/metadata stripping, moderation and archive retention remain mandatory downstream"
+  ],
+  "defaults": [
+    "992-byte UTF-8 bio and explicit zero-length avatar clear are reversible engineering defaults, not quoted product limits",
+    "Fresh-deployment authority permits expanded note schema/layout under new class; no claim existing deployment compatibility"
+  ],
+  "limitations": [
+    "No TXE/compiler/proofs/browser/services run by reviewer",
+    "Source has no raster codec validity enforcement and explicitly says so; declared dimensions do not prove actual PNG/JPEG contents",
+    "Current decoder ABI array bound32, projection/profile UI and application method allowlists still require explicit reviewed integration for new events/actions",
+    "Full privacy unlinkability, specialist audit and production release gates remain open"
+  ]
+}

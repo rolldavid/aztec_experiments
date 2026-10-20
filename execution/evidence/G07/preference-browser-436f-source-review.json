@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "436f253809a0b83d815b2c9ca90238aaa0a4381c",
+  "parentWiring": "8d79f0d3bae6398aad0970826a825aa1a8e2ff9e",
+  "base": "a3f7e200b4b4806842d52863c2807e84646a8610",
+  "verdict": "approved-source-pending-root-transfer-and-generated-assets; genuine browser acceptance pending",
+  "findings": [],
+  "sourceHashes": {
+    "apps/rolling/reader.browser.test.mjs": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947",
+    "apps/rolling/reader.mjs": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874",
+    "apps/rolling/wallet-panel.browser.test.mjs": "6c62c6c9dcdb270bff3d1452eaaafa62b7bc689ffdd22d93bdc908031d934c00",
+    "apps/rolling/wallet-panel.mjs": "83bd3fda88e4900c51096d266640843aab4ef07b7b849b0eb6c1183d43f781e5",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "6291ac0b49a1dc226a66d25c59d9ccbf6aed1fc85d334d25bb5b2ef6bc466320",
+    "apps/rolling/wallet-runtime.mjs": "338d3ac8a6e15d54195c486e917b94379fb4e48221d5647232af66199424a47b",
+    "scripts/testing/browser-worker.mjs": "83855bb0b339f6732e939b0f5f8d80f8db8e431d35d4057976b937214c730888",
+    "scripts/testing/rolling-application-fixture.mjs": "ccac4849b21be3cff68c2e9a898c643d65c91c34a79dd446924e5916e4dc7728",
+    "scripts/testing/rolling-application-fixture.test.mjs": "3ff345b2ed230076859a57c339d33ebefaa8520a6fc3c535d6798974675f0df6",
+    "scripts/testing/rolling-composer-browser.mjs": "e66d3e4a9544cff46ca9ee58561e81f12e5ab80f10297842ba763db8da9fa091",
+    "scripts/testing/rolling-preference-browser-fixture.mjs": "70319dbcdaf4271781eea03069e9de4b47e54d9f27f09e5696b4a82e65e6116a",
+    "scripts/testing/rolling-preference-browser-fixture.test.mjs": "1741ce065cd7d8483834b994b4939926709a49b9d543e247f274ab0c8a02caf0",
+    "scripts/testing/rolling-preference-browser.mjs": "d787e6f9607037b5885e0468394753a2affbfedc6d468a3e7cbf7952814d4491",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7cb46a1c1a83beec5d31d56bb8084ca9dccf8fd9b07a2e8efa5f788ee9a17ae2",
+    "scripts/testing/rolling-preference-recovery.mjs": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e",
+    "scripts/testing/rolling-preference-recovery.test.mjs": "d8aaa0dc8c9d54dedc3d5ed60fd676797a243e22dd2c734014147495d32f9365",
+    "scripts/testing/rolling-public-acceptance.mjs": "6df2b6fcd3b7188ec68bb5bafeae3d894ef382fac77f3cefb64546fe50ac4e48",
+    "scripts/testing/run-application.mjs": "8a03ecb26aec4e23c484c5cbcd164ad40c6e58ab6327350158555ff5a2cbeb0d",
+    "scripts/testing/scenario-flows.mjs": "7abdc6cbc51f2148ee7bd5cee035ee78b501c2930614849233ac3ebba406f85b",
+    "scripts/testing/scenarios.mjs": "941e3b99f39791ae8c57a7a13c3d706d378188123f9996cb7378318feef18eec"
+  },
+  "reviewedStableTransfers": [
+    {
+      "source": "58280d05ef7dfcaa7450812cc0575f069ec82a53",
+      "destination": "2f5dda3",
+      "patchAndChangedBlobsIdentical": true
+    },
+    {
+      "source": "0088e1440299a12fbcc92ce8a953985515b24dbc",
+      "destination": "09fa923",
+      "patchAndChangedBlobsIdentical": true
+    },
+    {
+      "source": "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
+      "destination": "b5c4f95",
+      "patchAndChangedBlobsIdentical": true
+    },
+    {
+      "source": "b5e6899ec9b93b449ce2bd8a946705886da1eb18",
+      "destination": "436f253",
+      "patchAndChangedBlobsIdentical": true
+    }
+  ],
+  "inspection": [
+    "Parent uses existing chain, service and real-wall miner, with explicit mutually selected preference-browser variant; no second chain or retry owner.",
+    "Actual root plus bookmark and main-board follow produce exactly three genuine HTTP/native jobs. Existing five-job relationships and notifications branches retain their original mutations and checks.",
+    "Before handoff parent completes encrypted journal reopen, canonical effect refetch, and fresh/cold public HTTP checks. Native browser replaces CLI cold recovery only for this explicit browser scenario.",
+    "Encrypted handoff is constructed using actual production backup crypto from account secret/salt and empty claims only; no journals, preference snapshots or expected state enter browser storage. Public post expectation is assertion-only.",
+    "CLI actor is awaited closed and its guard invalidated before browser handoff. Fee-helper wallet remains separately owned and usable for final private pool/debit/public FeeJuice verification.",
+    "Production awaited public-index/reader factory, strict wallet config and exact runtime assets reused. Trusted service CORS includes only reserved public origin for this branch.",
+    "At least150seconds remaining required before preparation and again before publication of <=120second handoff. Parent polls bounded result; original540second/4GiB owned supervisor remains authoritative.",
+    "Returned browser result is written after driver closes its context/browser. Parent closes reader/L1 listeners, attempts fee verification and final proof/send/L1 counter checks, persists observation, then acknowledges. Failure retains failed result; failed persistence cannot acknowledge.",
+    "Parent tests cover failed fees, late proof/send/L1 activity and missing persistence. Actual encrypted backup test decrypts exact two-key/empty-claims shape, checks mode0600 and exclusive write.",
+    "Browser/source fingerprints cover new testing files, all shared preference modules and all actual browser/SDK/wallet inputs/outputs; unchanged-source final checks retained.",
+    "Reviewed prior0088 copy defect is resolved by00e in combined tree; composer assertion now follows truthful no-deposit wording without relaxing account-switch or no-spend acceptance."
+  ],
+  "independentTests": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processed artifact> pinned Node24.21.0 --test --test-concurrency=1 scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-preference-browser-fixture.test.mjs scripts/testing/rolling-preference-browser.test.mjs scripts/testing/rolling-preference-recovery.test.mjs scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+    "passed": 194,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 2414.592208,
+    "log": "/tmp/reviewer-preference-browser-436f-tests.log",
+    "sha256": "e85663a2c60c8bf8f09597a010afafbb2dd9730325c4bceb625a9fd5809cb4a4",
+    "browserLaunched": false,
+    "diffCheck": "passed"
+  },
+  "requiredBeforeActual": [
+    "Exact root transfer and combined source equivalence review; preserve root deployment/preflight repairs not present in this isolated ancestor.",
+    "Build/verify current production wallet assets against these six UI sources, current SDK patch, catalog and CRS; preflight PrivateBok and normal artifacts must pass without mutation during campaign.",
+    "Run genuine scenario only with actual source freeze, >=150s browser reserve, owned process/resource supervisor and durable failure/accounting evidence.",
+    "Inspect real browser result, native fresh IndexedDB, three canonical setup effects and fees, request restrictions, final zero proof/send deltas, and all cleanup before runtime acceptance."
+  ],
+  "limitations": [
+    "194 cheap tests include labelled capability doubles and actual crypto/ABI components; no genuine chain/browser recovery was run by this reviewer.",
+    "Driver request allowlisting and local filtering are scoped evidence, not full wire unlinkability or external privacy audit.",
+    "Browser verifies recovered bookmark/main-board follow through actual UI; it does not independently qualify notifications/read-markers, reorg recovery or account-switch behavior in this one-account scenario."
+  ]
+}

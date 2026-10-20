@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T09:48:08.158092+00:00",
+  "campaign": "rolling-node-20261012-08",
+  "status": "readiness-failed-cleanup-complete",
+  "instanceTerminated": true,
+  "bothVolumesAbsent": true,
+  "fleetState": "deleted",
+  "fleetDeleteAttempts": 1,
+  "readinessQualified": false,
+  "runtimeAdapterObserved": "publicnode-config-v1",
+  "lastStage": "factory-archiver begin/no completion",
+  "allOwnedMonitoringAndCleanupCommandsExited": true,
+  "resourceOperatorReleased": true,
+  "evidence": {
+    "operator08-launch.json": "166c6dc05cbb04b8e81737b5b1b0cb9605213a357732f2ce25140ad8aab108d0",
+    "operator08-readonly-093951.json": "9bc266d11021948377fa450f620467ff18620938be3f13dace4d51d285baca38",
+    "operator08-cleanup-reconciliation.json": "c38bed2f32d4a5420eaf20dbbe280c55b4cd3010c750f55075ffbae65f9886b6",
+    "operator08-fleet-readback-0947.json": "5bef8873d3c0fde33ee636bc03b31465b59a4d51af263d5a961f21dfc9ed5a2c",
+    "operator08-archiver-delay-diagnosis.json": "d850c06f9391fe5343da4b39a7ca27e2a470e92e22a8b3cd31b8dcbfa4931ff7",
+    "operator08-cost-reconciliation-proposal.json": "7a155e736af6807a0c31b4625d887efd13e78acf042505bf50462d72e4f23a64"
+  },
+  "ledgerOwnedByLead": true,
+  "noReplacementOrPaidActionPending": true
+}

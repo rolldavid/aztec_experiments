@@ -1,0 +1,113 @@
+{
+  "candidate": "e28b121a2c37a7ac4d621dca0749f6feb88d3e35",
+  "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "transfers": [
+    {
+      "source": "cf84551",
+      "composed": "129eaeb",
+      "stablePatchId": "abe60ebfc40938e860e8d743b2a52d0a1135d5f3"
+    },
+    {
+      "source": "6029791",
+      "composed": "fdc45d1",
+      "stablePatchId": "b0fafede2dea53f6d07782202e2065112824adfa"
+    },
+    {
+      "source": "3fffb2e",
+      "composed": "27d879e",
+      "stablePatchId": "f771effe1cc16235521aa2daa251c87475e310b8"
+    },
+    {
+      "source": "2c7794b",
+      "composed": "6c063ef",
+      "stablePatchId": "d1070262e93401a3dd81a74393c71f206da1dce6"
+    },
+    {
+      "source": "8a8f88e",
+      "composed": "a562212",
+      "stablePatchId": "7a879d2b986bd26d4300e06daccf58cef18fa103"
+    },
+    {
+      "source": "37c204c",
+      "composed": "7573dbb",
+      "stablePatchId": "ee3f8ad8067a9d9c5a809b62e1565c327fb2a0ee"
+    },
+    {
+      "source": "9d565d1",
+      "composed": "3e84b3a",
+      "stablePatchId": "110d2dcc1201f56b82f6051a72bfad795a3bf2d7"
+    },
+    {
+      "source": "b755736",
+      "composed": "91d19ea",
+      "stablePatchId": "b879d22a4da49142bcfaafd2a5cfd4b1680fdb00"
+    },
+    {
+      "source": "e1157aa",
+      "composed": "e28b121",
+      "stablePatchId": "91899e94d0ede6fe853590a2931a4bb67cb72eb8"
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-w03-journal.mjs": "dc251aada34f75002872447bc30f96fe8cee53c6001ebe7ed305b7f054064c7b",
+    "scripts/test-w03-proof-replacement.mjs": "e70b847f63854583f95396bf04f4d782a953fc807987241eceeddfa165ce4808",
+    "scripts/testing/rolling-application-fixture.mjs": "d8358829e4470ba782a2eca9f81bb9fc58ba47f1d90095ac3c3ab93fb411690d",
+    "scripts/testing/rolling-application-fixture.test.mjs": "e4854939495a2082d818ba3174000671d834f5c3b1ddba6a650d43e8e8adbb28",
+    "scripts/testing/rolling-preference-reorg.mjs": "945359453165dc922c9aaf1df6555c0ccf8cf097c7182c4650edda7349135075",
+    "scripts/testing/rolling-preference-reorg.test.mjs": "f431c299e84443f53af786795650e739c940f017cd09c1de9f3b23a7920cebb8",
+    "scripts/testing/rolling-public-acceptance.mjs": "c2b78450b011fa164d93fa012a5cffc6606c3fc674f627c53be02e155a5cf8eb",
+    "scripts/testing/scenario-flows.mjs": "50d3826038d2fbbf7505d1b08c6f2874de7eb75d0f0c1b379b0ac77dc03ba6df",
+    "scripts/testing/scenarios.mjs": "4ecab810fbb40020cc482f27e9c903431151e11a274eee330855d4edf217a1e1",
+    "shared/l2-journal.mjs": "d509137a7047561ba9d9442b49a120558fd404d0a9e424cf2bd201796905be67",
+    "shared/rolling/application.mjs": "7042c547adc1be50b63cae144bd512defca21c4e5bc0c6dfdc700728f37747a1",
+    "shared/rolling/application.test.mjs": "59e0b22a9bad02a5e2a80b3b39835d995526f9a9d8882e9d32146615383f7401",
+    "shared/rolling/synchronized-application.mjs": "baeae1719beaa1b0b1a6ef917993cd2c6e46a4b07e13485353176155bcdc2518",
+    "shared/rolling/synchronized-application.test.mjs": "7913ef946d28b83dcbbebf6f7ce5d72965b87cfef8e8c99fed32fa9a139e5027",
+    "apps/rolling/wallet-panel.mjs": "5940a088924fd7fc699cf5dd3c4fc3d8f4dd90feef19b999c681e6de41bf0750",
+    "apps/rolling/wallet-panel.browser.test.mjs": "aa780c4119c3f15bd9d32b1cfd21ea1074a5c148af24dea4c5324f681923d0e9"
+  },
+  "reviewReferences": [
+    "replacement-journal-3fffb2e-review.json",
+    "replacement-application-37c204c-review.json",
+    "preference-reorg-parent-e115-review.json"
+  ],
+  "status": "Exact reviewed composition, normal builds and826sourcechecks passed; independent combined eligibility and real reorg pending",
+  "checks": {
+    "status": "pass",
+    "tests": 277,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "elapsedMs": 45610.44975,
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<rootnormalRollingartifact> pinnedNode --test --test-concurrency=1 scripts/test-w03-proof-replacement.mjs scripts/test-w03-journal.mjs shared/rolling/application.test.mjs shared/rolling/synchronized-application.test.mjs scripts/testing/rolling-preference-reorg.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+    "log": "execution/evidence/G07/reorg-e28-combined-source-tests.log",
+    "sha256": "329368893dd79dddbca58d5c3d6a41246083e385e6421c296245b59e2b7cb19f"
+  },
+  "rootCandidate": "5bbcb4621832a1e7427315d4d0d87f19fdd1f70d",
+  "rootMetadataPredecessor": "b5a549b",
+  "rootTransfers": [
+    "92bde88a574bd802e77de666471d361c975f48f7",
+    "845955bd67e43e28a59a80023758087dd74ac1a5",
+    "500b4d0f2d7e67c3b9e1d93d6355d8f5b3cb7d7d",
+    "adfc58e0796976da65c69680e98f71919f2246f6",
+    "e3b854a142cb1d2db0c8ad88a1be704aa3aec3ab",
+    "7fe5895d95f7d211e13f52cfe7da9c8d58f71479",
+    "0c09f3e09ff70ac4768c037bc98b5cc9dd4c8de7",
+    "e513fee71bca26ffe6a7122b9eb284deadc7892f",
+    "ead183aae39cce71af3ce3c828a73adf9ef97824"
+  ],
+  "rootExactSourceVerified": true,
+  "uiSource": "56e141030ee4aefc72ad04d5f759162019faf298",
+  "uiReview": "replacement-ui-56e1410-review.json",
+  "combinedChecks": {
+    "tests": 826,
+    "failed": 0,
+    "skipped": 0,
+    "record": "reorg-ui-combined-source-tests.json",
+    "sha256": "f69340f8a9d6a90daad662eee2fcee970fb2b1d4d13754b75ef1dd90516f6728"
+  },
+  "normalBuilds": {
+    "reorg-ui-sdk-build.json": "99495376b9fa2916b10e509fa879c6971bad611784de010972cfab89b088f620",
+    "reorg-ui-wallet-build.json": "5ba8a08a67c9fa798f3b63a354ff29eb345e93ca2a0f3b226a427084511ef69b"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "files": [
+    {
+      "name": "evaluation-ecc3f0c.json",
+      "key": "releases/rolling-shared-20261015-072358c88e68/checkpoint-833839356fdc4e86a90fe30535036b32/evaluation-ecc3f0c.json",
+      "bytes": 117585,
+      "sha256": "a439b9c26498cd8405d1bf4a81614e994d933d90842d950228c3406a855fe193",
+      "versionId": "_X1WyDIJEsxHa4xWhOeRW7xbi5numW5m"
+    },
+    {
+      "name": "stop-order-probe-live-result.json",
+      "key": "releases/rolling-shared-20261015-072358c88e68/checkpoint-833839356fdc4e86a90fe30535036b32/stop-order-probe-live-result.json",
+      "bytes": 2451,
+      "sha256": "c1b72341d5ad2930483d8ac6bf81f1e7dd8da6856bb79967cda4aa73c6f351c3",
+      "versionId": "MkBOuO_Q9KjoAN4e2qUro14gDjWjcsOC"
+    }
+  ],
+  "totalBytes": 120036,
+  "deleteBy": "2026-11-14",
+  "withinExisting20GBReservation": true
+}

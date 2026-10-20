@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "passed": false,
+  "stage": "application-pxe",
+  "transactions": [],
+  "cleanup": {
+    "applicationStore": true,
+    "fundingWallet": true,
+    "proverAndQuery": true,
+    "nodeRPC": true,
+    "indexedDBGlobals": true
+  },
+  "scope": "Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action",
+  "networkProofs": false,
+  "controlledPortalSettlement": true,
+  "privacyAcceptance": "Public-field equality checks only; independent privacy qualification remains",
+  "storage": {
+    "pxe": "Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim",
+    "journal": "Real authenticated encrypted file journals; reopen measured"
+  },
+  "sourceRevision": "7cead066cafda7baaabc37034ef795b91a38c439",
+  "applicationProofs": true,
+  "proofMode": "real",
+  "network": {
+    "chainId": "31337",
+    "version": "4000019475",
+    "rollup": "0x593e2c15850d626b67ba6541fe33e69d1fef17b2"
+  },
+  "sourceHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "b4bc6d957e5ee623054976b85a095df20c263173750bc8d53ab09361f4cfd106",
+    "scripts/testing/scenarios.mjs": "3f419e19a96fdf5ca2c2e6b23129d7cc2e379b72721c3c08914f2716f54c78fc",
+    "scripts/testing/scenario-flows.mjs": "fb2759edf82459cd71e1b81f9ecdb4087873e44f882a9bc01adda0ad0fb8466a",
+    "scripts/c01-real-node.mjs": "7090858471f1331aafa1d9289507a666cf657874f0215f5260e61766c6355822",
+    "scripts/c01-board-flow.mjs": "61b5e43f59156e42af45200d7209b576ce7224d6fe2383029745cad95ae5e4ca",
+    "scripts/c01-deposit-flow.mjs": "972bffc1bb3d97eebf5ce145541edc6f6981fd84976ae4d1fcf886a1b3349f01",
+    "scripts/c01-client-mining.mjs": "a71e800a541776464f7479ea9fa4ea5e0edc6d44f3745f2fcb5c1639d9b07197",
+    "scripts/w01-private-fee-flow.mjs": "934a1430b79c34e0b92ea1b5720be807ada6bcd6c6d6999806f93226184faba4",
+    "scripts/w01-unfunded-wallet.mjs": "413ad7864e3d7be5846f12f25aac456289e4cc895a6911985a7e6b4ed7241b2c",
+    "scripts/w01-private-funding.mjs": "7d474d160bde5e4a966c5f9577e7de7bd63768bc9f8c7cd3be446bb38ffdbcf8",
+    "shared/sdk-entry.mjs": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+    "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "shared/trusted-private-node.mjs": "0274235e51466099504ee3ef5dc45ab553684c136aac0ac98d8038135194e9c8",
+    "shared/routed-kernel-prover.mjs": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+    "shared/remote-prover-client.mjs": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+    "shared/rolling/application.mjs": "b217538ffc0ef600efc044016e1877a75a6a6c265e7e6fcd6a9afe6958be8c0d",
+    "shared/rolling/public-events.mjs": "c8278397055c3c306cc21d24964a890fdd52eefa973da9351428d0a3fdea54f1",
+    "shared/rolling/public-projection.mjs": "87ddb8a1d0b1eb70a1f504203acaa905f12c29e7f0fc8cef42874a85c0876117",
+    "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+    "shared/private-fee-estimation.mjs": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+    "shared/private-fee-simulation.mjs": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+    "shared/l2-journal.mjs": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+    "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+    "apps/src/billboard/user/transaction-journal-store.mjs": "abb9af112709a4e4ed3197de86ef058a4b06e3c63b1588861f6411b1629c443a",
+    "prover/service.mjs": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+    "prover/server.mjs": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+    "prover/private-query.mjs": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+    "prover/catalog.mjs": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+    "prover/rolling-artifacts.mjs": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+    "prover/rolling-artifacts.json": "7c045a82763b4ad747df88fb3e646a7ddd9be3b4528c95cdab27f300849966aa",
+    "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497",
+    "scripts/testing/rolling-public-acceptance.mjs": "e20081566a2f769f1366b05520716584c7d9a1f6652f34dda5e5914c52ae9323",
+    "shared/rolling/public-index.mjs": "f654cdefa51555f79530c1fdac212b593c42d7939097335baf76a038b563bfa7",
+    "shared/public-feed-file-storage.mjs": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+    "shared/public-feed-storage.mjs": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+    "scripts/rolling-public-server.mjs": "568dcbad153efb9f67f043e02ef50441df557c61f2d675e6d05d4d7424adbbd2",
+    "apps/rolling/start.mjs": "467913dfa1da28249c32684756eae7fcfcc2c1c5fabbebe89d417ac1dcdfd9d6",
+    "apps/rolling/reader-client.mjs": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a"
+  },
+  "artifactHashes": {
+    "billboard/target/rolling_contract-RollingBoard.json": "8c431f1458a2ae47e0773db820e551a4df4a7a10a82938cbb4b82cb84d56967e",
+    ".build/contracts-manifest.json": "1a222d435dc6dcb09979c2745648ff3fec168c0e8c945fd2fc7fdd10672391bb"
+  },
+  "bokArtifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+  "bokBuildInputs": {
+    "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
+    "experiments/private-bok/escrow/Nargo.toml": "8a83e1f7dc7e5043fa2332b698a1e6dde6ddd9c79e32b2c6bfc2ece05fac6e4c",
+    "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9",
+    "experiments/private-bok/tests/Nargo.toml": "d2d23aa424ec7535e3ff2565e3bf06685f6ff695de4139c253d14009b6b8b33e",
+    "experiments/private-bok/tests/src/lib.nr": "a2f404851311f65294c15b653bc9ad46f3df5b193099093bc60f3d6fe177e3f4",
+    "experiments/private-bok/probe-board/Nargo.toml": "8415a5b8d1b4c699802e33f6616034f1dba0e14dc95b85feefff6f4891339e6d",
+    "experiments/private-bok/probe-board/src/main.nr": "79e5744879232e6202da2240abb37cf64733dfa76ed34e61b07e5d72701df771",
+    "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
+    "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+    "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+    "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d"
+  },
+  "setupMining": {
+    "clientMining": {
+      "passed": true,
+      "ordinaryBlocksMined": 116,
+      "stopped": true,
+      "mode": "warped",
+      "maxObservedClockLeadSeconds": 1,
+      "clockSynchronization": "every mined block, including correction of wall-clock lead",
+      "lastBlock": "209",
+      "lastTimestamp": "1791748936"
+    }
+  },
+  "privateFees": {
+    "passed": false,
+    "ownerless": true,
+    "offchainIssuer": false,
+    "operatorFunding": false,
+    "chargesMaximumFee": false,
+    "walletRestore": {
+      "encryptedRoundTrip": true,
+      "freshRestoreContext": true,
+      "fullSaltPreserved": true,
+      "derivedSigningKeyFromRestoredSecret": true,
+      "sameApplicationAddress": true,
+      "applicationSigningDerivation": true,
+      "noIndependentTestSigningKeyReused": true
+    },
+    "funding": {
+      "passed": true,
+      "outcome": "complete",
+      "depositSends": 1,
+      "recoverySaves": 3,
+      "publicRecoveryPersistedBeforeDeposit": true,
+      "privateSecretsStored": false,
+      "publicRecovery": {
+        "schema": "private-fee-funding-v1",
+        "chainId": "31337",
+        "version": "4000019475",
+        "rollupAddress": "0x593E2c15850d626b67ba6541FE33e69D1fEF17B2",
+        "portalAddress": "0x2a77D58CFfDD41780beb25C618Bf03513AE29E9D",
+        "tokenAddress": "0xbb4BD7F1e2600eFa13c48578d2326238c41Eb3A1",
+        "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+        "sender": "0xa5ba85C5ef4171B0621e0eac7b9D0627491448De",
+        "nonce": "1",
+        "amount": "1000000000000000000000",
+        "txHash": "0x7339e6534914054dc0dfd2e1af0557b8acaa31702fe542a1e241bfb77852ede2",
+        "leafIndex": "0"
+      },
+      "realL1Deposit": true,
+      "amount": "1000000000000000000000",
+      "l1TxHash": "0x7339e6534914054dc0dfd2e1af0557b8acaa31702fe542a1e241bfb77852ede2",
+      "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+      "independentL1Sender": true,
+      "testFaucetFunding": true,
+      "productionFundingHelper": true,
+      "productionRecoveryHelper": true
+    },
+    "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+    "standalone": {
+      "passed": true,
+      "applicationProof": true,
+      "networkProof": false,
+      "standaloneFunding": true,
+      "proofMilliseconds": 8669,
+      "txHash": "0x256ab6178431c74a0fab359bca64a20db1d3549878b7e5e7e143da0b7cf2f8bb",
+      "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+      "nodeValidation": "valid",
+      "transactionFee": "12326634000000",
+      "status": "checkpointed",
+      "executionResult": "success",
+      "canonicalCheckpoint": true
+    }
+  },
+  "collateral": {
+    "passed": true,
+    "scope": "local real deposit and private claim with ordinary checkpoint inclusion",
+    "applicationProofs": true,
+    "proofMode": "real",
+    "networkProofs": false,
+    "syntheticMessages": false,
+    "syntheticProofs": false,
+    "claimEpochProofAccepted": false,
+    "walletOwnership": "parent",
+    "walletCleanup": "retained-by-parent",
+    "depositTxHash": "0xf08a060066ebf6cee35bf8be1d433c848b6a9f5f5c5a0c6cf4c5a740329b609d",
+    "depositBlock": "129",
+    "amount": "1000000000000000",
+    "inboxMessageKey": "0x00457c847196fbcdfd3c13cf9279184a87f52d208e1764963730cf3a701a77f4",
+    "messageContentChecked": true,
+    "artifactHashes": {
+      "billboard/target/rolling_contract-RollingBoard.json": "8c431f1458a2ae47e0773db820e551a4df4a7a10a82938cbb4b82cb84d56967e",
+      ".build/contracts-manifest.json": "1a222d435dc6dcb09979c2745648ff3fec168c0e8c945fd2fc7fdd10672391bb",
+      "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850"
+    },
+    "claimPublicationBarrier": {
+      "proposedBlock": 8,
+      "checkpointedBlock": 8,
+      "l1PendingCheckpoint": 8
+    },
+    "claimAnchor": {
+      "number": 8,
+      "hash": "0x18d0a63835381489780a76e0a118e6cfad7e3c370de44988ba302dd6bbf46da5"
+    },
+    "feePayer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+    "privateFees": true,
+    "provenAnchor": {
+      "number": 8,
+      "hash": "0x18d0a63835381489780a76e0a118e6cfad7e3c370de44988ba302dd6bbf46da5"
+    },
+    "gasUsed": {
+      "totalGas": {
+        "daGas": 3296,
+        "l2Gas": 822635
+      },
+      "teardownGas": {
+        "daGas": 192,
+        "l2Gas": 27510
+      }
+    },
+    "claimTxHash": "0x2fcd3f08d7feb5c45b40f0316deda07c803ad7b09d1bde102faf38429168a3bc",
+    "proofSha256": "1d0c20c6c9977816741fd16b0d3f3a39abb315248112d6ccb1e5ddb2e0a11c45",
+    "nodeValidation": "valid",
+    "inclusionSnapshots": [
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "154",
+        "l1Timestamp": "1791748881",
+        "nodeTime": 1791748881
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "155",
+        "l1Timestamp": "1791748882",
+        "nodeTime": 1791748882
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "156",
+        "l1Timestamp": "1791748883",
+        "nodeTime": 1791748883
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "157",
+        "l1Timestamp": "1791748884",
+        "nodeTime": 1791748884
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "158",
+        "l1Timestamp": "1791748885",
+        "nodeTime": 1791748885
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "159",
+        "l1Timestamp": "1791748886",
+        "nodeTime": 1791748886
+      },
+      {
+        "status": "pending",
+        "executionResult": null,
+        "blockNumber": null,
+        "l1Block": "160",
+        "l1Timestamp": "1791748887",
+        "nodeTime": 1791748887
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "161",
+        "l1Timestamp": "1791748888",
+        "nodeTime": 1791748888
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "162",
+        "l1Timestamp": "1791748889",
+        "nodeTime": 1791748889
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "163",
+        "l1Timestamp": "1791748890",
+        "nodeTime": 1791748890
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "164",
+        "l1Timestamp": "1791748891",
+        "nodeTime": 1791748891
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "165",
+        "l1Timestamp": "1791748892",
+        "nodeTime": 1791748892
+      },
+      {
+        "status": "proposed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "166",
+        "l1Timestamp": "1791748893",
+        "nodeTime": 1791748893
+      },
+      {
+        "status": "checkpointed",
+        "executionResult": "success",
+        "blockNumber": 9,
+        "l1Block": "168",
+        "l1Timestamp": "1791748895",
+        "nodeTime": 1791748895
+      }
+    ],
+    "replay": {
+      "rejected": true,
+      "reason": "consumed-claim-message",
+      "freshAccountRequest": true,
+      "originalMessageNullifierChecked": true,
+      "originalInboxLeafPresent": true,
+      "originalNoteUnchanged": true,
+      "noSecondNote": true,
+      "stage": "PXE witness generation; no second proof accepted or transaction sent"
+    },
+    "claimBlock": "9",
+    "claimStatus": "checkpointed",
+    "executionResult": "success",
+    "fee": "8418947400000",
+    "anchorBlock": 8,
+    "membershipRootChecked": true,
+    "logicalFieldCount": 10,
+    "physicalFieldCount": 8,
+    "exactDeliveredNoteChecked": true,
+    "nextRequired": "Wait eligibility; prove/include no-post exit, then use official test Outbox settlement and withdraw L1."
+  },
+  "actualHumanFees": "8418947400000",
+  "bok": {
+    "address": "0x004878f9fa4a59abdfddd7684ab574efc190c569141cc5ea22b77f4816f21909",
+    "txHash": "0x2980ad09dac4ce75809c4de13442a3cb29ce9ebc96310ff85a5978e87270ce72",
+    "used": false
+  },
+  "eligibility": {
+    "proposedBlock": 13,
+    "checkpointedBlock": 13,
+    "l1PendingCheckpoint": 13
+  },
+  "clock": {
+    "initialWallSeconds": 1791748832,
+    "deadlineAt": 1791748942671,
+    "initialSyncedL1Timestamp": "1791748935",
+    "ready": {
+      "ready": true,
+      "chainId": "31337",
+      "rollupVersion": "4000019475",
+      "rollupAddress": "0x593e2c15850d626b67ba6541fe33e69d1fef17b2",
+      "proofsEnabled": true,
+      "latestBlockNumber": 13,
+      "latestBlockHash": "0x2ffd908ed999c6e92908a9c715a17f098253cbf3d5ae460b5884b33a118be404",
+      "checkpointedBlockNumber": 13,
+      "finalizedBlockNumber": 2,
+      "oldestHistoricBlockNumber": 1,
+      "syncedL1Timestamp": "1791748936",
+      "checkedAtSeconds": 1791748936,
+      "lagSeconds": 0
+    },
+    "elapsedMs": 103432
+  },
+  "applicationMining": {
+    "clientMining": {
+      "passed": false,
+      "ordinaryBlocksMined": 1,
+      "stopped": true,
+      "mode": "real-wall",
+      "maxObservedClockLeadSeconds": 103,
+      "autominingDisabled": true,
+      "lastWallSeconds": 1791748937,
+      "lastL1WallLagSeconds": 0,
+      "clockSynchronization": "every mined block, including correction of wall-clock lead",
+      "lastBlock": "210",
+      "lastTimestamp": "1791748937",
+      "autominingRestored": true
+    }
+  },
+  "readiness": [
+    {
+      "phase": "after-first-wall-mine",
+      "wallSeconds": 1791748937,
+      "timestampAvailable": true,
+      "inspectorCode": "READY",
+      "syncedL1Timestamp": "1791748936",
+      "lagSeconds": 1
+    },
+    {
+      "phase": "adapters-started",
+      "wallSeconds": 1791748937,
+      "timestampAvailable": true,
+      "inspectorCode": "READY",
+      "syncedL1Timestamp": "1791748937",
+      "lagSeconds": 0,
+      "health": {
+        "status": 200,
+        "ready": true,
+        "proofs": "real",
+        "queryEnabled": true,
+        "queryReady": true
+      }
+    },
+    {
+      "phase": "trusted-client-created",
+      "wallSeconds": 1791748937,
+      "timestampAvailable": true,
+      "inspectorCode": "READY",
+      "syncedL1Timestamp": "1791748937",
+      "lagSeconds": 0,
+      "health": {
+        "status": 200,
+        "ready": true,
+        "proofs": "real",
+        "queryEnabled": true,
+        "queryReady": true
+      }
+    },
+    {
+      "phase": "application-failed",
+      "wallSeconds": 1791748937,
+      "timestampAvailable": true,
+      "inspectorCode": "READY",
+      "syncedL1Timestamp": "1791748937",
+      "lagSeconds": 0,
+      "health": {
+        "status": 200,
+        "ready": true,
+        "proofs": "real",
+        "queryEnabled": true,
+        "queryReady": true
+      }
+    }
+  ],
+  "failure": {
+    "stage": "application-pxe",
+    "code": "UNCLASSIFIED"
+  }
+}

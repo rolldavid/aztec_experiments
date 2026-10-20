@@ -1,0 +1,26 @@
+file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/experiments/private-bok/rejection.test.mjs:10
+const contract = {address: AztecAddress.fromBigInt(123n), artifact: loadContractArtifact(JSON.parse(fs.readFileSync(new URL('./target/private_bok-PrivateBok.json', import.meta.url))))};
+                                        ^
+
+TypeError: AztecAddress.fromBigInt is not a function
+    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/experiments/private-bok/rejection.test.mjs:10:41
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0
+✖ experiments/private-bok/rejection.test.mjs (377.628208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.554625
+
+✖ failing tests:
+
+test at experiments/private-bok/rejection.test.mjs:1:1
+✖ experiments/private-bok/rejection.test.mjs (377.628208ms)
+  'test failed'

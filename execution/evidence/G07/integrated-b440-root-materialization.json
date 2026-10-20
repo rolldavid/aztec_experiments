@@ -1,0 +1,20 @@
+{
+  "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+  "passed": true,
+  "at": "2026-10-12T21:15:14.452Z",
+  "exactQualifiedSourceAndAssetClosure": true,
+  "manifestsEqualIsolatedCandidate": true,
+  "hashes": {
+    ".build/sdk/sdk-manifest.json": "a2f229f04ad0228f19ccd8e59cbd17e46f1b581dae7cfb867b144d56005cd07a",
+    ".build/apps-manifest.json": "40843bb0da4bc6f0c991716e364804ffc9172567c1f710cadf33d63879dcf995",
+    ".build/rolling-wallet/manifest.json": "054f6afb2636e941ebc43f4b1f3114a740825c1906196f4be703660e18c8c352"
+  },
+  "sourceWorktree": "../rolling-lead-social",
+  "rootApplicationTrackedChanges": false,
+  "metadataDirty": "lead-ownedregistryandresourceledger",
+  "buildReceipts": [
+    "integrated-b440-root-sdk.json",
+    "integrated-b440-root-frontend.json",
+    "integrated-b440-root-wallet.json"
+  ]
+}

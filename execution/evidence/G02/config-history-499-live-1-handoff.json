@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "499c42a9074872451b3c66bbb497c32cdb0099fb",
+  "reviewSha256": "5949aeb08bafff8b9355e98f924bc9d27741c55db923d26ecd1ac281f2de5873",
+  "passed": true,
+  "scope": "Mac actual pinned SDK fullPublicNodeconfiguration +Tenderlydeploymenthistory compatibility; nativeLinux unqualified",
+  "elapsedMs": 3517,
+  "exitCode": 0,
+  "ownedProcessGroupAbsent": true,
+  "attempts": 1,
+  "operatorRetries": 0,
+  "sourceChanged": false,
+  "providerRoles": {
+    "configuration": "PublicNode",
+    "history": "Tenderly"
+  },
+  "passedStages": [
+    "source",
+    "chain",
+    "history-chain",
+    "anchor-before",
+    "history-anchor-before",
+    "collect-addresses",
+    "contracts-config",
+    "history-deploy-block",
+    "history-logs",
+    "anchor-after",
+    "history-anchor-after"
+  ],
+  "evidence": {
+    "config-history-499-live-1-intent.json": "3ee45cb6da5cd2eb92d35893c23e5f1eac527672c2a1b4a07f50ece1f14d5d97",
+    "config-history-499-live-1.json": "4bb664b10fc6d868f521a91445d4a91be8f95ea9faa49e51b80a32544fabf4fb",
+    "config-history-499-live-1-process.json": "bd4dcabe26d6526b6e0fcde0680917e0ba1d8074810e124fc6caddeeaeda707c"
+  },
+  "nextEligibleSourceProposal": "Previously documented hash-gated singleCLI getL1Config provider argument toPublicNode; keep ordinary/historyTenderly anddebugPublicNode. Requires separateexplicitwriterclaim, newhelperpin and review; noautomaticdeployment.",
+  "limits": [
+    "Fullnodefactory/archiver/epoch-cache ordinaryclient bursts stilluseTenderly; throughput remainsunqualified",
+    "No freshcloudlaunch, upload, runtimebuild orpaidaction authorized",
+    "DefaultSDKread retries andlatest contractreads preserved; commonfinalized anchor isnotatomic reads",
+    "Operator07 remainsfailed; thisdoesnotretroactivelyqualifyit"
+  ],
+  "nodeStartupQualified": false
+}

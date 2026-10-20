@@ -1,0 +1,562 @@
+{
+  "task_id": "V06",
+  "outcome": "pass",
+  "recorded_at": "2026-10-10T15:41:49.677766+00:00",
+  "source_fingerprint": "0ed788ea5a769ac80e03296eecf2879a5bdec11e632bdd921acb352605fec48e",
+  "source_inventory": "evidence/V06/source-final-458724c.json",
+  "artifacts": [
+    {
+      "path": "evidence/V06/acceptance.md",
+      "sha256": "28590096186027c043ead4831f7f67015e71fb170939d1fef1002c85b1029a1d"
+    },
+    {
+      "path": "evidence/V06/board-exit-reconciliation.json",
+      "sha256": "13998471a1c6040db27d6f789a9b4d596896d059085504cae6ec45e4281071d0"
+    },
+    {
+      "path": "evidence/V06/browser-fee-preflight-regressions.log",
+      "sha256": "b7540ef765daa40c6229c0871bab0b36a2d087dfd6f3390daa8bb1c20be3b8f3"
+    },
+    {
+      "path": "evidence/V06/browser-post.json",
+      "sha256": "e7aae87112ebacc38ba8b2c378c345f6d59b8ee17598d87eb24a910443244707"
+    },
+    {
+      "path": "evidence/V06/browser-post.log",
+      "sha256": "4f533a3d5b4c0d6c66e651f5b1bbef70121d50c11cfe525654f4dac4aa83443e"
+    },
+    {
+      "path": "evidence/V06/budget.json",
+      "sha256": "6dfbad2f52cc05f656ebc6980fb42e320983d27eba8be3bb955a320bc6727b0d"
+    },
+    {
+      "path": "evidence/V06/claim-anchor-regressions.log",
+      "sha256": "bb7a78ca00e5dc729cd6bfdc75d793fcd501280153f5786264f94a503532f1f1"
+    },
+    {
+      "path": "evidence/V06/cli-identity-test.log",
+      "sha256": "8f865be339acabfcda11e660a19eeb2cb9f39aa23a4107025cab05bb04a23d5f"
+    },
+    {
+      "path": "evidence/V06/current-instance-check.json",
+      "sha256": "cde686a839959eae6c3b0a2a2f5632645dd423ef02996540a1d193d045e79e38"
+    },
+    {
+      "path": "evidence/V06/current-release-archives.json",
+      "sha256": "26f4cf28c122eb7c8d1d6babde91f798e6d34e5c67d61314a274946e9d6b02dd"
+    },
+    {
+      "path": "evidence/V06/current-release-archives.json.upload.json",
+      "sha256": "7d44a6760ddb26931a7ce9439bda65c33f37e9430e55c17d7baebff0ee5ab705"
+    },
+    {
+      "path": "evidence/V06/current-runtime-check.log",
+      "sha256": "1d5ec0e727329c87451fbaa752161d8ad136228752ef930cff750eb8013b7b6f"
+    },
+    {
+      "path": "evidence/V06/eligibility-anchor-after.log",
+      "sha256": "7618144af52763e772014f271da0217a8e0458ad0fe9f0ecd6130dd63f72f845"
+    },
+    {
+      "path": "evidence/V06/eligibility-anchor-before.log",
+      "sha256": "60efa1eb3c1fb870ab9f762ee91990be9e71c1bc3debea5410b43ca9be9dae35"
+    },
+    {
+      "path": "evidence/V06/exits-finalized.json",
+      "sha256": "10d6b57bf6f5ee42e920a4ef498642ad9b0f2e7d42c660ba50796177938bd751"
+    },
+    {
+      "path": "evidence/V06/final-recovery-archives-3.log",
+      "sha256": "3e9dd5cd31bb093cfab33a73ea924657d7a9d0912ad023f47fd04ad348b2304f"
+    },
+    {
+      "path": "evidence/V06/flagged-journey.json",
+      "sha256": "4d6e66406cda02525e9b88613612bb90ac4be18bf1e0f1ff2e228999caa8f7fe"
+    },
+    {
+      "path": "evidence/V06/flagged-journey.log",
+      "sha256": "72db037fc6fb2a963e0252feae3da83a16d842437d691daf97037ca59c9e30f9"
+    },
+    {
+      "path": "evidence/V06/fleet-replacement-result.json",
+      "sha256": "6b564ac82dfd624137de8437febbf882b2a4342ae1f49628be7e929410a0a621"
+    },
+    {
+      "path": "evidence/V06/fresh-secret-exclusion-final.json",
+      "sha256": "ca9a625c318ff848946add34f658d34af5b9cb25f23407d8dbfc9fea6ecf50bf"
+    },
+    {
+      "path": "evidence/V06/fresh-secret-exclusion.json",
+      "sha256": "d4784c79ef7bf5741a8ff4c60332f21eb6222f6f60848249f6fba095dde1d1e6"
+    },
+    {
+      "path": "evidence/V06/funding-recovery-tests-2.log",
+      "sha256": "4ebd9d147cbdfbb61c201165f3398365421d4827eb57fcf69bbac39e17da31e3"
+    },
+    {
+      "path": "evidence/V06/github-filter-after.log",
+      "sha256": "12742e93f16188c9f7dea609fd335846f048a59996ef79ae7df960817a646d8f"
+    },
+    {
+      "path": "evidence/V06/github-filter-before.log",
+      "sha256": "e132fcac3c87966d9fc6b44538af46aeb6b0b8994164381716c26f033b610777"
+    },
+    {
+      "path": "evidence/V06/harness-final.log",
+      "sha256": "938a59718d18cf056b19394245958cc14f6b4be44f043910380bfad025d1bc5c"
+    },
+    {
+      "path": "evidence/V06/hosted-board-refund-final.log",
+      "sha256": "de2eea71ea6b93b0a894004530651ef16a4d6e28ea2d1a4bfd4fa71e8d8bb2fd"
+    },
+    {
+      "path": "evidence/V06/hosted-board-withdraw-final.log",
+      "sha256": "4fc21c3e4f3934a547317f9cef308e8e37955f94f1f970131072e08c305a5e1d"
+    },
+    {
+      "path": "evidence/V06/hosted-exit-input-regressions.log",
+      "sha256": "1f950d2a984ac383b140de04f8f4b71f1e5574c252e0f3ae3dc929919cce4afd"
+    },
+    {
+      "path": "evidence/V06/hosted-moderation-post.json",
+      "sha256": "614ed04862a7bce9a0a40772a9d60514ff34b808664ece983defd8a2e5c30192"
+    },
+    {
+      "path": "evidence/V06/hosted-moderation-post.log",
+      "sha256": "947eeb4b742565f5a8de5fabaf48810dbf0c42cd38b4453ac5d00e8bb354f434"
+    },
+    {
+      "path": "evidence/V06/hosted-onboarding-9.log",
+      "sha256": "6d40a2889cccd95fb265c9bd2e3c7b35ab70dfdc22ca1c8ea155f65b65e42ff5"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-claim-post.json",
+      "sha256": "d994d907ee9fd24511928c28bcc7fe34c76fcdba235c75fe03537212710cd9cc"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-claim-post.log",
+      "sha256": "9fe6bd9fad696127aed4560b3959e3d3480a21d6311855b21c44dd381199c1a8"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-credit-withdraw-final.log",
+      "sha256": "92cf61cf24f8ce872c436627dba51f77e261bc1e0cc8a061f1aea8115386ed60"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-deposit-2.log",
+      "sha256": "df9c1123db8adb9e4c9fe836b98d643c5970623fd16991092f3f784301f0eec5"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-deposit.json",
+      "sha256": "208cb3e7a9a7d815996fa43afc3b846721de1c736d5c62995eafe50e0b081808"
+    },
+    {
+      "path": "evidence/V06/hosted-plugin-redeem-final.log",
+      "sha256": "146a4e21ce373704cc68e0c47de05cb8b7f696aefd3f304c4d824618ffeaada2"
+    },
+    {
+      "path": "evidence/V06/hosted-post-deadlines.log",
+      "sha256": "e5622862cd35284368e6f7a71abdeb061d8f9505ac937decc19c47d9c8bd8aa9"
+    },
+    {
+      "path": "evidence/V06/hosted-result.json",
+      "sha256": "1261f6501fc416378938fa75ba53ac8007726f8367da6d3474babc22e894c1f9"
+    },
+    {
+      "path": "evidence/V06/lazy-checkout-after.log",
+      "sha256": "a95b1bf9eea57962d715dcfcfa7a1c3b810c5cc16b97e780880fbd6210d0789c"
+    },
+    {
+      "path": "evidence/V06/lazy-checkout-before.log",
+      "sha256": "c0dd2d7b241affdd072ac9649a3319ea613c0119779dfe12d8e2846e4f2055d8"
+    },
+    {
+      "path": "evidence/V06/live-qualification.json",
+      "sha256": "0fab2541e5fa68642fa279a6d3c6c46217c4bb18c047bb2ee4e4adb20b14db94"
+    },
+    {
+      "path": "evidence/V06/moderation-canonical-flag.json",
+      "sha256": "7dc7b1946d087fcdc8896e17cac13cd846c2e8d28a61842eceae07c5b225c6ea"
+    },
+    {
+      "path": "evidence/V06/moderation-finalized-flag.json",
+      "sha256": "bb8ffd49836cbad4b391ea61e656de20796dd2578654ff78b69ae79366fa78a7"
+    },
+    {
+      "path": "evidence/V06/moderation-post-supervisor-1791633879999.json",
+      "sha256": "5efbcd72ffcec1b30d80bceb2f46f2143ee1d9591d2535dc7cb59a21f7458653"
+    },
+    {
+      "path": "evidence/V06/moderator-finalized-result.json",
+      "sha256": "83a0a86377957b5f72b3ceb1e9cba7680e3b9aa4fb2838f2fcda1c51924b9d39"
+    },
+    {
+      "path": "evidence/V06/moderator-health-final.json",
+      "sha256": "510e636a534d73f87161084b271b1ebb8c2ba0163999392a42123848cb59d2d0"
+    },
+    {
+      "path": "evidence/V06/new-plugin-post-verified.json",
+      "sha256": "9122b6019d31079f7d0de73869579e556d8f9cd53db8a096a7ecf1e23e64b122"
+    },
+    {
+      "path": "evidence/V06/node-info.json",
+      "sha256": "9e9216f6cb62b2d0845dc0be4ac4228cc864d280c3f56888916c2bb7accf5a77"
+    },
+    {
+      "path": "evidence/V06/npm-v6-dist-tags.json",
+      "sha256": "818df77289aa15fb038400029a6da4ef6f28fbb53a8136e212ac52c46b214580"
+    },
+    {
+      "path": "evidence/V06/operations-final-review.json",
+      "sha256": "b9d170658a7d66e9f6fdf7818b95fa5dc39f4ad9cc79ab9125cd2f8e833833d5"
+    },
+    {
+      "path": "evidence/V06/plugin-canonical-reply.json",
+      "sha256": "be20d11d67efd3b55215a95e369371befea0456215c0c8fbc5ee5ba66b07db00"
+    },
+    {
+      "path": "evidence/V06/plugin-claim-post-supervisor-1791633525419.json",
+      "sha256": "2dbc70e26baf51f023ec3793bb4fd8ecc62d88a58f8df0efae0d90090dd3b1a7"
+    },
+    {
+      "path": "evidence/V06/plugin-completed-invocation.json",
+      "sha256": "f64deb984732e2a6c52e9776e73b96cbb6f6e94e99b154fc1582442b2f1217eb"
+    },
+    {
+      "path": "evidence/V06/plugin-current-inventory.json",
+      "sha256": "8a62c065823cb272c9fa70e1f5f335c9a52578f653a32348e38c21de2e208490"
+    },
+    {
+      "path": "evidence/V06/plugin-deposit-supervisor-1791633256555.json",
+      "sha256": "ed692dd4e958f837d3cb476ab1f83fbb0a2df790f4aa64a95b8fafbadd0e9d15"
+    },
+    {
+      "path": "evidence/V06/plugin-failed-invocation.json",
+      "sha256": "a3506beaf019b564f7b408f67c212fadbe0e20850184cc24e92dd20a67ceb00d"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-installed.json",
+      "sha256": "1a854013aeebb5d36a5a137e8dc489cfaaae1fafa7c826e3fe660afa037f4a73"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-recovery-archive.log",
+      "sha256": "f60d86432807ffae58e5c8b2cb1d59c2c30a3b3b9a9688858c045f1c4d571b81"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-smoke.json",
+      "sha256": "6459affea32319a2e44310ca4b31db054c28c96b3bf390839b1fa7de6e29c582"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-smoke.log",
+      "sha256": "483dd30bc073a7eaf991389d51f8640820b63769635a01815857126f766f09fb"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-suite.log",
+      "sha256": "c606263f99b24d8b79fe4ed9e26b055e1d2c9b8d3bde6bb31c3161215f0eb51c"
+    },
+    {
+      "path": "evidence/V06/plugin-filter-upload.log",
+      "sha256": "79d71845144255f932bfa447d03b5b83ee9c1789d6bc11fdd82603ecbd884521"
+    },
+    {
+      "path": "evidence/V06/plugin-filtered-inventory.json",
+      "sha256": "ef35253a76950828f451f404f2a5f95c79b8c601af6023295c78c25fa29167b2"
+    },
+    {
+      "path": "evidence/V06/plugin-lazy-installed.json",
+      "sha256": "7656dd915483bc414c339d9fae53f4b1637d83fdf51485f04d365aca773b6aae"
+    },
+    {
+      "path": "evidence/V06/plugin-lazy-recovery-archive.log",
+      "sha256": "8c8ebf39bec0ed93bcaeef69746c6daf7ddedd533679864524f613382d122c90"
+    },
+    {
+      "path": "evidence/V06/plugin-lazy-regressions.log",
+      "sha256": "e45ff6c46e31aa8c45ebc3a63d9087c25fdd7985edc71e0f1450aac58eb1ea4b"
+    },
+    {
+      "path": "evidence/V06/plugin-literal-oracle-failure.json",
+      "sha256": "95727d1f080cae501307e14083b6ac112486065ac97722a296a73fb0e0d0553f"
+    },
+    {
+      "path": "evidence/V06/plugin-live-deposit-verification.json",
+      "sha256": "76206dfee4453025ce390feb804ef6fd4df4b507577509795917bdb70e92a493"
+    },
+    {
+      "path": "evidence/V06/plugin-recovery-installed.json",
+      "sha256": "63ea0b319cf58f75cda7b74b90eede5c0d2734311c9e921fc42a15f518a04509"
+    },
+    {
+      "path": "evidence/V06/plugin-recovery-public-verification.json",
+      "sha256": "e7c883a9ff623b3690f9f6c30d6095a128a327d66622ae67518df9bae8bfd25a"
+    },
+    {
+      "path": "evidence/V06/plugin-recovery-suite-2.log",
+      "sha256": "8f560447ec2ea7a60f6d68271ae3114ad8853dcf0cfbef57db23449532abf913"
+    },
+    {
+      "path": "evidence/V06/plugin-redeem-supervisor-1791646367858.json",
+      "sha256": "9902de933a84d4c02deab57914640f4ab3dd0769d5d221a080fdacbf43dc197c"
+    },
+    {
+      "path": "evidence/V06/plugin-redeem.json",
+      "sha256": "87cba7738f7da8c363f3c7ac61868129c73837fe5329d97d4c6bbe5205a97de2"
+    },
+    {
+      "path": "evidence/V06/plugin-reply-withdraw-supervisor-1791644332731.json",
+      "sha256": "a9d76fb080215adb4ce424fbc041765b3959db611b3755accfaa970611661e16"
+    },
+    {
+      "path": "evidence/V06/plugin-reply-withdraw.json",
+      "sha256": "050d37af3719a43b7459c9c1e83fa9e06a98005a494407f70617fdb3644325cf"
+    },
+    {
+      "path": "evidence/V06/plugin-request.json",
+      "sha256": "94c4b1822a1e04ff0f81f4e16613060b0b29e2aa611399784dee65f1d16938c5"
+    },
+    {
+      "path": "evidence/V06/plugin-reservation.json",
+      "sha256": "8aab4450cdfe49a7bbefb8526642c18e2b23d42a2c5b22ccf3312d731e951edb"
+    },
+    {
+      "path": "evidence/V06/progress-1417.json",
+      "sha256": "870933754b3fc2fbf6074f7e9e7086df2b9e2e6963ff73ae66a58083cd4dab57"
+    },
+    {
+      "path": "evidence/V06/progress-final.json",
+      "sha256": "ae496eb9cca9dfd08d4c43f2a4925e90b26d2d7c4eb32a1fe41d23dfc60fe047"
+    },
+    {
+      "path": "evidence/V06/prover-host-recovery-archive.log",
+      "sha256": "815c4b7885a3f207b2ef906e7e26d4ccfbb44cf6b6ac167ae2936f4f254c7e9c"
+    },
+    {
+      "path": "evidence/V06/prover-security-final.json",
+      "sha256": "4976d89f5f3925b6dc07fdba15f26c6192e2a7507af30e05ff2180cc0bdcb5bc"
+    },
+    {
+      "path": "evidence/V06/public-assets-serial-check.json",
+      "sha256": "c7d12a9808c0cc3beb20fafb32bcc7ea6a258f2a90ee3473086a01c2423904b7"
+    },
+    {
+      "path": "evidence/V06/public-encoded-headers.json",
+      "sha256": "87a714dd9a47b44e6dec83d02a728a28086778728e47e2880fadcfbe49d39f6a"
+    },
+    {
+      "path": "evidence/V06/rebuilt-deployment-identity.json",
+      "sha256": "1ff25f0cd3ba990622925c76005a313c229f00f95518f5e4928c497f14983c83"
+    },
+    {
+      "path": "evidence/V06/reconcile-board-exit.mjs",
+      "sha256": "055f4121ab2244c5286a9fd84e95fb05971de1d80520b03d50d7969ede4e1f5b"
+    },
+    {
+      "path": "evidence/V06/recovery-build-regressions-2.log",
+      "sha256": "cb2ed85dd5e6e4d3aff569a906200810fa55d1897c784c6123be105ca79a092f"
+    },
+    {
+      "path": "evidence/V06/refund-supervisor-1791646515925.json",
+      "sha256": "421aac38761f7b57d043bfba9fabcb45208305cf17b5b79bfe71b4fd8eef7b76"
+    },
+    {
+      "path": "evidence/V06/refund.json",
+      "sha256": "e3355b53292ce40bdbb686ce1643de10036432d599bc848f1c5b1c326e8eb9ef"
+    },
+    {
+      "path": "evidence/V06/release-archives-verification.log",
+      "sha256": "0811c2b3c6b53e9cce4ed5082894d0caa22fc21f1042741449e9ccd99db9457a"
+    },
+    {
+      "path": "evidence/V06/replacement-budget-verify.log",
+      "sha256": "980b4145ec8ab202e3152b3b4e8a57dbebcc2805501bd31db8eafa85a9f0dded"
+    },
+    {
+      "path": "evidence/V06/replacement-first-post-health.json",
+      "sha256": "e774e9c1d8b227358c684e37cc7469f02c20a9ab1ef6525f8fb81130e181843c"
+    },
+    {
+      "path": "evidence/V06/replacement-install.log",
+      "sha256": "98ec9e228382bf66f16e37948ec3398756f2ef23996a0f16a30db2218d6fa3dd"
+    },
+    {
+      "path": "evidence/V06/replacement-public-health.json",
+      "sha256": "90d61de930faf5471a6e70319707e570878897f49ea3f53413f23a903e35fae5"
+    },
+    {
+      "path": "evidence/V06/replacement-ssh-revoked.json",
+      "sha256": "2ea7cb230abc861e23cdb35a6470a0c2e353cab0fe9111e76a3526383eb20085"
+    },
+    {
+      "path": "evidence/V06/review.md",
+      "sha256": "ebf37a2d5ebe10bfedb1966ea862be7c20bef11905c9eb1dfa399bc3a1c0fb18"
+    },
+    {
+      "path": "evidence/V06/source-b986d94.json",
+      "sha256": "5a387b4a122801b079bccd08ca52d5cda510b33d16e3ae0d43cdd83625074d4e"
+    },
+    {
+      "path": "evidence/V06/source-final-458724c.json",
+      "sha256": "1c09e46d00934e36b3fe4dcc08bd2f61b5aadc0d62848b6b5d69600c22c24bda"
+    },
+    {
+      "path": "evidence/V06/supervisor-1791632464784.json",
+      "sha256": "e8a7f57e4fa706a30cabcc3c6bf01e6e6309a0c7647d92e0cd550c4961373614"
+    },
+    {
+      "path": "evidence/V06/u01-current-controls.log",
+      "sha256": "bfd091f73f73b408b1ae405c28bcc1e5fb3d3c459f2e9647ce3f06e6434789ac"
+    },
+    {
+      "path": "evidence/V06/unflagged-journey.json",
+      "sha256": "f15df2ddb73e53260a159cc1e756ac6276883fd8b53c3fda7d796dca828cdf16"
+    },
+    {
+      "path": "evidence/V06/unflagged-journey.log",
+      "sha256": "2b66c0c0b11487c650843596391b0137ca394d61463f5e76a0c0e368cd9a8261"
+    },
+    {
+      "path": "evidence/V06/v6-anchored-probe-tests.log",
+      "sha256": "46bca143a77e779fd7c584b1f327e0bdf4c79105204741804610de689a87808c"
+    },
+    {
+      "path": "evidence/V06/v6-app-build-5.log",
+      "sha256": "63ca6abc3913c71ba97cc3026e43906820c54757d25ed87c2abd67ba80be22b8"
+    },
+    {
+      "path": "evidence/V06/v6-app-build-7.log",
+      "sha256": "63ca6abc3913c71ba97cc3026e43906820c54757d25ed87c2abd67ba80be22b8"
+    },
+    {
+      "path": "evidence/V06/v6-components-7.log",
+      "sha256": "2a1b3366922377ee333ccc4f07dbda1874424696876bdfbaf596f06ee5169071"
+    },
+    {
+      "path": "evidence/V06/v6-contract-build-3.log",
+      "sha256": "eef32588afbd59eec874cc88c9371d8bd86b7931080da971046c4f83900f65c8"
+    },
+    {
+      "path": "evidence/V06/v6-contract-build-5.log",
+      "sha256": "03df9bbbc9ae236c32371c13a07a012e45c351fcb0762910cd84d7d0aef1c8b7"
+    },
+    {
+      "path": "evidence/V06/v6-noir-tests.log",
+      "sha256": "e0096dfabb87723aea2e2490defe766d459782f6662f5de0e0a9b2594ebd4870"
+    },
+    {
+      "path": "evidence/V06/v6-plugin-tests-4.log",
+      "sha256": "facba194693976d7c9fdd98de8912fca55e741149f9f7c5e73043d77db318c8a"
+    },
+    {
+      "path": "evidence/V06/v6-portal-tests-2.log",
+      "sha256": "ea78d333ed30e7efd90183e495537ad6595c0bb26d4a8909e0333125e7914d65"
+    },
+    {
+      "path": "evidence/V06/v6-private-fees-2.log",
+      "sha256": "e2e39bd0f8056acd2402d86bdb9e3448aa9631e65b10589a2c702b549343a361"
+    },
+    {
+      "path": "evidence/V06/v6-sdk-build-5.log",
+      "sha256": "57b4617e12041bfaa775cd952a41e0f960f3cd981583091859fba985d8750f10"
+    },
+    {
+      "path": "evidence/V06/version-refresh.json",
+      "sha256": "2a64a1aae89c1860b165df4d406d1e6f6c0cf7c688a7cac905c4470484d4c071"
+    },
+    {
+      "path": "evidence/V06/website-content-encoding.json",
+      "sha256": "3b804def8e0e00996f91b3cec2dc012280269b5341bf7c1dbdd4fdc7954252d8"
+    },
+    {
+      "path": "evidence/V06/website-current-recovery-archive.log",
+      "sha256": "69f93275820c915215844ef52ff4bd565ae9506da89ba4d323d4589d132a4c52"
+    },
+    {
+      "path": "evidence/V06/withdraw-failed-commitment-input-20261010T1505.json",
+      "sha256": "3f1950bba54b70a7326bf910dc22cfd11b4f84c9023495b5beae61811e47de45"
+    },
+    {
+      "path": "evidence/V06/withdraw-supervisor-1791644530266.json",
+      "sha256": "16dd1a0c5443b6c972da2baa294f77cf49a4fb1611879624aa3b7a36187e2d5e"
+    },
+    {
+      "path": "evidence/V06/withdraw.json",
+      "sha256": "029fbef38f356a48c274ef6648240435e3b1056c4e23f3edf6cdc9ed3d49481e"
+    },
+    {
+      "path": "evidence/V06/wrong-origin-boundary-tests.log",
+      "sha256": "f9121bbf036be4b3970782f0b06651cb066c47141af3c0562473f57ed331ef08"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "V06-A01",
+      "result": "pass",
+      "summary": "Pinned deployed-testnet V6 6.0.0-rc.1 stack rebuilt. Noir197, Solidity40, components370, plugins92 and affected provenance/recovery/harness checks pass. Genuine unflagged and flagged native lifecycles and actual GUI/WASM posting pass within540s/4GiB. Final harness corrections have focused checks, live redemption results and independent review; final source is localcommit458724c.",
+      "artifacts": [
+        "evidence/V06/acceptance.md",
+        "evidence/V06/review.md",
+        "evidence/V06/source-final-458724c.json",
+        "evidence/V06/version-refresh.json",
+        "evidence/V06/v6-noir-tests.log",
+        "evidence/V06/v6-portal-tests-2.log",
+        "evidence/V06/v6-components-7.log",
+        "evidence/V06/plugin-filter-suite.log",
+        "evidence/V06/v6-sdk-build-5.log",
+        "evidence/V06/v6-contract-build-5.log",
+        "evidence/V06/v6-app-build-7.log",
+        "evidence/V06/unflagged-journey.json",
+        "evidence/V06/flagged-journey.json",
+        "evidence/V06/browser-post.json",
+        "evidence/V06/hosted-exit-input-regressions.log"
+      ]
+    },
+    {
+      "id": "V06-A02",
+      "result": "pass",
+      "summary": "Fresh official V6/Sepolia deployment completes real remote-proof funding, private claim, anonymous posting, finalized automatic moderation, paid plugin reply, unused-credit exit/redemption and board screening/exit/refund. Both exits finalized normally; exact999652microUSDC and1e13wei returned, canonical wrapped wallet effects, exact board liability/principal/wallet-minus-gas and replay rejection verified. Earlier board browser assertion failure is preserved; the successful existing exit was qualified read-only, not resubmitted or misrepresented as a browser rerun.",
+      "artifacts": [
+        "evidence/V06/live-qualification.json",
+        "evidence/V06/hosted-result.json",
+        "evidence/V06/moderation-finalized-flag.json",
+        "evidence/V06/moderator-health-final.json",
+        "evidence/V06/plugin-canonical-reply.json",
+        "evidence/V06/plugin-reply-withdraw.json",
+        "evidence/V06/board-exit-reconciliation.json",
+        "evidence/V06/withdraw-failed-commitment-input-20261010T1505.json",
+        "evidence/V06/withdraw.json",
+        "evidence/V06/exits-finalized.json",
+        "evidence/V06/plugin-redeem.json",
+        "evidence/V06/refund.json",
+        "evidence/V06/plugin-redeem-supervisor-1791646367858.json",
+        "evidence/V06/refund-supervisor-1791646515925.json",
+        "evidence/V06/review.md"
+      ]
+    },
+    {
+      "id": "V06-A03",
+      "result": "pass",
+      "summary": "Replacement Spotprover i-0025eb05db3c2491c serves realV6 proofs; final publichealth shows4completed/0failed with emptyqueue, following accepted live application transactions. Fresh AWS review verifies oneSpot/$0.40cap/noOnDemand, terminate behavior and CloudFront-only ingress; installed absolute timer13Oct08:42:31UTC and conservative campaignmaximum$83.27 remain within approved$100. Exact runtime/host/site/operator/plugin recoveries are hash-verified and versioned; moderator/plugin healthy.",
+      "artifacts": [
+        "evidence/V06/progress-final.json",
+        "evidence/V06/operations-final-review.json",
+        "evidence/V06/replacement-budget-verify.log",
+        "evidence/V06/fleet-replacement-result.json",
+        "evidence/V06/budget.json",
+        "evidence/V06/current-release-archives.json",
+        "evidence/V06/current-release-archives.json.upload.json",
+        "evidence/V06/plugin-filter-installed.json",
+        "evidence/V06/plugin-filtered-inventory.json",
+        "evidence/V06/review.md"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "self-review",
+    "reviewer": "Root integrator, with recorded independent internal reviews by /root/v6_migration_review and /root/deployment_review",
+    "summary": "Reviewed integrated source, actual proof/browser receipts, strict accounting and replay checks, preserved failed runs and read-only reconciliation, network/version compatibility, operational health, budget controls and recovery provenance. No unresolved V06 blocker. Internal engineering review is not the separate external audit; R04, soak and production clearance remain unwaived.",
+    "artifacts": [
+      "evidence/V06/review.md",
+      "evidence/V06/operations-final-review.json",
+      "evidence/V06/acceptance.md"
+    ]
+  }
+}

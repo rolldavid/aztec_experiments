@@ -1,0 +1,40 @@
+{
+  "candidate": "a65f56e1b75ca5b73f2d0551aada84a1587c3ddb",
+  "base": "f32a1037bd8e95b2994795e1cfe3053f72fd2930",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved source eligibility for one bounded public historical-log diagnostic",
+  "findings": [],
+  "sourceSha256": {
+    "deploy/prover/archiver-prerequisites.mjs": "82a8bd88ca88a7746b75b070f199608a41c79265887e3c6d65c8078f6fa865d6",
+    "deploy/prover/archiver-prerequisites.test.mjs": "9c588917d901a629239105285fc960a05a069d3849f24eaa1be241be2293f1b4"
+  },
+  "requirements": [
+    "G14 public SDK archiver prerequisite diagnosis; no wallet, cloud mutation or startup qualification",
+    "Separate original failed SDK stage from one exact historical eth_getLogs call"
+  ],
+  "independentChecks": {
+    "command": "NODE_BACKEND=js pinnedNode24 --test --test-concurrency=1 deploy/prover/archiver-prerequisites.test.mjs",
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1040.699166,
+    "log": "/tmp/reviewer-historical-a65-tests.log",
+    "liveRequests": 0
+  },
+  "sourceAssessment": [
+    "Fixed Sepolia public endpoint, deployment11785332 and exact rollout address/OwnershipTransferred topic; deploymenthash matches retained f32 deploy-block observation",
+    "One explicit fetch, redirect:error, no credentials/referrer,10s abort, streaming16KiB cap and128log cap; malformed UTF8/envelope/quantities/binding fail closed",
+    "Same parsed response fed into actual installed viem getContract.getEvents custom offline transport, retryCount0 and one-call counter; strict ABI addresspadding check independently applied; no second provider request",
+    "Only bounded numericHTTP/RPC counts/status and fixed categories persisted; hostile exceptions/getters are not serialized; stream canceled/released",
+    "Original f32 modes unchanged; historical CLI first checks existing package/node/eightmodule sourcepins; parent59s TERM+500msKILL/close and exclusive0600O_NOFOLLOW receipt retained",
+    "Original exception/raw response/provider text never enters report; workerstdout/stderr discarded"
+  ],
+  "evidenceLimits": [
+    "Original getOwnershipTransferredEventsAtDeploy repeats getL1StartBlock eth_call before getLogs; historical f32 UNAVAILABLE cannot be attributed to logs from this future one-call result",
+    "Two ethereum image modules byte-bound; six archiver/blob image modules remain unbound per archiver-prerequisites-f32-image-binding.json",
+    "No live request or image execution performed by reviewer; no fullnode readiness, historical AWS root-cause fix or paidlaunch approval",
+    "Pinned deploymenthash is historical public observation, not fresh independent network finality verification",
+    "Outerprocess timeout is authoritative if stream cancellation/dependency work stalls; imported helper alone is not independent process supervision"
+  ],
+  "handoff": "rolling-controls/execution/evidence/G02/archiver-historical-a65f56e-handoff.json"
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "findings": [],
+  "independentChecks": {
+    "report": "execution/evidence/G07/notification-infra-1ec-independent-checks.json",
+    "sha256": "d30abac71e6baca254efd3a3857dd0fe2a97c6c08de5e258ccf3c724c766cf1f",
+    "exactSourceBlobs": 10,
+    "trackedClean": true,
+    "sdkAndWallet": {
+      ".build/sdk/sdk-manifest.json": {
+        "sha256": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+        "verifiedInputs": 2040,
+        "verifiedOutputs": 8
+      },
+      ".build/rolling-wallet/manifest.json": {
+        "sha256": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+        "verifiedInputs": 81,
+        "verifiedOutputs": 24
+      }
+    },
+    "method": "Read-only exact git/blob/literal/hash inspection. No package, native, browser, prover, provider or service operation."
+  },
+  "base": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "verdict": "ELIGIBLE_ONE_CHANGED_GENUINE_NOTIFICATION_RUN_AND_ONE_FULL_LOCAL_PACKAGE_BUILD_SERIALIZED",
+  "composition": "Three notification-only harness files byte-identical72072ea; seven deployment files byte-identical4f70. Three additional tracked files are lead metadata. Production app/SDK patches/artifacts unchanged.",
+  "checksCarried": {
+    "combinedNode": 132,
+    "bootstrapPython": 51,
+    "logHashesVerified": {
+      "execution/evidence/G07/notification-infra-composed-tests.log": "e6c67d3f23fdb76c608df912fd80c4f56646c903fa3857af6fa8486f721a77f4",
+      "execution/evidence/G02/archiver-root-bootstrap-tests.log": "bc31543906f92347fa822d01289d939112015142fae76d9ba11ff54118dc7a46"
+    },
+    "independent720SelectedPure": 9,
+    "priorP2Closed": true
+  },
+  "notificationConditions": [
+    "Use unchanged four application proof actions and separate genuine setup claims; preserve B fee-only/no collateral and both initial pool baselines.",
+    "New single-shot B standalone is after A claim in same setup miner; no retry on uncertain result; retain partial paid evidence and both pool debit formulas.",
+    "Maintain180s browser/accounting admission,540s/4GiB outer, real proofs, same validated artifacts and all cleanup. Timing improvement remains a hypothesis until actual run.",
+    "Package build must complete/clean up and leave approved source/dependency/assets unchanged before notification; bind actual receipt to exactsource then."
+  ],
+  "coldCarry": {
+    "report": "execution/evidence/G07/cold-c43-runtime-review.json",
+    "sha256": "61696ea8445a3436012713c4fe731293056a68e93978cb7fd4714f8d6631b8eb",
+    "disposition": "Finite historicalc8 relationships/recovery measurement valid carry to unchanged current path; never relabel runtime revision. No extra genuine repeat required merely for these notification/infra-only changes."
+  },
+  "packageConditions": [
+    "Final bound helper report separately approves only local build/complete archive verification underexclusive540s/4GiB.",
+    "Actual manifest/archive/source closure and helper output must be independently reviewed before operator09 pinning; fresh payload, deadlines, once-intent, dual shutdown and Linux qualification remain open."
+  ],
+  "exclusions": [
+    "No actual notification success yet.",
+    "No archive creation, paid cloud action, Linux readiness or fullG07/G14 acceptance granted by source eligibility."
+  ]
+}

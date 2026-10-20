@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T21:29:41.663745+00:00",
+  "source": "1c7a6d7a26e4340fc36cdfb1aad4176749bf321e",
+  "scope": "First normal rc3 base build only: Billboard, PrivateFPC, PluginAdapter, Solidity portal and canonical consumer copies. Frozen generated snapshot, not a committed generated-output revision.",
+  "requirements": [
+    "G02 reproducible build and complete artifact provenance",
+    "G14-A01 current V6 exact dependency/native compiler processing"
+  ],
+  "verdict": "accepted_bounded_base_build_snapshot",
+  "findings": [],
+  "generatedSnapshotSha256": "e1cbda8f25ecf13650268baa1abf9f4fbce9961111cf06d131293f323acce447",
+  "generatedTrackedOutputs": 84,
+  "manifestSha256": "5a53c0af0e163072d20cb87f28b7e9549dc8507d4d547748ed53e87206088741",
+  "independentAudit": {
+    "path": "execution/evidence/G02/rc3-normal-base-1c7-independent-audit.json",
+    "sha256": "ba19532b451213300ff34f69459accf9a05b4707449b35579cab20846efb78a0",
+    "scriptSha256": "da2696ec8bc0d7238456e2ded7b8a25175b6c7b4b786491e6584fc0802fd8491"
+  },
+  "checks": {
+    "normalBuilderSourceInspected": true,
+    "exactSourceAndBinaryPinsRehashed": true,
+    "sourceInventoryFiles": 1014,
+    "rootSnapshotFilesUnchanged": 24,
+    "laterRootAdvanceMetadataOnly": [
+      "execution/infrastructure-ledger.json",
+      "execution/sessions/registry.json"
+    ],
+    "manifestInputsReconstructed": 52,
+    "dependencyPackages": 8,
+    "fullNoirDependencyFilesRehashed": 419,
+    "rawSnapshotsPreserved": 7,
+    "processed": {
+      "Billboard": {
+        "artifactSha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+        "privateVKCount": 5,
+        "allPrivateVKBytes": 4832,
+        "embeddedSourceCount": 127,
+        "stdlibSourceCountComparedToReviewedRaw": 10
+      },
+      "PrivateFPC": {
+        "artifactSha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+        "privateVKCount": 4,
+        "allPrivateVKBytes": 4832,
+        "embeddedSourceCount": 101,
+        "stdlibSourceCountComparedToReviewedRaw": 11
+      },
+      "PluginAdapter": {
+        "artifactSha256": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+        "privateVKCount": 1,
+        "allPrivateVKBytes": 4832,
+        "embeddedSourceCount": 96,
+        "stdlibSourceCountComparedToReviewedRaw": 10
+      }
+    },
+    "nativeProcessorLogDerivations": 10,
+    "allCanonicalCopiesByteIdentical": true,
+    "portalCompiler": "0.8.27+commit.40a35a09",
+    "portalConstructorInputs": 6,
+    "portalCreationAndRuntimePresent": true,
+    "portalManifestAndBytecodeCopiesExact": true,
+    "allowedGeneratedPathsOnly": true,
+    "processingTempsAbsent": true
+  },
+  "runtime": {
+    "elapsedMs": 110789,
+    "peakTreeRSSKiB": 2806304,
+    "ownedTreeAbsent": true,
+    "rssSampleCount": 108,
+    "exitCode": 0,
+    "limits": {
+      "milliseconds": 540000,
+      "rssKiB": 4194304
+    }
+  },
+  "evidence": {
+    "handoff.json": "2677b2e386f61b0f2f070578fcc6c085eafd73cbba7b01153bea416b222f5b8e",
+    "result.json": "f5bfc5ac720f8d93c8141b29680aa01ac7729ce4526c3de2154313a4bfb2d55e",
+    "execution-intent.json": "044d1da1b1f306d58eca57e5b1dafaae2ccf3fb51e3b3327a5fb35d0808ee6c3",
+    "preparation.json": "62c3ac02183836afd01a85e71742fb2188439a9318d21f4fd170c4ac6b24dcfb",
+    "run.mjs": "dcbe3ed803d1fd26008cefd9157b61529013fca5549be9b41c04aa2bac4ce790",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "build.log": "ecb5086a35708d440aa77fe89a284234bba86531381eed22914091fe12f4d2ce",
+    "verification-attempt-1.json": "1558fa8000546cc886c46096cf5bf774bb2370e9cc84e33ee69015054974b909"
+  },
+  "preservedFailures": [
+    {
+      "path": "execution/evidence/G02/rc3-normal-base-1c7/verification-attempt-1.json",
+      "disposition": "Evidence classifier treated compiler std/aes128.nr as a repository source. Independent audit classifies std explicitly and compares every std entry to preserved reviewed raw artifacts; all match. Normal build was not repeated."
+    },
+    {
+      "scope": "Independent audit first assertion",
+      "disposition": "Current root HEAD advanced to metadata-only 125a691 after build; all 25 root snapshot bytes are unchanged and only ledger/registry differ from b440. Corrected audit records the advance rather than requiring stale HEAD equality."
+    }
+  ],
+  "qualificationHolds": [
+    "All 260 unsuppressed compiler-bug-labelled diagnostics remain unresolved. This build uses the unchanged normal --silence-warnings command; silence is not diagnostic clearance or evidence of constraint soundness.",
+    "VKs were independently decoded, inventoried and bound to actual native processing logs and exact binaries, not recomputed or cryptographically proved by this read-only review.",
+    "Rolling output was recompiled raw by the full workspace compile; its 14 VKs and normal build, Avatar, PrivateBok and Invocation processing remain separate pending stages.",
+    "Portal AST/runtime metadata generation, normal SDK, TXE/adversarial constraint tests, proof execution, application catalog refresh, and remote/Linux/current-canonical qualification are not established by this stage.",
+    "No root dependency or generated artifact transfer/integration is approved by this snapshot acceptance."
+  ],
+  "nextDisposition": "May continue the previously reviewed sequential normal processing plan on the same pinned source under a separate lead-owned bounded slot; retain this exact snapshot and all prior raw diagnostics."
+}

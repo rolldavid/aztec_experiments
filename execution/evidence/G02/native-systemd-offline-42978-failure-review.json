@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:15:31.131039+00:00",
+  "scope": "Independent source and actual evidence review; no runtime execution",
+  "actualPacketSha256": "e32578ee41473a042ee5091b9070fd0fe179985daef9ce3a6c2522d86058d03b",
+  "sourceHashes": {
+    "run.py": "eb7b4c2835db0dec4827a25395184888d92cd6d1740326595b75b71afb10d162",
+    "boot-bound.py": "2244105a259c832e501e44ae7b5fbb11eeb655b543bad0fe2853cb76bd85ef57",
+    "driver.py": "eb8e59158d2293e9e45c12628c882126b33960675a5f62567a42493a151fe7ea",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176"
+  },
+  "packetHashesVerified": {
+    "intent.json": true,
+    "result.json": true,
+    "host-inspect-projection.json": true,
+    "create-intent.json": true,
+    "start-intent.json": true,
+    "before-cleanup.json": true
+  },
+  "actual": {
+    "session": 42978,
+    "passed": false,
+    "elapsedMs": 43263,
+    "hostConfinement": true,
+    "createCalls": 1,
+    "startCalls": 1,
+    "copyFailures": 72,
+    "beforeCleanupState": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": true,
+      "Status": "running"
+    },
+    "containerAbsent": true,
+    "sourceUnchanged": true
+  },
+  "finding": {
+    "severity": "P2",
+    "hostLocation": "offline-measured/run.py:120",
+    "guestLocation": "offline-measured/boot-bound.py:6",
+    "sourceDefect": "Receipt reader uses docker cp against /run, explicitly mounted tmpfs. Official documented corner case excludes tmpfs copying.",
+    "primarySource": "https://docs.docker.com/reference/cli/docker/container/cp/#corner-cases",
+    "historicalLimit": "No preflight or regression bytes and no raw copy error retained. Guest execution/confinement/systemd outcome remains unknown; running/OOM=false does not distinguish success from the boot failure sleep."
+  },
+  "repairRequirements": [
+    "Use one reviewed bounded public receipt transport; do not repeat the existing cp path.",
+    "Any guest exec reader must wait for a source-bound barrier proving the PID1-only cgroup inspection has completed; time delay alone is insufficient.",
+    "Preserve original confinement limits and production capture/classifier; no privileged fallback.",
+    "Publish complete bounded records atomically, distinguish unavailable/failed/malformed receipt, and independently complete owned cleanup on every path.",
+    "Add meaningful controlled tests for pre-barrier no-reader, failure/no-start, malformed/oversize/partial receipt and cleanup."
+  ],
+  "disposition": "Actual failure and positive cleanup accepted as evidence. Source repair and controlled checks eligible for preparation; no unchanged retry, new execution grant or native qualification."
+}

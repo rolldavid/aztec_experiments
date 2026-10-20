@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "candidate": "fa7fd1529d6ca7f4ec316e4beca9163c85410934",
+  "base": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "verdict": "approve scoped source/component integration",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "scripts/t04-metamask.mjs": "26c6d6da094cf185476179b0446572669cf4fa442d44aab2e4ed17e96fe81319",
+    "scripts/test-t04-browser-journey.mjs": "20ecc1ae7fd2372dde47b137e63852279f97e51ee585f0c8f1a19a415bfbe0d8"
+  },
+  "packet": "execution/evidence/G04/rc22-balances-withdrawals/retained-surface-repair-review.json",
+  "packetSha256": "eb6931fc16a689decaff710eee53f1d40238fd5db4b289db9e790311567026a9",
+  "review": [
+    "Only the existing readiness driver wait and its controlled regression tests change. Exact Unlock OR Recovery password locator is awaited under existing page/owner deadlines before visibility decision; already-loaded password path and delayed Unlock are both supported.",
+    "Password/file import/Import recovery/Recover funding checks remain unchanged. Load failure propagates before password/file/import. Payment/proof/network guards, retained directory validation and paid recovery binding are untouched.",
+    "Harness tests deliberately use locator doubles and a delayed event-loop surface: they reproduce the immediate visibility decision error and check event ordering and exact failure identity. They do not exercise real Playwright rendering, extension initialization or successful private recovery."
+  ],
+  "tests": {
+    "pass": 37,
+    "fail": 0,
+    "skip": 0,
+    "elapsedMs": 1216,
+    "verifiedReceiptAndLogHashes": true,
+    "retainedRedFailure": true
+  },
+  "remainingGates": [
+    "Actual changed retained browser readiness remains required;31446 stays failed. No payment, private Ready, supported named-wallet or fullRC19/20/39 acceptance follows from these tests."
+  ],
+  "reviewerExecution": "Read-only source and evidence verification; no tests or browser/service run."
+}

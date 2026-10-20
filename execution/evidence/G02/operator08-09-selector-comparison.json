@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "readOnlyPayloadAST": true,
+  "campaigns": {
+    "08": {
+      "payloadSha256": "5989e05b2c69ec5224538237328c0381526f7fc905137f0de14879562e14fdf4",
+      "networkHasExplicitRollupVersion": false,
+      "hostHasROLLUP_VERSION": false,
+      "hostHasRollupVersionCLI": false,
+      "registry": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+      "chainId": 11155111,
+      "selectorFromPinnedSDK": "canonical",
+      "ordinaryProviderTenderly": true
+    },
+    "09": {
+      "payloadSha256": "5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9",
+      "networkHasExplicitRollupVersion": false,
+      "hostHasROLLUP_VERSION": false,
+      "hostHasRollupVersionCLI": false,
+      "registry": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+      "chainId": 11155111,
+      "selectorFromPinnedSDK": "canonical",
+      "ordinaryProviderTenderly": true
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "revision": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+  "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+  "verdict": "approved scoped four-path composition; no blocking findings",
+  "source": {
+    "apps/dist/aztec_bundle.js": "8b3430289334d19291d89c891d193e62b3b930c17a54005837cfd39e93d1dd0d",
+    "apps/dist/sdk-manifest.json": "befd1ed48dc6574471f812a0279e378f52d38c73cd904df3efeeda0c65f8afae",
+    "plugins/agent.mjs": "bf53171c03092ccee2fa22858b72b9f6fc067cd63283b04a524b23e9be9c8435",
+    "plugins/test/model.test.mjs": "bd93ceeeaff8bc0c78f10990ab968c5c331f7532506ac9196fcd194d7d132f1d"
+  },
+  "sourceCarry": "Agent and tests exactly match independently reviewed f195e9c; generated two outputs exactly match c8fc7d5 normal build.",
+  "manifestChecks": {
+    "trackedEqualsNormalBuildManifest": true,
+    "bundleMatchesManifestAndPriorLiveServedHash": true,
+    "sdkInputs": 2057,
+    "sdkOutputs": 8,
+    "existingCheckSdk": "PASS; current lock/buildscript/required patches/all input and output hashes validated"
+  },
+  "tests": {
+    "currentModelLogSHA256": "0e0c11935b2d271321f34e6c0d7158793807b840640a3cf7d02de8742d953c54",
+    "currentModel": "34 passed zero failures/skips218.068542ms; no reviewer repeat"
+  },
+  "priorReviews": [
+    "reviewer-f7-authenticated-backup-review.json",
+    "reviewer-f195-canonical-message-retrieval-review.json",
+    "reviewer-9f677-composition-runtime-review.json"
+  ],
+  "scopeLimits": [
+    "No actual paid-provider RC30 retrieval or full G10 acceptance.",
+    "Backup source and generated closure approved; actual backup reopen remains separately qualified by owner.",
+    "No service, financial or browser action in this review."
+  ]
+}

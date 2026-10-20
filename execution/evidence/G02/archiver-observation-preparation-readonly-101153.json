@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T10:11:53.290160+00:00",
+  "scope": "Read-only us-east-1 project resource reconciliation and local plugin health",
+  "profileReferences": [
+    "message-board-deploy",
+    "message-board-sso"
+  ],
+  "reads": {
+    "identityDeploy": {
+      "available": true,
+      "data": {
+        "account": "052665140763"
+      }
+    },
+    "identitySso": {
+      "available": true,
+      "data": {
+        "account": "052665140763"
+      }
+    },
+    "instances": {
+      "available": true,
+      "data": []
+    },
+    "volumes": {
+      "available": true,
+      "data": []
+    },
+    "fleets": {
+      "available": true,
+      "data": [
+        {
+          "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T02:09:37+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T02:20:37+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T04:42:35+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T02:34:35+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T04:09:27+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T07:06:50+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T02:41:10+00:00",
+          "terminateWithExpiration": true
+        },
+        {
+          "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+          "state": "deleted",
+          "type": "request",
+          "validUntil": "2026-10-12T09:54:55+00:00",
+          "terminateWithExpiration": true
+        }
+      ]
+    },
+    "plugin": {
+      "available": true,
+      "httpStatus": 200,
+      "status": "ready",
+      "active": 0,
+      "lastFailurePresent": false
+    }
+  },
+  "ledgerSha256": "a5eecfa0801a551418708d8508d97ad380d7f6c4c57429487ccdbc238ebfe368",
+  "leadRecordedCumulativeBoundUsd": 190.28,
+  "pendingReservationUsd": 0,
+  "remainingUsd": 109.72,
+  "mutations": false,
+  "imageOperations": false
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "005e52d5c28929103963642eae02a81a4705842d",
+  "verdict": "changes requested: confirmed required browser CRS asset omitted; genuine composer acceptance failed",
+  "sourceHashes": {
+    "scripts/rolling-wallet-assets.mjs": "ce04ddfeb8c778679c6828b3ae21626fb5e7acf7079b3f5ffcbd8f418627be0c",
+    "shared/crs-client.js": "a3b240489fb12d650123330604837d1902e57beb34ba6c0938f42597ff4633de",
+    "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "apps/rolling/wallet-session.mjs": "d3cbd87202efafc6b44a2512e3404feb8c92494f8c713d5e7efcca8f5e69eecd",
+    "apps/rolling/wallet-panel.mjs": "67e5dc261d5d1e56b8500ec7965c4fb7d5e2ffd01f0cd2b9ec8ecb474ec61cfc",
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/testing/rolling-composer-fixture.mjs": "02fe21e06187151f537f7777b191bc979c9a5fbe7e7afe1e6fccb40137b22b1e",
+    "scripts/testing/browser-worker.mjs": "327ddab3f87d8e23e83e113f3f17245f592bde41b0813212a562dc446e3a2ba3",
+    "scripts/testing/run-application.mjs": "c746228245c636190758955c57d2cf86251ea7fa305d3a374fc0f04501bbc494"
+  },
+  "evidenceHashes": {
+    "execution/evidence/G06/application-3d1de6b1-26f3-4955-bea4-be2b044c6e73.json": "4a81c93974c2227ef8dbb5294018eca5629fc3c2dffba6057d9c18a4c310823d",
+    "execution/evidence/G06/application-port-516b5dcb-b9ae-49a3-b2d8-4497b6680640/observation.json": "d72a09be40c5fb04b72403ccd0a9613f3a29095d1fdcc64160a3270dfb5b43fd",
+    "execution/evidence/G06/composer-browser-prover-probe.json": "a12d330c1ff00da695f15bbde43104c0260bbf15255e7139da895c9c5d3fd323"
+  },
+  "findings": [
+    {
+      "severity": "P1",
+      "path": "scripts/rolling-wallet-assets.mjs",
+      "scenario": "Production private session on a genuine-proof node initializes browser prover even with remote prover configured. CRS loader requests pinned derivedG1, but inventory only exposes manifest.files. Required /crs/g1_uncompressed.dat returns404 and initialization rejects.",
+      "evidence": "Actual production asset/CSP probe: worker200, derivedG1 404, fixed BB_BROWSER_PROVER_CONFIGURATION in202ms; no CSP/page errors. Independent source comparison and local derived bytes/hash verified.",
+      "repair": "Include derivedG1 in exact validated CRS inventory/build/serve path; preserve pinned size/hash checks and no fallback. Add actual HTTP/initialization regression and corruption negatives."
+    },
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-composer-browser.mjs",
+      "scenario": "After import, driver waits only for Posting identity. A caught connection error renders immediately but remains indistinguishable from pending setup until120s timeout.",
+      "repair": "Retain only fixed known UI state/checkpoint classification, not arbitrary DOM/error/request bodies; fail promptly on known terminal connection failure while preserving all acceptance checks."
+    }
+  ],
+  "actualOutcome": {
+    "passed": false,
+    "stage": "import-a",
+    "browserElapsedMs": 120013,
+    "timedOut": true,
+    "privateRequests": 32,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0,
+    "bothAccountingVerified": true,
+    "readerAndL1Closed": true,
+    "browserAndContextClosed": true,
+    "ownedTreeAbsent": true,
+    "temporaryRemoved": true
+  },
+  "reportPreservation": {
+    "innerObservationDurable": "execution/evidence/G06/application-port-516b5dcb-b9ae-49a3-b2d8-4497b6680640/observation.json",
+    "ackPreservedAccounting": true,
+    "outerWorkerAbsent": "Browser exits1 after acknowledgement; supervisor failure can terminate fixture before worker-result write. This does not erase durable inner observation and does not constitute passing acceptance."
+  },
+  "limits": [
+    "Historical browser run did not retain fixed UI failure state or exact private request methods, so specific stage attribution remains inferred; the independent probe confirms a sufficient production blocker, not absence of other defects.",
+    "No private control/backup/journal contents inspected. No browser/proof/service run by reviewer; parent probe independently inspected.",
+    "Full composer, account switch,992-byte preparation and privacy acceptance remain unfulfilled."
+  ]
+}

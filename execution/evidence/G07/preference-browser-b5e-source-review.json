@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "b5e6899ec9b93b449ce2bd8a946705886da1eb18",
+  "base": "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
+  "verdict": "approved-source-pending-parent-composition-and-runtime",
+  "findings": [],
+  "scope": "Bounded test-only production Chromium keys-only preference recovery driver and reader copy; G07 recovery/private local Following and Bookmarks support.",
+  "sourceHashes": {
+    "scripts/testing/rolling-preference-browser.mjs": "d787e6f9607037b5885e0468394753a2affbfedc6d468a3e7cbf7952814d4491",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7cb46a1c1a83beec5d31d56bb8084ca9dccf8fd9b07a2e8efa5f788ee9a17ae2",
+    "apps/rolling/reader.mjs": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874",
+    "apps/rolling/reader.browser.test.mjs": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947"
+  },
+  "inspection": [
+    "Exact accessor-free detached control schema; canonical owner-only encrypted backup validation precedes browser use; all validation errors projected to fixed message.",
+    "Expected public post values are Node-side assertions and locators only, never application or preference state injection.",
+    "Fresh Chromium/native IndexedDB, real production Unlock/import/recovery UI and explicit bounded continuation; partial recovery cannot qualify private content.",
+    "Only three loopback origins allowed. Fixed public feed/board queries and static routes; installed SDK read/simulation inventory only; unknown or malformed RPC, expanded public query, proof/submission methods and WebSockets prevent pass.",
+    "No response bodies, request parameters, URLs, arbitrary errors, backup material or expected content included in returned report.",
+    "Actual DOM assertions require recovered Following, Bookmarks and main-board follow state; lock and reload must erase private presentation and avoid further private/feed traffic.",
+    "Timeout and cleanup failure prevent pass. Context and browser close precede final counter snapshot/reassertion; parent owns process/resource supervision and endpoint lifetimes.",
+    "Reader change is visible copy plus matching assertion; no pagination or network behavior change."
+  ],
+  "checks": [
+    {
+      "command": "Pinned Node 24.21.0 --test scripts/testing/rolling-preference-browser.test.mjs",
+      "kind": "independent cheap tests; no Chromium launched",
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 104.618167,
+      "log": "/tmp/reviewer-preference-browser-b5e-tests.log",
+      "sha256": "cde95931d96c36c042bee74ae6f1c50c4a6fa058db4faf2844f74dd46a6854f9"
+    },
+    {
+      "command": "git diff --check 58280d b5e6899",
+      "result": "pass"
+    }
+  ],
+  "requiredBeforeRuntime": [
+    "Review exact parent composition, immutable backup lifetime and current built assets.",
+    "Parent must reserve at least 150 seconds for the <=120 second browser within unchanged 540 second / 4 GiB owned-tree budget.",
+    "Parent must independently authenticate canonical setup/preferences and reconcile actual receiver/proof/submission counters and both relevant fee/accounting results after browser shutdown and before acknowledgement.",
+    "Final affected reader browser assertion still requires its granted browser slot; this review did not run Chromium."
+  ],
+  "limitations": [
+    "Traffic validator inspects request boundaries, not response status/body or full identifier/HMAC unlinkability. Successful DOM recovery and parent counters are separate required evidence.",
+    "No pending/completion receiver accounting is supplied by this driver itself.",
+    "Synthetic control/traffic tests are not genuine encrypted browser recovery, real chain, notification, reorg or full privacy acceptance."
+  ]
+}

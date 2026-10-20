@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:07:31.056420+00:00",
+  "candidate": "cedc8f86463b676b4346490e7dd51420d42770d0",
+  "parent": "f827a66bd3989d7a8a05c1a014642f8be3a16bde",
+  "packetSha256": "fd62681163519029f4773655908e3d397414ff8cfbd1228ff444c820f4ce07d1",
+  "sourceSha256": {
+    "scripts/testing/rolling-application-actor.mjs": "c642e51470b6a897f8dfd81e8e9260b514e43bfcc51240137f9463b88eb3297d",
+    "scripts/testing/rolling-application-actor.test.mjs": "618a3d9147c88300131abc6bb6e9ffbbd36e9b7bdd1bb6ac11502d67cb3724c3",
+    "scripts/testing/rolling-application-fixture.mjs": "66431a9a056d4ad07e387aa172caac8cddb6e27314a7966df8f048fd51d4ba69",
+    "scripts/testing/rolling-application-fixture.test.mjs": "334a9cce15d1fe6f4615fdda21f4a0583a1a8da9115d66aa52fcfad57f677993",
+    "scripts/testing/rolling-preference-recovery.mjs": "8526ddd89318762999471a1b27d50ff609fbab40ebb0e09baec95e334e995e8e",
+    "scripts/testing/rolling-preference-recovery.test.mjs": "6863e386a2f0cec69d9d401831a48b242fb0f32eeca6118a7fe538671de5111d",
+    "scripts/testing/scenarios.mjs": "f4b949287d09c87fda80c7a74c7650c32bae0cbf038ad631c694aef5b7748cb3"
+  },
+  "verdict": "CHANGES_REQUESTED; source-only; runtime tests unrun",
+  "requirements": [
+    "G07 original real L1 fork/retained prefix/suffix/full divergent rebuild/replacement/fees/history acceptance",
+    "No additional proof jobs or sends from cold reads; preserve global counter attribution and both tag-discovery negatives",
+    "Pre-HTTP durable journal wait, exact synchronous native admission, no late send after failure/cancellation, original Promise drainage before actor disposal"
+  ],
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "line": 831,
+      "title": "Overlap finalization can replace the original failure",
+      "detail": "The rootOverlap.run try has an unconditional finally whose drain/assert/snapshot/save awaits may throw. A drain, diagnostic or persistence failure then replaces the original overlap rejection, including falsy reasons preserved correctly by the state machine. This loses failure provenance before outer accounting/cleanup observes it.",
+      "requiredRepair": "Use an explicit failure flag and preserve the original rejection. Attempt required drain and finite observation persistence; combine finalization errors with the original without truthiness checks. A sole finalization failure must retain its own identity. Do not retry send or waive drainage.",
+      "requiredTests": [
+        "Actual-used finalizer paired original Error and falsy rejection values with drain/save failure.",
+        "Successful overlap plus sole finalization failure preserves that failure.",
+        "Drain remains awaited and original writer/scan cannot be released or forwarded by failed observation."
+      ]
+    }
+  ],
+  "reviewedInvariants": [
+    "Exactly seven authorized files changed from f827; no production engine or SDK mutation. Browser-only f827 remains a separate predecessor; 282 reorg additions are not currently integrated in a189.",
+    "Actual engine persists original journal at engine.js250, then awaits optional beforeSubmit252 before submitOnce255. Adapter forwards original journal receiver and values, checks stored operation/hash and immutable signed bytes, captures hooks and rejects confirmation-hook collisions.",
+    "One service-job admission precedes bootstrap scan; observer uses distinct PXE/journal namespace under same owner, with unchanged external submitted-proof/transport counters. Writer is sole financial actor.",
+    "Failure flag in root overlap state machine preserves falsy errors, poisons before draining, aborts scan and rejects hook latch; original scan/write are allSettled. No actor.close dependency used to unblock work.",
+    "Request-local AsyncLocalStorage liveness is synchronous before counters and native send; exact root hash/bytes and single permit checked. Underlying native send Promise is retained past downstream disconnect and submitOnce timeout.",
+    "Bootstrap adds empty complete state check; subsequent retained/orphan/restored/replacement-height/replacement assertions preserve full physical-page oracle, former-head accounting, both tags0 and zero read effects.",
+    "Marker reopens original writer namespace and separate observer namespace; private snapshot closure references the newly reopened observer.",
+    "Real L1 suffix change, original dropped/invalid tx and exact signed predecessor, canonical fee refund, renewed replacement review, independent marker digest, historical inclusions and final 3/4 service jobs remain asserted.",
+    "Scenario application/trusted worker profile2 and 540s/4GiB plus150/45/15 internal reserves unchanged. Source inventory includes process-worker/worker/native-profile inputs."
+  ],
+  "requiredRuntimeAfterRepair": [
+    "Matching actor/fixture/recovery suites with actual engine+AEAD journal and SDK serialized HTTP tests, all retained/new cases/no unexplained skips.",
+    "Real genuine initial/reorg eligibility requires separately reviewed exact composition/build closure and credible time/resource admission; this source review does not establish savings or permit another genuine run.",
+    "Do not infer all-process2: current rc3 persistent WSDB independently selects CPU-based default, as separate a189 reporting correction records."
+  ],
+  "limitations": [
+    "No test/native/browser/proof job executed by reviewer.",
+    "No genuine proof/read overlap timing or memory has been measured. Current browser admission failure is a separate scenario and supplies no overlap pass.",
+    "Lower-level helper tests and actual engine with labelled proving/node do not qualify canonical fork or financial outcomes."
+  ]
+}

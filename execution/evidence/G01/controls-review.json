@@ -1,0 +1,11 @@
+{
+  "candidate": "f27b9591b76a835c8238d81c44c58984af946552",
+  "base": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
+  "reviewer": "/root/reviewer",
+  "runtime_parent": "01a12a75-1b50-7871-a73b-4253a1010194",
+  "implementer": "/root/controls",
+  "verdict": "approve",
+  "blocking_findings": [],
+  "checks": "Independently ran 19 unittest cases in 7.529 seconds; six additional disposable probes blocked nonzero/bool exit, missing review artifact, acceptance hash mismatch, evidence hold, moved integration base. Reviewed all source/tests/docs before implementer conclusion.",
+  "limits": "Lead authenticates session independence and completeness; no external specialist/privacy/recovery assurance."
+}

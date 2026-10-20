@@ -1,0 +1,20 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T18:52:16.436785+00:00",
+  "candidate": "99891365eaf3c73254f06a1844702ee05fd980ba",
+  "base": "35ce657c248941d28a44496c189797ef4f95f8ed",
+  "verdict": "approve_scoped_source",
+  "findings": [],
+  "sourceHashes": {
+    "plugins/test/operator-lifecycle.test.mjs": "ff019daf8c7ce758aca4678756175bd73a8de5ef5c4860dfe338d00141dedc80",
+    "combined:plugins/operations.mjs": "ac51da7a3d1c3eb7f603f23a0edad8e841964014d39b01d8709b9add00f5455f"
+  },
+  "carriedReview": "review-7965483f-ci.json",
+  "checks": [
+    "Only intended test path changed; candidate test blob exactly equals7965483f, base test blob equals6a0de2a.",
+    "Production operations.mjs byte-identical to35ce used for independent focused test. Diffcheck clean. Prior2 focused passes carry without repetition."
+  ],
+  "limits": [
+    "Exact transfer approval; normal integration gate remains. No broad suite, service or external action performed."
+  ]
+}

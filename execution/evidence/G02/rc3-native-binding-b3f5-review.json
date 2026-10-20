@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "b3f5f6b8d979cb983118d574ba91a186a424019e",
+  "base": "6851dd5da205227813aec7ed4aaffff4a7970b37",
+  "verdict": "approve-narrow-Darwin-arm64-native-identity-binding-only",
+  "sourceHashes": {
+    "toolchain.json": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+    "scripts/test-toolchain-packages.mjs": "4ac0fa2b24ccce11e8584f5c04e8c45e0b1862b8187e07c3a93e1fefe4af8519"
+  },
+  "handoffSha256": "64f686b4887c05b0c9469ae079b503007df8ab45751b35c37fe0bdebf487e217",
+  "measuredEvidence": {
+    "receiptSha256": "5a1f8cc5207e652c5131cf02eada9f2eb2014a998f09bd30ad7b1dbe307c6895",
+    "commands": "Prior owner-authorized bb --version and nargo --version only; not repeated by reviewer",
+    "durationSeconds": 0.832,
+    "nativeVersion": "6.0.0-rc.6",
+    "nativeSha256": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217",
+    "currentBinaryAndCompilerBytesIndependentlyMatched": true,
+    "bothOriginalProcessesReaped": true
+  },
+  "independentTests": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 138.471584,
+    "path": "execution/evidence/G02/rc3-native-b3f5-independent-tests.log",
+    "sha256": "00757b1d351e866b9d0df8ffcd4a89aa8e3dd964f3512672b24188bd6541a9a3",
+    "nativeExecution": false
+  },
+  "assessment": [
+    "Only Darwin arm64 appears in active qualification. Package identity matches exact foundation bb.js rc6 pin; exact measured binary SHA and version are retained.",
+    "All four rc1 active pins were moved byte-for-byte to historical map, never consulted by bbBinary. Node and Noir compiler identity unchanged.",
+    "Unchanged bbBinary rejects unsupported/unqualified platform before selecting or reading configured override; package mismatch precedes binary read; checksum mismatch precedes version execution; exact version comparison remains.",
+    "New pure tests simulate unqualified platforms with nonexistent override, historical package mismatch and wrong checksum, restoring process/env/pin descriptors synchronously. Prior package mapping/closure checks remain."
+  ],
+  "findings": [],
+  "scopeCaveat": "The no-filesystem-inspection claim is verified for scripts/toolchain.mjs bbBinary. Unchanged prover/native-binary.mjs resolveNativeProver calls SDK findBbBinary/existsSync before looking up platform pin, although it rejects absent pin before binary contents/version execution. This review does not claim blanket no-path-probing for every runtime resolver.",
+  "limitations": [
+    "Binary identity/version only. No rc6 proof correctness/performance, compile, artifact/catalog/VK, SDK API, dependency patch, service or deployment qualification.",
+    "Linux/x64/other platforms remain absent from active map; prior historical evidence cannot authorize execution.",
+    "Root remains rc1 and unchanged; no installation/native operation performed by reviewer.",
+    "Any future rc3 deployment must review runtime resolver composition and regenerate/qualify required artifacts and package closure."
+  ]
+}

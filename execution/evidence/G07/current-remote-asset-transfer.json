@@ -1,0 +1,12 @@
+{
+  "source": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "route": "actualremote SSM8081 gzip",
+  "status": 200,
+  "wireBytes": 28082850,
+  "decodedBytes": 62963453,
+  "sha256": "7d7fc810cddc0eeea1cbcbba7e7306104ca15321777df8280afc8949df7b8db9",
+  "elapsedSeconds": 37.970039,
+  "thresholdSeconds": 60,
+  "passed": true,
+  "fullCold120Qualified": false
+}

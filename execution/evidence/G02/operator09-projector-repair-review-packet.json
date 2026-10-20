@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T10:39:49.271207+00:00",
+  "sourceRevision": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+  "trackedSourceUnchanged": true,
+  "scope": "Operator09 enclosing receipt P2 privacy repair; ignored source files only",
+  "priorOperatorSha256": "077771279bff12fdb3cb0fac783b1a9c149a62671c826720911ca448a45a14eb",
+  "reviewFinding": {
+    "path": "execution/evidence/G02/operator09-projector-review.json",
+    "sha256": "5c44ab4fd0e1e6433aec3e8fc9b02a73a357159c12ebd9761f608fd2b4792cd4"
+  },
+  "files": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator.py": "0e3f88bffbfe3cf961529fb0703b483716f7681b21f09eb7de47a85d26b6152a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator-test.py": "be6714d268a6f1faebb2228ff715d6e19eed3a115cfead95f938ad554e4d82fc"
+  },
+  "sourcePins": {
+    "bootstrapSha256": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "helperSha256": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "historicalOperator08Sha256": "ffdea3bc5f96bc84e4c027a13c081a837bc292c9c9619114f150c07f10a3da4a"
+  },
+  "repair": [
+    "Removed unrestricted scalar projection. Every projected string is a finite enum, exact configured public network value, or bounded canonical digest/block hash/timestamp. Every boolean/numeric field has strict type and bounds.",
+    "Enclosing malformed known fields reject the receipt to fixed validShape:false; no raw message/exception is serialized. Unknown fields are never projected and remain subject to bounded JSON tree validation.",
+    "Successful qualification requires complete fixed boolean checks, real-proof/network readiness, canonical anchors and report hash. False/partial receipts never become successful through omission.",
+    "Retain exact schema2 instrumentation and source-gated107 progress validator. Historical08 files stay unchanged.",
+    "Added receipt_bytes with16384-byte cap, strict UTF8/JSON, duplicate-key rejection, tree-depth/cardinality bounds and unsupported-type rejection. Structured receipt() applies equivalent decoded-size/type bounds.",
+    "Manifest/attestor remain None; callers cannot supply arbitrary pins to enable monitoring. No AWS/launch entrypoint added."
+  ],
+  "validation": {
+    "command": "python3 .build/rolling-node-09-operator-test.py",
+    "exitCode": 0,
+    "testsPassed": 19,
+    "elapsedSeconds": 1.589,
+    "scope": "Labelled offline fixtures only; synthetic package pins patched in memory; actual trusted bootstrap validator",
+    "log": "execution/evidence/G02/operator09-projector-repair-tests.log",
+    "logSha256": "ff3691f05534b41a45ab51bd96f5eee1c8373f6904a78032394bb64a56cee2eb"
+  },
+  "testCoverage": [
+    "All previous15 cases retained and strengthened to canonical actual bootstrap field shapes",
+    "Every known outer scalar mutated to private sentinel and oversized string",
+    "Complete successful qualification/readiness positives and missing/false checks, network/timestamp/block/hash negatives",
+    "Malformed nested/root values, numeric/signal/exit consistency and full transport/depth/duplicate-key failures",
+    "Private unknown and known fields omitted/rejected without raw error output"
+  ],
+  "apiHandoff": [
+    "Generic scalars(d,keys) intentionally removed: it was the unsafe bypass. Future console/control monitor projections require explicit typed field schemas during their separate wiring review.",
+    "Use receipt_bytes for downloaded exact bounded receipt bytes; receipt for already bounded-decoded console marker objects. No background monitor or transport is included.",
+    "Actual future package manifest/attestor pins and source-root update require separately reviewed preparation; defaults remain failclosed."
+  ],
+  "actionsNotTaken": [
+    "No sharedSDK/native/Docker/build/provider/cloud/service/paid action",
+    "No private config/capability/journal read or modification",
+    "No source107/ledger mutation"
+  ],
+  "acceptanceLimits": [
+    "Independent source review pending",
+    "No actual cloudreceipt or Linux qualification asserted",
+    "No newpackage or actualpayload reviewed"
+  ]
+}

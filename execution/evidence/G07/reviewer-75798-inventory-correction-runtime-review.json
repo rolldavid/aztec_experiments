@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_89_COMPONENT_RESULTS_WITH_PRESERVED_RUNNER_FAILURE",
+  "source": "7d74e7c2cddaac6e1cc3bd3774efe98d059e36ad",
+  "sessionId": 75798,
+  "failedActualPacketSha256": "1d41e119859c705589e655cdc5666a3b03357e2ac74116cbc1018f03eb214438",
+  "correctionSha256": "e1569c5bf4de90a9ae389a253456ddb0d10779140f385418773c5ee8eb7f905b",
+  "inventorySha256": "8b264f14c3eee65166f5adf74285580dcb89e63ac08ed05e4b4a4983d6807997",
+  "findings": [
+    "Original overall run remains failed because its expected inventory was 48.",
+    "Independently matched all nine exact source loop declarations and their 41 expanded cases plus 48 literal labels to retained TAP 89/89 with zero fail/cancel/skip/todo. Four intentional repeated observer labels retained as a multiset.",
+    "Retained-log missing and duplicate extra case negatives reject; no test, assertion, production source or runtime result was changed.",
+    "All actual and correction packet file hashes verified; all 4274 current bindings independently match, tracked source clean, 6097ms/915440KiB and positive owned tree/TMP cleanup."
+  ],
+  "disposition": "A new full runtime is unnecessary solely to correct the evidence inventory. The independently verified retained 89 component results may support configuration-only integration, accompanied by this append-only correction and the original failed receipt.",
+  "scope": "Native proof-flag configuration components only. Browser stays held; no devnet runtime or genuine proof acceptance. Subsequent disabled-default included-board needs separate exact preparation and parent grant."
+}

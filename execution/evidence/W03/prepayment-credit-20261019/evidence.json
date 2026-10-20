@@ -1,0 +1,73 @@
+{
+  "task_id": "W03-prepayment-credit",
+  "candidate": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+  "base": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+      "base": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+      "id": "focused-prepayment",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Focused existing native-cap, ETH/USDC funding, session wiring, panel and expiry-order tests",
+      "environment": "Pinned Node24/local component checks; synthetic payment boundary, no proof/payment",
+      "observed": "18 original checks plus2 finalexpiry cases; independent12checks retained. Exact6blobs transferred unchanged.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-fee-credit-focused.log",
+          "sha256": "620937629950a2a8dc62f22e7d02065ca112d3736869594bcdeda8bedcc26136"
+        },
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-fee-credit-wiring-browser.log",
+          "sha256": "62a792e443a285acfbb5e74093bcdf4fe3f2b7e97e11a927d5f23cd22236a94c"
+        },
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-expiry-order.log",
+          "sha256": "093820e4efb8202120248a1a89c1cdec144263f53dcf0af5560b3bf91a56fbb7"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+    "base": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/prepayment-credit-20261019/review.json",
+        "sha256": "b1fa081e26f26b95092e67fcd9535b546dac87a9659fddb7c305384616e8402e"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+      "base": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+      "id": "RC19-prepayment-affordability",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-fee-credit-focused.log",
+          "sha256": "620937629950a2a8dc62f22e7d02065ca112d3736869594bcdeda8bedcc26136"
+        },
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-fee-credit-wiring-browser.log",
+          "sha256": "62a792e443a285acfbb5e74093bcdf4fe3f2b7e97e11a927d5f23cd22236a94c"
+        },
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/prepayment-expiry-order.log",
+          "sha256": "093820e4efb8202120248a1a89c1cdec144263f53dcf0af5560b3bf91a56fbb7"
+        },
+        {
+          "path": "evidence/W03/prepayment-credit-20261019/review.json",
+          "sha256": "b1fa081e26f26b95092e67fcd9535b546dac87a9659fddb7c305384616e8402e"
+        }
+      ]
+    }
+  ]
+}

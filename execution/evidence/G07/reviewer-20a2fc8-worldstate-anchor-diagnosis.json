@@ -1,0 +1,49 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "observedAt": "2026-10-14T20:37:53.705004+00:00",
+  "sourceRevision": "20a2fc80de2c894f219afbf96f5e67a279fec5f8",
+  "kind": "read-only installed-source diagnosis, no implementation approval",
+  "requirements": [
+    "RC25",
+    "RC26"
+  ],
+  "measuredInput": "Both actual samples: proposed1471, checkpointed/proven1470, finalized1469, worldlatest1470 with checkpoint hash and treesAreSynched true. Supplied actual evidence not independently re-run here.",
+  "installedVersions": {
+    "aztec-node": "6.0.0-rc.3",
+    "world-state": "6.0.0-rc.3",
+    "pxe": "6.0.0-rc.3"
+  },
+  "sourceHashes": {
+    "node_modules/@aztec-labs/aztec-node/dest/aztec-node/server.js": "b85237ce09a418159b09d5ccfce9473d58c1ac443a82c1ef818ec7a6c70046c4",
+    "node_modules/@aztec-labs/aztec-node/dest/modules/node_world_state_queries.js": "142a0605984233dcc95f738135b41f1104b0b06dda3ca6eb46238f49e174524f",
+    "node_modules/@aztec-labs/world-state/dest/synchronizer/server_world_state_synchronizer.js": "3345c6fea7cd9145a6a0343ceb42710e2164635cd30b435402ec396ae4105133",
+    "node_modules/@aztec-labs/world-state/dest/native/native_world_state.js": "873b731ac10851e77a0ce73f4fac558161ca3a6c3e7487591a12b414dda96202",
+    "apps/rolling/wallet-session.mjs": "21af00ad2cbb359925715d8d99c0dfb8e1a891106de5802051f1f797d032c2f0",
+    "shared/trusted-private-node.mjs": "d449a9ecaa085edd2d0e948aa9aa45b0a6d8aa73fa9b644eabeb5c2691c2ed12"
+  },
+  "findings": [
+    "aztec-node server539-545 reads status from worldStateSynchronizer and tips from blockSource. Equality of the two latest heads is not an atomic API invariant.",
+    "ServerWorldStateSynchronizer.status170-177 exposes actual committed DB unfinalizedBlockNumber/hash. treesAreSynched describes tree consistency; it does not assert catch-up to archiver proposed head.",
+    "NodeWorldStateQueries.getWorldState224-266 resolves explicit block query to number/hash, calls syncImmediate(target,hash), then getVerifiedSnapshot(target,hash); fork/pruned failures remain errors. Proposed-tag special case uses current committed DB after synchronization instead.",
+    "WorldStateSynchronizer.syncImmediate219-266 supports already-reached historical target and verifies its archive hash; getVerifiedSnapshot63-90 verifies requested fork in actual returned snapshot. Historical query does not require continuously matching newest proposed tip.",
+    "Rolling wallet-session184 selects PXE checkpointed syncChainTip. Native compact captures exact tier and independently validates selector/current tier/hash/header before and after encoding."
+  ],
+  "recommendation": {
+    "scope": "Introduce explicit anchor/tier-aware readiness only for callers that already bind historical/checkpointed reads. Preserve current proposed equality as default for generic callers. No arbitrary common minimum/fallback anchor.",
+    "invariant": [
+      "Identity/proof policy, ordered tips, coherent world metadata, freshness and finality policy unchanged.",
+      "Selected canonical tier anchor must be present in retained history and no newer than world DB head. Reject world head above observed proposed tip as inconsistent; bounded existing reacquisition may collect a new whole snapshot.",
+      "Verify world latest hash against canonical metadata at its own height, not against proposed hash at a different height. Verify selected anchor and world head before/after as required; never treat synced boolean or height-only comparison as sufficient.",
+      "Caller still verifies exact requested old anchor and cryptographic history/read proof; readiness snapshot is not authorization for arbitrary unanchored future queries.",
+      "Pass explicit tier consistently through native compact and compact gateway readiness. Reader can pass its already-bound tier; generic private RPC/createTrustedPrivateNode policy must be deliberately reviewed instead of silently inheriting relaxed global semantics."
+    ],
+    "smallestFocusedCheck": "Extend existing trusted-node fixture with proposed1471/worldcheckpoint1470: explicit checkpointed readiness succeeds only with canonical matching hashes; default/proposed mode remains fail-closed. Reuse compact/gateway fixtures to prove before/after binding and unchanged HTTP errors."
+  },
+  "failureCases": [
+    "World below selected checkpoint; pruned selected checkpoint; world above proposed; same-height fork; world own-height hash mismatch; selected anchor or world head reorg at final fence; malformed/false-sync/stale/wrong identity/proof policy; finality mismatch; request newer than configured tier; hung grouped peer still drained; no unrequested fallback to older anchor."
+  ],
+  "limits": [
+    "This source diagnosis supports historical readiness semantics, not a completed repair or performance acceptance.",
+    "No services, SDK installation, source, wallet, provider or financial operations performed."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T17:08:51.772547+00:00",
+  "candidate": "899bf12743854997b4c3e7d66ccbe31e2b28c867",
+  "base": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "workerEquivalent": "c56d4dfa0a4392052ab4db8136f84490e5dc936d",
+  "verdict": "approve_scoped_source",
+  "launchVerdict": "hold_pending_explicit_runtime_preconditions",
+  "scope": "RC01/27/36\u201338 bounded testnet preparation; source and proposal review only. No paid launch, service operation, transaction, proof, or new build.",
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "3335977a8bf1d582f66cf3d061f007602c7439bf54446190cc7b85a109e1ff62",
+    "deploy/prover/package.py": "d8d551b7eeb80f4550d47180b9759d081e38f58ed290a0367abb977df23a1d4d",
+    "deploy/prover/BOOTSTRAP.md": "a87015b35656afc5c8954140dec4b41b304eb0d44a6a513b14c2f19d41ba22b5",
+    "scripts/test-prover-bootstrap.py": "f35dbb2adf46c57a39b748b53b7015dc131749865f5c5d0becc874d33121b67a",
+    "scripts/test-prover-package.py": "2bba95d6a89eb004ed68b7b53e76f0d9226db969f456852a521eeed490e4ad90"
+  },
+  "packetHashes": {
+    "proposal.json": "fe673c677f48a486cadbe781ca7133d1fb1579131ae67b67aacee6d15d20bee7",
+    "plan.md": "4743a81eeecc4156c91b82f840e3c981783284e91b3e7cee1d845c285ccf2597",
+    "routing-procedure.md": "9b764ce9d7e0e5b68d562c2ac2e31cb36801883fb493ab8a766adb31f668ad12"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "git diff --exit-code 899bf12743854997b4c3e7d66ccbe31e2b28c867 c56d4dfa0a4392052ab4db8136f84490e5dc936d -- deploy/prover/bootstrap.py deploy/prover/package.py deploy/prover/BOOTSTRAP.md scripts/test-prover-bootstrap.py scripts/test-prover-package.py",
+      "result": "pass; all five allowed source paths identical"
+    },
+    {
+      "command": "git diff --check b4871a1555f290dea7ef8b50900bdc8254bb6baf..899bf12743854997b4c3e7d66ccbe31e2b28c867",
+      "result": "pass; exact diff contains five allowed paths only"
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp PROVER_VALIDATION_NODE=<pinned Node24.21.0> PROVER_VALIDATION_CADDY_ARCHIVE=<worker packet/caddy_2.11.7_linux_amd64.tar.gz> python3 scripts/test-prover-bootstrap.py Bootstrap.test_monitor_failure_isolates_before_shutdown_and_bounds_watchdog Bootstrap.test_actual_control_install_order_and_persistent_absolute_timers Bootstrap.test_readiness_uses_installed_sdk_waiter_for_real_state_outcomes Bootstrap.test_six_hour_host_waits_past_old_cap_and_reserves_qualifier_time Bootstrap.test_qualification_failures_and_deadline_are_never_retried Bootstrap.test_valid_input_frozen_and_bounded_userdata_shell_syntax Bootstrap.test_alone_encoding_preserves_exact_program_and_executes_real_wrapper NodeStartup.test_complete_source_closure_is_checked_before_any_mount_write NodeStartup.test_stage_hook_command_is_narrow_and_preserves_prior_evidence ProverActivation.test_proxy_scope_templates_and_actual_pinned_archive ProverActivation.test_proxy_observer_requires_bound_state_and_expires_incomplete_transition ProverActivation.test_proxy_transition_one_intent_before_start_and_no_replay ProverActivation.test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused ProverActivation.test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_shuts_down -v",
+      "result": "14 passed in 1.103s on worker2bc8103d; bootstrap source/tests unchanged in final candidate. Existing checks cover exact generated wrapper/userdata <=16384, current real closure, once-only readiness/deadline, proxy transition and failure controls; no actual Linux services started."
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp PROVER_VALIDATION_NODE=<pinned Node24.21.0> python3 scripts/test-prover-package.py -v",
+      "result": "At2bc8103d eight passed and two PackagedQueryImports errors: stale fake SDK lacked stdlib/block export; missing-inspector negative expected old dynamic import. Diagnosed actual stderr. Minimal c56d4dfa fixture correction read independently; production unchanged."
+    },
+    {
+      "command": "Corrected existing PackagedQueryImports enabled copied-query case and PackagedQueryImports.test_missing_dependency_fails_static_import_without_ancestor_fallback under pinned Node24.21.0",
+      "result": "Both passed individually after correction (0.068s and0.060s). One intervening mistyped selector produced loader error only, then corrected selector passed. Actual copied adapter and inspector hashes retained; missing dependency errors at real static module import with network forbidden outside repository ancestors."
+    },
+    {
+      "command": "Independent Decimal sum of proposal components and envelope calculation",
+      "result": "123.4855913333333333333333333 USD; reserve125 + prior140 =265, remaining35 under300. Includes200GB failure egress, capped ordinary transfer, compute, storage/orphan allowance, IPv4, backup, tax/unpriced20%, separate20 cleanup/delayed-billing allowance."
+    }
+  ],
+  "conclusions": [
+    "Prior exact helper closure mismatch is repaired to actual trusted-private-node hash dca64303273cac0a8aa70eb8867d2ade5c60d4dbe9085ab6d49b7025956d955b. Packaging and startup both fail before owned work when closure differs.",
+    "Actual installed waitForNode/getNodeInfo follows native archiver/world-state initialization and precedes one strict inspectTrustedNode. Fifteen-minute qualifier reserve, immutable intent, absolute budget deadline and once-only qualifier remain. No custom inspection retry.",
+    "Failure controls cut physical interface before shutdown; successful attestations finish by rechecking controls. Monitor start100/stop5, failure-only stop hook,5-second inactive interval and1-second accuracy make a declared120-second composed bound. Unit tests establish configuration/dispatch, not observed Linux timing.",
+    "Optional immutable proxy scope reuses existing Caddy service/config, binds assigned private address, permits one post-qualified transition, hashes config/binary, checks service/process identity and proxied health. Incomplete or unknown transition expires/fails without replay. SG restriction is an external actual-cloud readback requirement, not a local attestation claim.",
+    "Packager requires byte-identical lock/package files, Linux x64/glibc Node24.21, six pinned native package versions and real addon imports; rejects Mac dependency closure. Actual Linux package closure/runtime remains to qualify.",
+    "Routing proposal now explicitly replaces dead old VPC origins, obtains fresh CloudFront ETag, stages query-only8083 then qualified browser proxy8080, and preserves other behavior mappings. Current rc3/BBrc6, threads1 and snapshot-with-native-fallback correctly distinguish configured behavior from successful sync."
+  ],
+  "launchPreconditions": [
+    "Before admitting125USD forecast, execute actual Linux detected-shaper-loss and hung-monitor cases demonstrating traffic quiescence <=120 seconds. Direct veth interface-down test alone, labelled systemdEndToEndExercised:false, does not satisfy this composed requirement. Hold/reforecast on excess.",
+    "Prepare and qualify actual lock-matched Linux dependency/native package closure; no existing version-only check substitutes for real deployment/proof qualification.",
+    "Lead must reserve the adopted amount before paid work, recheck current no-overlap resources and independent absolute Fleet/host deadlines, and read back real new origin/managed security-group/config state before browser admission."
+  ],
+  "packetNotes": [
+    "Proposal currently pins2bc8103d and its old package-test hash; finalc56/899bf only repairs fixture exports/static-import expectations. Production hashes and arithmetic remain unchanged. Worker asked to refresh source binding; this review independently binds all final five paths."
+  ],
+  "limits": [
+    "No full node synchronization, current testnet application deployment, real proof, wallet acceptance or six-hour completion guarantee.",
+    "Forecast is conditional planning, not invoice assurance; no claim of EC2 shutdown completion within120seconds.",
+    "No current cloud mutation or fresh independent inventory performed in this review.",
+    "Source approval supersedes repaired source findings in review.json; launch hold remains explicit."
+  ],
+  "references": [
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html",
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html"
+  ]
+}

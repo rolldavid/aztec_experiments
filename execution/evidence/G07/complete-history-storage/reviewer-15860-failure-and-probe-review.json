@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-20261011",
+  "scope": "15860 actual failure and built-in measurement probe eligibility",
+  "actualPacketSha256": "9359610a3a5f515c568314688463a3cb09f46c873af0c3bf34cb87374852d83e",
+  "verdict": "FAIL preserved; eligible for one separately granted built-in-only probe",
+  "findings": [
+    "All 30 TAP cases pass; overall independent kernel reconciliation fails. No capacity qualification.",
+    "Node v24.21 test controller runs internal test runner without ESM entry loader; pre_execution preloads --require, not --import. Missing controller receipt is source-explained.",
+    "Actual crash exit statuses 71/72/73 passed original assertions. Receipt code 1 is not their actual final process status. Per-PID preload has no main-thread guard; worker exit collision is plausible, historical attribution remains unproven."
+  ],
+  "probe": {
+    "proposalSha256": "6f46e24506201269396d2396fcb04b1a84264d73662b7ef28288de6221ee09f4",
+    "runnerSha256": "befb1621602687a6fc274eb2d1471b8b75890884d1abdfb005488a90ec66afaa",
+    "limits": "15s/512MiB existing Supervisor, five built-in-only arms",
+    "noSqlite": true,
+    "noLinkChange": true,
+    "noAutomaticRetry": true
+  },
+  "evidenceFilesRehashed": 19,
+  "sourceReferences": [
+    "https://raw.githubusercontent.com/nodejs/node/v24.21.0/lib/internal/main/test_runner.js",
+    "https://raw.githubusercontent.com/nodejs/node/v24.21.0/lib/internal/process/pre_execution.js"
+  ],
+  "limits": [
+    "Sampled aggregate is not instantaneous aggregate.",
+    "105005 events is about 2.1x prior cap, not 4x/later-post/full production qualification.",
+    "Probe does not authorize volume retry or measurement patch."
+  ]
+}

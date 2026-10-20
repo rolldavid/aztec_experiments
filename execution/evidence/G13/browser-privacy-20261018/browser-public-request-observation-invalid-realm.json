@@ -1,0 +1,16 @@
+{
+  "source": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "scope": "Actual browser public backend requests while navigating recovered private views; one human; no full unlinkability claim",
+  "observation": {
+    "requests": 4,
+    "feedRequests": 0,
+    "invalid": 4,
+    "overflow": 0,
+    "privateMatches": 0,
+    "observerErrors": 0,
+    "pending": 0,
+    "binding": "275d97826c2e7c44c4f8efc56806762a4c928039a2639b2569c917ba5b18e6b1",
+    "rows": [],
+    "scope": "Public-reader request URL/query/header projection only; values are keyed tokens, not privacy proof"
+  }
+}

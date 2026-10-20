@@ -1,0 +1,27 @@
+{
+  "base": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "candidate": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "task_id": "G12-rehearsal-runbook-corrections",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-20261018",
+  "allowed_paths": [
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "focused"
+  ],
+  "requirements": [
+    "RC36-reproducible-command-corrections",
+    "RC38-clean-rehearsal-prerequisites"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-20261018",
+      "task_id": "G12-rehearsal-runbook-corrections",
+      "paths": [
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

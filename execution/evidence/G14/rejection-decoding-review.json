@@ -1,0 +1,21 @@
+{
+  "revision": "c8b4a1276e22e16bcdfbf8d3974372884a5ebc50",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved",
+  "checks": [
+    "3 installed SDK tests clean pass",
+    "independent actual artifact probe all six PrivateBok guards and RollingBoard Plugin disabled",
+    "exactcallee/staticselector/arity failclosed and fixed evidence enum",
+    "canonical-state checks and one-send flow unchanged"
+  ],
+  "findings": [],
+  "limitations": [
+    "Prior failed chain cause unconfirmed until fresh diagnostic"
+  ],
+  "sourceHashes": {
+    "experiments/private-bok/rejection.mjs": "e178ca01a3be777acedd0635bf7a9afc657aac5e4537a863c909b5faad181f8e",
+    "experiments/private-bok/rejection.test.mjs": "faf83a7f7c232a3158528d3f08516d02780d7845403c098a9ab477d8ae5a59e8",
+    "experiments/private-bok/measure.mjs": "67e7ce372fc62f488ff8d704b75180c4cd32907aaa26404a0e864a2d2d1f3deb",
+    "billboard/rolling_contract/callback-rollback.mjs": "8d5adcccda5609d583dc5ceca9e18782891669f56e7272d03ab4ab5fb07c6455"
+  }
+}

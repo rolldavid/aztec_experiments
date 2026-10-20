@@ -1,0 +1,222 @@
+{
+  "passed": false,
+  "caseProfile": "normal",
+  "applicationProofs": false,
+  "networkProofs": false,
+  "controlledSettlement": true,
+  "fundingMode": "real-portal-deposit",
+  "payerMode": "private",
+  "privacyAcceptance": "pending public-effect checks; independent qualification missing",
+  "l1": [
+    {
+      "label": "deploy-token",
+      "txHash": "0x86b97750945ac30927fb29a8a16d70481bed9053ac25c5c4587dedd8ae9bb262",
+      "submission": "included",
+      "blockNumber": 133,
+      "blockHash": "0xda979a9463f9033f3d1e8def813d785cf81fadb6cc05630ed2496eea58c9157e",
+      "gasUsed": "542500",
+      "fee": "542500021700000"
+    },
+    {
+      "label": "deploy-portal",
+      "txHash": "0x46dae71ebf6f59a542034e7f09d11d3223601dfa0d98d3cf3c69f03da200d816",
+      "submission": "included",
+      "blockNumber": 204,
+      "blockHash": "0xe1ed4e844a0b6893c7a1a924c575fd4924bb2a8d513a0b724300965936a34a5b",
+      "gasUsed": "996964",
+      "fee": "996964006978748"
+    },
+    {
+      "label": "activate-portal",
+      "txHash": "0xe32d64d2ac0f4e3d9a40055f948093b482930954f550cd1668c852b859cafbea",
+      "submission": "included",
+      "blockNumber": 218,
+      "blockHash": "0xc0f8baee0f12b45b1261e5ae3be6458fab58662e95bc215ca27ba5f760160c25",
+      "gasUsed": "90423",
+      "fee": "90423000632961"
+    },
+    {
+      "label": "rolling-credit-approve",
+      "txHash": "0x609e256fb61577ef434796c517eafe177f7c55a81b5c9fc2bea6a7b05735f41b",
+      "submission": "included",
+      "blockNumber": 220,
+      "blockHash": "0x77aace284adb12311a274f61f641eac8edbf921e4deb54808fa8bc2ce7573ec9",
+      "gasUsed": "46318",
+      "fee": "46318000324226"
+    },
+    {
+      "label": "rolling-credit-deposit",
+      "txHash": "0x01b67c513984d773502dde0e616a2e9ffdb65830d594862ed3a3e2ea37905cd6",
+      "submission": "included",
+      "blockNumber": 221,
+      "blockHash": "0xdf304a638770c4c421c1098ccccd811d0d98463739ff944b44ce677820a4236a",
+      "gasUsed": "132610",
+      "fee": "132610000928270"
+    }
+  ],
+  "artifactHashes": {
+    "billboard/portal/out/DevUSDC.sol/DevUSDC.json": "02b3f1631dee076615b6e413e9ad1d5d8915c36bebd3adecc8413e19f8baff8e",
+    "billboard/portal/out/PluginPortal.sol/PluginPortal.json": "f7034218d801721ce2b39917c11f86055380868f6adbc3da36e6e115fed10e39"
+  },
+  "clientMining": {
+    "passed": false,
+    "ordinaryBlocksMined": 69,
+    "stopped": false,
+    "maxObservedClockLeadSeconds": 0,
+    "clockSynchronization": "every mined block, including correction of wall-clock lead",
+    "lastBlock": "219",
+    "lastTimestamp": "1791732392"
+  },
+  "privateFees": {
+    "passed": false,
+    "ownerless": true,
+    "operatorFunding": false,
+    "testFaucetFunding": true,
+    "humanPublicFeeFallback": false,
+    "privateCreditAndPoolReconciled": false,
+    "walletCleanupComplete": false,
+    "funding": {
+      "owner": {
+        "passed": true,
+        "realL1Deposit": true,
+        "independentL1Sender": true,
+        "testFaucetFunding": true,
+        "productionFundingHelper": true,
+        "productionRecoveryHelper": true,
+        "publicRecoveryPersistedBeforeDeposit": true,
+        "amount": "1000000000000000000000",
+        "l1TxHash": "0x82748a73fe0c7bfa1e2bb59b507387ecb35a1d0bdfcb38bc2da4753e0509f9bb",
+        "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+        "depositSends": 1,
+        "privateSecretsStored": false,
+        "publicRecovery": {
+          "schema": "private-fee-funding-v1",
+          "chainId": "31337",
+          "version": "2914619768",
+          "rollupAddress": "0x6F0903389a4fB0b016eA8269d1DC0AB4b361c9B2",
+          "portalAddress": "0xDB0f8147cF03E0D5b0C23459DE399086251E99aC",
+          "tokenAddress": "0x354bFf5b0c05C2F812fabF5F5d2608DE27D91158",
+          "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "sender": "0xc907554F9c78555b165e273e05a028c9De0A23fA",
+          "nonce": "1",
+          "amount": "1000000000000000000000",
+          "txHash": "0x82748a73fe0c7bfa1e2bb59b507387ecb35a1d0bdfcb38bc2da4753e0509f9bb",
+          "leafIndex": "0"
+        }
+      },
+      "otherUser": {
+        "passed": true,
+        "realL1Deposit": true,
+        "independentL1Sender": true,
+        "testFaucetFunding": true,
+        "productionFundingHelper": true,
+        "productionRecoveryHelper": true,
+        "publicRecoveryPersistedBeforeDeposit": true,
+        "amount": "1000000000000000000000",
+        "l1TxHash": "0xd8973c7fd4facc0f7debe6244c1eccd5723c908684973847cc6ef88d83003db0",
+        "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+        "depositSends": 1,
+        "privateSecretsStored": false,
+        "publicRecovery": {
+          "schema": "private-fee-funding-v1",
+          "chainId": "31337",
+          "version": "2914619768",
+          "rollupAddress": "0x6F0903389a4fB0b016eA8269d1DC0AB4b361c9B2",
+          "portalAddress": "0xDB0f8147cF03E0D5b0C23459DE399086251E99aC",
+          "tokenAddress": "0x354bFf5b0c05C2F812fabF5F5d2608DE27D91158",
+          "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "sender": "0x23ABDf1FaDEe001462DD7A25E124Ed776feA52A2",
+          "nonce": "1",
+          "amount": "1000000000000000000000",
+          "txHash": "0xd8973c7fd4facc0f7debe6244c1eccd5723c908684973847cc6ef88d83003db0",
+          "leafIndex": "1"
+        }
+      }
+    },
+    "standaloneB": {
+      "passed": true,
+      "txHash": "0x254ddf946f0c912772c72c07e528bf9fbd09adf4f11fd2231335a3e5d4b02bd7",
+      "status": "checkpointed",
+      "transactionFee": "7907652000000",
+      "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+      "applicationProof": false,
+      "networkProof": false,
+      "proofMode": "proofs-disabled",
+      "canonicalCheckpoint": true
+    }
+  },
+  "settlements": [
+    {
+      "passed": true,
+      "kind": "ready",
+      "deadlineMs": 60000,
+      "testControlled": true,
+      "syntheticSettlement": true,
+      "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+      "proofReceipts": [],
+      "finalized": false,
+      "epochs": [
+        {
+          "epoch": 6,
+          "firstCheckpoint": 1,
+          "lastCheckpoint": 1,
+          "testControlledCheckpoint": 1
+        },
+        {
+          "epoch": 8,
+          "firstCheckpoint": 2,
+          "lastCheckpoint": 2,
+          "testControlledCheckpoint": 2
+        },
+        {
+          "epoch": 10,
+          "firstCheckpoint": 3,
+          "lastCheckpoint": 3,
+          "testControlledCheckpoint": 3
+        },
+        {
+          "epoch": 11,
+          "firstCheckpoint": 4,
+          "lastCheckpoint": 6,
+          "testControlledCheckpoint": 6
+        },
+        {
+          "epoch": 12,
+          "firstCheckpoint": 7,
+          "lastCheckpoint": 7,
+          "testControlledCheckpoint": 7
+        },
+        {
+          "epoch": 13,
+          "firstCheckpoint": 8,
+          "lastCheckpoint": 8,
+          "testControlledCheckpoint": 8
+        }
+      ],
+      "sequencerPaused": true,
+      "sequencerResumed": true,
+      "applicationProofs": false,
+      "targetCheckpoint": 8,
+      "messageBlock": "8",
+      "messageBlockHash": "0x02556e3771901027bbf521aa8aebab7d7487f902e459f1d832dd7c246942e845",
+      "messageTxHash": "0x1b10b1ae0b5738533a9350dcc4f2006b539590f0748728e9eab34be7bf664c9d",
+      "expectedLeaf": "0x0065a11484726485c6c3ed9bc58036c083b0c66a2620591c7b7f06fce85d3b99",
+      "initialProvenCheckpoint": 2,
+      "forcedProvenCheckpoint": 8,
+      "localEpoch": 14,
+      "membership": {
+        "epochNumber": 13,
+        "checkpointCount": 1,
+        "leafIndex": "0",
+        "pathLength": 5,
+        "root": "0x00bcccb1f022e378ae2ebbb2bbea514df6a337c03e67672abba4e7a35ab70ba4"
+      },
+      "localSettlement": {
+        "l1Block": "217",
+        "l1Hash": "0x7112772e577aaf1996477a938d482095789707a73eeeba43e3792353d6061ef2",
+        "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+      },
+      "elapsedMs": 3861
+    }
+  ]
+}

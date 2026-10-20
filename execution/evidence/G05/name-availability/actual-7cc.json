@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "task": "G05",
+  "requirements": [
+    "RC14",
+    "G05-A08"
+  ],
+  "status": "development-acceptance-pass",
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "runtimeSha256": "9b09eb139cc9048bcf71950ae68c586a261d25ee139b44e453c0147f40296310",
+  "environment": {
+    "network": "retained local devnet",
+    "nativeProofs": false,
+    "pxeProofs": false,
+    "chromium": "155.0.8059.79",
+    "originalWallet": "U1",
+    "elapsedMs": 75022,
+    "peakTreeRSSKiB": 3029376,
+    "outerDeadlineMs": 120000,
+    "ownedTreeAbsent": true
+  },
+  "checks": {
+    "previousWorkflowCanonical": {
+      "transactionHash": "0x08f8558df589bca4e1e071da436162c901c8f6eda9565887335e2905852316f8",
+      "blockNumber": 1271,
+      "blockHash": "0x0a33f296d526525d9b2f351eddfec71168b969e23df36fc1aac7a0e207f81698",
+      "canonical": true
+    },
+    "previousEncryptedHistorySha256": "d3a89dee4aaef5de8c030d7dcc3ebd9c6c18e8b8875f851084f043ca95f9d2a2",
+    "nameAvailability": {
+      "id": "0x1b0d3c1c640df7c1a0181cf6a93ea1684c855861edb733b74cbe77c74e66222a",
+      "anchor": {
+        "blockNumber": 1505,
+        "blockHash": "0x06ec828031c9d2a3186426e0c4bf6bbfc61fb012d131a290b1db11f79243dd75"
+      }
+    },
+    "availabilityNotice": "available when checked; not a reservation",
+    "registeredIntent": "0x208a89a13777ec10f78b1b4409226bcb024af2b937791bec6ae0e93a523a5c3b",
+    "maximumFee": "19309082348514",
+    "canonicalReceipt": {
+      "transactionHash": "0x2db62eb14903e95829b9dae9ea23a1a2aefb1c6b10a91ca2c27f3ceb8cafb01b",
+      "blockNumber": 1507,
+      "blockHash": "0x131aa9be6db71a6814b6b8eafe015758d716272722b2cedc1477bf2c1cf74f77",
+      "canonical": true
+    },
+    "authenticEvent": {
+      "nameId": "12235830793786600782179573182796452112376447600860118680335542525392465568298",
+      "position": {
+        "blockNumber": "1507",
+        "blockHash": "0x131aa9be6db71a6814b6b8eafe015758d716272722b2cedc1477bf2c1cf74f77",
+        "txHash": "0x2db62eb14903e95829b9dae9ea23a1a2aefb1c6b10a91ca2c27f3ceb8cafb01b",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      }
+    },
+    "collision": {
+      "taken": true,
+      "draftPreserved": true,
+      "workflowUnchanged": true,
+      "additionalSends": 0
+    },
+    "nodeSubmissionsExplicitGuard": 1,
+    "traffic": {
+      "walletAssets": 16,
+      "privateRequests": 424,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "compactRequests": 0,
+      "compactPreflights": 0,
+      "tagDiscoveryRequests": 48,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    }
+  },
+  "measurementNotes": [
+    "Browser traffic observer counts only its read-only path; the separately guarded single send is counted in nodeSubmissionsExplicitGuard.",
+    "Node-side canonical receipt and event decoding are outside browser traffic counters.",
+    "No additional fee estimate on collision is established by source-bound focused regression; actual browser acceptance establishes taken status, draft preservation, unchanged saved workflow and no additional send.",
+    "Earlier failed runs performed zero sends and stopped before name preparation. They remain nonpasses.",
+    "No production or real-proof acceptance is claimed."
+  ],
+  "setupDiagnosis": {
+    "originalCause": "Private composition hardcoded a five-second Playwright timeout, unlike existing composer/preference drivers using remaining absolute deadline.",
+    "independentReviewer": "reviewer_resume",
+    "focusedCorrection": "Remaining-time observer passed contracts registration/session initialization; focused30s stopped honestly during private refresh. Authorized corrected100s/120s run passed75.022s.",
+    "applicationChanges": false
+  },
+  "artifacts": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/run-corrected.mjs",
+      "sha256": "72ecbfd5e399a0b473d8825dff1b358cb898140e336be66e5d2ffcdbc649b141"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/supervise-corrected.mjs",
+      "sha256": "7dea070e10378e779627abd588863866de2828e0f6a66182ec816fd4bf297208"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/corrected-result.json",
+      "sha256": "e1361caef0875a5f854ee3ba2200eeb8ac045fd0da76abcce15dfc81ce9f1339"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/corrected-supervisor.json",
+      "sha256": "c6331abc262f9376ebedce3abe9246d6af383e4002dc3f0ae63fb1c98dbd3fef"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/corrected.log",
+      "sha256": "0172e1d8108d6a43483d112ca9d6a126f927bc4aafd932f9f3aa6c62e3afafe6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/result.json",
+      "sha256": "ae1c96e66a135da869e59e22e3f59985ca6bad2873c7ebb672b4b7a516547392"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/unlock-result.json",
+      "sha256": "81abc7c40bee2140c17878b22fa96987335826f8b5fb777a368857aae440c9a4"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/unlock-lifecycle-result.json",
+      "sha256": "7b3ce8712e61ec195b51641e4df805467b2a986d6c1952163d5964f9d0021d0c"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/unlock-bounded-result.json",
+      "sha256": "39800154e963187efb8d1a324f61049568d980e658314cbb815318ca9d8eede1"
+    }
+  ],
+  "handoff": {
+    "originalU1Released": true,
+    "latestWorkflow": {
+      "type": "name",
+      "status": "confirmed",
+      "txHash": "0x2db62eb14903e95829b9dae9ea23a1a2aefb1c6b10a91ca2c27f3ceb8cafb01b"
+    },
+    "designRecoveryProfileUnchanged": true,
+    "encryptedBackupReference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/before-name-encrypted-recovery.json",
+    "reservation": "Entered fsynced once-only sentinel retained; canonical completion is this separate evidence. Never rerun the registration."
+  }
+}

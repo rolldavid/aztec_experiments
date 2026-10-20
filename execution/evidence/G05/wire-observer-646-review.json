@@ -1,0 +1,41 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "646139b484b7479d355f1ec8c1435d7c97e1c339",
+  "base": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+  "verdict": "approved_source_only",
+  "scope": "Bounded explicit serialized-fetch observer recognition; no full privacy or genuine campaign acceptance",
+  "fileSha256": {
+    "scripts/testing/rolling-wire-trace.mjs": "250963990d158a09b2f4bfc90ffeeaa2a6e94b57fd5d2eef8aa49058265b24c6",
+    "scripts/testing/rolling-wire-trace.test.mjs": "cb4f2a03bbcf0e7c82aa0dccdad0ff597ae5a937a4035d0a234d60c312dd3fbb"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinnedNode24> --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs",
+      "passed": 82,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 390.463417,
+      "log": "/tmp/reviewer-wire-646-tests.log",
+      "note": "Test suite exit0. Subsequent optional rg command had missing-file exit2; not a test failure."
+    }
+  ],
+  "findings": [],
+  "source_verification": [
+    "Installed viem getChainId/getBlockNumber/getGasPrice/estimateMaxPriorityFeePerGas/getAddresses/requestAddresses genuinely omit params. Exact six-method absent-params exception; explicit malformed params and nonzero extra params remain failures.",
+    "Installed PrivateKernelTailCircuitPublicInputs.toJSON and ChonkProof.toJSON return buffers; foundation json-rpc convert encodes buffers to base64. Actual SDK safe client/default fetch serializes synthetic unproved Tx and verifies exact fields without proof job.",
+    "Only Tx data/chonkProof at exact known Tx-method params0 paths are opaque after canonical nonempty base64 validation. All other Tx keys/values, public calldata/class logs, ID and further options traverse. Unknown/malformed buffer encoding does not qualify.",
+    "Only params0.data for eth_estimateGas/eth_sendTransaction is opaque with exact even-length hex encoding; all other transaction fields and block/state overrides traverse. eth_sendRawTransaction encoded bytes remain explicitly opaque while extra arguments traverse.",
+    "Header handling and original this/args/Promise/result/error forwarding unchanged; no retries or response-stream reads. Fullbody/node/depth/relation bounds retained. Arbitrary long text outside approved encoding paths remains unsupported.",
+    "Every opaque classification makes requestCoverageComplete false. Campaign source acceptance still requires separate decoded public effects and honest observer topology/header/native limits."
+  ],
+  "composition": {
+    "with": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+    "disposition": "Compatible nonoverlapping paths:5fd only HTTP/profile metadata and campaign30000 request cap;646 observer recognition preserves public API and failure counters. Exact combined transfer/source hash and affected tests required before runtime."
+  },
+  "historical_limits": [
+    "60df unknown193 matched empty public-l1 rows, but original individual method bodies were not retained; do not claim retrospective full classification.",
+    "Unsupported35 matches32isValidTx+3estimateGas counts and now has actual serializer regressions, but historical body field identity remains inference.",
+    "No no-leakage proof from ignoring binary content; opaque public kernel inputs need separately authenticated decoding/effects and explicit privacy reasoning.",
+    "No real chain/proofs, deployed service or browser acceptance run by reviewer."
+  ]
+}

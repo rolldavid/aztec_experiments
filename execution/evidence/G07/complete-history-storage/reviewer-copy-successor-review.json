@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE for one separately granted materialization only",
+  "packetSha256": "341906f3571aec4411f921944793e7a12ded3c15fdef048427aa0014201fe452",
+  "source": "6763cc56eef2836a018464a9ecec2f67f6ededef",
+  "leadHead": "7f646a9af6a3c6f5d04fedc9474e2f2dd6c04ca4",
+  "checks": [
+    "All four packet files rehashed; diff against previously approved materializer and supervisor inspected",
+    "285 dependency pins, all source pins and five lead manifest/source pins independently rehashed; both exact HEADs clean; new target absent",
+    "Changes restricted to successor paths, explicit clean lead HEAD gate, pinned scoped caffeinate -i; child unchanged",
+    "Existing 180s/2GiB supervisor, 60s copy and strict full materialization verification unchanged; failed original clone retained"
+  ],
+  "conditions": [
+    "Lead dependency tree and pinned manifests remain frozen until copy receipt and closure",
+    "Host remains physically awake; caffeinate -i prevents idle sleep only, not lid/manual sleep",
+    "No ordinary SQLite runtime grant: qualified copy receipt and explicit ordinary runner rebinding required"
+  ],
+  "scope": "No tests, copies, installs or runtime operations performed by reviewer"
+}

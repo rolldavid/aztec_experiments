@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "experiment": "synthetic-retained-private-event-query",
+  "platform": "lmdb",
+  "targets": {
+    "retained": [
+      1000,
+      10000,
+      50000
+    ],
+    "selected": 8,
+    "warmQueries": 5,
+    "warmP95Ms": 250,
+    "perProcessRssBytes": 1073741824
+  },
+  "measurement": {
+    "retained": 50000,
+    "selectedBlocks": 8,
+    "warmQueries": 5,
+    "variants": [
+      {
+        "variant": "upstream",
+        "retained": 50000,
+        "seedMs": 1435.059375,
+        "p95Ms": 277.88441699999976,
+        "queries": [
+          {
+            "durationMs": 251.44624999999996,
+            "resultCount": 8,
+            "reads": 50000,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 0,
+            "historicalRows": 50000
+          },
+          {
+            "durationMs": 238.6447909999997,
+            "resultCount": 8,
+            "reads": 50000,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 0,
+            "historicalRows": 50000
+          },
+          {
+            "durationMs": 247.52750000000015,
+            "resultCount": 8,
+            "reads": 50000,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 0,
+            "historicalRows": 50000
+          },
+          {
+            "durationMs": 265.38304100000005,
+            "resultCount": 8,
+            "reads": 50000,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 0,
+            "historicalRows": 50000
+          },
+          {
+            "durationMs": 277.88441699999976,
+            "resultCount": 8,
+            "reads": 50000,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 0,
+            "historicalRows": 50000
+          }
+        ],
+        "equal": true
+      },
+      {
+        "variant": "patched",
+        "retained": 50000,
+        "seedMs": 1460.0251669999998,
+        "p95Ms": 0.22062499999992724,
+        "queries": [
+          {
+            "durationMs": 0.2044580000001588,
+            "resultCount": 8,
+            "reads": 8,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 8,
+            "historicalRows": 0
+          },
+          {
+            "durationMs": 0.19737500000064756,
+            "resultCount": 8,
+            "reads": 8,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 8,
+            "historicalRows": 0
+          },
+          {
+            "durationMs": 0.22062499999992724,
+            "resultCount": 8,
+            "reads": 8,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 8,
+            "historicalRows": 0
+          },
+          {
+            "durationMs": 0.20362499999919237,
+            "resultCount": 8,
+            "reads": 8,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 8,
+            "historicalRows": 0
+          },
+          {
+            "durationMs": 0.14670899999964604,
+            "resultCount": 8,
+            "reads": 8,
+            "pending": 0,
+            "peak": 1,
+            "blockRows": 8,
+            "historicalRows": 0
+          }
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "memory": {
+    "nodePeakRssBytes": 558956544,
+    "browserProcessPeakRssBytes": []
+  },
+  "browserProcessPeakRssBytes": [],
+  "assessment": {
+    "correctnessPassed": true,
+    "patchedWarmP95Passed": true,
+    "perProcessRssPassed": true,
+    "variants": [
+      {
+        "variant": "upstream",
+        "readsPass": true,
+        "warmP95Pass": false
+      },
+      {
+        "variant": "patched",
+        "readsPass": true,
+        "warmP95Pass": true
+      }
+    ],
+    "passed": true
+  },
+  "source": {
+    "pins": [
+      {
+        "path": "src/storage/private_event_store/private_event_store.ts",
+        "before": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+        "after": "03e6c42214af82b82c6e2b46c44efc2f0a9f5c77fcb3f60b007d26b6e54c9376"
+      },
+      {
+        "path": "dest/storage/private_event_store/private_event_store.js",
+        "before": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35",
+        "after": "918ea32152a22abcb7d63b43fc7a04b653dba8369e322b242c9efbdf4ea589ff"
+      }
+    ],
+    "support": [
+      {
+        "variant": "upstream",
+        "path": "dest/storage/base_staging_store.js",
+        "sha256": "cb55c6d53b6d4a47737adb4e8bc0de81006483a1955a6d44bdb8bb36f825a196"
+      },
+      {
+        "variant": "upstream",
+        "path": "dest/storage/private_event_store/stored_private_event.js",
+        "sha256": "76f670f59fd73ecf95b765e795e62a63304df2c14a160a77440b5991110755e8"
+      },
+      {
+        "variant": "patched",
+        "path": "dest/storage/base_staging_store.js",
+        "sha256": "cb55c6d53b6d4a47737adb4e8bc0de81006483a1955a6d44bdb8bb36f825a196"
+      },
+      {
+        "variant": "patched",
+        "path": "dest/storage/private_event_store/stored_private_event.js",
+        "sha256": "76f670f59fd73ecf95b765e795e62a63304df2c14a160a77440b5991110755e8"
+      }
+    ],
+    "scriptSha256": "14c6f6de9cf9af44201ac2230c07472fc539eb0972ed1374aa7db3d4431f5abb",
+    "nodeVersion": "v24.21.0"
+  },
+  "limitations": [
+    "No real encrypted-event discovery or keys-only cold recovery",
+    "No end-to-end PXE synchronization bound",
+    "Warm p95 uses nearest-rank of five samples",
+    "No feature-cap inference from retained fixture sizes",
+    "RSS covers Node high-water mark and sampled owned Chromium processes; short-lived browser peaks and bundle service memory are not qualified"
+  ]
+}

@@ -1,0 +1,43 @@
+✔ labelled projection fixture checks all five resulting views and bounded pages (2.394334ms)
+✔ actual pure projection refuses wrong thread root before view acceptance (0.423417ms)
+✔ view acceptance rejects changed content, name, like total and bot impersonation (3.226125ms)
+✔ public acceptance rejects each human-address category and excess writes (3.75775ms)
+✔ cleanup attempts every owner even after prior failure and preserves failure identity (0.237416ms)
+✔ real file storage encrypts prepared operation, reopens and rejects ciphertext tampering (29.228584ms)
+✔ native fixture facade imports genuine shared factories and rejects unconstructed wallet/PXE brands (910.234542ms)
+✔ fixture uses sole real journal send path, five actions and canonical decoder rebuild (3.805583ms)
+✔ public readiness observations retain actual wall/lag and fixed reason, omit arbitrary error fields (0.401291ms)
+✔ readiness diagnostics do not project arbitrary inspector outputs or accept nonlocal health URLs (0.161917ms)
+✔ labelled local HTTP health fixture projects only public flags and bounds response size (22.608875ms)
+✔ native loader cleanup remains after PXE and prover owners, including their failures (97.100917ms)
+✔ staged apply/undo/rebuild, names, anonymous authenticated bot and thread (61.291792ms)
+✔ forged bot without linkage and mismatched target are atomic failures (3.031208ms)
+✔ same event data without validation cannot enter the projection (2.242041ms)
+✔ cross-transaction linkage, wrong request and wrong parent rejected (2.043292ms)
+✔ duplicate ordered event, stale stage and nonreverse undo rejected (1.785208ms)
+✔ removed post hides body and remains in canonical thread; undo restores (2.476958ms)
+✔ like transitions deduplicate tags without returning membership and reverse with reorg (2.342834ms)
+✔ bounded pages/cursors and wrong root reject (2.190709ms)
+✔ subboard metadata hashes, policy inheritance and rejection tombstone (4.946291ms)
+✔ event retention cap fails before mutation and unvalidated predicate is required (1.563667ms)
+✔ ordinary canonical replies, quotes and reposts project without bot identity (2.426209ms)
+✔ unknown parent and unregistered named identity never mutate the projection (2.165834ms)
+✔ touched-entry undo restores first value after multiple writes in a range (2.0605ms)
+✔ labelled performance fixture: retained two-thousand-range undo fits finite heap budget (67.012042ms)
+✔ profile exact binary bytes and independent current versions appear on existing posts at read time (5.298291ms)
+✔ profile clears, independent updates, reverse undo and redecoding rebuild preserve exact versions (15.352959ms)
+✔ unregistered identity, skipped/stale profile versions and atomic partial range rejected (7.435ms)
+✔ profile validation rejects bad digest, padding, lengths, dimensions, trailers and bot identity (9.3845ms)
+✔ 8192 byte profile content round trips, standard base64 padding is exact for all remainders (11.296958ms)
+✔ authenticated avatar removal redacts every identity accessor while canonical bytes and undo remain intact (6.047542ms)
+✔ removal is version scoped: new upload visible, stale race/duplicate/wrong digest/current-policy mismatch rejected (7.25325ms)
+✔ unset/cleared avatars cannot be removed and another name remains untouched (10.990334ms)
+✔ avatar removal event requires nonempty canonical UTF8 reason and exact reason hash (3.632292ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1652.783459

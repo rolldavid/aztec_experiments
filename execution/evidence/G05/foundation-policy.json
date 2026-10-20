@@ -1,0 +1,31 @@
+{
+  "candidate": "f9911f0fe3021275242211d4ddfcc64f40bf990b",
+  "base": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+  "task_id": "G05",
+  "implementer": "design-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "billboard/rolling_contract",
+    "billboard/Nargo.toml",
+    "noir-dependencies.json"
+  ],
+  "required_checks": [
+    "normal-build",
+    "foundation-txe"
+  ],
+  "requirements": [
+    "G05-protocol-foundation"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261011",
+      "task_id": "G05",
+      "paths": [
+        "billboard/rolling_contract",
+        "billboard/Nargo.toml",
+        "noir-dependencies.json"
+      ]
+    }
+  ]
+}

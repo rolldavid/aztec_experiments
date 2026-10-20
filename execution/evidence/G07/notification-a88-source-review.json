@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T13:15:59.588603+00:00",
+  "candidate": "a88c802a23af2f412c4acacb4f8093718acc2e2c",
+  "base": "6acf92d7d0acb9460392a01a81bb9819589b848b",
+  "verdict": "approved source-only profile/accounting repair; root transfer and current asset closure required before genuine run",
+  "findings": [],
+  "changedSourceHashes": {
+    "scripts/test-c01-native-profile.mjs": "34f8bcd80ba38b820a114faf322d4d5524fc270365bc4b36dfa63e138e7996b7",
+    "scripts/testing/rolling-application-fixture.mjs": "6e2f0b1d3bb65ab56dd96674b355dc59aadc8f70d094e0c9059e4100b6a1be7f",
+    "scripts/testing/rolling-application-fixture.test.mjs": "2a05f1efdf06d54d5976f9e3c3514a022d0b23dbb2ed010a5cf44f0d5d63d3de",
+    "scripts/testing/rolling-notification-fixture.mjs": "14f61dd5106c8eba6c2e4bac669d5bcc1daa21dcfae8c66f00e7a741eb34e27d",
+    "scripts/testing/rolling-notification-fixture.test.mjs": "bcbe2ea488c53925f71362e87007a809876e6e1b00f8a074f4f772338c66128e",
+    "scripts/testing/scenarios.mjs": "c6d55167545a2f486a72853db2b80e9454187a6ed9c5f356e5850989d4cc7c5e"
+  },
+  "workingTreeClean": true,
+  "independentChecks": {
+    "path": "execution/evidence/G07/notification-a88-independent-tests.log",
+    "sha256": "e820e4cdd86a24309a6f242b532a6d460c2093588b8f9195d563a48034892a5d",
+    "passed": 93,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 3215.991959,
+    "exitCode": 0,
+    "command": "pinned Node NODE_BACKEND=js --test --test-concurrency=1 scripts/test-c01-native-profile.mjs scripts/testing/rolling-notification-fixture.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+    "scope": "Lightweight SDK/source checks and actual checked-in callback/finally fragments with explicitly labelled chain, receipt and balance doubles; no real proofs/browser"
+  },
+  "assessment": [
+    "Only notification scenario setup applicationThreads changes1\u21922; trusted HTTP proving service explicitly selects2 for notification and1 elsewhere and persists requested count. Existing native profile admits only1or2 and checks actual singleton; original service process worker forwards thread setting to NativeUnixSocket. Node/world-state1, one-active-worker queue, deadlines540s/4GiB/180s reserve/150s browser/30s accounting unchanged.",
+    "Pre-handoff finally path independently attempts root receipt/effect collection and A/B balance verification. Drained proof queue and every forwarded hash having observed fee are required before each balance read. Unknown pending fee blocks both; paid reverted or later semantically rejected receipt can still contribute known charge and balances while original error remains fatal.",
+    "Accounting retains B standalone fee in A cross-pool expected balance and A actual fees in B expected pool balance. A verification failure does not suppress B verification; result and error observations are persisted independently.",
+    "Original failure and accounting errors aggregate, then existing reader/L1 ownership closes and persists. Collection performs reads only: no financial retry or new proof.",
+    "Parent run-application launches browser only on explicit browser-ready stage. Fixture writes handoff then sets handedOff=true before emitting this stage. Therefore pre-handoff collection is not selected for an already signaled browser; mere partial/full file write without signal cannot launch it.",
+    "Post-handoff collection retains mandatory browser-result presence before either balance read. New actual checked-in callback regression verifies undefined browser does not invoke balance verification; no weakening of active-browser write fence.",
+    "Tests retain original lifecycle/accounting checks, add paid semantic failure, unknown charge, independent B-on-A-failure, drained/active/invalid queue and exact full error/cleanup dispatch cases. Earlier source-string test failure retained by lead; revised test executes actual callback body."
+  ],
+  "priorFindingClosure": {
+    "report": "execution/evidence/G07/notification-5c2-timing-diagnosis-review.json",
+    "status": "Pre-handoff root-charge/balance evidence gap closed at source level; two-thread timing hypothesis implemented without reducing reserves."
+  },
+  "requiredActualObservations": [
+    "Actual setup singleton threads2 and trusted native worker threads2; requested report field alone does not establish runtime setting.",
+    "All four genuine application transactions plus real B standalone funding, canonical effects and both final fee ledgers.",
+    "Actual descendantRSS under4GiB, full cleanup, browser admission >=180s, fixed finite stage diagnostics and failed evidence retention.",
+    "Proof/receipt-wait and setup/catchup timing: two-thread savings are unmeasured, not guaranteed. No unchanged retry if new profile still misses budget."
+  ],
+  "limits": [
+    "No genuine run grant from this source review; exact root/SDK/wallet closure next.",
+    "No native proof, browser run, service or provider call performed.",
+    "Known recorded pending/reverted outcomes are tested with labelled doubles; this is not a general adversarial transport audit or product qualification."
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "recordedAt": "2026-10-12T20:36:50.483406+00:00",
+  "rawCompilationsPassed": true,
+  "heavySlotReleased": true,
+  "candidateSha256": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+  "candidatePackages": 8,
+  "candidateSourceFiles": 419,
+  "sevenFreshArtifacts": {
+    "Billboard": {
+      "path": "billboard/target/billboard_contract-Billboard.json",
+      "sha256": "dbed1efe76e33e90ecc95626bcc31577439677518814758eda6c6add48107e64",
+      "bytes": 7430779,
+      "functions": 49,
+      "fileMapEntries": 139
+    },
+    "PrivateFPC": {
+      "path": "billboard/target/private_fee_contract-PrivateFPC.json",
+      "sha256": "2a270bfe3b0f0357d82aaa7dea75a23cfa241655fcea06b013ec83c45a481e2c",
+      "bytes": 2347947,
+      "functions": 9,
+      "fileMapEntries": 114
+    },
+    "PluginAdapter": {
+      "path": "billboard/target/plugin_adapter-PluginAdapter.json",
+      "sha256": "c26ddb0e1f4c98b1fe6b0b14bea6fe62277d70db210dce919f180dba89bada5d",
+      "bytes": 1667585,
+      "functions": 24,
+      "fileMapEntries": 107
+    },
+    "RollingBoard": {
+      "path": "billboard/target/rolling_contract-RollingBoard.json",
+      "sha256": "9b3b76c75fb6709d98f738bbb2b166dbe14c69033f5aa5c2bb7724f1263d6cd7",
+      "bytes": 10662089,
+      "functions": 49,
+      "fileMapEntries": 148
+    },
+    "AvatarLogProbe": {
+      "path": "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+      "sha256": "c2668e118901e22536a5e5ccd4220db67327f6d4b67179f196efb1273a390a1d",
+      "bytes": 1030241,
+      "functions": 6,
+      "fileMapEntries": 74
+    },
+    "PrivateBok": {
+      "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
+      "sha256": "1c9f0ebdf8c11dd9570cbf01b8002d3a7bac4a4f093d8e9d02c94c41d04866f4",
+      "bytes": 3323452,
+      "functions": 25,
+      "fileMapEntries": 141
+    },
+    "InvocationProbeBoard": {
+      "path": "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json",
+      "sha256": "f641e1e1a444b7d30d118d3be11cf3f7c4f9f47664a637fe6cab56870e8e5f2b",
+      "bytes": 977380,
+      "functions": 6,
+      "fileMapEntries": 69
+    }
+  },
+  "runs": [
+    {
+      "sequence": 1,
+      "command": {
+        "sequence": 1,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "elapsedMs": 100301,
+      "peakTreeRSSKiB": 2412976,
+      "ownedTreeAbsent": true,
+      "logSha256": "e6511d1da8697cc60ec3a387d45c87149546a2f1070b17f6c9cd78be8030ddf1"
+    },
+    {
+      "sequence": 2,
+      "command": {
+        "sequence": 2,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "elapsedMs": 3212,
+      "peakTreeRSSKiB": 326240,
+      "ownedTreeAbsent": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "sequence": 3,
+      "command": {
+        "sequence": 3,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "elapsedMs": 14547,
+      "peakTreeRSSKiB": 452288,
+      "ownedTreeAbsent": true,
+      "logSha256": "0cc17a15e3d3c09f0b871127b133a80602a9117eaee020b6a98bdb9db674dd02"
+    }
+  ],
+  "rootAndLockedSourceHashesUnchanged": true,
+  "trackedSourceUnchanged": true,
+  "oldCacheNonDirectoryMetadataChanges": [
+    ".DS_Store",
+    "github.com/.DS_Store",
+    "github.com/AztecProtocol/.DS_Store",
+    "github.com/AztecProtocol/aztec-packages/.DS_Store"
+  ],
+  "oldCacheChangeLimit": "Only four Finder .DS_Store files changed metadata; attribution not established. All 418 original locked source files hash-identical; no old source file entry metadata changes. Parent cache directories gain new version entries. No historical cache contents intentionally changed.",
+  "activeLockUnchanged": true,
+  "activeLockPromoted": false,
+  "cacheGitOrigins": [
+    {
+      "repository": "aztec-labs-eng/aztec-nr",
+      "tag": "v6.0.0-rc.3",
+      "head": "694af4de4b196733819811c896867d5a9572a1b5",
+      "expectedCommit": "694af4de4b196733819811c896867d5a9572a1b5",
+      "headMatches": true,
+      "originMatches": true,
+      "clean": true,
+      "method": "Local compiler-fetched git metadata; independent archive origin check remains required"
+    },
+    {
+      "repository": "AztecProtocol/aztec-packages",
+      "tag": "v6.0.0-rc.6",
+      "head": "0df91ba1799012435c62c6108a0926b357fef88c",
+      "expectedCommit": "0df91ba1799012435c62c6108a0926b357fef88c",
+      "headMatches": true,
+      "originMatches": true,
+      "clean": true,
+      "method": "Local compiler-fetched git metadata; independent archive origin check remains required"
+    }
+  ],
+  "independentOfficialArchiveVerification": "PENDING separate public download grant; clean cache Git identity is not substituted for independent archive/content verification.",
+  "candidateOutcome": "candidate_requires_origin_verification",
+  "remaining": [
+    "Official archive origin comparison for all 8 packages and required commits",
+    "Independent candidate and seven artifact review before lead lock promotion",
+    "Normal artifact/VK processing, TXE, SDK/PXE/lifecycle and application proof qualification"
+  ],
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/summary.json": {
+      "sha256": "0092d28260a49a17422813eb9cbed7aac2bcc6c10be2474b3c193ead3b0edca1",
+      "bytes": 17372
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/intent.json": {
+      "sha256": "6301513ee11fde59fb9c665feaf21da58b6d0b3ea65dfb24a0d884c3d78a2959",
+      "bytes": 2168
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/execution-intent.json": {
+      "sha256": "79cb43360d4dcc226c60d34373f6d05c25a7c1bb20de89ed090ed08bde20ad7c",
+      "bytes": 393
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/candidate-intent.json": {
+      "sha256": "d24468f6d011c3c95ef7b5b7be8c4cd03337c5748045048fd0b54615198c1026",
+      "bytes": 987
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/candidate.log": {
+      "sha256": "e2e525d476aa0bdfc0dc396b1870152280970c46c117e43aa25f34be22e34590",
+      "bytes": 343
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/before.json": {
+      "sha256": "259e96c6aebd9a603ab45aab3f45926cf8e4c3ae06b21097e09179b4a101db3a",
+      "bytes": 13161330
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/run.mjs": {
+      "sha256": "b7541c9dc0fb7db865354a004be83ac805b03eec41b642169c44baf551d2f00c",
+      "bytes": 2022
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/child.py": {
+      "sha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+      "bytes": 380
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/prepare.py": {
+      "sha256": "66e7ce6effd6d44f4871034d5b7f8e6b23002d986d2abb7b8508da4f242447e8",
+      "bytes": 2705
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/check-after.py": {
+      "sha256": "d0b78e74d9d96431965fe946e37769b3663059899b09b57df1242c98cf3776a6",
+      "bytes": 3724
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-noir-dependencies.candidate.json": {
+      "sha256": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+      "bytes": 179576
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-1.json": {
+      "sha256": "c6f1da7b8f8ae1846802185acc6458116c7a616e89e2a0851c70399b7d5e7bba",
+      "bytes": 7501
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-1.log": {
+      "sha256": "e6511d1da8697cc60ec3a387d45c87149546a2f1070b17f6c9cd78be8030ddf1",
+      "bytes": 318770
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-2.json": {
+      "sha256": "5ec929392bb26cdade2a90a3e4dd63ec6374ee4a09b98ea3f46380e3528d10b7",
+      "bytes": 1655
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-2.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-3.json": {
+      "sha256": "a3dd2f608574893e20736135a6417c5905a6f1215040c30de31a0afbb3f31614",
+      "bytes": 2339
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-3.log": {
+      "sha256": "0cc17a15e3d3c09f0b871127b133a80602a9117eaee020b6a98bdb9db674dd02",
+      "bytes": 71687
+    }
+  }
+}

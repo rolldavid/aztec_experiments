@@ -1,0 +1,15 @@
+{
+  "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+  "rootArtifactChecks": [
+    {
+      "name": "RollingBoard",
+      "sha256": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431"
+    },
+    {
+      "name": "PrivateBok",
+      "sha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935"
+    }
+  ],
+  "sameCatalogBytesRootAndCandidate": true,
+  "noGeneratedArtifactWrites": true
+}

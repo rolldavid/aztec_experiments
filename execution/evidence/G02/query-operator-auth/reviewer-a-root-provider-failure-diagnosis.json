@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "sourceRevision": "3fc51f58362755ac6f3173d2c98c53710d8e8866",
+  "kind": "read-only-original-provider-failure-diagnosis",
+  "observedAt": "2026-10-14T12:01:55.384223+00:00",
+  "requestId": "0x20eae7900ceedf13052c1e16e47e78a1ed707ba183fd127454e8f52367f05fc8",
+  "journalSHA256": "09f53a1f173679b9ce8a668d2b9cd9561b73c78e8c1d85176883eb4cb2e77427",
+  "hostedPhase": "running",
+  "calls": [
+    {
+      "id": 0,
+      "phase": "settled",
+      "inputDigest": "4cc0ad61be227b498a1010bd8572a8a5eb31ae56c554bb39575404a2b73ed83e",
+      "requestedTokens": 1500,
+      "maximum": "148610",
+      "billingPresent": true,
+      "promptTokens": 552,
+      "completionTokens": 1500,
+      "charge": "5560",
+      "receipt": "0x29ef3eacf698279784cfbcf0684cf8c9c052f11db3569fb8fa1e02033c0d1356"
+    },
+    {
+      "id": 1,
+      "phase": "fenced",
+      "inputDigest": "b938c22362f76e4ca93fd1361bcd5d01e82b2ec8d94b7ab7a2ff747156373fdf",
+      "requestedTokens": 1500,
+      "maximum": "148610",
+      "billingPresent": false
+    }
+  ],
+  "finding": {
+    "severity": "P2",
+    "path": "plugins/private-bok-metering.mjs",
+    "symbol": "complete provider.execute catch",
+    "description": "Existing safe provider diagnostic is discarded by catch before the durable fenced call is saved. Neither call journal nor masked hosted log records HTTP/transport/billing classification, preventing concrete cause attribution after original paid-call failure.",
+    "minimalRepair": "Persist only getVeniceDiagnostic(error) fixed closed projection alongside the original call before/with fencing; never error.message/body/input/response. Reuse existing provider-metering diagnostic tests and metering journal tests, preserving no-replay fence. Owner implements only if assigned."
+  },
+  "cause": "Unknown: actual call1 provider/response/accounting-validation error was discarded. Call0 reached1500token cap; that observation alone does not establish why call1 failed.",
+  "billingRecovery": {
+    "required": true,
+    "callId": 1,
+    "inputDigest": "b938c22362f76e4ca93fd1361bcd5d01e82b2ec8d94b7ab7a2ff747156373fdf",
+    "evidenceMissing": "Original call1 verifiable provider billing receipt/usage and response identity",
+    "existingPath": "plugins/main.mjs --reconcile-billing ABSOLUTE_CONFIG ABSOLUTE_RECEIPT, stopped owning service lease, reconcileHostedBilling validation",
+    "recoveryBehavior": "Account original cost, release remaining reservation and finish without inventing reply; never run original model again.",
+    "possibleReadOnlyEvidence": "Installed venice-x402-client getTransactions GET /api/v1/x402/transactions/{address}?limit&offset supports bounded trusted-lead history inspection. History shape/useful billing facts not yet verified. Balance delta alone insufficient with concurrent B."
+  },
+  "checks": [
+    "Source provider constructs closed diagnostic classification; metering catch ignores it, hosted main masks message.",
+    "Journal has no call1 billing/response ID/failure classification, only original quote/digest/possibly-sent then fenced outcome.",
+    "Public service log contains only generic reconciliation lines; no HTTP/code/stage classification.",
+    "No source/state/config mutation, model request, financial transaction or credential access performed."
+  ]
+}

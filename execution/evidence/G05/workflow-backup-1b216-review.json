@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1b21614533b57708fafb52d8c21accff79b7c46d",
+  "baseRevision": "1812cea4bc58aca25958c62bc7275fb6eb8b7a2b",
+  "verdict": "approved-bounded-source",
+  "files": {
+    "shared/journal-backup.mjs": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+    "shared/journal-backup.test.mjs": "20ee7b5fe4b316d79522099b1a6f0c99ebb3de7bebc993159c373c3a5ce575ad"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=root processed RollingBoard pinned Node24.21.0 --test shared/journal-backup.test.mjs shared/rolling/application.test.mjs",
+      "result": "24 passed;0 failed"
+    },
+    {
+      "command": "NODE_BACKEND=js pinned Node24.21.0 --test scripts/test-w03-journal-backup.mjs scripts/test-w03-deployment-journal.mjs",
+      "result": "30 passed;0 failed; existing L2/ETH encrypted recovery and actual offline CLI remain passing"
+    },
+    {
+      "command": "git diff --check1812cea..1b216145",
+      "result": "passed"
+    }
+  ],
+  "findings": [],
+  "review": [
+    "Exact Rolling key domain requires canonical two-level framing with complete seven-field L2 scope; malformed nested types, domains, extra fields and whitespace rejected.",
+    "Existing authenticated descriptor decryption, storage-key equality, ciphertext authentication, same-owner filtering, export consistency and conflict/idempotent restore unchanged. No generic new-domain acceptance.",
+    "Actual Rolling prepare and uncertain submit workflow restore tests preserve intent identity and no-replay fence; older backup cannot overwrite newer local state.",
+    "Additional import is existing scope canonicalizer, without services or private-node activity. Reviewed actual application scope framing and encryption storage-key derivation."
+  ],
+  "limitations": [
+    "New workflow tests use labelled wallet/node doubles with actual application/crypto/IndexedDB CAS. They do not establish chain/browser-wallet recovery acceptance.",
+    "Generated SDK consumers need rebuild and their affected checks before deployment/integration qualification. Full product recovery and privacy gates remain open."
+  ]
+}

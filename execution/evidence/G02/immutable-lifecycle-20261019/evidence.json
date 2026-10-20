@@ -1,0 +1,56 @@
+{
+  "base": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+  "candidate": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "task_id": "G02-immutable-lifecycle",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+      "candidate": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+      "task_id": "G02-immutable-lifecycle",
+      "id": "immutable-lifecycle-boundary",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-name-pattern='rolling constructor|old deployment|current immutable|missing pending|retained signed|unknown send|reconcil|canonical|immutable|reorg' plugins/test/operations.test.mjs",
+      "environment": "Existing local component checks, pinnedNode24; no proofs",
+      "observed": "27 independent cases passed; retained transaction and separate canonical immutable-state anchor",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/immutable-lifecycle-20261019/review.json",
+          "sha256": "3d2ab859645d21e7c8cbb8c2b881cfd3c4d824f1b822fa9fab6eff3c8ad1d0a2"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+    "candidate": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+    "task_id": "G02-immutable-lifecycle",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G02/immutable-lifecycle-20261019/review.json",
+        "sha256": "3d2ab859645d21e7c8cbb8c2b881cfd3c4d824f1b822fa9fab6eff3c8ad1d0a2"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+      "candidate": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+      "task_id": "G02-immutable-lifecycle",
+      "id": "RC41-retained-original-lifecycle",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/immutable-lifecycle-20261019/review.json",
+          "sha256": "3d2ab859645d21e7c8cbb8c2b881cfd3c4d824f1b822fa9fab6eff3c8ad1d0a2"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "candidate": "2bc02640ad63969e761c40dea6614c26177906ae",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-timeout=30000",
+    "prover/worker-native-profile.test.mjs",
+    "scripts/test-remote-prover-worker.mjs",
+    "scripts/test-prover-service.mjs",
+    "scripts/test-prover-runtime.mjs"
+  ],
+  "exitCode": 0,
+  "timedOut": false,
+  "elapsedMs": 21424,
+  "pgid": 65061,
+  "ownedGroupAbsentBeforeCleanup": true,
+  "ownedGroupAbsent": true,
+  "logSha256": "16ac28d4ea48c96b48323aa82e3529492a48cf176cf69cb107d2fe558f765eb0"
+}

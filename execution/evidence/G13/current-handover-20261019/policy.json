@@ -1,0 +1,30 @@
+{
+  "base": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+  "candidate": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+  "task_id": "D8-current-handover",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "README.md",
+    "apps/rolling/README.md",
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "document-source-coherence"
+  ],
+  "requirements": [
+    "RC36-current-run-instructions"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "D8-current-handover",
+      "paths": [
+        "README.md",
+        "apps/rolling/README.md",
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T17:49:00.205072+00:00",
+  "purpose": "Independent read-only nonce reconciliation; no sign or send",
+  "results": [
+    {
+      "endpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+      "failure": "HTTP Error 403: Forbidden"
+    },
+    {
+      "endpoint": "https://rpc.sepolia.org",
+      "failure": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

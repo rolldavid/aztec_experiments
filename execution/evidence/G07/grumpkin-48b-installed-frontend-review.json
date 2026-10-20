@@ -1,0 +1,32 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "48b62e9f354a63581ac1f17cac6013f58de8a1b5",
+  "previousSource": "9c1fc5f2c9137e613ea4cc5a2a5b3f15bd20080e",
+  "packetSha256": "b5c049459e651aaeabeb98e1230178c3bcbe264900a46b7a1ba465f786011ef4",
+  "verdict": "accept staged build and exact two-asset installation/commit; eligible for one separately granted normal frontend build",
+  "checks": {
+    "stageResultAndLogHashVerified": true,
+    "stageElapsedMs": 718,
+    "stageRSS": "unmeasured-short-run",
+    "stageOwnedTreeAbsentAndProtectedPostcheck": true,
+    "fourStagedAndInstalledAssetHashesVerified": true,
+    "previousTwoAssetsAndManifestsPreserved": true,
+    "exactTwoTrackedOutputCommitWithExpectedParent": true,
+    "headClean": true,
+    "frontendWalletRunnerCodeUnchanged": true,
+    "preparationOnlySourceRebound": true,
+    "all3209UnaffectedPinsRehashed": true
+  },
+  "frontend": {
+    "deadlineMs": 180000,
+    "rssLimitKiB": 4194304,
+    "command": "node apps/build.mjs",
+    "source": "48b62e9f354a63581ac1f17cac6013f58de8a1b5"
+  },
+  "holds": [
+    "Wallet launch remains gated on actual frontend result, protected postcheck, normal output manifest verification and any exact generated-output commit/source rebind.",
+    "Fresh complete normal closure before both actual browser cases.",
+    "No browser initializer success or full CRS consumer qualification inferred from build/install."
+  ],
+  "findings": []
+}

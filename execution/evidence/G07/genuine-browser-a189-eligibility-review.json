@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:50:21.823827+00:00",
+  "candidate": "a18973f53bffc4c2b7b54c8c227b759e17a87290",
+  "base": "2f196a9b41cec91f0636038f7f5ba2bb3ad61d9e",
+  "verdict": "eligible-for-one-parent-granted-measured-genuine-preference-browser-trial",
+  "sourceAndClosure": {
+    "cleanCandidate": true,
+    "exactThreeFileProfileDeltaReviewed": true,
+    "actualFixtureTests": 101,
+    "allBindingsIndependentlyRehashed": 3158,
+    "actualChromiumExecutableIncluded": true,
+    "sdkInputsOutputs": [
+      2052,
+      8
+    ],
+    "frontendInputsOutputs": [
+      97,
+      10
+    ],
+    "walletInputsOutputs": [
+      84,
+      24
+    ],
+    "installedEightPlusTwo": "unchanged reviewed d22",
+    "normalArtifactsCatalogPrivateBok": "unchanged reviewed closure"
+  },
+  "launcherChecks": [
+    "Exact source and clean tree, independent review hash and all approved bindings before launch.",
+    "Exclusive fsynced intent plus exclusive log; same existing runApplication supervisor, no nested supervisor or retry.",
+    "Scenario selects application2/trusted2 while node/worldstate1 remain; existing native singleton assertions retained.",
+    "Actual local Chromium cache path is bound; top-level launcher preserves real HOME used by browser lookup.",
+    "No proof/provider shortcuts; three genuine writes, actual fresh browser IndexedDB keys-only recovery, complete privacy/counter/accounting/lock/public view checks remain."
+  ],
+  "limits": {
+    "campaignMs": 540000,
+    "applicationMs": 525000,
+    "rssLimitKiB": 4194304,
+    "browserAdmissionReserveMs": 150000,
+    "browserTimeoutMs": 120000,
+    "attempts": 1
+  },
+  "acceptance": {
+    "genuinePreparationProofJobs": 3,
+    "unchangedFinancialConservation": true,
+    "actualFreshChromiumDatabase": true,
+    "keysOnlyEncryptedBackup": true,
+    "publicBeforeUnlock": true,
+    "completePrivateRecovery": true,
+    "bookmarksAndFollowingAndBoardViews": true,
+    "lockClearsAndReloadLocked": true,
+    "coldWindows": 1,
+    "compactRequestsMinimum": 1,
+    "tagDiscoveryCalls": 0,
+    "recoveryProofJobs": 0,
+    "recoveryNodeSubmissions": 0,
+    "recoveryL1Submissions": 0,
+    "nativeCompactFailed": 0,
+    "nativeCompactPending": 0,
+    "observerErrors": 0,
+    "allOwnedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true
+  },
+  "measurementCaveat": "Historical two-thread timing supports changed experiment, not guaranteed375s handoff or complete browser success. If admission fails preserve actual fees and cleanup; no identical retry or deadline relaxation.",
+  "conditions": [
+    "Parent must bind this exact review in approved-launch with current3158 bindings before serialized slot grant.",
+    "Keep source/deps/assets frozen through actual exit and postcheck.",
+    "Actual runtime and cleanup require independent review; eligibility is not acceptance."
+  ],
+  "excludedClaims": [
+    "Full G07/reorg/capacity/provider/Linux qualification",
+    "260 compiler diagnostics clearance, external audit, soak or production release"
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/genuine-browser-a189/review-packet.json",
+      "sha256": "eb6da9cdb48baaad50acfeb3dde6d04c5fe254aef36db5f716c29e83c7317dfa"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/genuine-browser-a189/preparation.json",
+      "sha256": "df81ae1faf6f6f529edf6a56f9c50edd3b4bfafca81c58b370a93b17090f3e93"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/genuine-browser-a189/before-bindings.json",
+      "sha256": "1a2e517176b4ba2268ce0d77618118e67ef2505d16d7975c61db3218a97603c8"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/genuine-browser-a189/launch.py",
+      "sha256": "d13efafc9032a24502bcdb236c69cdfc7cc21c1c291ea1246143c00a21f8441b"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/browser-profile-a189-components/current-closure.json",
+      "sha256": "1c7b5f58a3315ff060d332c71d418625e3e13949cc9c020d3a429775d72e19aa"
+    }
+  ],
+  "reviewExecution": "Read/hash/source only, no test/build/browser/native/provider action."
+}

@@ -1,0 +1,48 @@
+✔ historical gateway: parsed numeric and anchored header selectors use checkpoint policy and final fences (45.379208ms)
+✔ historical gateway: public inspector metadata is explicitly checkpoint gated, health remains proposed (6.922042ms)
+✔ historical gateway: nonfixed selector "latest" stays strict (1.343959ms)
+✔ historical gateway: nonfixed selector "proposed" stays strict (1.042208ms)
+✔ historical gateway: nonfixed selector {"tag":"checkpointed"} stays strict (1.007542ms)
+✔ historical gateway: nonfixed selector {"archive":"0x0000000000000000000000000000000000000000000000000000000000000001"} stays strict (0.900917ms)
+✔ historical gateway: mixed latest batch gates strictly before any forwarding (0.974375ms)
+✔ historical gateway: rejects forked resolution (4.696708ms)
+✔ historical gateway: rejects final anchor reorg (6.87675ms)
+✔ historical gateway: unavailable/pruned state selector 0 cannot bypass bounds (2.87975ms)
+✔ historical gateway: unavailable/pruned state selector 8 cannot bypass bounds (2.548125ms)
+✔ historical gateway: typed mined receipt and effect witness resolve canonical history (13.939916ms)
+✔ historical gateway: archived receipts and effect witnesses survive world-state pruning (15.334458ms)
+✔ historical gateway: pruned archive read still rejects changed receipt identity (2.855083ms)
+✔ historical gateway: pruned archive read still rejects changed effect root (7.64575ms)
+✔ historical gateway: pruned archive read still rejects changed final canonical anchor (6.54575ms)
+✔ historical gateway: pending receipt needs stronger proposed policy and is never fabricated missing (2.627375ms)
+✔ historical gateway: wrong witness root produces fixed RPC failure, never historical success (7.457ms)
+✔ historical gateway: failing final fence drains held sibling before response/slot release (4.345542ms)
+✔ historical gateway: explicit archive membership selector is canonicalized while archive-root form stays strict (5.892041ms)
+✔ historical gateway: mismatched receipt identity fails closed rather than escalating it into success (2.385875ms)
+✔ historical gateway: pending and above-checkpoint receipts cannot bypass unavailable strict readiness (4.569291ms)
+✔ historical gateway: a batch reuses its validated header and shares final canonical anchors (3.539334ms)
+✔ historical gateway: typed genesis BlockResponse survives world-state pruning at1 (6.421292ms)
+✔ historical gateway: genesis header metadata remains canonical despite world-state pruning (4.326208ms)
+✔ historical gateway: orphaned genesis response cannot bypass final canonical fence (5.787958ms)
+✔ historical gateway: fixed public body and header at synced world head above checkpoint share canonical bounds (29.448875ms)
+✔ historical gateway: public body head allowance does not admit future bodies or pruned and above-checkpoint state (5.833541ms)
+✔ historical gateway: above-checkpoint public body still rejects orphan resolution and final reorg (10.780208ms)
+✔ historical gateway: real SDK block stream can prune an absent suffix above the canonical tip (99.347208ms)
+✔ historical gateway: getBlock preserves genuine above-tip absence with fresh proposed fences (5.111083ms)
+✔ historical gateway: getBlockData preserves genuine above-tip absence with fresh proposed fences (4.651834ms)
+✔ historical gateway: missing in-range or hash-selected block remains unavailable 6 (3.149ms)
+✔ historical gateway: missing in-range or hash-selected block remains unavailable {"hash":"0x0000000000000000000000000000000000000000000000000000000000000063"} (2.809792ms)
+✔ historical gateway: missing in-range or hash-selected block remains unavailable {"number":8,"hash":"0x0000000000000000000000000000000000000000000000000000000000000008"} (2.694041ms)
+✔ historical gateway: above-tip absence rejects final proposed advance (4.435167ms)
+✔ historical gateway: above-tip absence rejects final proposed regress (4.212333ms)
+✔ historical gateway: above-tip absence rejects final proposed same-height-fork (4.315291ms)
+✔ historical gateway: above-tip absence rejects final proposed unavailable (4.337083ms)
+✔ historical gateway: mixed pending receipt cannot bypass the absence final fence (4.946959ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 987.76975

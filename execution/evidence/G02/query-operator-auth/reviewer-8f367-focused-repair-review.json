@@ -1,0 +1,17 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "8f3670e419f1f38852f6bf0dfc6eff3d16f78a84",
+  "sourcePacketSha256": "3de215e22394fef2c3d29a035a5fb2e3d5022515d7e716b087adfc7f11484d42",
+  "preparationPacketSha256": "a46d2adae28b8fed48e98a7b3048b11c17943a1c209e3d96cc61978defba30e5",
+  "verdict": "Eligible for one separately granted focused two-case run only",
+  "findings": [
+    "Actual outgoing five batches assert all seven unique JSON-RPC IDs, exact params, final fence, every seven-read server gate and complete 42-call sequence; no loose count weakening.",
+    "Actual openPXEStore regression requires historical IDBRequest failure; observed owned request closes its eventual handle. New factory/full installed thirteen-global surface supports actual write/read/close/delete and restores all prior descriptors.",
+    "Only one test file changes; production and other claimed test unchanged. Runner is exact directory-only qualified template, identical child, 60s/2GiB, 3293 protected pins."
+  ],
+  "limits": [
+    "Two selected labels only; 21 integration cases intentionally excluded.",
+    "Full23/PXE execution requires successful focused actual review and separate grant.",
+    "Prior74085 remains failed."
+  ]
+}

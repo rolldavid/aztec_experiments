@@ -1,0 +1,28 @@
+{
+  "candidate": "eb1bd4b09e859c09e58022b3f872c477bebf5c95",
+  "base": "8342b4527278445f14c65046ae3cd1484d4667c5",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-withdrawal-membership-qualification",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "apps/rolling/wallet-runtime.mjs",
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "required_checks": [
+    "custody-chain-composition"
+  ],
+  "requirements": [
+    "RC22-RC37-guarded-wallet-chain"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-withdrawal-membership-qualification",
+      "paths": [
+        "apps/rolling/wallet-runtime.mjs",
+        "apps/rolling/wallet-session.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:32:21.045828+00:00",
+  "scope": "Read-only target diagnosis; no deployment or SDK changes",
+  "sourceCommit": "dd3e2bc4e4cf9fe37bf5269deae108d0c4d89d7a",
+  "nodeStartupQualified": false,
+  "livenessProcedure": {
+    "oneInvocation": true,
+    "processSession": 62055,
+    "exitCode": 0,
+    "processReaped": true,
+    "elapsedMs": 1314,
+    "httpRequests": 15,
+    "operatorRetries": 0,
+    "receiptSha256": "fb273259b63e35f5b5fb7ec0f1c3a89346a0320616620ccd9f543f9848a1f1a0",
+    "intentSha256": "9be9dbbc9af6e582df419a79b1b34be8af8b32e2d304ce6ba14a474bb1c1648e",
+    "procedureSha256": "22a917e37586af2f50788c08387a1711ea669f3a73cd717b9196160caecfa4bb",
+    "passedMeaning": "Bounded public reads and continuity succeeded; does not mean either node is qualified"
+  },
+  "anchor": {
+    "number": "11899198",
+    "timestamp": "1791811788",
+    "hash": "0x153ab287fd9cb0fbfcfecae4d9ba9c65edc4a14d4322fba5652e3fbd28ead356"
+  },
+  "observedWindowSeconds": "3612",
+  "candidate": {
+    "address": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "past": {
+      "pending": "16668",
+      "proven": "16668"
+    },
+    "current": {
+      "pending": "16668",
+      "proven": "16668"
+    },
+    "windowSeconds": "3612",
+    "pendingIncreased": false,
+    "provenIncreased": false,
+    "latestProvenCheckpoint": {
+      "number": "16668",
+      "slot": "19231",
+      "timestamp": "1791799356",
+      "ageSeconds": "12432"
+    }
+  },
+  "canonical": {
+    "address": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "past": {
+      "pending": "36",
+      "proven": "0"
+    },
+    "current": {
+      "pending": "87",
+      "proven": "64"
+    },
+    "windowSeconds": "3612",
+    "pendingIncreased": true,
+    "provenIncreased": true,
+    "latestProvenCheckpoint": {
+      "number": "64",
+      "slot": "2559",
+      "timestamp": "1791810132",
+      "ageSeconds": "1656"
+    }
+  },
+  "historicalConfig": {
+    "comparisonEvidence": "operator08-09-selector-comparison.json",
+    "sha256": "26e320cff16cf2744bcdc63538efae560d03002bc2f5e1d95a6c6472c00d1c38",
+    "conclusion": "08 and09 exact payloads omit numeric rollup version in host argv/env and NETWORK. Both select canonical through the pinned SDK.09 qualifier/application configuration independently expects2914217885; these are different selection semantics."
+  },
+  "existingProjectIdentity": {
+    "record": "deploy/prover/live-deployment.json",
+    "sha256": "e485cf1f86af4f1837988b46ba787a6638ac14acfe0e9032c9bf9544fbcc6dab",
+    "verifiedAt": "2026-10-10T15:39:58.005539+00:00",
+    "aztecVersion": "6.0.0-rc.1",
+    "rollupVersion": "2914217885",
+    "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "qualification": "Historical deployment identity; not a current service-health assertion"
+  },
+  "officialDocumentation": {
+    "url": "https://docs.aztec.network/networks",
+    "observedAt": "2026-10-12T13:32:21.046843+00:00",
+    "says": {
+      "sdkNodeNoir": "6.0.0-rc.1",
+      "testnetVersion": "2914217885",
+      "testnetRollup": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9"
+    },
+    "interpretation": "Current fetched network table agrees with existing project target but differs from current observed registry canonical. Treat documentation as lagging or insufficient to identify new canonical release; do not infer its SDK version from the numeric rollup identifier.",
+    "officialDomainSearchForNewVersionOrAddress": "No result found; not proof no release exists"
+  },
+  "sourceReferences": {
+    "stdlib/dest/config/chain-config.js": {
+      "lines": [
+        16,
+        17,
+        19
+      ],
+      "sha256": "efb8a9f70ec9e4f5d332c8a80ed7157de1d439c5b0343f8c255370a7113a60ca"
+    },
+    "aztec/dest/cli/cmds/standby.js": {
+      "lines": [
+        61,
+        63,
+        84,
+        110
+      ],
+      "sha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0"
+    },
+    "aztec/dest/cli/cmds/start_node.js": {
+      "lines": [
+        55,
+        70,
+        137
+      ],
+      "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a"
+    },
+    "ethereum/dest/contracts/registry.js": {
+      "lines": [
+        30,
+        38,
+        44
+      ],
+      "sha256": "093ad3ca90969b860284375410af6fa90b75452348e6690ced494b57e8d13914"
+    },
+    "ethereum/dest/contracts/rollup.js": {
+      "lines": [
+        829,
+        833,
+        931,
+        990,
+        1002
+      ],
+      "sha256": "52f1abedbd8220a87eddea5b65e6cefcebcce129409f09294714972df5ac91a2"
+    },
+    "stdlib/dest/snapshots/download.js": {
+      "lines": [
+        28
+      ],
+      "sha256": "6ffb9fdb49e34bcc30c26f40ca4b3493d8e163ae155e8d265c56e15246c5bf07"
+    },
+    "node-lib/dest/actions/snapshot-sync.js": {
+      "lines": [
+        21,
+        75
+      ],
+      "sha256": "cf595d70a3090f37b2c91e6b43b1423b02f25f13760d5d3d808bbbfd85c38390"
+    }
+  },
+  "supportedSelection": {
+    "explicit": "ROLLUP_VERSION=2914217885 or --rollup-version2914217885 (space-separated CLI value)",
+    "semantics": "SDK numeric parser preserves selected registry version for initial compatibility and full config. Registry wrapper retains its existing numeric-version-to-index fallback on lookup error; diagnostic deliberately used exact ABI getRollup without that fallback.",
+    "autoShutdown": "Pinned start_node only installs canonical-upgrade auto-shutdown watcher when following canonical. Explicit numeric mode omits that watcher by design; this is not permission to disable initial compatibility, query freshness, proof policy or independent AWS/host budget controls.",
+    "snapshot": "Snapshot index key includes L1 chainId, rollupVersion and rollupAddress; a different numeric target cannot safely reuse old-version state/snapshots."
+  },
+  "recommendation": {
+    "forExistingFundsAndHistoricalDeployment": "Keep2914217885/address identity in retained journals, contracts and recovery configuration. Explicit version pin is technically correct for that recovery scope, but no paid recovery host is recommended solely from matching constants.",
+    "forNewLiveApplication": "Do not blindly pin old target as a liveness fix: pending/proven unchanged over3612s and latestproven age12432s atanchor. These observations do not prove permanent shutdown but fail to establish current transaction viability.",
+    "nextPrerequisite": "Identify authoritative supported SDK/node/Noir release matching currentcanonical3409706519 and its three observed constants, or official evidence that existing2914217885 network will resume. If active canonical is adopted, treat as explicit coordinated network/toolchain change with new contracts and normal acceptance, preserving old recovery scope.",
+    "paidWork": "Hold another launch until chosen target compatibility plus liveness and version-specific source availability are established. No extension or replacement authorized by this report."
+  },
+  "limits": [
+    "A new current snapshot cannot establish exact field/address during09 historical standby.",
+    "One-hour no-progress observation is not proof of permanent retirement.",
+    "Onchain progress does not prove P2P/blob/archive availability, node readiness, wallet/prover compatibility or application acceptance.",
+    "A stale L2 tip can coexist with fresh L1 sync; passing query freshness alone would not prove new application transactions can finalize.",
+    "No automatic SDK/network upgrade, new funds migration or selector alteration."
+  ]
+}

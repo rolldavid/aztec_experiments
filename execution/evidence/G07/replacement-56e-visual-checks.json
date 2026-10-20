@@ -1,0 +1,25 @@
+{
+  "candidate": "56e141030ee4aefc72ad04d5f759162019faf298",
+  "label": "Actual production DOM/CSS, labelled custody/RPC/storage; no genuine chain claim",
+  "results": [
+    {
+      "width": 390,
+      "overflow": {
+        "document": false,
+        "dialog": false
+      },
+      "sends": 0,
+      "locked": true
+    },
+    {
+      "width": 1280,
+      "overflow": {
+        "document": false,
+        "dialog": false
+      },
+      "sends": 0,
+      "locked": true
+    }
+  ],
+  "cleanup": true
+}

@@ -1,0 +1,86 @@
+{
+  "candidate": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+  "base": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+  "task_id": "G04-USDC-driver-component",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+      "base": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+      "id": "current-driver-checks",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/checks.json",
+          "sha256": "7521839036cac8478b1340eede72bc6b4661e949eac22472bfad6008890506da"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/checks.log",
+          "sha256": "6f3fca9d8952afc5ffe1d5d5fadc7ba4a42a68002fb54e4792080e05a0bd543c"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/focused-environment.json",
+          "sha256": "c00bd99968734e4a22ee6e86919260526f359c1928959997fe7b1b2f77437ca2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/focused-environment.log",
+          "sha256": "03d54ca96e379ac4f9fdbbb519749a9d4c6c4860b0fb9bfa61c11ede47bb96ca"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-41ec-final-usdc-driver-review.json",
+          "sha256": "0b37e4da2e33fb98302aa331e1b44a292d2d204da5896fdc5fe93f23e97f51a2"
+        }
+      ],
+      "command": "Pinned Node24 --test scripts/test-t04-browser-journey.mjs; then only two failed setup checks via --test-name-pattern. Exact commands in evidence.",
+      "environment": "macOS; exact pinned official MetaMask/Phantom archives; canonical TMPDIR; controlled tests, no wallet payment or proof qualification.",
+      "observed": "77 unique current checks:75 original passes +2 focused passes after missing archive/canonical TMPDIR correction; original fullrun remains failed. Independent review verifies conjunction and unchanged source.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+      "base": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+      "id": "USDC-driver-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/checks.json",
+          "sha256": "7521839036cac8478b1340eede72bc6b4661e949eac22472bfad6008890506da"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/checks.log",
+          "sha256": "6f3fca9d8952afc5ffe1d5d5fadc7ba4a42a68002fb54e4792080e05a0bd543c"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/focused-environment.json",
+          "sha256": "c00bd99968734e4a22ee6e86919260526f359c1928959997fe7b1b2f77437ca2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/usdc-driver-current/focused-environment.log",
+          "sha256": "03d54ca96e379ac4f9fdbbb519749a9d4c6c4860b0fb9bfa61c11ede47bb96ca"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-41ec-final-usdc-driver-review.json",
+          "sha256": "0b37e4da2e33fb98302aa331e1b44a292d2d204da5896fdc5fe93f23e97f51a2"
+        }
+      ]
+    }
+  ],
+  "scope": "Four coherent test-driver paths only: automatic tripleclaim Ready observation, bounded stage/permission metadata and exact Connect guard. Actual USDC/native restart/fullproduct remain unqualified. No gate selftests repeated.",
+  "review": {
+    "candidate": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+    "base": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-41ec-final-usdc-driver-review.json",
+        "sha256": "0b37e4da2e33fb98302aa331e1b44a292d2d204da5896fdc5fe93f23e97f51a2"
+      }
+    ]
+  }
+}

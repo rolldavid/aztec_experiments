@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "parentSession": "lead-20261011",
+  "sourceRevision": "0a10f1874586e080064fd50a449d533bf4a99c4e",
+  "verdict": "approved",
+  "scope": "Bounded G06 genuine local application-proof journey only; not full G06, privacy or production qualification",
+  "requirements": [
+    "RC06",
+    "RC07",
+    "RC08",
+    "RC15",
+    "RC23",
+    "RC45"
+  ],
+  "evidence": {
+    "application": "execution/evidence/G06/application-cc816630-8476-432d-9a17-c0b57160f54e.json",
+    "applicationSha256": "4684594c7c1f480b5f5a76044be49d41f9791de90b561e2ec100b5c4b084875b",
+    "journey": "execution/evidence/G06/portal-c4906e3f-e365-4f5d-8dac-e44992c93a9c/experiment/journey/journey.json",
+    "journeySha256": "b6f0f94381b1572420e37110b32bfd3b05e245c0dab18ac6861ff11324104a62",
+    "portal": "execution/evidence/G06/portal-c4906e3f-e365-4f5d-8dac-e44992c93a9c"
+  },
+  "independentChecks": [
+    "149 application source hashes matched git revision; 11 installed SDK hashes and pinned Anvil matched",
+    "Journey/setup/rollback source hashes and three processed artifact hashes matched",
+    "Decoded eight retained TxEffects with pinned SDK; exact hashes, transaction identifiers and canonical fees matched",
+    "Decoded PostPublished and PluginInvoked; checked 32-byte content, canonical zero padding, content digest, name/post/request IDs and metadata",
+    "Inspected unchanged source assertions for eight rollback checks, exact ten-field collateral/history transition, request activation with budget 400 and private credit 600",
+    "Same reverted transaction block 27, block hash, effect hash and fee preserved through FINALIZED; one official settlement mark, 65 ordinary L1 mine iterations, 67833ms; matching post included in block 28",
+    "Recomputed owner fees 93304612200000 including reverted fee; B standalone fee 7985178000000; exact private balances and remaining shared pool 1999999898710209800000",
+    "Read source-bound real native application-prover path, nonempty chonk proof assertion and mandatory node.isValidTx valid before sends; collateral evidence records real proof hash and valid node verification",
+    "452416ms and1683536KiB satisfy 540000ms and4194304KiB limits; failures empty, owned process tree absent and temporary directory removed"
+  ],
+  "findings": [],
+  "limitations": [
+    "Actual proof bytes are not retained for independent offline proof re-verification; verification is source-bound native proving, validation and canonical inclusion evidence",
+    "Local chain31337; networkProofs false and controlledSettlement true; no epoch/network proof qualification",
+    "No actual model call in this journey",
+    "privacyAcceptance false: in-process observer reports direct human getContract matches owner8 and otherUser3; no anonymity or wire-level privacy acceptance",
+    "Generated browser consumer acceptance is separate"
+  ],
+  "blockingFindings": []
+}

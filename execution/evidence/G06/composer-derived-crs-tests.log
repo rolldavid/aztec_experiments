@@ -1,0 +1,12 @@
+✔ real browser SDK unlock and encrypted recovery survive unavailable private deployment without submission (2849.813541ms)
+✔ public wallet config is detached, exact and scoped to the same public reader deployment (1.033292ms)
+✔ operator capabilities, extra properties and unsafe endpoints cannot enter browser metadata or CSP (0.446041ms)
+✔ remote proof metadata binds board, chain, version and mode; nonlocal disabled proofs fail closed (0.291375ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3064.078166

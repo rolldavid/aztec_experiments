@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T18:18:14.240439+00:00",
+  "sourceRevision": "eea60ddad4ed44ea9c61275b95c42ce768be8ad6",
+  "baseRevision": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+  "requirements": [
+    "RC29",
+    "RC30",
+    "RC41"
+  ],
+  "verdict": "approved",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/main.mjs": "7a6e7ac49c74f1f17394e3c2859f05bbaf0c3955968eb3f0d8a2d026fcfc8443"
+  },
+  "checks": [
+    {
+      "type": "independent exact source diff and context inspection",
+      "outcome": "Only existing static-development system instruction string changed; no runtime logic, tests, permissions, caps, provider invocation, journal or publication changes."
+    },
+    {
+      "command": "node --check plugins/main.mjs",
+      "outcome": "passed",
+      "node": "24.21.0"
+    },
+    {
+      "type": "lead existing model/hosted test evidence inspected",
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G10/browser-runtime-instructions/focused.log",
+      "sha256": "c94625a88a039c1258977e387691b25b678ae3df7473176de060a80ab7796f88",
+      "passed": 96,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2171.568125,
+      "scope": "Existing control-flow regressions; not a real-model behavioral measurement and not independently repeated for one prose change."
+    }
+  ],
+  "analysis": [
+    "Instruction now accurately separates isolated Node test/build environment from browser execution of published dist. It explicitly disallows relying on CommonJS globals in browser entry code and directs tests to run entry/handlers without those globals.",
+    "Explicit latest expected states and activation sequences must be retained; generated test expectations cannot be rewritten to match wrong behavior. Latest request and cheaper-summary source wiring is unchanged.",
+    "Instruction explicitly says Node test success does not verify browser behavior. Existing acceptance receipts continue to mean isolated tests/build acceptance; no new browser-validation claim.",
+    "Repository permission, isolated execution, no network/install, accepted-revision ownership and no deployment authority remain as before."
+  ],
+  "assumptions": [
+    "Static dist is served as ordinary browser code; build/test scripts may still legitimately use Node/CommonJS.",
+    "Model may use browser-compatible libraries already bundled in its source; runtime warning concerns unavailable default globals rather than forbidding bundling."
+  ],
+  "limits": [
+    "This is a prompt-quality repair, not proof that future model outputs satisfy the application request.",
+    "Existing C failing generated revision remains failing; no accepted source was rewritten or provider call replayed.",
+    "Ordinary authorized continuation plus actual browser interaction/error checks and real concurrent provider-request observation remain required.",
+    "No user privacy, proof, billing, deployment or production qualification gate is waived."
+  ]
+}

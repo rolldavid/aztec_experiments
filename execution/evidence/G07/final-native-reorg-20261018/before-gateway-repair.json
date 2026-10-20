@@ -1,0 +1,82 @@
+{
+  "startedAt": "2026-10-18T15:56:10.691Z",
+  "directory": "/private/tmp/rolling-final-reorg-V08bFV",
+  "source": "343d5220e700c5ecfc60ce72a1ff6949e2a0ce20",
+  "proofs": false,
+  "automaticSettlement": false,
+  "scope": "Real main-policy/public index and private follow/notification reorg; no orphaned post/browser/real-proof claim",
+  "stages": [
+    {
+      "name": "native-network",
+      "at": "2026-10-18T15:56:10.889Z"
+    },
+    {
+      "name": "deploy-real-board",
+      "at": "2026-10-18T15:56:13.750Z"
+    },
+    {
+      "name": "retained-private-follow",
+      "at": "2026-10-18T15:56:23.464Z"
+    },
+    {
+      "name": "publish-removable-policy-and-preference",
+      "at": "2026-10-18T15:56:32.420Z"
+    },
+    {
+      "name": "single-l1-replacement",
+      "at": "2026-10-18T15:56:42.561Z"
+    },
+    {
+      "name": "observe-production-unwind",
+      "at": "2026-10-18T15:56:42.567Z"
+    }
+  ],
+  "passed": false,
+  "retained": {
+    "l1Number": 38,
+    "l1Hash": "0xa72a735a8e951060fa779f6ff3f93e01f681c68ac1c6cd5111aecb530c7537cf",
+    "l2Number": 3,
+    "l2Hash": "0x2ac5d959789e09990d339d4f6133fb5ed14a7c589d3bd391be265a143174c977",
+    "checkpoint": 3,
+    "privateRevision": "1",
+    "mainPolicyVersion": "1"
+  },
+  "beforeFork": {
+    "checkpoint": 5,
+    "finalized": 0,
+    "privateRevision": "2",
+    "mainPolicyVersion": "2"
+  },
+  "forkIntent": {
+    "depth": 2,
+    "oldTipHash": "0x08104059d4bcd5544b18f60efe3b584f592417725f76d16cddda5e8f68bc3cce",
+    "oldTipNumber": 40
+  },
+  "fork": {
+    "sameHeight": true,
+    "changedTip": true,
+    "retainedAncestor": true
+  },
+  "publicSameStore": true,
+  "firstPostForkReadRejected": {
+    "code": "ROLLING_COLD_PREFERENCES_UNAVAILABLE"
+  },
+  "failure": {
+    "name": "Error",
+    "code": "ROLLING_COLD_PREFERENCES_UNAVAILABLE",
+    "message": "Saved choices could not be recovered. Keep your recovery data and try again after checking the connection.",
+    "stack": [
+      "Error: Saved choices could not be recovered. Keep your recovery data and try again after checking the connection.",
+      "    at failure (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/shared/rolling/cold-preference-reader.mjs:11:35)",
+      "    at Object.read (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/shared/rolling/cold-preference-reader.mjs:270:17)",
+      "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "    at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/scripts/testing/rolling-application-actor.mjs:120:157)"
+    ]
+  },
+  "cleanup": {
+    "closed": true,
+    "errors": []
+  },
+  "stateBytes": 143360,
+  "within8GiB": true
+}

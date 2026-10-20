@@ -1,0 +1,19 @@
+{
+  "candidate": "f9911f0fe3021275242211d4ddfcc64f40bf990b",
+  "base": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+  "reviewer": "/root/reviewer",
+  "verdict": "approve",
+  "scope": "Names and subboard protocol foundation only; not full G05 acceptance",
+  "checks": [
+    "All11 changed files identical to independently reviewed worker0ddbeb7",
+    "Root artifact current main/encoding sources and3 privateVKs",
+    "Fresh combined40/40 exactsource tests uninstrumented and supervised cleanup",
+    "8 pinned packages418files112embedded, externalinventory unchanged",
+    "Generatedargs offset0/1/2 preserve original ownership assertions"
+  ],
+  "remaining": [
+    "Real proofs/concurrency/reverted mint/recovery/privacy traces",
+    "Profiles/posting/index/reorg and financial integration",
+    "19 compiler constraint diagnostics retain specialist release review"
+  ]
+}

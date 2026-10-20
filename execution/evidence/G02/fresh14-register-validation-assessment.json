@@ -1,0 +1,36 @@
+{
+  "scope": "Read-only current validation of exact retained fresh-devnet register transaction; not an original admission diagnosis or replay authorization",
+  "sourceRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "receipt": {
+    "txHash": "0x0df79c4081d486909001628f8cb72fb000fd88aee9fe227e5e8b8216ddd66058",
+    "status": "dropped",
+    "blockHash": "undefined",
+    "canonical": false,
+    "effectMatches": false,
+    "effectSucceeded": false
+  },
+  "transaction": {
+    "hash": "0x0df79c4081d486909001628f8cb72fb000fd88aee9fe227e5e8b8216ddd66058",
+    "anchorBlockNumber": 9,
+    "expirationTimestamp": "1792106117",
+    "chainId": "0x0000000000000000000000000000000000000000000000000000000000007a69",
+    "version": "0x0000000000000000000000000000000000000000000000000000000096bdc19b"
+  },
+  "validation": {
+    "result": "valid",
+    "reasonCodes": []
+  },
+  "originalJournalUnchanged": true,
+  "journalSha256": "816fe420f086a22e96c646b1cbf5719eda2fefbf6f2d60b358b31f0dbca3d203",
+  "noSends": true,
+  "cleanupComplete": true,
+  "elapsedMs": 35292,
+  "supervisorFailures": [],
+  "originalCause": "Not retained: original lifecycle invocation did not enable existing observeBroadcast; generic catch discarded admission exception. Current validity does not establish original dispatch or rejection cause.",
+  "evidence": {
+    "fresh14-register-validation-child.mjs": "10204dbd4bec6323deb4f57817864cffdcfa467d8ed8367d51c749699a2fe669",
+    "fresh14-register-validation-result.json": "7e3b42b174342317f1d2373403da9c55df3290045d0fe0e319d48dbc43785e47",
+    "fresh14-register-validation-supervisor.mjs": "cf038032a490674b354ec90ac2b2c49d36346dbaff37cd89575c65be73c253f6",
+    "fresh14-register-validation-supervisor-result.json": "e028895c4a7f042435974c7b0c9d4d08e996ed9924ea97df7b157347e507fdde"
+  }
+}

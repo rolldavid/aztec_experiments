@@ -1,0 +1,64 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "49bf979563f7ba9973ca49ea8a5fcd70ce25590d",
+  "base": "55e07721498cd87c781c05ea9508794bdc8da79c",
+  "verdict": "changes_requested_before_privileged_use",
+  "scope": "Trusted development-only Sepolia fee faucet helper; no real signing, mint or network action",
+  "file_sha256": {
+    "scripts/fee-asset-acquisition.mjs": "3cfe8854eeee4250cfff5382bec36bceabfe7ac2f918d645557cde8c150008ca",
+    "scripts/fee-asset-acquisition.test.mjs": "60feda527087b21cde9d7f068a57bcb4b2f462fee2a195d9568c9a90cc4d4da4"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/fee-asset-acquisition.test.mjs",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 1655.699334
+    },
+    {
+      "procedure": "Temporary independent mutation probes against helper using original labelled provider fixture and disposable test key; no repository source edits",
+      "passed": 0,
+      "failed_expected": 2,
+      "duration_ms": 237.93775,
+      "observed": [
+        "After successful included/finalized observation then receipt=null, journal observation.gasUsed becomes undefined.",
+        "Signer error code getter returns allowed primitive on validation reads and arbitrary test sentinel on third read; returned sanitized message contains sentinel."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "FEE-ACQUIRE-P2-1",
+      "severity": "P2",
+      "source": "scripts/fee-asset-acquisition.mjs:101",
+      "scenario": "Reconcile known inclusion, then transient missing receipt. Fresh unknown report overwrites prior stored block/gas/token accounting despite no contradiction proving that prior observation false.",
+      "repair": "Preserve bounded last included/history facts independently of current availability/reorg/finality outcome. Never infer replay or finality from historical observation; preserve one-send fence."
+    },
+    {
+      "id": "FEE-ACQUIRE-P2-2",
+      "severity": "P2",
+      "source": "scripts/fee-asset-acquisition.mjs:209",
+      "scenario": "error.code is read three times; changing accessor can return unvalidated secret third value, or throw raw private error. Regex also admits arbitrary provider-private uppercase suffixes.",
+      "repair": "Capture code once inside guarded extraction and accept only fixed known codes or privately branded own errors; unknown/accessor failure maps fixed UNAVAILABLE. Add changing/throwing/allowed-prefix-secret regressions."
+    }
+  ],
+  "verified": [
+    "fileState uses private temp file fsync, rename and parent directory fsync; uncertain write prevents further writes and send intent precedes one literal HTTP broadcast.",
+    "Restart with raw prepared bytes or any intent inspects only; dropped/absent/failed broadcast acknowledgments never grant send authority.",
+    "Actual ethers signed type2 transaction is checked for exact Sepolia sender/recipient/handler/value/calldata/nonce/gas/fee/access-list scope; no authorization-list delegation transaction introduced.",
+    "Read preflight validates exact runtime hashes, mintAmount, token/minter/decimals, nonce and fee/gas balance; send uses direct redirect-disabled single fetch.",
+    "Receipt reconciliation rejects chain/receipt/transaction/code/accounting mismatches; exact own mint and aggregate same-block token deltas checked; sender gas-only conservation rejects concurrent unrelated transfers."
+  ],
+  "mandatory_operator_preconditions": [
+    "Caller must acquire sender-wide exclusive operational lease across all journals, wallet sessions and tools; helper lock is per journal path only.",
+    "Use fresh live Sepolia chain/code/delegation/recipient/fee checks and trusted provider; supplied runtime constants/snapshots are not a current health claim.",
+    "Private0700 dedicated directory and0600 journal hold broadcastable signed bytes; preserve it through any uncertainty, never start another attempt due missing receipt.",
+    "Caller owns bounded provider lifetime/deadline and supported signer custody. No real privileged use before repaired exact revision review."
+  ],
+  "limits": [
+    "Provider/receipt/log tests use labelled doubles; only disposable ethers signing is real.",
+    "No purchase, fee mint or credential access performed.",
+    "Strict accounting may remain blocked by same-block incoming ETH or other sender traffic; do not waive to report pass."
+  ]
+}

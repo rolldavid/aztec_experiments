@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T05:35:48.995962+00:00",
+  "candidate": "28ca0e100e1afce7d0a437eeab2bb235cb34610a",
+  "base": "72e4f6dffb9f779de4b9951f0392e8202b95eebd",
+  "verdict": "approved-source-only-explicit-split-provider-bootstrap",
+  "findings": [],
+  "sourceSha256": {
+    "deploy/prover/BOOTSTRAP.md": "e5c3c8639c78807b637b51f935eaf5bc4c8709179eed38a405bf8e9f0626e827",
+    "deploy/prover/bootstrap.py": "7b3154d0954680d900468f6f8e63b24a8879f134fb7472582252d275c6325d10",
+    "scripts/test-prover-bootstrap.py": "8141bd3ae037bf43a9197f522578ffae2f93dc6227cf1ff50ee472e22426b099"
+  },
+  "checks": [
+    "Inspected all three changed paths before tests. Only runtime change replaces ordinary ETHEREUM_HOSTS PublicNode with exact keyless Tenderly URL. Explicit nonempty PublicNode debug endpoint remains; no provider discovery, fallback or runtime retry added.",
+    "Verified installed ethereum l1_reader environment mapping and archiver factory separate public/debug clients; blob-client config uses ordinary ETHEREUM_HOSTS. The tested split pair maps to these actual SDK fields.",
+    "Strict ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false, BLOB_ALLOW_EMPTY_SOURCES=false, real proofs, unchanged beacon endpoint, network config, admin protection, container isolation and shutdown controls retained.",
+    "Generated-unit and executed decoded-user-data tests assert unique environment keys, exact single provider per role and strict flags. Oversize capability combination remains rejected at unchanged 16384-byte compressed cap.",
+    "Independent complete Python bootstrap suite: 51 tests pass in 3.721 seconds, no services/cloud/container operation; includes existing bounded child cleanup checks. git diff --check clean.",
+    "Composes with independently verified eight-module static image binding and actual twelve-stage Mac split prerequisite report. No evidence is relabelled Linux qualification."
+  ],
+  "tests": {
+    "command": "python3 scripts/test-prover-bootstrap.py",
+    "log": "/tmp/reviewer-bootstrap-split-28ca-tests.log",
+    "sha256": "2593c37c9e0b8a28330c4e0142406cd6ac658be361880bc9aa6f7511cabf9e46",
+    "passed": 51,
+    "failed": 0
+  },
+  "prerequisiteReview": "execution/evidence/G02/archiver-image-split-72e-review.json",
+  "limits": [
+    "Not a launch authorization or claim that remote06 failure is fixed. Actual changed Linux startup/synchronization remains required.",
+    "Fresh runtime package must bind changed bootstrap bytes. Actual new capabilities/deadlines must be regenerated and independently measured <=16384; synthetic test size cannot qualify an actual payload.",
+    "Budget, absolute shutdown controls, live identities/endpoints and complete readbacks remain mandatory before a separately authorized launch.",
+    "Public endpoint availability/capacity is time-dependent; no sustained-service qualification. Existing SDK internal retry behavior is unchanged."
+  ]
+}

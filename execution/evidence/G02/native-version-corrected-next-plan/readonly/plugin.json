@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T01:48:46.129210+00:00",
+  "available": true,
+  "status": "degraded",
+  "active": 0,
+  "lastFailurePresent": true,
+  "readinessClaim": false
+}

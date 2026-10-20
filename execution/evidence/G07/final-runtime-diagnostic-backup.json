@@ -1,0 +1,20 @@
+{
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "files": [
+    {
+      "key": "releases/rolling-shared-20261015-072358c88e68/final-diagnostic-4801adfe1ab74e3fad824149bc7c42d1/final-diagnostic-state.tar.gz",
+      "bytes": 31131488,
+      "sha256": "c68d430390242325c586010f0c022f1544e14b150b0ae424603401d4c4de0e07",
+      "versionId": "EhfXB1gmMlIULvYTCLzPiUZxNSmiZfnX",
+      "transportChecksum": "dsfdtqQ0uXs0dy4yTKxM9GFhHHW6VHreRBwi3LeHWBc=-4",
+      "checksumType": "COMPOSITE"
+    }
+  ],
+  "deleteBy": "2026-11-14",
+  "withinExisting20GBReservation": true,
+  "failedCopyUnqualified": true,
+  "restoreMustVerifyFullSha256": true,
+  "command": "b8c7b8f8-0028-4791-9659-41bff1f6853b",
+  "observedAt": "2026-10-15T05:30:49.239288+00:00",
+  "scope": "Final small diagnostics/journals/DB and native reports; excludes large Anvil dumps. Original complete1572 backup retained, diagnostic snapshot is not itself a complete restore set."
+}

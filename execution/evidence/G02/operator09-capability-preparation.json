@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-09",
+  "startedAt": "2026-10-12T12:03:56.932Z",
+  "passed": true,
+  "noComputeLaunch": true,
+  "runtimeAdapter": "publicnode-config-v1",
+  "startupStageHelperSha256": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+  "range": {
+    "status": 206,
+    "bytes": 1024,
+    "exactVersion": true,
+    "prefixSha256": "d07ee367cf2022879be6380f9e591ae94bdb48e774f30f5d583e61935653b88f",
+    "region": "eu-west-2",
+    "redirects": false
+  },
+  "deadlines": {
+    "createdAt": "2026-10-12T12:03:58Z",
+    "budgetStop": "2026-10-12T13:03:58Z",
+    "commissioningStop": "2026-10-12T12:33:58Z",
+    "readinessStop": "2026-10-12T12:47:58Z",
+    "qualificationStop": "2026-10-12T13:02:58Z",
+    "credentialExpiration": "2026-10-12T20:03:57.000Z",
+    "capabilityLifetimeSeconds": 7200
+  },
+  "payload": {
+    "bytes": 16367,
+    "sha256": "5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9"
+  },
+  "finishedAt": "2026-10-12T12:03:58.554Z"
+}

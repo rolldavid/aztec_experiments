@@ -1,0 +1,22 @@
+{
+    "CommandId": "42b2256d-ed1c-426a-86a7-9d181408321b",
+    "InstanceId": "i-05977895ed0395a5a",
+    "Comment": "",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-15T02:11:16.164Z",
+    "ExecutionElapsedTime": "PT0.407S",
+    "ExecutionEndDateTime": "2026-10-15T02:11:16.164Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "{\"controlsPassed\": true, \"deadline\": {\"createdAt\": \"2026-10-15T01:32:35Z\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"runtimeArchiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"manifestSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\"}, \"setupReceipt\": {\"sourceRevision\": \"b1fc992b6abdb94d030851376e51fefdd2f55957\", \"archiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"controlSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"jobsStarted\": 0}}\n✔ an admitted request retains the full timeout and its real error through resume (14.237398ms)\n✔ a valid short work budget stops incomplete without inventing a successful evaluation (4.753352ms)\nℹ tests 30\nℹ suites 0\nℹ pass 30\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 239.934128\n",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}

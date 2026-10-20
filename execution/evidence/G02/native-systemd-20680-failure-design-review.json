@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:57:07.336917+00:00",
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "packetSha256": "ac4dd12c0b223ee6e1f618210ec89328baf94f0fa36a86ae748df984b69b5b19",
+  "regressionSha256": "42da06fe0f63b5b8c45d6905d7ebc966edeac28590e3d7104a2a39bc692e876f",
+  "verdict": "failed-before-cases; finite-original-exception-diagnostic-eligible-for-source-implementation",
+  "actual": {
+    "session": 20680,
+    "elapsedMs": 3434,
+    "checkpoint": {
+      "label": "none",
+      "operation": "timers-reload",
+      "timer": "none"
+    },
+    "recordedCases": 0,
+    "hostConfinement": true,
+    "systemdBarrierReady": true,
+    "guestConfinement": true,
+    "receiptTransportSucceeded": true,
+    "containerAbsent": true,
+    "sourceUnchanged": true,
+    "oomKilled": false
+  },
+  "diagnosis": [
+    "Both timer unit/service writes returned; next checkpoint is the first run([systemctl,daemon-reload],timeout=3). The exception leaves before any timer-start or workload case.",
+    "The unchanged production run uses subprocess.run(check=True,timeout=...) and discards stdout/stderr. The original exception was not retained, so nonzero exit, timeout or launch/OS failure are unresolved.",
+    "The later native_state observation succeeding only proves a distinct bounded systemctl-show command returned; it does not establish why daemon-reload failed. Total3.434s must not be used to infer a3s timeout.",
+    "Inactive/dead/zero execution metadata is expected before workload start, not evidence of lost successful workload state."
+  ],
+  "minimalSuccessor": {
+    "scope": "Outer driver catch only plus fixed pure projection/tests and bound helper hashes",
+    "projection": "Closed exception category; applicable returnCode must be an exact integer in finite signed process-status bounds, timeout must be a finite positive bounded numeric duration. Missing/wrong-type data maps to unavailable, not inferred values.",
+    "restrictions": [
+      "Project only ORIGINAL caught exception before secondary diagnostic observation.",
+      "No arbitrary class-name/message/stack/repr/args/cmd/stdout/stderr serialization.",
+      "No daemon-reload rerun, output recapture, changed production run/capture/classifier/subset or altered time/resource bounds.",
+      "Observer/projection failure cannot suppress atomic failed receipt or owned cleanup.",
+      "Tests exercise actual outer catch with CalledProcessError, TimeoutExpired, OSError, unknown and hostile/wrong-type attributes; preserve failure and no extra command."
+    ]
+  },
+  "holds": [
+    "No actual retention case completed; no native/systemd retention qualification.",
+    "Successor requires exact source/test/runner review and independent actual controlled outcome before a separately granted one-shot offline attempt."
+  ],
+  "reviewerRuntimeExecuted": false
+}

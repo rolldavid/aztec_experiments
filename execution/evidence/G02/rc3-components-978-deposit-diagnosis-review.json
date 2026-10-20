@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "978431c3e1b424c094198706ff01a5fe60f03a5f",
+  "verdict": "failed component run; stale labelled deposit fixture requires test-only repair",
+  "receiptSha256": "97563001e718286558aca8245eeafc2339e2bc2f27cec36e0d160aae5d11b11b",
+  "logSha256": "3ab4c6617ae73bd7a7d829267930aa16ce2f04f2b958834f3f7b755a8e0778f5",
+  "actual": {
+    "elapsedMs": 3661,
+    "peakTreeRSSKiB": 583200,
+    "ownedTreeAbsent": true,
+    "passed": 73,
+    "failed": 4,
+    "skipped": 0
+  },
+  "unchangedFromIntegratedB440": {
+    "apps/src/billboard/user/engine.js": true,
+    "scripts/test-c01-user.mjs": true
+  },
+  "sourceHashes": {
+    "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+    "scripts/test-c01-user.mjs": "79b8428ccd013ea1194427e0d98e0fdb4dadfdb5ca85336f0b16597cc4be430a"
+  },
+  "finding": {
+    "priority": "P2",
+    "cause": "All four failures hit existing connectTrustedPrivateNode configuration guard before custody assertions. depositHarness supplies old ordinary-node factory only, with no trusted factory/brand or expectedNetworkScope/trustedProverNode. VM also lacks global URL. This is a pre-existing fixture gap, not demonstrated rc3 engine regression.",
+    "repair": [
+      "Add platform URL and exact expected scope/trusted endpoint/proof policy.",
+      "Label factory/transport doubles explicitly; assert factory options and use identity-specific WeakSet branding plus same-identity readiness reinspection for cached path.",
+      "Make old ordinary-node factory throw to forbid fallback. Add unbranded returned node rejection before PXE/payment.",
+      "Where wallet path is reached, BaseWallet double stores exact aztecNode and pxe; PXE factory-owned WeakMap and isPrivatePXEForNode verify exact pair. Never always-true brands.",
+      "Preserve all save/readback-before-send, missing secret, invalid metadata, existing receipt and payment counts. Production engine unchanged."
+    ]
+  },
+  "evidenceCorrection": "Lead reports preparation prose erroneously described borrowed dependency link despite own APFS rc3 materialization. Preserve original and append correction tied to pre/post identity; do not retroactively edit receipt.",
+  "limits": [
+    "Other73 cases passed but whole component run failed.",
+    "Labelled custody/RPC doubles do not establish genuine private transport, browser or proof acceptance."
+  ],
+  "execution": "Read-only immutable978 source/diff/log review; no tests."
+}

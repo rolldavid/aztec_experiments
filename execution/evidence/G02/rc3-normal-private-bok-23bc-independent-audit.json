@@ -1,0 +1,76 @@
+{
+  "source": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+  "artifactAuditPassed": true,
+  "artifacts": {
+    "PrivateBok": {
+      "sha256": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "privateVKs": {
+        "authorize_request": {
+          "bytes": 4832,
+          "sha256": "14d7f239a61afd3dba5cad4537fb82808336db66f68f91eabc539faa020e1793"
+        },
+        "cancel": {
+          "bytes": 4832,
+          "sha256": "2a0e394f21c18254a6bb7b17c7d68c740bfecba120cc709997ef1d963834033d"
+        },
+        "claim": {
+          "bytes": 4832,
+          "sha256": "4e6b286aa6a0f1112be5233610f7cc7f1909c16b1d2c2d479b1665b568c799e0"
+        },
+        "expire": {
+          "bytes": 4832,
+          "sha256": "8358ffec1c084e2c90cef8137bcd35d43f31d0033f54283b42f5697301869cea"
+        },
+        "subtract_more": {
+          "bytes": 4832,
+          "sha256": "c2bb9f6f960cd80417ec249c3958e9822357292e74f5250f2c911687b69b02b6"
+        },
+        "withdraw": {
+          "bytes": 4832,
+          "sha256": "37e27b51786ee9306011fff55b509f16e7267e08d7e153613e166eb2c1b671aa"
+        }
+      },
+      "dependencies": 129,
+      "local": {
+        "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9"
+      },
+      "stdlibEntries": 11,
+      "transientAbsent": true
+    },
+    "InvocationProbeBoard": {
+      "sha256": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb",
+      "privateVKs": {},
+      "dependencies": 59,
+      "local": {
+        "experiments/private-bok/probe-board/src/main.nr": "79e5744879232e6202da2240abb37cf64733dfa76ed34e61b07e5d72701df771"
+      },
+      "stdlibEntries": 9,
+      "transientAbsent": true
+    }
+  },
+  "manifestSha256": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6",
+  "manifestInputs": 14,
+  "protectedUnchanged": 154,
+  "sourceSnapshotCount": 1028,
+  "sourceChangesSinceRun": [
+    "shared/portal-runtime.json"
+  ],
+  "rootChangesSinceRun": [],
+  "historicalRawUnchanged": 7,
+  "runtime": {
+    "elapsedMs": 17003,
+    "peakTreeRSSKiB": 746976,
+    "ownedTreeAbsent": true
+  },
+  "evidenceHashes": {
+    "handoff.json": "71fa5aaf4a457ae25c57d6e6b448008f4ce1b5ea653b06832fc66ef2250e53ef",
+    "result.json": "40720a445ea6428620dfe94a6f766c95977faf94dc780ae3a95aaf7f0901087f",
+    "build.log": "0fd08e3a291770f64f8ea73586cd1a63a7fed1f8b6a7ee9c55cda47b46d03485",
+    "execution-intent.json": "dfc1cb4f67a62aec8d5966f6ea8b7a3838b367a97918a29211d5726578410a93",
+    "preparation.json": "1808df3dea06c3520461b2ac24fce9701be54031f2cb8c229cf72be7f3360113",
+    "PrivateBok.processed.json": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+    "InvocationProbeBoard.processed.json": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb",
+    "private-bok-build.json": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6"
+  },
+  "method": "Independent pure Python inventory/hash/base64 audit; no build, SDK or proof execution."
+}

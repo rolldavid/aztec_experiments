@@ -1,0 +1,146 @@
+{
+  "source": "8d93452",
+  "passed": false,
+  "deadlineMs": 240000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2645024,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 598368
+    },
+    {
+      "elapsedMs": 2025,
+      "rssKiB": 854336
+    },
+    {
+      "elapsedMs": 3044,
+      "rssKiB": 1047152
+    },
+    {
+      "elapsedMs": 4155,
+      "rssKiB": 2525440
+    },
+    {
+      "elapsedMs": 5180,
+      "rssKiB": 2575920
+    },
+    {
+      "elapsedMs": 6199,
+      "rssKiB": 2426576
+    },
+    {
+      "elapsedMs": 7219,
+      "rssKiB": 2441312
+    },
+    {
+      "elapsedMs": 8240,
+      "rssKiB": 2487536
+    },
+    {
+      "elapsedMs": 9261,
+      "rssKiB": 2645024
+    },
+    {
+      "elapsedMs": 10287,
+      "rssKiB": 2111360
+    },
+    {
+      "elapsedMs": 11324,
+      "rssKiB": 1992224
+    },
+    {
+      "elapsedMs": 12355,
+      "rssKiB": 1998784
+    },
+    {
+      "elapsedMs": 13384,
+      "rssKiB": 2106368
+    },
+    {
+      "elapsedMs": 14413,
+      "rssKiB": 1483824
+    },
+    {
+      "elapsedMs": 15432,
+      "rssKiB": 951712
+    },
+    {
+      "elapsedMs": 16452,
+      "rssKiB": 1211600
+    },
+    {
+      "elapsedMs": 17472,
+      "rssKiB": 583840
+    }
+  ],
+  "failures": [
+    {
+      "stage": "bok-history-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "bok-history",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 9261,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 86435,
+        "ppid": 59636,
+        "rssKiB": 56480
+      },
+      {
+        "role": "bok-history",
+        "pid": 86445,
+        "ppid": 86435,
+        "rssKiB": 38384
+      },
+      {
+        "role": "bok-history",
+        "pid": 86446,
+        "ppid": 86445,
+        "rssKiB": 864224
+      },
+      {
+        "role": "bok-history",
+        "pid": 86448,
+        "ppid": 86446,
+        "rssKiB": 3584
+      },
+      {
+        "role": "bok-history",
+        "pid": 86450,
+        "ppid": 86446,
+        "rssKiB": 1664016
+      },
+      {
+        "role": "bok-history",
+        "pid": 86460,
+        "ppid": 86446,
+        "rssKiB": 9248
+      },
+      {
+        "role": "bok-history",
+        "pid": 86465,
+        "ppid": 86446,
+        "rssKiB": 6768
+      },
+      {
+        "role": "bok-history",
+        "pid": 86466,
+        "ppid": 86446,
+        "rssKiB": 2320
+      }
+    ]
+  },
+  "elapsedMs": 17915,
+  "ownedTreeAbsent": true
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "4db5b4b2526d83bceff08dcc23472c20f05d6ad3",
+  "verdict": "changes-requested",
+  "files": {
+    "apps/rolling/live.html": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+    "apps/rolling/reader-client.mjs": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+    "apps/rolling/reader-client.test.mjs": "45af8ed0fbb363dfda976cd75c33e6c29bf841c1da1a8a9d443a31b6b5c7de28",
+    "apps/rolling/reader.mjs": "be9086531161f4b487df5ab20236102d9f53a75a01b9e2269f25d32c4e41c5c5",
+    "apps/rolling/reader.browser.test.mjs": "6a6fb83e70421c2e0c69d5a4a77bbb90819c789d04e82643be621ef4adc07634"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24.21.0 --test apps/rolling/reader-client.test.mjs",
+      "result": "3 passed; 0 failed"
+    },
+    {
+      "command": "git diff --check 4db5b4b^..4db5b4b",
+      "result": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PUBLIC-READER-01",
+      "severity": "P2",
+      "path": "apps/rolling/reader.mjs",
+      "line": 55,
+      "scenario": "A reply links to /thread/root/parent when that parent is beyond the first30 thread rows. render fetches only the first page and focusRoute runs once; target is absent and deep link silently lands elsewhere. Load more does not rerun target focus.",
+      "repair": "Resolve the targeted canonical post with bounded public reads, verify its root, render/focus the correct target without weakening thread authority. Add a beyond-first-page deep-link regression."
+    },
+    {
+      "id": "PUBLIC-READER-02",
+      "severity": "P2",
+      "path": "apps/rolling/reader.mjs",
+      "line": 88,
+      "scenario": "Read beyond the first30 feed/thread rows, open a profile, then return. Only scroll/focus is retained, so render reloads30 rows and tries restoring the old larger offset against a shorter page. The earlier reading location is lost.",
+      "repair": "Preserve bounded pagination restoration state or a canonical visible-post anchor and fetch enough authorized content to restore that anchor. Test forward/back navigation after pagination."
+    }
+  ],
+  "review": [
+    "Public-only GET transport omits credentials, rejects redirects, bounds streamed JSON and cancels oversized reads.",
+    "DOM text creation and safe URL filtering avoid active application content. Mobile navigation uses inert and keyboard focus trapping; lifecycle aborts stale route requests.",
+    "Explicit interface copy identifies account actions as not yet connected. This is a partial public-reader slice, not full specification acceptance."
+  ],
+  "limits": [
+    "No Chromium run during the parent genuine-proof campaign. Existing browser test uses one synthetic post and does not exercise paginated navigation; inspected source only.",
+    "No live canonical API/browser acceptance performed. Remaining subboard-specific feed and account/composer functionality are not delivered by this slice."
+  ]
+}

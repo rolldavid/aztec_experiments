@@ -1,0 +1,29 @@
+{
+  "task": "G07",
+  "revision": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "base": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "changedFiles": {
+    "plugins/operator.mjs": "c752317ef80f9880e1ccfec587aa615d8dbee9a4aa1f26b0135981e8a2916ce4",
+    "plugins/test/operator-lifecycle.test.mjs": "7672e5dd4817e51b1f653726083f22b2d7c3b14abb7b2273b159764ec589af5e"
+  },
+  "scope": "Enable existing observeBroadcast on all three Rolling onceAztecOperation call sites; no shared helper change, retry path, raw errors or altered reconcile-only policy.",
+  "acceptance": [
+    "Persist prepared before dispatch and returned/rejected afterward for constructor, bind, register and L1 lifecycle",
+    "Only existing closed safe classification; hostile getters never invoked; raw provider messages absent",
+    "Retained intent is byte-identical after subsequent reconciliation and never prepares/sends again"
+  ],
+  "verification": {
+    "before": "6 selected checks: missing actual call-site opt-in sentinel failed; five state-machine tests passed",
+    "after": "14 selected existing/new checks passed; 0fail/skip;335.511542ms",
+    "command": "NODE_BACKEND=js node --test --test-name-pattern='Rolling operator enables|safe broadcast outcome|retained preparing|constructor campaign|Seed broadcast|Seed diagnostic' plugins/test/operator-lifecycle.test.mjs plugins/test/operations.test.mjs",
+    "logs": {
+      ".build/rc22-native-diagnosis/lifecycle-observer-before.log": "df0cda5add141a9a2b06dc84e67fb0d9412ff3dfc70f57f5097f5573cd9bfe24",
+      ".build/rc22-native-diagnosis/lifecycle-observer-after.log": "5d6610a7e39407671e131b75f6ebe47a6fd23dbb063adee0560a45c623e72713"
+    }
+  },
+  "limitations": [
+    "Static call-site sentinel verifies actual wiring, while state-machine tests exercise persistence/redaction/no replay; no new real transaction was sent for this source change.",
+    "Original failed registration cause remains unclassified; exact rebroadcast recovery is separate historical evidence.",
+    "No application bundle or installed SDK change required."
+  ]
+}

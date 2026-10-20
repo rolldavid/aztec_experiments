@@ -1,0 +1,10 @@
+✔ wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD (78.110916ms)
+✔ immutable wallet URLs bind exact decoded bytes and keep metadata and invalid queries fresh (52.507583ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 474.634333

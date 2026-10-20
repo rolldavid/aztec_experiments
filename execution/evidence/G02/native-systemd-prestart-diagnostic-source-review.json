@@ -1,0 +1,55 @@
+{
+  "reviewer": "reviewer-20261011",
+  "date": "2026-10-13T03:54:41.411533+00:00",
+  "verdict": "eligible-for-bounded-controlled-tests; actual never-started diagnostic requires separate grant and actual controlled result",
+  "packetSha256": "57e2a4bf292becb4531c1036ea2fa89bdf849385b11421a584191fc221e33142",
+  "files": {
+    "run.py": "57b404f49675e4bd32376836cba047c9f5ec7ed259d37ff362e5356f8cf127da",
+    "boot-bound.py": "2244105a259c832e501e44ae7b5fbb11eeb655b543bad0fe2853cb76bd85ef57",
+    "runner.diff": "74aa7e88cdfe52a7e2acca9f3bc2d84b164196fbe6e12ce0a112d7e1c8b13509",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176",
+    "test-runner.py": "55002960ab97fd9872b12da60f7130404c6edff39b51d5666006212cd99d4eed",
+    "driver.py": "eb8e59158d2293e9e45c12628c882126b33960675a5f62567a42493a151fe7ea"
+  },
+  "sourceFindings": [],
+  "checks": {
+    "originalConfinementAstUnchanged": true,
+    "controlledCases": [
+      "test_state_failure_cannot_skip_cleanup",
+      "test_persistence_failure_cannot_skip_cleanup",
+      "test_removal_failure_does_not_suppress_absence",
+      "test_unknown_identity_never_mutates",
+      "test_absence_transport_failure_not_positive_absence",
+      "test_state_rejects_unbounded_or_wrong_types",
+      "test_positive_confinement_and_each_unsafe_variant",
+      "test_projection_retains_prefix_hypothesis_without_accepting_it",
+      "test_projection_never_returns_secret_values_or_unknown_keys",
+      "test_missing_and_wrong_types_are_finite",
+      "test_no_start_path_and_original_guard_unchanged"
+    ],
+    "noStartExecPullCommandPath": true,
+    "fixedImageAndClosure": true,
+    "sameCreateResourceNamespaceAndSecurityArguments": true,
+    "projectionSavedBeforeOriginalPredicate": true,
+    "finiteAllowlistedProjectionNoRawEnvironmentMountPathsOrInspect": true,
+    "exclusiveInvocationAndCreateIntent": true,
+    "ownedIdentityReconciliationAndPositiveRemovalReadback": true,
+    "independentDiagnosticPersistenceAndCleanupAttempts": true
+  },
+  "limits": {
+    "totalSeconds": 60,
+    "workSeconds": 43,
+    "cleanupSeconds": 17,
+    "memoryMiB": 512,
+    "cpus": 2,
+    "network": "none"
+  },
+  "scope": [
+    "Control-only tests may exercise labelled data/transport doubles; they do not qualify actual Docker or systemd.",
+    "A future separately granted diagnostic may create, inspect, and remove exactly one never-started container; no guest execution or confinement relaxation.",
+    "passed means diagnostic collected and cleanup succeeded, not original confinement passed.",
+    "CAP_ representation remains an unproven hypothesis; actual finite readback is required before any normalization proposal.",
+    "CapDrop diagnostic equality preserves list order while original predicate compares a set; interpret the observed list against the unchanged predicate, not the equality bit alone."
+  ],
+  "runtimeExecutedByReviewer": false
+}

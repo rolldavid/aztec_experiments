@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T20:10:58.247401+00:00",
+  "reviewer": "independent-reviewer",
+  "candidate": "7f90bdcfcb06c3086281867766f350b64abdbce8",
+  "base": "b4b68b582d4f392a762d2c6c169910fd863a26f3",
+  "verdict": "PASS_SCOPED_HOSTED_AND_G10_COMPONENT_SOURCE",
+  "blockingFindings": [],
+  "sourceBlobs": {
+    "billboard/rolling_contract/journey.mjs": "c48afdd6d5fc5e754702cafbd8b9baabe9e754bd",
+    "billboard/rolling_contract/reply-acceptance.test.mjs": "2e5b8a0079a0ec31be7a58610cacea8cc5923c09",
+    "plugins/agent.mjs": "0e8d3381660689df5b88a792c1b277132d40013f",
+    "plugins/aztec.mjs": "2d8aacbc08a9731b3d519ecaa86dcddd751a71bb",
+    "plugins/conversation.mjs": "41db2bf00fbc2b26612dae1a2cfd12088231adf0",
+    "plugins/escrow-service.mjs": "f82d11d1e6abb2eeb42bb99c5dfda3f712f0172c",
+    "plugins/main.mjs": "03af2af3de42cb513f178570d115e943ff6b3c1b",
+    "plugins/private-bok-escrow.mjs": "0d45f09d7cb98644e74c74387d1accab35c0d4e5",
+    "plugins/protocol.mjs": "1fa70e2503ac1f5d8d3a8909cae122336ebd685b",
+    "plugins/test/conversation.test.mjs": "03c9d287c9182c33dea6742b52a24ab6a283161a",
+    "plugins/test/hosted-private-bok.test.mjs": "7bae023c48b5314bc2f2e3d9a697d6f3e62f87a7",
+    "plugins/test/model.test.mjs": "83563abf083c659f5d1aae354d79d3b61d194474",
+    "plugins/test/private-bok-escrow.test.mjs": "ca5549b5e25ef555689a09a58247a260243a6f21",
+    "plugins/test/provider-metering.test.mjs": "9840f569109e6d45a3c940eaeb28c7ac7a3ddec2",
+    "plugins/venice-metered.mjs": "df5e7d3c97de42b3da72807620ae7645d43294b6",
+    "scripts/testing/rolling-bok-fixture.mjs": "5ee8f389c0403580943162f8151baed341e38241"
+  },
+  "priorReviewedSource": [
+    "d0fcf916e1b31205b300ef1ecc12be7d7e6a961d",
+    "bc4fbca48099bd7245677b6ff6f2d442cade042b"
+  ],
+  "resolvedFinding": {
+    "source": "a2e7da276ad3f7c3c999a348cc24db58211a3c6a",
+    "issue": "Journey observer lost swallowed falsy thrown values and could replace the first null/undefined failure.",
+    "repair": "7f90bdc records failureSeen independently, retains first exact thrown value and rethrows it from assertHealthy. Existing observer case plus falsy/first-failure case pass."
+  },
+  "reviewConclusions": [
+    "Production hosted persistent index selects finalized tip; local development alone uses checkpointed. Canonical complete paginated history includes authenticated prior bot replies and exact selected request, with no partial/truncated paid history.",
+    "Paid summaries exclude latest request and use the same journalled metering port and total call cap as the main answer. Same-catalog input/output/cache rates are componentwise no higher and at least one strictly lower.",
+    "After durable reservation and current request/policy check, provider execution revalidates the originally captured history and canonical anchors. Own reservation may advance complete projection, but captured rows cannot change and later messages are not substituted into already-paid context.",
+    "Unknown hosted paid and reply outcomes remain reconciliation-only; reply-confirmed restart rechecks canonical exact original operation/linkage before finish. No private actor raw errors are exposed by repaired hosted startup.",
+    "Test observer now measures gas before send and preserves all original observation failures despite production reconciliation catches. This does not retrospectively establish omitted historical assertions."
+  ],
+  "componentEvidence": {
+    "whole161": {
+      "source": "a2e7da2",
+      "passed": 161,
+      "skipped": 0,
+      "durationMs": 2313.906375
+    },
+    "focusedObserver2": {
+      "source": "7f90bdcfcb06c3086281867766f350b64abdbce8",
+      "passed": 2,
+      "durationMs": 1411.103542
+    },
+    "carry": "160 unaffected earlier cases plus current original observer and new falsy observer; no new whole162 execution claimed.",
+    "hashes": {
+      "g10-handoff.json": "6879202fbe108c98f5d93fcc82acc8ae4d34c69328e5935033cfaa66294aa105",
+      "g10-component.log": "fc5dbd1e510c711a6bbc7984235c46ecf511cc914ea7ede4ab019386a6eeb672",
+      "observer-conversation-focus.log": "73687105dbdf6e74d3e11055eba27427662aff6dc9083beabee7c866aac1da93",
+      "observer-falsy-focus.log": "2fb01c0bd6d5db2bb2a155eac844a6d129f583253fef9c016f93fea1e6395f0b"
+    }
+  },
+  "actual49470": {
+    "status": "FAILED",
+    "source": "d0fcf916",
+    "overallPassed": false,
+    "outerReport": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G06/application-b67c5c52-9d99-4354-ab32-743600f0bdf6.json",
+    "outerSha256": "943990e347ec7622632cd23b536e63912ddfc57915cc32505e52cc888dbafef1",
+    "durableJourney": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G06/portal-3f38c5ed-9a34-4a4d-bdce-c2f99e9745f0/experiment/journey/journey.json",
+    "journeySha256": "0c5e9762c3a1a3a662b5acb16de478fb4b805dce64d75a1ef8f3efa18b1b0453",
+    "scopedObservations": {
+      "inertProviderCalls": 1,
+      "hostedSends": 4,
+      "repeatSends": 0,
+      "terminalState": "4",
+      "charge": "120",
+      "refund": "280",
+      "ownerBalance": "880",
+      "operatorEarnings": "120",
+      "cleanupPositive": true
+    },
+    "diagnosisLimit": "Final absent synthetic receipt TypeError observed. Post-mining simulation is source-backed observer defect, but exact swallowed historical exception unavailable. Intermediate reply-content, adversarial and privacy assertions remain unaccepted."
+  },
+  "remaining": [
+    "Changed observer actual chain run remains unrun; no full hosted journey acceptance.",
+    "No actual paid external provider, inference quality, production-finality/testnet or real-proof acceptance.",
+    "Persistent per-thread repository, generated-code isolation and G11 publication remain separate work.",
+    "Retained synthetic billing accounting is not evidence of actual provider debit."
+  ],
+  "reviewerExecutions": "Read-only source/evidence/hash inspection; no chain, tests or provider calls."
+}

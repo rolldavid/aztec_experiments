@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-14T03:29:12.767157+00:00",
+  "results": {
+    "0x0f2802dabc1e994f8916f8ad52caab046a96c6f01d64f9a1847f1e674dd72e8c": {
+      "blockNumber": "0xd7",
+      "blockHash": "0x9e856a11c24d5463d82a26ca89f65c32415668f207b57f4b56c41bf7077697e7",
+      "status": "0x1"
+    },
+    "finalized": {
+      "number": "0x41f",
+      "hash": "0xc7f63a26d348d895b49f02f52ea7cb613e16765367325f31be9577e4d982205c",
+      "timestamp": "0x6acef6e4"
+    },
+    "latest": {
+      "number": "0x421",
+      "hash": "0xe3341ce5d2e7a92c817554fb44569d9c37379d1b134c2ed1f0734695b42735a5",
+      "timestamp": "0x6acef6fd"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-14T12:49:30.808215+00:00",
+  "instance": "i-0cb8555882d6cfecc",
+  "region": "eu-west-2",
+  "profile": "message-board-deploy",
+  "commands": [
+    "975ab796-c355-4527-b851-6efadcbbb3a7",
+    "55411db1-0c12-4f7b-9696-4a6bb63a7c10",
+    "6a783f12-7ac6-49f2-ac3d-df12badd719d",
+    "8dd92587-25fe-4018-a78e-6f9cfef3b913"
+  ],
+  "readonly": true,
+  "service": {
+    "active": true,
+    "moderationHealthy": false,
+    "diagnostic": "MODERATION_FAILED",
+    "checkpoint": null,
+    "queueStates": {
+      "evaluated-ok": 4,
+      "confirmed-flag": 1
+    }
+  },
+  "model": {
+    "image": "ghcr.io/ggml-org/llama.cpp@sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+    "weightsBytes": 5680522464,
+    "manifestSHA": "15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+    "containerHealthy": true,
+    "cpuPercent": 0,
+    "memoryGiB": 2.998
+  },
+  "capacity": {
+    "hostMemoryMiB": 15615,
+    "availableMemoryMiB": 11691,
+    "diskAvailableBytes": 42330738688
+  },
+  "noNewPaidCapacity": true,
+  "limitations": [
+    "SSO Compute profile cannot SendCommand; existing authorized deploy profile works. No permissions changed.",
+    "Healthy model container is not healthy moderator; existing daemon failure remains distinct.",
+    "Focused currentprompt diagnostic authorized after local model run finishes, no service changes, no signing."
+  ]
+}

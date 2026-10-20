@@ -1,0 +1,13 @@
+{
+  "source": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-name-pattern=Phantom package pin|MetaMask aggregate launch",
+    "scripts/test-t04-browser-journey.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.383,
+  "environmentRepair": "Copy existing exact hash-pinned official Phantom package; canonical macOS TMPDIR. No source edit. Only two failed checks rerun.",
+  "packageSha256": "28b3bce96b53ca6824cafdfe4a0893a08c6bda6891fa55c37cfc88cef6d86639"
+}

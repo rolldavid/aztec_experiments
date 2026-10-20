@@ -1,0 +1,50 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T13:53:48.328775+00:00",
+  "source": "af5b9d250b5923ca79c0b63adae465c11c5c11a1",
+  "base": "ef5b3d39b9a9841ea7342ad37c5e281bf7bee360",
+  "requirements": [
+    "RC29",
+    "RC30",
+    "RC33",
+    "RC41"
+  ],
+  "verdict": "approved",
+  "findings": [],
+  "closedFindings": [
+    "13ed-F1",
+    "13ed-F2"
+  ],
+  "priorFindingReport": "reviewer-13ed-completion-findings.json",
+  "sourceHashes": {
+    "plugins/agent.mjs": "223cd936f0fcfa3bcbf5b34178001e7b2855ca0360375850776ef6caf75a825b",
+    "plugins/bok.mjs": "182069fc444deeedc65f6a9b8b2e9a9fa29bf553d581c538aa2225bd7237d8fa",
+    "plugins/private-bok-metering.mjs": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864",
+    "plugins/private-bok-metering.test.mjs": "4d6046389182ff746e15695bebd4efec1c52a7926a50ca736f295d11cdfed9e1",
+    "plugins/test/bok.test.mjs": "6856fff5f697a5cc4401be283615196c126946250d1da81477a11033fa84b81f",
+    "plugins/test/hosted-private-bok.test.mjs": "22be37b338eec70c562cb6f1c4af2b1513ea6777b95b0760bb85a6b627bcc449",
+    "plugins/test/model.test.mjs": "9e9689db48127eb11cb83103b289d433c01c4697a7729a028e4cfd10d0d897c8",
+    "plugins/test/provider-metering.test.mjs": "7b3a558cc68ea42f3cf9246592be5bd4d676d948d4709c1278376547709eabb6",
+    "plugins/test/venice.test.mjs": "24db5a687e3dd085c8a878db61e7b4098c6198d3ea47c3c36f22e655f35be5e6",
+    "plugins/venice-diagnostics.mjs": "c2da04f9b3f43ff8f77a4f3c1883a19dac3e887e945fe44712778dbf381de18a",
+    "plugins/venice-metered.mjs": "b550063b4afcb37967a3e08379238b04a7325e15fc7e773adae1d0502ec936d0",
+    "plugins/venice.mjs": "a49ab070e2a1c04f13ed0bdf92723e8b6a012217043d8820c2b5afc0da964fbf"
+  },
+  "packetSha256": "b4b2deabf70e7680c4ffd08f608e1c8da698fd9620a1944d0a663afaabc0e1bd",
+  "checksPerformed": [
+    "Read repaired source before revised handoff, rechecked full inherited completion, metering and hosted fixed-failure flow.",
+    "Verified unknown-present and null provider finish metadata normalize to fixed invalid sentinel through both adapters and persisted genuine settlement; raw labels never retained. Agent rejects any present reason other than supported successful stop/tool_calls after explicit length/filter handling. Deliberately absent legacy metadata compatibility retained.",
+    "Verified every tool argument parses into a non-null non-array object before any batch tool runs. Semantic tool-specific validation remains existing behavior; valid multi-tool runs preserved.",
+    "Independently ran12 existing focused checks: unknown/null completion, five malformed second argument shapes, three actual accounting-protocol settlements with labelled provider/escrow ports, valid stop/tool_calls path.12PASS0FAIL0SKIP114.214ms.",
+    "Verified coherent244PASS0FAIL2unchangedSKIP5.431s log and all12 source hashes. Existing hosted regression retains reserve\u2192paid\u2192settle\u2192fixed incomplete reply\u2192finish/refund and no tools/acceptance/replay."
+  ],
+  "assessment": [
+    "Both P1 findings closed. Billing stays truthful even when paid model response cannot be used. Existing replay/fence/receipt and maxCalls/budget/output configuration unchanged.",
+    "Fixed incomplete public result does not promote partial application acceptance. Real repository/isolated acceptance remains required on valid completion path."
+  ],
+  "limits": [
+    "Original corrected-B HTTP400 cause not proven; old financial uncertainties remain fenced and no raw response was reconstructed.",
+    "No actual paid/model/hosted acceptance performed; source approval and focused doubles only. Two container-dependent checks remain explicitly skipped.",
+    "Root must compose and run normal integration checks; future live quote/configuration actions remain separately controlled."
+  ]
+}

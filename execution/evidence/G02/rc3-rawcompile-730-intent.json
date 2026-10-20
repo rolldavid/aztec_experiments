@@ -1,0 +1,53 @@
+{
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "createdAt": "2026-10-12T20:33:46.042490+00:00",
+  "commands": [
+    {
+      "sequence": 1,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    },
+    {
+      "sequence": 2,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    },
+    {
+      "sequence": 3,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    }
+  ],
+  "compiler": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+    "sha256": "e1e5a7534b4ad7659fdc0f14d5877e24b7c4831a057aa38259556518583b1a96",
+    "previousMeasuredVersion": "1.0.0-rc.3",
+    "previousMeasuredCommit": "5a7ee9bf5ed8973076df7bb0d2b723024db09ae7",
+    "notExecutedHere": true
+  },
+  "deadlineMsPerRun": 540000,
+  "rssLimitKiB": 4194304,
+  "oldTargets": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard/target": {
+      "rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace"
+    },
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok/target": {
+      "invocation_probe_board-InvocationProbeBoard.json": "0884fd5e35816d9672495ca47c6a2935a2d342d25c5d0d553f99e9e9d1b578b7",
+      "private_bok-PrivateBok.json": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935"
+    }
+  },
+  "cachePolicy": "Existing cache bytes retained; exclusive new tag paths only; no HOME override",
+  "candidatePromotion": false
+}

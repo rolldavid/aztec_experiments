@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:08:01.151402+00:00",
+  "scope": "Exact09 immutable image and payload; static inspection only",
+  "passed": true,
+  "nodeStartupQualified": false,
+  "imageExecution": false,
+  "payloadBytes": 16367,
+  "sourceByteEqual": true,
+  "effectiveGenesis": {
+    "testAccounts": false,
+    "sponsoredFPC": false,
+    "prefundAddresses": []
+  },
+  "selector": "canonical",
+  "imageEquivalenceSha256": "93f51059aeccc9f54846f740a3fb09bd8a1652f6808f053fc4d6e1e039163a9e",
+  "bindingSha256": "a4221b6341ad60fb5d91bbf3fb75126730c9dce2c01207bc5478a01758f9dc42"
+}

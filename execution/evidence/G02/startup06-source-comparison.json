@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "source": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+  "comparedRoot": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "sourceFiles": 56,
+  "differences": [
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "candidateSha256": "a6c5e725d9294872ff88cd8d179be432737826fb43357d7d044ccbe632cafadd",
+      "rootSha256": "cb07715697fdb02e3147a041c366603032e9f7162a59ee4f49086c8569c58f0d"
+    },
+    {
+      "path": "deploy/prover/startup-stages.mjs",
+      "candidateSha256": "cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49",
+      "rootSha256": null
+    }
+  ],
+  "onlyReviewedSourceDifferences": true,
+  "nodeModulesSameResolvedDirectory": true,
+  "noRootIntegrationClaim": true
+}

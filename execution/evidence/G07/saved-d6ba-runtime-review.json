@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+  "scenario": "rolling-preference-saved",
+  "verdict": "PASS bounded genuine saved-byte CLI development acceptance; no reorg/marker/full-G07 closure",
+  "receipt": {
+    "path": "execution/evidence/G07/application-d6baaa0d-f3f9-4619-9f64-c396a0ec4d97.json",
+    "sha256": "73242671e83226520548b8b98dd88b503f36c2bb5324b9994a176358a6ffbc8b",
+    "elapsedMs": 379598,
+    "peakTreeRSSKiB": 1937840,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304
+  },
+  "binding": {
+    "innerSourceArtifactAndBokInputs": 90,
+    "mismatches": 0,
+    "outerSourceEntries": 257,
+    "existingFileHashMismatches": 0,
+    "sourceEligibility": "saved-f52-source-eligibility-review.json",
+    "sourceEligibilitySha256": "127ba801c93163f0eae8be277a279caec13aac0a28af53b3e66cf74dae6edc8d"
+  },
+  "checks": [
+    "Exact source final dispatch is saved-only and excludes reorg callbacks; genuine native HTTP jobs exactly2 completed, no failures.",
+    "Original post confirmed; original preference proof decoded by actual RPC then denied before forwarding. Receipt dropped/effect absent/validation valid plus unchanged actual private balances before resume.",
+    "Actual old actor closed, fresh actor same account/PXE database name set and same authenticated encrypted journal directory. Ciphertexts unchanged across reopened saved inspection.",
+    "Inspection and explicit resume enforce saved operation/hash/bytes/nonce/original maximum fee, full original head and same private bookmark digest. Exactly one transport forward, zero new proof/estimate/payment/wallet submission on resume.",
+    "Actual signed-byte equality exercised in memory across denied Tx, authenticated saved journal Tx, and forwarded Tx; raw transaction/journal bytes intentionally not retained in public evidence.",
+    "Both persisted TxEffects independently decoded with installed SDK, exact roundtrip, txhash/fee match receipts and SHA hashes. Saved preference has no board public events; its sole public log is fee-payment evidence, not a claim of zero total public logs.",
+    "Canonical decoder/full-block effect bindings and final3 canonical transaction refetches reached. Fresh/reopened SQLite public feed/thread4HTTP views, both checkpoints14 and2authenticated ranges, all listeners closed.",
+    "Final encrypted journal reopen retained same transaction with zero proof jobs.",
+    "All actor/funding/service/RPC/indexedDB/native loader/node/singleton cleanup flags true; outer owned tree absent and temp removed. Anvil SIGKILL is recorded owned cleanup, not unreported graceful shutdown."
+  ],
+  "fees": {
+    "root": "20905124400000",
+    "savedPreferenceOnce": "8511002400000",
+    "claim": "8418947400000",
+    "applicationTotal": "37835074200000",
+    "standalone": "9148068000000",
+    "totalPrivateDebit": "46983142200000",
+    "remainingPrivateBalance": "999999953016857800000",
+    "fundedAmount": "1000000000000000000000",
+    "arithmeticIndependentlyVerified": true
+  },
+  "savedAcceptance": {
+    "passed": true,
+    "sameStoreRecovery": true,
+    "controlledPreForwardFailure": true,
+    "originalSubmitRejected": true,
+    "unchargedBeforeResume": true,
+    "readOnlyInspection": true,
+    "identicalSignedBytes": true,
+    "sameOperationNonceAndFeeCeiling": true,
+    "explicitResume": true,
+    "resumeProofJobs": 0,
+    "resumeEstimates": 0,
+    "resumePayments": 0,
+    "resumeWalletSubmissions": 0,
+    "resumeTransportSends": 1,
+    "canonicalInclusions": 1,
+    "publicPreferenceEvents": 0,
+    "exactPrivateBookmark": true
+  },
+  "independentEffects": [
+    {
+      "file": "preference-root-effect.bin",
+      "roundtrip": true,
+      "txHash": "0x1e5a0b2f8789d124b9ea8ca8c6cd6ef1659f6b7f59945bfe89b01ddb7c1b857c",
+      "transactionFee": "0x000000000000000000000000000000000000000000000000000013035a838b80",
+      "revertCode": 0,
+      "publicLogs": 2,
+      "publicDataWrites": 14,
+      "noteHashes": 4,
+      "nullifiers": 6
+    },
+    {
+      "file": "saved-preference-effect.bin",
+      "roundtrip": true,
+      "txHash": "0x08dcf3997b2e8c122ede34dd8fdbe55a30efad51699e97fd0843c8ef1d24663f",
+      "transactionFee": "0x000000000000000000000000000000000000000000000000000007bd9f465500",
+      "revertCode": 0,
+      "publicLogs": 1,
+      "publicDataWrites": 1,
+      "noteHashes": 3,
+      "nullifiers": 7
+    }
+  ],
+  "limits": [
+    "Controlled local network, genuine application proofs but network proofs disabled/controlled portal settlement.",
+    "CLI in-memory IndexedDB adaptation, same-store reopen; no browser persistence, keys-only cold recovery or fresh-machine claim.",
+    "Controlled denial before forwarding; not accepted-send lost receipt and not reorg replacement.",
+    "Private preference absence and known-role equality in selected public fields are bounded checks, not unlinkability/full privacy or remote qualification.",
+    "No retrospective reclassification of prior failed initial reorg. SDK sparse checkpoint defect/reorg and marker remain open."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "1363e7697631b15974fae340afa66ca087745981",
+  "base": "a6f44f11ff1d48febb75769334da3ce89c0c749d",
+  "verdict": "approved-source-only",
+  "scope": "G06 two-account reaction acceptance consumer; genuine provisioning/instrumentation/runtime pending",
+  "fileHashes": {
+    "scripts/testing/rolling-account-reactions.mjs": "29826e9edf5cc71b9bc0569d16495f361927bd2625742a08625af4cdff2ee9df",
+    "scripts/testing/rolling-account-reactions.test.mjs": "8cd32e7fbc744dbbcdabd1b9ddd33d53cac73aeca6cdf7a03cdab75f30413076"
+  },
+  "tests": {
+    "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/testing/rolling-account-reactions.test.mjs",
+    "passed": 33,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 52.898291
+  },
+  "priorFindingDisposition": "P2 corrected on requirement and actual installed SDK basis. Local simulation authWitnesses delta recorded; native proofJobs/walletSubmissions/transportSends must all stay0. Inactive actor entirely unchanged. Captured safe integer counters monotonic.",
+  "retainedChecks": [
+    "Exact structured removed-post attribution required; transport outage not accepted",
+    "Five private canonical action callbacks and one moderator; duplicate event-free no-op",
+    "Distinct two-actor per-post tags and stable unlike tags",
+    "Post metadata/count/tombstone/reason/policy preserved",
+    "Negative tests each forbidden activity boundary, malformed/decreasing counters and inactive actor changes"
+  ],
+  "limits": [
+    "Synthetic event tests do not prove real accounts/fees/proofs/privacy",
+    "Parent must independently bind distinct accounts, instrument actual auth/proof/wallet/transport boundaries without altering calls, authenticate canonical effects, and supply exact installed-contract rejection classifier",
+    "No real action performed by reviewer"
+  ]
+}

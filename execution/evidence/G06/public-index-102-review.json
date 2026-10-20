@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "10201287fd4c104b322af3d7d9613d0821e73a3c",
+  "verdict": "approved-bounded-source",
+  "files": {
+    "scripts/rolling-public-server.mjs": "568dcbad153efb9f67f043e02ef50441df557c61f2d675e6d05d4d7424adbbd2",
+    "scripts/rolling-public-server.test.mjs": "76c0caf962955eb69e16ddf1415bc490e2f67b9dfc21511cf3fa0d65551eaa7c"
+  },
+  "checks": [
+    "Independently16 public-index/server tests passed using pinned Node24.21.0, NODE_BACKEND=js and real processed Rolling artifact.",
+    "Reviewed complete repair diff against53dcb. Existing active sync is awaited after request validation, status remains immediate, failed/incomplete sync returns503. No new request-owned sync or stale projection fallback.",
+    "Shared factory retains former CLI public-only node/decoder/storage setup with exact config keys and early port/URL checks. No listener starts from factory."
+  ],
+  "findings": [],
+  "limitations": [
+    "PUBLIC-INDEX-01 resolved.",
+    "Tests use labelled node/index doubles, real SQLite/ABI and ephemeral HTTP. No live-chain qualification."
+  ]
+}

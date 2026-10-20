@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "d0fcf916e1b31205b300ef1ecc12be7d7e6a961d",
+  "base": "b4b68b582d4f392a762d2c6c169910fd863a26f3",
+  "disposition": "PASS scoped source/component review; actual hosted-chain and release acceptance remain open",
+  "sourceSha256": {
+    "billboard/rolling_contract/journey.mjs": "e96823e3cf83e74196bd961014fdc13b162c094892443032d11255ac6b8313a6",
+    "plugins/aztec.mjs": "65152a68d02733cffe14651822240ceed41ac2c5655ff8ea4a0dfbf5ba5068bf",
+    "plugins/escrow-service.mjs": "bb174c8edeca3ba0f8c0602c04c199c15bdb4a3bf7e6339ae0e7c11b52dba3ea",
+    "plugins/main.mjs": "56effb28a0a638ddf07cbdd890d8335d36fa6989d748a31d04406e10b7fa102b",
+    "plugins/private-bok-escrow.mjs": "dcfa2a306e68939eca91944e6728ef0fb0dadb4087492de6ec738e03145a5b49",
+    "plugins/protocol.mjs": "8114abb194e1a0af654e4914634cbccf0afd839416b31d9c047935438b23b626",
+    "plugins/test/hosted-private-bok.test.mjs": "94ad44d6393653c86a5f402ab25a23fb7d38891edd5623e3295034412bdd7293",
+    "plugins/test/private-bok-escrow.test.mjs": "b79d9447b448f45bacc4c8ff132cfb6469b683ea9c969b3a06fc597fe6975e1b",
+    "scripts/testing/rolling-bok-fixture.mjs": "aa6774c59c12d1ed302cb22cc4b81ae19b218485742bd444389a12007bc83419"
+  },
+  "findingsResolved": [
+    {
+      "original": "8326d39 reply-confirmed recovery skipped canonical operation/link revalidation before finish",
+      "repair": "Both reply-intent and reply-confirmed inspect the original publish operation and current authenticated reply before finish; no retransmission."
+    },
+    {
+      "original": "Moderation could change during reservation before the paid provider call",
+      "repair": "Actual provider execute wrapper rechecks canonical request identity, usability and unreplied status after durable reservation/fence; rejection preserves uncertain reservation and does not replay."
+    },
+    {
+      "original": "Private actor JSON and SDK parse failures could escape into CLI errors",
+      "repair": "Private actor parsing, closed scalar decoding, and Rolling startup failure boundary return fixed safe messages with no raw cause; successful cleanup and cleanup-needs-attention remain distinct."
+    }
+  ],
+  "evidence": {
+    "execution/evidence/G14/hosted-private-bok/component-tests.log": "9d7dcf8eb72ad082ea3b72de9d9cb4f76e3230243b2d0bc42a01100b7a1183bb",
+    "execution/evidence/G14/hosted-private-bok/component-tests-current.log": "e5a934d7f932f96f62fd5521a8eb7dfece30d870b7d1a3287dd08c3626131805",
+    "execution/evidence/G14/hosted-private-bok/private-actor-focused-result.json": "1769e9d86f09895050dd74ad80b39085640c00e8166303bcace94c0584de03a6"
+  },
+  "testScope": {
+    "completedLog": "128/128 PASS, no skips, 3248.683833ms; includes reply recovery and moderation regression",
+    "additionalActorCase": "1/1 PASS, 1606.423666ms, session81800; retained implementer actual-tool-output receipt checked against current two source hashes",
+    "notClaimed": "No single whole129 run; reviewer did not rerun tests or execute heavy work."
+  },
+  "reviewedBehavior": [
+    "Explicit Rolling profile selects private request-centric escrow; legacy profile preserved.",
+    "Native prover disabled only for explicitly validated local development; real mode remains testnet-gated.",
+    "Existing durable metering and transaction intents precede paid/send boundaries; unknown outcomes reconcile or refuse without replay.",
+    "Exact publish_reply operation is reconciled canonically before releasing remaining credits.",
+    "Public board/plugin/current moderation and policy versions gate processing; private actor material is excluded from public reports."
+  ],
+  "remainingAcceptance": [
+    "Actual hosted Rolling/PrivateBok chain journey on coherent lead dependencies",
+    "Real model/provider paid execution acceptance",
+    "Production hosted startup, infrastructure and testnet genuine-proof acceptance",
+    "Broader persistent thread history/workspace and GitHub lifecycle requirements are outside this slice"
+  ]
+}

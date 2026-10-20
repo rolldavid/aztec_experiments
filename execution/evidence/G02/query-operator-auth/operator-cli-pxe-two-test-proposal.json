@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T13:33:21.328319+00:00",
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "status": "PROPOSAL_ONLY_NO_SOURCE_OR_RUNTIME_CHANGE",
+  "priorCoverageSha256": "59aacced4b13cb2ebc9ac5abbff0397f8bd29ff77cd284a2433e0edfbfe15533",
+  "actual50PacketSha256": "471ed11e392fae550493b58004e30357bfa5302cd1adc1a5ca803d813f01d249",
+  "recommendation": "Claim only two existing test files first. The maintained deployment operator already constructs the ordinary SDK node under the CLI exact-endpoint authentication wrapper and passes that same object to PXE. Establish actual compatibility before proposing any production client change.",
+  "proposedClaim": [
+    "scripts/test-w02-rpc.mjs",
+    "prover/private-query.integration.test.mjs"
+  ],
+  "supersedes": "The conditional broader candidateFutureClientClaim in client-coverage-readonly.json is not needed for the maintained deployment operator based on this call graph. No change to trusted-private-node or public wallet credential boundaries is proposed.",
+  "callGraph": [
+    {
+      "path": "apps/src/billboard/deploy/cli.mjs",
+      "lines": [
+        58,
+        75,
+        113,
+        280,
+        320
+      ],
+      "fact": "CLI installs createCliRpcFetch before loading the SDK bundle, evaluates .build/sdk/aztec_bundle.js, and supplies openPXEStore. Module top-level parses manifests; importing the whole CLI would invoke unrelated setup."
+    },
+    {
+      "path": "apps/src/billboard/deploy/engine.js",
+      "lines": [
+        285,
+        290,
+        335,
+        406
+      ],
+      "fact": "rawNode is a.createAztecNodeClient(config.aztecNodeUrl); ordinary preflight uses it; aztecNode=rawNode is passed into a.createPXE with the real application store. No createTrustedPrivateNode call is used."
+    },
+    {
+      "path": "shared/private-pxe.mjs",
+      "lines": [
+        89,
+        93,
+        112,
+        114
+      ],
+      "fact": "Application wrapper accepts this node directly, forwards to actual lazy SDK PXE, records its opaque cached node, and provides an existing readOnly option that skips application prover initialization and rejects proveTx."
+    },
+    {
+      "path": "node_modules/@aztec-labs/pxe/dest/pxe.js",
+      "lines": [
+        101,
+        110,
+        117,
+        150,
+        156,
+        892
+      ],
+      "fact": "Actual PXE reads NodeInfo and genesis, wraps input in withCache, starts its operation queue and registers protocol/preloaded contracts; stop drains queue/synchronizer and closes store. This is real initialization, potentially substantive hashing work, not a fake PXE or necessarily a cheap import."
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "lines": [
+        120,
+        137
+      ],
+      "fact": "Credential-free private facade uses omit/no-referrer and intentionally bypasses CLI injection. It is a separate public-app privacy boundary, not the maintained deployment operator route."
+    }
+  ],
+  "proposedCases": [
+    {
+      "file": "scripts/test-w02-rpc.mjs",
+      "scope": "Preserve existing exact CLI-function extraction and all old tests. Add actual installed shared createAztecNodeClient using the extracted unchanged deployment wrapper and real local HTTP. Validate successful schema-decoded reads, concurrent maxBatchSize<=3, exact selected path/key, wrong/missing key rejection, and endpoint isolation. Restore global fetch in finally or use an existing isolated child seam; do not inject a fake SDK fetch as proof of CLI compatibility."
+    },
+    {
+      "file": "prover/private-query.integration.test.mjs",
+      "scope": "Extend existing synthetic public-chain composition with real query-only service/operator digest, real production inspector and schema validation. Exercise the ordinary authenticated SDK node and actual shared readOnly PXE with owned fake-indexeddb/openPXEStore. Use non-secret synthetic account identity solely for required store metadata, no registered account/key/wallet. Retain all existing private-facade tests unchanged."
+    },
+    {
+      "file": "prover/private-query.integration.test.mjs",
+      "scope": "Assert PXE uses the same node through its real cached route, proveTx remains disabled, public reads succeed, the upstream sees no key/cookie/authorization, service proof resources remain structurally absent, and held-request/error shutdown drains before listener/store/child cleanup. Inspect every actual requested method against the frozen49-method allowlist; unsupported methods are a finding, never implicitly added."
+    }
+  ],
+  "fixtureRequirements": [
+    "Use real SDK schema shapes and current block/NodeInfo identity. Add only public synthetic upstream responses required by actual initialization; no PXE/cache/protocol-provider replacements.",
+    "Read-only PXE still creates SDK lazy prover/simulator objects and may hash protocol contracts. Do not claim no local prover object allocation or label its construction cheap; serialized bounded runtime permission is required. No native proof or signing call is authorized.",
+    "Existing store requires nonzero rollup/account addresses and explicit namespace. Use clearly labelled synthetic identity and fresh owned database only; preserve all real stores.",
+    "Original SDK makeFetch retry backoffs remain unchanged. Compatibility evidence does not establish no automatic transaction retry. No sendTx or other real mutation is part of this proposal."
+  ],
+  "bundledCoverageGate": "CLI consumes the normal SDK bundle. After coherent normal SDK build and manifest verification, exercise the same tested path via its actual exported createAztecNodeClient/createPXE/openPXEStore using the existing isolated bundle-evaluation seam. Source-module success alone must not be described as actual bundled CLI qualification. Missing/stale bundle is a held gate, never a manifest rewrite or stub.",
+  "proposedExecution": "After source review, prepare exact discovered test labels and import/source/dependency closure under existing serialized Supervisor. Start with existing60s2GiB cap if preparation shows actual PXE initialization fits; any needed different bound requires explicit lead grant before execution, not automatic extension. No current test execution requested by this evidence write.",
+  "acceptanceLimits": [
+    "Controlled authentication/SDK/PXE public-read transport only; not complete deployment, proving, current public-network freshness, gateway routing or paid-host qualification.",
+    "Actual CLI production uses provingEnabledForNode and autoSync=true; the readOnly variant isolates authentication safely and does not prove the full proof-enabled deployment path.",
+    "No developer key reaches remote host or public app. Synthetic test capability only; no private configuration read.",
+    "Keep original default service mode, authenticated route gate, method admission, identity/freshness checks and pending-handler drain unchanged."
+  ],
+  "bindings": {
+    "apps/src/billboard/deploy/cli.mjs": "2015c9706c63e02f1662940b6fbe23c447a932e80762674f32add8907eede098",
+    "apps/src/billboard/deploy/engine.js": "88f5a9db5e376b3f89dba37595bed77650c4de20c0c81fea003d664df4296182",
+    "shared/sdk-entry.mjs": "d04e410abbbc898f8c0b49d1b0eec9f5d26150778bcbc57307c55112c4d7c450",
+    "shared/aztec-node-client.mjs": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+    "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+    "scripts/test-w02-rpc.mjs": "94d1b9b84fdd361c87c983e0556ea1426da8be50ef441ec289bc1ec3109dbe56",
+    "scripts/test-aztec-node-client.mjs": "2570be70422508fd8c1e8d15e88cdfc84f3cff7d33a6dd112a23830e275d31ce",
+    "scripts/test-remote-prover.mjs": "2200fc5589c21b6face4cbdbfd3b5786034c441b60798c24698b53edc77ad7d7",
+    "scripts/test-rpc-credential-boundary.mjs": "a1dd9c4443066f6339162530d9c8d0988aa6db56ec49b8bc0073cac184a72a8a",
+    "prover/private-query.integration.test.mjs": "c94e9f5398957a7bee88359689e9bccb1abe145c016811a9d42ebe6e954f27db",
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js": "de2efadead22a3c7110375cfcafe39530cd40b6784625fa02cd97f54260216de",
+    "node_modules/@aztec-labs/pxe/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+    "node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js": "44fcd54adefcf4b0cac1c402dc819e9f87664fa94f1fdb9ce65b2bc8c83a5c46"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "script": "scripts/test-public-feed-browser.mjs",
+  "args": [],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "twoBoardDirectory": true,
+      "directoryToSelectedBoardAndBack": true,
+      "mobileDirectory": true
+    },
+    {
+      "passed": true,
+      "hostedAuthorAndFundingSetup": true,
+      "noVisitorConfiguration": true,
+      "missingFeesBlockWalletInitialization": true
+    },
+    {
+      "passed": true,
+      "scope": "Reader phase only; author setup reported separately",
+      "actualBuiltBrowser": true,
+      "automaticBoardLoading": true,
+      "directLinkIgnoresStaleSettings": true,
+      "walletFree": true,
+      "publicBundleBytes": 33256,
+      "paginatedPosts": 55,
+      "reloadNoLogRescan": true,
+      "actualCliWithoutWallet": true,
+      "noProvingAssetRequests": true,
+      "publicOnlyDatabase": true,
+      "escapedContent": true,
+      "controlledRpc": true,
+      "mobileViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "flaggedBodyAbsent": true,
+      "longContentNoHorizontalOverflow": true
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1313840,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 570832
+    },
+    {
+      "elapsedMs": 2018,
+      "rssKiB": 1313840
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-public-feed-browser.mjs": "50b1c52bb113e76cda39ec8bf25ccec4f91f06287a4fc0780074595d87dfd07b",
+    "shared/public-feed-projection.mjs": "4b94035aac00055b0268d31de7a570448b3224991020b3d7adf40678c9b237ce",
+    "shared/public-feed-storage.mjs": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+    "shared/public-feed-file-storage.mjs": "6d87728c3d24be72bcc91c22be9097980a791939091270cf9e9ce48aad22f1b7",
+    "shared/public-feed-connection.mjs": "23905e1e7d6405b4aaed0db319912c79736ae631c6adac36759dfe63bf090c7f",
+    "shared/public-feed-cli.mjs": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+    "shared/public-feed.mjs": "0e4372344bf904780f0eca7c9a4c62cf903a525631941e0b8d05454d0906b321",
+    "shared/public-feed-source.mjs": "a13220b34be5b267cb71d621ee6067ed99a96f19e49c1727b3ae48562b77cfc7",
+    "apps/dist/public-feed.js": "5e709b1210ff675e46c3ac95c2807157e3dc0581c760b1bccaa11095b26107d6",
+    "apps/dist/feed.html": "d98b63c0e62bed774d675caca176dacb9cd4bc7bf2b0882f97d726aaff872fe9",
+    "scripts/run-bounded-browser-check.mjs": "945d3f6ca1dc8012469a8bfe6c9ce7c724974e953d963785cad152112f969670",
+    "scripts/testing/supervisor.mjs": "518d827972d68cce7bab14f56df6483a260f5f5dc4082b50e2e4bbd80b0723f2",
+    "scripts/owned-test-process-tree.mjs": "ed8a490c451afa0ac2d4f0d6accbd51edfcf33088e59b058422921a070ac6a26",
+    "deploy/hosting-config.mjs": "52ade3bf75fd0ca6bd1fd82b2a67e9d5eff064af09a52751c76693b227b3987d",
+    ".build/apps-manifest.json": "38f357b8bd557bd4fac3c42ae4cffe37a6822e3f3c8e0f2bcc6740864c5ec428",
+    ".build/sdk/sdk-manifest.json": "70c44262126238f1ceacf432cc1727a4ce975cc18c07b066ad46adf5bcbe4cf0"
+  },
+  "peakMemory": {
+    "elapsedMs": 2018,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 93090,
+        "ppid": 23665,
+        "rssKiB": 56272
+      },
+      {
+        "role": "ui",
+        "pid": 93125,
+        "ppid": 93090,
+        "rssKiB": 232896
+      },
+      {
+        "role": "ui",
+        "pid": 93126,
+        "ppid": 93125,
+        "rssKiB": 96384
+      },
+      {
+        "role": "ui",
+        "pid": 93127,
+        "ppid": 93126,
+        "rssKiB": 73808
+      },
+      {
+        "role": "ui",
+        "pid": 93128,
+        "ppid": 93126,
+        "rssKiB": 49360
+      },
+      {
+        "role": "ui",
+        "pid": 93129,
+        "ppid": 93126,
+        "rssKiB": 147248
+      },
+      {
+        "role": "ui",
+        "pid": 93134,
+        "ppid": 93126,
+        "rssKiB": 657872
+      }
+    ]
+  },
+  "elapsedMs": 2377,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,24 @@
+✔ official ABI functions and installed expected constants use actual field types (1.706167ms)
+✔ labelled compatible fixture passes with fixed before/after anchor, not node qualification (4.782125ms)
+✔ each genuine mismatch retains finite field name and all three observed constants (1.954916ms)
+✔ canonical upgrade and candidate remain separate; compatible different target is not approved (0.677917ms)
+✔ wrong candidate registry entry remains observable without target substitution (0.504ms)
+✔ binding rejects absent/extra/polluted image, payload, module, genesis and selector fields (0.449667ms)
+✔ binding changing/throwing getters never execute and cannot leak (0.118833ms)
+✔ source or binding rejection happens before any provider operation (0.5085ms)
+✔ exact installed source checks accept only an explicit binding file and perform no network reads (6.544292ms)
+✔ binding reader rejects relative/symlink/directory/oversized/malformed files (2.129166ms)
+✔ each operation error preserves phase and stops without operator retries (2.912167ms)
+✔ official HTTP/RPC numeric errors only, arbitrary getters/strings remain private (1.442416ms)
+✔ wrong chain, bytecode, address, version and nonfield data fail closed (1.507459ms)
+✔ same-height reorg and registry change fail continuity after preserving comparisons (0.70875ms)
+✔ supervisor refuses existing/relative/symlink receipts before creating child (1.096208ms)
+✔ real disposable child deadline preserves partial receipt and reaps process (574.131875ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1912.167875

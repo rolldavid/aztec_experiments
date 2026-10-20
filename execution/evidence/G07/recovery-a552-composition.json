@@ -1,0 +1,51 @@
+{
+  "candidate": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+  "base": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+  "reviewedSource": "c6fc1848d86e34ba5ce673435aab0a9307598bcb",
+  "exactChangedFiles": [
+    {
+      "path": "scripts/test-w03-proof-replacement.mjs",
+      "sha256": "acee6c2d618acd4021bb740b812bdd16c1ca2900116d2e179a9d306144753830"
+    },
+    {
+      "path": "shared/l2-journal.mjs",
+      "sha256": "97a5c8dce2ba34f72ef26e2564cb8ef63daa396f1971df6e91bc6ae8987347b4"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "ca86f51a313c8c65c574034242bf9752635e57687e7766cc94a3b3bd4cbf8612"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "62dd44bf37db5aacbccd49e81b10bfc37873d1345aac9d3017a7be0f4be917cd"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "fa2023757d297e063953d558401338a090a6d5be084cc215bffd548911612178"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.test.mjs",
+      "sha256": "9c6d3c2f476b55376599db768aba64b3bf43ae0fbbf36c4116300e62f67728b0"
+    }
+  ],
+  "review": "replacement-order-c6fc184-review.json",
+  "scope": "Six changed source files; prior a699 harness/UI retained. Metadata registry and budget ledger dirty lead-owned excluded from source.",
+  "verification": [
+    {
+      "path": "execution/evidence/G07/recovery-a552-sdk-build.json",
+      "sha256": "50e705ba2c1f6fa01764a5a93c006b0bf4525d753dd9db7101f8d79acb3ace2a"
+    },
+    {
+      "path": "execution/evidence/G07/recovery-a552-wallet-build-correct-command.json",
+      "sha256": "71fd3a0c45f510f2ed89f34ee606f8ea850e02c58c12b9359369a591f33aae17"
+    },
+    {
+      "path": "execution/evidence/G07/recovery-a552-combined-source-tests.json",
+      "sha256": "be93ee7c5d54faa307e96426b1e8de994da8db70c5baf8d3e304ee659574757b"
+    }
+  ],
+  "preservedInvocationFailure": {
+    "path": "execution/evidence/G07/recovery-a552-wallet-build.json",
+    "cause": "Lead used nonexistent script filename; no source change or build execution. Corrected command from previous actual build evidence passes."
+  }
+}

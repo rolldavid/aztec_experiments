@@ -1,0 +1,303 @@
+{
+  "passed": false,
+  "applicationProofs": false,
+  "networkProofs": false,
+  "sourceRevision": "4df9d863d4d5be2d61afaee65b08decdf57fe12a",
+  "controlledSettlement": true,
+  "localTestAssets": true,
+  "transactions": [
+    {
+      "label": "deploy-escrow",
+      "txHash": "0x2517d727d15928b8b217e4c6dca3c6fe52dae2c5ba0e0af2092e00b35cbcf83c",
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 33536,
+          "l2Gas": 1307765
+        },
+        "teardownGas": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      },
+      "executionResult": "success",
+      "blockNumber": 8,
+      "blockHash": "0x0d4e49bc1c9c6c0f1ccdb54cb045a32b3b7227c274cb3ab58946734a7a6c9aec",
+      "transactionFee": "14254638500000",
+      "effectSha256": "1df983406926b18c7a5dfba84e9bd38fd21d9df11224147a950f0873feeba3e1"
+    },
+    {
+      "label": "set-bok-portal",
+      "txHash": "0x2c196758d8dfee3d595c212da74bdf093a0dc5a0d5e6e7f2db3e99d47ffe4d77",
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 320,
+          "l2Gas": 977936
+        },
+        "teardownGas": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      },
+      "executionResult": "success",
+      "blockNumber": 9,
+      "blockHash": "0x1b184bc122a3841577947197857a98126a203aca18954b3e24f9473f56abbd74",
+      "transactionFee": "9974947200000",
+      "effectSha256": "f00684358eab3826802904bc6912f099d62f0d18c71b49178b7f4d6955dee510"
+    },
+    {
+      "label": "claim-bok-credit",
+      "txHash": "0x1b9c9f652bc7d90f4b6d6a8a3ea385f77423d4185eb17918e94dc33742359500",
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 3392,
+          "l2Gas": 910958
+        },
+        "teardownGas": {
+          "daGas": 192,
+          "l2Gas": 27510
+        }
+      },
+      "executionResult": "success",
+      "blockNumber": 12,
+      "blockHash": "0x00d7b32c7eaaa81a5780af79ba4177e2d662f06babd51a57915996720de44fdc",
+      "transactionFee": "9319842000000",
+      "effectSha256": "f67abb206dd5650370ab20e4dc30592ed0f98a82b7f7b0647417335f265d7c76",
+      "publicFootprint": {
+        "schemaVersion": 1,
+        "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+        "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+        "sharedFeePayer": true,
+        "authorIsPublicFeePayer": false,
+        "counts": {
+          "publicCalls": 2,
+          "publicCalldataFields": 6,
+          "publicDataWrites": 1,
+          "publicLogs": 1,
+          "noteCommitments": 4,
+          "nullifiers": 7,
+          "l2ToL1MessageHashes": 0,
+          "privateDeliveryLogs": 5,
+          "privateDeliveryEmittedFields": 80,
+          "contractClassLogs": 0
+        },
+        "rolePresence": {
+          "feePayer": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": true,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicCallSenders": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": true,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicCallTargets": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": true,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicCallCalldata": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": true,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicWriteSlots": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicWriteValues": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicLogContracts": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": true,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "publicLogFields": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "noteCommitments": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "nullifiers": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "l2ToL1MessageHashes": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "privateDeliveryTags": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          },
+          "privateDeliveryPayloadFields": {
+            "author": false,
+            "otherAuthor": null,
+            "sharedPayer": false,
+            "board": null,
+            "moderator": false,
+            "funder": null,
+            "collateralFunder": null,
+            "otherCollateralFunder": null,
+            "feeFunder": null,
+            "otherFeeFunder": null,
+            "coinbase": null
+          }
+        },
+        "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+      }
+    }
+  ],
+  "humanActualFees": {
+    "owner": "9319842000000",
+    "otherUser": "0"
+  },
+  "sourceHashes": {
+    "scripts/testing/rolling-bok-fixture.mjs": "45e16497cba4d1ffbc3e782d6151b64fa69b56815ed13353ca219f082eb26d7b",
+    "scripts/testing/private-bok-fixture.mjs": "fb0db22aac8644f81baccbfc34a734833b3adcea002132c43bff6338dbfdfb04",
+    "scripts/testing/private-bok-fees.mjs": "6f1b490dd78c98dcc8d88679b9e672314268c268bc93d40f9a78e24ee6b5ac06",
+    "scripts/c01-board-flow.mjs": "61b5e43f59156e42af45200d7209b576ce7224d6fe2383029745cad95ae5e4ca",
+    "scripts/c01-ready-flow.mjs": "4afc91235e1c290b329932f400e3a72fa4d06e269d28131598000e0cd47209fa",
+    "scripts/c01-deposit-flow.mjs": "972bffc1bb3d97eebf5ce145541edc6f6981fd84976ae4d1fcf886a1b3349f01",
+    "scripts/testing/fixture-worker.mjs": "83a97bdabe2fdc08ed59349bd86a93f5d6b08d492cc4e8ba20293072036a1b57",
+    "scripts/testing/scenarios.mjs": "5690ecd3c1a58bea54f0ab59c4e2bb7de3ab896f7c1c29be515b135eaf614158",
+    "scripts/testing/scenario-flows.mjs": "7cda62e19adcd7626aafb054b4719c955794ab8faaf717f07f7e5e93f1732a02"
+  },
+  "privateBokArtifactSha256": "4975cf4699f75a030007fe5b1dc752609675b07c1e1cdd6b9fdfa37e363cbc16",
+  "bokActivation": {
+    "activated": true,
+    "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G06/portal-db890393-e041-4aec-9100-13ac6cb32ad9/fixture.json"
+  },
+  "failure": {
+    "stage": "collateral-claim",
+    "errorClass": "Error",
+    "category": "unclassified",
+    "frames": [],
+    "functions": []
+  },
+  "collateral": {
+    "passed": false,
+    "scope": "local real deposit and private claim with ordinary checkpoint inclusion",
+    "applicationProofs": false,
+    "proofMode": "proofs-disabled",
+    "networkProofs": false,
+    "syntheticMessages": false,
+    "syntheticProofs": true,
+    "claimEpochProofAccepted": false,
+    "walletOwnership": "parent",
+    "walletCleanup": "retained-by-parent",
+    "stage": "preflight",
+    "errorClass": "AssertionError",
+    "location": "    at assertC01BorrowedClaimWallet (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/c01-deposit-flow.mjs:51:3)\n    at depositAndClaimC01 (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/c01-deposit-flow.mjs:78:26)\n    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-bok-fixture.mjs:117:27"
+  }
+}

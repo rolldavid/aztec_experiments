@@ -1,0 +1,46 @@
+{
+  "sdk": {
+    "inputs": 2040,
+    "outputs": 8
+  },
+  "dependency": {
+    "state": "patched",
+    "files": [
+      {
+        "path": "src/block_synchronizer/block_synchronizer.ts",
+        "sha256": "5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20"
+      },
+      {
+        "path": "dest/block_synchronizer/block_synchronizer.js",
+        "sha256": "9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78"
+      }
+    ]
+  },
+  "wallet": {
+    "inputs": 81,
+    "outputs": 24
+  },
+  "contractInputCount": 52,
+  "artifacts": [
+    {
+      "name": "RollingBoard",
+      "privateVKs": 14
+    },
+    {
+      "name": "PrivateBok",
+      "privateVKs": 6
+    }
+  ],
+  "bok": {
+    "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+    "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+    "inputCount": 14
+  },
+  "manifests": {
+    ".build/sdk/sdk-manifest.json": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+    ".build/rolling-wallet/manifest.json": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+    ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+    "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+  }
+}

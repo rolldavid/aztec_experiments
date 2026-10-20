@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "mode": "independent source-only review; no runtime, network, credentials, funding or infrastructure actions",
+  "candidate": "6b0a68f637c21c28e0af30a29f9b5cde06830fa0",
+  "recipeSha256": "c59d225dcfe3ce5512e9782f1966e5571f04c06813b7fbbd9d196127bfeaf994",
+  "activationProposalSha256": "65a807f8b3059c27648d0da4ddfb13598d4a0ff7dff50c1bc8cc04d4c69f0e06",
+  "verification": {
+    "recipeSourceHashes": 14,
+    "recipeArtifactHashesAndSizes": 7,
+    "mismatches": []
+  },
+  "verdict": "Eligible planning correction: actual application scope gates proof activation, not query-only node commissioning. Operator implementation and access must be ready before consuming the bounded paid host window. No paid preparation or launch granted by this review.",
+  "sourceBasis": [
+    "prover/qualify-runtime.mjs:73-97 accepts network/queryNode scope and rejects proof-only fields; 232-268 verifies native/catalog then an actual query-only service without deployed application addresses.",
+    "deploy/prover/README.md query qualification explicitly excludes board/fee/plugin addresses and allocates no queue or worker. proofs:real here means genuine node proof verification, not enabled application proof jobs.",
+    "deploy/prover/bootstrap.py:412 binds node RPC and admin to host loopback; the temporary qualifier service is closed after qualification. Successful node commissioning does not expose a local-client deployment route.",
+    "apps/src/billboard/deploy/engine.js:431-470 is legacy 12-argument/48-field/universal deployment; Rolling init at main.nr:347 requires 11 arguments,32 rules fields and nonzero sender as moderator/config deployer.",
+    "engine.js:533-549 requires get_portal/is_portal_set/get_censor/get_policy_version; Rolling exposes none of those. Rolling main_policy is version/digest and update_portal is the private portal-binding entry point.",
+    "prepare-deployment-manifest.mjs:14 and cli.mjs:328 independently select the legacy artifact; both must follow a closed explicit contract discriminator.",
+    "shared/rolling/deployment.mjs supplies canonical class/instance/storage/portal verification, but requires an activated portal. It cannot simply replace every pre-activation check wholesale."
+  ],
+  "safeOrder": [
+    "Prepare and review the explicit Rolling deployment adapter and meaningful ABI/recovery tests, current FPC publication/funding procedure, and any later PrivateBok profile before commissioning a timed host. Keep disposable deployment identities, keys and journals local; no keys on prover host.",
+    "Compose the qualified Linux pin with affected source and perform coherent normal builds/package closure once practical, with the actual query runtime and activation implementation. Reserve the complete same-host forecast and independently review fresh bounded payload/authority; current 39 USD proposal is not a reservation or grant.",
+    "If no separately verified suitable public L2 endpoint exists, commission the proposed same host in explicit query-only stage: node native verification on, proof/proxy masked, no board/FPC/Bok addresses fabricated, no proof queue/worker. Preserve existing 90/105-minute commissioning/qualification bounds, full 3-hour absolute host/Fleet limit, egress/storage/resource controls, receipt and cleanup.",
+    "Require actual query qualification and canonical freshness. Separately establish a reviewed local-client access path to the loopback node or an explicit current public L2 endpoint. Never open admin RPC, silently enable proxy, add SSH/host IAM, or upload wallet keys. Neither path is established by current L1-only network receipts.",
+    "Use the reviewed local operator and local real proving to journal the exact current FPC/board/portal/Bok operations through that node. Preserve bounded phases and real public-network finality; no fixture settlement controls or automatic unknown-transaction replay. Record pending settlement and remaining host budget honestly.",
+    "Only after actual current application class/instance/portal/scope verification, sufficient remaining proof window and fresh query/control checks may the existing reviewed one-shot proof activation consume its separate intent. Remote proof service and public proxy are separate gates; do not reset host timers or qualify full proof from node commissioning.",
+    "If finality or preparation exceeds the host window, preserve journals and shut down on schedule. Any later extension/replacement needs reconciled total budget, reviewed controls and fresh authority; no implicit extension from this staging plan."
+  ],
+  "publicEndpointAlternative": {
+    "status": "not established",
+    "allowedNext": "One explicitly planned bounded read-only current L2 endpoint qualification could establish identity, real proof verification, canonical freshness and required deployment RPC capability before local deployment. Do not infer this from paced L1 progress or stale rc1 handover. No arbitrary fallback/rotation or live credential discovery in this review."
+  },
+  "minimumRollingClaim": [
+    "shared/deployment-manifest.mjs",
+    "scripts/prepare-deployment-manifest.mjs",
+    "apps/src/billboard/deploy/engine.js",
+    "apps/src/billboard/deploy/cli.mjs",
+    "scripts/test-deployment-manifest.mjs",
+    "scripts/test-prepare-deployment-manifest.mjs",
+    "scripts/test-w03-deploy-engine.mjs",
+    "scripts/test-c01-deploy-activation.mjs"
+  ],
+  "claimConditions": [
+    "Preserve legacy defaults. Add a closed Rolling discriminator distinct from existing local-test/operator execution profile; never infer artifact/profile from network, file substitution or loose ABI shape.",
+    "Bind exact normal artifact/class and 32-field UTF-8 rules schema, 11-argument order, expected real deployer identity and deterministic address. Reject legacy censor/universal-zero semantics in Rolling mode.",
+    "Use actual Rolling portal storage initialization and update_portal semantics, original/current class identity, main_policy version/digest and Config commitment. Check actual pinned ABI/projection in tests; no invented getters or weakening after constructor success.",
+    "Preserve the original signed transaction journal, publication, Ethereum CREATE2/immutables and Ready/Outbox activation flows; profile/network/identity become recovery scope. Unknown results remain reconciliation-required and never create an automatic new transaction.",
+    "Add meaningful legacy-preservation and Rolling negatives for wrong artifact/class/profile/actor/rules width/constructor/portal state and unknown receipt; test original actual operator functions. No testnet transaction or funding execution from source acceptance.",
+    "PrivateBok operator profile and funding wrappers are separate later bounded claims; existing plugin dropped-raw rebroadcast logic requires independent uncertainty review. Full Bok service/credit acceptance is not waived by constructor-only scope.",
+    "If shared SDK exports or additional exact tests must change, request those precise paths; do not widen into a new deployment orchestrator."
+  ],
+  "budget": {
+    "currentRetainedUsd": 235.28,
+    "remainingUsd": 64.72,
+    "sameHostProposalUsd": 39,
+    "wouldLeaveUsd": 25.72,
+    "reservationOrPaidGrant": false
+  },
+  "remainingGates": [
+    "current deployment operator implementation",
+    "local-to-node access path or verified current public L2 endpoint",
+    "fresh current test identity/funding/receipt reconciliation",
+    "coherent Linux release closure",
+    "target-region ancillary forecast and complete paid payload review",
+    "real node query qualification",
+    "actual application scope and finality",
+    "separate one-shot proof activation and real proof acceptance"
+  ]
+}

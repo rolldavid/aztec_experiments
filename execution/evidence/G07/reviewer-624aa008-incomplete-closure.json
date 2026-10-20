@@ -1,0 +1,46 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T19:54:07.931211+00:00",
+  "sourceRevision": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+  "baseRevision": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+  "verdict": "approve",
+  "findings": [],
+  "requirements": [
+    "RC18",
+    "RC19",
+    "RC20",
+    "RC21",
+    "RC25",
+    "RC26"
+  ],
+  "sourceReview": "execution/evidence/G07/reviewer-635cf-incomplete-resumption.json",
+  "sourceReviewSha256": "3acbe961779b9bffe3501e0901e5ff71f7d05a7eb71c1435c4ba1da9ba4b7520",
+  "sourceHashes": {
+    "apps/dist/aztec_bundle.js": "e35ad5f0d248490bae61cfcffb605022cf1d5556300230375295b96ece305676",
+    "apps/dist/sdk-manifest.json": "17bb67f5247bccf849dba4ea9cc7f8a2c36e348cabc409360477200789a3bd3b",
+    "scripts/patch-pxe-preference-page.mjs": "f7395581e8feaac2bd5a6fa89c0f983223c8765063def8379f2ffeca3b070aa3",
+    "scripts/test-pxe-preference-page.mjs": "0753617e8896295ed73e677f70b9ce715de36cbac5273a204c35eba4b6b50305",
+    "shared/rolling/cold-preference-reader.mjs": "4bcbe049895272c02ffe7e1c093fba76c50001c97abb8948b6876921c2ef5203",
+    "shared/rolling/cold-preference-reader.test.mjs": "8eb03c00a572dce97dc42a27615843e86326fbba558c23a8d80757622213e7be"
+  },
+  "checks": [
+    "All four source/test blobs equal independently reviewed 635cf80; exact terminal-mailbox P1 repair retained.",
+    "Independent existing check-sdk.mjs passed 2057 inputs / 8 outputs, Aztec 6.0.0-rc.3.",
+    "Both committed SDK bundle/manifest equal normal .build/sdk outputs.",
+    "All 97 wallet inputs and all 25 served files independently rehashed; sizes and hashes match.",
+    "Normal materialization binds unchanged eight upstream patches and compact helper; recovery helper pin f63feaa140c37aaba6109dbcda119a1373ed1f8a1d3df993c2768f5ec268ff29. Prior ten files archived before supported installer operation.",
+    "Parent combined 108 manifest/reader tests pass, no failures/skips, 1481.964ms; source-bound independent 42 reader and original P1 regression results carried forward without broad repeat."
+  ],
+  "evidenceHashes": {
+    ".build/g07-incomplete-closure/materialization.json": "03a5171e184a398a6c4d1acdfe0f8f17c246e686de585d1860bec122c7827dc2",
+    ".build/g07-incomplete-closure/sdk-build.log": "518cd4fd5c2f6ed894deecd369ce5159c7250c5fd6acd5a861b51c5c09449602",
+    ".build/g07-incomplete-closure/apps-build.log": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac",
+    ".build/g07-incomplete-closure/wallet-build.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd",
+    ".build/g07-incomplete-closure/combined-checks.log": "8ed119ee048cb616c65ca908ad86203fa41d2b93f103ca82110576cafcc571e9",
+    ".build/rolling-wallet/manifest.json": "94c415174f6bb73b8689e8cbc64b0f932b0a24f170080f2e5af4317357bf4e92"
+  },
+  "limits": [
+    "Component and generated closure approval only. Actual retained resumption and fresh full recovery under unchanged 120 seconds remain open.",
+    "No SDK package/source mutation, service, wallet, browser, provider or financial operation performed by reviewer."
+  ]
+}

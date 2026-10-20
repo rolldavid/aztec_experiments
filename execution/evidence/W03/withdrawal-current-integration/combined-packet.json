@@ -1,0 +1,28 @@
+{
+  "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "parents": [
+    "07293b594fc8d1723a0703c92287e3efdca8c7cd",
+    "eabddc3a5691ce5f10aabe324bb8f61c576f7e06"
+  ],
+  "sourceEquivalence": {
+    "withdrawalTestUnchangedFrom07293b5": true,
+    "readerAndCompactUnchangedFromEabddc3": true
+  },
+  "checks": [
+    {
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/combined-withdrawal.log",
+      "sha256": "1151596f168516aa7c40ef8c75c703bc220e034bc8bd117a719ed296a44addf3",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/combined-reader.log",
+      "sha256": "2c6f649e9f2db25f3bb7625a8fa6f6f2114e5543aa2cba4888819c7aae1b80ea",
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "scope": "Combined synthetic withdrawal and reader/compact tests only; no real-chain acceptance, SDK builds or service operations."
+}

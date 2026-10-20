@@ -1,0 +1,842 @@
+{
+  "source": "86adc375",
+  "walletAssets": "0cf44274",
+  "mode": "Native development; node realProofs false, PXE proverEnabled false",
+  "accounts": 2,
+  "ownedNamesEach": 2,
+  "distinctBookmarkedPosts": true,
+  "views": [
+    {
+      "account": "A",
+      "view": "Following",
+      "posts": 0
+    },
+    {
+      "account": "A",
+      "view": "Notifications",
+      "posts": 0
+    },
+    {
+      "account": "A",
+      "view": "Main board",
+      "posts": 0
+    },
+    {
+      "account": "A",
+      "view": "Bookmarks",
+      "posts": 1
+    },
+    {
+      "account": "B",
+      "view": "Following",
+      "posts": 0
+    },
+    {
+      "account": "B",
+      "view": "Notifications",
+      "posts": 0
+    },
+    {
+      "account": "B",
+      "view": "Main board",
+      "posts": 0
+    },
+    {
+      "account": "B",
+      "view": "Bookmarks",
+      "posts": 1
+    }
+  ],
+  "comparison": {
+    "passed": true,
+    "requests": 10,
+    "feedRequests": 8,
+    "scope": "Matching public-reader request window only; no native receiver, response or cryptographic unlinkability qualification"
+  },
+  "browser": {
+    "requests": 10,
+    "feedRequests": 8,
+    "invalid": 0,
+    "overflow": 0,
+    "privateMatches": 0,
+    "observerErrors": 0,
+    "pending": 0,
+    "binding": "c6ce9581b1a31f01806c6b9c177ecd5df56cecffe7d522ff4ed69a818b725108",
+    "rows": [
+      {
+        "url": {
+          "bytes": 39,
+          "token": "88431f6a65d3873a57482cb4f5dc8e5971867c511e3f52b57a865f0fc18f4a93"
+        },
+        "method": "GET",
+        "route": "feed",
+        "path": {
+          "bytes": 9,
+          "token": "f7174c55f175d4cf968ce11ec950a017a7ed41b48f8aad762c5ceb7f8a32ae08"
+        },
+        "query": [
+          {
+            "key": "limit",
+            "keyShape": {
+              "bytes": 5,
+              "token": "2902f5e463ae2b3a69ba41ec082e0a357d5cf2ccace4793eed87fc8f6a15b2df"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "8f9713e5fd0bf0e87bc0b2c7a159b1cc23717e65caa6c1d5d2635fd3623b9c79"
+            }
+          }
+        ],
+        "headers": [
+          {
+            "name": "accept-encoding",
+            "nameShape": {
+              "bytes": 15,
+              "token": "b82f5e4f5ca40c2bcc05ea78794f42abe88edc014c4562cae3477bb2fc34e0d4"
+            },
+            "value": {
+              "bytes": 23,
+              "token": "d5b08925e558a7c56298259c0d6ea5bb1635e531a00d5c5c40fd2ea11def6795"
+            }
+          },
+          {
+            "name": "accept-language",
+            "nameShape": {
+              "bytes": 15,
+              "token": "dde32e4f5497820cb53724f44bb72badd2537278153bbeeed96306545f8181e0"
+            },
+            "value": {
+              "bytes": 26,
+              "token": "04251a76f69b60a06e3d9278576534273b93ff16c5e3e0d6421cf236abc5ab9c"
+            }
+          },
+          {
+            "name": "accept",
+            "nameShape": {
+              "bytes": 6,
+              "token": "a2d977a650c65129bf23d3ba63e6edea55b4ec91ac62be7e2bb0bb5fd547628b"
+            },
+            "value": {
+              "bytes": 16,
+              "token": "74b79420c8cb083b4081b1042cd241f6ab5931ab051fa53325ad3f617d389c9d"
+            }
+          },
+          {
+            "name": "cache-control",
+            "nameShape": {
+              "bytes": 13,
+              "token": "d113514d0475d8f16be28bb9bedc279392d11081774663bce628c7f958261b17"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "connection",
+            "nameShape": {
+              "bytes": 10,
+              "token": "617e97276b196f990a613126536e7ce521ae8871f19f53d3835d9c320272cfd6"
+            },
+            "value": {
+              "bytes": 10,
+              "token": "72bab154857898a80206215591e95fd36e55b065a83c503c92e84178bccaa96f"
+            }
+          },
+          {
+            "name": "host",
+            "nameShape": {
+              "bytes": 4,
+              "token": "cc286558b19403bd3ae69b11ea268b5ac362eb9560a88e5551044fc2423d6498"
+            },
+            "value": {
+              "bytes": 14,
+              "token": "e7cc04b02df6cbc10905237dbfcfb9938e6c677eb7d78865ec76dfd3da428819"
+            }
+          },
+          {
+            "name": "pragma",
+            "nameShape": {
+              "bytes": 6,
+              "token": "7d5dac9d49239301d602fb9776a1e291fce1bbf55521046a0a29208d52bea249"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "sec-ch-ua-mobile",
+            "nameShape": {
+              "bytes": 16,
+              "token": "ac78645fa4b5a6bee1ee46a77ae1a1863edf1467e4ace06aa3ef25c872480aa1"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "624a75aaac1f46276b0d51348eb888fbbdea69b75ba540ff3a4164472b6953fc"
+            }
+          },
+          {
+            "name": "sec-ch-ua-platform",
+            "nameShape": {
+              "bytes": 18,
+              "token": "221d6e9b8f20b4489eec8896ecae8cefe6f02ce45228b33bbf8afaef3da8655a"
+            },
+            "value": {
+              "bytes": 7,
+              "token": "26721922c39fad411bfc959324bb6789f6aea04c0e1b16ae210f6cf294f03065"
+            }
+          },
+          {
+            "name": "sec-ch-ua",
+            "nameShape": {
+              "bytes": 9,
+              "token": "3963b79aa7949a5d121d5ed1a82840a487d4d4a36546b37373c61a757bce5f90"
+            },
+            "value": {
+              "bytes": 39,
+              "token": "33f08af995f9bad17ed8eab086b3c0caab8a27ee688926b546b170a73240e6fc"
+            }
+          },
+          {
+            "name": "sec-fetch-dest",
+            "nameShape": {
+              "bytes": 14,
+              "token": "375f936f91c264ceb0ac81e98817c9da4f23a853e70f2edd2fa5f47c1babe9d9"
+            },
+            "value": {
+              "bytes": 5,
+              "token": "5002573e954c62adfc1d95f48d328f65c0da89bb0c9326e5a01a8e3cc27aa169"
+            }
+          },
+          {
+            "name": "sec-fetch-mode",
+            "nameShape": {
+              "bytes": 14,
+              "token": "ce52da6a2d8ba84df9bc0ef45e7e36111ca9ab1f034e91edc725c36c9d76e16c"
+            },
+            "value": {
+              "bytes": 4,
+              "token": "dbbb9198a415e8dc25b2b9f5ff7812a671ca825a3f8853ea6ad013eb5fc59f6c"
+            }
+          },
+          {
+            "name": "sec-fetch-site",
+            "nameShape": {
+              "bytes": 14,
+              "token": "e089dbd8841831ac30cf6e6c90ade71c5ffb2d6bddaa0b4017f3dbd04ca2255d"
+            },
+            "value": {
+              "bytes": 11,
+              "token": "37e18a26fa9c823c04ba9aa969d2d135f2da06bfa1f01ab8d11b31b4f9058ed6"
+            }
+          },
+          {
+            "name": "user-agent",
+            "nameShape": {
+              "bytes": 10,
+              "token": "07aac94310557b82651c93a618e91c6e9f5723b5b418d724eb635dbf4137e4d9"
+            },
+            "value": {
+              "bytes": 125,
+              "token": "406d6672c6edfdfab23e9489bf277245c1843a038b94bd98b1c330d2a1d5f5d1"
+            }
+          }
+        ],
+        "issues": [],
+        "count": 8
+      },
+      {
+        "url": {
+          "bytes": 45,
+          "token": "5ede0f2cd39e8de2fc738bb6ec122070de03a02f308f8d64c12d6fafc29f92f0"
+        },
+        "method": "GET",
+        "route": "board",
+        "path": {
+          "bytes": 10,
+          "token": "e9f77581d75797ab98e8be4e7317954af8d9c3aaa3ec780b6295ed4efd29b59f"
+        },
+        "query": [
+          {
+            "key": "id",
+            "keyShape": {
+              "bytes": 2,
+              "token": "e802debaf9334de7dd4170eec0f59054a6cd397110727931b8cb0c4ec316dbe0"
+            },
+            "value": {
+              "bytes": 1,
+              "token": "b126df8657fe885f1b824e742bbb40536e5c874abdc2e862f713f4f6aa901d36"
+            }
+          },
+          {
+            "key": "limit",
+            "keyShape": {
+              "bytes": 5,
+              "token": "2902f5e463ae2b3a69ba41ec082e0a357d5cf2ccace4793eed87fc8f6a15b2df"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "8f9713e5fd0bf0e87bc0b2c7a159b1cc23717e65caa6c1d5d2635fd3623b9c79"
+            }
+          }
+        ],
+        "headers": [
+          {
+            "name": "accept-encoding",
+            "nameShape": {
+              "bytes": 15,
+              "token": "b82f5e4f5ca40c2bcc05ea78794f42abe88edc014c4562cae3477bb2fc34e0d4"
+            },
+            "value": {
+              "bytes": 23,
+              "token": "d5b08925e558a7c56298259c0d6ea5bb1635e531a00d5c5c40fd2ea11def6795"
+            }
+          },
+          {
+            "name": "accept-language",
+            "nameShape": {
+              "bytes": 15,
+              "token": "dde32e4f5497820cb53724f44bb72badd2537278153bbeeed96306545f8181e0"
+            },
+            "value": {
+              "bytes": 26,
+              "token": "04251a76f69b60a06e3d9278576534273b93ff16c5e3e0d6421cf236abc5ab9c"
+            }
+          },
+          {
+            "name": "accept",
+            "nameShape": {
+              "bytes": 6,
+              "token": "a2d977a650c65129bf23d3ba63e6edea55b4ec91ac62be7e2bb0bb5fd547628b"
+            },
+            "value": {
+              "bytes": 16,
+              "token": "74b79420c8cb083b4081b1042cd241f6ab5931ab051fa53325ad3f617d389c9d"
+            }
+          },
+          {
+            "name": "cache-control",
+            "nameShape": {
+              "bytes": 13,
+              "token": "d113514d0475d8f16be28bb9bedc279392d11081774663bce628c7f958261b17"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "connection",
+            "nameShape": {
+              "bytes": 10,
+              "token": "617e97276b196f990a613126536e7ce521ae8871f19f53d3835d9c320272cfd6"
+            },
+            "value": {
+              "bytes": 10,
+              "token": "72bab154857898a80206215591e95fd36e55b065a83c503c92e84178bccaa96f"
+            }
+          },
+          {
+            "name": "host",
+            "nameShape": {
+              "bytes": 4,
+              "token": "cc286558b19403bd3ae69b11ea268b5ac362eb9560a88e5551044fc2423d6498"
+            },
+            "value": {
+              "bytes": 14,
+              "token": "e7cc04b02df6cbc10905237dbfcfb9938e6c677eb7d78865ec76dfd3da428819"
+            }
+          },
+          {
+            "name": "pragma",
+            "nameShape": {
+              "bytes": 6,
+              "token": "7d5dac9d49239301d602fb9776a1e291fce1bbf55521046a0a29208d52bea249"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "sec-ch-ua-mobile",
+            "nameShape": {
+              "bytes": 16,
+              "token": "ac78645fa4b5a6bee1ee46a77ae1a1863edf1467e4ace06aa3ef25c872480aa1"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "624a75aaac1f46276b0d51348eb888fbbdea69b75ba540ff3a4164472b6953fc"
+            }
+          },
+          {
+            "name": "sec-ch-ua-platform",
+            "nameShape": {
+              "bytes": 18,
+              "token": "221d6e9b8f20b4489eec8896ecae8cefe6f02ce45228b33bbf8afaef3da8655a"
+            },
+            "value": {
+              "bytes": 7,
+              "token": "26721922c39fad411bfc959324bb6789f6aea04c0e1b16ae210f6cf294f03065"
+            }
+          },
+          {
+            "name": "sec-ch-ua",
+            "nameShape": {
+              "bytes": 9,
+              "token": "3963b79aa7949a5d121d5ed1a82840a487d4d4a36546b37373c61a757bce5f90"
+            },
+            "value": {
+              "bytes": 39,
+              "token": "33f08af995f9bad17ed8eab086b3c0caab8a27ee688926b546b170a73240e6fc"
+            }
+          },
+          {
+            "name": "sec-fetch-dest",
+            "nameShape": {
+              "bytes": 14,
+              "token": "375f936f91c264ceb0ac81e98817c9da4f23a853e70f2edd2fa5f47c1babe9d9"
+            },
+            "value": {
+              "bytes": 5,
+              "token": "5002573e954c62adfc1d95f48d328f65c0da89bb0c9326e5a01a8e3cc27aa169"
+            }
+          },
+          {
+            "name": "sec-fetch-mode",
+            "nameShape": {
+              "bytes": 14,
+              "token": "ce52da6a2d8ba84df9bc0ef45e7e36111ca9ab1f034e91edc725c36c9d76e16c"
+            },
+            "value": {
+              "bytes": 4,
+              "token": "dbbb9198a415e8dc25b2b9f5ff7812a671ca825a3f8853ea6ad013eb5fc59f6c"
+            }
+          },
+          {
+            "name": "sec-fetch-site",
+            "nameShape": {
+              "bytes": 14,
+              "token": "e089dbd8841831ac30cf6e6c90ade71c5ffb2d6bddaa0b4017f3dbd04ca2255d"
+            },
+            "value": {
+              "bytes": 11,
+              "token": "37e18a26fa9c823c04ba9aa969d2d135f2da06bfa1f01ab8d11b31b4f9058ed6"
+            }
+          },
+          {
+            "name": "user-agent",
+            "nameShape": {
+              "bytes": 10,
+              "token": "07aac94310557b82651c93a618e91c6e9f5723b5b418d724eb635dbf4137e4d9"
+            },
+            "value": {
+              "bytes": 125,
+              "token": "406d6672c6edfdfab23e9489bf277245c1843a038b94bd98b1c330d2a1d5f5d1"
+            }
+          }
+        ],
+        "issues": [],
+        "count": 2
+      }
+    ],
+    "scope": "Public-reader request URL/query/header projection only; values are keyed tokens, not privacy proof"
+  },
+  "receiver": {
+    "requests": 10,
+    "feedRequests": 8,
+    "invalid": 0,
+    "overflow": 0,
+    "privateMatches": 0,
+    "observerErrors": 0,
+    "pending": 0,
+    "binding": "c6ce9581b1a31f01806c6b9c177ecd5df56cecffe7d522ff4ed69a818b725108",
+    "rows": [
+      {
+        "url": {
+          "bytes": 39,
+          "token": "88431f6a65d3873a57482cb4f5dc8e5971867c511e3f52b57a865f0fc18f4a93"
+        },
+        "method": "GET",
+        "route": "feed",
+        "path": {
+          "bytes": 9,
+          "token": "f7174c55f175d4cf968ce11ec950a017a7ed41b48f8aad762c5ceb7f8a32ae08"
+        },
+        "query": [
+          {
+            "key": "limit",
+            "keyShape": {
+              "bytes": 5,
+              "token": "2902f5e463ae2b3a69ba41ec082e0a357d5cf2ccace4793eed87fc8f6a15b2df"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "8f9713e5fd0bf0e87bc0b2c7a159b1cc23717e65caa6c1d5d2635fd3623b9c79"
+            }
+          }
+        ],
+        "headers": [
+          {
+            "name": "accept-encoding",
+            "nameShape": {
+              "bytes": 15,
+              "token": "b82f5e4f5ca40c2bcc05ea78794f42abe88edc014c4562cae3477bb2fc34e0d4"
+            },
+            "value": {
+              "bytes": 23,
+              "token": "d5b08925e558a7c56298259c0d6ea5bb1635e531a00d5c5c40fd2ea11def6795"
+            }
+          },
+          {
+            "name": "accept-language",
+            "nameShape": {
+              "bytes": 15,
+              "token": "dde32e4f5497820cb53724f44bb72badd2537278153bbeeed96306545f8181e0"
+            },
+            "value": {
+              "bytes": 26,
+              "token": "04251a76f69b60a06e3d9278576534273b93ff16c5e3e0d6421cf236abc5ab9c"
+            }
+          },
+          {
+            "name": "accept",
+            "nameShape": {
+              "bytes": 6,
+              "token": "a2d977a650c65129bf23d3ba63e6edea55b4ec91ac62be7e2bb0bb5fd547628b"
+            },
+            "value": {
+              "bytes": 16,
+              "token": "74b79420c8cb083b4081b1042cd241f6ab5931ab051fa53325ad3f617d389c9d"
+            }
+          },
+          {
+            "name": "cache-control",
+            "nameShape": {
+              "bytes": 13,
+              "token": "d113514d0475d8f16be28bb9bedc279392d11081774663bce628c7f958261b17"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "connection",
+            "nameShape": {
+              "bytes": 10,
+              "token": "617e97276b196f990a613126536e7ce521ae8871f19f53d3835d9c320272cfd6"
+            },
+            "value": {
+              "bytes": 10,
+              "token": "72bab154857898a80206215591e95fd36e55b065a83c503c92e84178bccaa96f"
+            }
+          },
+          {
+            "name": "host",
+            "nameShape": {
+              "bytes": 4,
+              "token": "cc286558b19403bd3ae69b11ea268b5ac362eb9560a88e5551044fc2423d6498"
+            },
+            "value": {
+              "bytes": 14,
+              "token": "e7cc04b02df6cbc10905237dbfcfb9938e6c677eb7d78865ec76dfd3da428819"
+            }
+          },
+          {
+            "name": "pragma",
+            "nameShape": {
+              "bytes": 6,
+              "token": "7d5dac9d49239301d602fb9776a1e291fce1bbf55521046a0a29208d52bea249"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "sec-ch-ua-mobile",
+            "nameShape": {
+              "bytes": 16,
+              "token": "ac78645fa4b5a6bee1ee46a77ae1a1863edf1467e4ace06aa3ef25c872480aa1"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "624a75aaac1f46276b0d51348eb888fbbdea69b75ba540ff3a4164472b6953fc"
+            }
+          },
+          {
+            "name": "sec-ch-ua-platform",
+            "nameShape": {
+              "bytes": 18,
+              "token": "221d6e9b8f20b4489eec8896ecae8cefe6f02ce45228b33bbf8afaef3da8655a"
+            },
+            "value": {
+              "bytes": 7,
+              "token": "26721922c39fad411bfc959324bb6789f6aea04c0e1b16ae210f6cf294f03065"
+            }
+          },
+          {
+            "name": "sec-ch-ua",
+            "nameShape": {
+              "bytes": 9,
+              "token": "3963b79aa7949a5d121d5ed1a82840a487d4d4a36546b37373c61a757bce5f90"
+            },
+            "value": {
+              "bytes": 39,
+              "token": "33f08af995f9bad17ed8eab086b3c0caab8a27ee688926b546b170a73240e6fc"
+            }
+          },
+          {
+            "name": "sec-fetch-dest",
+            "nameShape": {
+              "bytes": 14,
+              "token": "375f936f91c264ceb0ac81e98817c9da4f23a853e70f2edd2fa5f47c1babe9d9"
+            },
+            "value": {
+              "bytes": 5,
+              "token": "5002573e954c62adfc1d95f48d328f65c0da89bb0c9326e5a01a8e3cc27aa169"
+            }
+          },
+          {
+            "name": "sec-fetch-mode",
+            "nameShape": {
+              "bytes": 14,
+              "token": "ce52da6a2d8ba84df9bc0ef45e7e36111ca9ab1f034e91edc725c36c9d76e16c"
+            },
+            "value": {
+              "bytes": 4,
+              "token": "dbbb9198a415e8dc25b2b9f5ff7812a671ca825a3f8853ea6ad013eb5fc59f6c"
+            }
+          },
+          {
+            "name": "sec-fetch-site",
+            "nameShape": {
+              "bytes": 14,
+              "token": "e089dbd8841831ac30cf6e6c90ade71c5ffb2d6bddaa0b4017f3dbd04ca2255d"
+            },
+            "value": {
+              "bytes": 11,
+              "token": "37e18a26fa9c823c04ba9aa969d2d135f2da06bfa1f01ab8d11b31b4f9058ed6"
+            }
+          },
+          {
+            "name": "user-agent",
+            "nameShape": {
+              "bytes": 10,
+              "token": "07aac94310557b82651c93a618e91c6e9f5723b5b418d724eb635dbf4137e4d9"
+            },
+            "value": {
+              "bytes": 125,
+              "token": "406d6672c6edfdfab23e9489bf277245c1843a038b94bd98b1c330d2a1d5f5d1"
+            }
+          }
+        ],
+        "issues": [],
+        "count": 8
+      },
+      {
+        "url": {
+          "bytes": 45,
+          "token": "5ede0f2cd39e8de2fc738bb6ec122070de03a02f308f8d64c12d6fafc29f92f0"
+        },
+        "method": "GET",
+        "route": "board",
+        "path": {
+          "bytes": 10,
+          "token": "e9f77581d75797ab98e8be4e7317954af8d9c3aaa3ec780b6295ed4efd29b59f"
+        },
+        "query": [
+          {
+            "key": "id",
+            "keyShape": {
+              "bytes": 2,
+              "token": "e802debaf9334de7dd4170eec0f59054a6cd397110727931b8cb0c4ec316dbe0"
+            },
+            "value": {
+              "bytes": 1,
+              "token": "b126df8657fe885f1b824e742bbb40536e5c874abdc2e862f713f4f6aa901d36"
+            }
+          },
+          {
+            "key": "limit",
+            "keyShape": {
+              "bytes": 5,
+              "token": "2902f5e463ae2b3a69ba41ec082e0a357d5cf2ccace4793eed87fc8f6a15b2df"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "8f9713e5fd0bf0e87bc0b2c7a159b1cc23717e65caa6c1d5d2635fd3623b9c79"
+            }
+          }
+        ],
+        "headers": [
+          {
+            "name": "accept-encoding",
+            "nameShape": {
+              "bytes": 15,
+              "token": "b82f5e4f5ca40c2bcc05ea78794f42abe88edc014c4562cae3477bb2fc34e0d4"
+            },
+            "value": {
+              "bytes": 23,
+              "token": "d5b08925e558a7c56298259c0d6ea5bb1635e531a00d5c5c40fd2ea11def6795"
+            }
+          },
+          {
+            "name": "accept-language",
+            "nameShape": {
+              "bytes": 15,
+              "token": "dde32e4f5497820cb53724f44bb72badd2537278153bbeeed96306545f8181e0"
+            },
+            "value": {
+              "bytes": 26,
+              "token": "04251a76f69b60a06e3d9278576534273b93ff16c5e3e0d6421cf236abc5ab9c"
+            }
+          },
+          {
+            "name": "accept",
+            "nameShape": {
+              "bytes": 6,
+              "token": "a2d977a650c65129bf23d3ba63e6edea55b4ec91ac62be7e2bb0bb5fd547628b"
+            },
+            "value": {
+              "bytes": 16,
+              "token": "74b79420c8cb083b4081b1042cd241f6ab5931ab051fa53325ad3f617d389c9d"
+            }
+          },
+          {
+            "name": "cache-control",
+            "nameShape": {
+              "bytes": 13,
+              "token": "d113514d0475d8f16be28bb9bedc279392d11081774663bce628c7f958261b17"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "connection",
+            "nameShape": {
+              "bytes": 10,
+              "token": "617e97276b196f990a613126536e7ce521ae8871f19f53d3835d9c320272cfd6"
+            },
+            "value": {
+              "bytes": 10,
+              "token": "72bab154857898a80206215591e95fd36e55b065a83c503c92e84178bccaa96f"
+            }
+          },
+          {
+            "name": "host",
+            "nameShape": {
+              "bytes": 4,
+              "token": "cc286558b19403bd3ae69b11ea268b5ac362eb9560a88e5551044fc2423d6498"
+            },
+            "value": {
+              "bytes": 14,
+              "token": "e7cc04b02df6cbc10905237dbfcfb9938e6c677eb7d78865ec76dfd3da428819"
+            }
+          },
+          {
+            "name": "pragma",
+            "nameShape": {
+              "bytes": 6,
+              "token": "7d5dac9d49239301d602fb9776a1e291fce1bbf55521046a0a29208d52bea249"
+            },
+            "value": {
+              "bytes": 8,
+              "token": "267f05db5d6daba6685667edfec85a3e8292f3f46b3f6aeb429793099e8fb46e"
+            }
+          },
+          {
+            "name": "sec-ch-ua-mobile",
+            "nameShape": {
+              "bytes": 16,
+              "token": "ac78645fa4b5a6bee1ee46a77ae1a1863edf1467e4ace06aa3ef25c872480aa1"
+            },
+            "value": {
+              "bytes": 2,
+              "token": "624a75aaac1f46276b0d51348eb888fbbdea69b75ba540ff3a4164472b6953fc"
+            }
+          },
+          {
+            "name": "sec-ch-ua-platform",
+            "nameShape": {
+              "bytes": 18,
+              "token": "221d6e9b8f20b4489eec8896ecae8cefe6f02ce45228b33bbf8afaef3da8655a"
+            },
+            "value": {
+              "bytes": 7,
+              "token": "26721922c39fad411bfc959324bb6789f6aea04c0e1b16ae210f6cf294f03065"
+            }
+          },
+          {
+            "name": "sec-ch-ua",
+            "nameShape": {
+              "bytes": 9,
+              "token": "3963b79aa7949a5d121d5ed1a82840a487d4d4a36546b37373c61a757bce5f90"
+            },
+            "value": {
+              "bytes": 39,
+              "token": "33f08af995f9bad17ed8eab086b3c0caab8a27ee688926b546b170a73240e6fc"
+            }
+          },
+          {
+            "name": "sec-fetch-dest",
+            "nameShape": {
+              "bytes": 14,
+              "token": "375f936f91c264ceb0ac81e98817c9da4f23a853e70f2edd2fa5f47c1babe9d9"
+            },
+            "value": {
+              "bytes": 5,
+              "token": "5002573e954c62adfc1d95f48d328f65c0da89bb0c9326e5a01a8e3cc27aa169"
+            }
+          },
+          {
+            "name": "sec-fetch-mode",
+            "nameShape": {
+              "bytes": 14,
+              "token": "ce52da6a2d8ba84df9bc0ef45e7e36111ca9ab1f034e91edc725c36c9d76e16c"
+            },
+            "value": {
+              "bytes": 4,
+              "token": "dbbb9198a415e8dc25b2b9f5ff7812a671ca825a3f8853ea6ad013eb5fc59f6c"
+            }
+          },
+          {
+            "name": "sec-fetch-site",
+            "nameShape": {
+              "bytes": 14,
+              "token": "e089dbd8841831ac30cf6e6c90ade71c5ffb2d6bddaa0b4017f3dbd04ca2255d"
+            },
+            "value": {
+              "bytes": 11,
+              "token": "37e18a26fa9c823c04ba9aa969d2d135f2da06bfa1f01ab8d11b31b4f9058ed6"
+            }
+          },
+          {
+            "name": "user-agent",
+            "nameShape": {
+              "bytes": 10,
+              "token": "07aac94310557b82651c93a618e91c6e9f5723b5b418d724eb635dbf4137e4d9"
+            },
+            "value": {
+              "bytes": 125,
+              "token": "406d6672c6edfdfab23e9489bf277245c1843a038b94bd98b1c330d2a1d5f5d1"
+            }
+          }
+        ],
+        "issues": [],
+        "count": 2
+      }
+    ],
+    "scope": "Public-reader request URL/query/header projection only; values are keyed tokens, not privacy proof"
+  },
+  "limitations": [
+    "Public-reader request window only",
+    "No cryptographic unlinkability claim",
+    "Trusted native upstream window incomplete and retained separately"
+  ],
+  "captureNote": "Compared serialized captures in one Node realm; original interactive comparison hit cross-realm Array prototypes, without a traffic mismatch."
+}

@@ -1,0 +1,5260 @@
+{
+  "applicationProofs": true,
+  "remoteProver": true,
+  "schemaVersion": 2,
+  "scenario": "rolling-composer",
+  "profile": "Four genuine names then production browser encrypted custody recovery, account switch and composer boundaries",
+  "startedAt": "2026-10-12T01:15:18.689Z",
+  "passed": true,
+  "stages": [
+    {
+      "role": "fixture",
+      "stage": "start-disposable-l1",
+      "elapsedMs": 1072
+    },
+    {
+      "role": "fixture",
+      "stage": "prepare-genesis",
+      "elapsedMs": 1183
+    },
+    {
+      "role": "fixture",
+      "stage": "deploy-local-protocol-fixture",
+      "elapsedMs": 2505
+    },
+    {
+      "role": "fixture",
+      "stage": "wait-for-local-validator-activation",
+      "elapsedMs": 3510
+    },
+    {
+      "role": "fixture",
+      "stage": "start-application-node",
+      "elapsedMs": 3537
+    },
+    {
+      "role": "fixture",
+      "stage": "prove-board-deployment",
+      "elapsedMs": 6341
+    },
+    {
+      "role": "fixture",
+      "stage": "board-create-proving-wallet",
+      "elapsedMs": 6363
+    },
+    {
+      "role": "fixture",
+      "stage": "board-build-deployment-request",
+      "elapsedMs": 6470
+    },
+    {
+      "role": "fixture",
+      "stage": "board-genuine-client-proof",
+      "elapsedMs": 6919
+    },
+    {
+      "role": "fixture",
+      "stage": "board-serialize-proof",
+      "elapsedMs": 15390
+    },
+    {
+      "role": "fixture",
+      "stage": "board-real-node-validation",
+      "elapsedMs": 15395
+    },
+    {
+      "role": "fixture",
+      "stage": "board-close-wallet",
+      "elapsedMs": 15580
+    },
+    {
+      "role": "fixture",
+      "stage": "board-inclusion",
+      "elapsedMs": 15582
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-reopen-wallet",
+      "elapsedMs": 29886
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-deploy-disabled-portal",
+      "elapsedMs": 30146
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-prove-update-portal",
+      "elapsedMs": 30152
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-serialize-proof",
+      "elapsedMs": 36668
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-validate-update-portal",
+      "elapsedMs": 36674
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-close-wallet",
+      "elapsedMs": 36842
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-inclusion",
+      "elapsedMs": 36843
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-settlement",
+      "elapsedMs": 45989
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:private-fee-funding",
+      "elapsedMs": 58034
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:fund-disposable-user",
+      "elapsedMs": 71431
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:bridge-user-funds",
+      "elapsedMs": 71441
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:wait-inbox",
+      "elapsedMs": 72104
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:fund-disposable-user",
+      "elapsedMs": 87803
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:bridge-user-funds",
+      "elapsedMs": 87812
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:wait-inbox",
+      "elapsedMs": 88470
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:prove-standalone-funding",
+      "elapsedMs": 97579
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:include-standalone-funding",
+      "elapsedMs": 105638
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:collateral-claim",
+      "elapsedMs": 116142
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:reuse-parent-claim-wallet",
+      "elapsedMs": 116198
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:deposit-real-l1",
+      "elapsedMs": 116409
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:wait-real-inbox-anchor",
+      "elapsedMs": 116414
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:checkpoint-pause-start",
+      "elapsedMs": 124209
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:checkpoint-pause-complete",
+      "elapsedMs": 128654
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:checkpoint-converged",
+      "elapsedMs": 128855
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:prove-real-claim",
+      "elapsedMs": 128862
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:include-real-claim",
+      "elapsedMs": 139201
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:check-delivered-deposit-note",
+      "elapsedMs": 147500
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:reject-real-claim-replay",
+      "elapsedMs": 147630
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:deploy-unused-bok-scope",
+      "elapsedMs": 147792
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:collateral-eligibility",
+      "elapsedMs": 167028
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:real-wall-clock-readiness",
+      "elapsedMs": 188711
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:node-rpc-startup",
+      "elapsedMs": 299418
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:trusted-service-startup",
+      "elapsedMs": 299428
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:trusted-client-construction",
+      "elapsedMs": 299821
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:application-pxe",
+      "elapsedMs": 299919
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:owned-name-1",
+      "elapsedMs": 303782
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:owned-name-2",
+      "elapsedMs": 327122
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:owned-name-3",
+      "elapsedMs": 345957
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:owned-name-4",
+      "elapsedMs": 364877
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:encrypted-journal-reopen",
+      "elapsedMs": 391047
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:canonical-projection-rebuild",
+      "elapsedMs": 391823
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:canonical-public-http-reopen",
+      "elapsedMs": 391838
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:production-browser-composer",
+      "elapsedMs": 392196
+    },
+    {
+      "role": "fixture",
+      "stage": "browser-ready",
+      "elapsedMs": 393740
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-launch",
+      "elapsedMs": 393953
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-public-reader",
+      "elapsedMs": 394340
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-unlock-a",
+      "elapsedMs": 395073
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-import-a",
+      "elapsedMs": 395884
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-choices-a",
+      "elapsedMs": 400515
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-prepare-992",
+      "elapsedMs": 400544
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-cancel-992",
+      "elapsedMs": 404993
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-reject-996",
+      "elapsedMs": 405814
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-literal-preview",
+      "elapsedMs": 405825
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-lock-a",
+      "elapsedMs": 405866
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-reload",
+      "elapsedMs": 405954
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-unlock-b",
+      "elapsedMs": 406064
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-import-b",
+      "elapsedMs": 406899
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-choices-b",
+      "elapsedMs": 411341
+    },
+    {
+      "role": "browser",
+      "stage": "rolling-composer-complete",
+      "elapsedMs": 411373
+    },
+    {
+      "role": "fixture",
+      "stage": "rolling-application:complete",
+      "elapsedMs": 411823
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2427744,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 670832
+    },
+    {
+      "elapsedMs": 2024,
+      "rssKiB": 835920
+    },
+    {
+      "elapsedMs": 3044,
+      "rssKiB": 1128976
+    },
+    {
+      "elapsedMs": 4062,
+      "rssKiB": 1029136
+    },
+    {
+      "elapsedMs": 5077,
+      "rssKiB": 1065792
+    },
+    {
+      "elapsedMs": 6092,
+      "rssKiB": 1160336
+    },
+    {
+      "elapsedMs": 7107,
+      "rssKiB": 1392928
+    },
+    {
+      "elapsedMs": 8124,
+      "rssKiB": 1504800
+    },
+    {
+      "elapsedMs": 9149,
+      "rssKiB": 1611424
+    },
+    {
+      "elapsedMs": 10164,
+      "rssKiB": 1581120
+    },
+    {
+      "elapsedMs": 11180,
+      "rssKiB": 1817232
+    },
+    {
+      "elapsedMs": 12197,
+      "rssKiB": 1855184
+    },
+    {
+      "elapsedMs": 13212,
+      "rssKiB": 1860544
+    },
+    {
+      "elapsedMs": 14228,
+      "rssKiB": 1974208
+    },
+    {
+      "elapsedMs": 15244,
+      "rssKiB": 1966624
+    },
+    {
+      "elapsedMs": 16259,
+      "rssKiB": 2005200
+    },
+    {
+      "elapsedMs": 17282,
+      "rssKiB": 2006624
+    },
+    {
+      "elapsedMs": 18298,
+      "rssKiB": 2007952
+    },
+    {
+      "elapsedMs": 19332,
+      "rssKiB": 2009648
+    },
+    {
+      "elapsedMs": 20365,
+      "rssKiB": 2011056
+    },
+    {
+      "elapsedMs": 21397,
+      "rssKiB": 2022176
+    },
+    {
+      "elapsedMs": 22411,
+      "rssKiB": 1968080
+    },
+    {
+      "elapsedMs": 23434,
+      "rssKiB": 1968352
+    },
+    {
+      "elapsedMs": 24450,
+      "rssKiB": 1964944
+    },
+    {
+      "elapsedMs": 25483,
+      "rssKiB": 1947520
+    },
+    {
+      "elapsedMs": 26499,
+      "rssKiB": 1948064
+    },
+    {
+      "elapsedMs": 27528,
+      "rssKiB": 1951024
+    },
+    {
+      "elapsedMs": 28546,
+      "rssKiB": 2033296
+    },
+    {
+      "elapsedMs": 29562,
+      "rssKiB": 2044592
+    },
+    {
+      "elapsedMs": 30594,
+      "rssKiB": 2116976
+    },
+    {
+      "elapsedMs": 31609,
+      "rssKiB": 2139904
+    },
+    {
+      "elapsedMs": 32624,
+      "rssKiB": 2037744
+    },
+    {
+      "elapsedMs": 33639,
+      "rssKiB": 2032112
+    },
+    {
+      "elapsedMs": 34664,
+      "rssKiB": 1464864
+    },
+    {
+      "elapsedMs": 35815,
+      "rssKiB": 916064
+    },
+    {
+      "elapsedMs": 36836,
+      "rssKiB": 1132752
+    },
+    {
+      "elapsedMs": 37851,
+      "rssKiB": 1143056
+    },
+    {
+      "elapsedMs": 38873,
+      "rssKiB": 1148896
+    },
+    {
+      "elapsedMs": 39909,
+      "rssKiB": 1157392
+    },
+    {
+      "elapsedMs": 40941,
+      "rssKiB": 1164832
+    },
+    {
+      "elapsedMs": 41976,
+      "rssKiB": 1174656
+    },
+    {
+      "elapsedMs": 43005,
+      "rssKiB": 1184128
+    },
+    {
+      "elapsedMs": 44040,
+      "rssKiB": 1193936
+    },
+    {
+      "elapsedMs": 45073,
+      "rssKiB": 1216160
+    },
+    {
+      "elapsedMs": 46088,
+      "rssKiB": 1227776
+    },
+    {
+      "elapsedMs": 47115,
+      "rssKiB": 1079552
+    },
+    {
+      "elapsedMs": 48149,
+      "rssKiB": 917536
+    },
+    {
+      "elapsedMs": 49183,
+      "rssKiB": 927760
+    },
+    {
+      "elapsedMs": 50207,
+      "rssKiB": 916096
+    },
+    {
+      "elapsedMs": 51224,
+      "rssKiB": 844224
+    },
+    {
+      "elapsedMs": 52259,
+      "rssKiB": 845440
+    },
+    {
+      "elapsedMs": 53283,
+      "rssKiB": 846624
+    },
+    {
+      "elapsedMs": 54316,
+      "rssKiB": 848032
+    },
+    {
+      "elapsedMs": 55348,
+      "rssKiB": 850288
+    },
+    {
+      "elapsedMs": 56366,
+      "rssKiB": 851056
+    },
+    {
+      "elapsedMs": 57381,
+      "rssKiB": 852368
+    },
+    {
+      "elapsedMs": 58414,
+      "rssKiB": 1017200
+    },
+    {
+      "elapsedMs": 59431,
+      "rssKiB": 1075328
+    },
+    {
+      "elapsedMs": 60447,
+      "rssKiB": 1317328
+    },
+    {
+      "elapsedMs": 61463,
+      "rssKiB": 1367328
+    },
+    {
+      "elapsedMs": 62481,
+      "rssKiB": 1371360
+    },
+    {
+      "elapsedMs": 63496,
+      "rssKiB": 1349632
+    },
+    {
+      "elapsedMs": 64512,
+      "rssKiB": 1333008
+    },
+    {
+      "elapsedMs": 65527,
+      "rssKiB": 1391040
+    },
+    {
+      "elapsedMs": 66552,
+      "rssKiB": 1290480
+    },
+    {
+      "elapsedMs": 67583,
+      "rssKiB": 1306192
+    },
+    {
+      "elapsedMs": 68611,
+      "rssKiB": 1225664
+    },
+    {
+      "elapsedMs": 69635,
+      "rssKiB": 1222288
+    },
+    {
+      "elapsedMs": 70658,
+      "rssKiB": 1032400
+    },
+    {
+      "elapsedMs": 71676,
+      "rssKiB": 1131200
+    },
+    {
+      "elapsedMs": 72700,
+      "rssKiB": 1112944
+    },
+    {
+      "elapsedMs": 73729,
+      "rssKiB": 1114736
+    },
+    {
+      "elapsedMs": 74763,
+      "rssKiB": 1116288
+    },
+    {
+      "elapsedMs": 75795,
+      "rssKiB": 1080592
+    },
+    {
+      "elapsedMs": 76819,
+      "rssKiB": 1095440
+    },
+    {
+      "elapsedMs": 77847,
+      "rssKiB": 816560
+    },
+    {
+      "elapsedMs": 78873,
+      "rssKiB": 434608
+    },
+    {
+      "elapsedMs": 79893,
+      "rssKiB": 409056
+    },
+    {
+      "elapsedMs": 80909,
+      "rssKiB": 413168
+    },
+    {
+      "elapsedMs": 81935,
+      "rssKiB": 441312
+    },
+    {
+      "elapsedMs": 82965,
+      "rssKiB": 447024
+    },
+    {
+      "elapsedMs": 83991,
+      "rssKiB": 450320
+    },
+    {
+      "elapsedMs": 85018,
+      "rssKiB": 451936
+    },
+    {
+      "elapsedMs": 86047,
+      "rssKiB": 492352
+    },
+    {
+      "elapsedMs": 87066,
+      "rssKiB": 503536
+    },
+    {
+      "elapsedMs": 88090,
+      "rssKiB": 599696
+    },
+    {
+      "elapsedMs": 89118,
+      "rssKiB": 602144
+    },
+    {
+      "elapsedMs": 90134,
+      "rssKiB": 606672
+    },
+    {
+      "elapsedMs": 91161,
+      "rssKiB": 583216
+    },
+    {
+      "elapsedMs": 92180,
+      "rssKiB": 584656
+    },
+    {
+      "elapsedMs": 93214,
+      "rssKiB": 586160
+    },
+    {
+      "elapsedMs": 94245,
+      "rssKiB": 590512
+    },
+    {
+      "elapsedMs": 95278,
+      "rssKiB": 591872
+    },
+    {
+      "elapsedMs": 96311,
+      "rssKiB": 596128
+    },
+    {
+      "elapsedMs": 97327,
+      "rssKiB": 603712
+    },
+    {
+      "elapsedMs": 98354,
+      "rssKiB": 729936
+    },
+    {
+      "elapsedMs": 99369,
+      "rssKiB": 944544
+    },
+    {
+      "elapsedMs": 100384,
+      "rssKiB": 1185040
+    },
+    {
+      "elapsedMs": 101401,
+      "rssKiB": 1278368
+    },
+    {
+      "elapsedMs": 102417,
+      "rssKiB": 1141392
+    },
+    {
+      "elapsedMs": 103433,
+      "rssKiB": 1158592
+    },
+    {
+      "elapsedMs": 104448,
+      "rssKiB": 1292560
+    },
+    {
+      "elapsedMs": 105465,
+      "rssKiB": 1249008
+    },
+    {
+      "elapsedMs": 106481,
+      "rssKiB": 1266608
+    },
+    {
+      "elapsedMs": 107508,
+      "rssKiB": 1267280
+    },
+    {
+      "elapsedMs": 108542,
+      "rssKiB": 1203856
+    },
+    {
+      "elapsedMs": 109562,
+      "rssKiB": 1204880
+    },
+    {
+      "elapsedMs": 110578,
+      "rssKiB": 1205952
+    },
+    {
+      "elapsedMs": 111609,
+      "rssKiB": 1209152
+    },
+    {
+      "elapsedMs": 112638,
+      "rssKiB": 1210768
+    },
+    {
+      "elapsedMs": 113669,
+      "rssKiB": 1212384
+    },
+    {
+      "elapsedMs": 114690,
+      "rssKiB": 1044592
+    },
+    {
+      "elapsedMs": 115712,
+      "rssKiB": 1069472
+    },
+    {
+      "elapsedMs": 116734,
+      "rssKiB": 1193456
+    },
+    {
+      "elapsedMs": 117769,
+      "rssKiB": 1209200
+    },
+    {
+      "elapsedMs": 118792,
+      "rssKiB": 1217280
+    },
+    {
+      "elapsedMs": 119825,
+      "rssKiB": 1228608
+    },
+    {
+      "elapsedMs": 120860,
+      "rssKiB": 1227488
+    },
+    {
+      "elapsedMs": 121894,
+      "rssKiB": 1234432
+    },
+    {
+      "elapsedMs": 122908,
+      "rssKiB": 1239808
+    },
+    {
+      "elapsedMs": 123925,
+      "rssKiB": 1237248
+    },
+    {
+      "elapsedMs": 124958,
+      "rssKiB": 1236384
+    },
+    {
+      "elapsedMs": 125986,
+      "rssKiB": 1237696
+    },
+    {
+      "elapsedMs": 127021,
+      "rssKiB": 1205536
+    },
+    {
+      "elapsedMs": 128056,
+      "rssKiB": 1206480
+    },
+    {
+      "elapsedMs": 129093,
+      "rssKiB": 1199264
+    },
+    {
+      "elapsedMs": 130108,
+      "rssKiB": 1242352
+    },
+    {
+      "elapsedMs": 131123,
+      "rssKiB": 1348544
+    },
+    {
+      "elapsedMs": 132137,
+      "rssKiB": 1419440
+    },
+    {
+      "elapsedMs": 133152,
+      "rssKiB": 1602496
+    },
+    {
+      "elapsedMs": 134168,
+      "rssKiB": 1631424
+    },
+    {
+      "elapsedMs": 135183,
+      "rssKiB": 1655888
+    },
+    {
+      "elapsedMs": 136198,
+      "rssKiB": 1661520
+    },
+    {
+      "elapsedMs": 137214,
+      "rssKiB": 1666224
+    },
+    {
+      "elapsedMs": 138229,
+      "rssKiB": 1684000
+    },
+    {
+      "elapsedMs": 139244,
+      "rssKiB": 1696880
+    },
+    {
+      "elapsedMs": 140260,
+      "rssKiB": 1696544
+    },
+    {
+      "elapsedMs": 141296,
+      "rssKiB": 1696720
+    },
+    {
+      "elapsedMs": 142330,
+      "rssKiB": 1697104
+    },
+    {
+      "elapsedMs": 143363,
+      "rssKiB": 1692656
+    },
+    {
+      "elapsedMs": 144396,
+      "rssKiB": 1692736
+    },
+    {
+      "elapsedMs": 145429,
+      "rssKiB": 1553408
+    },
+    {
+      "elapsedMs": 146463,
+      "rssKiB": 1560768
+    },
+    {
+      "elapsedMs": 147479,
+      "rssKiB": 1567504
+    },
+    {
+      "elapsedMs": 148504,
+      "rssKiB": 1688320
+    },
+    {
+      "elapsedMs": 149519,
+      "rssKiB": 1755520
+    },
+    {
+      "elapsedMs": 150535,
+      "rssKiB": 1698608
+    },
+    {
+      "elapsedMs": 151550,
+      "rssKiB": 1698736
+    },
+    {
+      "elapsedMs": 152565,
+      "rssKiB": 1708000
+    },
+    {
+      "elapsedMs": 153581,
+      "rssKiB": 1684400
+    },
+    {
+      "elapsedMs": 154595,
+      "rssKiB": 1675168
+    },
+    {
+      "elapsedMs": 155610,
+      "rssKiB": 1675744
+    },
+    {
+      "elapsedMs": 156626,
+      "rssKiB": 1669952
+    },
+    {
+      "elapsedMs": 157660,
+      "rssKiB": 1670144
+    },
+    {
+      "elapsedMs": 158692,
+      "rssKiB": 1670736
+    },
+    {
+      "elapsedMs": 159720,
+      "rssKiB": 1671968
+    },
+    {
+      "elapsedMs": 160754,
+      "rssKiB": 1697168
+    },
+    {
+      "elapsedMs": 161777,
+      "rssKiB": 1697328
+    },
+    {
+      "elapsedMs": 162811,
+      "rssKiB": 1697568
+    },
+    {
+      "elapsedMs": 163845,
+      "rssKiB": 1697968
+    },
+    {
+      "elapsedMs": 164879,
+      "rssKiB": 1698128
+    },
+    {
+      "elapsedMs": 165901,
+      "rssKiB": 1700112
+    },
+    {
+      "elapsedMs": 166919,
+      "rssKiB": 1709520
+    },
+    {
+      "elapsedMs": 167951,
+      "rssKiB": 1711232
+    },
+    {
+      "elapsedMs": 168984,
+      "rssKiB": 1665264
+    },
+    {
+      "elapsedMs": 170019,
+      "rssKiB": 1493856
+    },
+    {
+      "elapsedMs": 171035,
+      "rssKiB": 1462080
+    },
+    {
+      "elapsedMs": 172059,
+      "rssKiB": 1363872
+    },
+    {
+      "elapsedMs": 173074,
+      "rssKiB": 1304752
+    },
+    {
+      "elapsedMs": 174104,
+      "rssKiB": 1306656
+    },
+    {
+      "elapsedMs": 175139,
+      "rssKiB": 1316592
+    },
+    {
+      "elapsedMs": 176158,
+      "rssKiB": 1287152
+    },
+    {
+      "elapsedMs": 177177,
+      "rssKiB": 1287392
+    },
+    {
+      "elapsedMs": 178193,
+      "rssKiB": 1288896
+    },
+    {
+      "elapsedMs": 179224,
+      "rssKiB": 1299424
+    },
+    {
+      "elapsedMs": 180259,
+      "rssKiB": 1300864
+    },
+    {
+      "elapsedMs": 181292,
+      "rssKiB": 1306352
+    },
+    {
+      "elapsedMs": 182336,
+      "rssKiB": 1305904
+    },
+    {
+      "elapsedMs": 183372,
+      "rssKiB": 1308688
+    },
+    {
+      "elapsedMs": 184387,
+      "rssKiB": 1252400
+    },
+    {
+      "elapsedMs": 185419,
+      "rssKiB": 1254592
+    },
+    {
+      "elapsedMs": 186453,
+      "rssKiB": 1255840
+    },
+    {
+      "elapsedMs": 187472,
+      "rssKiB": 1260224
+    },
+    {
+      "elapsedMs": 188497,
+      "rssKiB": 1272864
+    },
+    {
+      "elapsedMs": 189556,
+      "rssKiB": 1165440
+    },
+    {
+      "elapsedMs": 190577,
+      "rssKiB": 1045136
+    },
+    {
+      "elapsedMs": 191606,
+      "rssKiB": 1051872
+    },
+    {
+      "elapsedMs": 192639,
+      "rssKiB": 1056720
+    },
+    {
+      "elapsedMs": 193672,
+      "rssKiB": 1056928
+    },
+    {
+      "elapsedMs": 194705,
+      "rssKiB": 1057664
+    },
+    {
+      "elapsedMs": 195730,
+      "rssKiB": 1057792
+    },
+    {
+      "elapsedMs": 196763,
+      "rssKiB": 1057936
+    },
+    {
+      "elapsedMs": 197795,
+      "rssKiB": 917696
+    },
+    {
+      "elapsedMs": 198842,
+      "rssKiB": 761168
+    },
+    {
+      "elapsedMs": 199866,
+      "rssKiB": 758992
+    },
+    {
+      "elapsedMs": 200882,
+      "rssKiB": 721632
+    },
+    {
+      "elapsedMs": 201898,
+      "rssKiB": 721792
+    },
+    {
+      "elapsedMs": 202936,
+      "rssKiB": 704224
+    },
+    {
+      "elapsedMs": 203969,
+      "rssKiB": 704336
+    },
+    {
+      "elapsedMs": 205004,
+      "rssKiB": 705248
+    },
+    {
+      "elapsedMs": 206025,
+      "rssKiB": 641392
+    },
+    {
+      "elapsedMs": 207045,
+      "rssKiB": 640208
+    },
+    {
+      "elapsedMs": 208066,
+      "rssKiB": 640384
+    },
+    {
+      "elapsedMs": 209099,
+      "rssKiB": 640512
+    },
+    {
+      "elapsedMs": 210134,
+      "rssKiB": 638544
+    },
+    {
+      "elapsedMs": 211169,
+      "rssKiB": 637888
+    },
+    {
+      "elapsedMs": 212201,
+      "rssKiB": 638032
+    },
+    {
+      "elapsedMs": 213235,
+      "rssKiB": 638384
+    },
+    {
+      "elapsedMs": 214269,
+      "rssKiB": 466624
+    },
+    {
+      "elapsedMs": 215287,
+      "rssKiB": 414832
+    },
+    {
+      "elapsedMs": 216322,
+      "rssKiB": 400576
+    },
+    {
+      "elapsedMs": 217357,
+      "rssKiB": 384096
+    },
+    {
+      "elapsedMs": 218391,
+      "rssKiB": 384832
+    },
+    {
+      "elapsedMs": 219426,
+      "rssKiB": 385056
+    },
+    {
+      "elapsedMs": 220459,
+      "rssKiB": 385760
+    },
+    {
+      "elapsedMs": 221480,
+      "rssKiB": 385936
+    },
+    {
+      "elapsedMs": 222514,
+      "rssKiB": 386240
+    },
+    {
+      "elapsedMs": 223548,
+      "rssKiB": 386800
+    },
+    {
+      "elapsedMs": 224585,
+      "rssKiB": 386960
+    },
+    {
+      "elapsedMs": 225618,
+      "rssKiB": 387680
+    },
+    {
+      "elapsedMs": 226634,
+      "rssKiB": 382128
+    },
+    {
+      "elapsedMs": 227669,
+      "rssKiB": 382128
+    },
+    {
+      "elapsedMs": 228694,
+      "rssKiB": 383296
+    },
+    {
+      "elapsedMs": 229718,
+      "rssKiB": 382784
+    },
+    {
+      "elapsedMs": 230748,
+      "rssKiB": 383968
+    },
+    {
+      "elapsedMs": 231783,
+      "rssKiB": 384192
+    },
+    {
+      "elapsedMs": 232809,
+      "rssKiB": 384368
+    },
+    {
+      "elapsedMs": 233840,
+      "rssKiB": 384768
+    },
+    {
+      "elapsedMs": 234875,
+      "rssKiB": 385040
+    },
+    {
+      "elapsedMs": 235907,
+      "rssKiB": 408448
+    },
+    {
+      "elapsedMs": 236934,
+      "rssKiB": 409472
+    },
+    {
+      "elapsedMs": 237961,
+      "rssKiB": 412144
+    },
+    {
+      "elapsedMs": 238994,
+      "rssKiB": 412864
+    },
+    {
+      "elapsedMs": 240024,
+      "rssKiB": 397120
+    },
+    {
+      "elapsedMs": 241055,
+      "rssKiB": 397360
+    },
+    {
+      "elapsedMs": 242090,
+      "rssKiB": 398192
+    },
+    {
+      "elapsedMs": 243109,
+      "rssKiB": 398640
+    },
+    {
+      "elapsedMs": 244144,
+      "rssKiB": 397280
+    },
+    {
+      "elapsedMs": 245178,
+      "rssKiB": 398112
+    },
+    {
+      "elapsedMs": 246212,
+      "rssKiB": 399456
+    },
+    {
+      "elapsedMs": 247245,
+      "rssKiB": 400656
+    },
+    {
+      "elapsedMs": 248261,
+      "rssKiB": 401840
+    },
+    {
+      "elapsedMs": 249274,
+      "rssKiB": 340288
+    },
+    {
+      "elapsedMs": 250310,
+      "rssKiB": 344416
+    },
+    {
+      "elapsedMs": 251342,
+      "rssKiB": 350160
+    },
+    {
+      "elapsedMs": 252374,
+      "rssKiB": 353056
+    },
+    {
+      "elapsedMs": 253401,
+      "rssKiB": 358800
+    },
+    {
+      "elapsedMs": 254422,
+      "rssKiB": 359504
+    },
+    {
+      "elapsedMs": 255446,
+      "rssKiB": 360256
+    },
+    {
+      "elapsedMs": 256469,
+      "rssKiB": 361008
+    },
+    {
+      "elapsedMs": 257494,
+      "rssKiB": 361744
+    },
+    {
+      "elapsedMs": 258519,
+      "rssKiB": 362976
+    },
+    {
+      "elapsedMs": 259544,
+      "rssKiB": 363584
+    },
+    {
+      "elapsedMs": 260566,
+      "rssKiB": 368016
+    },
+    {
+      "elapsedMs": 261587,
+      "rssKiB": 368736
+    },
+    {
+      "elapsedMs": 262608,
+      "rssKiB": 520736
+    },
+    {
+      "elapsedMs": 263630,
+      "rssKiB": 526448
+    },
+    {
+      "elapsedMs": 264645,
+      "rssKiB": 526960
+    },
+    {
+      "elapsedMs": 265667,
+      "rssKiB": 527888
+    },
+    {
+      "elapsedMs": 266688,
+      "rssKiB": 541200
+    },
+    {
+      "elapsedMs": 267703,
+      "rssKiB": 548736
+    },
+    {
+      "elapsedMs": 268727,
+      "rssKiB": 548928
+    },
+    {
+      "elapsedMs": 269751,
+      "rssKiB": 552384
+    },
+    {
+      "elapsedMs": 270778,
+      "rssKiB": 565648
+    },
+    {
+      "elapsedMs": 271807,
+      "rssKiB": 573504
+    },
+    {
+      "elapsedMs": 272838,
+      "rssKiB": 573648
+    },
+    {
+      "elapsedMs": 273864,
+      "rssKiB": 572176
+    },
+    {
+      "elapsedMs": 274896,
+      "rssKiB": 572304
+    },
+    {
+      "elapsedMs": 275927,
+      "rssKiB": 572544
+    },
+    {
+      "elapsedMs": 276943,
+      "rssKiB": 572592
+    },
+    {
+      "elapsedMs": 277978,
+      "rssKiB": 571392
+    },
+    {
+      "elapsedMs": 279006,
+      "rssKiB": 571760
+    },
+    {
+      "elapsedMs": 280039,
+      "rssKiB": 572048
+    },
+    {
+      "elapsedMs": 281072,
+      "rssKiB": 572176
+    },
+    {
+      "elapsedMs": 282106,
+      "rssKiB": 572272
+    },
+    {
+      "elapsedMs": 283141,
+      "rssKiB": 573296
+    },
+    {
+      "elapsedMs": 284174,
+      "rssKiB": 573376
+    },
+    {
+      "elapsedMs": 285204,
+      "rssKiB": 573568
+    },
+    {
+      "elapsedMs": 286237,
+      "rssKiB": 573712
+    },
+    {
+      "elapsedMs": 287271,
+      "rssKiB": 573968
+    },
+    {
+      "elapsedMs": 288286,
+      "rssKiB": 574128
+    },
+    {
+      "elapsedMs": 289322,
+      "rssKiB": 574368
+    },
+    {
+      "elapsedMs": 290339,
+      "rssKiB": 574480
+    },
+    {
+      "elapsedMs": 291372,
+      "rssKiB": 574592
+    },
+    {
+      "elapsedMs": 292407,
+      "rssKiB": 574720
+    },
+    {
+      "elapsedMs": 293437,
+      "rssKiB": 574768
+    },
+    {
+      "elapsedMs": 294470,
+      "rssKiB": 574880
+    },
+    {
+      "elapsedMs": 295502,
+      "rssKiB": 575056
+    },
+    {
+      "elapsedMs": 296535,
+      "rssKiB": 575104
+    },
+    {
+      "elapsedMs": 297560,
+      "rssKiB": 562608
+    },
+    {
+      "elapsedMs": 298593,
+      "rssKiB": 525664
+    },
+    {
+      "elapsedMs": 299609,
+      "rssKiB": 632256
+    },
+    {
+      "elapsedMs": 300665,
+      "rssKiB": 1008928
+    },
+    {
+      "elapsedMs": 301681,
+      "rssKiB": 1060048
+    },
+    {
+      "elapsedMs": 302697,
+      "rssKiB": 1068928
+    },
+    {
+      "elapsedMs": 303712,
+      "rssKiB": 912880
+    },
+    {
+      "elapsedMs": 304743,
+      "rssKiB": 846944
+    },
+    {
+      "elapsedMs": 305759,
+      "rssKiB": 852880
+    },
+    {
+      "elapsedMs": 306773,
+      "rssKiB": 856832
+    },
+    {
+      "elapsedMs": 307789,
+      "rssKiB": 1003184
+    },
+    {
+      "elapsedMs": 308804,
+      "rssKiB": 1484032
+    },
+    {
+      "elapsedMs": 309829,
+      "rssKiB": 1839520
+    },
+    {
+      "elapsedMs": 310849,
+      "rssKiB": 924848
+    },
+    {
+      "elapsedMs": 311866,
+      "rssKiB": 928080
+    },
+    {
+      "elapsedMs": 312899,
+      "rssKiB": 933392
+    },
+    {
+      "elapsedMs": 313923,
+      "rssKiB": 933776
+    },
+    {
+      "elapsedMs": 314950,
+      "rssKiB": 934256
+    },
+    {
+      "elapsedMs": 315982,
+      "rssKiB": 934688
+    },
+    {
+      "elapsedMs": 317001,
+      "rssKiB": 939088
+    },
+    {
+      "elapsedMs": 318017,
+      "rssKiB": 939552
+    },
+    {
+      "elapsedMs": 319051,
+      "rssKiB": 914800
+    },
+    {
+      "elapsedMs": 320077,
+      "rssKiB": 915264
+    },
+    {
+      "elapsedMs": 321111,
+      "rssKiB": 757968
+    },
+    {
+      "elapsedMs": 322137,
+      "rssKiB": 782240
+    },
+    {
+      "elapsedMs": 323167,
+      "rssKiB": 789744
+    },
+    {
+      "elapsedMs": 324197,
+      "rssKiB": 790208
+    },
+    {
+      "elapsedMs": 325234,
+      "rssKiB": 791232
+    },
+    {
+      "elapsedMs": 326268,
+      "rssKiB": 931040
+    },
+    {
+      "elapsedMs": 327284,
+      "rssKiB": 987152
+    },
+    {
+      "elapsedMs": 328302,
+      "rssKiB": 913248
+    },
+    {
+      "elapsedMs": 329317,
+      "rssKiB": 933296
+    },
+    {
+      "elapsedMs": 330332,
+      "rssKiB": 939280
+    },
+    {
+      "elapsedMs": 331355,
+      "rssKiB": 958288
+    },
+    {
+      "elapsedMs": 332370,
+      "rssKiB": 1569840
+    },
+    {
+      "elapsedMs": 333397,
+      "rssKiB": 1864624
+    },
+    {
+      "elapsedMs": 334435,
+      "rssKiB": 819088
+    },
+    {
+      "elapsedMs": 335454,
+      "rssKiB": 820816
+    },
+    {
+      "elapsedMs": 336480,
+      "rssKiB": 824288
+    },
+    {
+      "elapsedMs": 337500,
+      "rssKiB": 825216
+    },
+    {
+      "elapsedMs": 338528,
+      "rssKiB": 826784
+    },
+    {
+      "elapsedMs": 339554,
+      "rssKiB": 827152
+    },
+    {
+      "elapsedMs": 340588,
+      "rssKiB": 828528
+    },
+    {
+      "elapsedMs": 341612,
+      "rssKiB": 836464
+    },
+    {
+      "elapsedMs": 342626,
+      "rssKiB": 630656
+    },
+    {
+      "elapsedMs": 343647,
+      "rssKiB": 635408
+    },
+    {
+      "elapsedMs": 344667,
+      "rssKiB": 733136
+    },
+    {
+      "elapsedMs": 345683,
+      "rssKiB": 790480
+    },
+    {
+      "elapsedMs": 346697,
+      "rssKiB": 778240
+    },
+    {
+      "elapsedMs": 347711,
+      "rssKiB": 792720
+    },
+    {
+      "elapsedMs": 348733,
+      "rssKiB": 820160
+    },
+    {
+      "elapsedMs": 349748,
+      "rssKiB": 830656
+    },
+    {
+      "elapsedMs": 350762,
+      "rssKiB": 1082592
+    },
+    {
+      "elapsedMs": 351778,
+      "rssKiB": 1777600
+    },
+    {
+      "elapsedMs": 352796,
+      "rssKiB": 1299568
+    },
+    {
+      "elapsedMs": 353820,
+      "rssKiB": 892592
+    },
+    {
+      "elapsedMs": 354854,
+      "rssKiB": 879232
+    },
+    {
+      "elapsedMs": 355888,
+      "rssKiB": 880080
+    },
+    {
+      "elapsedMs": 356904,
+      "rssKiB": 881536
+    },
+    {
+      "elapsedMs": 357936,
+      "rssKiB": 881840
+    },
+    {
+      "elapsedMs": 358968,
+      "rssKiB": 882064
+    },
+    {
+      "elapsedMs": 360002,
+      "rssKiB": 722464
+    },
+    {
+      "elapsedMs": 361029,
+      "rssKiB": 710512
+    },
+    {
+      "elapsedMs": 362056,
+      "rssKiB": 725472
+    },
+    {
+      "elapsedMs": 363090,
+      "rssKiB": 728976
+    },
+    {
+      "elapsedMs": 364120,
+      "rssKiB": 855760
+    },
+    {
+      "elapsedMs": 365137,
+      "rssKiB": 907520
+    },
+    {
+      "elapsedMs": 366151,
+      "rssKiB": 883952
+    },
+    {
+      "elapsedMs": 367166,
+      "rssKiB": 903472
+    },
+    {
+      "elapsedMs": 368180,
+      "rssKiB": 933360
+    },
+    {
+      "elapsedMs": 369196,
+      "rssKiB": 933600
+    },
+    {
+      "elapsedMs": 370218,
+      "rssKiB": 1448496
+    },
+    {
+      "elapsedMs": 371233,
+      "rssKiB": 1743712
+    },
+    {
+      "elapsedMs": 372250,
+      "rssKiB": 746176
+    },
+    {
+      "elapsedMs": 373267,
+      "rssKiB": 716000
+    },
+    {
+      "elapsedMs": 374298,
+      "rssKiB": 716816
+    },
+    {
+      "elapsedMs": 375327,
+      "rssKiB": 694976
+    },
+    {
+      "elapsedMs": 376360,
+      "rssKiB": 652064
+    },
+    {
+      "elapsedMs": 377394,
+      "rssKiB": 656864
+    },
+    {
+      "elapsedMs": 378422,
+      "rssKiB": 659488
+    },
+    {
+      "elapsedMs": 379455,
+      "rssKiB": 663536
+    },
+    {
+      "elapsedMs": 380487,
+      "rssKiB": 667520
+    },
+    {
+      "elapsedMs": 381519,
+      "rssKiB": 671568
+    },
+    {
+      "elapsedMs": 382542,
+      "rssKiB": 696800
+    },
+    {
+      "elapsedMs": 383576,
+      "rssKiB": 699424
+    },
+    {
+      "elapsedMs": 384609,
+      "rssKiB": 701856
+    },
+    {
+      "elapsedMs": 385640,
+      "rssKiB": 704176
+    },
+    {
+      "elapsedMs": 386668,
+      "rssKiB": 706496
+    },
+    {
+      "elapsedMs": 387699,
+      "rssKiB": 795392
+    },
+    {
+      "elapsedMs": 388719,
+      "rssKiB": 820176
+    },
+    {
+      "elapsedMs": 389738,
+      "rssKiB": 843440
+    },
+    {
+      "elapsedMs": 390763,
+      "rssKiB": 851984
+    },
+    {
+      "elapsedMs": 391786,
+      "rssKiB": 941216
+    },
+    {
+      "elapsedMs": 392801,
+      "rssKiB": 964080
+    },
+    {
+      "elapsedMs": 393817,
+      "rssKiB": 1232560
+    },
+    {
+      "elapsedMs": 394853,
+      "rssKiB": 1530720
+    },
+    {
+      "elapsedMs": 395901,
+      "rssKiB": 1958752
+    },
+    {
+      "elapsedMs": 396937,
+      "rssKiB": 2067520
+    },
+    {
+      "elapsedMs": 397972,
+      "rssKiB": 1937152
+    },
+    {
+      "elapsedMs": 399032,
+      "rssKiB": 1944960
+    },
+    {
+      "elapsedMs": 400059,
+      "rssKiB": 2023904
+    },
+    {
+      "elapsedMs": 401090,
+      "rssKiB": 2129216
+    },
+    {
+      "elapsedMs": 402119,
+      "rssKiB": 2092944
+    },
+    {
+      "elapsedMs": 403147,
+      "rssKiB": 2106528
+    },
+    {
+      "elapsedMs": 404175,
+      "rssKiB": 2104976
+    },
+    {
+      "elapsedMs": 405202,
+      "rssKiB": 2029600
+    },
+    {
+      "elapsedMs": 406240,
+      "rssKiB": 2036320
+    },
+    {
+      "elapsedMs": 407269,
+      "rssKiB": 1832896
+    },
+    {
+      "elapsedMs": 408300,
+      "rssKiB": 2348672
+    },
+    {
+      "elapsedMs": 409330,
+      "rssKiB": 2427744
+    },
+    {
+      "elapsedMs": 410359,
+      "rssKiB": 2390240
+    },
+    {
+      "elapsedMs": 411390,
+      "rssKiB": 1131392
+    },
+    {
+      "elapsedMs": 412428,
+      "rssKiB": 820656
+    },
+    {
+      "elapsedMs": 413476,
+      "rssKiB": 820752
+    },
+    {
+      "elapsedMs": 414524,
+      "rssKiB": 820752
+    },
+    {
+      "elapsedMs": 415574,
+      "rssKiB": 845120
+    },
+    {
+      "elapsedMs": 416610,
+      "rssKiB": 845152
+    },
+    {
+      "elapsedMs": 417661,
+      "rssKiB": 845168
+    },
+    {
+      "elapsedMs": 418712,
+      "rssKiB": 845168
+    },
+    {
+      "elapsedMs": 419762,
+      "rssKiB": 846848
+    },
+    {
+      "elapsedMs": 420813,
+      "rssKiB": 677872
+    },
+    {
+      "elapsedMs": 421862,
+      "rssKiB": 680000
+    },
+    {
+      "elapsedMs": 422915,
+      "rssKiB": 680048
+    },
+    {
+      "elapsedMs": 423963,
+      "rssKiB": 147296
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "fixture",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "browser",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "localAnvilBinary": "22d5eeb9e70e198d0feb76a15bb97d2061b653798080dad0cc328ab20495b0bd",
+    "scripts/t04-metamask.mjs": "557d3f1088fc5a7e49ebb716ee06f7fb86e278dab37770a0bc04e0af514c5baa",
+    "scripts/t04-browser-performance.mjs": "da670983c6fb7bde4d05a3feceba5bbefbd47bfa5c79f961a5e74dc4deaed47b",
+    "scripts/t04-browser-funding.mjs": "7d7b65059be0a9bc1e4737065da6b7bb6449424b5d4bdc6cdd601e091d591eae",
+    "scripts/t04-cold-browser-fees.mjs": "9d6d558bdf7ec53b1b1ebd1e0d81ef771f9add3e460b56ddb43e19b53d250466",
+    "scripts/w01-unfunded-wallet.mjs": "413ad7864e3d7be5846f12f25aac456289e4cc895a6911985a7e6b4ed7241b2c",
+    "scripts/application-post.mjs": "b353f152b9699d407a8e32af659c730e85429757ee5c721d2532bb1ff46cb11f",
+    "scripts/t04-wallet-absence.mjs": "68bbd62f8ce00c6f9bb28603c4604ea37399c422d70d555f29af48b0e9b1aaff",
+    "scripts/t04-withdraw-traffic.mjs": "bd117106e45c71e5dac839c5b0a068cdc372c47ce123330b5f9a80bfc3049a3c",
+    "scripts/t03-repeated-posts.mjs": "32a689127efa9c5bfc4b6439c44d60b5c6007e3872baa957399427db5614548b",
+    "scripts/o01-censor-command-flow.mjs": "084cbe32ce4cf9d6d2f499b7fcd14caea7bc6087639b302085f411dd46c18620",
+    "scripts/o01-censor-command-io.mjs": "33241513fa6d7b1fcd02a0b282c8eb2dec9529020ba8d69b7e8ef165afce0ac8",
+    "scripts/t04-browser-journey.mjs": "89de5797546bf7013641af3f8fce3ebc5b4ea7096c73f96d9660de0e318cb0cc",
+    "scripts/t04-browser-journey-verify.mjs": "24273b6875e77bdb62b7e7af59f745e3fadb4676b83a3239a371792fff6ccfc9",
+    "scripts/t04-browser-post-recovery.mjs": "0883fbea8e5d11bfe16bd2ae3a4d3c4950452828f1b2104ccb05740ddd86b129",
+    "scripts/t04-post-response-loss.mjs": "e2252661599cd245a749cb5d5a02be97be3eaee8446e67c8cda0d1c815fee46f",
+    "scripts/run-bounded-browser-check.mjs": "7af2410c85fe52dde3d655d64f271a1f6eefb18d0bbf7fc55f731f00bd85e9f0",
+    "scripts/u01-browser-flow.mjs": "01c6b294aab8261ed5caab1274761f8fbdef06aab67e5bca0ee4e1a783033c79",
+    "scripts/u01-browser-post-verify.mjs": "e7de1e7f1c4c1a55e937b1ca4a18766c7c3e26d8006284c35b9f974e2775cec7",
+    "scripts/u01-browser-post.mjs": "d619f0019261cf879e9c53cacd17c70046f59b48bd0f9a97a8c6ef3373aa31d2",
+    "scripts/browser-error-observer.mjs": "0a54ad2eb04df064622f580c9f47dda956e1f0d1d226367f58f2034fba84c432",
+    "scripts/u01-browser-rpc.mjs": "03b79a31ceed9e849fec185500c7e406f410fc94d3460e34a71ea0676d440ced",
+    "scripts/t03-rpc-observer.mjs": "384ef12f6980f04932e3f0a37e60434cb649293f9621787ca9bc0f23c2adafd5",
+    "scripts/t03-public-footprint.mjs": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d",
+    "scripts/c01-native-profile.mjs": "a3e5b526210247329bf1c936d3590e826db8fcf5e0cc6700d266986ec15967d0",
+    "scripts/test-c01-application.mjs": "479f63fbe482f38699d7ed6e950abd2e2f746c3ffebf29fd8d42dda12a3b7fbf",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "scripts/c01-settle-application-message.mjs": "13cb8cfe07b27382e1a160765f487fcecb8b3b306a8601623f864837578458ba",
+    "scripts/c01-application-deployment.mjs": "3f02b5d3076321cc85fcf94309571f86ff892cc5381411258b8d0bdbfef71aa1",
+    "scripts/w03-note-attribution.mjs": "779e2a17762688ff8977f3af73dea93a17a6c5f57d640e1e0b60b2994f734924",
+    "shared/application-nullifier.mjs": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+    "scripts/w03-proof-recovery.mjs": "d59facfb1a0809a771a4619671d6c85f6058a87911e331342b645832b4b25de3",
+    "shared/l2-journal.mjs": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+    "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+    "shared/journal-backup.mjs": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+    "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+    "scripts/w02-wallet-restore.mjs": "075e36e2ad77486618e002b99a162a739ace47364ce9bbe4e35dc8fd60afa672",
+    "shared/wallet-backup.js": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+    "scripts/w01-private-fee-standalone.mjs": "3d44f41fdf94a8c150cc9475bbbfe49d35d62fd31f2dc62bfcbe3c7d9efa93b8",
+    "scripts/w01-refund-revert.mjs": "e92db072157b2f59de86882645544820fb22be27461f119de9e68bc19394ba97",
+    "scripts/w01-private-fee-flow.mjs": "934a1430b79c34e0b92ea1b5720be807ada6bcd6c6d6999806f93226184faba4",
+    "scripts/w01-private-funding.mjs": "7d474d160bde5e4a966c5f9577e7de7bd63768bc9f8c7cd3be446bb38ffdbcf8",
+    "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+    "shared/private-fee-payment.mjs": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+    "shared/private-fee-funding.mjs": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+    "shared/ethereum-journal.mjs": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "apps/src/billboard/user/transaction-journal-store.mjs": "abb9af112709a4e4ed3197de86ef058a4b06e3c63b1588861f6411b1629c443a",
+    "scripts/c01-settle-ready.mjs": "cf0a0e4a531e938b601f4fdf13ce336a9d453435f3df70e2be38f6d2e2d93d1c",
+    "scripts/c01-settle-message.mjs": "4e9bc2eeb7dad873311045c49f89b0b53c5ccd4f34d0516924e47338773ed132",
+    "scripts/c01-bridge-flow.mjs": "170e8eb6642a083d127ee58dfa3e11db95e12ead5a6153607285783827387080",
+    "scripts/c02-screening-flow.mjs": "b4211db1a37473344be664c90fc52a46b89b48bd4c02f72f4d7c1cd008c48091",
+    "scripts/t02-screening-journey.mjs": "cc929409563a4254b3abf0b6f5edc3969807a19d1edb8d64797add5ccd1558b9",
+    "scripts/t02-redeposit-flow.mjs": "7166acd8e072bac5156d103be317790bfd6226543204c7ca3335bb72fc9cdd3d",
+    "scripts/t02-wrong-origin.mjs": "fb669443a3a42973cf53fbf6656fcb7ebb457764951a92b8717c3904f18369d7",
+    "scripts/t02-claim-boundary.mjs": "e3eb38f5644a56a4ac3d8c0a425d78d6857118a2d7716e15f71c1891dad207c5",
+    "scripts/test-t02-claim-boundary.mjs": "d02fe4102d85c4d510b707a2b64781c3d37512eb68fac1f9cccabd5c87724ccc",
+    "node_modules/@aztec-labs/pxe/src/node/caching_aztec_node.ts": "637cf1f3c53c5115a6c6ba4073d769a72930f4cf5b3e3a4c9d801da6e644db52",
+    "node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js": "f1e9cf066fb78c47c0ec836413247a085502af99a521129833bf99c281eb7865",
+    "node_modules/@aztec-labs/pxe/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "node_modules/@aztec-labs/pxe/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+    "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/InboxAbi.js": "cda5a4580d11c0f7ec7bd88911b928d6f42379739c3abb411888a779842c43f2",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Inbox.sol": "7dc210e25c63154ea759814d1d93675f1e431ced5438c0983ee6104c62fee46e",
+    "scripts/t02-redeposit-replay.mjs": "c8a358b33d08f205464d18d91e22312e661b07bbfa0491e8a72ea63d3363c53b",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/OutboxAbi.js": "858df4a22ebe4f45f2ea28757a69aab34417abb0651da58e549a1d34e2b11d7b",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Outbox.sol": "de268cae33268c6ce8538d687b3612b090d37052a270846e233717520f9df212",
+    "scripts/c03-author-claims.mjs": "f3b64689b874503b338df22eb9092dc97aadf0d5dba935b36db90ac209ddd0f4",
+    "scripts/c03-contention-flow.mjs": "66c03662704036fd0dccd101334af34aacadc1e6db8d957960117aa330ea3024",
+    "scripts/c01-client-mining.mjs": "a71e800a541776464f7479ea9fa4ea5e0edc6d44f3745f2fcb5c1639d9b07197",
+    "scripts/c01-deposit-flow.mjs": "972bffc1bb3d97eebf5ce145541edc6f6981fd84976ae4d1fcf886a1b3349f01",
+    "scripts/c01-exit-flow.mjs": "b98fc5c964238871d6a83fc7d863b0dd3a698a0d12b7171ee3943f6fc17322a7",
+    "scripts/c01-withdraw-l1.mjs": "09323ce30632abd6180c6530adedf63eee4f453f5ce8e3ce1da19f85b24915fe",
+    "scripts/c01-ready-flow.mjs": "4afc91235e1c290b329932f400e3a72fa4d06e269d28131598000e0cd47209fa",
+    "scripts/c01-board-inclusion.mjs": "b7958b1267b0f1c88d2afbab417dc85250eb502dabbffd7269763c72d0c355c7",
+    "scripts/c01-board-flow.mjs": "ed5d3eabb1476d52d6eb505ec8feef7fc015d8daa8ad5e0f37ec6c0940c78c5b",
+    "scripts/c01-real-node.mjs": "7090858471f1331aafa1d9289507a666cf657874f0215f5260e61766c6355822",
+    "scripts/toolchain.mjs": "072a82f69135f7c98468141debf2a83bc16baf187a3d8c6d5eb1090caf255f7f",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "node_modules/@aztec-labs/ethereum/dest/deploy_aztec_l1_contracts.js": "3d0d212408324359a3501fc4ab35ca546b6fae1c5ea432ee45fe4b3006941da9",
+    "plugins/account-client.mjs": "47c185f745fa57f5a118dd5dcdfba501005e839a704fabb4ded572c7415ef5b2",
+    "plugins/account-view.mjs": "a4b317f90680fdf0aba8e6e3b4ef011547a0bfebbb5d3fe7d7fca85c2ffbba5e",
+    "plugins/agent.mjs": "b407517c6d0ffadccaa909dfa797c19944721c1e7cc7d960a4ea55040f0345fc",
+    "plugins/application.mjs": "9a49562a2b37743feaaea426f99b0cdb09f432c1b9bf4d1b7683a2ca8ab43eb5",
+    "plugins/aztec.mjs": "b58ffcd7e05a6312ef7280dace9603edb881dbc541e82ae465556cae323a091c",
+    "plugins/bok.mjs": "f278892c1656ae60098eb62753730fb1a60f8902d9447e752f83ebc44cc2382e",
+    "plugins/client.mjs": "0bf931829f0b22c7b47ce3f4debb40d7579f15f917715890973f3fa807e2c8c7",
+    "plugins/create-actor.mjs": "1be5d83bb28d02f8febdce6755eeaf878a27c4920bb3b9167f4825ac7cfbee3c",
+    "plugins/escrow-service.mjs": "9dfc6c5c393a1e121a0eecbd5ad9f8c5520a7abb99aa700be5c76e146235c50b",
+    "plugins/escrow.mjs": "272c39b495f4d9020a15d422f3f6a1d08ed2c229c9ebf3f3b6ee2737883e5138",
+    "plugins/funding-receipt.mjs": "eff4a3ea73fc0bea4f4337ce9c480a543f91765192cacba17c03bef11e848085",
+    "plugins/github-tools.mjs": "00a141f259da1e035c28018dd4b7ed38866565856995537e7bd779b631a83011",
+    "plugins/invocation.mjs": "b064e27f4849cbaa9782fde1c7202381cb095ec96b3376a877e60418c2bbae29",
+    "plugins/main.mjs": "bd47ced5d30812b45c2dec3263a30c94974f596502f19882196743572c296e8e",
+    "plugins/metering.mjs": "d2247b49e2bfa79477884b7ab209e9648db1511d589a074f4cde852d9f1dd4d6",
+    "plugins/operations.mjs": "eb773cf2e9a77bc372950e13ad46c158a0fab7464634600f58760764b8725119",
+    "plugins/operator.mjs": "b21419c04b76a06bbceec80b0fcf076885a210414be864efbd846922ed3dae33",
+    "plugins/private-bok-escrow.mjs": "009a9c56d80507fba9c37c09ca88907a4105bcac8bb94d3fe1ff709e6352beab",
+    "plugins/private-bok-metering.mjs": "6b39eed0d2c6750efcc7fac9385782bb08f84c19e92239252109d75e47a01320",
+    "plugins/private-bok-metering.test.mjs": "047ef58ecfca87ad7b3b5e60b5a7e34060f0d87596a1e71465665b6f0afd2351",
+    "plugins/protocol.mjs": "3db05f013e6c40e4f41a9cc5808c743f1ac127707a867f0f679b95da5b66d458",
+    "plugins/request-status.mjs": "c7e7fa44f97647483614ba3ec6755bd2eb3f9d845392e2404986e2f08def311a",
+    "plugins/treasury-cctp.mjs": "f8cf3369636cc452ec2ddc0cfb873537bf7897f133d8c6e0269c093fb15436eb",
+    "plugins/treasury.mjs": "c534039593db0857ffdc773eff45528be2ff97e0d6b7cf1760f9356e355cd731",
+    "plugins/venice-cli.mjs": "cfbace906f0e8dac362270719588607346d4e4454d6be1d766ca6402fa66ec6b",
+    "plugins/venice-diagnostics.mjs": "06ba9e6f368bed032e711be194fe65b965bbb8cf6c1906a77ab7ca7b605fd99b",
+    "plugins/venice-metered.mjs": "0f49d26b5cbcf202f4bcae9337ec4780097d8bd0d5baee1e85a2702ead1403ed",
+    "plugins/venice.mjs": "411bc6329071553fc7c782a5bbd45f5287ff3186e4e934cc8585584805866129",
+    "shared/aztec-node-client.mjs": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+    "shared/routed-kernel-prover.mjs": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+    "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "shared/remote-prover-client.mjs": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+    "shared/proving-policy.mjs": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+    "shared/private-fee-estimation.mjs": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+    "shared/private-fee-simulation.mjs": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+    "shared/sdk-entry.mjs": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "shared/public-feed-storage.mjs": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+    "shared/public-feed-file-storage.mjs": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+    "scripts/rolling-public-server.mjs": "568dcbad153efb9f67f043e02ef50441df557c61f2d675e6d05d4d7424adbbd2",
+    "apps/rolling/start.mjs": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+    "apps/rolling/reader-client.mjs": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+    "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+    "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+    "shared/rolling/application.test.mjs": "e3ca828d3f4b87f2aeb7aeb80c4e738540f96c354f11464c512270f07f2b6a8d",
+    "shared/rolling/deployment.mjs": "37ac263fe5d6f0fe35b0c1c5125408c99b149d4fff76c51806e68b25d59e31a5",
+    "shared/rolling/deployment.test.mjs": "3561446ecb6fcb0e0159ed60c7d66ffdb079b4b2907060cd7ba10bc8785e9640",
+    "shared/rolling/funding-receipts.mjs": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+    "shared/rolling/funding-receipts.test.mjs": "286eff80f20e1cf8dedb6aef4fa658d077d5dfffa7e49ff3951057ec7a2c55e8",
+    "shared/rolling/invocation.mjs": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+    "shared/rolling/invocation.test.mjs": "f2bdc2a0a92ced221096a0b738b367c4576727fb57b32eae0702858c5c7a629b",
+    "shared/rolling/name-policy.mjs": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+    "shared/rolling/name-policy.test.mjs": "dc41c57f8483036169bfd25bcf0da297f357fa486296baa2ea3d6b2439ae358c",
+    "shared/rolling/public-events.mjs": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+    "shared/rolling/public-events.test.mjs": "b6b9c4fc0cd8295e153078922e81f42f0271471a8303be479f213773518b1414",
+    "shared/rolling/public-index.mjs": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+    "shared/rolling/public-index.test.mjs": "cfe30b187d4ae981d0aa9e8e2b3bb17e755f6e9c940d153be0bd8e17450942a2",
+    "shared/rolling/public-projection.mjs": "977e8ce9ecef21d0b5ce1e4b63492531f6425725c7459485a34470f0797086e7",
+    "shared/rolling/public-projection.test.mjs": "2c536039a654f25756a41dade8653ba389a44f7d091ed3331856590c2ea1551b",
+    "shared/rolling/synchronized-application.mjs": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+    "shared/rolling/synchronized-application.test.mjs": "ade03c20625919899906912d74eb7ab437841f3581ad38d0b27a5e9212d8c403",
+    "prover/application-policy.mjs": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+    "prover/application-policy.test.mjs": "f18dd45c54003ea34d4944129c586138a7588281da0f1e2b91ecb8117a3558b0",
+    "prover/catalog.mjs": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+    "prover/interfaces.mjs": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+    "prover/native-binary.mjs": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+    "prover/pin-rolling-artifacts.mjs": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+    "prover/plugin-policy.mjs": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+    "prover/private-query.integration.test.mjs": "e54fbcffab5c45ec210c11006ff1bd8ed9b05d9a8e0e91f43d9999013eb76d14",
+    "prover/private-query.mjs": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+    "prover/private-query.test.mjs": "ecea091df7e574683bcc2ff461813e17c11e4bbb1d54cd3f4365834b7f94740e",
+    "prover/process-worker.mjs": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+    "prover/qualify-runtime.mjs": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+    "prover/qualify-runtime.test.mjs": "bbbb7877266bb05e313f2f3a02e33f6d69578be6f71efe577feb7fe4fb05c6c6",
+    "prover/queue.mjs": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+    "prover/rolling-artifacts.mjs": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+    "prover/runtime.mjs": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+    "prover/server.mjs": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+    "prover/service.mjs": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+    "prover/start.mjs": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+    "prover/worker.mjs": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+    "scripts/testing/assets.mjs": "28d8cbfe0602a849c7c5227b25e38ad2cd918ada172033ae5d555477a7d6a378",
+    "scripts/testing/browser-worker.mjs": "327ddab3f87d8e23e83e113f3f17245f592bde41b0813212a562dc446e3a2ba3",
+    "scripts/testing/fixture-worker.mjs": "ad7e5261fe59104fb12162dd0e188012dbc97fbbe935492d445765b23e230fbe",
+    "scripts/testing/private-bok-fees.mjs": "6f1b490dd78c98dcc8d88679b9e672314268c268bc93d40f9a78e24ee6b5ac06",
+    "scripts/testing/private-bok-fees.test.mjs": "5313068d67b87cb4eb8491284521be0d56e2f9209407798cce00934f886c96ef",
+    "scripts/testing/private-bok-fixture.mjs": "97bb79fc1d90193746fdf5ef07cc2ed2ed78301663925c9b1f60b2f64d9b73b2",
+    "scripts/testing/private-bok-fixture.test.mjs": "60de3c60a4aa6c04b28fdbbd1f6d46f38875c0963c96371e06f7f398cc514deb",
+    "scripts/testing/private-bok-node-observer.mjs": "412f54290494092027ce8045ae4a48dcff8f1d393c8c3eb6ba6de0990dac0cf4",
+    "scripts/testing/private-bok-node-observer.test.mjs": "4b98cc5f3d81ee676fc47a12401cd6d8812be284c85ba036dee2ae2a2ebfed37",
+    "scripts/testing/private-bok-provider-coordinator.mjs": "5a368f446c761d7c6463148e056f094161b2965712ee6bf98314d01c2d2d0064",
+    "scripts/testing/private-bok-provider-coordinator.test.mjs": "153cfe8de4e3747754ca952f31090ab1ab3c51f6de391bab0a5e31fd83a3b80f",
+    "scripts/testing/private-bok-provider-fixture.mjs": "f6c01cabd3b11844132db66e7c64cf7b7faee442d118ffcb8cf20d8c443a7726",
+    "scripts/testing/private-bok-provider-fixture.test.mjs": "e3ed754db278d094954d0a8b1484a10dec151362c1b81713d204614270ab6597",
+    "scripts/testing/private-bok-provider-worker.mjs": "240868ea6bfa9c50ee5e04efc6758d1406139cc2900a5ef71041e02d521fc730",
+    "scripts/testing/private-bok-provider-worker.test.mjs": "46f67d02287a1fb245fe78893b278fa63c0c072e7019d8e8f437d50c39938232",
+    "scripts/testing/process-tree.test.mjs": "8779a55199ed6a475faa6ceee7ad4c8eb866ce3b16b7a661ebbf042fdcd255a2",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+    "scripts/testing/remote-prover-fixture.mjs": "be11a671a67564dae3a5be6a991d9fc82fff6694e51a9b9038d55b3b5414f1b0",
+    "scripts/testing/reverted-finality.mjs": "e9b35772ed37ee1ec9623450c3caf9f3c09b77066d3da4fb90dae002f146b647",
+    "scripts/testing/reverted-finality.test.mjs": "a848e862ac85ecf7f2fa0abb7f3a9cdec1fb2d1363227b090acee51b94e516da",
+    "scripts/testing/rolling-account-reactions.mjs": "29826e9edf5cc71b9bc0569d16495f361927bd2625742a08625af4cdff2ee9df",
+    "scripts/testing/rolling-account-reactions.test.mjs": "8cd32e7fbc744dbbcdabd1b9ddd33d53cac73aeca6cdf7a03cdab75f30413076",
+    "scripts/testing/rolling-application-actor.mjs": "fe2af0833ad6282e4a2e18974851a2fe9e64e6279458c2ca5bdb32e925bd1696",
+    "scripts/testing/rolling-application-actor.test.mjs": "fb0eadd2cc48fcf6438ac95516f3c3a751a8acf59a23f7dbc91a711b73f9f67a",
+    "scripts/testing/rolling-application-fixture.mjs": "227fba7ee9c8aa787834e75adb72d287980631dc291cbd5b95f8624925544b4a",
+    "scripts/testing/rolling-application-fixture.test.mjs": "6c53787f04a6f06d48bedd4e956d6718abbdf71d21ab5dc0b768bb698f529f90",
+    "scripts/testing/rolling-bok-fixture.mjs": "28487c99ed1d4afc9873f12e9d536a7d8de0dba6e58c5a9f3b767c40cc08f5c6",
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/testing/rolling-composer-browser.test.mjs": "16a3c94e7cc52e92789470f88229a97218ea00d1672e6463552aaa7bdce08596",
+    "scripts/testing/rolling-composer-fixture.mjs": "02fe21e06187151f537f7777b191bc979c9a5fbe7e7afe1e6fccb40137b22b1e",
+    "scripts/testing/rolling-composer-fixture.test.mjs": "5439d39db3676a59606bd241b3b1b0a362fde758b4a94424ef527cdfa6a3853d",
+    "scripts/testing/rolling-native-artifacts.mjs": "6c8d367fc0c08098adaedcade88bf00d381b56c5cfdcef95d3755016aaae99b2",
+    "scripts/testing/rolling-native-artifacts.test.mjs": "b327c2da9d00172047eaf7e802be61ad933b1fb19ab56ce855c33ce2520b3048",
+    "scripts/testing/rolling-note-membership.mjs": "0821d9e3a170056990699bb1f332fbae0d08d04c7c80f6b0502b3a8bcf074558",
+    "scripts/testing/rolling-note-membership.test.mjs": "18ad64b3bed16cb81958c3b78ea223aa26001b39c1557ea0546be0c96bc59ca6",
+    "scripts/testing/rolling-owned-names.mjs": "2769f0c513977289a9128aa7c807a7169cb4e698d034f645f5bd0c4648e15d7d",
+    "scripts/testing/rolling-owned-names.test.mjs": "aa95c24335dd6b6cc040c68744877e9fd2f8b778fea72439e0deaf22ac9ed81a",
+    "scripts/testing/rolling-profile-acceptance.mjs": "419b0d78c7d81b9b9c1ae4d723d57d3af07e1fcca6b5e735afd97b640b46343c",
+    "scripts/testing/rolling-profile-acceptance.test.mjs": "49341304cb2332aeede5a96282afbe1291686dbedcc9c334b8afb300274fd4fe",
+    "scripts/testing/rolling-public-acceptance.mjs": "4e22f7bccb41252d4b65d2031ac468a7ee42186d62baf2a4b1a46573f9d889ad",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "bda0a402074a535ac593fd43b8319420c84bfc6c254d41e34c3328e5085c8a00",
+    "scripts/testing/rolling-removed-like.mjs": "d379d8b1e67d11e17adebbe029718cf72fd4487e0b242ea9fd84749ef68e0ee8",
+    "scripts/testing/rolling-removed-like.test.mjs": "7fcc7f655dde186e7c7e0b15d77082db754c79699c4c5bdc1da267c00968a1b3",
+    "scripts/testing/rolling-social-acceptance.mjs": "3df95179f567bfeda24127f28d5b2ab37d4a678a73429329a3f3f430ac28def7",
+    "scripts/testing/rolling-social-acceptance.test.mjs": "7fd3b08c40916c965882b2e480835b26d347974f3412a03a11cedd3fb2cca124",
+    "scripts/testing/rolling-wire-campaign.mjs": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "475709532b6c42dbaccb6def7c276ba311fe8149f23d0d48bffbf98159d96543",
+    "scripts/testing/rolling-wire-trace.mjs": "025dfe1d5d5aeddcec215861a65f6b4f0b7cf9a9b03ad0eb7b10828913e6cc92",
+    "scripts/testing/rolling-wire-trace.test.mjs": "2b710401bbdad174a07a9f5036d153c900f6781f125925e8b83afe41104c243e",
+    "scripts/testing/run-application.mjs": "c746228245c636190758955c57d2cf86251ea7fa305d3a374fc0f04501bbc494",
+    "scripts/testing/scenario-flows.mjs": "8848dc853e1a1a1191d7949ecaea4060c1c386a86462be993a77e542dd447a08",
+    "scripts/testing/scenarios.mjs": "39c477cbfdfa37eb26e13ad519071947974c2f75cd59a744d581c05890694f76",
+    "scripts/testing/sequencer-observation.mjs": "3525c4a3a63e89cc6fdfdb064a841ee445ce6395f640fc50268a56febee8e6de",
+    "scripts/testing/sequencer-observation.test.mjs": "f606ed32c7fee2ebefe5b08f38811741083404f684f5b21957ddac5cab63a166",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/testing/supervisor.test.mjs": "408262a671e08176e9b0ed150e0439318fb04a7566e22a74b90527d6b79cc938",
+    "scripts/testing/trusted-query-fixture.mjs": "f7e0a4e85da4d65e598cedc71b2c96382c9c8847f21bdd0d13d6c6c33b702347",
+    "scripts/testing/trusted-query-fixture.test.mjs": "90fb1248d7893319f78b832458d42f2e6c2d7687fb85cb9c092fd39a76fab315",
+    ".build/apps-manifest.json": "44798816c875c033a8376efe335d5d9f3376422009503d79a2d8e580a863432a",
+    ".build/sdk/sdk-manifest.json": "4c301f4d00803deb9928b83a284a1251059b7877da6866f01515c7b36c155a92",
+    "apps/dist/acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
+    "apps/dist/aztec_bundle.js": "a85aa5a425e3d238fb9788634afc524172edf2320a62fc5d9288c440babbfd92",
+    "apps/dist/bb-main.worker.js": "a20e91000929692e4dda7c9b99d273fa3a565d433a1918239aaebd88ca104174",
+    "apps/dist/bb-thread.worker.js": "80d2a3036eb1a04094200890d660fb503f7cc3103bdcb003b3ccea2fdfecc663",
+    "apps/dist/board-catalog.json": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+    "apps/dist/boards.html": "6e82d3d4511b9dc89e50ea79ac6d0771559f9da7f5428247e8110df3e68c5e74",
+    "apps/dist/censor.html": "82aba7b43e3de53fc189983c66f5595eb51c3211160af699ac3b5f6939b7640c",
+    "apps/dist/crs/crs-manifest.json": "0e80536b38ebba752bfe08b86466f1161e9324c9d5b6e666c8c20560db0aadda",
+    "apps/dist/crs/g1.dat": "8d6fb7829bcfbfeaf02a79104539bfd3777a328ec46d3331e37effca2ee1b416",
+    "apps/dist/crs/g1_uncompressed.dat": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac",
+    "apps/dist/crs/g2.dat": "01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f",
+    "apps/dist/crs/grumpkin_g1.dat": "b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9",
+    "apps/dist/deploy.html": "d79c9ea949f778834cc684ee19de300ee77081b4d173aa27c01225be81a4d5ee",
+    "apps/dist/fee-juice.html": "f408f021100de72ac53967abe754aae1607b5b3511df77924f0f56a30164fb83",
+    "apps/dist/feed.html": "4c03ad0a0b95989c538e97dbc05ce88d2fa3c716e26ce78fb7aa9c3af6be2634",
+    "apps/dist/noirc_abi_wasm_bg.wasm": "51dbfae8ef59b40e88f093fcc59df503a937649dd17ff4e5ecc1eeb4e95594d9",
+    "apps/dist/plugins.js": "1e6519a2fee39eae565d69596bb6c5a87e3de9aab11f874a69ec8bddb775f25f",
+    "apps/dist/public-feed-metadata.json": "c51cb431b36644c82f01cbea7233f37cbd4e61993591cd91e06e5d15ec35381e",
+    "apps/dist/public-feed.js": "f678aa8c9c22943de27d8d7d70e1c552de139ad08d7628afd1482043b21645c2",
+    "apps/dist/sdk-manifest.json": "4c301f4d00803deb9928b83a284a1251059b7877da6866f01515c7b36c155a92",
+    "apps/dist/sqlite.worker.js": "0da5c95c7f16ba09e3fef5621e3e46149a66c078412da9fb7b541d24e71b2367",
+    "apps/dist/sqlite3-opfs-async-proxy.js": "4ea2bcbd715b0d56089fc871ea241f8c5985d8669d1ddecaab4d56a8da806ce9",
+    "apps/dist/sqlite3.wasm": "e7600bc6d59b1459362c8c2d4686f733e26d58041b3cdc599929661ecfeb21ae",
+    "apps/dist/user.html": "5f2bdb51774a81f7f9eff7f61516dfa11597cf18c42a30c858f86dc6cf9b0274",
+    "apps/rolling/DESIGN.md": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+    "apps/rolling/README.md": "3e9b9e1033c617d1031e89e7bcaec3f9aeffda2ed90ee526dc1d3ee67e207240",
+    "apps/rolling/app.mjs": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+    "apps/rolling/avatar-upload.browser.test.mjs": "e97e6615e9d2bd1243331cd69e78ed53fbabb8adb4ae10a53050075febe704b5",
+    "apps/rolling/avatar-upload.mjs": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+    "apps/rolling/fixtures.mjs": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+    "apps/rolling/index.html": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+    "apps/rolling/live.html": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+    "apps/rolling/model.mjs": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+    "apps/rolling/model.test.mjs": "f4252a90a236a087d89beb8c89f23fe7b9a1a7fca75f21d85691186e3f567f3a",
+    "apps/rolling/navigation.mjs": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+    "apps/rolling/navigation.test.mjs": "8a1838c1291063cbdcfea890a35c03ba71386d17b5cf8a9d3ee874499a1074c4",
+    "apps/rolling/profile-view.browser.test.mjs": "86ce734abbda85a7159b4511a8152d814d3b52292ae4aa13b207f0d78e8885e7",
+    "apps/rolling/profile-view.mjs": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+    "apps/rolling/reader-client.test.mjs": "45af8ed0fbb363dfda976cd75c33e6c29bf841c1da1a8a9d443a31b6b5c7de28",
+    "apps/rolling/reader.browser.test.mjs": "467ce035d7137a9a98cbf9fdc6c92b4c17979a57b7181b9ae903d8e6dbc28862",
+    "apps/rolling/reader.mjs": "2567aece7a6dc79b8978299ae786e3a84991a3f2c5faf3b155c8176fdb2ff4fc",
+    "apps/rolling/serve.mjs": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+    "apps/rolling/start.test.mjs": "89dfec1200781b1e92aa8ffc31bfa0f616997e8eb59c24ef907a874d21c80dc5",
+    "apps/rolling/style.css": "2069395877e28a34db09adeb2f3da496a5fe541705859f7f6fcf7d7323a00712",
+    "apps/rolling/wallet-panel.browser.test.mjs": "8fd240b1f0609ef126bb68e7eded5f8054f9beb0e1dfcdf1c7845138473fb729",
+    "apps/rolling/wallet-panel.mjs": "67e5dc261d5d1e56b8500ec7965c4fb7d5e2ffd01f0cd2b9ec8ecb474ec61cfc",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "c404b67a72f10f3e40f809e38a9905fa71fce1655a79f37352f36094e1bd2e26",
+    "apps/rolling/wallet-runtime.mjs": "67b3868c5732c133cb39a90b93dc55750bcf419eecad6768f08c98f39dea7325",
+    "apps/rolling/wallet-session.mjs": "d3cbd87202efafc6b44a2512e3404feb8c92494f8c713d5e7efcca8f5e69eecd",
+    "apps/rolling/wallet-session.test.mjs": "6d855d6df2bc364010a3364119304e1ba8751e564991e71d4f9efc0be680a37b",
+    "scripts/rolling-wallet-assets.mjs": "a57fd1880f00af1718c2f632e01b299f1865ea6b3c775308f665b8af81fcc3de",
+    ".build/rolling-wallet/manifest.json": "3d8f52a661d15537952a0f4d300214d7d14aa772d9292a84a5bf6915ea511951",
+    "billboard/Nargo.toml": "c2ebd5861978eb15cf7f0f7501c1a849d1db8907ad17f9c8e2082128046b3973",
+    "billboard/billboard_contract/Nargo.toml": "001e498bec7be9f96e41dba78a43d263e7820f083dd1189fda4165df5625516e",
+    "billboard/billboard_contract/src/lib.nr": "b4e084588485dd6473bbe22832f8c1461c51693200b5b1c0fde08e4c5cdaecf7",
+    "billboard/billboard_contract/src/main.nr": "7bcfdd2770c181dd02736903884ab166d5d5603a68e16462ffe830cb1ac788ab",
+    "billboard/billboard_test/Nargo.toml": "9676f16a5e402b4e9e4b1008bec64f4603f0591932ee88e8f111fa3bbd498f3e",
+    "billboard/billboard_test/src/c01.nr": "15a9afed877d0b9a3fb2a324550ee2c2bf53bde72a4390f21acc28bccbcf4651",
+    "billboard/billboard_test/src/c02.nr": "638f64981b9c40a10f07677a3ddac50bb71df568717881cc5944863f7cbd38b9",
+    "billboard/billboard_test/src/c03.nr": "955b91d2833e2cee02a82cce22929d72645479128bc7b17e494f1a53e855d22c",
+    "billboard/billboard_test/src/c04_seeded.nr": "81976ec023b6d35769a3018095fb970516b3519514800f8c0863ca91c9a35b42",
+    "billboard/billboard_test/src/c05.nr": "22f68b1af6d4307f4192ea31a1611faf261016671d16954e3c636f503f113c59",
+    "billboard/billboard_test/src/compact_note.nr": "f8d3b462039848a4554571a0f55261a12b083e049cb12a0ed2c393714a82a009",
+    "billboard/billboard_test/src/lib.nr": "41f15199de0c2eeb1ff47d3771ff6f0881aed058ac720f6955a233ecf2d72d9a",
+    "billboard/plugin_adapter/Nargo.toml": "db808446b9dfddba9f17c72d401fe73d5de084963911e29ca06841f65abd08ae",
+    "billboard/plugin_adapter/src/main.nr": "6cf6d4113a10d836eb1e9088385ea80d6ed8db5fd3a0887fee0978c6332b5841",
+    "billboard/plugin_adapter/src/tests.nr": "4dd1265d27c75c08dfa49bafad5220056fcb87669ea1fb3642bf09706e8e113d",
+    "billboard/portal/foundry.toml": "a632930fe4b3a187523f71eb2a197c127d2092fffa5d3c8a66e8ddcef9c6bdb4",
+    "billboard/portal/package-lock.json": "e832cd7f79dba8d488754fc25164e01114821144042808bd5377db1481227e6f",
+    "billboard/portal/src/BillboardPortal.sol": "d51ff02b1855844f3f0f54eee9443b25967d9add43591a9e0fed2fee46302479",
+    "billboard/portal/src/DevUSDC.sol": "863c83008d15fb83d56d1b2668d507ce06990358f900b4746cc8c2116768f821",
+    "billboard/portal/src/PluginPayments.sol": "b3ac90e832ab609f9935496858fb48e71261fe976e900db9ba6b69228720a4af",
+    "billboard/portal/src/PluginPortal.sol": "5c4793bd0eb30cad8b1f49f1e37c2cf7fc0d983087df7a04258c7dd205c7f882",
+    "billboard/portal/src/PortalMessages.sol": "8d04182a35d47eabb3da6cabb69012584d5b722ebddb295c6079e257644fb350",
+    "billboard/portal/test/PluginPayments.t.sol": "99a735ed0135b2568cdee25c19454c927ab599ad86b19c34b409faa7cdbbd50c",
+    "billboard/portal/test/PortalArtifactRegression.t.sol": "3898c45f22ce2ab62cb830573a1e469392f6fb6015cbc265dccb735edfe0cce0",
+    "billboard/portal/test/PortalCodecVectors.t.sol": "8b5c4d17d9b42a9c64110e0cb86392133e1e725a5276446f2a334eb9a3672ef4",
+    "billboard/portal/test/PortalConservation.t.sol": "d471888197f5751895dff9b519c24c5982b1720c7185633feab716ffbeb19ac0",
+    "billboard/portal/test/PortalReentrancy.t.sol": "9a1cc31d83b45968d61e5b562660fc8935888f02085a17f31c9490f5d66fe52f",
+    "billboard/portal/test/PortalV1.t.sol": "4519dbaf396a073d0eaccabfd95cfc5cbe3ed72f59e424de62f1ec11482e64f0",
+    "billboard/private_fee_contract/Nargo.toml": "19c37d7efe2c5d3b3b3eb271ad47fcac8eb83317bfe063db7c7dd5de4016802a",
+    "billboard/private_fee_contract/src/gas.nr": "622220e369f5d6a8fb9777e6701dfd2705f4c090d74db3e460517f4b73c39a7f",
+    "billboard/private_fee_contract/src/main.nr": "018cad875b1236e5d979eda27fa10bf0f457ee2183b975f214ab936b33871112",
+    "billboard/private_fee_test/Nargo.toml": "cda4d82808c1bd743a0231688e2b5dfa33b009f09da4022e9d1b1f3ffc02be88",
+    "billboard/private_fee_test/src/lib.nr": "4414ffd76cf89df9edf95445ada44341e0ab2dc2fe690bedde79252526eeab5d",
+    "billboard/rolling_contract/Nargo.toml": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+    "billboard/rolling_contract/src/main.nr": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+    "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+    "billboard/rolling_contract/src/posting_tests.nr": "50260ec95740956981709ace32eed4aedf600c23ae0c06c27097a665db00d4dc",
+    "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+    "billboard/rolling_contract/src/profiles_tests.nr": "1c232d3109754fc986796a8f7be01b0a32e05bb422cd092d2f8768595c2caee4",
+    "billboard/rolling_contract/src/tests.nr": "66a5c4c5dc00aee6c89700acfbf58b113609a9b9c598abc8f43a36a41590b488",
+    "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "scripts/artifact-provenance.mjs": "7a0bc1717b199a8425f6bf846f7fdd184f98e62a733e3eac7baadc50d12a9ef4",
+    "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+    "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+    "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d",
+    "shared/protocol-schema.mjs": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+    "shared/protocol-commitments.mjs": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+    "node_modules/ethers/dist/ethers.umd.min.js": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b",
+    ".build/sdk/aztec_bundle.js": "a85aa5a425e3d238fb9788634afc524172edf2320a62fc5d9288c440babbfd92",
+    "shared/crs-client.js": "a3b240489fb12d650123330604837d1902e57beb34ba6c0938f42597ff4633de",
+    "shared/wallet-providers.js": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+    "shared/passkey-wallet.js": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+    "shared/claim-secret-store.js": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+    "shared/account.js": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+    "crs-manifest.json": "0e80536b38ebba752bfe08b86466f1161e9324c9d5b6e666c8c20560db0aadda",
+    ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3",
+    ".build/rolling-wallet/runtime.mjs": "ad4a655a562bd8f33dfd376c33304f1a8a2ddbf79cb46de90b6f34f072a5b32f",
+    "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+    "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497",
+    ".build/sdk/acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
+    ".build/sdk/bb-main.worker.js": "a20e91000929692e4dda7c9b99d273fa3a565d433a1918239aaebd88ca104174",
+    ".build/sdk/bb-thread.worker.js": "80d2a3036eb1a04094200890d660fb503f7cc3103bdcb003b3ccea2fdfecc663",
+    ".build/sdk/noirc_abi_wasm_bg.wasm": "51dbfae8ef59b40e88f093fcc59df503a937649dd17ff4e5ecc1eeb4e95594d9",
+    ".build/sdk/sqlite.worker.js": "0da5c95c7f16ba09e3fef5621e3e46149a66c078412da9fb7b541d24e71b2367",
+    ".build/sdk/sqlite3-opfs-async-proxy.js": "4ea2bcbd715b0d56089fc871ea241f8c5985d8669d1ddecaab4d56a8da806ce9",
+    ".build/sdk/sqlite3.wasm": "e7600bc6d59b1459362c8c2d4686f733e26d58041b3cdc599929661ecfeb21ae"
+  },
+  "setup": [
+    {
+      "name": "bn254_g1.dat",
+      "sha256": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac",
+      "bytes": 75497472
+    },
+    {
+      "name": "bn254_g2.dat",
+      "sha256": "01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f",
+      "bytes": 128
+    },
+    {
+      "name": "grumpkin_g1_v2.flat.dat",
+      "sha256": "b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9",
+      "bytes": 4194368
+    }
+  ],
+  "networkProofs": false,
+  "controlledSettlement": true,
+  "binarySha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953",
+  "applicationBBThreads": 1,
+  "nodeBBThreads": 1,
+  "worldStateHardwareConcurrency": 1,
+  "fixtureHeapMiB": 768,
+  "peakMemory": {
+    "elapsedMs": 409330,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 64998,
+        "ppid": 59636,
+        "rssKiB": 79360
+      },
+      {
+        "role": "fixture",
+        "pid": 65011,
+        "ppid": 64998,
+        "rssKiB": 640320
+      },
+      {
+        "role": "fixture",
+        "pid": 65015,
+        "ppid": 65011,
+        "rssKiB": 42288
+      },
+      {
+        "role": "fixture",
+        "pid": 65017,
+        "ppid": 65011,
+        "rssKiB": 11456
+      },
+      {
+        "role": "fixture",
+        "pid": 65019,
+        "ppid": 65011,
+        "rssKiB": 3168
+      },
+      {
+        "role": "fixture",
+        "pid": 65034,
+        "ppid": 65011,
+        "rssKiB": 8768
+      },
+      {
+        "role": "fixture",
+        "pid": 65035,
+        "ppid": 65011,
+        "rssKiB": 5792
+      },
+      {
+        "role": "fixture",
+        "pid": 65036,
+        "ppid": 65011,
+        "rssKiB": 3136
+      },
+      {
+        "role": "fixture",
+        "pid": 65076,
+        "ppid": 65011,
+        "rssKiB": 6240
+      },
+      {
+        "role": "browser",
+        "pid": 66195,
+        "ppid": 64998,
+        "rssKiB": 197952
+      },
+      {
+        "role": "browser",
+        "pid": 66198,
+        "ppid": 66195,
+        "rssKiB": 122448
+      },
+      {
+        "role": "browser",
+        "pid": 66199,
+        "ppid": 66198,
+        "rssKiB": 70016
+      },
+      {
+        "role": "browser",
+        "pid": 66200,
+        "ppid": 66198,
+        "rssKiB": 43744
+      },
+      {
+        "role": "browser",
+        "pid": 66202,
+        "ppid": 66198,
+        "rssKiB": 1193056
+      }
+    ]
+  },
+  "browser": {
+    "schemaVersion": 1,
+    "passed": true,
+    "scope": "Production browser custody/PXE/composer boundary; no browser publication or extension-funding acceptance",
+    "checks": {
+      "publicBeforeUnlock": true,
+      "ownedChoicesA": true,
+      "ownedChoicesB": true,
+      "exact992Prepared": true,
+      "preparedCancelled": true,
+      "oversizeRetained": true,
+      "literalPreview": true,
+      "accountSwitch": true,
+      "collateralPendingB": true
+    },
+    "traffic": {
+      "walletAssets": 32,
+      "privateRequests": 256,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    },
+    "cleanup": {
+      "contextClosed": true,
+      "browserClosed": true
+    },
+    "stage": "complete",
+    "elapsedMs": 17597,
+    "timedOut": false
+  },
+  "worker": {
+    "passed": true,
+    "profile": "application transaction proofs with official local protocol fixture and controlled settlement",
+    "nonlocalNetworkDenied": true,
+    "deployment": {
+      "passed": true,
+      "profile": "official SDK local application fixture",
+      "realVerifier": false,
+      "networkProofs": false,
+      "rollupVersion": "3674247165",
+      "addresses": {
+        "rollupAddress": "0x5ec2c02eef86f64118ad7a592c33a179f69d6544",
+        "registryAddress": "0x96d3bba1ddbb38cc91311452bfe3dd0b87dee820",
+        "inboxAddress": "0xd8290cf22dc0f94368e00f431102ae8cfd6710d3",
+        "outboxAddress": "0x5dcb64dd2be347d5e89bd70d82b47f747b340b21",
+        "feeJuiceAddress": "0xb8da645f66d308f09ac1666931432cd03ae6ff66",
+        "feeJuicePortalAddress": "0x8c3ac2d51bc3ccb07165ec036f2e85f75332159e",
+        "coinIssuerAddress": "0x71dd08d3a3a13b02b561404e2e63e054e86d4bac",
+        "rewardDistributorAddress": "0x25a3ecfe64fa9f2d7f70ac54995df25cd485112e",
+        "governanceProposerAddress": "0x7a9ee7208b2b8f2683dfe9167f119f89bafa8b96",
+        "governanceAddress": "0xd0859686f80650278ff7ce96867e2c2e2f9961df",
+        "stakingAssetAddress": "0x51abeb53a2c982ae04810432bb3ffc6d742dbb1f",
+        "feeAssetHandlerAddress": "0xa8a88503831e4b3bf2c0713a26dcab6f89a4244b",
+        "stakingAssetHandlerAddress": "0x79559c94388512a123af4d4158e56ca53b0a9e86",
+        "zkPassportVerifierAddress": "0xd99bfcec71d346e2c1ea5ee784386f1535ffb2c3",
+        "gseAddress": "0xed671c6a0147473409a5aa437ea21d64e12b230f",
+        "dateGatedRelayerAddress": "0x4cb3480aa111a9bc5e400a5a2d422968d40f7d98"
+      }
+    },
+    "validatorActivation": {
+      "committee": [
+        "0x6a7bae61c5bc468af58a2756746f51690c0c1996"
+      ],
+      "ordinaryTimeAdvancesSeconds": [
+        {
+          "seconds": 20,
+          "timestamp": "1791767778",
+          "epoch": "1",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791767798",
+          "epoch": "2",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791767818",
+          "epoch": "3",
+          "committee": null
+        }
+      ]
+    },
+    "node": {
+      "passed": true,
+      "scope": "Four genuine names then production browser encrypted custody recovery, account switch and composer boundaries",
+      "realProofs": true,
+      "proverSubsystemCreated": false,
+      "ordinarySequencerConstructed": true,
+      "sequencerStarted": true,
+      "rollupVersion": 3674247165,
+      "board": {
+        "passed": true,
+        "scope": "real client deployment transaction proof and node admission validation only",
+        "initializerVisibility": "public; client proof authenticates private account/transaction path",
+        "sent": false,
+        "included": false,
+        "epochProofAccepted": false,
+        "proofMs": 8477,
+        "boardProfile": "rolling",
+        "artifactHashes": {
+          "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+          ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3"
+        },
+        "clientProverBackend": "NativeUnixSocket",
+        "threads": 1,
+        "nodeValidation": "valid",
+        "txHash": "0x2825684b28f0b0ee77a0e40ff9dd466e3abff4d4dd3a5adf58ce5ff6a0bebeab",
+        "boardAddress": "0x0c67ffe5ad7709a123b54255640c22b15276acda40fa7a65234afcada64f4761",
+        "proofBytes": 111556,
+        "proofSha256": "4eec62a254e197c63ae871186ea3e937a1a082976d965344af6620354ba1cd0a",
+        "feePayerBalance": "10000000000000000000000",
+        "nextRequired": "Submit this exact in-memory tx, observe inclusion, then use official test settlement before local Ready activation.",
+        "walletStopped": true
+      },
+      "inclusion": {
+        "passed": true,
+        "txHash": "0x2825684b28f0b0ee77a0e40ff9dd466e3abff4d4dd3a5adf58ce5ff6a0bebeab",
+        "adjustments": [
+          {
+            "block": "43",
+            "timestamp": "1791767819"
+          },
+          {
+            "block": "44",
+            "timestamp": "1791767820"
+          },
+          {
+            "block": "45",
+            "timestamp": "1791767821"
+          },
+          {
+            "block": "46",
+            "timestamp": "1791767822"
+          },
+          {
+            "block": "47",
+            "timestamp": "1791767823"
+          },
+          {
+            "block": "48",
+            "timestamp": "1791767824"
+          },
+          {
+            "block": "49",
+            "timestamp": "1791767825"
+          },
+          {
+            "block": "50",
+            "timestamp": "1791767826"
+          },
+          {
+            "block": "51",
+            "timestamp": "1791767827"
+          },
+          {
+            "block": "52",
+            "timestamp": "1791767828"
+          },
+          {
+            "block": "53",
+            "timestamp": "1791767829"
+          },
+          {
+            "block": "54",
+            "timestamp": "1791767830"
+          },
+          {
+            "block": "55",
+            "timestamp": "1791767831"
+          },
+          {
+            "block": "57",
+            "timestamp": "1791767833"
+          }
+        ],
+        "initialClockLeadSeconds": -84,
+        "diagnostic": {
+          "events": {
+            "state-changed": 65,
+            "preparing-checkpoint": 3,
+            "block-tx-count-check-failed": 2,
+            "checkpoint-empty": 2,
+            "checkpoint-published": 1
+          },
+          "skips": {
+            "past-start-deadline": 1,
+            "already-processed": 20,
+            "pending-l1-sync": 2
+          },
+          "recent": [
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "pending-l1-sync",
+              "slot": 17,
+              "syncedL2Slot": 15
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 18,
+              "secondsIntoBuildFrame": 0.652,
+              "oldState": "SYNCHRONIZING",
+              "newState": "PROPOSER_CHECK"
+            },
+            {
+              "kind": "preparing-checkpoint",
+              "targetSlot": 18,
+              "checkpointNumber": 2
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 18,
+              "secondsIntoBuildFrame": 0.662,
+              "oldState": "PROPOSER_CHECK",
+              "newState": "INITIALIZING_CHECKPOINT"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 18,
+              "secondsIntoBuildFrame": 0.67,
+              "oldState": "INITIALIZING_CHECKPOINT",
+              "newState": "WAITING_FOR_TXS"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 17,
+              "secondsIntoBuildFrame": 5.784,
+              "oldState": "WAITING_FOR_TXS",
+              "newState": "PUBLISHING_CHECKPOINT"
+            },
+            {
+              "kind": "block-tx-count-check-failed",
+              "slot": 18,
+              "minTxs": 1
+            },
+            {
+              "kind": "checkpoint-empty",
+              "slot": 18
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "PUBLISHING_CHECKPOINT",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "checkpoint-published",
+              "slot": 17,
+              "checkpoint": 1
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            }
+          ],
+          "samples": [
+            {
+              "pending": 1,
+              "syncedSlot": 13,
+              "l1": 1791767818,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 14,
+              "l1": 1791767819,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 14,
+              "l1": 1791767820,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 14,
+              "l1": 1791767821,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 14,
+              "l1": 1791767822,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 14,
+              "l1": 1791767823,
+              "worldBlock": 0,
+              "finalizedBlock": 0,
+              "proposedBlock": 0,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 15,
+              "l1": 1791767824,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 15,
+              "l1": 1791767825,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 15,
+              "l1": 1791767826,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 15,
+              "l1": 1791767827,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 15,
+              "l1": 1791767828,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 16,
+              "l1": 1791767829,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 16,
+              "l1": 1791767830,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 16,
+              "l1": 1791767831,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 0,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 17,
+              "l1": 1791767833,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            }
+          ],
+          "lastEvent": {
+            "state-changed": {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            "past-start-deadline": {
+              "kind": "past-start-deadline",
+              "targetSlot": 15,
+              "nowForStartGate": 1791767818.114,
+              "startDeadline": 1791767815.5
+            },
+            "preparing-checkpoint": {
+              "kind": "preparing-checkpoint",
+              "targetSlot": 18,
+              "checkpointNumber": 2
+            },
+            "block-tx-count-check-failed": {
+              "kind": "block-tx-count-check-failed",
+              "slot": 18,
+              "minTxs": 1
+            },
+            "checkpoint-empty": {
+              "kind": "checkpoint-empty",
+              "slot": 18
+            },
+            "already-processed": {
+              "kind": "already-processed"
+            },
+            "pending-l1-sync": {
+              "kind": "pending-l1-sync",
+              "slot": 17,
+              "syncedL2Slot": 15
+            },
+            "checkpoint-published": {
+              "kind": "checkpoint-published",
+              "slot": 17,
+              "checkpoint": 1
+            }
+          },
+          "timing": [
+            {
+              "slot": 16,
+              "now": 1791767819.52,
+              "index": 0,
+              "deadline": 1791767821,
+              "buildStartDeadline": 1791767820.5,
+              "lastBlockBuildTime": 1791767821.5,
+              "maxBlocksPerCheckpoint": 1,
+              "minBlockDuration": 1,
+              "finalSubslotDeadline": 1791767821,
+              "canStart": true
+            },
+            {
+              "slot": 17,
+              "now": 1791767824.544,
+              "index": 0,
+              "deadline": 1791767826,
+              "buildStartDeadline": 1791767825.5,
+              "lastBlockBuildTime": 1791767826.5,
+              "maxBlocksPerCheckpoint": 1,
+              "minBlockDuration": 1,
+              "finalSubslotDeadline": 1791767826,
+              "canStart": true
+            },
+            {
+              "slot": 18,
+              "now": 1791767829.669,
+              "index": 0,
+              "deadline": 1791767831,
+              "buildStartDeadline": 1791767830.5,
+              "lastBlockBuildTime": 1791767831.5,
+              "maxBlocksPerCheckpoint": 1,
+              "minBlockDuration": 1,
+              "finalSubslotDeadline": 1791767831,
+              "canStart": true
+            }
+          ]
+        },
+        "status": "checkpointed",
+        "executionResult": "success",
+        "sequencerState": "IDLE",
+        "nodeClockSeconds": 1791767834,
+        "blockNumber": "1",
+        "transactionFee": "164897199147600000",
+        "ordinarySequencer": true,
+        "syntheticSettlement": false,
+        "epochProofAccepted": false,
+        "clockProfile": "controlled disposable L1 mining and node clock synchronization; no throughput/finality claim"
+      },
+      "readyMining": {
+        "clientMining": {
+          "passed": true,
+          "ordinaryBlocksMined": 7,
+          "stopped": true,
+          "mode": "warped",
+          "maxObservedClockLeadSeconds": 0,
+          "clockSynchronization": "every mined block, including correction of wall-clock lead",
+          "lastBlock": "65",
+          "lastTimestamp": "1791767841"
+        }
+      },
+      "ready": {
+        "passed": true,
+        "scope": "disabled portal deployment and update_portal client execution",
+        "applicationProofs": true,
+        "proofMode": "real",
+        "networkProofs": false,
+        "bindingSubmitted": true,
+        "readyEmitted": true,
+        "epochProofAccepted": false,
+        "portalActivated": true,
+        "portalAddress": "0x410eb7041a7d067ddc1490ee6dc3fb78ff996a15",
+        "portalDeploymentTxHash": "0xf9e07de42a5784ec4ccf8f31346b62fe0360e85d689e49eaf7f69ea673e47213",
+        "portalDeploymentBlock": "59",
+        "depositsEnabled": false,
+        "boardAddress": "0x0c67ffe5ad7709a123b54255640c22b15276acda40fa7a65234afcada64f4761",
+        "configHash": "0x006b25da5b874c6a6be9ad570b583a244c3821edf3274131a05dd41d874bf4c5",
+        "artifactHashes": {
+          "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+          ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3",
+          "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850"
+        },
+        "txHash": "0x014d1b526dfc0dad93fdac12c509fe7ca7d63e122892f8f5ab8aae7d86dc8568",
+        "nodeValidation": "valid",
+        "proofSha256": "34df26bd90efcd4ec899fbb92c2710f312d534419eea46d2c7d483d3d2e077d2",
+        "expectedReadyContent": "0x00f14194e7b00bfbbeaf85435b30cb7920efa0cdfe6a3c99ebc7e7816704ae85",
+        "expectedReadyLeaf": "0x00b77fc8ead51de2160aa03b453072a6a015bd91250b984020cb1bbe05f2e1f9",
+        "nextRequired": "Include exact binding tx; require SUCCESS and actual Ready leaf, official test settlement of the emitted message before local portal activation.",
+        "walletStopped": true,
+        "controlledSettlement": true
+      },
+      "readyInclusion": {
+        "passed": true,
+        "txHash": "0x014d1b526dfc0dad93fdac12c509fe7ca7d63e122892f8f5ab8aae7d86dc8568",
+        "adjustments": [
+          {
+            "block": "66",
+            "timestamp": "1791767842"
+          },
+          {
+            "block": "67",
+            "timestamp": "1791767843"
+          },
+          {
+            "block": "68",
+            "timestamp": "1791767844"
+          },
+          {
+            "block": "69",
+            "timestamp": "1791767845"
+          },
+          {
+            "block": "70",
+            "timestamp": "1791767846"
+          },
+          {
+            "block": "71",
+            "timestamp": "1791767847"
+          },
+          {
+            "block": "72",
+            "timestamp": "1791767848"
+          },
+          {
+            "block": "73",
+            "timestamp": "1791767849"
+          },
+          {
+            "block": "74",
+            "timestamp": "1791767850"
+          }
+        ],
+        "initialClockLeadSeconds": 0,
+        "diagnostic": {
+          "events": {
+            "state-changed": 43,
+            "preparing-checkpoint": 2,
+            "checkpoint-published": 1,
+            "block-tx-count-check-failed": 1,
+            "checkpoint-empty": 1
+          },
+          "skips": {
+            "already-processed": 14,
+            "pending-l1-sync": 1
+          },
+          "recent": [
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "pending-l1-sync",
+              "slot": 21,
+              "syncedL2Slot": 19
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 22,
+              "secondsIntoBuildFrame": 0.717,
+              "oldState": "SYNCHRONIZING",
+              "newState": "PROPOSER_CHECK"
+            },
+            {
+              "kind": "preparing-checkpoint",
+              "targetSlot": 22,
+              "checkpointNumber": 3
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 22,
+              "secondsIntoBuildFrame": 0.724,
+              "oldState": "PROPOSER_CHECK",
+              "newState": "INITIALIZING_CHECKPOINT"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 22,
+              "secondsIntoBuildFrame": 0.732,
+              "oldState": "INITIALIZING_CHECKPOINT",
+              "newState": "WAITING_FOR_TXS"
+            },
+            {
+              "kind": "state-changed",
+              "targetSlot": 21,
+              "secondsIntoBuildFrame": 5.974,
+              "oldState": "WAITING_FOR_TXS",
+              "newState": "PUBLISHING_CHECKPOINT"
+            },
+            {
+              "kind": "checkpoint-published",
+              "slot": 21,
+              "checkpoint": 2
+            },
+            {
+              "kind": "block-tx-count-check-failed",
+              "slot": 22,
+              "minTxs": 1
+            },
+            {
+              "kind": "checkpoint-empty",
+              "slot": 22
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "PUBLISHING_CHECKPOINT",
+              "newState": "IDLE"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "IDLE",
+              "newState": "SYNCHRONIZING"
+            },
+            {
+              "kind": "already-processed"
+            },
+            {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            }
+          ],
+          "samples": [
+            {
+              "pending": 1,
+              "syncedSlot": 18,
+              "l1": 1791767841,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 18,
+              "l1": 1791767842,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 1,
+              "syncedSlot": 18,
+              "l1": 1791767843,
+              "worldBlock": 1,
+              "finalizedBlock": 0,
+              "proposedBlock": 1,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 19,
+              "l1": 1791767844,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 19,
+              "l1": 1791767845,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 19,
+              "l1": 1791767846,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 19,
+              "l1": 1791767847,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 19,
+              "l1": 1791767848,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 20,
+              "l1": 1791767849,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 1,
+              "treesAreSynched": true
+            },
+            {
+              "pending": 0,
+              "syncedSlot": 21,
+              "l1": 1791767851,
+              "worldBlock": 2,
+              "finalizedBlock": 0,
+              "proposedBlock": 2,
+              "checkpointedBlock": 2,
+              "treesAreSynched": true
+            }
+          ],
+          "lastEvent": {
+            "state-changed": {
+              "kind": "state-changed",
+              "oldState": "SYNCHRONIZING",
+              "newState": "IDLE"
+            },
+            "already-processed": {
+              "kind": "already-processed"
+            },
+            "preparing-checkpoint": {
+              "kind": "preparing-checkpoint",
+              "targetSlot": 22,
+              "checkpointNumber": 3
+            },
+            "pending-l1-sync": {
+              "kind": "pending-l1-sync",
+              "slot": 21,
+              "syncedL2Slot": 19
+            },
+            "checkpoint-published": {
+              "kind": "checkpoint-published",
+              "slot": 21,
+              "checkpoint": 2
+            },
+            "block-tx-count-check-failed": {
+              "kind": "block-tx-count-check-failed",
+              "slot": 22,
+              "minTxs": 1
+            },
+            "checkpoint-empty": {
+              "kind": "checkpoint-empty",
+              "slot": 22
+            }
+          },
+          "timing": [
+            {
+              "slot": 21,
+              "now": 1791767844.155,
+              "index": 0,
+              "deadline": 1791767846,
+              "buildStartDeadline": 1791767845.5,
+              "lastBlockBuildTime": 1791767846.5,
+              "maxBlocksPerCheckpoint": 1,
+              "minBlockDuration": 1,
+              "finalSubslotDeadline": 1791767846,
+              "canStart": true
+            },
+            {
+              "slot": 22,
+              "now": 1791767849.731,
+              "index": 0,
+              "deadline": 1791767851,
+              "buildStartDeadline": 1791767850.5,
+              "lastBlockBuildTime": 1791767851.5,
+              "maxBlocksPerCheckpoint": 1,
+              "minBlockDuration": 1,
+              "finalSubslotDeadline": 1791767851,
+              "canStart": true
+            }
+          ]
+        },
+        "status": "checkpointed",
+        "executionResult": "success",
+        "sequencerState": "IDLE",
+        "nodeClockSeconds": 1791767851,
+        "blockNumber": "2",
+        "transactionFee": "2667948159800000",
+        "ordinarySequencer": true,
+        "syntheticSettlement": false,
+        "epochProofAccepted": false,
+        "clockProfile": "controlled disposable L1 mining and node clock synchronization; no throughput/finality claim"
+      },
+      "settlement": {
+        "passed": true,
+        "scope": "controlled test settlement, test-controlled Ready membership and enabled portal",
+        "kind": "ready",
+        "deadlineMs": 60000,
+        "testControlled": true,
+        "syntheticSettlement": true,
+        "proofReceipts": [],
+        "finalized": false,
+        "epochs": [
+          {
+            "epoch": 4,
+            "firstCheckpoint": 1,
+            "lastCheckpoint": 1,
+            "testControlledCheckpoint": 1
+          },
+          {
+            "epoch": 5,
+            "firstCheckpoint": 2,
+            "lastCheckpoint": 2,
+            "testControlledCheckpoint": 2
+          }
+        ],
+        "sequencerPaused": true,
+        "sequencerResumed": true,
+        "applicationProofs": true,
+        "targetCheckpoint": 2,
+        "messageBlock": "2",
+        "messageBlockHash": "0x13c9f6cac207dc8d108ff4706d6477e1ddd1369dafd801e9812975526799fab5",
+        "messageTxHash": "0x014d1b526dfc0dad93fdac12c509fe7ca7d63e122892f8f5ab8aae7d86dc8568",
+        "expectedLeaf": "0x00b77fc8ead51de2160aa03b453072a6a015bd91250b984020cb1bbe05f2e1f9",
+        "initialProvenCheckpoint": 0,
+        "forcedProvenCheckpoint": 2,
+        "localEpoch": 6,
+        "membership": {
+          "epochNumber": 5,
+          "checkpointCount": 1,
+          "leafIndex": "0",
+          "pathLength": 5,
+          "root": "0x00cc3b0568bc522907117cff56ff699225e1d211037a46453693e21b55603b23"
+        },
+        "localSettlement": {
+          "l1Block": "76",
+          "l1Hash": "0x77358577120cdc1f6945e61f2b4078bc57e1680de76dd90962f0f4c12f459935",
+          "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+        },
+        "elapsedMs": 11830,
+        "activation": {
+          "txHash": "0x876882f3285a4ddc939f6ff506821fdf79f2d6694cdd326781e30ea1df24f601",
+          "blockNumber": "77",
+          "blockHash": "0x7f31642167aa8d3e6c9bbc8e500a921944b38b1762b4201cafaeb3ef12a85821",
+          "depositsEnabled": true
+        }
+      },
+      "bridge": {
+        "schemaVersion": 1,
+        "scenario": "composer",
+        "passed": true,
+        "stage": "complete",
+        "transactions": [
+          {
+            "action": "owned-name-1",
+            "startedAt": 1791768022474,
+            "submission": "included",
+            "maximumFee": "429862821170877",
+            "txHash": "0x27e68df2fbfb147c6751b2bb8d6f4477804a90126d6e237b2350fa4637f29be8",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "blockNumber": 16,
+            "blockHash": "0x07bf09262beb08a7506f35cfbdfb63de9bcbedb73c514157aa90e59f8732c861",
+            "transactionFee": "10177600800000",
+            "elapsedMs": 22051,
+            "effectSha256": "8cae91dcb7886be1bbe9a886bdf40ce3688ff1001f0ec9d714366e98cb19574f",
+            "publicFootprint": {
+              "schemaVersion": 1,
+              "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+              "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+              "sharedFeePayer": true,
+              "authorIsPublicFeePayer": false,
+              "counts": {
+                "publicCalls": 2,
+                "publicCalldataFields": 70,
+                "publicDataWrites": 2,
+                "publicLogs": 2,
+                "noteCommitments": 3,
+                "nullifiers": 4,
+                "l2ToL1MessageHashes": 0,
+                "privateDeliveryLogs": 3,
+                "privateDeliveryEmittedFields": 48,
+                "contractClassLogs": 0
+              },
+              "rolePresence": {
+                "feePayer": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallSenders": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallTargets": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallCalldata": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteSlots": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteValues": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogContracts": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "noteCommitments": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "nullifiers": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "l2ToL1MessageHashes": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryTags": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryPayloadFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                }
+              },
+              "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+            },
+            "events": [
+              "NameRegistered"
+            ]
+          },
+          {
+            "action": "owned-name-2",
+            "startedAt": 1791768045815,
+            "submission": "included",
+            "maximumFee": "429337744754733",
+            "txHash": "0x101947863273de3e2723861465d4e9e1ea521a3876cb1c111238b6dcf64759ea",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "blockNumber": 17,
+            "blockHash": "0x24faae35ae868c4b72acb5dcba738fc97721eb86ea7606255018a924de8b14ee",
+            "transactionFee": "10165207800000",
+            "elapsedMs": 17550,
+            "effectSha256": "b4c22f8ecaf42e2250a5bf42746c2f6cea0b0881e356ca4ae4e275cb6440fdbf",
+            "publicFootprint": {
+              "schemaVersion": 1,
+              "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+              "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+              "sharedFeePayer": true,
+              "authorIsPublicFeePayer": false,
+              "counts": {
+                "publicCalls": 2,
+                "publicCalldataFields": 70,
+                "publicDataWrites": 2,
+                "publicLogs": 2,
+                "noteCommitments": 3,
+                "nullifiers": 4,
+                "l2ToL1MessageHashes": 0,
+                "privateDeliveryLogs": 3,
+                "privateDeliveryEmittedFields": 48,
+                "contractClassLogs": 0
+              },
+              "rolePresence": {
+                "feePayer": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallSenders": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallTargets": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallCalldata": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteSlots": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteValues": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogContracts": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "noteCommitments": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "nullifiers": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "l2ToL1MessageHashes": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryTags": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryPayloadFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                }
+              },
+              "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+            },
+            "events": [
+              "NameRegistered"
+            ]
+          },
+          {
+            "action": "owned-name-3",
+            "startedAt": 1791768064650,
+            "submission": "included",
+            "maximumFee": "402453996004049",
+            "txHash": "0x1b1bab033428673d09a08806ced8123f1a8a10dc553364e4babb7cd2cf431749",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "blockNumber": 18,
+            "blockHash": "0x2670172d774f9f993d0cd25aa649bbd0b74586ded347ca030c07f4a877fd26b3",
+            "transactionFee": "10751758800000",
+            "elapsedMs": 17605,
+            "effectSha256": "e7e35fc05790eb9984cd69a5aac381814ae611b628b5dc0cc8c89cdf876c44d9",
+            "publicFootprint": {
+              "schemaVersion": 1,
+              "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+              "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+              "sharedFeePayer": true,
+              "authorIsPublicFeePayer": false,
+              "counts": {
+                "publicCalls": 2,
+                "publicCalldataFields": 70,
+                "publicDataWrites": 2,
+                "publicLogs": 2,
+                "noteCommitments": 4,
+                "nullifiers": 5,
+                "l2ToL1MessageHashes": 0,
+                "privateDeliveryLogs": 5,
+                "privateDeliveryEmittedFields": 80,
+                "contractClassLogs": 0
+              },
+              "rolePresence": {
+                "feePayer": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallSenders": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallTargets": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallCalldata": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteSlots": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteValues": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogContracts": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "noteCommitments": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "nullifiers": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "l2ToL1MessageHashes": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryTags": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryPayloadFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                }
+              },
+              "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+            },
+            "events": [
+              "NameRegistered"
+            ]
+          },
+          {
+            "action": "owned-name-4",
+            "startedAt": 1791768083570,
+            "submission": "included",
+            "maximumFee": "380906184002781",
+            "txHash": "0x1df258d0b1bd530a448c76766336f3e72f4b511d44da5c70c97fa311c980090e",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "blockNumber": 19,
+            "blockHash": "0x1322a2295b69f871c9ee90d592975cbc21d8b3aa19bc3c60df490bfb473e1305",
+            "transactionFee": "10177600800000",
+            "elapsedMs": 22641,
+            "effectSha256": "f16581a1554c1461190bc34022df03a82b5c045656860fc4307ffa1c295c3800",
+            "publicFootprint": {
+              "schemaVersion": 1,
+              "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+              "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+              "sharedFeePayer": true,
+              "authorIsPublicFeePayer": false,
+              "counts": {
+                "publicCalls": 2,
+                "publicCalldataFields": 70,
+                "publicDataWrites": 2,
+                "publicLogs": 2,
+                "noteCommitments": 3,
+                "nullifiers": 4,
+                "l2ToL1MessageHashes": 0,
+                "privateDeliveryLogs": 3,
+                "privateDeliveryEmittedFields": 48,
+                "contractClassLogs": 0
+              },
+              "rolePresence": {
+                "feePayer": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallSenders": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallTargets": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicCallCalldata": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteSlots": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicWriteValues": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogContracts": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": true,
+                  "board": true,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "publicLogFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "noteCommitments": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "nullifiers": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "l2ToL1MessageHashes": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryTags": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                },
+                "privateDeliveryPayloadFields": {
+                  "author": false,
+                  "otherAuthor": false,
+                  "sharedPayer": false,
+                  "board": false,
+                  "moderator": null,
+                  "funder": null,
+                  "collateralFunder": null,
+                  "otherCollateralFunder": null,
+                  "feeFunder": null,
+                  "otherFeeFunder": null,
+                  "coinbase": null
+                }
+              },
+              "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+            },
+            "events": [
+              "NameRegistered"
+            ]
+          }
+        ],
+        "cleanup": {
+          "applicationActorA": true,
+          "applicationActorB": true,
+          "fundingWallet": true,
+          "fundingWalletB": true,
+          "proverAndQuery": true,
+          "nodeRPC": true,
+          "indexedDBGlobals": true,
+          "nativeArtifactLoader": true
+        },
+        "scope": "Actual separate private accounts registering and recovering readable owned names without publishing owner groups",
+        "networkProofs": false,
+        "controlledPortalSettlement": true,
+        "privacyAcceptance": "Public-field equality checks only; independent privacy qualification remains",
+        "storage": {
+          "pxe": "Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim",
+          "journal": "Real authenticated encrypted file journals; reopen measured"
+        },
+        "sourceRevision": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+        "applicationProofs": true,
+        "proofMode": "real",
+        "network": {
+          "chainId": "31337",
+          "version": "3674247165",
+          "rollup": "0x5ec2c02eef86f64118ad7a592c33a179f69d6544"
+        },
+        "sourceHashes": {
+          "scripts/testing/rolling-wire-campaign.mjs": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+          "scripts/testing/rolling-wire-trace.mjs": "025dfe1d5d5aeddcec215861a65f6b4f0b7cf9a9b03ad0eb7b10828913e6cc92",
+          "scripts/testing/rolling-owned-names.mjs": "2769f0c513977289a9128aa7c807a7169cb4e698d034f645f5bd0c4648e15d7d",
+          "scripts/t03-public-footprint.mjs": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+          "scripts/testing/rolling-removed-like.mjs": "d379d8b1e67d11e17adebbe029718cf72fd4487e0b242ea9fd84749ef68e0ee8",
+          "scripts/testing/rolling-application-actor.mjs": "fe2af0833ad6282e4a2e18974851a2fe9e64e6279458c2ca5bdb32e925bd1696",
+          "scripts/testing/rolling-account-reactions.mjs": "29826e9edf5cc71b9bc0569d16495f361927bd2625742a08625af4cdff2ee9df",
+          "scripts/testing/rolling-social-acceptance.mjs": "3df95179f567bfeda24127f28d5b2ab37d4a678a73429329a3f3f430ac28def7",
+          "scripts/testing/rolling-profile-acceptance.mjs": "419b0d78c7d81b9b9c1ae4d723d57d3af07e1fcca6b5e735afd97b640b46343c",
+          "experiments/avatar/raster-fixture.mjs": "68ae27bc43efe68ed7ffaa157cf78895750c0987de632d78f114d5ac04f7fda7",
+          "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+          "scripts/testing/rolling-native-artifacts.mjs": "6c8d367fc0c08098adaedcade88bf00d381b56c5cfdcef95d3755016aaae99b2",
+          "scripts/testing/rolling-application-fixture.mjs": "227fba7ee9c8aa787834e75adb72d287980631dc291cbd5b95f8624925544b4a",
+          "scripts/testing/scenarios.mjs": "39c477cbfdfa37eb26e13ad519071947974c2f75cd59a744d581c05890694f76",
+          "scripts/testing/scenario-flows.mjs": "8848dc853e1a1a1191d7949ecaea4060c1c386a86462be993a77e542dd447a08",
+          "scripts/c01-real-node.mjs": "7090858471f1331aafa1d9289507a666cf657874f0215f5260e61766c6355822",
+          "scripts/c01-board-flow.mjs": "ed5d3eabb1476d52d6eb505ec8feef7fc015d8daa8ad5e0f37ec6c0940c78c5b",
+          "scripts/c01-deposit-flow.mjs": "972bffc1bb3d97eebf5ce145541edc6f6981fd84976ae4d1fcf886a1b3349f01",
+          "scripts/c01-client-mining.mjs": "a71e800a541776464f7479ea9fa4ea5e0edc6d44f3745f2fcb5c1639d9b07197",
+          "scripts/w01-private-fee-flow.mjs": "934a1430b79c34e0b92ea1b5720be807ada6bcd6c6d6999806f93226184faba4",
+          "scripts/w01-unfunded-wallet.mjs": "413ad7864e3d7be5846f12f25aac456289e4cc895a6911985a7e6b4ed7241b2c",
+          "scripts/w01-private-funding.mjs": "7d474d160bde5e4a966c5f9577e7de7bd63768bc9f8c7cd3be446bb38ffdbcf8",
+          "shared/sdk-entry.mjs": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+          "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+          "shared/routed-kernel-prover.mjs": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "shared/remote-prover-client.mjs": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+          "shared/rolling/synchronized-application.mjs": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+          "shared/rolling/public-events.mjs": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+          "shared/rolling/public-projection.mjs": "977e8ce9ecef21d0b5ce1e4b63492531f6425725c7459485a34470f0797086e7",
+          "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "shared/private-fee-estimation.mjs": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "shared/private-fee-simulation.mjs": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "shared/l2-journal.mjs": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+          "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+          "apps/src/billboard/user/transaction-journal-store.mjs": "abb9af112709a4e4ed3197de86ef058a4b06e3c63b1588861f6411b1629c443a",
+          "prover/service.mjs": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+          "prover/server.mjs": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+          "prover/private-query.mjs": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+          "prover/catalog.mjs": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "prover/rolling-artifacts.mjs": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "prover/rolling-artifacts.json": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64",
+          "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497",
+          "scripts/testing/rolling-public-acceptance.mjs": "4e22f7bccb41252d4b65d2031ac468a7ee42186d62baf2a4b1a46573f9d889ad",
+          "shared/rolling/public-index.mjs": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+          "shared/public-feed-file-storage.mjs": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "shared/public-feed-storage.mjs": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "scripts/rolling-public-server.mjs": "568dcbad153efb9f67f043e02ef50441df557c61f2d675e6d05d4d7424adbbd2",
+          "apps/rolling/start.mjs": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+          "apps/rolling/reader-client.mjs": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+          "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+          "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a"
+        },
+        "artifactHashes": {
+          "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+          ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3"
+        },
+        "bokArtifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+        "bokBuildInputs": {
+          "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
+          "experiments/private-bok/escrow/Nargo.toml": "8a83e1f7dc7e5043fa2332b698a1e6dde6ddd9c79e32b2c6bfc2ece05fac6e4c",
+          "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9",
+          "experiments/private-bok/tests/Nargo.toml": "d2d23aa424ec7535e3ff2565e3bf06685f6ff695de4139c253d14009b6b8b33e",
+          "experiments/private-bok/tests/src/lib.nr": "a2f404851311f65294c15b653bc9ad46f3df5b193099093bc60f3d6fe177e3f4",
+          "experiments/private-bok/probe-board/Nargo.toml": "8415a5b8d1b4c699802e33f6616034f1dba0e14dc95b85feefff6f4891339e6d",
+          "experiments/private-bok/probe-board/src/main.nr": "79e5744879232e6202da2240abb37cf64733dfa76ed34e61b07e5d72701df771",
+          "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
+          "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+          "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+          "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+          "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+          "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+          "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d"
+        },
+        "nativeArtifacts": {
+          "adapter": "Node24 pinned JSON import type only; CLI test fixture",
+          "nodeVersion": "24.21.0",
+          "packageVersion": "6.0.0-rc.1",
+          "artifactCount": 60,
+          "adaptedLoads": 11,
+          "closed": true,
+          "inputs": {
+            "node_modules/@aztec-labs/protocol-contracts/package.json": "0556aba33bede1c160e34da72b508e5ca0b26b66876afe93540d49c4bf47fb13",
+            "node_modules/@aztec-labs/standard-contracts/package.json": "f4b5ac013c13429a26ede380ec4086318d31ba9dd90e17e9738f621247c51bde",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/package.json": "4f3eae20cb874fd4b138ce582e1372dadd6523457c329917c4a3b32f2f14f0e3",
+            "node_modules/@aztec-labs/protocol-contracts/dest/fee-juice/lazy.js": "49ec7e07e98e608aa359af6ded3a02543637ef348af610d563049cd59b85c665",
+            "node_modules/@aztec-labs/protocol-contracts/dest/class-registry/lazy.js": "256f14b4451f3f7de9d55512409ce87c40ca41ae490afc234a4a2fc7ca47fb15",
+            "node_modules/@aztec-labs/protocol-contracts/dest/instance-registry/lazy.js": "fef787ccb08fc7bf02c73c9eb9e5b26fde1a7cdf401aaca8e4580ee0433f3462",
+            "node_modules/@aztec-labs/standard-contracts/dest/auth-registry/lazy.js": "2298afe1df16bc4a9e1153d6af50819662d123916d012190b0dd6077bb25ffb7",
+            "node_modules/@aztec-labs/standard-contracts/dest/handshake-registry/lazy.js": "4ad7a29776282399da32556c3f85425d9fc91c48276bccb64963c98412899314",
+            "node_modules/@aztec-labs/standard-contracts/dest/multi-call-entrypoint/lazy.js": "aca9517c0a334263873f976c4bd55069259701fa30982ec9e65e96549a81f00d",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/dest/client_artifacts_helper.js": "7dd23be379bec54bdd7ba4de79b31f898457e9c7a88227ec2d559d081a13decd",
+            "node_modules/@aztec-labs/protocol-contracts/artifacts/FeeJuice.json": "bdd946bbec6dccef2ede601363c907ed10efd61028ddccdfd32ba663aa0a28f1",
+            "node_modules/@aztec-labs/protocol-contracts/artifacts/ContractClassRegistry.json": "9291bfe9f4b69e0759d0b4716fccb5ea46f19eb3ffaaf89d3b2dcb0a3668d395",
+            "node_modules/@aztec-labs/protocol-contracts/artifacts/ContractInstanceRegistry.json": "ffad591d82069a09f0a452ab7d24b2ea6c6375ca212411285bf5d99af8a9086c",
+            "node_modules/@aztec-labs/standard-contracts/artifacts/AuthRegistry.json": "90460098eba7bb81076296db7cd643ba1a730bcd220d08b1591eab57558702dc",
+            "node_modules/@aztec-labs/standard-contracts/artifacts/HandshakeRegistry.json": "9ab37c0fb9b7ba564783b0dbe184cbe2082a4c32668998e93c45137b04428b08",
+            "node_modules/@aztec-labs/standard-contracts/artifacts/MultiCallEntrypoint.json": "f3894e2175cfefbf91f61f987cdbf0865e0f296cd49eb2c10abba125c5fd018a",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init.json": "3c45372ecba74baf9470fcad19e7bfc2d241989d7b5bd850cd06a8c3bf5769f1",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init_simulated.json": "01d58a5ce0be60aaa2a4c7f4c693f2caf573025d472622741f0de1d05ad00093",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init_2.json": "134a29eb6175905c75797911581e9820b903ccd6c3d4d1e0005d561971db8f78",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init_3.json": "844b2d641e251eccd57689bb73c7e4eafda4e0db46787fccccf50d4e7acfcead",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init_4.json": "462a716143d879ef50283c05e16fed4ee7a238dce711f0893ad14f87eb266377",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_init_5.json": "71bb69277f7986a3d5d0baedaae05fcab5cfc3c7b869d3bc458cdb6b7b1e706c",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner.json": "9bb9337425405b76e179aa39a6996ce6144a61e4a3c08b86ee30f3f5e86fc4ee",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner_simulated.json": "d30c17e0f74c77da253253f396a81e0174c31dd0950fc5226599d88984c01c27",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner_2.json": "263fe6135fd3d760be5f016eb6ea884d0fc6a3ff8d6c74c6bf56a3a6535d5638",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner_3.json": "1e18cece34af3d60b2c09a0275d593203fb65dedf101cfa34cdb3a8f46abf78c",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner_4.json": "eb4c1e594800c7cbc362689a391a1a7223756ee095dcab14b1962933c1533955",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_inner_5.json": "179efad2a0b2019dd74a2672bc809bb594a1b9e6616ffb714130a42adb151a51",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/hiding_kernel_to_rollup.json": "f9b16567cf6c5cda6fa34dfdb2fbb678bae8e8dc53dc4cc414b106d1885d9f95",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/hiding_kernel_to_public.json": "61b84f64ab897cb33415e6c848871f60be64c6d6f5771daaeab50a584a786273",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_4_4_4_4_4_4_0_0_0.json": "6f172ca2f3d3aff13db1105b50e2f997a6021cc9f9e6a8136325189cc250d5f6",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_4_4_4_4_4_4_0_0_0.json": "481e8aa5555fda6eba6fe9dbb92e3b84327adbec68a80fa398c4781c2f13bf0b",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_32_32_32_32_16_16_0_0_0.json": "1ea33c14e6ca7136090f480b46db99331415dc20e0d54155f3a57766aec5cae6",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_32_32_32_32_16_16_0_0_0.json": "73b07c33edd60001436cb643b545171d1fd0f75e0eeada1db2335f75182062d4",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_64_0_0_0_0_0_0_0_0.json": "bda7a89cac5e58bcca89b58a75e0e142cb4ec2dc143bad5825bd6058443ae42a",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_64_0_0_0_0_0_0_0_0.json": "58da2ef5d6b634391acc145054aaa0c75a24dd28c1098f3fc819699b68cecafa",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_0_64_0_0_0_0_0_0_0.json": "699641c849d8aa80525225373b022aa8a82c11e9afa7a07484fe2f664f5e190f",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_0_64_0_0_0_0_0_0_0.json": "d6afbdc7099995b6246cf11505f77e99058ec69cf5979ab074c6fe6ea53b25ec",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_0_0_64_0_0_0_0_0_0.json": "2ec0aa3dcaae8c426cd8350399e184da3a1ccc9e7738beda6700d45ed604790e",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_0_0_64_0_0_0_0_0_0.json": "2ce82b60fc2b0c38986456d2daf670191cac3a3af10b8ef728833e3cbc137445",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_0_0_0_64_0_0_0_0_0.json": "748a1649902371308b7fac0b131e29a1129a75e9d9686b44791af3b3704c72d2",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_0_0_0_64_0_0_0_0_0.json": "abbf5e4ee7d6049fa0ac3c310fd10eff31b203c5aea4f6d103357c86d98c5619",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_0_0_0_0_64_0_0_0_0.json": "ffb484dc05339dd2b058d3288a62acd953410fc04a7558f6bcb178fcd2d92fa9",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_0_0_0_0_64_0_0_0_0.json": "3ec2778b9592d4be113e76ac07e086c9e3abdf7c1ce5af076cd054f706097358",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_0_0_0_0_0_64_0_0_0.json": "9b5db99839ffa3b682b1151e052a6e66dc64b5563a406a94da00973faa73a4c0",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_simulated_0_0_0_0_0_64_0_0_0.json": "c3b2410fd4443318942ce4106decae512282b48d6df38881926e4ec4d26dca55",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_0_8_0_8_4_0_4_16_8.json": "8f825b77fd725cbd5d685ef367b42f42d5121475001a609b1a25a3e2c132150e",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated_0_8_0_8_4_0_4_16_8.json": "dbd79c6eaac041de4c4664198175b8f5f6d8f83c8e94327497ab91bb6edf9f2c",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_4_4_4_4_4_4_4_4_4.json": "ffb5774a729beba9614ff640656cdbd419146de554fd30ab5f648a5df3ad134b",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated_4_4_4_4_4_4_4_4_4.json": "f1565468d247a9989749d01bdb0bd5dcd72afd007d9102437342ebb05ae093bd",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_8_8_8_8_8_8_8_8_8.json": "d6f705b94513bf4b9ca4dc04c6bc5b221f26b52103da28cfcebcff7208431663",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated_8_8_8_8_8_8_8_8_8.json": "7b27375178fbbd0b41e324fc960cd429f1298efe96d0c2e03986eec5d00bfa4c",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_16_16_16_16_16_16_16_16_16.json": "353d9f31ec2953bd9dc99750cb45d6d05979e61677c84aa6d2d9a5c2e1ce9695",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated_16_16_16_16_16_16_16_16_16.json": "37b3785d88f42101fb793e143a2a6a1a922bf49e6fa691297150b93786c68787",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_32_32_32_32_32_32_32_32_32.json": "146510332877219dc302a66fa596b72b9dad9c81e2238d55b87e5319732b9892",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated_32_32_32_32_32_32_32_32_32.json": "c6c6ad43a209f5473e41f1ed4ffcd3cd49890d53c1e9368e31fd631227d588ac",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail.json": "1eb915e50d1da4aaa5a39250865580e0f11988c53ee23f5bcbc5ce2703a42c0f",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_simulated.json": "3c04872535a05913d6a51eb4f965a64acb42a6193df3dbf2fe6a03122433389a",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_0_8_0_8_4_0_4_16_8.json": "75db240bd97f2b21a026e50540365ecf87be7d9e296f0cafd18deffa4ede5025",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated_0_8_0_8_4_0_4_16_8.json": "da935393da2500490be86ea8e4398fa106b035754ec39719827290024b1c11ab",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_4_4_4_4_4_4_4_4_4.json": "d1d50b35ee2e243bbd7588645434f526e30f65b095436ccf97dea77cf1a3e6f7",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated_4_4_4_4_4_4_4_4_4.json": "f4854ff653b9ca15235cfb6db9c9b70f3817d6f7822a5545d644c2bef6e145b1",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_8_8_8_8_8_8_8_8_8.json": "151d8901a4c9b4c7144dba7ec45a8df4303de005938ddf2a5684aa32bf39fe23",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated_8_8_8_8_8_8_8_8_8.json": "9185d2e1966d46cca05f5dc133df5d57fe25f58dbf431d30c2f600820da5d2c9",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_16_16_16_16_16_16_16_16_16.json": "f2e7221a76c9e794d361bd809547eea87d9ba02666115644aebcdba346f19edc",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated_16_16_16_16_16_16_16_16_16.json": "ff40802f76b12982bc4e7902941bbaa2598b8f92e127391e45ccdf6143a9a118",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_32_32_32_32_32_32_32_32_32.json": "756a98b951deababc0ffb5471a8659bf4c1c9a29d9a15df4ecf1ea5c5b073e13",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated_32_32_32_32_32_32_32_32_32.json": "dc53c6f267e7de3dc2a92379e52d52b55ad660b31548d1f78521deaf47f1c77f",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public.json": "db9fcd456c60eaf1f438fd825feccbe6c72ef2247fce9c174d3c89242168a30b",
+            "node_modules/@aztec-labs/noir-protocol-circuits-types/artifacts/private_kernel_reset_tail_to_public_simulated.json": "351263861ac2d428bf0b15094dbed11c5372e1a5cfb6d9cf831253a313463fb0"
+          }
+        },
+        "setupMining": {
+          "clientMining": {
+            "passed": true,
+            "ordinaryBlocksMined": 129,
+            "stopped": true,
+            "mode": "warped",
+            "maxObservedClockLeadSeconds": 0,
+            "clockSynchronization": "every mined block, including correction of wall-clock lead",
+            "lastBlock": "228",
+            "lastTimestamp": "1791768017"
+          }
+        },
+        "privateFees": {
+          "passed": true,
+          "ownerless": true,
+          "offchainIssuer": false,
+          "operatorFunding": false,
+          "chargesMaximumFee": false,
+          "walletRestore": {
+            "encryptedRoundTrip": true,
+            "freshRestoreContext": true,
+            "fullSaltPreserved": true,
+            "derivedSigningKeyFromRestoredSecret": true,
+            "sameApplicationAddress": true,
+            "applicationSigningDerivation": true,
+            "noIndependentTestSigningKeyReused": true
+          },
+          "funding": {
+            "passed": true,
+            "outcome": "complete",
+            "depositSends": 1,
+            "recoverySaves": 3,
+            "publicRecoveryPersistedBeforeDeposit": true,
+            "privateSecretsStored": false,
+            "publicRecovery": {
+              "schema": "private-fee-funding-v1",
+              "chainId": "31337",
+              "version": "3674247165",
+              "rollupAddress": "0x5ec2C02eeF86f64118aD7A592c33A179F69d6544",
+              "portalAddress": "0x8c3ac2d51bc3ccb07165ec036f2E85F75332159E",
+              "tokenAddress": "0xb8da645F66D308f09Ac1666931432cD03Ae6FF66",
+              "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+              "sender": "0x29CfE725aEdA242D9e0b10c007e9431CEf3f583A",
+              "nonce": "1",
+              "amount": "1000000000000000000000",
+              "txHash": "0xb44edddd7faf058f6ace0cd190a3e6ee2aa0e15035b5a99dad2da825c6786041",
+              "leafIndex": "0"
+            },
+            "realL1Deposit": true,
+            "amount": "1000000000000000000000",
+            "l1TxHash": "0xb44edddd7faf058f6ace0cd190a3e6ee2aa0e15035b5a99dad2da825c6786041",
+            "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+            "independentL1Sender": true,
+            "testFaucetFunding": true,
+            "productionFundingHelper": true,
+            "productionRecoveryHelper": true
+          },
+          "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "coldStart": true,
+          "poolBefore": "0",
+          "netOtherPoolChange": "999999971162988400000",
+          "privateDebit": "29662650600000",
+          "privateBalance": "999999970337349400000",
+          "actualProtocolFees": "29662650600000",
+          "authorPublicBalanceZero": true
+        },
+        "secondPrivateFees": {
+          "passed": true,
+          "ownerless": true,
+          "offchainIssuer": false,
+          "operatorFunding": false,
+          "chargesMaximumFee": false,
+          "walletRestore": {
+            "encryptedRoundTrip": true,
+            "freshRestoreContext": true,
+            "fullSaltPreserved": true,
+            "derivedSigningKeyFromRestoredSecret": true,
+            "sameApplicationAddress": true,
+            "applicationSigningDerivation": true,
+            "noIndependentTestSigningKeyReused": true
+          },
+          "funding": {
+            "passed": true,
+            "outcome": "complete",
+            "depositSends": 1,
+            "recoverySaves": 3,
+            "publicRecoveryPersistedBeforeDeposit": true,
+            "privateSecretsStored": false,
+            "publicRecovery": {
+              "schema": "private-fee-funding-v1",
+              "chainId": "31337",
+              "version": "3674247165",
+              "rollupAddress": "0x5ec2C02eeF86f64118aD7A592c33A179F69d6544",
+              "portalAddress": "0x8c3ac2d51bc3ccb07165ec036f2E85F75332159E",
+              "tokenAddress": "0xb8da645F66D308f09Ac1666931432cD03Ae6FF66",
+              "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+              "sender": "0x0f380ecD3100b67a7C005eeD83aa43a0E59C3255",
+              "nonce": "1",
+              "amount": "1000000000000000000000",
+              "txHash": "0xd42af5b34b23501c8ac33b24149a1bbece3ec39d772d384489e640fa51610e4a",
+              "leafIndex": "1"
+            },
+            "realL1Deposit": true,
+            "amount": "1000000000000000000000",
+            "l1TxHash": "0xd42af5b34b23501c8ac33b24149a1bbece3ec39d772d384489e640fa51610e4a",
+            "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+            "independentL1Sender": true,
+            "testFaucetFunding": true,
+            "productionFundingHelper": true,
+            "productionRecoveryHelper": true
+          },
+          "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "standalone": {
+            "passed": true,
+            "applicationProof": true,
+            "networkProof": false,
+            "standaloneFunding": true,
+            "proofMilliseconds": 7965,
+            "txHash": "0x2eb26f9a9024e9406d0ef6d180604fa058cbaa2e3c9fd0b730804f1f6e5dc06c",
+            "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+            "nodeValidation": "valid",
+            "transactionFee": "7907652000000",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "canonicalCheckpoint": true
+          },
+          "coldStart": true,
+          "poolBefore": "0",
+          "netOtherPoolChange": "999999970337349400000",
+          "privateDebit": "28837011600000",
+          "privateBalance": "999999971162988400000",
+          "actualProtocolFees": "28837011600000",
+          "authorPublicBalanceZero": true
+        },
+        "collateral": {
+          "passed": true,
+          "scope": "local real deposit and private claim with ordinary checkpoint inclusion",
+          "applicationProofs": true,
+          "proofMode": "real",
+          "networkProofs": false,
+          "syntheticMessages": false,
+          "syntheticProofs": false,
+          "claimEpochProofAccepted": false,
+          "walletOwnership": "parent",
+          "walletCleanup": "retained-by-parent",
+          "depositTxHash": "0xa91d534c300d812cf14e4423608aa485facd5b48335ae479119ce842c4fe6999",
+          "depositBlock": "149",
+          "amount": "1000000000000000",
+          "inboxMessageKey": "0x0014502dc2c057b86ca931d7ef155f26aa2bf20d70a3ccffb0dd269db745bcaf",
+          "messageContentChecked": true,
+          "artifactHashes": {
+            "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+            ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3",
+            "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850"
+          },
+          "claimPublicationBarrier": {
+            "proposedBlock": 9,
+            "checkpointedBlock": 9,
+            "l1PendingCheckpoint": 9
+          },
+          "claimAnchor": {
+            "number": 9,
+            "hash": "0x2f0c699408864f9109b86a00ae94b80747fb834e5ea153dd3e88d51664fbfe71"
+          },
+          "feePayer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "privateFees": true,
+          "provenAnchor": {
+            "number": 9,
+            "hash": "0x2f0c699408864f9109b86a00ae94b80747fb834e5ea153dd3e88d51664fbfe71"
+          },
+          "gasUsed": {
+            "totalGas": {
+              "daGas": 3392,
+              "l2Gas": 910958
+            },
+            "teardownGas": {
+              "daGas": 192,
+              "l2Gas": 27510
+            }
+          },
+          "claimTxHash": "0x1db2a83660b71a3eeaac510b9a31f563a9c6318202bf376c376e19dbf48a097e",
+          "proofSha256": "a1a89d0387d1f8695ba7028b3a5ea1e545c47835f318a98e4a1ac9712fef1717",
+          "nodeValidation": "valid",
+          "inclusionSnapshots": [
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "173",
+              "l1Timestamp": "1791767962",
+              "nodeTime": 1791767962
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "174",
+              "l1Timestamp": "1791767963",
+              "nodeTime": 1791767963
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "175",
+              "l1Timestamp": "1791767964",
+              "nodeTime": 1791767964
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "176",
+              "l1Timestamp": "1791767965",
+              "nodeTime": 1791767965
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "177",
+              "l1Timestamp": "1791767966",
+              "nodeTime": 1791767966
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "178",
+              "l1Timestamp": "1791767967",
+              "nodeTime": 1791767967
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "179",
+              "l1Timestamp": "1791767968",
+              "nodeTime": 1791767968
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "180",
+              "l1Timestamp": "1791767969",
+              "nodeTime": 1791767969
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "181",
+              "l1Timestamp": "1791767970",
+              "nodeTime": 1791767970
+            },
+            {
+              "status": "checkpointed",
+              "executionResult": "success",
+              "blockNumber": 10,
+              "l1Block": "183",
+              "l1Timestamp": "1791767972",
+              "nodeTime": 1791767972
+            }
+          ],
+          "replay": {
+            "rejected": true,
+            "reason": "consumed-claim-message",
+            "freshAccountRequest": true,
+            "originalMessageNullifierChecked": true,
+            "originalInboxLeafPresent": true,
+            "originalNoteUnchanged": true,
+            "noSecondNote": true,
+            "stage": "PXE witness generation; no second proof accepted or transaction sent"
+          },
+          "claimBlock": "10",
+          "claimStatus": "checkpointed",
+          "executionResult": "success",
+          "fee": "9319842000000",
+          "anchorBlock": 9,
+          "membershipRootChecked": true,
+          "logicalFieldCount": 10,
+          "physicalFieldCount": 8,
+          "exactDeliveredNoteChecked": true,
+          "nextRequired": "Wait eligibility; prove/include no-post exit, then use official test Outbox settlement and withdraw L1."
+        },
+        "actualHumanFees": "50592010200000",
+        "bok": {
+          "address": "0x16dadf46d1e3f38d13eb1a5ed0f90882ce7c1fdb1bd0818c773e3f929556dda5",
+          "txHash": "0x2a5a7b49ab50a2e2a10279fe2decba7f119b19fac1f1aa4ad11161266022f58e",
+          "used": false
+        },
+        "eligibility": {
+          "proposedBlock": 15,
+          "checkpointedBlock": 15,
+          "l1PendingCheckpoint": 15
+        },
+        "clock": {
+          "initialWallSeconds": 1791767907,
+          "initialSyncedL1Timestamp": "1791768017",
+          "deadlineAt": 1791768019000,
+          "applicationReserveMs": 180000,
+          "ready": {
+            "ready": true,
+            "chainId": "31337",
+            "rollupVersion": "3674247165",
+            "rollupAddress": "0x5ec2c02eef86f64118ad7a592c33a179f69d6544",
+            "proofsEnabled": true,
+            "latestBlockNumber": 15,
+            "latestBlockHash": "0x0745a3371f973a34d953106c36fe1aaef1684062024c65c33dc10ac8098ee014",
+            "checkpointedBlockNumber": 15,
+            "finalizedBlockNumber": 2,
+            "oldestHistoricBlockNumber": 1,
+            "syncedL1Timestamp": "1791768017",
+            "checkedAtSeconds": 1791768017,
+            "lagSeconds": 0
+          },
+          "elapsedMs": 109808
+        },
+        "applicationMining": {
+          "clientMining": {
+            "passed": true,
+            "ordinaryBlocksMined": 113,
+            "stopped": true,
+            "mode": "real-wall",
+            "maxObservedClockLeadSeconds": 110,
+            "autominingDisabled": true,
+            "lastWallSeconds": 1791768130,
+            "lastL1WallLagSeconds": 0,
+            "clockSynchronization": "every mined block, including correction of wall-clock lead",
+            "lastBlock": "341",
+            "lastTimestamp": "1791768130",
+            "autominingRestored": true
+          }
+        },
+        "readiness": [
+          {
+            "phase": "after-first-wall-mine",
+            "wallSeconds": 1791768018,
+            "timestampAvailable": true,
+            "inspectorCode": "READY",
+            "syncedL1Timestamp": "1791768017",
+            "lagSeconds": 1
+          },
+          {
+            "phase": "adapters-started",
+            "wallSeconds": 1791768018,
+            "timestampAvailable": true,
+            "inspectorCode": "READY",
+            "syncedL1Timestamp": "1791768018",
+            "lagSeconds": 0,
+            "health": {
+              "status": 200,
+              "ready": true,
+              "proofs": "real",
+              "queryEnabled": true,
+              "queryReady": true
+            }
+          },
+          {
+            "phase": "trusted-client-created",
+            "wallSeconds": 1791768018,
+            "timestampAvailable": true,
+            "inspectorCode": "READY",
+            "syncedL1Timestamp": "1791768018",
+            "lagSeconds": 0,
+            "health": {
+              "status": 200,
+              "ready": true,
+              "proofs": "real",
+              "queryEnabled": true,
+              "queryReady": true
+            }
+          }
+        ],
+        "initialPublicAnchor": {
+          "blockNumber": "1",
+          "blockHash": "0x27641521e6d26960572dfb7ad42cb1abad2150fecece81881daa9aaabb0a455a",
+          "txHash": "0x2825684b28f0b0ee77a0e40ff9dd466e3abff4d4dd3a5adf58ce5ff6a0bebeab",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        },
+        "names": {
+          "scenario": "private-owned-names",
+          "privateTransactions": 4,
+          "registeredNames": 4,
+          "privateOwnershipExact": true,
+          "readableMetadataExact": true,
+          "collateralFreeRegistration": true,
+          "journalReopenPreserved": true,
+          "scope": "Exact private owned-name sets and labels after sequential registration and application/journal reopen. Concurrent uniqueness, cold PXE recovery and broader observer privacy remain separate."
+        },
+        "publicViews": [
+          {
+            "posts": [],
+            "nextCursor": null,
+            "revision": 5,
+            "identity": {
+              "id": "14380595655445837215016664028043031941106156001724837735944625249482157779792",
+              "first": "Juniper",
+              "last": "Vale",
+              "profile": {
+                "bio": {
+                  "version": "0",
+                  "digest": "0",
+                  "length": "0",
+                  "text": ""
+                },
+                "avatar": {
+                  "version": "0",
+                  "digest": "0",
+                  "width": "0",
+                  "height": "0",
+                  "length": "0",
+                  "encoding": "base64",
+                  "data": "",
+                  "removal": null
+                }
+              }
+            }
+          },
+          {
+            "posts": [],
+            "nextCursor": null,
+            "revision": 5,
+            "identity": {
+              "id": "17419114559397912460671718523752068678982477365683563194832363871241930340203",
+              "first": "River",
+              "last": "Stone",
+              "profile": {
+                "bio": {
+                  "version": "0",
+                  "digest": "0",
+                  "length": "0",
+                  "text": ""
+                },
+                "avatar": {
+                  "version": "0",
+                  "digest": "0",
+                  "width": "0",
+                  "height": "0",
+                  "length": "0",
+                  "encoding": "base64",
+                  "data": "",
+                  "removal": null
+                }
+              }
+            }
+          },
+          {
+            "posts": [],
+            "nextCursor": null,
+            "revision": 5,
+            "identity": {
+              "id": "17975403956797744019970888872463458302729905972312609966283690340975302529001",
+              "first": "Ellis",
+              "last": "Moss",
+              "profile": {
+                "bio": {
+                  "version": "0",
+                  "digest": "0",
+                  "length": "0",
+                  "text": ""
+                },
+                "avatar": {
+                  "version": "0",
+                  "digest": "0",
+                  "width": "0",
+                  "height": "0",
+                  "length": "0",
+                  "encoding": "base64",
+                  "data": "",
+                  "removal": null
+                }
+              }
+            }
+          },
+          {
+            "posts": [],
+            "nextCursor": null,
+            "revision": 5,
+            "identity": {
+              "id": "6148142006156069819108724176893243789450754808914254954030225425100291996130",
+              "first": "Morgan",
+              "last": "Reed",
+              "profile": {
+                "bio": {
+                  "version": "0",
+                  "digest": "0",
+                  "length": "0",
+                  "text": ""
+                },
+                "avatar": {
+                  "version": "0",
+                  "digest": "0",
+                  "width": "0",
+                  "height": "0",
+                  "length": "0",
+                  "encoding": "base64",
+                  "data": "",
+                  "removal": null
+                }
+              }
+            }
+          }
+        ],
+        "journalReopen": {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true,
+          "actors": [
+            {
+              "sameHash": true,
+              "newProofJobs": 0,
+              "transactionBytesRetained": true
+            },
+            {
+              "sameHash": true,
+              "newProofJobs": 0,
+              "transactionBytesRetained": true
+            }
+          ]
+        },
+        "rebuild": {
+          "passed": true,
+          "canonicalTransactionsRefetched": 5,
+          "normalizedCacheTreatedAsAuthority": false
+        },
+        "publicReader": {
+          "passed": true,
+          "sessions": [
+            {
+              "phase": "fresh",
+              "closed": true,
+              "checkpoint": {
+                "number": 19,
+                "hash": "0x1322a2295b69f871c9ee90d592975cbc21d8b3aa19bc3c60df490bfb473e1305"
+              },
+              "views": [
+                "profile",
+                "profile",
+                "profile",
+                "profile",
+                "feed",
+                "directory"
+              ],
+              "authenticatedRanges": 2
+            },
+            {
+              "phase": "reopened",
+              "closed": true,
+              "checkpoint": {
+                "number": 19,
+                "hash": "0x1322a2295b69f871c9ee90d592975cbc21d8b3aa19bc3c60df490bfb473e1305"
+              },
+              "views": [
+                "profile",
+                "profile",
+                "profile",
+                "profile",
+                "feed",
+                "directory"
+              ],
+              "authenticatedRanges": 2
+            }
+          ],
+          "persistedRangesBeforeReopen": 2,
+          "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+        },
+        "composer": {
+          "passed": true,
+          "scope": "Production browser encrypted import and composer; no browser posting/funding acceptance",
+          "cleanup": {
+            "reader": true,
+            "l1": true
+          },
+          "cliActorsClosed": true,
+          "browser": {
+            "schemaVersion": 1,
+            "passed": true,
+            "scope": "Production browser custody/PXE/composer boundary; no browser publication or extension-funding acceptance",
+            "checks": {
+              "publicBeforeUnlock": true,
+              "ownedChoicesA": true,
+              "ownedChoicesB": true,
+              "exact992Prepared": true,
+              "preparedCancelled": true,
+              "oversizeRetained": true,
+              "literalPreview": true,
+              "accountSwitch": true,
+              "collateralPendingB": true
+            },
+            "traffic": {
+              "walletAssets": 32,
+              "privateRequests": 256,
+              "proofSubmits": 0,
+              "nodeSubmissions": 0,
+              "l1Submissions": 0,
+              "blockedRequests": 0,
+              "inspectionErrors": 0
+            },
+            "cleanup": {
+              "contextClosed": true,
+              "browserClosed": true
+            },
+            "stage": "complete",
+            "elapsedMs": 17597,
+            "timedOut": false
+          },
+          "receiver": {
+            "newProofJobs": 0,
+            "newNodeSubmissions": 0,
+            "l1": {
+              "requests": 8,
+              "forwarded": 32,
+              "rejected": 0,
+              "errors": 0,
+              "pending": 0
+            }
+          },
+          "accounting": {
+            "a": true,
+            "b": true
+          },
+          "accountingVerified": true
+        },
+        "accountFees": {
+          "a": "29662650600000",
+          "b": "20929359600000"
+        },
+        "proverJobs": {
+          "jobs": 2,
+          "bytes": 0,
+          "running": false,
+          "submitted": 4,
+          "completed": 4,
+          "failed": 0
+        }
+      },
+      "epochSchedulingStarted": false,
+      "idleProverAgentCreated": false,
+      "nodeStopped": true
+    },
+    "anvilExit": {
+      "code": null,
+      "signal": "SIGKILL"
+    },
+    "singletonsStopped": true
+  },
+  "elapsedMs": 424312,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "finishedAt": "2026-10-12T01:22:23.028Z"
+}

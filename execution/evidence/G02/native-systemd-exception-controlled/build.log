@@ -1,0 +1,42 @@
+test_absence_transport_failure_not_positive_absence (local_fixture.Boundary.test_absence_transport_failure_not_positive_absence) ... ok
+test_capabilities_accept_only_exact_measured_names_and_counts (local_fixture.Boundary.test_capabilities_accept_only_exact_measured_names_and_counts) ... ok
+test_environment_rejects_duplicates_extras_missing_wrong_values_types (local_fixture.Boundary.test_environment_rejects_duplicates_extras_missing_wrong_values_types) ... ok
+test_exact_measured_fixture_and_only_order_changes_pass (local_fixture.Boundary.test_exact_measured_fixture_and_only_order_changes_pass) ... ok
+test_other_confinement_failures_still_reject_measured_representation (local_fixture.Boundary.test_other_confinement_failures_still_reject_measured_representation) ... ok
+test_persistence_failure_cannot_skip_cleanup (local_fixture.Boundary.test_persistence_failure_cannot_skip_cleanup) ... ok
+test_positive_confinement_and_each_unsafe_variant (local_fixture.Boundary.test_positive_confinement_and_each_unsafe_variant) ... ok
+test_production_subset_and_workload_unchanged (local_fixture.Boundary.test_production_subset_and_workload_unchanged) ... ok
+test_removal_failure_does_not_suppress_absence (local_fixture.Boundary.test_removal_failure_does_not_suppress_absence) ... ok
+test_state_failure_cannot_skip_cleanup (local_fixture.Boundary.test_state_failure_cannot_skip_cleanup) ... ok
+test_state_rejects_unbounded_or_wrong_types (local_fixture.Boundary.test_state_rejects_unbounded_or_wrong_types) ... ok
+test_unknown_identity_never_mutates (local_fixture.Boundary.test_unknown_identity_never_mutates) ... ok
+test_case_failures_keep_native_state_and_missing_result (local_fixture.DriverPhases.test_case_failures_keep_native_state_and_missing_result) ... ok
+test_checkpoint_schema_is_closed_and_state_exception_is_finite (local_fixture.DriverPhases.test_checkpoint_schema_is_closed_and_state_exception_is_finite) ... ok
+test_diagnostic_failure_cannot_replace_primary_outcome (local_fixture.DriverPhases.test_diagnostic_failure_cannot_replace_primary_outcome) ... ok
+test_result_availability_never_opens_content (local_fixture.DriverPhases.test_result_availability_never_opens_content) ... ok
+test_success_keeps_all_four_cases_and_final_assertions (local_fixture.DriverPhases.test_success_keeps_all_four_cases_and_final_assertions) ... ok
+test_timer_failures_keep_exact_phase_without_later_work (local_fixture.DriverPhases.test_timer_failures_keep_exact_phase_without_later_work) ... ok
+test_called_process_keeps_only_finite_return_code (local_fixture.OriginalException.test_called_process_keeps_only_finite_return_code) ... ok
+test_malformed_scalar_values_cannot_coerce_or_leak (local_fixture.OriginalException.test_malformed_scalar_values_cannot_coerce_or_leak) ... ok
+test_os_error_reveals_no_path_errno_or_message (local_fixture.OriginalException.test_os_error_reveals_no_path_errno_or_message) ... ok
+test_outer_failure_preserved_when_diagnostic_fails (local_fixture.OriginalException.test_outer_failure_preserved_when_diagnostic_fails) ... ok
+test_timeout_keeps_only_finite_seconds (local_fixture.OriginalException.test_timeout_keeps_only_finite_seconds) ... ok
+test_unknown_subclasses_getters_and_messages_are_untouched (local_fixture.OriginalException.test_unknown_subclasses_getters_and_messages_are_untouched) ... ok
+test_atomic_complete_publication_and_no_overwrite (local_fixture.Transport.test_atomic_complete_publication_and_no_overwrite) ... ok
+test_boot_pending_never_accepts_other_systemd (local_fixture.Transport.test_boot_pending_never_accepts_other_systemd) ... ok
+test_boot_phase_codes_and_embedded_bytes (local_fixture.Transport.test_boot_phase_codes_and_embedded_bytes) ... ok
+test_duplicate_missing_malformed_oversize_rows_reject (local_fixture.Transport.test_duplicate_missing_malformed_oversize_rows_reject) ... ok
+test_exact_systemd_barrier (local_fixture.Transport.test_exact_systemd_barrier) ... ok
+test_file_mutation_during_read_is_rejected (local_fixture.Transport.test_file_mutation_during_read_is_rejected) ... ok
+test_finite_boot_exit_projection (local_fixture.Transport.test_finite_boot_exit_projection) ... ok
+test_fixed_reader_command_and_missing (local_fixture.Transport.test_fixed_reader_command_and_missing) ... ok
+test_identity_races_and_types_reject (local_fixture.Transport.test_identity_races_and_types_reject) ... ok
+test_partial_publication_never_becomes_final (local_fixture.Transport.test_partial_publication_never_becomes_final) ... ok
+test_reader_envelope_partial_oversize_invalid_paths (local_fixture.Transport.test_reader_envelope_partial_oversize_invalid_paths) ... ok
+test_reader_rechecks_identity_before_and_after (local_fixture.Transport.test_reader_rechecks_identity_before_and_after) ... ok
+test_real_file_reader_bounds_partial_and_symlink (local_fixture.Transport.test_real_file_reader_bounds_partial_and_symlink) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.178s
+
+OK

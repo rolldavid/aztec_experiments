@@ -1,0 +1,9 @@
+{
+  "CommandId": "57afda26-a83f-48c7-9caa-7fbff6e5bff7",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-15T02:45:38.221Z",
+  "ExecutionEndDateTime": "2026-10-15T02:45:42.221Z",
+  "StandardOutputContent": "{\"sourceUnchanged\": true, \"sha256\": \"34d2a80baddcc3347f5838c1e8d3ac378a893067bfc5df7b9939fb689aef71a8\", \"ownedTreeAbsent\": true, \"removedOwnOutputs\": [\"/var/lib/rolling-node/shared/load-1572/anvil-recovery-a03341e5-ea1b-4b32-841f-f6837aa0e8cb.json\", \"/var/lib/rolling-node/shared/load-1572/anvil-cache-a0e70fcb-2b2d-4883-a891-9e5b2b322068\"], \"originalQualifierPassed\": false, \"actualLoadMs\": 39877, \"memoryFailure\": [{\"stage\": \"memory-limit\"}], \"peakTreeRSSKiB\": 12692876, \"peakMemory\": {\"elapsedMs\": 60896, \"processes\": [{\"role\": \"supervisor\", \"pid\": 14407, \"ppid\": 1, \"rssKiB\": 605964}, {\"role\": \"anvil\", \"pid\": 14449, \"ppid\": 14407, \"rssKiB\": 12086912}]}, \"nativeExit\": {\"role\": \"anvil\", \"code\": null, \"signal\": \"SIGKILL\", \"closed\": true, \"cleanupComplete\": true}}\n",
+  "StandardErrorContent": ""
+}

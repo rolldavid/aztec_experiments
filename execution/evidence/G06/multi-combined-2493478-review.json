@@ -1,0 +1,47 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "base": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+  "verdict": "approved-source-for-bounded-genuine-multi-account-campaign",
+  "scope": "G06 two distinct accounts reaction development acceptance harness, full product/privacy still open",
+  "fileHashes": {
+    "scripts/testing/rolling-account-reactions.mjs": "29826e9edf5cc71b9bc0569d16495f361927bd2625742a08625af4cdff2ee9df",
+    "scripts/testing/rolling-account-reactions.test.mjs": "8cd32e7fbc744dbbcdabd1b9ddd33d53cac73aeca6cdf7a03cdab75f30413076",
+    "scripts/testing/rolling-application-actor.mjs": "fe2af0833ad6282e4a2e18974851a2fe9e64e6279458c2ca5bdb32e925bd1696",
+    "scripts/testing/rolling-application-actor.test.mjs": "fb0eadd2cc48fcf6438ac95516f3c3a751a8acf59a23f7dbc91a711b73f9f67a",
+    "scripts/testing/rolling-application-fixture.mjs": "8343a708bd88a685a4d9c20a78ca13e86aa8128a7eb0d50012ef76f12adbab19",
+    "scripts/testing/rolling-application-fixture.test.mjs": "9c801835794ceab5648bb49efe5eccded96ea2798763d2a5941161a1ae18d27f",
+    "scripts/testing/rolling-public-acceptance.mjs": "c47a2a941a9ddfd8782110fb097cfd1f06dd6d0117d00d66ebd756f411dc3f04",
+    "scripts/testing/rolling-removed-like.mjs": "d379d8b1e67d11e17adebbe029718cf72fd4487e0b242ea9fd84749ef68e0ee8",
+    "scripts/testing/rolling-removed-like.test.mjs": "7fcc7f655dde186e7c7e0b15d77082db754c79699c4c5bdc1da267c00968a1b3",
+    "scripts/testing/rolling-social-acceptance.mjs": "3df95179f567bfeda24127f28d5b2ab37d4a678a73429329a3f3f430ac28def7",
+    "scripts/testing/scenario-flows.mjs": "c2b081e1ae08c00357ed07f72ff70a914da2e635061cc2ddfa8d6dee1a82e83d",
+    "scripts/testing/scenarios.mjs": "8d3570b4f1f05c5e8923ac3f8953ab45bce662dc952ff348f588943f3744f195"
+  },
+  "sourceChecks": [
+    "All12changedpaths confined scripts/testing; no production/shared/Noir/artifact changes",
+    "Exactbyte transfers of reviewed1363 reactions,251actor andbdef classifier",
+    "All34ee findings repaired atcc9; d13adds actualpublicfootprint classifier to runtime source hashes; all newlyexecuted helperfiles present and bound",
+    "Distinct actual W01 account addresses and sameFPCasserted; A cold/B standalone beforeclaim; independent encrypted/PXEstores via reviewed actorfactory, sharednode/service/miner",
+    "Six human HTTPproofjobs required; separate moderator genuine path; duplicate paidnoop, private unlike and actualremovedprepare classifier; auth allowed, no native proof/wallet submit/transportsend on rejection",
+    "Bothjournals reopen/reconcile exactprevioushash withallactivity unchanged; semanticassertions and canonicalHTTPreopen retained",
+    "Per-accountfees and cross-poolmath includes Bstandalone once, equalbaselines, zero humanpublicFeeJuice; includedfees saved before semanticchecks",
+    "Actorclosedbefore sharedservice/IndexedDB/native loader; partialfunding observations retained byrole; activefailure journal selected",
+    "Original conversation/profile/anonymous/repost variants preserve action and jobcriteria; bounded540s768MiBfixture4GiB remains"
+  ],
+  "tests": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=../aztec_experiments/billboard/target/rolling_contract-RollingBoard.json ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-social-acceptance.test.mjs scripts/testing/rolling-account-reactions.test.mjs scripts/testing/rolling-application-actor.test.mjs scripts/testing/rolling-public-acceptance.test.mjs scripts/testing/rolling-removed-like.test.mjs",
+    "passed": 134,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 2069.899625
+  },
+  "findings": [],
+  "limits": [
+    "Exacttransfer/currentcombinedrevision verification before root campaign",
+    "No genuine multi-account runtime yet; missing/failed receipt/check cannot pass",
+    "Public exactfield comparisons and sameposttag distinctions do not establish full observerunlinkability",
+    "Fixtures localcontrolledsettlement, not deployment/testnet/audit acceptance",
+    "No expensive/services/browser/proof run by reviewer"
+  ]
+}

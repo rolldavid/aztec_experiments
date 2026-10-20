@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "verdict": "PASS bounded genuine initial preference reorg; eligible ONE unchanged-source genuine marker campaign",
+  "findings": [],
+  "evidence": {
+    "outer": "execution/evidence/G07/application-e1cad0a5-1ab2-4fa6-adcf-135b5038020c.json",
+    "outerSha256": "ed943d8ae88138e1b8861bd0c5d6dec7878589407cfa975c7438964c79184169",
+    "inner": "execution/evidence/G06/application-port-35713916-4a94-4f46-8325-ef8ef3ca21b0/observation.json",
+    "innerSha256": "102eef95d8ecd9472be11c63ee362b60685857815abe65bce521090d093868da",
+    "outerInnerEqual": true,
+    "sourceCheck": "execution/evidence/G07/reorg-e1cad-independent-source-check.json",
+    "sourceEntriesMatched": 405,
+    "codec": "execution/evidence/G07/reorg-e1cad-independent-codec.json"
+  },
+  "runtime": {
+    "elapsedMs": 450654,
+    "innerCompleteMs": 438624,
+    "peakTreeRSSKiB": 1917568,
+    "deadlineMs": 540000,
+    "maxRSSSampleGapMs": 1520,
+    "httpNativeJobs": {
+      "jobs": 1,
+      "bytes": 0,
+      "running": false,
+      "submitted": 3,
+      "completed": 3,
+      "failed": 0
+    },
+    "applicationProofs": true,
+    "networkProofs": false,
+    "controlledSettlement": true,
+    "childExitCode": 0,
+    "allCleanup": true
+  },
+  "verifiedConjunction": [
+    "Source fixture 3b259 inspected through actual fork, retained private snapshot, dropped original validator, explicit renewed fee review, replacement inclusion, final private snapshot and journal reopen assertions.",
+    "Real single L1 suffix replacement at depth40 retained checkpoint12; same L1 height, changed tip, common ancestor unchanged; original mining stopped before mutation and recovery mining separately joined/restored.",
+    "Actual archiver and worldstate unwound to12, hot cached orphan preference reverted to exact retained head/state without proof/send; original block15 transaction became DROPPED/effect absent and normal validation only Block header not found.",
+    "No pool deletion, clock waiver, synthetic preference state or restoration bypass in reviewed path.",
+    "Original 194496-byte signed transaction SHA retained exactly in replacement history; replacement has different txHash, canonical block16, authenticated no Rolling preference public events, private state equals expected initialized bookmark state.",
+    "Three persisted binary effects independently decoded and byte-roundtripped with installed SDK; hash, txHash and numeric fee agree with evidence. Original signed Tx hash checked only; full compressed-proof decoding was deliberately not initialized after its pure-codec prerequisite failure.",
+    "Final actual funding PXE advanced canonical anchor15 to16 before utility balance read, retained same canonical16 afterward; all three exact private/public/pool equalities passed.",
+    "Journal read-only reopen retains original and replacement historical inclusions; original remains dropped; exactly three genuine HTTP/native jobs completed and none failed."
+  ],
+  "accounting": {
+    "retainedHumanFees": "37835074200000",
+    "standaloneFee": "8217756000000",
+    "canonicalTotalDebit": "46052830200000",
+    "excludedOrphanFee": "8511002400000",
+    "privateBalance": "999999953947169800000",
+    "publicBalance": "0",
+    "poolBalance": "999999953947169800000",
+    "lastVerification": {
+      "status": "passed",
+      "stage": "complete",
+      "expected": {
+        "privateBalance": "999999953947169800000",
+        "authorPublicBalance": "0",
+        "poolBalance": "999999953947169800000"
+      },
+      "target": {
+        "number": 16,
+        "hash": "0x1d9cb2708b4689e5e4697fff305127b6ae6effde7a73751fd53bad0d90c705f8"
+      },
+      "anchorBeforeSync": {
+        "number": 15,
+        "hash": "0x097c9086d6f489a412392ebb80be753ba09ce3d2867aabd603d8c8fe27377578"
+      },
+      "anchorBeforeRead": {
+        "number": 16,
+        "hash": "0x1d9cb2708b4689e5e4697fff305127b6ae6effde7a73751fd53bad0d90c705f8"
+      },
+      "targetCanonicalBefore": true,
+      "anchorCanonicalBefore": true,
+      "privateBalance": "999999953947169800000",
+      "authorPublicBalance": "0",
+      "poolBalance": "999999953947169800000",
+      "anchorAfterRead": {
+        "number": 16,
+        "hash": "0x1d9cb2708b4689e5e4697fff305127b6ae6effde7a73751fd53bad0d90c705f8"
+      },
+      "targetCanonicalAfter": true,
+      "anchorCanonicalAfter": true
+    },
+    "limitation": "Pre-replacement restored balance equality is source-enforced and reached; lastVerification retains final numeric snapshot only, not a separate intermediate numeric snapshot."
+  },
+  "limits": [
+    "Initial hot-cache rollback only; marker same-store cold reopen and changed-marker hash review still require their own genuine pass.",
+    "Public HTTP fresh/cold 4 views and canonical rebuild occurred before fork at original block15; do not claim post-fork public HTTP/cache rebuild from this run.",
+    "CLI actual SDK stores use in-memory IndexedDB adaptation; no native browser reorg-persistence claim.",
+    "No full encrypted-discovery capacity, full anonymity, remote Linux qualification, network proof or full G07 closure.",
+    "Prior failed runs remain failed; this pass does not establish the unrecorded historical mismatch amount."
+  ],
+  "markerEligibility": {
+    "sourceUnchanged": true,
+    "oneRun": true,
+    "scenario": "rolling-preference-reorg-marker",
+    "limits": "540s/4GiB unchanged; frozen source/dependencies/assets; all original marker/cold-store/digest/fee/cleanup gates required",
+    "assetsCarry": {
+      ".build/sdk/sdk-manifest.json": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+      ".build/rolling-wallet/manifest.json": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+      ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+      "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+    },
+    "sourceReview": "execution/evidence/G07/pxe-3b259-source-eligibility-review.json"
+  }
+}

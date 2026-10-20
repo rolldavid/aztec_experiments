@@ -1,0 +1,27 @@
+{
+  "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+  "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "task_id": "W03-browser-ci-sdk-heap",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "scripts/run-bounded-browser-check.mjs"
+  ],
+  "required_checks": [
+    "wallet-browser"
+  ],
+  "requirements": [
+    "W03-native-sdk-receipt-consumers",
+    "RC38-bounded-component-check"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "W03-browser-ci-sdk-heap",
+      "paths": [
+        "scripts/run-bounded-browser-check.mjs"
+      ]
+    }
+  ]
+}

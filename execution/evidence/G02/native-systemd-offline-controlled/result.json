@@ -1,0 +1,47 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T03:40:34.793Z",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-offline-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-offline-controlled/home",
+    "TMPDIR": "/private/tmp/roc-26s6bo03",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-offline-controlled/build.log",
+  "diagnosticHold": "Seven labelled in-memory controlled boundary checks; no Docker/network/systemd/native or guest process execution.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 524288,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "builder": {
+    "code": 0,
+    "elapsedMs": 91
+  },
+  "elapsedMs": 222,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T03:40:35.016Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "testCount": 7,
+  "noSkipped": true,
+  "passed": true,
+  "logSha256": "3c823c64c0943974b087dd63667dfd23c0d3a078d8963ebfd45dc2540685d597"
+}

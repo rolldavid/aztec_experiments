@@ -1,0 +1,27 @@
+▶ owned isolated SDK and ACIR suite
+  ▶ application store fixture owns full isolated namespaces and deletes them after settled hooks
+    ✔ real application metadata and isolated data on labelled Node IndexedDB (9.398958ms)
+    ✔ failed identity preparation retains cleanup ownership without opening a database (0.942083ms)
+  ✔ application store fixture owns full isolated namespaces and deletes them after settled hooks (11.772334ms)
+  ✔ actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index (11.81975ms)
+  ✔ actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation (6.59375ms)
+  ✔ generated page / actual SDK rejects consistent wrong ordinal before utility (74.497ms)
+  ✔ generated page / actual SDK rejects consistent wrong fee before utility (8.038291ms)
+  ✔ generated page / actual SDK rejects consistent wrong execution before utility (26.434959ms)
+  ✔ generated page / actual SDK rejects consistent wrong slot before utility (4.945333ms)
+  ✔ generated multi-tx page uses authenticated ordinal and detaches original mutable receipt (13.397208ms)
+  ✔ generated page final original-node receipt change discards validated staged event (9.715208ms)
+  ✔ patched real queue: post-settle hook once, callback capture, no-hook defaults and failure drainage (3.153416ms)
+  ✔ actual SDK synthetic complete effect membership rejects changed ciphertext and changed root (1.9265ms)
+  ✔ actual application store/SDK on labelled Node IndexedDB: valid event commits, forged payload/missing nullifier does not (4.744041ms)
+  ✔ actual application store/SDK on labelled Node IndexedDB: staged valid event discarded on final context or canonical receipt failure (6.197041ms)
+  ✔ actual application store/SDK on labelled Node IndexedDB retains operation until awaited validator settles; no detached write (2.339375ms)
+✔ owned isolated SDK and ACIR suite (1417.045167ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2453.655209

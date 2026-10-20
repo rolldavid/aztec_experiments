@@ -1,0 +1,97 @@
+{
+  "task": "G09-current-policy-union-parent-update",
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "passed": true,
+  "at": "2026-10-15T14:50:57.319438+00:00",
+  "scope": "Existing trusted moderator public/genesis action; not moderator UI; native/PXE proofs disabled",
+  "sends": 1,
+  "elapsedMs": 6850,
+  "position": {
+    "blockNumber": "794",
+    "blockHash": "0x13f421fac0552912403e43140ae524570cb07a59d4dfa529802834809273da42",
+    "txHash": "0x1a38e347261d444c919b7917bddc61ac2ff8e619edf04553687e54dc4aed5816",
+    "txIndexWithinBlock": "0",
+    "logIndexWithinTx": "0"
+  },
+  "version": "2",
+  "rules": "No threats. Do not publish the passphrase apricot.",
+  "feeCap": "200000000000000",
+  "transactionFee": "14375992200000",
+  "signedBytesSha256": "eeba495dc8498ac780feda7939f2db87695a1a6e640a940c828e36a52320d4d5",
+  "effectSha256": "e7fe1578833e8512f83ddd5991908c7877ce939f42832af2a214b55a11b828ec",
+  "closed": true,
+  "ownedTreeAbsent": true,
+  "limitations": [
+    "No human wallet mutation; authoritative wallet remains advert788.",
+    "Reevaluation and actual removal under parent2 are pending separate normal-daemon observation.",
+    "Private actor config was referenced through trusted existing file; no funding/new actor/deployment.",
+    "Raw signed/effect/operator session remain private."
+  ],
+  "files": [
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/apricot-evaluated-ok.json",
+      "bytes": 476,
+      "sha256": "e2ace67bcee563676f9c09d38938f7ce16122bb790d59eb5a1619a015657a5a4"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/canonical-events.json",
+      "bytes": 1827,
+      "sha256": "46046ea64acb3e6d1d905388877790ab3ba9a021c50f8488abe0da10f9ae8b16"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/effect.bin",
+      "bytes": 1519,
+      "sha256": "e7fe1578833e8512f83ddd5991908c7877ce939f42832af2a214b55a11b828ec"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/entered.json",
+      "bytes": 207,
+      "sha256": "536cfe3ffff4dc65e8b7765e5b3d82870988f300550c7f97844313026a15f497"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/operator-binding.json",
+      "bytes": 1164,
+      "sha256": "eebfd5bef8342f5eaa2ef311be55e4df7a0e18a91419ece2154f70e74af2fe63"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/operator-binding.template.json",
+      "bytes": 893,
+      "sha256": "93391eaafdf12f6818a51d59d456b9b66ae2dac58e100802c43f5e2df3f24a09"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/parent-policy-adapter.mjs",
+      "bytes": 7759,
+      "sha256": "433348363be4424e7de353ee5e1b153b54039e1e13ec668508b1104e1dff38e5"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/parent-policy-supervise.mjs",
+      "bytes": 1985,
+      "sha256": "968138fb3d1519c69d6a30045dc3c4a663ae13a69e32174bb349606a953fa6a8"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/parent-policy.mjs",
+      "bytes": 9284,
+      "sha256": "1aa3548b7279d6978ff854154f050324645df4e8c27ac05d8060ae74e59d08b5"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/result.json",
+      "bytes": 8519,
+      "sha256": "ed568b5d71232c546de942a0b6570b31f9a80dfbd511e0733e087ae8997a7a19"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/signed-intent.json",
+      "bytes": 314,
+      "sha256": "4d25c4cd7f8de56a762cbe496ef2caacb4e4a0e083e843cda4f2403fb8af04bc"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/signed.bin",
+      "bytes": 123008,
+      "sha256": "eeba495dc8498ac780feda7939f2db87695a1a6e640a940c828e36a52320d4d5"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/supervisor.json",
+      "bytes": 1453,
+      "sha256": "bb9d22135370e3bce31a3ba15e8587deb04eaae34d98e07a0a2facd8aad41302"
+    }
+  ]
+}

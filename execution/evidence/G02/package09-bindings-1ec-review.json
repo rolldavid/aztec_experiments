@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "findings": [],
+  "independentChecks": {
+    "report": "execution/evidence/G07/notification-infra-1ec-independent-checks.json",
+    "sha256": "d30abac71e6baca254efd3a3857dd0fe2a97c6c08de5e258ccf3c724c766cf1f",
+    "exactSourceBlobs": 10,
+    "trackedClean": true,
+    "sdkAndWallet": {
+      ".build/sdk/sdk-manifest.json": {
+        "sha256": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+        "verifiedInputs": 2040,
+        "verifiedOutputs": 8
+      },
+      ".build/rolling-wallet/manifest.json": {
+        "sha256": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+        "verifiedInputs": 81,
+        "verifiedOutputs": 24
+      }
+    },
+    "method": "Read-only exact git/blob/literal/hash inspection. No package, native, browser, prover, provider or service operation."
+  },
+  "verdict": "APPROVED_EXACT_LITERAL_BINDINGS_FOR_ONE_LOCAL_FULL_PACKAGE09_BUILD",
+  "helpers": {
+    "verifier": {
+      "sha256": "a7c4856aa63bba8b60bf43746169f927ac2687444656df6d94c6ebae322dd513",
+      "reversalMatchesReviewedBaseline": true,
+      "assignments": [
+        "EXPECTED_SOURCE",
+        "EXPECTED_INPUTS"
+      ]
+    },
+    "runner": {
+      "sha256": "9682e930c00c078cfe35056f2cb68d8511b191ba824c1bcadb94436a2657162f",
+      "reversalMatchesReviewedBaseline": true,
+      "assignments": [
+        "EXPECTED_VERIFIER_SHA"
+      ]
+    }
+  },
+  "packageInputsVerified": {
+    "deploy/prover/package.py": "b418397c323884a9d1c1608ed6c3fea1b069d617a7de6b9da78657584178e5af",
+    "deploy/prover/bootstrap.py": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "deploy/prover/startup-stages.mjs": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+    "scripts/patch-private-event-query.mjs": "3111de6c8dc1f77dbf68961c7f398598701b89125894f92cf19cfa7c2b4337b0",
+    "scripts/patch-pxe-reorg-anchor.mjs": "b0dbc2608f641db11ec013e549a48362aeca75f21e383325b42111e1c312b7e6",
+    "package.json": "1854b9e2a0cc0170d350c8d82c52da88a3cfb1abee1740795f3f5745fe1aa13d",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "crs-manifest.json": "0e80536b38ebba752bfe08b86466f1161e9324c9d5b6e666c8c20560db0aadda",
+    ".build/A02-node/node-v24.21.0-darwin-arm64/bin/node": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b"
+  },
+  "bootstrapPins": {
+    "CATALOG_SHA": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+    "STARTUP_HELPER_SHA": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c"
+  },
+  "bindingAssessment": [
+    "AST-extracted EXPECTED_SOURCE/EXPECTED_INPUTS/EXPECTED_VERIFIER_SHA only; reversing exactly those assignments toNone reconstructs both previouslyreviewed8af source hashes byte-for-byte.",
+    "Runner binds current verifier digest; verifier binds clean root1ec and all11 exact actual input hashes. No environment or command-line override added.",
+    "Original failclosed before/after source checks, both installed/copied PXEpatch pairs, artifact catalog load, bootstrap/helper/LinuxNode/BB checks, complete archive file/member verification and one shared540s/4GiB group supervisor remain unchanged.",
+    "No actual helper import/execute during review; source-only eligibility. Process-group containment retains previouslynoted detached-process limit; actual reviewed package usesordinary subprocesses."
+  ],
+  "requiredNext": [
+    "Parent exclusive local packaging slot, fresh09 outputs/nooverwrite, retain failures and partial evidence.",
+    "Verify actual built manifest/archive hashes, complete file set and patched modules/sourceclosure; this report is not an archive verification.",
+    "Bind later operator09 pins only after actual archive review; fresh\u226416384-byte payload/deadline onceintent and shutdownreadbacks separately required.",
+    "Six instrumentation image modules and Linux execution qualification remain separate from Mac/static build."
+  ],
+  "unchangedHistoricalArtifacts": true,
+  "cloudMutationAuthorizedByThisReport": false
+}

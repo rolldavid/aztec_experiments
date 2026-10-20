@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer",
+  "revision": "da7c54ef5a9182f9824bb744ce299fa5bf4ae9f3",
+  "originalRevision": "2e6be214863aa67d5b02e934084e8b9c1bffe435",
+  "verdict": "approved-scoped-native-clock-component",
+  "blockingFindings": [],
+  "sourceBindings": {
+    "plugins/devnet/network.mjs": "813a2b09d9004fa9f36e676bdcfa272dcdee8d08a578f7a164be67f14a3aaac6",
+    "plugins/devnet/operator-test.mjs": "9214cb8ca3826e71db10eafc292d03bfcfe59b734eab1dd460f5a7cfff82f894"
+  },
+  "compositionExact": true,
+  "assessment": [
+    "Only restored native-json snapshots enter the reset, after pre/post-load file hash and exact saved head number/hash plus rollup pending/proven checks.",
+    "evm_setTime uses exact authenticated head seconds; immediate readback requires unchanged head number/hash/timestamp. No mining, balance write, reset fallback, journal mutation or production/proof guard change.",
+    "Failure propagates through existing startup cleanup; incomplete boot cannot write a qualified stopped checkpoint. Original source snapshot remains intact.",
+    "Fresh and legacy restore paths remain unchanged; helper is a small existing startup-path correction."
+  ],
+  "evidence": {
+    "designPacketSha256": "16fd6a3b932fe1e8d523cedc9c59ff7551f995491cd23b18b7b8b6949f7fc81b",
+    "allPacketBindingsVerified": true,
+    "focused": "10 selected PASS, including installed AutomineSequencer with controlled L1, invalid head and falsy rejection controls",
+    "bareActual": "3019ms PASS; same previously rejected target accepted after clock reset; original head and inventory unchanged",
+    "rootHealthSha256": "e1ce13de3f36a6f36c233d0dbb0c1a16372c2e47c2941fc9de0e065803447304",
+    "rootOwnerSha256": "e936ae2173ee0773217b94b542e48ff610e0341ca56f91cd0c5375bd11afd76c",
+    "rootActual": "10137ms PASS; checkpoint178, oldest1, trees synced, clean stop, owned tree absent, zero financial operations"
+  },
+  "limitations": [
+    "Actual health advances native development checkpoints normally; the reset itself preserves the restored head.",
+    "This does not qualify full bootstrap, wallet payments, testnet, or genuine proofs."
+  ],
+  "reviewActions": "Read-only source/hash/evidence inspection; no service or heavy test run."
+}

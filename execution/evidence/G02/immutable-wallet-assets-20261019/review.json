@@ -1,0 +1,34 @@
+{
+  "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+  "verdict": "approved",
+  "scope": "Authenticated immutable wallet asset delivery and browser HTTP cache; four source/test paths only.",
+  "findings": [],
+  "reviewed": [
+    "Server accepts exactly one lowercase64hex sha256 query for wallet/CRS assets, compares actual decoded bytes before cacheable success, rejects malformed/extra/duplicate queries and pinned runtime.json. Mutable metadata and unpinned routes remain no-store.",
+    "Private browser max-age immutable response does not authorize shared CDN caching; gzip/identity Vary, decoded hash, SRI and isolation/CSP headers retained.",
+    "Browser uses source descriptors for exact hashed URLs, SRI scripts and bounded/digest-verified JSON; sequential script order and permanent failed-load no-replay fence remain.",
+    "Both browser asset60s deadlines and server60s truncation removed. Native finish/close/error owns server response byte release; compressor concurrency32waiters, asset128MiB, cache32MiB and aggregate response128MiB bounds unchanged.",
+    "Page exit aborts pending fetch/script load and removes listeners; metadata/API transport bound remains. No custom cache, retry framework, chain or proof changes."
+  ],
+  "checks": [
+    {
+      "command": "node --test apps/rolling/start.test.mjs",
+      "passed": 8,
+      "failed": 0,
+      "durationMs": 332.858083
+    },
+    {
+      "command": "node --test --test-name-pattern='native browser reuses|public (asset|artifact|script)' apps/rolling/wallet-runtime.browser.test.mjs",
+      "passed": 5,
+      "failed": 0,
+      "durationMs": 934.987208,
+      "actualBrowserObservation": "Headless Chromium fetched immutable artifact once across two documents and mutable metadata twice."
+    }
+  ],
+  "limits": [
+    "Native browser cache check uses small public fixture; not an actual hosted SDK download benchmark.",
+    "After affected assets/server publication, resume genuine saved-wallet continuation; no payment or full blockchain qualification replay required.",
+    "Physical response sockets may remain open until native transport completion/cancellation; byte ownership remains bounded."
+  ]
+}

@@ -1,0 +1,879 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-11T21:15:16.589Z",
+  "scope": "read-only Sepolia conversion feasibility, no wallet/signing/faucet/send",
+  "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+  "nodeEndpoint": "https://aztec-testnet.drpc.org",
+  "expectedNetwork": {
+    "chainId": "11155111",
+    "version": "2914217885",
+    "rollup": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9"
+  },
+  "calls": [
+    {
+      "label": "chainId",
+      "passed": true,
+      "value": 11155111
+    },
+    {
+      "label": "public-node-network",
+      "passed": true,
+      "value": {
+        "l1ChainId": 11155111,
+        "rollupVersion": 2914217885,
+        "nodeVersion": "6.0.0-rc.1",
+        "l1ContractAddresses": {
+          "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+          "registryAddress": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+          "inboxAddress": "0x816ce1861ec258f99279e75a3ee6b5dfc9571e30",
+          "outboxAddress": "0xb9dae0f8c5dd6524c1015ffe6494d9fd0623df0d",
+          "feeJuiceAddress": "0x762c132040fda6183066fa3b14d985ee55aa3c18",
+          "feeJuicePortalAddress": "0x5bb7523a95c1fdf1d2a3dd9fb7d497e7f5142d7f",
+          "coinIssuerAddress": "0xe05d0a62045b4237556c1ec423e59eea9a24eaee",
+          "rewardDistributorAddress": "0x83b2a93ef343cab7be9d8bba7317f314975e5cb0",
+          "governanceProposerAddress": "0x01c7d4ca153748d2377968fef22894cb162e9480",
+          "governanceAddress": "0xcaf7447721447b22cd0076ac7c63877c3afd329f",
+          "stakingAssetAddress": "0x5595cb9ed193cac2c0bc5393313bc6115817954b",
+          "feeAssetHandlerAddress": "0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9",
+          "gseAddress": "0xb6a38a51a6c1de9012f9d8ea9745ef957212eaac"
+        }
+      }
+    },
+    {
+      "label": "rollup.getFeeAsset",
+      "passed": true,
+      "value": "0x762C132040fdA6183066Fa3B14d985ee55aA3C18"
+    },
+    {
+      "label": "rollup.getFeeAssetPortal",
+      "passed": true,
+      "value": "0x5Bb7523A95c1FDF1D2A3DD9fb7d497E7F5142D7F"
+    },
+    {
+      "label": "usdc.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 1798,
+        "keccak256": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb"
+      }
+    },
+    {
+      "label": "weth.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 3124,
+        "keccak256": "0xc864e10689f2da18833652a3b075d43106e87f0f90d95ee64f6f0b33bc026083"
+      }
+    },
+    {
+      "label": "factory.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 24535,
+        "keccak256": "0xacb5afea1f8877239fadd30358add13f2f9d4fb80175402c686d392295224fef"
+      }
+    },
+    {
+      "label": "quoter.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 8273,
+        "keccak256": "0xe4068c0e5f3f2d9980793dd4314d2222dca27d03fd999cb5dca580fd90ceea0e"
+      }
+    },
+    {
+      "label": "router.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 24497,
+        "keccak256": "0xe7f98ee73dfe6d5c96cbf8936920f496b1b82f24326d6a415b4144a2252271de"
+      }
+    },
+    {
+      "label": "rollup.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 24418,
+        "keccak256": "0x6bdfab78d9799c2f674a68a6461a1ff37638bc27ee0a1a5b568374e804fed72a"
+      }
+    },
+    {
+      "label": "feeJuice.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 2753,
+        "keccak256": "0x0c5e7ba8cc1b85665b72c1843e9546936973f870a7951c29722018f3f9dcee88"
+      }
+    },
+    {
+      "label": "feePortal.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 1757,
+        "keccak256": "0x2e81eb8aa72f7fb574e3a8ab20f9477632cbced01c10c20afa7625bf2a3dc14a"
+      }
+    },
+    {
+      "label": "usdc.name",
+      "passed": true,
+      "value": "USDC"
+    },
+    {
+      "label": "usdc.symbol",
+      "passed": true,
+      "value": "USDC"
+    },
+    {
+      "label": "usdc.decimals",
+      "passed": true,
+      "value": 6
+    },
+    {
+      "label": "usdc.totalSupply",
+      "passed": true,
+      "value": "10742398429128541534"
+    },
+    {
+      "label": "weth.name",
+      "passed": true,
+      "value": "Wrapped Ether"
+    },
+    {
+      "label": "weth.symbol",
+      "passed": true,
+      "value": "WETH"
+    },
+    {
+      "label": "weth.decimals",
+      "passed": true,
+      "value": 18
+    },
+    {
+      "label": "weth.totalSupply",
+      "passed": true,
+      "value": "194164410876639238772786"
+    },
+    {
+      "label": "feeJuice.name",
+      "passed": true,
+      "value": "FeeJuice"
+    },
+    {
+      "label": "feeJuice.symbol",
+      "passed": true,
+      "value": "FEE"
+    },
+    {
+      "label": "feeJuice.decimals",
+      "passed": true,
+      "value": 18
+    },
+    {
+      "label": "feeJuice.totalSupply",
+      "passed": true,
+      "value": "11635972001000000000000000000"
+    },
+    {
+      "label": "feePortal.UNDERLYING",
+      "passed": true,
+      "value": "0x762C132040fdA6183066Fa3B14d985ee55aA3C18"
+    },
+    {
+      "label": "feePortal.ROLLUP",
+      "passed": true,
+      "value": "0x8c2fb2A68A3d362ab1DE99E06F83f8903160BbD9"
+    },
+    {
+      "label": "feePortal.VERSION",
+      "passed": true,
+      "value": "2914217885"
+    },
+    {
+      "label": "feePortal.INBOX",
+      "passed": true,
+      "value": "0x816ce1861ec258F99279E75a3EE6B5Dfc9571E30"
+    },
+    {
+      "label": "feePortal.L2_TOKEN_ADDRESS",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000003"
+    },
+    {
+      "label": "router.WETH9",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "router.factory",
+      "passed": true,
+      "value": "0x0227628f3F023bb0B980b67D528571c95c6DaC1c"
+    },
+    {
+      "label": "usdc.version",
+      "passed": true,
+      "value": "2"
+    },
+    {
+      "label": "usdc.DOMAIN_SEPARATOR",
+      "passed": true,
+      "value": "0xb90e5057db141a932946e64d09ccb7ffc9b00bd79fec26f698d29af0c83320a6"
+    },
+    {
+      "label": "weth/usdc/100.getPool",
+      "passed": true,
+      "value": "0xFeEd501c2B21D315F04946F85fC6416B640240b5"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.token0",
+      "passed": true,
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.token1",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.liquidity",
+      "passed": true,
+      "value": "791829028724873"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.slot0",
+      "passed": true,
+      "value": [
+        "364453994542860650081208994094142",
+        168684,
+        5,
+        6,
+        6,
+        0,
+        true
+      ]
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.weth.balance",
+      "passed": true,
+      "value": "3355611724285811637"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.usdc.balance",
+      "passed": true,
+      "value": "523385374118"
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.weth->usdc.quote",
+      "passed": true,
+      "value": [
+        "47240132",
+        "364554041695496094296683590513127",
+        0,
+        "114201"
+      ]
+    },
+    {
+      "label": "0xFeEd501c2B21D315F04946F85fC6416B640240b5.usdc->weth.quote",
+      "passed": true,
+      "value": [
+        "21158277431228",
+        "364451877505745273361047592026757",
+        0,
+        "95197"
+      ]
+    },
+    {
+      "label": "weth/usdc/500.getPool",
+      "passed": true,
+      "value": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.token0",
+      "passed": true,
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.token1",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.liquidity",
+      "passed": true,
+      "value": "13157796658750913"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.slot0",
+      "passed": true,
+      "value": [
+        "365786156716487280489134811074317",
+        168757,
+        208,
+        900,
+        900,
+        0,
+        true
+      ]
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.weth.balance",
+      "passed": true,
+      "value": "101084120474177090430"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.usdc.balance",
+      "passed": true,
+      "value": "4165132971378"
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.weth->usdc.quote",
+      "passed": true,
+      "value": [
+        "46890006",
+        "365792175091028761256996566567219",
+        1,
+        "114211"
+      ]
+    },
+    {
+      "label": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1.usdc->weth.quote",
+      "passed": true,
+      "value": [
+        "21304826881175",
+        "365786028431917283169810160108281",
+        1,
+        "95499"
+      ]
+    },
+    {
+      "label": "weth/usdc/3000.getPool",
+      "passed": true,
+      "value": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.token0",
+      "passed": true,
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.token1",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.liquidity",
+      "passed": true,
+      "value": "8790744319278135"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.slot0",
+      "passed": true,
+      "value": [
+        "365573935110495664175910844983270",
+        168746,
+        40,
+        128,
+        128,
+        0,
+        true
+      ]
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.weth.balance",
+      "passed": true,
+      "value": "54040585290248762499"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.usdc.balance",
+      "passed": true,
+      "value": "3828654271488"
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.weth->usdc.quote",
+      "passed": true,
+      "value": [
+        "46826662",
+        "365582920752115736680165961000200",
+        1,
+        "98302"
+      ]
+    },
+    {
+      "label": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50.usdc->weth.quote",
+      "passed": true,
+      "value": [
+        "21226882248282",
+        "365573743799405800037105959076811",
+        1,
+        "95446"
+      ]
+    },
+    {
+      "label": "weth/usdc/10000.getPool",
+      "passed": true,
+      "value": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.token0",
+      "passed": true,
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.token1",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.liquidity",
+      "passed": true,
+      "value": "106943014519252558"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.slot0",
+      "passed": true,
+      "value": [
+        "367123740951712484623182679071101",
+        168830,
+        27,
+        51,
+        51,
+        0,
+        true
+      ]
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.weth.balance",
+      "passed": true,
+      "value": "1019407962896715284305"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.usdc.balance",
+      "passed": true,
+      "value": "52697271777366"
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.weth->usdc.quote",
+      "passed": true,
+      "value": [
+        "46107179",
+        "367124474387937765154906900235705",
+        0,
+        "98330"
+      ]
+    },
+    {
+      "label": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47.usdc->weth.quote",
+      "passed": true,
+      "value": [
+        "21256949888636",
+        "367123725203614416644097909343990",
+        0,
+        "95442"
+      ]
+    },
+    {
+      "label": "weth/feeJuice/100.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "weth/feeJuice/500.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "weth/feeJuice/3000.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "weth/feeJuice/10000.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "usdc/feeJuice/100.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "usdc/feeJuice/500.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "usdc/feeJuice/3000.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "usdc/feeJuice/10000.getPool",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "v2Factory.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 13859,
+        "keccak256": "0xbab145d02e7005f0d84c6c1639d39b799b0ea16df99ebbdaf5a14d9da820b4e0"
+      }
+    },
+    {
+      "label": "v2Router.code",
+      "passed": true,
+      "value": {
+        "present": true,
+        "bytes": 17944,
+        "keccak256": "0xc60e0f393de6483b46dc810c7067a30acf94048c6523e60392fdf94a7301fc92"
+      }
+    },
+    {
+      "label": "v2Router.WETH",
+      "passed": true,
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "label": "v2Router.factory",
+      "passed": true,
+      "value": "0xF62c03E08ada871A0bEb309762E260a7a6a880E6"
+    },
+    {
+      "label": "v2.weth/usdc.getPair",
+      "passed": true,
+      "value": "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74"
+    },
+    {
+      "label": "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74.getReserves",
+      "passed": true,
+      "value": [
+        "2622927672298",
+        "55899412630290095699",
+        1791749412
+      ]
+    },
+    {
+      "label": "v2.weth/feeJuice.getPair",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "v2.usdc/feeJuice.getPair",
+      "passed": true,
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "finalized-anchor-recheck",
+      "passed": true,
+      "value": {
+        "number": "11894279",
+        "hash": "0x8c39f3ed46c20ce04b1a2573413e9457bbeef2e786e1596794d27490295700d6"
+      }
+    }
+  ],
+  "sources": [
+    "https://developers.circle.com/stablecoins/usdc-contract-addresses",
+    "https://developers.uniswap.org/docs/protocols/v3/deployments/v3-ethereum-deployments",
+    "https://developers.uniswap.org/docs/protocols/v2/deployments"
+  ],
+  "block": {
+    "number": "11894279",
+    "hash": "0x8c39f3ed46c20ce04b1a2573413e9457bbeef2e786e1596794d27490295700d6",
+    "timestamp": "1791752532",
+    "baseFeePerGas": "14",
+    "gasLimit": "199609378"
+  },
+  "nodeInfo": {
+    "l1ChainId": 11155111,
+    "rollupVersion": 2914217885,
+    "nodeVersion": "6.0.0-rc.1",
+    "l1ContractAddresses": {
+      "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+      "registryAddress": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+      "inboxAddress": "0x816ce1861ec258f99279e75a3ee6b5dfc9571e30",
+      "outboxAddress": "0xb9dae0f8c5dd6524c1015ffe6494d9fd0623df0d",
+      "feeJuiceAddress": "0x762c132040fda6183066fa3b14d985ee55aa3c18",
+      "feeJuicePortalAddress": "0x5bb7523a95c1fdf1d2a3dd9fb7d497e7f5142d7f",
+      "coinIssuerAddress": "0xe05d0a62045b4237556c1ec423e59eea9a24eaee",
+      "rewardDistributorAddress": "0x83b2a93ef343cab7be9d8bba7317f314975e5cb0",
+      "governanceProposerAddress": "0x01c7d4ca153748d2377968fef22894cb162e9480",
+      "governanceAddress": "0xcaf7447721447b22cd0076ac7c63877c3afd329f",
+      "stakingAssetAddress": "0x5595cb9ed193cac2c0bc5393313bc6115817954b",
+      "feeAssetHandlerAddress": "0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9",
+      "gseAddress": "0xb6a38a51a6c1de9012f9d8ea9745ef957212eaac"
+    }
+  },
+  "addresses": {
+    "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "weth": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14",
+    "factory": "0x0227628f3F023bb0B980b67D528571c95c6DaC1c",
+    "quoter": "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3",
+    "router": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+    "rollup": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "feeJuice": "0x762C132040fdA6183066Fa3B14d985ee55aA3C18",
+    "feePortal": "0x5Bb7523A95c1FDF1D2A3DD9fb7d497E7F5142D7F",
+    "v2Factory": "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
+    "v2Router": "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3"
+  },
+  "pools": [
+    {
+      "pair": [
+        "weth",
+        "usdc"
+      ],
+      "fee": 100,
+      "address": "0xFeEd501c2B21D315F04946F85fC6416B640240b5",
+      "token0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "token1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "liquidity": "791829028724873",
+      "slot0": [
+        "364453994542860650081208994094142",
+        168684,
+        5,
+        6,
+        6,
+        0,
+        true
+      ],
+      "balances": {
+        "weth": "3355611724285811637",
+        "usdc": "523385374118"
+      },
+      "quotes": [
+        {
+          "src": "weth",
+          "dst": "usdc",
+          "amountIn": "1000000000000000",
+          "result": [
+            "47240132",
+            "364554041695496094296683590513127",
+            0,
+            "114201"
+          ]
+        },
+        {
+          "src": "usdc",
+          "dst": "weth",
+          "amountIn": "1000000",
+          "result": [
+            "21158277431228",
+            "364451877505745273361047592026757",
+            0,
+            "95197"
+          ]
+        }
+      ],
+      "code": {
+        "present": true,
+        "bytes": 22142,
+        "keccak256": "0xec0a6190324439deb8ccb1aaac8ae9227e9d7b4f47d099b4bedfaea0c310c43a"
+      }
+    },
+    {
+      "pair": [
+        "weth",
+        "usdc"
+      ],
+      "fee": 500,
+      "address": "0x3289680dD4d6C10bb19b899729cda5eEF58AEfF1",
+      "token0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "token1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "liquidity": "13157796658750913",
+      "slot0": [
+        "365786156716487280489134811074317",
+        168757,
+        208,
+        900,
+        900,
+        0,
+        true
+      ],
+      "balances": {
+        "weth": "101084120474177090430",
+        "usdc": "4165132971378"
+      },
+      "quotes": [
+        {
+          "src": "weth",
+          "dst": "usdc",
+          "amountIn": "1000000000000000",
+          "result": [
+            "46890006",
+            "365792175091028761256996566567219",
+            1,
+            "114211"
+          ]
+        },
+        {
+          "src": "usdc",
+          "dst": "weth",
+          "amountIn": "1000000",
+          "result": [
+            "21304826881175",
+            "365786028431917283169810160108281",
+            1,
+            "95499"
+          ]
+        }
+      ],
+      "code": {
+        "present": true,
+        "bytes": 22142,
+        "keccak256": "0xfadf4ede8b01011fd675c19bd415a9498a66c18dd5d30c333a1d712b103f591f"
+      }
+    },
+    {
+      "pair": [
+        "weth",
+        "usdc"
+      ],
+      "fee": 3000,
+      "address": "0x6Ce0896eAE6D4BD668fDe41BB784548fb8F59b50",
+      "token0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "token1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "liquidity": "8790744319278135",
+      "slot0": [
+        "365573935110495664175910844983270",
+        168746,
+        40,
+        128,
+        128,
+        0,
+        true
+      ],
+      "balances": {
+        "weth": "54040585290248762499",
+        "usdc": "3828654271488"
+      },
+      "quotes": [
+        {
+          "src": "weth",
+          "dst": "usdc",
+          "amountIn": "1000000000000000",
+          "result": [
+            "46826662",
+            "365582920752115736680165961000200",
+            1,
+            "98302"
+          ]
+        },
+        {
+          "src": "usdc",
+          "dst": "weth",
+          "amountIn": "1000000",
+          "result": [
+            "21226882248282",
+            "365573743799405800037105959076811",
+            1,
+            "95446"
+          ]
+        }
+      ],
+      "code": {
+        "present": true,
+        "bytes": 22142,
+        "keccak256": "0xabc68deb7d5a32706cf736ea5d662949f81b9f7552950b0630aef3d2eec4abcd"
+      }
+    },
+    {
+      "pair": [
+        "weth",
+        "usdc"
+      ],
+      "fee": 10000,
+      "address": "0x6418EEC70f50913ff0d756B48d32Ce7C02b47C47",
+      "token0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "token1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "liquidity": "106943014519252558",
+      "slot0": [
+        "367123740951712484623182679071101",
+        168830,
+        27,
+        51,
+        51,
+        0,
+        true
+      ],
+      "balances": {
+        "weth": "1019407962896715284305",
+        "usdc": "52697271777366"
+      },
+      "quotes": [
+        {
+          "src": "weth",
+          "dst": "usdc",
+          "amountIn": "1000000000000000",
+          "result": [
+            "46107179",
+            "367124474387937765154906900235705",
+            0,
+            "98330"
+          ]
+        },
+        {
+          "src": "usdc",
+          "dst": "weth",
+          "amountIn": "1000000",
+          "result": [
+            "21256949888636",
+            "367123725203614416644097909343990",
+            0,
+            "95442"
+          ]
+        }
+      ],
+      "code": {
+        "present": true,
+        "bytes": 22142,
+        "keccak256": "0x391f542bbd5e238f7ab35a931f1bbd09854c98853a978a13434dd63273030d9a"
+      }
+    }
+  ],
+  "anchorUnchanged": true,
+  "finishedAt": "2026-10-11T21:18:56.994Z",
+  "v2Pairs": [
+    {
+      "pair": [
+        "weth",
+        "usdc"
+      ],
+      "address": "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74",
+      "reserves": [
+        "2622927672298",
+        "55899412630290095699",
+        1791749412
+      ],
+      "code": {
+        "present": true,
+        "bytes": 11293,
+        "keccak256": "0x5b83bdbcc56b2e630f2807bbadd2b0c21619108066b92a58de081261089e9ce5"
+      }
+    }
+  ],
+  "usdcDomain": {
+    "name": "USDC",
+    "version": "2",
+    "chainId": "11155111",
+    "verifyingContract": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "expected": "0xb90e5057db141a932946e64d09ccb7ffc9b00bd79fec26f698d29af0c83320a6",
+    "matchesObserved": true
+  },
+  "networkCrossChecks": {
+    "expectedChain": true,
+    "expectedVersion": true,
+    "expectedRollup": true,
+    "nodeFeeAssetMatchesRollup": true,
+    "nodeFeePortalMatchesRollup": true,
+    "portalUnderlyingMatchesFeeAsset": true,
+    "portalRollupMatchesExpected": true,
+    "portalVersionMatchesExpected": true
+  }
+}

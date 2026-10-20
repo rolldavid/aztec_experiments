@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "4683d4c7926128a89b5600a5fdc87c91181189b8",
+  "baseRevision": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "requirements": [
+    "RC36",
+    "RC37",
+    "RC38"
+  ],
+  "sourceInspection": "All three changed paths reviewed, including285,bca and468 deltas. Independent fast controls remain separate from application observation. Ordinary application exception or observer timeout routes to verified exposed-service containment; native node/journals retained. Controls/containment loss still isolates and shuts down. Unallocated units accepted only with inactive/failed and zero PID. Marker prevents automatic admission replay. Shared BASE/receipt locks defer observation during live writers; reentrant containment persists marker before releasing writer. Routine query checks retain bounded exact unit/config/process/entrypoint/auth checks; full source/file ownership validation remains at initial admission/update.",
+  "unchangedSafetyFunctions": {
+    "verify_controls": true,
+    "isolate_network": true,
+    "shutdown_failure": true,
+    "install_controls": true,
+    "verify_release": true
+  },
+  "focusedChecks": {
+    "command": "python3 scripts/test-prover-bootstrap.py <11 existing affected monitor/containment/activation/query/delivery cases>",
+    "passed": 11,
+    "failed": 0,
+    "seconds": 0.124,
+    "tests": [
+      "Bootstrap.test_monitor_failure_isolates_before_shutdown_and_bounds_watchdog",
+      "Bootstrap.test_fast_monitor_never_runs_application_observation",
+      "Bootstrap.test_application_observer_skips_live_install_or_receipt_writer",
+      "Bootstrap.test_application_containment_holds_writer_through_failure_marker",
+      "Bootstrap.test_application_failure_retains_node_only_after_verified_containment",
+      "ProverActivation.test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_contains",
+      "ProverActivation.test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_contains",
+      "QueryHost.test_simulated_commissioning_actual_readback_once_and_reader_modes",
+      "QueryHost.test_actual_readback_rejects_group_grammar_and_identity_config_unit_drift",
+      "QueryHost.test_attestor_bound_opt_in_or_retained_records_cannot_disappear_silently",
+      "ActivationDelivery.test_delivery_attestor_defers_install_then_missing_bound_request_contains"
+    ]
+  },
+  "limits": [
+    "Checks use explicit controlled systemd doubles except actual local flock contention; no live Linux unit/watchdog exercise claimed.",
+    "Standalone containment has90s watchdog, including blocked lock; deliberate manual containment/install/activation must remain serialized as documented. Typical observer timeout kills and releases observer writer before its separate OnFailure containment unit.",
+    "Owner budgets/Fleet deadlines and final proof qualification requirements unchanged; source approval does not itself authorize release or prove runtime acceptance."
+  ],
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "92c09268d532b81f6b7f7ca002e7f77bf53e7268f5b724874e2048fa341cd766",
+    "scripts/test-prover-bootstrap.py": "ad6aec268a90b763814081d870047dbf1d9b355ef924620eab67cb6ee2b1c1c1",
+    "deploy/prover/BOOTSTRAP.md": "837ac3e72505fe91e160a32d14e6d56b1e7aa7c44288ff3543f9d5aacb5fa724"
+  }
+}

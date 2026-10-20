@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T02:25:00.311395+00:00",
+  "source": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+  "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "branch": "codex/rolling-startup-stage-diagnostic",
+  "changedPaths": [
+    "deploy/prover/BOOTSTRAP.md",
+    "deploy/prover/bootstrap.py",
+    "deploy/prover/package.py",
+    "deploy/prover/startup-stages.mjs",
+    "deploy/prover/startup-stages.test.mjs",
+    "scripts/test-prover-bootstrap.py",
+    "scripts/test-prover-package.py"
+  ],
+  "fileSha256": {
+    "deploy/prover/BOOTSTRAP.md": "01e8b8f5a9b611fa84074e09b5c6a77c173385f9bb920539b6e2dbb3e5c0d5d0",
+    "deploy/prover/bootstrap.py": "a6c5e725d9294872ff88cd8d179be432737826fb43357d7d044ccbe632cafadd",
+    "deploy/prover/package.py": "b418397c323884a9d1c1608ed6c3fea1b069d617a7de6b9da78657584178e5af",
+    "deploy/prover/startup-stages.mjs": "cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49",
+    "deploy/prover/startup-stages.test.mjs": "4262a2b4441625edb864524509358527ccce5d21c8004f08f5685dd3f53bb31d",
+    "scripts/test-prover-bootstrap.py": "b3f39d3046d93f25f906c3cb974a932ed189018ff32a12ccce58454c9876d3f3",
+    "scripts/test-prover-package.py": "a20deca5a8e4b073a720421e592f4071bcbbcab0abefaf1d436ad5e6ab804b14"
+  },
+  "evidence": {
+    "startup-stage-image-equivalence-complete.json": "6074e9defd65a36a59a12c9faeace58eb122b8e721cf62c35c5ea88173de31d4",
+    "startup-stages-node-tests.log": "b0e34812eea2f4969c59a80334df00660b975920e1d8b9e371a0d78f13afb176",
+    "startup-stages-bootstrap-tests.log": "315d6bb2cf3a54033819f6ae649db4c287cde5516e10743f74cebfda750465ca",
+    "startup-stages-package-tests.log": "c2e3266a8e9e7b1f597cb84f550fed96f64f81f47c0a972737792a39965e9d73"
+  },
+  "tests": {
+    "nodePinnedVersion": "24.21.0",
+    "node": {
+      "passed": 10,
+      "failed": 0
+    },
+    "bootstrap": {
+      "passed": 51,
+      "failed": 0
+    },
+    "package": {
+      "passed": 6,
+      "failed": 0
+    }
+  },
+  "hostProgramByteEquivalent": true,
+  "hostProgramSha256": "8d18408f3349693e0b52afa84b0e20db3279d276061fe68384dda281207f2827",
+  "exactImageNodeVersionMetadata": "24.21.0",
+  "sourceModulesByteMatchedToImage": true,
+  "generatedTestnetDefaultClosureNowCompared": true,
+  "scope": "diagnostic-only trusted pinned runtime; not malicious-process attestation",
+  "nodeStartupQualified": false,
+  "sdkDiskModified": false,
+  "fullnodeExecuted": false,
+  "nativeGenesisExecuted": false,
+  "packageBuilt": false,
+  "paidAction": false,
+  "remaining": [
+    "Independent review of exact candidate",
+    "Fresh runtime package and complete hash verification",
+    "Fresh actual capability/deadline userdata generation within16384 bytes",
+    "Separately authorized nativeAMD64 instrumented startup and actual query qualification"
+  ],
+  "observedCheapRepair": "Actual Mac registerHooks test exposed /var to /private/var resolution. Production prepared target URLs now use verified realpath within /usr/src/yarn-project; test passes. No SDK/cache override."
+}

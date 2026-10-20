@@ -1,0 +1,17 @@
+............F......................................
+======================================================================
+FAIL: test_current_reviewed_catalog_matches_bootstrap_pin (__main__.Bootstrap.test_current_reviewed_catalog_matches_bootstrap_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/scripts/test-prover-bootstrap.py", line 40, in test_current_reviewed_catalog_matches_bootstrap_pin
+    self.assertEqual(hashlib.sha256(catalog.read_bytes()).hexdigest(),b.CATALOG_SHA)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85' != 'be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64'
+- 1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85
++ be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64
+
+
+----------------------------------------------------------------------
+Ran 51 tests in 3.503s
+
+FAILED (failures=1)

@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "verdict": "FAILED_MEMORY_LIMIT_PRESERVED",
+  "actualPacketSha256": "429da29081e40fe3b16df9fe280951dfac691c0d72be86221e43d42a749be279",
+  "elapsedMs": 1058,
+  "sampledPeakTreeRSSKiB": 526800,
+  "limitKiB": 524288,
+  "firstSample": {
+    "supervisor": 241584,
+    "python": 11904,
+    "nodeController": 43520,
+    "nodeWorker": 229792
+  },
+  "verification": [
+    "All bound packet/log/result/runner hashes verified; first sample exceeded limit, supervisor failed and killed owned work before any completed TAP outcome.",
+    "Positive owned tree/TMP/link/source/dependency closure retained. No capacity acceptance."
+  ],
+  "sourceDiagnosis": [
+    "Existing sha allocates readFileSync whole file for each547+2402 pin. Current inputs total146860836bytes; largest shared/aztec_bundle.js54978603bytes. This is a concrete avoidable observer allocation source.",
+    "Actual sampler does not prove which allocations were live/retained; reducing hash allocation is justified but no quantified saving or exclusive cause claim."
+  ],
+  "minimalRepairProposal": [
+    "Replace only evidence runner sha helper with synchronous fixed64KiB reusable-buffer SHA256 update, exact bytes and all same pin checks, fd close in finally. No GC/exclusion/new memory allowance.",
+    "First focused expected-known hash checks including empty/partial/full/multiple chunk boundaries and all actual same pins; smallest original child under same supervisor to observe overhead and cleanup.",
+    "Exact source/runner review and actual focused acceptance before anyvolume successor."
+  ],
+  "boundsUnchanged": true
+}

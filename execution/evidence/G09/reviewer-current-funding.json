@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "sourceRevision": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "runtimeMetadataSha256": "63e85a70ffd6b2f28961fed807c8b697d60b5df118515c2ac05ed8d16cd2742b",
+  "sourceHashes": {
+    "shared/rolling/aggregate-wallet.mjs": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+    "shared/rolling/aggregate-funding.mjs": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+    "shared/rolling/aggregate-recovery.mjs": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+    "shared/rolling/application.mjs": "daa4fac422d8d1ad682d8791db11f4fe1b7d143c13a1fe4cfe5002c18a10b586",
+    "apps/rolling/wallet-panel.mjs": "6bc3b9c1492a82b9eecf218fc316591d7bbe4b35e630b2b5928a66e3c07d7f94",
+    "apps/rolling/wallet-session.mjs": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617",
+    "scripts/t04-metamask.mjs": "6084ea7d5d0a337e4bfe6d3daf95676067f730c19bc442fa3d1e68b5f6ad3403"
+  },
+  "verdict": "accept scoped canonical aggregate payment and original signed claim evidence; automatic UI completion and complete funding journey remain failed/unqualified",
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/attempt3/packet.json",
+    "sha256": "f38410395a132520a7c5c0d6767d5a79b8b0517f6936cea823d62255a0abb0ab",
+    "linkedFilesVerified": 19
+  },
+  "actual": {
+    "network": "native development chain31337; native/PXE proofs disabled",
+    "l1Payment": {
+      "hash": "0xa5d8f74536e7e435f264bcaa4e6f884bad30a5de0e1ac0fb426f67b41648c298",
+      "success": true,
+      "ethereumNonce": 2,
+      "latestAndPendingNonceAfter": 3,
+      "consentSignatures": 1,
+      "applicationPaymentRequests": 1,
+      "valueWei": "1015195612086309",
+      "gasCeilingWei": "1600000000000000",
+      "totalPaymentAndGasCeilingWei": "2700000000000000",
+      "canonicalAggregateEventAmounts": {
+        "collateralWei": "1000000000000000",
+        "privateFeeBaseUnits": "1000000000000000",
+        "bokBaseUnits": "100000"
+      }
+    },
+    "l2Claim": {
+      "hash": "0x27f4f00d43443f7ba11598f00044d77dead16655b08706bc1ba0670ecaf1d3b1",
+      "blockNumber": 489,
+      "blockHash": "0x2a3a192aa1f4487c31a17e9f6e5e5c4783bc5689218e745bdd60ad31efa330a1",
+      "status": "finalized",
+      "executionResult": "success",
+      "applicationNodeSends": 1,
+      "signedBytes": 122148,
+      "signedSha256": "c8e8540e3c1a1c99c3178abfed1292c35d9da0513745b4361f5a6fb257f3315f",
+      "effectBytes": 3299,
+      "effectSha256": "a7a79c96866c91e11ceb57475419481d4ff5af70235b429a4b4392362f51c64c",
+      "effectTransactionFeeBaseUnits": "10348767000000",
+      "savedIntentId": "0x2220bac4f76949c4bb1717813d086ef5f160fb4396e267a95cc73bfdaeab95e7",
+      "savedWorkflowObserved": "submitting",
+      "savedSignedOperationMatchesIntent": true
+    },
+    "observers": {
+      "inspectionErrors": 0,
+      "proofRequests": 0,
+      "extensionWideCoverage": false
+    },
+    "cleanup": {
+      "fundingSupervisorPassed": false,
+      "fundingSupervisorElapsedMs": 99505,
+      "fundingOwnedTreeAbsent": true,
+      "journalExportSupervisorPassed": false,
+      "journalOwnedTreeAbsent": true
+    }
+  },
+  "independentChecks": [
+    "Read the actual funding procedure, saved journal/canonical procedures and original result data before packet conclusion. All 19 packet-linked byte counts and SHA256 values match.",
+    "Offline validated exact aggregate calldata/plan hash and typed consent signature, signer, nonce, chain, amounts, signature embedded in payment calldata, secret-hash/deadline agreement and approved payment+gas bounds. No RPC or send was used.",
+    "Offline parsed exact retained signed Tx and TxEffect using current installed SDK, verified their transaction hashes equal the original saved claim, full binary roundtrip equality and recorded SHA256/length.",
+    "Canonical receipt/effect membership is evidenced by the saved no-browser verifier using existing verifyRetainedClaimReceipt and exact effect block/hash checks. Reviewer did not repeat live reads.",
+    "Existing verifyEthereumIntentReceipt invokes aggregate effect verification: exact canonical router/code and one matching collateral/FPC/Bok deposit event, amounts and bounded exchange/refund identities. Actual verifier success is retained; raw L1 receipt was not separately exported in this packet.",
+    "Exclusive fsynced funding dispatch intent and payment intent precede wallet transport; source guards permit one consent/payment and one observed L2 submission. Failed read-only follow-ups did not replay them."
+  ],
+  "uiFindings": [
+    {
+      "id": "G09-FUNDING-GAS-GUIDANCE",
+      "status": "concrete UX defect; guard itself correct",
+      "source": "apps/rolling/wallet-panel.mjs work() and aggregateFundingView(); shared/rolling/aggregate-wallet.mjs confirm()",
+      "detail": "Earlier GAS_CHANGED rejects after scoped consent because the explicitly approved gas ceiling is below the fresh doubled estimate. Generic work() error hides the reason and next safe action. Display a closed allowlisted explanation directing a fresh allocation/gas review; preserve entered values and never increase the cap or repeat payment automatically.",
+      "smallestPaths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    },
+    {
+      "id": "G09-FUNDING-AUTOMATIC-COMPLETION",
+      "status": "actual acceptance failure; internal cause unresolved",
+      "detail": "Original 80000ms observer timed out with attempted claim and submitting workflow. Canonical success is established later, but Ready UI, persisted confirmed workflow/claim checkpoint and fresh export were not observed. application.submitPrepared waits for wallet.sendTx before outcome(); panel schedules another reconcile only after advanceClaim settles. Chain inclusion alone cannot identify the stalled await or justify changing guard/scheduler semantics.",
+      "next": "Retain exact signed journal/profile; use existing read-only reconciliation when lead resumes service, never another payment/claim. Capture bounded existing progress/result to identify the actual await before any claim logic repair."
+    }
+  ],
+  "limits": [
+    "Original automatic UI run remains FAILED at unchanged80000ms; the later canonical check is a separate scoped pass, not a replacement UI success.",
+    "Journal export run failed after retaining signed bytes; another reconciliation attempt timed out before readiness. No fresh encrypted confirmed export exists. Authoritative attempt3 profile and exact signed bytes must remain preserved.",
+    "Current private collateral/FPC/Bok balances and post-claim application readiness were not observed. Canonical original claim success and L1 allocations do not qualify every funding UI/accounting predicate.",
+    "No production proof, testnet, complete G09 journey, receiver privacy or full unlinkability qualification. Public aggregate L1 allocation amounts and shared payer visibility are expected; no raw secrets, calldata, signatures or private journals are copied into this review.",
+    "No reviewer browser, service, build, network, model or financial action."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "txHash": "0x212104a5f8a9587d652e5ac0fa3d05275d8729f3d1c91161e9d8ed7c7e5f9250",
+  "reason": "mismatch",
+  "applicationProofs": false,
+  "sourceHashes": {
+    "billboard/rolling_contract/callback-rollback.mjs": "8d5adcccda5609d583dc5ceca9e18782891669f56e7272d03ab4ab5fb07c6455",
+    "billboard/rolling_contract/src/main.nr": "d9a95b1df3e764072019c94cf574cc39e57795cd159b2b6c915d6e455e958499",
+    "billboard/rolling_contract/src/posting.nr": "ee9864837ba6ea243afbf65779e7bb7cf5c49e41fe60c4443ff2b623051dd2e5",
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "experiments/private-bok/escrow/src/main.nr": "fdd45a3ebf90d28df3aa59894d523a034835249c3781e370cb5dd1d1c710a46b",
+    "experiments/private-bok/rejection.mjs": "e178ca01a3be777acedd0635bf7a9afc657aac5e4537a863c909b5faad181f8e",
+    "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b"
+  },
+  "contractClasses": {
+    "board": "0x0c45dfd005e7f862153158e0f075b7dc364bbda82e0f99dcaa2b48ee76a84185",
+    "bok": "0x278905ff308f40e32500b5241820f55ff506830652adb53ce57783b6200b5dff"
+  }
+}

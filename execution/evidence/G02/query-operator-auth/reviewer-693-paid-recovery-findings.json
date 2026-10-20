@@ -1,0 +1,46 @@
+{
+  "candidate": "693f06482bb6806fe32897f616a83d6c48f2ca03",
+  "base": "1068070d92ef6865af726bda74764da8fd72cccf",
+  "verdict": "changes-required-paid-recovery-evidence",
+  "source": {
+    "scripts/t04-metamask.mjs": "bb27b01eb04ff177b1e21a53838ab717dd99d5d129373c4270b5c1772d1d5ec2",
+    "scripts/test-t04-browser-journey.mjs": "2ed6cf87b69a79ab90b3de6c4aa6e841a5eada37d27963aa63ae64938d79e1cd",
+    "scripts/test-wallet-extension-browser.mjs": "eb9c2e2c0d5f4ae0740b522d78ac3973deadf058e65cf1b1a27cd570c56fda60"
+  },
+  "findings": [
+    {
+      "priority": 1,
+      "file": "scripts/t04-metamask.mjs",
+      "lines": [
+        365,
+        389
+      ],
+      "finding": "Canonical supplied transaction and configured allocations are not bound to the retained encrypted aggregate intent resumed by the UI. Two same-scope USDC payments can have identical allocation amounts and unchanged beneficiary Ethereum nonce. A Ready result could concern payment B while the report attributes it to payment A.",
+      "repair": "Before resume, compare the actual decrypted saved aggregate record to the supplied canonical hash and original exact intent/plan; confirm the resulting saved claim is linked to it. Return only a boolean or safe public hash, never private custody."
+    },
+    {
+      "priority": 2,
+      "file": "scripts/t04-metamask.mjs",
+      "lines": [
+        377,
+        389
+      ],
+      "finding": "Paid recovery wallet-operation attempt count is read only before returning. Unlike ordinary funding, no host-visible finalizer checks later forbidden attempts after browser teardown, and the report uses fixed zero counts.",
+      "repair": "Use a host-retained bounded counter or equivalent actual-used observer, preserve it on failure, and assert it in the caller post-context finalizer."
+    }
+  ],
+  "acceptedScope": [
+    "Exact official extension startup frame GET directory allowance retains origin/version, no query/hash/credentials, exact loaded extension parent, literal src and sandbox predicates. Existing app/warning-route rejection remains.",
+    "No application or generated asset change.",
+    "Original focused run had 31 passes and one private-temp alias failure; same admission case passes using canonical private TMPDIR. This is staged test evidence, not a clean whole32 rerun."
+  ],
+  "evidence": {
+    "execution/evidence/G04/metamask-paid-recovery-focused.log": "6ebdf4a5eba863916568b59b1130cd37da63aaff8d14f42a5f1fc1d16f901b2b",
+    "execution/evidence/G04/metamask-paid-recovery-admission-focused.log": "2a3b62573d036b4d5ca9d0196e3a46408fce00ba64c90c813e8d39c08d0460fb"
+  },
+  "limits": [
+    "No paid claim browser run performed by reviewer.",
+    "Actual50657 full run remains failed; canonical ETH payment evidence does not establish private claim readiness.",
+    "Prior106807 component review carries for unchanged source."
+  ]
+}

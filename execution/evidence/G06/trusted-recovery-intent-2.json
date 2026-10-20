@@ -1,0 +1,18 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "scenario": "rolling-trusted-recovery",
+  "recordedAt": "2026-10-12T02:37:18.824287+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G06/trusted-recovery-4c76-review.json",
+  "reviewSha256": "b8958d084bebecd64533c8217b3b86264f00f0bc0965af06078ae0f6ff79af33",
+  "status": "completed pass; independent runtime review pending",
+  "hypothesis": "f61 semantic denial passed; installedSDKbatch response200 was wrongly expected400. Exactsemantic faultcounter/no-forward/readiness/clienterror anddedicatedphasepair nowrequired. No actualoutcome waived.",
+  "preserveFailure": "application-f61bd071-35e6-4839-9298-1a97b64ba2e3.json",
+  "startedAt": "2026-10-12T02:37:58.637879+00:00",
+  "evidence": "application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json",
+  "evidenceSha256": "5b52a2dae88cb58a6506fabb63136d7e5bcce88421ce368d2e348cfac35fe391",
+  "elapsedMs": 450528,
+  "peakTreeRSSKiB": 1842368,
+  "allCleanup": true
+}

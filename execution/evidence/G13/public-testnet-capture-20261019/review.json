@@ -1,0 +1,31 @@
+{
+  "sourceRevision": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+  "baseRevision": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+  "verdict": "approved",
+  "scope": "Existing testnet browser public Tx/RPC observation capability; not final D4 privacy acceptance",
+  "files": {
+    "scripts/test-wallet-extension-browser.mjs": "d81a14b8e79d84713459110976637a750bd2052d50ba3b887792befdaa805c23",
+    "scripts/testing/rolling-wire-trace.mjs": "297fbc4d73e0c55640aa38e9035eef8f4d5e8e228f698c9502a8413d7e403c69",
+    "scripts/testing/rolling-wire-trace.test.mjs": "ef7460a6e2c6ada82f6230249ec6469a0e710cae7716b3d29ce1dc02bb111893",
+    "scripts/t03-public-footprint.mjs": "a0a99cec6942f003e27599831be63e2b161945bfbea637c20bc495defbe851b3"
+  },
+  "findings": [],
+  "resolved": [
+    "Observation evidence I/O failure now records publicObservationFailure/passed=false and continues existing owned cleanup. Focused test executes the actual cleanup block with injected failure.",
+    "Shared schema client uses current owner deadline, max5s per read, bounded8MiB response, no retries/redirects/credentials and sanitized errors. Same endpoint getNodeInfo preflight precedes wallet/proof work and binds actual network/realProofs.",
+    "47 exact method literals independently corroborated against installed viem public/wallet actions. Pinned standard method names retained; unknown names remain explicitly counted/redacted."
+  ],
+  "independentVerification": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned Node24 --test --test-name-pattern=\"public Tx capture|public capture\" scripts/testing/rolling-wire-trace.test.mjs",
+    "result": "5 passed;0 failed/skipped;543ms",
+    "other": "Read complete coherent candidate before conclusion; original worker109checks retained, no broad rerun."
+  },
+  "boundaries": [
+    "Actual SDK Tx schema recomputes transaction hash, strips proof before public-byte retention, and retains only proof digest/length. No witness/control/private-wallet input reaches evidence.",
+    "Canonical receipt/effect/header-number/block-hash binding uses captured submission and deliberate second canonical block read; missing roles explicit.",
+    "Current public browser query sends no operator key. A successful same-route preflight establishes read access; operator-only endpoint mismatch fails before costly work. No developer credentials placed in browser.",
+    "Application browser route scope excludes extension/native/upstream/remote receivers. Historical27unknown methods are not retroactively decoded by this patch.",
+    "Only required claim is canonically qualified by this entrypoint; other retained public transactions need canonical effect attachment in their actual required journeys. Public equality metrics are not cryptographic unlinkability proof.",
+    "Actual D4 positive controls, zero unexplained observer errors/truncation, source binding and effect/role comparisons remain final-run work."
+  ]
+}

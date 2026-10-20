@@ -1,0 +1,72 @@
+{
+  "Billboard": {
+    "path": "billboard/target/billboard_contract-Billboard.json",
+    "sha256": "dbed1efe76e33e90ecc95626bcc31577439677518814758eda6c6add48107e64",
+    "bytes": 7430779,
+    "functions": 49,
+    "fileMapEntries": 139,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/billboard_contract-Billboard.json",
+    "snapshotSha256": "dbed1efe76e33e90ecc95626bcc31577439677518814758eda6c6add48107e64",
+    "privateFunctions": 5
+  },
+  "PrivateFPC": {
+    "path": "billboard/target/private_fee_contract-PrivateFPC.json",
+    "sha256": "2a270bfe3b0f0357d82aaa7dea75a23cfa241655fcea06b013ec83c45a481e2c",
+    "bytes": 2347947,
+    "functions": 9,
+    "fileMapEntries": 114,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/private_fee_contract-PrivateFPC.json",
+    "snapshotSha256": "2a270bfe3b0f0357d82aaa7dea75a23cfa241655fcea06b013ec83c45a481e2c",
+    "privateFunctions": 4
+  },
+  "PluginAdapter": {
+    "path": "billboard/target/plugin_adapter-PluginAdapter.json",
+    "sha256": "c26ddb0e1f4c98b1fe6b0b14bea6fe62277d70db210dce919f180dba89bada5d",
+    "bytes": 1667585,
+    "functions": 24,
+    "fileMapEntries": 107,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/plugin_adapter-PluginAdapter.json",
+    "snapshotSha256": "c26ddb0e1f4c98b1fe6b0b14bea6fe62277d70db210dce919f180dba89bada5d",
+    "privateFunctions": 1
+  },
+  "RollingBoard": {
+    "path": "billboard/target/rolling_contract-RollingBoard.json",
+    "sha256": "9b3b76c75fb6709d98f738bbb2b166dbe14c69033f5aa5c2bb7724f1263d6cd7",
+    "bytes": 10662089,
+    "functions": 49,
+    "fileMapEntries": 148,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/rolling_contract-RollingBoard.json",
+    "snapshotSha256": "9b3b76c75fb6709d98f738bbb2b166dbe14c69033f5aa5c2bb7724f1263d6cd7",
+    "privateFunctions": 14
+  },
+  "AvatarLogProbe": {
+    "path": "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+    "sha256": "c2668e118901e22536a5e5ccd4220db67327f6d4b67179f196efb1273a390a1d",
+    "bytes": 1030241,
+    "functions": 6,
+    "fileMapEntries": 74,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/avatar_log_probe-AvatarLogProbe.json",
+    "snapshotSha256": "c2668e118901e22536a5e5ccd4220db67327f6d4b67179f196efb1273a390a1d",
+    "privateFunctions": 0
+  },
+  "PrivateBok": {
+    "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
+    "sha256": "1c9f0ebdf8c11dd9570cbf01b8002d3a7bac4a4f093d8e9d02c94c41d04866f4",
+    "bytes": 3323452,
+    "functions": 25,
+    "fileMapEntries": 141,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/private_bok-PrivateBok.json",
+    "snapshotSha256": "1c9f0ebdf8c11dd9570cbf01b8002d3a7bac4a4f093d8e9d02c94c41d04866f4",
+    "privateFunctions": 6
+  },
+  "InvocationProbeBoard": {
+    "path": "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json",
+    "sha256": "f641e1e1a444b7d30d118d3be11cf3f7c4f9f47664a637fe6cab56870e8e5f2b",
+    "bytes": 977380,
+    "functions": 6,
+    "fileMapEntries": 69,
+    "snapshot": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-reviewed-raw-730-preserved-before-normal-1c7/invocation_probe_board-InvocationProbeBoard.json",
+    "snapshotSha256": "f641e1e1a444b7d30d118d3be11cf3f7c4f9f47664a637fe6cab56870e8e5f2b",
+    "privateFunctions": 0
+  }
+}

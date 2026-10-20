@@ -1,0 +1,43 @@
+{
+  "measurementId": "RC30-qwen-summary-20261018-01",
+  "assessment": "Implementer observation; independent review pending",
+  "quality": [
+    {
+      "criterion": "instructions",
+      "passed": true,
+      "evidence": "Keep app.ts and revision abc123 retained."
+    },
+    {
+      "criterion": "decisions",
+      "passed": true,
+      "evidence": "Keep blue retained as decision."
+    },
+    {
+      "criterion": "unresolved",
+      "passed": true,
+      "evidence": "Add tests retained as unresolved, not completed."
+    },
+    {
+      "criterion": "repositoryReferences",
+      "passed": true,
+      "evidence": "Exact app.ts and abc123 strings retained."
+    }
+  ],
+  "latestSentinelAbsent": true,
+  "finishReason": "stop",
+  "providerDurationMs": 2891.905333,
+  "chargedMicroUsdc": "92",
+  "identicalTokensMainMicroUsdc": "391",
+  "balanceBeforeUsd": 4.83888695,
+  "balanceAfterUsd": 4.83879591,
+  "observedProviderBalanceReductionUsd": 0.00009104,
+  "balanceCanConsume": true,
+  "modelCalls": 1,
+  "additionalModelCalls": 0,
+  "mainCalls": 0,
+  "topups": 0,
+  "limitations": [
+    "Single public fixture; no claim of broad model quality or full main-model journey.",
+    "Main comparison is arithmetic using current published rates, not a second paid call."
+  ]
+}

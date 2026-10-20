@@ -1,0 +1,37 @@
+{
+  "verdict": "approved-prepared-bounded-extension",
+  "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-testnet-plan/dedicated-bok-host/extension-0300",
+  "packetRegistrySha256": "75af63a6aaa6741177b8eff2296de3a570725723a110faf95337b21bc24a0c9a",
+  "budgetProposalSha256": "a537b14c8d92c5a71e01d07a84e31deb03a24821d8f53dffa7f995a5a36b2a47",
+  "findings": [],
+  "budget": {
+    "priorForecastUSD": "435.3445457313333333333333334",
+    "coreAdditional5hUSD": "32.81599333333333333333333332",
+    "bokAdditional5hUSD": "6.967933333333333333333333330",
+    "endpointsAdditional5hUSD": "0.120",
+    "completeForecastUSD": "475.248472398",
+    "reservationUSD": 480,
+    "ownerCeilingUSD": 500,
+    "basis": "Same previously reviewed per-hour components scaled5/4 from4h; all original140 historical bound, failure network, taxes, storage/orphan, cleanup/billing and20 static-retention allocation retained. No cost credit from delayed bill or low measured traffic."
+  },
+  "verified": [
+    "All18 registry hashes match. Fresh retained inventory has exactly2existing hosts,3encrypted DeleteOnTermination volumes1192GiB,0snapshots,2one-AZ endpoints. No resource capacity added.",
+    "Each proposed AWS schedule changes only ScheduleExpression from22:00/22:05 to03:00/03:05 UTC20October. Exact instance/endpoint targets, roles, ENABLED, no flexible window and retries remain.",
+    "Procedure preserves original native22:00 controls until all3later AWS schedules are updated and read back. Both host updates then run under existing nonblocking lock with immutable old-deadline/source/archive/create/commission guards and one-use fsynced intent bound to proposal.",
+    "Scripts change only budgetStop and timer OnCalendar, keep active timer/monitor, use daemon-reload without service restart, verify actual NextElapse and existing native controls check. Failure restores original timer/deadline; partial two-host success must be reconciled separately.",
+    "Both embedded parameter scripts equal reviewed shell files. Core71d5 vs Bok05d provenance remains distinct. Fresh-bootstrap8hour rule unchanged; explicit operational extension retains original creation time.",
+    "Updated ShutdownAt/BudgetStop/endpoint cleanup tags are bookkeeping, not independent safety controls.",
+    "Old export capabilities cannot cover03:00. Packet explicitly requires separate source-bound export with start-before02:55 and refreshed credential expiry beyond03:45; current02:27 credential is insufficient."
+  ],
+  "executionConditions": [
+    "Lead updates sole ledger reservation480 and rereads actual targets/deadlines before any change.",
+    "All3AWS schedule readbacks must pass before host deadline changes; save both native Success/control/NextElapse results without inferring one host from the other.",
+    "Reconcile uncertain results instead of blind replay; do not disable later independent shutdown controls.",
+    "Refresh final checkpoint credentials before quiet handover; do not run historical22:00 export after extension."
+  ],
+  "limits": [
+    "Reviewer performed only local read-only inspection/arithmetic/hash comparison, no AWS mutation or service operation.",
+    "Forecast is not final invoiced cost; delayed account-wide bill remains contextual.",
+    "Original paid request/model/proofs/journals and existing observers remain untouched."
+  ]
+}

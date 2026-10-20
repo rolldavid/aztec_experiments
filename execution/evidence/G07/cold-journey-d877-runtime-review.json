@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T23:43:23.462387+00:00",
+  "sourceRevision": "d877853b3877f1a07587fd0bb58a8060b21a15fd",
+  "disposition": "accepted affected three-file component runtime; no genuine cold-recovery acceptance",
+  "evidence": {
+    "result.json": "7d3836389dde0496ba2feb9b4ba11fd81fc7d0aa25b03390106fe49cbbd5a299",
+    "build.log": "b038956daada85cdf99e26b85531a49a5f38d147007ba3d787cee03986573b85",
+    "postcheck.json": "af8e271fbdbd1901395f19342d06b7f0c993c26286d8a47eaf691193d55bcb2f",
+    "preparation.json": "0a057adc94fc2a69d1cf8442f3c3c8d7245922cdfaa4f5424dc7cc82110b027d",
+    "execution-intent.json": "52dc8e533f343a2b9bdd44f17699f5d1b6cf84042a36f03d82991839c3bd9c41",
+    "before-source.json": "feb2aec09f6d45ec84b0f41f117052685b02aad0ab82cbcd00b15188712b306e",
+    "run.mjs": "c0071d30858b0700dcf5bb9bf2bd9a6b992fddef80f2791caa8d882e5f6a8030",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+  },
+  "actual": {
+    "counts": {
+      "tests": 161,
+      "pass": 161,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "elapsedMs": 7113,
+    "peakTreeRSSKiB": 791376,
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "ownedTreeAbsent": true,
+    "command": [
+      "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+      "--test",
+      "--test-concurrency=1",
+      "scripts/testing/rolling-application-fixture.test.mjs",
+      "scripts/testing/rolling-application-actor.test.mjs",
+      "scripts/testing/rolling-preference-recovery.test.mjs"
+    ],
+    "sourceAndInstalledRowsIndependentlyRehashed": 1160
+  },
+  "assertionsObserved": [
+    "Exact fresh-actor lifetime assertion passed after fifth-argument repair; original failed predicate evidence remains retained.",
+    "Actual artifact hash callback and specific missing-extension failure passed with zero signing/send; explicit cold capability selection and ordinary lazy initialization passed.",
+    "Actual local HTTP native-adapter route is before ordinary RPC decoding, default-off rejected; closing retains handler ownership until held native read settles. Node service replies in this test are labelled doubles.",
+    "Comparator accepts repeated physical block progress but rejects partial publication, changing anchor, backward progress, changed private snapshot, extra send, unfinished terminal and orphaned marker.",
+    "Original actor/journal/fee/account/lifecycle and scenario requirements in the three files all executed without skips."
+  ],
+  "sourceReview": {
+    "path": "execution/evidence/G07/cold-journey-d877-install-source-review.json",
+    "sha256": "59b38d438669c3ee731ad5807cfbd52da997e47c36f7b40dc2054aad988a1c36"
+  },
+  "limitations": [
+    "Tests use actual installed SDK/ABI/encrypted storage and actual listener but labelled actor/node/cursor replies; no live five-proof chain or real encrypted compact recovery occurred.",
+    "Successful cleanup is actual supervisor-owned tree closure plus test hooks; retained evidence HOME/cache is intentional, not a claimed absent evidence directory.",
+    "Normal SDK/wallet rebuild and exact current generated closure are still prerequisites for genuine run eligibility.",
+    "No full cold capacity, browser chain recovery, Linux qualification or compiler260 hold clearance."
+  ],
+  "blockingFindings": [],
+  "readOnlyReview": true
+}

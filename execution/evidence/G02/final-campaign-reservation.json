@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-15T11:00:14.621424+00:00",
+  "campaign": "rolling-shared-20261015-4a1c3edd3114",
+  "sourceRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "priorConservativeBoundUsd": 279.3,
+  "reservationUsd": 20.5,
+  "totalUsd": 299.8,
+  "remainingUsd": 0.2,
+  "accountWideEstimatedUsd": 171.3739913909,
+  "costEvidenceSha256": "f3e1c9a1a5180b687f5f92c291045da0d499750be84de72cdddef364cd2dcc2c",
+  "identity": "expectedprojectaccount/profileverified",
+  "resources": {
+    "us-east-1instances": [],
+    "volumes": [],
+    "activeFleets": [],
+    "ami": "ami-0fa5967347d08d2df",
+    "amiOwner": "099720109477",
+    "securityGroup": "sg-076e39ea1d8dbf8d0",
+    "ingress": [],
+    "subnets": [
+      "subnet-aa91f4ce",
+      "subnet-a705ce88"
+    ]
+  },
+  "notQualification": "No resource running yet. Existingfull120 failure remainsopen; nativeproofsdisabled."
+}

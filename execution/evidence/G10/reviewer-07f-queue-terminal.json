@@ -1,0 +1,86 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "sourceRevision": "07fbe043221fb62341ad03bd989412d4b06b3675",
+  "baseRevision": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+  "verdict": "changes_requested",
+  "requirements": [
+    "RC33",
+    "RC41",
+    "G14-A05"
+  ],
+  "changedPaths": [
+    "plugins/aztec.mjs",
+    "plugins/escrow-service.mjs",
+    "plugins/main.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/server.test.mjs",
+    "scripts/rolling-public-server.mjs",
+    "scripts/rolling-public-server.test.mjs",
+    "shared/rolling/public-index.mjs",
+    "shared/rolling/public-index.test.mjs",
+    "shared/rolling/public-sqlite.mjs",
+    "shared/rolling/public-sqlite.test.mjs"
+  ],
+  "sourceHashes": {
+    "plugins/aztec.mjs": "df0c390e63d032700f1504a92d0f4f477d0d44679ed2a4628b05823b68f1166b",
+    "plugins/escrow-service.mjs": "8f59afe87dfabc7ed3e6622d9e420dc0f5c9f9c0be192ce333b4acf17dec8808",
+    "plugins/main.mjs": "be51f84591a186757873e527558d712e93e5e97a8c79c0df5267f0aeddf636d6",
+    "plugins/test/hosted-private-bok.test.mjs": "698025ccfd794d5f6d19e9867442422485322e7bf05abaef0039b0b3d05a7e0a",
+    "plugins/test/server.test.mjs": "abe95434713ac682ae32b756cf6f4c2937cd539dc5443f2beb331a7f63cdac43",
+    "scripts/rolling-public-server.mjs": "1ce70623dbba8914db90dbdbf54b4ecb232e178ed522a88da3b2a9b7777dae63",
+    "scripts/rolling-public-server.test.mjs": "9d684f1a69a0d9085abd011875254d41c8e0c05df970e80f9c601489a3125544",
+    "shared/rolling/public-index.mjs": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+    "shared/rolling/public-index.test.mjs": "ee62145f57f20365cfbf20777632c85f6a98d9088262e05ad8044449f848f3ec",
+    "shared/rolling/public-sqlite.mjs": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+    "shared/rolling/public-sqlite.test.mjs": "a1ede7465f88cb99aa1af2fdbca8a2ba03f8f0591860217b57fab259154d3aa1"
+  },
+  "findings": [
+    {
+      "id": "Q07-1",
+      "severity": "P1",
+      "file": "plugins/escrow-service.mjs",
+      "scenario": "A saved reply-intent or reply-confirmed request whose post is subsequently removed/flagged or plugin disabled is excluded by the new generic usable pre-dispatch gate. Exact original reply/finish reconciliation previously remained allowed and does not require a new model call. This can strand accounting/refund.",
+      "repair": "Separate FIFO predecessor admission from eligibility for new model work; retain existing runPrivateBokRequest fresh usable gates for new execution and exact original recovery path."
+    },
+    {
+      "id": "Q07-2",
+      "severity": "P2",
+      "file": "plugins/aztec.mjs",
+      "scenario": "After predecessor timeout, service close waits only the released poll and jobs. The owned admission can still be awaiting terminal state and later access index/wallet after main has closed them.",
+      "repair": "Expose and drain the existing admission owner during normal close before wallet/index teardown; mark it closed to prevent new work."
+    },
+    {
+      "id": "Q07-3",
+      "severity": "P1",
+      "file": "plugins/main.mjs",
+      "scenario": "Each terminal exemption reads its own newer escrow checkpoint while final admission only rechecks the older board anchor. An early terminal checkpoint can reorg during later predecessor reads while the old board anchor remains canonical, leaving a stale exemption accepted.",
+      "repair": "Pin every terminal escrow read to the captured board anchor through the existing canonical port, or revalidate all exact observation anchors before admission. Preferred bounded repair pins original canonical height/hash and retains numbered canonical checks."
+    }
+  ],
+  "checks": [
+    {
+      "kind": "independent existing suites",
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js LOG_LEVEL=silent HARDWARE_CONCURRENCY=1 node --test --test-concurrency=1 plugins/test/server.test.mjs plugins/test/hosted-private-bok.test.mjs",
+      "result": "68PASS,0FAIL/SKIP,3988.31225ms",
+      "log": "execution/evidence/G10/reviewer-07f-queue-focused.log",
+      "sha256": "8d62b33fbed60ec3b4147102b972ed5ba1bc3c205418c88ce64bf4e360a8b71b"
+    },
+    {
+      "kind": "independent controlled focused counterexamples using existing APIs",
+      "log": "execution/evidence/G10/reviewer-07f-failure-scenarios-corrected.log",
+      "result": "Recovery:8 admissions,0 runs. Shutdown: pendingAtClose true, one index read after close, pending clears only after delayed release. No real services/provider calls.",
+      "setupFailure": "Initial evidence script had incorrect relative import path and exited before checks; original failure retained in reviewer-07f-failure-scenarios.log.",
+      "sha256": "09e0968bb15b77f06a2fc78bdccff39f6f993bcf633c4bd4540e00540ec76dea"
+    }
+  ],
+  "positiveAssessment": [
+    "Bounded cursor/batch draining removes immediate failure and fulfilled-noop global-reset starvation.",
+    "Scoped indexed predecessor keyset retains >64-row FIFO barriers; SQLite generation/revision and index ownership guards remain.",
+    "Terminal helper reuses original journal limits and read-only billing validation, checks state4/zero liabilities and exact identity; no provider/chain mutation or journal write ports admitted.",
+    "Numeric recovery/public sorting and active-thread uniqueness remain bounded."
+  ],
+  "limits": [
+    "No source edits or live application/service/financial/provider operations performed.",
+    "Actual C/D concurrency, billing and product acceptance remain separate."
+  ]
+}

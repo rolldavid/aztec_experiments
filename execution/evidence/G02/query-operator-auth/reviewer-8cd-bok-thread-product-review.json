@@ -1,0 +1,46 @@
+{
+  "reviewer": "independent-reviewer",
+  "revision": "8cd2fda8f08eb85fa012dbcacd69a421393a75c9",
+  "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+  "disposition": "approved-scoped-source-component",
+  "blockingFindings": [],
+  "requirements": [
+    "RC04",
+    "RC29",
+    "RC30",
+    "RC31",
+    "RC33",
+    "RC39",
+    "RC41"
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "72dff50ef12288af1f17a81ff3703e397be6d40d80aaf1854dfcdc74c9ba13c5",
+    "apps/rolling/wallet-panel.mjs": "ac67e92ff34447e1fd462e54adeb339da50af7bea06f1394ac17ff154f11b792",
+    "plugins/isolated-execution.mjs": "d4636d94b8652a091b5cb4d830e4fc850cfbb20b16b20bfe33932db0b72df2a7",
+    "plugins/test/isolated-execution.test.mjs": "a8a4ce2e91f081d730669ff4a9f9a2e44896e63b06b3ace0a104031ea68bbe6d",
+    "shared/rolling/application.mjs": "b0509fff9ee7b9bc563739e39828eb6c0c8d5d9a73217383e31623b6eb89be6d",
+    "shared/rolling/application.test.mjs": "1fcaf2d6b60383e9514f1f967977ffd3cafa15c87c4e5d201529fddaefba1450"
+  },
+  "review": [
+    "Bok optional parent/root fields preserve root-post compatibility and require a paired zero or paired nonzero thread. Actual get_post ABI and contract posting checks agree on existence, removed flag, same subboard and canonical root.",
+    "Authenticated wallet utility simulation is enclosed by unchanged PXE snapshot identity and canonical node-block recheck; original guards are retained. Checks run before authorization preparation, authorization submission, saved post preparation, post submission and final beforeSubmit. Changed parent/root/removal/reorg rejects without second authorization.",
+    "Existing encrypted record preserves original action, nonce, request and immutable post draft; prepareBokPost permits only existing policy/hint refresh. Existing credit, fee review, two explicit confirmations and unknown-send journal fences remain.",
+    "Reader Reply context survives reply-to-Bok action selection; UI requires paired fields and preserves subboard/content. No public owner identifiers or new query endpoint.",
+    "Docker absence classifier adds only exact JSON message envelope with original exact target, exit code1 and empty stdout. Extra fields, other target, appended diagnostics, daemon errors or collisions do not count as absence. Isolation limits, cleanup and container execution unchanged.",
+    "Implementation is a small use of existing utility/anchor and UI paths; no new persistence or orchestration layer."
+  ],
+  "evidence": {
+    "packet": "rolling-design/execution/evidence/G10/bok-thread-replies/review-packet.json",
+    "sha256": "38eeff8e94c0439df04921207a95c7bf06a78d0a47b4559e6847bdc53fa3e8e6",
+    "sourceAndEvidenceBindingsVerified": 18,
+    "coverage": "52 ordinary +3 labelled browser +2 actual Git/container/publication cases; 57 distinct passes, 3 explicit other container skips. Final affected4 reply and2 Docker cases overlap prior coverage.",
+    "actualWorkspaceOwnerElapsedMs": 9813,
+    "actualWorkspaceTestLogDurationMs": 9695.154583,
+    "cleanup": "All successful owner receipts show ownedTreeAbsent/linkRestored true and empty failures. Preserved original pre-create failure is not recast as success."
+  },
+  "limits": [
+    "No reviewer heavy runs or source edits.",
+    "Normal integrated SDK/wallet build required for product changes.",
+    "Actual two-user/two-thread provider conversation, live GitHub and full RC41 acceptance remain separate."
+  ]
+}

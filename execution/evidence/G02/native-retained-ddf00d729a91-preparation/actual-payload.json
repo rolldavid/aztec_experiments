@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-ddf00d729a91",
+  "sourceCommit": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+  "payload": {
+    "bytes": 12489,
+    "sha256": "9c2916bdf025863b1f9cc0df617d69d04ca8170d1e38c155c84004d2bc8731a7",
+    "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+    "mode": "0600",
+    "byteEquivalentRegeneration": true,
+    "syntaxParsedNotExecuted": true,
+    "controlSourceSha256": "802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84",
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878"
+  },
+  "privateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-ddf00d729a91",
+  "configurationReference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-ddf00d729a91/bootstrap.json",
+  "payloadReference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-ddf00d729a91/user-data.gz",
+  "deadlines": {
+    "createdAt": "2026-10-13T06:41:46Z",
+    "latestLaunch": "2026-10-13T06:51:46Z",
+    "commissioningStop": "2026-10-13T07:11:46Z",
+    "budgetStop": "2026-10-13T07:26:46Z"
+  },
+  "capabilities": {
+    "fixedBucketRegionAndKey": true,
+    "sensitiveValuesConfinedToPrivateConfig": true,
+    "versionInGetQuery": false,
+    "currentVersionCheckedViaHEADAndRange": true,
+    "binaryHashBeforeExec": true,
+    "receiptPath": "receipts/native-version-20261013-ddf00d729a91/final.json",
+    "signedHeaders": "host"
+  },
+  "controls": {
+    "separateFleetAndHostDeadline": true,
+    "noIngressGroup": "sg-076e39ea1d8dbf8d0",
+    "nativeVersionSeconds": 15,
+    "nativeMemoryMiB": 512,
+    "nativeCpuQuotaPercent": 200,
+    "egressMbps": 50,
+    "ordinaryLinuxPinPromoted": false,
+    "nodeStartupQualified": false
+  },
+  "operator": {
+    "coreSha256": "26be0976bf91c091fae21537e6f121d3cac9cf2f8138653efed3dd753a6d997e",
+    "onlyBindingsAndWrapperPinsChanged": true,
+    "launchGrantUnset": true,
+    "payloadReviewUnset": true
+  },
+  "computeCreated": false,
+  "binaryUploaded": false,
+  "reusedImmutableVersion": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+  "reservedUsd": 10,
+  "cumulativeBoundUsd": 235.28,
+  "passed": true
+}

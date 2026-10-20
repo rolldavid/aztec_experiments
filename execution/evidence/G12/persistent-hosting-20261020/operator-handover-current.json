@@ -1,0 +1,19 @@
+{
+  "coreInstance": "i-0a9b5b9ba55815cda",
+  "bokInstance": "i-0a7d9957f2b3d7f19",
+  "applicationUrl": "https://d30njln0kead8n.cloudfront.net",
+  "appSource": "34cc7252",
+  "nativeManifest": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+  "controlSource": "0205d08b",
+  "persistentNativeReceipts": [
+    "persistent/core-result.json",
+    "persistent/bok-result.json"
+  ],
+  "appReadback": "app-artifact-http-result.json",
+  "moderatorSource": "34cc7252+f3e23bf4",
+  "moderatorStart": "moderator/start-result.json",
+  "moderatorState": "moderator/handover-state-result.json",
+  "moderatorReadiness": "Not yet observed; start completed and enabled without affecting other service PIDs.",
+  "scheduledAgentWork": "Owner requested stopped; parent deleted automation. No new schedules created.",
+  "nextActions": "No further work scheduled. Keep live services running; inspect retained receipts only if explicitly resumed."
+}

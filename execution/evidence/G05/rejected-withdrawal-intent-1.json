@@ -1,0 +1,20 @@
+{
+  "candidate": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+  "scenario": "rolling-rejected-withdrawal",
+  "recordedAt": "2026-10-12T03:48:29.612023+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "status": "failed",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "review": "execution/evidence/G05/subboard-8003-review.json",
+  "reviewSha256": "086fcb6166577cc173a6f8ec1e7a1c073f2ba671405fae3a3311d301481ead96",
+  "acceptance": "Genuine post and authorized subboard rejection; mature screening, exact L2 exit nullifier/message, actual original-depositor L1 refund and replay rejection. Local test cooldown10/censor20 and supported Outbox settlement; no protocol finality or deployed-network claim. Four private HTTP jobs plus separately proved moderator action.",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-rejected-withdrawal",
+  "result": "application-778e4478-dc87-40a7-9e95-9d2daf7080a8.json",
+  "resultSha256": "e65d8554a7eb26c6ad9faa3f1c24be743dbbb45128099400db4090d99e93cf9a",
+  "elapsedMs": 327304,
+  "exitCode": 1,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-20T07:52:17.447120+00:00",
+  "instances": {
+    "i-0a7d9957f2b3d7f19": "running",
+    "i-0a9b5b9ba55815cda": "running"
+  },
+  "deletedSchedules": [
+    "rolling-core-restore-20261020-core",
+    "rolling-bok-restore-20261020-shutdown",
+    "rolling-core-restore-20261020-endpoints"
+  ],
+  "fleetState": "deleted_running",
+  "instancesTerminated": false,
+  "guestShutdown": "stop",
+  "apiTerminationProtection": true,
+  "monthlyBudgetUsd": 1500
+}

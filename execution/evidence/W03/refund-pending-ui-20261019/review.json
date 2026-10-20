@@ -1,0 +1,22 @@
+{
+  "candidate": "b9fb18bf20d390666a587ac45af2ce16937efa66",
+  "base": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+  "verdict": "approved",
+  "findings": [],
+  "scope": "Visible owned-operation progress during original Ethereum refund review/check/confirm.",
+  "basis": [
+    "Uses existing note/work ownership; controls remain disabled while operation runs.",
+    "Success clears progress; existing work catch clears progress and displays failure.",
+    "No wallet/session/journal/send behavior changes.",
+    "Replaces misleading unconditional Outbox wait wording with settlement/finality explanation."
+  ],
+  "independentFocusedChecks": {
+    "selected": "existing refund shows owned confirmation progress",
+    "passed": 2,
+    "failed": 0,
+    "durationMs": 1438.10375,
+    "output": "3218e7",
+    "scope": "Existing browser fixture with held operation and labelled provider/session doubles; no chain or wallet transaction."
+  },
+  "workerEvidence": "Five affected cases in .build/refund-status-focused.log; no broad repetition."
+}

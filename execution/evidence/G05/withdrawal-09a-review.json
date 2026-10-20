@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-12T04:03:51.222084+00:00",
+  "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "base": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+  "verdict": "approved exact source for one changed genuine rejected-withdrawal attempt; runtime acceptance pending",
+  "requirements": [
+    "G05-A07",
+    "RC13 original depositor withdrawal rights"
+  ],
+  "findings": [],
+  "sourceHashes": {
+    "scripts/testing/rolling-admission-read.mjs": "fabe2e9bb65a6797f1ce8265a0e064e87d3f2af42947a27b7cfee3bc31ed94fa",
+    "scripts/testing/rolling-admission-read.test.mjs": "04514de7b6309cfab283b9967dca6dc38b90819612503368bccca379d9961a16",
+    "scripts/testing/rolling-application-fixture.mjs": "b43a4f2ca5704d1ba33bb237e478424c9301cbb082f249751bd89b0654fea3f0"
+  },
+  "priorFailure": "G05/rejected-withdrawal-778e-diagnosis-review.json",
+  "independentTests": {
+    "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-admission-read.test.mjs scripts/testing/rolling-rejected-withdrawal.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+    "log": "/tmp/reviewer-withdrawal-09a-tests.log",
+    "logSha256": "9efe47e43319d753c4dce1f9e9349cb37711a697af12fe501dd8684e720838f0",
+    "passed": 154,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 2557.700167
+  },
+  "checks": [
+    "Read exact three-path diff before test results. Fixture now invokes real extracted helper only in rejectedWithdrawal branch; native hash value retained as BlockHash with no wire conversion or fallback.",
+    "All three mapped reads share the identical captured hash and contract. Slots remain post_time/post_flag_deadline/post_flagged derived with actual SDK map hash. Decimal output and same-height final canonical block-hash recheck unchanged.",
+    "Regression calls actual helper and installed ArchiverDataSourceBase/UnseenBlockHoldOff with labelled synthetic block/storage backing. Original string-hash input fails before backing read, typed reference completes all three reads; final fork replacement rejects. Each of three storage failures propagates original error without later read/retry/partial result.",
+    "Existing full two-phase withdrawal consumer and parent tests retained, all154 passed. No changes to proof, fee, clock, admission maturity, miner ownership, actual physical-note/nullifier/L1 message/refund or replay assertions.",
+    "Outer assets.mjs automatically fingerprints every scripts/testing/*.mjs including new helper and test. Inner source list binds changed fixture; new helper additionally bound by outer source map. Source freeze remains required throughout campaign."
+  ],
+  "priorEvidenceDisposition": {
+    "subboardDa251": "Preserved bounded runtime evidence at8003: only changed existing executable code is withdrawal-specific branch; all subboard consumer, Home/index/public/production/Noir/artifact/policy bytes unchanged. No need to relabel historical runtime as09a execution.",
+    "source8003": "Prior composition approval remains applicable outside repaired admission call.",
+    "failed778e": "Retain failed report and paid included create/post outcomes; do not retroactively mark withdrawal passed."
+  },
+  "limits": [
+    "This fixes a native SDK fixture boundary only. Genuine rejection/screen/L2 exit/L1 original-depositor refund and final canonical continuity still require changed actual run.",
+    "Cheap tests use actual installed resolver with labelled backing data, not chain or network proofs.",
+    "No full G05/product/privacy/model/browser/testnet qualification claimed."
+  ]
+}

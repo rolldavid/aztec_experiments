@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "fce70cbeb23d7010eaf2fa59c65d3cf015752dcd",
+  "verdict": "changes_requested",
+  "scope": "Read-only funding claim preparation; no transactions, services or proof execution",
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node 24.21.0 --test shared/rolling/funding-receipts.test.mjs",
+      "result": "27 passed, 0 failed; 1221.916 ms"
+    },
+    {
+      "check": "Installed SDK BlockData, BlockParameter and L1ToL2MessageMembershipWitness; actual claim ABIs, commitment layout and existing recovery helpers",
+      "result": "Compatible source types and encoding"
+    }
+  ],
+  "findings": [
+    {
+      "id": "FUNDING-P2-01",
+      "severity": "P2",
+      "paths": [
+        "shared/rolling/funding-receipts.mjs"
+      ],
+      "scenario": "Scope/receipt/secrets are snapshotted, but node/provider/contextGuard are repeatedly read from mutable input after awaits. Replacing input.node with an ordinary backend during an awaited provider read still allows the original session guard to pass and discloses the selected funding message membership request there; replacing contextGuard can remove the account-change fence. The entrypoint also accepts unbranded nodes, unlike existing deployment/application boundaries.",
+      "repair": "Capture capability references before first await, use only captured references, and require existing trusted-node branding before personal requests. Add mutation-during-await and ordinary-node rejection regressions."
+    }
+  ],
+  "positive_checks": [
+    "No send API, signer, polling or payment replay",
+    "Distinct absent, waiting-finality, waiting-delivery, reverted, mismatch, reorg and unknown paths",
+    "Canonical L1 receipt and finalized anchor rechecks; canonical L2 height/hash/root and exact 36-level witness reconstruction",
+    "Private claim data separated from public evidence; fixed diagnostic projection",
+    "Finalized L1 explicitly a reversible engineering default, not product latency requirement"
+  ],
+  "limitations": [
+    "Labelled RPC doubles, no real L1/L2 receipt acceptance",
+    "Already-consumed status intentionally not established; claim-ready means preparation only",
+    "Caller integration must reuse encrypted recovery and existing transaction journal; full G05/G14 remain open"
+  ]
+}

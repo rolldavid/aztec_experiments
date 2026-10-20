@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T01:52:01.969631+00:00",
+  "sourceCommit": "282a1e1df46c7aa20ff85f82dbb826545ac687c0",
+  "verdict": "failed-unit-run-preserved-source-backed-runner-environment-repair-recommended",
+  "evidence": {
+    "receiptSha256": "7793f631ba240dec3ad71bd0f0087c5c5c5af3c0cb9069dfe3984789b76cc7ea",
+    "logSha256": "d5ac01cf152dc9944666cc4abb096b78fb5af3098e3890633f3f83580f24060f",
+    "runnerSha256": "4826cc1bf92dc9d4a10161f0f9e0cf5bd5b4cf2cf14b79eaca04954a5352d590"
+  },
+  "actual": {
+    "elapsedMs": 60179,
+    "peakAggregateRssBytes": 493649920,
+    "completedLabels": 55,
+    "expectedLabels": 148,
+    "summaryPresent": false,
+    "firstUnreportedSourceTest": "actual SDK serialized Tx is persistently denied before forward, then forwarded unchanged exactly once",
+    "location": "scripts/testing/rolling-application-fixture.test.mjs:390",
+    "cleanup": {
+      "ownedGroupAbsent": true,
+      "originalLinkRestored": true,
+      "ownedTemporaryDirectoryRemoved": true,
+      "sourceUnchanged": true,
+      "dependencyPinsUnchanged": true
+    }
+  },
+  "sourceFinding": {
+    "priority": "P2",
+    "title": "Runner TMPDIR exceeds Darwin native socket path capacity",
+    "runnerTmpdir": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/genuine-cold-reorg-unit-run-1",
+    "minimumSocketPathBytes": 118,
+    "typicalFiveDigitPidSocketPathBytes": 122,
+    "darwinSunPathBytes": 104,
+    "sdkSocketConstruction": "@aztec-foundation/bb.js/dest/node/bb_backends/node/native_socket.js:118 path.join(os.tmpdir(), bb-PID-thread-counter.sock)",
+    "sdkStartupBackstopMs": 60000,
+    "trace": "First unreported test creates actual Tx.random then awaits Tx.recomputeHash before opening HTTP. RecomputeHash invokes real hash path; foundation Poseidon initializes Barretenberg whose Node default selects NativeUnixSocket. NODE_BACKEND=js is bcrypto selection, not a BB native-backend override.",
+    "scope": "The configured TMPDIR is provably incompatible even at minimal PID/socket suffix. Exact historical stuck await/native error not logged, so timeout causality remains a strong source-backed hypothesis, not established native stderr."
+  },
+  "recommendedMinimalRepair": [
+    "Runner-only fresh exclusively owned short /tmp directory with explicit0700, exact bounded prefix and recorded path; preserve test source,148 labels,60s/2GiB, TAP/no-skips and original failed receipt.",
+    "Before spawn, conservatively bound encoded socket path including PID/thread/counter suffix against Darwin104-byte capacity with terminator margin. Do not create any preexisting path or reuse prior evidence directory.",
+    "Route TMPDIR to that owned short directory; retain positive group-absence gate before removing it or restoring dependency link. No backend switch, skip, timeout increase or weakened assertion.",
+    "Parent reviews successor exact hashes and grants at most one changed bounded unit run after current slot cleanup. If still fails, preserve exact last label/failure and diagnose further; no blind repeats."
+  ],
+  "reviewAccountability": "Prior runner source review missed native Unix socket path-length interaction. This report narrows that approval; original failed run and review remain unchanged.",
+  "reviewerExecutedTests": false,
+  "acceptance": "55 successes alone do not qualify148 suite or genuine cold reorg."
+}

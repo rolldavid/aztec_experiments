@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f48620957ee2e5ed5aed4b541c9de1e3cede9d33",
+  "base": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "verdict": "approved_source_for_bounded_actual_composer_campaign",
+  "scope": "G05-A09/G06-A06 genuine production browser preparation/cancellation/custody recovery and account switch; actual runtime pending",
+  "findings": [],
+  "files": {
+    "scripts/testing/assets.mjs": "28d8cbfe0602a849c7c5227b25e38ad2cd918ada172033ae5d555477a7d6a378",
+    "scripts/testing/browser-worker.mjs": "327ddab3f87d8e23e83e113f3f17245f592bde41b0813212a562dc446e3a2ba3",
+    "scripts/testing/rolling-application-fixture.mjs": "227fba7ee9c8aa787834e75adb72d287980631dc291cbd5b95f8624925544b4a",
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/testing/rolling-composer-browser.test.mjs": "16a3c94e7cc52e92789470f88229a97218ea00d1672e6463552aaa7bdce08596",
+    "scripts/testing/rolling-composer-fixture.mjs": "e400e9054979d7a5228a29576c9e4fc6125cf2f5571028e04b8e1f1249686f18",
+    "scripts/testing/rolling-composer-fixture.test.mjs": "e332d7bd5ddc8e572619e5f4d0c02ccc99b6d01bd4d6a0223a28a7f95f75fb89",
+    "scripts/testing/run-application.mjs": "c746228245c636190758955c57d2cf86251ea7fa305d3a374fc0f04501bbc494",
+    "scripts/testing/scenario-flows.mjs": "8848dc853e1a1a1191d7949ecaea4060c1c386a86462be993a77e542dd447a08",
+    "scripts/testing/scenarios.mjs": "39c477cbfdfa37eb26e13ad519071947974c2f75cd59a744d581c05890694f76"
+  },
+  "equivalence": "All10 transferred paths byte-identical to independently reviewed8c90e59ed8b80be67646759b43cd87711723e888. Existinge3 wire observer/acceptance repair remains unchanged. No production source/artifact/package change.",
+  "priorReviews": {
+    "G05/composer-browser-0379-review.json": "dab6390a54ae483394aba7c9cbc56e97bd3b3d56484d83db2695b2d62c1652ec",
+    "G06/composer-parent-a60-review.json": "fe956e10aaf4bd9d257ebcfe212421231fecf1e1b89fe168aa25c23607a2b406",
+    "G06/composer-parent-da278-review.json": "927d2de23586f3eb3fe58116cd20daf46e2f97905201ddd875b8631aaac75022",
+    "G06/composer-parent-8c90-review.json": "d73bc7539714feed4e277e78dffd443f17eaf2df1739aeaa375e326ed3f78da9"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processed artifact> pinned Node24 --test --test-concurrency=1 scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-composer-fixture.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 1594.41675,
+      "log": "/tmp/reviewer-composer-f486-tests.log",
+      "sha256": "c6780132791014c6a8e422344661e97567c9e66b5f649afae0fffe2292c40bec"
+    },
+    {
+      "procedure": "Independently SHA256 and byte-size verified every existing generated wallet manifest input/output against current filesystem",
+      "inputs": 75,
+      "files": 23,
+      "manifestSha256": "ca994bd9a9f70d239b1ed46738c6ef621bd4737e1f652bd4c0a66064854695f0"
+    }
+  ],
+  "limits": [
+    "No actual Chromium or genuine proof acceptance from source/pure checks. Campaign must pass same540s/4GiB and all receiver/accounting/cleanup gates.",
+    "Production named/Anonymous choices must derive from imported encrypted custody and actual private queries; no fabricated runtime/session injection.",
+    "Acknowledgement occurs only after durable browser result, both fee checks and final no-proof/no-send counters; missing result/ack/persistence/cleanup fails.",
+    "This does not qualify browser publication, extension funding, complete wire privacy or production release."
+  ]
+}

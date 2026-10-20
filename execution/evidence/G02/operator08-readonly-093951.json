@@ -1,0 +1,373 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-08",
+  "observedAt": "2026-10-12T09:39:51.307892+00:00",
+  "readOnly": true,
+  "readinessDeadline": "2026-10-12T09:38:55Z",
+  "deadlineElapsed": true,
+  "instance": {
+    "available": true,
+    "data": [
+      {
+        "id": "i-0613e5a3dca106101",
+        "state": "terminated",
+        "type": "m7a.4xlarge",
+        "launchTime": "2026-10-12T09:02:09+00:00",
+        "volumes": [],
+        "iam": null,
+        "securityGroups": [],
+        "key": null
+      }
+    ]
+  },
+  "fleet": {
+    "available": true,
+    "data": [
+      {
+        "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+        "state": "active",
+        "activity": "fulfilled",
+        "type": "request",
+        "validUntil": "2026-10-12T09:54:55+00:00",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "shutdown": {
+    "available": true,
+    "data": {
+      "InstanceId": "i-0613e5a3dca106101",
+      "InstanceInitiatedShutdownBehavior": {
+        "Value": "terminate"
+      }
+    }
+  },
+  "volumes": {
+    "available": false,
+    "category": "AWS_READ_FAILED"
+  },
+  "console": {
+    "available": true,
+    "timestamp": "2026-10-12T09:10:00+00:00",
+    "bootstrapObservations": [
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T09:54:55Z",
+        "egressBytes": 3229568,
+        "runtimeArchiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T09:54:55Z",
+        "egressBytes": 3231228,
+        "runtimeArchiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T09:54:55Z",
+        "egressBytes": 3232992,
+        "runtimeArchiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      }
+    ],
+    "bootstrapDiagnostics": [
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "tc-package",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "tc-package",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      }
+    ],
+    "finalReceiptMarkers": []
+  },
+  "finalReceipt": {
+    "available": true,
+    "ContentLength": 2227,
+    "LastModified": "2026-10-12T09:38:56+00:00",
+    "ETag": "\"9e4a30e9684d54403da79c0ece519b43\"",
+    "VersionId": "R7kxVzhFNc2.SKptWPLfFFQzzB5k0ZTY",
+    "downloadAvailable": true,
+    "sha256": "67f6bc73cd69717996ceb1855cbd810063d0926653da42162e05b373de6160ac",
+    "observation": {
+      "bindings": {
+        "schemaVersion": 1,
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3"
+      },
+      "qualification": {
+        "schemaVersion": 1,
+        "passed": false,
+        "stage": "readiness-failed",
+        "scope": "legacy-query-only",
+        "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e"
+      },
+      "readiness": {
+        "attempts": 133,
+        "ready": false,
+        "category": "UNAVAILABLE"
+      },
+      "services": {
+        "node": {
+          "available": true,
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "Result": "success",
+          "ExecMainCode": 0,
+          "ExecMainStatus": 0,
+          "NRestarts": 0
+        },
+        "qualification": {
+          "available": true,
+          "LoadState": "loaded",
+          "ActiveState": "deactivating",
+          "SubState": "stop-post",
+          "Result": "success",
+          "ExecMainCode": 1,
+          "ExecMainStatus": 0,
+          "NRestarts": 0
+        },
+        "container": {
+          "available": true,
+          "status": "running",
+          "running": true,
+          "restarting": false,
+          "oomKilled": false,
+          "exitCode": 0
+        }
+      },
+      "checks": {},
+      "startup": {
+        "available": true,
+        "schemaVersion": 1,
+        "oversizedLines": 0,
+        "complete": false,
+        "exitCode": null,
+        "signal": null,
+        "stages": [
+          "process-spawned",
+          "crs",
+          "genesis"
+        ],
+        "errors": [],
+        "instrumentation": {
+          "available": true,
+          "schemaVersion": 1,
+          "instrumented": true,
+          "runtimeAdapter": "publicnode-config-v1",
+          "helperSha256": "5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9",
+          "history": [
+            [
+              "registry-guard",
+              "begin"
+            ],
+            [
+              "registry-guard",
+              "complete"
+            ],
+            [
+              "rollup-compatibility",
+              "begin"
+            ],
+            [
+              "rollup-compatibility",
+              "complete"
+            ],
+            [
+              "l1-config",
+              "begin"
+            ],
+            [
+              "l1-config",
+              "complete"
+            ],
+            [
+              "genesis-compare",
+              "begin"
+            ],
+            [
+              "genesis-compare",
+              "complete"
+            ],
+            [
+              "telemetry",
+              "begin"
+            ],
+            [
+              "telemetry",
+              "complete"
+            ],
+            [
+              "factory",
+              "begin"
+            ],
+            [
+              "factory-bb",
+              "begin"
+            ],
+            [
+              "factory-bb",
+              "complete"
+            ],
+            [
+              "factory-kzg",
+              "begin"
+            ],
+            [
+              "factory-kzg",
+              "complete"
+            ],
+            [
+              "factory-keystore",
+              "begin"
+            ],
+            [
+              "factory-keystore",
+              "complete"
+            ],
+            [
+              "factory-addresses",
+              "begin"
+            ],
+            [
+              "factory-addresses",
+              "complete"
+            ],
+            [
+              "factory-l1-constants",
+              "begin"
+            ],
+            [
+              "factory-l1-constants",
+              "complete"
+            ],
+            [
+              "factory-blob",
+              "begin"
+            ],
+            [
+              "factory-blob",
+              "complete"
+            ],
+            [
+              "factory-snapshot",
+              "begin"
+            ],
+            [
+              "factory-snapshot",
+              "complete"
+            ],
+            [
+              "factory-epoch-cache",
+              "begin"
+            ],
+            [
+              "factory-epoch-cache",
+              "complete"
+            ],
+            [
+              "factory-world-state",
+              "begin"
+            ],
+            [
+              "factory-world-state",
+              "complete"
+            ],
+            [
+              "factory-avm",
+              "begin"
+            ],
+            [
+              "factory-avm",
+              "complete"
+            ],
+            [
+              "factory-archiver",
+              "begin"
+            ]
+          ]
+        }
+      },
+      "bindingMatches": {
+        "manifest": true,
+        "bootstrap": true
+      }
+    }
+  },
+  "diagnostics": {
+    "finalReceiptSource": "/var/lib/rolling-bootstrap-private/final-receipt.json",
+    "readinessSource": "/var/lib/rolling-bootstrap/qualification/readiness-observation.json",
+    "uploadIntent": "/var/lib/rolling-bootstrap-private/upload-intent.json",
+    "uploadResult": "/var/lib/rolling-bootstrap-private/upload-result.json",
+    "remoteRead": "Exact S3 final receipt or ROLLING_QUALIFICATION_RECEIPT console marker; no host SSH/SSM assumed",
+    "pendingReadinessRemainsHostLocal": true
+  }
+}

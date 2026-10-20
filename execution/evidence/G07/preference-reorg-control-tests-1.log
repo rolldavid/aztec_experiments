@@ -1,0 +1,20 @@
+✔ control fixture persists intent before one same-height replacement and verifies restoration (1.4385ms)
+✔ control fixture refuses invalid boundary: changed-l1 (0.386917ms)
+✔ control fixture refuses invalid boundary: changed-l2 (0.118125ms)
+✔ control fixture refuses invalid boundary: finalized (0.061833ms)
+✔ control fixture refuses invalid boundary: empty-suffix (0.063792ms)
+✔ control fixture refuses invalid boundary: unpublished (0.050583ms)
+✔ control fixture refuses active miner or exhausted admission before touching Anvil (0.120875ms)
+✔ failed durable intent prevents mutation; uncertain RPC is never replayed (0.210416ms)
+✔ SDK swallowed restore failure is independently rejected (0.302166ms)
+✔ control fixture requires actual replacement effect: height (0.205709ms)
+✔ control fixture requires actual replacement effect: hash (0.139584ms)
+✔ control fixture requires actual replacement effect: rollup (0.110333ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.527916

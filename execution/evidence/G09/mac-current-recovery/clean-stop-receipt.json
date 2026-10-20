@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-15T09:08:27.152678+00:00",
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "sessionId": 86149,
+  "ownerPid": 34438,
+  "sessionExitCode": 0,
+  "signalBy": "lead; no additional worker signal",
+  "signalTime": "Not precisely recorded; lead reports between 09:02:59 and 09:04 UTC",
+  "stateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state",
+  "phase": "stopped",
+  "networkSha256": "d006ae59908e5d354d9ec820ac81a8596030bf125e8dbfa9e7e0351f5d0061e2",
+  "snapshotFile": "anvil-recovery-d79f3618-540d-4e26-92ea-120b427047bb.json",
+  "snapshotHash": "7e598e941b56806fd832844f0700d9f6a14eeb9060e131e1caa66e0bd1138dc8",
+  "snapshotHashEvidence": "Recorded by normal clean-stop checkpoint writer; this readback did not repeat the full snapshot hash",
+  "snapshotHead": {
+    "number": "0x53d",
+    "hash": "0xda2330991f63246ed5758dbb8c2e9ec51d150cf9147836aa012be27ce68fd82b",
+    "pending": "626",
+    "proven": "626"
+  },
+  "snapshotStat": {
+    "bytes": 2074488468,
+    "dev": 16777232,
+    "ino": 233747393,
+    "mode": "0o600",
+    "mtimeNs": 1792055038435259903
+  },
+  "predecessor": {
+    "snapshotFile": "anvil-recovery-2de5acd0-2fdd-432c-954a-3b7eeb93f492.json",
+    "snapshotHash": "25a0168b65d51e8996cc17d1dd1b748da12497d6a1bb8e69960e4e8b744588fa",
+    "snapshotHead": {
+      "number": "0x50b",
+      "hash": "0x9daa572f6b1dc2e945729ce29094eb1f2850ceeee1bfbc9b8184657a77db0fad",
+      "pending": "601",
+      "proven": "601"
+    }
+  },
+  "ownedCache": {
+    "directory": "anvil-cache-b8f8a3ed-86ed-49f7-992e-0db0d72d5e1d",
+    "dev": 16777232,
+    "ino": 233747394
+  },
+  "processObservations": [],
+  "processScope": "Exact parent/remaining direct children and all Anvil/bb processes absent; successful normal CLI cleanup exited zero",
+  "ports": {
+    "8181": {
+      "listenerAbsent": true
+    },
+    "18181": {
+      "listenerAbsent": true
+    },
+    "18547": {
+      "listenerAbsent": true
+    },
+    "62239": {
+      "listenerAbsent": true
+    }
+  },
+  "leaseOrFailureFilesPresent": {
+    "hosted.lock": false,
+    "owner.json": false,
+    "shutdown-failure.json": false
+  },
+  "logSha256": "aafb8b7f1e0ac1bb04a9628bad03066349bd66bb74f68cae14bf5d3377508d0c",
+  "noRestartOrAdditionalSignal": true,
+  "passed": true
+}

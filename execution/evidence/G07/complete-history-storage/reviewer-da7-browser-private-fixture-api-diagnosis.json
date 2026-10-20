@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:41:45.563188+00:00",
+  "source": "da7bd5aea1498d389d70af4430d7b197e78edfd8",
+  "sourceBindings": {
+    "apps/rolling/wallet-panel.mjs": "2b96bae77fd9172b6fb0b883d33a379bc569a77db06dd7dff82ac9fa182bc35f",
+    "apps/rolling/reader.browser.test.mjs": "e7b193f76cee8bfff8d0f7fdaad28d6b391b12987aac6cc8e1b315f627f1fd03"
+  },
+  "finding": "Stale labelled runtime API in privateViewFixture: exports readPreferences but production panel recoverPreferences calls readColdPreferences({signal}).",
+  "evidence": [
+    "wallet-panel.mjs64 performs missing-method call inside work boundary; work catch clears preferences and displays sanitized error.",
+    "reader.browser.test.mjs298 supplies readPreferences only; recoverPrivateView line308 waits for ready text which cannot be reached through that fixture.",
+    "Retained ordinary.log cases20-23 show same ready-text timeout; source identifies the missing fixture method without inferring a proof/config failure."
+  ],
+  "recommendation": "Test-only correct labelled runtime to actual readColdPreferences API, retain result data and existing checks; add exact cold-call assertion to first failed existing case, execute that smallest case after parent grant before remaining affected cases.",
+  "held": [
+    "Full browser outcome remains failed/pending terminal actual receipt.",
+    "No timeout increase, application proof bypass, native config change or unchanged full rerun."
+  ],
+  "noRuntimeByReviewer": true
+}

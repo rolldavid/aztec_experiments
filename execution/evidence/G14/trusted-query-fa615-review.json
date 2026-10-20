@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "parent_session": "lead-20261011",
+  "reviewed_at": "2026-10-11T18:15:03.410685+00:00",
+  "candidate": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+  "base": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+  "verdict": "approved for bounded development integration",
+  "scope": "Actual local SDK trusted-query proof-policy qualification plus reviewed automatic Linux bootstrap qualification source. Not full G14 acceptance.",
+  "blocking_findings": [],
+  "evidence": {
+    "path": "execution/evidence/G14/application-fa6156d3-bc71-4dbd-9344-e569db60b12e.json",
+    "sha256": "0253840de4cee1bd5539a0de3b100fff8dee9792051aa4a6a56976c79ad2b845"
+  },
+  "independent_checks": [
+    {
+      "check": "Exact application source fingerprints",
+      "result": "pass",
+      "git_bound": 153,
+      "installed_sdk": 11,
+      "anvil_binary": 1,
+      "inner_git_bound": 13
+    },
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/testing/trusted-query-fixture.test.mjs",
+      "result": "pass",
+      "tests": 12
+    },
+    {
+      "command": "python3 scripts/test-prover-bootstrap.py",
+      "result": "pass",
+      "tests": 21,
+      "log": "/tmp/reviewer-bfbb-bootstrap.log"
+    },
+    {
+      "command": "git diff --check 5235f49..bfbbf4c",
+      "result": "pass"
+    },
+    {
+      "command": "python3 execution/graph.py validate",
+      "result": "pass",
+      "packages": 53,
+      "criteria": 269
+    },
+    {
+      "command": "python3 execution/specification_check.py",
+      "result": "pass"
+    }
+  ],
+  "runtime": {
+    "passed": true,
+    "elapsed_ms": 116350,
+    "deadline_ms": 180000,
+    "peak_tree_rss_kib": 940512,
+    "rss_limit_kib": 4194304,
+    "maximum_sampling_gap_ms": 1059,
+    "failures": [],
+    "canonical_inclusion": {
+      "tx_hash": "0x2734c748b465f61da6d08c80ea8c28fd84fc724b6c149596b3037537ee3a40bd",
+      "status": "checkpointed",
+      "execution_result": "success",
+      "block_number": 1,
+      "anchor": {
+        "number": 1,
+        "hash": "0x0d3b7de001785ab58acc12e6f2bf1820e2299f862c3b1711b482141c105a32f2"
+      },
+      "board": "0x2f2300998129c36b3b5b0a628d28b4092ab9251416dcdffb2849665496017711",
+      "binding": "Deployment tx hash matches included receipt; helper queries current checkpoint hash/header and verifies identical block through actual HTTP client both before and after mismatched proof expectation."
+    },
+    "network": {
+      "chainId": "31337",
+      "version": "2229031892",
+      "rollup": "0x0512adc4495aa72331512f27a75f33688e50d2f6",
+      "actualNodeProofs": false
+    },
+    "checks": {
+      "healthyBefore": {
+        "passed": true,
+        "actualNodeProofs": false,
+        "expectedProofs": false,
+        "canonicalAnchorVerified": true
+      },
+      "mismatch": {
+        "passed": true,
+        "actualNodeProofs": false,
+        "expectedProofs": true,
+        "code": "BB_TRUSTED_NODE_IDENTITY"
+      },
+      "healthyAfter": {
+        "passed": true,
+        "actualNodeProofs": false,
+        "expectedProofs": false,
+        "canonicalAnchorVerified": true
+      }
+    },
+    "public_readiness": {
+      "beforeHttp": {
+        "scope": "public node timestamp and production readiness inspector",
+        "ready": true,
+        "syncedL1Timestamp": "1791742361",
+        "wallTimeMs": 1791742361194,
+        "wallTimeSeconds": 1791742361,
+        "lagSeconds": 0
+      },
+      "afterHttp": {
+        "scope": "public node timestamp and production readiness inspector",
+        "ready": true,
+        "syncedL1Timestamp": "1791742361",
+        "wallTimeMs": 1791742361586,
+        "wallTimeSeconds": 1791742361,
+        "lagSeconds": 0
+      }
+    },
+    "clock": {
+      "sequencerPaused": true,
+      "elapsedMs": 91198,
+      "initialSyncedL1Timestamp": "1791742361",
+      "initialWallSeconds": 1791742279,
+      "finalSyncedL1Timestamp": "1791742361",
+      "finalWallSeconds": 1791742361
+    },
+    "jobs": {
+      "submitted": 0,
+      "completed": 0,
+      "failed": 0,
+      "jobs": 0
+    },
+    "cleanup": {
+      "adapters": {
+        "nodeRpcClosed": true,
+        "queryServiceClosed": true
+      },
+      "node_stopped": true,
+      "singletons_stopped": true,
+      "owned_tree_absent": true,
+      "temporary_directory_removed": true
+    }
+  },
+  "combined_source_disposition": {
+    "changed_paths": [
+      "deploy/prover/BOOTSTRAP.md",
+      "deploy/prover/bootstrap.py",
+      "execution/infrastructure-ledger.json",
+      "execution/sessions/registry.json",
+      "scripts/c01-real-node.mjs",
+      "scripts/test-prover-bootstrap.py",
+      "scripts/testing/scenario-flows.mjs",
+      "scripts/testing/scenarios.mjs",
+      "scripts/testing/trusted-query-fixture.mjs",
+      "scripts/testing/trusted-query-fixture.test.mjs"
+    ],
+    "bootstrap_equivalent_to": "57eab3087073812051cebcd448d6c12ce202777c",
+    "prior_findings": "Missing origins and AF_NETLINK sandbox findings repaired. Prior records retained; source approvals do not assert Linux runtime success.",
+    "resource_ledger": "Committed proposal retains historical conservative bound and 105 USD forecast reservation, total 213.28 USD against 300 USD. Pending live reservation updates are lead-owned and excluded from exact source verdict.",
+    "session_registry": "Preserves logical/runtime/history mapping and prior integration. No active source ownership conflict observed."
+  },
+  "launch_source_disposition": "Approved reviewed bootstrap source for a bounded authorized launch after lead verifies exact generated payload/package hash, live budget reconciliation and independent cloud shutdown controls. No cloud operations or compute launch performed by reviewer. Missing service-linked role remains a separate operational prerequisite; this report does not confer extra IAM authority.",
+  "limitations": [
+    "Proofs disabled on disposable local chain 31337; no genuine application or epoch proof claim for this scenario.",
+    "No Linux seccomp, tc, systemd, native package, actual full-node synchronization or cloud shutdown acceptance; actual Linux qualification remains required.",
+    "No human-query unlinkability or specialist privacy qualification; this test checks actual HTTP identity/freshness/canonical query behavior.",
+    "No production release, full G05/G06/G14 closure, provider billing recovery resolution or deployed browser qualification.",
+    "The 180-second test budget includes protocol setup and real wall-clock catch-up; it is not a relaxed product latency threshold.",
+    "No raw RPC packet capture retained; source-bound actual SDK/service calls and assertions supply this bounded runtime evidence."
+  ]
+}

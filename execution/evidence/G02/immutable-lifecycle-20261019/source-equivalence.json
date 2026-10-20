@@ -1,0 +1,48 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "comparison": {
+    "hostedApplicationSource": "791297f7e0b075f85201a923c9603c228368ab9a",
+    "integrationSource": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+    "changedPaths": [
+      "deploy/prover/bootstrap.py",
+      "plugins/operations.mjs",
+      "plugins/operator.mjs",
+      "plugins/test/operations.test.mjs",
+      "scripts/test-prover-bootstrap.py"
+    ]
+  },
+  "decision": "Reuse unchanged application assets and admitted native runtime; run operator lifecycle reconciliation from integration source. No application asset rebuild or native reprovisioning required by this delta.",
+  "surfaces": {
+    "browserReaderWallet": "Tracked reader, wallet, shared application logic, assets and build inputs unchanged. Prior source-bound evidence carries only within its original observed scope.",
+    "contracts": "No Noir, Solidity, generated contract artifacts or catalogs changed.",
+    "hostedBok": "plugins/main.mjs and all called hosted behavior unchanged. operations.mjs file differs solely in reconcileRollingOperation, which the hosted composition does not import or invoke. Do not label whole operations module byte-identical. operator.mjs is the separate trusted CLI and its changed reconciliation adapter is not the hosted entrypoint.",
+    "operatorLifecycle": "Run current0d5011b5 for constructor reconciliation; prior791 copy lacks pruned-state repair and must not be used for that command. Original transactions/journals remain authoritative.",
+    "deploymentControl": "Bootstrap differs by reviewed SDK parser correction and routine degraded-health handling. Actual host already promoted to5e; these are operational changes with separate scoped review, not browser rebuild triggers."
+  },
+  "nativeRuntime": {
+    "oldManifest": "acb7fb97d5f57e00fa90824fb2801d725868a9cfb391ae9f7bd6f9b9b2fbf9f2",
+    "currentManifest": "05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e",
+    "changedPackagedFiles": [
+      "deploy/prover/bootstrap.py"
+    ],
+    "unchangedPackagedFiles": 72755,
+    "actualPromotionReceiptSha256": "c0741c7b34570dc4105f4b12df8c81d81cc234883874202528b1826b8dc92f3c",
+    "proverProcessPreserved": true,
+    "proverProcess": {
+      "pid": 24909,
+      "startTicks": "999217",
+      "exe": "/opt/board-prover/releases/rolling-acb7fb97d5f57e00/node/bin/node",
+      "cwd": "/opt/board-prover/releases/rolling-acb7fb97d5f57e00"
+    },
+    "nodePreserved": true,
+    "activationReexecuted": false,
+    "qualificationReexecuted": false,
+    "applicationProofQualified": false
+  },
+  "limits": [
+    "Source equivalence is not new execution or final acceptance",
+    "Actual wallet/real-proof journey remains pending",
+    "Do not upgrade historical privacy, performance, deployment or Bok observations beyond their original scopes",
+    "Package comparison uses exact retained manifest file maps and successful verified promotion receipt; no repeated entire filesystem scan or rebuild"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "base": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+  "candidate": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+  "task_id": "G13-current-runbook",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+      "candidate": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+      "task_id": "G13-current-runbook",
+      "id": "runbook-source-match",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent current interface crosscheck and git diff --check",
+      "environment": "Exact source9def, documentation only",
+      "observed": "Moderatorauthority/transferback, repositorypoolAppadmission andownerboundedqualification match actualimplementedbehavior",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/moderator-rotation-20261018/runbook/review-runbook-9def66e9.json",
+          "sha256": "44f6f233b163c5ba68e8bb8edcc7a01dc5fc8a56be4d209d56ddd7c03c21b5e0"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+    "candidate": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+    "task_id": "G13-current-runbook",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G09/moderator-rotation-20261018/runbook/review-runbook-9def66e9.json",
+        "sha256": "44f6f233b163c5ba68e8bb8edcc7a01dc5fc8a56be4d209d56ddd7c03c21b5e0"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+      "candidate": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+      "task_id": "G13-current-runbook",
+      "id": "RC36-RC38-runbook-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/moderator-rotation-20261018/runbook/review-runbook-9def66e9.json",
+          "sha256": "44f6f233b163c5ba68e8bb8edcc7a01dc5fc8a56be4d209d56ddd7c03c21b5e0"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+{"phase":"discovered","count":24,"names":["preferences_tests::actual_stale_update_is_rejected","preferences_tests::actual_unknown_kind_is_rejected","preferences_tests::anonymous_name_follow_rejected","preferences_tests::digest_binds_every_event_field_and_network_contract_scope","preferences_tests::future_expected_revision_rejected","preferences_tests::future_read_marker_is_rejected","preferences_tests::global_toggle_cannot_encode_arbitrary_target","preferences_tests::marker_cannot_be_written_through_toggle","preferences_tests::nonexistent_head_cannot_skip_initial_revision","preferences_tests::preference_encoding_fits_standard_note_and_encrypted_event","preferences_tests::private_heads_initialize_and_update_independently_without_collateral_or_names","preferences_tests::read_marker_commits_actual_canonical_header","preferences_tests::replacement_binds_exact_predecessor_and_increment","preferences_tests::revision_cannot_wrap","preferences_tests::stale_update_cannot_replace_head","preferences_tests::toggle_enum_accepts_main_board_and_global_only_with_correct_targets","preferences_tests::unknown_head_schema_rejected","preferences_tests::unsupported_kind_rejected","preferences_tests::zero_bookmark_rejected","preferences_tests::zero_initialized_digest_rejected","preferences_tests::zero_initialized_revision_rejected","preferences_tests::zero_kind_rejected","preferences_tests::zero_subscription_rejected","preferences_tests::zero_thread_marker_is_rejected"],"artifact":"normal14VK","realProofs":false}
+{"role":"service","pid":89155,"port":57671}
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":57671}
+{"role":"tests","pid":89167,"port":57671}
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:519:22
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:519:32
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:525:15
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:525:22
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:531:15
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:531:26
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:538:22
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:538:26
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:544:26
+    │
+544 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:551:32
+    │
+551 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:558:26
+    │
+558 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:565:26
+    │
+565 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:572:26
+    │
+572 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:579:15
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:579:26
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused import FromField
+  ┌─ rolling_contract/src/profiles_tests.nr:3:62
+  │
+3 │     protocol::{address::{AztecAddress, EthAddress}, traits::{FromField, Packable}}};
+  │                                                              --------- unused import
+  │
+
+[rolling_contract] Running 20 test functions
+[rolling_contract] Testing preferences_tests::actual_stale_update_is_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::actual_unknown_kind_is_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::anonymous_name_follow_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::digest_binds_every_event_field_and_network_contract_scope ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::future_expected_revision_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::future_read_marker_is_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::global_toggle_cannot_encode_arbitrary_target ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::marker_cannot_be_written_through_toggle ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::nonexistent_head_cannot_skip_initial_revision ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::preference_encoding_fits_standard_note_and_encrypted_event ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::private_heads_initialize_and_update_independently_without_collateral_or_names ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::read_marker_commits_actual_canonical_header ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::replacement_binds_exact_predecessor_and_increment ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::revision_cannot_wrap ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::stale_update_cannot_replace_head ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::toggle_enum_accepts_main_board_and_global_only_with_correct_targets ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::unknown_head_schema_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::unsupported_kind_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::zero_bookmark_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::zero_initialized_digest_rejected ... [0m[32mok[0m
+[rolling_contract] [0m[32m20 tests passed[0m
+{"role":"service","pid":89237,"port":57700}
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":57700}
+{"role":"tests","pid":89263,"port":57700}
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:519:22
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:519:32
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:525:15
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:525:22
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:531:15
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:531:26
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:538:22
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:538:26
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:544:26
+    │
+544 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:551:32
+    │
+551 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:558:26
+    │
+558 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:565:26
+    │
+565 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:572:26
+    │
+572 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:579:15
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:579:26
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused import FromField
+  ┌─ rolling_contract/src/profiles_tests.nr:3:62
+  │
+3 │     protocol::{address::{AztecAddress, EthAddress}, traits::{FromField, Packable}}};
+  │                                                              --------- unused import
+  │
+
+[rolling_contract] Running 4 test functions
+[rolling_contract] Testing preferences_tests::zero_initialized_revision_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::zero_kind_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::zero_subscription_rejected ... [0m[32mok[0m
+[rolling_contract] Testing preferences_tests::zero_thread_marker_is_rejected ... [0m[32mok[0m
+[rolling_contract] [0m[32m4 tests passed[0m
+{"phase":"finished","passed":true,"cleanupComplete":true,"children":[{"pid":89155,"exitCode":0,"signal":null},{"pid":89167,"exitCode":0,"signal":null},{"pid":89237,"exitCode":0,"signal":null},{"pid":89263,"exitCode":0,"signal":null}]}

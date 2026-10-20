@@ -1,0 +1,52 @@
+{
+  "type": "independent private actual acceptance composition review",
+  "status": "approved_private_acceptance_composition",
+  "files": {
+    "run.mjs": "b38697983d3e9162b9757c5e31f7284df7672aa8d5999c1398dd620b82d3d313",
+    "supervise.mjs": "98a5a838216b0d4d8ebb0b44bd750ed71813e23cf0ef6f11c8b9026e693758e6"
+  },
+  "requirementScope": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "findings": [
+    {
+      "id": "FIXTURE-1",
+      "status": "resolved",
+      "finding": "Final observation must follow browser closure and pending route drain; missing/nonzero counters and wrong phase send counts now fail."
+    },
+    {
+      "id": "FIXTURE-2",
+      "status": "resolved",
+      "finding": "Actual initial recovery decrypt must prove no claims/journals and preserve existing recovery epoch; epoch read is noninitializing, retained workflow attempt is compared without exposing epoch."
+    },
+    {
+      "id": "FIXTURE-3",
+      "status": "resolved",
+      "finding": "Rejected route tasks may be removed before final allSettled with rejection swallowed. Request/frame construction is before innertry; unconditional rejected-task accounting required before removal.",
+      "repair": "Every rejection records routeFailures and inspectionErrors before deleting task, while original rejected task still reaches Playwright. Final requires zero rejected tasks and drained state; already-settled rejection cannot disappear."
+    }
+  ],
+  "acceptedSourceProperties": [
+    "Runtime JSON and served engine SHA256/length bound, loaded CDP script source hash independently checked",
+    "Unique preproof breakpoint before transaction request/prove; signed breakpoint after durable journal.prepare and workflow signed callback before broadcast",
+    "Actual paused breakpoint and renderer crash required; no synthetic state or stored-journal injection",
+    "Same original action/id/nonce retained, renewed fee reviewed explicitly, signed saved intent takes priority on final reopen",
+    "Final route parses official typed Tx, compares exact hash and serialized-byte SHA256 to encrypted retained journal, allows one exact send only",
+    "Exclusive fsynced entered sentinels remain on failure; no phase or broadcast replay",
+    "100s inner action budget after setup plus120s totalSupervisor/4GiB; cleanup owned by Supervisor",
+    "Artifact records contain public action/hash evidence and encrypted backups; keys/password/rawsignedbytes/epoch not emitted",
+    "Extension requests bypass application observer and are explicitly excluded from zero-send claim"
+  ],
+  "limitations": [
+    "No actual browser/crash/send operation performed by reviewer",
+    "This validates private acceptance procedure only, not actual W03 acceptance or real-proof performance",
+    "Finalsource/runtime binding remains lead responsibility"
+  ],
+  "previousReviewedRunSha256": "4ff303ec7d3446dcf04416cadde44e4e173758c40574f5dc8d6edcf2e227705b",
+  "checks": {
+    "independent": "Full procedure/source path review, changed lines inspected, final Node24 syntax pass; no browser/remote/tests with application execution",
+    "workerReported": "22 final-counter/epoch cases and3 route ownership/rejection cases passed; not represented as independently rerun",
+    "applicationSource": "Unchanged; lead binds runtime/source separately"
+  }
+}

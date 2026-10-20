@@ -1,0 +1,36 @@
+{
+  "candidate": "7646446316c507d52e231635bda13606e1d3edf9",
+  "scope": "Named MetaMask ETH/USDC aggregate driver, component source only",
+  "verdict": "observation-repair-required",
+  "source": {
+    "scripts/run-bounded-browser-check.mjs": "f25c62312071f3187b520a619633804541475a40413c0d9e9ab3b956d9c61f24",
+    "scripts/t04-metamask.mjs": "9974d5f03aa9cf3d15389e04da64ecb91f7014a460056e29e562ead644d0561c",
+    "scripts/t04-phantom.mjs": "3c813fa3c23f654790b149c5ba1d2c54d7610922e01e9a8b317b69f6842cdab4",
+    "scripts/test-t04-browser-journey.mjs": "179d3b641c7c5caed2d4470e751d3827769e8d6536838ca6c2673091be7b45b6",
+    "scripts/test-wallet-extension-browser.mjs": "73f0d6b053846e3e5deb19cabdc13f7898e95a4282c1f95ec6738e1a4eb2680e"
+  },
+  "reviewedBoundaries": [
+    "Genuine pinned extension and forwarded original provider requests; no fabricated wallet response",
+    "Fixed local nativefalse launch control and exact served runtime metadata SHA/config",
+    "Fresh private profile and unpacked extension retained at stable path; no accidental recovery rerun",
+    "Initial and prepared encrypted recovery downloads before signing/payment",
+    "Exact ETH calldata/from/nonce/value/gas cap, or exact USDC typed schema/domain/full-plan nonce with one relay POST",
+    "Original canonical transaction and all three portal effects verified; private claims explicitly unqualified"
+  ],
+  "finding": {
+    "priority": 2,
+    "file": "scripts/test-wallet-extension-browser.mjs",
+    "description": "L2 submission counter matches only /v1/node, but current devnet trustedQuery uses root POST /. Actual send calls may be reported as zero. Match configured exact trusted query origin/path and retain malformed JSON rejection."
+  },
+  "evidence": {
+    "reportedControlledCases": 27,
+    "reportedElapsedMs": 1443,
+    "packet": "execution/evidence/G04/named-wallet-acceptance/metamask-aggregate-implemented.json",
+    "actualBrowserFunding": "not executed"
+  },
+  "limits": [
+    "No named-wallet payment acceptance",
+    "No private claim/post/Bok or testnet qualification",
+    "No reviewer browser or chain run"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "source": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "at": "2026-10-15T02:28:20.540524+00:00",
+  "servedBundleSha256": "19d1d3a16690f4512d33b6625defbaf4863b67b952ceb88b733e620861aefb0e",
+  "originalScopeRetained": true,
+  "checkpoint": {
+    "number": 297,
+    "hash": "0x041aef3bffce53723ba05d83c529ba340bae5c767a171063ba01ed21bb1c6d6f"
+  },
+  "cua": "River Canvas public profile reload succeeds, block296; no wallet sends",
+  "nativeAndPxeProofs": false
+}

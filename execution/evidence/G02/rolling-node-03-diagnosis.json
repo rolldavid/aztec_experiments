@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-11T20:19:17.189758+00:00",
+  "source": "582652fb9bb04e84e9e162026e0355bd20c9c829",
+  "investigator": "design-20261011",
+  "outcome": "no confirmed startup cause; missing diagnostic/finalreceipt retention",
+  "checks": [
+    "2026-10-11T20:14:36Z PublicNode Sepolia block11894043 canonicalrollup0x8c2fb2A68A3d362ab1DE99E06F83f8903160BbD9 version2914217885 matches qualification",
+    "2026-10-11T20:15:50Z installed6rc1 validateTraceAvailability: debug recent/oldfalse, trace recent/oldtrue; startup prerequisite passes fromMac",
+    "Pinned image metadata linux/amd64 defaultroot workdir/usr/src/yarn-project exact node entrypointmatches",
+    "Installed6rc1 accepts local NETWORK_CONFIG_LOCATION/networkjson/snapshot flags; earlyCRSdownload/compatibilitystandby can precede RPC readiness"
+  ],
+  "limits": [
+    "Read-only local checks do not prove remote health",
+    "terminated instanceInitiatedShutdown; readinessdeadline20:11; no retained finalreceipt",
+    "Never replay paidlaunch frommissingreceipt"
+  ],
+  "next": "Review fixed bounded service/container/readiness observations and synchronously durable finalreceipt before any replacement. Keep rawlogs/secrets private; no permissions or gates relaxed."
+}

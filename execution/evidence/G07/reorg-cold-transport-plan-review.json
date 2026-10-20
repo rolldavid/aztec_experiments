@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "writtenAt": "2026-10-13T05:23:49.022199+00:00",
+  "packetSha256": "7fc28f320c975cc459d34636821fdfa769969452847911aa4864e015ff3f9ce7",
+  "baseline": "03c4db3015d67381474b928edd8eed8370491e83",
+  "verdict": "THREE_PATH_IMPLEMENTATION_PLAN_ELIGIBLE_WITH_REQUIRED_ATTEMPT_ATTRIBUTION",
+  "sourceReferencesVerified": 8,
+  "installedReferencesVerified": 4,
+  "paths": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-preference-recovery.test.mjs"
+  ],
+  "rationale": [
+    "A distinct authentic branded cold client with its own batcher, existing query-only gateway and dedicated native receiver on the same actual chain gives a concrete attribution boundary. No production transport hook, private request identifier or SDK proxy is needed.",
+    "Original cold helper zero-tag, activity, physical-page and atomic recovery assertions remain unchanged. Existing query-only mode avoids a second prover/queue; preserve real network/readiness/compact authentication.",
+    "The failed historical global9+1 remains unattributed; future separation does not retroactively identify its caller."
+  ],
+  "requiredConstraints": [
+    "Count cold attempted private/public tagged methods and send attempts at an actual cold request boundary before readiness/schema/other rejection can hide them. Include every batch item. Native forwarded counts alone are insufficient. Reuse an existing bounded fixture observer keyed to the fixed cold endpoint if suitable; do not log arguments or add identifying request headers/selectors.",
+    "Keep accepted native compact and forwarded-method counts separately. Persist main/cold literal totals and checked sum without guessed subtraction. Unknown/pending/observer errors cannot count as zero.",
+    "Query-only proof-job routes remain disabled, but sendTx is still a supported SDK query transport method. Synchronous cold native send fence must record rejected attempt before any onSend/nativeforward. Require zero cold proof/send/auth witnesses and preserve original global writer financial counts.",
+    "Cold actor reopen uses same dedicated node+endpoint and same journal/PXE namespace. Original writer remains main service, no new proof/deployment/chain.",
+    "Own acquired resources at each construction step. Drain native reads and sends and gateway handlers even on cancellation/disconnection; close both listeners with positive absence. Preserve original/falsy failure and cleanup failures.",
+    "Keep540s/4GiB/45s/15s/150s and no performance promise. Exact source review and bounded concurrent controls precede separately reviewed genuine trial."
+  ],
+  "testsRequired": [
+    "Actual HTTP/schema adapters with labelled finite native responses: concurrent writer private+public tag batches change main/global totals, cold zero remains0; original cold helper passes only with authentic fixture output assertions.",
+    "Injected cold private tag, public tag, mixed batch, and late terminal/oracle tag each fail the SAME original helper; main traffic cannot mask them.",
+    "Cold attempted send is recorded and rejects synchronously with0 onSend/native forward; proof jobs on query-only route denied while main writer remains real enabled.",
+    "Overlapping delayed receiver requests/failure/cancellation fully settle before cleanup; failed second listener startup closes first; original/falsy failure preserved with cleanup failure.",
+    "Marker observer reopen retains exact cold endpoint/client scope and SAME journal/PXE namespace; no ordinary fallback, account scope or fresh-wallet workaround.",
+    "All original recovery/overlap assertions and affected fixture tests retained; source dispatch enforces writer and cold routing separation."
+  ],
+  "runtimeGranted": false,
+  "sourceApproved": false,
+  "limits": [
+    "Implementation-plan review only. No new source/runtime accepted.",
+    "No retrospective cold privacy pass, genuine reorg pass, initialized-marker waiver or fullG07 acceptance."
+  ]
+}

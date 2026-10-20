@@ -1,0 +1,58 @@
+✖ tombstone notifications: removed reply supports read without revealing content (4734.208167ms)
+✖ tombstone notifications: removed reply supports unsubscribe without revealing content (4046.021958ms)
+✖ tombstone notifications: rejected reply supports read without revealing content (3977.0275ms)
+✖ tombstone notifications: rejected reply supports unsubscribe without revealing content (3985.699792ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17262.812792
+
+✖ failing tests:
+
+test at apps/rolling/reader.browser.test.mjs:358:90
+✖ tombstone notifications: removed reply supports read without revealing content (4734.208167ms)
+  locator.focus: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#post-11').getByRole('button', { name: 'Mark thread read', exact: true })[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/apps/rolling/reader.browser.test.mjs:366:112) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('#post-11').getByRole('button', { name: 'Mark thread read', exact: true })" ]
+  }
+
+test at apps/rolling/reader.browser.test.mjs:358:90
+✖ tombstone notifications: removed reply supports unsubscribe without revealing content (4046.021958ms)
+  locator.focus: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#post-11').getByRole('button', { name: 'Unsubscribe from thread', exact: true })[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/apps/rolling/reader.browser.test.mjs:366:112) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('#post-11').getByRole('button', { name: 'Unsubscribe from thread', exact: true })" ]
+  }
+
+test at apps/rolling/reader.browser.test.mjs:358:90
+✖ tombstone notifications: rejected reply supports read without revealing content (3977.0275ms)
+  locator.focus: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#post-11').getByRole('button', { name: 'Mark thread read', exact: true })[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/apps/rolling/reader.browser.test.mjs:366:112) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('#post-11').getByRole('button', { name: 'Mark thread read', exact: true })" ]
+  }
+
+test at apps/rolling/reader.browser.test.mjs:358:90
+✖ tombstone notifications: rejected reply supports unsubscribe without revealing content (3985.699792ms)
+  locator.focus: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#post-11').getByRole('button', { name: 'Unsubscribe from thread', exact: true })[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/apps/rolling/reader.browser.test.mjs:366:112) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('#post-11').getByRole('button', { name: 'Unsubscribe from thread', exact: true })" ]
+  }

@@ -1,0 +1,49 @@
+{
+  "phase": "moderation-post",
+  "passed": true,
+  "startedAt": "2026-10-10T12:04:41.103Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T12:04:45.967Z"
+    },
+    {
+      "stage": "post-moderation-test-fixture",
+      "at": "2026-10-10T12:05:13.713Z"
+    },
+    {
+      "stage": "phase-complete",
+      "at": "2026-10-10T12:07:30.742Z"
+    }
+  ],
+  "ethereumNonceBefore": 7,
+  "message": "I will not argue with you at tonight's meeting. I will wait outside afterward and punch you in the face.",
+  "postId": "0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2",
+  "post": {
+    "hash": "0x0a836183e9ab4da3790d8097ff0c9a8a103681cfc54a279566bd0e481bb337f2",
+    "status": "checkpointed",
+    "blockNumber": 15400,
+    "blockHash": "0x19872a1db9972b72bcc577d5c078918b472e3d22ac7621e1a16e02f2a6102ae4",
+    "transactionFee": "3666684336669400000"
+  },
+  "publication": {
+    "postId": "0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2",
+    "orderIndex": "2",
+    "text": "I will not argue with you at tonight's meeting. I will wait outside afterward and punch you in the face.",
+    "publishedAt": "1791634044",
+    "flagDeadline": "1791637644",
+    "policyVersion": "0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa",
+    "publication": {
+      "blockNumber": "15400",
+      "blockHash": "0x19872a1db9972b72bcc577d5c078918b472e3d22ac7621e1a16e02f2a6102ae4",
+      "txHash": "0x0a836183e9ab4da3790d8097ff0c9a8a103681cfc54a279566bd0e481bb337f2",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "flagged": false,
+    "flag": null
+  },
+  "flagDeadline": 1791637644,
+  "ethereumNonceAfter": 7,
+  "finishedAt": "2026-10-10T12:07:30.932Z"
+}

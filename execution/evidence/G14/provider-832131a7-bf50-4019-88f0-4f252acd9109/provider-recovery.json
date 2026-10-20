@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "passed": false,
+  "applicationProofs": false,
+  "networkProofs": false,
+  "controlledSettlement": true,
+  "replyAvailable": false,
+  "cleanup": {
+    "accounting-initial": true
+  },
+  "sourceHashes": {
+    "scripts/testing/private-bok-provider-coordinator.mjs": "5a368f446c761d7c6463148e056f094161b2965712ee6bf98314d01c2d2d0064",
+    "scripts/testing/private-bok-provider-worker.mjs": "240868ea6bfa9c50ee5e04efc6758d1406139cc2900a5ef71041e02d521fc730",
+    "plugins/private-bok-escrow.mjs": "009a9c56d80507fba9c37c09ca88907a4105bcac8bb94d3fe1ff709e6352beab",
+    "plugins/private-bok-metering.mjs": "6b39eed0d2c6750efcc7fac9385782bb08f84c19e92239252109d75e47a01320",
+    "plugins/venice.mjs": "411bc6329071553fc7c782a5bbd45f5287ff3186e4e934cc8585584805866129",
+    "plugins/venice-metered.mjs": "501a05d0728a5f944793d387a5eba1406bbbae35cf24fba5daa74733f4724f97",
+    "plugins/metering.mjs": "d2247b49e2bfa79477884b7ab209e9648db1511d589a074f4cde852d9f1dd4d6",
+    "plugins/operations.mjs": "eb773cf2e9a77bc372950e13ad46c158a0fab7464634600f58760764b8725119",
+    "shared/aztec-node-client.mjs": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+    "shared/routed-kernel-prover.mjs": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+    "scripts/toolchain.mjs": "072a82f69135f7c98468141debf2a83bc16baf187a3d8c6d5eb1090caf255f7f",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "crs-manifest.json": "0e80536b38ebba752bfe08b86466f1161e9324c9d5b6e666c8c20560db0aadda",
+    "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0"
+  },
+  "failure": {
+    "stage": "initial",
+    "category": "campaign-failed"
+  }
+}

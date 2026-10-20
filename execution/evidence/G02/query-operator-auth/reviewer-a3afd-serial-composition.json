@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "candidate": "a3afd8ffd27b886b9dbe3424d4c85da274fed79e",
+  "base": "16dea3808c5366e456ec50c001c2502436191230",
+  "verdict": "approved",
+  "findings": [],
+  "scope": [
+    "shared/rolling/compact-client.mjs",
+    "shared/rolling/compact-client.test.mjs"
+  ],
+  "sourceSha256": {
+    "shared/rolling/compact-client.mjs": "d539722e1e6cdd07336b5bee731a65871be2a82b846cc772096fb525f8417d00",
+    "shared/rolling/compact-client.test.mjs": "88762b91dc8b0085166c17f5c1f8898efbe28e88dbcef85c24a339c32ae76426"
+  },
+  "componentReview": "reviewer-8a222-serial-compact.json",
+  "checksPerformed": [
+    "Exact two-file diff; both blobs byte-identical to independently approved8a2221c. No other source or SDK/generated helper changes.",
+    "Carried forward independent focused tests and reviewed42-test evidence; no redundant expensive tests.",
+    "Read normal wallet-only build log25outputs97inputs and completed combined42PASS0FAIL0SKIP151.964ms log."
+  ],
+  "limitations": [
+    "Actual serial transport batch timing and full recovery120s acceptance remain open.",
+    "Normal integration gate still required; unchanged SDK/helper proof/privacy controls retain prior reviews."
+  ],
+  "combinedLogSha256": "9e575ce99a3d5f7af75a966c46f5218ff20198fa73283a8124f4c3082f8c6cde"
+}

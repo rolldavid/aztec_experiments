@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewType": "independent-source-repair",
+  "candidate": "eec415995a35d9653c0a1fb6dc5c7c038e1325bf",
+  "base": "7c6de5b2b87a7f2c7f7d08ec1b2765653bd9f7a4",
+  "sourceHashes": {
+    "scripts/testing/rolling-preference-browser.mjs": "15a69eceb9b7654488a96a5b702eb1fdff6201c0d1a1e99f86273744bf69d87d",
+    "scripts/testing/rolling-preference-browser.test.mjs": "c7834713a626808762e293f3f5edc424e2426414c9ca3be73920869fd6e92646",
+    "scripts/testing/rolling-notification-browser.mjs": "48e16989649a1c04eb8477bef2f8cc99f78c47cdeeb2071dc84cd86f765a3866",
+    "scripts/testing/rolling-notification-browser.test.mjs": "e14dcbc31bce4e5c7071a22c18c7932c8495207ef9c880f487321af4e7c48f35"
+  },
+  "packetSha256": "19866518f18c2782dabb7e4fd125d6ffa7da4c211129429fc7c5cb659d176fe0",
+  "disposition": "source-eligible-for-bounded-affected-tests",
+  "findings": [],
+  "closures": [
+    {
+      "id": "P2-public-tag-discovery",
+      "sourceClosed": true,
+      "evidence": "Shared observer now increments both allowed public/private tagged-log methods per envelope. Public-only and mixed batch regressions call the real window checker, require exact counterdelta and reject with positive compact observation. Ordinary explicit action discovery outside windows remains allowed."
+    },
+    {
+      "id": "P2-final-notification-traffic",
+      "sourceClosed": true,
+      "evidence": "Actual driver invokes finalizer only after both awaited closes, checks current elapsed deadline then captures current observer snapshot. Finalizer requires all16checkflags, exact2 proof/send/completedphases, closedphase, zero L1/blocked/inspection/denied, timeoutfalse and bothcleanupflags. Original unsuccessful execution cannot become successful. Tests mutate actual-used finalizer inputs across a microtask; source assertion binds post-teardown invocation."
+    }
+  ],
+  "runtimeExecuted": false,
+  "testEligibility": {
+    "files": [
+      "scripts/testing/rolling-preference-browser.test.mjs",
+      "scripts/testing/rolling-notification-browser.test.mjs"
+    ],
+    "conditions": [
+      "Parent grants serialized bounded slot after active genuine run cleanup.",
+      "Use matching rc3 dependency tree and preserve its hashes/ownership. Existing Tx/SDK test can initialize native BB, so not concurrent with proof job.",
+      "Retain old7c6 verdict and all new test results; no real browser/chain claim from these unit files."
+    ]
+  },
+  "carry": "7c6 strict selector/origin/field/tier/body/counter/privacy/fee placement review carries unchanged except the two stated repairs. Four modified paths only; no product/dependency changes.",
+  "remaining": [
+    "Actual affected tests are unrun.",
+    "Both parent browser scenarios must enable actual compact endpoint and reconcile request observations with accepted native/gateway counters.",
+    "Full real cold browser recovery/fee accounting and large-history bounded recovery remain unqualified."
+  ]
+}

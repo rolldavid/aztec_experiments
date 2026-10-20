@@ -1,0 +1,13 @@
+{"stage":"restore-existing-hosted-account"}
+{"stage":"verify-public-asset:user.html"}
+{"stage":"verify-public-asset:aztec_bundle.js"}
+{"stage":"verify-public-asset:plugins.js"}
+{"stage":"load-live-application"}
+{"stage":"restore-disposable-aztec-account"}
+{"stage":"reconnect-disposable-ethereum-account"}
+{"stage":"wait-restored-application"}
+{"stage":"redeem-board-deposit"}
+{"stage":"metamask-gas-fields","functionName":"withdraw","gasLimit":"416957","requestGas":"0x22479"}
+{"stage":"phase-complete"}
+{"phase":"refund","passed":true}
+{"passed":true,"phasePassed":true,"ownedTreeAbsent":true}

@@ -1,0 +1,22 @@
+{
+  "candidate": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "scenario": "rolling-preference-browser",
+  "recordedAt": "2026-10-12T06:19:51.370630+00:00",
+  "status": "completed-failed",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+  "reviewSha256": "9d47cae15c08c3f38697d82f75d08faa1091ad0349bdffe8ce4b56d2bfd47024",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-browser",
+  "scope": "Three real local private-proof actions then productionChromium nativeIndexedDB keys-only recovery/localprivateviews/lockreload; browsermustsubmitzero. No paid proofjob/existing account send. Remote07 independentquery-onlyqualification proofJobs0.",
+  "finishedAt": "2026-10-12T06:25:50.818Z",
+  "result": "execution/evidence/G07/application-1bbf40e7-5b40-46bc-a4f7-e8c1f29b800a.json",
+  "resultSha256": "4f763c08c12942bf5ac814e774df232f353dbd483e0371e65616430dc1e568fe",
+  "elapsedMs": 359353,
+  "peakTreeRSSKiB": 1882928,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "diagnosis": "Browser import blocked after one private request: observer inspectionErrors=1. No unchanged retry; inspect actual production RPC namespace and installed transport."
+}

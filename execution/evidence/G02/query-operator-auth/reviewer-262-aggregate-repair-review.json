@@ -1,0 +1,30 @@
+{
+  "candidate": "262a14c5382ea620d4c173d0ec74452a03e7abbf",
+  "reviewedPredecessor": "662de1fad8c6b7f62f6add0cc996bcc8dbc6bbd8",
+  "priorReviewSha256": "2b190491271f6e0872cebc06b063f30688447277ecdcefcd12160da208450084",
+  "verdict": "source-component-accepted-with-explicit-gates",
+  "changedPaths": [
+    "plugins/rolling-funding-relay.mjs",
+    "plugins/test/rolling-funding-relay.test.mjs"
+  ],
+  "sourceSha256": {
+    "plugins/rolling-funding-relay.mjs": "b11cb4ebb8a7e24545fe2c276f42c7062d61c96c409f9ac898dd6711873fc657",
+    "plugins/test/rolling-funding-relay.test.mjs": "89cf96fb0319cbadef60a2a46c26526b28810f68e014516618b64f106d62cf6e"
+  },
+  "resolvedFindings": [
+    "Actual private startup rejects redirected/non-directory/non0700/non-owning state directory before importing/acquiring lease or reading signer.",
+    "Missing per-plan journal with matching durable active reservation returns unresolved, retains gas reservation and blocks new submission. No unsafe retry introduced."
+  ],
+  "validation": {
+    "log": "execution/evidence/G04/aggregate-usdc-relay-review-repair.log",
+    "sha256": "f4708e416c882fa9702445cf6038f05d1eb7474acf5e2c0d11c21b5457739f6f",
+    "scope": "Three affected focused cases: writable directory, symlink directory, retained reservation without plan file. Earlier 44 relay/operations results and unchanged component evidence remain separate."
+  },
+  "limitations": [
+    "Orphan pre-broadcast reservation deliberately requires operator reconciliation and remains unavailable; no automatic recovery/reset claim.",
+    "Dedicated signer must remain exclusive to this service; directory lease cannot constrain unrelated manual signing.",
+    "No actual aggregate funding, liquidity, named-wallet, USDC browser continuation, full normal-generated closure, or testnet claim.",
+    "Final integration must bind final coherent UI/source and normal build outputs; this accepts reviewed source component only."
+  ],
+  "reviewerExecution": "No tests/builds/provider writes performed by reviewer; exact source diff and owner focused log inspected."
+}

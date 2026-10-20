@@ -1,0 +1,23 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+  "baseRevision": "72a7019a002657e089d29d13f6c81ded58113152",
+  "verdict": "approved",
+  "scope": "Constructor-only SDK check consumes exact normal-build PrivateBok instead of separately pinned release bundle",
+  "files": {
+    "plugins/test/operations.test.mjs": "8e266bd02c649acf062c582ff858cec299b2f6aa290314fe6eee71b16d549fb5"
+  },
+  "checks": [
+    "Read sole test diff and full existing normal-build provenance verifier/buildInputs. It validates exact source/toolchain/lock inputs, both normal-build output digests, transpilation, expected names and private verification keys. The added post-verification digest binds consumed artifact bytes against a change between reads.",
+    "Four named constructor arguments, actual Contract.deploy.getInstance, separate derivation/class/address assertions, forbidden wallet/network accesses and extra-argument rejection remain unchanged. No mock artifact or bypass substituted.",
+    "Production release loader/catalog/startup verification untouched; retained actual current release loader read returns bothRollingBoard/PrivateBok. Narrow constructor check no longer depends on unrelated RollingBoard release bytes.",
+    "Independent actual constructor + missing/altered PrivateBok focused cases:3passed0fail/skip/cancel in894ms. Worker retains29focused matches covering normal-build provenance negatives. No compile/proof/chain run."
+  ],
+  "ciDisposition": "CI39163431047 passed clean build, tracked consumer drift and rebuild comparison then failed constructor check in artifact/baseline stage. Generated output artifact was not retained; exact differing byte/cross-platform cause remains unknown, not asserted. Subsequent skipped CIchecks are not passing and normal CI/gate still required.",
+  "blockingFindings": [],
+  "limitations": [
+    "Test-only scope change justified by constructor behavior requirement; does not qualify new deployment/release artifacts.",
+    "No broad tests or regenerated outputs by reviewer."
+  ],
+  "at": "2026-10-18T20:49:13.295408+00:00"
+}

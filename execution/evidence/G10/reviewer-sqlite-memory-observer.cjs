@@ -1,0 +1,1 @@
+const original=process.memoryUsage;process.memoryUsage=function(...args){const result=Reflect.apply(original,process,args);process.stderr.write(JSON.stringify({reviewerRssObservation:true,pid:process.pid,rss:result.rss})+'\n');return result;};

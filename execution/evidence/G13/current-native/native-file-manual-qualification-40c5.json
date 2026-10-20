@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-14T02:42:28.370284+00:00",
+  "kind": "explicit-native-recovery-qualification",
+  "priorPid": 84911,
+  "priorPidAbsent": true,
+  "failedMetadataAndLeasePreserved": true,
+  "source": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+  "evidence": "native-file-readonly-result-40c5.json",
+  "evidenceSha256": "8366ced51b936eb62d270a0befb3f55c653d504f82fae946c5189c7386558049",
+  "head": {
+    "number": "0x36f",
+    "hash": "0x4273f5c0d3cdb257dad5ea829636dacf4bafe9e84f715ee34e1686aec2badd31",
+    "pending": "396",
+    "proven": "396"
+  },
+  "snapshot": {
+    "sha256": "62dd33deae24b3777a071946b8515dc5faa161889709bad020eaa1e3c75eb433",
+    "bytes": 1228843986
+  },
+  "financialReplay": false,
+  "observation": "Latest native dump exactly matches prior clean head396 and all three original payment effects; probe failed before any sync/account action. Cleanup sequence error skipped net.close; Supervisor killed owned tree. No prior snapshot rewind."
+}

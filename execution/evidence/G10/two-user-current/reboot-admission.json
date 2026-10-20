@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-14T11:45:32.763163+00:00",
+  "qualification": "bare-reboot-e46-result.json",
+  "snapshot": {
+    "sha256": "3ab2ffd49af2be538bfecf25e0533df179d1755adb913ba296e7ddd02776fec2",
+    "bytes": 1916768008
+  },
+  "head": {
+    "number": "0x4e8",
+    "hash": "0xd6653d5a4871d7dd8546cfbe25fc06c42aa37aa06315e259305f52a2f8580c05",
+    "pending": "583",
+    "proven": "583"
+  },
+  "deadOwnerPids": [
+    43570,
+    43684
+  ],
+  "portsFree": [
+    8081,
+    18081,
+    18546,
+    18787,
+    18788
+  ],
+  "reviewSha256": "e970f585fe5c1408ad35b0d9b9906107b9f500c147c9eba64717ecf00551c262",
+  "change": "Metadata-only admission after actual host reboot; originals archived privately; no financial action; poststart L2 check required"
+}

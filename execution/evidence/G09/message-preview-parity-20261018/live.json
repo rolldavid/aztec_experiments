@@ -1,0 +1,6 @@
+{
+  "revision": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "procedure": "Reload only static app; import existing account; enter labelled Garden notes URL and open Preview message; inspect visible link target. No transaction prepared or sent.",
+  "observed": "Preview shows Garden notes labelled anchor with exact expected URL; literal markup not displayed. Refunded private balance0.989952USDC displayed from current chain.",
+  "environment": "Same native node/PXE proofsdisabled, no service restart or build."
+}

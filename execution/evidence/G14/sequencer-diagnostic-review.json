@@ -1,0 +1,26 @@
+{
+  "revision": "b55d582336bcdb80a43ce88a88d5b42f44d9560d",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved source only",
+  "checks": [
+    "four independently rerun tests passed",
+    "single submit unchanged",
+    "only diagnostic scenario inner60s total120s",
+    "allowlisted bounded fields, no raw errors, exact logger forwarding and detach"
+  ],
+  "resolved_findings": [
+    {
+      "severity": "P2",
+      "revision": "b143c8f",
+      "issue": "Double-read getter and throwing getter could leak/interfere",
+      "repair": "b55d582 single-read guarded fields; regression tests"
+    }
+  ],
+  "sourceHashes": {
+    "scripts/c01-board-inclusion.mjs": "43c4027c11cf87b893c71ad73b19789af865372cdb16de2a4e03d27a6df9e430",
+    "scripts/c01-real-node.mjs": "797a4ce44debcefc7168c54dd99cc4e8ffcbebb715cb01fb0e14f110ca15d953",
+    "scripts/testing/scenarios.mjs": "a5c14128bd78730b6d684168ac9cd09a7498ce83526a08831e38d917f8f19ffc",
+    "scripts/testing/sequencer-observation.mjs": "561fdb0a5ef576e8c1fd8e21287c558942bae62b3d5d9bac80d23c3bbc5157ce",
+    "scripts/testing/sequencer-observation.test.mjs": "3a8f93ba5d70a4e25eafb81f9f2613644f4b2900fa78ef1dded12d6455ddc4a9"
+  }
+}

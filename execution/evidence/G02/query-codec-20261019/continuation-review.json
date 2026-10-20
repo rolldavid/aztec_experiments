@@ -1,0 +1,65 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "verdict": "approved conditional exact-original-byte continuation after repaired native validation and current transaction/claim reconciliation",
+  "transactionHash": "0x2aa0b57f16905d75285198dc1523513db7305292e087375cf25f1352ba717717",
+  "retainedStateSha256": "acdfa81ebb012d1fc9dcd9162795efc3e11c871a4db2051ff19aa2a2b2dcbac8",
+  "rawBytes": 291232,
+  "observedJournal": {
+    "phase": "submission-unknown",
+    "policy": "reconcile-only",
+    "broadcastAttempt": {
+      "state": "rejected",
+      "httpStatus": null,
+      "rpcCode": null,
+      "ethersCode": "unknown"
+    }
+  },
+  "findings": [
+    "Native dropped is the fallback when this node currently has neither pool membership nor archived effect. It does not establish never-broadcast.",
+    "Existing onceAztecOperation correctly reconciles every retained record without executing again. Never remove/reset it or call a fresh bootstrap to reconstruct the action.",
+    "Both installed sendTx and isValidTx input schemas contain the same Tx.schema. Gateway validates the complete schema before any upstream dispatch. Missing singleton causes pre-dispatch rejection, but original generic journal error does not by itself identify that precise failure.",
+    "Standalone original-journal reconciliation must initialize the native synchronous codec before Tx.fromBuffer; otherwise reconcileRollingOperation catches parse failure and reports unresolved."
+  ],
+  "continuationConditions": [
+    "Bind original endpoint, running gateway source/process lifetime and exact original send serialization to the demonstrated pre-dispatch codec failure, using retained response/trace or conclusive source/process evidence. The later isValidTx reproduction and unknown error alone are insufficient.",
+    "After repaired gateway deployment, verify retained bytes hash and network/version/fee payer against original scope; observe exact original hash receipt, effect and pool without submitting. Canonical or queued means observation only.",
+    "Check original finalized L1 deposit and native claim witness/index109 plus expected siloed claim nullifier. Spent claim or inconsistent canonical state requires investigation, not another claim.",
+    "Native isValidTx of original bytes must return valid without simulation or fee-enforcement bypass. Invalid response is not authority to regenerate.",
+    "Only after pre-dispatch evidence resolves uncertainty, persist a separate exclusive one-use continuation intent binding original state digest/hash/bytes and deployed endpoint; dispatch exact original Tx once. Any uncertain continuation is read-only thereafter.",
+    "Preserve original journal and use its existing finalized receipt/canonical effect/nullifier/FPC reconciliation for completion. No new proof, signature, deposit, bridge or altered fee."
+  ],
+  "actions": "Read-only source/journal metadata review; no network, signing, proof or broadcast.",
+  "localPredispatchReproduction": {
+    "evidenceSha256": "4c5d57c748896eee715e2a01232fba6d8bb2e627e3f82a4feb2aa7f5ad530fc9",
+    "procedureSha256": "bd2cc207c88216bc388367be787f4208b72a557af53212ede849d34b369891bf",
+    "verdict": "supports pre-dispatch inference when bound to unchanged original host process/source",
+    "observations": [
+      "Exact original506 gateway source and installed native aztec_sendTx serialization; retained transaction bytes/hash match.",
+      "Removing only process Sync codec causes400/-32602 with zero fake upstream requests. No real transaction broadcast.",
+      "468229-byte local request versus468231-byte earlier request does not assert identical request ID/envelope; identical Tx bytes/schema are the relevant binding."
+    ],
+    "remaining": "Lead old-host source/process continuity readback; repaired native validation and current original transaction/claim state."
+  },
+  "originalHostBinding": {
+    "evidenceSha256": "e05cbb3ecf3f2c2d9af2a7d680e28c1e7b1aea950f34cfa008c5a81d3de6b5f7",
+    "instance": "i-09e2dbeea10854dc8",
+    "pid": 5896,
+    "startedAt": "2026-10-18T23:59:07Z",
+    "observedAt": "2026-10-19T00:12:15.257Z",
+    "gatewaySha256": "f145924694617da04bb266e8ec784f9357f041f5fc36ddccc800715d01316439",
+    "manifestSha256": "986706a5102c52babc7a5657b377e7ac2127fa2c705eedc5350fa3fa9a0f366e",
+    "assessment": "Active unchanged original-source gateway process spans the original00:02:48 attempt. Combined with same-schema retained native sendTx reproduction, supports conclusive pre-dispatch codec failure."
+  },
+  "remainingConditions": [
+    "Do not submit if original hash is already queued or canonical.",
+    "Native validation of exact retained Tx must pass; original claim109 remains available and expected nullifier unspent.",
+    "Durable exclusive continuation intent binds original hash/raw and limits this continuation to one dispatch. Subsequent uncertainty reconciles only.",
+    "No original journal reset, new proof, signature, deposit, bridge or fee alteration."
+  ],
+  "concreteContinuation": {
+    "sha256": "8a594464afe3202904768b8f8bd5f0c6d617ee495ddde1e53706df1ba5294d26",
+    "verdict": "approved with prior hosted codec validation condition",
+    "assessment": "Exact immutable original journal binding and same Tx; actual native receipt/pool/effect, finalized deposit, canonical claim109 witness/nullifier, no-bypass validation and anchor recheck; exclusive persisted continuation intent before one send. Existing marker prevents replay. No keys/new proofs or original journal alteration."
+  }
+}

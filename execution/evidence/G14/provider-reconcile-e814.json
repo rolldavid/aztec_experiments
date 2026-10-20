@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-11T16:13:15.525Z",
+  "campaign": "e8143457-e709-4217-ac10-dbb730759f1e",
+  "readOnly": true,
+  "previousObservedBalanceUsd": 4.97272274,
+  "balanceUsd": 4.97272274,
+  "canConsume": true,
+  "observedDebitUsd": 0,
+  "service": {
+    "status": "ready",
+    "active": 0
+  },
+  "receipt": "missing; provider call fenced; no replay"
+}

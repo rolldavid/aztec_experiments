@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-14T15:01:19.081391+00:00",
+  "sourceRevision": "049c1926891bf2c4b275fb5d303ece280ef9d140",
+  "integratedRevision": "158473578bd49d59e2200f25f07a27ec5be2ad69",
+  "applicationSourceUnchangedByFixturePin": true,
+  "procedure": "CUA reload original app tab2 and original generated tip calculator tab3 after native84108/hosted18854 restart; inspect rendered accessibility state and Home screenshot.",
+  "observed": {
+    "home": "Original four conversation posts restored at authenticated chain block890; original invocation/request texts retained; no wallet connection needed.",
+    "generatedApp": "Same stable original B latest URL loads default bill80 tip12.5, tip10,total90 afterservice restart.",
+    "hostedHealth": "degraded, active0, originalhistoricalfailure14:59:51; no claim service fully healthy."
+  },
+  "limits": [
+    "No new Bokmodel call or human walletsend from this check.",
+    "Original failed Bok completion remains public; generatedapp recovery does not qualify successful reply/update or GitHub mirror.",
+    "Dedicated GitHubApp installation, fullrecovery and testnet proofs remain open."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "billboard/rolling_contract/build.mjs"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments",
+  "sourceRevision": null,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "passed": true,
+  "peakTreeRSSKiB": 1963072,
+  "samples": 168,
+  "cleanupComplete": true,
+  "elapsedMs": 86396,
+  "exitCode": 0,
+  "signal": null,
+  "samplingFailure": false,
+  "logSha256": "b03616d7fd815cde6577d269a28e3ea34991c6a2ea848aff1010db0252eea842"
+}

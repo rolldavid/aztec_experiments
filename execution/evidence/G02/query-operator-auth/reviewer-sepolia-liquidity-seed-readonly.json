@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer",
+  "scope": "Read-only feasibility and mandatory concrete pre-sign conditions; no approval of unimplemented Sepolia writer or live liquidity qualification",
+  "sourceRevision": "20541ffc044f19fde2e89bf5f2a9cf036d8699b6",
+  "verdict": "Small canonical-pool seeding is conditionally viable using existing authorized test inventory and once-only primitives. Existing local deployment entrypoint is not suitable unchanged.",
+  "bindings": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/plugins/devnet/liquidity.mjs",
+      "sha256": "fe0d39a3dd4e41170964ea263489f98ca90cafd7f4866c66c513db548059f4a6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/plugins/operations.mjs",
+      "sha256": "af011710abd76ea1f34ae3eed50e28c8d01c6da3d778c11920ef986273c49c43"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/funding-and-seeding-proposal.json",
+      "sha256": "810534ff226becafa9e6d8e0bf69753ea55a5e9a87b339ca8a1dff8fd994dd4f"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/funding-liquidity-current.json",
+      "sha256": "812b3c0f9d1334e2dbea991f35ffa0e67f9b6c46d337371452580be5e52c0397"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/pool-setup-independent-estimates.json",
+      "sha256": "1df64b491320dd0a9c73e01f1bd7fa8b5096416c647abd74f761e99a7f43eda3"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/pool-setup-bounded-gas.json",
+      "sha256": "aed8674c5049248e34a86bdd1da2a57fc06b6f1517405ee98566904d5095656f"
+    }
+  ],
+  "routeRecommendation": [
+    "If first acceptance is zero-ETH USDC, seed canonical USDC/FEE first: the current USDC route additionally uses existing USDC/WETH collateral liquidity. WETH/FEE is required separately for ETH funding. This sequencing reduces initial gas exposure without claiming both routes qualified.",
+    "Use official NonfungiblePositionManager createAndInitializePoolIfNecessary+mint, with refundETH in the WETH leg; preserve project ownership of resulting NFT. No token/dependency deployments, mint handler, faucet, private issuance or old mint operation replay.",
+    "The proposed250FEE per pool is thin: withdrawing100FEE consumes40percent of that inventory. It is a test seed price, not a market price. Actual exact-output quotes must fit original user caps after finality; mere positive pool liquidity is insufficient."
+  ],
+  "journalAssessment": [
+    "liquidityProgress writes entered inventory before stage and requires every entered journal. Keep this fail-closed behavior, including crash before operation record exists; never infer permission to restart from absent files.",
+    "onceAztecOperation persists preparing before callback and raw/hash submission-unknown before broadcast. Existing records only reconcile; preparation failures, lost acknowledgements and unclear outcomes cannot authorize retransmission or replacement.",
+    "liquidityStage currently hard-codes31337, development:true and local-liquidity identity. Reuse mechanics through an explicit closed11155111 seed path; do not remove local guards or call deployDevelopmentLiquidity/localContext.",
+    "Existing matchRollingEthereumSigned checks chain/from/nonce/to/data/value0 but does not validate gasLimit/maxFeePerGas/maxPriorityFeePerGas. The seed adapter must bind and parse-check those exact fields plus value before signing/broadcast and on reconciliation. Value-bearing ETH transactions need the corresponding exact-value matcher."
+  ],
+  "mandatoryChecksBeforeSigning": [
+    "Freeze exact Sepolia11155111 chain, both signer addresses, official factory/manager/quoter/WETH/USDC/FEE addresses and actual runtime hashes/getters; bind USDC proxy/implementation identity and canonical FEE portal underlying token. Official addresses must be chain-specific.",
+    "Hold an exclusive signer/nonce writer for each authorized account; record pending/latest nonce and reconcile known original hashes. New transfer stages must use distinct fresh nonces and never replace, reset or delete permanent374f2 mint lease/journal. If a selected nonce collides with any uncertain saved operation, stop.",
+    "Use private owned canonical0700 directory with immutable scope/plan and external initialization/entered-stage protection. Exact per-stage dependency ordering; missing previous record or altered plan fails closed.",
+    "Bind exact recipients, token amounts, approve spender and finite amounts, NFT recipient/project owner, sortedtoken0/token1, fee3000/tickspacing60, valid tick range, current sqrt price, nonzero amount minima, transaction value, deadline and refund destination. Recheck existingpool price/liquidity immediately before signing; unexpected earlier initialization must not silently change the seed ratio.",
+    "Estimate and eth_call exact full multicall with explicit intended sender/value/gas ceiling at a recorded current block after prerequisites, plus current basefee/tip. Aggregate initializer estimates alone are insufficient for mint/approve/revoke/transfer costs. Apply per-stage and total cumulative max gas cost and reserve all dependent cleanup/revoke costs before spending.",
+    "Persist exact signed bytes/hash before sole broadcast. Unknown never retries. Use reconcileRollingEthereum development:false with finalized head, canonical receipt block recheck and exact signed field/effect verification; a provider timeout is not a revert.",
+    "After successful finality verify factory-derived pool/token identities, initialized price/range, NFT owner+position, IncreaseLiquidity amounts, token transfers and actual ETH refund/gas accounting. Revoke residual approvals via separate once-only journals, not a duplicate prior stage.",
+    "Only then obtain current QuoterV2 exact-output quotes for intended real fee amounts and remaining balances. Pool seed success does not fund/qualify deployment, application collateral, relay operational gas, actual user claim or real proof acceptance."
+  ],
+  "gasDiagnosis": {
+    "recordedEstimates": [
+      "35158850",
+      "35158984"
+    ],
+    "status": "Not rejected solely for exceeding16,777,216 total gas. Current Sepolia Glamsterdam state gas is separately metered; exact transaction execution cap and current RPC/client compatibility still apply. No live transaction validity was independently simulated here.",
+    "sources": [
+      {
+        "url": "https://blog.ethereum.org/2026/09/17/glamsterdam-testnet-announcement",
+        "supports": "Sepolia activation Oct6,2026 and state-creation repricing; current-client requirement."
+      },
+      {
+        "url": "https://eips.ethereum.org/EIPS/eip-8037",
+        "supports": "Separate state-gas reservoir and execution cap semantics."
+      },
+      {
+        "url": "https://developers.uniswap.org/docs/protocols/v3/deployments/v3-ethereum-deployments",
+        "supports": "Chain-specific official Sepolia factory/position manager/quoter/router addresses."
+      }
+    ]
+  },
+  "budgetAssessment": "Proposed90Mgas*2,000,000wei=0.00018ETH plus0.000025ETH seed leaves0.000022330675098265ETH from project after proposed0.00008ETH transfer. This is only a conditional ceiling; transfer costs, exact complete mint stages, future app deployments/collateral/relay budgets remain separately required. No additional real-money/cloud budget is approved by this review.",
+  "actionsPerformed": "Read source/public retained evidence and official primary documentation. No private key discovery, lease mutation, signing, sending, test-token transfer, service action, RPC load or expensive job."
+}

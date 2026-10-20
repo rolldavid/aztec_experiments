@@ -1,0 +1,21 @@
+{
+  "command": [
+    "python3",
+    "execution/integration_gate.py",
+    "check",
+    "--repo",
+    ".",
+    "--policy",
+    "execution/evidence/G11/preprovisioned-thread-repositories/policy.json",
+    "--policy-sha256",
+    "69a0a7cd8288bbc8af5e90cb67d52797ba0acac3d14a52392ccfb0f794a4c875",
+    "--evidence",
+    "execution/evidence/G11/preprovisioned-thread-repositories/gate-evidence.json",
+    "--evidence-root",
+    ".."
+  ],
+  "exitCode": 1,
+  "stdout": "{\"status\": \"blocked\", \"reason\": \"check real-selected-app-transport status: blocked\"}\n",
+  "stderr": "",
+  "meaning": "Normal candidate gate blocked on actual external acceptance; no deliberate negative self-test, no branch advance."
+}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "executionAuthorized": false,
+  "preparedOnly": true,
+  "sourcePacketSha256": "f561f396abfe2b869265c615fcad5844faaf5792e48da1e7c97655906a39fe1d",
+  "runtimePreparationSha256": "ccafe876316e080c9615d1d90097c7e013f554d858169d2576cca1d95509208c",
+  "expectedTests": 31,
+  "inventory": [
+    "Boundary.test_state_failure_cannot_skip_cleanup",
+    "Boundary.test_persistence_failure_cannot_skip_cleanup",
+    "Boundary.test_removal_failure_does_not_suppress_absence",
+    "Boundary.test_unknown_identity_never_mutates",
+    "Boundary.test_absence_transport_failure_not_positive_absence",
+    "Boundary.test_state_rejects_unbounded_or_wrong_types",
+    "Boundary.test_positive_confinement_and_each_unsafe_variant",
+    "Boundary.test_exact_measured_fixture_and_only_order_changes_pass",
+    "Boundary.test_environment_rejects_duplicates_extras_missing_wrong_values_types",
+    "Boundary.test_capabilities_accept_only_exact_measured_names_and_counts",
+    "Boundary.test_other_confinement_failures_still_reject_measured_representation",
+    "Boundary.test_production_subset_and_workload_unchanged",
+    "Transport.test_exact_systemd_barrier",
+    "Transport.test_boot_pending_never_accepts_other_systemd",
+    "Transport.test_identity_races_and_types_reject",
+    "Transport.test_duplicate_missing_malformed_oversize_rows_reject",
+    "Transport.test_fixed_reader_command_and_missing",
+    "Transport.test_reader_rechecks_identity_before_and_after",
+    "Transport.test_reader_envelope_partial_oversize_invalid_paths",
+    "Transport.test_finite_boot_exit_projection",
+    "Transport.test_real_file_reader_bounds_partial_and_symlink",
+    "Transport.test_file_mutation_during_read_is_rejected",
+    "Transport.test_atomic_complete_publication_and_no_overwrite",
+    "Transport.test_partial_publication_never_becomes_final",
+    "Transport.test_boot_phase_codes_and_embedded_bytes",
+    "DriverPhases.test_timer_failures_keep_exact_phase_without_later_work",
+    "DriverPhases.test_case_failures_keep_native_state_and_missing_result",
+    "DriverPhases.test_success_keeps_all_four_cases_and_final_assertions",
+    "DriverPhases.test_result_availability_never_opens_content",
+    "DriverPhases.test_diagnostic_failure_cannot_replace_primary_outcome",
+    "DriverPhases.test_checkpoint_schema_is_closed_and_state_exception_is_finite"
+  ],
+  "protectedCount": 850,
+  "sourceClean": true,
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "changesFromQualified25": [
+    "run.mjs evidence directory literal only",
+    "suite.py candidate directory and exact31 count only",
+    "unchanged child.py",
+    "fresh protected snapshot and owned short TMPDIR"
+  ],
+  "files": {
+    "run.mjs": "9fdb88a4344d4b34363d54d6092e8f134324f8add14b614bc457d9b8a3e3a8ec",
+    "suite.py": "53f262395f4dec204d469e6f94b88b381b79f82c6b8ecc8c6356b4e45c131164",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "preparation.json": "ccafe876316e080c9615d1d90097c7e013f554d858169d2576cca1d95509208c",
+    "before-source.json": "1e3ec2c3da804d856d5289311d09cff07a50c86ff111d30d12492c51a62ec488"
+  },
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-phase-controlled/run.mjs"
+  ]
+}

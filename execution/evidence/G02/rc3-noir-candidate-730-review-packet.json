@@ -1,0 +1,14 @@
+{
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "candidate": "rc3-noir-dependencies.candidate.json",
+  "candidateSha256": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+  "rawCompileEvidence": "rc3-rawcompile-730-handoff.json",
+  "rawCompileEvidenceSha256": "7bc005b60d2909ea4e60a469c6f1303f03336792e4c58b5bb339ddf46887f5d7",
+  "officialOriginEvidence": "rc3-noir-origin-verification-730-complete.json",
+  "officialOriginEvidenceSha256": "081a28f11026ba7309d62106af3b3864f54b72c2e319a92a67e49be885ad2937",
+  "artifactsStillMatchRawEvidence": true,
+  "trackedWorktreeClean": true,
+  "activeLockUnchanged": true,
+  "promotionPerformed": false,
+  "reviewRequested": "Independent exact seven raw artifacts/candidate/origin closure assessment before lead alone promotes active lock. Normal processed artifacts, VKs, TXE and application qualification still pending."
+}

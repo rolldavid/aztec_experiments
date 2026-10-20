@@ -1,0 +1,61 @@
+{
+  "candidate": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "transfers": [
+    {
+      "original": "4a03f4c5c5d43957bf6d94f003dd0da394b2ff78",
+      "root": "9a6a91cba9b1073bb8c2a518eaee1b8f803a44b9",
+      "paths": [
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs",
+        "prover/rolling-artifacts.json"
+      ],
+      "exactPatchAndCommitBlobs": true
+    },
+    {
+      "original": "915dfee5cbe4f3cb3865b4ed93850110af918582",
+      "root": "e95d6304db85df202d50e9ee3282c098b69c276e",
+      "paths": [
+        "scripts/measure-private-event-query.mjs",
+        "scripts/measure-private-event-query.test.mjs"
+      ],
+      "exactPatchAndCommitBlobs": true
+    },
+    {
+      "original": "cb7f8577532e02e74194a3a182d3bdab6db9465d",
+      "root": "f4ed5c5cd20fbb99df79f01090e0f75aca5e952d",
+      "paths": [
+        "scripts/measure-private-event-query.mjs",
+        "scripts/measure-private-event-query.test.mjs"
+      ],
+      "exactPatchAndCommitBlobs": true
+    },
+    {
+      "original": "24184aeccaf56ee357725f7fcb5595b6b08b0927",
+      "root": "0cd95011a43b2b3af2689bc3624bbc28a4178339",
+      "paths": [
+        "scripts/testing/rolling-application-actor.mjs",
+        "scripts/testing/rolling-application-actor.test.mjs"
+      ],
+      "exactPatchAndCommitBlobs": true
+    },
+    {
+      "original": "bd41834903d93945b12a32b70be8a20d0b2e0a01",
+      "root": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "paths": [
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-preference-recovery.mjs",
+        "scripts/testing/rolling-preference-recovery.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ],
+      "exactPatchAndCommitBlobs": true
+    }
+  ],
+  "allCompositionAndBuildHashesMatch": true,
+  "noirUniquePassed": 175,
+  "post834Paths": 14,
+  "totalPaths": 46
+}

@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T01:07:26.732924+00:00",
+  "source": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+  "base": "d449fafafeaf7436456d9a6273732d3872a76719",
+  "verdict": "source-eligible-for-bounded-labelled-unit-and-private-CLI-tests-only",
+  "blockingFindings": [],
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-version-operator/repair-v2/review-packet.json",
+    "sha256": "a4f6cc1073d1bb73e2d1b6c53e2663b737b9fcb31372726e781b486752284df3"
+  },
+  "exactFiles": [
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sha256": "864f2b7e9dc15c2999bc810a9c330fc4b60ed1dad3a7f7ed8f8f8f1d15b3299a",
+      "bytes": 97486
+    },
+    {
+      "path": "scripts/test-prover-bootstrap.py",
+      "sha256": "d1254b312df61d43ee1e45f91ebabc301b4d505875b724fb9c856054d5c52162",
+      "bytes": 106517
+    },
+    {
+      "path": "deploy/prover/BOOTSTRAP.md",
+      "sha256": "9209fe76187671867e5bf5bf8165b2be623249b5fd59d818c636c8fd5fb990bd",
+      "bytes": 50156
+    },
+    {
+      "path": ".build/native-version-operator-core.py",
+      "sha256": "4b434583de58543dff67699a1fd0a8a38ec31b01e435629cc5c6a1806a1cfdc1",
+      "bytes": 29583
+    },
+    {
+      "path": ".build/native-version-operator-upload.py",
+      "sha256": "982a8d113f9996a2d593cf272d28897c9c48ccd8756ed0772618df01b5cabc3b",
+      "bytes": 319
+    },
+    {
+      "path": ".build/native-version-operator-launch.py",
+      "sha256": "c3086f0469b49ea07bd2a67d72dfbbf1370ec42aeb8b5a0e3528114cfbadd220",
+      "bytes": 319
+    },
+    {
+      "path": ".build/native-version-operator-observe.py",
+      "sha256": "7d1561a651f6fa1f534dceee31d8e4b99275cccdb11fce6531f72e59cb246858",
+      "bytes": 320
+    },
+    {
+      "path": ".build/native-version-operator-cleanup.py",
+      "sha256": "99e4c4f347966b914104a39f7d6de9f4228abbe386a396ed96575b463f556de7",
+      "bytes": 320
+    },
+    {
+      "path": ".build/native-version-operator-test.py",
+      "sha256": "af31c103b54e4c6679101f4fa3392c07ca4b0f03f2a788a34104a8e9fee41a8c",
+      "bytes": 16098
+    }
+  ],
+  "independentVerification": {
+    "allNineHashesMatch": true,
+    "trackedTreeClean": true,
+    "allPythonFilesParse": true,
+    "ordinaryHostGeneratorValidationLinuxQualificationAndMainAstUnchanged": true,
+    "onlyBootstrapTopLevelAstChange": "NATIVE_HOST",
+    "operatorBindingsRemainNull": true,
+    "allFourWrappersBindExactCore": "4b434583de58543dff67699a1fd0a8a38ec31b01e435629cc5c6a1806a1cfdc1",
+    "runtimeTestsExecutedByReviewer": false
+  },
+  "priorFindingsDisposition": [
+    {
+      "finding": "CLI fixture uses unresolved macOS /tmp alias",
+      "disposition": "source repaired",
+      "evidence": "Owned fixture root is resolved before invoking unchanged production path guard. New alias negative and existing exclusive-file/collision/permission/closed-Linux-gate assertions remain."
+    },
+    {
+      "finding": "Blanket X-Amz exclusion rejects public validator source",
+      "disposition": "source repaired",
+      "evidence": "Exact synthetic capabilities/credential/signature values excluded from SOURCE and WORKER, CONFIG equality retained, actual CLI stdout/stderr checked. Public validator field names no longer mistaken for secret values."
+    },
+    {
+      "finding": "Empty or missing disk mapping can verify controls",
+      "disposition": "source repaired",
+      "evidence": "Exactly one /dev/sda1 mapping, typed VolumeId/DeleteOnTermination, independent matching encrypted40GiB gp3/3000IOPS/125throughput observation and actual terminate shutdown readback required. Missing/wrong/empty/incomplete/unobserved cases authored against actual resource_snapshot."
+    },
+    {
+      "finding": "Malformed or wrong-Fleet deletion response acknowledged",
+      "disposition": "source repaired",
+      "evidence": "Exactly one owned Fleet successful row with finite current/previous states and no unsuccessful deletion required. Actual cleanup tests reject empty/malformed/wrong/duplicate responses and verify retained intent blocks a second mutation."
+    }
+  ],
+  "guestPreflightAssessment": {
+    "ordering": "Verified absolute budget/commissioning controls and durable single-attempt intent precede guest observation; failed guest prerequisite stops before binary download or start; final receipt/publication remains inside unconditional shutdown finally.",
+    "inputs": [
+      "Fixed bounded no-follow regular /proc/cpuinfo at65536bytes",
+      "Fixed bounded no-follow /usr/lib/os-release at4096bytes",
+      "Fixed /usr/bin/getconf GNU_LIBC_VERSION at3seconds/256bytes through existing bounded capture",
+      "Fixed executable ELF interpreter presence; intentional trusted system symlink following"
+    ],
+    "projection": "Only finite architecture/vendor/status enums, bounded integer libc/processor values, Ubuntu24.04 boolean and six fixed intersection flag booleans. No raw host text, URL, arbitrary environment, native stdout or exception enters receipt.",
+    "acceptance": "x86_64, loader present, glibc>=2.34, Ubuntu24.04, two AMD processors. CPU flags are observations only, not an invented ISA qualification.",
+    "operator": "Closed exact nested schema recomputes guest pass, requires guest pass for download/version/complete and final success; early not-observed and failed states stay false. Existing exact binary/source/worker/deadline/result/control invariants retained.",
+    "limitsPreserved": "15-second version capture,20-second systemd cap,512MiB,200percent CPU,30-minute commissioning and45-minute absolute shutdown/Fleet expiry; ordinary active Linux qualification remains absent."
+  },
+  "testEligibility": {
+    "conditions": [
+      "Parent explicit serialized grant after genuine6829 cleanup; no concurrent heavy jobs.",
+      "Supported Python3.14 and bounded owned supervisor <=60seconds/2GiB.",
+      "Focused NativeVersionDiagnostic class:12 source-authored cases, followed by ignored operator test file:12 source-authored cases. Require all24 pass/no skips and actual cleanup/source pins.",
+      "Labelled transports only; no AWS/provider/native-binary invocation. CLI subprocess may only generate isolated private synthetic payload; never execute decoded host program.",
+      "Full composed bootstrap/package suites only after focused actual review, with exact five helper closure and external private temporary root."
+    ],
+    "grantScope": "Eligibility only, not immediate execution or paid authorization"
+  },
+  "remainingHolds": [
+    "Actual tests unrun; source closure is not runtime acceptance.",
+    "No payload, upload, launch, Fleet, receipt observation or cleanup operation authorized.",
+    "Final private capability/payload/source/hash bindings, reservation/ledger, fresh no-overlap/no-ingress/resource checks and independent launch grant remain required.",
+    "Actual AMD64 guest/version evidence and genuine native proving still absent; no active Linux pin or normal package gate promotion.",
+    "Prior failed8/10 focused result and original operator findings remain historical evidence."
+  ]
+}

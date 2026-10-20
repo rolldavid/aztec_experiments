@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "task": "G05",
+  "requirements": [
+    "RC14",
+    "RC15",
+    "RC16",
+    "G05-A08",
+    "G05-A09",
+    "G05-A10"
+  ],
+  "status": "development-component-pass",
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "runtimeSha256": "9b09eb139cc9048bcf71950ae68c586a261d25ee139b44e453c0147f40296310",
+  "environment": {
+    "network": "retained local devnet",
+    "nativeProofs": false,
+    "pxeProofs": false,
+    "chromium": "155.0.8059.79",
+    "originalWallet": "U1",
+    "elapsedMs": 79900,
+    "peakTreeRSSKiB": 3811616,
+    "outerDeadlineMs": 120000,
+    "ownedTreeAbsent": true
+  },
+  "checks": {
+    "previousCanonical": {
+      "transactionHash": "0x28a975b4e7d306a08673550538df1e6f0f99088a3aa1b6d3ccc04f2afc12f65e",
+      "blockNumber": 1519,
+      "blockHash": "0x05a8e8ebc7295400f0dde6102281eae94cb6c4a72e3b0a5d8bc4df606ec3eea1",
+      "canonical": true
+    },
+    "previousBackupSha256": "7bed64e2aff16725119dd4c5e416b731869024077c0dccb00b5d816949a1e981",
+    "composer": {
+      "ownedNames": [
+        "River Ledger"
+      ],
+      "anonymousOptions": 1,
+      "postSends": 0
+    },
+    "randomSuggestion": {
+      "valid": true,
+      "prepared": false,
+      "notReservation": true
+    },
+    "profileRoute": "#/profile/12235830793786600782179573182796452112376447600860118680335542525392465568298",
+    "canonical": {
+      "transactionHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+      "blockNumber": 1530,
+      "blockHash": "0x276883e8121ccaf769a689d39bcc6802d4e5fdcd6524cbab312dfcd64eae9567",
+      "canonical": true
+    },
+    "bioEvent": {
+      "nameId": "12235830793786600782179573182796452112376447600860118680335542525392465568298",
+      "version": "1",
+      "digest": "9584195986340052268756751121936132792758113927657985169899671258524012384139",
+      "position": {
+        "blockNumber": "1530",
+        "blockHash": "0x276883e8121ccaf769a689d39bcc6802d4e5fdcd6524cbab312dfcd64eae9567",
+        "txHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      }
+    },
+    "publicBioVisible": true,
+    "sends": 1,
+    "traffic": {
+      "walletAssets": 16,
+      "privateRequests": 396,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "compactRequests": 0,
+      "compactPreflights": 0,
+      "tagDiscoveryRequests": 46,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    }
+  },
+  "savedWorkflow": {
+    "digest": "ec45f804fdf5e8099f69270899994eaf9dcce1240d95c8543ac24adf957cdd4a",
+    "type": "bio",
+    "status": "confirmed",
+    "txHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+    "intentId": "0x1cc58cc194f8a8c923947fa1e06163e84490f269299968eefed4da98e08e1065",
+    "maximumFee": "34824900242118",
+    "first": null,
+    "last": null,
+    "nameAvailability": null,
+    "profileName": "0x1b0d3c1c640df7c1a0181cf6a93ea1684c855861edb733b74cbe77c74e66222a",
+    "expectedVersion": "0",
+    "bioMatches": true
+  },
+  "requestedPublicBio": "A quiet place to share small ideas.",
+  "measurementNotes": [
+    "One separately guarded aztec_sendTx; read-only browser observer records0 because the send uses the explicitly counted one-send branch.",
+    "No post/new-name/funding/model transaction. Existing unknown Bok journals remain untouched.",
+    "Node-side canonical receipt/event verification is outside browser traffic counters.",
+    "Normal initial unlock restored registered name; no fresh-key ownership recovery qualification inferred.",
+    "Bio version1 and no-avatar public profile were observed; avatar publication/moderation, posting history and real-proof testnet acceptance remain separate."
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/run.mjs",
+      "sha256": "a0302b63bdbc89779fadde22965ccbf97ec117f842cd919976c8bbd931789a1f"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/supervise.mjs",
+      "sha256": "bdb315bd19f7050e7077bb73c6e8443778554d6f2eb1c57b476f3c6fda67b88b"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/result.json",
+      "sha256": "8d972536adb05a0bd4990d830cae42de7f76f7d938d6aea7ce49f1b52b7e5211"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/supervisor.json",
+      "sha256": "2d5317f787fb9354e35904238e3bc568769ec669a6dbdbe07263d413a28d38f0"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/actual.log",
+      "sha256": "f100a153eff2370ec63fd125029b9c1421e69555611293a6c58de9110f48696d"
+    }
+  ],
+  "handoff": {
+    "originalU1Released": true,
+    "type": "bio",
+    "status": "confirmed",
+    "txHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+    "beforeBioEncryptedHistoryReference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-profile-bio/before-bio-encrypted-recovery.json",
+    "reservation": "Entered fsynced once-only sentinel retained; separate canonical evidence proves completion. Never replay the bio intent."
+  }
+}

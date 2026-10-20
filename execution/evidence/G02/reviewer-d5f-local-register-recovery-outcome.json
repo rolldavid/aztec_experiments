@@ -1,0 +1,37 @@
+{
+  "revision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "kind": "independent-exact-local-transaction-recovery-outcome",
+  "priorReview": "execution/evidence/G02/reviewer-d5f-local-register-recovery.json",
+  "priorReviewSha256": "2f34419234dacfe1ede9f092066b6722fe04ee9adf49e96c33c81042c788354d",
+  "verdict": "accept-scoped-actual-recovery",
+  "packet": "../rolling-design/execution/evidence/G07/keys-only-current/fresh15-register-recovery-assessment.json",
+  "packetSha256": "011e145bc33f597ace8f1bdd81052df0d85935cabd0018317157072eaa33962e",
+  "independentChecks": [
+    "Read exact private recovery procedure; one sendTx call, no signing/preparation/new transaction, exclusive wx intent file and file+directory fsync precede call.",
+    "Verified all four packet evidence hashes against actual procedure/result/supervisor files.",
+    "Verified raw result reports exact preconditions, default validation valid, one nonempty nullifier and one transaction send.",
+    "Read canonical reconciliation code: exact receipt/effect hash, block number/hash and execution result agreement; same original transaction subsequently reconciled by register and status.",
+    "Verified original journal before/after hashes identical and separate recovery-intent hash bound.",
+    "Verified Supervisor zero failures, child exit0 and ownedTreeAbsent=true. No independent live calls or tests."
+  ],
+  "transactionHash": "0x0df79c4081d486909001628f8cb72fb000fd88aee9fe227e5e8b8216ddd66058",
+  "result": {
+    "status": "proven",
+    "executionResult": "success",
+    "blockNumber": 17,
+    "blockHash": "0x269ab4b6feaa8a2c4fee8f1d23f2bd30941a3f26ca9323f7f087652b35287077",
+    "canonical": true,
+    "portalReady": true,
+    "registrationReady": true,
+    "hostedServiceReady": false
+  },
+  "journalSha256": "816fe420f086a22e96c646b1cbf5719eda2fefbf6f2d60b358b31f0dbca3d203",
+  "recoveryIntentSha256": "3643f71a19d4682158e8b09307f16a4301b86ffc74c1e737bd5a669679ca47ee",
+  "limitations": [
+    "Disposable31337 native/PXE proofs-disabled recovery only; not testnet/real-proof acceptance.",
+    "Original failed admission cause remains unknown; successful rebroadcast does not reconstruct original dispatch.",
+    "General reconcile-only policy unchanged. This recovery intent is consumed; all further work reconciles only.",
+    "Full startup/liquidity/application readiness not established by this packet. Original long-chain state untouched."
+  ],
+  "findings": []
+}

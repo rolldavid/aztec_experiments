@@ -1,0 +1,61 @@
+{
+  "candidate": "87f56b03f4c3a63ac4f97e6c1943dd718affb526",
+  "verdict": "changes-requested",
+  "scope": "G13 retained local current Rolling development component, source review before actual current startup. No live startup, restart, funding or proof acceptance.",
+  "sourceSha256": {
+    "apps/rolling/README.md": "c15ae200c532a5f8a007e6de8d15178c9fb15189de93f32a697dc4079c811105",
+    "apps/src/billboard/deploy/engine.js": "9cd16e23c58824c5c72a0c8f25c630b01f2af03017cc14c0718267512c6b3b39",
+    "docs/rolling-deployment.md": "599aeb4ffb62e008e8367572c95b1b24fa7fee4d2f5d962aa7c2b8bd6f629720",
+    "plugins/devnet/bootstrap.mjs": "237afbcd247d78d1b43eff15758fbe1f799ad2f916e2174e5386e5aea507151c",
+    "plugins/devnet/network.mjs": "81df395badc3ca3aaa3f3251055b9088994571fcc98a1d2d139a8142e8d8bef4",
+    "plugins/devnet/operator-test.mjs": "40072339b126f24886ddf45bf8798c50255134a94cde2f80de4a061dbd530219",
+    "plugins/devnet/start.mjs": "a76e959e50781c4d4112edd50cd6884ee4fe77b770592d9dcc442a8856d1d566",
+    "scripts/test-w03-deploy-engine.mjs": "6307ffe23cf31cad11f085f3bd88e0ca36649cc0d0ff0fb4f59a37eed744f88b"
+  },
+  "handoffSha256": "9edfdae35ef1a7cfb8de3398160e61cdb788708b036816f6466ca9b9a269c90e",
+  "findings": [
+    {
+      "id": "private-state-ownership",
+      "priority": 1,
+      "paths": [
+        "plugins/devnet/start.mjs"
+      ],
+      "description": "Private state validation checks only the final path mode/type, omitting canonical realpath and ownership; cleanup unlinks owner.json without matching its originally acquired inode. Reuse the existing canonical private-directory and owned-inode lease checks; a redirected path/replaced lock must not be accepted or deleted."
+    },
+    {
+      "id": "mining-failure-clean-stop",
+      "priority": 2,
+      "paths": [
+        "plugins/devnet/network.mjs"
+      ],
+      "description": "Mining loop catches and stores miningError. close skips persistent snapshot when miningError exists but never adds it to failures, then resolves. Outer cleanup removes owner lock and reports success with network.json still running. Propagate recorded mining failure and preserve recovery-required ownership."
+    },
+    {
+      "id": "missing-network-metadata",
+      "priority": 1,
+      "paths": [
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/bootstrap.mjs"
+      ],
+      "description": "Missing network.json selects a fresh chain even when prior snapshot/node/deployment data remain. Guard initial creation against retained chain artifacts before new identity/Anvil/rollup; preserve legitimate initial actor-only creation. Missing original metadata is not reset authorization."
+    }
+  ],
+  "reviewedInvariants": [
+    "Native persistent network requires proofs false; actual embedded PXE uses proverEnabled false. Legacy profile remains explicit and no production cryptography bypass was introduced.",
+    "Current schema2 deployment CLI is reused with retained original actor and journals. Board creation anchor is preserved separately from portal binding, checked against original transaction and current canonical block.",
+    "PrivateFPC publication saves signed transaction bytes before its only send; retained operations reconcile without retransmission. Bok readiness remains constructor-only, no invented funding/liquidity/provider.",
+    "Anvil dump(true) snapshot hash, original identity/funding list/ports/toolchain and stopped phase are required on resume; unclean records reject. These checks do not yet cover the missing-network case above.",
+    "Application/native RPC ports are loopback and selected independently; public wallet configuration excludes operator keys. Runtime child logging/config files stay private."
+  ],
+  "evidenceRead": {
+    "sourceHashesMatch": true,
+    "allDeclaredLogHashesMatch": true,
+    "reportedScope": "67 focused components plus changed four anchor checks; actual tiny Anvil historical dump/load probe. These do not establish full Aztec/current app startup or clean-stop restart."
+  },
+  "remainingGates": [
+    "Affected fixes and source-used regressions.",
+    "Normal apps rebuild for changed injected deployment engine and current generated closure.",
+    "Actual current nativefalse startup, canonical reader ready, served wallet, clean stop/reopen with original creation and no extra sends."
+  ],
+  "reviewerExecution": "Read-only source/evidence hashing. No heavy test, chain, Anvil or provider action by reviewer."
+}

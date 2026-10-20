@@ -1,0 +1,18 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "fc21c7b6d741bbced9a7e3a0e7f9ae034fd55c30",
+  "verdict": "PASS_ONE_OPTION_TEST_REPAIR_AND_SELECTED_CONSTRUCTOR_ELIGIBILITY",
+  "sourcePacketSha256": "652f6024d93cde05f299b6485d0bff6f0cbb6e6822e6358f51e2ea4899d30c8d",
+  "preparationSha256": "576dd1a54855e689ea1269f076e048029d0abe89204bbddea78597d0d3a429b7",
+  "runnerSha256": "811fefe22190d92752ae1ef324aeb02448777b605331fce0182966bf54a1afc3",
+  "checks": [
+    "Exact only test initializer skipSrsInit:true; all assertions/network/wallet traps unchanged.",
+    "Pinned SDK explicitly supports this public hash initialization option; no CRS/proof claim.",
+    "All3599 protected hashes unchanged; runner directory-only successor, same60s2GiB and cleanup.",
+    "One selected constructor case,29excluded; receipt actual carries unchanged; historical7697 remains failed."
+  ],
+  "holds": [
+    "Parent separately grants after lead heavy cleanup.",
+    "HTTP adapter still held; no actual deployment or proof acceptance."
+  ]
+}

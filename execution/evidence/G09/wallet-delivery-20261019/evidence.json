@@ -1,0 +1,61 @@
+{
+  "task_id": "G09-wallet-delivery",
+  "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+  "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "wallet-delivery-documentation",
+      "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+      "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "git diff --check 0d5011b556455f4b46740781a946d5fbab6d95eb 5cdc69da61b162998c451672a63979f6fc15cc25",
+      "environment": "macOS/Git; source-only documentation delta",
+      "observed": "No whitespace errors; source-bound documentation correspondence independently approved",
+      "artifacts": [
+        {
+          "path": "evidence/G09/wallet-delivery-20261019/check.json",
+          "sha256": "bc5ffdfc1adc4dee05bf8c0ed490789054af2c53a8debda6cd7d7ce0c55a41f0"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+    "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G09/wallet-delivery-20261019/review.json",
+        "sha256": "ae12ea6c3f57435ec60bda22ac8b37a48c10056524015485d0537d518badb5c4"
+      },
+      {
+        "path": "evidence/G09/wallet-delivery-20261019/configuration-review.json",
+        "sha256": "ad182265bb8a3de21509434fc5573db849ef4df33e37b5eb51cf585d78fc2441"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "RC41-reproducible-wallet-delivery",
+      "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+      "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G09/wallet-delivery-20261019/review.json",
+          "sha256": "ae12ea6c3f57435ec60bda22ac8b37a48c10056524015485d0537d518badb5c4"
+        },
+        {
+          "path": "evidence/G09/wallet-delivery-20261019/check.json",
+          "sha256": "bc5ffdfc1adc4dee05bf8c0ed490789054af2c53a8debda6cd7d7ce0c55a41f0"
+        }
+      ]
+    }
+  ]
+}

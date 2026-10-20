@@ -1,0 +1,36 @@
+{
+  "CommandId": "b556d192-477b-4b09-ad46-6a54bace9a04",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Extend existing reviewed Rolling host shutdown to06:30UTC without restart",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T00:41:26.656Z",
+  "ExecutionElapsedTime": "PT0.338S",
+  "ExecutionEndDateTime": "2026-10-19T00:41:26.656Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"budgetStop\": \"2026-10-19T06:30:00Z\", \"nextElapse\": \"Mon 2026-10-19 06:30:00 UTC\", \"controlsVerified\": true}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "57aadaeb-cb12-4d8a-aa15-c89c258ec65d",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 00:41:50 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "776",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "57aadaeb-cb12-4d8a-aa15-c89c258ec65d",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

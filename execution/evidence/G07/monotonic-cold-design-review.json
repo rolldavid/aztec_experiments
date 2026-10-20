@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewType": "independent-readonly-design-feasibility",
+  "baseline": "eec415995a35d9653c0a1fb6dc5c7c038e1325bf",
+  "assessmentSha256": "dda5a48f2aaeac997b6f255facafe515a39960b0710941b5e5a11f96f0508fe1",
+  "sourceHashes": {
+    "scripts/patch-pxe-preference-page.mjs": "18318b26c720285bbe3c2b502307a97c62673c54a1ac9fbb5dc066ea77922380",
+    "shared/rolling/cold-preference-reader.mjs": "d81afcb9517b07ba00bffc639dbdff5b8836b3706122d117add6ae88012777dc",
+    "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "installed-rc3-pxe-src/notes/note_service.ts": "da02bf076263644a1f9d1d330a5e7b536e4214633d538bde97a930ca57eb5924",
+    "installed-rc3-pxe-src/storage/note_store/note_store.ts": "1840f842b22b3adff161bc402a2b4bdf32d0d02fde93495d3d1a976e71ec74af",
+    "installed-rc3-pxe-src/events/event_service.ts": "fa5aab36e77834ac74fbb8509a5359073116bd6e05575cf8ac4beca1c55add32",
+    "installed-rc3-pxe-src/storage/private_event_store/private_event_store.ts": "03e6c42214af82b82c6e2b46c44efc2f0a9f5c77fcb3f60b007d26b6e54c9376",
+    "installed-rc3-pxe-src/block_synchronizer/block_synchronizer.ts": "5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20"
+  },
+  "disposition": "feasible-with-mandatory-source-and-runtime-conditions-no-future-source-approval",
+  "observedGap": "At baseline any anchor difference resets scoped SDK cursor; reader clears AEAD prefix on anchor/epoch difference. Pages are bounded, but one appended empty block can replay all physical history. Current genuine attempt does not close incremental scaling acceptance.",
+  "sourceReasoning": [
+    {
+      "source": "NoteService.validateAndStoreNotes lines120-228",
+      "finding": "Original validator authenticates unique note hash against transaction context and queries siloed nullifier emission at the supplied anchored block. It stores both note and emission, preserving reorg semantics. Replaying the former note envelope at the new anchor through this validator can refresh spent status; merely reading the former cached candidate cannot."
+    },
+    {
+      "source": "NoteStore.addNotes lines52-61;applyNullifiers lines223-282;PrivateEventStore.storePrivateEventLog lines72-115",
+      "finding": "Notes keyed by siloed nullifier, events by siloed event commitment; repeats add scope/stage existing records, nullifier emission is idempotent. Existing entries are reused, not compared against new metadata. Revalidation must prove original validator actually staged the exact former authenticated candidate under the fixed page, not infer success from existing storage."
+    },
+    {
+      "source": "Recovery helper baseline lines99-108,139-163",
+      "finding": "Candidate currently retains only nullifier/slot. It lacks an authenticated physical page locator. Existing records cannot be upgraded by guessing a page; restart them. Replayed page event stages must not become newly delivered fold records."
+    },
+    {
+      "source": "Reader baseline lines98-136",
+      "finding": "AEAD prefix is bound to scope/database/epoch/anchor and exact SDK delivery; mailbox may be one sequence ahead after lost response. New epoch extension needs explicit persisted predecessor linkage to retain prefix without dropping or duplicating suffix. Post-CAS mailbox/canonical checks remain necessary."
+    }
+  ],
+  "mandatoryConditions": [
+    {
+      "id": "locator-validation",
+      "requirement": "Persist exact authenticated former-head block/hash, tx hash/ordinal and <=8-log range at original admission. At promotion reauthenticate compact ordered root, canonical old block, receipt/effect/class/network, and original utility/NoteService at new anchor. Require actual staged former nullifier+owner+contract+slot matching locator; zero admission/wrong page/missing head fails. Do not invent manual nullifier authority."
+    },
+    {
+      "id": "monotonic-state",
+      "requirement": "Only complete prior cursor with no pending tx records, unchanged scope/class/artifact/tier/proofs/database/generation and strictly higher new canonical anchor can extend. Recheck old anchor canonical at promotion and before commit. Same-height fork, missing old hash, generation change or incomplete scan must reject or restart honestly."
+    },
+    {
+      "id": "bounded-promotion",
+      "requirement": "Promotion is a separate <=8 physical-log step, not old-page replay plus another8 suffix logs in one call. Atomically commit note/event/emission revalidation with cursor transition through existing coordinator and after-contributor beforeCommit checks. Replayed events stay DB-only; new mailbox records empty; suffix begins oldAnchor+1 without skips."
+    },
+    {
+      "id": "head-uniqueness",
+      "requirement": "Retain former candidate only if original new-anchor validation says active; clear it only on authenticated spent result. Scan every suffix ciphertext and reject two distinct active heads, missing terminal head and wrong head/digest. No first/last-candidate selection. Empty former head is a separate authenticated completed case."
+    },
+    {
+      "id": "prefix-CAS",
+      "requirement": "New epoch sequence0 mailbox carries exact previous database/epoch/complete sequence/anchor/head. Reader may retain only its own AEAD-authenticated prefix bound to that exact old completed delivery and scope. Lost promotion response and failed CAS replay the same mailbox; absence/mismatch of prefix forces scoped restart. Never accept arbitrary matching digest as derived-state authority. Adapt schema validation explicitly; no relaxed generic seq0 shortcut."
+    },
+    {
+      "id": "markers-reorg",
+      "requirement": "Reset marker-classification progress at new anchor or prove an equally strict canonical carry; never publish until all required markers verified. Preserve orphan marker exclusion, all-store rollback generation invalidation, context/abort lease ownership and post-CAS mailbox/canonical checks."
+    }
+  ],
+  "requiredRegressions": [
+    "No-log append retains exact independent full-replay state and fetches only bounded former-head page plus appended blocks, independent of prefix length.",
+    "Two actual ACIR revisions with real nullifier consumption: old head inactive, new head unique, suffix fold exactly once.",
+    "Wrong former locator/zero fresh candidate, malicious missing-spend reply yielding two active heads, missing terminal head, exact-nullifier cross-contract mismatch.",
+    "Lost promotion response, restart before/after SDKcommit and AEAD CAS, deliberate CAS conflict, missing old encrypted prefix, old-format cursor without locator.",
+    "Reorg at old anchor, same-height replacement, generation/account/class/tier change and late validator/store failure retain atomic rollback/no stale publication.",
+    "Read-marker append and orphan marker revalidation, empty uninitialized prefix, incomplete old scan never skips history."
+  ],
+  "capacityDisposition": {
+    "status": "full-acceptance-remains-open",
+    "constraints": "No artificial history cap; protocol block limits and <=8 physical logs are correctness bounds, not measured latency/RSS guarantees. Complete first scan, dense repeated block authentication, O(active choices) encrypted CAS, deep rollback/walkback, actual retention/disk/RPC cost and real browser traces still require measurement.",
+    "targets": "Assessment proposed p95<=2s/max<=10s and1GiB isolated reader remain unaccepted engineering proposals pending parent resource/methodology review; five warm samples are not broad percentile qualification. No deadline increase or fallback authorized."
+  },
+  "execution": {
+    "tests": false,
+    "native": false,
+    "browser": false,
+    "network": false,
+    "productionWrites": false
+  },
+  "communication": "Concrete locator/revalidation, idempotent replay, bounded promotion and predecessor-CAS constraints sent directly to Design before source review."
+}

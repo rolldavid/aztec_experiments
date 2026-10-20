@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_FOR_PARENT_CLAIMED_TWO_TEST_FILE_IMPLEMENTATION",
+  "proposalSha256": "1db8f86407f42d7e088c21035ece98c3744ad1fbb49bb67a9da4e797b9e65531",
+  "paths": [
+    "scripts/test-w02-rpc.mjs",
+    "prover/private-query.integration.test.mjs"
+  ],
+  "basis": "Accepted actual normal CLI loader/store73230 and installed SDK/service full24; existing parent composition fixture and exact CLI terminal seam reuse.",
+  "conditions": [
+    "Preserve moved two labels/assertions and original3w02/24integration cases; enumerate29+3 exact inventory.",
+    "Only exact hash/URL/single terminal main seam, unchanged normal bundle/CLI/store/simulator; fresh child and checkSdk before/after.",
+    "Async child needed for parent HTTP loop; bounded output/time and explicit child drain on all failure paths within existing supervisor. No generic RPC/command IPC.",
+    "Before original injector, deny non-loopback/extraneous paths and nonallowlisted transaction/proof methods without altering permitted request receiver/args/response/errors/retry behavior. Do not expose synthetic capability values in receipt.",
+    "Stage node/auth then readOnlyPXE then drain under independently reviewed source/runner and separate serial grants. Wrong key/missing/private facade and stale rejection assert no protected upstream call."
+  ],
+  "scope": "Bundled transport/readOnly compatibility only, not CLI transaction main, proof-enabled deployment, provider or infrastructure qualification.",
+  "runtimeAuthorized": false
+}

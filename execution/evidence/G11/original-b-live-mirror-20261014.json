@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-14T15:54:54.293Z",
+  "sourceRevision": "36f83f91b944c9036c167cdc7a20990193ea3cd6",
+  "repositoryId": 1419307628,
+  "private": true,
+  "actionsEnabled": false,
+  "remoteCommit": "528b5c9604a72d8dbe628f5f35a25580a939856e",
+  "remoteTree": "c9d6d3d2882af91c2d8c6cd9ec3bb3e81e243f4e",
+  "sourceDigest": "62819172c0c053429d8bb38f43be098ed8f036eb3e4073fd2adbec820ed3bea4",
+  "verifiedFiles": [
+    {
+      "path": "app.js",
+      "sha256": "93923c63a3ce5ad516e44287c7d4c446c73e678b2ad5daf059fcc56b528bc01a",
+      "bytes": 849
+    },
+    {
+      "path": "index.html",
+      "sha256": "b109d06b255196cf056ca8b391cfff5797e5f09cd100d12afc26ae8b1f0da738",
+      "bytes": 1775
+    },
+    {
+      "path": "package.json",
+      "sha256": "ca2291474e4dcf962d7281ae4f642b9f69be268ece2b89a3de8a4de3559d9ea8",
+      "bytes": 305
+    },
+    {
+      "path": "style.css",
+      "sha256": "61e0d56c2fac474384d05f7fdeaf1232fe0d480df7968c335d3f4dd0e0e2ab67",
+      "bytes": 1273
+    },
+    {
+      "path": "test.js",
+      "sha256": "d60041e1f14ec69c0ad702aff935fd52ee7d7914084ae4c98fd65278bc9fd8c9",
+      "bytes": 2111
+    }
+  ],
+  "assistedRecovery": true,
+  "automaticCreationQualified": false,
+  "originalJournalUnchanged": true
+}

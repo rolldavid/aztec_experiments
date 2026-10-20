@@ -1,0 +1,140 @@
+--- offline/run.py
++++ prestart-diagnostic/run.py
+@@ -1,4 +1,4 @@
+-"""One separately granted harmless offline systemd regression; no native binary."""
++"""Never-started host-inspect diagnostic; preserves original confinement predicate."""
+ import hashlib,json,os,pathlib,re,signal,subprocess,sys,time,uuid
+ D=pathlib.Path(__file__).resolve().parent
+ DOCKER='/usr/local/bin/docker'
+@@ -26,6 +26,54 @@
+  if h['CapAdd']!=['SYS_ADMIN'] or set(h['CapDrop'])!={'NET_RAW','NET_BIND_SERVICE'} or h['SecurityOpt']!=['no-new-privileges'] or h['LogConfig']['Type']!='none' or h['Tmpfs']!=TMPFS:raise ValueError('Capabilities')
+  if info['Config']['Env']!=['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin','container=docker']:raise ValueError('Environment')
+  return True
++def inspect_fields(info):
++ # Public fixed-field diagnostic only. No unknown string, Config object, Env
++ # value, entrypoint, mount source/destination or arbitrary key is retained.
++ missing=object()
++ def get(*keys):
++  value=info
++  for key in keys:
++   if type(value) is not dict or key not in value:return missing
++   value=value[key]
++  return value
++ def project(value,kind,allowed=()):
++  if value is missing:return {'status':'missing'}
++  if value is None:return {'status':'null'}
++  if kind=='bool':return {'status':'observed','value':value} if type(value) is bool else {'status':'invalid-type'}
++  if kind=='int':return {'status':'observed','value':value} if type(value) is int and 0<=value<=2**63-1 else {'status':'invalid-type-or-range'}
++  if kind=='enum':
++   if type(value) is not str:return {'status':'invalid-type'}
++   return {'status':'observed','value':value} if value in allowed else {'status':'unlisted-value'}
++  if kind=='list':
++   if type(value) is not list:return {'status':'invalid-type'}
++   if len(value)>16:return {'status':'oversized-list'}
++   return {'status':'observed','count':len(value),'values':[x if type(x) is str and x in allowed else 'unlisted-value' for x in value]}
++  if kind=='empty':
++   if type(value) not in (list,dict):return {'status':'invalid-type'}
++   return {'status':'observed','count':len(value)} if len(value)<=128 else {'status':'oversized-container'}
++  raise ValueError('Closed projection kind')
++ rows={}
++ def add(name,keys,expected,kind,allowed=()):
++  v=get(*keys);rows[name]={'expected':expected,'equal':type(v) is type(expected) and v==expected,'observed':project(v,kind,allowed)}
++ for name,expected,allowed in [('NetworkMode','none',('none','bridge','host','default')),('CgroupnsMode','private',('private','host','')),('PidMode','',('','host','private')),('IpcMode','private',('private','host','shareable','none',''))]:add(name,('HostConfig',name),expected,'enum',allowed)
++ for name,expected in [('Privileged',False),('ReadonlyRootfs',True)]:add(name,('HostConfig',name),expected,'bool')
++ for name in ('Binds','Devices','DeviceRequests'):
++  v=get('HostConfig',name);rows[name]={'expected':'absent-or-empty','empty':v is None or type(v) in (list,dict) and len(v)==0,'observed':project(v,'empty')}
++ v=get('Mounts');rows['Mounts']={'expected':'empty','empty':type(v) is list and len(v)==0,'observed':project(v,'empty')}
++ if type(v) is list and len(v)<=16:rows['Mounts']['types']=[project(x.get('Type',missing) if type(x) is dict else missing,'enum',('tmpfs','bind','volume','image','cluster','npipe')) for x in v]
++ for name,expected in [('Memory',536870912),('MemorySwap',536870912),('NanoCpus',2000000000),('PidsLimit',128)]:add(name,('HostConfig',name),expected,'int')
++ caps=('SYS_ADMIN','NET_RAW','NET_BIND_SERVICE','CAP_SYS_ADMIN','CAP_NET_RAW','CAP_NET_BIND_SERVICE','ALL','SYS_PTRACE','CAP_SYS_PTRACE')
++ add('CapAdd',('HostConfig','CapAdd'),['SYS_ADMIN'],'list',caps)
++ add('CapDrop',('HostConfig','CapDrop'),['NET_RAW','NET_BIND_SERVICE'],'list',caps)
++ add('SecurityOpt',('HostConfig','SecurityOpt'),['no-new-privileges'],'list',('no-new-privileges','no-new-privileges=true','seccomp=unconfined','apparmor=unconfined'))
++ add('LogType',('HostConfig','LogConfig','Type'),'none','enum',('none','json-file','local','journald'))
++ v=get('HostConfig','Tmpfs');rows['Tmpfs']={'expectedCount':len(TMPFS),'exactMatch':type(v) is dict and v==TMPFS,'observed':project(v,'empty')}
++ rows['Tmpfs']['expectedTargetChecks']={k:{'present':type(v) is dict and k in v,'optionsEqual':type(v) is dict and type(v.get(k)) is str and v[k]==options} for k,options in TMPFS.items()}
++ v=get('Config','Env');expected=['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin','container=docker']
++ rows['Environment']={'exactMatch':type(v) is list and v==expected,'observed':project(v,'empty')}
++ if type(v) is list and len(v)<=16:rows['Environment']['entryChecks']=[{'knownKey':x.split('=',1)[0] if type(x) is str and x.split('=',1)[0] in ('PATH','container') else 'unlisted-key','expectedValue':type(x) is str and x in expected} for x in v]
++ v=get('Image');rows['Image']={'expectedBoundId':IMAGE,'matches':type(v) is str and v==IMAGE,'status':'missing' if v is missing else 'observed' if type(v) is str else 'invalid-type'}
++ return {'schemaVersion':1,'fields':rows,'rawInspectRetained':False,'predicateChanged':False}
+ def cleanup(cid,call,report,persist):
+  if type(cid) is not str or not re.fullmatch('[a-f0-9]{64}',cid):
+   report['containerAbsent']=None;report['cleanupError']='ownership-unverified';return
+@@ -34,7 +82,7 @@
+  except Exception:errors.append('state-unavailable')
+  try:persist()
+  except Exception:errors.append('evidence-unavailable')
+- for args in (['kill',cid],['wait',cid],['rm','--force',cid]):
++ for args in (['rm','--force',cid],):
+   try:call(args,check=False,cleanup=True)
+   except Exception:errors.append(args[0]+'-unavailable')
+  try:
+@@ -43,11 +91,11 @@
+  except Exception:report['containerAbsent']=None;errors.append('absence-unavailable')
+  if errors:report['cleanupErrors']=errors
+ def main():
+- if sys.argv[1:]!=['--execute-reviewed-once']:raise SystemExit('Separate execution grant required')
++ if sys.argv[1:]!=['--inspect-reviewed-once']:raise SystemExit('Separate execution grant required')
+  if any(sha(D/p)!=s for p,s in PINS.items()):raise ValueError('Source changed')
+  out=D/'actual';out.mkdir(mode=0o700) # Never replay an existing invocation.
+  start=time.monotonic();operation=start+43;end=start+60
+- name='rolling-systemd-offline-'+uuid.uuid4().hex[:12];label=sha(D/'run.py')
++ name='rolling-systemd-prestart-'+uuid.uuid4().hex[:12];label=sha(D/'run.py')
+  report={'schemaVersion':1,'name':name,'image':IMAGE,'sourceSha256':label,'passed':False,'nativeQualified':False,'containerAbsent':None,'calls':[]}
+  cid=None;attempted=False
+  def interrupted(signum,frame):raise InterruptedError('Interrupted')
+@@ -69,16 +117,7 @@
+   m=re.fullmatch(rb'"([a-f0-9]{64})" "/'+name.encode()+rb'" "'+label.encode()+rb'"\n?',p.stdout)
+   if not m:raise ValueError('Unknown ownership')
+   return m[1].decode()
+- def copy_record(name,maximum):
+-  dest=out/name
+-  p=call(['cp',cid+':/run/'+name,str(dest)],limit=2,check=False)
+-  if p.returncode:
+-   if dest.exists():raise ValueError('Partial record')
+-   return None
+-  if dest.is_symlink() or not dest.is_file() or dest.stat().st_size>maximum:raise ValueError('Record bounds')
+-  dest.chmod(0o600);value=json.loads(dest.read_bytes())
+-  if type(value) is not dict:raise ValueError('Record schema')
+-  return value
++
+  try:
+   if call(['ps','-q']).stdout.strip():raise ValueError('Other container running')
+   if call(['ps','-aq','--filter','name=^/'+name+'$']).stdout.strip():raise ValueError('Name collision')
+@@ -95,26 +134,15 @@
+   cid=p.stdout.decode().strip();report['containerId']=cid
+   if reconcile()!=cid:raise ValueError('Ownership')
+   info=json.loads(call(['inspect',cid,'--format','{{json .}}']).stdout)
+-  report['hostConfinement']=confined(info)
+-  if state(info['State'])['Status']!='created':raise ValueError('Unexpected start')
+-  save(out/'start-intent.json',{'containerId':cid,'attempts':1});call(['start',cid])
+-  preflight=None;receipt=None
+-  while time.monotonic()<operation:
+-   if preflight is None:
+-    preflight=copy_record('preflight.json',1024)
+-    if preflight is not None:
+-     report['preflight']=preflight
+-     if preflight!={'passed':True,'category':'confined'}:raise ValueError('Guest confinement')
+-   if preflight is not None:
+-    receipt=copy_record('regression.json',16384)
+-    if receipt is not None:break
+-   observed=state(json.loads(call(['inspect',cid,'--format','{{json .State}}']).stdout))
+-   if not observed['Running']:report['earlyExitState']=observed;raise ValueError('Guest exited')
+-   time.sleep(min(.5,max(0,operation-time.monotonic())))
+-  if receipt is None:raise TimeoutError('Regression deadline')
+-  report['receiptSha256']=sha(out/'regression.json');report['regression']=receipt
+-  if receipt.get('passed') is not True or receipt.get('nativeQualified') is not False or [r.get('label') for r in receipt.get('cases',[])]!=['baseline','success','nonzero','timeout'] or [r.get('outcome') for r in receipt['cases'][1:]]!=['passed','nonzero','timeout']:raise ValueError('Regression failed')
+-  report['passed']=True
++  report['fieldDiagnostic']=inspect_fields(info)
++  save(out/'host-inspect-projection.json',report['fieldDiagnostic'])
++  try:report['hostConfinement']=confined(info)
++  except Exception:report['hostConfinement']=False
++  observed=state(info['State']);report['observedState']=observed
++  if observed['Status']!='created' or observed['Running']:raise ValueError('Unexpected start')
++  report['diagnosticCompleted']=True;report['guestExecuted']=False
++  report['passed']=True # Diagnostic collection completed; NOT confinement pass.
++
+  except Exception as e:report['errorCategory']='timeout' if isinstance(e,(TimeoutError,subprocess.TimeoutExpired)) else 'precondition-or-operation'
+  finally:
+   if attempted and cid is None:

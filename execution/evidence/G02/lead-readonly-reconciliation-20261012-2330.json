@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-12T23:27:56.716970+00:00",
+  "read_only": true,
+  "execution_environment": "trusted local sole lead",
+  "known_instance_count": 11,
+  "known_volume_count": 16,
+  "deploy_identity": {
+    "exit_code": 0,
+    "result": "052665140763",
+    "error": null
+  },
+  "sso_identity": {
+    "exit_code": 0,
+    "result": "052665140763",
+    "error": null
+  },
+  "known_instances": {
+    "exit_code": 0,
+    "result": [],
+    "error": null
+  },
+  "known_volumes": {
+    "exit_code": 0,
+    "result": [],
+    "error": null
+  },
+  "plugin": {
+    "http_status": 200,
+    "status": "degraded",
+    "active": 0
+  },
+  "prover": {
+    "http_status": null,
+    "error": "TimeoutError"
+  }
+}

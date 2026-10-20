@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12T04:08:51.787832+00:00",
+  "sourceCommit": "f32a1037bd8e95b2994795e1cfe3053f72fd2930",
+  "paths": [
+    "deploy/prover/archiver-prerequisites.mjs",
+    "deploy/prover/archiver-prerequisites.test.mjs"
+  ],
+  "checks": {
+    "pinnedNodeUnitTests": 15,
+    "passed": 15,
+    "providerCalls": 0,
+    "actualSdkExportsVerifiedWithoutRpc": true,
+    "installedSourcePinsVerified": true,
+    "disposableProcessDeadlineAndCleanupVerified": true
+  },
+  "testLogSha256": "042293e3be9a7cec96ed3ec7af9a30348d331fbac7ee84857679fd8688281edd",
+  "limitations": [
+    "Not a fullnode startup or Linux qualification.",
+    "New archiver-specific image module equivalence evidence pending before actual provider probe.",
+    "Actual SDK read retry defaults retained; outer child deadline guarantees bounded incomplete result.",
+    "Actual provider probe not yet run."
+  ],
+  "operator06CleanupComplete": true,
+  "fleetFinalState": "deleted"
+}

@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "verdict": "accept-scoped-development-social-evidence",
+  "revision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "packetSha256": "91c027544771c02ac41ef0b604d316cc1258843d2d7a77d5311e0f228dbcdd52",
+  "facts": [
+    {
+      "step": "01-subboard",
+      "txHash": "0x0f8355a3d1ca74c4c144affa04f9c5e5771a5c9f999307d48a9127d79b0deca0",
+      "canonicalBlock": "663",
+      "eventType": "SubboardCreated",
+      "transactionFee": "22579505400000",
+      "maximumFee": "42007592701158",
+      "oneObservedSend": true,
+      "cleanupVerified": true,
+      "originalObserverPassed": true
+    },
+    {
+      "step": "02-apricot",
+      "txHash": "0x265493e51055a57c9e49c795528259e438bb4c42ae69192b7e6e457f518df48c",
+      "canonicalBlock": "682",
+      "eventType": "PostPublished",
+      "transactionFee": "22155573000000",
+      "maximumFee": "41217917985300",
+      "oneObservedSend": true,
+      "cleanupVerified": true,
+      "originalObserverPassed": false
+    },
+    {
+      "step": "05-anonymous-reply",
+      "txHash": "0x0e3889245a559dbca68a3e7cc82216dc9d2baf1e2adb1ccbf5407fbc6c5be6e5",
+      "canonicalBlock": "688",
+      "eventType": "PostPublished",
+      "transactionFee": "21486024600000",
+      "maximumFee": "39970723170714",
+      "oneObservedSend": true,
+      "cleanupVerified": true,
+      "originalObserverPassed": true
+    },
+    {
+      "step": "06-like",
+      "txHash": "0x1de373c4ec1f69edffc4170aba33a1e6fbeb62e7895b7cc7c05ca556516f18fb",
+      "canonicalBlock": "690",
+      "eventType": "LikeChanged",
+      "transactionFee": "8356666200000",
+      "maximumFee": "15514056075042",
+      "oneObservedSend": true,
+      "cleanupVerified": true,
+      "originalObserverPassed": true
+    }
+  ],
+  "independentChecks": {
+    "allLinkedHashesAndSizesVerified": 50,
+    "step01PreservedInputMappingsVerified": 4,
+    "canonicalPostFieldsAndDecodedTextMatchPublicRecords": true,
+    "namedIdentityDecimalHexEquality": true,
+    "anonymousReplyParentRootAndBoardMatch": true,
+    "likeCanonicalEventAndPublicCountOne": true,
+    "immutablePredecessorConfirmedHashChain": true,
+    "originalBackupCurrentHashUnchanged": true,
+    "durablePreparedIntentFeesAndOutcomeBindingsVerified": true,
+    "browserCountersAndOwnedCleanupVerified": true,
+    "reviewerLiveOperations": 0
+  },
+  "criterionDisposition": {
+    "RC06": "Scoped pass: actual reply parent and root match named original post; immutable original content remains. Tombstone behavior not exercised in this batch.",
+    "RC08": "Scoped pass: one authenticated onchain LikeChanged and public count1. Quotes/reposts/bookmarks/follows/notifications not qualified by these four sends.",
+    "RC10": "Scoped pass for authentic creation, directory search/stable link and observed no automatic Home promotion. Existing funded account means no zero-collateral creation claim.",
+    "RC11": "Scoped pass for exact current subboard metadata/local rules/parent version and reconstructed public identity. Rejection and parent-policy-union behavior unexecuted here.",
+    "RC15": "Scoped pass for actual named author and Anonymous reply selection/public identity. Does not establish exhaustive own-name list, exactly-one-Anonymous inventory, cross-account or full unlinkability."
+  },
+  "failureDisposition": {
+    "apricotOriginal": "Original result and supervisor remain failed at canonical-public-correlation after successful one-send canonical receipt; strict decimal-versus-hex comparison was incorrect.",
+    "readonlyClosure": "Separate fresh context GET-only UI check verifies exact original transaction/public record, numeric name identity, River Canvas label, reply control and Home nonpromotion; no wallet/runtime import or resend.",
+    "acceptedDerivative": "Only acceptance/error metadata added/removed; original signed, canonical and request facts unchanged.",
+    "reviewerOfflineDecode": "An additional offline SDK wire reparse became CPU-bound without output and was terminated after about75s (TERM then KILL PID81183, no children). It produced no passing decode evidence and is not counted. Typed wire/effect authentication relies on the source-inspected actual observer plus preserved exact hashes/correlation; no second attempt."
+  },
+  "observedSourceGuards": [
+    "Normal UI prepares/reviews explicit fees, exclusive fsynced per-step intent precedes arming, one aztec_sendTx wire captured durably before transport.",
+    "Captured typed Tx hash and byte digest are compared to encrypted signed journal; read-only observer checks successful receipt, same-block effect/fee, unique exact full-block effect, canonical getBlockData and decoded authenticated event.",
+    "Routes are drained after context close; final counters and original backup hash are checked. Direct node/public reads are explicitly outside browser counters."
+  ],
+  "limitations": [
+    "Native and PXE proofs disabled; no real-proof/testnet/release claim.",
+    "Same funded account made all actions; no zero-collateral or unrelated-human privacy conclusion.",
+    "Four observed application-page sends total; not extension-wide traffic measurement.",
+    "No model or parent-policy-union acceptance; model actions are unexecuted in this batch.",
+    "No fresh chain query by reviewer; acceptance binds recorded canonical observations and exact artifacts.",
+    "Full G05/G06/G09 and cryptographic/privacy qualification remain open."
+  ],
+  "preservedRuntimeBindingMapping": {
+    "originalPacketPath": ".build/g09-current-moderation-journey/policy-union/runtime-binding.json",
+    "immutableSnapshot": ".build/g09-current-moderation-journey/policy-union/social-batch/runtime-binding.json",
+    "sha256": "6dd9439e1dc391b7bf6e352b73e90710a18be67adc4e5751a41a3fbca61df015",
+    "reason": "Subsequent disjoint private-preference journey updated active binding after review; exact prior social bytes preserved and independently hash-verified."
+  }
+}

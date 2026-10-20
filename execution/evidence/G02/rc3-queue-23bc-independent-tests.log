@@ -1,0 +1,33 @@
+✔ source pin is exact installed original; transformed TS and JS are exact output pins (3.782708ms)
+✔ rc3 queue pressure, wait timer cleanup and error handling remain byte-identical (0.474667ms)
+✔ unknown source and already transformed source cannot be transformed again (1.468042ms)
+✔ isolated complete apply, verify and repeated apply preserve exact bytes (19.911292ms)
+✔ mixed/unknown state rejects before changing either copied file (9.780667ms)
+✔ shared installed package and symlink target are never writable by prototype (3.926709ms)
+✔ isolated helper is exact reviewed source and a missing/tampered copy fails verification (10.83175ms)
+✔ added method does not rewrite original executeUtility, discovery, private calls or event retrieval (1.147625ms)
+✔ transformed JS parses without importing SDK or starting native work (94.439542ms)
+✔ Noir page uses original dispatcher and original validator, has no direct store or sync frontier (1.035041ms)
+✔ labelled boundary double rejects zero count before queue or utility (1.452833ms)
+✔ labelled boundary double rejects nine logs before queue or utility (0.667333ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (1.219667ms)
+✔ labelled boundary double rejects unknown key before queue or utility (0.269042ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.253666ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.377708ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.271125ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.275792ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.2745ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.262ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (0.439292ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.311125ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.490958ms)
+✔ labelled boundary double preserves account guard failure and exposes no raw cause (0.335208ms)
+✔ labelled boundary double calls exactly one existing queue after valid capture (0.390292ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 233.343083

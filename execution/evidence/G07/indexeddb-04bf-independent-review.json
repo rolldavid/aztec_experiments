@@ -1,0 +1,145 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+  "base": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+  "requirements": [
+    "G07-A02",
+    "G07-A06",
+    "G07-A07"
+  ],
+  "verdict": "approve exact source and tested IndexedDB atomicity component; genuine wallet acceptance and integration remain pending",
+  "findings": [],
+  "sourceReview": {
+    "scope": "12 declared paths; explicit hash-gated original/patched TS and JS installer, SDK provenance gates, storage and real browser regressions; no source writes during review",
+    "properties": [
+      "Native operations dispatch synchronously inside IDB request success callbacks; a pending heartbeat alone is not treated as active transaction access.",
+      "Serial ownership, immediate completion rejection handler, inflight drain, abort on callback/request failure, finally restoration of existing and newly opened containers.",
+      "Closed allowlist and blocked transaction/source/request/objectStore handles prevent normal container escape to a raw transaction.",
+      "Inputs cloned at submission, immutable native key ranges retained, index/cursor iteration routed through scheduler; no schema, database identity or public adapter replacement.",
+      "Manifest rejects original, unknown and mixed dependency states; installation remains explicit and normal build/check require exact patched bytes."
+    ],
+    "priorDraftFindings": "0700 raw-handle and inflight concerns addressed in this exact source"
+  },
+  "bindings": {
+    "candidate": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+    "sourceFiles": {
+      "TESTING.md": "1ce1a8fe54bda78abf8b8234b8893612cb79a6b829c9fc00ab73bf10de4d9f26",
+      "package.json": "044b16b71bdaef35d72e50a0a0d26e8173bb10ac51ea4512211829fe46c6cbec",
+      "scripts/build-sdk.mjs": "ebce525b0052b123e49049a598e695d98dae11030683876ac0dabca5260a8b71",
+      "scripts/check-sdk.mjs": "8dd3ff79103f366faf06744cab2472a972d0e56c82d855b4b9fc2666f86ff4c8",
+      "scripts/fixtures/indexeddb-atomicity-6.0.0-rc.1/README.md": "cbff23bda4d09aac317d278c02e93696dfca6a6a350047ad0653d8d32c7733f9",
+      "scripts/fixtures/indexeddb-atomicity-6.0.0-rc.1/store.js": "2f1a33c8bbcdd16af817eb7c0d5dc0e1c944f5f5055f99d280da4f8d0e321cdf",
+      "scripts/fixtures/indexeddb-atomicity-6.0.0-rc.1/store.ts": "fb534e8e211909b0de90fe171212a9fdcfd5af0d80a22fa827c7fc901ad44ebf",
+      "scripts/patch-indexeddb-atomicity.mjs": "ee0cca283d835ea2624cee5acdceaf0ee540f62d674387bc2aa5ff63ca2bc6fb",
+      "scripts/test-indexeddb-atomicity-patch.mjs": "10fa4027b414562bbf71ba5e580546adc8a1ea23bf06ecb121f865751109e6f6",
+      "scripts/test-sdk-manifest.mjs": "423107d531c54a5b923e66bd7909e27bf605f4a39c155519d3588277c1637351",
+      "scripts/test-sdk-storage-browser.mjs": "0fbed45955e11e2c7f54fb492c6ca11c52e4a28a003f1d75cc73d1e5957e52f9",
+      "scripts/test-sdk-storage.mjs": "7c7debf4b7a3ebe4f76d10dd1181fdc7e148728f4bea8d5625e18471c151517d"
+    },
+    "sdkManifestSha256": "a2f229f04ad0228f19ccd8e59cbd17e46f1b581dae7cfb867b144d56005cd07a",
+    "closureCounts": [
+      2042,
+      8
+    ],
+    "installed": {
+      "node_modules/@aztec-labs/kv-store/src/deprecated/indexeddb/store.ts": "e71b52af584c9e2285c80f635503c1f4d1989948a3b8b21db860d8178f7ae0f6",
+      "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js": "e6efed86ab1f05b268cf11bfe02ecd0e9fe6462e6747585285090d00232c3100"
+    },
+    "rootSdkManifestSha256": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee"
+  },
+  "checks": {
+    "components": {
+      "record": "indexeddb-04bf-independent-components.json",
+      "sha256": "ef813ba29f89abd025816d72413a18863e2ca7a7974db732b2de51a438479b7e",
+      "result": {
+        "command": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/test-indexeddb-atomicity-patch.mjs",
+          "scripts/test-sdk-storage.mjs",
+          "scripts/test-sdk-manifest.mjs"
+        ],
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social",
+        "sourceRevision": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+        "deadlineMs": 60000,
+        "rssLimitKiB": 4194304,
+        "passed": true,
+        "peakTreeRSSKiB": 127904,
+        "samples": 3,
+        "cleanupComplete": true,
+        "elapsedMs": 1245,
+        "exitCode": 0,
+        "signal": null,
+        "samplingFailure": false,
+        "logSha256": "1fd27ee8974871ff3319461681ba6f13d3e4719ed0f0c38da976e7b2a45e7b0d"
+      }
+    },
+    "browser": {
+      "record": "indexeddb-04bf-independent-browser.json",
+      "sha256": "600d9a9393134e4ca26b0302689a5e2fa5538daf0511bd4a0183f5df755fe240",
+      "result": {
+        "command": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+          "scripts/test-sdk-storage-browser.mjs"
+        ],
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social",
+        "sourceRevision": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+        "deadlineMs": 60000,
+        "rssLimitKiB": 4194304,
+        "passed": true,
+        "peakTreeRSSKiB": 1019072,
+        "samples": 7,
+        "cleanupComplete": true,
+        "elapsedMs": 3367,
+        "exitCode": 0,
+        "signal": null,
+        "samplingFailure": false,
+        "logSha256": "c39d98c169b39a70b36ca03cbee3d659c37f173124659ae22a85d9a7a90bb80b"
+      }
+    }
+  },
+  "postClosure": {
+    "at": "2026-10-12T20:42:37.364561+00:00",
+    "candidate": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+    "sourceAndInstalledAndSdkUnchanged": true,
+    "allSdkInputsOutputsRehashed": [
+      2042,
+      8
+    ],
+    "worktreeClean": true,
+    "rootSdkManifestUnchanged": true
+  },
+  "browserEvidence": {
+    "actual": "Chromium 153.0.8010.12, built application SDK adapter, actual installed StagedWriteCoordinator with labelled disposable map contributors",
+    "bundleSha256": "9ebdf62290a071c8e7b38ee73682e515977fda1abc0012d56fb443591016fb36",
+    "coordinatorSha256": "68b832502064102a9394fafec6193953fef88cb1c71e5dab80a4d7cd9538e20b",
+    "observed": [
+      "Immediate and 20ms delayed callback failures retain prior data and remove inserted data live and after reopen.",
+      "Falsy/synchronous failures, clear and newly opened containers, actual ConstraintError, queue ordering and delayed success verified.",
+      "Early callback return drains submitted writes; mutable arguments retain call-time snapshot.",
+      "Delayed map/index/cursor/multimap/array/set/singleton operations and collection rollback verified.",
+      "Actual coordinator late second-contributor failure rolls back both labelled maps; subsequent coordinator success commits both.",
+      "Chain, rollup, account, namespace and schema isolation retained; zero page faults and no disposable databases after cleanup."
+    ]
+  },
+  "preservedFailures": [
+    "indexeddb-atomicity-browser-baseline-local-copy.json",
+    "indexeddb-atomicity-browser-repaired.json"
+  ],
+  "reviewInvocationNotes": [
+    "Two preliminary read-only binding setup attempts used incorrect manifest/dependency paths and stopped before test execution; corrected to sdk-manifest.json and deprecated/indexeddb. No source or dependency changes resulted."
+  ],
+  "beforeGenuine": [
+    "Add explicit genuine source fingerprints for scripts/patch-indexeddb-atomicity.mjs and both exact installed kv-store TS/dest paths; browser bundle manifest alone does not bind native actor imports.",
+    "Freeze transferred candidate, verify explicit installer in an isolated dependency tree, normal SDK and wallet manifests/all inputs/outputs, and retained source/artifact/prover pins before execution.",
+    "One fresh rolling-notification-browser genuine run is the minimum affected wallet acceptance: actual browser subscription and marker writes, account switching/lock and fresh keys-only recovery, four jobs and both accounts fee conservation under unchanged 540s/4GiB and admission limits."
+  ],
+  "carryDisposition": "Prior a75 genuine notification and default1 relationship results remain historical functional evidence. They do not qualify the new storage implementation. No need to repeat every unrelated scenario solely for this two-file dependency patch; compare unchanged source and artifact closure explicitly.",
+  "limits": [
+    "No genuine wallet, real PXE synchronization, proof or reorg executed by these tests.",
+    "Coordinator contributors are labelled maps, not actual encrypted event/note processing.",
+    "No full G07, deployment, capacity or overall integration approval.",
+    "Heartbeat work during long arbitrary awaits is not a capacity or battery-performance qualification."
+  ]
+}

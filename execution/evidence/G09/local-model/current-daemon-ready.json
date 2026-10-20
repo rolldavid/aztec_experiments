@@ -1,0 +1,42 @@
+{
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "observedAt": 1792075583.5107641,
+  "pid": 89165,
+  "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "checkpoint": {
+    "number": 784,
+    "hash": "0x0009f5b1e798b46f2759b3c3414f9081e9d4b39af16cfa400afee63dc1c7d485"
+  },
+  "lastSuccessfulIngestAt": "1792075569648",
+  "jobs": [
+    {
+      "postId": "0x1adc5989b049faa7d3d16cba367bc0d270f3d442011e5996a2333b5d1d0a5839",
+      "state": "manual-review",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+    },
+    {
+      "postId": "0x25eb84fc8ea7452573ccf2c3b789d6f9657679676e17b79bde39d3a39bf3c8ad",
+      "state": "evaluated-ok",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+    },
+    {
+      "postId": "0x06dfc3199d2f56d1041d4266cf3f7fe06be57e738b268f3414e440b016245f52",
+      "state": "leased",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+    }
+  ],
+  "containers": [
+    {
+      "name": "billboard-model-8f06608f-c8d4-4057-a244-a6278356efb9-proxy",
+      "running": true,
+      "health": null
+    },
+    {
+      "name": "billboard-model-8f06608f-c8d4-4057-a244-a6278356efb9",
+      "running": true,
+      "health": "healthy"
+    }
+  ],
+  "scope": "Actual same-daemon successful canonical ingestion plus isolated runtime readiness; evaluations not assumed complete"
+}

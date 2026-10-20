@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "PASS_SCOPED_CONTROLLED_27",
+  "source": "c770fd1d3d1e66ce99657bcd9ff0d98ad2681252",
+  "actualPacketSha256": "a790fcc81b94891b3e4cbc5b8de8dd54441ef55913e27a251f47295ce0b1bb69",
+  "session": 40376,
+  "checks": {
+    "exactLabels": 27,
+    "pass": 27,
+    "skip": 0,
+    "elapsedMs": 192,
+    "rssKiB": null,
+    "rssExplanation": "No sample during short run; not zero memory",
+    "protectedHashesRechecked": 1163,
+    "packetArtifactsVerified": true,
+    "ownedTreeAbsent": true,
+    "temporaryAbsent": true
+  },
+  "scope": "Existing builtin-only controls and labelled SDK-shaped receipt projection. No actual SDK constructor/receipt, HTTP, wallet, native proof, provider or deployment acceptance.",
+  "next": "Prepare source-bound actual installed SDK no-send constructor/receipt and loopback HTTP adapter focused checks; separate source/runner review and parent grant before runtime."
+}

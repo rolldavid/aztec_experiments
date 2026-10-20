@@ -1,0 +1,19 @@
+{
+  "mode": "real-portal-deposit",
+  "operationId": "uncertain-fund",
+  "portal": "0x35f79e954d86d7ce264e72ee49d2093f7d56e571",
+  "escrow": "0x10ca541e30070375323054e86c54b64969dfac3e36ef1ae7f10381ad5e49ab4e",
+  "chainId": "31337",
+  "rollupVersion": "515880010",
+  "amount": "1000",
+  "recipientCommitment": "0x16b2519eaef68b7bfc4eb89a5f9a165341e40019538bde29009fd04f91e713fc",
+  "secretHash": "0x194751cb9439e5afe1ff1aa4b203a24ec5761938f5b3a09cbb2de314c6ee4576",
+  "content": "0x0038120b13596d0ce051273ab7be4312f7265ee1c6f3b5c10205a3425fb46275",
+  "leafIndex": "2",
+  "messageHash": "0x00acd98d2deb69a82fe6692e481c71675cda01ac820c183aa60d073256df0978",
+  "txHash": "0xfe1b138a3ac54ef3e4b64a9e09984244e431112720fa8bda335139a6041ad6ad",
+  "blockHash": "0xa937d23b9cf24370ba0cea84b2ccff65e7c92bfb1ff09674a48214d44b54bd76",
+  "blockNumber": 149,
+  "canonical": true,
+  "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-d92e6f32-99a3-447c-9598-e34ad9ad0ad4/uncertain-fund-deposit.json"
+}

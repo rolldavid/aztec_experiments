@@ -1,0 +1,26 @@
+{
+  "source": "2812bbc4ce857886af68795ab7e450eae679484a",
+  "startedAt": "2026-10-13T12:28:01.794Z",
+  "pid": 41537,
+  "runnerSha256": "88fc70822375a7fb8bc7b117e0768c4c90228c47f6f00eb92e239919bd175fcd",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "preparationSha256": "e5ca2b8237a20e79850dd2d617c7b4d1c833175d15a5fb60e012aa35f67ab136",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "scripts/test-prover-bootstrap.py",
+    "ProverActivation",
+    "-v"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/full-prover-activation/focused-traffic/home",
+    "TMPDIR": "/private/tmp/ptc18-_o64weed",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PROVER_VALIDATION_NODE": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "retry": false
+}

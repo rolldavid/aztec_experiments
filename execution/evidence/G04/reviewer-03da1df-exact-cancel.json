@@ -1,0 +1,42 @@
+{
+  "reviewer": "independent reviewer_resume",
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "scope": "One explicit dispatch of the fixed retained Sepolia cancellation; source review only, not authority or evidence of an actual send.",
+  "revision": "03da1df1a32ea27194a74e562fddf1abf8933c73",
+  "verdict": "approve-scoped-source",
+  "sourceSha256": {
+    "plugins/operations.mjs": "4864e55644f643cce62d264a9b3a10fd122c82a0ef49599b9117a631049829af",
+    "plugins/operator.mjs": "18ef77cc9e7c822e257cade1852fc7e6258aa41cbf09c0b4b379cb61cab02a3a",
+    "plugins/test/operations.test.mjs": "59e97fd7f56de83f4d6ac8ee4b51fe8b3be32d5726116bab052c3f25abd50e10"
+  },
+  "packetSha256": "322fb25562b102f6a5b4ea0d7f3fc6a45c4f367f566fa7c8788fc60038c393b5",
+  "findingDisposition": [
+    {
+      "id": "G04-EXACT-1",
+      "status": "closed",
+      "evidence": "Both production entry points reject any statePath other than the literal original campaign path before parsing, file reads, locking or provider construction. Subsequent existing parent realpath/owner/mode checks reject symlink aliases. Copied-path regression passes."
+    }
+  ],
+  "independentChecks": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp HARDWARE_CONCURRENCY=1 Node24 --test --test-name-pattern=Exact cancellation plugins/test/operations.test.mjs",
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 3203.08475,
+    "kind": "Synthetic signed transactions and chain doubles; actual local exclusive/fsync store; no external RPC or original private-file reads."
+  },
+  "assessment": [
+    "Exact original sender/nonce/hash is pinned at production admission. Ethers signature/raw decoding binds chain11155111/type2/self/value0/data0x/empty accessList/21000 and unchanged fees capped at5gwei. No signing port is used by the exact-dispatch runner.",
+    "Six original file hashes, raw digest and operation identity bind the explicit <=24h intent. Source files are rechecked around entry and dispatch; the original journals are only read.",
+    "An exclusive fsynced entered sidecar precedes dispatch. All entered outcomes, including failed fsync acknowledgement, post-entry veto, transport error, wrong acknowledgement and observation persistence failure remain reconcile-only. Changing expiry cannot create another slot.",
+    "Original state.lock plus lead-owned sender lease remains the operational serialization boundary. Three candidate receipts/effects are reconciled before entry and again before dispatch; visible/pending candidates, changed nonce, stale canonical head, insufficient balance or unaffordable original fee stop the operation.",
+    "The raw RPC path makes one bounded10s nonredirecting request without retry or auxiliary broadcastTransaction metadata calls. A returned transport acknowledgement does not establish canonical execution; existing three-winner reconciliation remains decisive.",
+    "The change reuses existing plan/signature/reconciliation/lock/transport machinery and adds one bounded explicit recovery transition; no scheduler, key capability or general replacement framework."
+  ],
+  "limitations": [
+    "Original429 observation is not proof the earlier raw transaction was unaccepted: the old ethers broadcast path also ran auxiliary RPCs. This recovery relies on explicit authority and exact signed transaction idempotency, not absence or429 alone.",
+    "Local expiry does not expire signed bytes on chain. A later winner can still race fresh observations; exact nonce/hash prevents a different new transaction, and final canonical winner reconciliation remains required.",
+    "The trusted original directory, sidecar retention and exclusive lead sender lease must remain intact; deleting the permanent sidecar or bypassing the trusted operator is outside this mechanism.",
+    "No real network outcome, fee expenditure, deployment, continuation, or broader testnet release acceptance is claimed. Worker101 affected passes are reported by its packet; reviewer independently ran only the8 targeted cases."
+  ]
+}

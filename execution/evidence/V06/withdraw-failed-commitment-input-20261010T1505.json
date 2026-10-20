@@ -1,0 +1,129 @@
+{
+  "phase": "withdraw",
+  "passed": false,
+  "startedAt": "2026-10-10T15:02:11.307Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T15:02:16.118Z"
+    },
+    {
+      "stage": "verify-public-asset:user.html",
+      "at": "2026-10-10T15:02:16.118Z"
+    },
+    {
+      "stage": "verify-public-asset:aztec_bundle.js",
+      "at": "2026-10-10T15:02:17.135Z"
+    },
+    {
+      "stage": "verify-public-asset:plugins.js",
+      "at": "2026-10-10T15:02:23.336Z"
+    },
+    {
+      "stage": "load-live-application",
+      "at": "2026-10-10T15:02:24.942Z"
+    },
+    {
+      "stage": "restore-disposable-aztec-account",
+      "at": "2026-10-10T15:02:27.338Z"
+    },
+    {
+      "stage": "reconnect-disposable-ethereum-account",
+      "at": "2026-10-10T15:02:27.834Z"
+    },
+    {
+      "stage": "wait-restored-application",
+      "at": "2026-10-10T15:02:28.273Z"
+    },
+    {
+      "stage": "screen-and-withdraw",
+      "at": "2026-10-10T15:02:40.385Z"
+    }
+  ],
+  "ethereumNonceBefore": 7,
+  "plan": {
+    "scope": "[1,2,2]",
+    "depositChainId": "3975687956716040083807072109371572748972341715518127934008812911420907584461",
+    "amount": "10000000000000",
+    "waitingReason": null,
+    "readyAt": 1791640020,
+    "chainTime": 1791644556,
+    "remaining": 2,
+    "maxScreeningSteps": 2,
+    "maximumCreditSpend": "196200000000000000000"
+  },
+  "authorPostDeadlines": [
+    {
+      "label": "onboarding",
+      "postId": "0x1d23a70e21f615514ce7e67f6a58efa8417d10d7803d74e941f2aecf827c5f18",
+      "txHash": "0x0d70066e95f5953d193dacd5e2a0c4eaed342ebf2197ca33ba85a47e8ee7e20d",
+      "flagDeadline": 1791636348
+    },
+    {
+      "label": "moderation-post",
+      "postId": "0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2",
+      "txHash": "0x0a836183e9ab4da3790d8097ff0c9a8a103681cfc54a279566bd0e481bb337f2",
+      "flagDeadline": 1791637644
+    },
+    {
+      "label": "plugin-claim-post",
+      "postId": "0x17967be209de76f032d1f9f9c4beeb3bde2e9c8376d9c6a9342d053a2db87947",
+      "txHash": "0x1d837c1f390cc8dabc545b2cc4e59a0109a92370f64ca22502ecbed5bb5e42d1",
+      "flagDeadline": 1791637428
+    },
+    {
+      "label": "plugin-request",
+      "postId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+      "txHash": "0x227f0ec9c66a908f5c0337c6b0d1f58456a9968fdae468589dcac8ee79caffdb",
+      "flagDeadline": 1791643692
+    }
+  ],
+  "moderationFixtureDeadline": 1791637644,
+  "readyAt": 1791643692,
+  "exit": {
+    "hash": "0x195cf29c310c001b4479aebe727f661c1f72dd0b59d7e2b4d7e2856a57b1f3d6",
+    "status": "checkpointed",
+    "blockNumber": 15548,
+    "blockHash": "0x1a4904ac511e54520299d253fa8c01e220865593ad260faa6064e7183ee59113",
+    "transactionFee": "903720144595200000"
+  },
+  "failure": {
+    "stage": "screen-and-withdraw",
+    "name": "Error",
+    "code": null,
+    "frames": [
+      "    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-hosted-followup.mjs:52:191"
+    ]
+  },
+  "ui": {
+    "operation": {
+      "id": "5e8c46b1-ad57-4a92-8782-e195648d6199",
+      "action": "withdrawal",
+      "status": "paused",
+      "stage": "settlement",
+      "message": "Paused. Your completed payments are saved.",
+      "mode": "remote",
+      "error": {
+        "code": "BB_OPERATION_PAUSED"
+      },
+      "startedAt": 1791644562825,
+      "result": {
+        "state": "withdrawal_needs_verification",
+        "lastL2TxHash": "0x195cf29c310c001b4479aebe727f661c1f72dd0b59d7e2b4d7e2856a57b1f3d6"
+      },
+      "failedAtStage": null,
+      "endedAt": 1791644706095,
+      "history": [
+        "screening",
+        "preparing",
+        "proving",
+        "submitting",
+        "confirming",
+        "settlement"
+      ]
+    },
+    "diagnostic": "{\n  \"schema\": 1,\n  \"operationId\": \"5e8c46b1-ad57-4a92-8782-e195648d6199\",\n  \"operation\": \"withdrawal\",\n  \"stage\": \"settlement\",\n  \"status\": \"paused\",\n  \"proving\": \"remote\",\n  \"errorCode\": \"BB_OPERATION_PAUSED\"\n}",
+    "pluginStatus": ""
+  },
+  "finishedAt": "2026-10-10T15:05:07.594Z"
+}

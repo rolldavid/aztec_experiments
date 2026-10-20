@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:32:02.154335+00:00",
+  "baseline": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+  "designSha256": "0d54f2dcf6f58bb5bad8b0b90b76d88cdb455462a8622002842d4c216330cc98",
+  "disposition": "design-feasible-pending-exact-source-and-runtime-review",
+  "sourceReferenceHashChecks": {
+    "shared/trusted-private-node.mjs": true,
+    "shared/trusted-private-node.test.mjs": true,
+    "prover/private-query.mjs": true,
+    "shared/rolling/cold-preference-reader.mjs": true,
+    "scripts/patch-pxe-preference-page.mjs": true,
+    "scripts/test-pxe-preference-page.mjs": true,
+    "../rolling-lead-runtime/node_modules/@aztec-labs/foundation/src/json-rpc/client/safe_json_rpc_client.ts": true
+  },
+  "assessment": [
+    "Existing SDK schedules queued requests with a zero-ms batch window; fixed same-turn public reads fit existing maxBatchSize3. Actual transport coalescing still requires runtime evidence because schema/typed-parameter awaits can separate calls.",
+    "Tips and world-state read pairing does not cross identity validation. Initial checkpointed/proposed canonical observations can pair after their fixed targets are captured; timestamp and final proposed reread must remain later.",
+    "Generated recovery anchor metadata and public instance, and generated page anchor/page metadata/instance, are independent public queries after validated nodeInfo and captured typed anchor. They are not atomic; every original hash/network/class/address/effect/ordinal check and later canonical/account guard remains required.",
+    "Do not combine separate body/after-settlement validators, reader pre/post-CAS/mailbox publication checks, or compact pre/post admission. The proposal preserves these boundaries."
+  ],
+  "requiredSourceReview": [
+    "Snapshot each fulfilled response synchronously into primitives or exact SDK buffer copies before waiting on siblings or performing async hashes; no retained mutable provider object may govern later validation.",
+    "Start only fixed2/3 reads; convert synchronous throws to member promises; await allSettled, inspect status rather than reason truthiness, and preserve original falsy rejection until normal sanitizer. Stable declaration-order precedence.",
+    "Hold queue/account/gateway ownership until every started member settles. No Promise.race, detached work, retries, TTL or readiness reuse.",
+    "Wrong network/proofs must trigger zero subsequent calls; pair failures must not commit/publish; late context/canonical/contributor changes must retain original rejection/rollback.",
+    "Same block numbers do not authorize deduplication of intentionally separate observations. Existing RPC methods/schema/privacy limits remain exact.",
+    "Changed generated helper/transform hashes require full explicit installed8+2 closure and normal manifests before any genuine consumer. No review of dirty in-progress source implied."
+  ],
+  "measurementDisposition": {
+    "mandatory": "Same6steps,4acceptedcompact,12status+5advance, exact snapshot/head/digest, both tags0, errors/pending0 and cleanup.",
+    "requestCeiling": 400,
+    "baselineRequests": 475,
+    "timeTargetMs": 8500,
+    "meaning": "Predeclared development efficiency targets. A miss is recorded, not a reason to remove checks or retry unchanged. One finite fixture does not establish17-block/fullsync/large-history SLA."
+  },
+  "execution": "No tests/network/native/build or source mutation performed."
+}

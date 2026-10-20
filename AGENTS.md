@@ -1,3 +1,7 @@
+## Current checkout entry point
+
+Read [START_HERE.md](START_HERE.md) first for current hosting, authority, outstanding work and the published handover. Historical task records do not restart stopped campaigns.
+
 # Production anonymous message board
 
 ## Mission and entry point
@@ -8,7 +12,7 @@ The persistent source of work is `execution/graph.json`, not chat memory.
 Read `execution/README.md`, `execution/decisions.md`, and the selected task plan.
 
 For remaining Aztec application work, read and use
-[`aztec-app-development`](/Users/zac/.codex/skills/aztec-app-development/SKILL.md).
+[`aztec-app-development`](skills/aztec-app-development/SKILL.md).
 Apply its fast local iteration guidance: native devnet and PXE proof flags disabled
 for development, state-dependent execution, focused checks before expensive runs,
 and component ownership through debugging. Keep independent review before

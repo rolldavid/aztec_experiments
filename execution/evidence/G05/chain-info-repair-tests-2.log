@@ -1,0 +1,30 @@
+✔ locked construction does not load or query a wallet (0.827667ms)
+✔ name preparation is encrypted, real ABI encoded and immutable across mutation/restart (9.7605ms)
+✔ all first-slice actions encode against the installed RollingBoard ABI (33.513209ms)
+✔ unknown send stays fenced across replacement instances; absent receipt never authorizes retry (1.66075ms)
+✔ durable fence failure prevents send; successfully saved pre-send fence cannot be retried (1.312791ms)
+✔ saved fee ceiling and saved policy cannot be silently changed on submission (3.632084ms)
+✔ rejects arbitrary calls, fabricated Bok flow and oversized content without truncating (1.301833ms)
+✔ private ownership and status reads never invoke publicReader, and do not overclaim eligibility (2.558583ms)
+✔ reconcile uses exact operation identity and preserves reverted outcomes (1.453625ms)
+✔ CAS excludes concurrent writers from sending the same prepared intent twice (2.198625ms)
+✔ cancellation only before send, including cancellation/submission CAS race (3.161166ms)
+✔ live private screening hint round-trips through encrypted store and actual ABI (6.486917ms)
+✔ canonical receipt lost after a reported success returns recovering; changed deployment fails closed (1.953167ms)
+✔ wrong wallet node fails before any personalized wallet/utility call (0.262417ms)
+✔ actual encrypted L2 journal and workflow coexist; restart acknowledges only canonical predecessor (7.183542ms)
+✔ actual journal pending transaction arriving after prepare blocks before private simulation (1.212917ms)
+✔ actual restarted reverted journal still requires finality, and reorg prevents acknowledgement (7.310167ms)
+✔ missing factory PXE provenance rejects before private wallet calls (0.183333ms)
+✔ unverified captured wallet submission route is rejected before personalized calls (0.061167ms)
+✔ newly acknowledged but non-final reverted transaction blocks pre-estimation too (1.249916ms)
+✔ installed BaseWallet field-valued chain identity passes strict application binding (0.4885ms)
+✔ chain binding rejects malformed, missing and out-of-field identities before private reads (0.94175ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 929.0895

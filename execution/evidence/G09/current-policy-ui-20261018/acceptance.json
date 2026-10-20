@@ -1,0 +1,18 @@
+{
+  "sourceRevision": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "environment": "Original native devnet and PXE flags false; independent localhost browser origin",
+  "procedure": [
+    "Import existing disposable moderator account through normal account UI",
+    "Review and confirm new parent rules through moderator action",
+    "Observe v2 on public board; historical posts retain v1",
+    "Review and confirm original text as new version3",
+    "Observe v3 No threats. on public board"
+  ],
+  "canonicalBlocks": [
+    96,
+    97
+  ],
+  "result": "passed scoped moderator action and inspectable policy history",
+  "limitation": "Public projection at96 stayed at95 until reload; focused server repair G07-public-read-refresh underway. Real proofs/testnet and external audit remain separate.",
+  "independentReview": "../current-moderation-20261018/review.json"
+}

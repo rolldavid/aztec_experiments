@@ -1,0 +1,38 @@
+{
+  "candidate": "6128c140b1059ff8fdf3699d0bf86f6f64cba0d0",
+  "base": "f5c7f6a3796ef5149f8fcf048d966b45962c9f20",
+  "verdict": "source approved for bounded early commissioning diagnostics",
+  "checks": [
+    {
+      "command": "python3 scripts/test-prover-bootstrap.py",
+      "worktree": "../rolling-design",
+      "result": "pass",
+      "tests": 25
+    },
+    {
+      "command": "git diff --check f5c7f6a..6128c14",
+      "result": "pass"
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "Only three declared bootstrap paths changed. Fixed step/status/error category, bounded exit code, whole-string parsed numeric versions, class shape and validated public source hashes only.",
+    "Sink opens only existing ttyS0 and console with NONBLOCK/NOFOLLOW/CLOEXEC; confirms character device; one write; no retry/create/permission changes.",
+    "Early platform/filesystem/lock failures now reach shutdown. Diagnostic and failure-stage write errors cannot suppress attempts to start budget service then fallback direct poweroff; each subprocess bounded10s.",
+    "Strict tc acceptance, AF_NETLINK, immutable timers, network shaping and qualification assertions unchanged."
+  ],
+  "limits": [
+    "Previous actual host termination cause unknown.",
+    "Tests use simulated faults; actual Linux tty delivery, systemd controls and commissioning still required.",
+    "Replacement launch needs fresh total budget/resource reconciliation and verified independent cloud termination control."
+  ],
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "parent_session": "lead-20261011",
+  "reviewed_at": "2026-10-11T18:34:07.182290+00:00",
+  "source_sha256": {
+    "deploy/prover/BOOTSTRAP.md": "57ef8f42e868572281eca352eaf8db6d4673c159af7c41ebdef9abf7d2a4fe85",
+    "deploy/prover/bootstrap.py": "939c6fe4b44f4c6e5bffe930cfc6347bb6edcabe1860652fe9a9d2a534994ce6",
+    "scripts/test-prover-bootstrap.py": "9009f9a493c07fdc17153007afeb4bf62ad72a2d5f9a09100089b7c9658c2da0"
+  }
+}

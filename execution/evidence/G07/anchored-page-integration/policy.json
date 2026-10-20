@@ -1,0 +1,46 @@
+{
+  "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+  "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-anchored-compact-page",
+  "implementer": "controls-resume-20261014",
+  "allowed_paths": [
+    "prover/compact-block-native.mjs",
+    "prover/compact-block-native.test.mjs",
+    "prover/compact-node-registration.test.mjs",
+    "prover/compact-service.test.mjs",
+    "prover/private-query.mjs",
+    "prover/server.mjs",
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs",
+    "shared/rolling/compact-client.mjs",
+    "shared/rolling/compact-client.test.mjs"
+  ],
+  "required_checks": [
+    "focused-combined",
+    "actual-sdk-archive",
+    "generated-wallet-closure"
+  ],
+  "requirements": [
+    "G07-anchored-page-authenticated-progress-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-resume-20261014",
+      "task_id": "G07-anchored-compact-page",
+      "paths": [
+        "prover/compact-block-native.mjs",
+        "prover/compact-block-native.test.mjs",
+        "prover/compact-node-registration.test.mjs",
+        "prover/compact-service.test.mjs",
+        "prover/private-query.mjs",
+        "prover/server.mjs",
+        "shared/rolling/cold-preference-reader.mjs",
+        "shared/rolling/cold-preference-reader.test.mjs",
+        "shared/rolling/compact-client.mjs",
+        "shared/rolling/compact-client.test.mjs"
+      ]
+    }
+  ]
+}

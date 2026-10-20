@@ -1,0 +1,61 @@
+{
+  "task": "G09-navigation-focus",
+  "session": "design-resume-20261014",
+  "parent": "lead-20261011",
+  "base": "0a848579",
+  "revision": "d026cee0054c89f4d4796b203322fb05c6492aac",
+  "requirements": [
+    "RC05",
+    "G09-A01",
+    "G09-A05"
+  ],
+  "files": {
+    "apps/rolling/reader.mjs": "34b4ff50b910aeb2c803415998b1e1c78e71a9ceb9fb6a48d27821019f12ac08",
+    "apps/rolling/navigation.mjs": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649",
+    "apps/rolling/wallet-panel.mjs": "ba705d35fd9d099b92a73e62ab19fa3ccaf322e7456eccec29ea559389d21697",
+    "apps/rolling/reader.browser.test.mjs": "ac06064697639f1be7858247bb672874ff223b6fb4e8e6b21ee621d024d07913",
+    "apps/rolling/navigation.test.mjs": "000d471aded75248698f456a6174a86627ef08fbcc0c3f47177a0d4c7da55021",
+    "apps/rolling/wallet-panel.browser.test.mjs": "dc409ab7ea501962fc2cbe386fda04c7325a60996f22ae1ec4beb6a14117900e"
+  },
+  "changes": [
+    "Return to an authenticated public page snapshot by saved visible post plus viewport offset; load enough pages within existing20s restoration deadline to find displaced anchor. Preserve per-page revision/cursor validation and scoped link focus. Missing anchor is explicitly announced.",
+    "Explicit keyboard paging transfers focus to appended content, empty terminal status or error; automatic loads and user focus moved during pending request are not stolen.",
+    "Dialog rerenders retain same labelled control or meaningful section; asynchronous disabling retains original control without changing intent, funds or account guards."
+  ],
+  "verification": [
+    {
+      "result": "4 initial regressions fail on original source",
+      "log": ".build/g09-navigation-before.log"
+    },
+    {
+      "result": "4 repaired regressions pass3.620s",
+      "log": ".build/g09-navigation-focused.log"
+    },
+    {
+      "result": "30 affected navigation/reader/dialog checks pass18.896s on final reader/navigation; wallet subsequently extended to retain async operation focus",
+      "log": ".build/g09-navigation-affected.log"
+    },
+    {
+      "result": "5 final wallet checks pass4.093s including async profile selector, fee confirmation and uncertain-send fencing",
+      "log": ".build/g09-navigation-wallet-final.log"
+    }
+  ],
+  "logs": {
+    ".build/g09-navigation-before.log": "83763a8c050480329873a553b1d0eddf8dd0f2c734a689cd9791db5c15c1228c",
+    ".build/g09-navigation-focused.log": "7b158189f8154aa6c60ce32efa90acf11d21688d76dc90ab201d2c7e2fc87b0a",
+    ".build/g09-navigation-affected.log": "c5cd8c36b4eb108deab0d8f8246bdf6964537ee9a3a62b0be484c602d4bb5347",
+    ".build/g09-navigation-wallet-final.log": "1b75ce38fdccca7ce74f6d3795a41b4479f264cb184389a04cc99869fef0c645"
+  },
+  "command": "env NODE_BACKEND=js TMPDIR=/private/tmp T04_CHROMIUM_EXECUTABLE=<existing Chrome155 executable> <pinned Node24> --test --test-concurrency=1 --test-timeout=15000 --test-name-pattern=<selection in logs/brief> apps/rolling/navigation.test.mjs apps/rolling/reader.browser.test.mjs apps/rolling/wallet-panel.browser.test.mjs",
+  "limitations": [
+    "Synthetic browser/DOM presentation evidence; no new real wallet, chain, proof or mobile acceptance claim.",
+    "Full app build and exact integrated-source review/gate remain lead-owned.",
+    "Existing20s restore deadline retained; no guarantee to find an arbitrarily distant removed/shifted anchor before it expires."
+  ],
+  "environment": {
+    "node": "24.21.0",
+    "chrome": "155.0.8059.79",
+    "dependencies": "../rolling-lead-bok/node_modules (read-only)",
+    "services": "No live chain/wallet/model or AWS access; isolated fixture HTTP only."
+  }
+}

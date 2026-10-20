@@ -1,0 +1,16 @@
+✔ saved transaction pending never exposes a send action (802.573125ms)
+✔ saved transaction canonical never exposes a send action (681.399375ms)
+✔ saved transaction unknown never exposes a send action (677.388042ms)
+✔ saved transaction empty never exposes a send action (688.406125ms)
+✔ saved transaction context-changed never exposes a send action (677.226417ms)
+✔ ordinary saved post exact-byte recovery is explicit and preserves its draft (743.9155ms)
+✔ ordinary saved post replacement review is explicit and preserves its draft (695.179791ms)
+✔ saved avatar recovery cannot bypass the exact preview requirement (682.323125ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5888.34525

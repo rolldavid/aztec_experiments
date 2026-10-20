@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "task": "W02-current-closure",
+  "agentSession": "controls-resume-20261014",
+  "parentSession": "lead-20261011",
+  "recordedAt": "2026-10-15T01:33:44.142590+00:00",
+  "candidate": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+  "base": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "actualAcceptanceSource": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "recommendation": "All four W02 engineering criteria have current bounded evidence; integrate the one-file fixture repair and obtain independent closure review before root updates W02.json. This is not full application or production acceptance.",
+  "criteria": [
+    {
+      "id": "W02-A01",
+      "text": "No claim secret, private key or sensitive signing material appears in application/daemon logs or public evidence.",
+      "result": "pass engineering coverage",
+      "evidence": [
+        "custody-boundaries.log",
+        "rolling-session-boundaries.log",
+        "journal-daemon-boundaries.log",
+        "journal-backup-repaired.log",
+        "current-evidence-scan.json"
+      ],
+      "reason": "Current browser/CLI import errors, malformed key files and signer failures retain fixed public diagnostics; actual Rolling constructor/refresh/funding projection adversarial tests preserve errors privately while emitting closed fields only. Daemon calls safeModerationDiagnostic/moderationFailure rather than raw exceptions; SDK build fixes LOG_LEVEL silent and session injects silent logger. Current60-file exact-known-secret scan reports0 matches. Actual accepted outputs expose booleans/canonical public data and encrypted backups only.",
+      "limits": [
+        "Exact-known-secret occurrence scan does not prove no encoded/derived leaks or all historical logs. Controlled errors/SDK and provider doubles are labelled; independent specialist privacy audit remains separate."
+      ]
+    },
+    {
+      "id": "W02-A02",
+      "text": "Wallet backup and restore recover authorized access with clear warnings and no accidental key overwrite.",
+      "result": "pass engineering coverage",
+      "evidence": [
+        "execution/evidence/W02/fresh-encrypted-restore-20261015.json",
+        "custody-boundaries.log",
+        "journal-backup-repaired.log",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/W02/reviewer-d5f-fresh-encrypted-restore.json"
+      ],
+      "reason": "Actual UI import in empty independent browser profile restored same key/salt, four portable journals, confirmed avatar workflow and owned River Canvas. Original profile regular-file paths/content and backup unchanged. Existing current tests cover wrong password/tamper, conflicting newer state, cross-account scope, poisoned commitment, active-wallet refusal and atomic no-overwrite behavior. Real AEAD journal tests exercise unknown transaction no-replay fences.",
+      "limits": [
+        "Actual restore intentionally sends nothing; same identity and authorized private ownership access are observed. No new full-history or real-proof qualification is inferred or required for configuration-independent encryption/import behavior."
+      ]
+    },
+    {
+      "id": "W02-A03",
+      "text": "Chain/account switching and concurrent tabs cannot cross-wire wallets or contract instances.",
+      "result": "pass engineering coverage",
+      "evidence": [
+        "execution/evidence/W02/fresh-current-accepted-20261015.json",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/W02/reviewer-d5f-fresh-invalidation.json",
+        "custody-boundaries.log",
+        "rolling-session-boundaries.log"
+      ],
+      "reason": "Actual current MetaMask two-tab natural lock contention and origin-authorized Account2 switch produce observed account events and application invalidation in both tabs; old-context export refuses. Actual chain0x1 selection/readback and subsequent invalidation observed, then Account1/31337 restored with workflow unchanged. Current controlled tests exercise context mutation at initialization/read/send boundaries and cleanup-before-lock-release.",
+      "limits": [
+        "chainChanged callback delivery/timing was not captured; events[] snapshot does not prove a delayed callback. Real chain change/readback plus subsequent app invalidation are the acceptance evidence."
+      ]
+    },
+    {
+      "id": "W02-A04",
+      "text": "Privacy and recovery descriptions match actual key management and documented lost-secret limits.",
+      "result": "pass engineering coverage",
+      "evidence": [
+        "execution/evidence/W02/fresh-encrypted-restore-20261015.json",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/reviewer-d5f4138-privacy-copy.json",
+        "source-inventory.json"
+      ],
+      "reason": "Current UI states encrypted recovery/password no-reset, lost key limits, raw key import warning and fresh backup after independently random claim secrets. docs/recovery.md and BUILDING.md describe random keys, full salts, encrypted journal scope, unlocked-page/PXE limitations and explicit key custody. Exact d5 reviewed privacy copy discloses configured trusted prover/query-service visibility and local filtering rather than absolute Only you promise.",
+      "limits": [
+        "docs/recovery.md retains legacy CLI/Wallet Setup instructions as applicable routes; current Rolling navigation is established by actual UI evidence. No network anonymity or independent-node unlinkability asserted."
+      ]
+    }
+  ],
+  "actualPackets": [
+    {
+      "path": "execution/evidence/W02/fresh-current-accepted-20261015.json",
+      "sha256": "87486207a508fc39a1a017a51f120c6d55f7f9cf63480679034220dd6ab5bce5",
+      "bytes": 7159
+    },
+    {
+      "path": "execution/evidence/W02/fresh-encrypted-restore-20261015.json",
+      "sha256": "4598dbdec948eae544054b308206b118843a74ecaff7c156f68c1ba7600fbac9",
+      "bytes": 6895
+    }
+  ],
+  "independentActualReviews": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/W02/reviewer-d5f-fresh-invalidation.json",
+      "sha256": "e94a408799c4c17e2e62e33f4337ccdd48b2afdaf12279577a9c3c80dcbb2f40",
+      "bytes": 2696
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/W02/reviewer-d5f-fresh-encrypted-restore.json",
+      "sha256": "82d29daaebe03127d3a6954f77b838d0e2b542e200e3bd28adebe718f3306cb1",
+      "bytes": 5334
+    }
+  ],
+  "privacyCopyReview": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/reviewer-d5f4138-privacy-copy.json",
+    "sha256": "215b4958f9ae9f813c1240aeaab939854c9bce14d10b7bb41646209e94ba5823",
+    "bytes": 2028
+  },
+  "ci": {
+    "actual": {
+      "path": ".build/w02-current-closure/ci-d5.json",
+      "sha256": "5197233f32c80ee5398dde1e53b5f3d35d4e0e26ee8607bc4f063cc6235f4feb",
+      "bytes": 3118
+    },
+    "runUrl": "https://github.com/zac-williamson/aztec_experiments/actions/runs/38658401700",
+    "status": "completed/success",
+    "scope": "Clean build, generated-drift rejection, repeat-byte build, baseline application tests including listed W02 files and legacy browser test, model-isolation disposable fixtures. Shared/journal-backup.test.mjs is NOT in this workflow and its failure was discovered separately.",
+    "carryForward": "All listed W02 source/build/docs files identical d5\u2192b1\u2192candidate. Only candidate test fixture changes. b1/current candidate has no new CI claim; final integration gate remains root-owned."
+  },
+  "checks": [
+    {
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js Node24 --test scripts/test-w02-wallet-ui.mjs scripts/test-wallet-backup.mjs scripts/test-w02-cli-inputs.mjs censor-daemon/test_wallet_authority.mjs",
+      "source": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "result": "91PASS0FAIL0SKIP",
+      "durationMs": 819.772,
+      "log": {
+        "path": ".build/w02-current-closure/custody-boundaries.log",
+        "sha256": "9a826451d3d9cffd1d767f970e3a917c73fe597c8628030dae3cf0239277ed0f",
+        "bytes": 7807
+      }
+    },
+    {
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js Node24 --test --test-name-pattern='diagnostic|projection|errors|context|lock|invalidat' apps/rolling/wallet-session.test.mjs",
+      "source": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "result": "42 selected PASS0FAIL0SKIP; nonmatching cases not claimed",
+      "durationMs": 19809.928,
+      "log": {
+        "path": ".build/w02-current-closure/rolling-session-boundaries.log",
+        "sha256": "b2bcfc7824a839ab996df143ee654c2b027945372fc3ccd2b5629b5d4b2031ab",
+        "bytes": 3968
+      }
+    },
+    {
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js Node24 --test censor-daemon/test_health.mjs censor-daemon/test_signer.mjs shared/journal-backup.test.mjs scripts/test-w02-session.mjs",
+      "source": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "result": "170PASS5FAIL0SKIP retained; five journal fixtures fail before backup because new canonical-name SDK seam was absent",
+      "durationMs": 788.680583,
+      "log": {
+        "path": ".build/w02-current-closure/journal-daemon-boundaries.log",
+        "sha256": "439dd2a2bca766e7d1411f56e8f317f11925e56816ebece3ca6d6a78ecf4261d",
+        "bytes": 21739
+      }
+    },
+    {
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<physical lead processed RollingBoard artifact> Node24 --test shared/journal-backup.test.mjs",
+      "source": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+      "result": "33PASS0FAIL0SKIP; all five original failures repaired without assertion changes",
+      "durationMs": 738.715083,
+      "log": {
+        "path": ".build/w02-current-closure/journal-backup-repaired.log",
+        "sha256": "1ed96cd7a4c350323708cabc692c7ea65106f763c1c654b5563d1e13c7281d37",
+        "bytes": 3176
+      }
+    }
+  ],
+  "repair": {
+    "path": "shared/journal-backup.test.mjs",
+    "sha256": "bcc4867c7b3aa944f50a3b49aea27f0e192a4180dc755fe3c6255daa27094a88",
+    "rationale": "Existing name prepare now checks canonical name availability; portable-backup fixture lacked installed Poseidon/map helpers and node canonical/storage methods. Added existing application-test seam, exact ref/address assertions and singleton cleanup. No production or behavior assertions changed.",
+    "dependencies": "Temporary symlink to existing physical lead dependencies removed after test; no installed/copied dependencies. Normal processed artifact reused, not patched."
+  },
+  "additionalEvidence": [
+    {
+      "path": ".build/w02-current-closure/source-inventory.json",
+      "sha256": "dade44387614cfd9179ec6eee5fc337bf0989bb0e2c1c4a6969f0885c008f6a9",
+      "bytes": 3741
+    },
+    {
+      "path": ".build/w02-current-closure/scan-current-evidence.mjs",
+      "sha256": "f7044b6383b9533cd83ea5240b66ea7164d45ef7984d1fa95b9ff06f0ac15dbb",
+      "bytes": 2234
+    },
+    {
+      "path": ".build/w02-current-closure/current-evidence-scan.json",
+      "sha256": "af63323cb354a2d9147a86c9b5fa2b23d61aa935cec3e50ed3a033cf58ff757b",
+      "bytes": 13655
+    }
+  ],
+  "remainingW02Gaps": [
+    "Independent review of this coherent fixture repair/closure packet and root gated integration/update remain pending; no additional W02 product defect identified."
+  ],
+  "separateUnresolvedGates": [
+    "T03 privacy observer coverage/containment and specialist analysis",
+    "G13 final current combined checks and clean reproducible candidate closure",
+    "Targeted real-proof testnet acceptance against verified matching network",
+    "External specialist audit,14-day representative soak,target-network clearance and final R04 release gate"
+  ],
+  "historicalDisposition": "September15 W02.json/self-review and source001 remain historical; do not relabel them current. Current actual evidence and source-bound checks above supersede their acceptance claim for this component only.",
+  "writes": "One assigned test file plus owned private evidence; root owns graph and W02.json. No browser, service, financial or model actions."
+}

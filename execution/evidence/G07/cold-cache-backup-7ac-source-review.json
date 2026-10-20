@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "7ac0ebb12613a814f983158dd593e3ff7879e36b",
+  "verdict": "PASS source eligibility for bounded 14-test backup suite; runtime pending",
+  "sourceHashes": {
+    "shared/journal-backup.mjs": "40d2dba557263a176a02349ddff69f0a1f63d5c46791c3a62defafd84fdd5272",
+    "shared/journal-backup.test.mjs": "70408efd17140ee7df01bb7ee48e7d57242d518d5ad124e3e2cb1a35b46a4506"
+  },
+  "findings": [],
+  "checked": [
+    "New allowed domain is exact production cold reader eleven-field frame: numeric chain/version, rollup, board, original class, artifact hash, account, proof boolean, fixed tier, format1. Numeric/canonical JSON/hex/nonzero/Fr limits match reader construction.",
+    "Existing domains unchanged. Descriptor recovered with authenticated ownership before frame validation; storage key and ciphertext authentication retained. Export same-owner unknown or malformed records fails instead of silently omitting; restore cannot overwrite different/newer bytes.",
+    "New positive fixture invokes production cold reader to produce actual incomplete AEAD/CAS cache, combines all five existing/new record domains and preserves false completeness on restore. Chain and SDK delivery are explicitly doubles.",
+    "Negatives cover scope shape/numeric/field/tier/policy/domain/canonical spelling, owner/ciphertext/descriptor/key transplantation, duplicates/newer conflict/lost CAS/final export readback mutation. Original eight cases remain."
+  ],
+  "limits": [
+    "No unit/native run by reviewer during active genuine job; 14 cases require serialized grant and actual result review.",
+    "Backup authenticates portable records, not recovered head/prefix or PXE synchronization. Restored cache still requires reader database/epoch/canonical-anchor/context checks.",
+    "Partial restore remains preexisting per-record idempotent behavior; does not claim whole-backup atomicity.",
+    "No full cold integration, browser or genuine-chain acceptance implied."
+  ]
+}

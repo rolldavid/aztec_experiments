@@ -1,0 +1,45 @@
+{
+  "verdict": "Latest recovery dump qualification accepted for explicit exact-state admission; post-restart L2 continuity remains pending",
+  "resultSHA256": "51019bd0e3064ad2bf9c32bfbd37c5d14f5f0c1bc994d189596a4ab06bea4a51",
+  "qualifierSHA256": "dbe10b2b4f15d4efe15558014c036c828da14387a69e37797e8e9f5c0bf731dc",
+  "snapshot": {
+    "sha256": "b277eb655c4ee11a6067b67535a701808015c5a29abe66846c10cfcb85328c5d",
+    "bytes": 1526028124
+  },
+  "head": {
+    "number": "0x412",
+    "hash": "0xad4483220629cb2bd8c0f5592b71092fb0b0d7a7e83d9843d15fff0c60286077",
+    "pending": "477",
+    "proven": "477"
+  },
+  "measured": {
+    "elapsedMs": 23705,
+    "peakTreeRSSKiB": 3283008,
+    "limitKiB": 4194304,
+    "nativeExit": {
+      "role": "anvil",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    "ownedTreeAbsent": true,
+    "financialOperations": 0
+  },
+  "checks": [
+    "Loaded exact original3fb dump with unchanged pre/post SHA; historical prior qualified checkpoint remains canonical.",
+    "Restored actual L1head1042 and pending=proven477 match latest independently recorded progress, despite looser>=472 assertion in qualifier source.",
+    "Original inventory transfer exact, original payment/gas/second-wallet transactions successful and canonical, original recipient ETH0.001 and nonce0.",
+    "No financial/mining RPC in qualifier; graceful child shutdown completed."
+  ],
+  "admissionConditions": [
+    "Preserve failed metadata and lease as evidence before any exact metadata-only repair.",
+    "Require original owner dead, original service ports free and final dump hash unchanged.",
+    "Bind native-json-v1 snapshot filename3fb, SHA b277eb655c4ee11a6067b67535a701808015c5a29abe66846c10cfcb85328c5d and exact head/hash/pending/proven from this result; do not alter identities, journals or contract state.",
+    "Resume same campaign only. Verify original L2 withdrawal1c9a\u202618a4ad canonical and current node freshness before browser; no automatic financial replay."
+  ],
+  "limits": [
+    "ENOSPC remains temporal correlation, not proven miner exception.",
+    "No postrestart L2 success or L1 refund success inferred."
+  ]
+}

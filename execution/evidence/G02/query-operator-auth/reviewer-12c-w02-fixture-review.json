@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "observedAt": "2026-10-14T12:37:34.876825+00:00",
+  "revision": "12c90c145b87d8f93d16349edb637629ef1b735d",
+  "baseRevision": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "requirements": [
+    "RC38",
+    "RC39"
+  ],
+  "verdict": "approved",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/test-w02-cli-session.mjs": "129e8225dabeea97ef1f5fc847ea5abe55e7ef631052a06c45882d29fb608c88",
+    "scripts/test-w02-session.mjs": "47a51fca994e4f4509b1acb0a0e8a025605785615cc33444e8b45b57310d601a"
+  },
+  "checks": [
+    "Read current actual CLI preflight/cache/finally body and engine connection/setup/salt helpers before retained failure/success logs.",
+    "Both fixes expand extraction boundaries to include actual moved dependencies. No application implementation copied, no assertions removed, skipped or weakened.",
+    "CLI mismatch occurs before cache restore/action; provider.destroy remains asserted. Actual filesystem checkpoint success/failure, lock absence and recovered-revert warning assertions unchanged.",
+    "Engine includes real _connectionKey called by _setupKey; lossless200bit salts, rejected invalid salts and account/network/rollup/board cache separation assertions unchanged. Added extraction-boundary assertion fails closed.",
+    "Preserved before log has7pass5fail; _connectionKey ReferenceError and missing preflight account/provider effects consistent with exact source diagnosis. After log12pass0fail0skip227.915125ms."
+  ],
+  "logHashes": {
+    "w02-before.log": "6958f3094a48a8c0b8f288af5f83dfddd607cff299d5ea438a5d99e8f118fc66",
+    "w02-after.log": "df4db02fb0bedbfdf026d8b17b486a871b536db3f4fa2d4506dd510aaf054a09"
+  },
+  "limits": [
+    "Focused test fixture repair only; SDK/network/WebLocks doubles retain explicit labels.",
+    "Full clean CI outcome must be separately observed; no complete application/release acceptance inferred.",
+    "No reviewer runtime needed for three-line extraction-only change after source/log verification."
+  ]
+}

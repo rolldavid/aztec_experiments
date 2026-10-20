@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "reviewedAt": "2026-10-15T01:04:28.230425+00:00",
+  "revision": "9bf9cfc94b56530ccc3c884af1b946115e0c1ec7",
+  "base": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "verdict": "approve",
+  "scope": "Source component and controlled checks only; actual selected-App transport is pending.",
+  "requirements": [
+    "RC29",
+    "RC31",
+    "RC32",
+    "RC33"
+  ],
+  "findings": [],
+  "closedFindings": [
+    {
+      "id": "G11-POOL-1",
+      "priorReview": "execution/evidence/G11/reviewer-9d9abeb-pool.json",
+      "disposition": "Closed. Canonical captured conversation and repository open/close admission precede durable running intent. Exhaustion leaves no hosted run intent or paid reservation; after replenishment the same request runs once. Captured history and current request are rechecked, reused by actual agent, and actual toolbox revalidates the allocation. Existing entered running intent is checked before preflight and remains fenced."
+    }
+  ],
+  "checks": [
+    "Read all four repair deltas before repaired packet. Carried forward unaffected pool identity/manifest/selected token/genesis/Actions/lineage/uncertain-mutation assessment by exact blob hashes.",
+    "Inspected actual main wiring: trusted repository open/close uses same namespace/thread/request identity and existing serialization, lease and pending publication machinery; no new model tool or developer credential.",
+    "Independent full existing hosted suite at clean9bf:61 pass,0 fail/skip,2925.285ms. Includes same-request exhaustion/replenishment, original running no-replay and before/after admission canonical changes.",
+    "Verified all8 source hashes and all9 packet evidence log hashes. No service/browser/model/wallet/GitHub mutation."
+  ],
+  "sourceHashes": [
+    {
+      "path": "plugins/DEPLOYMENT.md",
+      "sha256": "d94163626b5ef9e0057ee449723a4a2332c7042e4c978ed2212da13526880d3e"
+    },
+    {
+      "path": "plugins/escrow-service.mjs",
+      "sha256": "db987e35069918a4d79789fdc35df76f108da7ef40f3894b7cf20750979ce7a3"
+    },
+    {
+      "path": "plugins/github-app-broker.mjs",
+      "sha256": "7343366a78c90968437123906ee0ab760d2a48475198204004b0bb898adc6719"
+    },
+    {
+      "path": "plugins/main.mjs",
+      "sha256": "46d44446181dc1aa7099d91fe0a68fc304f32aa25b0f027a964d3ceb9a53a8b0"
+    },
+    {
+      "path": "plugins/test/github-app-broker.test.mjs",
+      "sha256": "f26d38404f53a3f68e0359b93123dea6176252fbffb697af01b89c524284dade"
+    },
+    {
+      "path": "plugins/test/hosted-private-bok.test.mjs",
+      "sha256": "4d97972d16c0ce617ed7ddb08823d6767360a657ade8df8ca74a1b13ea162eeb"
+    },
+    {
+      "path": "plugins/test/thread-repositories.test.mjs",
+      "sha256": "5dd6abb3298eb01cce3c119dfeb3c6ca633c58788809d086348b958565323261"
+    },
+    {
+      "path": "plugins/thread-repositories.mjs",
+      "sha256": "8a2e10ea73b00e86f2904b9fa4e6f7759f227461659964d71c553efc1c1ad242"
+    }
+  ],
+  "unchangedFrom9d9": [
+    "plugins/github-app-broker.mjs",
+    "plugins/test/github-app-broker.test.mjs",
+    "plugins/test/thread-repositories.test.mjs",
+    "plugins/thread-repositories.mjs"
+  ],
+  "evidenceAttribution": {
+    "prior9d9": "Worker197 total:195pass2preexisting container skips; later ref regression1pass. Independent29 selected pool/thread/hosted tests at9d9; old hosted exhaustion expectation is superseded and not carried forward.",
+    "repair9bf": "Worker83 hosted/thread total:81pass2preexisting container skips; independent61 full hosted pass at exact9bf. No claim all197 were rerun at9bf.",
+    "failedRegression": "Before-repair exhaustion/replenishment failure retained in pool-admission-before-repair.log."
+  },
+  "independentLog": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G11/reviewer-9bf9cfc-pool.log",
+  "independentLogSha256": "dc83c07067c492b6bba751d9da8efeca91c1e372039ca9a41b5b9cb996e597cc",
+  "packetSha256": "d1a3ab5dceea918bb14403d12e48d4196ec93e7509efd3e5a64ed60b15bb59b7",
+  "limits": [
+    "GitHub/provider ports in checks are controlled fixtures; selected-App real transport, source readback and production qualification remain pending.",
+    "Finite append-only pool needs trusted operator provisioning/replenishment. No claim GitHub automatic creation/selection API works.",
+    "Entered or uncertain paid requests remain unreplayed; this repair only moves predictable resource admission before entry.",
+    "No executor implementation changed; two opt-in real container tests remain skipped and are not claimed passing.",
+    "Existing legacy created mirrors and connected repositories remain on original paths; no reassignment or fabricated creation receipts."
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "revision": "79c8b459d77ef6dacae6c2cd8a4051a8e582ce03",
+  "base": "069759295c10f161068db738521b9912b4c4f797",
+  "verdict": "approved scoped coherent release/withdrawal/refund-only driver source; no blocking findings",
+  "source": {
+    "scripts/t04-metamask.mjs": "dcfea7ad7e67389c0dd7eb9fa0580f0293e76a4a24b95caece8db49630e16634",
+    "scripts/test-wallet-extension-browser.mjs": "dbac3254c672542302682b2f79d956ad7fae92fe6ab1701e181638a8d8aaf466",
+    "scripts/test-t04-browser-journey.mjs": "902eafa82aa8d051e4608421d132edf9caec3abd57baf0e40ede07cdb5c170c0",
+    "scripts/run-bounded-browser-check.mjs": "5b6c7d37c983d008c75cad17d7c1258372836a0785590b185558826f35eaef99"
+  },
+  "priorFindingsClosed": [
+    "518e599 exact encrypted journal admission joins Node-owned outer request guard; one attempt and late teardown counters remain.",
+    "Ready export now requires exact configured original claim hash, current node scope, successful canonical receipt and original payment/current custody binding.",
+    "Actual app credential failure is independently repaired in root8342b45; driver does not bypass that error."
+  ],
+  "assessment": [
+    "Finite schema2 approvals bind runtime/public scope, recovery file hash/permissions, original release or withdrawal hash, amount/caps and expiry; existing outputs are never overwritten.",
+    "Keys-only unlock authenticates empty initial claims/journals and forbids specifying an old full recovery file. Current workflow is then authenticated with exact original withdrawal and recipient; no stale journal restoration.",
+    "Read-only refund has120s owner, no Confirm call and zero provider/outer ETH, L2 and proof sends; quote cancellation occurs after diagnostic prepare.",
+    "Refund-only performs no L2 withdrawal; actual refund uses existing UI review/confirmation and exact saved Ethereum-journal tuple. Unknown/rejected attempts are not automatically retried.",
+    "Node admission survives page loss and finalization runs after context close; provider count one, outer at most one with exact raw/unsigned equality, nonce increment and canonical receipt/event/token delta checked on successful path.",
+    "Release preserves original authorization through export/reopen, fee-review cancel and same-request release, checks canonical accounting and restored available credit without post/model invocation.",
+    "Finite diagnostic fields avoid raw exception text/private identifiers; no app/proof/config guards changed."
+  ],
+  "evidence": {
+    "refundPacketSHA256": "a271addd2d5a5237ba402f71e8b27878d70c5a87c1af66bb0bb1d763190b7f67",
+    "releasePacketSHA256": "2f41a4b8224534be371732175a9e4c3c554b6ab71fa775baff655067a79a7e75",
+    "packetSourceAndListedLogsActualHashesVerified": true,
+    "latestFocused": "7 passed860.052416ms; earlier source-bound focused carries preserved; no broad reviewer rerun",
+    "actualReadyExport": "PASS19971ms, original claim hash/canonical block",
+    "actualRelease": "PASS133061ms,2L2 authorize/release,0ETH/proof,closedhistoryreopen",
+    "actualWithdrawal": "Canonical1c9a\u202618a4ad separately confirmed by reviewer live block418; overall withdrawal/refund driver did not pass",
+    "actualRefundReadOnly": "Both original failures retained; last19854ms account-status/prepare fail,zero sends. Root834 app repair source approved separately."
+  },
+  "limits": [
+    "Actual successful L1 refund remains unqualified until terminal owner result.",
+    "This is native local development, not production proof, positive expiry, testnet withdrawal or whole-product qualification.",
+    "No browser, financial action, private profile read or service mutation during review."
+  ]
+}

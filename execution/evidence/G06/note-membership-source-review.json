@@ -1,0 +1,16 @@
+{
+  "source": "447889890979b5b6e05f1a0cb3633649f506c345",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved for one bounded diagnostic",
+  "tests": 9,
+  "caveats": [
+    "debug.getNotes synchronizes contract notes; instrumented state may differ from original failure",
+    "unmatched settled reads remain inconclusive about pending note classification"
+  ],
+  "checks": [
+    "pinned NoteDao/debugfilter/hash ordering/storage layout/findLeavesIndexes semantics",
+    "preserves original receiver/promise/errors and restores node method",
+    "only fixedcategories/counts/publicanchors persisted",
+    "correctpreflight before unchanged negative and finalpositive; no bypass"
+  ]
+}

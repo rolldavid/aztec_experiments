@@ -1,0 +1,47 @@
+✔ actual installed source pins and fixed official client configuration without network (6.633583ms)
+✔ labelled fake phases persist before/after in exact order and pass exact addresses to official-config seam (0.952834ms)
+✔ each failing phase stops without replay or downstream calls (1.260667ms)
+✔ separate address and26-read config failures retain exact phase and numeric official HTTP/RPC status (0.728583ms)
+✔ official typed numeric causes accepted, arbitrary names/code/messages not accepted (0.328917ms)
+✔ changing/throwing numeric, message and cause getters never execute (0.11725ms)
+✔ cyclic/deep/error-proxy cause chains terminate with no raw values (0.127ms)
+✔ wrong chain, registry, rollup and configuration version are distinct rejection gates (0.60675ms)
+✔ source failure and malformed public projection fail closed without leaking extra fields (1.035125ms)
+✔ anchor continuity preserves exact number/hash/timestamp and retains preceding successes (0.650625ms)
+✔ receipt creation is exclusive, symlinks/relative paths reject before child (1.070333ms)
+✔ actual disposable child timeout preserves partial phase and kills/reaps TERM-ignoring process (566.664125ms)
+✔ spawn failure rejects promptly and retains initial safe receipt (6.32725ms)
+✔ explicit split roles are immutable; default Tenderly mode is preserved; unsupported selectors fail before work (0.675042ms)
+✔ split full config plus actual historical seam pass only after both before/after common anchors (0.632083ms)
+✔ split wrong chain/common anchor fails before address collection or any history request (0.335875ms)
+✔ split config429 and historical4444 stay errors without retry/fallback (0.587167ms)
+✔ split logs require nonempty <=128 actual SDK event name and exact deployment/address/removal binding (1.76875ms)
+✔ split post-history reorg on either provider rejects all preceding successful checks (0.584916ms)
+✔ split labels survive child failure and invalid mode refuses receipt creation (38.577084ms)
+✔ actual installed SDK full configuration and history use distinct fixed transports against labelled fetch doubles only (25.735667ms)
+✔ all exact pinned SDK modules hash-bind; only selected complete config call changes, and modules parse without execution (211.638167ms)
+✔ source hash, duplicate/missing anchors, reversed offsets and unknown phase reject (0.341209ms)
+✔ synthetic awaited operation preserves receiver, argument identity, pending state, result and exact rejection (1.715125ms)
+✔ real dedicated atomic record retains nested begin/complete and no caller data (56.262709ms)
+✔ malformed, forged-hash, nonnested, duplicate, overflow and extra-field records reject (0.261083ms)
+✔ symlinks, public permissions, wrong-size and malformed dedicated files reject (2.141709ms)
+✔ recording failure is sticky and cannot change application success or error (6.092709ms)
+✔ loader forwards unrelated return/error identity and validates exact target bytes before substitution (0.233959ms)
+✔ actual Node24 synchronous load hook substitutes only exact target and deregisters (2.530125ms)
+✔ dangling record and temporary symlinks are rejected before recording (0.903875ms)
+✔ configuration provider rewrite requires one exact complete call and independently enforces call count (0.42425ms)
+✔ actual installed complete configuration call and merge retain all other arguments, awaited result, genesis guard and runtime providers (0.664417ms)
+✔ attestation requires the exact semantic runtime adapter label rather than diagnostic-only claim (10.86725ms)
+✔ actual pinned sync method preserves pending work, receiver, error identity and no retries while observing failures (4.407959ms)
+✔ progress snapshots distinguish advancing checkpoints, an in-flight wait and repeated errors; writes throttle and final flush (42.502208ms)
+✔ actual viem numeric errors, bounded cause chains and malicious accessors never disclose raw errors (118.364875ms)
+✔ progress schema rejects nonfinite, unsafe, incoherent, private and extra fields (0.269208ms)
+✔ new repeated-operation anchors are unique and mandatory, successful checkpoint observation is after actual persistence (2.112958ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1675.677958

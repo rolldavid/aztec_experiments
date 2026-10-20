@@ -1,0 +1,47 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "4df2c0bae64f9d4cccf4f1b4a6aca2afce583d22",
+  "base": "dd86b6dea4e5f7e54276e7eab8a15be600a9a54e",
+  "verdict": "approved_source_only",
+  "requirements": [
+    "G05-A01",
+    "G05-A08",
+    "Exact canonical mined normalized-name collision reason, not a later unrelated simulation"
+  ],
+  "fileSha256": {
+    "scripts/testing/rolling-collision-observer.mjs": "920ca0144fd2c7485afcd3e79d5e7fde11b3f49d5fce81eadf49f43565726b83",
+    "scripts/testing/rolling-collision-observer.test.mjs": "adfae7243b990633eb54e779e77d02e6281a075667c2586c4b3280b0bf2e736a"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinnedNode24> --test --test-concurrency=1 scripts/testing/rolling-collision-observer.test.mjs",
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 584.16275,
+      "log": "/tmp/reviewer-collision-observer-4df-tests.log",
+      "scope": "Labelled synthetic processor outcomes using actual installed SDK classes and effect encoding; no AVM/race/proof acceptance"
+    }
+  ],
+  "findings": [],
+  "installed_source": [
+    "simulator/dest/public/public_processor/public_processor.js:758 dynamically invokes this.processTxWithPublicCalls(tx);827-848 returns[processedTx,appLogicReturnValues,logs] and calls result.findRevertReason.",
+    "stdlib/dest/tx/processed_tx.js:42-68 constructs actual TxEffect and exposes hash,globalVariables,revertCode,revertReason; fallback empty SimulationError cannot satisfy exact name classifier.",
+    "stdlib/dest/tx/global_variables.js has own numeric blockNumber, schema branded-number; Tx.getTxHash returns own txHash."
+  ],
+  "observations": [
+    "Wrapper preserves receiver/argument identity, invokes original once and returns original Promise/result/error; observer exceptions never replace original. Hostile Promise attachment fails closed with pending/errors.",
+    "Input Tx hash, processed hash, effect hash and processed/input global blocknumber must agree before record. Installed TxEffect.prototype encoder produces bounded bytes, SHA256 is retained in memory only.",
+    "Only actual reverted code1 with installed SimulationError and synchronous boolean classifier can match. Exact static name collision classifier remains separate parent-authenticated dependency.",
+    "Any pending/error/truncation/conflict/lost ownership prevents matching. Identical duplicate executions counted; different same-hash effect/block/classification/revert poisons all.128call bound retained.",
+    "Snapshots expose fixed counts/flags only, no hashes, witnesses, raw reasons or error text. Close restores original descriptor only if still owned, otherwise flags loss and leaves later owner untouched.",
+    "No second sequencing/mining/service/retry lifecycle. Prototype tap is global within test process and must be tightly owned."
+  ],
+  "parent_runtime_conditions": [
+    "Install only after actual distinct two-pending transaction barrier and immediately before existing sequencer resume; keep preflight simulations outside window.",
+    "Authenticate canonical receipt/effect bytes and block membership independently; match exact txHash/effectSHA/block tuple before accepting structured loser reason.",
+    "Preserve canonical included fee/effect evidence before semantic assertions, and verify winner/loser ownership after appropriate finality/sync.",
+    "Check all observer counters and restored=true after close in finally on success/failure; scope no concurrent unrelated writer/processor campaign.",
+    "Actual genuine race not yet run. A source-level tap alone does not prove canonical inclusion or protocol rollback."
+  ]
+}

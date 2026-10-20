@@ -1,0 +1,34 @@
+{
+  "task_id": "G02-original-submitted-reserve",
+  "implementer": "funding_resume2",
+  "candidate": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+  "base": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "plugins/escrow-service.mjs",
+    "plugins/main.mjs",
+    "plugins/private-bok-escrow.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/private-bok-escrow.test.mjs"
+  ],
+  "required_checks": [
+    "original-reserve-continuation"
+  ],
+  "requirements": [
+    "RC41-original-reserve-continuation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "G02-original-submitted-reserve",
+      "paths": [
+        "plugins/escrow-service.mjs",
+        "plugins/main.mjs",
+        "plugins/private-bok-escrow.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/private-bok-escrow.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "scope": "Current native USDC original payment/claim recovery only; not uninterrupted120s onboarding acceptance",
+  "passed": true,
+  "elapsedMs": 21982,
+  "originalUninterruptedFailurePreserved": true,
+  "sameClaimHash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+  "canonicalClaim": {
+    "transactionHash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+    "blockNumber": 824,
+    "blockHash": "0x264cb8615215a4690e280be9244dd1e74e83ae59427e4ca1b56eb0732d6f3784",
+    "canonical": true
+  },
+  "normalReadyUi": true,
+  "separateBalances": {
+    "refundableCollateralWei": "1000000000000000",
+    "privateFeeCredit": "989600233000000",
+    "unallocatedBokUsdcBaseUnits": "100000",
+    "requestAccountingComplete": false
+  },
+  "normalEncryptedExport": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/usdc-01/wallet/ready-recovery-export.json",
+    "sha256": "4ace8fb3cb7936e0357bee5a02db1261629bbfce32f4512de9407c49e9a95f24"
+  },
+  "exportMatchesCurrentCustody": true,
+  "effects": {
+    "newSignatures": 0,
+    "newPayment": 0,
+    "newL2Sends": 0,
+    "proofRequests": 0,
+    "blockedRequests": 0
+  },
+  "cleanup": {
+    "contextClosed": true,
+    "ownedTreeAbsent": true
+  },
+  "references": {
+    "actual-packet.json": {
+      "sha256": "70b5794dd5ba5a8489657280bcda0432f69e289122978cfb3ab3b2dfb3979a1c",
+      "bytes": 8442
+    },
+    "recover-export.mjs": {
+      "sha256": "17e3f168aa9e723b69301028c599756d73ba78486278cd3683fb7e2becad08fd",
+      "bytes": 8633
+    },
+    "supervise-recovery.mjs": {
+      "sha256": "38ce52852e0feb5098bec5f2d6c5aea5855cd414438bea7d1cede8de60ec4582",
+      "bytes": 1022
+    },
+    "recovery-export-result.json": {
+      "sha256": "852b6450ff2c8222f783cdbcd05daa95436117d1f08289af9ad54dbc9d43da8d",
+      "bytes": 5197
+    },
+    "recovery-supervisor.json": {
+      "sha256": "0dddf990e7cc4c3ab72b5373a73447cca02d13ab36e9740a2e4dc565157de91f",
+      "bytes": 8978
+    },
+    "wallet/ready-recovery-export.json": {
+      "sha256": "4ace8fb3cb7936e0357bee5a02db1261629bbfce32f4512de9407c49e9a95f24",
+      "bytes": 1023071
+    }
+  },
+  "remaining": "Original automatic claim105.904s timeout remains; no performance cause asserted from later recovery."
+}

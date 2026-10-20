@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "9d443a4cbc1ad1a06a49c2fa106c47690b278f77",
+  "base": "3834273162cdcf930630f5612d392692b04c3fae",
+  "worker": "1870e6aa4222cc2a8a0fcfc2164498f05994ab8d",
+  "packetSha256": "a3d6467b137f7fe33461158638b25ea3239e2a017da16f0d99b9049022b8f4b7",
+  "sourceReviewSha256": "429b66f511afcbaba6e2276a4b81f0b8b1073b114367b361d00fdb16e1979005",
+  "verdict": "eligible-one-matched265-component-run-after-parent-serialized-grant",
+  "independentChecks": {
+    "exactThreeChangedPaths": true,
+    "allThreeBlobsEqualWorker": true,
+    "sourceClean": true,
+    "packetFileHashes": true,
+    "allProtectedPinsRehashed": 3236,
+    "mismatches": [],
+    "runnerOnlyDirectoryDiffFromAccepted03c": true,
+    "childUnchanged": true,
+    "fullTwoSuitesSerialTapNoFilter": true,
+    "inventorySha256": "ad6a874568c4d4499a6eb7ba10c2e9f88dbd924ef7290ac512625f3f3d9e7137",
+    "expectedTests": 265,
+    "isolatedHomeShortOwnedTmp": true,
+    "selected20cArtifactBound": true
+  },
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "requiredOutcome": [
+    "Exact265 label multiset and all six TAP totals including zero failed/skipped/cancelled/todo",
+    "Original descendant-aware Supervisor cleanup, protected hashes/source clean and owned temporary absence",
+    "No runtime source/dependency mutations"
+  ],
+  "limits": [
+    "Component HTTP/schema/SDK Tx and labelled node/proof fixtures only; no genuine reorg/browser or performance qualification.",
+    "No runtime execution by reviewer."
+  ]
+}

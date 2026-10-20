@@ -1,0 +1,22 @@
+✔ rolling mixed payload permits only its exact board/Bok/private fee calls (0.874792ms)
+✔ all padding and fee/network conditions fail closed (0.205792ms)
+✔ every private application circuit is address/network/function bound, including continuations (0.2095ms)
+✔ fragmented private fee balance permits only bound self-recursion, never a direct payload call (64.452125ms)
+✔ artifact provenance rejects missing, stale, raw and symlinked release inputs (8.870625ms)
+✔ actual private expiry is allowed but public expiry and direct callback are refused (24.837708ms)
+✔ actual authenticated Bok reply entrypoint requires configured escrow and private fee, never direct board callback (36.756459ms)
+✔ normal profile entrypoints are narrowly allowed, with private fees and no direct setters (32.085875ms)
+✔ synthetic oracle traverses maximum raster, removal, clear and replacement (6.840666ms)
+✔ synthetic oracle rejects stale-version (2.228208ms)
+✔ synthetic oracle rejects wrong-bytes (119.350417ms)
+✔ synthetic oracle rejects lost-bio (4.614875ms)
+✔ synthetic oracle rejects wrong-event (0.632333ms)
+✔ synthetic oracle rejects unredacted (1.639042ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 743.362583

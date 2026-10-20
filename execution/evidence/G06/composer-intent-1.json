@@ -1,0 +1,12 @@
+{
+  "candidate": "f48620957ee2e5ed5aed4b541c9de1e3cede9d33",
+  "scenario": "rolling-composer",
+  "startedAt": "2026-10-12T00:47:03.144206+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G06/composer-combined-f486-review.json",
+  "reviewSha256": "e2ab7f9dd51af76fa5bcc99c4e35159168245663b71593136d8e59d085d44b58",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-composer",
+  "status": "launch once",
+  "scope": "Genuine funded names then actual production encrypted custody import/account switching/prepare/cancel; no browserpaymentclaim"
+}

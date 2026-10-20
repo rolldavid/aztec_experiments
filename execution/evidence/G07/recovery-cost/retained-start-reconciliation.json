@@ -1,0 +1,15 @@
+{
+  "sourceRevision": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "time": "2026-10-14T23:45:49.360035+00:00",
+  "deadOwnerPid": 56517,
+  "portsAbsent": true,
+  "qualifiedSnapshotHash": "34d2a80baddcc3347f5838c1e8d3ac378a893067bfc5df7b9939fb689aef71a8",
+  "changedMetadata": [
+    "phase starting to stopped",
+    "archive dead hosted.lock",
+    "archive shutdown-failure.json"
+  ],
+  "privateOriginalBackup": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/g07-recovery-cost/failed-start-private",
+  "financialActions": 0,
+  "basis": "Standalone exact-head load passed55.571s, source unchanged, owned tree absent. One normal retry uses unchanged60s bound."
+}

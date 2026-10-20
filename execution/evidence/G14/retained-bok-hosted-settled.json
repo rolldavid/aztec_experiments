@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-14T06:15:38.757577+00:00",
+  "source_revision_host": "0cc564a",
+  "source_revision_decoder": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "environment": "Retained devnet node realProofs:false PXE proverEnabled:false; actual hosted model/provider charge, no top-up or GitHub writes",
+  "journal_sha256": "1384cc4c68bdc47d3830597b99dcfd1abd502faa5453140ee592adeffae8730c",
+  "hosted_phase": "finished",
+  "finished": true,
+  "call_count": 1,
+  "call_phases": [
+    "settled"
+  ],
+  "escrow_operations": [
+    {
+      "method": "reserve",
+      "txHash": "0x1130215bb30220ad0b717cfe12c7ba12781402456fb1c19771181f34a5eded24",
+      "proofMode": "disabled"
+    },
+    {
+      "method": "settle",
+      "txHash": "0x189403b6265a510923375719716b62bbc95505952a5cdd220ced7cbb745a3006",
+      "proofMode": "disabled"
+    },
+    {
+      "method": "publish_reply",
+      "txHash": "0x0f47ba98114e8a275aab94d1a0c57061282ac8029a107b21a197c56be51b31fe",
+      "proofMode": "disabled"
+    },
+    {
+      "method": "finish",
+      "txHash": "0x0e0f89a9a1e352a353cef13a69ff805aaf06ec4389e87c30a56b558f074cf31c",
+      "proofMode": "disabled"
+    }
+  ],
+  "canonical_evidence": "retained-bok-original-canonical-events.json",
+  "limits": "Final decoder and browser observation separate. Do not replay provider call or transaction from journal receipt uncertainty."
+}

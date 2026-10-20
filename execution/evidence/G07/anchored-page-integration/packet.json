@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "task": "G07-anchored-compact-page",
+  "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+  "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+  "branch": "codex/rolling-anchored-compact-page",
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "5ef64de5e070f9640f24e96b6d992600e016bade71ba14cb7fc9207f2518c1e0",
+    "prover/compact-block-native.test.mjs": "6af03560f1b4ec5c9135aaa5172012dfbd6df19e44e1dfc3e7866abe20e666ef",
+    "prover/compact-node-registration.test.mjs": "57690be8d51f415f28b6c2de7d8e147d410e9a7b71e74625bf315dd8bd3d13b6",
+    "prover/compact-service.test.mjs": "c49d74a9f2f5e05aa11edc9e5a237f04702832687a9f161d8be4365b80ccde04",
+    "prover/private-query.mjs": "dbba9518ba2a2d072610352e73643edacea23b35fed3dea0648e53ea044a51da",
+    "prover/server.mjs": "3f177de25b28d96de3d6b9e5bbb3ac8d9cdb109091d0dc4a36f48f1b3840a3f7",
+    "shared/rolling/cold-preference-reader.mjs": "3be04beaad5e33e88de9541744646e73b64c3ee1e2fbf14095313ca1b83c8d36",
+    "shared/rolling/cold-preference-reader.test.mjs": "91f6016507e7da8c5fed02a6f3981d73317726403b85a9fc322dd379f6fd86f1",
+    "shared/rolling/compact-client.mjs": "5e8336fef6839646994ead19ed296d2101500ebe1a73177616a0b5f00205b1d9",
+    "shared/rolling/compact-client.test.mjs": "001451b8426d4e903a36ede8ef51aaf27c80cdc4e7da0e5bca17591da1e1a43a"
+  },
+  "sourceDiff": {
+    "files": 10,
+    "note": "Original9paths plus lead-approved existing native registration test dependency copy list."
+  },
+  "reviewNotes": {
+    "path": ".build/g07-anchored-compact-page/REVIEW-NOTES.md",
+    "sha256": "b01718707ac0228af1df6f6aa28502f5c2da11100be064e6f4fe5f150fe9a92d"
+  },
+  "logs": {
+    "before.log": {
+      "sha256": "a5702870325314e95186dbca48c453790ab1317379166289c1c7c3806734178c",
+      "tests": "2",
+      "pass": "0",
+      "fail": "2",
+      "skipped": "0",
+      "duration_ms": "79.367042"
+    },
+    "initial.log": {
+      "sha256": "8e1e33df646e72899ccf2b3f5288cc04758e31b5fde1c517b0e56513a267442d",
+      "tests": "142",
+      "pass": "142",
+      "fail": "0",
+      "skipped": "0",
+      "duration_ms": "1164.90325"
+    },
+    "page.log": {
+      "sha256": "3fbe9b359c3fb61a55ef2cb104ced82a4d70162eda07ef3c0778843b42995718",
+      "tests": "43",
+      "pass": "43",
+      "fail": "0",
+      "skipped": "0",
+      "duration_ms": "1168.956541"
+    },
+    "page-final.log": {
+      "sha256": "cb4ffc67a49726de1d1ed1d872aa5f13926e1fbc14e2fd77bd5a3444750bd021",
+      "tests": "51",
+      "pass": "50",
+      "fail": "1",
+      "skipped": "0",
+      "duration_ms": "1207.295959"
+    },
+    "final.log": {
+      "sha256": "03cf0f522aa02292860c9530193ca306ec9d2ea070214ed8723ef0ba7928fdab",
+      "tests": "254",
+      "pass": "253",
+      "fail": "1",
+      "skipped": "0",
+      "duration_ms": "1679.419875"
+    },
+    "combined-final.log": {
+      "sha256": "f85ff8bd379ebf90fee20de5b811fb1dbc32be24ed8ecd110e412742cc890f2b",
+      "tests": "254",
+      "pass": "254",
+      "fail": "0",
+      "skipped": "0",
+      "duration_ms": "1923.121667"
+    },
+    "service.log": {
+      "sha256": "886f99927c8c3fc8ed80fb9e047f24b4f48a3d16486a960a805b6907d6d8036a",
+      "tests": "12",
+      "pass": "12",
+      "fail": "0",
+      "skipped": "0",
+      "duration_ms": "2700.774958"
+    }
+  },
+  "finalChecks": {
+    "scopedCombined": {
+      "passed": 254,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1923.121667
+    },
+    "service": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2700.774958
+    },
+    "diffCheck": "PASS",
+    "worktree": "clean",
+    "temporaryDependencySymlinkRemoved": true
+  },
+  "commands": {
+    "regressionBefore": "TMPDIR=/private/tmp Node24 --test --test-name-pattern=\"anchored page:\" shared/rolling/compact-client.test.mjs shared/rolling/cold-preference-reader.test.mjs",
+    "finalScoped": "TMPDIR=/private/tmp Node24 --test shared/rolling/compact-client.test.mjs shared/rolling/cold-preference-reader.test.mjs prover/compact-service.test.mjs prover/compact-block-native.test.mjs prover/private-query.test.mjs prover/compact-node-registration.test.mjs",
+    "service": "TMPDIR=/private/tmp Node24 --test scripts/test-prover-service.mjs"
+  },
+  "preservedFailures": {
+    "before.log": "Two new regressions fail on original8a source (missing readPage; forbidden scalar fallback).",
+    "page-final.log": "New final-readiness test armed its veto during initial setup; corrected to arm only after initialization, preserving expected veto.",
+    "final.log": "253PASS1FAIL: source-only image test omitted newly shared compact-client. Production package already includes it. Fixed only approved existing test copy list; rerun254PASS."
+  },
+  "implementation": {
+    "route": "Existing /v1/compact-block -> /rolling/compact-block-v1, explicit page mode. No new listener/package/service/framework.",
+    "request": "Closed public from/count1..32 + pinned anchor and fixed tier, <=1024 bytes. No account/filter fields.",
+    "body": "Total2MiB decoded, serial native body work, prefix ends at first private-log/unknown-large block or BEFORE additional flattening would exceed cap. Byte-limited prefix is contiguous and nonempty.",
+    "ownership": "Original10s timers, one compact slot, full await/cancel/drain ownership. Page errors never become successful prefixes or trigger retries.",
+    "authentication": "Original per-block native header/network/canonical/readiness fences plus initial/final pinned anchor. Reader omits per-block hash-discovery only because unchanged SDK verifies each body/header/archive membership under the pinned anchor before staging. Original final readiness/canonical/CAS/context/mailbox fences retained.",
+    "rate": "Reserve requested physical-block count against original minute bucket before upstream work, including short/failed admitted pages; no refund or quota increase. Malformed request still costs one request unit.",
+    "compatibility": "Original scalar API remains for nextLog continuation and captured legacy component interface. Current production client always exposes page capability. An attempted page never falls back to scalar."
+  },
+  "unchangedLimits": {
+    "requestBytes": 1024,
+    "decodedResponseBytes": 2097152,
+    "nativeAndClientTimeoutMs": 10000,
+    "wholeColdMs": 120000,
+    "pageBlocks": 32,
+    "sdkPhysicalLogs": 8,
+    "compactSingleFlight": 1,
+    "productionDefaultPerMinute": 600,
+    "existingDevelopmentPerMinute": 1800
+  },
+  "coverage": [
+    "Actual pinned SDK bodies over native loopbackHTTP, empty32, firstdense1/3/32, unknown-large and2MiB preflatten boundary.",
+    "First/middle/last canonical member and final anchor failures discard entire response.",
+    "Closed request/response schemas, duplicate/hole/order/anchor/size errors, no raw cause or automatic retry.",
+    "Physical quota charged full requested bound on shortprefix, before upstream oninsufficient allowance; proof quota separate.",
+    "Client/native/server abort/close holds ownership through pending work; no next member after abort.",
+    "Reader useful32-block progress, shortprefix progress, SDK failure beforeCAS, late readiness/canonical veto afterCAS retains durable state, no scalar fallback.",
+    "Labelled latency/call-count test under existing10s; not real remote timing."
+  ],
+  "remainingLeadChecks": {
+    "actualSdkArchive": "ROLLING_PREFERENCE_PAGE_NATIVE=1 LOG_LEVEL=silent TMPDIR=/private/tmp <Node24> --test --test-name-pattern=\"owned isolated SDK and ACIR suite\" scripts/test-pxe-preference-page.mjs",
+    "actualSdkDisposition": "Explicitly deferred to lead integration slot while live moderation campaign owns heavy resources. Do not set ACIR or HTTP diagnostic opt-ins.",
+    "normalBuild": "Normal wallet closure required; no SDK patch/source change. Native and gateway source must be deployed coherently with current wallet.",
+    "actualCold": "Whole remote120s freshkeys/nonemptyrevision3 acceptance remains unqualified; no live rerun performed."
+  },
+  "limitations": [
+    "Production600 blocks/min default can limit longhistory120; existing development1800 remains unchanged. Conservative full-count charges for shortprefixes can also bind sooner on densehistory.",
+    "Native archiver Body allocation before encoder preflight remains existing limitation, not solved by decoded wire budget.",
+    "Prior actual6b failed82.420s evidence remains immutable and failure cause not conclusively attributed by new labelled fixture.",
+    "No cryptographic assurance from disabled native/PXE proofs, no new privacy or testnet claim."
+  ],
+  "operations": "No AWS/browser/live-service/model/financial action or shared dependency mutation. Temporary own symlink to physical lead dependencies removed."
+}

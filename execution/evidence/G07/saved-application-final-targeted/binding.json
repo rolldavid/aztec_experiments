@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-name-pattern=saved replacement cannot|synchronization|capabilities and method|preference head observes|saved resume options",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/synchronized-application.test.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedMs": 9372,
+  "processExited": true,
+  "source": {
+    "application.mjs": "558414e0a5d7d5b805347ba545e8c52e2bb190b09615f99f2f6fd37fdbc37e04",
+    "application.test.mjs": "98e44059c8521b102efacfd5e43da59eedea265c53da561e5dfdc8bafe00a9d7",
+    "synchronized-application.mjs": "fa2023757d297e063953d558401338a090a6d5be084cc215bffd548911612178",
+    "synchronized-application.test.mjs": "9c6d3c2f476b55376599db768aba64b3bf43ae0fbbf36c4116300e62f67728b0"
+  }
+}

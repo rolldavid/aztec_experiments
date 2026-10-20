@@ -1,0 +1,51 @@
+{
+  "candidate": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "base": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "task_id": "G06-genuine-browser-composer-development",
+  "implementer": "lead-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/wallet-runtime.browser.test.mjs",
+    "scripts/rolling-wallet-assets.mjs",
+    "scripts/testing/assets.mjs",
+    "scripts/testing/browser-worker.mjs",
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-composer-browser.mjs",
+    "scripts/testing/rolling-composer-browser.test.mjs",
+    "scripts/testing/rolling-composer-fixture.mjs",
+    "scripts/testing/rolling-composer-fixture.test.mjs",
+    "scripts/testing/run-application.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/scenarios.mjs"
+  ],
+  "required_checks": [
+    "source-and-regressions",
+    "real-funded-composer",
+    "coordination-and-gate"
+  ],
+  "requirements": [
+    "G05-G06-real-composer-development"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "task_id": "G06-genuine-browser-composer-development",
+      "owner": "lead-20261011",
+      "paths": [
+        "apps/rolling/wallet-runtime.browser.test.mjs",
+        "scripts/rolling-wallet-assets.mjs",
+        "scripts/testing/assets.mjs",
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-composer-browser.mjs",
+        "scripts/testing/rolling-composer-browser.test.mjs",
+        "scripts/testing/rolling-composer-fixture.mjs",
+        "scripts/testing/rolling-composer-fixture.test.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ]
+    }
+  ],
+  "scope_limits": "Actual funded private recovery and composer preparation/cancel without browser publication. Full privacy/social/reaction wire, wallet extension funding, independent deployment and release gates remain open."
+}

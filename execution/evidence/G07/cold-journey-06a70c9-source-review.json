@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T23:38:49.835152+00:00",
+  "sourceRevision": "06a70c90cc368c2b0ae3122058bd84eef4f062fc",
+  "baseRevision": "72c71b4c8292a83fd488fcafbfea8ea0827e0348",
+  "disposition": "changes requested: two affected test defects; no additional blocking production-source finding identified",
+  "sourceFiles": {
+    "scripts/testing/assets.mjs": "dc3657900eae39c00e59202f1a9920881a0bd103b4e9dc15de3f77b66c039d40",
+    "scripts/testing/rolling-application-actor.mjs": "519d1ae366ddafaa51f9a2f1305d5cd9baee8f521a726587ed7dac6afae15bdd",
+    "scripts/testing/rolling-application-actor.test.mjs": "5041ad527490baab13419ee80907a6a1523ea6a1fa712264fa81759823828d15",
+    "scripts/testing/rolling-application-fixture.mjs": "fd5ee17432f6101ff73b88cc9d9bac3dd48920c03d576122cd692b646c6204df",
+    "scripts/testing/rolling-application-fixture.test.mjs": "13317fa6ecbf1a954bdffb462a780bf1d941f1052d6a504c5674ca2b2203c1e3",
+    "scripts/testing/rolling-preference-recovery.mjs": "3b8c5bdf78dec66f175c9a925d5365ee6a7231399cd9c0a6aa8f5f185a9879fb",
+    "scripts/testing/rolling-preference-recovery.test.mjs": "b8782d9e3fdfda74621bb613277b33098f2d3d2585e68d1cbd731c102720d253"
+  },
+  "findings": [
+    {
+      "priority": 2,
+      "path": "scripts/testing/rolling-application-fixture.test.mjs",
+      "line": 369,
+      "title": "Retained lifetime assertion searches obsolete actor call signature",
+      "evidence": {
+        "closedOffset": 738,
+        "oldTestConstructedOffset": -1,
+        "actualConstructedOffset": 1808
+      },
+      "requiredRepair": "Update exact construction string for boundedCold fifth argument and preserve both closed>=0 and constructed>closed. Retain source-level failed assertion evidence."
+    },
+    {
+      "priority": 2,
+      "path": "scripts/testing/rolling-application-actor.test.mjs",
+      "line": 403,
+      "title": "Missing-extension negative currently rejects before the intended boundary",
+      "evidence": "Common sdk fixture does not define computeArtifactHash. New readColdPreferences calls it before constructing the reader; broad assert.rejects accepts that TypeError. The actual fixture SDK exports the function through stdlib/contract/artifact_hash.js.",
+      "requiredRepair": "Provide the fixture hash capability and assert it was reached; use a specific cold-reader invalid-extension error or nonvacuous first-mailbox path. Preserve zero signing, witness and send assertions."
+    }
+  ],
+  "sourceAssessment": [
+    "Exactly seven claimed files changed. Existing five real relationship writes, canonical public decoding/rebuild, fee conservation and real-proof/deadline guards are unchanged.",
+    "Explicit boundedCold selects only preference-relationships fresh replacement. Ordinary actor and ordinary initial/incremental readers remain; fresh actor defers signing-capsule simulation, never falls back on missing cold extension, and preserves exclusive lease/context/drained close and fresh journal/PXE checks.",
+    "Actual native compact adapter mounts before JSON-RPC route/body parsing, with actual node and fixed network/proof/checkpointed configuration. Gateway enables its reviewed compact route only for this scenario. Pending native promises are retained and awaited during shutdown; actual handler catches normal native failures without abandoning work.",
+    "Cold terminal comparator permits repeated physical block progress, rejects backward/partial-published/orphaned/incomplete states, requires terminal anchor/progress consistency and exact private snapshot with zero additional proof/send/wallet submission. Reader itself authenticates compact roots, mailbox, head and anchor across awaits.",
+    "Native fingerprint inventory now includes installer and full eight transformed targets plus both generated helpers (pxe pair was already included). Fixture source inventory includes cold reader/client/compact verifier/native adapter; general source scanner also binds them.",
+    "Actor constructor uses autoSync:false and existing official tipsOnly block sync, derives/registers identity/contracts without ordinary signing simulation in cold mode. Real computeArtifactHash exported by native facade is used; future browser SDK requires separate reviewed79f export/build composition."
+  ],
+  "requiredBeforeGenuine": [
+    "Repair and run the affected actor/fixture/recovery tests with current rc3 dependencies, retaining old failed cases.",
+    "Compose reviewed79f distribution, explicitly install only stopped physical owning dependency tree, inspect exact eight+two closure and current normal SDK/wallet/artifact/catalog/PrivateBok/fingerprint manifests. No installer or build executed by reviewer.",
+    "Bind exact combined candidate and absolute540s/4GiB intent. Historical d7f cold starts448855ms, old recovery3004ms, outer464664ms: roughly75s former final headroom is feasibility evidence, not a runtime guarantee. Preserve cleanup/accounting tail.",
+    "Require actual compact accepted>0 and no pending reads, complete authenticated private snapshot, all five effects/receipts/fees, fresh keys-only stores and zero extra signing witnesses/proofs/sends in eventual receipt."
+  ],
+  "limitations": [
+    "No tests/native/browser/genuine actions executed in this review.",
+    "Current candidate alone lacks pending distribution composition/installation; source review is not current full-run eligibility.",
+    "CLI Node fake-indexeddb remains explicitly distinct from browser recovery; no large history capacity/full G07 qualification.",
+    "Compiler260 and current-network/Linux gates remain open."
+  ]
+}

@@ -1,0 +1,1 @@
+{"cases":[{"automine":true,"interval":null,"paused":true,"restored":true,"intentAbsent":true},{"automine":false,"interval":null,"paused":true,"restored":true,"intentAbsent":true},{"automine":false,"interval":60,"paused":true,"restored":true,"intentAbsent":true}],"oldSetupReproduced":true,"cleanup":true}

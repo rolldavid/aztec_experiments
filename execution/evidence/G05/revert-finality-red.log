@@ -1,0 +1,128 @@
+✔ file: read-only outcome never rebroadcasts or acknowledges (403.426875ms)
+✔ file: operation metadata survives restart and canonical recovery alone permits the next operation (194.999125ms)
+✔ file: crash before broadcast recovers identical actual SDK transaction without a new proof (131.779625ms)
+✔ file: crash after broadcast recovers receipt without resending; acknowledgement is explicit (157.9325ms)
+✔ file: claim preserves exact intent at prepared (188.502125ms)
+✔ file: claim preserves exact intent at response-lost (188.619917ms)
+✔ file: claim preserves exact intent at before-confirmed (191.405292ms)
+✔ file: claim preserves exact intent at after-confirmed (194.293542ms)
+✔ file: post preserves exact intent at prepared (193.877916ms)
+✔ file: post preserves exact intent at response-lost (180.702541ms)
+✔ file: post preserves exact intent at before-confirmed (190.593583ms)
+✔ file: post preserves exact intent at after-confirmed (191.297167ms)
+✔ file: dummy preserves exact intent at prepared (191.387375ms)
+✔ file: dummy preserves exact intent at response-lost (201.739916ms)
+✔ file: dummy preserves exact intent at before-confirmed (191.123875ms)
+✔ file: dummy preserves exact intent at after-confirmed (190.550667ms)
+✔ file: withdraw preserves exact intent at prepared (195.599625ms)
+✔ file: withdraw preserves exact intent at response-lost (194.440584ms)
+✔ file: withdraw preserves exact intent at before-confirmed (206.038667ms)
+✔ file: withdraw preserves exact intent at after-confirmed (199.192541ms)
+✔ file: canonical recheck rejects previously acknowledged receipt after reorg (98.717167ms)
+✔ file: concurrent prepare permits exactly one durable transaction (85.378125ms)
+✔ file: wrong key and full-salt mismatch fail authentication (81.379375ms)
+✔ file: scope separation never recovers another board or chain (64.68475ms)
+✖ file: failed execution, uncertain drop, RPC error and foreign receipt never permit replacement (156.918833ms)
+✖ file: reverted sender sequence waits for canonical finality without changing saved intent (169.280583ms)
+✔ file: wallet context change prevents recovery broadcast (89.349375ms)
+✔ file: persisted envelope excludes transaction and wallet plaintext and tampering fails closed (105.603125ms)
+✔ indexeddb: read-only outcome never rebroadcasts or acknowledges (338.387709ms)
+✔ indexeddb: operation metadata survives restart and canonical recovery alone permits the next operation (188.494166ms)
+✔ indexeddb: crash before broadcast recovers identical actual SDK transaction without a new proof (114.411833ms)
+✔ indexeddb: crash after broadcast recovers receipt without resending; acknowledgement is explicit (150.578875ms)
+✔ indexeddb: claim preserves exact intent at prepared (189.239167ms)
+✔ indexeddb: claim preserves exact intent at response-lost (173.712416ms)
+✔ indexeddb: claim preserves exact intent at before-confirmed (194.518042ms)
+✔ indexeddb: claim preserves exact intent at after-confirmed (172.523417ms)
+✔ indexeddb: post preserves exact intent at prepared (180.663083ms)
+✔ indexeddb: post preserves exact intent at response-lost (190.975667ms)
+✔ indexeddb: post preserves exact intent at before-confirmed (179.057875ms)
+✔ indexeddb: post preserves exact intent at after-confirmed (178.931ms)
+✔ indexeddb: dummy preserves exact intent at prepared (175.71125ms)
+✔ indexeddb: dummy preserves exact intent at response-lost (176.294458ms)
+✔ indexeddb: dummy preserves exact intent at before-confirmed (182.583792ms)
+✔ indexeddb: dummy preserves exact intent at after-confirmed (166.065541ms)
+✔ indexeddb: withdraw preserves exact intent at prepared (189.451834ms)
+✔ indexeddb: withdraw preserves exact intent at response-lost (162.0575ms)
+✔ indexeddb: withdraw preserves exact intent at before-confirmed (181.301375ms)
+✔ indexeddb: withdraw preserves exact intent at after-confirmed (189.605083ms)
+✔ indexeddb: canonical recheck rejects previously acknowledged receipt after reorg (86.843875ms)
+✔ indexeddb: concurrent prepare permits exactly one durable transaction (65.877334ms)
+✔ indexeddb: wrong key and full-salt mismatch fail authentication (64.799375ms)
+✔ indexeddb: scope separation never recovers another board or chain (58.648584ms)
+✖ indexeddb: failed execution, uncertain drop, RPC error and foreign receipt never permit replacement (155.102875ms)
+✖ indexeddb: reverted sender sequence waits for canonical finality without changing saved intent (141.318375ms)
+✔ indexeddb: wallet context change prevents recovery broadcast (83.111375ms)
+✔ indexeddb: persisted envelope excludes transaction and wallet plaintext and tampering fails closed (91.468042ms)
+✔ file adapter rejects symlinks, unsafe modes and stale locks without replacing data (2.023458ms)
+✔ abrupt worker death after durable prepare preserves exact recovery transaction (382.328333ms)
+ℹ tests 58
+ℹ suites 0
+ℹ pass 54
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10477.406
+
+✖ failing tests:
+
+test at scripts/test-w03-journal.mjs:86:2
+✖ file: failed execution, uncertain drop, RPC error and foreign receipt never permit replacement (156.918833ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:90:3
+      at async withStorage (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:26:124)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'BB_TRANSACTION_FINALITY_PENDING' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/test-w03-journal.mjs:95:2
+✖ file: reverted sender sequence waits for canonical finality without changing saved intent (169.280583ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:102:4
+      at async withStorage (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:26:124)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'BB_TRANSACTION_FINALITY_PENDING' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/test-w03-journal.mjs:86:2
+✖ indexeddb: failed execution, uncertain drop, RPC error and foreign receipt never permit replacement (155.102875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:90:3
+      at async withStorage (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:26:124)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'BB_TRANSACTION_FINALITY_PENDING' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/test-w03-journal.mjs:95:2
+✖ indexeddb: reverted sender sequence waits for canonical finality without changing saved intent (141.318375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:102:4
+      at async withStorage (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-w03-journal.mjs:26:124)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'BB_TRANSACTION_FINALITY_PENDING' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

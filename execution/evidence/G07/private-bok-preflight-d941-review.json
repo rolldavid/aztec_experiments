@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T05:34:58.673116+00:00",
+  "candidate": "d941042545eea332b31329e3cc50e387566624bf",
+  "base": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "verdict": "approved-source-only-early-build-rejection",
+  "findings": [],
+  "sourceSha256": {
+    "BUILDING.md": "6ae1d712232bad241ba7a4aa27e901fd817bc7f9afb33e29e63d7c0e8dfe2627",
+    "scripts/testing/private-bok-build-preflight.mjs": "9167972af01b063069e5c6cfa95f78f00b692e11c342753d8294e0d47ce87978",
+    "scripts/testing/private-bok-build-preflight.test.mjs": "82b7a85119b620baf8e992bde2484f6834e7689dc7c6b88ee19eb5ed96129328",
+    "scripts/testing/run-application.mjs": "07fedf9a35a0a1d40e425f768b0def5a584765ca00532d6620259671362a75ef"
+  },
+  "checks": [
+    "Read all four changed paths before tests. Every current Rolling board-profile and private-bok scenario is covered. Guard is after fingerprints but before browser reservation, prepareRuntime and fixture startup. Existing fixture/final checks remain.",
+    "Importing build module is read-only because build execution has a direct-entry guard. Failure enters existing supervisor cleanup/reporting; no retry, automatic build or source write.",
+    "Verifier compares exact input map and both output hashes, checks artifact names, transpilation, function arrays and nonempty private VKs. This supplements downstream artifact policy; it is not a cryptographic VK verifier.",
+    "Independent ten focused tests passed, zero skipped, 43.390083 ms. Stale inputs rejected before output reads; missing/altered outputs, malformed JSON, unprocessed artifact and absent VK rejected. Test injections are trusted test dependencies, not production CLI options; default uses actual buildInputs/fs.",
+    "Independent read-only root-artifact composition passed with fourteen inputs and hashes recorded below. Isolated source inputs match root; readFile mapping only redirects generated paths to root.",
+    "Build instructions preserve canonical -> processed Rolling -> PrivateBok -> SDK/CRS -> wallet ordering and normal regeneration rather than editing manifests; no concurrent asset consumer, serial supervisor and local qualification limits stated. git diff --check passed."
+  ],
+  "actualArtifacts": {
+    "manifest": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+    "privateBok": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "probe": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+    "inputCount": 14
+  },
+  "tests": {
+    "command": "NODE_BACKEND=js pinned-Node24.21.0 --test scripts/testing/private-bok-build-preflight.test.mjs",
+    "log": "/tmp/reviewer-private-bok-preflight-d941-tests.log",
+    "sha256": "a76d4ec70f974d9c009aa6af2ab399ce3b06abb4588151b7fc093af00b157020",
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limits": [
+    "No genuine campaign or full supervisor was run by reviewer; placement inspected directly. Previous 876c remains failed.",
+    "Early verification does not lock artifacts. Original fixture/use and final fingerprint checks remain necessary.",
+    "No altered runtime/proof/privacy acceptance from this build guard."
+  ]
+}

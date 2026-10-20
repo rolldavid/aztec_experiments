@@ -1,0 +1,47 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "task_id": "G06-trusted-recovery-development",
+  "implementer": "lead-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-public-acceptance.mjs",
+    "scripts/testing/rolling-trusted-recovery.mjs",
+    "scripts/testing/rolling-trusted-recovery.test.mjs",
+    "scripts/testing/rolling-wire-trace.mjs",
+    "scripts/testing/rolling-wire-trace.test.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/scenarios.mjs",
+    "shared/rolling/public-index.test.mjs"
+  ],
+  "required_checks": [
+    "source-and-regressions",
+    "real-trusted-recovery",
+    "coordination-and-gate"
+  ],
+  "requirements": [
+    "G06-trusted-recovery-development"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "task_id": "G06-trusted-recovery-development",
+      "owner": "lead-20261011",
+      "paths": [
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-trusted-recovery.mjs",
+        "scripts/testing/rolling-trusted-recovery.test.mjs",
+        "scripts/testing/rolling-wire-trace.mjs",
+        "scripts/testing/rolling-wire-trace.test.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs",
+        "shared/rolling/public-index.test.mjs"
+      ]
+    }
+  ],
+  "scope_limits": "Bounded actual live denial/staleness/state-preserving recovery; no automatic resend/public fallback. G06 component evidence separate from G05/G07/G09/G10/fullproduct, deployedtopology, specialist review,14daysoak/networkclearance."
+}

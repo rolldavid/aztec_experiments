@@ -1,0 +1,21 @@
+{
+  "applicationEvidence": "application-38f61b6a-f191-4336-9e8d-274e38a742b7.json",
+  "sourceRevision": "e67c1eb",
+  "hostReport": "node-2026-10-11-172134.ips",
+  "pid": 64388,
+  "captureTime": "2026-10-11 17:21:30.8966 +0100",
+  "signal": "SIGABRT",
+  "faultSymbols": [
+    "__pthread_kill",
+    "pthread_kill",
+    "__abort",
+    "abort",
+    "node::(anonymous namespace)::DefaultAbortHandler(char const*, char const*)",
+    "node::OOMErrorHandler(char const*, v8::OOMDetails const&)",
+    "v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&)",
+    "v8::internal::Heap::FatalProcessOutOfMemory(char const*)",
+    "v8::internal::Heap::RecomputeLimits(v8::internal::GarbageCollector, v8::base::TimeTicks)"
+  ],
+  "conclusion": "V8 heap OOM infixture64388 at384MiB; totalRSS1270080KiB below unchanged4194304KiB gate. Applicationproof failure not established.",
+  "repairProposal": "Same explicit768MiB fixtureheap already exercised byRolling; only private-normal/uncertain namedprofiles change. Keep540s/4GiB gates."
+}

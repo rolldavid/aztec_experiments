@@ -1,0 +1,44 @@
+{
+  "candidate": "2419226e967bce7c8b6f1c6082e704d5aa40a5dc",
+  "verdict": "PASS_SCOPED_DISABLED_COMPONENT",
+  "verifiedFiles": {
+    "plugins/github-app-broker.mjs": "aa20b694b496089679c21a0dd68b6780be77edf4e350f7c32fc213e47a5b001a",
+    "plugins/test/github-app-broker.test.mjs": "f28a0226a8edeae7336d7d00586aae735a52f8860941af14a4adab4092b9745f",
+    "plugins/DEPLOYMENT.md": "3a02477fdecca538188338cd4dac02a76d83484f4c69a9f85eaca745ef13edd1",
+    "execution/evidence/G11/github-app-broker/private-mirror-tests.log": "32099be783170a4b1c0fb9643f5eb100c813b925f521e1c2e7d299b9650fe325",
+    "execution/evidence/G11/github-app-broker/installation-preparation.json": "6ba6fe3a22b457743f52b3987908c35c6da6789a95a8a0dd0c316a112f15531e"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G11/github-app-broker/private-mirror-handoff.json",
+    "sha256": "3f39e7d25afb4231b519d99e01dd7cb9ac275375afb5d7d1cf383485f114c9a0"
+  },
+  "reviewed": [
+    "Host-only default-disabled capability reads no key and performs no request until enabled. Dedicated exact organization/App/install identities, private key no-follow ownership boundary and narrowed installation token permission/repository scopes are checked. Credentials never passed to model, toolbox, generated execution, Git or stored journal.",
+    "Exact trusted accepted revision, source archive/manifest/digests and positive cleanup are validated before API calls. Canonical Git blob/nested-tree/commit encoding preserves binary data; explicit remoteCommit mapping does not replace local accepted authority.",
+    "Every repository/blob/tree/commit/ref mutation persists intent before its sole call. Lost responses reconcile exact original marker/object/ref. Unknown absence stays unresolved without retransmission. Conflicting invocation, unresolved predecessor and changed remote head reject; persistence failure poisons capability.",
+    "Private repository visibility and exact ownership marker are rechecked. Final ref is non-forced with predecessor and final readback; dedicated sole writer is required, not a general multi-writer CAS guarantee.",
+    "Finite file/byte/state/request/deadline bounds and safe fixed errors retained. Source workflow/credential paths rejected; no automatic capacity increase, redirects or provider fallback.",
+    "Private mirror is parent-selected reversible engineering default, not a claim that Draft3 mandates source history secrecy. operatorUrl stays private operator metadata; current public app/source pairing remains publication HTTP service."
+  ],
+  "evidence": "24 controlled protocol/filesystem cases PASS5267.760667ms,0 skips; actual local Git hash-object validation. No external GitHub calls. Original eef source/log retained; its installation preparation was superseded in place and is not claimed to match the old handoff hash.",
+  "officialApiChecks": [
+    {
+      "url": "https://docs.github.com/en/rest/repos/repos#create-an-organization-repository",
+      "finding": "Installation token supports organization repository creation with Administration write, private and auto_init parameters."
+    },
+    {
+      "url": "https://docs.github.com/en/rest/about-the-rest-api/api-versions?apiVersion=2026-03-10",
+      "finding": "Pinned API version is documented."
+    },
+    {
+      "url": "https://docs.github.com/en/rest/git/commits#create-a-commit",
+      "finding": "Contents-write Git commits support explicit tree, parents, author and committer."
+    }
+  ],
+  "limitations": [
+    "No real installed App, token/organization/Actions configuration or remote GitHub API/commit serialization acceptance. Controlled doubles are not live qualification.",
+    "Main callback wiring and pre-paid-work availability check remain future integration. Exclusive state owner and preserved journal/source backups required.",
+    "64 revisions per repository and128 repositories are refusal limits, not indefinite growth qualification.",
+    "No external registration, credential discovery or mutation performed or authorized by review."
+  ]
+}

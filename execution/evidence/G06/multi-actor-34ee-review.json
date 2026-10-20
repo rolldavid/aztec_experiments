@@ -1,0 +1,39 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "34ee6c9ebd167ba3fbca7b67c9238e6ad3977d82",
+  "verdict": "changes-requested",
+  "scope": "Multi-account parent harness structural review, no runtime approval",
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "scenario": "First multi-account root receipt invokes public footprint with otherHuman; classifier accepts only otherAuthor and throws Unknown role. Subsequent checks also read wrong key.",
+      "repair": "Use existing otherAuthor role in action and moderator calls/assertions, with actual classifier composition regression."
+    },
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "scenario": "A funding succeeds; B funding pays/broadcasts then fails with privateFeeObservation. Outer catch overwrites report.privateFees (A) with B; secondPrivateFees absent, losing A durable observation.",
+      "repair": "Track active funding role and retain B partial evidence separately without overwriting A; inject B paid-failure regression and verify cleanup."
+    },
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "scenario": "Removed-like prepare runs B while activeActor remains A after previous unlike; unexpected B activity failure reconciles wrong journal.",
+      "repair": "Select activeActor B before prepare and preserve exact B failure evidence."
+    }
+  ],
+  "otherChecks": [
+    "A cold bridge plus B standalone precede A claim; cross-pool arithmetic matches existing reviewed two-helper accounting including standalone exactly once",
+    "Six HTTP jobs expected for root+five reactions; moderator separately proven; original variants retain3/4/5counts",
+    "Distinct actors and stores, shared service/node/miner, per-actor journal reopen with counters unchanged",
+    "Classifier not yet present in candidate source binding: deliberate runtime block retained"
+  ],
+  "testObservation": {
+    "note": "During authorized cheap suite, lead began repairing two files;102tests passed707.729416ms but this is NOT exact34ee check evidence. Exact repaired revision must be reviewed/tested separately."
+  },
+  "limits": [
+    "No heavy/service/proof run",
+    "Missing classifier must independently pass review; original real scenario runtime still pending"
+  ]
+}

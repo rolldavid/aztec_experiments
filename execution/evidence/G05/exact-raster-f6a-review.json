@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f6a9f8fb07297859f0d353f722a38839cd5bd967",
+  "verdict": "approved_source_and_pure_fixture_checks",
+  "files": {
+    "experiments/avatar/raster-fixture.mjs": "68ae27bc43efe68ed7ffaa157cf78895750c0987de632d78f114d5ac04f7fda7",
+    "experiments/avatar/codec.test.mjs": "e6f8b96916e5ac5fe99e024aa8f2820045a29e72428f6700ab822bf4a0b5e5d7"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinnedNode24.21.0 --test experiments/avatar/codec.test.mjs",
+      "result": "Independently6passed0failed0skipped80.302ms"
+    }
+  ],
+  "observations": [
+    "Deterministic real pixel channel changes fixed raster; PNG built by same pinned compressor with exactly8192bytes",
+    "Strict fixture decoder verifies canonical chunk order, CRC/dimensions/filter/inflation and exact expected RGB; pack/unpack preserves bytes; corruption/truncation/trailing data reject",
+    "ExpectedPNG SHAe4cffd6efa8a50239a2a3b37147c40f0f9684ee47edd769e0cae357ad71a9bc7 verified; no junk padding/metadata"
+  ],
+  "limits": [
+    "Old G03 manifests not repinned or acceptance reused",
+    "Only deterministic fixture, not photographic quality or actual onchain8192byte acceptance"
+  ]
+}

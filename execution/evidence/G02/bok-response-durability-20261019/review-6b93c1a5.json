@@ -1,0 +1,26 @@
+{
+  "candidate": "6b93c1a59c89eb744b4586599e1c2a9785f3598a",
+  "base": "88e337df3444ac53284c07d94bc4bb7bc2d52f82",
+  "verdict": "approved",
+  "findings": [],
+  "scope": "Private response durability before settlement and state-driven observation of exact existing chain intents.",
+  "basis": [
+    "Closed assistant payload at most1MiB retained with digest binding exact input, validated billing receipt and finish reason before settlement. Invalid/oversized output settles actual billing but remains invalid to agent.",
+    "Pending existing chain intent uses native original-operation waiter; no new reserve/settlement mutation permission. Production waiter retains timeout0.",
+    "Received/settled undelivered response rechecks actual canonical settlement before delivery. Durable responseDelivered fence and content purge precede agent handoff; ambiguous handoff never authorizes tool replay.",
+    "Hosted restart restricted to first undelivered response and exact input; earlier tools/later calls cannot be replayed. Canonical billing/state admission and agent input hash remain.",
+    "Legacy missing response remains accounting-only. This change cannot recover the lost live legacy message."
+  ],
+  "independentFocusedChecks": {
+    "passed": 7,
+    "failed": 0,
+    "durationMs": 1243.45625,
+    "output": "061369",
+    "scope": "Existing controlled ports plus real durable file-state reopen; no service/model/proof operation."
+  },
+  "workerEvidence": "140 affected cases in response-durability-suites.log; no broad repeat.",
+  "limits": [
+    "At-most-once handoff deliberately sacrifices response after a crash beyond durable handoff but before agent receipt.",
+    "Source approval is not actual current request settlement/publication acceptance."
+  ]
+}

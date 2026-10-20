@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "1e4ea69abaac25a44e80712343947831b17ce8ca",
+  "actualPacket": "bff2f592f6da6c3b2d3aab41cd606c01aa09eca9f99a60e6652ed3b743e622d7",
+  "verdict": "PASS focused7; eligible separately granted whole360 controlled suite",
+  "verified": {
+    "artifacts": 5,
+    "independentExactLogLabels": 7,
+    "excluded": 169,
+    "protectedRehash": 3310,
+    "ownedTreeTmpCleanSource": true
+  },
+  "elapsedMs": 397,
+  "peakRSSKiB": null,
+  "scope": "Labelled accounting doubles; no actual devnet or genuine proof acceptance",
+  "whole360": {
+    "packetSha256": "df2f0a6155c5a464b2224846cb9fa93d4faade45cbdf45a550f09e6a451444d3",
+    "expected": "184 unchanged fixture +169 retained helper +7new;360unique labels",
+    "limits": "60s2GiB unchanged owner/child",
+    "requires": "Separate lead grant after Controls route3 cleanup"
+  },
+  "reviewerRuntimePerformed": false
+}

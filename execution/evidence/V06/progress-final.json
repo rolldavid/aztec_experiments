@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-10T15:37:59.057Z",
+  "tips": {
+    "proposed": 15575,
+    "checkpointed": 15575,
+    "proven": 15552,
+    "finalized": 15552
+  },
+  "receipts": {
+    "pluginRequest": {
+      "hash": "0x1d837c1f390cc8dabc545b2cc4e59a0109a92370f64ca22502ecbed5bb5e42d1",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15397
+    },
+    "newPluginRequest": {
+      "hash": "0x227f0ec9c66a908f5c0337c6b0d1f58456a9968fdae468589dcac8ee79caffdb",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15484
+    },
+    "boardExit": {
+      "hash": "0x195cf29c310c001b4479aebe727f661c1f72dd0b59d7e2b4d7e2856a57b1f3d6",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15548
+    },
+    "pluginExit": {
+      "hash": "0x11fd9f0d422af2e5891a349727dba787181994db8e287617499aaf3f6a77a3f4",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15545
+    }
+  },
+  "plugin": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  },
+  "prover": {
+    "ready": true,
+    "proofs": "real",
+    "queue": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 4,
+      "completed": 4,
+      "failed": 0
+    }
+  }
+}

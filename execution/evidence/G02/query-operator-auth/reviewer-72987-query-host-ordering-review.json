@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T16:52:23.217794+00:00",
+  "proposalSha256": "1245fcebb51a556466e80736e98c332c612a7306bac4ca01143735893972313b",
+  "source": "72987b78d36accde73ccba9466c0f787f9bb6479",
+  "verdict": "Six-path source implementation plan eligible; exact source/tests must be reviewed before runtime. No paid, routing or remote activation action authorized.",
+  "verifiedSourceBindings": 15,
+  "ordering": [
+    "Finish exact source-built package, bounded payload and reviewed future deployment/delivery path before buying time-limited host capacity.",
+    "Query-only commissioning may precede real application addresses; proof service/proxy stay masked and query authentication is mandatory for the operator route.",
+    "Live network/qualification, immutable actual current deployment evidence and finite activation delivery precede one-shot prover activation; activation repeats current identity/Ready/anchor/control checks.",
+    "Full proof-job transport is separate from exact operator /v1/node access; query success does not qualify a public prover."
+  ],
+  "implementationConditions": [
+    "Dedicated query UID plus explicit read-only public-runtime group must survive activation_paths ownership changes. Do not precreate board-prover, widen root-private capabilities or make release bytes writable. Test real modes/traversal/safe links before and after activation.",
+    "Use existing supervisor/attestor and shutdown owners. Add query unit to every relevant stop/drift/failure path; no second deadline owner, restart fallback or silent recovered activation.",
+    "Attest actual unit bytes, UID/group/config/hash/listener and current query readiness before advertising availability. Query unit must not allocate proof worker or job queue.",
+    "Pure CloudFront transform must preserve unrelated behaviors, exact path, no caching and capability-header forwarding without logging or embedding the key. HTTPS viewer policy alone does not establish origin TLS; eventual VPC-origin protocol/port/SG identity needs explicit actual readback.",
+    "The current49-method authenticated surface remains the boundary; no admin8082/8882, job endpoint or generic command exposure. Direct-origin access must still authenticate.",
+    "Normal full package closure and generated payload<=16384 remain required. Actual source growth may require an explicitly claimed existing packaging path, not an undeclared workaround.",
+    "Future S3 publication is scoped publisher delegation because future object digest/VersionId cannot be known at launch. Keep fixed schema/key/window, first immutable binding and current live checks; no generic remote execution.",
+    "PrivateBok current artifact/constructor/auth/no-unknown-replay operator remains a separate prerequisite. Local development must retain native proof-disabled flags; real proofs are testnet acceptance only."
+  ],
+  "budget": "No new allocation.235.28 reserved/spent and64.72 remaining;39 proposal still unallocated and requires refreshed complete campaign costs/authority.",
+  "runtimeByReviewer": false
+}

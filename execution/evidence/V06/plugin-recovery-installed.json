@@ -1,0 +1,19 @@
+{
+  "verifiedAt": "2026-10-10T12:13:43.329786+00:00",
+  "files": [
+    {
+      "path": "plugins/account-client.mjs",
+      "before": "101c3e28682c0cc30b25b885f63cbcce0f67027021400c5023957251dfd6a9ba",
+      "after": "47c185f745fa57f5a118dd5dcdfba501005e839a704fabb4ded572c7415ef5b2"
+    },
+    {
+      "path": "plugins/funding-receipt.mjs",
+      "before": null,
+      "after": "eff4a3ea73fc0bea4f4337ce9c480a543f91765192cacba17c03bef11e848085"
+    }
+  ],
+  "runtime": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/runtime",
+  "manifestSha256": "61e9357f5703d4105158e2b3f96f566f8a9089fdfcfae8281378f4f636ceabc1",
+  "serviceRestartRequired": false,
+  "reason": "Changed modules are browser account code; the running plugin operator does not import them."
+}

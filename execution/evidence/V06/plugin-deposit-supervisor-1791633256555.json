@@ -1,0 +1,476 @@
+{
+  "passed": true,
+  "phase": "plugin-deposit",
+  "observations": [
+    {
+      "stage": "restore-existing-hosted-account"
+    },
+    {
+      "stage": "deposit-one-test-usdc"
+    },
+    {
+      "stage": "metamask-gas-fields",
+      "functionName": "approve",
+      "gasLimit": "140018",
+      "requestGas": "0x222f2"
+    },
+    {
+      "stage": "metamask-gas-fields",
+      "functionName": "deposit",
+      "gasLimit": "969289",
+      "requestGas": "0xd9ac0"
+    },
+    {
+      "stage": "phase-complete"
+    },
+    {
+      "phase": "plugin-deposit",
+      "passed": true
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 3565232,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 401568
+    },
+    {
+      "elapsedMs": 2025,
+      "rssKiB": 1020144
+    },
+    {
+      "elapsedMs": 3050,
+      "rssKiB": 1987328
+    },
+    {
+      "elapsedMs": 4078,
+      "rssKiB": 2295200
+    },
+    {
+      "elapsedMs": 5103,
+      "rssKiB": 3104512
+    },
+    {
+      "elapsedMs": 6128,
+      "rssKiB": 3232528
+    },
+    {
+      "elapsedMs": 7154,
+      "rssKiB": 3344016
+    },
+    {
+      "elapsedMs": 8179,
+      "rssKiB": 3395120
+    },
+    {
+      "elapsedMs": 9205,
+      "rssKiB": 3435472
+    },
+    {
+      "elapsedMs": 10231,
+      "rssKiB": 3471888
+    },
+    {
+      "elapsedMs": 11256,
+      "rssKiB": 3466192
+    },
+    {
+      "elapsedMs": 12293,
+      "rssKiB": 3468704
+    },
+    {
+      "elapsedMs": 13329,
+      "rssKiB": 3477408
+    },
+    {
+      "elapsedMs": 14364,
+      "rssKiB": 3487248
+    },
+    {
+      "elapsedMs": 15389,
+      "rssKiB": 3306432
+    },
+    {
+      "elapsedMs": 16423,
+      "rssKiB": 3497280
+    },
+    {
+      "elapsedMs": 17451,
+      "rssKiB": 3453824
+    },
+    {
+      "elapsedMs": 18476,
+      "rssKiB": 3436832
+    },
+    {
+      "elapsedMs": 19504,
+      "rssKiB": 3565232
+    },
+    {
+      "elapsedMs": 20530,
+      "rssKiB": 3488288
+    },
+    {
+      "elapsedMs": 21555,
+      "rssKiB": 3488240
+    },
+    {
+      "elapsedMs": 22590,
+      "rssKiB": 3367824
+    },
+    {
+      "elapsedMs": 23619,
+      "rssKiB": 3434176
+    },
+    {
+      "elapsedMs": 24644,
+      "rssKiB": 3367792
+    },
+    {
+      "elapsedMs": 25675,
+      "rssKiB": 3524640
+    },
+    {
+      "elapsedMs": 26701,
+      "rssKiB": 3326368
+    },
+    {
+      "elapsedMs": 27726,
+      "rssKiB": 3353568
+    },
+    {
+      "elapsedMs": 28754,
+      "rssKiB": 3357568
+    },
+    {
+      "elapsedMs": 29783,
+      "rssKiB": 3361088
+    },
+    {
+      "elapsedMs": 30820,
+      "rssKiB": 3309536
+    },
+    {
+      "elapsedMs": 31849,
+      "rssKiB": 3303456
+    },
+    {
+      "elapsedMs": 32887,
+      "rssKiB": 3252528
+    },
+    {
+      "elapsedMs": 33911,
+      "rssKiB": 3254496
+    },
+    {
+      "elapsedMs": 34936,
+      "rssKiB": 3201408
+    },
+    {
+      "elapsedMs": 35962,
+      "rssKiB": 3195984
+    },
+    {
+      "elapsedMs": 36999,
+      "rssKiB": 3199408
+    },
+    {
+      "elapsedMs": 38025,
+      "rssKiB": 3228336
+    },
+    {
+      "elapsedMs": 39058,
+      "rssKiB": 3227760
+    },
+    {
+      "elapsedMs": 40085,
+      "rssKiB": 3215424
+    },
+    {
+      "elapsedMs": 41121,
+      "rssKiB": 3213984
+    },
+    {
+      "elapsedMs": 42150,
+      "rssKiB": 3210032
+    },
+    {
+      "elapsedMs": 43188,
+      "rssKiB": 3213152
+    },
+    {
+      "elapsedMs": 44221,
+      "rssKiB": 3177952
+    },
+    {
+      "elapsedMs": 45248,
+      "rssKiB": 3189952
+    },
+    {
+      "elapsedMs": 46273,
+      "rssKiB": 3213024
+    },
+    {
+      "elapsedMs": 47298,
+      "rssKiB": 3224128
+    },
+    {
+      "elapsedMs": 48322,
+      "rssKiB": 3258832
+    },
+    {
+      "elapsedMs": 49350,
+      "rssKiB": 3238256
+    },
+    {
+      "elapsedMs": 50429,
+      "rssKiB": 3193408
+    },
+    {
+      "elapsedMs": 51466,
+      "rssKiB": 3190560
+    },
+    {
+      "elapsedMs": 52490,
+      "rssKiB": 3088576
+    },
+    {
+      "elapsedMs": 53529,
+      "rssKiB": 3089024
+    },
+    {
+      "elapsedMs": 54566,
+      "rssKiB": 3090112
+    },
+    {
+      "elapsedMs": 55601,
+      "rssKiB": 3090240
+    },
+    {
+      "elapsedMs": 56627,
+      "rssKiB": 3029184
+    },
+    {
+      "elapsedMs": 57664,
+      "rssKiB": 3031280
+    },
+    {
+      "elapsedMs": 58701,
+      "rssKiB": 3027376
+    },
+    {
+      "elapsedMs": 59726,
+      "rssKiB": 2909072
+    },
+    {
+      "elapsedMs": 60758,
+      "rssKiB": 2873872
+    },
+    {
+      "elapsedMs": 61782,
+      "rssKiB": 2818112
+    },
+    {
+      "elapsedMs": 62809,
+      "rssKiB": 2827712
+    },
+    {
+      "elapsedMs": 63832,
+      "rssKiB": 2238544
+    },
+    {
+      "elapsedMs": 64857,
+      "rssKiB": 2256480
+    },
+    {
+      "elapsedMs": 65882,
+      "rssKiB": 2238032
+    },
+    {
+      "elapsedMs": 66918,
+      "rssKiB": 2270224
+    },
+    {
+      "elapsedMs": 67942,
+      "rssKiB": 2271920
+    },
+    {
+      "elapsedMs": 68976,
+      "rssKiB": 2276592
+    },
+    {
+      "elapsedMs": 70012,
+      "rssKiB": 2277488
+    },
+    {
+      "elapsedMs": 71045,
+      "rssKiB": 2278272
+    },
+    {
+      "elapsedMs": 72082,
+      "rssKiB": 2278240
+    },
+    {
+      "elapsedMs": 73120,
+      "rssKiB": 2279312
+    },
+    {
+      "elapsedMs": 74149,
+      "rssKiB": 2282128
+    },
+    {
+      "elapsedMs": 75187,
+      "rssKiB": 2283968
+    },
+    {
+      "elapsedMs": 76222,
+      "rssKiB": 2089120
+    },
+    {
+      "elapsedMs": 77247,
+      "rssKiB": 2082608
+    },
+    {
+      "elapsedMs": 78274,
+      "rssKiB": 2070432
+    },
+    {
+      "elapsedMs": 79312,
+      "rssKiB": 2073904
+    },
+    {
+      "elapsedMs": 80344,
+      "rssKiB": 2075360
+    },
+    {
+      "elapsedMs": 81377,
+      "rssKiB": 2085904
+    },
+    {
+      "elapsedMs": 82404,
+      "rssKiB": 2087760
+    },
+    {
+      "elapsedMs": 83436,
+      "rssKiB": 2088032
+    },
+    {
+      "elapsedMs": 84473,
+      "rssKiB": 2094224
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "hosted-followup",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "shared/ethereum-journal.mjs": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+    "shared/public-app-config.js": "5445b1894b9ac822009f6123b0d2d50329b8da7201c2a9c622f8546fa94293ef",
+    "scripts/hosted-test-gas.mjs": "e2cb22b2843971975f56720b798c2ee3a88949acd947844900d6ba2732b4d70b",
+    "scripts/run-hosted-followup.mjs": "de222c1d2afeabef020d1227017a42178c3a56eb6f457cbfb0a705f19b34a6b1",
+    "scripts/test-hosted-followup.mjs": "aa05544e0c5799ccc74e3e0670aaf97ce27ce0133f57c42e8ec4c08b80ba76f9",
+    "scripts/hosted-existing-account.mjs": "9dd4609f28628ca49ab51a98c138cb7127bf1cb4da2a58b575f047b88a95768f",
+    "scripts/testing/supervisor.mjs": "a5cdd5d62f354b46c4a97e27e5993e7dec559bc469919068790e3bf37e1ffcbd",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "scripts/t04-metamask.mjs": "557d3f1088fc5a7e49ebb716ee06f7fb86e278dab37770a0bc04e0af514c5baa",
+    "scripts/browser-error-observer.mjs": "0a54ad2eb04df064622f580c9f47dda956e1f0d1d226367f58f2034fba84c432",
+    "scripts/t04-browser-journey-verify.mjs": "24273b6875e77bdb62b7e7af59f745e3fadb4676b83a3239a371792fff6ccfc9",
+    "plugins/operations.mjs": "2393d7a438789067435ca7300fae6783e5eec1937c3d4e80a5b48ddcbf60a0bb",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "apps/dist/user.html": "3e7d5197a6d1b602878cd990209323b282ca4c47d259457ffa3f54de1f3759e3",
+    "apps/dist/aztec_bundle.js": "648ccd7dab264e89c6e0dbe6b1084cf6a6aa73eddaa03ef103547c73ebecba82",
+    "apps/dist/plugins.js": "e99bfd653fd6f71086fc2a2dc67b6021b173c6c4224594d5937bbb35fdf8c490",
+    ".build/apps-manifest.json": "d3adb712124f761179246ca153c2646068c25a29481257f606767094bd391a5a",
+    ".build/sdk/sdk-manifest.json": "f3aca601e1abaa1c9a938fa3ff782117aa90f090902badcf8a186c1df4ee4674",
+    ".build/v6/board-reader-config.json": "6b7fa5fda8fc6193201a52b15c2636e2f59b998b73ae5fda5583341b522319a2",
+    ".build/v6/plugin-service.json": "eeec09d2a73cb1fb58907aa7b69d85a7b592c22c40c5aaa2419efc23fc37200c"
+  },
+  "peakMemory": {
+    "elapsedMs": 19504,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 26901,
+        "ppid": 70769,
+        "rssKiB": 133600
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26922,
+        "ppid": 26901,
+        "rssKiB": 644176
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26927,
+        "ppid": 26922,
+        "rssKiB": 296768
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26935,
+        "ppid": 26927,
+        "rssKiB": 147360
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26936,
+        "ppid": 26927,
+        "rssKiB": 107120
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26937,
+        "ppid": 26927,
+        "rssKiB": 72832
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26943,
+        "ppid": 26927,
+        "rssKiB": 895776
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26944,
+        "ppid": 26927,
+        "rssKiB": 165024
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26947,
+        "ppid": 26927,
+        "rssKiB": 172640
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26960,
+        "ppid": 26927,
+        "rssKiB": 290752
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 26972,
+        "ppid": 26927,
+        "rssKiB": 539232
+      },
+      {
+        "role": "hosted-followup",
+        "pid": 27000,
+        "ppid": 26927,
+        "rssKiB": 99952
+      }
+    ]
+  },
+  "phasePassed": true,
+  "elapsedMs": 85233,
+  "ownedTreeAbsent": true
+}

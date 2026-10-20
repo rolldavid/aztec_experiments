@@ -1,0 +1,28 @@
+✖ remaining batch budget defers the next case without shortening its model timeout (48.722542ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.768666
+
+✖ failing tests:
+
+test at censor-daemon/test_evaluation.mjs:75:1
+✖ remaining batch budget defers the next case without shortening its model timeout (48.722542ms)
+  AssertionError [ERR_ASSERTION]: Five seconds left must not admit another model request
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-controls/censor-daemon/test_evaluation.mjs:79:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

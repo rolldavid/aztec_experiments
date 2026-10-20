@@ -1,0 +1,15 @@
+{
+  "source": "ebbc39c2e730431284c6330ce1f509a51fdd024c",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=restored native clock|native idle|native startup readiness|native wall|seed",
+    "plugins/devnet/operator-test.mjs",
+    "plugins/test/operations.test.mjs",
+    "plugins/test/operator-lifecycle.test.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedMs": 2443,
+  "scope": "Combined affected native clock and seed tests; controlled tests, no signing or proof qualification."
+}

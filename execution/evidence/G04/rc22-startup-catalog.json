@@ -1,0 +1,22 @@
+{
+  "source": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+  "at": "2026-10-14T06:26:20.123518+00:00",
+  "failure": {
+    "session": 4417,
+    "source": "42ec48e",
+    "error": "Rolling provenance mismatch",
+    "stage": "loadRollingArtifacts before network/identity",
+    "directoryEmptyAfterExit": true
+  },
+  "repair": "Existing normal pin generator verifies embedded source and produces catalog, existing bootstrapSHA follows generated digest",
+  "focusedCheck": {
+    "command": "pinnedNode prover/pin-rolling-artifacts.mjs then installed loadRollingArtifacts()",
+    "exitCode": 0,
+    "names": [
+      "RollingBoard",
+      "PrivateBok"
+    ],
+    "elapsedSeconds": 0.069
+  },
+  "noFinancialActions": true
+}

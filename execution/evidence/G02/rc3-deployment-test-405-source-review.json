@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "40527355c2a2654b1fbe2a85cf80a90c12c45831",
+  "reviewedAt": "2026-10-13T00:30:47.404511+00:00",
+  "disposition": "source-approved-for-bounded-composed-component-tests",
+  "packetSha256": "06fe56b1c442a0d4bceb6b0fa6394bdf13c7fdc662da69218116dd2bcdf9ed36",
+  "changedSourceHashes": {
+    "scripts/test-prover-bootstrap.py": "7d75f7877e9681f6021735dcb46488bde6cf08d5639b9ebf8cc9dfbce966f683",
+    "deploy/prover/BOOTSTRAP.md": "befccbc4a2e768878b3d5c3952be89165125566c1ae7d376fac8db130956269f"
+  },
+  "productionBootstrapByteIdentical": true,
+  "actualLeadHelperClosure": {
+    "deploy/prover/startup-stages.mjs": true,
+    "prover/compact-node-transform.mjs": true,
+    "prover/compact-node-registration.mjs": true,
+    "prover/compact-block-native.mjs": true,
+    "shared/trusted-private-node.mjs": true
+  },
+  "findingDisposition": {
+    "archive": "Python>=3.12 explicitly required; data-filter and FilterError assertions unchanged.",
+    "CLI": "Same supported sys.executable; external owned temp avoids checkout-path rejection; real missing-pin CLI rejection has no output, then unchanged copied CLI tests positive labelled temporary qualification and no-overwrite. Repository toolchain preserved.",
+    "termination": "Separate owned session/group; every communicate bounded; cleanup kills owned group then reaps/closes pipes and verifies group absence. Exact -SIGTERM, stdout/stderr empty and completed signal receipt assertions retained.",
+    "ENOSPC": "Counter advances only after actual child exists; first post-spawn persist fails. Exact error identity, TERM/KILL escalation and cleanup assertions retained."
+  },
+  "limitations": [
+    "Historical termination stall cause remains unresolved. This fixture repair must not be described as a production wrapper fix.",
+    "3-second readiness still includes source mount setup; if it fails, use new verbose/stage evidence to distinguish setup from actual signal delivery; do not widen production deadlines.",
+    "Full suite is not eligible in Controls worktree with three helper mismatches. Compose exact two-file repair into lead-runtime and rehash five helpers first.",
+    "No tests executed during review; source approval not runtime acceptance."
+  ],
+  "nextRun": {
+    "scope": "Focused four affected cases first under explicit supported interpreter and existing bounded parent owner; if pass, both complete suites with unchanged60s/2GiB admission and stop-first-suite-failure.",
+    "interpreter": "Explicit /opt/homebrew/opt/python@3.14/bin/python3.14 after recording actual version/hash; all Python CLI children inherit sys.executable.",
+    "observability": "-u plus named verbose output; preserve old deadline/error log and retained temporary directory.",
+    "release": "No Linux pin promotion, cloud/package generation, image qualification or integration approval."
+  }
+}

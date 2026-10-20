@@ -1,0 +1,121 @@
+✔ rendezvous accepts only fixed stages and bounded unique public transaction identifiers (3.062208ms)
+✔ atomic rendezvous cannot overwrite a prior stage or accept an unverified release (7.585916ms)
+✔ missing release respects remaining parent budget (0.412291ms)
+✔ canonical exit rejects wrong leaf, duplicate leaf, wrong nullifier and ineligible anchor (433.650292ms)
+✔ aborted lifecycle terminates a rendezvous even with a clamped legacy time callback (101.128834ms)
+✔ browser modes roundtrip strictly across the real handoff boundary (12.063792ms)
+✔ journey diagnostic outputs fixed milestones and allowlisted exception only (0.270709ms)
+✔ actual browser journey stops after one deposit action when claim reports an error (0.827791ms)
+✔ partial canonical progress is ordered, bounded, public-only and copied (0.418458ms)
+✔ non-Chromium lifecycle scenarios retain one explicit engine and existing bounds (1.635667ms)
+✔ cold funding driver never claims or deposits again after a failed deposit (1.136209ms)
+✔ handoff accepts actual SDK whole-token formatting and rejects invalid amounts (0.844458ms)
+✔ MetaMask is accepted only for explicit Chromium lifecycle and funding (0.19425ms)
+✔ MetaMask request observation preserves provider result and refuses overlapping transactions (45.502334ms)
+✔ request guard attributes blank extension iframes without exempting application requests (0.224584ms)
+✔ MetaMask confirmation guard binds exact account, chain, target, amount and calldata (9.440334ms)
+✔ Phantom mode is explicit signature-only and leaves the original MetaMask mode unchanged (1.15275ms)
+✖ Phantom package pin rejects a modified official package before extracting any files (0.990708ms)
+✔ Phantom exact G04 typed payloads verify distinct domains and reject mutation or a different signer (41.359541ms)
+✔ Phantom signature-only request admission denies financial sends and arbitrary signing (0.145ms)
+✔ Phantom onboarding acknowledges discovered accounts before the password form (0.217375ms)
+✔ Phantom completion prefers the offered defer control (0.183083ms)
+✔ Phantom completion uses only a disposable username and records remote retention (0.100834ms)
+✔ MetaMask aggregate admission binds one exact local ETH payment and its gas ceiling (7.177583ms)
+✔ MetaMask aggregate modes require an explicit asset and do not change legacy or Phantom modes (0.16125ms)
+✖ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (14.837792ms)
+✔ MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering (1.587375ms)
+✔ MetaMask aggregate observer counts every actual configured root RPC send and rejects malformed batches (0.348875ms)
+✔ MetaMask retained readiness denies all payment/proof requests without substituting reads (0.360291ms)
+✔ MetaMask retained readiness imports the existing encrypted recovery through actual accessible input names only (0.165833ms)
+✔ MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe (0.144958ms)
+✔ MetaMask unfunded continuation rejects any saved journal or prior Ethereum/consent nonce (0.115875ms)
+✔ paid MetaMask recovery binds encrypted scope, exact payment and all claim legs (4.913458ms)
+✔ paid recovery surface projects only closed visible notices and controls (5.207167ms)
+✔ paid recovery observes one classified advance without new approval: success (0.141625ms)
+✔ paid recovery observes one classified advance without new approval: review (0.041ms)
+✔ paid recovery observes one classified advance without new approval: review-saved (0.036083ms)
+✔ paid recovery observes one classified advance without new approval: reverted (0.044333ms)
+✔ paid recovery observes one classified advance without new approval: error (0.0415ms)
+✔ paid recovery observes one classified advance without new approval: waiting-bridge (0.04925ms)
+✔ paid recovery observes one classified advance without new approval: pending (0.030042ms)
+✔ paid recovery observes one classified advance without new approval: timeout (0.045417ms)
+✔ paid recovery diagnostic failures cannot replace the original wait failure (0.076166ms)
+✔ paid recovery permits only the exact non-signing MetaMask account permission (0.447417ms)
+✔ paid recovery account selection retains original provider rejection (0.21925ms)
+✔ paid recovery waits for authentic MetaMask account selection: delayed-connect (1.336333ms)
+✔ paid recovery waits for authentic MetaMask account selection: other-confirmation (0.209875ms)
+✔ paid recovery waits for authentic MetaMask account selection: warning-confirmation (0.248042ms)
+✔ paid recovery waits for authentic MetaMask account selection: missing-prompt (0.127875ms)
+✔ MetaMask startup cache worker permits only pinned static reads after a verified frame (0.184ms)
+✔ retained readiness waits for actual account surface: delayed-unlock (0.357542ms)
+✔ retained readiness waits for actual account surface: already-loaded (0.150791ms)
+✔ retained readiness waits for actual account surface: load-failure (0.170209ms)
+✔ retained Bok opt-in defaults to no action and bounds exact approval before launch (0.605875ms)
+✔ retained Bok approval file requires private regular owned input (1.192292ms)
+✔ retained Bok saved workflow keeps private identifiers in page until confirmed public post (2.453833ms)
+✔ retained Bok UI confirms only two exact saved reviews and stops before any invalid confirmation (0.308917ms)
+✔ retained Bok public discovery uses only public post IDs and uniform bounded accounting pages (0.477625ms)
+✔ retained Bok canonical event checks reject wrong reply linkage and unfinished or dishonest accounting (1.092584ms)
+✔ retained Bok discovery fails closed on mixed snapshots, duplicate matches and pagination exhaustion (0.968375ms)
+✔ explicit prepared claim review flag is default-off and paid-recovery-only (0.134291ms)
+✔ prepared claim review binds original encrypted records, three receipts, empty journal and saved cap (6.368833ms)
+✔ prepared claim confirms exactly once through existing UI after two original-record checks (0.363209ms)
+✔ explicit retained readiness recognizes restored prepared surface: false (0.134417ms)
+✔ explicit retained readiness recognizes restored prepared surface: true (0.061625ms)
+✔ restored prepared confirmation still requires explicit mode and original-record checks (0.10875ms)
+✔ existing browser owner grants application budget only to explicit aggregate Bok continuation (3.590792ms)
+✔ Bok canonical phases consume one original deadline rather than restarting wait budgets (0.224875ms)
+✔ Bok deadline expiring during authorize inspection prevents its confirmation (0.149791ms)
+✔ Bok deadline expiring during post inspection prevents its confirmation (0.066834ms)
+✔ installed Playwright async false predicate is a truthy Promise; awaited discovery does not finish early (3.921583ms)
+✔ read-only Bok observation accepts only exact original public identifiers and cannot authorize expired approval (1.177541ms)
+✔ fatal wallet diagnostics retain only closed fields without intercepting errors or invoking getters (0.277667ms)
+✔ fresh automatic three-leg claim waits for Ready and binds original saved consent without another action (0.624708ms)
+✔ automatic claim surface keeps waiting states pending without interacting with the application (0.523375ms)
+✔ wallet stage memory observations contain only page classes and cannot replace execution failures (0.153333ms)
+✔ aggregate account permission observation preserves pending, resolved and rejected provider behavior (1.297709ms)
+ℹ tests 77
+ℹ suites 0
+ℹ pass 75
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1044.973834
+
+✖ failing tests:
+
+test at scripts/test-t04-browser-journey.mjs:166:1
+✖ Phantom package pin rejects a modified official package before extracting any files (0.990708ms)
+  Error: ENOENT: no such file or directory, open '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/phantom-20261014-acquisition/package.crx'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Object.readFile (node:internal/fs/promises:1996:14)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:168:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/phantom-20261014-acquisition/package.crx'
+  }
+
+test at scripts/test-t04-browser-journey.mjs:238:1
+✖ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (14.837792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/tmp/t04-aggregate-aFT5g8'
+  - '/tmp/t04-aggregate-aFT5g8'
+  
+      at readMetaMaskAggregateControl (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/t04-metamask.mjs:180:9)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-t04-browser-journey.mjs:247:122)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/tmp/t04-aggregate-aFT5g8',
+    expected: '/tmp/t04-aggregate-aFT5g8',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

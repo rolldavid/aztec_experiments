@@ -1,0 +1,26 @@
+{
+  "candidate": "c67447631d1b14dd846412b9297e83020384e644",
+  "base": "2d98b9b608a8ee35bf2d363b1f12ad01465958ad",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-native-prover-platform-check",
+  "implementer": "design-20261011",
+  "allowed_paths": [
+    "scripts/test-native-prover-pin.mjs"
+  ],
+  "required_checks": [
+    "locked-native-prover-inventory"
+  ],
+  "requirements": [
+    "RC38-RC39-build-platform-integrity"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261011",
+      "task_id": "G13-native-prover-platform-check",
+      "paths": [
+        "scripts/test-native-prover-pin.mjs"
+      ]
+    }
+  ]
+}

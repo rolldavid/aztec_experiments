@@ -1,0 +1,33 @@
+{
+  "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-complete-public-reader-observation",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "scripts/testing/rolling-preference-browser.mjs",
+    "scripts/testing/rolling-preference-browser.test.mjs",
+    "scripts/testing/rolling-wire-campaign.mjs",
+    "scripts/testing/rolling-wire-campaign.test.mjs"
+  ],
+  "required_checks": [
+    "affected-observer-tests",
+    "unchanged-wallet-closure"
+  ],
+  "requirements": [
+    "G13-RC25-observation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "G13-complete-public-reader-observation",
+      "paths": [
+        "scripts/testing/rolling-preference-browser.mjs",
+        "scripts/testing/rolling-preference-browser.test.mjs",
+        "scripts/testing/rolling-wire-campaign.mjs",
+        "scripts/testing/rolling-wire-campaign.test.mjs"
+      ]
+    }
+  ]
+}

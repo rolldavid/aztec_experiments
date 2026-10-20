@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "task": "G07",
+  "sourceRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "parentRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "changedPaths": [
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs"
+  ],
+  "diagnosis": "Actual retained scan failed at10.490s with the generic reader failure; five compact bodies and observed RPC responses were200. Repeated complete readiness snapshots consume the same unchanged10s read budget; existing labelled clock/call-cost test reproduces failure before repair. This does not prove the exact hidden cause of every earlier failure.",
+  "change": "Complete readiness snapshots at operation entry and after final encrypted CAS/mailbox/advance processing, before final canonical anchor validation. Every prior pinned-anchor recheck and context guard remains; no snapshot authority cache, timeout increase, retry, or fallback.",
+  "checks": [
+    {
+      "command": "node --test --test-name-pattern=\"bounded read checkpoints useful progress\" shared/rolling/cold-preference-reader.test.mjs",
+      "source": "c803 plus new regression test",
+      "result": "Expected failure:1test,0pass,1fail;48.675ms"
+    },
+    {
+      "command": "node --test shared/rolling/cold-preference-reader.test.mjs shared/rolling/compact-client.test.mjs",
+      "source": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "result": "83PASS,0FAIL,0SKIP;248.859ms"
+    }
+  ],
+  "acceptanceLimits": [
+    "Controlled SDK/provenance doubles remain labelled; original AEAD/fold executes in the existing tests.",
+    "No SDK bundle rebuilt, no repaired live recovery run yet.",
+    "120s full cold criterion, real-proof/testnet and privacy qualification remain open."
+  ],
+  "files": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/shared/rolling/cold-preference-reader.mjs",
+      "sha256": "91012b4bdcbe1ad56a126381746b7323e0f6bae99426e7758247049827ffde23"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/shared/rolling/cold-preference-reader.test.mjs",
+      "sha256": "dc62e8017ca980041614364cdc2648d9f96f8465d98730d20e689f068354a7ce"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-linux-browser-preparation/reader-latency-before.log",
+      "sha256": "dffbff3d23b0187374fb22d1da66885f7966c50c9998c149d2073e53ad517aea"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-linux-browser-preparation/reader-latency-after-final.log",
+      "sha256": "f830e91098d8d473ebdf9534531452e1ce21d476fbe6c8e00a2e701c6eb1c465"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-linux-browser-preparation/linux1588-retained-scan-01-packet.json",
+      "sha256": "9fb3a4c922008c511ecede014835666d43c7b52157ce57efbba800e32cefb6b5"
+    }
+  ]
+}

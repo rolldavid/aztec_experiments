@@ -1,0 +1,21 @@
+{
+  "candidate": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+  "scenario": "rolling-subboard-policy",
+  "recordedAt": "2026-10-12T03:40:28.664219+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "status": "passed",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "acceptance": "Real private fee-only subboard creation, separate collateral-funded anonymous post, parent policy update and authorized rejection, failed post preparation without lost deposit, default/curated Home checks and canonical board/directory/thread/post reconstruction with SQLite reopen. No browser publication or completed withdrawal claim.",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-subboard-policy",
+  "startedAt": "2026-10-12T03:41:04.023789+00:00",
+  "review": "execution/evidence/G05/subboard-8003-review.json",
+  "reviewSha256": "086fcb6166577cc173a6f8ec1e7a1c073f2ba671405fae3a3311d301481ead96",
+  "result": "application-da2510b2-87cc-417f-bb49-19d97c2371b4.json",
+  "resultSha256": "b35d4093d8bf0234f2ee61fc5ec86b5f4c69adafd020d7f1ccff5e6c24f1257e",
+  "exitCode": 0,
+  "elapsedMs": 393599,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

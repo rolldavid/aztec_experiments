@@ -1,0 +1,25 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "773dc67174e2954ebc6e40f51f0a288a78a84737",
+  "verdict": "SOURCE_BACKED_NARROW_REFACTOR_PROPOSAL_ONLY",
+  "failedSize": 16477,
+  "hardLimitUnchanged": 16384,
+  "basis": [
+    "Finite codec and reversible formatting comparisons did not fit; stop parameter tuning.",
+    "Existing HOST activation_support verifies packaged bootstrap.py by PINS.startup before compiling isolated namespace and passing host globals.",
+    "qualification_projection and qualification_anchors are used only within qualify after verify_release, unlike pre-package failure reporting functions."
+  ],
+  "proposal": [
+    "Measure relocation of those two post-package pure projection helpers to the already packaged bootstrap.py namespace using existing verified support seam.",
+    "Retain thin HOST wrappers, original predicate order and exact output fields; explicit host QUALIFICATION/PINS parameters.",
+    "Do not change pre-download controls, shutdown, final receipt, service observations, limits, runtime qualification or native capture.",
+    "No new download/helper path/generic AST extraction framework."
+  ],
+  "requiredReview": [
+    "Exact source diff and helper semantic preservation.",
+    "Bounded realistic payload size including source hash shift, with headroom measured rather than assumed.",
+    "Existing projection controls plus missing/tampered packaged support rejection and original FinalReceipt focus before broader checks.",
+    "New package/bootstrap startup hash and runtime hash require fresh future campaign bindings."
+  ],
+  "noRuntimeByReviewer": true
+}

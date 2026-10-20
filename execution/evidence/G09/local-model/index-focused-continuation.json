@@ -1,0 +1,42 @@
+{
+  "source": "39dbff586a5092349c32d93b721d5417733e3532",
+  "procedure": "One service lifetime; at most two existing list calls, no model or signing",
+  "elapsedMs": 39422,
+  "rows": [
+    {
+      "call": 1,
+      "passed": false,
+      "elapsedMs": 20022,
+      "error": "Canonical index is catching up"
+    },
+    {
+      "call": 2,
+      "passed": true,
+      "elapsedMs": 16792,
+      "checkpoint": {
+        "number": 776,
+        "hash": "0x013c03414cd4a5d2d8470d62eaa858c12008a74d14964724bd19b0ef3c926430"
+      },
+      "scanComplete": true,
+      "posts": [
+        {
+          "postId": "0x1adc5989b049faa7d3d16cba367bc0d270f3d442011e5996a2333b5d1d0a5839",
+          "flagged": true,
+          "currentPolicyVersion": "0x081d70c857c8f24b664ac0cbaa90782316b37496b5110d05c760e8891554a3ae"
+        },
+        {
+          "postId": "0x25eb84fc8ea7452573ccf2c3b789d6f9657679676e17b79bde39d3a39bf3c8ad",
+          "flagged": false,
+          "currentPolicyVersion": "0x15dea57784ad75e97c96ec0aa1c6ada316a73b7997f717a47ff813c305b4c934"
+        },
+        {
+          "postId": "0x06dfc3199d2f56d1041d4266cf3f7fe06be57e738b268f3414e440b016245f52",
+          "flagged": false,
+          "currentPolicyVersion": "0x15dea57784ad75e97c96ec0aa1c6ada316a73b7997f717a47ff813c305b4c934"
+        }
+      ],
+      "development": true
+    }
+  ],
+  "cleanup": true
+}

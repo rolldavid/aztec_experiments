@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T12:49:46.381781+00:00",
+  "fleetId": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+  "deleteRequestedOrAlreadyDeleted": true,
+  "noReplacement": true,
+  "failureEvidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/operator09-readonly-124921.json",
+  "resourceAbsencePending": true
+}

@@ -1,0 +1,34 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourceReviewSha256": "925ae7c914ad53dccfa16c43eceee79ef28f79a823831dd1ab8e8f71c3513cb2",
+  "runnerReviewSha256": "d01d987c508301953902d36dafd741b56f6cc7e027fb0ffcbcd80fbc9d144b56",
+  "preparationPacketSha256": "065d70e24f87b1deffb7cb079352ce96a988acf40f5a6e244146719d0a964147",
+  "actual": {
+    "passed": true,
+    "testCount": 17,
+    "skipped": 0,
+    "exitCode": 0,
+    "elapsedMs": 339,
+    "peakRSSMeasured": false,
+    "configuredRSSLimitKiB": 524288,
+    "protectedCount": 793,
+    "protectedUnchanged": true,
+    "ownedTreeAbsent": true,
+    "tempRemoved": true
+  },
+  "files": {
+    "run.mjs": "71ae0b76f1976812edf2fca307e0a7cc80629b5389c82515ed400a7a068d98d8",
+    "suite.py": "cb3b324499b18f69ab58a9637c0556b1af2e16be2399918e300742b5e4b71ce4",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "execution-intent.json": "6a4ee8c14d827ad5f0aa31bc5e04920d03724b2dd61636daf09c544742d88c6d",
+    "result.json": "0b9f43b47a3eac8b843f3e27ff6ad450e709a4de7396bd5ae8308950ce6ca6ee",
+    "build.log": "010f6c8db3ead2401b3f2f15a026b3beb467f1af55a7e455943389c6a78a3d4e",
+    "before-source.json": "4aa99afb576f78fc861d9f8e1f4a2a76d063f9e60cb312f1baa552fd4ab6d06b"
+  },
+  "limits": [
+    "Controlled tests only; no Docker/network/systemd/native execution or paid actions.",
+    "Setup log storage transient maximum is three 64KiB chunks (192KiB); final retained maximum is two chunks (128KiB).",
+    "Docker setup remains separately gated."
+  ],
+  "authority": "Parent conditional grant activated by explicit Design285 positive closure; one execution only."
+}

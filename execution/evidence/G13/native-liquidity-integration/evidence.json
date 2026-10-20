@@ -1,0 +1,193 @@
+{
+  "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+  "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+  "task_id": "G04-G13-native-liquidity-wallet-component",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "normal-build-provenance",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/liquidity-contracts-build-owner.json",
+          "sha256": "f16a6503b7457f6b5d7785f69f7bb711360e41ea65ac8c1ed694d51487219d8c"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/liquidity-assets-build-owner.json",
+          "sha256": "5ba2ad821480432c97c932f8ffe6c1d7632ca2d61496791dc971aaafcd9363db"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-3c27-coherent-liquidity-metamask-review.json",
+          "sha256": "8fbb4257e24654a174368f7b08f7739c8b82fbbc15dc8a2ed09957c5bad9709e"
+        }
+      ],
+      "command": "Existing component checks and normal builders; commands in linked records",
+      "observed": "Normal contracts159680ms, ordered assets33350ms; independent exact manifests/output/input carry verified oncandidate.",
+      "environment": "macOS Node24.21.0 Aztec6.0.0-rc.3 native devnet/PXE flags disabled, no paid operations",
+      "exit_code": 0
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "native-relay-controls",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G13/development-composition/native-settlement-handoff.json",
+          "sha256": "f6309d5601ea870d29571af967e6233b6f483060e594fba1cecb2a85a8b36a4a"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G13/development-composition/swap-router-abi-handoff.json",
+          "sha256": "f7caaab4863383a988e5e0d99fcc34cab699a785be31145e82ec04fd0fbed840"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/relay-retention-focused.log",
+          "sha256": "1d82754b18114b6a553939e0e82de7274396ac679ac09c367f58a12a78c3f4e3"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-3c27-coherent-liquidity-metamask-review.json",
+          "sha256": "8fbb4257e24654a174368f7b08f7739c8b82fbbc15dc8a2ed09957c5bad9709e"
+        }
+      ],
+      "command": "Existing component checks and normal builders; commands in linked records",
+      "observed": "36 existing checks plus actual pinned ABI focused1 and relay24 pass; application proof flags configuration only.",
+      "environment": "macOS Node24.21.0 Aztec6.0.0-rc.3 native devnet/PXE flags disabled, no paid operations",
+      "exit_code": 0
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "named-wallet-driver",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/metamask-aggregate-launch-handoff.json",
+          "sha256": "d95f6f82a4df76a6cf685e2043979da47644092f8fe6d1994fe75bf165ab68fb"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-be720-metamask-final-review.json",
+          "sha256": "f1f735e6efd8e1c97ae5c18c003c16f4abe614e31f0d97106723cdb8d88fb1e3"
+        }
+      ],
+      "command": "Existing component checks and normal builders; commands in linked records",
+      "observed": "Independent source review and27 existing focused cases plus retainedprofile/endpoint focused repairs; actual payment still open.",
+      "environment": "macOS Node24.21.0 Aztec6.0.0-rc.3 native devnet/PXE flags disabled, no paid operations",
+      "exit_code": 0
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "native-startup-readiness",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-automine-resume-result.json",
+          "sha256": "b7218d8cef185bb4b1c49215c9614f1089bbee6aa22700117e0faf199f2f9645"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-automine-resume-owner.json",
+          "sha256": "ee5c28d5554c4d758ebcd76ddf1280dd127276899e952ede89523e04f82d0f83"
+        }
+      ],
+      "command": "Existing component checks and normal builders; commands in linked records",
+      "observed": "Actual56936 PASS47993ms, originalnewcampaignreused, canonical index17, realCircle/V3/PrivateBok/relayready, settledsnapshot andownedcleanup; no userpayment orhostedmodel qualification.",
+      "environment": "macOS Node24.21.0 Aztec6.0.0-rc.3 native devnet/PXE flags disabled, no paid operations",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "normal-build-provenance",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/liquidity-contracts-build-owner.json",
+          "sha256": "f16a6503b7457f6b5d7785f69f7bb711360e41ea65ac8c1ed694d51487219d8c"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/liquidity-assets-build-owner.json",
+          "sha256": "5ba2ad821480432c97c932f8ffe6c1d7632ca2d61496791dc971aaafcd9363db"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-3c27-coherent-liquidity-metamask-review.json",
+          "sha256": "8fbb4257e24654a174368f7b08f7739c8b82fbbc15dc8a2ed09957c5bad9709e"
+        }
+      ]
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "native-relay-controls",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G13/development-composition/native-settlement-handoff.json",
+          "sha256": "f6309d5601ea870d29571af967e6233b6f483060e594fba1cecb2a85a8b36a4a"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G13/development-composition/swap-router-abi-handoff.json",
+          "sha256": "f7caaab4863383a988e5e0d99fcc34cab699a785be31145e82ec04fd0fbed840"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/relay-retention-focused.log",
+          "sha256": "1d82754b18114b6a553939e0e82de7274396ac679ac09c367f58a12a78c3f4e3"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-3c27-coherent-liquidity-metamask-review.json",
+          "sha256": "8fbb4257e24654a174368f7b08f7739c8b82fbbc15dc8a2ed09957c5bad9709e"
+        }
+      ]
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "named-wallet-driver",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/metamask-aggregate-launch-handoff.json",
+          "sha256": "d95f6f82a4df76a6cf685e2043979da47644092f8fe6d1994fe75bf165ab68fb"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-be720-metamask-final-review.json",
+          "sha256": "f1f735e6efd8e1c97ae5c18c003c16f4abe614e31f0d97106723cdb8d88fb1e3"
+        }
+      ]
+    },
+    {
+      "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+      "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+      "id": "native-startup-readiness",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-automine-resume-result.json",
+          "sha256": "b7218d8cef185bb4b1c49215c9614f1089bbee6aa22700117e0faf199f2f9645"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-automine-resume-owner.json",
+          "sha256": "ee5c28d5554c4d758ebcd76ddf1280dd127276899e952ede89523e04f82d0f83"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+    "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-3c27-coherent-liquidity-metamask-review.json",
+        "sha256": "8fbb4257e24654a174368f7b08f7739c8b82fbbc15dc8a2ed09957c5bad9709e"
+      }
+    ]
+  }
+}

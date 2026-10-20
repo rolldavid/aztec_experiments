@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "source": "6851dd5da205227813aec7ed4aaffff4a7970b37",
+  "scope": "read-only installed bytes and source; no native execution",
+  "bbPackage": {
+    "version": "6.0.0-rc.6",
+    "lockEntry": {
+      "version": "6.0.0-rc.6",
+      "resolved": "https://registry.npmjs.org/@aztec-foundation/bb.js/-/bb.js-6.0.0-rc.6.tgz",
+      "integrity": "sha512-xDMJKYUKpYxHAtrC48m+wQKN3bWM7muX6et/OZUbQC5AzoezT5ePeTnYKYeOYQQvLgdNHv/nYJVLRvG/Bn63yg==",
+      "license": "MIT",
+      "dependencies": {
+        "comlink": "^4.4.1",
+        "commander": "^12.1.0",
+        "idb-keyval": "^6.2.1",
+        "msgpackr": "^1.11.2",
+        "pako": "^2.1.0",
+        "proper-lockfile": "^4.1.2",
+        "tslib": "^2.4.0"
+      },
+      "bin": {
+        "bb": "dest/node/bin/index.js"
+      }
+    },
+    "packageJsonSha256": "1a8088fbf34fa1df8669d9a84fd2fa9c8a95ad661530adbba2d97d7032c617e5"
+  },
+  "nativeBinaries": {
+    "arm64-macos": {
+      "path": "node_modules/@aztec-foundation/bb.js/build/arm64-macos/bb",
+      "bytes": 23511984,
+      "sha256": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217",
+      "executableBit": true,
+      "magic": "cffaedfe",
+      "executed": false
+    },
+    "amd64-macos": {
+      "path": "node_modules/@aztec-foundation/bb.js/build/amd64-macos/bb",
+      "bytes": 43798640,
+      "sha256": "170d938cdd0d480d99bf51f3ef044c85ab8cc9b8dea897119d2c8521167366b5",
+      "executableBit": true,
+      "magic": "cffaedfe",
+      "executed": false
+    },
+    "arm64-linux": {
+      "path": "node_modules/@aztec-foundation/bb.js/build/arm64-linux/bb",
+      "bytes": 24200864,
+      "sha256": "83645bab6e43d3ea6ec65634d31d11490b1150190d6696206f2a7b8e1e0d79e0",
+      "executableBit": true,
+      "magic": "7f454c46",
+      "executed": false
+    },
+    "amd64-linux": {
+      "path": "node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb",
+      "bytes": 44698432,
+      "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+      "executableBit": true,
+      "magic": "7f454c46",
+      "executed": false
+    }
+  },
+  "pxePatchBeforeHashes": [
+    {
+      "helper": "scripts/patch-private-event-query.mjs",
+      "path": "src/storage/private_event_store/private_event_store.ts",
+      "expectedBefore": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+      "actual": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+      "matches": true,
+      "applied": false
+    },
+    {
+      "helper": "scripts/patch-private-event-query.mjs",
+      "path": "dest/storage/private_event_store/private_event_store.js",
+      "expectedBefore": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35",
+      "actual": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35",
+      "matches": true,
+      "applied": false
+    },
+    {
+      "helper": "scripts/patch-pxe-reorg-anchor.mjs",
+      "path": "src/block_synchronizer/block_synchronizer.ts",
+      "expectedBefore": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+      "actual": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+      "matches": true,
+      "applied": false
+    },
+    {
+      "helper": "scripts/patch-pxe-reorg-anchor.mjs",
+      "path": "dest/block_synchronizer/block_synchronizer.js",
+      "expectedBefore": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+      "actual": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+      "matches": true,
+      "applied": false
+    }
+  ],
+  "disabledLifecycleScripts": [
+    {
+      "name": "@parcel/watcher",
+      "version": "2.6.0",
+      "scripts": {
+        "install": "node scripts/build-from-source.js"
+      },
+      "executed": false
+    },
+    {
+      "name": "bcrypto",
+      "version": "5.5.2",
+      "scripts": {
+        "install": "node-gyp rebuild"
+      },
+      "executed": false
+    },
+    {
+      "name": "bufferutil",
+      "version": "4.1.0",
+      "scripts": {
+        "install": "node-gyp-build"
+      },
+      "executed": false
+    },
+    {
+      "name": "esbuild",
+      "version": "0.25.12",
+      "scripts": {
+        "postinstall": "node install.js"
+      },
+      "executed": false
+    },
+    {
+      "name": "keccak",
+      "version": "3.0.4",
+      "scripts": {
+        "install": "node-gyp-build || exit 0"
+      },
+      "executed": false
+    },
+    {
+      "name": "leveldown",
+      "version": "6.1.1",
+      "scripts": {
+        "install": "node-gyp-build"
+      },
+      "executed": false
+    },
+    {
+      "name": "lmdb",
+      "version": "3.5.7",
+      "scripts": {
+        "install": "node-gyp-build-optional-packages"
+      },
+      "executed": false
+    },
+    {
+      "name": "msgpackr-extract",
+      "version": "3.0.4",
+      "scripts": {
+        "install": "node-gyp-build-optional-packages"
+      },
+      "executed": false
+    },
+    {
+      "name": "protobufjs",
+      "version": "7.6.6",
+      "scripts": {
+        "postinstall": "node scripts/postinstall"
+      },
+      "executed": false
+    },
+    {
+      "name": "unrs-resolver",
+      "version": "1.12.2",
+      "scripts": {
+        "postinstall": "node postinstall.js"
+      },
+      "executed": false
+    },
+    {
+      "name": "utf-8-validate",
+      "version": "5.0.10",
+      "scripts": {
+        "install": "node-gyp-build"
+      },
+      "executed": false
+    }
+  ],
+  "officialReleaseReferences": {
+    "installVersions": {
+      "url": "https://install.aztec.network/6.0.0-rc.3/versions",
+      "sha256": "bd07b479c05d41cc4a18745bad2d057fed7da1c0217997597896ef47a4dad5f9",
+      "text": "noir: 1.0.0-rc.3\nfoundry: 1.4.1\nnode: 24.12.0\n"
+    },
+    "aztecNrManifest": {
+      "url": "https://raw.githubusercontent.com/aztec-labs-eng/aztec-nr/694af4de4b196733819811c896867d5a9572a1b5/aztec/Nargo.toml",
+      "sha256": "4c2ee807f594bf38cf759cb507d8b2bb428691598056d60b324ff0e1b370c969",
+      "text": "[package]\nname = \"noir_aztec\"\nauthors = [\"aztec-labs\"]\ncompiler_version = \">=0.18.0\"\ntype = \"lib\"\n\n[dependencies]\nprotocol_types = { git = \"https://github.com/AztecProtocol/aztec-packages\", tag = \"v6.0.0-rc.6\", directory = \"noir-projects/fnd/noir-protocol-circuits/crates/types\" }\nsha256 = { tag = \"v0.3.0\", git = \"https://github.com/noir-lang/sha256\" }\nposeidon = { tag = \"v0.3.0\", git = \"https://github.com/noir-lang/poseidon\" }\n"
+    },
+    "foundationRef": {
+      "url": "https://api.github.com/repos/AztecProtocol/aztec-packages/git/ref/tags/v6.0.0-rc.6",
+      "sha256": "5ade9363bf67767ecd2182bcba0fff2016179180dce9c0e1ee497480d7d92585",
+      "text": {
+        "ref": "refs/tags/v6.0.0-rc.6",
+        "node_id": "REF_kwDOJAQCorVyZWZzL3RhZ3MvdjYuMC4wLXJjLjY",
+        "url": "https://api.github.com/repos/AztecProtocol/aztec-packages/git/refs/tags/v6.0.0-rc.6",
+        "object": {
+          "sha": "0df91ba1799012435c62c6108a0926b357fef88c",
+          "type": "commit",
+          "url": "https://api.github.com/repos/AztecProtocol/aztec-packages/git/commits/0df91ba1799012435c62c6108a0926b357fef88c"
+        }
+      }
+    },
+    "noirTag": {
+      "url": "https://api.github.com/repos/noir-lang/noir/git/ref/tags/v1.0.0-rc.3",
+      "sha256": "1493704a5fc3bdc907b3a9ab1f2dc04604ba8e46d2fa93b98e424df86aae5615",
+      "object": {
+        "sha": "5a7ee9bf5ed8973076df7bb0d2b723024db09ae7",
+        "type": "commit",
+        "url": "https://api.github.com/repos/noir-lang/noir/git/commits/5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
+      }
+    },
+    "noirNargoToml": {
+      "url": "https://raw.githubusercontent.com/noir-lang/noir/v1.0.0-rc.3/tooling/nargo_cli/src/cli/mod.rs",
+      "sha256": "4c624ac22fd9b53fb9e721666f68bf382b1b22ebe0fcee13fdd7cc424b3c1f9f",
+      "cacheMatches": []
+    },
+    "noirResolver": {
+      "url": "https://raw.githubusercontent.com/noir-lang/noir/v1.0.0-rc.3/tooling/nargo_toml/src/lib.rs",
+      "sha256": "a055ff4098061bc90910d0fff9eaec56d61e5b58e0d192e369be4ae8df0846af",
+      "cacheMatches": []
+    },
+    "tooling/nargo_toml/src/git.rs": {
+      "url": "https://raw.githubusercontent.com/noir-lang/noir/5a7ee9bf5ed8973076df7bb0d2b723024db09ae7/tooling/nargo_toml/src/git.rs",
+      "sha256": "287a4209481118a1335839f98bf09a27a1a09f0ec42503e4bf5ec63c5778220e",
+      "cacheMatches": [
+        {
+          "line": 64,
+          "text": "    dirs::home_dir().unwrap().join(\"nargo\")"
+        }
+      ]
+    }
+  },
+  "foundationSourceCommit": "0df91ba1799012435c62c6108a0926b357fef88c",
+  "aztecNodeCommit": "b37a5869760fb55faa8d4697d3ccbecc6f913fce",
+  "aztecNrCommit": "694af4de4b196733819811c896867d5a9572a1b5",
+  "otherNativePackages": {
+    "@aztec-foundation/wsdb-darwin-arm64": {
+      "package": "@aztec-foundation/wsdb-darwin-arm64",
+      "path": "node_modules/@aztec-foundation/wsdb-darwin-arm64/aztec-wsdb",
+      "installed": true,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/wsdb-darwin-arm64/-/wsdb-darwin-arm64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-ilu/+1xAJpDi8kGxPkScmRdCaRuRKM+1/3l0ySaVZjFDzh4UP6g8IhzH89tT2ZTFU26bwGSqHoiDJOsP8HS9Rg==",
+        "cpu": [
+          "arm64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "darwin"
+        ]
+      },
+      "executed": false,
+      "bytes": 5001928,
+      "sha256": "c335216eeb1be24d49ff1055d5ecf49654f7e81ebbcc637a3fdd0908303a935d"
+    },
+    "@aztec-foundation/wsdb-darwin-x64": {
+      "package": "@aztec-foundation/wsdb-darwin-x64",
+      "path": "node_modules/@aztec-foundation/wsdb-darwin-x64/aztec-wsdb",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/wsdb-darwin-x64/-/wsdb-darwin-x64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-50m3RkHFM28R88ENrMKOJn2NR4x+UEGw+kFOP+Ouvi2+iyT0Ekuesyl/gWa/2Ejj8+adJYF4ybyiaKftolBOkw==",
+        "cpu": [
+          "x64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "darwin"
+        ]
+      },
+      "executed": false
+    },
+    "@aztec-foundation/wsdb-linux-arm64": {
+      "package": "@aztec-foundation/wsdb-linux-arm64",
+      "path": "node_modules/@aztec-foundation/wsdb-linux-arm64/aztec-wsdb",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/wsdb-linux-arm64/-/wsdb-linux-arm64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-9UenWAQgKohzJMBcZWzVSeOBRqP01OF40uHp++uYGbUThJsQJEZn0lYbRynhpglBE4T/e0vOqS/mEziaY64Xsw==",
+        "cpu": [
+          "arm64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "linux"
+        ]
+      },
+      "executed": false
+    },
+    "@aztec-foundation/wsdb-linux-x64": {
+      "package": "@aztec-foundation/wsdb-linux-x64",
+      "path": "node_modules/@aztec-foundation/wsdb-linux-x64/aztec-wsdb",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/wsdb-linux-x64/-/wsdb-linux-x64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-baVD24p96r3Va7bV9JC3oHDmnL88joByCUo0xMM5cQq8WCH40+OtwkQJIw9jXym9LxuQ1nr6wen5PV0e+4PnaQ==",
+        "cpu": [
+          "x64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "linux"
+        ]
+      },
+      "executed": false
+    },
+    "@aztec-foundation/bb-avm-sim-darwin-arm64": {
+      "package": "@aztec-foundation/bb-avm-sim-darwin-arm64",
+      "path": "node_modules/@aztec-foundation/bb-avm-sim-darwin-arm64/bb-avm-sim",
+      "installed": true,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/bb-avm-sim-darwin-arm64/-/bb-avm-sim-darwin-arm64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-0o2+/G1FgCLPPiKPoVJRqsi3/HCJHqt09lG2Q0k9kLXe/XD09ZztBmztstMBytgPMan7G370saUPTaOVbm87pw==",
+        "cpu": [
+          "arm64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "darwin"
+        ]
+      },
+      "executed": false,
+      "bytes": 3528728,
+      "sha256": "56e150fbe0bfee1c3d08c3a548bc8debefc0235f9482da3f55dfe8f2a2ee16c3"
+    },
+    "@aztec-foundation/bb-avm-sim-darwin-x64": {
+      "package": "@aztec-foundation/bb-avm-sim-darwin-x64",
+      "path": "node_modules/@aztec-foundation/bb-avm-sim-darwin-x64/bb-avm-sim",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/bb-avm-sim-darwin-x64/-/bb-avm-sim-darwin-x64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-kk6zUEuzhL6PHjEc2ziTb/BTut4ZdC/H5YBPQUq9/KIE3bdN0q2IFsUDV0OvAtCaxalm8T+YDmOZsNOQdHUd/g==",
+        "cpu": [
+          "x64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "darwin"
+        ]
+      },
+      "executed": false
+    },
+    "@aztec-foundation/bb-avm-sim-linux-arm64": {
+      "package": "@aztec-foundation/bb-avm-sim-linux-arm64",
+      "path": "node_modules/@aztec-foundation/bb-avm-sim-linux-arm64/bb-avm-sim",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/bb-avm-sim-linux-arm64/-/bb-avm-sim-linux-arm64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-pbSkro/e61v7g/g+0eG4ghYsibjahV4zJMGjOQ6jfJYJh6jZ81vexifnzWgoi6lddtyR3f4TJIe93BohbOuN2Q==",
+        "cpu": [
+          "arm64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "linux"
+        ]
+      },
+      "executed": false
+    },
+    "@aztec-foundation/bb-avm-sim-linux-x64": {
+      "package": "@aztec-foundation/bb-avm-sim-linux-x64",
+      "path": "node_modules/@aztec-foundation/bb-avm-sim-linux-x64/bb-avm-sim",
+      "installed": false,
+      "lock": {
+        "version": "6.0.0-rc.6",
+        "resolved": "https://registry.npmjs.org/@aztec-foundation/bb-avm-sim-linux-x64/-/bb-avm-sim-linux-x64-6.0.0-rc.6.tgz",
+        "integrity": "sha512-CPy41SUVYmFiPmclizY6LdIOPpmx9X6bm4qU9/giHqGqU/8ohwEWUr7n2Kyr5idNEDn3tLB2/vmrVIUQyV5xUg==",
+        "cpu": [
+          "x64"
+        ],
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "linux"
+        ]
+      },
+      "executed": false
+    }
+  },
+  "compiler": {
+    "version": "1.0.0-rc.3",
+    "commit": "5a7ee9bf5ed8973076df7bb0d2b723024db09ae7",
+    "sameAsCurrentToolchain": true,
+    "installedPinSource": "toolchain.json",
+    "executed": false,
+    "officialInstallNodeRecommendation": "24.12.0",
+    "retainedNode": "24.21.0",
+    "cache": "Pinned upstream tooling/nargo_toml/src/git.rs64 uses dirs::home_dir().unwrap().join(nargo); no NARGO_HOME override established. Do not repurpose HOME. Serialize resolution, preserve existing immutable rc1 and shared hash-pinned utility caches; newrc3/rc6 tag paths are separate. Additional OS-level isolation would need deliberate design if exclusive tag ownership insufficient."
+  },
+  "nextSmallestNativeClaim": {
+    "paths": [
+      "toolchain.json",
+      "scripts/test-toolchain-packages.mjs"
+    ],
+    "procedure": [
+      "Under serialized slot run only actual Darwin-arm64 bb --version and pinned nargo --version, each <=10s. Record exact bytes/version/cleanup. Do not execute foreign-architecture Linux/Mac binaries on this host.",
+      "Qualify current native platform with rc6 packagebinding and measured binaryversion; keep unexecuted platforms fail-closed instead of asserting unknown versions.",
+      "Explicitly apply/verify the existing TWO hash-gated PXE patches in this isolated node_modules only, then scoped actualSDK/native smoke checks; never run blanket npm rebuild as hidden preparation."
+    ],
+    "acceptance": "Normal native processing remains blocked until current platform qualification passes; provenance hashes alone are not runtime evidence."
+  },
+  "nextNoirClaim": {
+    "paths": [
+      "billboard/billboard_contract/Nargo.toml",
+      "billboard/billboard_test/Nargo.toml",
+      "billboard/plugin_adapter/Nargo.toml",
+      "billboard/private_fee_contract/Nargo.toml",
+      "billboard/private_fee_test/Nargo.toml",
+      "billboard/rolling_contract/Nargo.toml",
+      "experiments/avatar/Nargo.toml",
+      "experiments/private-bok/escrow/Nargo.toml",
+      "experiments/private-bok/probe-board/Nargo.toml",
+      "experiments/private-bok/tests/Nargo.toml",
+      "noir-dependencies.json",
+      "scripts/prepare-noir-lock.py"
+    ],
+    "exactDependencies": {
+      "aztecNr": "v6.0.0-rc.3 at694af4de4b196733819811c896867d5a9572a1b5",
+      "protocolTypes": "v6.0.0-rc.6 at0df91ba1799012435c62c6108a0926b357fef88c",
+      "compiler": "unchanged1rc3/5a7ee9bf"
+    },
+    "gates": [
+      "Preserve current generated artifacts, raw compile in owned targets only; normal compiler with unchanged assertions/constraints.",
+      "Existing prepare-noir-lock.py emits schema1/onecontract and only billboard manifests, whereas current checkerrequires schema2/contract-specific inventories including experiments; do not blindly overwrite lock with its current output. Extend existing generator or lead-owned verified inventory workflow with explicit per-contract evidence.",
+      "Origin-authenticate resolved manifest/source trees against official exactcommit archives before processing raw artifacts. No bypass of checkNoirDependencyTrees/checkNoirEmbeddedSources."
+    ]
+  },
+  "subsequentBuildClaims": [
+    {
+      "paths": [
+        "billboard/portal/package.json",
+        "billboard/portal/package-lock.json",
+        "scripts/build-contracts.mjs"
+      ],
+      "reason": "L1 artifacts are foundationrc6; build-contracts currentlycompares portalDependency.version to pins.aztec(rc3), which is nowwrong. Compare explicit l1-artifacts packagepin, retainexact Solidity/Foundrychecks."
+    },
+    {
+      "paths": [
+        "scripts/build-crs.mjs",
+        "crs-manifest.json"
+      ],
+      "reason": "CurrentvalidateCrsManifest explicitly requires SDKrc1 and derived metadata labels BB packagewithpins.aztec; update onlyafterrc6CRS requirements/source/bytes independentlyverified, distinguish SDKrc3 fromBBrc6."
+    },
+    {
+      "paths": [
+        "prover/rolling-artifacts.json",
+        "prover/artifacts.json",
+        "deploy/prover/bootstrap.py",
+        "deploy/prover/package.py"
+      ],
+      "reason": "Later regeneratenormal VK/class/catalog/profile/deploymentpackageexactpins from actualnewbuilds. OldRC1 addresses/assets are recoveryonly, never relabelled new."
+    }
+  ],
+  "boundedQualificationOrder": [
+    "Serialized actualnative/compiler identity and isolated dependency lifecycle smoke tests, fixed<=60s each withcleanup.",
+    "Serialized rawcompile plusauthenticatelock, then normaltranspile/VKs forRollingBoard/PrivateBok/PrivateFPC andassociatedprotocolfixtures. Existing540s/4GiB percampaign bound; no fakekeys.",
+    "ExistingNoir/TXE assertions oncomplete rebuilt closure, oldcandidate evidence remains historical.",
+    "ApplyexistingPXEpatches explicitly; buildSDK, CRS andapps fromnewnormalartifacts. Recheckbrowser worker/WASM/import/prover/provenance boundaries usingexistingharness.",
+    "Onecomplete real local userjourney oncoherentnewversion before anylatestnetwork deployment. Neednewtrustedfullnode/archiver/currentnetworkclearance; no paidlaunch authorized bythisreport."
+  ],
+  "lifecycleInterpretation": {
+    "bbAndWsdbPackages": "Published platform binaries are installed directly and have no install/postinstall hook. Actualstartup remainsuntested.",
+    "disabled11Scripts": "esbuild andLMDB/etc mayalreadyhaveplatform prebuilds, but --ignore-scriptsdoesnotqualifyimports. bcrypto hasnode-gyprebuild only; existing NODE_BACKEND=js isexplicit existingmode, notproof native bcrypto works. Execute narrow needed official lifecycle/smoke onlyunder newslot, neverassume all11required or silentlyinvoke blanket rebuild.",
+    "productionReadiness": false
+  },
+  "sourceChangesMade": false
+}

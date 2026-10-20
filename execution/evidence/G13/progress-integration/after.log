@@ -1,0 +1,12 @@
+✔ initialization projection ignores accessors and account invalidation clears late observations (2901.008583ms)
+✔ refresh diagnostic survives connect sanitizer and retry then clears on account invalidation (1634.149542ms)
+✔ claim progress distinguishes saved records, preparation and confirmation without claiming submission success (728.38625ms)
+✔ claim progress exposes only fixed preparation failure in DOM and clears it after account invalidation (1155.309958ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6756.981875

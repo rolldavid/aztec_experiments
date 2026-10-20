@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-14T09:56:55.219Z",
+  "source": "90d735130fe6d03ed3275776ee0b87d392697b0a",
+  "chainId": "31337",
+  "recipient": "0x9d93d213938bb564068532645b7ea2afdd60e22f",
+  "amount": "1000000000000000",
+  "transactionHash": "0xfcbbb9780529f8ed0906c17e00e4c2247ac9f560e9a586b043f326ff635a51f8",
+  "blockNumber": 904,
+  "blockHash": "0x6e40ab188066a03275c7c69c1a0c3fff7668a63d2a3dffa24ed0cd249e9a05cf",
+  "scope": "Local refund gas only, after originalzeroETHReady and cancellation. No real funds. Does not qualify gaslesswithdrawal."
+}

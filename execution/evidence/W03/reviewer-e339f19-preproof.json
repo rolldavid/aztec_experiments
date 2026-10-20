@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent repaired exact-source review",
+  "sourceRevision": "e339f197272e61aac5dd6cee2eb7ea6fd092bd8c",
+  "baseRevision": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "reviewedPredecessor": "e7cff92479a4f5de96512b20b1aa7c297ef699ea",
+  "requirements": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "verdict": "approve source component; normal generated closure and actual interruption acceptance remain separate",
+  "openFindings": [],
+  "findingDisposition": [
+    {
+      "id": "PREPROOF-1",
+      "status": "resolved",
+      "evidence": "checkPreproofPreferenceContext reuses savedContextMatches with original head/revision/marker. It runs before and after renewed estimation, on renewed submission, and fresh synchronized lifecycle guards before journal persistence and broadcast. Changed marker/head across all five boundaries rejects; late broadcast veto preserves signed journal. Matching preference/read-marker controls still send once."
+    },
+    {
+      "id": "PREPROOF-2",
+      "status": "resolved",
+      "evidence": "prepareBokPost deletes prior preproof/preproofReview when creating its new intent. Original funded action, nonce, authorization hash and current canonical predecessor remain. New regression completes interrupted authorization -> renewal -> authorization -> distinct post -> confirmation; current scope uses controlled chain/proof ports."
+    }
+  ],
+  "priorReview": {
+    "path": "execution/evidence/W03/reviewer-e7cff92-preproof.json",
+    "sha256": "ea593576cb2ef86ffbad35df97703a1e4909c8ee7e9be507b4369689c86d6a6d",
+    "unchangedStructuralAssessmentCarried": true
+  },
+  "exactSource": {
+    "changedSincePredecessor": [
+      "shared/rolling/application.mjs",
+      "shared/rolling/application.test.mjs"
+    ],
+    "sourceSha256": {
+      "apps/rolling/wallet-panel.browser.test.mjs": "116e1672caf798e6f561c1d3b16c1c212b2ba0667c9922b96fa710b4c673c421",
+      "apps/rolling/wallet-panel.mjs": "6bc3b9c1492a82b9eecf218fc316591d7bbe4b35e630b2b5928a66e3c07d7f94",
+      "apps/rolling/wallet-session.mjs": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617",
+      "apps/rolling/wallet-session.test.mjs": "ffef314dde43bfb30b489a508080fddaa8944dc13b11b3bd203412bfddeff5b9",
+      "apps/src/billboard/user/engine.js": "518147420ab6fc3caf7df5a90a311358dd8ffe73e4c371741fdb0a767b7d4b39",
+      "scripts/test-receipt-baseline.mjs": "d73b50c623657fa05cf75aa6b27f5bfe3bcae39ad8ca7293bcc6b4499255a735",
+      "shared/journal-backup.mjs": "13dd4698a506f6816d5141e2c07e3e2f6ada2aef1baced6bcbd260ddaa6673ba",
+      "shared/journal-backup.test.mjs": "fd925ef44eec84ce202c3902592457d6d09af40c533c94a9387bc78d291f8a93",
+      "shared/journal-indexeddb.mjs": "15af7055dc0f24f2c78785da86acc78525e5e10b5293092f84e3277bf88688c3",
+      "shared/rolling/application.mjs": "daa4fac422d8d1ad682d8791db11f4fe1b7d143c13a1fe4cfe5002c18a10b586",
+      "shared/rolling/application.test.mjs": "529f51e7f543337ce0aa6ef9456bb605b8c80fc41e5f565ddf69b52986f14dce",
+      "shared/rolling/synchronized-application.mjs": "a5c86495c2b872275f9983b77df4a3eb6c0789911f8206637bcd5cecdee79aaa",
+      "shared/rolling/synchronized-application.test.mjs": "9e7f124a55ff87ccc83688f1d8e008b4e468d8ecf408705402cc64292f226b67"
+    },
+    "equalToPredecessor": {
+      "apps/rolling/wallet-panel.browser.test.mjs": true,
+      "apps/rolling/wallet-panel.mjs": true,
+      "apps/rolling/wallet-session.mjs": true,
+      "apps/rolling/wallet-session.test.mjs": true,
+      "apps/src/billboard/user/engine.js": true,
+      "scripts/test-receipt-baseline.mjs": true,
+      "shared/journal-backup.mjs": true,
+      "shared/journal-backup.test.mjs": true,
+      "shared/journal-indexeddb.mjs": true,
+      "shared/rolling/application.mjs": false,
+      "shared/rolling/application.test.mjs": false,
+      "shared/rolling/synchronized-application.mjs": true,
+      "shared/rolling/synchronized-application.test.mjs": true
+    },
+    "repairPacketSha256": "267ad317739be25a5e1cbac18d6e24228c87319aa122acc46ae126d8df6851ee",
+    "allPacketSourceHashesVerified": true
+  },
+  "independentChecks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp LOG_LEVEL=silent HARDWARE_CONCURRENCY=1 Node24.21.0 --test --test-name-pattern=\"positive pre-proof|signed replacement remains|ordinary unknown fence\" shared/rolling/application.test.mjs",
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2692.704666,
+      "path": "execution/evidence/W03/reviewer-e339f19-application.log",
+      "sha256": "222c3c2883bc9fe502de3298999fab3ab0b16a86f9df63944901d44bc0ab9d37",
+      "scope": "Real encrypted journal CAS with labelled proof/network ports; original unknown/signed-byte priority, restored/missing provenance, revocation, all repaired context boundaries and Bok transition."
+    }
+  ],
+  "carriedChecks": {
+    "independentPredecessor": "104 persistence/engine cases passed at e7; engine, journal adapters, tests and synchronization/session/panel blobs unchanged. This is carried scoped evidence, not a claimed104 rerun at e339. Backup fixture imports application, whose changed recovery-only paths were assessed by current25; do not call entire transitive closure unchanged.",
+    "workerCurrent": [
+      {
+        "path": ".build/w03-preproof-recovery/reviewer-regressions-before.log",
+        "sha256": "f2622fb5105d1ddf22b2d25dbe42f3d2146c1eed9868e0167a96168a267f8c0c",
+        "hashVerified": true,
+        "scope": "All 11 new regressions reproduced against e7 source before repair; no live effects.",
+        "passed": 0,
+        "failed": 11
+      },
+      {
+        "path": ".build/w03-preproof-recovery/reviewer-regressions-after.log",
+        "sha256": "5c0541e18ee22470b4df507c75ca8e853ae795e8c82f0d51a07dab8c577defaf",
+        "hashVerified": true,
+        "scope": null,
+        "passed": 11,
+        "failed": 0
+      },
+      {
+        "path": ".build/w03-preproof-recovery/application-review-repair-full.log",
+        "sha256": "ad5fbd2c56523d9645976d2b8bbc8d21df06631a09f860ef52742b4f3345f96f",
+        "hashVerified": true,
+        "scope": "Full final application suite including 13 new regressions/positive controls, original unknown fences and signed replacement paths.",
+        "passed": 254,
+        "failed": 0
+      }
+    ],
+    "workerEarlier": "Original full469 and other final affected subsets retain their actual e7 attribution. Repair packet records11 failures before,11 after, full current application254 pass."
+  },
+  "safetyAssessment": [
+    "Positive provenance remains limited to factory-bound built-in send and new attempts. No new service, scheduler or arbitrary automatic retry.",
+    "Strict durable metadata remains non-exported and invalidated before financial restoration; missing/invalid or restored provenance never upgrades historical unknown.",
+    "Factory captures original send and lifecycle functions, with mandatory post-journal signed CAS and final guard before sole broadcast. Account lock remains owned until original proof/send settles.",
+    "Current signed bytes always take priority after callback failure, restore or account invalidation; replacement path remains exact signed recovery with existing lineage rules.",
+    "Explicit renewal preserves action/nonce/operation and re-estimates fee; separate user confirmation required. Preference canonical meaning now remains immutable through late stages."
+  ],
+  "limitations": [
+    "Source component approval only. Normal SDK/apps/wallet build and manifests must bind exact source before integration; journal adapters are generated SDK inputs.",
+    "No live crash/reload, new chain transaction, provider/model, actual proof, browser or remote action performed here.",
+    "Existing Web Lock assumes supported same-origin account entrypoints. Entire OS/browser metadata rollback remains outside the guarantee.",
+    "Historical ambiguous no-byte records intentionally remain fenced; broader W03, real-proof and final release gates are not declared complete."
+  ]
+}

@@ -1,0 +1,13 @@
+✔ RC22 one explicit Bok accounting check completes bounded pages without partial or double-counted totals (1319.424583ms)
+✔ RC22 Bok accounting stop discards a late result before an explicit new check and release review (721.925042ms)
+✔ RC22 Bok accounting invalidated fences incomplete results without further reads (595.558083ms)
+✔ RC22 Bok accounting failed fences incomplete results without further reads (556.737292ms)
+✔ RC22 Bok accounting malformed fences incomplete results without further reads (536.306ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3947.467291

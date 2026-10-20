@@ -1,0 +1,79 @@
+{
+  "ImageId": "ami-0fa5967347d08d2df",
+  "InstanceType": "m7a.4xlarge",
+  "InstanceInitiatedShutdownBehavior": "terminate",
+  "MetadataOptions": {
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 1,
+    "HttpEndpoint": "enabled"
+  },
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/sda1",
+      "Ebs": {
+        "Encrypted": true,
+        "DeleteOnTermination": true,
+        "VolumeSize": 40,
+        "VolumeType": "gp3",
+        "Iops": 3000,
+        "Throughput": 125
+      }
+    },
+    {
+      "DeviceName": "/dev/sdf",
+      "Ebs": {
+        "Encrypted": true,
+        "DeleteOnTermination": true,
+        "VolumeSize": 1024,
+        "VolumeType": "gp3",
+        "Iops": 3000,
+        "Throughput": 125
+      }
+    }
+  ],
+  "NetworkInterfaces": [
+    {
+      "AssociatePublicIpAddress": true,
+      "DeviceIndex": 0,
+      "Groups": [
+        "sg-03065d3c141f9b030"
+      ]
+    }
+  ],
+  "TagSpecifications": [
+    {
+      "ResourceType": "instance",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "rolling-chat-development-node"
+        },
+        {
+          "Key": "Project",
+          "Value": "AnonymousMessageBoard"
+        },
+        {
+          "Key": "Task",
+          "Value": "G14"
+        }
+      ]
+    },
+    {
+      "ResourceType": "volume",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "rolling-chat-development-node"
+        },
+        {
+          "Key": "Project",
+          "Value": "AnonymousMessageBoard"
+        },
+        {
+          "Key": "Task",
+          "Value": "G14"
+        }
+      ]
+    }
+  ]
+}

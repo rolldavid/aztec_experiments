@@ -1,0 +1,28 @@
+{
+  "observed_at": "2026-10-11T11:29:19.420101+00:00",
+  "rows": [
+    {
+      "key": "releases/v6-20261010/prover-runtime-current.tar.gz",
+      "version": "uX8HjolM50hiDUiEWtxbeuFMeGXT4gCz",
+      "exit_code": 0,
+      "remote_bytes": 453339879,
+      "encrypted": "AES256",
+      "version_matches": true,
+      "size_matches": true,
+      "local_archive_exists": true,
+      "local_sha256_matches": true
+    },
+    {
+      "key": "releases/v6-20261010/prover-host-current.tar.gz",
+      "version": ".NeGYl7ejSh6p6FnQulsTzY.1EOhaRRy",
+      "exit_code": 0,
+      "remote_bytes": 17200074,
+      "encrypted": "AES256",
+      "version_matches": true,
+      "size_matches": true,
+      "local_archive_exists": true,
+      "local_sha256_matches": true
+    }
+  ],
+  "limit": "Metadata and localarchivehash only; not current runtime health or restoredsource qualification."
+}

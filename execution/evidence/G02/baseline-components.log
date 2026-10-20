@@ -1,0 +1,535 @@
+
+> test:components
+> node scripts/test-harness.mjs components
+
+✔ concurrent V6 RPC reads respect the public testnet batch limit without losing calls (16.545625ms)
+✔ application RPC batches cannot exceed the provider limit (0.377292ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 676.624625
+✔ interface hides SDK objects and owns acknowledgements and withdrawal state (3.842833ms)
+✔ failed operations do not acknowledge a new transaction (0.974666ms)
+✔ public feed remains readable after wallet disconnect (0.920625ms)
+✔ reads expose deposit values and chain time without a node or contract (0.913ms)
+✔ account and application modules do not read DOM; transaction pages do not use private handles (1.828583ms)
+✔ public JSDoc interfaces typecheck with the lockfile compiler (522.910458ms)
+✔ an operation completed after a configuration change cannot acknowledge its result (1.208458ms)
+✔ deployment settings export uses the captured manifest, never a later edited one (0.64675ms)
+✔ funding completes zero_balance_need_deposit without a second UI action (0.866333ms)
+✔ funding completes deposited_l1_not_claimed_l2 without a second UI action (0.742666ms)
+✔ funding completes postable without a second UI action (0.733667ms)
+✔ duplicate funding requests share one operation and a failed claim never sends another deposit (0.941167ms)
+✔ configuration change after payment stops automatic continuation (0.749292ms)
+✔ progress callback cannot switch the board before claim starts (0.614417ms)
+✔ progress subscribers cannot interrupt transactions or receive private inputs (0.615959ms)
+✔ a proving preference change only affects a future operation (0.722334ms)
+✔ another workflow cannot break ownership of an active onboarding operation (0.702541ms)
+✔ message validation rejects oversized UTF-8 before reaching the engine (0.516416ms)
+✔ a board without a remote endpoint reports the actual local mode (0.549125ms)
+✔ operation receipts whitelist public results and preserve the failed phase (0.566458ms)
+✔ fee funding application sequence: fresh (0.924625ms)
+✔ fee funding application sequence: consumed (0.751416ms)
+✔ fee funding application sequence: pending (0.524916ms)
+✔ fee funding application sequence: resume-missing (0.593625ms)
+✔ Activity acknowledges only canonical outcomes from its journal interface (1.352709ms)
+✔ explicit onboarding Resume recovers its fee scope and original reviewed deposit amount (0.758ms)
+✔ guided deployment prepares a validated, scoped manifest without sending transactions (2.676375ms)
+✔ moderator recovery review is invalidated by a newer review or configuration change (1.068167ms)
+✔ withdrawal keeps one owner across settlement and passes the reviewed fee budget (0.970333ms)
+✔ pausing settlement preserves the withdrawal and never requests another refund (2.59475ms)
+✔ gas quote estimates the selected deposit without signing and disposes stale reads (2.94125ms)
+✔ standalone fee balance uses a read operation without replacing completed progress (0.551875ms)
+✔ Ethereum refund recovery returns its verified receipt without restarting onboarding (0.612625ms)
+✔ top-up retains ownership through balance refresh and cannot start a second payment (0.65375ms)
+✔ balance unavailability does not reclassify a confirmed top-up as failed (0.573542ms)
+✔ author balance read normalizes the raw contract ABI at the SDK boundary (14.0295ms)
+✔ resuming an already confirmed post preserves its public identity and actual fee (0.812541ms)
+✔ failure before a new proof cannot silently recover an older confirmed post instead (0.746958ms)
+✔ deployment records survive continuation without crossing manifests: active (0.741ms)
+✔ deployment records survive continuation without crossing manifests: pending-settlement (0.496625ms)
+✔ a freshly reviewed deployment can replace damaged public deployment settings (0.469584ms)
+✔ restored settlement gives priority to an uncertain Ethereum refund (0.718708ms)
+✔ posting adapter connects portable plugin APIs without exposing private handles (1.051458ms)
+✔ plugin account shares the operation lock and captures proving before asynchronous work (0.727875ms)
+✔ withdrawal review reports screened cooldown debt and clears expired debt (0.5155ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1321.128584
+✔ same PRF and Ethereum identity restore the exact same fields (6.283083ms)
+✔ invalid PRF does not produce a substitute account (1.6905ms)
+✔ registration uses fresh resident user handles, preserving prior synced credentials (1.753584ms)
+✔ known credential authentication stays bound to its identifier (1.023125ms)
+✔ cancellation and missing PRF never trigger registration (1.048042ms)
+✔ registration without immediate PRF authenticates that same credential once (0.902458ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.81025
+✔ full Field salt reaches derivation without placing keys in DOM (3.513083ms)
+✔ failed derivation does not activate or overwrite secret fields (0.629167ms)
+✔ malformed import event emits bounded diagnostics and clears selection (0.621667ms)
+✔ signature generation and silent wallet replacement are unavailable (0.43825ms)
+✔ final network mismatch prevents activating a signer (0.771667ms)
+✔ callback failure invalidates activated session without logging callback diagnostics (0.504208ms)
+✔ initial account authorization event permits the matching browser signer (0.604583ms)
+✔ preactivation notification does not override final account: different account (0.471792ms)
+✔ preactivation notification does not override final account: empty authorization (0.535333ms)
+✔ preactivation notification does not override final account: malformed authorization (0.542333ms)
+✔ final account read rejects a replacement even without an event (0.495917ms)
+✔ same-account notification after connection is not a replacement (0.4665ms)
+✔ disconnect during authorization prevents activating a signer (0.5ms)
+✔ transient selection events before activation are reconciled with final provider reads (0.442708ms)
+✔ repeated matching authorization notifications permit connection (0.407416ms)
+✔ new account requires explicit passkey creation and saves no secret (1.112958ms)
+✔ saved metadata unlocks the exact passkey instead of creating (0.560708ms)
+✔ cancelled passkey or changed Ethereum context never activates an account (1.622583ms)
+✔ invalid saved account null cannot create a replacement (0.530458ms)
+✔ invalid saved account false cannot create a replacement (0.473792ms)
+✔ invalid saved account 0 cannot create a replacement (0.458292ms)
+✔ invalid saved account "" cannot create a replacement (0.471542ms)
+✔ invalid saved account [] cannot create a replacement (0.523041ms)
+✔ invalid saved account {} cannot create a replacement (0.481375ms)
+✔ corrupt metadata fails closed, explicit import repairs it (0.5745ms)
+✔ absent browser wallet returns an actionable code without opening an account (0.430958ms)
+✔ the selected provider owns signing and event invalidation, not the global (1.117083ms)
+✔ requested network switch is accepted but unexpected network changes still invalidate (0.659167ms)
+✔ rejecting a network switch leaves the session disconnected (0.514166ms)
+✔ events from a previously rejected wallet cannot invalidate the newly selected wallet (0.534375ms)
+✔ selected wallet identity is shown with its exact authorized account (0.435958ms)
+✔ disconnect immediately clears connected status and shows reconnect guidance (0.597625ms)
+✔ accountsChanged immediately clears connected status and shows reconnect guidance (0.391083ms)
+✔ chainChanged immediately clears connected status and shows reconnect guidance (0.411041ms)
+✔ explicit invalidation notifies consumers, including outside wallet events (0.459625ms)
+✔ explicit account selection requests fresh permission before activating a signer (0.423625ms)
+✔ rejected account selection cannot silently reuse a previously authorized account (0.426917ms)
+✔ after passkey cancellation a new connection still requests account selection (0.561167ms)
+✔ permission selection can replace an older origin grant before signer activation (0.483583ms)
+✔ permission dialog may clear and replace accounts and announce its network before activation (0.437667ms)
+✔ disconnect while choosing an account still prevents activating a signer (0.403833ms)
+✔ final account validation reads the transport rather than a cached provider result (0.442792ms)
+✔ preactivation disconnect followed by reconnect permits a validated session (0.423791ms)
+✔ same-chain announcements after activation preserve the session; a changed chain invalidates it (0.418ms)
+✔ existing account choice authenticates instead of creating when browser metadata is missing (0.494958ms)
+✔ active application work prevents lock and passkey replacement (0.491083ms)
+✔ a throwing rendering listener cannot leave custody busy (0.453583ms)
+✔ damaged metadata is typed and the public formatter gives an explicit recovery action (0.945791ms)
+✔ invalid raw wallet fields and mismatched address have actionable import errors (0.855667ms)
+✔ explicit passkey import cannot replace an active wallet or its saved metadata (0.522042ms)
+✔ passkey UI safely reports BB_PASSKEY_UNSUPPORTED (0.684458ms)
+✔ passkey UI safely reports BB_PASSKEY_PRF_UNSUPPORTED (0.589458ms)
+✔ passkey UI safely reports UNRECOGNIZED (0.577625ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.016834
+✔ matching synthetic artifacts and recorded sources pass (13.059583ms)
+✔ stale deploy Noir copy is rejected (9.195375ms)
+✔ stale censor Noir copy is rejected (8.655875ms)
+✔ missing verification key is rejected even when all consumer copies agree (9.576125ms)
+✔ empty private function set is rejected even when all consumer copies agree (9.116708ms)
+✔ only public functions is rejected even when all consumer copies agree (10.16925ms)
+✔ untranspiled artifact is rejected even when all consumer copies agree (8.45975ms)
+✔ truthy non-boolean transpilation marker is rejected even when all consumer copies agree (8.809333ms)
+✔ stale portal bytecode is rejected: apps/src/billboard/portal_bytecode.txt (9.079542ms)
+✔ stale portal bytecode is rejected: apps/src/billboard/deploy/portal_bytecode.txt (8.478292ms)
+✔ portal source drift is rejected by embedded compiler provenance (8.4165ms)
+✔ missing Solidity source provenance is rejected (8.345666ms)
+✔ string-encoded Solidity metadata remains supported (8.939792ms)
+✔ Noir source drift requires a rebuild (8.851541ms)
+✔ Noir dependency declaration drift requires a rebuild (8.833417ms)
+✔ root dependency lock drift requires a rebuild (8.729125ms)
+✔ portal dependency lock drift requires a rebuild (8.2355ms)
+✔ compiler configuration drift requires a rebuild (8.518084ms)
+✔ toolchain pins drift requires a rebuild (9.042083ms)
+✔ contract builder drift requires a rebuild (8.31525ms)
+✔ Noir debug-path normalizer drift requires a rebuild (8.900083ms)
+✔ Noir dependency verifier drift requires a rebuild (8.631416ms)
+✔ Noir dependency pins drift requires a rebuild (8.290917ms)
+✔ new Noir source omitted from the old manifest requires a rebuild (9.950625ms)
+✔ contract manifest input hash tampering is rejected (9.059917ms)
+✔ contract manifest noir hash tampering is rejected (8.979417ms)
+✔ contract manifest portal hash tampering is rejected (8.643917ms)
+✔ contract manifest pluginAdapter hash tampering is rejected (8.228417ms)
+✔ contract manifest pluginPortal hash tampering is rejected (9.110708ms)
+✔ synchronized altered Noir artifacts still fail the recorded build hash (8.396125ms)
+✔ synchronized altered portal bytecode still fails the recorded build hash (8.941791ms)
+✔ privateFee key, extra route and stale content fail closed (9.0105ms)
+✔ refund completion must remain restricted to the fee contract (7.548042ms)
+✔ plugin artifact drift is rejected: plugins/adapter_artifact.json (8.198959ms)
+✔ plugin artifact drift is rejected: billboard/portal/out/PluginPortal.sol/PluginPortal.json (8.085625ms)
+✔ plugin claim cannot lose its verification key even with a refreshed manifest (8.255083ms)
+✔ plugin portal source must match compiler provenance (7.799167ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 459.597458
+✔ rejected http-error response cancels its unread body (23.178541ms)
+✔ rejected oversized response cancels its unread body (4.271458ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.836375
+✔ wallet-free cache resumes bounded pages without rescanning completed history (6.014875ms)
+✔ snapshot pagination neither duplicates nor misses posts when newer ones arrive (1.398542ms)
+✔ same-height reorg rolls back affected pages and invalidates pagination (1.431458ms)
+✔ flag-only block updates a cached post without scanning its publication (0.648458ms)
+✔ failed atomic persistence retains prior checkpoint and retries same page (1.118584ms)
+✔ chain change during fetch never commits fetched events (0.28975ms)
+✔ identical event duplicates deduplicate; conflicting payloads fail (0.528541ms)
+✔ unexpected private fields, wrong scope and out-of-range results cannot enter cache (0.406208ms)
+✔ bounded rollback can discard cache and rebuild after deep reorg (0.69125ms)
+✔ capacity failure is explicit and does not advance past missing events (0.461375ms)
+✔ RPC failure preserves cached data and cursor (0.366209ms)
+✔ malformed restored cache and concurrent sync are rejected (3.984209ms)
+✔ paging a validated restored history does not reread persisted ranges (0.804084ms)
+✔ one-event append after10000posts writes only new range and small head (390.781708ms)
+✔ failed atomic commit leaves storage and visible state unchanged (0.70625ms)
+✔ competing writers cannot overwrite a committed head (1.165208ms)
+✔ three-block rollback restores moved policies, posts and flags exactly (0.664791ms)
+✔ page policy output is bounded by selected posts plus current policy (34.479791ms)
+✔ occupied block checks overlap in batches of at most eight (1.539083ms)
+✔ late board initialization reaches current history without scanning empty blocks (0.484125ms)
+✔ old post can be flagged under new policy and page retains both policies (0.53025ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 509.061541
+✔ full-history index refuses to checkpoint an omitted publication order (4.686416ms)
+✔ an index starting from genesis refuses a nonzero first publication order (0.566083ms)
+✔ orphaned flag disappears when its page is rolled back (1.137875ms)
+✔ different payloads at one canonical event position never commit (0.294292ms)
+✔ unavailable historical checkpoint preserves all cached events (0.506917ms)
+✔ identical policy can be published repeatedly under the same content version (0.41425ms)
+✔ conflicting text cannot reuse a policy content version (0.35275ms)
+✔ post without its preceding policy publication cannot enter full-history cache (0.411041ms)
+✔ sync deadline covers the aggregate RPC sequence, not each read independently (30.719708ms)
+✔ connection reads pinned immutable slots at one block and matches both contract class IDs (31.03375ms)
+✔ matching public slots cannot bypass a wrong currentContractClassId (10.493667ms)
+✔ matching public slots cannot bypass a wrong originalContractClassId (13.201458ms)
+✔ connection rejects conflicting immutable slot 1 (9.362917ms)
+✔ connection rejects conflicting immutable slot 3 (13.107708ms)
+✔ connection rejects conflicting immutable slot 4 (11.2545ms)
+✔ connection rejects conflicting immutable slot 5 (8.601333ms)
+✔ restored public cache rejects additional private payload fields (0.7095ms)
+✔ policy A then B then A identifies A as the current restored policy (0.433459ms)
+✔ restored range rejects duplicate identity disguised by transaction index (0.360458ms)
+✔ board link resolves portal and verifies network without visitor configuration (9.661458ms)
+✔ board link rejects malformed address before RPC (26.452708ms)
+✔ board link rejects unsupported class before reading portal (13.23325ms)
+✔ board link rejects unbound portal and mismatched deployment network (16.419583ms)
+✔ board link rejects a portal that names another board (10.723458ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 273.821208
+✔ sqlite atomic ranges, competing writers and snapshot rollback (15.802125ms)
+✔ indexeddb atomic ranges, competing writers and snapshot rollback (5.120959ms)
+✔ competing native cache writers recover by reopening without losing committed ranges (9.943333ms)
+✔ browser reader discards only conflicted connections and does not retry the failed request (1.85475ms)
+✔ standalone manual refresh preserves messages and stops background retries after conflict (1.21025ms)
+✔ standalone interval refresh preserves messages and stops background retries after conflict (1.501042ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 113.053917
+✔ hosted posting uses the explicit board, preserves fee settings and links, and ignores saved settings (3.233375ms)
+✔ unavailable or mismatched hosted settings prevent wallet initialization {"fee":false} (0.734125ms)
+✔ unavailable or mismatched hosted settings prevent wallet initialization {"fetchFailure":true} (0.49875ms)
+✔ unavailable or mismatched hosted settings prevent wallet initialization {"hash":"#network=2:0x1111111111111111111111111111111111111111:5&board=0x0444444444444444444444444444444444444444444444444444444444444444"} (0.518667ms)
+✔ unavailable or mismatched hosted settings prevent wallet initialization {"hash":"#board=invalid"} (0.534583ms)
+✔ a board change during verification reloads before installing settings or initializing wallets (1.054667ms)
+✔ hosted board retains its remote prover and another board cannot inherit it (1.127458ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 58.819125
+✔ publication extraction matches the pinned SDK decoder (1.115834ms)
+✔ two-board directory paginates at a pinned checkpoint and filters other classes (14.213959ms)
+✔ network mismatch stops, while upgraded incompatible instances are excluded (0.83125ms)
+✔ a repeated cursor is rejected without silently skipping the page (0.859041ms)
+✔ reorg invalidates the scan before publishing results and prevents continuation (0.509ms)
+✔ unavailable instances do not block scanning later history (0.332584ms)
+✔ discovery begins inclusively at the supported class registration block (0.362584ms)
+✔ a real board bound to an incompatible portal does not hide later boards (1.192375ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 283.787625
+✔ Node proving fails closed before initialization and rejects backend/custom prover overrides (1.676875ms)
+✔ verified CLI setup routes exact direct-WASM singleton through streaming prover and WASM simulator (0.746084ms)
+✔ failed local verification, wrong existing backend and replaced singleton cannot prove (1.314958ms)
+✔ Node read-only PXE retains SDK behavior without proving setup (0.417542ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85.342083
+✔ CLI cache and account execution retain both explicit and derived signing identities (216.588125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 573.993541
+✔ apps/src/billboard/user/cli.mjs initializes hashing only then async local prover once (6.626042ms)
+✔ apps/src/billboard/user/cli.mjs rejects missing, truncated, modified and symlink local bytes without caching success (13.800417ms)
+✔ apps/src/billboard/deploy/cli.mjs initializes hashing only then async local prover once (2.436125ms)
+✔ apps/src/billboard/deploy/cli.mjs rejects missing, truncated, modified and symlink local bytes without caching success (11.241792ms)
+✔ actual operator CRS inventory includes derived bytes and all original hash pins (0.920333ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 95.486792
+✔ required local derived G1, G2 and Grumpkin initialize the pinned point counts (41.812542ms)
+✔ g1_uncompressed.dat missing stops without alternate reads, network requests or prover calls (0.885709ms)
+✔ g1_uncompressed.dat corrupt stops without alternate reads, network requests or prover calls (53.833125ms)
+✔ g1_uncompressed.dat truncated stops without alternate reads, network requests or prover calls (1.428083ms)
+✔ g2.dat missing stops without alternate reads, network requests or prover calls (37.859458ms)
+✔ g2.dat corrupt stops without alternate reads, network requests or prover calls (37.8365ms)
+✔ g2.dat truncated stops without alternate reads, network requests or prover calls (37.7465ms)
+✔ grumpkin_g1.dat missing stops without alternate reads, network requests or prover calls (37.771375ms)
+✔ grumpkin_g1.dat corrupt stops without alternate reads, network requests or prover calls (40.483333ms)
+✔ grumpkin_g1.dat truncated stops without alternate reads, network requests or prover calls (38.195209ms)
+✔ missing manifest is rejected before any data request (0.29925ms)
+✔ different SDK release is rejected before any data request (0.134792ms)
+✔ old schema is rejected before any data request (0.118666ms)
+✔ wrong compressed format is rejected before any data request (0.247375ms)
+✔ wrong G2 format is rejected before any data request (0.089708ms)
+✔ wrong Grumpkin format is rejected before any data request (0.085542ms)
+✔ old point count is rejected before any data request (0.080167ms)
+✔ old Grumpkin filename is rejected before any data request (0.0785ms)
+✔ unexpected network destination is rejected before any data request (0.073166ms)
+✔ duplicate file is rejected before any data request (0.093333ms)
+✔ invalid range is rejected before any data request (0.086875ms)
+✔ missing derived entry is rejected before any data request (0.0915ms)
+✔ wrong derived name is rejected before any data request (0.076084ms)
+✔ wrong derived length is rejected before any data request (0.068958ms)
+✔ wrong derived point count is rejected before any data request (0.076125ms)
+✔ wrong derived format is rejected before any data request (0.076416ms)
+✔ invalid derived digest is rejected before any data request (0.069375ms)
+✔ derived remote URL is rejected before any data request (0.087042ms)
+✔ missing provenance is rejected before any data request (0.070375ms)
+✔ wrong derivation method is rejected before any data request (0.082209ms)
+✔ wrong derivation SDK is rejected before any data request (0.06675ms)
+✔ wrong derivation input name is rejected before any data request (0.06875ms)
+✔ mismatched derivation input pin is rejected before any data request (0.07725ms)
+✔ mismatched derivation G2 pin is rejected before any data request (0.067541ms)
+✔ wrong derivation WASM path is rejected before any data request (0.061916ms)
+✔ wrong derivation WASM digest is rejected before any data request (0.064959ms)
+✔ extra derivation metadata is rejected before any data request (0.066292ms)
+✔ truncated body cannot be loaded (13.681458ms)
+✔ oversized body cannot be loaded (0.171ms)
+✔ oversized content length cannot be loaded (0.409542ms)
+✔ HTTP failure cannot be loaded (0.066333ms)
+✔ empty successful response cannot be loaded (0.072584ms)
+✔ oversized streamed response is cancelled instead of reading remaining bytes (0.417875ms)
+✔ non-ending HTTP error response is cancelled before rejection (0.117542ms)
+✔ HTTP error response remains the rejection reason when cancellation fails (0.113542ms)
+✔ BN254 initialization rejection prevents Grumpkin initialization (40.11025ms)
+✔ unexpected BN254 response cannot be reported as initialized (40.921167ms)
+✔ unexpected Grumpkin response cannot be reported as initialized (40.167625ms)
+✔ browser loading uses the same checks with Web Crypto SHA-256 (63.521ms)
+✔ verified local derived bytes skip compressed reads and use the documented empty response (40.276625ms)
+✔ truncated derived input stops before hashing or invoking the prover (0.162917ms)
+✔ oversized derived input stops before hashing or invoking the prover (0.2785ms)
+✔ cache metadata wrapper stops before hashing or invoking the prover (2.236458ms)
+✔ loader cannot replace the trusted metadata snapshot (40.167875ms)
+✔ mismatched derived content pin never accepts bytes through supplied cache metadata (38.176125ms)
+✔ derived initialization rejects nonempty output and does not initialize Grumpkin (41.58575ms)
+✔ derived initialization rejects missing output and does not initialize Grumpkin (40.837375ms)
+✔ derived initialization rejects wrong element type and does not initialize Grumpkin (40.186875ms)
+✔ browser VM uses full Web Crypto digest verification for derived input (48.326833ms)
+✔ explicit BN254 prefix verifies the complete derived source before selecting points (40.612ms)
+✔ corruption beyond the retained prefix fails before any prover call (37.995875ms)
+✔ prefix budget rejects invalid and excessive values, and snapshots caller selection (80.898042ms)
+✔ derived prefix rejects an unexpected nonempty initialization response (41.176125ms)
+ℹ tests 63
+ℹ suites 0
+ℹ pass 63
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1173.245417
+✔ accepts the exact pinned partial response and requests identity encoding (13.87025ms)
+✔ rejects ignored Range (0.541542ms)
+✔ rejects wrong range (0.281875ms)
+✔ rejects oversized stream (0.4625ms)
+✔ rejects truncated stream (0.228208ms)
+✔ rejects checksum mismatch (0.180792ms)
+✔ rejects the first invalid download without consulting another destination (0.301334ms)
+✔ schema2 separates the72MiB derived asset from bounded network assets (0.868541ms)
+✔ rejects derived provenance: wrong Grumpkin format (0.227875ms)
+✔ rejects derived provenance: wrong Grumpkin point count (0.138625ms)
+✔ rejects derived provenance: wrong Grumpkin byte length (0.077042ms)
+✔ rejects derived provenance: wrong G2 point count (0.061875ms)
+✔ rejects derived provenance: changed source URL (0.060666ms)
+✔ rejects derived provenance: old schema (0.059083ms)
+✔ rejects derived provenance: missing derived asset (0.074875ms)
+✔ rejects derived provenance: changed output pin (0.076ms)
+✔ rejects derived provenance: oversized derived output (0.066ms)
+✔ rejects derived provenance: wrong points (0.071083ms)
+✔ rejects derived provenance: unreviewed method (0.086875ms)
+✔ rejects derived provenance: package mismatch (0.067416ms)
+✔ rejects derived provenance: input checksum mismatch (0.068209ms)
+✔ rejects derived provenance: G2 checksum mismatch (0.0595ms)
+✔ rejects derived provenance: untrusted WASM path (0.067458ms)
+✔ rejects derived provenance: unreviewed WASM hash (0.071583ms)
+✔ rejects derived provenance: unexpected derivation field (0.053292ms)
+✔ rejects derived provenance: oversized network asset (0.06075ms)
+✔ rejects actual WASM bytes that do not match the declared gzip pin (0.100833ms)
+✔ rejects cache corruption before an explicitly requested atomic replacement (5.503417ms)
+✔ rename failure retains previous target and removes the temporary file (1.397167ms)
+✔ corruption during temporary write is rejected before replacing target (1.344334ms)
+✔ invalid derived bytes never create or replace a target (0.385042ms)
+✔ derivation timeout kills and closes its actual child, restoring signal listeners (103.968459ms)
+✔ derivation interruption kills and closes its actual child (0.970417ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 191.174708
+✔ browser fixes real SDK prover options and initializes matching singleton before PXE (2.069083ms)
+✔ incompatible cached singleton blocks PXE without replacement (1.642084ms)
+✔ browser custom prover and invalid options cannot bypass supported bound (2.131708ms)
+✔ Node path preserves explicit native options and custom prover without browser singleton (0.683917ms)
+✔ private logging remains silent and initialization failures are redacted (0.788ms)
+✔ async CRS verification must finish before PXE and concurrent requests share its initialization (2.68975ms)
+✔ failed CRS validation blocks PXE, denies remote fallback and permits clean retry (0.569083ms)
+✔ cached singleton without skipSrsInit is rejected before CRS or PXE (0.355917ms)
+✔ verified loader uses only local files, rejects redirects and hashes bytes before initialization (0.667917ms)
+✔ browser injects streaming prover using the same simulator and preserves verified proof fields/compression (0.905375ms)
+✔ streaming proof failure cannot return a proof (0.4355ms)
+✔ remote transport switches on the same PXE without reopening the wallet store (0.401584ms)
+✔ devnet toggle-off uses disabled transport and non-devnet cannot disable proofs (0.625375ms)
+✔ read-only PXE performs no prover initialization and cannot create a fake proof on testnet (0.405583ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.619833
+✔ ordered per-step inputs, hiding VK, local verification and compressed fields match upstream (1.953625ms)
+✔ each failed command stops all later work and redacts underlying data (4.160875ms)
+✔ invalid proof cannot reach compression or caller (0.431125ms)
+✔ overlap cannot poison active job; failed singleton is quarantined and fresh instance works (1.501792ms)
+✔ missing compressed output is rejected even after valid local verification (0.438541ms)
+✔ missing kinds, missing keys and a non-hiding final step fail before proving (0.923708ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.769459
+✔ browser actual module persists ciphertext and interoperates with Node AES-GCM (9.826417ms)
+✔ browser actual custody rejects wrong wallet, ciphertext corruption and moved scope (6.441917ms)
+✔ browser save observes transaction abort and never reports durable success (1.7155ms)
+✔ actual engine codec matches frozen claim, boundary and exit commitments (5.8305ms)
+✔ actual public deposit flow saves and reads back before send; returns bridge message index without secret (9.595708ms)
+✔ actual deposit flow fails closed for missing store, failed durability and disabled portal (3.63725ms)
+✔ actual deposit flow fails closed for mismatched read-back and existing receipt (2.565917ms)
+✔ actual recovery rejects inconsistent deposit metadata and requires its saved secret (3.607417ms)
+✔ wiped claim storage reports missing secret and cannot send another payment (1.267792ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 285.789167
+✔ class publication uses its own transaction; already published=false (2.423833ms)
+✔ class publication uses its own transaction; already published=true (0.479541ms)
+✔ unreconciled publication cannot advance merely because its class exists (0.718833ms)
+✔ a returned publication submission is insufficient without observed class registration (0.556917ms)
+✔ pinned internal L2Block hash method differs from public node BlockResponse hash value (4.135458ms)
+✔ deployment returns pending immediately, then a resumed check forwards the exact finalized witness (2.244583ms)
+✔ unfinalized receipt never requests a witness or activates (0.573625ms)
+✔ missing witness never activates a finalized transaction (0.751042ms)
+✔ reverted receipt fails closed before witness lookup (0.481584ms)
+✔ missing success receipt fails closed before witness lookup (0.472042ms)
+✔ dropped receipt fails closed before witness lookup (0.466916ms)
+✔ unknown receipt fails closed before witness lookup (0.430167ms)
+✔ wrong transaction receipt fails closed before witness lookup (0.414875ms)
+✔ missing block hash receipt fails closed before witness lookup (0.460417ms)
+✔ pending and proposed receipts do not qualify even with a high finalized tip (0.42025ms)
+✔ receipt block must still match canonical block at its height (0.697458ms)
+✔ re-inclusion during witness resolution returns pending; resume checks the new block (1.243167ms)
+✔ drop during witness resolution prevents activation (0.752083ms)
+✔ malformed finalized tip cannot satisfy the finality comparison (0.44175ms)
+✔ activation requires successful L1 receipt and enabled portal {"activationStatus":0} (0.79925ms)
+✔ activation requires successful L1 receipt and enabled portal {"enabled":false} (0.80425ms)
+✔ a stalled Ready RPC has a bounded unknown outcome without activation (10.881959ms)
+✔ deployment missing CREATE2 proxy is checked before wallet or proving work (1.351791ms)
+✔ deployment unrecognized CREATE2 proxy is checked before wallet or proving work (0.3725ms)
+✔ deployment pinned CREATE2 proxy is checked before wallet or proving work (0.337542ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 586.063375

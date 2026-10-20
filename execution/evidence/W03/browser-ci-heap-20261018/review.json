@@ -1,0 +1,75 @@
+{
+  "revision": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "baseRevision": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": "W03-browser-ci-sdk-heap; one existing component runner allowance, no product/test assertion changes.",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": {
+    "independentImports": {
+      "passed": true,
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js <pinned Node24> --max-old-space-size=128 --input-type=module; import existing W02 Playwright, SDK receipt/block/JSON-RPC and toolchain dependencies only",
+      "browserLaunched": false
+    },
+    "workerBoundedRun": {
+      "sourceHashesVerified": 12,
+      "verifiedLocations": {
+        "scripts/test-w02-browser.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/test-w02-browser.mjs",
+        "shared/passkey-wallet.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/passkey-wallet.js",
+        "shared/account.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/account.js",
+        "shared/application.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/application.js",
+        "shared/wallet-buttons.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/wallet-buttons.js",
+        "shared/wallet-backup.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/wallet-backup.js",
+        "scripts/run-bounded-browser-check.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/run-bounded-browser-check.mjs",
+        "scripts/testing/supervisor.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/supervisor.mjs",
+        "scripts/owned-test-process-tree.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/owned-test-process-tree.mjs",
+        "deploy/hosting-config.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/deploy/hosting-config.mjs",
+        ".build/apps-manifest.json": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/apps-manifest.json",
+        ".build/sdk/sdk-manifest.json": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/sdk/sdk-manifest.json"
+      },
+      "reportSha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12",
+      "elapsedMs": 9635,
+      "peakTreeRSSKiB": 1885552,
+      "cleanupVerifiedFromReport": true,
+      "note": "Worker build dependency links were temporary; exact recorded manifests survive in lead checkout. Reviewer verified those bytes rather than claiming stale/missing worker paths matched."
+    },
+    "diffCheck": "clean; only scripts/run-bounded-browser-check.mjs changed"
+  },
+  "review": [
+    "Exact selector changes only scripts/test-w02-browser.mjs from64MiB to128MiB old-space allowance. Wallet extension256MiB, public-feed128MiB and other component64MiB settings unchanged.",
+    "Original lead import-only log confirms V8 heap exhaustion before test body at64MiB. Independent import-only check succeeds at128MiB without launching browser or using chain.",
+    "60second supervisor deadline and4194304KiB process-tree RSS cap unchanged. NODE_OPTIONS clearing, assertions on zero exit/all observations passed, before/after source fingerprints and owned-tree/temp cleanup requirements are unchanged.",
+    "Inspected actual bounded run report: passed, no failures, zero-exit completed child,9635ms elapsed and1885552KiB peak process-tree RSS, cleanup complete. All12 report source hashes independently match exact candidate source or recorded lead generated manifests. Browser was not rerun during live claim.",
+    "Test script and its assertions untouched; this allows actual SDK receipt classes to load, rather than altering recovery behavior or suppressing failures."
+  ],
+  "limitations": [
+    "Worker report establishes existing built browser component run; reviewer independently checked hashes, results, controls and import feasibility, not a second browser execution.",
+    "Worker generated dependency paths were temporary: local apps manifest missing and SDK manifest differed after cleanup; exact recorded manifests verified at rolling-lead-bok instead. No claim those stale worker paths matched.",
+    "No production code, live services, paid operations or transaction changes. Whole application, authentic browser funding and real-proof/release requirements remain separate."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/browser-ci-heap/import-128.log",
+      "sha256": "2b95062065b1be3a3b63ff21a705b19ee1da404e47513f1a4995f4628fdaad35",
+      "bytes": 72
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/browser-ci-heap/report-verification.json",
+      "sha256": "f6cb3d45131f8ab0a551a467b6fd22f1f8430caaf40e0654e1163512e3e6e756",
+      "bytes": 2030
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/T04/wallet-browser-20261018-heap128.json",
+      "sha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12",
+      "bytes": 3648
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/application-continuation/w02-import-64.log",
+      "sha256": "351214088e903f5a98e326316d0d711cc92c26d3c00630c1df67d5169d1cbd59",
+      "bytes": 12710
+    }
+  ]
+}

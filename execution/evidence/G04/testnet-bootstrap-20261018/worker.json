@@ -1,0 +1,35 @@
+{
+  "task": "G04-testnet-bootstrap",
+  "revision": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+  "base": "996dba928",
+  "scope": [
+    "plugins/operator.mjs",
+    "plugins/operations.mjs",
+    "plugins/test/operations.test.mjs"
+  ],
+  "verification": [
+    {
+      "command": "NODE_BACKEND=js HARDWARE_CONCURRENCY=2 TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='bootstrap' plugins/test/operations.test.mjs",
+      "passed": 5,
+      "failed": 0,
+      "durationMs": 1104.295
+    },
+    {
+      "command": "NODE_BACKEND=js HARDWARE_CONCURRENCY=2 TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='bootstrap|once|reconciliation|testnet router|router reconciliation|PXE' plugins/test/operations.test.mjs",
+      "passed": 29,
+      "failed": 0,
+      "durationMs": 6491.972333
+    }
+  ],
+  "rebase": "Only disjoint parent changes; tested source bytes unchanged by rebase. No repeat broad checks.",
+  "limitations": [
+    "No network mutation, L1 payment, real proof or current-testnet completion claimed.",
+    "Requires parent-provided current finalized L1 deposit and a matching private claim before admission.",
+    "Interrupted preparing or submitted journals reconcile only; never auto-resign or replay."
+  ],
+  "commands": {
+    "new": "node plugins/operator.mjs bootstrap-testnet-private-fee PLAN STATE --actor-file PRIVATE_CURRENT_ACTOR --claim PRIVATE_CURRENT_CLAIM",
+    "status": "node plugins/operator.mjs testnet-private-fee-status PLAN STATE"
+  },
+  "environment": "PLUGIN_QUERY_API_KEY from existing service-side configuration; source-bound pinned Node runtime"
+}

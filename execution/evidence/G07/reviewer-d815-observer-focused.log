@@ -1,0 +1,11 @@
+✔ internal readiness observer is allowlisted, coalesced and cannot change fail-closed HTTP (36.874125ms)
+✔ internal readiness observer does not await pending or rejected observers (5.681792ms)
+✔ service carries readiness observer internally without extending serialized configuration (17.69925ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 814.779041

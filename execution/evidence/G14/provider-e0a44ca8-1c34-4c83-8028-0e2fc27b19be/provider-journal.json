@@ -1,0 +1,246 @@
+{
+  "operations": {},
+  "privateBokEscrow": {
+    "schemaVersion": 1,
+    "binding": {
+      "network": "eip155-31337:aztec-3470944737:0x3a23b92656b40dec7ce40d282cae5f67214285e4",
+      "escrow": "0x03832d6718b44c44f33c80dc0ec964f52a8155c5ddf32a249c9fc40d4f2043dd",
+      "requestId": "0x044b61921003c4cbc38d40a0a11ef3a791f0f1c0f4e046403c9520c5e55d6ef8",
+      "target": "0x0b5c5381777173ae0548d5c1911a103510f8008c6795c164c8d80b77aa9dd6ba",
+      "operator": "0x0e45733fc53e24ab75c6704dd5860fe393a22139dbd07fab5f81e3f5464d4584",
+      "board": "0x0f0871ab9c8b67ead913d54cd32dd78d0c19d7a41e7a5741e83322bab35f8bd3",
+      "classId": "0x22946dc668feb3f651f167901873c6d750ad210e9962efa9d8f32c20c0479f24",
+      "finality": "checkpointed",
+      "proofMode": "disabled"
+    },
+    "operations": {
+      "a895f43af635a70f25ac25ef07323a8e39a1ee065b23f51c5bf6020b963b738b": {
+        "method": "reserve",
+        "argsDigest": "28c5e085e120eaf199729a278e34029b98fa049cb9637c623cf81ae791811b16",
+        "args": [
+          "0x044b61921003c4cbc38d40a0a11ef3a791f0f1c0f4e046403c9520c5e55d6ef8",
+          0,
+          "143584"
+        ],
+        "phase": "submission-unknown",
+        "proofMode": "disabled",
+        "txHash": "0x1607dfd07681d607da632664e67ffb134aac5bed35180c81455c35880184aa92",
+        "transactionSha256": "eb99d5f1607a9d1ff89a88363e58466b937335689034d7621f705603306923e5",
+        "result": {
+          "status": "succeeded",
+          "canonical": true,
+          "method": "reserve",
+          "argsDigest": "28c5e085e120eaf199729a278e34029b98fa049cb9637c623cf81ae791811b16",
+          "txHash": "0x1607dfd07681d607da632664e67ffb134aac5bed35180c81455c35880184aa92",
+          "transactionFee": "11189981400000",
+          "blockNumber": 15,
+          "blockHash": "0x27f9e62a40c58dc843b7211f0103c71191186d982a105a8cf1b399f46e13a5ab"
+        },
+        "observation": {
+          "status": "checkpointed",
+          "transactionFee": "11189981400000",
+          "executionResult": "success",
+          "blockNumber": 15,
+          "blockHash": "0x27f9e62a40c58dc843b7211f0103c71191186d982a105a8cf1b399f46e13a5ab",
+          "effectSha256": "4d0b2690e9ea9991bcc18d920f54e07833e2cf68809efcb2a3a215f8524380cf",
+          "canonical": true
+        },
+        "includedHistory": [
+          {
+            "status": "proposed",
+            "transactionFee": "11189981400000",
+            "executionResult": "success",
+            "blockNumber": 15,
+            "blockHash": "0x27f9e62a40c58dc843b7211f0103c71191186d982a105a8cf1b399f46e13a5ab",
+            "effectSha256": "4d0b2690e9ea9991bcc18d920f54e07833e2cf68809efcb2a3a215f8524380cf",
+            "txHash": "0x1607dfd07681d607da632664e67ffb134aac5bed35180c81455c35880184aa92",
+            "canonicalAtObservation": true
+          },
+          {
+            "status": "checkpointed",
+            "transactionFee": "11189981400000",
+            "executionResult": "success",
+            "blockNumber": 15,
+            "blockHash": "0x27f9e62a40c58dc843b7211f0103c71191186d982a105a8cf1b399f46e13a5ab",
+            "effectSha256": "4d0b2690e9ea9991bcc18d920f54e07833e2cf68809efcb2a3a215f8524380cf",
+            "txHash": "0x1607dfd07681d607da632664e67ffb134aac5bed35180c81455c35880184aa92",
+            "canonicalAtObservation": true
+          }
+        ]
+      },
+      "ad62d609aeafe333af03c15a00afa9c08d8574aa211522182ef66d7c4654ae6f": {
+        "method": "settle",
+        "argsDigest": "eb8d2c9009f1e4ef549cd13e85f6852c5417f11bc820741b274e7ea70bf2f384",
+        "args": [
+          "0x044b61921003c4cbc38d40a0a11ef3a791f0f1c0f4e046403c9520c5e55d6ef8",
+          0,
+          "151",
+          "0x09e194a496d0452c7eeb73466f24f9bcd39e9b6effd522532c96ddacb16e1645"
+        ],
+        "phase": "submission-unknown",
+        "proofMode": "disabled",
+        "txHash": "0x1aa5575fe43def89b465639ef4c77c669eaa414f22cd6fb7a01e5edf87493a11",
+        "transactionSha256": "96a9f0b56d1c2ad3a25bc5a565e10176c58247771cea763f8242648856131846",
+        "result": {
+          "status": "succeeded",
+          "canonical": true,
+          "method": "settle",
+          "argsDigest": "eb8d2c9009f1e4ef549cd13e85f6852c5417f11bc820741b274e7ea70bf2f384",
+          "txHash": "0x1aa5575fe43def89b465639ef4c77c669eaa414f22cd6fb7a01e5edf87493a11",
+          "transactionFee": "11870443800000",
+          "blockNumber": 16,
+          "blockHash": "0x183fc9cfb751ff3af7479d2401f3ca4ce590cae9ac05b6c8e4a6facc30b09c77"
+        },
+        "observation": {
+          "status": "checkpointed",
+          "transactionFee": "11870443800000",
+          "executionResult": "success",
+          "blockNumber": 16,
+          "blockHash": "0x183fc9cfb751ff3af7479d2401f3ca4ce590cae9ac05b6c8e4a6facc30b09c77",
+          "effectSha256": "52ddd3f60653e7f830f377975b18952f4eb4d56df8eb2a39a1fe3f13a416a6ec",
+          "canonical": true
+        },
+        "includedHistory": [
+          {
+            "status": "proposed",
+            "transactionFee": "11870443800000",
+            "executionResult": "success",
+            "blockNumber": 16,
+            "blockHash": "0x183fc9cfb751ff3af7479d2401f3ca4ce590cae9ac05b6c8e4a6facc30b09c77",
+            "effectSha256": "52ddd3f60653e7f830f377975b18952f4eb4d56df8eb2a39a1fe3f13a416a6ec",
+            "txHash": "0x1aa5575fe43def89b465639ef4c77c669eaa414f22cd6fb7a01e5edf87493a11",
+            "canonicalAtObservation": true
+          },
+          {
+            "status": "checkpointed",
+            "transactionFee": "11870443800000",
+            "executionResult": "success",
+            "blockNumber": 16,
+            "blockHash": "0x183fc9cfb751ff3af7479d2401f3ca4ce590cae9ac05b6c8e4a6facc30b09c77",
+            "effectSha256": "52ddd3f60653e7f830f377975b18952f4eb4d56df8eb2a39a1fe3f13a416a6ec",
+            "txHash": "0x1aa5575fe43def89b465639ef4c77c669eaa414f22cd6fb7a01e5edf87493a11",
+            "canonicalAtObservation": true
+          }
+        ]
+      },
+      "8aa7285877b40705d3e8fe5c6571523b5876c1003119c4f9bfbd5684a3fb8346": {
+        "method": "finish",
+        "argsDigest": "800f864ee45ff9d1c8076f81a9861c7dcc2fd35d7e82487f3aa4ad7f8084a706",
+        "args": [
+          "0x044b61921003c4cbc38d40a0a11ef3a791f0f1c0f4e046403c9520c5e55d6ef8"
+        ],
+        "phase": "submission-unknown",
+        "proofMode": "disabled",
+        "txHash": "0x0975bc7139e14b80ce6ec343d6129a270a60dc3657ee112efb50d534a0c24640",
+        "transactionSha256": "732e128b21730dd157bb9aca30e055e1ad038fb3dcfc7a23c4eb7443798b8f92",
+        "result": {
+          "status": "succeeded",
+          "canonical": true,
+          "method": "finish",
+          "argsDigest": "800f864ee45ff9d1c8076f81a9861c7dcc2fd35d7e82487f3aa4ad7f8084a706",
+          "txHash": "0x0975bc7139e14b80ce6ec343d6129a270a60dc3657ee112efb50d534a0c24640",
+          "transactionFee": "11461525800000",
+          "blockNumber": 17,
+          "blockHash": "0x10be1ca8ca425c03093b4a3f0d75eb66f9e9113071d7f537453a2003695b5913"
+        },
+        "observation": {
+          "status": "checkpointed",
+          "transactionFee": "11461525800000",
+          "executionResult": "success",
+          "blockNumber": 17,
+          "blockHash": "0x10be1ca8ca425c03093b4a3f0d75eb66f9e9113071d7f537453a2003695b5913",
+          "effectSha256": "bc18449192cb9a3affcab8be57eb993b966cda333284601aa042a32374902ae6",
+          "canonical": true
+        },
+        "includedHistory": [
+          {
+            "status": "proposed",
+            "transactionFee": "11461525800000",
+            "executionResult": "success",
+            "blockNumber": 17,
+            "blockHash": "0x10be1ca8ca425c03093b4a3f0d75eb66f9e9113071d7f537453a2003695b5913",
+            "effectSha256": "bc18449192cb9a3affcab8be57eb993b966cda333284601aa042a32374902ae6",
+            "txHash": "0x0975bc7139e14b80ce6ec343d6129a270a60dc3657ee112efb50d534a0c24640",
+            "canonicalAtObservation": true
+          },
+          {
+            "status": "checkpointed",
+            "transactionFee": "11461525800000",
+            "executionResult": "success",
+            "blockNumber": 17,
+            "blockHash": "0x10be1ca8ca425c03093b4a3f0d75eb66f9e9113071d7f537453a2003695b5913",
+            "effectSha256": "bc18449192cb9a3affcab8be57eb993b966cda333284601aa042a32374902ae6",
+            "txHash": "0x0975bc7139e14b80ce6ec343d6129a270a60dc3657ee112efb50d534a0c24640",
+            "canonicalAtObservation": true
+          }
+        ]
+      }
+    }
+  },
+  "privateBok": {
+    "version": 1,
+    "identity": {
+      "network": "eip155-31337:aztec-3470944737:0x3a23b92656b40dec7ce40d282cae5f67214285e4",
+      "escrow": "0x03832d6718b44c44f33c80dc0ec964f52a8155c5ddf32a249c9fc40d4f2043dd",
+      "requestId": "0x044b61921003c4cbc38d40a0a11ef3a791f0f1c0f4e046403c9520c5e55d6ef8",
+      "target": "0x0b5c5381777173ae0548d5c1911a103510f8008c6795c164c8d80b77aa9dd6ba"
+    },
+    "limits": {
+      "maxCalls": 1,
+      "maxInputBytes": 1024,
+      "maxTokens": 64,
+      "maxReservation": "1000000",
+      "maxBudget": "1000000"
+    },
+    "calls": {
+      "0": {
+        "id": 0,
+        "phase": "settled",
+        "inputDigest": "55d0c2d526bddd5ea7e9fbd5b18f9a89cc2b34fece620422cb42bd71a3f6808d",
+        "requestedTokens": 64,
+        "quote": {
+          "modelId": "kimi-k2-5",
+          "inputBound": 256000,
+          "maxTokens": 64,
+          "inputPrice": "560000000",
+          "outputPrice": "3500000000",
+          "cachePrice": "220000000",
+          "maximum": "143584"
+        },
+        "before": {
+          "budget": "1000000",
+          "available": "1000000",
+          "charged": "0",
+          "refunded": "0"
+        },
+        "billing": {
+          "providerId": "chatcmpl-70eb5b76aae26dfee0cb31263cf6864c",
+          "modelId": "kimi-k2-5",
+          "promptTokens": 32,
+          "completionTokens": 38,
+          "cachedTokens": 0,
+          "inputPrice": "560000000",
+          "outputPrice": "3500000000",
+          "cachePrice": "220000000",
+          "charge": "151",
+          "receipt": "0x09e194a496d0452c7eeb73466f24f9bcd39e9b6effd522532c96ddacb16e1645"
+        }
+      }
+    },
+    "operations": {
+      "a895f43af635a70f25ac25ef07323a8e39a1ee065b23f51c5bf6020b963b738b": {
+        "method": "reserve",
+        "argsDigest": "28c5e085e120eaf199729a278e34029b98fa049cb9637c623cf81ae791811b16"
+      },
+      "ad62d609aeafe333af03c15a00afa9c08d8574aa211522182ef66d7c4654ae6f": {
+        "method": "settle",
+        "argsDigest": "eb8d2c9009f1e4ef549cd13e85f6852c5417f11bc820741b274e7ea70bf2f384"
+      },
+      "8aa7285877b40705d3e8fe5c6571523b5876c1003119c4f9bfbd5684a3fb8346": {
+        "method": "finish",
+        "argsDigest": "800f864ee45ff9d1c8076f81a9861c7dcc2fd35d7e82487f3aa4ad7f8084a706"
+      }
+    },
+    "finished": true
+  }
+}

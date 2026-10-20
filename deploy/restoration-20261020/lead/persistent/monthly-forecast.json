@@ -1,0 +1,18 @@
+{
+  "ownerAuthorization": "Authorize $1,500/month; optimize costs while keeping the app online",
+  "monthlyCeilingUsd": 1500,
+  "periodDays": 31,
+  "fixedComputeStorageEndpointsIPv4BeforeTaxUsd": "1021.614733150684931506849316",
+  "fixedWith20PercentTaxAllowanceUsd": "1225.937679780821917808219179",
+  "networkForecastGB": 500,
+  "networkWith20PercentTaxUsd": 117,
+  "networkBasis": "Observed formerhostNetworkOut3.7GB overcampaign, rounded4GB/day asbaseline;500GB/month allows>4xthat dailyusage. This is traffic forecast, not full shaped maximum or guaranteedspendcap.",
+  "archivesStaticAllowanceMonthlyUsd": 20,
+  "billingDelayTrafficCleanupBufferUsd": 100,
+  "monthlyForecastUsd": "1462.937679780821917808219179",
+  "unreservedHeadroomUsd": "37.062320219178082191780821",
+  "operatingPolicy": "No demonstrationtimebasedtermination. Preserve nativeprocess/security/egresscontainment and lifecycleautostart. ExistingAWSaccountbudgetnotifications unchanged. Add projectmonthlybudgetvisibility and existingCodexheartbeatactualcost/forecast supervision; notifybeforeprojectedceiling and optimizewithoutunnecessaryoutages. No promise of zerofailures/unlimitedtraffic.",
+  "technicalChangeOwner": "controls_resume2",
+  "noNewModelCalls": true,
+  "budgetDashboardScope": "AWS rejected exactallocationfilter nesting depth. Dashboardconservativelyincludesallaccountservices exceptLightsail, includingunrelatedLondonEC2. Exactprojectreconciliationstillseparatelyexcludesbothknownunrelatedpairs. Never misreportdashboardtotalasprojectspend."
+}

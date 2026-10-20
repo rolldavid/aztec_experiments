@@ -1,0 +1,77 @@
+{
+  "candidate": "069759295c10f161068db738521b9912b4c4f797",
+  "base": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+  "task_id": "G04-USDC-original-payment-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "069759295c10f161068db738521b9912b4c4f797",
+      "base": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+      "id": "reviewed-source-and-real-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-069-chromium-usdc-integration-review.json",
+          "sha256": "139fabb9327c1a7202008b3ad2db98167878361744805e16075dc342dabe8635"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/usdc-original-payment-recovery-actual.json",
+          "sha256": "071cd0778cd6ca96d95522ff5c528c16a61ed2d7f0da0f7db0ea57e662b22f96"
+        },
+        {
+          "path": "rolling-design/execution/evidence/T04/rc22-metamask-usdc-paid-recovery-1.json",
+          "sha256": "6ed7d4860ddd95a44911f0ef52c52ff9eb0916f623bc739fb80ba74de56d3c33"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/rc22-usdc-original-canonical-effects.json",
+          "sha256": "7a807ddfb39584a0db7ada697c3a3b4b42528787cf4ff6978d666c60a34c72d5"
+        }
+      ],
+      "command": "Existing focused component tests; actual original USDC two-run recovery; independent exact source and normal manifests carry verification",
+      "environment": "Native devnet realProofs=false and PXE proverEnabled=false; pinnedChrome155, original realMetaMask retainedwallet",
+      "observed": "Five exactreviewedblobs; actual63989failed observation retained after one successful payment; actual28247PASS28.653s confirms original3effects,savedcap,1L2claim,Ready;0new signatures/relayPOST/Ethereum sends/proofs. No uninterrupted/testnet qualification claimed.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "069759295c10f161068db738521b9912b4c4f797",
+      "base": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+      "id": "RC18-RC19-native-original-USDC-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-069-chromium-usdc-integration-review.json",
+          "sha256": "139fabb9327c1a7202008b3ad2db98167878361744805e16075dc342dabe8635"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/usdc-original-payment-recovery-actual.json",
+          "sha256": "071cd0778cd6ca96d95522ff5c528c16a61ed2d7f0da0f7db0ea57e662b22f96"
+        },
+        {
+          "path": "rolling-design/execution/evidence/T04/rc22-metamask-usdc-paid-recovery-1.json",
+          "sha256": "6ed7d4860ddd95a44911f0ef52c52ff9eb0916f623bc739fb80ba74de56d3c33"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/rc22-usdc-original-canonical-effects.json",
+          "sha256": "7a807ddfb39584a0db7ada697c3a3b4b42528787cf4ff6978d666c60a34c72d5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "069759295c10f161068db738521b9912b4c4f797",
+    "base": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-069-chromium-usdc-integration-review.json",
+        "sha256": "139fabb9327c1a7202008b3ad2db98167878361744805e16075dc342dabe8635"
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "task_id": "W03-funding-confirmation-progress",
+  "implementer": "controls_resume2",
+  "candidate": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+  "base": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs"
+  ],
+  "required_checks": [
+    "funding-progress"
+  ],
+  "requirements": [
+    "RC19-funding-confirmation-progress-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "W03-funding-confirmation-progress",
+      "paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs"
+      ]
+    }
+  ]
+}

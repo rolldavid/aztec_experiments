@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-13T01:48:42.613151+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "exitCode": 0,
+  "available": true,
+  "incomplete": false,
+  "observation": {
+    "account": "052665140763",
+    "expectedAccount": true,
+    "assumedRole": true
+  },
+  "finishedAt": "2026-10-13T01:48:43.526503+00:00"
+}

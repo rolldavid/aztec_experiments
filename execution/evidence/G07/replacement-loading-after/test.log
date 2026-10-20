@@ -1,0 +1,21 @@
+✔ explicit create, encrypted backup download, no automatic account creation and failed cleanup preserves account (707.585167ms)
+✔ locking clears recovered private capability before asynchronous session cleanup settles (295.657333ms)
+✔ recovery full values wrap inside the dialog at 390px: history (323.617834ms)
+ℹ {"width":390,"phase":"history","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 390px: prepared-marker (250.620334ms)
+ℹ {"width":390,"phase":"prepared-marker","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 1280px: history (329.603667ms)
+ℹ {"width":1280,"phase":"history","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ recovery full values wrap inside the dialog at 1280px: prepared-marker (266.016459ms)
+ℹ {"width":1280,"phase":"prepared-marker","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ retained unknown intent clears loading only after account connection settles (277.6865ms)
+✔ retained replacement-ready intent clears loading only after account connection settles (278.831833ms)
+✔ settled connection message cleanup preserves custody guidance and failed connection alert (269.5605ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3157.068292

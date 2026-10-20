@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "verdict": "accept-scoped-same-claim-recovery",
+  "scope": "Existing local native/PXE proofs-disabled USDC payment and claim recovery, normal Ready, separated balances and current encrypted export; not uninterrupted onboarding or real-proof qualification.",
+  "packets": {
+    "actual-packet.json": "70b5794dd5ba5a8489657280bcda0432f69e289122978cfb3ab3b2dfb3979a1c",
+    "recovery-packet.json": "5891af04b0a28380c1d0fd746dc58a22f97513a7ec818dd7ab303f7868fec7ff"
+  },
+  "checks": {
+    "artifactReferences": 17,
+    "artifactHashesAndLengths": "all pass",
+    "proceduresRead": [
+      "recover-export.mjs",
+      "supervise-recovery.mjs",
+      "inspect-claim.mjs"
+    ],
+    "sourceRead": [
+      "scripts/t04-metamask.mjs:643",
+      "apps/rolling/wallet-panel.mjs:156",
+      "shared/rolling/aggregate-wallet.mjs:264",
+      "shared/rolling/application.mjs:274",
+      "apps/src/billboard/user/engine.js:269",
+      "shared/transaction-outcomes.mjs:55"
+    ],
+    "independentHeavySdkParse": false,
+    "newBrowserOrServiceOrRpcOrTransaction": false
+  },
+  "observed": {
+    "paymentHash": "0x8b52ab41dbc2baffa320df70af23e0e83b94ad7757995a9feb88459f25f9af8d",
+    "claimHash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+    "canonicalBlock": 824,
+    "canonicalBlockHash": "0x264cb8615215a4690e280be9244dd1e74e83ae59427e4ca1b56eb0732d6f3784",
+    "binding": "Before/reconciled/after preserve exact operation, workflow ID, hash, claim-deposit type and all three payment receipt hashes. Initial authenticated journal procedure round-trips122148-byte typed Tx and verifies its hash; reviewer inspected procedure/result but did not repeat SDK parse.",
+    "workflowTransition": "submitting to confirmed via normal Check existing transaction, followed by Resume saved funding",
+    "ready": true,
+    "recoveryElapsedMs": 21982,
+    "collateralWei": "1000000000000000",
+    "privateFeeCredit": "989600233000000",
+    "bokUsdcBaseUnits": "100000",
+    "feeReconciliation": "1000000000000000 - 10399767000000 = 989600233000000",
+    "depositCount": 1,
+    "accountStatus": "fee-ready",
+    "encryptedExportSha256": "4ace8fb3cb7936e0357bee5a02db1261629bbfce32f4512de9407c49e9a95f24",
+    "exportAssertion": "Downloaded encrypted export decrypted in-page and compared by complete JSON equality against a fresh production export of current custody. No secret values retained in reviewer report.",
+    "recoveryEffects": {
+      "newSignatures": 0,
+      "newPayment": 0,
+      "newL2Sends": 0,
+      "proofRequests": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    },
+    "cleanup": "context closed and supervisor owned tree absent; no failures"
+  },
+  "originalFailure": {
+    "preserved": true,
+    "elapsedMs": 105904,
+    "automaticAcceptance": false,
+    "caution": "Original safe claimTxHash null was conditional on confirmation, not evidence of an absent stored hash. Later canonical block timestamp does not establish receipt availability at the original observation cutoff."
+  },
+  "observationLimits": [
+    "Recovery launched with extensions disabled and service workers blocked; no-send counters cover its application-page routes, not a generalized browser/extension privacy audit. Separate canonical helper reads occur outside browser counters.",
+    "Readiness/export are scoped actual results; complete Bok request accounting explicitly unavailable, not zero.",
+    "No new-profile import of this final export was performed; equality qualifies current portable payload rather than a separate restore journey.",
+    "No reviewer independent typed-wire/effect reparse; authenticated procedure, result, canonical helper and matching hashes are the available evidence.",
+    "Native development only: real-proof/testnet/Phantom and full privacy gates remain.",
+    "Later successful recovery does not qualify uninterrupted onboarding or prove latency cause."
+  ],
+  "presentationRecommendation": {
+    "justified": true,
+    "location": "apps/rolling/wallet-panel.mjs:156-162",
+    "finding": "Closed funding-claim diagnostics exist, but visible progress handles only stage estimating/submitting and falls back to Checking the private account for every funding-claim step, including submit.",
+    "smallestChange": "Map validated existing funding-claim step values to fixed honest progress text in the panel and cover the mapping with existing panel tests. For submit, describe preparing and confirming the saved private claim, and say not to repeat the Ethereum payment; do not claim already submitted or an ETA.",
+    "preserve": [
+      "Original deadlines",
+      "No replay policy",
+      "Busy/account/context guards",
+      "Closed diagnostic vocabulary; no raw errors or private values",
+      "No causal latency fix asserted"
+    ],
+    "optionalFinerProgress": "Only if separately needed, wire the existing engine fixed preparing/proving/submitting/confirming callback through a closed session projection. This is not needed for the minimum existing-step presentation fix."
+  }
+}

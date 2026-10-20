@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "96825e16271baf7d81442415565fe51b1533737e",
+  "reviewedAt": "2026-10-12T06:09:53.378322+00:00",
+  "verdict": "actual-local-payload-approved; fresh cloud launch/readback and slot gates remain",
+  "findings": [],
+  "payload": {
+    "bytes": 16356,
+    "headroomBytes": 28,
+    "sha256": "f1023f506cc78df0cc7a739fdd9561fac1efd3bf7e92cb72065aed506a08ce8f",
+    "bootstrapSourceSha256": "68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af",
+    "manifestSha256": "628a51cff3337a3588abb923d5902cc568f24b9da98067cc03390f6c22fbf5da",
+    "archiveSha256": "fc290658514a36c88bf194c9cfc156f75a402fe42f1d5e493476e6ff2fb10ee4",
+    "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+    "generatedAttestorSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3"
+  },
+  "independentLocalChecks": [
+    "Actual gzip length/hash, gzip and LZMA decode, shell syntax and decoded Python compilation.",
+    "Exact regenerate from reviewed bootstrap at recorded creation time equals actual shell byte-for-byte; decoded CONFIG equals private config; PINS/NETWORK/QUALIFICATION equal reviewed source. No generated host program executed.",
+    "All private directory/files owner UID, directory0700/files0600, non-symlink.",
+    "GET bound to exact upload version/key; PUT to exact campaign receipt; both fixed eu-west-2 host and expiry08:06:50Z. Recorded provider credential expiration14:06:49Z exceeds budget+60s. Raw capabilities never emitted.",
+    "GET and PUT capability strings absent from root attestor SOURCE; separate inaccessible private storage/once-only upload remains.",
+    "Recorded upload checksum decodes to exact archive SHA; recorded206version/prefix readback retained, no reviewer network call.",
+    "Fleet local policy exactly one on-demand request, no spot, ValidUntil07:06:50Z and TerminateInstancesWithExpiration true.",
+    "Template reference m7a.4xlarge, shutdownterminate, IMDSv2 hop1, encrypted40+1024GiB delete-on-termination, no IAM instance profile/SSH KeyName/inherited UserData. Live SG/AMI/template checks still required.",
+    "Decoded source preserves persistent budget/commissioning timers before download, 50Mbps aggregate shaper, strict trace/blob/real-proof network, masked public prover, no restart, loopback qualification and independent once-only intents."
+  ],
+  "deadlines": {
+    "createdAt": "2026-10-12T06:06:50Z",
+    "commissioningStop": "2026-10-12T06:36:50Z",
+    "readinessStop": "2026-10-12T06:50:50Z",
+    "qualificationStop": "2026-10-12T07:05:50Z",
+    "budgetAndFleetStop": "2026-10-12T07:06:50Z",
+    "capabilityExpiry": "2026-10-12T08:06:50Z",
+    "latestLaunchFor20MinuteCommissioningMargin": "2026-10-12T06:16:50Z"
+  },
+  "evidenceHashes": {
+    "operator07-payload-verification.json": "99cc8ca37547f1941473e68b7d471972bf22684808871b2a8349a2f7de40ca83",
+    "operator07-upload-preparation.json": "c9a1d9a3ba57d138a839c00c7ef30be25a08fbf98fb171ef60e8b87676ba2e33",
+    "operator07-capability-preparation.json": "3eef7d8b1a0147add393dd85b393d445acddbdd0ba81739abdd81758c5e87607",
+    "operator07-preparation-plan.json": "7d7c07d7e5a7b1104d72a2168900e0d5461793189d9b663b32b3f1022a8d6a45",
+    "operator07-preparation-grant.json": "03b5e8d1ba7a2a0bff87bab9db47a70ed37821a93ece8d1139cd40306f0211b4",
+    "startup07-968-package-review.json": "1b8da40a52ada2077d39372a1f71be6a01c2784be28ee3794fbcfa7475cb3f6a"
+  },
+  "requiredBeforeAndAfterLaunch": [
+    "Lead heavy/launch slot release and fresh account/no-overlap/AMI/SG/noSSH readbacks; verify cumulative185.28USD reservation and unchanged payload.",
+    "Exclusive durable LT and Fleet intents before each one-attempt call; unknown outcome reconciles exact token/name, never recreates. No LT/Fleet send intent existed at this local inspection.",
+    "Immediate actual Fleet absolute expiration/terminate and exact instance/user-data/volume/noIAM controls, then actual host timer/shaper/masked-prover/source receipts.",
+    "If launch margin expires, generate fresh deadlines/payload and re-review; do not reuse stale deadlines or silently remove controls to fit28byte remaining space."
+  ],
+  "limits": [
+    "Review performed no cloud mutation, launch, RPC, credential acquisition or runtime qualification.",
+    "Local verified payload is not evidence that native Linux startup or query qualification succeeds."
+  ]
+}

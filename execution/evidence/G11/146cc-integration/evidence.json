@@ -1,0 +1,245 @@
+{
+  "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+  "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+  "task_id": "G09-G11-connected-bok-moderator-publication",
+  "holds": [],
+  "findings": [],
+  "review": {
+    "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+    "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-146cc-coherent-publication-review.json",
+        "sha256": "42196f72c10c048a215285cf30d02ef675a3387141862a340ec53c09e73b6530"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "bok-and-moderator-component",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "command": "Existing application/synchronized/wallet/panel/reader component commands recorded in source-bound review and component result",
+      "observed": "Bok recovery reviewed; moderator307 distinct API/browser/assets checks, source-identical composition; actual new moderator transaction remains open",
+      "environment": "Local macOSarm64 pinnedNode24.21, actualGit/Dockerlocal/HTTP; labelled fixtureports for componentchecks, no paidexternal actions, native developmentproof flagsfalse",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-c47d-bok-compose-review.json",
+          "sha256": "4e7684f6244a10926be6a890040309636c2a724908766d71219500ebd3acc737"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-460a-moderator-review.json",
+          "sha256": "9b72b029babda0ea8606a720811a97413e79439afe2df0f8d6f96d684e855541"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G09/moderator-controls/component-result.json",
+          "sha256": "73b798ff62d0fc1ceeb7b61645437cfe6310f67c389108a8d0f1a7c689c3f27d"
+        }
+      ]
+    },
+    {
+      "id": "pending-request-concurrency",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "command": "Existing public-index/SQLite/service suites and final pending-index focused checks",
+      "observed": "146 ordinary passes+2explicitvolume skips in predecessor; current3pending/SQLplan checks pass; independent805review binds sourcecarry, unusableheads progress, same-threadorder and cross-threadoverlap",
+      "environment": "Local macOSarm64 pinnedNode24.21, actualGit/Dockerlocal/HTTP; labelled fixtureports for componentchecks, no paidexternal actions, native developmentproof flagsfalse",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-805a-concurrent-pending-review.json",
+          "sha256": "e82f2bfa716a786f31fee4b31ab4f1ce01603930886b632561a733ab56c06b15"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/pending-index-focus.log",
+          "sha256": "83974afcfeffebd43a119aad7ca9eccc2637422d967aafca0bc866c31bc0cfc5"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/incremental-thread-component.log",
+          "sha256": "6859074aa58cb49d755d2cac0cde31f70c2166c63f5c576234476455ea3ee1cc"
+        }
+      ]
+    },
+    {
+      "id": "workspace-isolated-repair",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "command": "Existing workspace tests plus opt-in actual isolated Git repair/restart fixture",
+      "observed": "29 current fatalcontrol/workspace checks and actual68196 twoexecutions repair/restart pass24.4s; exactabsencechange separatelyqualified",
+      "environment": "Local macOSarm64 pinnedNode24.21, actualGit/Dockerlocal/HTTP; labelled fixtureports for componentchecks, no paidexternal actions, native developmentproof flagsfalse",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-8aba-workspace-hooks-review.json",
+          "sha256": "5777cf3d98429728f2ae45f0922a968709e379584afaff4ac500a8dd6a9d9683"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eee1-isolated-execution-review.json",
+          "sha256": "e4a6da8a8fb487adf92f25c30a2885ecb8c574f3da758d614c8a63da203e511e"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/workspace-fatal-control.log",
+          "sha256": "33508bfdfd5c4fb7b7fc06d0559da1fcd98b75f81d766732a9308ad99f3fbdd9"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/actual-thread-execution-diagnostic.log",
+          "sha256": "67ef95d19c5479819a2380b80a4569d5bec9537da46daad6a8b4b43c60726fe5"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/isolated-generated-execution/exact-absence-handoff.json",
+          "sha256": "533a2922f7a4c7b72ef7d34546a0d793887884979bcd961f428fabff96109cd8"
+        }
+      ]
+    },
+    {
+      "id": "stable-publication-component",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "command": "node --test plugins/test/model.test.mjs plugins/test/static-publication.test.mjs",
+      "observed": "40pass1explicitoptinbrowser skip960ms; currentlatestsource/app pair, moderation, quotaorphan repair. No browser rerun claimed",
+      "environment": "Local macOSarm64 pinnedNode24.21, actualGit/Dockerlocal/HTTP; labelled fixtureports for componentchecks, no paidexternal actions, native developmentproof flagsfalse",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9157-publication-review.json",
+          "sha256": "f7b6867bdac7bd23302228f29050dd06355748c1ae5581464768045b27575abf"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/stable-publication-pair.log",
+          "sha256": "36834128941b1b01c7fe14051a33361356f0028e449e78e49079ed4f3ab55d5d"
+        }
+      ]
+    },
+    {
+      "id": "actual-git-executor-http",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "command": "TMPDIR=/private/tmp BOK_THREAD_PUBLICATION_TESTS=1 node --test --test-name-pattern=\"actual accepted Git and isolated artifact\" plugins/test/thread-repositories.test.mjs",
+      "observed": "66280 PASS1/1 12352ms: actual Git acceptedrevision, isolatedpositive tests/build, separate HTTPartifact and exactsource revision/digest, ownedcontainerremoved. ExternalGitHub false, no modelcall or realproof",
+      "environment": "Local macOSarm64 pinnedNode24.21, actualGit/Dockerlocal/HTTP; labelled fixtureports for componentchecks, no paidexternal actions, native developmentproof flagsfalse",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/actual-thread-publication-exact-inspect.log",
+          "sha256": "92552bba465de294b5b12fba2a8f1ce9b6ed4965e3a8a8f05ea06e4adb3053dd"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-146cc-coherent-publication-review.json",
+          "sha256": "42196f72c10c048a215285cf30d02ef675a3387141862a340ec53c09e73b6530"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "bok-and-moderator-component",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-c47d-bok-compose-review.json",
+          "sha256": "4e7684f6244a10926be6a890040309636c2a724908766d71219500ebd3acc737"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-460a-moderator-review.json",
+          "sha256": "9b72b029babda0ea8606a720811a97413e79439afe2df0f8d6f96d684e855541"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G09/moderator-controls/component-result.json",
+          "sha256": "73b798ff62d0fc1ceeb7b61645437cfe6310f67c389108a8d0f1a7c689c3f27d"
+        }
+      ]
+    },
+    {
+      "id": "pending-request-concurrency",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-805a-concurrent-pending-review.json",
+          "sha256": "e82f2bfa716a786f31fee4b31ab4f1ce01603930886b632561a733ab56c06b15"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/pending-index-focus.log",
+          "sha256": "83974afcfeffebd43a119aad7ca9eccc2637422d967aafca0bc866c31bc0cfc5"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/incremental-thread-component.log",
+          "sha256": "6859074aa58cb49d755d2cac0cde31f70c2166c63f5c576234476455ea3ee1cc"
+        }
+      ]
+    },
+    {
+      "id": "workspace-isolated-repair",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-8aba-workspace-hooks-review.json",
+          "sha256": "5777cf3d98429728f2ae45f0922a968709e379584afaff4ac500a8dd6a9d9683"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eee1-isolated-execution-review.json",
+          "sha256": "e4a6da8a8fb487adf92f25c30a2885ecb8c574f3da758d614c8a63da203e511e"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/workspace-fatal-control.log",
+          "sha256": "33508bfdfd5c4fb7b7fc06d0559da1fcd98b75f81d766732a9308ad99f3fbdd9"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/actual-thread-execution-diagnostic.log",
+          "sha256": "67ef95d19c5479819a2380b80a4569d5bec9537da46daad6a8b4b43c60726fe5"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/isolated-generated-execution/exact-absence-handoff.json",
+          "sha256": "533a2922f7a4c7b72ef7d34546a0d793887884979bcd961f428fabff96109cd8"
+        }
+      ]
+    },
+    {
+      "id": "stable-publication-component",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9157-publication-review.json",
+          "sha256": "f7b6867bdac7bd23302228f29050dd06355748c1ae5581464768045b27575abf"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/stable-publication-pair.log",
+          "sha256": "36834128941b1b01c7fe14051a33361356f0028e449e78e49079ed4f3ab55d5d"
+        }
+      ]
+    },
+    {
+      "id": "actual-git-executor-http",
+      "candidate": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "base": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/actual-thread-publication-exact-inspect.log",
+          "sha256": "92552bba465de294b5b12fba2a8f1ce9b6ed4965e3a8a8f05ea06e4adb3053dd"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-146cc-coherent-publication-review.json",
+          "sha256": "42196f72c10c048a215285cf30d02ef675a3387141862a340ec53c09e73b6530"
+        }
+      ]
+    }
+  ]
+}

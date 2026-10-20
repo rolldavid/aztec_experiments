@@ -1,0 +1,61 @@
+{
+  "base": "9a3c40d8bf51cc51cbbecb60e2c37c36a0963193",
+  "candidate": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+  "task_id": "G07-local-compact-capacity",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "9a3c40d8bf51cc51cbbecb60e2c37c36a0963193",
+      "candidate": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+      "id": "config-rate",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/compact-capacity-final.log",
+          "sha256": "2890d3a3fbbbf5753baa4c3b72874f6ec9f84e73df73d918b80f9cea5b0b1d0b"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-953429-capacity.json",
+          "sha256": "ea081a30a772a0fb338d01ac03eaa6f4ae6c159a33b30b037ffd24619d07c2e6"
+        }
+      ],
+      "command": "NODE_BACKEND=js node --test --test-name-pattern compact|rate existing devnet/operator-test and compact-service tests",
+      "environment": "macOS Node24.21.0 controlledHTTP",
+      "observed": "11PASS0skip2301.420459ms; independent9PASS2936ms",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "9a3c40d8bf51cc51cbbecb60e2c37c36a0963193",
+      "candidate": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+      "id": "RC27-local-capacity-configuration-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/compact-capacity-final.log",
+          "sha256": "2890d3a3fbbbf5753baa4c3b72874f6ec9f84e73df73d918b80f9cea5b0b1d0b"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-953429-capacity.json",
+          "sha256": "ea081a30a772a0fb338d01ac03eaa6f4ae6c159a33b30b037ffd24619d07c2e6"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "9a3c40d8bf51cc51cbbecb60e2c37c36a0963193",
+    "candidate": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-953429-capacity.json",
+        "sha256": "ea081a30a772a0fb338d01ac03eaa6f4ae6c159a33b30b037ffd24619d07c2e6"
+      }
+    ]
+  }
+}

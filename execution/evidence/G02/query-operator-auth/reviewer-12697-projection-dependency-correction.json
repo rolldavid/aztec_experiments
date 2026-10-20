@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "1b4265c4fcc8ba1dc992dcc904aa41547f24f8eb",
+  "verdict": "CONFIRMED_FAILED_FOCUS_AND_CORRECTED_PRIOR_REVIEW",
+  "correction": [
+    "Earlier reviewer plan said projection/anchor helpers are used only within qualify. This was incorrect.",
+    "validated_qualification also calls them when checks/anchors exist; final_receipt and attest consume that validator.",
+    "Therefore scoped removal of verified packaged source after q construction invalidates a successful receipt; prior source eligibility overlooked this dependency."
+  ],
+  "observed": "12697 selected success subcase falls back to interrupted-unknown and shutdown; original assertions correctly fail.",
+  "safetyBoundary": [
+    "Pre-package failure qualification records lack checks/anchors, so embedded failure path remains independent of packaged helpers.",
+    "Successful qualification receipt intentionally requires pinned packaged support at validation time; retain this fail-closed behavior."
+  ],
+  "next": "Test-only exact source fixture remains installed through final_receipt. Replace broad run double with exact startup-observation command/timeout/capture returning fixed public unavailable JSON, and exact budget-start command/timeout recording shutdown. Reject unknown calls, assert one startup observation, retain original success/disk-failure assertions.",
+  "supersedesClaimsIn": [
+    "reviewer-773-post-package-packing-plan.json only-use statement",
+    "reviewer-1b4265-scoped-receipt-fixture-preparation-review.json fixture eligibility"
+  ],
+  "noProductionEditOrRuntimeByReviewer": true
+}

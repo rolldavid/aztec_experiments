@@ -1,0 +1,43 @@
+{
+  "task": "G10-bounded-direct-history",
+  "source": "9860a1cb35b13bc20a18c46b3b488677509d10c4",
+  "base": "479de808a277fcaff4e4279d5b51e35af083b3f5",
+  "files": {
+    "plugins/agent.mjs": "b35fb55cbcffda05ff42118d10e97388bc1bc25320bf6383326621ee6a240d38",
+    "plugins/DEPLOYMENT.md": "3012051974b94f2f460fec677e910660541314b8c5ac7f011a0f5a02a0f9c44d",
+    "plugins/test/model.test.mjs": "dbfe466d611407bde99b3cdca89cacdb276b7a8d7108f68598bd70189051ee36",
+    "plugins/test/thread-repositories.test.mjs": "5ce3594ce11c93b2c41d4fe5ab6d5dc8df9d19533261a0356abed8d3636b9749",
+    "plugins/test/hosted-private-bok.test.mjs": "0d4544821f1427208341be23dcf3888a767e1f0616a890a8effba6d3e239b266"
+  },
+  "checks": [
+    {
+      "files": [
+        "plugins/test/model.test.mjs",
+        "plugins/test/conversation.test.mjs"
+      ],
+      "passed": 84,
+      "durationMs": 168.099208,
+      "log": "model-conversation.log"
+    },
+    {
+      "files": [
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/thread-repositories.test.mjs"
+      ],
+      "namePattern": "actual agent uses guarded metering|trusted allocation precedes every paid call",
+      "passed": 4,
+      "durationMs": 1389.605917
+    }
+  ],
+  "capacity": {
+    "directHistoryUtf8JsonBytes": 8192,
+    "existingHistoryMaximumBytes": 60000,
+    "existingMeteredRequestDefaultMaximumBytes": 65536,
+    "priceReservation": "Unchanged live catalog full published context bound and output limit, available funds enforced before provider work. Threshold is plugin size policy, not tokenizer estimate."
+  },
+  "limits": [
+    "Controlled model/chain ports only; no live provider, proof, transaction or service operations.",
+    "Existing paid summary/request136a is unaffected; deploy only after terminal journals and graceful drain.",
+    "Initial new boundary fixture assertion included mutable assistant-appended message array; corrected to inspect exact prior-history message, then all checks passed."
+  ]
+}

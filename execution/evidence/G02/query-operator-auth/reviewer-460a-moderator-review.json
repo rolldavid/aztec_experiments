@@ -1,0 +1,35 @@
+{
+  "candidate": "460a440ef3a30d9d2f9695ef099cdd3129727e0c",
+  "base": "c47d2b3ac1075153daf85c4e9f2f6814aef2b2f4",
+  "verdict": "PASS_SCOPED_COMPONENT",
+  "sources": {
+    "apps/rolling/reader.browser.test.mjs": "41dcffc3c3f020724271468425bd0fdb57a30c2c76468774ddfb5bf4c1dfe28b",
+    "apps/rolling/reader.mjs": "61d42db24e90709fded6efd38c3089613823f87635b00d8b03403e4823594986",
+    "apps/rolling/wallet-panel.browser.test.mjs": "a4ed5902dd96e1ad4db5032e7b0d2509708a38fbda534e9c88729414d8b05229",
+    "apps/rolling/wallet-panel.mjs": "da7f6a95edc544ef5fd3c8d48302e10a7e165e943b3f2062b39207c0bc0e57cd",
+    "shared/rolling/application.mjs": "2950ba5f7fa3169de76450b2b86b559cdad0db447882e0cbf431a0a92c849ff0",
+    "shared/rolling/application.test.mjs": "0ae7338ee882728d3808bbb7d3bedb74fed8faf1134d1e65b62726ddb1e74124",
+    "shared/rolling/synchronized-application.mjs": "f88aebdd54de26603afbee397233690a442bbe93d9b1f6384be75837d2f8061f",
+    "shared/rolling/synchronized-application.test.mjs": "58592829a99e2a0a3602ebf6ef8fb0c00c5b8ef728da9fa87c6dd3974862a021"
+  },
+  "reviewed": [
+    "Exact eight source changes; immutable moderator storage slot read at checkpoint hash then canonical anchor recheck, owner comparison under existing account/route guard.",
+    "All four calls match pinned contract implementation and actual public/utility ABI: remove_post,remove_avatar,reject_subboard,set_main_policy. No author edit/hide/delete authority or private ownership discovery.",
+    "Preparation and final beforeSubmit repeat authority/target/policy validation; original encrypted intent, fee ceiling, explicit consent and sole journalled wallet lifecycle retained. Unknown remains fenced.",
+    "Avatar removal binds current version/digest, post removal current policy/local version. Contract expected-version checks retained where present.",
+    "Contextual reader buttons carry only public target IDs and require locally authenticated moderator capability; hidden/display repair and synchronous account invalidation guard verified.",
+    "Normal wallet rebuild recorded; unrelated funding/Bok recovery/native proof behavior preserved."
+  ],
+  "evidence": {
+    "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G09/moderator-controls/component-result.json",
+    "sha256": "73b798ff62d0fc1ceeb7b61645437cfe6310f67c389108a8d0f1a7c689c3f27d",
+    "verified": "All eight Git source hashes, five actual receipt/log pairs independently match. API129/session+assets61/reader35/panel82=307 pass, no skips. Build1467ms. Owned cleanup positive.",
+    "historicalFailures": "Combined timeout and hidden-button CSS failure retained; final completed suites accepted without recasting failed runs."
+  },
+  "limitations": [
+    "Actual canonical moderator transactions remain unrun. ABI/component/Chromium controlled ports are not live chain acceptance.",
+    "set_main_policy and reject_subboard have no expected-version contract argument: preflight review does not provide atomic on-chain policy CAS.",
+    "Combined candidate generated wallet closure required after composition.",
+    "Notification fresh keys-only restoration and real testnet proof acceptance remain separate."
+  ]
+}

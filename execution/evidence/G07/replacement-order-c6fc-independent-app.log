@@ -1,0 +1,22 @@
+✔ saved-byte beforeSubmit revalidates head after synchronization (320.393167ms)
+✔ saved-byte beforeSubmit revalidates marker after synchronization (262.66425ms)
+✔ saved-byte beforeSubmit revalidates account after synchronization (253.07175ms)
+✔ saved-byte beforeSubmit revalidates ciphertext after synchronization (260.251875ms)
+✔ saved-byte options reject accessors and snapshot exact hash before asynchronous context checks (435.658209ms)
+✔ saved-byte recovery owns the busy interval and cannot be concurrently confirmed (414.124125ms)
+✔ saved replacement cannot bypass pending predecessor through app recovery (1644.815583ms)
+✔ saved replacement cannot bypass unknown predecessor through app recovery (1668.100917ms)
+✔ saved replacement cannot bypass canonical predecessor through app recovery (1656.004125ms)
+✔ saved-byte late predecessor head change prevents broadcast (1361.478875ms)
+✔ saved-byte late predecessor marker change prevents broadcast (1380.598792ms)
+✔ replacement late predecessor head change prevents first broadcast (1278.488708ms)
+✔ replacement late predecessor marker change prevents first broadcast (1228.287041ms)
+✔ saved resume options are captured before synchronization without invoking accessors (1.295625ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14386.098667

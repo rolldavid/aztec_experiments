@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "e71e96d0c7114923511dba22db7578c5dc71656d",
+  "reviewType": "independent source; no runtime execution",
+  "verdict": "APPROVE_SOURCE_FOR_BOUNDED_AFFECTED_TESTS_AND_COMPOSITION",
+  "sourceHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "f0b779d306972eece9be5b53b1a3ed0d2312bfda1851a1916df0c8e3fd5922a0",
+    "scripts/testing/rolling-application-fixture.test.mjs": "700e24c6cc4f540f4347df4dd29028f97bc978812dc4f6e58ac3c723c2394f07"
+  },
+  "findings": [],
+  "checks": {
+    "exactTwoChangedPaths": [
+      "scripts/testing/rolling-application-fixture.mjs",
+      "scripts/testing/rolling-application-fixture.test.mjs"
+    ],
+    "privateBodyEqualExceptExplicitRecoveryWirePhase": true,
+    "privateBodySha256": "b1344f6b22e8fe049b84101c043dddce31e406de552ba464f7ab9f4812be6631",
+    "publicBodyEqualExceptOuterImportAssignment": true,
+    "publicBodySha256": "fad2387a4edb6a12aa4e43b71b4c106823f0a27130482846d22e357716aa8098",
+    "browserAndAccountingAndCleanupSuffixByteIdentical": true,
+    "suffixSha256": "20c50cac9c74df1835783354a7ba9e4298898ad9220e2a9afb01a4ed5123e842"
+  },
+  "assessment": [
+    "Actual-used helper awaits both callbacks once, sequentially; boundedCold selects public-first, other lanes retain private-first. Rejections propagate unchanged and prevent later phase; no financial retry.",
+    "Public canonical rebuild and fresh/reopened HTTP checks use public node/artifact/cache and captured public expectations, not actor private store. Original private checkpoint, old actor closure, fresh keys-only ownership, zero-effects checks, metrics finally and failure persistence remain intact.",
+    "Explicit recovery-a phase is set before bounded private recovery, avoiding attribution to public-read. Cold metrics remain scoped within original private body. Outer imported verifier remains available for later stale-readiness check.",
+    "No required public-after-private ordering found in scoped G07 requirements. Existing 30s/21.5s admissions and 525s inner/540s outer deadlines unchanged. This changes admission order, not amount of work or guaranteed completion time.",
+    "Eight new labelled actual-helper tests cover both orderings, once/sequential execution, both failure positions, invalid input, and actual fixture source binding. Authored tests remain unrun at this review."
+  ],
+  "combinedCandidateDisposition": {
+    "allowCompositionWithReviewedD22": true,
+    "reason": "e71 changes harness scheduling; d22 changes authenticated suffix-extension capability while preserving reviewed b3 batching and initial-cold validation. Exact combined bytes must be checked, not inferred from merge success.",
+    "requiredBeforeGenuine": [
+      "Run affected fixture tests including eight new cases on final combined source.",
+      "Verify exact four d22 blobs and two e71 blobs, preserving all current worker/native/bootstrap source and b3 identity/drain guards.",
+      "Preserve predecessor installed closure, apply exact d22 in exclusively owned stopped dependency tree, verify full 8+2 closure and protected inputs.",
+      "Run normal SDK/frontend/wallet builds and rehash source/artifact/catalog/served closures; review exact candidate and unchanged 540s/4GiB/default1 launcher.",
+      "Fresh full genuine relationships must pass original five effects, fees/conservation, public fresh/reopen, exact cold snapshot, zero recovery submissions/tags, native accepted/errors/pending, and full cleanup."
+    ],
+    "carry": [
+      "06e9 establishes historical b3 finite genuine initial-cold component only; overall failed public admission and final conservation did not run.",
+      "D22 component169 count-corrected acceptance carries source-specific synthetic/extracted correctness. Matched HTTP runtime requires separate direct review.",
+      "No redundant b3-only genuine repeat required before final combined candidate; new genuine is required for its conjunction."
+    ],
+    "holds": [
+      "No actual run grant here.",
+      "No monotonic extension/reorg HTTP or whole-history capacity acceptance from an initial-cold journey.",
+      "No production or compiler diagnostic clearance."
+    ]
+  },
+  "inspectionNote": "Controls working tree has returned clean to 5b0f4f; review read exact immutable e71 Git blobs."
+}

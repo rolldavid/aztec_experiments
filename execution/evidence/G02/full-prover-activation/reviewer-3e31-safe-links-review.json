@@ -1,0 +1,22 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "3e31a8ab0505814b96fa51f6af399b28f9fe89af",
+  "sourcePacketSha256": "191fdbacf75d85dd04f2d5b94af653c59281a2a26d2ee4e8bc39999793805099",
+  "runnerPacketSha256": "fce6235dd0928ef34cf8fd662218583821dd5f0c496c3a0b40a2563825222266",
+  "previousFindingReview": "15e9d1adfeef21bea91ba20108dcc65e024ecd0f573060c60269f628dcdad5c5",
+  "verdict": "P2 repaired in source; ELIGIBLE for one separately granted focused16 run60s2GiB",
+  "checks": [
+    "All six current source hashes verified; diff from1797 restricted to actual activation_paths, four actual-used regression tests and documentation",
+    "Complete root-owned regular/directory/link plan and parents validated before useradd/chown/chmod; relative symlinks must resolve strictly to inventoried internal regular files",
+    "Absolute/external/directory/cyclic/dangling/special links rejected; no-follow chown, no symlink chmod, per-entry identity checked before mutation; original durable intent and shutdown/replay guards unchanged",
+    "Actual Node-like npm/npx/corepack filesystem links drive production helper tests; ownership and privileged operations explicitly mocked; original full private/config protections retained",
+    "Runner packet files and1147 protected bindings independently rehashed; exact16 AST labels; short0700 TMP identity verified; source3e31 clean",
+    "Existing supervisor/child60s2GiB, exact label/count/no-skip collector, owned-tree and temporary cleanup; only evidence directory changed from predecessor wrapper"
+  ],
+  "conditions": [
+    "Separate parent serialized grant after current heavy task closure; no runtime performed by reviewer",
+    "SourceReviewPending metadata is honestly unrun; this separate review binds exact frozen bytes without editing preparation",
+    "Actual focused receipt still required; full89/package9 and real SDK/HTTP activation require coherent lead helper/release composition",
+    "Generated userdata size/package/current deployment/access/budget/live controls remain paid-preparation gates; no paid or full prover acceptance inferred"
+  ]
+}

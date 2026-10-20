@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-15T19:19:33.128618+00:00",
+  "state": "stopped",
+  "snapshotFile": "anvil-recovery-f76809d3-cffd-49a3-9652-7c7ef110c655.json",
+  "snapshotHash": "d58ece022b706055b4ee39f89eb75efe13772cf8d1f76a13729fe9b0d9e3a61e",
+  "snapshotHead": {
+    "number": "0x7e1",
+    "hash": "0x831fa4cbcb0b9278abc578dfcb6a83c55226035fb56138afe82b9b456817a352",
+    "pending": "962",
+    "proven": "962"
+  },
+  "leaseAbsent": true,
+  "ports": {
+    "8181": {
+      "listenersAbsent": true,
+      "returnCode": 1
+    },
+    "18181": {
+      "listenersAbsent": true,
+      "returnCode": 1
+    },
+    "18547": {
+      "listenersAbsent": true,
+      "returnCode": 1
+    }
+  },
+  "automation": {
+    "id": "continue-rolling-chat-draft-3",
+    "status": "PAUSED",
+    "reason": "All remaining executable acceptance requires stable awake local host; repeated sleep interrupted tests. Other prerequisites remain external."
+  },
+  "leadRetained": true,
+  "applicationComplete": false,
+  "resume": "execution/sessions/handoff-20261013-1242.md"
+}

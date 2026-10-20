@@ -1,0 +1,12 @@
+✔ USDC uses two real signatures, retained random custody and one relay post without user Ethereum send (1417.088834ms)
+✔ USDC rejected consent preserves custody and permits only a fresh reviewed quote (4001) (567.98775ms)
+✔ USDC rejected consent preserves custody and permits only a fresh reviewed quote (ACTION_REJECTED) (218.551958ms)
+✔ USDC consent delay cannot open an already expired authorization prompt (201.493541ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7839.957

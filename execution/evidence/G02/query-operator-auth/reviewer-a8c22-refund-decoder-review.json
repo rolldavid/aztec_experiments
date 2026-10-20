@@ -1,0 +1,72 @@
+{
+  "candidate": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "base": "0cc564a478dfad9246e7e661f4a34be6a3e93516",
+  "verdict": "approved for source/component integration; rebuilt live public-feed acceptance remains separate",
+  "findings": [],
+  "source": {
+    "shared/rolling/public-events.mjs": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+    "shared/rolling/public-events.test.mjs": "587ad8b61ba322a4726753ff0ae6e636a88e9e4eea1cfe62b1776c685f492b6b"
+  },
+  "evidence": {
+    "execution/evidence/G07/public-refund-decoder/checks.json": "bb05773beafa496e5bad752649db1ae68447a8572dc49b1f74f82ec6d681f8b9",
+    "execution/evidence/G07/public-refund-decoder/original-failure.json": "ead552429e202ab18310de986536b5411f4c02a2ed0d9eb7f22efd35a13502ee",
+    "execution/evidence/G14/retained-bok-original-canonical-events.json": "828083a06ca559d1a76a48023161c7c0a5572fd4b1523d0f157a8b96d48b1a0a",
+    ".build/rolling-devnet-diagnostics/refund-public-events-tests.log": "ffaccc91e196c23f989e5ccb3f01ffd22cb44365ab0d89a6fce0e8edc7ec158e"
+  },
+  "assessment": [
+    "Exactly two changed paths. Known application tags always enter unchanged strict ABI decoding; malformed known tags cannot use the completion branch.",
+    "Only configured Bok address and unknown application tag enter the completion branch. Exactly three Fr fields, artifact balances slot and strictly positive u128 amount required. Board unknown logs and other malformed Bok logs still reject.",
+    "Each excluded transport log requires a co-resident fully decoded and validated AccountingChanged whose cumulative refunded value covers its amount. Original application log positions are retained; transport is never returned as an application event or accepted by standalone decodeLog.",
+    "Successful receipt, block/effect byte equality, total public-log limits, current class, authenticated original constructor/storage and final canonical anchor verification remain unchanged before returning events.",
+    "This is source/class-bound transport recognition, not cryptographic validation of the opaque completion-tag preimage. Pinned source inventory and PartialUintNote.complete format were independently inspected in reviewer-bok-completion-log-diagnosis.json."
+  ],
+  "tests": {
+    "currentFile": 43,
+    "pass": 43,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 3373.392084,
+    "newCases": 10,
+    "coveredNegatives": [
+      "malformed known application tag precedence",
+      "board emitter",
+      "wrong balances slot",
+      "zero and overflowing amount",
+      "extra field",
+      "insufficient refund accounting",
+      "invalid accounting trailer",
+      "absent accounting event"
+    ],
+    "reviewerExecutedTests": false
+  },
+  "actualReadOnlyDecoder": {
+    "sourceHashMatchesGit": true,
+    "elapsedSecondsReported": 0.805,
+    "authorization": [
+      "AccountingChanged"
+    ],
+    "post": [
+      "PostPublished",
+      "AccountingChanged",
+      "PluginInvoked"
+    ],
+    "reply": [
+      "PostPublished",
+      "PluginReplyPublished"
+    ],
+    "finish": [
+      "AccountingChanged"
+    ],
+    "finishCanonicalBlock": 614,
+    "finishLogIndex": 1,
+    "terminalState": "4",
+    "available": "0",
+    "reserved": "0",
+    "accountingConservesBudget": true
+  },
+  "limitations": [
+    "Original finish ROLLING_PUBLIC_INVALID and old-service API 503 evidence preserved.",
+    "Actual decoder acceptance does not establish rebuilt running feed recovery; normal SDK build and controlled service restart remain parent-owned.",
+    "No new transaction, model call, proof or heavy test executed by reviewer; native development evidence is not genuine-proof/testnet qualification."
+  ]
+}

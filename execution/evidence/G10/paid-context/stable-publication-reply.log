@@ -1,0 +1,27 @@
+✔ fresh agent uses tool output and always closes the checkout (1.680125ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (2.195375ms)
+✔ first message has no unnecessary paid summary (0.390875ms)
+✔ conversation incomplete blocks any paid model call (0.260583ms)
+✔ conversation noncanonical blocks any paid model call (0.114666ms)
+✔ conversation wrong latest blocks any paid model call (0.1635ms)
+✔ conversation changed latest blocks any paid model call (0.135ms)
+✔ conversation duplicate blocks any paid model call (0.510917ms)
+✔ conversation invented system role blocks any paid model call (0.284333ms)
+✔ conversation oversized message blocks any paid model call (0.277459ms)
+✔ conversation empty blocks any paid model call (0.096958ms)
+✔ unknown summary outcome does not retry or start main model (0.410458ms)
+✔ summary cannot invoke tools or become system authority (0.603ms)
+✔ summary counts against the request model-call ceiling (0.180083ms)
+✔ successful answer waits for host acceptance before closing invocation workspace (3.714708ms)
+✔ published app links are host-produced, byte bounded, and omit private validation metadata (0.28475ms)
+✔ isolated STATIC_CLEANUP_REQUIRED stops the agent before another paid call or tool (0.145833ms)
+✔ isolated STATIC_RECORD_FAILED stops the agent before another paid call or tool (0.057958ms)
+✔ isolated STATIC_UNAVAILABLE stops the agent before another paid call or tool (0.048875ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 314.750041

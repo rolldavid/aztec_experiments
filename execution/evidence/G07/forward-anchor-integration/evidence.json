@@ -1,0 +1,104 @@
+{
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "task_id": "G07-pxe-forward-anchor-integration",
+  "holds": [],
+  "findings": [
+    {
+      "id": "G07-PXE-1",
+      "blocking": true,
+      "status": "resolved"
+    },
+    {
+      "id": "G07-PXE-2",
+      "blocking": true,
+      "status": "resolved"
+    }
+  ],
+  "checks": [
+    {
+      "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+      "id": "combined-126",
+      "status": "pass",
+      "command": "Node24 --test scripts/patch-pxe-reorg-anchor.test.mjs shared/rolling/cold-preference-reader.test.mjs shared/rolling/compact-client.test.mjs",
+      "environment": "macOS arm64 pinnedNode24.21.0 rc3; actualSDK/LMDB and labelledreaderdoubles",
+      "observed": "126PASS0fail0skip; independent43PASS inclbothreproducedreviewfailures; no fullcold120 claim",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/combined-tests.log",
+          "sha256": "46e334cb2b6de7f222b034f2051333196a1cea3c2a595f42d337f0b5d551dcb2"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/worker-packet.json",
+          "sha256": "51516ea8fac5e4500686f585915719f8dd4bcd1f8d76ab36d64877a7c4b93301"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-12f2f28-forward-anchor.json",
+          "sha256": "eed9857511e81b72e642a066535fa2eab69c8bb4acc3afaca29f04c88d93e075"
+        }
+      ]
+    },
+    {
+      "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+      "id": "generated-closure",
+      "status": "pass",
+      "command": "normal build-sdk.mjs; apps/build.mjs; rolling-wallet-assets.mjs; check-sdk.mjs; loadRollingWalletAssets",
+      "environment": "macOS arm64 pinnedNode24.21.0 rc3; stoppedconsumers duringdependencyupdate",
+      "observed": "2057SDKinputs8outputs;97walletinputs25files/static9scripts; independenthashclosureverified",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/generated-closure.json",
+          "sha256": "be29e67c076e7ac598ba93a5fa0f136dd564c66e827ac40dff327b8c856aa69f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-12f2f28-forward-anchor.json",
+          "sha256": "eed9857511e81b72e642a066535fa2eab69c8bb4acc3afaca29f04c88d93e075"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+      "id": "G07-A08-canonical-forward-synchronization-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/worker-packet.json",
+          "sha256": "51516ea8fac5e4500686f585915719f8dd4bcd1f8d76ab36d64877a7c4b93301"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/combined-tests.log",
+          "sha256": "46e334cb2b6de7f222b034f2051333196a1cea3c2a595f42d337f0b5d551dcb2"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/forward-anchor-integration/generated-closure.json",
+          "sha256": "be29e67c076e7ac598ba93a5fa0f136dd564c66e827ac40dff327b8c856aa69f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-12f2f28-forward-anchor.json",
+          "sha256": "eed9857511e81b72e642a066535fa2eab69c8bb4acc3afaca29f04c88d93e075"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+    "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-12f2f28-forward-anchor.json",
+        "sha256": "eed9857511e81b72e642a066535fa2eab69c8bb4acc3afaca29f04c88d93e075"
+      }
+    ]
+  }
+}

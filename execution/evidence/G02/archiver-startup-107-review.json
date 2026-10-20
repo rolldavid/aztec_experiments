@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+  "base": "9a3e590c5b4fbe5a9bb854bc277641c55d14b6cf",
+  "verdict": "source approved for bounded diagnostic development; package/image/operator/payload/Linux gates remain pending",
+  "findings": [],
+  "sourceHashes": {
+    "deploy/prover/BOOTSTRAP.md": "3d23ed6d5baa4e37333b7acb6b9ffa9ba0f4a37053cc2bb5e3e2434a7cc37236",
+    "deploy/prover/bootstrap.py": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "deploy/prover/startup-stages.mjs": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "deploy/prover/startup-stages.test.mjs": "d30485ddd9fe26765af20937e44637effa54903919c4282af0c5084d026fff90",
+    "scripts/test-prover-bootstrap.py": "44db77906f20414df90efc09374b529138ecc975f855b7f752ce1682f3eafac4"
+  },
+  "inspection": [
+    "Exactly5declared paths; bootstrap changes confined helperpin,finite phase list and schema2 safe projection. Host budget/shutdown/network/qualification/masked prover controls unchanged.",
+    "Six exact-whole-file sourcepins and unique anchors fail closed; independently tested transformed byte reversal restores originals except prior explicitly reviewed PublicNode config argument. Actual source parses; no SDK disk changes.",
+    "Installed Archiver.sync instrumentation preserves original awaits/receiver/results and throws identical caught error; no new retry/fallback. Actual installed method has no successful early return bypassing completion.",
+    "Archiver phase begins before initial-sync start, completes at actual initialSyncPromise resolution; mandatory current node configuration blocks initial sync. New l1_synchronizer head/local/checkpoint observations placed after their source-defined read/commit points.",
+    "Bounded8typed causes and numeric HTTP/RPC fields only; messages/stacks/URLs never inspected or persisted. Malicious own accessor/cycles/untyped spoof/deepcause tests remain unknown without secrets.",
+    "8192byte owner-only record with exacthelper/runtimeAdapter/schema; JS and Python strict finite fields/count coherence. Atomictemp/rename/fsync, stickyfailed/temp reject old record. Evidence failure does not replace original application failure.",
+    "One unref30secondflush timer; heartbeat does not advance observation/progress. Forced finite phases+normalprocess exit flush; SIGKILL/powerloss may lose last30seconds and total filesystem failure may prevent sticky marker.",
+    "Checkpoint high-water progress timestamp does not make chain-readiness claim; actual local/head/checkpoint values may decrease on reorg, no readiness gate inferred from counters."
+  ],
+  "checks": {
+    "independentNode": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 551.225292,
+      "log": "archiver-startup-107-independent-node.log",
+      "sha256": "297647b1ca61e002a72ce4ad3b5d110fbb950d0eda588e91a48379200077d820"
+    },
+    "independentPython": {
+      "passed": 51,
+      "failed": 0,
+      "log": "archiver-startup-107-independent-python.log",
+      "sha256": "80cabe959e98d10628a2980f9409f639eb087ff8cc4750e4f19f2375b8a75fc2",
+      "runtime": "PROVER_VALIDATION_NODE pinned24.21 absolute; includes disposable process/control tests and actualJS record\u2192Python projection"
+    }
+  },
+  "requiredBeforeRuntime": [
+    "Exact image equality for newly instrumented l1_synchronizer and allsix sourcepins; no inference from installed Mac source.",
+    "Fresh complete package/source closure and currentcatalog pins.",
+    "Operator receipt projector updated and independently validated forschema2 archiver field/runtimeAdapter.",
+    "Fresh actual capabilities/payload <=16384bytes and all absolute host/cloud deadlines/controls; source change itself does not grant paid launch.",
+    "Actual Linux startup/readiness/queryqualification remain unproven; diagnostic stage/progress is not health, privacy or sustainedprovider qualification."
+  ],
+  "limits": [
+    "No network/provider calls, Docker/node service, package build or paid operations performed by reviewer.",
+    "No fullnode or remote acceptance; historical failure remains failed."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:46:45.945104+00:00",
+  "source": "27e7eadb6d849ecd7dcae4ce248447655dace433",
+  "packetSha256": "47ab44c6b16ec0d707646e7c9cadd7fb03dbcf363efa3bf1c090bdc97a8ba19a",
+  "verdict": "PASS one remaining12 run eligibility under separate parent grant",
+  "verified": [
+    "Directory-only owner change; same child/cache/source and original180s/4GiB ceiling.",
+    "Exact filter selects12 original labels,20excluded; previous19+focused1+remaining12 equals32 distinct labels without duplicates.",
+    "All588source+2578dependency pins independently matched.",
+    "Focused repaired28990 actual accepted review8b2289a12b0940f6c8956d409d3174040a327df738ae7635d03ace0ac8ecdded."
+  ],
+  "limitations": "No new full32 passing run claim;73047 remains failed. Actual renderer/labelled API only, not realwalletPXE/proofs/chain.",
+  "noRuntimeByReviewer": true
+}

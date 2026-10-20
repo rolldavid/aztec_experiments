@@ -1,0 +1,10 @@
+{
+  "label": "provider-fund",
+  "sourceRevision": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "proofMode": "proofs-disabled",
+  "portal": "0x1511d4edf93a7ce88e1c03fbaea7d77dd6f5aca7",
+  "escrow": "0x03832d6718b44c44f33c80dc0ec964f52a8155c5ddf32a249c9fc40d4f2043dd",
+  "amount": "1000000",
+  "content": "0x006b355f5ddace4e55cd1c1e9cd728095fa6ae89e7d869393b5f14c392fed956",
+  "fundingMode": "real-portal-deposit"
+}

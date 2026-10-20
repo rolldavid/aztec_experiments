@@ -1,0 +1,35 @@
+{
+  "base": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+  "candidate": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "task_id": "G09-message-preview-parity",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "apps/rolling/model.mjs",
+    "apps/rolling/reader.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/reader.browser.test.mjs"
+  ],
+  "required_checks": [
+    "message-preview-parity"
+  ],
+  "requirements": [
+    "RC04-preview-parity",
+    "RC07-safe-unchanged-content"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G09-message-preview-parity",
+      "paths": [
+        "apps/rolling/model.mjs",
+        "apps/rolling/reader.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/reader.browser.test.mjs"
+      ]
+    }
+  ]
+}

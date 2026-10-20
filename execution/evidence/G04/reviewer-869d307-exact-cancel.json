@@ -1,0 +1,16 @@
+{
+  "reviewer": "independent reviewer_resume",
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "scope": "One explicit dispatch of the fixed retained Sepolia cancellation; source review only, not authority or evidence of an actual send.",
+  "revision": "869d3079dbcd4fcf4c36235c513b8c7ee5e04c42",
+  "verdict": "changes-requested",
+  "findings": [
+    {
+      "id": "G04-EXACT-1",
+      "severity": "P1",
+      "location": "plugins/operator.mjs recoverExactSepoliaCancellation and seedTestnetLiquidity",
+      "scenario": "Copy the six files and dispatch intent to a second private directory. Both entry points accepted that location, deriving an independent exclusive sidecar, so the fixed original hash could be dispatched a second time. A deterministic filename within an arbitrary directory is not a single authority slot.",
+      "requiredRepair": "Bind both production entry points to the original canonical campaign state location before source access, lock or provider creation."
+    }
+  ]
+}

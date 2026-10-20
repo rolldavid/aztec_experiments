@@ -1,0 +1,36 @@
+{
+  "source": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+  "at": "2026-10-18T19:59:23.252Z",
+  "configReference": "/private/tmp/rolling-rotation-q0fmwljc/bok-service.json",
+  "configSha256": "82d847432711538f41654244f0cea984e890b80979f96a12805a1e2290b5cc18",
+  "stateDirectory": "/private/tmp/rolling-rotation-q0fmwljc/bok-state",
+  "serviceSession": 31908,
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  },
+  "descriptorMatched": true,
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "1916296214",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+    "receiver": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+  },
+  "coreUrl": "http://127.0.0.1:8080",
+  "coreHttpStatus": 200,
+  "nodeUrl": "http://127.0.0.1:18080/",
+  "ethereumUrl": "http://127.0.0.1:18545/",
+  "installationId": 171412624,
+  "repositoryPoolIds": [
+    1424760976
+  ],
+  "poolAdmission": "Exact App-scoped token, private metadata, disabled Actions, genesis commit/tree/blob and head all checked by existing broker startup",
+  "allocations": 0,
+  "modelCalls": 0,
+  "priorStatePreserved": true,
+  "priorBlockerResolved": true,
+  "pid": 32866
+}

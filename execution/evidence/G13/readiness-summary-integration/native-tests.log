@@ -1,0 +1,34 @@
+/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/node_modules/loady/lib/loady.js:154
+  const err = new Error(`Cannot find module '${name}'`);
+              ^
+
+Error: Cannot find module 'bcrypto.node'
+    at moduleError (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/node_modules/loady/lib/loady.js:154:15)
+    at resolve (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/node_modules/loady/lib/loady.js:89:9)
+    at load (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/node_modules/loady/lib/loady.js:99:16)
+    at Object.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/node_modules/bcrypto/lib/native/binding.js:11:33)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12) {
+  code: 'MODULE_NOT_FOUND'
+}
+
+Node.js v24.21.0
+✖ plugins/devnet/operator-test.mjs (1476.794042ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1480.675042
+
+✖ failing tests:
+
+test at plugins/devnet/operator-test.mjs:1:1
+✖ plugins/devnet/operator-test.mjs (1476.794042ms)
+  'test failed'

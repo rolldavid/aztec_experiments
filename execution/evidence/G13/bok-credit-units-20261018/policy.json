@@ -1,0 +1,30 @@
+{
+  "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+  "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+  "task_id": "G13-bok-credit-units",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "bok-credit-units"
+  ],
+  "requirements": [
+    "RC04-Bok-request-review",
+    "RC22-exact-human-credit-units",
+    "RC33-saved-ceilings-and-outcomes"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G13-bok-credit-units",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

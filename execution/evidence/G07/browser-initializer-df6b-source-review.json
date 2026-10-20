@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "df6b5965a19bafcbc70e41036cf705d0bd8af8ac",
+  "sourcePacketSha256": "6e8a5c159d9d70855f2d4675243781246dd5d41944c83ed4232105c4c7845631",
+  "verdict": "source-approved-one-public-only-initializer-diagnostic-pending-exact-lead-runner",
+  "blockingFindings": [],
+  "independentChecks": [
+    "Exactly one test file changed; original custody test retained byte-for-byte as prefix. Candidate/diff and all8 named production/manifest reference hashes verified.",
+    "Real production runtime/bundle/WasmWorker/CRS original methods used. Observer Reflect.apply preserves receiver/args/return/Promise/rejection, records fulfillment separately, restores descriptors after pending observation settlement.",
+    "No account creation/import, private chain or proof; only labelled public config and empty index. Real CRS full hashes/lengths/SRS parameters and return checks retained and independently asserted.",
+    "Matches genuine driver256MiB JS heap/service-worker and route restrictions. No alternate backend, heap increase, remote CRS fallback or cryptographic bypass.",
+    "Canonical owned0700 diagnostic directory and exclusive0600 files; bounded inner public-only error strings confined to private file, no TAP/public report error content.",
+    "Context/browser/server each closed despite earlier failure; final traffic/effects/errors/cleanup gate pass. Supervisor remains necessary for partial worker or hook timeout."
+  ],
+  "runnerConditions": [
+    "Exact single diagnostic test name and opt-in; original custody case intentionally excluded and must be reported factually, not treated as qualification.",
+    "Use approved lead normal SDK/wallet/CRS/browser closure, pinned Node/Chromium, owned isolatedHOME/shortTMP and descendant-aware60s4GiB supervisor.",
+    "Only one attempt; preserve private failure evidence, final public report, hashes and cleanup regardless outcome.",
+    "No actual run until exact composition/runner reviewed and parent serialized grant."
+  ],
+  "limitations": [
+    "Direct initializer reproduction does not exercise deployed node/session/account recovery or qualify browser cold flow.",
+    "Failure can identify actual observed initializer cause; success alone cannot retroactively identify historical failure.",
+    "No runtime execution by reviewer."
+  ]
+}

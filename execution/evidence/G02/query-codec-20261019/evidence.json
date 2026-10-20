@@ -1,0 +1,56 @@
+{
+  "base": "506ca88234424152d7438dcee016ae57d7fa06cc",
+  "candidate": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "task_id": "D1-query-codec",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "506ca88234424152d7438dcee016ae57d7fa06cc",
+      "candidate": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+      "task_id": "D1-query-codec",
+      "id": "retained-compressed-transaction",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Focused existing private-query test with protected retained transaction input",
+      "environment": "Local HTTP fake upstream; actual installed SDK and existing real compressed proof",
+      "observed": "Independent reviewer executed two focused checks, zero skipped, 973ms; exact bytes forwarded once, codec failure prevents startup",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/query-codec-20261019/review.json",
+          "sha256": "3b5ace3951ea37fbd56c84633d5d36289d87190177f523d8dea3024da3e90a17"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "506ca88234424152d7438dcee016ae57d7fa06cc",
+    "candidate": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+    "task_id": "D1-query-codec",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G02/query-codec-20261019/review.json",
+        "sha256": "3b5ace3951ea37fbd56c84633d5d36289d87190177f523d8dea3024da3e90a17"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "506ca88234424152d7438dcee016ae57d7fa06cc",
+      "candidate": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+      "task_id": "D1-query-codec",
+      "id": "RC18-RC21-native-transaction-transport",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/query-codec-20261019/review.json",
+          "sha256": "3b5ace3951ea37fbd56c84633d5d36289d87190177f523d8dea3024da3e90a17"
+        }
+      ]
+    }
+  ]
+}

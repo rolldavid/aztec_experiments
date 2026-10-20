@@ -1,0 +1,39 @@
+{"role":"service","pid":7325,"port":65508,"realProofs":false}
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":65508}
+{"role":"tests","pid":7354,"port":65508,"realProofs":false}
+[12:50:05.289] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[rolling_contract] Running 1 test function
+[12:50:13.273] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:50:13.274] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:50:13.297] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:50:13.327] INFO: txe_node Aztec Node version: txe
+[12:50:13.327] INFO: txe_node Aztec Node started on chain 0x1
+[12:50:13.341] INFO: txe:top_level_context Created block 1 with timestamp 1791719413
+[12:50:13.424] INFO: txe:top_level_context Created block 2 with timestamp 1791719413
+[12:50:13.503] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.031396582999999735s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.031396582999999735,"rate":32468947.33735861,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:50:13.804] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.01746441700000105s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01746441700000105,"rate":13353781.005113767,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+{"diagnostic":"G05-note-counts","dbCount":1,"pickedCount":1,"limit":1,"offset":0}
+[12:50:14.107] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02427587499999936s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.02427587499999936,"rate":9606903.973595439,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":1152,"l2Gas":876591},"totalSizeInBytes":1152,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:50:14.148] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.01006737499999872s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.01006737499999872,"rate":826332.5842139642,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:50:14.177] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008786083000000873s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008786083000000873,"rate":946838.3123627644,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+{"diagnostic":"G05-note-counts","dbCount":1,"pickedCount":1,"limit":1,"offset":0}
+[12:50:14.376] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008773291999999856s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008773291999999856,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+{"diagnostic":"G05-note-counts","dbCount":1,"pickedCount":1,"limit":1,"offset":0}
+[12:50:14.592] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.006845416000000114s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.006845416000000114,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+{"diagnostic":"G05-note-counts","dbCount":2,"pickedCount":1,"limit":8,"offset":1}
+[rolling_contract] Testing tests::names_register_and_ownership_survives_reauthentication ... [0m[31mFAIL
+Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Oracle 'print' not found. The contract's oracle version (31.0) is compatible with this private execution environment (31.0), so all standard oracles should be available. This could mean the contract was compiled against a modified version of Aztec.nr, or that it references an oracle that does not exist. See https://docs.aztec.network/errors/8", data: None }
+[0m
+
+[rolling_contract] Failures:
+     tests::names_register_and_ownership_survives_reauthentication
+
+[rolling_contract] [0m[31m1 test failed
+
+[0m[12:50:15.018] ERROR: wasm-simulator:acvm Error in oracle callback print: Oracle 'print' not found. The contract's oracle version (31.0) is compatible with this private execution environment (31.0), so all standard oracles should be available. This could mean the contract was compiled against a modified version of Aztec.nr, or that it references an oracle that does not exist. See https://docs.aztec.network/errors/8
+[12:50:15.023] INFO: simulator:avm-pool AVM simulator pool destroyed
+Error: Test command exited unexpectedly: 1
+    at exitError (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:58:26)
+    at runWithService (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:103:67)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/billboard/rolling_contract/test.mjs:31:3

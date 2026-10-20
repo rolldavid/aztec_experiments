@@ -1,0 +1,221 @@
+{
+  "schema": "rolling-g09-human-post-model-removal-v1",
+  "createdAt": "2026-10-15T08:26:25.312175+00:00",
+  "passed": true,
+  "scope": "One real development human post through retained wallet UI, intended isolated pinned9B model decision, canonical automated removal and public tombstone. Native and PXE proofs disabled.",
+  "sourceRevision": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "runtimeSha256": "6eb53e9a9fc848fb382fb273a2cadf5c811a4e8de676c760942a3062c05b84f5",
+  "application": {
+    "elapsedMs": 144946,
+    "postTxHash": "0x105b0a82716c1ec30edb261cbd684d475882f88472bdb76b0d3b8e291f3fd62f",
+    "maximumFeeReviewed": "40863084272367",
+    "maximumFeeAuthorized": "1000000000000000",
+    "sends": 1,
+    "blockedRequests": 0,
+    "inspectionErrors": 0,
+    "contextClosed": true,
+    "ownedTreeAbsent": true,
+    "originalBackupUnchanged": true,
+    "postId": "12149458384919124989847482452722011620626189287225894869695977437752594159673",
+    "content": "I will find you and hurt you.",
+    "identity": "River Canvas",
+    "policy": {
+      "version": "1",
+      "digest": "19222328848760308624277369113847665349661069980220624057416038094065873769087",
+      "text": "No threats."
+    }
+  },
+  "modelIdentity": {
+    "imageDigest": "0x15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+    "weightsDigest": "0x03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "configurationDigest": "0xb7ea178b178f78afb01a70eb409efa6360d6d61d6fd2e317427fa81f266fe534",
+    "promptDigest": "0xd7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862",
+    "modelVersion": "0xcc373fe217f094208d2558ff8be336da10b9f2b0b863dc002a9085f97173f861"
+  },
+  "moderation": {
+    "job": {
+      "postId": "0x1adc5989b049faa7d3d16cba367bc0d270f3d442011e5996a2333b5d1d0a5839",
+      "policyVersion": "0x081d70c857c8f24b664ac0cbaa90782316b37496b5110d05c760e8891554a3ae",
+      "modelVersion": "0xcc373fe217f094208d2558ff8be336da10b9f2b0b863dc002a9085f97173f861",
+      "publishedAt": "1792052582",
+      "deadline": "1792052642",
+      "state": "confirmed-flag",
+      "attempt": "1",
+      "transactionHash": "0x1eb6847a3027233bf8a31384892b8cc4d65a3f7b0353ff483e6aeadf919459ad"
+    },
+    "decision": {
+      "isViolation": true,
+      "reason": "The post contains a direct threat to cause physical harm to an individual."
+    },
+    "receipt": {
+      "txHash": "0x1eb6847a3027233bf8a31384892b8cc4d65a3f7b0353ff483e6aeadf919459ad",
+      "blockHash": "0x149102440d77047211baf22799f3baa28f5c865c4fbbf1c8c84cc9a30c996f6b",
+      "blockNumber": "598",
+      "status": "finalized",
+      "executionResult": "success"
+    },
+    "flagEvent": {
+      "type": "PostRemoved",
+      "position": {
+        "blockNumber": "598",
+        "blockHash": "0x149102440d77047211baf22799f3baa28f5c865c4fbbf1c8c84cc9a30c996f6b",
+        "txHash": "0x1eb6847a3027233bf8a31384892b8cc4d65a3f7b0353ff483e6aeadf919459ad",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "payload": {
+        "postId": "0x1adc5989b049faa7d3d16cba367bc0d270f3d442011e5996a2333b5d1d0a5839",
+        "policyVersion": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "reason": "The post contains a direct threat to cause physical harm to an individual.",
+        "penalized": true
+      }
+    },
+    "history": [],
+    "publicTombstone": true,
+    "publicCheckpoint": {
+      "number": 600,
+      "hash": "0x03cea7630b60680086c4f765391b3ab231a286e453e2fb27297bd1b103f02ad2"
+    }
+  },
+  "health": [
+    {
+      "severity": "ok",
+      "checkpointHeight": 600,
+      "stateCounts": {
+        "queued": 0,
+        "leased": 0,
+        "evaluated-ok": 0,
+        "submit-intent": 0,
+        "submitted": 0,
+        "reconciling": 0,
+        "retryable-error": 0,
+        "confirmed-flag": 1,
+        "expired": 0,
+        "manual-review": 0
+      }
+    },
+    {
+      "severity": "ok",
+      "checkpointHeight": 600,
+      "stateCounts": {
+        "queued": 0,
+        "leased": 0,
+        "evaluated-ok": 0,
+        "submit-intent": 0,
+        "submitted": 0,
+        "reconciling": 0,
+        "retryable-error": 0,
+        "confirmed-flag": 1,
+        "expired": 0,
+        "manual-review": 0
+      }
+    },
+    {
+      "severity": "ok",
+      "checkpointHeight": 600,
+      "stateCounts": {
+        "queued": 0,
+        "leased": 0,
+        "evaluated-ok": 0,
+        "submit-intent": 0,
+        "submitted": 0,
+        "reconciling": 0,
+        "retryable-error": 0,
+        "confirmed-flag": 1,
+        "expired": 0,
+        "manual-review": 0
+      }
+    }
+  ],
+  "limitations": [
+    "Single actual human main-board case; not a full model quality/capacity or adversarial-policy qualification.",
+    "Authentic Bok parity and parent/local union acceptance remain separate.",
+    "No real-proof or network release acceptance inferred.",
+    "Initial0.969s ECONNREFUSED preflight remains failed; it launched no browser and created no dispatch marker.",
+    "Prior automatic funding80s nonpass remains preserved; later exact read-only reconciliation passed."
+  ],
+  "rootPrivateReceipts": [
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/moderator-final-ready-result.json",
+      "sha256": "a08d08bc3342a127a626212010f6e561fea677e5c1b8f1a8acf477d9242c32f7",
+      "commandId": "9ac7ec24-af5b-4557-8b40-426dc9028c98"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/post-ready-read-result.json",
+      "sha256": "fa5ec28f0a19dbc378fef524581fe5ca86edecbe99fc6e0f369a83e7f6acf538",
+      "commandId": "11607e11-d6d6-4faf-9735-5005025bbcdb"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/post-model-outcome-result.json",
+      "sha256": "967bd32f19902307ca4c920a5cb4ce4a7da448f769290ba36891b093624a5379",
+      "commandId": "af8877ee-bab9-4163-9413-0443845464b8"
+    }
+  ],
+  "files": [
+    {
+      "path": "normal-post.mjs",
+      "bytes": 12401,
+      "sha256": "d9ffd08a672ce8b353a1fbb0bb18f524fc46b5cf82eb1c6ca96ba1cfa5923456"
+    },
+    {
+      "path": "normal-post-supervise.mjs",
+      "bytes": 1362,
+      "sha256": "f94febe1ea08c239022ee800c011c90ac51a06f18d15ebac361e08a3395419b6"
+    },
+    {
+      "path": "normal-post-supervisor.json",
+      "bytes": 16312,
+      "sha256": "8f5c9fa79e039e4367ee45f437ec76f51cd07fddc550f0b2780c19f0e7267bfb"
+    },
+    {
+      "path": "normal-post.log",
+      "bytes": 4511,
+      "sha256": "85362e13cf6a02f7668b76cc5cff727394ccd620a0805b7773340fe6c6a00a20"
+    },
+    {
+      "path": "normal-post-forwarding-failure-supervisor.json",
+      "bytes": 396,
+      "sha256": "04601e2d0fe34b6568d9719d4bb08aac966c6745aefa8529f8b08c602e4812b2"
+    },
+    {
+      "path": "normal-post-forwarding-failure.log",
+      "bytes": 40,
+      "sha256": "225293eb3363941e437ddda90dbafefbc1161d0ec6983e0ac2c00dce2da12549"
+    },
+    {
+      "path": "attempt3/normal-post-forwarding-failure.json",
+      "bytes": 358,
+      "sha256": "dd0c7f9bc20ee68713f998b0e7bcb957750dd4663c69160ee28137dad608a906"
+    },
+    {
+      "path": "attempt3/normal-post-result.json",
+      "bytes": 5079,
+      "sha256": "7486bbf27a08d9e60d710617e5c833e72d88e9af70960854ead2a25f5c096930"
+    },
+    {
+      "path": "attempt3/normal-post-prepared.json",
+      "bytes": 902,
+      "sha256": "b9edd6619cb7ee34eb1c4489c9ca7d232f3570cebaab57a26a34129607dab76e"
+    },
+    {
+      "path": "attempt3/normal-post-dispatch-entered.json",
+      "bytes": 303,
+      "sha256": "b80c98bd7f96fc7f81faf6c5a85cb7066adbfae117f15a319e4df3b0a6acac51"
+    },
+    {
+      "path": "attempt3/normal-post-wire-request.json",
+      "bytes": 166186,
+      "sha256": "e71297b17ebfca0cdaf63fb60ce843dba65ae9296a18a62719da419851b565c1"
+    },
+    {
+      "path": "attempt3/normal-post-public-observation.json",
+      "bytes": 5116,
+      "sha256": "efd71db573cb12eed2d54a4183de205cd9c4661f120a9d226e0da0d551bf0387"
+    },
+    {
+      "path": "attempt3/fresh507-readonly-packet.json",
+      "bytes": 1577,
+      "sha256": "14b80c1a23028f0473c17b53f26414770c822a9921356889262a5d40bb2684b8"
+    }
+  ]
+}

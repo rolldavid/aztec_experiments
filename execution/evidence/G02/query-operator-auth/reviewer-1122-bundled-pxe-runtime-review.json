@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "PASS_SCOPED_RUNTIME",
+  "source": "58c215350a003ae680007b5df7f2e1575f69746c",
+  "sessionId": 1122,
+  "actualPacketSha256": "bd851b18eb0242fc63855726e8ed1ed60b40caf1e0eaf51a7df9f2250ceeb23f",
+  "verified": [
+    "All referenced packet files and5385 protected bindings independently rehashed.",
+    "Exact one selected TAP label,1pass/no fail/cancel/skip/todo;2580ms1134272KiB.",
+    "Owned tree/TMP/launcher absence and source closure positive.",
+    "Actual normal CLI/bundle readOnly PXE/store/cache path uses native proverEnabled:false; authenticated local query service and exact embedded-WASM fence, native read-only prove refusal and no send/simulation/validation calls retained."
+  ],
+  "scope": "Controlled local read-only integration only, not transaction main, external provider, deployment or proof acceptance.",
+  "nextGate": "Drain and whole31 remain separate preparations/grants; no automatic execution. Historical28950 remains failed."
+}

@@ -1,0 +1,15 @@
+{
+  "revision": "479de808a277fcaff4e4279d5b51e35af083b3f5",
+  "base": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+  "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='bounded predecessor|queued predecessor|closing predecessor|service shutdown drains|actual SDK board projection|terminal node pins' plugins/test/hosted-private-bok.test.mjs",
+  "result": {
+    "passed": 7,
+    "failed": 0,
+    "durationMs": 3314.782459
+  },
+  "files": {
+    "plugins/aztec.mjs": "7de30e600af57d5c1d00b74339e949a26167069deec0cc9b715c2ab126b244f4",
+    "plugins/test/hosted-private-bok.test.mjs": "0ed5b940f1fa6812c4dfc5bc65ab51b2f8bd5ae1eceac82edd117d3d6f6891ac"
+  },
+  "scope": "Deferred canonical read ownership, bounded pages/revision checks, closure/drain, native SDK public board/finality guards. No chain/proof/model/service operation."
+}

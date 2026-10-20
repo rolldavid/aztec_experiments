@@ -1,0 +1,28 @@
+{
+  "passed": false,
+  "stages": [
+    "node-resume",
+    "canonical-fee-receipt",
+    "fee-publication",
+    "fresh-embedded-wallet",
+    "before-sync-header"
+  ],
+  "financialOperations": 0,
+  "feeReceipt": {
+    "status": "finalized",
+    "executionResult": "success",
+    "blockNumber": 6,
+    "canonical": true
+  },
+  "failedStage": "before-sync-header",
+  "failure": {
+    "errorClass": "Error",
+    "code": null,
+    "frames": [
+      "anchor_block_store.js:24:19",
+      "serial_queue.js:58:33",
+      "base_memory_queue.js:113:17"
+    ]
+  },
+  "cleanStopped": false
+}

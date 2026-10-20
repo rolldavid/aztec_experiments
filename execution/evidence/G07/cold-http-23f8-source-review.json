@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+  "base": "74f5ca21217162bd8951d413a8184133f4956fb7",
+  "disposition": "Source eligible for ONE isolated finite-chain HTTP/ACIR diagnostic after parent grant, <=60s/2GiB; no execution by reviewer",
+  "packetSha256": "18a952234d92ce115199ebc795bc6f3edd044baf42ebe08f91636d0bd79f5c75",
+  "sourceBindings": {
+    "scripts/test-pxe-preference-page.mjs": "ce8a398da02a59f73a468a2001275a7c82130e5ec1a8f2ee9876adeeb54d25c0",
+    "scripts/patch-pxe-preference-page.mjs": "18318b26c720285bbe3c2b502307a97c62673c54a1ac9fbb5dc066ea77922380",
+    "shared/rolling/cold-preference-reader.mjs": "d81afcb9517b07ba00bffc639dbdff5b8836b3706122d117add6ae88012777dc",
+    "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "shared/rolling/compact-client.mjs": "081d0bcf919ff6b93886debdc6f9ff70f4fff7cfd793bdbf11ea251b52ca20b9",
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "prover/private-query.mjs": "e279a8718dade472ea617710c562906199554c9afb60fac7fd5ec7273a899ed8",
+    "prover/server.mjs": "e6876f78cbdc31fc3abe7c64e62a70a47be95e4eec67366d3b528835baabb3c4",
+    "prover/compact-block-native.mjs": "5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07"
+  },
+  "changedPaths": [
+    "scripts/test-pxe-preference-page.mjs"
+  ],
+  "assessment": [
+    "Uses unchanged baseline reader/generated cursor and original NoteService/EventService/ACIR/coordinator; no speculative monotonic fix or bypassed validator.",
+    "Actual official JSON-RPC schema transport, trusted-node factory, private query gateway and native compact route are connected through two owned loopback listeners. Readiness checks remain intact to measure their amplification.",
+    "Finite four-block canonical source, proof policy false, extracted generated-method receiver identity predicate, initial-sync check and Node fake IndexedDB are explicit labelled seams. This is not full createPXE or real chain/browser qualification.",
+    "Progress persists numeric sequence/nextBlock/nextLog/complete, SDK status/advance/error/pending and native/gateway counters in per-step finally and cleanup. LastMailbox represents last successful SDK response if a later call failed; it is not proof of the failing operation location.",
+    "Complete result is checked against bookmark77/revision1/all other sets/default notifications; digest independently recomputed from original authenticated stored event and matched to stored note digest. Both tag methods must remain zero and exactly four native responses succeed.",
+    "Failure retains fixed stage, observations and original test failure; pass set only in final cleanup hook after original database deletion hooks. Gateway drains before upstream closes; pending handlers are retained through settlement.",
+    "Existing test bodies/default mode remain unchanged. Explicit diagnostic mode excludes unrelated cases and must not be reported as full81-case acceptance."
+  ],
+  "requiredActualReview": [
+    "At least the diagnostic test and enclosing suite actually execute rather than all skipped; disclose excluded original cases.",
+    "Validate complete event/head digest, expected native4, tag0/errors0/pending0 and real numeric per-step observations.",
+    "Bind normal processed20c artifact, baseline installer/helper/reader and installed rc3 dependency ownership before/after.",
+    "Verify listener/process/database/temp cleanup independently in result and final observation.",
+    "On failure retain actual snapshot and diagnose exact stage; no repeat or increased budget automatically authorized."
+  ],
+  "limits": [
+    "Four-block finite fixture may identify amplification/progress but does not establish 17-block genuine throughput or remaining24s sufficiency.",
+    "Extracted receiver and initial-sync stub do not reproduce full constructor/BlockSynchronizer/caching behavior; preserve this boundary in conclusions.",
+    "No source implementation repair, SDK installation, full genuine retry, performance SLO or compiler260 clearance implied."
+  ],
+  "relatedFailureReviewSha256": "b7db061170a389f823798a76d14b2427a5687811ec177ceb8a5cf24f8f531e6f"
+}

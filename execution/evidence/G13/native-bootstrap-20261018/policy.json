@@ -1,0 +1,31 @@
+{
+  "base": "c750c8d0e5d6ad97b7ec25f54b2b36d8651a18be",
+  "candidate": "c8a287c4311a8fd66d4ace122fca4e7b4b09520f",
+  "task_id": "G13-native-bootstrap",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs"
+  ],
+  "required_checks": [
+    "native-boundaries"
+  ],
+  "requirements": [
+    "RC01-native-class-publication",
+    "RC01-state-driven-finality"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G13-native-bootstrap",
+      "paths": [
+        "plugins/devnet/bootstrap.mjs",
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs"
+      ]
+    }
+  ]
+}

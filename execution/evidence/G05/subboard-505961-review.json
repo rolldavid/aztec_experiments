@@ -1,0 +1,79 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "505961f2d84a4934dc0bffc214b10c7a3a363e6b",
+  "base": "72eed3d80f80d7f00f1f92787880f05ab6c6830b",
+  "verdict": "approved bounded combined source; rebuild affected wallet assets before actual campaigns",
+  "blocking_findings": [],
+  "source_sha256": {
+    "apps/rolling/reader-client.mjs": "a4b65f45da86f1ec7204a7d432a00783607b1625814fa7710d49c295b286123e",
+    "apps/rolling/reader-client.test.mjs": "07854f12b892a193a0a4ce1c033f5942dde8d2e23662e09df8284f8731b4b613",
+    "apps/rolling/reader.browser.test.mjs": "887276f49989dc7b4359a9db3fa6368bb41439516d342f61cfaf151b0b8e7d4b",
+    "apps/rolling/reader.mjs": "294569933f0d703edfda104b40a1a8816138de83e300db2c42de8b8728054f10",
+    "scripts/rolling-public-server.mjs": "a3bea8c2770ea128cbbc9d11cc0a09b31ac58d6d03c987edfc56bae22bc100d2",
+    "scripts/rolling-public-server.test.mjs": "09fe85dfbba811dc3076ba0e32dc90db4c2cf83fe77e387e50eb606b37e9983a",
+    "scripts/testing/rolling-application-fixture.mjs": "6ebcaa1d13d7e82be113b1ffbacba26f1005523b05f6b1c52cfb5dd38f340f8f",
+    "scripts/testing/rolling-public-acceptance.mjs": "2aab1c65a929cb9d4f506241aee75e4575857372faa6e0d27a33c888188ae041",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "af7cccb635106cbb3a05658994ba6b2824582671d786dc2bb352a445c424d7d1",
+    "scripts/testing/rolling-rejected-withdrawal.mjs": "beea8b8ea81ad9f433370a5bf17b0bcf53fd312ad98a9f69bdfebffcdf269967",
+    "scripts/testing/rolling-rejected-withdrawal.test.mjs": "c3c1a20306b6e0905c8deefa393a9852bea2a9bd04e7b9e27f58e1f90f8e0329",
+    "scripts/testing/rolling-subboard-acceptance.mjs": "81a95fdb369c9eff41d59575ec7c0b8ab28ac4d284bf7e337cdb113e9038786b",
+    "scripts/testing/rolling-subboard-acceptance.test.mjs": "2c707f7e429f67ebdb16a596a9291592a1f969780a3fba96576472b9ae9dda72",
+    "scripts/testing/rolling-wire-campaign.mjs": "cef2170597a43fb4ba0c1606d4ab4101be5dcd44d8b0c60d3a8f895b39f7167d",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "ee1cc0e39e5f268360f38c3fb72e0dec5336aa927eca15518822daaf3f6d534e",
+    "scripts/testing/rolling-wire-trace.mjs": "6a03736379d8c0beb8d46ab107e505f8df1eaefb0727c59f00d127e9e53fc287",
+    "scripts/testing/rolling-wire-trace.test.mjs": "14ed4a0f68b27cedd545c76d2915edb7afff64ad6ead5bf416d3c4e9acb78826",
+    "scripts/testing/scenario-flows.mjs": "790c50a83847d836fdaf269d15e78fe4097a059d2c5e054bc0328e314639d101",
+    "scripts/testing/scenarios.mjs": "1dbb8d253e47f7881667fa618e525772e590f9d356e7fb42010fa6f003e2df70",
+    "shared/rolling/application.mjs": "d4d42b2ff4e8808640b7e924bedf5c6d98dcab126d553830151d052c9718931f",
+    "shared/rolling/application.test.mjs": "d8fd572e94ccd03fc7d3db7bcfbbfcb78e51604be31bbce3052249aa2ebd2c8a",
+    "shared/rolling/public-index.mjs": "097363cf3e0fd84d7315e2e34dea77107b0f1014aab8c36dfa3a64280ba8c1e4",
+    "shared/rolling/public-index.test.mjs": "b2f551fd8487f793bcd8cf16d92ecb6beacd1542070c5e5e202fb56bcda3d467",
+    "shared/rolling/public-projection.mjs": "4392abad3c0e8c433370c8cca8d862a064b2eb956e38d52dd749a274867beec1",
+    "shared/rolling/public-projection.test.mjs": "114949fa7012200761a06779e7e0044bfbd8832d30539a94bde3341d588b5bb6"
+  },
+  "exact_file_equivalence": {
+    "apps/rolling/reader-client.mjs": "c9d42d0",
+    "apps/rolling/reader-client.test.mjs": "c9d42d0",
+    "apps/rolling/reader.browser.test.mjs": "c9d42d0",
+    "apps/rolling/reader.mjs": "c9d42d0",
+    "scripts/rolling-public-server.mjs": "c9d42d0",
+    "scripts/rolling-public-server.test.mjs": "c9d42d0",
+    "scripts/testing/rolling-rejected-withdrawal.mjs": "c9d42d0",
+    "scripts/testing/rolling-rejected-withdrawal.test.mjs": "c9d42d0",
+    "scripts/testing/rolling-subboard-acceptance.mjs": "c9d42d0",
+    "scripts/testing/rolling-subboard-acceptance.test.mjs": "c9d42d0",
+    "scripts/testing/rolling-wire-campaign.mjs": "858e12c",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "858e12c",
+    "shared/rolling/application.mjs": "c9d42d0",
+    "shared/rolling/application.test.mjs": "c9d42d0",
+    "shared/rolling/public-index.mjs": "c9d42d0",
+    "shared/rolling/public-projection.mjs": "c9d42d0",
+    "shared/rolling/public-projection.test.mjs": "c9d42d0"
+  },
+  "combined_review": [
+    "Withdrawal and subboard branch bodies are byte-identical approved c9; race body and full trusted-recovery completion body are byte-identical72eed. Recovery batch semantic denial/one-shot fault and fixed phase retained.",
+    "Flags remain exclusive named variants. Source inventory is union. Existing social/composer/race/recovery private proof counts retained; subboard2 HTTPjobs plus2 separately proved moderator actions; withdrawal4 HTTPjobs plus1 moderator.",
+    "Public helper composes Home curation with ef533 sequential bounded catchup and5a explicit readerPort reuse, keeping default wire factory pagesPerSync and30s/20s/1.5s gates. Home wire route addition preserves all opaque/unknown/failure counters and personalized-denial phase.",
+    "All canonical transaction collections include main-policy/subboard moderator rows. Home default/curated/rejected fresh/cold paths retain exact metadata and no automatic promotion.",
+    "Withdrawal first completes actualL2 note consumption, canonical reconstruction/journal/fees/proof checks, then closes private actor/funding/query resources inside original real-wall callback. Only after original miner stopped/restored is one-use settlement continuation invoked using native canonical receipts/effects/tree roots; no post-warp private query or extra miner. Original depositor refund/replay and both canonical continuity checks remain.",
+    "No production contract/artifact changes. Shared application adds reviewed explicit rejected-subboard attribution and screen action; wallet assets must be regenerated and validated before execution. Test-only10s/20s timing remains explicit hashed setup, not production latency authority."
+  ],
+  "checks": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processedartifact> <pinnedNode> --test --test-concurrency=1 [11 affected fixture/public/withdrawal/subboard/wire/application/projection/index/server/reader test modules]",
+    "log": "/tmp/reviewer-subboard-505961-tests.log",
+    "passed": 418,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 12875.019875
+  },
+  "nonblocking_documentation": [
+    {
+      "path": "execution/evidence/G05/subboard-505961-composition.json",
+      "finding": "conflict_disposition says withdrawal5jobs; correct description is four HTTP private jobs plus one separately proven moderator transaction. Code and consumer agree on4, not a reason to weaken assertions."
+    }
+  ],
+  "limitations": [
+    "Source approval only; genuine race/subboard/Home/rejected withdrawal and source-bound runtime evidence remain required under540s/4GiB.",
+    "No new Chromium/build/proof/cloud/service operations. Existing release/topology/privacy/model gates remain open."
+  ]
+}

@@ -1,0 +1,18 @@
+✔ accounting requires achieved canonical checkpoint and retains all measurements (6.257666ms)
+✔ failed balance 0 retains every actual value before equality assertions (1.226708ms)
+✔ failed balance 1 retains every actual value before equality assertions (0.393708ms)
+✔ failed balance 2 retains every actual value before equality assertions (0.877916ms)
+✔ swallowed synchronization failure cannot authorize accounting: behind (1.1685ms)
+✔ swallowed synchronization failure cannot authorize accounting: orphan (0.385625ms)
+✔ swallowed synchronization failure cannot authorize accounting: same-height (0.47475ms)
+✔ chain/context changes during private balance read fail closed: anchor (1.631875ms)
+✔ chain/context changes during private balance read fail closed: canonical (2.707791ms)
+✔ read errors retain stage and partial observations, without retry (2.142416ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.770291

@@ -1,0 +1,28 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:51:40.762257+00:00",
+  "source": "4bf7a439d3423dfd13f5f8e9210cc3fc79d86efa",
+  "base": "d941febf73ad1d1074ba66d0e3d61ce8457c9b64",
+  "packetSha256": "954d001baffe3365a8544892a001654e503268832b517c3bb4a12f68273c788e",
+  "verdict": "PASS source for focused13 preparation; no actual node or send runtime authorization",
+  "verified": [
+    "Exact four claimed fixture/scenario paths; original two test cases retained as exact prefix;13 literal labels checked.",
+    "Duplicate Fr import fixed; original2ef remains unrun failed-preflight source.",
+    "Explicit included-board Rolling scenario/native false checks and typed disposable actor projection precede wallet/send. Native options exactly proverEnabled:false.",
+    "Actual-used wallet boundary stops its wallet; preflight cleanup label distinguishes later production operator cleanup.",
+    "Constructor performs one initial production command; retained commands disallow wallet progress and sends, require identical private journal hash and exact canonical constructor-only result. Preparing/unknown outcome cannot trigger another initial command.",
+    "Existing real-wall miner uses original application deadline; finite32 observations and original owner remain.",
+    "Closed public report persists outside temporary cleanup; actor remains memory-only and signed journal is retained0700/0600, with only hashes/finite result public.",
+    "Current lead SDK provenance independently rehashed; patched PXE config precedence remains exact."
+  ],
+  "requiredBeforeRuntime": [
+    "Exact coherent lead composition/current SDK and normal closure.",
+    "Focused13 owner/source/pins/inventory review and actual acceptance.",
+    "Separately reviewed/granted native-disabled wallet no-send stage; only after its actual acceptance separately consider constructor stage."
+  ],
+  "limitations": [
+    "Labelled tests exercise actual-used helper boundaries, not actual RPC/wallet/node lifecycle yet.",
+    "No CLI main, hosted authenticated endpoint, testnet proof, portal/registration/credits/full Bok qualification."
+  ],
+  "noRuntimeByReviewer": true
+}

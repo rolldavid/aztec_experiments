@@ -1,0 +1,109 @@
+{
+  "preparedAt": "2026-10-18T23:18:28.097569+00:00",
+  "scope": "Read-only replacement feasibility; no launch, financial action or ledger mutation",
+  "priorBoundUsdPreserved": 140,
+  "currentCampaignReservationUsdPreserved": 125,
+  "totalReservationUsdPreserved": 265,
+  "ceilingUsd": 300,
+  "proposedEarliestStart": "2026-10-18T23:30:00Z",
+  "proposedIndependentShutdown": "2026-10-19T02:30:00Z",
+  "runtimeHoursMaximum": 3,
+  "cleanupOverrunForecastHours": ".5",
+  "resourceHoursBasis": {
+    "firstTerminatedUpperHours": 1,
+    "secondTerminatedUpperHours": 2,
+    "thirdTerminatedUpperHours": 1.5,
+    "replacementHours": 3,
+    "cleanupHours": ".5",
+    "combinedHours": 8,
+    "oldVolumesAbsent": true,
+    "oldSnapshotsAbsent": true,
+    "oldOrphanHoursReleased": 72,
+    "remainingNewVolumeOrphanHours": 24,
+    "chargedStorageHours": 32,
+    "actualOverlap": 0,
+    "thirdUpperBound": "Launch22:09:48; knownterminatedbefore23:17:44; retain1.5h rounded allowance"
+  },
+  "network": {
+    "observations": [
+      {
+        "instanceId": "i-0fad0c13d8f697e85",
+        "bytes": 2174907.0,
+        "points": 4,
+        "lastPoint": "2026-10-19 00:35:00+05:30"
+      },
+      {
+        "instanceId": "i-042331bb699a44e4c",
+        "bytes": 45833807.0,
+        "points": 21,
+        "lastPoint": "2026-10-19 03:15:00+05:30"
+      },
+      {
+        "instanceId": "i-05f9637af7bb5a5f9",
+        "bytes": 28126890.0,
+        "points": 13,
+        "lastPoint": "2026-10-19 04:40:00+05:30"
+      }
+    ],
+    "observedBytes": 76135604,
+    "lagAllowance20minPerOldHostBytes": 22500000000,
+    "replacement3_5h50MbpsBytes": 78750000000,
+    "failureAllowanceBytes": 200000000000,
+    "upperBytes": 301326135604,
+    "egressRateUsdGB": ".195",
+    "rateScope": "Existing conservative EC2/CloudFront/related transfer bound; no free-tier credit assumed; cross-region inputs separately reserved"
+  },
+  "componentsUsd": {
+    "compute8h": "7.41888",
+    "gp3_1064GiB_32h": "3.783111111111111111111111111",
+    "extra375MiBps_32h": "1.00",
+    "ipv4_8h": "0.040",
+    "crossRegionAndArtifactReads": "5",
+    "backup20GB30days": "1",
+    "requestsMonitoring": "2",
+    "egressIncluding200GBFailureAllowance": "58.758596442780",
+    "caddyRetention": "0.1",
+    "privateManagementEndpoints": "1",
+    "taxUnpriced20percent": "16.02011751077822222222222222",
+    "delayedBillingCleanupBuffer": "20"
+  },
+  "campaignUpperForecastUsd": "116.1207050646693333333333333",
+  "roundedForecastUsd": 117,
+  "recommendedCampaignReservationUsd": 125,
+  "recommendedCumulativeReservationUsd": 265,
+  "headroomInside125Usd": "8.8792949353306666666666667",
+  "headroomTo300AfterReservationUsd": 35,
+  "fitsWithin300": true,
+  "retention": {
+    "allSixPriorEbsVolumesConfirmedAbsent": true,
+    "oldSnapshots": 0,
+    "retainedS3BackupsAllowance": "20GB30days1USD plus prior140 retained archives untouched",
+    "crossRegionArchiveReadsAllowanceUsd": 5,
+    "endpointHoursBasis": "2 one-AZ endpoints; creation18:58:52/55 through02:30 plus24h orphan and rounded partialhours,33h total, .02USD/hour +5GB*.01= .71USD beforetax; retain1USD plus globaltax",
+    "endpointCleanupRequiredBy": "2026-10-19T02:30:00Z",
+    "endpointControlsCurrentlyRecordedDeadline": "2026-10-19T00:51:57Z",
+    "endpointControlExtensionNotPerformed": true
+  },
+  "conditions": [
+    "Lead must remove/reconcile empty active thirdFleet before replacement; worker observed ActiveInstances empty but Fleet active.",
+    "No new launch until mixed-monitor repair independently reviewed and budget ledger updated by lead.",
+    "Set and verify new host absolute shutdown and Fleet terminate-on-expiry to02:30; verify commissioning and50Mbps shaping before workload.",
+    "Extend and verify endpoint cleanup to02:30 before launch; cost alone does not extend its control.",
+    "Startafter23:30 means end remains02:30; no slidingthreehour extension.",
+    "Reuse current approved64GiB m7a.4xlarge/40+1024GiBencryptedgp3 500MiBpsdatadisk; DeleteOnTermination and same nativeprovider configuration.",
+    "Missing financial receipts never release reservations; no financial journal touched."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/current-testnet-bootstrap/replacement-budget-20261019/live-readonly.json",
+      "sha256": "fc0e2e4b671af6757c2d12c9f7e7a27f54b908080446f30f88bcbb71c80d11b4"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/current-testnet-bootstrap/replacement-budget-20261019/retention-readonly.json",
+      "sha256": "6767ccc5393dda69d39858e66c20a71ca59ac844129f5c25041eae0c6b7bd5e4"
+    }
+  ],
+  "paidActionsByWorker": 0,
+  "billingApiCalls": 0,
+  "ledgerEdits": 0
+}

@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "task": "G07-mixed-witnessed-prefix",
+  "base": "57c1582cd76770af0ffb6c11573d6bbc701c7da6",
+  "revision": "19e4490ce7717ab8b8c2151703ac4b25e3db9cfc",
+  "sourceFiles": {
+    "prover/compact-block-native.mjs": "6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888",
+    "prover/compact-block-native.test.mjs": "eae9611e4246a5b925efa4f2abb719f8c2ca5e1af516e61fdf9253cdc520233d",
+    "scripts/patch-pxe-preference-page.mjs": "34c568fe26630e460ce6488d43eeb412517b40e12bdf36bda141fa55c1d8e413",
+    "scripts/test-pxe-preference-page.mjs": "ffe63e8fd050d0384bfcdbfeda223626f529182fb306104dd7ea494cc71bc4f7",
+    "shared/rolling/cold-preference-reader.mjs": "9f25b857a60401c74a89ffc8e7b13d3f89727df052297e88e1c97240b69cbed3",
+    "shared/rolling/cold-preference-reader.test.mjs": "d596dfe4e344c3d5f234a2065710f3d4a95194397dec0d8c310dd60c92958250",
+    "shared/rolling/compact-client.mjs": "3be616f60d7267ccf71f537ddd117ac78ea4e85a29bfd37c487e06b8c257060e",
+    "shared/rolling/compact-client.test.mjs": "61e110f23f36ab5bd6f84c94b0d4fbfaa960b246b04308feee02d285cc6eae1c"
+  },
+  "checks": {
+    "nativeClientReader": {
+      "passed": 206,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2678.539167
+    },
+    "finalActualSDK": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 115540.117416
+    },
+    "focusedMixedSafety": {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "httpMatchedBeforeAfter": {
+      "passedPerInvocation": 2,
+      "skippedPerInvocation": 10,
+      "sameSyntheticChain": 525,
+      "sameGenuineOwnedRevisions": 2,
+      "physicalLogsByOwnedTransaction": [
+        5,
+        2
+      ],
+      "injectedGatewayDelayMs": 130,
+      "beforeDataPageMs": [
+        6480.964042,
+        6277.175375
+      ],
+      "beforeDataHttpRequests": 72,
+      "beforeNextBlock": 6,
+      "afterDataPageMs": 9628.629708,
+      "afterDataHttpRequests": 48,
+      "afterNextBlock": 33,
+      "samePerPageDeadlineMs": 10000
+    },
+    "eightForeignTransactions": {
+      "physicalBlocks": 256,
+      "physicalLogs": 8,
+      "utilityCalls": 8,
+      "localSdkProcessingMs": 807.63375,
+      "fixtureScope": "Genuine foreign encrypted ACIR envelopes with synthetic transaction/chain inclusion; not eight own revisions or WAN qualification"
+    }
+  },
+  "preservedFailures": [
+    "Native before regression returned2 vs expected37.",
+    "Initial expanded candidate and validator-overlap-only candidate exceeded unchanged10s reader deadline; preserved, no success or encryptedCAS inference from SDK success alone.",
+    "First expanded baseline completed both revisions then hit incorrect diagnostic assertion expecting2active heads. Corrected to2events+1live revision2 head.",
+    "Initial held-peer test arrival detector2s was insufficient for real ACIR work. Final separates10s arrival detector from1s peer-start detector; application10s unchanged."
+  ],
+  "limitations": [
+    "Final130ms page margin is only0.371s; not robust remote-topology qualification.",
+    "Original full-history120s acceptance remains open; no browser/livechain/model/financial action occurred.",
+    "Eight foreign transaction local timing does not qualify eight owned transactions or130ms network latency.",
+    "Optional legacy non-phase HTTP diagnostic and its inherited one-block call-count expectations were not run; no acceptance case removed.",
+    "Installed SDK/generated assets intentionally remain unchanged; root owns materialization/build.",
+    "Transport legacy page grammar unchanged; validator scheduling and safe publication overlap apply to recovery while preserving all original guards."
+  ],
+  "safety": [
+    "All physical logs including foreign count toward8;64records,2MiB,256explicitwitnessedblocks,10s unchanged.",
+    "Whole input authenticated before staging; unknown/oversized first goes scalar; later stops before first omitted body; at most1lookahead; failures are not successful prefixes.",
+    "All original validators captured and drained with one outer4way bound; exact staged seal follows all groups; fresh canonical+account guard last at both original commit boundaries.",
+    "PostCASanchor and mailbox both drain; full readiness remains aftermailbox; finalanchor remains last.",
+    "Existing own-revision continuity, receipt/stage mutations, reorg, account and contributor-veto checks pass."
+  ],
+  "smallestPublicBudgetIfRequired": "One private-log-bearing block per page is a conservative public scheduling choice, not ownership-dependent. It cannot universally guarantee10s because one block may itself contain multiple log transactions; do not infer full120s qualification. No such cap was applied in this candidate.",
+  "helper": {
+    "prior": "0e9354f6b97e00bf2668ec874206abccc6a5596d2ad9c57d4f7e8de390b8f2df",
+    "new": "c2c46e0a1153ebd74466eb981f4eeb011d9875a4b348fd38467bb5586b51cc36",
+    "eightTransformedPinsUnchanged": true,
+    "compactHelperUnchanged": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af"
+  },
+  "evidence": {
+    ".build/g07-mixed-witnessed-prefix/native-before.log": {
+      "sha256": "38d0838de4ed69e58f8ec7da5b5205b16a107d420fe1d086ea57b75cf5f82833",
+      "bytes": 1307
+    },
+    ".build/g07-mixed-witnessed-prefix/transport-after.log": {
+      "sha256": "9dde593a56f98f04fb5aa37a1bc8ab14f4935919dbc16829dcc41f5c9d056c57",
+      "bytes": 18507
+    },
+    ".build/g07-mixed-witnessed-prefix/transport-final.log": {
+      "sha256": "3362ca2bee0bd840d3a40dc7565ca68dc934d7815ecaf8fa06f42ef6f010c2a2",
+      "bytes": 18703
+    },
+    ".build/g07-mixed-witnessed-prefix/sdk-after.log": {
+      "sha256": "5dd34f7829849eec782afdac24dc559ec47889e1a7416e0c764e83c1f5699147",
+      "bytes": 8453
+    },
+    ".build/g07-mixed-witnessed-prefix/sdk-focused-final.log": {
+      "sha256": "60a2b2cc78f37474150533da8693afd422e1c6e948e41053a2da22bdc51faa6c",
+      "bytes": 1106
+    },
+    ".build/g07-mixed-witnessed-prefix/sdk-final.log": {
+      "sha256": "5cc5aaf2679073b7d743054e3eb73316c2b0c603902b9a2664bfc912690c2a92",
+      "bytes": 8556
+    },
+    ".build/g07-mixed-witnessed-prefix/http-before.log": {
+      "sha256": "b2057c7316802016f0188eeae8247e135a316aef11887055c8ebe74f56399edd",
+      "bytes": 1807
+    },
+    ".build/g07-mixed-witnessed-prefix/http-two-after.log": {
+      "sha256": "494ff5b63c9c1e7fa971d0db8da2b368086290de3a949f901db71e5146f2e76e",
+      "bytes": 2807
+    },
+    ".build/g07-mixed-witnessed-prefix/http-two-before.log": {
+      "sha256": "f5d4900b0a3558bb791af4793c524e23471c611f25e158c3de4ce70abed38878",
+      "bytes": 2721
+    },
+    ".build/g07-mixed-witnessed-prefix/http-two-after-phases.log": {
+      "sha256": "4a4a6229b14d1dca26a97027c3c487abd74ab6200c4add68123d20532ace31da",
+      "bytes": 2809
+    },
+    ".build/g07-mixed-witnessed-prefix/http-two-overlap.log": {
+      "sha256": "72e36c3c625a7f6d79d2bd2d476b5a74a3fc3591104be0ff941547451d7ac58f",
+      "bytes": 2811
+    },
+    ".build/g07-mixed-witnessed-prefix/http-final-before.log": {
+      "sha256": "57a9747a20a506f3f902a5ae2635b29dfe79fd4fa593cd3d4e8d80339b362498",
+      "bytes": 1806
+    },
+    ".build/g07-mixed-witnessed-prefix/http-final-after.log": {
+      "sha256": "230ae44a542c84b9fe03b5c52e4f9193ae32e314db467aba3253f3ed784ab5b8",
+      "bytes": 1793
+    },
+    ".build/g07-mixed-witnessed-prefix/validator-after.log": {
+      "sha256": "cf7866e2d8e1f8cbabf92bd1c8c869e88002feada63d426f9aba3fce81973c6c",
+      "bytes": 798
+    },
+    ".build/g07-mixed-witnessed-prefix/validator-after-aligned.log": {
+      "sha256": "73c8ad4dea4dd39defc357143e0dc69afe0165e09b3ccd3d2a807a7bb9ea5e10",
+      "bytes": 791
+    },
+    ".build/g07-mixed-witnessed-prefix/validator-after-drain.log": {
+      "sha256": "abb9505f5c5c472b6bc2ccc2cea171c76566eda4f2176aa4a7f8071f7cfcabe4",
+      "bytes": 309
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792059011722.json": {
+      "sha256": "0fec667dd58081ed1f0f31648ee01a6a50c029beadd33117f79582358d68148e",
+      "bytes": 20190
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792059572431.json": {
+      "sha256": "9dbd50a2164e63205caf5e44e8186355d05660ca9e2769454eb9fb20d82c4db2",
+      "bytes": 1608
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792059711162.json": {
+      "sha256": "54c7d33941021c057940bd4397980fc312e52bf0ee332f1b41a522f48b0c79db",
+      "bytes": 2756
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792059823510.json": {
+      "sha256": "bc983bffb076d9401c6ae5acf5abc140181f93c33b766120597875e59b479774",
+      "bytes": 13213
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792060275998.json": {
+      "sha256": "5f239dd9b4654f5bb9e314ff4a281cebb23fe94658fd5919da58e760dd95e5e8",
+      "bytes": 14923
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792060714718.json": {
+      "sha256": "75d1f232ebedff38d99c818c731f6de0d070d6d3740dc3918f4f25fceda2670c",
+      "bytes": 38273
+    },
+    "execution/evidence/G07/cold-http-progress/actual-1792060748404.json": {
+      "sha256": "df51b608e20850d29b290538fc591ebb54c15768f9ae933f793e88871025dceb",
+      "bytes": 27419
+    }
+  },
+  "cleanup": {
+    "nodeModulesWasSymlink": true,
+    "removedLinkTarget": "../rolling-lead-bok/node_modules",
+    "physicalDependencyTreeChanged": false,
+    "ownedTestSessionsExited": true,
+    "httpFinalBeforeAfterCleanup": [
+      {
+        "listenersClosed": true,
+        "pendingSettled": true,
+        "databasesDeleted": true
+      },
+      {
+        "listenersClosed": true,
+        "pendingSettled": true,
+        "databasesDeleted": true
+      }
+    ]
+  },
+  "commands": {
+    "nativeClientReader": {
+      "env": {
+        "NODE_BACKEND": "js",
+        "HARDWARE_CONCURRENCY": "1"
+      },
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "prover/compact-block-native.test.mjs",
+        "shared/rolling/compact-client.test.mjs",
+        "shared/rolling/cold-preference-reader.test.mjs"
+      ]
+    },
+    "actualSDK": {
+      "env": {
+        "NODE_BACKEND": "js",
+        "HARDWARE_CONCURRENCY": "1",
+        "ROLLING_PREFERENCE_PAGE_NATIVE": "1",
+        "ROLLING_PREFERENCE_PAGE_ACIR": "1"
+      },
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-name-pattern=owned isolated SDK and ACIR suite",
+        "scripts/test-pxe-preference-page.mjs"
+      ]
+    },
+    "matchedHttp": {
+      "env": {
+        "NODE_BACKEND": "js",
+        "HARDWARE_CONCURRENCY": "1",
+        "ROLLING_PREFERENCE_PAGE_NATIVE": "1",
+        "ROLLING_PREFERENCE_PAGE_ACIR": "1",
+        "ROLLING_COLD_HTTP_DIAGNOSTIC": "1",
+        "ROLLING_COLD_HTTP_PHASE_DIAGNOSTIC": "1"
+      },
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-name-pattern=owned isolated SDK and ACIR suite|cold HTTP progress",
+        "scripts/test-pxe-preference-page.mjs"
+      ],
+      "beforeUses": "Exact57c versions of nativeadapter/client/reader/SDKpatch with identical final test fixture; candidate bytes restored in finally before after-run."
+    }
+  }
+}

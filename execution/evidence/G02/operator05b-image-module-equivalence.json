@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T01:47:27.248678+00:00",
+  "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "noExecution": true,
+  "noPull": true,
+  "noNetwork": true,
+  "files": {
+    "aztec/package.json": {
+      "sha256": "17c3bba4fa63249c525dc18ceb89e4316dfe9c1e4af93f8eef810359a313b6e3",
+      "installedSha256": "e9faab1c1d6154e6c5731dd3afe4445272a8f402c820824988e078317523443e",
+      "byteEquivalent": false,
+      "imageVersion": "0.1.0",
+      "installedVersion": "6.0.0-rc.1"
+    },
+    "aztec/dest/cli/cmds/start_node.js": {
+      "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+      "installedSha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+      "byteEquivalent": true
+    },
+    "aztec/dest/cli/cmds/standby.js": {
+      "sha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+      "installedSha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+      "byteEquivalent": true
+    },
+    "cli/package.json": {
+      "sha256": "5dc8b20a73a485033f7ac43668e30df0fc41295b96d768621e1ac54e4cbf1b39",
+      "installedSha256": "dca5d76b8422a3748d69f644e3182d00094c42c1ab29b333c1ea6da5a7badeb0",
+      "byteEquivalent": false,
+      "imageVersion": "0.32.0",
+      "installedVersion": "6.0.0-rc.1"
+    },
+    "cli/dest/config/get_l1_config.js": {
+      "sha256": "c2c1ef826e367caf126e4b89f0bdc8644490c302d3d3113e178b70903b42d641",
+      "installedSha256": "c2c1ef826e367caf126e4b89f0bdc8644490c302d3d3113e178b70903b42d641",
+      "byteEquivalent": true
+    },
+    "ethereum/package.json": {
+      "sha256": "c2d7543391aba029d24412efbcad974ab76d3570204c2f1ad3de7600f8c17249",
+      "installedSha256": "716561e520fc5f51388eefe75d13c20be356446868ad10faa5f6ebead1f16009",
+      "byteEquivalent": false,
+      "imageVersion": "0.1.0",
+      "installedVersion": "6.0.0-rc.1"
+    },
+    "ethereum/dest/client.js": {
+      "sha256": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+      "installedSha256": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+      "byteEquivalent": true
+    },
+    "ethereum/dest/contracts/registry.js": {
+      "sha256": "093ad3ca90969b860284375410af6fa90b75452348e6690ced494b57e8d13914",
+      "installedSha256": "093ad3ca90969b860284375410af6fa90b75452348e6690ced494b57e8d13914",
+      "byteEquivalent": true
+    },
+    "ethereum/dest/contracts/rollup.js": {
+      "sha256": "52f1abedbd8220a87eddea5b65e6cefcebcce129409f09294714972df5ac91a2",
+      "installedSha256": "52f1abedbd8220a87eddea5b65e6cefcebcce129409f09294714972df5ac91a2",
+      "byteEquivalent": true
+    },
+    "ethereum/dest/queries.js": {
+      "sha256": "5db2421c32014c551de395d6d98cb26bfaf10afadeb88d9442b476130b6cb050",
+      "installedSha256": "5db2421c32014c551de395d6d98cb26bfaf10afadeb88d9442b476130b6cb050",
+      "byteEquivalent": true
+    }
+  },
+  "cleanupConfirmed": true,
+  "imageId": "sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "allModuleBytesEquivalent": true
+}

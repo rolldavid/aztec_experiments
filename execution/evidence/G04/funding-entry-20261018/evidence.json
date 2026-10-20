@@ -1,0 +1,69 @@
+{
+  "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+  "candidate": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+  "task_id": "G04-current-preview-funding",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+      "candidate": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+      "task_id": "G04-current-preview-funding",
+      "id": "focused-independent",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='initial funding entry|funding completion reports refreshed|aggregate funding UI reviews exact allocations|rejected funding connection retains' apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "Pinned Node24 local focused UI checks",
+      "observed": "6 independent focused checks pass; no whole journey",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/funding-entry-20261018/review.json",
+          "sha256": "19b96eda49ccb43961213312910b19cd4132db63c49576195a730a4edcaa8ce6"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+    "candidate": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+    "task_id": "G04-current-preview-funding",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/funding-entry-20261018/review.json",
+        "sha256": "19b96eda49ccb43961213312910b19cd4132db63c49576195a730a4edcaa8ce6"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+      "candidate": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+      "task_id": "G04-current-preview-funding",
+      "id": "RC18-funding-entry",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/funding-entry-20261018/review.json",
+          "sha256": "19b96eda49ccb43961213312910b19cd4132db63c49576195a730a4edcaa8ce6"
+        }
+      ]
+    },
+    {
+      "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+      "candidate": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+      "task_id": "G04-current-preview-funding",
+      "id": "RC19-observed-funding-status",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/funding-entry-20261018/review.json",
+          "sha256": "19b96eda49ccb43961213312910b19cd4132db63c49576195a730a4edcaa8ce6"
+        }
+      ]
+    }
+  ]
+}

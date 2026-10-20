@@ -1,0 +1,66 @@
+{
+  "revision": "c750c8d0e5d6ad97b7ec25f54b2b36d8651a18be",
+  "baseRevision": "bc833ec5ae83019e29d4a841fde2863a6ef96938",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "scope": "G05/RC14 correctable name input, G07/RC27 same-step public block reuse, W03 SDK receipt fixture compatibility. Coherent development delta only.",
+  "checks": {
+    "independentFocused": {
+      "passed": 16,
+      "failed": 0,
+      "durationMs": 7883.401208,
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js <pinned Node24> --test --test-concurrency=1 --test-name-pattern='invalid name drafts|name availability|persistent ingestion owns|persistent original decoder|actual wallet preserves|actual wallet passes attributed|accepted (claim|dummy) survives|plugin metadata persists|password recovery file transfers' shared/rolling/application.test.mjs shared/rolling/public-index.test.mjs scripts/test-engine-private-fee.mjs scripts/test-w03-journal-backup.mjs"
+    },
+    "independentBrowser": {
+      "passed": 4,
+      "failed": 0,
+      "durationMs": 3326.462083,
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js <pinned Node24> --test --test-concurrency=1 --test-name-pattern='name availability' apps/rolling/wallet-panel.browser.test.mjs"
+    },
+    "exactW02Callback": "Executed exact changed recovery callback extracted from final source with actual SDK mined/dropped wire decoding and encrypted L2 journal. Asserted blocked:true, submissions:1, sameHash:true. Synthetic window and Map storage; not full browser E2E.",
+    "walletClosure": {
+      "revision": "c750c8d0e5d6ad97b7ec25f54b2b36d8651a18be",
+      "walletManifestSha256": "d4d7caf89cef3f77f3b16c8f4e622ee7cd04ea79f8d4787f4eaf7be37d812bcd",
+      "inputsVerified": 97,
+      "outputsVerified": 25
+    },
+    "sourceBinding": "All source/tests exercised at 91965208 compared byte-for-byte equal to final candidate, except W02 callback independently exercised at final revision. Clean checkout and git diff --check."
+  },
+  "review": [
+    "Name input errors are narrowly classified TypeError/RangeError from local nameRegistration, after existing recovery/journal fencing and before availability, fee estimate or new intent. UI recognizes only the explicit safe failure code; unknown failures remain blocked.",
+    "Public ingestion passes its existing full block directly, avoiding a second body read without a node proxy or cross-step cache. Receipt, effect byte identity, transaction uniqueness/ordinal, current/original class, canonical block and Bok attestation rechecks remain. Existing fixture verifies six full-block reads across seven steps and unchanged projection.",
+    "Old wrong-ordinal test manufactured inconsistent bodies on the second read now eliminated. Replacement receipt-block-mismatch and reorg-during-decode cases fail with zero committed segments; duplicate transaction and bad log digest cases remain. The ordinal consistency assertion remains in production.",
+    "Receipt repairs use installed SDK receipt classes and wire decoding; fee budget, journal-before-send, saved hash, one-submission and recovery-block assertions remain intact. No suppression, retries, assertion weakening or full-suite requirement added."
+  ],
+  "limitations": [
+    "Development integration approval only; no full application, live network, privacy, wallet or testnet acceptance claimed.",
+    "Lead reports separate native startup DA configuration mismatch before class submission. That unresolved runnable-environment blocker is outside this source delta.",
+    "Real-proof testnet acceptance, specialist review, qualification soak and network release gates remain open."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/application-continuation/focused.log",
+      "sha256": "29351c1e006f1913b5848ada8237c45266def0fa2bf5e15b6ed935ef36c0110c",
+      "bytes": 1743
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/application-continuation/browser-focused.log",
+      "sha256": "e2b8df7c995423d59503f26c2bb3025e21fce15b06e52dc62dabbde59daf32f1",
+      "bytes": 603
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/application-continuation/w02-callback.log",
+      "sha256": "6feb71f9e94a061fdf882ff3c898925ee7bda6a2ed7ffde01d06be01ffe62c37",
+      "bytes": 136
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/application-continuation/closure.json",
+      "sha256": "f857983fb1711fc708bc59f4a4dee7444498175cc025d247eabdb6709e140a33",
+      "bytes": 204
+    }
+  ]
+}

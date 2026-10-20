@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:36:28.212618+00:00",
+  "source": "da7bd5aea1498d389d70af4430d7b197e78edfd8",
+  "actualPacketSha256": "2ed7b084d45697689c010a20f7f78166ac4063c8514fd17811d40d870ae8340f",
+  "verdict": "PASS ordinary49 runtime; previously reviewed browser32 preparation eligible for separate parent grant",
+  "verified": [
+    "Exact49 TAP labels and footer49pass/zero fail, skip, cancel, todo; child exit0.",
+    "All actual artifact hashes and557source+2402dependency pins independently matched.",
+    "6147ms and534288KiB sampled aggregate peak within original60s/2GiB.",
+    "Owned tree absence reported by unchanged supervisor, TMP independently absent, original dependency link restored, clean source."
+  ],
+  "browserPreparationSha256": "261c8d1090cdf9f8ab211893492c94e6a77d7719e2732abaea02ff3782bc73e3",
+  "scope": "Finite-chain realSQLite/decoder/HTTP and lifecycle components only; no browser result, realwalletPXE, densewire, fullcanonicalarchive or deployment qualification.",
+  "noRuntimeByReviewer": true
+}

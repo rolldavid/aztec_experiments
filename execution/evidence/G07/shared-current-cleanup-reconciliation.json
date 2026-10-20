@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-15T08:57:37.773978+00:00",
+  "instance": "i-0ce75825f0222ddab",
+  "state": "terminated",
+  "volumesAbsent": [
+    "vol-0dfd3e2212c8aa986",
+    "vol-07d26abe5ef0e09e5"
+  ],
+  "networkOutObservedBytes": 2387824156.0,
+  "networkMetricPoints": 23,
+  "networkUpperBoundBytes": 10000000000,
+  "networkBoundReason": "Observed2.388GB + up to10min lag at50Mbps3.75GB + exact1.986GBS3Macrestore <8.2GB; round10GB; cross-regioninputs separately reserved.",
+  "objectVersions": 120,
+  "retainedBytes": 5299660337,
+  "multipart": 0,
+  "deleteBy": "2026-11-14",
+  "costUpperBoundUsd": {
+    "compute2_5h": 2.3184,
+    "encryptedGp3_1064GiB2_5h": 0.2915068493150685,
+    "extra375MiBps2_5h": 0.05136986301369863,
+    "publicIPv4_2_5h": 0.0125,
+    "networkBound10GB": 1.95,
+    "crossRegion": 1,
+    "retained20GB30days": 1,
+    "requestsMonitoring": 0.5,
+    "taxUnpriced20Percent": 1.4247553424657535,
+    "delayedBillingBuffer": 10
+  },
+  "calculatedBoundUsd": 18.54853205479452,
+  "roundedCampaignBoundUsd": 20,
+  "priorCampaignBoundUsd": 259.29,
+  "cumulativeBoundUsd": 279.29,
+  "remainingUsd": 20.71,
+  "notActualInvoice": true,
+  "originalReservationUsd": 35,
+  "freshFinancialStateBackupVerified": true,
+  "original1572BackupPreserved": true,
+  "readOnlyAdvancedStateDiagnosticOnly": true
+}

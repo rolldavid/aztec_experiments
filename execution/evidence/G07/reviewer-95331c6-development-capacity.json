@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T23:36:41.267555+00:00",
+  "sourceRevision": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "baseRevision": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+  "verdict": "approve",
+  "scope": "Local retained development snapshot capacity for bounded next100-block campaign; no product acceptance threshold changed.",
+  "requirements": [
+    "RC26",
+    "RC39"
+  ],
+  "findings": [],
+  "resolvedDocumentationFinding": "Final docs correct both stale6GiB/8GiB values to7GiB/9GiB; source/test blobs unchanged from independently checkedc5d13f6.",
+  "changedFiles": [
+    {
+      "path": "docs/rolling-deployment.md",
+      "sha256": "e8f5dd7530b8c95996be9d8af51b665a29b79b94dd279f9715ebd0b80a1120e3"
+    },
+    {
+      "path": "plugins/devnet/network.mjs",
+      "sha256": "603c677d4af627fdb1d24f432858ce6ca8a6ac323d549840accfc61d9b7a8c62"
+    },
+    {
+      "path": "plugins/devnet/operator-test.mjs",
+      "sha256": "1d431c22d276bf332c8505e5f653676baf7431f747ead29c3f592fae12c913b3"
+    }
+  ],
+  "checks": [
+    "Inspected exact diff and enclosing admission/checkpoint lifecycle. Only native file ceiling increases6\u21927GiB and admission8\u21929GiB, keeping2GiB candidate margin; legacy128MiB RPC cap and all streaming64KiB/hash/fsync/inode/mode/owner/no-follow guards unchanged.",
+    "Capacity admission still occurs before starting-state mutation, while predecessor pruning remains after actual canonical matching normal load. Shutdown failure preserves prior/candidate/cache and never automatically rolls back.",
+    "Sparse oversize boundary now tests7GiB+1, and minimum free space tests9GiB\u22121 rejection/9GiB admission. Independently ran those existing tests plus qualified-load retention:3PASS0FAIL0SKIP3434.264ms. No native service or snapshot launched/loaded.",
+    "Cleanup ledger arithmetic independently verified:87,556,743,168\u221244,437,377,024=43,119,366,144bytes,40.158GiB reduction. Protected current snapshots/cache retained according to ledger; no cleanup performed in this review.",
+    "Reported current6.340GB plus measured0.509GB next100-block forecast fits7GiB ceiling with approximately0.667GB headroom. This is a bounded operational forecast, not indefinite capacity.",
+    "Changed paths absent from current SDK and wallet input closures; no SDK/asset rebuild required. Documentation-only successor does not invalidate source test evidence."
+  ],
+  "diskEvidence": {
+    "path": "aztec_experiments/execution/evidence/G02/disk-total-20261015.json",
+    "sha256": "f9b6febf0b45dcfb6b5e85e88caf8b3acb3b7876e233ce13beb2745bacc37451"
+  },
+  "limits": [
+    "9GiB free-space admission is not a reservation against unrelated disk consumers, future Anvil cache growth or arbitrary run duration. Observe current campaign100-block bound and reconcile disk before extension.",
+    "Full historical data retained; no pruning, proof bypass, timeout relaxation or wallet/data reset.",
+    "No new fresh120s recovery, testnet real-proof or production qualification inferred."
+  ]
+}

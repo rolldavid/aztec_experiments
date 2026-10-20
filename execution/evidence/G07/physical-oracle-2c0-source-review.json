@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T07:30:42.925345+00:00",
+  "verdict": "SOURCE_ELIGIBLE_FOR_BOUNDED_184_FIXTURE_CASES",
+  "candidate": "2c0f143513894b549d546ee31c262a4df8360063",
+  "packetSha256": "85fda7f21fd96b195e540b6872cde61656b3e2425a6a25951cd4aa3d0f8b6812",
+  "sources": {
+    "scripts/testing/rolling-application-fixture.mjs": "9820f2a4326e88de95c28b2236ed001f5824c73318b036d635753727919a7ff5",
+    "scripts/testing/rolling-application-fixture.test.mjs": "0cb0537f0cf3c7c41552774ae276a6f2d6202a17f02b0e4337d08eea2e4f55ea"
+  },
+  "checks": [
+    "Exactly two claimed paths; actual callback extracted and wired with same actual node and context receiver. Only intended read semantic change is includeTransactions:true.",
+    "Preserves canonical before/after block hash, header number, per-body deadline, context guards, existing6143 effects/64 logs bounds and8-log-per-transaction counting. No partial result on rejection.",
+    "Pinned installed NodeBlockProvider/projection/block-parameter module hashes independently matched current lead rc3 files. Package export resolves dest/index.js and relative module imports are correct.",
+    "Fourteen new tests use actual installed provider/projection with a labelled finite holdOff chain; default metadata failure is reproduced, explicit full-body identity/options/order are checked, actual-used helper tested on missing/wrong/oversized body/header/anchor, deadline, falsy context and original node failure.",
+    "Existing170 cases retained; only source-dispatch expectations update to helper call. Recovery169 unchanged carry; no SDK/normal artifact implementation changes."
+  ],
+  "runtimePlan": {
+    "fixtureCases": 184,
+    "deadlineSeconds": 60,
+    "memoryMiB": 2048,
+    "requiresExactCompositionRunnerAndParentGrant": true
+  },
+  "limitations": [
+    "No tests or native/chain runtime performed by reviewer.",
+    "Actual body reads add the originally intended workload to oracle; existing45/15/150 and540/525 budgets remain unqualified for full reorg completion.",
+    "Does not retroactively pass94022 or establish complete cold/fork/marker acceptance."
+  ]
+}

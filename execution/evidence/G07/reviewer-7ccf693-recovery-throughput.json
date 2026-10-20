@@ -1,0 +1,55 @@
+{
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "requirements": [
+    "RC26",
+    "RC40"
+  ],
+  "status": "bounded source/evidence diagnosis, not performance acceptance",
+  "evidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/keys-only-current/actual-result-nonempty-7cc-recovery.json",
+    "sha256": "cf440e6cbc67cb8e731372686aba2aa0b3bee95a30431795177f20fe1fcc9a3f"
+  },
+  "actual": {
+    "retainedStart": 728,
+    "retainedEnd": 878,
+    "anchor": 1520,
+    "elapsedMs": 112038,
+    "pages": 44,
+    "pageTotalMs": 103805,
+    "classification": {
+      "no-tx-receipt-observed": {
+        "pages": 33,
+        "pageMs": 76052,
+        "advancedBlocks": 139,
+        "compact": 150
+      },
+      "tx-receipt-observed": {
+        "pages": 11,
+        "pageMs": 27753,
+        "advancedBlocks": 11,
+        "compact": 11
+      }
+    },
+    "responseInspectionFailures": 19,
+    "tagDiscovery": 0,
+    "sends": 0
+  },
+  "finding": {
+    "source": "scripts/patch-pxe-preference-page.mjs array recovery branch; cold-preference-reader prefix selection",
+    "mechanism": "Only completely zero-transaction blocks may share existing32block atomic cursor commit. Scalar branch nevertheless advances any fully authenticated block whose ciphertext list is empty without ingest. Thus blocks containing public transactions but zero private ciphertexts pay whole page/frame/CAS/readiness overhead individually.",
+    "evidenceStrength": "Actual many no-receipt/effect pages advance1block in~1.85\u20132.1seconds with68RPCs; one32emptyblock batch takes3.257seconds. This supports significant fixed per-page overhead. Actual body fields were not retained, so exact classification of every slow block is an inference from source and request shape, not a complete block-content measurement."
+  },
+  "smallestCandidate": [
+    "Extend existing batched cursor path to fully authenticated zero-ciphertext blocks, including nonzero public transaction counts. Scalar semantics already skip these safely.",
+    "Reuse existing compact parsing for bounded selection only. A wire/header hint cannot establish emptiness: installed SDK must authenticate full transaction/body roots, archive membership and actual ciphertext absence for every block.",
+    "Keep original log-bearing transaction ingestion unchanged,32block count and aggregate field/byte cap, current account/old/newanchor guards, all commit checks and atomic no-progress on malformed middle or fork.",
+    "Existing SDK and reader tests should cover nonzero-tx/no-private-log batches plus mixed real-private-log refusal/no skip, malformedmiddle, aggregatecapacity,reorg and loss/replay; no separate test framework."
+  ],
+  "notRecommended": [
+    "Do not suppress five readiness sweeps or three SDK-frame authority checks simply because they recur; preserve CAS/mailbox and both commit boundaries.",
+    "Do not call19response inspection failures zero or assume HTTP200 means parsedRPCsuccess.",
+    "Do not infer whole1520block/120s completion from short retainedprefix timings or increase acceptance deadlines."
+  ],
+  "remainingDiagnosis": "Potential costly repeated artifact hashing and nested gateway/readiness metadata checks are visible source work, but per-stage time was not measured here. Do not attribute precise wall-time fractions or promise120s from this evidence.",
+  "operations": "Read-only source and existing JSON analysis; no browser/native/model/proof/service actions."
+}

@@ -1,0 +1,29 @@
+{
+  "createdAt": "2026-10-11T18:23:52.695705+00:00",
+  "campaign": "distinct-provider-diagnostic-20261011-1824",
+  "source": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+  "purpose": "Classify previously unclassified provider failure using reviewed safe HTTP/billing diagnostics; new distinct request on fresh disposable chain and journal",
+  "original_uncertain_campaign": "e8143457-e709-4217-ac10-dbb730759f1e",
+  "original_replay": false,
+  "maximum_model_calls": 1,
+  "maximum_micro_usdc": 143584,
+  "max_tokens": 64,
+  "model": "kimi-k2-5",
+  "top_up": false,
+  "hypothesis": "Currentcatalog/OpenAPI show request supported; one newlyfenced call exposes actual error category or receipts. Do not speculate cap/tool rejection.",
+  "attempts": 1,
+  "max_attempts": 1,
+  "qualification": "realprovider/accounting; applicationproofdisabled diagnostic; not fullG14",
+  "status": "failed; fenced",
+  "evidence": "application-7369ba90-c227-4e3d-8c9b-3b606966622e.json",
+  "journal_directory": "execution/evidence/G14/provider-832131a7-bf50-4019-88f0-4f252acd9109",
+  "observation": {
+    "category": "http-rejection",
+    "http_status": 400,
+    "attempted_model_calls": 1,
+    "phase": "fenced",
+    "replay": false,
+    "elapsed_ms": 174181,
+    "cleanup": true
+  }
+}

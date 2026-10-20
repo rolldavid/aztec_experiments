@@ -1,0 +1,21 @@
+{
+  "command": [
+    "python3",
+    "execution/integration_gate.py",
+    "integrate",
+    "--repo",
+    ".",
+    "--policy",
+    "execution/evidence/G12/989-integration/policy.json",
+    "--policy-sha256",
+    "a47e2ef52f8c00eefe6e6e53b0ddc58dce407d34daeb6b59ddb0717655a86482",
+    "--evidence",
+    "execution/evidence/G12/989-integration/evidence.json",
+    "--evidence-root",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"status\": \"pass\", \"mode\": \"integrate\", \"candidate\": \"989d53ff8c5ccf1c83584be206c91583b0fbb83e\", \"base\": \"5734ac0513959c150be80d70c3578cfcbd2cb642\", \"ref\": \"refs/heads/codex/rolling-chat-draft3\"}\n",
+  "stderr": "",
+  "negativeSelfTestsRepeated": false
+}

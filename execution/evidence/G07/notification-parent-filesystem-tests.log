@@ -1,0 +1,16 @@
+✔ browser campaign retains 540s/4GiB parent and reserves 30s beyond 150s browser (3.969291ms)
+✔ only exact private subscription phase file is accepted; absent file waits (4.422209ms)
+✔ rejects command signal (2.37525ms)
+✔ rejects wrong phase signal (1.255667ms)
+✔ rejects large signal (1.319875ms)
+✔ rejects empty signal (1.037458ms)
+✔ rejects malformed signal (1.035208ms)
+✔ rejects symlink phase and nonprivate file/directory (1.674208ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.145708

@@ -1,0 +1,13 @@
+✔ thread pool exhaustion before running permits replenishment and the same original request once (5.513083ms)
+✔ existing entered agent intent stays fenced without re-admission even if pool capacity returns (0.234083ms)
+✔ thread admission rejects changed canonical initial-history before durable run or paid work (0.177625ms)
+✔ thread admission rejects changed canonical after-allocation before durable run or paid work (0.138292ms)
+✔ thread admission rejects changed canonical request before durable run or paid work (0.388375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1603.746125

@@ -1,0 +1,28 @@
+{
+  "task_id": "W03-public-refund-native-address",
+  "implementer": "controls_resume2",
+  "candidate": "a63b024ad31d6c7775ae7facba43995a2f011788",
+  "base": "ffa68cd615b98899cc172f0266e4df95bd932dfb",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "required_checks": [
+    "native-address"
+  ],
+  "requirements": [
+    "RC26-confirmed-exit-recovery-native-account"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "W03-public-refund-native-address",
+      "paths": [
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs"
+      ]
+    }
+  ]
+}

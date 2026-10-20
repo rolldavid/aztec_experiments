@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T12:09:21.398921+00:00",
+  "predecessorPlanSha256": "9d14c23c632f89d6adab6ceab7183de92a130ce5a8031f3f4d915dc59d7015d6",
+  "scope": "Append-only evidence comparison; no source, routing, auth, IAM, payload or paid changes. Supersedes any implied preference for SSM.",
+  "leadReadOnlySourceBindings": {
+    "prover/server.mjs": "e6876f78cbdc31fc3abe7c64e62a70a47be95e4eec67366d3b528835baabb3c4",
+    "prover/private-query.mjs": "e279a8718dade472ea617710c562906199554c9afb60fac7fd5ec7273a899ed8",
+    "prover/service.mjs": "47665e1ed180881c1b88679651b3cbc2d4650207059bbced43377d51b44a93d6",
+    "deploy/prover/Caddyfile": "a0168a60bad7b114c49e9e98b395ccdde931c8b9f64533d89eeba4fe0e49b6c1",
+    "deploy/prover/cloudfront.mjs": "1cbd402cfe68913b30e684005eb4bf0a7467dba2d87735811dbaeb0db62b89ae",
+    "deploy/prover/board-prover-proxy.service": "4f3c7ff79a720f9ec0fc4ef77da3d72eee7ae3fa8ef7e4231bb9845b01affd5a"
+  },
+  "recommendation": "Prefer existing query-only HTTP composition for deployment data-plane traffic and an explicitly bounded S3 publication capability for later activation authority, subject to source review. This avoids host developer credentials, IAM and SSH. Current code does not yet implement operator authentication or remote activation delivery.",
+  "gatewayFacts": {
+    "route": "POST /prover/v1/node through CloudFront VPC origin/Caddy to loopback query-only service",
+    "present": [
+      "Actual SDK AztecNodeApiSchema validation before dispatch, fixed loopback upstream and version response handler",
+      "Fresh current-network inspector before forwarding; 10s upstream attempt, no redirect/retry or caller credential forwarding",
+      "Batch8/concurrent8/request8MiB/response32MiB bounds",
+      "Query-only creates no proof queue/worker and rejects all job paths before body decode",
+      "Local signing can remain entirely on Mac; sendTx submits already formed transaction"
+    ],
+    "notPresent": [
+      "Operator authentication: Origin/CORS policy does not authenticate CLI requests, and missing Origin is admitted",
+      "Deployment-only minimal method list: current adapter permits the whole pinned node schema, not an independently enumerated deployment subset",
+      "Existing Caddy/CloudFront scope is /prover/*, not a dedicated operator-only data-plane restriction",
+      "Persistent query-only commissioning listener and public routing are not activated by the current bootstrap qualification probe"
+    ],
+    "proposedMinimum": [
+      "Reuse existing query-only service/server and proxy rather than raw node8082/admin8882 exposure",
+      "Explicitly review a dedicated operator route/auth gate and actual deployment-required methods, reject proof/admin/control routes before body decoding",
+      "Keep operator credential local or provider-side; server holds only a narrowly scoped verification capability, never AWS/developer-wallet privileges",
+      "Bind TLS/private origin, current network/freshness, no caching, one transport attempt and existing request/response/concurrency limits; verify absent/wrong auth and direct-origin bypass rejection",
+      "Verify actual CLI SDK deployment through authenticated path in bounded local test before cloud use; keep local keys, funding and transaction journals separate"
+    ]
+  },
+  "s3ActivationOption": {
+    "existingMechanisms": [
+      {
+        "path": ".build/rolling-node-09-operator-upload.py",
+        "sha256": "525b39f4ed6146a9a38ef34fdaedbbae431a119b77c01ba5324e11efb12bf406",
+        "purpose": "Owned immutable upload intent, checksum/version HEAD verification and preservation on uncertainty"
+      },
+      {
+        "path": ".build/rolling-node-09-operator-capabilities.mjs",
+        "sha256": "6dafc3a824406aeb468a9849fcc9b7ef569d4b0932146eea56d2485a884a6d5a",
+        "purpose": "Existing scoped expiring request capabilities; raw URLs stay private"
+      },
+      {
+        "path": "deploy/prover/bootstrap.py",
+        "sha256": "7103b37d9f7ef0875cbccfa197a5083fc60d594da428e0b54677e688dcf302d9",
+        "purpose": "Root-private capabilities, bounded receipt/download primitives, existing attestor lifecycle and once-only activation scope/receipt/live checks"
+      }
+    ],
+    "prelaunchDelegation": "Pin unique campaign, exact source/manifest/network/artifact identities, fixed bucket/key and narrow root-only expiring GET capability before launch. This authorizes only a fixed public deployment-evidence envelope for that campaign, never arbitrary commands, URLs, paths, environment, code or new resource requests. No host AWS credential or write capability.",
+    "unknownFutureBinding": "Actual deployment addresses, object bytes/hash and VersionId do not exist at launch. An unversioned scoped GET cannot honestly be described as prebound to a future exact version/hash. The trust boundary is the existing authorized object writer and TLS-authenticated S3 response, limited by precommitted campaign/network/artifact schema. If independent cryptographic signer authorization beyond that account is required, a small fixed signed commitment must be separately reviewed; do not silently assume one exists.",
+    "operatorPublication": [
+      "After actual deployment/Ready/canonical verification, write an exclusive fsynced local intent for one unique activation key with full expected bytes/checksum; upload once using If-None-Match:* and expected owner",
+      "Reconcile uncertain write by exact key/version/checksum, never retry the financial or transaction action",
+      "HEAD/GET exact returned VersionId and checksum, record public envelope SHA and object VersionId; keep capability URLs out of the public envelope/evidence",
+      "Envelope contains only captured closed public deployment/scope/evidence fields. No private keys, RPC credentials, executable command or generic configuration loader"
+    ],
+    "hostConsumptionProposal": [
+      "Reuse existing root attestor timer ownership; no separate polling daemon or generic job runner. Explicitly opt into one finite activation window/counter under the original absolute shutdown deadline",
+      "Proposed bound for review: at most60 fixed-key reads, spaced at least30s, a maximum30-minute window, and no read/start when less than15minutes remains. Exact scheduling must bind the final campaign budget and node-ready/deployment timeline before implementation",
+      "Bound each response/time/bytes, no redirects/fallback; validate fixed host/key/S3 version metadata and strict envelope.404 means not yet published within the finite window, other failures remain explicit",
+      "On first valid object, exclusively persist observed VersionId plus full SHA/bytes before writing separate root-only scope/evidence files; any subsequent difference or existing activation intent is reconcile-only",
+      "Run existing activation validation unchanged against current manifest/artifacts, canonical FPC, class/address/deployer/constructor/config/Ready, fresh L1/L2 anchors and controls; hash-match scope file to consumed envelope",
+      "Preserve existing durable intent before unmask/start and terminal shutdown on failure. Never change deadlines, account scope or current proof assertions from envelope content"
+    ],
+    "gates": [
+      "Source claim needed for narrow authenticated commitment/consumption integration; not present in1797",
+      "Schema/host/path/type/oversize/version/hash/staleness/reorg/wrong-campaign/replay tests and filesystem ownership/failure cleanup",
+      "Unknown publication outcome and existing intent never produce duplicate activation",
+      "No private authority copied into prover-readable config; strict root/prover traversal and egress separation",
+      "Exact projected activated receipt must distinguish delivery accepted from actual full prover readiness/proof pass"
+    ]
+  },
+  "comparison": [
+    {
+      "option": "Existing query gateway + bounded S3 activation",
+      "hostIamOrSsh": "Not required",
+      "advantages": "Reuses present data plane and scoped capability primitives; local signing stays Mac; no developer-account privilege enters host",
+      "remaining": "Operator auth/method scope and fixed remote activation delivery are explicit source changes requiring review; not currently implemented"
+    },
+    {
+      "option": "Verified public current L2 endpoint + bounded S3 activation",
+      "hostIamOrSsh": "Not required",
+      "advantages": "Could avoid routing operated node for initial deployment",
+      "remaining": "No presently verified compatible endpoint; historical public route failed SDK methods, docs stale; external provider trust/capacity and own-node freshness still must qualify"
+    },
+    {
+      "option": "SSM management + loopback port forwarding",
+      "hostIamOrSsh": "Managed-agent IAM required even without attached instance profile; SSH unnecessary",
+      "advantages": "Existing repository administration pattern, established delivery/command interface",
+      "remaining": "Adds management role/agent/plugin and credential isolation requirements; current default-setting read not enabled/readiness evidence; avoid developer-account credentials or broad moderator role"
+    }
+  ],
+  "sourceFreeze": "1797 unchanged; reviewer has found valid package internal-symlink activation failure. Any delivery proposal must wait for that repair/review, not work around it.",
+  "executionAuthorized": false
+}

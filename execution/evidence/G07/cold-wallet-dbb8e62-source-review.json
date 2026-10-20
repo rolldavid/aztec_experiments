@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "dbb8e62a1635220c776f9198d7878e56a226d458",
+  "base": "b5eb2a1301987bbd9ab646a16f73087756f9805c",
+  "disposition": "source-eligible-for-bounded-two-file-component-tests-with-distribution-and-genuine-gates-open",
+  "changedPaths": [
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "bf0f37bfbc3d7ddb2078e2f4ced4a0d04a76d70bb4391ec8020ca949e8380451"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "sha256": "60c587f8ac103008f1f40976d829cfcb7e19d138a163dee79aa86540b6db5168"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "da02925b7bb03558f2c4ddfabb1dffbe089d7fe0eb4cca146327f75062564f9b"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "38615eb6a8acedbf1f4011d3615861fda7ea53c50b2e82c04cb7d324ee3d61c0"
+    }
+  ],
+  "blockingFindings": [],
+  "controlsComposition": {
+    "eightExactBlobs": [
+      {
+        "path": "prover/private-query.integration.test.mjs",
+        "sha256": "c94e9f5398957a7bee88359689e9bccb1abe145c016811a9d42ebe6e954f27db",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "prover/qualify-runtime.mjs",
+        "sha256": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "prover/qualify-runtime.test.mjs",
+        "sha256": "6173ab5050247bf6eb739ccc3324dab45400528ca12df1c90b7fa8503c93e50e",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "prover/server.mjs",
+        "sha256": "e6876f78cbdc31fc3abe7c64e62a70a47be95e4eec67366d3b528835baabb3c4",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "prover/service.mjs",
+        "sha256": "92e55530ac4362a5b546c9458d44532011874b087057e8fbad1c46c98f1aa742",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "prover/start.mjs",
+        "sha256": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "scripts/test-prover-service.mjs",
+        "sha256": "210e1515885b6b88949169a8f7cd33c80cafdc10b19490c203375a3904cd3308",
+        "exactControls8fBlob": true
+      },
+      {
+        "path": "scripts/test-remote-prover.mjs",
+        "sha256": "57f78fc421238cd682cfbd59ab8ccbe5511c523a34272ee74816f62a2ac0d193",
+        "exactControls8fBlob": true
+      }
+    ],
+    "bothStablePatchTransfersMatch": true,
+    "runtimeReviewSha256": "13768b1a5ee444ce803402438fa6d9d9a377c44f14dc6c8a477c686f9c996350",
+    "carry": "Unchanged Controls8f component source/runtime evidence carries; no new deployment or actual Linux claim."
+  },
+  "sourceAssessment": [
+    "Existing account lease encloses session initialization, cold read, lazy ordinary initialization, and close. busy remains true until original pending call settles; abort does not use Promise.race or release lease early.",
+    "Original account identity snapshot and guarded trusted-node/PXE/wallet identity checks remain. Cold artifact hash is recomputed from verified detached local deployment artifact, not UI or node-supplied metadata.",
+    "Compact client is constructed from captured trusted query URL origin, fixed checkpointed tier, optional already-captured local-dev flag; no independent endpoint input or fallback to ordinary readPreferences.",
+    "Cold read requires installed processRollingPreferenceRecovery; missing extension rejects. The ordinary preference API remains available for historically qualified ordinary consumers.",
+    "Signing-capsule simulation is lazy once-successful, guarded before/after and invoked only by ordinary synchronization/read path. Official AccountManager.create has no private discovery; initial PXE.sync calls official tipsOnly BlockSynchronizer, not ContractSyncService.",
+    "Panel preferences-first connect skips readAccountStatus and ownedIdentities and begins blocked. Selecting a preference only stages a form; an explicit financial recovery check is required before action review can render.",
+    "Underlying application.prepare still reads durable workflow, reconciles terminal outcome and journal.assertCanStart before action construction/payment estimate. Therefore a journal changed since UI status cannot be authorized by cached blocked=false alone.",
+    "Existing account invalidation/late result/clear preferences and busy close behavior remains; partial cold results never publish preference arrays."
+  ],
+  "testsInspected": [
+    "Actual session lock/AEAD/local artifact computation with explicitly synthetic first mailbox: no capsule/ordinary event/head call and exactly one lease.",
+    "Missing extension rejects without fallback; held mailbox cancellation/account mutation retains lock and rejects concurrent ordinary operation/close until settle.",
+    "Signing-key account mutation assertion moved to first ordinary operation, preserving zero subsequent simulation and teardown checks.",
+    "Real DOM tests use labelled custody/RPC application doubles; new counter assertions demand zero status/names on cold entry and financial check before prepare. Existing complete/recovery/cancel/failure checks remain."
+  ],
+  "testEligibility": {
+    "files": [
+      "apps/rolling/wallet-session.test.mjs",
+      "apps/rolling/wallet-panel.browser.test.mjs"
+    ],
+    "limits": {
+      "deadlineMs": 60000,
+      "rssLimitKiB": 2097152
+    },
+    "status": "eligible pending serialized parent-owned slot and correct existing artifacts/dependency closure",
+    "executedByReviewer": false
+  },
+  "requiredAcceptance": [
+    "Test exact two-file component candidate; preserve failures without weakening assertions.",
+    "Before enabled application use, separately review and apply exact production SDK distribution, computeArtifactHash export, complete pinned PXE extension and stopped-owner installation. Current source approval does not establish those installed capabilities.",
+    "Normal SDK/wallet builds and source/input inventories must bind this new UI/session consumer and installed dependency bytes.",
+    "Exercise actual cold continuation beyond first mailbox through compact HTTP and terminal authenticated head, keys-only restore and actual financial retained-intent/account invalidation boundaries in fresh native browser.",
+    "Retain no-send/no-extra-proof, deadline/RSS, reorg/atomicity, and large-history capacity requirements. Initial block synchronization/prover initialization and whole-block authentication costs remain unqualified by synthetic mailbox tests."
+  ],
+  "usefulAdditionalNegatives": [
+    "Retained prepared/unknown journal discovered after cold recovery must render recovery intent rather than the new-action fee button; repeat with a failed readAccountStatus. Existing underlying durable checks are source-backed, but the new DOM happy-path check alone does not execute this branch.",
+    "Actual configured gateway origin and artifact hash should be observed in an enabled second-step compact request, since current synthetic test stops at initial mailbox."
+  ],
+  "limits": [
+    "No source edits, dependency mutations or tests executed by reviewer.",
+    "No overall integration or new genuine cold/browser acceptance; prior d7f journey did not call readColdPreferences.",
+    "Compiler260, Linux/fullnode and deployment holds remain."
+  ],
+  "workingTreeStatus": ""
+}

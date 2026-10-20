@@ -1,0 +1,32 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "bdefec48802532717cc68f498276628de346a74d",
+  "base": "9b607acfbceeab62c5b547bc136f7d26f4496bb6",
+  "verdict": "approved-source-only",
+  "scope": "Exact removed-like rejection classifier, actual runtime pending",
+  "fileHashes": {
+    "scripts/testing/rolling-removed-like.mjs": "d379d8b1e67d11e17adebbe029718cf72fd4487e0b242ea9fd84749ef68e0ee8",
+    "scripts/testing/rolling-removed-like.test.mjs": "7fcc7f655dde186e7c7e0b15d77082db754c79699c4c5bdc1da267c00968a1b3"
+  },
+  "findingDisposition": "P2 closed: unique static Post removed error selector captured from detached processed artifact, exact typed field equality before Noir decoder. Unknown selector never reaches decoder; exact known selector still ABI decoded.",
+  "tests": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=../aztec_experiments/billboard/target/rolling_contract-RollingBoard.json ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-removed-like.test.mjs",
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 688.521959,
+    "childBoundary": "Real SDK decoder child verifies false unknown/true known guard and exactly empty stdout+stderr; bounded10s/64KiB and BB cleanup"
+  },
+  "retainedChecks": [
+    "Actual SimulationError/schema reconstruction",
+    "Deepest exact board address and only_self _set_like selector",
+    "One typed static revert field, bounded stack and accessor-free primitive reconstruction",
+    "No error-owned methods, message-only, nested cause, wrong callee or outage acceptance",
+    "Authenticated artifact remains parent responsibility"
+  ],
+  "limits": [
+    "Synthetic SimulationError tests are not real AVM/chain acceptance",
+    "Combined parent source/funding/counter/recovery review and actual runtime still required",
+    "Prior noisy9b evidence preserved"
+  ]
+}

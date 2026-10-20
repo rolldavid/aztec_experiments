@@ -1,0 +1,25 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T18:33:35.289091+00:00",
+  "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+  "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+  "verdict": "approve_scoped_source",
+  "findings": [],
+  "sourceHashes": {
+    "plugins/operations.mjs": "ac51da7a3d1c3eb7f603f23a0edad8e841964014d39b01d8709b9add00f5455f",
+    "plugins/operator.mjs": "1b6d7c4d27c098d663e7e0c022e754a3579988a6d30a1c0bd92846735b60220b",
+    "plugins/test/operations.test.mjs": "36a236546b710746dd5b9816dc0037fd0b28993f71f179888566c4cc84dfd36b"
+  },
+  "carriedReview": "review-5fad773c.json",
+  "checks": [
+    {
+      "procedure": "Compare all three source/base blobs:35ce657c/279f56d1 against5fad773c/9a186d1c; compare prior independent SHA256; git diff --check.",
+      "result": "All byte comparisons and hashes identical. Exactly the three reviewed paths changed; diff check passed. Prior nine focused tests carry without repetition."
+    }
+  ],
+  "limits": [
+    "No real journal, private key, provider, transaction or service accessed by reviewer. Actual HTTP429 record, current dual-provider absence, source digests and receipt/finality must be established by trusted lead.",
+    "HTTP429 plus current absence is a narrowly authorized transport-rejection recovery, not generic permission to replay an uncertain financial action. This path cannot recover unknown/returned attempts or automatically retry its own admission.",
+    "Source approval only; exact integration transfer binding and normal gate remain. No deadline waiver or claim remaining funding will fit its window."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "candidate": "a9ea6c1d738d3bfd944eadbc006443d998201b25",
+  "prior_contract_test_revision": "49adfe3bc4b9d1fc7ffd1332d656570133d2c260",
+  "checked_paths": [
+    "experiments/private-bok/build.mjs",
+    "experiments/private-bok/test.mjs",
+    "experiments/private-bok/Nargo.toml",
+    "experiments/private-bok/escrow",
+    "experiments/private-bok/probe-board",
+    "experiments/private-bok/tests",
+    "noir-dependencies.json",
+    "package-lock.json",
+    "toolchain.json",
+    "scripts/build-contracts.mjs",
+    "scripts/check-noir-dependencies.mjs",
+    "scripts/normalize-noir.mjs"
+  ],
+  "git_diff_empty": true,
+  "rationale": "Only unchanged contract/build/test inputs reuse56TXE and normalbuild results. Changed driver/harness/prover checked separately; full chain run required.",
+  "build_manifest_sha256": "525d5471c417884ec03d6b6de210e4e511367b9c2dc343063e770ae4e74cc162",
+  "not_acceptance": [
+    "realproof",
+    "privatefees",
+    "actualproductcallback",
+    "modelbilling",
+    "independentprivacy"
+  ]
+}

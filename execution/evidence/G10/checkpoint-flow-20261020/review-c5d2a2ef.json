@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "candidate": "c5d2a2ef51d5292f45d86c5c7fb7272054268b50",
+  "base": "84a5c525077de41fba86376f48e6a0d3bc60f9a4",
+  "verdict": "approved",
+  "findings": [],
+  "changedBlobs": {
+    "apps/rolling/wallet-session.mjs": "1020d162f1985be68871d4f7066f34394bf69a89",
+    "apps/rolling/wallet-session.test.mjs": "48124e6eb11ba2efcb2f5fc0ba6122b4612d2a2f",
+    "shared/rolling/aggregate-recovery.mjs": "04319710d2203ef2ef470528d97740e2a11915cd",
+    "shared/rolling/aggregate-wallet.mjs": "5eac15121da38a891bad6a74e125cfa88998fb15",
+    "shared/rolling/aggregate-wallet.test.mjs": "b452e098b7cb7138f53a9ea3a8c0ed1d6c43a8da",
+    "shared/rolling/funding-receipts.mjs": "bfd5cea8168e5941764ec326f31ee9887b5c7b11",
+    "shared/rolling/funding-receipts.test.mjs": "25ad00903ccf1cbdb02908f198cdad2a8eaef1e5"
+  },
+  "assessment": [
+    "Canonical mined Ethereum funding/refund replaces extra finalized-head/subscription policy. Returned evidence no longer manufactures finalizedL1 metadata.",
+    "Funding preserves original transaction/receipt/log identity, custody and portal/code bindings, exact native message commitment/Merkle witness, fresh pre/post L1 and L2 canonical checks. Native checkpointed message readiness remains.",
+    "Refund preserves exact original encrypted Ethereum request/nonce, L2 exit effect and Outbox witness, actual portal call before explicit send, original receipt/event and final canonical block check. Unknown outcomes retain existing recovery/no-replay fences.",
+    "Reverted payment permits only fresh explicit reviewed intent after canonical original observation and archival; transaction mutation, reorg and archive failure remain rejected.",
+    "Removed subscription helper has no remaining production callers. Account reads no longer block on finality; context guards and ownership/draining of provider reads remain."
+  ],
+  "independentChecks": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-c5d2-funding.log",
+      "sha256": "2916eff6c38c91bd34c3df52dadc03ef6540cc1627c7968ccde10b92a2673707",
+      "passed": 154,
+      "failed": 0,
+      "durationMs": 4213.72375
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-c5d2-session.log",
+      "sha256": "b259faef24f1d7a2250859c8c4e85b9e45d23f2eba4886f29c45384e119dc412",
+      "passed": 49,
+      "failed": 0,
+      "durationMs": 6229.265292
+    }
+  ],
+  "totalPassed": 203,
+  "limitations": [
+    "Canonical mined/checkpointed completion is not irreversible finality; later reorg observations must still fail canonical checks.",
+    "No network, proof, model, service, financial or cloud action performed; no live acceptance claim."
+  ]
+}

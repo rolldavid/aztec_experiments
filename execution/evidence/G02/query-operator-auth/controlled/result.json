@@ -1,0 +1,145 @@
+{
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "startedAt": "2026-10-13T13:25:44.169Z",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/test-prover-service.mjs",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/test-remote-prover.mjs",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/prover/private-query.test.mjs"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/query-operator-auth/controlled/home",
+    "TMPDIR": "/private/tmp/qoa-eztu05jg",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/query-operator-auth/controlled/build.log",
+  "diagnosticHold": "Controlled actual local HTTP/SDK schema tests only; no public provider, wallet, native proof, cloud or dependency writes.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 667424,
+  "rssSamples": [
+    {
+      "elapsedMs": 1000,
+      "rssKiB": 360672
+    },
+    {
+      "elapsedMs": 2029,
+      "rssKiB": 667424
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 2029,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 52836,
+        "ppid": 59636,
+        "rssKiB": 135776
+      },
+      {
+        "role": "cold-journey-components",
+        "pid": 52873,
+        "ppid": 52836,
+        "rssKiB": 12576
+      },
+      {
+        "role": "cold-journey-components",
+        "pid": 52874,
+        "ppid": 52873,
+        "rssKiB": 50448
+      },
+      {
+        "role": "cold-journey-components",
+        "pid": 52882,
+        "ppid": 52874,
+        "rssKiB": 468624
+      }
+    ]
+  },
+  "builder": {
+    "code": 0,
+    "elapsedMs": 2214
+  },
+  "elapsedMs": 2281,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T13:25:46.450Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "testCount": 50,
+  "passCount": 50,
+  "failCount": 0,
+  "noSkipped": true,
+  "actualLabels": [
+    "query disabled by default; fixed loopback configuration only",
+    "official SDK schema forwarding, fixed upstream, exact inspector scope and no client credentials",
+    "origin, admin, malformed params/body, batch and body bounds reject before personalized upstream",
+    "proof health remains separate, gate closes on stale/identity/unavailable states without raw errors",
+    "upstream error is sanitized and sent once, never represented as absence",
+    "redirect is rejected without contacting target or retrying",
+    "schema-invalid upstream result is an error, not a fabricated successful value",
+    "concurrency includes inspector and health; excess calls never enter upstream",
+    "required result null is rejected while optional genuine absence survives",
+    "changed network response headers fail without leaking mismatch details",
+    "compact disabled by default, exact explicit tier/origin configuration only",
+    "compact checks readiness before/after and forwards exact selector, no caller headers",
+    "compact origin/selector/request bounds reject before readiness or upstream",
+    "compact stale post-forward state withholds result and sanitizes failure",
+    "compact decoded oversize or schema-invalid upstream is rejected",
+    "compact never follows redirect or retries",
+    "compact single flight owns pending readiness even after client abort",
+    "compact origin configuration rejects object before any coercion",
+    "compact oversized unfinished chunked upload closes socket before releasing ownership",
+    "compact chunked rejection retains actual handler slot until socket closes",
+    "compact declared rejection retains actual handler slot until socket closes",
+    "compact chunked unfinished rejection uses existing deadline and cleanup",
+    "compact declared unfinished rejection uses existing deadline and cleanup",
+    "compact deadline closes a consumed IncomingMessage socket while retaining readiness ownership",
+    "operator authenticates real HTTP before inspector and strips capability from actual upstream",
+    "operator complete batch authorization precedes inspector and every upstream effect",
+    "operator method policy is fixed, schema backed, and excludes discovery or administrative additions",
+    "service health and failed bind use production lifecycle without leaking queue directories",
+    "rolling configuration rejects missing fee/Bok, aliases and unknown profiles before listening",
+    "query configuration rejects nonlocal upstream before creating service resources",
+    "query-only: explicit mode rejects all proof settings and malformed identity before allocation",
+    "query-only: actual service starts without importing or allocating any proof lifecycle",
+    "query-only: bind failure and repeated close preserve caller directory and release listener",
+    "query-only identity rejects object coercion before any service allocation",
+    "explicit Bok-disabled configuration rejects contradictory scopes and accessors without coercion",
+    "labelled lifecycle doubles: service freezes disabled and full scopes before the first async boundary",
+    "actual harmless child: production worker environment omits absent Bok despite hostile parent value",
+    "operator authentication is a closed captured query-only digest, before proof allocation",
+    "authenticated query-only service has zero proof resources and denies unauthenticated SDK-shaped HTTP",
+    "wire rejects truncation, trailing bytes and mismatched witness lengths",
+    "disk FIFO executes serially, enforces per-client and byte limits and cleans payloads",
+    "HTTP board/mode/origin checks and rate limits run before queue admission",
+    "query-only HTTP has no proof routes, dummy queue or positive proof readiness",
+    "query-only rejects a held-open proof body without waiting for its remaining bytes",
+    "HTTP closure waits for admitted upstream work even after downstream disconnect",
+    "operator raw duplicate, malformed, absent and wrong keys reject held-open bodies before handler",
+    "authenticated operator exposes only exact POST node path, with origin policy intact",
+    "operator server rejects malformed digest and ordinary-mode auth without coercion",
+    "authenticated operator closure still waits for admitted upstream handler",
+    "actual CLI auth helper with real HTTP still denies its credential-free bypass"
+  ],
+  "exactLabels": true,
+  "passed": true,
+  "logSha256": "7070f88dd380c2e57e8c34fbaaffd77625432924b3da89f9bee52eed6b0a08c4"
+}

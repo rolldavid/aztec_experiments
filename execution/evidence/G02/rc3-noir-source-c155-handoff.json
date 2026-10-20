@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "source": "c1550212458320e1675d11331933cff5184d0432",
+  "base": "b3f5f6b8d979cb983118d574ba91a186a424019e",
+  "branch": "codex/rolling-v6-noir-dependencies",
+  "changedPaths": [
+    "billboard/billboard_contract/Nargo.toml",
+    "billboard/billboard_test/Nargo.toml",
+    "billboard/plugin_adapter/Nargo.toml",
+    "billboard/private_fee_contract/Nargo.toml",
+    "billboard/private_fee_test/Nargo.toml",
+    "billboard/rolling_contract/Nargo.toml",
+    "experiments/avatar/Nargo.toml",
+    "experiments/private-bok/escrow/Nargo.toml",
+    "experiments/private-bok/probe-board/Nargo.toml",
+    "experiments/private-bok/tests/Nargo.toml",
+    "scripts/prepare-noir-lock.py",
+    "scripts/test-prepare-noir-lock.py"
+  ],
+  "tests": {
+    "command": [
+      "python3",
+      "scripts/test-prepare-noir-lock.py"
+    ],
+    "passed": 18,
+    "failed": 0,
+    "scope": "labelled synthetic file trees/artifacts only; no compiler or source fetching",
+    "logSha256": "533d60fd8023e3a6bb096eb2cb86114b461843588f0d72b87f01b0a1e7b529bb"
+  },
+  "activeLockUnchanged": true,
+  "activeLockSha256": "6465dfa29036186ec7c032a112a24318d408f8fef14eb31384e7384bbdcb6043",
+  "compiled": false,
+  "newLockGenerated": false,
+  "nativeExecuted": false,
+  "dependencyCacheChanged": false,
+  "freshCompilePlan": {
+    "requiresLeadSerializedGrant": true,
+    "limits": "Existing540s/4GiB perstage/campaign; no assertion or provingflag weakening",
+    "preflight": [
+      "Inventory/fingerprint existing owned target directories and move them to unique ignored backups before fresh compilation; preserve root artifacts and all historical caches.",
+      "Confirm actualsource c155 plus reviewed6851/b3f5 bindings, exactpinnedcompiler, ownedreal node_modules and no othercompiler/cachewriter.",
+      "Nargo usesfixedhome/nargo; nounsupported NARGO_HOME or HOME repurposing. Newv6rc3 aztec-nr andv6rc6 foundationtag paths have exclusive resolution ownership; existingutility/rc1trees immutable and fingerprinted."
+    ],
+    "rawCommands": [
+      {
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      {
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      {
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      }
+    ],
+    "candidateCommand": [
+      "python3",
+      "scripts/prepare-noir-lock.py",
+      "--output",
+      "execution/evidence/G02/rc3-noir-dependencies.candidate.json",
+      "--artifact",
+      "billboard/target/billboard_contract-Billboard.json",
+      "--artifact",
+      "billboard/target/private_fee_contract-PrivateFPC.json",
+      "--artifact",
+      "billboard/target/plugin_adapter-PluginAdapter.json",
+      "--artifact",
+      "billboard/target/rolling_contract-RollingBoard.json",
+      "--artifact",
+      "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+      "--artifact",
+      "experiments/private-bok/target/private_bok-PrivateBok.json",
+      "--artifact",
+      "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json"
+    ],
+    "originVerificationCommand": [
+      "python3",
+      "scripts/verify-noir-origins.py",
+      "--lock",
+      "execution/evidence/G02/rc3-noir-dependencies.candidate.json",
+      "--output",
+      "execution/evidence/G02/rc3-noir-origin-verification.json",
+      "--download-dir",
+      ".build/rc3-noir-origin-archives"
+    ],
+    "promotionGate": "Every official resolved archive comparison passes and exact candidate receives independent review; only then replace active noir-dependencies.json. Expected officialaztec-nr694af4de and foundation0df91ba commits independentlybound in provenance. No manuallyrelabelled rc1hashes.",
+    "postPromotion": "Run existingcheckNoirDependencyTrees+checkNoirEmbeddedSources forALL7 freshlycompiledcontracts, then normalaztec_process/VKs inownedtargets underseparateheavygrant. Currentbuild remainsfailclosed againstoldlock untilpromotion."
+  },
+  "generatorSemantics": [
+    "DefaultCLI manifests include billboard, avatar andprivate-Bok; --manifest onlyextends. Sevenexistingcontractnamesrequired; additionalcontracts onlyextend.",
+    "Schema2 includescomplete resolvedexternalmanifest/sourcefiles andlocalmanifesthashes; per-contractcompilerembeddedhashes; exactrawartifactpath+SHA binding.",
+    "External origins stillrequireindependentverification; compilerstdlib stillrequirespinnedcompiler qualification.",
+    "No changes to sourceauthentication/checkers/constraints/nativegates."
+  ],
+  "limitations": [
+    "Rawcompiler/API compatibility remainsunmeasured.",
+    "Existingartifactprocessing/source gates intentionally fail until actualnewlockverified.",
+    "Currentcandidate is source preparation, not runnablecompleteupgrade."
+  ]
+}

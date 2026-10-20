@@ -1,0 +1,10 @@
+✔ native network adapter delegates coherent setup and owns shutdown exactly once (85.968958ms)
+✔ finality advances native state only for successful original receipts (0.781583ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2287.588792

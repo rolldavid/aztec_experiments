@@ -1,0 +1,37 @@
+✔ fresh agent uses tool output and always closes the checkout (1.125375ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (1.091541ms)
+✔ first message has no unnecessary paid summary (0.204209ms)
+✔ conversation incomplete blocks any paid model call (0.236125ms)
+✔ conversation noncanonical blocks any paid model call (0.2505ms)
+✔ conversation wrong latest blocks any paid model call (0.104958ms)
+✔ conversation changed latest blocks any paid model call (0.095375ms)
+✔ conversation duplicate blocks any paid model call (0.068833ms)
+✔ conversation invented system role blocks any paid model call (0.0905ms)
+✔ conversation oversized message blocks any paid model call (0.11525ms)
+✔ conversation empty blocks any paid model call (0.080541ms)
+✔ unknown summary outcome does not retry or start main model (0.212375ms)
+✔ summary cannot invoke tools or become system authority (0.080333ms)
+✔ summary counts against the request model-call ceiling (0.104375ms)
+✔ successful answer waits for host acceptance before closing invocation workspace (4.541666ms)
+✔ published app links are host-produced, byte bounded, and omit private validation metadata (0.605416ms)
+✔ isolated STATIC_CLEANUP_REQUIRED stops the agent before another paid call or tool (0.155458ms)
+✔ isolated STATIC_RECORD_FAILED stops the agent before another paid call or tool (0.059959ms)
+✔ isolated STATIC_UNAVAILABLE stops the agent before another paid call or tool (0.049208ms)
+✔ actual accepted commit survives restart; failed invocation leaves previous source intact (474.873417ms)
+✔ same-thread operations wait; a different thread opens independently (120.280625ms)
+✔ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (381.755334ms)
+✔ lease loss prevents acceptance; user paths and changed repository identity fail closed (116.553666ms)
+✔ existing toolbox edits and accepts actual thread source across independent invocations (779.115625ms)
+✔ failed validation cannot advance accepted source and cannot be retried in same session (431.615708ms)
+✔ bounded revision and storage budgets refuse new accepted source (380.332875ms)
+✔ model can check and repair an empty thread; acceptance reuses only the exact checked source (952.554791ms)
+✔ a text-only empty thread can answer without creating a fake static application (43.591125ms)
+✔ publication lost acknowledgement reconciles the exact accepted receipt without model or validation replay (347.39825ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4081.462709

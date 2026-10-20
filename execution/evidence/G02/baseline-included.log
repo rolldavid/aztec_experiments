@@ -1,0 +1,18 @@
+
+> test:e2e
+> node scripts/test-c01-application.mjs included-board
+
+{"role":"fixture","stage":"start-disposable-l1","elapsedMs":939}
+{"role":"fixture","stage":"prepare-genesis","elapsedMs":1057}
+{"role":"fixture","stage":"deploy-local-protocol-fixture","elapsedMs":2713}
+{"role":"fixture","stage":"wait-for-local-validator-activation","elapsedMs":3829}
+{"role":"fixture","stage":"start-application-node","elapsedMs":3860}
+{"role":"fixture","stage":"prove-board-deployment","elapsedMs":7532}
+{"role":"fixture","stage":"board-create-proving-wallet","elapsedMs":7562}
+{"role":"fixture","stage":"board-build-deployment-request","elapsedMs":7838}
+{"role":"fixture","stage":"board-genuine-client-proof","elapsedMs":8546}
+{"role":"fixture","stage":"board-serialize-proof","elapsedMs":9696}
+{"role":"fixture","stage":"board-real-node-validation","elapsedMs":9708}
+{"role":"fixture","stage":"board-close-wallet","elapsedMs":9803}
+{"role":"fixture","stage":"board-inclusion","elapsedMs":9815}
+{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/C01/application-b5b15c01-3c95-477a-b8ee-2d67791145fc.json","passed":true,"scenario":"included-board"}

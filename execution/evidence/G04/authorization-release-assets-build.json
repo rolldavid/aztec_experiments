@@ -1,0 +1,25 @@
+{
+  "source": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+  "purpose": "Normal SDK apps wallet build for interrupted Bok authorization release",
+  "passed": false,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [
+    {
+      "stage": "scripts/build-sdk.mjs-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "elapsedMs": 175,
+  "ownedTreeAbsent": true
+}

@@ -1,0 +1,168 @@
+{
+  "base": "b140728d9c933eab5502d14d467900d020e10626",
+  "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "task_id": "G07-wallet-asset-transfer",
+  "holds": [],
+  "findings": [
+    {
+      "id": "TRANSFER-1",
+      "blocking": true,
+      "status": "resolved"
+    },
+    {
+      "id": "TRANSFER-2",
+      "blocking": true,
+      "status": "resolved"
+    }
+  ],
+  "checks": [
+    {
+      "base": "b140728d9c933eab5502d14d467900d020e10626",
+      "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+      "id": "wallet-transfer-http",
+      "status": "pass",
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp HARDWARE_CONCURRENCY=1 Node24 --test apps/rolling/start.test.mjs",
+      "environment": "macOS arm64 Node24.21.0 pinned dependencies; real localhost HTTP with synthetic asset bytes",
+      "observed": "7testsPASS0skip worker, independent, combined; stalledreader and31workers, bytecap/deadline, negotiation/integrity guards; no live cold acceptance claimed",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/repaired-packet.json",
+          "sha256": "5b81cfc1bfc7b9558d23f094ae04217c77c518594eb392d707cefa08f9c1d9fb"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/final.log",
+          "sha256": "19a95e77d63cddbdbff7960ba06062cb3c2cf90fc4e41f9dd92145cac488f6d9"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/before.log",
+          "sha256": "e43e02249679decb5a57a0ba9a20155228f10056b741d968d1a5901de0011e2f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/compression-measurement.json",
+          "sha256": "200c05225121178fae8cb9cbf2b295ca4b297cabbc9d89ee0e8ea7248ba2affc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-combined.log",
+          "sha256": "e796bd1937693ce4165da36b36a194ac84fbc498d90c4371ae7ea3b0d47f67fe"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-candidate-map.json",
+          "sha256": "74ceb63396260642833267eb1251ade2f021dcdc1356c6c45a7103d89d9bad77"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-0c4fec4-transfer.json",
+          "sha256": "2f98c98e381f95b934c10323811c7b2d2114f1026287cf2bb6879fa2087c8262"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-c803b4d-transfer-composition.json",
+          "sha256": "0ee40d886c41ddd34471e9c216436e81c0395869f920e5c565e029a733fc55c3"
+        }
+      ]
+    },
+    {
+      "base": "b140728d9c933eab5502d14d467900d020e10626",
+      "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+      "id": "combined-transfer-http",
+      "status": "pass",
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp HARDWARE_CONCURRENCY=1 Node24 --test apps/rolling/start.test.mjs",
+      "environment": "macOS arm64 Node24.21.0 pinned dependencies; real localhost HTTP with synthetic asset bytes",
+      "observed": "7testsPASS0skip worker, independent, combined; stalledreader and31workers, bytecap/deadline, negotiation/integrity guards; no live cold acceptance claimed",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/repaired-packet.json",
+          "sha256": "5b81cfc1bfc7b9558d23f094ae04217c77c518594eb392d707cefa08f9c1d9fb"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/final.log",
+          "sha256": "19a95e77d63cddbdbff7960ba06062cb3c2cf90fc4e41f9dd92145cac488f6d9"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/before.log",
+          "sha256": "e43e02249679decb5a57a0ba9a20155228f10056b741d968d1a5901de0011e2f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/compression-measurement.json",
+          "sha256": "200c05225121178fae8cb9cbf2b295ca4b297cabbc9d89ee0e8ea7248ba2affc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-combined.log",
+          "sha256": "e796bd1937693ce4165da36b36a194ac84fbc498d90c4371ae7ea3b0d47f67fe"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-candidate-map.json",
+          "sha256": "74ceb63396260642833267eb1251ade2f021dcdc1356c6c45a7103d89d9bad77"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-0c4fec4-transfer.json",
+          "sha256": "2f98c98e381f95b934c10323811c7b2d2114f1026287cf2bb6879fa2087c8262"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-c803b4d-transfer-composition.json",
+          "sha256": "0ee40d886c41ddd34471e9c216436e81c0395869f920e5c565e029a733fc55c3"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "b140728d9c933eab5502d14d467900d020e10626",
+      "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+      "id": "G07-A08-public-wallet-transfer-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/repaired-packet.json",
+          "sha256": "5b81cfc1bfc7b9558d23f094ae04217c77c518594eb392d707cefa08f9c1d9fb"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/final.log",
+          "sha256": "19a95e77d63cddbdbff7960ba06062cb3c2cf90fc4e41f9dd92145cac488f6d9"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/before.log",
+          "sha256": "e43e02249679decb5a57a0ba9a20155228f10056b741d968d1a5901de0011e2f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-integration/compression-measurement.json",
+          "sha256": "200c05225121178fae8cb9cbf2b295ca4b297cabbc9d89ee0e8ea7248ba2affc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-combined.log",
+          "sha256": "e796bd1937693ce4165da36b36a194ac84fbc498d90c4371ae7ea3b0d47f67fe"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/compression-candidate-map.json",
+          "sha256": "74ceb63396260642833267eb1251ade2f021dcdc1356c6c45a7103d89d9bad77"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-0c4fec4-transfer.json",
+          "sha256": "2f98c98e381f95b934c10323811c7b2d2114f1026287cf2bb6879fa2087c8262"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-c803b4d-transfer-composition.json",
+          "sha256": "0ee40d886c41ddd34471e9c216436e81c0395869f920e5c565e029a733fc55c3"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "b140728d9c933eab5502d14d467900d020e10626",
+    "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "controls-resume-20261014",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-0c4fec4-transfer.json",
+        "sha256": "2f98c98e381f95b934c10323811c7b2d2114f1026287cf2bb6879fa2087c8262"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-c803b4d-transfer-composition.json",
+        "sha256": "0ee40d886c41ddd34471e9c216436e81c0395869f920e5c565e029a733fc55c3"
+      }
+    ]
+  }
+}

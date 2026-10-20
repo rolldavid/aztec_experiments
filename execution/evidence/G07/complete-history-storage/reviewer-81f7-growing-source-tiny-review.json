@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "SOURCE_ACCEPTED_TINY_ONLY_ELIGIBLE",
+  "source": "81f7d6a2bb290e1ecc6bc260fe30dc2b469bf00b",
+  "sourcePacketSha256": "cd7ae838846c1aa0bf612f883b291e16447231e95f1997a710a42721ed89c42f",
+  "tinyPacketSha256": "75bba334682bb8ba687b665d51cc60a97a7091bdbe5ff8b58f00d26a030a9e54",
+  "findings": [
+    "Exact two test files add99 lines; production query/store/reducer and all prior tests retained.",
+    "Shared tiny/full fixture incrementally validates and inserts5 events per transaction, no lifetime JS expected array; unique plugin projection rows grow. Near/final RSS captured in same live process/store.",
+    "Independent SQL physical count/byte aggregates, bounded late feed and single-post queries, reopen untrusted state, exact rollback count and stale-control rejection preserve storage scope.",
+    "Small decoder/index companion separately checks finite canonical replay, publication, stale cursors and forked suffix removal; it does not authenticate200k synthetic rows.",
+    "Tiny owner mechanically reuses accepted22496 lifecycle/streaming SHA/main-thread kernel receipts; only selected tiny count/summary and30s bound differ.550 source plus2402 dependency hashes independently verified."
+  ],
+  "eligible": "One selected tiny26-event/20-plugin/5-post/5-undo test under30s512MiB,128MiB setup guard, exact1 label0skip/56 excluded, after parent serialized grant.",
+  "held": "Full growing volume and small decoder companion require separately reviewed actual and grants. 200006 synthetic plugin-dominated events with sparse late posts cannot close dense feed/Home/directory, production factory, operated archive, or full capacity conjunction. Kernel per-process plus sampled aggregate is not an instantaneous aggregate memory proof."
+}

@@ -1,0 +1,35 @@
+{
+  "candidate": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+  "base": "e03bc65678d0260e179f6d058b563978085b5e66",
+  "verdict": "approved",
+  "scope": "Operation-scoped funding receipt verification with native transport ownership and local identity fences.",
+  "findings": [],
+  "reasoning": [
+    "Full network/account attestation brackets funding verification; per-read guard still checks session owner, captured deployment/network, trusted node, wallet/PXE route and caller context. Other full guards remain unchanged.",
+    "Only exact saved transaction/receipt hash and code at saved receipt height are memoized inside one invocation. Canonical L1 block, finalized anchor and L2 header/witness checks are not cached. Fresh post-witness rechecks still reject reorgs.",
+    "All exact intent/calldata/account/portal/effect/custody/secret/message-root checks remain; returned claim is not a payment or submit authority. Original journal and no-replay fences unchanged.",
+    "Whole-operation20second Promise.race removed; reads are awaited and transport failures retain UNKNOWN classification. This eliminates abandoned in-flight verification work and cumulative deadline failures without manufacturing progress.",
+    "Cache is discarded between invocations, including prepare versus submit revalidation. Tests preserve actual adversarial mismatch and canonical reorg expectations rather than duplicate-read counts."
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp node --test shared/rolling/funding-receipts.test.mjs",
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2814.036167
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp node --test --test-name-pattern='funding|aggregate|durable' shared/rolling/application.test.mjs",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1398.748416
+    }
+  ],
+  "limits": [
+    "Existing tests use labelled provider/component doubles and real encoding/hash/witness logic, not fresh public-network proofs.",
+    "No claim that the actual paid wallet continuation succeeded until the affected deployed path is observed.",
+    "Provider request failure bounds remain transport-owned; this patch adds no polling scheduler or timeout-driven fallback."
+  ]
+}

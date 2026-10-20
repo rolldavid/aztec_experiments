@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "be936e1aeebb2db5ee8370ac1e9c87599df1b486",
+  "prior": "fce70cbeb23d7010eaf2fa59c65d3cf015752dcd",
+  "verdict": "approved_source_only",
+  "findingDisposition": {
+    "FUNDING-P2-01": "resolved: branded trusted client enforced; guard, node, provider, store and artifact references captured before first await, read methods bound once"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24.21.0 --test shared/rolling/funding-receipts.test.mjs",
+      "result": "30 passed, 0 failed, 1619.345875 ms"
+    },
+    {
+      "check": "Actual trusted factory and SDK response schemas exercised with explicitly labelled transport doubles",
+      "result": "Unbranded copied client rejected before guard/membership; await-time replacements of route/guard/provider/method/artifact/store cannot change captured capabilities"
+    }
+  ],
+  "limitations": [
+    "No real funding, transactions, proofs or services were used",
+    "Claim-ready is not proof of unconsumed funds or spendability",
+    "Existing encrypted recovery/journal and verified deployment/session integration remain required",
+    "Finalized L1 default may affect latency and is documented as reversible; full G05/G14 acceptance remains open"
+  ]
+}

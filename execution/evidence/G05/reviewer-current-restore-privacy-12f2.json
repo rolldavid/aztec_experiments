@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent reviewer_resume",
+  "sourceRevision": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "runtimeSha256": "ec2fe0a176c25ecac8747cb5ae2135718d3c5cb225a9b03939e351c59f447716",
+  "requirements": [
+    "G05-A10 scoped restored ownership/current bio/avatar",
+    "G05-A11 limited public footprint and browser first-hop observations"
+  ],
+  "verdict": "accept-scoped-evidence; full G05-A11 remains open",
+  "packetSha256": "a058d7ca4d65eae290aea0fbf574732d209aaffa23eb9de479a48045f2ec3265",
+  "linkedFilesVerified": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/retained-bio-footprint.json",
+      "sha256": "b2c8688f083a304c10902123d093b4ac2e543f8de9dd620f8b75fe7ce9162207",
+      "bytes": 9498
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/classify-retained-bio.mjs",
+      "sha256": "3a4cb8beb9526f553858e99b44d21301ec0b4dbd18b9295327f9411285f5cb32",
+      "bytes": 7601
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/run.mjs",
+      "sha256": "910762602f107dc42271da139d7632e6c364580e7e221a88dc770d4209e980c3",
+      "bytes": 19870
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/supervise.mjs",
+      "sha256": "eb467bd12412680772126cdeeafe9c88069a4fd01113f7106a923ccc8af5b11d",
+      "bytes": 1054
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/restore-corrected-result.json",
+      "sha256": "8afa70011e2026cb873eb4ba236b468212324ac02406d515abcaa4df7b34f531",
+      "bytes": 43860
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/restore-corrected-supervisor.json",
+      "sha256": "09f04e7cc840cb53f89987ba429d96eb4c775cf2787beec1fcdb8823cb1ba8f9",
+      "bytes": 56307
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/restore-corrected.log",
+      "sha256": "f6579f47e3a7828db4e00a93466497e70a9b33672329d7b7cde549fb13101756",
+      "bytes": 26914
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/followthrough.mjs",
+      "sha256": "6ab5351f06e8cc5f702239a65a600eec4835ef66a603558eb998f3b2fdda7542",
+      "bytes": 15188
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/supervise-followthrough.mjs",
+      "sha256": "87cae2ac39f112a52c982a826bf7dfe10b7ce27351ac2bdc74188b8e1c91fa39",
+      "bytes": 1067
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/logical-followthrough-result.json",
+      "sha256": "505259b2742793f30a010cb4c97e00f255f1f220c4061f8292d958c1ec62ab6d",
+      "bytes": 6622
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/logical-followthrough-supervisor.json",
+      "sha256": "a60ddd3275476d3f03b1e13684f789b982b99c40c1ffb340eb17af14291ac080",
+      "bytes": 10032
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/logical-followthrough.log",
+      "sha256": "792edde178422c8b0e62842136ab172b44174f892e303632faf17d8e9242ac21",
+      "bytes": 4844
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/restore-result.json",
+      "sha256": "9ebcf508eb858d2a967351a81017234e4f594d7cf110a96f5c175518f0c14008",
+      "bytes": 1258
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/restore-supervisor.json",
+      "sha256": "93853d94f6bb02d3cc302b498bd9d8b93bb282c9dce93820ae6d4bd4217fe222",
+      "bytes": 1843
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/browser-preflight.json",
+      "sha256": "ae9cf4b3f1feb7b2ba9ea8f8866a10a7d8948f23bde3ff811b122907db778108",
+      "bytes": 320
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/current-observer-gaps.json",
+      "sha256": "8b9220256ca53e9c4216c7bbf66c438004215220440574ac3ad4e14431006b1f",
+      "bytes": 9519
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-current-privacy-acceptance/runtime-12f.json",
+      "sha256": "ec2fe0a176c25ecac8747cb5ae2135718d3c5cb225a9b03939e351c59f447716",
+      "bytes": 3898
+    }
+  ],
+  "sourceSha256": {
+    "shared/rolling/application.mjs": "daa4fac422d8d1ad682d8791db11f4fe1b7d143c13a1fe4cfe5002c18a10b586",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "shared/l2-journal.mjs": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+    "scripts/t03-public-footprint.mjs": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+    "shared/rolling/public-events.mjs": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605"
+  },
+  "runtimeScriptsVerified": [
+    "/wallet/ethers.js",
+    "/wallet/aztec_bundle.js",
+    "/wallet/crs-client.js",
+    "/wallet/wallet-providers.js",
+    "/wallet/passkey-wallet.js",
+    "/wallet/wallet-backup.js",
+    "/wallet/claim-secret-store.js",
+    "/wallet/account.js",
+    "/wallet/engine.js"
+  ],
+  "actualAssessment": {
+    "restore": {
+      "freshStorageVerified": true,
+      "sameIdentity": true,
+      "fourPortableJournals": true,
+      "confirmedBioTransaction": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+      "canonicalReceipt": {
+        "transactionHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+        "blockNumber": 341,
+        "blockHash": "0x1ceb3c929ef8ccd2dfcf11a158836cb50cc4b7951fba4803da84cf96e7cf1a5a",
+        "canonical": true
+      },
+      "composer": {
+        "oneAnonymous": true,
+        "restoredOwnedName": "River Canvas",
+        "nameId": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+        "explicitNamedThenAnonymousSelection": true
+      }
+    },
+    "denial": {
+      "actualTrustedRequestsAborted": 1,
+      "fixedUnavailableVisible": true,
+      "profileSnapshotWithheld": true,
+      "reviewDisabled": true,
+      "scope": "Browser first-hop injection only; no claim of gateway outage/native receiver observation."
+    },
+    "originalRun": {
+      "passed": false,
+      "stage": "explicit-private-refresh",
+      "errorClass": "AssertionError",
+      "completedPrivateRefresh": true,
+      "reason": "Procedure reached owned-name read after explicit refresh and then asserted encrypted envelope equality. Source application.outcome rewrites the confirmed logical value; journal-record generates fresh AES-GCM IVs. This run remains failed."
+    },
+    "followthrough": {
+      "passed": true,
+      "durationSecondsReported": 4.612,
+      "noRepeatedImportOrPrivateInitialization": true,
+      "noPrivateRequests": true,
+      "authenticatedContinuity": {
+        "records": [
+          {
+            "kind": "AZTEC_BB_L2_JOURNAL_KEY_V1",
+            "sameFullAuthenticatedValue": true,
+            "oldValueSha256": "82f5c257e90e2e179231b34dbab911ffb7fc3c6a908d06f0e86540798db1db9b",
+            "currentValueSha256": "82f5c257e90e2e179231b34dbab911ffb7fc3c6a908d06f0e86540798db1db9b",
+            "ciphertextEqual": true,
+            "type": null,
+            "status": null,
+            "id": null,
+            "operation": "ROLLING_WORKFLOW_V1:0x2ff9a9b59f1479a25ecc215ff9303254c0aef2343c0e624ad345b23d88c813fe",
+            "txHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+            "transactionHexSha256": "ed3a4a2a9358cd8002cd436510a080340605df10ac0ff78d72a049b755e8b201"
+          },
+          {
+            "kind": "ROLLING_WORKFLOW_V1",
+            "sameFullAuthenticatedValue": true,
+            "oldValueSha256": "d5cc0eccbe5f2ef0d3974cbb1fb5755d353a213baefae13ad48c7d8483d6d35d",
+            "currentValueSha256": "d5cc0eccbe5f2ef0d3974cbb1fb5755d353a213baefae13ad48c7d8483d6d35d",
+            "ciphertextEqual": false,
+            "type": "bio",
+            "status": "confirmed",
+            "id": "0x2ff9a9b59f1479a25ecc215ff9303254c0aef2343c0e624ad345b23d88c813fe",
+            "operation": null,
+            "txHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+            "transactionHexSha256": null
+          }
+        ],
+        "keysImported": false,
+        "accountInitialized": false,
+        "basis": "Current task-profile records after prior explicit refresh equal the full authenticated original confirmed-bio backup records, not ciphertext. No import, initialization, refresh or transaction repeated."
+      },
+      "publicBioVisible": true,
+      "publicAvatar": {
+        "width": 100,
+        "height": 100,
+        "center": [
+          67,
+          119,
+          92,
+          255
+        ]
+      },
+      "failedAssetRequestsRetained": 3
+    },
+    "traffic": {
+      "restore": {
+        "walletAssets": 16,
+        "privateRequests": 220,
+        "feedRequests": 0,
+        "boardRequests": 0,
+        "compactRequests": 0,
+        "compactPreflights": 0,
+        "tagDiscoveryRequests": 13,
+        "proofSubmits": 0,
+        "nodeSubmissions": 0,
+        "l1Submissions": 0,
+        "blockedRequests": 0,
+        "inspectionErrors": 0
+      },
+      "followthrough": {
+        "walletAssets": 14,
+        "privateRequests": 0,
+        "feedRequests": 0,
+        "boardRequests": 0,
+        "compactRequests": 0,
+        "compactPreflights": 0,
+        "tagDiscoveryRequests": 0,
+        "proofSubmits": 0,
+        "nodeSubmissions": 0,
+        "l1Submissions": 0,
+        "blockedRequests": 0,
+        "inspectionErrors": 0
+      },
+      "bothFinalObservedSends": 0,
+      "bothContextsClosed": true,
+      "bothOwnedTreesAbsent": true
+    },
+    "offlineFootprint": {
+      "originalTransactionSource": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+      "transactionHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+      "signedBytesSha256": "96d27661a82d159ff3d088808c50635d2a46d7e3b3b305a0182a65373020dfc6",
+      "effectBytesSha256": "173756279d7498970049884f65eaab6cfde534d143a01f4674c594cb78602e35",
+      "matchesPreviouslyIndependentlyReviewedW03Effect": true,
+      "sharedFeePayer": true,
+      "authorIsPublicFeePayer": false,
+      "counts": {
+        "publicCalls": 2,
+        "publicCalldataFields": 39,
+        "publicDataWrites": 9,
+        "publicLogs": 2,
+        "noteCommitments": 3,
+        "nullifiers": 5,
+        "l2ToL1MessageHashes": 0,
+        "privateDeliveryLogs": 3,
+        "privateDeliveryEmittedFields": 48,
+        "contractClassLogs": 0
+      },
+      "selectedNameMatchesBioEvent": true,
+      "networkAttempts": 0
+    }
+  },
+  "criterionDisposition": {
+    "G05-A10": "Supports restoring this actual human account/owned name, its confirmed bio workflow and signed journal, named/Anonymous selection, current public bio/avatar. Does not newly establish complete profile history, all names or authentic bot distinction.",
+    "G05-A11": "Only exact known-author field absence and shared-payer presence for one retained bio, plus scoped browser first-hop trace. Full unlinkability unqualified."
+  },
+  "limits": [
+    "No equality digest was captured immediately before refresh. Follow-through proves full post-refresh authenticated values equal the original confirmed backup, which is sufficient for the scoped continuity claim but is not a new before/after semantic trace.",
+    "Original failed launch and failed ciphertext-comparison runs remain nonpasses. Follow-through did not repeat import, denial, refresh, private initialization or private RPCs. Three failed asset requests in follow-through are retained; no assertion of a wholly error-free transport run.",
+    "Both observer counters are application-browser scope. Extension requests bypass this guard, node-side canonical receipt reads are outside browser counters, and no gateway/native receiver correspondence was measured. Browser route abort is not a real gateway outage.",
+    "Route handlers are drained after context close, but the fixture does not record a separate persistent rejected-route count; no blanket claim covering arbitrary late route-handler failures or all external traffic is made.",
+    "One human/one name cannot demonstrate cross-name or multi-human unlinkability. Whole-field equality does not test derived identifiers, commitments, nullifiers, delivery linkage, funding/timing/network linkage or proof witness transport. Actual restore used13 tag-discovery requests.",
+    "Native/PXE proofs disabled; no real-proof/testnet, complete cold-history, specialist privacy audit or G13 release qualification."
+  ],
+  "nextAction": "No application repair is indicated by the ciphertext comparison. Remaining privacy acceptance needs receiver-correlated observations and multi-human/multiple-name relational analysis under the documented trusted prover/query boundary; this packet alone cannot close G05-A11."
+}

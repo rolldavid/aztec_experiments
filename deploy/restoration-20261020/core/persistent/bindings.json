@@ -1,0 +1,42 @@
+{
+  "source": "0205d08b",
+  "payloadSha256": "ba41b1ccf5405063287dcd387041ea3dfb242188884f628346b66dbdd04484db",
+  "payloadBytes": 117529,
+  "controlSourceSha256": "475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38",
+  "policy": {
+    "schemaVersion": 1,
+    "budgetName": "Rolling Chat ongoing hosting",
+    "monthlyUsd": 1500,
+    "budgetReadbackSha256": "5636c869ccf55306314c6b495c8c13c84f4101b384dd717e9bd50b9cbc74be40"
+  },
+  "hosts": {
+    "core": {
+      "instanceId": "i-0a9b5b9ba55815cda",
+      "oldAttestorSha256": "66518824d8132b7de6971d1ff0820639f2b3715b1320cc3e6033be9c7c077fee",
+      "manifest": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+      "oldDeadline": {
+        "createdAt": "2026-10-20T06:46:12Z",
+        "budgetStop": "2026-10-20T14:46:12Z",
+        "commissioningStop": "2026-10-20T07:16:12Z",
+        "hostResources": {
+          "dataVolumeGiB": 1024,
+          "egressMbps": 50
+        }
+      }
+    },
+    "bok": {
+      "instanceId": "i-0a7d9957f2b3d7f19",
+      "oldAttestorSha256": "457d49c826520c86dd018565fea505d25b31be0034727055acd3c46523bdd07c",
+      "manifest": "05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e",
+      "oldDeadline": {
+        "createdAt": "2026-10-20T06:43:38Z",
+        "budgetStop": "2026-10-21T06:42:00Z",
+        "commissioningStop": "2026-10-20T07:13:38Z",
+        "hostResources": {
+          "dataVolumeGiB": 128,
+          "egressMbps": 10
+        }
+      }
+    }
+  }
+}

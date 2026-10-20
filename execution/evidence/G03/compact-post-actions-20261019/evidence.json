@@ -1,0 +1,56 @@
+{
+  "base": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+  "candidate": "afaa23a9efd00d441188fa17fee05743888eefe8",
+  "task_id": "G03-compact-post-actions",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+      "candidate": "afaa23a9efd00d441188fa17fee05743888eefe8",
+      "task_id": "G03-compact-post-actions",
+      "id": "post-action-component",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing focused social/rejected-board browser component cases",
+      "environment": "Pinned Node24/Chrome, renderer fixture; no chain replay",
+      "observed": "Independent 2cases passed, no skipped; all action payloads preserved, More adds no public reads.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G03/compact-post-actions-20261019/review.json",
+          "sha256": "5d28406d7ddd5c109d491eab2589be7d7e15d29dfa529eb8b276757b206348b5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+    "candidate": "afaa23a9efd00d441188fa17fee05743888eefe8",
+    "task_id": "G03-compact-post-actions",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G03/compact-post-actions-20261019/review.json",
+        "sha256": "5d28406d7ddd5c109d491eab2589be7d7e15d29dfa529eb8b276757b206348b5"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+      "candidate": "afaa23a9efd00d441188fa17fee05743888eefe8",
+      "task_id": "G03-compact-post-actions",
+      "id": "RC08-post-action-presentation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G03/compact-post-actions-20261019/review.json",
+          "sha256": "5d28406d7ddd5c109d491eab2589be7d7e15d29dfa529eb8b276757b206348b5"
+        }
+      ]
+    }
+  ]
+}

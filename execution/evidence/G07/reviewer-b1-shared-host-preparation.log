@@ -1,0 +1,9 @@
+test_actual_control_install_order_and_persistent_absolute_timers (__main__.Bootstrap.test_actual_control_install_order_and_persistent_absolute_timers) ... ok
+test_deadline_cannot_be_extended_or_package_replaced (__main__.Bootstrap.test_deadline_cannot_be_extended_or_package_replaced) ... ok
+test_controls_failure_never_downloads_and_requests_shutdown (__main__.Bootstrap.test_controls_failure_never_downloads_and_requests_shutdown) ... ok
+test_final_shutdown_even_persistence_upload_or_control_failure (__main__.NativeVersionDiagnostic.test_final_shutdown_even_persistence_upload_or_control_failure) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.111s
+
+OK

@@ -1,0 +1,6 @@
+{
+  "review": "reviewer-2419-github-broker-review.json",
+  "originalPreparationRestoredAt": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G11/github-app-broker/installation-preparation-public-historical.json",
+  "sha256": "75ade3f6a7eb69a2cca21d247fc6e25de872c3d6646f978c0f47da6e4ca82548",
+  "disposition": "Exact original handoff preparation bytes recovered and independently hash-verified. Current private preparation remains separately bound; no source/tests changed."
+}

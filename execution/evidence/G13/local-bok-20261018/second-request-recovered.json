@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "requestId": "0x26bcd364302d53710568319d22e9ec0197efb41949c0d766f1cfd065eb064207",
+  "status": "accounted-without-reply",
+  "providerCalls": 6,
+  "additionalProviderCalls": 0,
+  "callsUnchanged": true,
+  "accounting": {
+    "anchor": {
+      "number": 45,
+      "hash": "0x0039d57439364e1b4087ba17af2dca2d39f4bc10a13070ae19c7d52a9bbf8d19"
+    },
+    "state": "4",
+    "budget": "250000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "10048",
+    "refunded": "239952"
+  },
+  "finish": {
+    "txHash": "0x0737a59ceadc00d5ce55ec5ad90ca361a6eef911f9313100a54315f19ee762d8",
+    "blockNumber": 45,
+    "blockHash": "0x0039d57439364e1b4087ba17af2dca2d39f4bc10a13070ae19c7d52a9bbf8d19",
+    "canonical": true
+  },
+  "artifact": {
+    "url": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/latest/",
+    "status": 200,
+    "acceptedRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+    "sha256": "ce083e6f89c85d7f6d7f24ec5a94f34c593e5d872c1565f3dc4eb3d96bf22c28"
+  },
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": "2026-10-18T09:05:05.186Z"
+  },
+  "pid": 72835,
+  "sessionId": 72186
+}

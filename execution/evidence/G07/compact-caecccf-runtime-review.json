@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "caecccf2c33fb881c967478a22d64175788b258f",
+  "verdict": "approved-bounded-native-and-gateway-component-evidence",
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07",
+    "prover/compact-block-native.test.mjs": "c1ffc7481128b48adb4e947b73a40194c791f01aaa72ad233ec73469021b0a20",
+    "prover/private-query.mjs": "e279a8718dade472ea617710c562906199554c9afb60fac7fd5ec7273a899ed8",
+    "prover/private-query.test.mjs": "65538283d37d9936d1d4a2f81bf4126a9251b7280e05cf825ee0c45a9aec45eb",
+    "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "shared/rolling/compact-client.mjs": "081d0bcf919ff6b93886debdc6f9ff70f4fff7cfd793bdbf11ea251b52ca20b9",
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318"
+  },
+  "evidenceHashes": {
+    "result.json": "a103340ff015900131590580b3c9c0712481755caa8e09534353bce59336e69b",
+    "cleanup.json": "47c3e6aaf998870560f0c82c9fea89b9af44ab6455f04a9ad942e8ddd95edd4e",
+    "build.log": "bf41104bc102066fea585f2dd6dcb8cd5330f6b39cb92741d85c7970969f3508",
+    "execution-intent.json": "8075f1d2885622c20f330c731f886812bddabdf5be55337aa50935a2d250e5b0",
+    "preparation.json": "843a19993458147012bf33ddef9a8f1468a602bd1f720232e36accfdf48d6497",
+    "before-source.json": "f59404010ac33b6846f9d89f424da80737a43efc54dfddf1b73d8432dc16c8fd",
+    "packages-before.json": "0104483bb48799ded075d5778929eb49bbfd10cc9d16bae08e91cad17bda0579"
+  },
+  "runtime": {
+    "passed": 65,
+    "failures": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "elapsedMs": 1995,
+    "peakTreeRSSKiB": 255632,
+    "ownedTreeAbsent": true,
+    "ownedRc1DirectoryRestored": true,
+    "borrowedRc3PackageMetadataVerified": 55
+  },
+  "assessment": [
+    "Actual sequential41native+24gateway test argv overrides reused normal-base role label; no build claimed.",
+    "All8 source hashes match exactcandidate/current bytes.55borrowedControls package manifests unchanged; original own directory restored, preservation path absent.",
+    "Both new actual IncomingMessage EOF tests execute request-destroy/socket-destroy boundary and hold429 until underlying native/readiness settlement; early-release bug is now covered.",
+    "Existing canonical SDK-body/root-consumer/category/preflight/reorg/readiness and fixed HTTP error semantics preserved. Real loopbackunfinished upload and labelled timer/socket controls complement one another."
+  ],
+  "limits": [
+    "Synthetic canonical node/readiness fixtures and socket/timer controls use actual SDK/HTTP primitives; no deployed node or truebrowser/fullcold acceptance.",
+    "10s timer closes client connection; it does not force uncancellable native promises to finish. Active remains owned until actual settlement.",
+    "CLI main/admin/prebody-parser registration/config authority remains a separate gate.",
+    "No productionintegration/rc3fullqualification or compiler diagnostic clearance."
+  ],
+  "method": "Read-only independent source/evidence/dependency hash audit; no native test replay."
+}

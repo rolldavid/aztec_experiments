@@ -1,0 +1,46 @@
+{
+  "candidate": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+  "base": "04f41a280ff7eb8d64c9f0333bf0e6924b6b536f",
+  "task_id": "G05-name-race-acceptance",
+  "implementer": "lead-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "scripts/testing/rolling-application-actor.mjs",
+    "scripts/testing/rolling-application-actor.test.mjs",
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-collision-observer.mjs",
+    "scripts/testing/rolling-collision-observer.test.mjs",
+    "scripts/testing/rolling-name-collision.mjs",
+    "scripts/testing/rolling-name-collision.test.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/scenarios.mjs"
+  ],
+  "required_checks": [
+    "source-tests",
+    "genuine-race"
+  ],
+  "requirements": [
+    "G05-normalized-name-race"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "task_id": "G05-name-race-acceptance",
+      "owner": "lead-20261011",
+      "paths": [
+        "scripts/testing/rolling-application-actor.mjs",
+        "scripts/testing/rolling-application-actor.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-collision-observer.mjs",
+        "scripts/testing/rolling-collision-observer.test.mjs",
+        "scripts/testing/rolling-name-collision.mjs",
+        "scripts/testing/rolling-name-collision.test.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ]
+    }
+  ],
+  "scope_limits": "Two genuine private registrations racing one normalized name; exact paid losing revert, ownership rollback and recovery. Does not close all G05, privacy specialist review or release gates."
+}

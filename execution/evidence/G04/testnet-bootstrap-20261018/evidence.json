@@ -1,0 +1,56 @@
+{
+  "base": "996dba928ac024e4e2585befdec8c3520b07bc01",
+  "candidate": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+  "task_id": "G04-testnet-bootstrap",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "996dba928ac024e4e2585befdec8c3520b07bc01",
+      "candidate": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+      "task_id": "G04-testnet-bootstrap",
+      "id": "focused-current-bootstrap",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test --test-name-pattern=bootstrap plugins/test/operations.test.mjs",
+      "environment": "Actual installed currentSDK focused tests, nofinancial/proof",
+      "observed": "Independent5passed1.06s; exactSDKclaimwitness/payment/batch/sendboundarychecked",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/testnet-bootstrap-20261018/review.json",
+          "sha256": "e197ef2f0920756ea8af4d61d186881f967f75cd46baf590d615023f5c31e308"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "996dba928ac024e4e2585befdec8c3520b07bc01",
+    "candidate": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+    "task_id": "G04-testnet-bootstrap",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/testnet-bootstrap-20261018/review.json",
+        "sha256": "e197ef2f0920756ea8af4d61d186881f967f75cd46baf590d615023f5c31e308"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "996dba928ac024e4e2585befdec8c3520b07bc01",
+      "candidate": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+      "task_id": "G04-testnet-bootstrap",
+      "id": "RC36-current-board-independent-bootstrap",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/testnet-bootstrap-20261018/review.json",
+          "sha256": "e197ef2f0920756ea8af4d61d186881f967f75cd46baf590d615023f5c31e308"
+        }
+      ]
+    }
+  ]
+}

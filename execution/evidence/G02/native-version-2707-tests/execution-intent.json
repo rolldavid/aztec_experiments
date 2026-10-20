@@ -1,0 +1,23 @@
+{
+  "source": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "startedAt": "2026-10-13T02:04:20.880Z",
+  "pid": 87153,
+  "runnerSha256": "a1da470cc3f162ae806f7e1201a2f733553ff75ffcdf1338d5cf3da0d218e47d",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "preparationSha256": "71804caf429fc2338b7ce405610bfb470db2847f06f169245b77427ef096a885",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-test.py",
+    "-v"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-version-2707-tests/home",
+    "TMPDIR": "/private/tmp/rolling-2707-tests-aiz3nz4o",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "retry": false
+}

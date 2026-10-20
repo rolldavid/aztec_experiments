@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-14T19:25:03.489569+00:00",
+  "source": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+  "failedSession": 36362,
+  "deadPid": 10259,
+  "allPortsFree": true,
+  "priorMetadataSha256": "3ba6b16712b7347297f299a313712cdac3473917582de7ee13db5a898bd91569",
+  "qualifiedCheckpointSha256": "6e760a431e5a4c661682f18a0043900a76b4f0b38f669e0afc025250bb7cc07b",
+  "head": {
+    "number": "0xa9f",
+    "hash": "0xa92ae138d3baded66e40f63634bcbf1da951b4f072ae5d1c589d9dd62098f4eb",
+    "pending": "1308",
+    "proven": "1308"
+  },
+  "qualification": "../rolling-design/.build/rc22-native-diagnosis/load-5b091-result.json",
+  "mutation": "Only phase starting\u2192stopped after independentlyverified original snapshot read-onlyload; preserve original metadata/failed shutdown/dead lease in privatearchive",
+  "noChainMutation": true
+}

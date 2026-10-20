@@ -1,0 +1,6 @@
+{
+    "State": "running",
+    "InstanceType": "c8a.4xlarge",
+    "Market": "spot",
+    "Volume": true
+}

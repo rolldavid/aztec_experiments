@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "candidate": "73ca3ffa0dd63331c33a39c33ef23311d36b90ce",
+  "base": "48c0209fff13d62e8aee9be0ff6ea08608504b5f",
+  "verdict": "approve scoped hosted-finish discovery and immutable-memo components",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/escrow-service.mjs": "f44a70cb9d94cda7ac3601ed71d14305891a13c9a673d6970df320bd76eaecd1",
+    "plugins/main.mjs": "01051c2ede85d05e04b5fbb2e5619935cfef4161a4ecbc405aa1e074799e1384",
+    "plugins/test/hosted-private-bok.test.mjs": "9afef1f9c04d6f77bc81851f85d000d001a0092514bef17ccfaf3d49c91ee747",
+    "plugins/test/private-bok-escrow.test.mjs": "d5d02f0b934528c4a79521ec0c0d36a5190fd15818ee12308e4e67c0fd905205",
+    "shared/rolling/public-events.mjs": "ff844b64c6db90c108b01c16ba85fd9ab7b93efac63b969cf5ec961f1799004a",
+    "shared/rolling/public-events.test.mjs": "64da646eb2e3f05bb173d74dd8dd0575fdaf5ae3a254e8b9b49918ca79d89529",
+    "shared/rolling/public-index.test.mjs": "52b083d0a55f3c0374d47501eed3e33da08a6cf22a3f2188324bd2d48d9774d3"
+  },
+  "closedFinding": {
+    "source": "0515358 hostedRecoveryScanner",
+    "issue": "Hash-named FIFO could block O_RDONLY open before regular-file test, hanging poll/close.",
+    "repair": "73ca rejects nonregular Dirent before open, uses O_NOFOLLOW|O_NONBLOCK, retains post-open regular-file/8MiB limit and fixed parser error. Existing negative now creates actual FIFO as well as symlink/malformed JSON.",
+    "status": "closed"
+  },
+  "review": [
+    "Scanner walks at most64 entries and emits at most16 recovery requests per poll under held lease; only reply-intent/reply-confirmed journals qualify. Existing running/finished phases cannot restart paid model execution.",
+    "Exact full-scope filename digest, network/escrow/plugin/request/post/target fields and fresh canonical board request/thread bind dispatch. Normal request owner reopens existing store, rechecks complete binding, original canonical reply operation/linkage and pending finish operation; no new provider/reply/finish replay added.",
+    "Recovery enters existing jobs/concurrency and same-thread exclusion before ordinary pending requests. Public pending feed can be empty after reply; retained journal remains discoverable. Directory iterator persists across bounded scans, closes after server poll/jobs drain and before lease release.",
+    "Malformed/symlink/FIFO local records fail closed with sanitized error; production onError emits fixed reconciliation error. Scanner adds no public journal endpoint, wallet identity grouping or private argument log.",
+    "New direct-owner tests preserve original finish hash/digest/transaction bytes/fee, pending/noncanonical observation and single proof/send count. Service-level test uses actual filesystem and HTTP/service scheduling but controlled canonical chain/provider ports.",
+    "Memo/cold-cache source and actual are separately approved in reviewer-9bdf-bok-memo-cold-review.json; no further memo edits in73ca."
+  ],
+  "evidence": {
+    "logs": {
+      ".build/hosted-recovery-focused.log": "df9098d1891338a9776268e21be57393a46f9f5312bdddbee415af336a7ea133",
+      ".build/hosted-recovery-combined.log": "1b366dce440768134c720db94d29ea91809edd93b9e03fb307d1a88b2c8c3cdb",
+      ".build/hosted-recovery-fifo.log": "73f7670713a8ed989a4941eb9b687a92d1b1bdbcc8c408cc0eb80c3307c4f679"
+    },
+    "initialFocusedNewCases": 4,
+    "initialCombinedPass": 49,
+    "initialCombinedDurationMs": 1890.866083,
+    "finalAffectedNegativePass": 1,
+    "finalAffectedNegativeDurationMs": 14.625709,
+    "coverageStatement": "Final49 case coverage is48 unaffected prior passes plus changed1 FIFO/symlink/malformed case pass, not a rerun of whole49.",
+    "memoReviewSha256": "b7b77825187e84c7ffcf74f21114eadfbe2d1c1528bb4dae918e157cd362a298",
+    "actualColdReadyMs": 28648,
+    "actualColdEmptyBlocks": 484
+  },
+  "remainingGates": [
+    "Historical34888 overall failure remains failed. Component tests do not establish actual hosted pending-finish chain recovery.",
+    "Saved hosted running/unknown paid-call billing remains deliberately refused; trusted original-billing reconciliation product entrypoint remains separate work.",
+    "Malformed retained journals may degrade recovery until operator intervention; this approval adds no reset/deletion/replay permission.",
+    "Cold-cache result is one local native-disabled qualification, not arbitrary history, testnet or soak acceptance."
+  ],
+  "reviewerExecution": "Read-only source/log/hash inspection, no chain/browser/service/test replay."
+}

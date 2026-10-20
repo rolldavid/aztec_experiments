@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "22fc52355e566ce196e4b8f81ba99791d7966912",
+  "base": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "verdict": "changes requested",
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "scenario": "First public acceptance registers the public-reader observer label. The second stale-state acceptance allocated another reader endpoint and registered the same label, which the actual observer rejects; the required stale recovery journey would fail before its HTTP assertions.",
+      "required_repair": "Retain one observer endpoint identity across serial listener lifetimes without weakening duplicate registration or omitting observations."
+    }
+  ],
+  "source_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "dc06e5ef123654296e5e6c43f9d958ac18d5761b479a311fc7231faa9eadf6fd",
+    "scripts/testing/rolling-application-fixture.test.mjs": "5acbd7064e57c4a54af5809a22d161cb9c76843b13644b14caf4fd07b4d80361",
+    "scripts/testing/rolling-public-acceptance.mjs": "cc049ec3228ca08924a4dcbdd70288153928ec48abfb9170f81b2757017a045b",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "886e1371d02a65fcf9a15135e8109f8702734ee74ccc03d2a633ea8a8e145b4f",
+    "scripts/testing/rolling-trusted-recovery.mjs": "2b153489345016f156c0578c6f0a486ce78fbb4d9072adcce372ae8e46a48c1d",
+    "scripts/testing/rolling-trusted-recovery.test.mjs": "b5d80470bc655278e24dd23baf58646eb999074d7462a334bbc40b7e2953a878",
+    "scripts/testing/scenario-flows.mjs": "6f7fab7dee2a13c41db51e2e452b80ee2f5ab94151b1303b2e070142d98beecd",
+    "scripts/testing/scenarios.mjs": "8f72cfd2bddbe848dac7dec58328368b3c7c31ee45ac012f17d3cd58e7cc72d9",
+    "shared/rolling/public-index.test.mjs": "cfe30b187d4ae981d0aa9e8e2b3bb17e755f6e9c940d153be0bd8e17450942a2"
+  },
+  "disposition": "Superseded by independently checked repaired candidate5a62; no actual recovery acceptance at this revision."
+}

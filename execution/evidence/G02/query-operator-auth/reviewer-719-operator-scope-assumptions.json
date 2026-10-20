@@ -1,0 +1,18 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "bounded-four-path-implementation-assumptions-no-runtime-authority",
+  "lead": "71943392fcd29ac0f41558eaed3c0da828dba671",
+  "proposal": "c1122f57ae2f4c1e36da6e77fd19fbcf046f1c3a36f779949c058a4e0327158c",
+  "bindingsVerified": 22,
+  "observations": [
+    "Current operator resumes droppedL2 by sending raw bytes and L1 recordedTransaction always broadcasts; same-hash reuse is still retransmission.",
+    "Existing atomic0600 fileState poisoning is reusable; default recordedTransaction semantics for unrelated callers must not silently change.",
+    "Current operator initializes wallet before saved L2 operation handling, and claim-fees derives a dynamic operation name; reconcile dispatch must precede signing/proving/wallet/claim-secret reads for any retained intent.",
+    "Preparing without hash and uncertain persistence never justify another prepare/sign/send. Persist possibly-sent before first invocation. Canonical missing/dropped/reorg observations retain journal and public pending/failed status without replay.",
+    "Canonical successful constructor result needs exact receipt/effect/block and original/current class/deployer/four-argument identity; cached address alone is not acceptance.",
+    "Private transport key belongs outside config/identity/journal/output. Exact scoped URL/method/header, redirect rejection/no retry, bounded response, sanitized outward failure are required. Current top-level raw error.message/shortMessage logging needs attention at this boundary.",
+    "Native devnet/PXE flags false must avoid eager native prover preparation. Existing escrow adapter checkNetwork explicitly requiresproverEnabled true and customproofCreator mode: reuse policy patterns only, not this check unchanged.",
+    "Rolling constructor-only profile must reject old portal/register/earnings commands before sensitive/native initialization; full hosted Bok lifecycle remains separate."
+  ],
+  "runtimeOrPrivateCredentialAccess": false
+}

@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-14T16:11:12.619395+00:00",
+  "scope": "Read-only hosted journal projection afternormalrestart; no provider/chainoperations",
+  "journals": [
+    {
+      "file": "f155559a7473071c2522d216cdc320c55a6d34325443f1178e6ddbd9a61577e6.json",
+      "sha256": "564e266272ebfbb0b87d84f73fdec2580cce7c8f9ecc31196dcae4910d3b5a51",
+      "phase": "finished",
+      "requestId": "0x28908ae63f7067953b07e9515a12a4e40a430127f7cbb20c19052d13119a6714",
+      "topLevelKeys": [
+        "operations",
+        "privateBokEscrow",
+        "hostedPrivateBok",
+        "privateBok"
+      ]
+    },
+    {
+      "file": "5507d59c9da452415830d3b84a7a30b6c566e2bef474d6a9051ba1e43fd5710f.json",
+      "sha256": "09f53a1f173679b9ce8a668d2b9cd9561b73c78e8c1d85176883eb4cb2e77427",
+      "phase": "running",
+      "requestId": "0x20eae7900ceedf13052c1e16e47e78a1ed707ba183fd127454e8f52367f05fc8",
+      "topLevelKeys": [
+        "operations",
+        "privateBokEscrow",
+        "hostedPrivateBok",
+        "privateBok"
+      ]
+    },
+    {
+      "file": "d8762dc4d1fe40578fb8e7370db4ad71faa93f377434344115bd2938cbf61bbd.json",
+      "sha256": "0071f493c7b54378b6a390c58493e613adb176723f6c037bf0a32966a9297da2",
+      "phase": "running",
+      "requestId": "0x019dbbd71a45e5dbcee5b15bb70058920b0a74c0b131742870a87b4ae6c0ac3e",
+      "topLevelKeys": [
+        "operations",
+        "privateBokEscrow",
+        "hostedPrivateBok",
+        "privateBok"
+      ]
+    }
+  ],
+  "sourceReview": "escrow-service.mjs rollingQueue schedules independent threads; unresolved saved hosted phase refuses before any provider execute. Health retains jobFailure but does not disable unrelated new requests."
+}

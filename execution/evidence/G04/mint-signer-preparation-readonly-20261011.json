@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-11T22:01:23.969Z",
+  "scope": "Public account references and read-only chain state only; no secret contents loaded, signer constructed, transaction estimation, signing or sending",
+  "chainId": 11155111,
+  "block": {
+    "number": "11894502",
+    "hash": "0x4bbc1210d4015d61a9f2bd92b78fdc37423750833b457915ff1a70becad710b3",
+    "timestamp": "1791755220"
+  },
+  "accounts": [
+    {
+      "role": "retained-disposable-author",
+      "address": "0x374f2eEB49A9Cc4a8BB732BB45b3C1fd751fdFC7",
+      "reference": ".build/hosted-v6-onboarding-20261010/result.json",
+      "finalizedBalanceWei": "113299428400771",
+      "finalizedNonce": 9,
+      "pendingNonce": 9,
+      "codeBytes": 23
+    },
+    {
+      "role": "historical-deployer",
+      "address": "0x0443527ca2fd922e62cda88a087757116c71dc21",
+      "reference": "deploy/prover/live-deployment.json:boardDeployment.manifest.actors.ethereumDeployer",
+      "finalizedBalanceWei": "147330675098265",
+      "finalizedNonce": 14,
+      "pendingNonce": 14,
+      "codeBytes": 0
+    }
+  ],
+  "anchorUnchanged": true,
+  "references": {
+    "retainedIdentity": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/hosted-v6-onboarding-20261010/private/identity.json",
+    "identityContentsRead": false,
+    "existingSignerLoader": "scripts/hosted-existing-account.mjs (restores retained MetaMask identity; no headless mint entrypoint)",
+    "historicalMintCommand": "plugins/public/fees.mjs mint CONFIG AUTHOR_DIRECTORY (historical V5; not suitable unchanged)",
+    "servicePrivateConfig": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/service.json",
+    "operatorActor": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/operator.json (Aztec actor, not asserted to be L1 signer)",
+    "deployerKeyFileLocated": false
+  }
+}

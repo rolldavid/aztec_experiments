@@ -1,0 +1,11 @@
+{"stage":"restore-existing-hosted-account"}
+{"stage":"verify-public-asset:user.html"}
+{"stage":"verify-public-asset:aztec_bundle.js"}
+{"stage":"verify-public-asset:plugins.js"}
+{"stage":"load-live-application"}
+{"stage":"restore-disposable-aztec-account"}
+{"stage":"reconnect-disposable-ethereum-account"}
+{"stage":"wait-restored-application"}
+{"stage":"screen-and-withdraw"}
+{"phase":"withdraw","passed":false,"failure":{"stage":"screen-and-withdraw","name":"Error","code":null,"frames":["    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/test-hosted-followup.mjs:52:191"]}}
+{"passed":false,"ownedTreeAbsent":true}

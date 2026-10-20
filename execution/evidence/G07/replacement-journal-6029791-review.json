@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "60297919a9b5586e9fe714637bb6adac78d2c593",
+  "base": "cf84551e0a424494b7b7c1d4f4ecff355864e117",
+  "verdict": "changes requested; predecessor resend finding fixed but final account-context gap remains",
+  "findings": [
+    {
+      "severity": "P2",
+      "file": "shared/l2-journal.mjs",
+      "line": 168,
+      "title": "Final authenticated read can outlive account context validation",
+      "scenario": "Second context guard succeeds, then last awaited storage read/decryption is suspended while account locks or changes. No subsequent guard runs and recovery broadcasts. Same recoverSaved path affects recover and reconcilePrevious.",
+      "reproduction": "execution/evidence/G07/replacement-6029791-context-probe.json",
+      "repair": "Retain predecessor/ciphertext/second-guard checks, add final context validation after last awaited storage work before broadcast. Caller exclusive wallet lease remains mandatory; no additional storage await after final guard."
+    }
+  ],
+  "positiveDisposition": "All predecessor send checks in shared recoverSaved cover both recovery entry points, strict persisted policy and current hash/ciphertext retained; canonical current reconciliation and legacy path unchanged.",
+  "independentTests": {
+    "tests": 116,
+    "pass": 116,
+    "skip": 0,
+    "durationMs": 31669.000125,
+    "log": "/tmp/reviewer-replacement-6029791-tests.log",
+    "sha256": "94a577a4712906115883d563f063a1239b02fff177840b706310bd07f3f6297a"
+  },
+  "sourceHashes": {
+    "shared/l2-journal.mjs": "89f7f397873ba66287c6e2b328d160edb636efd4a24fa9c239e5a325a4f8de82",
+    "scripts/test-w03-proof-replacement.mjs": "2fe014668adc233eb24d1c297b7d2dcb44476b021aa4bce1373aa690e2e4f3e7",
+    "scripts/test-w03-journal.mjs": "dc251aada34f75002872447bc30f96fe8cee53c6001ebe7ed305b7f054064c7b"
+  },
+  "limits": [
+    "Actual Tx serialization and AEAD with synthetic proof/node responses; no real chain or replacement qualification.",
+    "Failure evidence retained before3fffb2e follow-up."
+  ]
+}

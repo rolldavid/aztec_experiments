@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "revision": "8a8f88e211de6944ae2055f4a6ebe97f37871112",
+  "parent": "2c7794b524168557b3371e3c2fb146adf4741895",
+  "finding": "P2 replacement-prepared summary lost renewed quote on account/session reopen",
+  "reviewStatus": "pending independent repair review",
+  "source": {
+    "shared/rolling/application.mjs": "1614cd8befc304f60dacc2a699051674ec63436059463542041f2209744c4c35",
+    "shared/rolling/application.test.mjs": "ee20f90e1d171036ceb63168434248e2e740c589effcc9da9682e8fb33519b98"
+  },
+  "repair": "summary includes detached replacementReview whenever present; original maximumFee/action/nonce remain unchanged.",
+  "verification": {
+    "command": "<pinned Node24.21.0> --test --test-concurrency=1 shared/rolling/application.test.mjs shared/rolling/synchronized-application.test.mjs",
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "durationMs": 11862.533,
+    "cleanup": "test process exited; no services/heavy jobs",
+    "regression": "Reopen actual encrypted workflow+SDK-Tx journal; readAccountStatus and inspectRecovery.intent carry original review, caller mutations cannot change durable review, larger spending rejected, exact renewed ceiling submits."
+  },
+  "evidence": {
+    "replacement-application-summary-repair.log": "c4846a8383e52395aad05e8cf650e308fb166e59015f67cbd36e8440c98c8582"
+  },
+  "limits": [
+    "Labelled fake chain/proofs with actual SDK Tx/AEAD; no genuine reorg or browser qualification."
+  ]
+}

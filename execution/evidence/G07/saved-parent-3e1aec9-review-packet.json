@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "task": "G07",
+  "candidate": "3e1aec931d92d557b4630a8d09febe921e5f8ec2",
+  "base": "6d0b67f",
+  "branch": "codex/rolling-preference-saved-parent",
+  "scope": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-preference-saved.mjs",
+    "scripts/testing/rolling-preference-saved.test.mjs",
+    "scripts/testing/scenarios.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/rolling-public-acceptance.mjs",
+    "scripts/testing/rolling-public-acceptance.test.mjs"
+  ],
+  "leadContribution": "Explicitly adopted pre-existing uncommitted startNodeRpc send-before-forward fault, deniedTransaction capture and onSend(tx) handoff; recorded in commit body. No unrelated work altered.",
+  "changedCodeFirst": [
+    "git show 3e1aec9 -- scripts/testing/rolling-preference-saved.mjs",
+    "git show 3e1aec9 -- scripts/testing/rolling-application-fixture.mjs",
+    "git show 3e1aec9 -- scripts/testing/scenarios.mjs scripts/testing/scenario-flows.mjs scripts/testing/rolling-public-acceptance.mjs",
+    "git show 3e1aec9 -- scripts/testing/rolling-preference-saved.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs"
+  ],
+  "scenario": {
+    "name": "rolling-preference-saved",
+    "deadlineMs": 540000,
+    "aggregateMemoryMiB": 4096,
+    "fixtureHeapMiB": 768,
+    "browser": "none",
+    "proofJobs": 2,
+    "actions": [
+      "Genuine Anonymous main-board post",
+      "Genuine bookmark proof; journal saved before controlled HTTP rejection prior to native node forward",
+      "Native DROPPED, absent effect, valid signed Tx and unchanged private-fee balance",
+      "Close original actor and recreate with identical private account, PXE namespace and encrypted journal directory",
+      "Readonly recovery inspection: unchanged ciphertext and counters",
+      "Explicit resumeSaved with exact saved intent and hash",
+      "Canonical inclusion, same signed bytes/op/nonce/fee ceiling, private digest/bookmark, public reader reconstruction and final journal reopen"
+    ]
+  },
+  "helper": {
+    "export": "exerciseRollingSavedPreference",
+    "inputs": [
+      "root",
+      "expectedDigest",
+      "prepare",
+      "submit",
+      "setSendFault",
+      "snapshotSaved",
+      "readUnsent",
+      "reopenSameStores",
+      "inspectRecovery",
+      "resumeSaved",
+      "collectIncluded",
+      "readPreferences",
+      "activity",
+      "deadlineAt"
+    ],
+    "boundary": "Actual lifecycle, node, keys, fees, projections and receipts owned by fixture. Helper preserves private state only in RAM and returns fixed aggregate assertions. Parent collectIncluded persists paid receipt/effect before subsequent assertions even if resume rejected.",
+    "resumeCounts": {
+      "proofJobs": 0,
+      "walletSubmissions": 0,
+      "transportSends": 1,
+      "estimates": 0,
+      "payments": 0
+    }
+  },
+  "checks": {
+    "final": {
+      "passed": 114,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "elapsedMs": 2902,
+      "processExited": true
+    },
+    "initial": {
+      "passed": 105,
+      "failed": 1,
+      "exitCode": 1,
+      "elapsedMs": 2937,
+      "cause": "Installed Tx.random assigns a random claimed txHash; RPC Tx.schema invokes Tx.create and recomputes actual input hash. Synthetic fixture now calls supported recomputeHash before exact byte comparison. Production equality checks remain unchanged."
+    },
+    "installedEvidence": [
+      "node_modules/@aztec-labs/stdlib/dest/tx/tx.js:127",
+      "node_modules/@aztec-labs/stdlib/dest/tx/tx.js:254"
+    ],
+    "qualification": "Labelled callback mutation tests plus actual SDK serialization through owned tiny loopback listener; no genuine proof or live chain run."
+  },
+  "evidence": {
+    "saved-parent-first/test.log": "051bca96af2ec38a8819635dddebfb0da0057a49245e2c30391a6e1e91e0eeef",
+    "saved-parent-first/binding.json": "4ccca7238c822cbf8513622b31fdb121814f74d080438df7dd47075a5aea82b2",
+    "saved-parent-final/test.log": "84faffaa18eed3cf4752acb1f14d5df3e59124265a4a9fda6268fc6281d18297",
+    "saved-parent-final/binding.json": "6159946ed5c8bd420cf9776db9aed0ecc818387eb08f776ffe97d1a2c15ec4ec"
+  },
+  "limits": [
+    "Source review and actual 540s real-proof campaign still required.",
+    "CLI PXE uses existing labelled fake-indexeddb platform adaptation; this is same-store real SDK recovery, not native browser or key-only recovery.",
+    "Public-effect footprint is existing bounded decoded-field inspection, not complete cryptographic privacy assurance.",
+    "No source outside eight assigned paths, no SDK/node_modules/build/proof/cloud mutations."
+  ],
+  "ownership": "Candidate clean and frozen; eight-path writer claim released pending review. No heavy slot consumed."
+}

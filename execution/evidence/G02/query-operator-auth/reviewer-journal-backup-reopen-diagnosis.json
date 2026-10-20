@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-14T10:04:58.485104+00:00",
+  "sourceRevision": "90d735130fe6d03ed3275776ee0b87d392697b0a",
+  "sourceSha256": {
+    "shared/journal-backup.mjs": "105e2b3305528431dfe185135522e1674109cef8ce81277b9db27eff21901937",
+    "shared/journal-backup.test.mjs": "c4bd28ed757eb19623d3e34014c3ec4efd6ce25ee5014a68dbd2c04dc726acff",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "shared/account.js": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+    "shared/rolling/preference-reader.mjs": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+    "shared/rolling/cold-preference-reader.mjs": "51cba1368e538e83a8b1af74d2dcc1d2454ffda15b6cd5205e549c3ff715a189"
+  },
+  "scope": "Read-only application diagnosis only; no live profile, encrypted user record, service, test or source mutation.",
+  "finding": "restoreRecords currently rejects any differing ciphertext at the same key, even when both authenticated values are identical. journal-record.write creates fresh payload and recovery-descriptor IVs each time. Both preference readers write during read/recovery, including completed reads; this supports a source-level reopening-conflict mechanism, not attribution of the particular full-backup failure.",
+  "minimalOwnedPaths": [
+    "shared/journal-backup.mjs",
+    "shared/journal-backup.test.mjs"
+  ],
+  "recommendedImplementation": [
+    "Retain incoming authentication, descriptor framing, wallet ownership, exact storageKey and size/duplicate checks. Extend the private authenticate helper to retain descriptor and decrypted value for internal comparison only; do not expose them in logs or exports.",
+    "For a present different ciphertext, independently authenticate the local envelope using the same wallet and key. Require identical canonical descriptor keyDomain/scopeText, then accept full decrypted-value equality while preserving local ciphertext. Conservative JSON.stringify equality of entire parsed values is enough for fresh-IV rewrites; never compare only selected status/hash fields or discard revision/intent metadata.",
+    "For the exact allowlist ROLLING_PREFERENCES_V1 and ROLLING_COLD_PREFERENCES_V1 only, differing authenticated local cache may be preserved. Incoming cache must still authenticate; corrupt local cannot be silently replaced. This is local preservation, not merge, newer-wins inference or authoritative completeness.",
+    "All other domains remain financial/intent-bearing: different decrypted payloads fail closed in either direction. Missing local keys still restore the authenticated incoming records by existing null compare-and-swap; newer unknown backup intent must never be silently skipped.",
+    "Keep validation of the complete input before writes. Capture observed local bytes and the skip/install decision; re-read before applying each decision and reject a concurrent change. Preserve existing null CAS/readback and partial-restoration resumability. No journal schema or global workflow redesign required."
+  ],
+  "domainAssessment": {
+    "preserveAuthenticatedLocalCache": [
+      "ROLLING_PREFERENCES_V1",
+      "ROLLING_COLD_PREFERENCES_V1"
+    ],
+    "neverMergeDifferingPayload": [
+      "ROLLING_TOPUP_FUNDING_V1",
+      "ROLLING_AGGREGATE_FUNDING_V1",
+      "AZTEC_BB_L2_JOURNAL_KEY_V1",
+      "AZTEC_BB_ETH_JOURNAL_KEY_V1",
+      "ROLLING_WORKFLOW_V1"
+    ],
+    "ordinaryPreferenceValidation": "Full owner/network/class scope, canonical checkpoint, trusted node and contract class; fold digest/terminal revision and canonical read markers; pre/post write rechecks. Cache carries derived selections, not signed transaction intent.",
+    "coldPreferenceValidation": "Exact class/artifact/proof-policy/tier scope; database/epoch/sequence/mailbox continuity, canonical anchors and terminal fold digest. Missing/incompatible predecessor restarts reconstruction; complete UI only after full validation."
+  },
+  "existingImportSemantics": "shared/account.js restores claims and journals under existing recovery lock before activating prepared wallet. Empty arrays do not restore records. No account.js change is needed for the narrow ciphertext/cache policy. Keys-only import must remain available and must not clear current records.",
+  "focusedRegressionRecommendations": [
+    "Same financial decrypted value encrypted twice with distinct payload/descriptor IVs: restore succeeds with byte-identical local record retained.",
+    "Different financial status/nonce/intent/signed bytes/cap/claim custody in either backup direction: rejection before any input writes; unknown intent not hidden.",
+    "Both exact cache domains: differing valid local cache retained; duplicate, foreign owner, wrong scope/key/domain, corrupt incoming or corrupt local rejected.",
+    "Actual preference reader read-after-export changes ciphertext; import succeeds and next reader still revalidates canonical anchor/database epoch and never publishes stale partial totals.",
+    "Concurrent local ciphertext replacement between validation and commit fails closed; missing-record CAS behavior unchanged.",
+    "Mixed cache plus conflicting financial input rejects the whole validation phase without cache deletion or financial overwrite."
+  ],
+  "qualification": "Actual original full-export failure remains unexplained until owner performs authorized offline private snapshot comparison. Do not label it fixed from source reasoning alone."
+}

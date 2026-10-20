@@ -1,0 +1,75 @@
+{
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "startedAt": "2026-10-13T07:43:54.966Z",
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/live-1.json"
+  ],
+  "reviewSha256": "5a9063cb220d83d8112a6cdcf5863662d4036a0fa3c9b80cce00b761642d91c9",
+  "deadlineMs": 65000,
+  "rssLimitKiB": 1048576,
+  "peakTreeRSSKiB": 315360,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 315360
+    }
+  ],
+  "failures": [
+    {
+      "stage": "public-network-read-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "public-network-read",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 1003,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 24406,
+        "ppid": 59636,
+        "rssKiB": 175136
+      },
+      {
+        "role": "public-network-read",
+        "pid": 24421,
+        "ppid": 24406,
+        "rssKiB": 138512
+      },
+      {
+        "role": "public-network-read",
+        "pid": 24422,
+        "ppid": 24421,
+        "rssKiB": 1712
+      }
+    ]
+  },
+  "publicSummary": {
+    "passed": false,
+    "readsComplete": false,
+    "requests": 14,
+    "elapsedMs": 892,
+    "nodeStartupQualified": false
+  },
+  "elapsedMs": 1255,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T07:43:56.223Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "receiptPresent": true,
+  "receiptSha256": "43d6c7e62c2de150809c69ebe2e770fe25897695c45a651b3453fbe90c487817",
+  "completed": true
+}

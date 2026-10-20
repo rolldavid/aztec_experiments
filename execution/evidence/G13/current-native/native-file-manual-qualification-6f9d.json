@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-14T02:58:03.654596+00:00",
+  "priorPidAbsent": true,
+  "priorPid": 86940,
+  "failedMetadataAndLeasePreserved": true,
+  "evidence": "native-file-readonly-result-6f9d.json",
+  "evidenceSha256": "5653801a00bbd2e69e9ff67a41e0e204b7305def96eeb423946d2fcc6d476212",
+  "head": {
+    "number": "0x3a1",
+    "hash": "0x2630e779d6974629138b943206b34497961b6e0f19f5176f7615e6ec244c0620",
+    "pending": "421",
+    "proven": "421"
+  },
+  "financialReplay": false,
+  "observation": "Original constructor+portalregistration reconciled; separatearchiverestored oldest1; actualstartupfailedwallclock; latestnativefile exactpriorcleanhead421/allpayment preserved"
+}

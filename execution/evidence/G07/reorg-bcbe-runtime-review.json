@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "verdict": "PASS bounded genuine initialized-marker same-store cold reorg recovery",
+  "findings": [],
+  "outer": "execution/evidence/G07/application-bcbe7cc0-5a6c-4117-b052-c24007bc3284.json",
+  "outerSha256": "2e1a74b1fc0fbae550d822fd2230cf7873302283eb2eae8c338ab5e082c4d5e3",
+  "inner": "execution/evidence/G06/application-port-b1b77775-d6b7-4fda-b620-d8334c478a24/observation.json",
+  "innerSha256": "7914840ff95dbd5a91ee8476bb1aa02c6ef5f170d4df4133122becb3b1e9d415",
+  "outerInnerEqual": true,
+  "independentChecks": {
+    "sourceEntriesMatched": 405,
+    "sourceEvidence": "execution/evidence/G07/reorg-bcbe-independent-source-check.json",
+    "effectsDecodedAndRoundtripped": 4,
+    "codecEvidence": "execution/evidence/G07/reorg-bcbe-independent-codec.json",
+    "originalSignedBytesSha256": "5a8cd0ae04056c89501446b9216598b5bc833df78c70e28b66d760d67febaa62",
+    "compressedOriginalTxIndependentlyDecoded": false,
+    "currentAssetHashes": {
+      ".build/sdk/sdk-manifest.json": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+      ".build/rolling-wallet/manifest.json": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+      ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+      "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+    },
+    "allCurrentAssetsVerified": {
+      "sdkInputs": 2040,
+      "sdkOutputs": 8,
+      "walletInputs": 81,
+      "walletOutputs": 24
+    }
+  },
+  "runtime": {
+    "elapsedMs": 484835,
+    "peakTreeRSSKiB": 2167968,
+    "maxSampleGapMs": 1494,
+    "childExitCode": 0,
+    "allCleanup": true,
+    "httpNativeJobs": {
+      "jobs": 1,
+      "bytes": 0,
+      "running": false,
+      "submitted": 4,
+      "completed": 4,
+      "failed": 0
+    },
+    "applicationProofs": true,
+    "networkProofs": false,
+    "controlledSettlement": true
+  },
+  "verifiedConjunction": [
+    "Actual retained initialized bookmark at R14, L1ancestor294, depth45 single fork removing original marker inclusion17 and anchor16; same L1height/differenttip/commonancestor stable. Both sequential miner owners stopped/restored.",
+    "Actual archiver/worldstate unwind toR14 followed by closing original actor and recreating SAME PXE namespace and encrypted journal directory before first post-fork preference read. No fresh-store bypass.",
+    "Complete authenticated retained head/state recovered exactly with activity counters unchanged; normal original validation Block header not found, receiptDROPPED/effectabsent, no pool deletion.",
+    "New same-height canonical block16 hash differs from original anchor; explicit expectedMarkerHash and unchanged retained head supplied to prepareReplacement; renewed fee quote separately reviewed before one new proof/send.",
+    "Source computes independent expected marker digest from actual chain/version/board/root/newblockhash/retaineddigest with separator0x52435031, requires exact complete private snapshot including throughBlock16/newhash, and old tx remains dropped. These private values are deliberately not persisted; evidence establishes executed source-bound assertions, not independent offline digest recomputation.",
+    "Replacement canonical18 has distinct txHash; persisted binary hash/fee agrees with actualreceipt/effect and installed codec. Private preference events not in Board public event stream; only FPC public log for private action.",
+    "Original signed byteSHA retained in predecessor record; journal reopen canonical result retains both historical inclusions. Four nativeHTTP proofs total (root, retainedbookmark, orphanmarker, replacement), all completed/no failed.",
+    "Canonical FPC anchor17\u219218 sync, before/after canonical18 checks and actual three balance equalities passed."
+  ],
+  "accounting": {
+    "canonicalHumanFees": "46346076600000",
+    "standaloneFee": "8837964000000",
+    "canonicalDebit": "55184040600000",
+    "excludedOrphanFee": "8511002400000",
+    "finalPrivateAndPool": "999999944815959400000",
+    "authorPublicBalance": "0",
+    "lastVerification": {
+      "status": "passed",
+      "stage": "complete",
+      "expected": {
+        "privateBalance": "999999944815959400000",
+        "authorPublicBalance": "0",
+        "poolBalance": "999999944815959400000"
+      },
+      "target": {
+        "number": 18,
+        "hash": "0x2ce8328b1b93caa8eac13a197df0b5ecda78c3e6de5f937158f174af0339c754"
+      },
+      "anchorBeforeSync": {
+        "number": 17,
+        "hash": "0x016b5dbf29185e68d21d34c97ee8b9d6851e0b2ce8c938d22a38214aec6684d3"
+      },
+      "anchorBeforeRead": {
+        "number": 18,
+        "hash": "0x2ce8328b1b93caa8eac13a197df0b5ecda78c3e6de5f937158f174af0339c754"
+      },
+      "targetCanonicalBefore": true,
+      "anchorCanonicalBefore": true,
+      "privateBalance": "999999944815959400000",
+      "authorPublicBalance": "0",
+      "poolBalance": "999999944815959400000",
+      "anchorAfterRead": {
+        "number": 18,
+        "hash": "0x2ce8328b1b93caa8eac13a197df0b5ecda78c3e6de5f937158f174af0339c754"
+      },
+      "targetCanonicalAfter": true,
+      "anchorCanonicalAfter": true
+    }
+  },
+  "limits": [
+    "Actual SDK with CLI fake-indexeddb adapter, not native browser reorg persistence.",
+    "Public HTTP four fresh/cold views occurred beforefork at17; no postfork public-index reorg HTTP acceptance.",
+    "Intermediate restored-fee equality executed but only final numeric verification persisted.",
+    "No full G07 cold work bound, full privacy, notification browser, remote Linux, release or specialist audit closure.",
+    "Prior failed runtime evidence unchanged; no inferred historical mismatch amount."
+  ]
+}

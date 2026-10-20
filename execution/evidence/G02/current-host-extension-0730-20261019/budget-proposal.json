@@ -1,0 +1,131 @@
+{
+  "preparedAt": "2026-10-19T04:05:42.994775+00:00",
+  "scope": "Proposal only; no resources, schedules, timers or ledger changed",
+  "instanceId": "i-09e2dbeea10854dc8",
+  "from": "2026-10-19T06:30:00Z",
+  "recommendedDeadline": "2026-10-19T07:30:00Z",
+  "recommendedEndpointCleanup": "2026-10-19T07:35:00Z",
+  "extensionHours": "1",
+  "priorHistoricalBoundUsd": 140,
+  "priorCurrentForecastUsd": "284.3734997313360",
+  "proposedCampaignUpperForecastUsd": "150.9366983980026666666666666",
+  "proposedCumulativeUpperForecastUsd": "290.9366983980026666666666666",
+  "recommendedCumulativeReservationUsd": 295,
+  "ceilingUsd": 300,
+  "unallocatedAfterReservationUsd": 5,
+  "forecastHeadroomUsd": "9.0633016019973333333333334",
+  "incrementUsdPerHourIncludingTax": "6.563198666666666666666666666",
+  "componentsUsd": {
+    "compute13h": "12.05568",
+    "gp3_1064GiB_37h": "4.374222222222222222222222222",
+    "extra375MiBps_37h": "1.15625",
+    "ipv4_13h": "0.065",
+    "crossRegionAndArtifactReads": "5",
+    "backup20GB30days": "1",
+    "requestsMonitoring": "2",
+    "egressIncluding200GBFailureAllowance": "80.696096442780",
+    "caddyRetention": "0.1",
+    "privateManagementEndpoints": "1",
+    "taxUnpriced20percent": "21.48944973300044444444444444",
+    "delayedBillingCleanupBuffer": "20",
+    "bokArtifactIncrementalAllowance": "2"
+  },
+  "ratesUsd": {
+    "computePerHour": "0.92736",
+    "storagePerHour": "0.1182222222222222222222222222",
+    "throughputPerHour": "0.03125",
+    "ipv4PerHour": "0.005",
+    "egressPerHour": "4.3875"
+  },
+  "alternatives": [
+    {
+      "deadline": "2026-10-19T07:30:00Z",
+      "extensionHours": "1",
+      "forecastUsd": "290.9366983980026666666666667",
+      "withinExistingEightHourControl": true
+    },
+    {
+      "deadline": "2026-10-19T08:00:00Z",
+      "extensionHours": "1.5",
+      "forecastUsd": "294.2182977313360000000000000",
+      "withinExistingEightHourControl": false
+    },
+    {
+      "deadline": "2026-10-19T08:30:00Z",
+      "extensionHours": "2",
+      "forecastUsd": "297.4998970646693333333333333",
+      "withinExistingEightHourControl": false
+    }
+  ],
+  "liveReconciliation": {
+    "checkedAt": "2026-10-19T04:03:41.443715+00:00",
+    "currentHostAccruedHours": "4.291512143055555555555555556",
+    "currentHostAccruedComputeRateEstimateUsd": "3.979776700984000000000000000",
+    "previousTerminatedHostsBoundHoursPreserved": 4.5,
+    "observedCurrentNetworkOutBytes": 387013904.0,
+    "networkAllowanceNotReleased": true,
+    "instanceCount": 1,
+    "volumeGiB": 1064,
+    "snapshots": 0,
+    "endpoints": 2,
+    "allVolumesDeleteOnTermination": true,
+    "currentCampaignArchiveBytes": 3559069493,
+    "allBucketArchiveBytes": 36793235304,
+    "olderArchivesDisposition": "Remain in unchanged140USD prior bound; no free spending inferred",
+    "multipartUploads": 0
+  },
+  "preservedBuffers": {
+    "cleanupComputeHours": ".5",
+    "postStopVolumeHours": 24,
+    "endpointOrphanHours": 24,
+    "currentArchiveAllowanceGB": 20,
+    "archiveRetentionDays": 30,
+    "networkFailureAllowanceGB": 200,
+    "priorNetworkMetricLagAllowanceGB": "22.5",
+    "delayedBillingCleanupUsd": 20,
+    "taxUnpricedPercent": 20,
+    "bokArtifactAllowanceUsd": 2
+  },
+  "endpointCostCheck": "Two endpoints through07:35 plus24h orphan, rounded37h each: .02*37+.05=.79USD remains below existing1USD component. No new endpoint.",
+  "financialReceiptLimit": "Forecast, not an invoice. Preserve all prior charges/unknown liabilities; no Cost Explorer savings or observed-low-network substitution. All declared buffers retained.",
+  "evidence": {
+    "actual-readonly.json": "8fe33af9b100a7560ebe1c920af62187be7cdc2e90789f9d10443ddd31f5ed14",
+    "retention-summary.json": "60dabbb28996a8490d971fcdf6bea83deaa39d51c0d03d0382aade870e9010b3",
+    "budget.json": "27f9545ce21cfb59fc37096473790e0b4ef2a64b233e6ea6f3fded255f722a8d",
+    "host-controls-result.json": "c52ede8da789a4f97b26b08c9ee52a7ef53e5046bb10474f78a8b9e4f8b72d92"
+  },
+  "paidActions": 0,
+  "ledgerEdits": 0,
+  "deadlineChanges": 0,
+  "existingControlLimit": {
+    "createdAt": "2026-10-18T23:45:46Z",
+    "maximumExistingBudgetWindowHours": 8,
+    "latestPermittedByExistingControl": "2026-10-19T07:45:46Z",
+    "recommendedWithoutCodeChange": "2026-10-19T07:30:00Z",
+    "source": "deploy/prover/bootstrap.py validate and existing extend-host.sh guard",
+    "doNotResetCreatedAt": true
+  },
+  "hostControlsReadback": {
+    "deadline": {
+      "createdAt": "2026-10-18T23:45:46Z",
+      "budgetStop": "2026-10-19T06:30:00Z",
+      "commissioningStop": "2026-10-19T00:15:46Z",
+      "runtimeArchiveSha256": "277e94caca0667270aee1ac48e782e9d994a17194533553c0e4024f32e1bc808",
+      "manifestSha256": "05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e",
+      "hostResources": {
+        "dataVolumeGiB": 1024,
+        "egressMbps": 50
+      }
+    },
+    "budgetTimer": "NextElapseUSecRealtime=Mon 2026-10-19 06:30:00 UTC\nActiveState=active",
+    "safetyTimer": "ActiveState=active",
+    "interface": "enp39s0",
+    "classes": "class htb 1:10 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 1600b cburst 1600b \nclass htb 1:1 root rate 50Mbit ceil 50Mbit burst 1Mb cburst 1Mb \nclass htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 1600b cburst 1600b"
+  },
+  "plannedAssetDelta": {
+    "bytesUpperBound": 28200000,
+    "newResources": 0,
+    "currentCampaignStoredBytesAfterDeltaUpperBound": 3587269493,
+    "disposition": "Included in unchanged20GB30day archive allowance,5USD cross-region/artifact-read allowance and full50Mbps transfer envelope; no duplicate incremental charge or allowance release."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "sourceRevision": "e339f197272e61aac5dd6cee2eb7ea6fd092bd8c",
+  "candidate": "b140728d9c933eab5502d14d467900d020e10626",
+  "base": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "sourceHashesMatch": true,
+  "generatedFiles": {
+    "apps/dist/aztec_bundle.js": "1509140dec6aa68849e5ee292380ee69bca0a5d4115d5416a65fb60c97d0fafa",
+    "apps/dist/censor.html": "16e4b14de60dbc4048f17fcbcc870c044c9be11a8661b3f6e000b77949e7ea0e",
+    "apps/dist/fee-juice.html": "f4ade9587b7a347f8dfe31169557601b06f385e193f6044b8fd82981f9c7ecda",
+    "apps/dist/sdk-manifest.json": "98c8ed86e64dbe6fd4575d3aca8af95e67209632b1483638534a60ac5d63db1b",
+    "apps/dist/user.html": "cc442b710767e3c94cb2220b5f79007beb8defaf58d0cdc0233081a917f71f8c"
+  },
+  "normalBuild": "scripts/build-sdk.mjs;apps/build.mjs;scripts/rolling-wallet-assets.mjs;scripts/check-sdk.mjs",
+  "combinedChecks": "25focused application cases pass on generated candidate; static wallet loader pass; actual live crash/reload remains pending"
+}

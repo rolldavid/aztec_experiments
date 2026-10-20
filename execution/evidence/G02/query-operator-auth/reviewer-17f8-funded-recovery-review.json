@@ -1,0 +1,121 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "17f8a03b0b37d7a146837a7d45cdc115e19bbc64",
+  "base": "0b6d66dc36d7e2b0feb30b00ac5257f0834f62a6",
+  "verdict": "PASS scoped funding-recovery component review; generated SDK/wallet rebuild and current build checks pending before integration",
+  "blockingFindings": [],
+  "paths": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "1b27ecc11e72cfc34494f4ba3135bb0b16da518b0c74a3616b1bc99713947eba",
+    "apps/rolling/wallet-panel.mjs": "1502d87c026da74f30b48bba95ca06ac0177e72b63454c3a659ec8558313482c",
+    "apps/rolling/wallet-runtime.mjs": "00469cd4572833287c8a6b54ff33187a1c1a93f120856e3e2ad4ea2497dbf8a3",
+    "apps/rolling/wallet-session.mjs": "b857636e20652f755bafc4f9aa59dda112be0c75d47e8fb764dc558e5b873170",
+    "apps/rolling/wallet-session.test.mjs": "83e5b585c5df4d172f58c8f9e182a8426170e7323712ebf560a1ed7372f52ae0",
+    "scripts/test-w03-ethereum-journal.mjs": "46d34773c6c0d503dee855e3aa9c7f47e3d825ef1eff59bbf214b1242fd9e175",
+    "shared/ethereum-journal.mjs": "a96648820e87b02ac4777e21ffb984f38f55fa9d6559b9a78253c031fcf1aa5e",
+    "shared/rolling/application.mjs": "c07c33ddfed173f656c3fa83ffe56342389bc7cdd47cdef582f7ece342d323ec",
+    "shared/rolling/application.test.mjs": "74adb20901400541a311a3e6cc92f0a415cb8f25e4a6016ba19e853c6be449db",
+    "shared/sdk-entry.mjs": "e01a48f14bbc9cd64895999eee68239d2cef28e7599bd5506bd5264fdabe0ecd"
+  },
+  "logs": {
+    "tests.log": {
+      "sha256": "c930bd55a02305a82bd3018c8ff62e82f780602baf373e61e8df48093c38b769",
+      "footer": [
+        "\u2139 tests 150",
+        "\u2139 suites 0",
+        "\u2139 pass 150",
+        "\u2139 fail 0",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 3074.786292"
+      ]
+    },
+    "application-tests.log": {
+      "sha256": "3b188db5962870af662453f0960e64fea219a332469a7a45916fc9f6cd25d93b",
+      "footer": [
+        "\u2139 tests 138",
+        "\u2139 suites 0",
+        "\u2139 pass 138",
+        "\u2139 fail 0",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 37056.787542"
+      ]
+    },
+    "funding-focused.log": {
+      "sha256": "9fc0c7331311d1281a57796f55f838513682b08ecf90ed57e774f122cfe1aae2",
+      "footer": [
+        "\u2139 tests 7",
+        "\u2139 suites 0",
+        "\u2139 pass 7",
+        "\u2139 fail 0",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 1132.510708"
+      ]
+    },
+    "session-tests.log": {
+      "sha256": "406f92121faffc3a7284f970d493e8e7fee1eb43631f2570c5ecaf62781b9d85",
+      "footer": [
+        "\u2139 tests 48",
+        "\u2139 suites 0",
+        "\u2139 pass 48",
+        "\u2139 fail 0",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 21869.571833"
+      ]
+    },
+    "browser-funding-focused.log": {
+      "sha256": "8d2b7b1fb1f1760d35b4231f87c0fa30e5a690b451f30af902d4af9ed27ab589",
+      "footer": [
+        "\u2139 tests 3",
+        "\u2139 suites 0",
+        "\u2139 pass 2",
+        "\u2139 fail 1",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 33213.163166"
+      ]
+    },
+    "panel-tests.log": {
+      "sha256": "3c1962d8a57a640b26b497ac22a1a4f7f9282b1649267bf27930533ab6f9b4bd",
+      "footer": [
+        "\u2139 tests 73",
+        "\u2139 suites 0",
+        "\u2139 pass 73",
+        "\u2139 fail 0",
+        "\u2139 cancelled 0",
+        "\u2139 skipped 0",
+        "\u2139 todo 0",
+        "\u2139 duration_ms 52639.456625"
+      ]
+    }
+  },
+  "sourceFindings": [
+    "Bok token deposit uses existing encrypted Ethereum journal scope and durable intent. Direct transaction calldata including recipient, amount and secretHash must match; event-only wallet envelopes do not count as success. Canonical receipt/from/nonce/chain/block and exactly one matching effect remain required.",
+    "Existing recover defaults retry:false. No new automatic resubmission or journal is introduced; explicit legacy same-nonce retry remains existing behavior and is not invoked by this wallet recovery slice.",
+    "claim-deposit action stores only closed public receipt metadata in its summary; derived collateral secret is inside existing encrypted args. Optional private-fee claim salt is not in public summary. Receipt verifier remains canonical L1/finality/L2 anchor/Merkle authentication authority.",
+    "Preparation and submission derive/verify collateral again; submit compares exact derived arguments. Optional fee receipt is independently reverified at each payment preparation and enters existing PrivateMintAndPayFeePaymentMethod, preserving FeeJuice claim plus FPC mint/pay in one L2 transaction.",
+    "Existing submitPrepared writes submitting before wallet send, supplies the same L2 journal and workflow operation, and reconciliation cannot silently resend.",
+    "Session exposes only five lazy guarded Ethereum read methods, supplies no signer, retains existing claim-secret custody, and destroys the provider on session disposal. Native proof configuration dcb remains unchanged.",
+    "UI accepts a bounded explicit public receipt file, reviews amount and maximum fee, and sends only after confirmation; provider messages and private derived arguments are not displayed. Retained preparation resumes through existing application status."
+  ],
+  "runtimeInterpretation": [
+    "150 journal tests passed, including Bok lost response/no resend and exact-call/event/reorg negatives.",
+    "138 application/verifier checks predate optional-fee addition; final seven selected funding cases pass and verify changed optional-fee wiring. No assertion that a new full138 run occurred.",
+    "48 session checks plus focused new lazy provider case coverage; final panel73 passed. Earlier browser-focused expected-text failure retained, not reclassified.",
+    "These fixtures verify wiring and guards; they do not establish real wallet bridge consumption, spendable funding or actual atomic fee mint execution."
+  ],
+  "openAcceptance": [
+    "Normal SDK export/bundle and wallet rebuild with current manifests",
+    "Actual wallet receipt recovery and fee-claim plus collateral execution",
+    "Full aggregate ETH/USDC funding, allowance/conversion and Bok readiness",
+    "Real-proof testnet acceptance"
+  ],
+  "noRuntimeExecutedByReviewer": true
+}

@@ -1,0 +1,44 @@
+{
+  "candidate": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "base": "d026cee0054c89f4d4796b203322fb05c6492aac",
+  "reviewer": "reviewer_resume",
+  "verdict": "approve bounded evaluator admission repair",
+  "requirements": [
+    "M03 finite-run evaluation honesty; original corpus, quality and latency gates unchanged"
+  ],
+  "blockingFindings": [],
+  "sourceHashes": {
+    "censor-daemon/evaluate-model.mjs": "3abfd61aee9a073cb806b6d3ac72414cb86c5d90e40d579cbdeaf7dd3b910c59",
+    "censor-daemon/test_evaluation.mjs": "684d853840b50f5dc9cd36d8c7a98315190d4a8158fbb39d24ecd430bf817ee9"
+  },
+  "assessment": [
+    "Changed source and existing/new tests read before candidate packet. Only evaluator admission, explicit session deferral and four regressions change; no new runtime/framework or model retry.",
+    "Each unattempted case now requires remaining work budget >= original immutable LIMITS.timeoutMs120000. Startup costs are included. Insufficient tail leaves that case absent from results, records its ID/remaining/required budget, then verifies/stops runtime through existing finally.",
+    "Every admitted call receives full120000 timeout. Genuine thrown errors still become durable error results, remain part of denominators/latency and block qualification; completed-set continuation never retries an error to choose a better outcome.",
+    "Deferred cases resume on a subsequent explicit invocation from the first missing ID. An incomplete or zero-result campaign remains complete=false/qualityPass=false/latencyPass=false/pass=false; stopped-cleanly means cleanup, not qualification. Original maxCases and work-budget bounds remain.",
+    "Atomic result/session saves, exclusive lock, runtime identity verification, full corpus digest and evaluatorDigest/model/platform/prompt/config exact binding are unchanged. Repaired evaluator cannot append to original109-result output because evaluatorDigest differs; original must remain immutable and linked to any separately authorized repaired campaign.",
+    "Corpus bytes, production moderation/model runtime and model identity source identical to base. THRESHOLDS and report completeness/error rules unchanged. No existing saved campaign/result file changed by this commit.",
+    "Previous actual5109ms tail timeout is a plausible operator-budget artifact from oldmin(120000,remaining), reproduced by controlled fixture. This review does not infer the model would have passed with120000ms or erase that historical result."
+  ],
+  "independentVerification": {
+    "command": "TMPDIR=/private/tmp <pinned Node24.21.0> --test censor-daemon/test_evaluation.mjs",
+    "log": "execution/evidence/M03/reviewer-ecc3f0c-evaluation.log",
+    "sha256": "a5dae31c1c4e4c8f700fce3fd5ae94d497d11df77a59ec07086a447ae020e90e",
+    "pass": 30,
+    "fail": 0,
+    "skip": 0,
+    "diffCheck": "passed",
+    "sourceAndWorkerLogs": "both exact source hashes and all three retained regression logs verified",
+    "runtime": "Existing disposable controlled fixtures only; no model/remote/container/build/service action."
+  },
+  "workerPacket": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/m03-model-budget/packet.json",
+    "sha256": "566d61232bba2bd000e1e2ce5417fd4ae5a695436b8774628f51031afe0cf70e"
+  },
+  "limitations": [
+    "Conservative admission may leave nearly120seconds unused in a480second batch. This is intentional, not lowered acceptance or reported model latency.",
+    "Previous109 actual results were not independently reread remotely during this review; preservation follows commit scope/exact saved binding and must also be honored by lead continuation.",
+    "A new repaired campaign requires an explicit separate output; no hidden retry or automatic requalification is authorized by source approval.",
+    "Capacity still requires full corpus and measured flag evidence; elapsed workload/soak/network/privacy release gates remain."
+  ]
+}

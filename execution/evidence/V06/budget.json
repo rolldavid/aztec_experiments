@@ -1,0 +1,10 @@
+{
+  "approvedTotalUSD": 100,
+  "priorConservativeTotalUSD": 49.47,
+  "newMaximumComputeUSD": 28.8,
+  "newAncillaryReserveUSD": 5,
+  "conservativeMaximumTotalUSD": 83.27,
+  "deadline": "2026-10-13 08:42:31 UTC",
+  "maximumHourlyUSD": 0.4,
+  "instanceCount": 1
+}

@@ -1,0 +1,8 @@
+{
+  "source": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "execSession": 30239,
+  "exitCode": 0,
+  "processEvidence": "startup09-package-process.json",
+  "processSha256": "f15d9bf0c08ac1d378d2aa5db12d052b103c9929fe3d9b93d2aefe3ba12dcae8",
+  "note": "Lead executionmetadata separate from immutable reviewed tool result; original bytes retained."
+}

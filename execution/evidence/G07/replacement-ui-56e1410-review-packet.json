@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "revision": "56e141030ee4aefc72ad04d5f759162019faf298",
+  "base": "7d9c7d7",
+  "applicationDependency": "37c204cb1d64f8e30a5d9c8edf91e76c12511101",
+  "reviewStatus": "pending independent source review",
+  "source": {
+    "apps/rolling/wallet-panel.mjs": "5940a088924fd7fc699cf5dd3c4fc3d8f4dd90feef19b999c681e6de41bf0750",
+    "apps/rolling/wallet-panel.browser.test.mjs": "aa780c4119c3f15bd9d32b1cfd21ea1074a5c148af24dea4c5324f681923d0e9"
+  },
+  "checks": {
+    "command": "caffeinate -i <pinnedNode24.21.0> --test --test-concurrency=1 --test-timeout=20000 apps/rolling/wallet-panel.browser.test.mjs",
+    "outerProcessGroupBoundSeconds": 120,
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 15974.954417,
+    "exitCode": 0,
+    "sourceBinding": {
+      "source": {
+        "apps/rolling/wallet-panel.mjs": "5940a088924fd7fc699cf5dd3c4fc3d8f4dd90feef19b999c681e6de41bf0750",
+        "apps/rolling/wallet-panel.browser.test.mjs": "aa780c4119c3f15bd9d32b1cfd21ea1074a5c148af24dea4c5324f681923d0e9"
+      },
+      "exitCode": 0,
+      "durationMs": 16019,
+      "processExited": true
+    },
+    "cleanup": "test/browser/listener cleanup completed; outer process exited; browser slot released",
+    "syntax": true,
+    "diffCheck": true
+  },
+  "evidence": {
+    "replacement-ui-browser-first.log": "b4f28a1bbc1489a3a744c0ae44c1004c00d1f12cdbe58294fe83e8916548e7d3",
+    "replacement-ui-browser-first-binding.json": "625bdd307232e68c0dd587058516ddce095764488db4773f57ed02f45ac148cc"
+  },
+  "behavior": [
+    "Check recovery options calls read-only inspectRecovery explicitly, never during render/open.",
+    "Original action stays visible; optional history details show original settings head plus prior canonical transaction/fee observations clearly labelled historical.",
+    "Only replacement-available exposes Review replacement; current hash and complete exact head forwarded unchanged.",
+    "Read marker stays at saved height and changed hash requires an unchecked explicit acknowledgement before preparation; closing/rechecking clears consent.",
+    "replacement-prepared displays renewed replacementReview.maximumFee separate from original ceiling; Confirm replacement and send is a separate click. No unsupported cancellation or exact-byte resume added.",
+    "Reopened prepared summary restores renewed quote without inspect/prepare/send; submit errors return to existing recovery.",
+    "Failure/lock/account change/close clears RAM eligibility, preserves encrypted workflow authority. Late inspection results cannot repopulate switched account DOM.",
+    "Existing50ff delayed refresh lock regression retained and passed."
+  ],
+  "assumptions": [
+    "Public display strings and structured recovery data come from reviewed production application, not untrusted network APIs. Text nodes preserve literal data.",
+    "No extra session wrapper needed: production wallet-session wraps synchronized methods dynamically under existing account lease.",
+    "Wallet bundle/build and actual funded browser/reorg acceptance are lead-owned later work."
+  ],
+  "limitations": [
+    "All44 checks use actual Chromium/production DOM with labelled account/RPC/storage doubles; no genuine transaction/reorg recovery acceptance claimed.",
+    "Advanced head, unknown valid-but-unsent and unavailable historical context stay fenced; UI does not invent financial retry."
+  ]
+}

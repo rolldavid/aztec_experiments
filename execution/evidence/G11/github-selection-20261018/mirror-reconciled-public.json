@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "acceptedRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+  "publication": {
+    "published": true,
+    "repositoryId": "63bdbadc8db2b808bb36a4b8206f2e27c865d32c3a7e4c8b1a84adaf333b0a93",
+    "threadId": "0x00a2a974f5c5faa50baa898d7ee36cadbc78c234d4f23c867a33dd47fd3c972f",
+    "acceptedRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+    "publicationId": "54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c",
+    "artifactUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/r/a7809ad963de416d7ff37056260a3afe35dab072/files/index.html",
+    "sourceUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/r/a7809ad963de416d7ff37056260a3afe35dab072/source.json",
+    "latestUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/latest/",
+    "latestSourceUrl": "http://127.0.0.1:8798/t/54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/source.json"
+  },
+  "mirror": {
+    "mirrored": true,
+    "repositoryId": "63bdbadc8db2b808bb36a4b8206f2e27c865d32c3a7e4c8b1a84adaf333b0a93",
+    "threadId": "0x00a2a974f5c5faa50baa898d7ee36cadbc78c234d4f23c867a33dd47fd3c972f",
+    "acceptedRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+    "sourceDigest": "b829669a7aff4ccbf9a8e0e666419e56f42bcfcc3ebe3696999de004908bf919",
+    "remoteRepositoryId": 1424177099,
+    "remoteCommit": "b0f3cedf1881677ae9171dfc25432b8c64af9dd0",
+    "remoteTree": "e29638f3a931aa91ebc6e7352812a2c0f3b6e9b6",
+    "remoteParent": "019cd5aa89bd3c658f17abd644f6c3c5d329f5f6",
+    "operatorUrl": "https://github.com/zac-williamson/bok-54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c/tree/b0f3cedf1881677ae9171dfc25432b8c64af9dd0"
+  },
+  "actionsDisabled": true,
+  "billingJournalUnchanged": true,
+  "modelCalls": 0,
+  "chainTransactions": 0
+}

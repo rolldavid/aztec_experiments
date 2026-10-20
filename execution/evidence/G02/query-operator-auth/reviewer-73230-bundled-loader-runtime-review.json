@@ -1,0 +1,20 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "ac35fd3cc2e01ef670bf4ab225cc1f561de3cef4",
+  "verdict": "ACCEPT_FOCUSED_ACTUAL_NORMAL_CLI_LOADER_STORE",
+  "actualPacketSha256": "3e338622fb74bc1bdda5f38017aef33b69494d8af1b5bbb34767aba923991440",
+  "tests": 2,
+  "pass": 2,
+  "fail": 0,
+  "skipped": 0,
+  "elapsedMs": 971,
+  "sampledPeakTreeRSSKiB": null,
+  "measurement": "No sample in short run; not measured zero.",
+  "verification": [
+    "All actual bound file hashes verified; raw TAP exact two labels/zero nonpass, exit0 and no supervisor failures.",
+    "Exact-source seam negatives and real module prelude/normal bundle loader/simulator/store open-write-read-close-delete checks pass.",
+    "5370 protected bindings unchanged and positive process/TMP cleanup recorded."
+  ],
+  "scope": "Real normal bundled CLI loader/store compatibility only, no main transaction/PXE/network.",
+  "next": "Minimal broader bundled transport/readOnlyPXE/drain source proposal may be reviewed; no runtime or actual deployment approval from this receipt."
+}

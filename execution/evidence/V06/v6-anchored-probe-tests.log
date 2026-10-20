@@ -1,0 +1,12 @@
+✔ disarming corruption leaves SDK cache polluted; restoration refetches authentic membership (425.142875ms)
+✔ restoration rejects a reset that fails to reach the source (1.306583ms)
+✔ restoration rejects a source response inconsistent with canonical membership (0.789667ms)
+✔ probe matches both fields of the actual V6 anchored block parameter and the message (0.502834ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1073.419584

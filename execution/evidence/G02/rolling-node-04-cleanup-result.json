@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-11T22:14:57.199749+00:00",
+  "exitCode": 0,
+  "result": {
+    "SuccessfulFleetDeletions": [
+      {
+        "CurrentFleetState": "deleted_terminating",
+        "PreviousFleetState": "active",
+        "FleetId": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945"
+      }
+    ],
+    "UnsuccessfulFleetDeletions": []
+  }
+}

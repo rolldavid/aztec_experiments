@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "accepted-normal-public-avatar-build-only",
+  "source": "ae1a220b2d5694ba84ff6875d36882e4d97eceaf",
+  "actualPacketSha256": "158f4db48cdb1c3643b8cd9a8b06f8571ef0ee811842783b0d28a9b3b77fd583",
+  "buildSession": 78625,
+  "auditSession": 8453,
+  "elapsedMs": 3244,
+  "peakTreeRSSKiB": 785040,
+  "verified": {
+    "sourceBindings": 4106,
+    "protectedOutputs": 152,
+    "priorOutputs": 2,
+    "rawSnapshots": 7,
+    "tools": true,
+    "publicOnlyTranspiled": true,
+    "exactDependencyInventory": 64,
+    "exactLocalSources": 1,
+    "compilerStdMatchesRaw": true,
+    "manifestInputs": 7,
+    "artifactSha256": "0d08f33e943cf760d3ab938fd77f98654707e31cba253dd575a3a6c4719312a3",
+    "ownedPeakProcessesAbsent": true,
+    "processingAbsent": true,
+    "cleanSource": true
+  },
+  "limitations": [
+    "No image, transaction or proof qualification; compiler260 hold remains open."
+  ]
+}

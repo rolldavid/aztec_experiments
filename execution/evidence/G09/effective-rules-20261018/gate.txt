@@ -1,0 +1,1 @@
+{"status": "pass", "mode": "integrate", "candidate": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1", "base": "f7bbfd06f413bdd72243d9a46c382926617f2000", "ref": "refs/heads/codex/rolling-chat-draft3"}

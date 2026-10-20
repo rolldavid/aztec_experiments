@@ -1,0 +1,77 @@
+{
+  "candidate": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+  "base": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+  "task_id": "G11-G12-private-mirror-and-runbook",
+  "holds": [],
+  "findings": [],
+  "review": {
+    "candidate": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+    "base": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-252b-broker-runbook-review.json",
+        "sha256": "c9b515f3db307e41fead0756cfbda4a43f4ac920ee7edf84a90ee7e603a5db6d"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "candidate": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+      "base": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "id": "private-mirror-composition-and-handoff",
+      "status": "pass",
+      "command": "Existing GitHub broker24controlled checks; focused hostedpublication +persistentrepository recovery2; bundled quick_validate.py and independent skillforward review",
+      "environment": "LocalmacOS pinnedNode24.21; controlledGitHubtransport, actuallocalGit; noGitHubtraffic/paidactions",
+      "observed": "24source-identicalbroker passes,2currentcompositionpasses3087ms, skillvalidatorvalid and actualfile/command/schema sourceinspection. Both962docfindingsfixed. ActualApp/independentdeploymentblocked separately.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-252b-broker-runbook-review.json",
+          "sha256": "c9b515f3db307e41fead0756cfbda4a43f4ac920ee7edf84a90ee7e603a5db6d"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2419-github-broker-review.json",
+          "sha256": "8ec53c763121c09ae8352131a1abd680bf5e8838e1bddefdfe25d3231e311413"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/github-app-broker/private-mirror-handoff.json",
+          "sha256": "3f39e7d25afb4231b519d99e01dd7cb9ac275375afb5d7d1cf383485f114c9a0"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/mirror-publication-composition.log",
+          "sha256": "97bbb917721639bd7fdb11090087d39c3cd2fc4a4de32e060024cbf109b429c8"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "private-mirror-composition-and-handoff",
+      "candidate": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+      "base": "146cc7a93f9720e3ccf7e920386394f42edd5b2a",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-252b-broker-runbook-review.json",
+          "sha256": "c9b515f3db307e41fead0756cfbda4a43f4ac920ee7edf84a90ee7e603a5db6d"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2419-github-broker-review.json",
+          "sha256": "8ec53c763121c09ae8352131a1abd680bf5e8838e1bddefdfe25d3231e311413"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/github-app-broker/private-mirror-handoff.json",
+          "sha256": "3f39e7d25afb4231b519d99e01dd7cb9ac275375afb5d7d1cf383485f114c9a0"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/mirror-publication-composition.log",
+          "sha256": "97bbb917721639bd7fdb11090087d39c3cd2fc4a4de32e060024cbf109b429c8"
+        }
+      ]
+    }
+  ]
+}

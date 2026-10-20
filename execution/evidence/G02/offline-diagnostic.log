@@ -1,0 +1,6 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 1
+
+    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/.rolling-offline-diagnostic.mjs:64:9
+{"passed":false,"errorClass":"AssertionError","networkRequests":0,"elapsedMs":890}

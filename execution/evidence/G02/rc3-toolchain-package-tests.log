@@ -1,0 +1,35 @@
+✔ labelled fixtures accept exact labs rc3 and foundation rc6, with scoped closure (4.035459ms)
+✔ labelled fixtures reject release label mismatch (2.481334ms)
+✔ labelled fixtures reject missing map (2.113875ms)
+✔ labelled fixtures reject unknown direct package (2.3035ms)
+✔ labelled fixtures reject unused direct pin (2.48ms)
+✔ labelled fixtures reject range declaration (2.421209ms)
+✔ labelled fixtures reject range pin (2.237417ms)
+✔ labelled fixtures reject blanket rc3 foundation downgrade (2.213458ms)
+✔ labelled fixtures reject duplicate declarations (2.129291ms)
+✔ labelled fixtures reject missing lock closure (2.207708ms)
+✔ labelled fixtures reject direct and closure disagree (2.21375ms)
+✔ labelled fixtures reject stale lock root (2.172625ms)
+✔ labelled fixtures reject extra lock root (2.060583ms)
+✔ labelled fixtures reject missing direct lock (1.995167ms)
+✔ labelled fixtures reject stale transitive lock (2.494792ms)
+✔ labelled fixtures reject missing integrity (2.416334ms)
+✔ labelled fixtures reject linked lock (2.133125ms)
+✔ labelled fixtures reject unreviewed closure member (2.237083ms)
+✔ labelled fixtures reject unused closure pin (2.208542ms)
+✔ labelled fixtures reject lock path escape (2.6645ms)
+✔ labelled fixtures reject old installed SDK (2.259667ms)
+✔ labelled fixtures reject wrong installed identity (2.222334ms)
+✔ labelled fixtures reject old installed transitive (2.155166ms)
+✔ missing installed package is a failure (2.26975ms)
+✔ nested scoped lock cannot hide an older installed SDK (3.608583ms)
+✔ unsupported optional native platform may be absent, current platform may not (2.877958ms)
+✔ Node pin remains exact and old native qualification cannot run with new SDK (0.14075ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.827083

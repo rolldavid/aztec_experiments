@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent read-only design safety assessment",
+  "sourceRevision": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "proposal": {
+    "path": "rolling-design/.build/w03-empty-fence-analysis/assessment.md",
+    "sha256": "994127464b48924cda322f9c7f4a1a32e6f0b308fae2501d7186b7887d98233b"
+  },
+  "verdict": "recommend implementation of the bounded new-attempt protocol, subject to the explicit invariants below; not source approval or actual recovery qualification",
+  "requirements": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "conclusion": "Positive pre-proof provenance plus restore invalidation is a sound and proportionate extension for supported same-store crash/reload. The existing write-before-send ordering alone cannot authenticate absence after stale or partial backup restoration. A local identifier without mandatory restore rotation would be insufficient. Preserve every historical unknown/no-bytes fence and the existing signed-byte recovery path.",
+  "sourceEvidence": [
+    {
+      "path": "apps/src/billboard/user/engine.js",
+      "lines": "146-154,171-178,235-255",
+      "observation": "Current wallet route WeakMap authenticates node/PXE but not an unchanged sendTx implementation. Built-in sendTx proves, materializes Tx, awaits journal.prepare, then action/context hooks, then the sole submitOnceWithReconciliation."
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "lines": "834-862",
+      "observation": "Current workflow becomes submitting before entering wallet lifecycle. A crash in simulation/proving therefore has no positive durable pre-proof discriminator. Application exclusive is in-memory only."
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "lines": "139-150,197-202,298-316",
+      "observation": "Browser session holds the same account Web Lock for the entire public application call; this, rather than application busy alone, is the existing serialization seam."
+    },
+    {
+      "path": "shared/account.js",
+      "lines": "58-99",
+      "observation": "Normal encrypted restoration takes that account Web Lock before restoring journals and activates the account afterwards. Keys-only import does not restore financial records."
+    },
+    {
+      "path": "shared/journal-indexeddb.mjs",
+      "lines": "1-27",
+      "observation": "Current strict IndexedDB CAS resolves on transaction completion. keys() enumerates all entries in records, so provenance must use a genuinely excluded metadata namespace/store, not an unrecognized financial entry."
+    },
+    {
+      "path": "shared/journal-backup.mjs",
+      "lines": "83-130",
+      "observation": "Restore authenticates descriptors and preserves conflicting financial records, then inserts records individually. Partial restoration can occur. Rotation must precede any insertion; imported records cannot provide metadata."
+    },
+    {
+      "path": "shared/journal-record.mjs",
+      "lines": "43-61",
+      "observation": "Encrypted slot CAS and authenticated readback already supply exact ciphertext commitments; retain them instead of treating status text or a nullable inspect result as authority."
+    },
+    {
+      "path": "shared/l2-journal.mjs",
+      "lines": "71-85",
+      "observation": "assertCanStart authenticates the predecessor and rechecks its canonical receipt/finality. The new renewed-review path must retain this validation; an equal prior ciphertext does not alone establish current canonical permission."
+    }
+  ],
+  "implementationInvariants": [
+    {
+      "id": "EF-1",
+      "risk": "Stale/partial backup recreates a pre-proof workflow after the original attempt actually broadcast.",
+      "required": "New durable random provenance is non-exported and cannot be supplied by incoming records. Rotate it with strict committed persistence before restored financial writes, including idempotent/same-store restores and partial failures. Never silently initialize or repair missing metadata into authority for an existing pre-proof attempt. Unsupported storage stays fenced; keys-only reopen preserves existing provenance."
+    },
+    {
+      "id": "EF-2",
+      "risk": "A suspended old proof completes after renewed preparation and writes or broadcasts a different transaction.",
+      "required": "Hold the existing account Web Lock through the entire built-in send promise, restoration, and explicit recovery transition. Persistently revoke the old attempt by exact workflow CAS. Mandatory captured attempt/context/provenance checks must veto old continuations before journal.prepare and before broadcast, including across awaited hooks. Do not release ownership merely because a UI wait or timeout ended while proof work is still running."
+    },
+    {
+      "id": "EF-3",
+      "risk": "A caller replaces sendTx or bypasses an optional callback while still satisfying privateWalletRoutes.",
+      "required": "Only the factory-owned captured built-in lifecycle may create recovery-capable pre-proof state. Bind exact wallet, journal, context, operation, action, approved fee review, attempt and predecessor commitment; capture the send implementation and mandatory signed checkpoint. Do not authenticate authority using a writable flag, mutable progress callback or method name."
+    },
+    {
+      "id": "EF-4",
+      "risk": "Crash or failed readback between signed journal persistence and workflow checkpoint creates conflicting apparent states.",
+      "required": "Signed journal bytes for the operation take precedence over pre-proof workflow status. Callback CAS failure or ambiguous persistence prevents broadcast; recovery remains exact-byte only. Never delete, overwrite or regenerate a matching signed transaction to restore the pre-proof state."
+    },
+    {
+      "id": "EF-5",
+      "risk": "Renewed preparation changes the intended action or bypasses current fee, canonical or action-specific guards.",
+      "required": "Keep exact action/nonce/operation and source binding. Reauthenticate exact predecessor ciphertext (including explicitly captured null), run existing assertCanStart and action-specific current checks, require renewed explicit fee consent, and preserve PXE sender-tagging data. Do not infer duplicate safety for a newly generated Tx nonce."
+    },
+    {
+      "id": "EF-6",
+      "risk": "New schema accidentally upgrades historical uncertain attempts.",
+      "required": "Historical submitting/no-provenance records, mismatched epoch, signed stage without interpretable bytes, unexpected predecessor, unsupported wallet/storage, or ambiguous storage result remain blocked. Ordinary reconcile never initiates proof or send."
+    }
+  ],
+  "minimality": "Reuse existing account lock, encrypted workflow CAS, storage adapter and built-in engine; a non-exported restore-invalidated provenance value and positive attempt stage are the needed additions. No scheduler, service, external monotonic authority, automatic replay loop, or new test framework is warranted. The broader named file surface is justified by the existing engine/storage/backup/session boundary; claim any added journal API explicitly.",
+  "focusedAcceptanceBeforeIntegration": [
+    "New-schema simulation/proof crash with empty and canonical prior journals; exact original operation/action retained and renewed fee confirmation required.",
+    "Crash after journal commit before signed callback; callback CAS/readback failure; crash after callback and unknown broadcast: exact-byte path only, no reproof.",
+    "Paused old proof plus revoked attempt; failed/timed-out observation must not release a still-running owned lifecycle.",
+    "Fresh-store stale backup, same-store import, idempotent import, partial restore, rotation failure, missing/malformed metadata, and metadata exclusion from export.",
+    "Forged capability or replaced send implementation, account/chain change, changed predecessor, canonical predecessor reorg, and original action-specific late vetoes.",
+    "Historical unknown/no-bytes assertions remain unchanged; keys-only reopen preserves eligibility; no reset of PXE tagging."
+  ],
+  "limitations": [
+    "No implementation, tests, browser, service, signing or network operations were performed for this assessment.",
+    "This protocol does not provide rollback resistance against restoring an entire origin database and its metadata from an OS/storage snapshot, nor against arbitrary malicious same-origin execution. Such rollback must not be advertised as supported financial recovery.",
+    "Actual interrupted same-store development acceptance and source review remain required after implementation; real-proof and final release gates are unchanged."
+  ],
+  "sourceSha256": {
+    "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+    "shared/rolling/application.mjs": "e80112d4879fffea8296b3af72bc737c08e6fba65e4b7a2c3c816eb3a51afb24",
+    "apps/rolling/wallet-session.mjs": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+    "shared/journal-indexeddb.mjs": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+    "shared/journal-backup.mjs": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "shared/l2-journal.mjs": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+    "shared/account.js": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059"
+  }
+}

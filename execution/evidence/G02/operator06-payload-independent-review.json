@@ -1,0 +1,71 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "04f41a280ff7eb8d64c9f0333bf0e6924b6b536f",
+  "passed": true,
+  "observedAt": "2026-10-12T03:13:22.305647+00:00",
+  "payloadBytes": 16336,
+  "payloadSha256": "63d3ad09c153b0edf0e4386d1705b02fd78a0c707bc3113f50b444733157ae23",
+  "decodedPayloadSha256": "0745c344b9e881ad61968ff2cfaab099951feecde0f096a68066f0085dbc457d",
+  "sourcePins": {
+    "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+    "manifest": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+    "node": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+    "bb": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+    "catalog": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64",
+    "bootstrap": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+    "startup": "a6c5e725d9294872ff88cd8d179be432737826fb43357d7d044ccbe632cafadd"
+  },
+  "sourceRoundtripExact": true,
+  "privateConfigExact": true,
+  "immutableGETVersionMatchesReceipt": true,
+  "capabilitiesCoverBudgetPlus30min": true,
+  "fleetAndTemplateChecksPassed": true,
+  "hostControlsAndModesPassed": true,
+  "deadlines": {
+    "createdAt": "2026-10-12T03:09:27Z",
+    "budgetStop": "2026-10-12T04:09:27Z",
+    "commissioningStop": "2026-10-12T03:39:27Z"
+  },
+  "latestPermittedLaunch": "2026-10-12T03:19:27+00:00",
+  "verdict": "approved actual immutable payload for one bounded operator06 diagnostic, conditional on listed live launch controls and launch before03:19:27Z; not Linux/runtime qualification",
+  "findings": [],
+  "budget": {
+    "prior_bound_usd": 145.28,
+    "additional_reserved_usd": 25,
+    "cumulative_bound_usd": 170.28,
+    "remaining_usd": 129.72,
+    "not_actual_bill": true
+  },
+  "actual_checks": {
+    "all_source_and_compression_roundtrip": true,
+    "shell_and_decoded_python_syntax": true,
+    "capabilities_not_in_public_attestor": true,
+    "private_permissions": true,
+    "template_no_IAM_no_keypair_no_inherited_userdata": true,
+    "template_termination_IMDSv2_hop1_encrypted_DOT": true,
+    "fleet_capacity_one_ondemand_zero_spot": true,
+    "independent_host_absolute_budget_and_commission_timers": true,
+    "whole_ENI50Mbps_and_masked_prover": true,
+    "verified_package_source_04f": true
+  },
+  "remaining_launch_readbacks": [
+    "Fresh existing-provider identity and no live/stop-state overlapping instance, EBS or active Fleet; preserve prior paid-outcome journals. Reviewed inventory from02:37 is historical, not a new live call by reviewer.",
+    "Create/read back exact launch template and actual instance: no IAM/keypair, unchanged authorized SG/no SSH ingress, pinned image/AMI, IMDSv2/hop1, encrypted40+1024GiB DeleteOnTermination.",
+    "Single retry-disabled exclusive-intent LT/Fleet actions; read actual request Fleet ValidUntil04:09:27Z,TerminateInstancesWithExpiration and exact one instance. Unknown receipts reconcile without replay.",
+    "Actual host absolute budget04:09:27Z/commissioning03:39:27Z installed before downloads,50Mbps tc verification, masked prover/proxy, protected startup helper/record and exact package/manifest. Failure requires retained safe evidence and authorized cleanup.",
+    "If not launched before03:19:27Z regenerate fresh unused deadlines/capabilities and remeasure/review exact payload. Never modify launched inputs or automatically replace/extend.",
+    "Actual native Linux startup/query/finalreceipt/termination and volume deletion remain acceptance gates; no claims from local payload inspection."
+  ],
+  "limitations": [
+    "No credential discovery, raw capability output, network request, signing, upload or AWS/provider/service action by reviewer.",
+    "Initial independent AST probe tried literal_eval on a nonliteral wrapper assignment and failed locally; corrected to extract only CONFIG/SOURCE, then exact regenerate comparison passed. No source/payload changes."
+  ],
+  "evidence_hashes": {
+    "execution/evidence/G02/operator06-payload-verification.json": "88a5a777c73a8aaab6d0ec5e87dcebe0e06402933cb125e9c4fdef603322c973",
+    "execution/evidence/G02/operator06-capability-preparation.json": "b33ec9d7c2670f0bbae5972b5a3d83780936abe5e7e64c2fcb46c2ce3a3bc158",
+    "execution/evidence/G02/startup-stage-operator06-proposal.json": "9bbe523d6823f2be3e1ef52fc64e42a89743abc5cb824b978af989b92f138bda",
+    "execution/evidence/G02/startup-stage-infra-reconciliation-20261012.json": "b0c85906ce3b744f3b8d49a2ae595e61979c5c5607afa661866594a8831eae32",
+    "execution/evidence/G02/startup06-package-04f41-review.json": "575c5a6a8654feef8290c4fdb6935dcfa1861dbd68a38e93e5732dbb119bcaae",
+    "execution/infrastructure-ledger.json": "53a456d18414f5c01275462e8c1c506111509e150f8886ff127badb20085790d"
+  }
+}

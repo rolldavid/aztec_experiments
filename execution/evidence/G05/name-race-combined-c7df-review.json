@@ -1,0 +1,58 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "c7df4b191d7f9c71d75318a12ec1c25327e3f8aa",
+  "base": "68e7c326f1ca946463ebc8cfd04848e62ff7cfb8",
+  "verdict": "approved bounded combined source for eventual genuine normalized-name race campaign after root transfer review; actual runtime pending",
+  "blocking_findings": [],
+  "source_sha256": {
+    "scripts/testing/rolling-application-actor.mjs": "075cf15c2e42e2e6e324e9bf11fe98fd981ab75132be30a60d17d7abb0504f02",
+    "scripts/testing/rolling-application-actor.test.mjs": "3bb394775f55ca1770c4e64e4696c1008280105b19398ee77e95f4ce483e3f8a",
+    "scripts/testing/rolling-application-fixture.mjs": "49ec2d1f8791595acb06489b121d3a8d8dde4b6a79445c5810acf29cc8f241f2",
+    "scripts/testing/rolling-application-fixture.test.mjs": "68ca1849c34df574f5445278f6feaa5030cf5025ebc217123e75c7529cdf7ac1",
+    "scripts/testing/rolling-collision-observer.mjs": "920ca0144fd2c7485afcd3e79d5e7fde11b3f49d5fce81eadf49f43565726b83",
+    "scripts/testing/rolling-collision-observer.test.mjs": "adfae7243b990633eb54e779e77d02e6281a075667c2586c4b3280b0bf2e736a",
+    "scripts/testing/rolling-name-collision.mjs": "2e81ed3b805738a47f6aca63c2ad6057b055452698582cb54f35ce425545ecae",
+    "scripts/testing/rolling-name-collision.test.mjs": "6687fdf1f47ecc1316115ad57154240c7971b1ab96e38ac7c9d6b2d6e836180d",
+    "scripts/testing/scenario-flows.mjs": "95fbc4883ce94f6ee92b0a6b74282d2f22c172ae73a80c956337358282059312",
+    "scripts/testing/scenarios.mjs": "67d9b5e36d53638a8cc7141e8fc2a4d9f534ed441308545f2edd083f74c436d2"
+  },
+  "prior_reviews": {
+    "execution/evidence/G05/name-race-combined-af9-review.json": "3925bfc29326f41d76e0c32dc5084f08c403885d189ac4c2aca53831b8139dba",
+    "execution/evidence/G06/trusted-recovery-parent-5a62-review.json": "dd982bf9e7cc8db2dbf1b29dde001375d36ef4bfca3a3ca15ec6943038f8286e",
+    "execution/evidence/G06/trusted-recovery-68e-transfer-review.json": "223b54c1886de44ef750d4f5fe83cb7671f7490aa838f68e85a31be7abcf2a33"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-application-actor.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-collision-observer.test.mjs scripts/testing/rolling-name-collision.test.mjs scripts/testing/rolling-trusted-recovery.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+      "result": "pass",
+      "tests": 242,
+      "skipped": 0,
+      "duration_ms": 3906.2415,
+      "log": "/tmp/reviewer-race-recovery-c7df-tests.log"
+    },
+    {
+      "command": "git diff --check68e7c32..c7df4b1",
+      "result": "pass"
+    },
+    {
+      "name": "Independent blob/body equality",
+      "result": "6race actor/classifier/observer files and exact racebody equal approvedaf9;3recovery consumer/reader files and exact recoverybody equal68e. Wholecombinedfixture/scenario conflict diff independently inspected."
+    }
+  ],
+  "assessment": [
+    "Scenario flags derive from exact distinct strings: race/recovery cannot both run. Name race skips ordinary preliminary name registration, sets deadline only on raceactors, produces2real jobs, profile oracle for winner, retains bothjournals including revertedloser. Recovery retains1realjob and excludesBemptyjournal, naturalaging closure onlyrecovery.",
+    "Bothrealtransactions must be pending with distinctintents/hash beforesequencer resumes. Serial genuineproving remains; collisiontap installed onlyafterbothpending and beforestart. Laterpreflight cannot qualify loserreason.",
+    "No detached submission Promise.race: originalactor writers settled afterresume beforeboth boundedcanonical receipt/effectcollections. Partialfailure preserves eachavailablefee/effect and initialerror; no active-only repeat fallback inrace.",
+    "Actualraceassertions require exactlyonecanonicalwinner/onepaidrevert, authenticatedfullblockeffectbyteequality, deepestcontract/staticcollisionreason boundto exactminedloser, zero loserBoardevents/privateownership, exactwinnername, finalityfence and encryptedjournalreopen.",
+    "Observerclose must restore originalmethod and have zero pending/errors/conflicts/truncation/ownershiploss, then exactlosertuple stillmatches. No weakened assertion or new lifecycle owner.",
+    "90s proofadmission is distinctfrom unchanged120s realproverdeadline; actorbeforeSubmit blocks expiredproofsend, confirmationcutoff retains90sparentreserve. Default540s/4GiB gates unchanged. Timingfeasibility is runtimegate, not source proof of completion.",
+    "Merged sourceinventory includesbothhelperfamilies. Recovery faultcontrols remain offexceptrecovery, sameport publicreader/ef533sequentialcatchup retained, three miningcall sites correspond to existingsequentialsetup/application/recovery ownership.",
+    "No productioncontract/sharedSDK/artifact/buildinput change; existingcomposer/social/reaction pathways remain sourceidentical exceptsharedtestactor optionaldeadline whosedefault isunchanged."
+  ],
+  "limitations": [
+    "242independentchecks are labelled unit/SDK/lifecycle/controlfixtures, not real race. Parent294passinglog is supplementary, not substituted for independent checks.",
+    "Root68e live recovery evidence must remain sourcebound and separately reviewed; this mergedcandidate does not relabel it.",
+    "No atomiccollision acceptance until actual2pendingbarrier/minedwinner+loser/accounting/canonicalHTTP/cleanup evidence passes.",
+    "No G05/G06 completion, fullprivacy or productionrelease approval."
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "candidate": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+  "scope": "Actual owned native child configuration only; not CPU parallelism or proof acceptance",
+  "samples": [
+    {
+      "at": "2026-10-12T13:35:57.558120+00:00",
+      "supervisorPid": 57289,
+      "children": [
+        {
+          "pid": 57313,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 2
+          }
+        },
+        {
+          "pid": 57318,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        },
+        {
+          "pid": 57336,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        },
+        {
+          "pid": 57348,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-10-12T13:40:03.663583+00:00",
+      "supervisorPid": 57289,
+      "children": [
+        {
+          "pid": 57313,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 2
+          }
+        },
+        {
+          "pid": 57318,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        },
+        {
+          "pid": 57336,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        },
+        {
+          "pid": 57348,
+          "ppid": 57305,
+          "numericThreadEnvironment": {
+            "HARDWARE_CONCURRENCY": 1
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-10-12T13:40:54.579926+00:00",
+      "supervisorPid": 57289,
+      "children": [
+        {
+          "pid": 59618,
+          "ppid": 59607,
+          "numericThreadEnvironment": {
+            "PROVER_THREADS": 2,
+            "HARDWARE_CONCURRENCY": 12
+          }
+        }
+      ]
+    }
+  ]
+}

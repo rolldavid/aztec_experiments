@@ -1,0 +1,35 @@
+{
+  "candidate": "ade89fd1462ea4ace3a75edaf09f56d8cbbd4368",
+  "base": "1319407aa3b804a21e1fe9b5f10133554b0b4009",
+  "overall_base": "47cb0a005cdbb96588deb53c343a83aa28574f8c",
+  "verdict": "source approved for bounded actual journey",
+  "findings": [],
+  "resolved_findings": [
+    "G06-REPLY-P2-01: both negatives now require actual SimulationError, exact static assertion selector and correct deepest callee through existing matchesContractRejection. Replay binds RollingBoard; wrong operator binds PrivateBok."
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinnedNode --test billboard/rolling_contract/reply-acceptance.test.mjs",
+      "worktree": "../rolling-controls",
+      "passed": 24,
+      "failed": 0
+    }
+  ],
+  "observations": [
+    "New tests reject ordinary/message-only errors, unknown/multiple selectors, wrong contract even with matching guard ABI, swapped guards and unknown labels.",
+    "Public revertCode/no-send path and all original rollback, event, accounting, privacy smoke and resource assertions retained.",
+    "Shared rejection helper added to actual source fingerprints."
+  ],
+  "limits": [
+    "No actual canonical reply acceptance or genuine proof/provider billing result yet.",
+    "Tests use real SDK error types with labelled fake guard ABI, not live application acceptance."
+  ],
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewed_at": "2026-10-11T18:49:22.979484+00:00",
+  "source_sha256": {
+    "billboard/rolling_contract/journey.mjs": "02ae4e9f4df636e90f1660c8755c40e41d2751675e5885dfdaa011ecf2d6eaa2",
+    "billboard/rolling_contract/reply-acceptance.mjs": "bbf18b51606769e84e96d2df1cec506a4e5f5cbe0d8f1411fbbfc1c43419db18",
+    "billboard/rolling_contract/reply-acceptance.test.mjs": "e773af07bce77915920d7ddace8a870edbf68b58e9268018c18bc194033a6460"
+  }
+}

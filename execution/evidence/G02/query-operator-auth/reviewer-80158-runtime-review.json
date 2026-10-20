@@ -1,0 +1,30 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "accepted-controlled-50-only",
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "actualPacketSha256": "471ed11e392fae550493b58004e30357bfa5302cd1adc1a5ca803d813f01d249",
+  "resultSha256": "bd34312c9053a84e9be969aea3f3cfee80c92ff5c232db9ee0df0f4a2cff7f0a",
+  "logSha256": "7070f88dd380c2e57e8c34fbaaffd77625432924b3da89f9bee52eed6b0a08c4",
+  "checks": {
+    "exactFullLabelMultiset": 50,
+    "TAPTests": 50,
+    "pass": 50,
+    "failCancelledSkippedTodo": 0,
+    "protectedRehashed": 3165,
+    "ownedPeakPidsAbsent": [
+      52836,
+      52873,
+      52874,
+      52882
+    ],
+    "temporaryAbsent": true,
+    "cleanExactSource": true,
+    "sourceAndRunnerReviewBindingsVerified": true
+  },
+  "elapsedMs": 2281,
+  "peakTreeRSSKiB": 667424,
+  "limitations": [
+    "Controlled local HTTP and actual installed schema/CLI adapter only.",
+    "No complete SDK/PXE deployment transport, real node, proof, private transaction, cloud routing or activation qualification."
+  ]
+}

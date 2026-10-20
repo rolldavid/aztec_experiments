@@ -1,0 +1,99 @@
+// GENERATED FILE - DO NOT EDIT. RUN `yarn generate` or `yarn generate:data`
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { FunctionSelector } from '@aztec-labs/stdlib/abi';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { ProtocolContracts } from '@aztec-labs/stdlib/tx';
+export const protocolContractNames = [
+    'ContractInstanceRegistry',
+    'ContractClassRegistry',
+    'FeeJuice'
+];
+export const ProtocolContractSalt = {
+    ContractInstanceRegistry: new Fr(1),
+    ContractClassRegistry: new Fr(1),
+    FeeJuice: new Fr(1)
+};
+export const ProtocolContractAddress = {
+    ContractInstanceRegistry: AztecAddress.fromBigIntUnsafe(2n),
+    ContractClassRegistry: AztecAddress.fromBigIntUnsafe(1n),
+    FeeJuice: AztecAddress.fromBigIntUnsafe(3n)
+};
+export const ProtocolContractDerivedAddress = {
+    ContractInstanceRegistry: AztecAddress.fromStringUnsafe('0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77'),
+    ContractClassRegistry: AztecAddress.fromStringUnsafe('0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17'),
+    FeeJuice: AztecAddress.fromStringUnsafe('0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79')
+};
+export const ProtocolContractClassId = {
+    ContractInstanceRegistry: Fr.fromString('0x250bc22bd53e83820ec12b83b41addb81073884ef63e7dc5261787bf92850f7f'),
+    ContractClassRegistry: Fr.fromString('0x010f027b753bf0e29dedc8e47a8bdda62211a7253b002b625cffb475495dc002'),
+    FeeJuice: Fr.fromString('0x1fa4d16bbcc242b144b07ee9a424083ee404ed9ce11037b24c465057b6a92c59')
+};
+export const ProtocolContractClassIdPreimage = {
+    ContractInstanceRegistry: {
+        artifactHash: Fr.fromString('0x28f9ec60f51cd93bc2cd3d021d3a0d1847cd3b4b57ed6fb22435d422b3a0fb31'),
+        privateFunctionsRoot: Fr.fromString('0x2cab3dca97df25e1b2f62b64540799a1130f8d2cf41aff507909ec075cb3905b'),
+        publicBytecodeCommitment: Fr.fromString('0x1fd8380bb220e7d13db681da7e62c93b03add6754895a84c51d13fcde03e8d25')
+    },
+    ContractClassRegistry: {
+        artifactHash: Fr.fromString('0x21edcafeabc08ef1566c5f3ad3594449ab67812a5bb425a8e51b8c67e4d50bdb'),
+        privateFunctionsRoot: Fr.fromString('0x0cce8e37c65a1cf4365b585909228fcde42954d12737435d912d86186167b8cc'),
+        publicBytecodeCommitment: Fr.fromString('0x0ce4c618c3ed7f3a20410e618c06bb701e150af7fe28a3e92f68e7733809f33e')
+    },
+    FeeJuice: {
+        artifactHash: Fr.fromString('0x03a70c5c263a8968dc45863fbed9e409a23a4234175cc27eccd16e2fbdbdba8b'),
+        privateFunctionsRoot: Fr.fromString('0x056ab6386ea8654985dc89dc9f083b0e002df2459f12866bf498b0b5546412ff'),
+        publicBytecodeCommitment: Fr.fromString('0x2968eb109f722c701d59d171c32d32b79199841f0044d6bbd77dc43bd513a770')
+    }
+};
+export const ProtocolContractInitializationHash = {
+    ContractInstanceRegistry: Fr.fromString('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    ContractClassRegistry: Fr.fromString('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    FeeJuice: Fr.fromString('0x0000000000000000000000000000000000000000000000000000000000000000')
+};
+export const ProtocolContractPrivateFunctions = {
+    ContractInstanceRegistry: [
+        {
+            selector: FunctionSelector.fromField(Fr.fromString('0x0000000000000000000000000000000000000000000000000000000077cff62f')),
+            vkHash: Fr.fromString('0x0ba93c1df26342e4871884648597eba8204fe51b1295e00ecb69a011db1359b6')
+        }
+    ],
+    ContractClassRegistry: [
+        {
+            selector: FunctionSelector.fromField(Fr.fromString('0x000000000000000000000000000000000000000000000000000000006934ed0d')),
+            vkHash: Fr.fromString('0x1af8e7c965fa21b828e2307fb320fbf38038a42121495906aba2b80c3f072bd8')
+        }
+    ],
+    FeeJuice: [
+        {
+            selector: FunctionSelector.fromField(Fr.fromString('0x00000000000000000000000000000000000000000000000000000000cbe67243')),
+            vkHash: Fr.fromString('0x2e78182eafa9eedb8a75d0eabee8cc7031a41b2d630949979a9495f6be9d9e2e')
+        },
+        {
+            selector: FunctionSelector.fromField(Fr.fromString('0x00000000000000000000000000000000000000000000000000000000e8d374b6')),
+            vkHash: Fr.fromString('0x253da18011550ba749e4311e9dc5f59309a35c27b1d16e1f9ccb90bae9db1235')
+        }
+    ]
+};
+export const ProtocolContractsList = new ProtocolContracts([
+    AztecAddress.fromStringUnsafe('0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17'),
+    AztecAddress.fromStringUnsafe('0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77'),
+    AztecAddress.fromStringUnsafe('0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000'),
+    AztecAddress.fromStringUnsafe('0x0000000000000000000000000000000000000000000000000000000000000000')
+]);
+export const protocolContractsHash = Fr.fromString('0x0f54271c52865841a77aaa66036eed901aff22fdce9f08e123ec8b205c9854d7');
+export const ProtocolContractGenesisNullifiers = [
+    Fr.fromString('0x04287df03953b0d68b0e83e08a89067afc602626defd6002277cd6df34696818'),
+    Fr.fromString('0x0d99507b7ecac720c73bf197a0e7366a5ed80c1c1b0afe8ff8c6ecc7b5a7aefe'),
+    Fr.fromString('0x0eb50b367fb754d3a7d1238bfc105cc9b391a02e187be69038876ae9a502e877'),
+    Fr.fromString('0x16f917edd8e333013e5bb0633f7f484725bd19403854d6112992dccef4961e32'),
+    Fr.fromString('0x1cea539e01abaa5db980e7ff52ef0d2a7772310306ac625783ae435756ee326d'),
+    Fr.fromString('0x2c3a57c8d7c387652babd36c4d79ab03c0fe593e160315a4dc098f92caf592c3')
+];
+export const CONTRACT_INSTANCE_PUBLISHED_EVENT_TAG = Fr.fromHexString('0x1a7e1badb79abdd38c684b3c8306ffe7ecb33c69e3380d9855730aaaa83a21a8');

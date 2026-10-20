@@ -1,0 +1,493 @@
+{
+  "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "pathCount": 67,
+  "steps": [
+    {
+      "from": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "to": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "changedPaths": 46,
+      "report": "execution/evidence/G07/combined-11d-source-review.json",
+      "reportSha256": "6538bb83aa0c0c4dc26f239c053d5259c7fbc702275559f5f0f920e447633ac6"
+    },
+    {
+      "from": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "to": "96825e16271baf7d81442415565fe51b1533737e",
+      "changedPaths": 9,
+      "report": "execution/evidence/G02/startup07-968-package-review.json",
+      "reportSha256": "1b8da40a52ada2077d39372a1f71be6a01c2784be28ee3794fbcfa7475cb3f6a"
+    },
+    {
+      "from": "96825e16271baf7d81442415565fe51b1533737e",
+      "to": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "changedPaths": 21,
+      "report": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "reportSha256": "9d47cae15c08c3f38697d82f75d08faa1091ad0349bdffe8ce4b56d2bfd47024"
+    },
+    {
+      "from": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "to": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+      "changedPaths": 2,
+      "report": "execution/evidence/G07/preference-browser-842-repair-review.json",
+      "reportSha256": "a5240ee823ecfc9130bb2c113130575c89de44aca3d060c571c5b29c8d1c6981"
+    },
+    {
+      "from": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+      "to": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "changedPaths": 2,
+      "report": "execution/evidence/G07/preference-browser-50ff-lock-review.json",
+      "reportSha256": "78c213e3eaae68cf9b0fbfbbb9307b632494cc61fecadab26954300dde4f4ee9"
+    }
+  ],
+  "paths": {
+    ".github/workflows/build.yml": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "4d11e51088bd7d40d6f203847f9ad188049d38579e63face38bd25604f1941a9"
+    },
+    "BUILDING.md": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "6ae1d712232bad241ba7a4aa27e901fd817bc7f9afb33e29e63d7c0e8dfe2627"
+    },
+    "apps/rolling/wallet-session.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "4ec5ffcdc5de053a64a1550686cfeb48b135fa5494794b499a75d16b089054de"
+    },
+    "apps/rolling/wallet-session.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "1218680b0e4221b688b94277d3945a7698b0ba147123c6d7ff96702d635daae1"
+    },
+    "billboard/rolling_contract/src/main.nr": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "0f690fef381b8342cf0030132ccefa1b724ee308fdf5939ce482eb7bf448bfd0"
+    },
+    "billboard/rolling_contract/src/preferences.nr": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30"
+    },
+    "billboard/rolling_contract/src/preferences_tests.nr": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "7d9a4aecdca5f0ebf42c01f091c9f8960f3e38a18fb0de9f7fa114de3b8f9fe8"
+    },
+    "noir-dependencies.json": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "6465dfa29036186ec7c032a112a24318d408f8fef14eb31384e7384bbdcb6043"
+    },
+    "package.json": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "8d66bf51bf21f04f294b7fca156bdc099a98ed2fb27a76b1569fc0ec3c562ac4"
+    },
+    "prover/application-policy.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "95bdd2dcec524b513bfc651f6ac66b6f432041a82687cf991e0fbcdf52517b1a"
+    },
+    "prover/application-policy.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "c91b8115e3e1c947d6ed527811395f5a77868103a35723406ee04e79176a4ea2"
+    },
+    "prover/rolling-artifacts.json": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+    },
+    "scripts/build-sdk.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "de6a74e5e4bfe480301a9b48f7e9fa791c9da041f7b5b5269646a8783803ceb4"
+    },
+    "scripts/check-sdk.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "a93b0457d59a7618ad96b722deab1c82f526e8ed5a7407aa7db169d9fdc291dc"
+    },
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/README.md": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "c3c5c079c31dad6cf3e46b02abe2f9db72c397a5eebe9299b26865e81fe10399"
+    },
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.js": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35"
+    },
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.ts": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de"
+    },
+    "scripts/measure-private-event-query.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "2eef9dca0b9ce0f0c98f1df242972aadec394e52bbdf06c45a8094237ad2a401"
+    },
+    "scripts/measure-private-event-query.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "9ac4e07f5ec5aad786e03f5fc81a9072c4290d5251bb9ce76e5ad0088f514c6d"
+    },
+    "scripts/patch-private-event-query.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "3111de6c8dc1f77dbf68961c7f398598701b89125894f92cf19cfa7c2b4337b0"
+    },
+    "scripts/test-private-event-query.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "74bce1b6c0447afa139a2abb488c023e2acaca7131decfd1bc436375df485d3e"
+    },
+    "scripts/test-sdk-manifest.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "4951bddcffc346f2cdcb85945ed9c4455a2003c75f31836f0145f325f9eedbe9"
+    },
+    "scripts/testing/rolling-application-actor.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "50d76610020e1156d40854bb720f06ef382279048a146dfed62873703b368384"
+    },
+    "scripts/testing/rolling-application-actor.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "2dd1498b984900582e1b5f530c718c996432fd881efd2bad2e8553da573d2772"
+    },
+    "scripts/testing/rolling-application-fixture.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "ccac4849b21be3cff68c2e9a898c643d65c91c34a79dd446924e5916e4dc7728"
+    },
+    "scripts/testing/rolling-application-fixture.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "3ff345b2ed230076859a57c339d33ebefaa8520a6fc3c535d6798974675f0df6"
+    },
+    "scripts/testing/rolling-preference-recovery.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e"
+    },
+    "scripts/testing/rolling-preference-recovery.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "d8aaa0dc8c9d54dedc3d5ed60fd676797a243e22dd2c734014147495d32f9365"
+    },
+    "scripts/testing/rolling-public-acceptance.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "6df2b6fcd3b7188ec68bb5bafeae3d894ef382fac77f3cefb64546fe50ac4e48"
+    },
+    "scripts/testing/scenario-flows.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "7abdc6cbc51f2148ee7bd5cee035ee78b501c2930614849233ac3ebba406f85b"
+    },
+    "scripts/testing/scenarios.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "941e3b99f39791ae8c57a7a13c3d706d378188123f9996cb7378318feef18eec"
+    },
+    "shared/journal-backup.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "a890acadbbc2d4e5add41f5cd1410b49f0256fad627f50428610703ca3bebd09"
+    },
+    "shared/journal-backup.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "53e2db2ba43e87d67e063d687eeeefe5a140bbd0b2e94a395f3d534e927c6cf3"
+    },
+    "shared/rolling/application.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "a9643703e253dca62c56e85c19e7eedd90d5231f7d26420ce04b8de3c42bed55"
+    },
+    "shared/rolling/application.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "3ac17688235151b0e6d04187573dfe9b4ef099a180f6bc9f7a88f2517878ab7e"
+    },
+    "shared/rolling/preference-events.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267"
+    },
+    "shared/rolling/preference-events.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "5d53d76d66a302fcf3bba527ff599af169e1ba07fe402fd21476e7cbc3f74f14"
+    },
+    "shared/rolling/preference-reader.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0"
+    },
+    "shared/rolling/preference-reader.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "2a3cfa336fd5b1137df01b83330154543b70f518f6876f7326d72632042c6b80"
+    },
+    "shared/rolling/preferences.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82"
+    },
+    "shared/rolling/preferences.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "ee37752376c1313766fd42a8cccaa25b181226a612014cbd483090ead6fb29d3"
+    },
+    "shared/rolling/private-views.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d"
+    },
+    "shared/rolling/private-views.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "065063f1f969714ed95f31e2ebddb370afabe58238e2e844ba202af7c6a630e0"
+    },
+    "shared/rolling/synchronized-application.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "8113444dac5e2e0a6182ace99f6c1881f9e9172c246c860f42163d680e5f1f06"
+    },
+    "shared/rolling/synchronized-application.test.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "a67826ac57cd294d298efd096fe284730dd12211728ce65e23bd7981562a328c"
+    },
+    "shared/sdk-entry.mjs": {
+      "reviewedRevision": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "review": "execution/evidence/G07/combined-11d-source-review.json",
+      "sha256": "adf1f5d670a5a57633cd11f3ca5b7197808ce27da0a54d02be6d8905b2d82da4"
+    },
+    "deploy/prover/BOOTSTRAP.md": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "e5c3c8639c78807b637b51f935eaf5bc4c8709179eed38a405bf8e9f0626e827"
+    },
+    "deploy/prover/archiver-prerequisites.mjs": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "ce333305e443fc9b9a7b04a8b0f7f3f5d297b0de13da592c7c8d80a179222fc9"
+    },
+    "deploy/prover/archiver-prerequisites.test.mjs": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "6768186a9ad0393eb29572f33116e93921513d821042c6db701bf50d21f33be3"
+    },
+    "deploy/prover/bootstrap.py": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af"
+    },
+    "scripts/test-prover-bootstrap.py": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "8141bd3ae037bf43a9197f522578ffae2f93dc6227cf1ff50ee472e22426b099"
+    },
+    "scripts/testing/private-bok-build-preflight.mjs": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "9167972af01b063069e5c6cfa95f78f00b692e11c342753d8294e0d47ce87978"
+    },
+    "scripts/testing/private-bok-build-preflight.test.mjs": {
+      "reviewedRevision": "96825e16271baf7d81442415565fe51b1533737e",
+      "review": "execution/evidence/G02/startup07-968-package-review.json",
+      "sha256": "82b7a85119b620baf8e992bde2484f6834e7689dc7c6b88ee19eb5ed96129328"
+    },
+    "scripts/testing/run-application.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "8a03ecb26aec4e23c484c5cbcd164ad40c6e58ab6327350158555ff5a2cbeb0d"
+    },
+    "apps/rolling/reader.browser.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947"
+    },
+    "apps/rolling/reader.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874"
+    },
+    "apps/rolling/wallet-panel.browser.test.mjs": {
+      "reviewedRevision": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "review": "execution/evidence/G07/preference-browser-50ff-lock-review.json",
+      "sha256": "8964aef1ef3fa55aa4b255cdf5bad40f92097fb2be2082382f9ff1668251d689"
+    },
+    "apps/rolling/wallet-panel.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "83bd3fda88e4900c51096d266640843aab4ef07b7b849b0eb6c1183d43f781e5"
+    },
+    "apps/rolling/wallet-runtime.browser.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "6291ac0b49a1dc226a66d25c59d9ccbf6aed1fc85d334d25bb5b2ef6bc466320"
+    },
+    "apps/rolling/wallet-runtime.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "338d3ac8a6e15d54195c486e917b94379fb4e48221d5647232af66199424a47b"
+    },
+    "scripts/testing/browser-worker.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "83855bb0b339f6732e939b0f5f8d80f8db8e431d35d4057976b937214c730888"
+    },
+    "scripts/testing/rolling-composer-browser.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "e66d3e4a9544cff46ca9ee58561e81f12e5ab80f10297842ba763db8da9fa091"
+    },
+    "scripts/testing/rolling-composer-browser.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "1b42a3198da3afda12a0d13a8372d555afa37b5bc4780d55a6f03ee63942c52a"
+    },
+    "scripts/testing/rolling-preference-browser-fixture.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "70319dbcdaf4271781eea03069e9de4b47e54d9f27f09e5696b4a82e65e6116a"
+    },
+    "scripts/testing/rolling-preference-browser-fixture.test.mjs": {
+      "reviewedRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "review": "execution/evidence/G07/combined-ad1-source-eligibility-review.json",
+      "sha256": "1741ce065cd7d8483834b994b4939926709a49b9d543e247f274ab0c8a02caf0"
+    },
+    "scripts/testing/rolling-preference-browser.mjs": {
+      "reviewedRevision": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "review": "execution/evidence/G07/preference-browser-50ff-lock-review.json",
+      "sha256": "521b5c935b48f5bd6558a922db759df9b475b19b59f663b4dfafbc933a56db9a"
+    },
+    "scripts/testing/rolling-preference-browser.test.mjs": {
+      "reviewedRevision": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+      "review": "execution/evidence/G07/preference-browser-842-repair-review.json",
+      "sha256": "7e4adbee3546c8cc46667902bb6aa93f98cfbdacc65d9db3de39d3b9ec3e5dcb"
+    }
+  },
+  "carriedRuntime": [
+    {
+      "historicalRevision": "11dcb37",
+      "review": "execution/evidence/G07/preference-relationships-2aafe-runtime-review.json",
+      "reviewSha256": "ada9489c189eee396e93b26786919f62772cb9053ed677b902089db6f58306a4",
+      "unchangedRelevantProductionPaths": [
+        "billboard/rolling_contract/src/main.nr",
+        "billboard/rolling_contract/src/preferences.nr",
+        "billboard/rolling_contract/src/preferences_tests.nr",
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs",
+        "prover/rolling-artifacts.json",
+        "shared/journal-backup.mjs",
+        "shared/journal-backup.test.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/preference-events.mjs",
+        "shared/rolling/preference-events.test.mjs",
+        "shared/rolling/preference-reader.mjs",
+        "shared/rolling/preference-reader.test.mjs",
+        "shared/rolling/preferences.mjs",
+        "shared/rolling/preferences.test.mjs",
+        "shared/rolling/private-views.mjs",
+        "shared/rolling/private-views.test.mjs",
+        "shared/rolling/synchronized-application.mjs",
+        "shared/rolling/synchronized-application.test.mjs",
+        "shared/sdk-entry.mjs"
+      ],
+      "laterChangedPaths": [
+        "BUILDING.md",
+        "apps/rolling/reader.browser.test.mjs",
+        "apps/rolling/reader.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-runtime.browser.test.mjs",
+        "apps/rolling/wallet-runtime.mjs",
+        "deploy/prover/BOOTSTRAP.md",
+        "deploy/prover/archiver-prerequisites.mjs",
+        "deploy/prover/archiver-prerequisites.test.mjs",
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/private-bok-build-preflight.mjs",
+        "scripts/testing/private-bok-build-preflight.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-composer-browser.mjs",
+        "scripts/testing/rolling-composer-browser.test.mjs",
+        "scripts/testing/rolling-preference-browser-fixture.mjs",
+        "scripts/testing/rolling-preference-browser-fixture.test.mjs",
+        "scripts/testing/rolling-preference-browser.mjs",
+        "scripts/testing/rolling-preference-browser.test.mjs",
+        "scripts/testing/rolling-preference-recovery.mjs",
+        "scripts/testing/rolling-preference-recovery.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ],
+      "disposition": "CLI runtime remains historical with identical core protocol/reader/application; later UI/browser scenario wiring is qualified separately by a8eb. Not a byte-identical whole-source rerun."
+    },
+    {
+      "historicalRevision": "96825e1",
+      "review": "execution/evidence/G07/preference-notifications-38ce-runtime-review.json",
+      "reviewSha256": "6d42f1784cd7596340a35d6981dd4a72f046dd78bd7aad04cd12ec290eef586a",
+      "unchangedRelevantProductionPaths": [
+        "billboard/rolling_contract/src/main.nr",
+        "billboard/rolling_contract/src/preferences.nr",
+        "billboard/rolling_contract/src/preferences_tests.nr",
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs",
+        "prover/rolling-artifacts.json",
+        "shared/journal-backup.mjs",
+        "shared/journal-backup.test.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/preference-events.mjs",
+        "shared/rolling/preference-events.test.mjs",
+        "shared/rolling/preference-reader.mjs",
+        "shared/rolling/preference-reader.test.mjs",
+        "shared/rolling/preferences.mjs",
+        "shared/rolling/preferences.test.mjs",
+        "shared/rolling/private-views.mjs",
+        "shared/rolling/private-views.test.mjs",
+        "shared/rolling/synchronized-application.mjs",
+        "shared/rolling/synchronized-application.test.mjs",
+        "shared/sdk-entry.mjs"
+      ],
+      "laterChangedPaths": [
+        "apps/rolling/reader.browser.test.mjs",
+        "apps/rolling/reader.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-runtime.browser.test.mjs",
+        "apps/rolling/wallet-runtime.mjs",
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-composer-browser.mjs",
+        "scripts/testing/rolling-composer-browser.test.mjs",
+        "scripts/testing/rolling-preference-browser-fixture.mjs",
+        "scripts/testing/rolling-preference-browser-fixture.test.mjs",
+        "scripts/testing/rolling-preference-browser.mjs",
+        "scripts/testing/rolling-preference-browser.test.mjs",
+        "scripts/testing/rolling-preference-recovery.mjs",
+        "scripts/testing/rolling-preference-recovery.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ],
+      "disposition": "CLI runtime remains historical with identical core protocol/reader/application; later UI/browser scenario wiring is qualified separately by a8eb. Not a byte-identical whole-source rerun."
+    }
+  ]
+}

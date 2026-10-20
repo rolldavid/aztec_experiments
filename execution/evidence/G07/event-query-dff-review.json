@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-12T03:50:35.427228+00:00",
+  "base": "a00a0187047df11db71482f669ae17e33954e1ff",
+  "sourceOnly": true,
+  "findings": [],
+  "check": {
+    "command": "NODE_BACKEND=js pinned Node v24.21.0 --test --test-concurrency=1 immutable extracted scripts/test-private-event-query.mjs shared/rolling/private-views.test.mjs",
+    "log": "/tmp/reviewer-g07-dff-fea-tests.log",
+    "logSha256": "3901ff5455e879417753c7977b6306cbc93a1ae487b0e151d7105fc4029a0457",
+    "tests": 43,
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 971.724542,
+    "extraction": "/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/reviewer-g07-source-cs33fuvu",
+    "installedModulesChanged": false
+  },
+  "candidate": "dffbf8dc74a3ffb03b96f3dacd5cd00fa5b249f2",
+  "verdict": "approved bounded source proposal; not authorization to install shared SDK patch",
+  "requirements": [
+    "G07-A02",
+    "G07-A08"
+  ],
+  "sourceHashes": {
+    "scripts/patch-private-event-query.mjs": "515687b52864c8b4edf9f9b2c5623a2c642ce27744807f0978e92191039dd46e",
+    "scripts/test-private-event-query.mjs": "b88bd31f13d2b77dd82829214a9dfe4ddcbcddb526ac4fe70cccd5da4227a1db"
+  },
+  "checks": [
+    "Independently inspected pinned original TS/dest PrivateEventStore, StoredPrivateEvent serialization, BaseStagingStore locking/transaction and actual LMDB/IndexedDB range adapters before tests.",
+    "Only getPrivateEvents body transforms; both original/after hashes enforced. Remaining store/flush/prune, contract/selector indexes and auth queue unchanged. Explicit copied package path, mixed/unknown/symlink state fails closed. Interrupted two-file installation is detected, not automatically repaired.",
+    "Block index range is closed-open, zero interval avoids adapter unbounded endpoint behavior; candidate rows capped at 4096 including staged scan. All indexed candidates recheck contract/selector/block/scope/optional tx. Valid staged override takes precedence, ordering preserved, malformed/missing/index inconsistency throws.",
+    "Single awaited primary read drains on failure. Internal transaction failure token defers rejection until transaction completion; fixed errors conceal record/scope/decoder contents and do not convert failures to empty histories. 1MiB individual and 8MiB aggregate candidate encoding caps precede persistent deserialization.",
+    "19 independent tests: actual LMDB and actual deprecated IndexedDB adapter using explicitly labelled fake-indexeddb; differential scopes/ordering/staging/discard/prune, delayed read/iterator failures, byte/row limits, exact TS emission and package pins."
+  ],
+  "limitations": [
+    "No shared installed module was modified. Build/bundle/package integration and resulting source fingerprints require separate exact-source review.",
+    "Small fixtures establish behavior, not native browser IndexedDB transaction qualification or 1k/10k/50k capacity/latency/memory acceptance.",
+    "Limits are reversible candidate-work bounds, may reject dense intervals including other contracts and duplicate staged candidates; no silent partial results. Decoder/KV allocation overhead is not a total process-memory cap.",
+    "Official ensureContractSynced cold backlog and recipient tagging discovery remain outside the bounded query; no cancellation/queue bypass is introduced.",
+    "Existing private-event verbose logging must remain suppressed at production logging boundary. No genuine preference recovery/reorg/private trace or cryptographic assurance claimed."
+  ]
+}

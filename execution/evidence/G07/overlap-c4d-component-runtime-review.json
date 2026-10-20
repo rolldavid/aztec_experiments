@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:26:57.499284+00:00",
+  "sourceRevision": "c4d9416af7bd362307a3507f5c44d52921bd7a42",
+  "verdict": "accepted-exact-component-runtime; genuine-cold-reorg-eligibility-remains-separate",
+  "bindings": {
+    "receipt": "e41f332e65207bcfcd3c24cffaa84215f038cae05e7dea2de374bc53f60db100",
+    "log": "82e0fe457317cbb07a20ec0bc9b485df20235ec3193a89ed8640e936fc1d25c5",
+    "runner": "c19b00c937480e571e7939a4c86e1d7d2da1d95fbf412e5f99af33085f2c303e",
+    "plan": "01830c539a2adb5043ede5e9c319baf55cdcfe4a0853baa99f40b1b5b5d21be9",
+    "sourceReview": "fefe80bd07dc09773b4283e0ac81b95101827c0f1cd8f9f5cb319b8949a30830",
+    "runnerReview": "803c0b9c3103ad00539d50b9f09f99991b3308ce28410b21e29a329ec25883f9"
+  },
+  "actual": {
+    "exitCode": 0,
+    "elapsedMs": 5511,
+    "peakAggregateRssBytes": 793116672,
+    "tapCounts": {
+      "tests": 285,
+      "pass": 285,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "originalLinkRestored": true,
+    "sourceUnchanged": true,
+    "dependencyPinsUnchanged": true,
+    "ownedTemporaryDirectoryRemoved": true
+  },
+  "independentVerification": {
+    "exact285LabelMultiset": true,
+    "all32FinalizerRepairCasesPresent": true,
+    "sourceArtifactHashesRehashed": 549,
+    "dependencyHashesRehashed": 283,
+    "mismatches": 0,
+    "helperAbsences": 2,
+    "temporaryDirectoryCurrentlyAbsent": true,
+    "currentOwnedProcessReadback": [],
+    "currentHeadStillExact": true
+  },
+  "scope": [
+    "Actual parent-used finalizer all original/falsy failure and cleanup combinations, actor engine/journal/AEAD, SDK transaction serialization, request-local fence and HTTP ownership component checks.",
+    "PXE/proof/node doubles remain labelled. No actual cold SDK/ACIR, canonical fork, full history, real proof fee accounting, whole-journey timing or 4GiB overlap claim from this run.",
+    "Source composition may carry only exact reviewed seven-path bytes with independently checked integration differences. Existing genuine/reorg/browser/capacity acceptance remains open."
+  ],
+  "testsExecutedByReviewer": false
+}

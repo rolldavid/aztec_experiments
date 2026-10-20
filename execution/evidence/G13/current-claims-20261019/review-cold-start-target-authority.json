@@ -1,0 +1,34 @@
+{
+  "verdict": "120s SDK target attribution is unsupported; correct the summary, retain observations",
+  "sources": {
+    "execution/evidence/G03/targets.md": "79758b5f74edb4885c27e585f6b42cb4232ee3c1bf457778e1da16b8e20203a4",
+    "execution/evidence/G03/targets-original-20261011.md": "d372cc6e9cae74de8a5dd0a5bbf1a0adfd9c3b79f81e61f0f61b3150caba373e",
+    "execution/draft3-requirements.json": "d223d228bf8568285c61d78a4457d1c909bc4445bc20e2a2f5de1db8ec4827c0"
+  },
+  "authority": [
+    {
+      "source": "execution/evidence/G03/targets.md",
+      "line": 10,
+      "scope": "Individual remote proof <=120s; median <=60s across >=10; total browser qualification540s/4GiB; network finality separate."
+    },
+    {
+      "source": "execution/evidence/G03/targets-original-20261011.md",
+      "line": 10,
+      "scope": "Identical original predeclared proof and total-browser limits."
+    },
+    {
+      "source": "/Users/zac/Rolling Chat Contractor Specification Draft 3.pdf",
+      "page": 9,
+      "scope": "Predeclare initial feed/thread/scroll/search/index freshness/rebuild/node requests/proof latency/cost targets; report cold/warm hardware/network/dataset. No numeric SDK or full-wallet startup threshold."
+    }
+  ],
+  "interpretation": [
+    "No standalone cold SDK or full-wallet startup numeric threshold is declared in these applicable sources.",
+    "133s and405s SDK transfers remain slow observed asset delivery. They do not violate the individual-proof120s limit, and cannot establish pass/fail against the entire540s browser qualification without the matching full-run interval.",
+    "The old60s asset watchdog caused real application failures. Its historical failure remains; implementation timer is not automatically a predeclared UX acceptance target.",
+    "Historical reviewer language about cold recovery within120s is not evidence that the owner or G03 declared an SDK target. Do not convert it into one retrospectively.",
+    "Keep cold/warm measurements and any missing full-run interval explicit; do not add a new threshold or erase observed slowness."
+  ],
+  "recommendedText": "Cold SDK delivery measured133s and405s. These are slow asset observations; no standalone120s SDK target was declared. The120s limit applies to individual remote proofs and540s/4GiB to total browser qualification. Warm SDK cache695.91ms is also an asset metric, not full account startup acceptance.",
+  "noChecksOrRuntimeActions": true
+}

@@ -1,0 +1,84 @@
+{
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T21:05:34.013065+00:00",
+  "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+  "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "findings": [],
+  "verdict": "PASS bounded genuine notification and fresh native-browser recovery component",
+  "receipt": {
+    "path": "application-1b1c3a03-1030-43df-aa5b-52f10d54597b.json",
+    "sha256": "9793b812bb39b8db39abc538d2151d48a941844bd6b8a1cdd2134a6c5b75ba94"
+  },
+  "independentAudit": {
+    "path": "notification-1b1-independent-audit.json",
+    "sha256": "d263c9072f377d7f5988a6c49d54a8aeadb2b37bb873b350cb8aca721ebdde9d",
+    "scriptSha256": "7537297ebff8bb2c37db0b33964f529d44295a87952e85adcd1c0176876fba22"
+  },
+  "checks": {
+    "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+    "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+    "passed": true,
+    "sourceHashCounts": {
+      "outer": 397,
+      "inner": 81,
+      "artifacts": 2,
+      "native": 70,
+      "bok": 14
+    },
+    "normalBuildClosure": {
+      ".build/sdk/sdk-manifest.json": {
+        "sha256": "a2f229f04ad0228f19ccd8e59cbd17e46f1b581dae7cfb867b144d56005cd07a",
+        "inputs": 2042,
+        "outputs": 8
+      },
+      ".build/apps-manifest.json": {
+        "sha256": "40843bb0da4bc6f0c991716e364804ffc9172567c1f710cadf33d63879dcf995",
+        "inputs": 97,
+        "outputs": 10
+      },
+      ".build/rolling-wallet/manifest.json": {
+        "sha256": "054f6afb2636e941ebc43f4b1f3114a740825c1906196f4be703660e18c8c352",
+        "inputs": 81,
+        "outputs": 24
+      }
+    },
+    "transactions": 4,
+    "fees": {
+      "application": "59562237000000",
+      "collateral": "9685326000000",
+      "standalone": "7907652000000",
+      "aTotal": "51638293200000",
+      "bTotal": "25516921800000",
+      "combined": "77155215000000"
+    },
+    "effectSerializationCheck": "whole SHA256 plus pinned TxEffect success/hash/fee prefix; no independent full SDK decoder rerun",
+    "browserChecks": 16,
+    "nativeTrustedChildrenWith2Threads": 4,
+    "diffPaths": 51,
+    "draftReferencesRehashed": 22,
+    "elapsedMs": 465896,
+    "peakTreeRSSKiB": 2086304,
+    "receiptSha256": "9793b812bb39b8db39abc538d2151d48a941844bd6b8a1cdd2134a6c5b75ba94",
+    "innerSha256": "60c84725af5f48fda53b59e4e2b89e9d6dc020f66265528fb598304dc6d6ee21",
+    "postRunClosureSha256": "26b053fd1321e2d0affbdb1be9cdec7f45926fd77a6dc0221533139591ee67b0"
+  },
+  "assessment": [
+    "Four distinct checkpointed successful canonical transactions in blocks 14\u201317: A root, B subscription, A reply, B read marker. Four preserved effect files hash-match; success/hash/fee serialized prefixes independently agree with receipts. Subscription/marker emit zero Board events; root/reply each PostPublished.",
+    "Actual production acceptance recomputes both preference revisions with pinned Poseidon, verifies canonical marker context, exact recovered state and notification selection. Private states are intentionally not persisted; this conclusion binds the reviewed assertions and successful actual execution, not an independent replay from persisted private data.",
+    "Actual Chromium passes all 16 checks: fresh database, explicit subscription and marker consent, reply unread then suppressed, public reply retained, lock/reload and fresh-context keys-only import. Four recovery steps; exactly two browser proof submissions and sends, zero additional recovery writes and zero L1 submissions/blocked/inspection errors. Parent independently requires four completed HTTP proof jobs and four sends.",
+    "Recomputed application fees 59562237000000; collateral 9685326000000; standalone B funding 7907652000000; combined 77155215000000. A/B private debits and public pool conservation agree at canonical block17 before and after balance read; both public account balances zero.",
+    "Encrypted CLI journal reopen retains exact transaction identity without reproving; canonical index rebuilt and fresh/reopened SQLite HTTP feed/thread authenticated at block17. Browser native IndexedDB is separately exercised by the real browser above.",
+    "465896ms <540000ms; peak2086304KiB <4194304KiB; outer tree and temporary directory absent, browser/context and every recorded fixture owner closed. Four actual trusted children each PROVER_THREADS=2/HARDWARE_CONCURRENCY=2; this establishes settings, not measured CPU parallelism.",
+    "397 outer bindings (396 actual file hashes plus localAnvil alias),81 inner source,70 native artifact inputs,14 PrivateBok inputs and2 artifact hashes match frozen isolated checkout. All2042/8 SDK,97/10 frontend,81/24 wallet input/output bytes independently rehashed post-run."
+  ],
+  "limits": [
+    "Local official protocol fixture uses controlled settlement and no genuine network epoch proof; not deployed-node/testnet qualification.",
+    "Known-role equality footprint is bounded and is not full privacy/linkability assurance.",
+    "No large-history recovery or performance generalization.",
+    "Successful wallet runtime complements separately reproduced delayed-failure atomicity tests; it does not itself inject storage failure.",
+    "No full TxEffect SDK decoder rerun; whole-file digest and pinned serialization prefix independently checked."
+  ],
+  "failedHistoryPreserved": [
+    "application-80b000fd-7c53-4d40-b651-cafadadf09c3.json and all earlier notification failures remain failures."
+  ]
+}

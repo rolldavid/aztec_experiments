@@ -1,0 +1,30 @@
+✔ actual SDK board projection gates canonical plugin, moderation, anchor and native proof mode (964.259417ms)
+✔ Rolling threads overlap while same-thread requests remain ordered and shutdown drains (21.580708ms)
+✖ small decoded late-post history reauthenticates on reopen and removes forked suffix before publication (11.928ms)
+✔ SQLite query SQL uses actual bounded range indexes without sort or table scan (94.863125ms)
+✔ SQLite trusted chronological scan uses bounded ascending pages across new canonical publications (19.70225ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1671.385334
+
+✖ failing tests:
+
+test at shared/rolling/public-index.test.mjs:483:1
+✖ small decoded late-post history reauthenticates on reopen and removes forked suffix before publication (11.928ms)
+  Error: Rolling public storage is unavailable.
+      at error (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-sqlite.mjs:13:33)
+      at requireThat (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-sqlite.mjs:14:75)
+      at createRollingPublicSqliteStore (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-sqlite.mjs:58:2)
+      at store (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-index.test.mjs:317:27)
+      at Object.open (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-index.test.mjs:318:27)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-index.test.mjs:485:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'ROLLING_PUBLIC_STORAGE_INVALID'
+  }

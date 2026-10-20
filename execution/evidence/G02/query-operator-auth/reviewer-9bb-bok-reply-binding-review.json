@@ -1,0 +1,41 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "parentSession": "rolling-chat-draft3-lead",
+  "reviewedAt": "2026-10-14T12:51:44.453639+00:00",
+  "source": "9bb2d22d52d5b769b19ae53b5a1a6d1f0688a702",
+  "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "requirements": [
+    "RC29",
+    "RC30",
+    "RC31",
+    "RC33"
+  ],
+  "verdict": "approved",
+  "findings": [],
+  "scope": [
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs"
+  ],
+  "sourceHashes": {
+    "shared/rolling/application.mjs": "d9608d2675482b2a07f359d1846ad96e5e897ace87258f2ba19a6afe7ed366e9",
+    "shared/rolling/application.test.mjs": "96aa5023d112d3dab92def8e2a48aa8f5e3f786d89551f47155059fa4a6e50b6"
+  },
+  "packet": "execution/evidence/G14/live-authorization-release-withdrawal/bok-reply-binding-handoff.json",
+  "packetSha256": "f6c6795311c79a9ab3e9ffa27dfe144d5b5e0d5d5b232b906f8890be9b9f70bf",
+  "checksPerformed": [
+    "Read exact two-file diff and canonical contract invocation preimage, unchanged escrow exact-target assertion and existing authorization/post/release lifecycle.",
+    "Verified every packet source/evidence SHA256, original failing real-hash regression and final 39 Bok/3 invocation passing logs.",
+    "Independently executed two focused existing tests with pinned Node v24.21.0: 2 PASS, 0 FAIL, 0 SKIP, 2866.527834ms; actual Poseidon with labelled chain/transaction doubles."
+  ],
+  "assessments": [
+    "Canonical target now includes parent, root_reference, kind and reference as well as all prior network, authority, nonce and UTF-8 content fields, matching the unchanged Noir preimage. Root defaults remain equivalent.",
+    "Saved authorization is not rewritten. Mismatch fails before post fee estimation, post record replacement or submission. Existing canonical release preparation remains available and preserves explicit confirmation; independent regression covers this path.",
+    "Existing immutable-draft equality and canonical thread rechecks remain. Tests independently assemble contract field order from exact post ABI instead of invoking the new helper, and deliberately recreate the old mismatch to check refusal.",
+    "Retained actual no-send hash evidence confirms original recorded target matches old root defaults but not full reply draft. This establishes a concrete defect without claiming the generic SDK assertion location was decoded."
+  ],
+  "limitations": [
+    "Approval covers source and focused regression, not a successful corrected live cross-user reply. Root must compose, build and run normal integration checks, then existing actual devnet flow.",
+    "Original confirmed wrong-target authorization requires explicit existing cancellation/release before a newly authorized corrected request; no financial action performed by reviewer.",
+    "No real-proof testnet acceptance or final RC29/RC30/RC31/RC33 completion inferred."
+  ]
+}

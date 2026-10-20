@@ -1,0 +1,103 @@
+{
+  "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded development integration; actual subboard-policy and rejected-withdrawal conjunction satisfied",
+  "findings": [],
+  "changedPaths": 31,
+  "sourceSha256": {
+    "apps/rolling/reader-client.mjs": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+    "apps/rolling/reader-client.test.mjs": "43f51b01781026b7da28b091d35d81efbec822327ee8b9039c8a141da01c3e15",
+    "apps/rolling/reader.browser.test.mjs": "2d809b7ae664689f035054fb9343f203787d8fc1f47fe7082df3fc9e5387cfcd",
+    "apps/rolling/reader.mjs": "11f35d5e47e82cf2b6fb813e5a5c7564cfafeeddd6755d68f7d2262907580331",
+    "apps/rolling/wallet-panel.browser.test.mjs": "c6e421e9563c9e0db27428421e816a557e8a3131dc5d8035158009dccd41e6db",
+    "apps/rolling/wallet-panel.mjs": "0d9bfb6fdabfe2cd7ae3734d24b955a7198ab3b0376b99bcfd57b504ada1358c",
+    "scripts/rolling-public-server.mjs": "d36cf775df3e308c9d25ce98d4eabf8ee5177ac24999d39b83ff5a83effb5542",
+    "scripts/rolling-public-server.test.mjs": "bd841e4d9d49af0209d8d67260f4ce60ae25f090eb6bbad83216b70196a15cc2",
+    "scripts/testing/rolling-admission-read.mjs": "fabe2e9bb65a6797f1ce8265a0e064e87d3f2af42947a27b7cfee3bc31ed94fa",
+    "scripts/testing/rolling-admission-read.test.mjs": "04514de7b6309cfab283b9967dca6dc38b90819612503368bccca379d9961a16",
+    "scripts/testing/rolling-application-fixture.mjs": "b43a4f2ca5704d1ba33bb237e478424c9301cbb082f249751bd89b0654fea3f0",
+    "scripts/testing/rolling-composer-browser.mjs": "75d0eea7ccf802726d3e4601a2899cbbf8ec1e5d75fbf813b2ba7ff8fcb80f60",
+    "scripts/testing/rolling-composer-browser.test.mjs": "1a086047f0d3136ddce33258afbc32cb7ee086ae3ef8ce8cef5bd06366fdd40f",
+    "scripts/testing/rolling-public-acceptance.mjs": "a644b08897cf654c1af43a9ea7239fc854ac65ec197d7af3f4ea2a7544bb1fdf",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "f6cb2ca9fc097d319776a125b6dd81b389925eef9ba80a79d5d24f6a6b486638",
+    "scripts/testing/rolling-rejected-withdrawal.mjs": "beea8b8ea81ad9f433370a5bf17b0bcf53fd312ad98a9f69bdfebffcdf269967",
+    "scripts/testing/rolling-rejected-withdrawal.test.mjs": "c3c1a20306b6e0905c8deefa393a9852bea2a9bd04e7b9e27f58e1f90f8e0329",
+    "scripts/testing/rolling-subboard-acceptance.mjs": "f3ac791f2ef741ee925ce7c673b38c40650bb6b0184318e6c2d328df0a27cef4",
+    "scripts/testing/rolling-subboard-acceptance.test.mjs": "654c8bc37a06f639ee06d4d4a0770459a9e336ba62cbc44a9eb060860a97308b",
+    "scripts/testing/rolling-wire-campaign.mjs": "0246901af38f6510af0e276b26bba324f68f6ae422305146b0605670374b364e",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "7db43420387b1bc8bb06879bed8114e0f5c9169363dda2b1e06604e996ebb720",
+    "scripts/testing/rolling-wire-trace.mjs": "9afb34e91dc8f2d3c9d521f5606b13f6c56adef4d57c6e87eca909de0f28528f",
+    "scripts/testing/rolling-wire-trace.test.mjs": "b82bfed2d3d4107c201c3b1ed03d71456a9629ceb832f554072dfa4249ae73b6",
+    "scripts/testing/scenario-flows.mjs": "790c50a83847d836fdaf269d15e78fe4097a059d2c5e054bc0328e314639d101",
+    "scripts/testing/scenarios.mjs": "1dbb8d253e47f7881667fa618e525772e590f9d356e7fb42010fa6f003e2df70",
+    "shared/rolling/application.mjs": "d4d42b2ff4e8808640b7e924bedf5c6d98dcab126d553830151d052c9718931f",
+    "shared/rolling/application.test.mjs": "d8fd572e94ccd03fc7d3db7bcfbbfcb78e51604be31bbce3052249aa2ebd2c8a",
+    "shared/rolling/public-index.mjs": "446346166d3a677e88efa54bcee6eb79bc0ccb62402de10ace64aafc46ad9458",
+    "shared/rolling/public-index.test.mjs": "bdea16ba1d1d520bd0bc323184ad593bf2cb0b3a89deb03b07b46548508b9fc0",
+    "shared/rolling/public-projection.mjs": "feb2c27f6e090496b969340a3ad37e54abdb502836604f4b68bdebf5daf2731d",
+    "shared/rolling/public-projection.test.mjs": "ba43b842bed64139f52a440e8505d92fe9303c04a43b4da1161a9e6bb8bf803a"
+  },
+  "reviewComposition": {
+    "priorReviewedPaths": 29,
+    "identicalPriorBlobs": 28,
+    "onlyFollowup": "09a withdrawal-only typed BlockHash helper and tests; exact fixture diff inspected",
+    "reviewRecords": [
+      {
+        "path": "execution/evidence/G05/subboard-8003-review.json",
+        "sha256": "086fcb6166577cc173a6f8ec1e7a1c073f2ba671405fae3a3311d301481ead96"
+      },
+      {
+        "path": "execution/evidence/G05/withdrawal-09a-review.json",
+        "sha256": "9f4e9a7de24876b73fab42bae49bef2d3aeb710f04302c42efe3f297a31c2f02"
+      },
+      {
+        "path": "execution/evidence/G05/subboard-da251-runtime-review.json",
+        "sha256": "10ecbd1ccb0d9c84b1cc965fcac57a89fdd7b82d997604527a5125da1751fe8a"
+      },
+      {
+        "path": "execution/evidence/G05/rejected-withdrawal-65c1-runtime-review.json",
+        "sha256": "fa3cac320e93179fa3a9efa64984d1250387e102d9fe1ef493200ad6ff449d5a"
+      }
+    ],
+    "startupAndRace": "No changed path outside prior29+newadmission2; previously retained04f startup/8d8 race metadata guards unchanged"
+  },
+  "runtimeEvidence": [
+    {
+      "source": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+      "run": "da2510b2-87cc-417f-bb49-19d97c2371b4",
+      "disposition": "Subboard production/consumer/branch unchanged by09a; independent original runtime review carries forward with withdrawal-only fixture delta disposition"
+    },
+    {
+      "source": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "run": "65c1f05e-9108-482a-b081-69ea3b80289f",
+      "disposition": "Independently approved above"
+    }
+  ],
+  "checks": {
+    "reviewerSourceTests": "Prior247 affected tests at8003;154 native admission/withdrawal/parent tests at09a,0fail/skip, unchanged tested blobs verified",
+    "leadCurrentCombined": {
+      "command": "execution/evidence/G05/combined-09a-check-command.json",
+      "log": "execution/evidence/G05/combined-09a-tests.log",
+      "sha256": "ddd3d8e13f423cd029fd049f50e861ac130a7429d6d8473785840baf6a201d1f",
+      "passed": 599,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 14655.849875
+    },
+    "priorBrowser": "47 synthetic Chromium checks at8003; UI blobs unchanged; not real-chain browser acceptance",
+    "currentIndependentAssets": "Actual checkSdk and canonical contractInputs equality passed; all75wallet inputs and24outputs byte/size hashes verified",
+    "walletManifestSha256": "098107f3af46c0b25d4dd137135b52866212f7f130aee129473d7f1f3cb8feaa",
+    "probeCorrection": "Initial reviewer read-only asset check imported nonexistent contract-build-inputs; corrected to actual artifact-provenance export, then passed without source mutation"
+  },
+  "limitations": [
+    "Genuine local application proofs, not epoch/network proofs or economic finality; local31337 controlled Outbox settlement",
+    "Explicit fixture cooldown10s/censorWindow20s; production-default timing performance not measured",
+    "Native process/HTTP prover and public reader transport, not browser full withdrawal UX",
+    "Canonical continuity and exact private note assertions executed by source-bound fixture; private note/depositor associations intentionally RAM-only, not independently redecoded from stored private data",
+    "Stored L1 refund observation attests executed canonical receipt/event/balance checks; raw historical L1 response objects are not persisted for offline independent reexecution",
+    "Public footprint only exact known-role equality; no full unlinkability, moderation-model or specialist assurance claim",
+    "No G05 whole-task closure, remote Linux qualification, G07 preferences or production release claim"
+  ],
+  "taskClosure": "No graph/task state modified or full G05 completion asserted"
+}

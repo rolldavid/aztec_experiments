@@ -1,0 +1,28 @@
+{
+  "task_id": "W03-funded-prover-policy",
+  "implementer": "lead-20261011",
+  "candidate": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+  "base": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "prover/application-policy.mjs",
+    "prover/application-policy.test.mjs"
+  ],
+  "required_checks": [
+    "focused-policy"
+  ],
+  "requirements": [
+    "RC19-funded-claim-policy"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-funded-prover-policy",
+      "paths": [
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs"
+      ]
+    }
+  ]
+}

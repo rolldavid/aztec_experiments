@@ -1,0 +1,22 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T06:08:16.688Z",
+  "pid": 14132,
+  "runnerSha256": "344b9544831b784f66c57c7a8d04761baa34bc811a32e629c83213a5d7b01b70",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "preparationSha256": "bc17f074b05529afee946b796d545b17db15a4ef1fe6f8caef2c7ddfff6e0824",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-offline-system-bus-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-offline-system-bus-controlled/home",
+    "TMPDIR": "/private/tmp/obc-4xdynji6",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "retry": false
+}

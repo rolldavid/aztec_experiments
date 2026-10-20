@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "finishedAt": "2026-10-13T01:48:46.162989+00:00",
+  "readOnly": true,
+  "awsCalls": 12,
+  "healthCalls": 1,
+  "awsRetries": false,
+  "records": {
+    "identity-deploy": {
+      "available": true,
+      "sha256": "7d4742ff81677881f37da0e9737e29be758d5a3cf31c0f4c5b20ff7bb587354f",
+      "observation": {
+        "account": "052665140763",
+        "expectedAccount": true,
+        "assumedRole": true
+      }
+    },
+    "identity-sso": {
+      "available": true,
+      "sha256": "eb9bc6f110d77808b3dade2a2390c41ac4af9cae1b1fd16c3255c8963fbf2ceb",
+      "observation": {
+        "account": "052665140763",
+        "expectedAccount": true,
+        "assumedRole": true
+      }
+    },
+    "instances": {
+      "available": true,
+      "sha256": "aa8c21222727e35beecfd34a81351e7a07d02dfd814bb699b8e475e559f62be9",
+      "observation": {
+        "rows": [
+          {
+            "id": "i-0d023f41f8a8e4f8a",
+            "state": "terminated",
+            "projectTagged": false
+          }
+        ]
+      }
+    },
+    "volumes": {
+      "available": true,
+      "sha256": "af347fba2b0cc70809716e68cec6c6aa76b80e4790d46404bf47f1944798037a",
+      "observation": {
+        "rows": []
+      }
+    },
+    "fleets": {
+      "available": true,
+      "sha256": "550917cb781fac6793d08480582a856bd8b884ae272a2390fb6949c7a4f2a97e",
+      "observation": {
+        "rows": [
+          {
+            "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-87719d54-e165-4f5b-86e1-ffd26f39228b",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          },
+          {
+            "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+            "state": "deleted",
+            "terminateWithExpiration": true
+          }
+        ]
+      }
+    },
+    "groups": {
+      "available": true,
+      "sha256": "06ae2f6bd199456bdb02110af9f4d8b6ae2be7910eb35714720e57d3a70c3c31",
+      "observation": {
+        "rows": [
+          {
+            "id": "sg-03065d3c141f9b030",
+            "vpc": "vpc-4585113d",
+            "zeroIngress": false,
+            "egressRules": 1,
+            "allIpv4Egress": true
+          },
+          {
+            "id": "sg-076e39ea1d8dbf8d0",
+            "vpc": "vpc-4585113d",
+            "zeroIngress": true,
+            "egressRules": 1,
+            "allIpv4Egress": true
+          },
+          {
+            "id": "sg-7e0fd90b",
+            "vpc": "vpc-4585113d",
+            "zeroIngress": false,
+            "egressRules": 1,
+            "allIpv4Egress": true
+          }
+        ]
+      }
+    },
+    "subnets": {
+      "available": true,
+      "sha256": "c21cc2054ec6977f6b6f6fe4629b2a75f8f5126bff162618c0f95d32b5581524",
+      "observation": {
+        "rows": [
+          {
+            "id": "subnet-aa91f4ce",
+            "vpc": "vpc-4585113d",
+            "az": "us-east-1b",
+            "state": "available",
+            "availableIpCount": 4090,
+            "mapPublicIp": true
+          },
+          {
+            "id": "subnet-a705ce88",
+            "vpc": "vpc-4585113d",
+            "az": "us-east-1c",
+            "state": "available",
+            "availableIpCount": 4090,
+            "mapPublicIp": true
+          }
+        ]
+      }
+    },
+    "offerings": {
+      "available": true,
+      "sha256": "465d94991f4e0e58531188a8000cd2761c45352941ec9d0d93e95df789ccfd80",
+      "observation": {
+        "rows": [
+          {
+            "InstanceType": "m7a.large",
+            "LocationType": "availability-zone",
+            "Location": "us-east-1b"
+          },
+          {
+            "InstanceType": "m7a.large",
+            "LocationType": "availability-zone",
+            "Location": "us-east-1d"
+          },
+          {
+            "InstanceType": "m7a.large",
+            "LocationType": "availability-zone",
+            "Location": "us-east-1a"
+          },
+          {
+            "InstanceType": "m7a.large",
+            "LocationType": "availability-zone",
+            "Location": "us-east-1f"
+          },
+          {
+            "InstanceType": "m7a.large",
+            "LocationType": "availability-zone",
+            "Location": "us-east-1c"
+          }
+        ]
+      }
+    },
+    "ami": {
+      "available": true,
+      "sha256": "53698dced6c9d74e8202661dbd40b0e9c1808a3abb70dba9ee38d2350fc3688d",
+      "observation": {
+        "rows": [
+          {
+            "id": "ami-0fa5967347d08d2df",
+            "owner": "099720109477",
+            "architecture": "x86_64",
+            "state": "available",
+            "rootDevice": "/dev/sda1",
+            "rootType": "ebs",
+            "creationDate": "2026-10-04T10:47:07.000Z",
+            "rootVolumes": [
+              {
+                "device": "/dev/sda1",
+                "sizeGiB": 8
+              },
+              {
+                "device": "/dev/sdb",
+                "sizeGiB": null
+              },
+              {
+                "device": "/dev/sdc",
+                "sizeGiB": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "hardware": {
+      "available": true,
+      "sha256": "f4f9ddfabe3fd6e8033f038f468741b0e10d0f86a59200830b22e575e1a1f7bf",
+      "observation": {
+        "rows": [
+          {
+            "type": "m7a.large",
+            "vcpus": 2,
+            "cores": 2,
+            "memoryMiB": 8192,
+            "architectures": [
+              "x86_64"
+            ]
+          }
+        ]
+      }
+    },
+    "pricing": {
+      "available": true,
+      "sha256": "38901b96142f9fbef60ba64f640fea2c66edd8918bd0991896454fa5dbc38b8b",
+      "observation": {
+        "rows": [
+          {
+            "sku": "TX58337QN5B6HX4A",
+            "instanceType": "m7a.large",
+            "effectiveDate": "2026-10-01T00:00:00Z",
+            "unit": "Hrs",
+            "usd": "0.1159200000",
+            "beginRange": "0",
+            "endRange": "Inf"
+          }
+        ]
+      }
+    },
+    "binary": {
+      "available": true,
+      "sha256": "0f7adb3b14fa40fc28729ccc2110dbdd08633217450d1357bf068f075d85f870",
+      "observation": {
+        "bytes": 44698432,
+        "version": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+        "checksumSha256": "+ksSra79VoS1O4AjRrn+g5qz1qSoKaXqTv1r0gDggp8=",
+        "encrypted": true
+      }
+    }
+  },
+  "plugin": {
+    "schemaVersion": 1,
+    "at": "2026-10-13T01:48:46.129210+00:00",
+    "available": true,
+    "status": "degraded",
+    "active": 0,
+    "lastFailurePresent": true,
+    "readinessClaim": false
+  },
+  "mutations": 0
+}

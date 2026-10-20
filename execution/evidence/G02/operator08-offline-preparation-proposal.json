@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-10-12T08:49:02.109015+00:00",
+  "scope": "Offline operator08 successor preparation only; semantic runtime adapter, not diagnostic-only instrumentation",
+  "sourceCandidate": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "compositionEvidence": {
+    "path": "execution/evidence/G02/config-adapter-5ce-composition.json",
+    "sha256": "c94d0fe6e1850f52c4c54d76dc75871fe8a5d02e5b91be88f1e847cebc734918"
+  },
+  "inputs": {
+    "bootstrapSha256": "006470c66eb718a3e626f24b23b9b264b144fcc8993f6116cdacae925c10296c",
+    "helperSha256": "5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9",
+    "runtimeAdapter": "publicnode-config-v1"
+  },
+  "offlineSuccessor": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-08-operator.py",
+    "sha256": "ffdea3bc5f96bc84e4c027a13c081a837bc292c9c9619114f150c07f10a3da4a",
+    "actualNetworkMonitorReady": false,
+    "description": "Import-safe successor of07 receipt projector with exact08 package manifest and attestor pins; rejects missing/wrong adapter/helper and retains valid semantic label. Direct execution refuses; no AWS entrypoint copied prematurely."
+  },
+  "assessment": {
+    "path": "operator08-offline-helper-assessment.json",
+    "sha256": "2632c6a33fd7ea3ed5fc3a37b8394048151ca4ddf923de04cddd29f69f321e14",
+    "checksPassed": 11,
+    "realisticSyntheticPayloadBytes": [
+      16359,
+      16364,
+      16362
+    ],
+    "minimumObservedHeadroomBytes": 20,
+    "actualPayloadQualified": false
+  },
+  "priorWorkflowSourceHashes": {
+    "prepare07-local.py": "f9378992feff5c53c7ba868db2f2a8d44121282891ea407623233ae7015e0296",
+    "prepare07-upload.py": "12948ad5d1f9ee689c9e2cd3e647822ab3be5b15e0798fdd771fca97e43a721c",
+    "prepare07-capabilities.mjs": "e7e71b341ccfab7bc0bd7537a09d21cb931c1c560c68ebd15e7b89437124d262",
+    "launch07.py": "0003808f7230d09096cfd63db3488e643c96ccf78fdffef55e8e0dc28050dc0e",
+    "rolling-node-07-readonly.py": "ec86cf5560b9cf19c28df60fd632ed23ace52a6deffabde5768158717e615c3e"
+  },
+  "onceOnlyWorkflowToBindAfterPackage": [
+    "Existing prepare07-local save routine becomes08 only after fresh package review: external0700 directory,0600 exclusive O_EXCL|O_NOFOLLOW files, fsync file and directory. Preserve07 and all earlier journals. New prepared upload-intent is not send authority.",
+    "Upload: require exact reviewed archive/source/manifest/hash/size, reserved forecast, expected account/bucket owner, fresh no-overlap and plugin-active0, empty fresh immutable key. Persist exclusive send intent before one AWS_MAX_ATTEMPTS=1 PutObject with IfNoneMatch* and exact checksum. Receipt missing means reconcile exact key/version only; never replay.",
+    "HEAD exact immutable version and read-only scoped GET Range206 with matching1024-byte prefix. Existing successful receipt-probe evidence may be reused; no unsolicited second PUT probe. Scope URLs only exact versionedGET and08 receiptPUT, eu-west-2; check actual provider expiration through budget+cleanup. Raw capabilities stay external0600.",
+    "Generate actual new payload from exact reviewed bootstrap; shell syntax, LZMA exact decode, full source/pins, gzip bytes<=16384 and hash independently checked. No truncation, controls removal or assumed compression headroom.",
+    "New explicit LT/Fleet grant only after payload review and fresh identity/resources/SG/template/AMI. Each exclusive fsynced intent and client token precedes one retry-disabled mutation. Missing receipt reconciles by name/token; no new token replacement. Preserve unchanged noIAM/noSSH/noextraingress/noauthoritychange.",
+    "60min absolute budgetStop in Fleet request ValidUntil with TerminateInstancesWithExpiration and persistent host timer. Commissioning30min, readiness44min, qualification59min fromactualcreatedAt. Require>=20min commissioning remaining atlaunch; reject stalewindow, never extend silently. Exact encrypted DOT disks, terminate-on-shutdown,50Mbps shaping, root attestation/admin isolation, maskedpublicprover and zero proofjobs read back.",
+    "After launch own one monitor only, bind exact new resourceIDs/deadlines/manifest/bootstrap/helper/runtimeAdapter. Terminal failure/controlfailure/deadline -> once-only owned cleanup and reconciliation, no automatic replacement; preserve sanitized receipt and private journals."
+  ],
+  "budgetProposal": {
+    "ledgerPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/infrastructure-ledger.json",
+    "ledgerSha256": "69b1b2ff2e74c186c135ccecc571a71569b9ee5c39dad5865ffba20d982880a8",
+    "priorConservativeCumulativeUsd": 175.28,
+    "remainingBeforeProposalUsd": 124.72,
+    "newProposedReservationUsd": 25,
+    "proposedTotalUsd": 200.28,
+    "proposedRemainingUsd": 99.72,
+    "allocated": false,
+    "forecastComponentsUsd": {
+      "compute1_25h": 1.1592,
+      "gp3_1064GiB1_25h": 0.14575342,
+      "orphanDisk24hContingency": 2.79846575,
+      "publicIPv4_1_25h": 0.00625,
+      "egress35GB_at0_195": 6.825,
+      "newArchiveAndReceipts30days": 0.5,
+      "crossRegionReadAllowance": 0.5,
+      "requestsAndLogs": 0.25,
+      "taxAllowance": 3,
+      "additionalBillingCleanupBuffer": 9.81533083
+    },
+    "priceScope": "Reuse source-backed prior07 rates as planning inputs only; recheck applicable published prices and current live resources before allocating/launching. No network/price query in this offline task.",
+    "operatingPeriodSeconds": 3600,
+    "cleanupOverrunSeconds": 900,
+    "networkBasis": "50Mbps *1.25h =28.125GB; reserve35GB including shaping burst/headroom. Neither forecast nor software shaper is a proof of a hard faulty-host cost bound.",
+    "overlap": "07 instance terminated, volumes absent and Fleet deleted verified historical evidence. No overlap planned; no fresh resource query permitted in this offline task. Any unexpected live overlap blocks prelaunch and requires complete reforecast.",
+    "retention": "Previous campaign archive retention already counted175.28; new .5 provision covers one new archive/receipts30days. No retainedcompute/snapshot planned; orphandisk24h reserve included. If old archives extend beyond already budgeted retention, reconcile separately before launch.",
+    "durationRationale": "60-minute diagnostic ceiling retains30min commissioning,44min readiness,59min qualifier cutoff. Prior07 failed at44min after l1-config earlyexit; the reviewed configuration-provider change addresses measuredMac429 but actualLinuxstartup and subsequentsync duration remain unknown. This is a bounded diagnostic window, not a prediction that sync qualifies within44min. No automatic extension."
+  },
+  "privateReferencePlan": {
+    "prior": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-07",
+    "proposed": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-08",
+    "created": false,
+    "credentialProvider": "message-board-deploy via existing supportedprovider; not invoked"
+  },
+  "nextGates": [
+    "Independent operator successor review and lead forecast allocation; currentlaunchhold remains.",
+    "Lead completed exact5ce localpackage; independent package review is pending. Existing07 archive cannot be substituted.",
+    "Separately authorized onceupload and fresh actual capabilities/deadlines/payload; independent byte/pin/control/payloadsize review.",
+    "Separate fresh LT/Fleet launch grant after every prerequisite. RealLinux initialization/query qualification and sustained ordinaryprovider capacity remain unverified."
+  ],
+  "actionsNotTaken": [
+    "No provider/network/plugin/AWS call, credential invocation, upload, private08 directory, paid allocation, LT/Fleet, container, service, packagebuild, proof or source edit. No ledger mutation."
+  ],
+  "packageNowAvailable": {
+    "evidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/runtime-package-startup08-20261012.json",
+    "evidenceSha256": "92fc476a7cdad3ad36865e9f48a0316f3ae49729a2b9b2ee1de8a9fb8b68107e",
+    "source": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+    "archive": "/private/tmp/rolling-prover-release-startup08-20261012.tar.gz",
+    "archiveBytes": 383881211,
+    "archiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+    "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+    "reviewStatus": "pending independent review perlead; not authorized for upload",
+    "workerHeavyBuildPerformed": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "1319407aa3b804a21e1fe9b5f10133554b0b4009",
+  "base": "47cb0a005cdbb96588deb53c343a83aa28574f8c",
+  "reviewed_at": "2026-10-11T18:44:55.735970+00:00",
+  "verdict": "changes requested",
+  "findings": [
+    {
+      "id": "G06-REPLY-P2-01",
+      "severity": "P2",
+      "file": "billboard/rolling_contract/journey.mjs",
+      "location": "new replay/wrong-operator SDK simulation loop",
+      "failure": "A caught ordinary error or wrong-callee SimulationError with a message containing Already replied or Only operator satisfies rejected+expectedReasonMatched. This does not establish the intended contract guard.",
+      "repair": "Use existing matchesContractRejection on actual static assertion selector and deepest callee. Replay callee RollingBoard; wrong-operator callee PrivateBok. Retain returned execution revertCode check and no-send behavior. Add ordinary/message-only and wrong-callee negative regression."
+    }
+  ],
+  "checks": [
+    {
+      "command": "pinnedNode --test billboard/rolling_contract/reply-acceptance.test.mjs",
+      "worktree": "../rolling-controls",
+      "passed": 22,
+      "failed": 0,
+      "scope": "labelled fake observations only"
+    },
+    {
+      "command": "git diff --check 47cb0a0..1319407",
+      "result": "pass"
+    }
+  ],
+  "positive_observations": [
+    "Original mined callback eight-check rollback and finality ownership untouched. No additional miner or increased540s/4GiB bound.",
+    "Actual effect event selection binds emitter and event tag; exact body/padding, kind4/name0, canonical parent/root/subboard, policy and plugin/request/target assertions.",
+    "Reserve200/settle120/finish on400 budget explicitly synthetic provider; final private880/operator120 exact conservation. No model calls introduced.",
+    "Canonical receipt/effect fee evidence saved before public footprint/limit assertions; public writes<=63 and human field smoke preserved."
+  ],
+  "source_sha256": {
+    "billboard/rolling_contract/journey.mjs": "9c9a623ede1e00ae4986cbf07cc41cf9b16cf30340a6e42b3c775f221ca0fe8c",
+    "billboard/rolling_contract/reply-acceptance.mjs": "a38bbb157a6123127ceda973bf1b6f8da2f878b4ebb0d1706667535d95bd112b",
+    "billboard/rolling_contract/reply-acceptance.test.mjs": "bcdf8765c44de7cf73115a211f725519281f54dabfb3ce49a377176543bb8eb1"
+  },
+  "limits": [
+    "No actual journey approval until negative assertion repair re-reviewed.",
+    "No genuine provider billing or privacy qualification from this fixture.",
+    "Actual canonical reply path and processed updated artifacts must run after source approval."
+  ]
+}

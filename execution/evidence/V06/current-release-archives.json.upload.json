@@ -1,0 +1,13 @@
+{
+  "bytes": 4777,
+  "sha256": "26f4cf28c122eb7c8d1d6babde91f798e6d34e5c67d61314a274946e9d6b02dd",
+  "s3": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/v6-20261010/current-release-archives.json",
+    "versionId": "Ej5TJfuplGrLOVFurtpdn3SM4qfAEuG8",
+    "expiration": "2026-11-10T00:00:00Z",
+    "serverSideEncryption": "AES256",
+    "checksumType": "FULL_OBJECT",
+    "checksumSHA256": "JvTPKMEi63yNHWur3pH3mObTTlxn1hMUonSUbp1rAt0="
+  }
+}

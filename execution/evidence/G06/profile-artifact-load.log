@@ -1,0 +1,8 @@
+legacy Billboard [
+  'apps/src/billboard/billboard_artifact.json',
+  '.build/contracts-manifest.json'
+]
+rolling RollingBoard [
+  'billboard/target/rolling_contract-RollingBoard.json',
+  '.build/contracts-manifest.json'
+]

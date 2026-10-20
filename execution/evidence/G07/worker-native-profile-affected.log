@@ -1,0 +1,21 @@
+✔ native runtime reuses verified read-only CRS and rejects corrupted installed data (412.284458ms)
+✔ a nightly label alone cannot bypass the pinned native binary check (4.617291ms)
+✔ service health and failed bind use production lifecycle without leaking queue directories (214.14375ms)
+✔ rolling configuration rejects missing fee/Bok, aliases and unknown profiles before listening (0.369875ms)
+✔ query configuration rejects nonlocal upstream before creating service resources (0.130791ms)
+✔ actual isolated worker accepts configured board and rejects forged board/network metadata (2620.512167ms)
+✔ native route switched to local delegates to its SDK implementation (116.527417ms)
+✔ standalone fee funding is limited to the configured fee contract and network (3296.980541ms)
+✔ plugin-only proofs require configured receivers, exact entrypoint calls and network (7205.813583ms)
+✔ board and fee calls cannot bypass a private plugin claim binding (3971.998417ms)
+✔ actual fee payloads and plugin calls encode into the accepted account policy (11.149167ms)
+✔ catalog pins V6 circuit kinds with both hiding variants and application verification keys (90.826041ms)
+✔ rolling job checks every signed payload and private binding even in a mixed batch (94.128959ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20061.225125

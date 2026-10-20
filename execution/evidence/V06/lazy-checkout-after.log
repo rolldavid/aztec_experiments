@@ -1,0 +1,20 @@
+✔ only a model option immediately after @bok selects a model (0.651666ms)
+✔ invalid and ambiguous selections return a board reply without running the agent (0.16475ms)
+✔ service composition keeps the chosen model through tool turns and isolates simultaneous requests (0.488041ms)
+✔ unknown or incompatible models produce a reply before any provider spending (0.165625ms)
+✔ unrelated provider failures remain visible (0.1895ms)
+✔ plain replies need no repository checkout or API request (1.985959ms)
+✔ filesystem tools share one checkout and a failed clone is never retried (2.557375ms)
+✔ PR publication preserves commit, files and complete invocation identity: 0x123 (1.815916ms)
+✔ PR publication preserves commit, files and complete invocation identity: 291 (1.49775ms)
+✔ PR publication preserves commit, files and complete invocation identity: 1291 (1.238375ms)
+✔ failed checkout initialization is cleaned by the session owner (0.395042ms)
+✔ PR reads retain changed files inside the agent budget despite large GitHub metadata (1.270166ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192.243375

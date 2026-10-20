@@ -1,0 +1,47 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T05:26:23.877Z",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-runspace-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-runspace-controlled/home",
+    "TMPDIR": "/private/tmp/rsc-fy3xtdgr",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-runspace-controlled/build.log",
+  "diagnosticHold": "43 controlled checks only; no Docker/provider/native execution; separate lead grant required.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "builder": {
+    "code": 0,
+    "elapsedMs": 371
+  },
+  "elapsedMs": 479,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T05:26:24.357Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "testCount": 43,
+  "noSkipped": true,
+  "passed": true,
+  "logSha256": "7d92d09a03f557c38f11cc1007c472b821191009b1d10e7d73d37e0dde6adac1"
+}

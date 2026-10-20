@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+  "files": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator.py": "077771279bff12fdb3cb0fac783b1a9c149a62671c826720911ca448a45a14eb",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator-test.py": "28df7e958d9a02b9d764c3b32bbc72b588578cdc5ec2e6ed3500400676d6d176"
+  },
+  "verdict": "changes-requested-before-untrusted-receipt-projection",
+  "scope": "Offline operator09 schema2 projector only; no launch or monitor authority",
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator.py",
+      "lines": [
+        51,
+        57,
+        67
+      ],
+      "issue": "scalars copies unrestricted strings from known enclosing receipt fields. Valid package bindings and a strict instrumentation object do not authenticate qualification.stage/scope, service Result/status, readiness category, startup signal or other scalar fields. Arbitrary provider/private text can reach saved/displayed projection under these known keys; tests currently only reject unknown keys.",
+      "reproduction": "Synthetic bounded probe passes matching package pins and arbitrary known qualification stage/scope strings; both retained. Evidence operator09-known-field-probe.json contains only booleans/labels.",
+      "requiredRepair": "Validate full enclosing receipt with finite allowed strings, exact hashes/address formats, numeric/boolean ranges and explicit bounds, or require and execute an equivalent trusted schema before projection. Unknown/malformed known values must become fixed unavailable/rejected output without raw text. Add known-key secret/long-string/malformed-type tests."
+    }
+  ],
+  "checks": {
+    "existingTests": {
+      "passed": 15,
+      "failed": 0,
+      "log": "execution/evidence/G02/operator09-projector-independent-tests.log",
+      "labels": "Pure fixtures, exact public bootstrap validator, in-memory synthetic package pins; no provider calls"
+    },
+    "independentNegative": "execution/evidence/G02/operator09-known-field-probe.json",
+    "sourcePositive": [
+      "Exact reported operator/test hashes confirmed.",
+      "Schema2 instrumentation requires exact helper/runtime adapter, finite phase history, strict numeric progress/counters/errors via hash-verified actual bootstrap validator.",
+      "Trusted bootstrap bytes execute with non-main name; direct invocation refuses, no AWS/provider call.",
+      "Missing fresh manifest/attestor pins fail closed; historical08 source preserved."
+    ]
+  },
+  "limits": [
+    "No package09 or actual cloud receipt/payload reviewed.",
+    "Source hash/version pins and schema2 instrumentation do not make arbitrary enclosing fields safe.",
+    "No private config/journal/capability read; no services, credentials, network, launch or source mutation."
+  ]
+}

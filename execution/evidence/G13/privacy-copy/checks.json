@@ -1,0 +1,9 @@
+{
+  "source": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "command": "PinnedNode24 --check apps/rolling/reader.mjs; PinnedNode24 --check apps/rolling/wallet-panel.mjs",
+  "exitCodes": [
+    0,
+    0
+  ],
+  "observed": "Two existingUI modules parse; only two literal strings changed; independent source/assetclosure review. No behavior or generatedinputs changed."
+}

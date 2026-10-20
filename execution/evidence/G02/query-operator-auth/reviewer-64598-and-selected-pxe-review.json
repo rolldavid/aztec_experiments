@@ -1,0 +1,13 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "0e2cffc7bcb87215dcf5caf8c6ff291a80a389f8",
+  "actualPacketSha256": "f2fb81b868b20cbe111fcc91fce4f9bbbf918768d687bb59bf736dd9cdf67c32",
+  "verdict": "64598 focused actual PASS; exact selected PXE preparation eligible for separate ONE grant",
+  "actual": "One exact label969ms RSS unmeasured; four original lazy artifacts reject bare and load with pinned adapter in separate children. Packet/control hashes and positive cleanup checked.",
+  "selectedPreparationSha256": "b9a8374be74f802cecc55ac75107cdd96116082f47eac75ccb4c574c0520553b",
+  "runner": "Directory-only qualified runner, same child60s2GiB,3301 pins rehashed; one existing real readOnly PXE case, no full24.",
+  "limits": [
+    "Synthetic HTTP/actual SDK PXE/store only; full24 and bundled deployment remain separate.",
+    "Historical9393 remains failed."
+  ]
+}

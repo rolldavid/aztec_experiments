@@ -1,0 +1,8 @@
+{
+  "candidate": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+  "base": "f27b9591b76a835c8238d81c44c58984af946552",
+  "reviewer": "/root/reviewer",
+  "verdict": "approve",
+  "summary": "Installed V6 constructor requires rollbackables[], then actual tips store. Repair preserves actual forward sync, HTTP, anchor, zero errors/external calls, WASM/CRS assertions, timeout and cleanup. No fallback/retry or weakened assertion.",
+  "runtime_check": "Root subsequently verified actual offline test passed in1477ms,3 loopback requests,0 external."
+}

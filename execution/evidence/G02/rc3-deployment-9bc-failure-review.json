@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:25:12.059505+00:00",
+  "source": "9bcab84fe4ccff9e577c5f60d58471697bdcd54f",
+  "disposition": "changes-required-before-targeted-reproduction",
+  "scope": "Read-only source/evidence diagnosis; no test, service, package or native execution.",
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/preparation.json": "e6e650204c5879f1404f80efb6d59103ac835b2695f5c91f4a2735c1cba7a94d",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/before-source.json": "354ac3151741248033c1afae19d348dc45bdd76ff5932cde932ef92d44685df0",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/result.json": "d83e05e57c574fbce3fbc61caba14c4112d22ae808ed45c754a3e78fbff40d93",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/build.log": "8519e99472ba192f6fc2f795db0af834b75d748a577090c5d768094795b08db6",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/postcheck.json": "a64a283bd9f03f5da9c76bdab52c0c19bd4d8e05cbe89e8bb531480fdaf2231a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/rc3-deployment-combined/tmp/tmplqnxpglz/node-startup.json": "4a3dc1cd712a7c305a8e5e909c8d8fb8081422aea585432384d436d9c4661049"
+  },
+  "sourceBindings": {
+    "deploy/prover/bootstrap.py": "08b2708a65a1de7b390f5d880a9a9e1ef302b93dbaf7ff4b99efec7ad5947a13",
+    "scripts/test-prover-bootstrap.py": "ae80042bf7a1ccc43dbfcbb722c134991ccbd3c6cae8530dac434d27237a4993",
+    "scripts/test-prover-package.py": "1c741526c7bdcda41f9943deb2867a4491c5014d055542646795301ca031ce46"
+  },
+  "actual": {
+    "passed": false,
+    "elapsedMs": 60057,
+    "peakRSSKiB": 505872,
+    "ownedTreeAbsent": true,
+    "sourceBindingsUnchanged": 1160,
+    "retainedTemporaryDirectory": "tmplqnxpglz",
+    "packageSuiteReached": false
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "scripts/test-prover-bootstrap.py:167",
+      "finding": "Selected /usr/bin Python3.9 is incompatible with tarfile.FilterError and extractall(filter=data).",
+      "repair": "Pin a supported actual interpreter in runner and all test subprocesses; retain malicious archive rejection and filter=data. Do not add unsafe extraction fallback."
+    },
+    {
+      "priority": "P2",
+      "path": "scripts/test-prover-bootstrap.py:596",
+      "finding": "CLI success subprocess invokes actual generate and absent active Linux qualification; fixture_generate qualification override does not cross subprocess boundary. Fail-closed production behavior is intentional.",
+      "repair": "Use isolated labelled qualification setup for CLI success/output/no-overwrite checks; independently retain actual unqualified CLI rejection before output/compression. No active repository pin promotion."
+    },
+    {
+      "priority": "P2",
+      "path": "scripts/test-prover-bootstrap.py:915",
+      "finding": "Observed timeout maps to test49 by exact unittest AST order. Retained process-spawned record proves node_wrapper reached Popen; missing ready and no trace do not identify child startup or signal cause. Finally kills only wrapper then communicates without timeout, which can block on inherited grandchild pipes.",
+      "repair": "Bound every communicate/wait, own and clean exact disposable process group/descendants, record finite stage and child/wrapper exit observations. Keep real signal forwarding and -SIGTERM assertion. Separate helper-filesystem setup from child-ready budget or explicitly observe setup completion; do not claim instrumentation failure or slow fsync as historical cause."
+    },
+    {
+      "priority": "P2",
+      "path": "scripts/test-prover-bootstrap.py:952",
+      "finding": "ENOSPC injection syncs==4 is stale: new instrument_node_args fsyncs multiple files/directories before spawn, while injection requires children nonempty. Counter passes4 before child exists and cannot inject later.",
+      "repair": "Count persistence fsyncs only after child creation or target actual node-startup persistence. Preserve original error identity, TERM/KILL behavior, reap, output sanitization, and cleanup observation assertions."
+    }
+  ],
+  "interpretation": "No demonstrated production node-wrapper regression from this timed-out run. Environment/stale test defects established; forwarded-termination historical cause unresolved. Temporary evidence is retained, not cleanup acceptance.",
+  "requiredNext": [
+    "Exact source repair review, named verbose focused archive/CLI/termination/ENOSPC cases under bounded parent ownership.",
+    "Only after focused cases pass run both full suites with supported interpreter and unchanged assertions; preserve original failed receipt.",
+    "No Linux qualification, cloud readiness, generated payload eligibility or source integration acceptance follows from this component result."
+  ]
+}

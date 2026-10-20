@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12T12:03:00.735441+00:00",
+  "authority": "Lead /root message authorizes one exact09 immutable archive upload and payload preparation only; no LT/Fleet/compute",
+  "source": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "archiveSha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+  "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+  "reservationUsd": 25,
+  "cumulativeBoundUsd": 215.28,
+  "independentPackageReview": {
+    "path": "execution/evidence/G02/startup09-package-runtime-review.json",
+    "sha256": "11b54c629b9764e9ec301caec557fbc339a261522c04dc755e423b944876276f"
+  },
+  "pluginDisposition": "Lead confirmed node diagnostic upload/preparation invokes no plugin jobs. Require fresh active0 and record known degraded RPC_METHOD_NOT_FOUND without claiming readiness. All production/proof/qualification health gates remain."
+}

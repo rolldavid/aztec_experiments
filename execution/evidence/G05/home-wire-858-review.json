@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "858e12c4b2e163f37ed780604dbff20cf206993d",
+  "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "verdict": "approved bounded Home observer support source; no actual Home privacy acceptance",
+  "files": {
+    "scripts/testing/rolling-wire-campaign.mjs": "cef2170597a43fb4ba0c1606d4ab4101be5dcd44d8b0c60d3a8f895b39f7167d",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "ee1cc0e39e5f268360f38c3fb72e0dec5336aa927eca15518822daaf3f6d534e",
+    "scripts/testing/rolling-wire-trace.mjs": "5aa93ea0b702e9ed78e4cd435c0b2b3178e66d8a66784c10dc5db8b270894413",
+    "scripts/testing/rolling-wire-trace.test.mjs": "feb7bacfe3b2c7a553dcff40a2d398fb55178165f41b4d45c46d56fb98b0cbeb"
+  },
+  "findings": [],
+  "review": [
+    "Two production observer lines add only exact Home route recognition: sender home has identical feed limit/cursor allowlist; diagnostic receiver matches GET /api/home boundary.",
+    "Unknown params,duplicate params,oversized values and known-human equality continue fixedaggregate failure/role detection without rawbody/identifier persistence.",
+    "Observer call/promise/result/error behavior,existing eth_simulateV1 support,opaque exceptions and completeness gaps unchanged.",
+    "Receiver reconciles actual loopback Home request in new test; other positive controls explicitly synthetic.",
+    "106 tests include installed SDK/viem serialization and all previous unknown/opaque defenses plus Home/feed parity and actualHTTP receiver test."
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinnedNode24.21.0> --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs scripts/testing/rolling-wire-campaign.test.mjs",
+      "cwd": "rolling-design",
+      "result": "106passed0failed0skipped1045.901667ms",
+      "log": "/tmp/reviewer-home-wire-858-tests.log",
+      "sha256": "60a40a0bce2e44a327c231bc3cc2095ff54ebc68f2cd87499d5deb7862c7e8d3"
+    }
+  ],
+  "limits": [
+    "No real chain/Home curation or full wallet privacy claim. Runtime-addedheaders/opaque bodies remain existing explicit gaps.",
+    "Finalrootcomposition and actualsource-bound scenario remain leadowned."
+  ]
+}

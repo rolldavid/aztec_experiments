@@ -1,0 +1,5 @@
+{"stage":"restore-existing-hosted-account"}
+{"stage":"post-moderation-test-fixture"}
+{"stage":"phase-complete"}
+{"phase":"moderation-post","passed":true}
+{"passed":true,"phasePassed":true,"ownedTreeAbsent":true}

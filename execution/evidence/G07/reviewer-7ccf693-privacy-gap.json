@@ -1,0 +1,94 @@
+{
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "requirements": [
+    "RC23",
+    "RC25"
+  ],
+  "status": "unqualified privacy acceptance; no newly demonstrated exact-identity disclosure",
+  "reviewer": "/root/reviewer_resume",
+  "mainGap": {
+    "kind": "current observer coverage and query-operator trust",
+    "facts": [
+      "G05 actual name acceptance counted424 private requests and48tag-discovery calls. It intentionally stores routes/methods/status, not RPC arguments/results, body field correlations or public effect analysis.",
+      "createRollingPreferenceTraffic checks route/envelope/method inventory; for private reads it does not classify account/name/tag values within params or response bodies. Zero inspectionErrors means its narrow allowlist checks passed, not no identity disclosure.",
+      "Installed ContractClassService.getCurrentClassId fetches getContract(address,anchoredBlock); ordinary SDK discovery uses tag-indexed queries. A private-query operator sees these arguments.",
+      "Public reader private views all acquire uniform /api/feed pages and filter locally. reader-client accepts only closed public route parameters and omits credentials. No account/name-set/subscription endpoint was found in this reviewed route."
+    ],
+    "implication": "The authorized trusted-query boundary contains potentially identifying lookups. Grouped tag queries can associate requested ciphertexts with their containing transactions/public name events; this is a protocol-observer correlation channel in addition to IP/timing. Actual cross-name or account link from the current campaign is not established because the retained trace omits values/results."
+  },
+  "nextAction": {
+    "priority": 1,
+    "action": "On the next already-authorized real two-identity/private-view operation, reuse existing rolling-wire-trace/campaign and canonical public-footprint observers. Feed known private roles privately and retain only bounded equality/category/repetition aggregates and canonical effect references. Reconcile receiver counts and fail unknown/truncated/opaque coverage explicitly. Attribute cold recovery separately from ordinary account-status/signing discovery. Do not create a separate harness or initiate a new paid/proof/funding action solely to reproduce an old capture.",
+    "minimumQuestions": [
+      "Did any human account or full owned-name set reach public index/cache routes?",
+      "Which private query methods contain the known account, names, note tags or nullifiers, and can tag-to-transaction association group otherwise separate names?",
+      "Are all personal RPCs confined to the explicitly trusted prover-controlled query/fullnode/archive boundary, with no ordinary-node fallback or external forwarding?",
+      "Does genuine cold recovery maintain zero tag discovery while restored private views fetch only uniform public pages?"
+    ],
+    "absenceLimit": "Existing wire observer excludes responses/native transport and classifies proof/binary fields opaque. Its scoped pass is not complete byte coverage or a cryptographic unlinkability proof."
+  },
+  "claimsToAvoid": [
+    "Do not describe424privateRPC/48tag requests as privacy-safe merely because all requests returnedHTTP200 or no known raw address is a public event field.",
+    "Do not generalize cold recovery zero-tags to ordinary account refresh/name registration; current actual name campaign has48tags.",
+    "Do not treat a matching network/proof/readiness snapshot or loopback URL as proof of independent query operator control. Specification permits prover witness trust; extending it to node/archive must have explicit same-operator topology evidence.",
+    "Do not treat Bok public identity permission as human caller identity permission.",
+    "Do not treat old rc1-pinned privacy design narrative or earlier synthetic/raw-equality tests as current rc3 specialist qualification."
+  ],
+  "residuals": {
+    "intentionalPublic": "Selected name/content links, public name existence, per-post reaction tag reuse, bot identity and invocation/accounting context.",
+    "residualTimingContent": "IP/session, funding/withdrawal amounts and timing, writing style/avatar reuse; these are not solved by a clean public schema.",
+    "cryptographicUnqualified": "Derived note/nullifier/tag unlinkability across names and anonymous actions, initializer/account metadata, hidden ownership and refunds; specialist review and actual protocol traces remain necessary."
+  },
+  "evidence": [
+    {
+      "path": "execution/evidence/G05/name-availability/actual-7cc.json",
+      "location": "rolling-controls",
+      "sha256": "5311eebe787903e9b1e12d60fa56d8579ded5a5d22b76e75b7b70b443142031b"
+    },
+    {
+      "path": "execution/evidence/G14/privacy-acceptance-gaps.json",
+      "location": "aztec_experiments",
+      "sha256": "4f2cac3734ab399225b459e294891c4ad483fe4ad10158f1c519a07bfe5f96ea"
+    },
+    {
+      "path": "execution/evidence/G07/initial-cold-observer-assessment.json",
+      "location": "aztec_experiments",
+      "sha256": "e5cdc820a628c907eee2334cd2d25e6da81be819695f390bf21325746c78a150"
+    }
+  ],
+  "source": [
+    {
+      "path": "shared/rolling/PRIVACY_DESIGN.md",
+      "sha256": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389"
+    },
+    {
+      "path": "apps/rolling/reader.mjs",
+      "sha256": "332b10e60994372f1d267d77b8192c515630ec282cee0ac04249ff84e56c9a64"
+    },
+    {
+      "path": "apps/rolling/reader-client.mjs",
+      "sha256": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365"
+    },
+    {
+      "path": "scripts/testing/rolling-preference-browser.mjs",
+      "sha256": "1655f37fa0dfe5000a13270ed46f92f5a972392a1a21939bbb628b04731df919"
+    },
+    {
+      "path": "scripts/testing/rolling-wire-trace.mjs",
+      "sha256": "9afb34e91dc8f2d3c9d521f5606b13f6c56adef4d57c6e87eca909de0f28528f"
+    },
+    {
+      "path": "scripts/testing/rolling-wire-campaign.mjs",
+      "sha256": "a45573449abcbf8555eab6083821402a008f3069be72f81d9cac7972b97a5b70"
+    },
+    {
+      "path": "scripts/t03-public-footprint.mjs",
+      "sha256": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e"
+    }
+  ],
+  "noActions": "Read-only source/evidence inspection only; no live browser, node/provider request, infrastructure, profile mutation, source changes or expensive tests."
+}

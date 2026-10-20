@@ -1,0 +1,7 @@
+Scheme is: ultra_honk, num threads: 12 (mem: 8.50 MiB)
+Transpiling: /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json -> /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json.processing (mem: 8.50 MiB)
+Transpiled: /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json -> /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json.processing (mem: 19.50 MiB)
+Generating verification keys for functions in avatar_log_probe-AvatarLogProbe.json.processing (mem: 19.50 MiB)
+Cache directory: /Users/zac/.bb/6.0.0-rc.1/vk_cache (mem: 19.50 MiB)
+No private constrained functions found (mem: 20.64 MiB)
+Successfully processed: /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json -> /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json.processing (mem: 21.88 MiB)

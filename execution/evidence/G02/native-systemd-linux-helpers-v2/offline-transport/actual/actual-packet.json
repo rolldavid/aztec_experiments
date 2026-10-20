@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourcePacketSha256": "b7c00b9cb649cfcf97dd525fd2adff5bd88989775b0f76380ad29bb71a375c87",
+  "reviewSha256": "992ea0acf4a6ffc8cef353aac8d7d7ac6add625e571fb4442c06095553c0d785",
+  "session": 85080,
+  "exitCode": 1,
+  "passed": false,
+  "elapsedMs": 3335,
+  "hostConfinement": true,
+  "systemdBarrier": {
+    "identity": {
+      "pid": 632,
+      "startedAt": "2026-10-13T04:32:32.688528667Z"
+    },
+    "processCount": 2,
+    "status": "ready"
+  },
+  "guestPreflight": {
+    "category": "confined",
+    "passed": true
+  },
+  "receiptTransport": "two-fixed-receipts-read",
+  "regressionPassed": false,
+  "recordedCases": 0,
+  "sourceUnchanged": true,
+  "containerAbsent": true,
+  "beforeCleanupState": {
+    "Dead": false,
+    "ExitCode": 0,
+    "OOMKilled": false,
+    "Running": true,
+    "Status": "running"
+  },
+  "files": {
+    "before-cleanup.json": "1f2925ae8e4e3ee152169ba19673f30fb46c73321000e16ef62dc1d25e017012",
+    "create-intent.json": "a89d2a383164bb1051c08d546c8b22292bdd8edca60e2262c045c25b179e7657",
+    "host-inspect-projection.json": "1d9c4b069b03c0d1d38acfee08606d2a4f93ae7301b81fa33704e11550144618",
+    "intent.json": "65b472ac395d316d095121e3f1f2629cfbaa2b611d9f312e8e2099dce41a5be8",
+    "preflight.json": "9b2f6eea5aa3d977b6a6f7b12efcc0fa4df9a60c9d96b712ede2946d0de294e6",
+    "regression.json": "618a25cdaf8cfc12be01f2abe41a227305e72907c36da9d3fce8f3de9c500149",
+    "result.json": "ac8091f89f1177dd19fd2dd0a96b5d66ab0c78bd49f4bc56cf49f67325761937",
+    "start-intent.json": "64038f69a52c168e7f711f848102cde7f501b9a2db7b2b4ed01959039de1763f"
+  },
+  "limits": [
+    "Failure before first case row; exact failing guest operation not recorded.",
+    "No native BB/systemd retention qualification or retry."
+  ]
+}

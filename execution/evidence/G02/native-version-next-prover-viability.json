@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T01:46:38.799732+00:00",
+  "scope": "Read-only feasibility; no intents, upload, payload, resource, configuration, or ledger mutation",
+  "sourceCommit": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "sourceBindings": [
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sha256": "28646b535b163540934302816effa920ed4e92a8f2126f40c93770dc80f15c83"
+    },
+    {
+      "path": "deploy/prover/package.py",
+      "sha256": "b4107a0d5391312aaae087fe86bd3eef73eb76e85bf40c8a350ec323e8e1782c"
+    },
+    {
+      "path": "deploy/prover/board-prover.service",
+      "sha256": "340d19baa4b764e5198fafb261f74001ffefa4c2d9dde111ef0ba07ca7e61cef"
+    },
+    {
+      "path": "prover/service.mjs",
+      "sha256": "92e55530ac4362a5b546c9458d44532011874b087057e8fbad1c46c98f1aa742"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d"
+    }
+  ],
+  "budget": {
+    "ceilingUsd": 300,
+    "retainedAndReservedUsd": 215.28,
+    "remainingUsd": 84.72,
+    "priorD73ReservationRetainedUsd": 10,
+    "newAllocation": false
+  },
+  "recommendation": "After repair source/tests and separate grants, one corrected minimal version-only host reusing existing immutable bytes; then one coherent full-node/prover-capable host. Do not introduce a parked diagnostic-to-prover control plane solely to save one small version host.",
+  "immutableBinaryReuse": {
+    "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "bytes": 44698432,
+    "version": "6.0.0-rc.6",
+    "objectKey": "releases/native-bb-fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f/bb",
+    "objectVersion": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+    "uploadAgain": false,
+    "nextCampaign": "Fresh distinct identity only after grant; exact existing version/checksum HEAD and scoped fresh GET, new receipt key, new private control-source/worker/source bindings. Do not overwrite or replay d73 journals."
+  },
+  "sameDiagnosticHost": {
+    "supportedNow": false,
+    "reasons": [
+      "native_execute finally unconditionally native_shutdown; installed45minFleet/host deadlines are fixed and not an extension interface.",
+      "m7a.large has8GiB, below existing24GiB proof unit alone and fullnode hardware CPU floor.40GiB root lacks node1TB datastore.",
+      "release_preflight/package.py and ordinarybootstrap generation reject absent active Linux rc6 pin BEFORE usable output. A qualified fresh full archive cannot be honestly prestaged before native pass/review/pin update.",
+      "The closed no-ingress/no-role/no-SSH host has no authenticated subsequent install/promotion channel. Reusing a later signed object polling channel would add lifecycle/source review rather than reuse an existing authority.",
+      "Raising host size ahead of pass would spend fullhost capacity during independent review+package creation, and require new network/service/data-disk controls."
+    ],
+    "possibleButNotMinimal": "A separately reviewed larger-host state machine could publish native pass, keep original absolute stop, wait for a source/hash-authorized archive and then run existing ordinarybootstrap; it must not bypass pin/package gates or give dynamic worker capabilities. No such handoff exists or is proposed for implementation."
+  },
+  "minimumVersionPhase": {
+    "proposedReservationUsd": 10,
+    "host": "m7a.large",
+    "maximumMinutes": 45,
+    "commissioningMinutes": 30,
+    "versionSeconds": 15,
+    "versionMemoryMiB": 512,
+    "versionCpuQuota": 2,
+    "ingress": "existing zero-ingress SG",
+    "storageGiB": 40,
+    "controls": "one requestFleet ValidUntil+TerminateInstancesWithExpiration, independent persistent hosttimer; all fixed before download; shutdown on every final outcome",
+    "costBasis": "Reuse same complete10USD forecast from native-version-operator/launch-prerequisites-readonly.json; this is a conservative reserve, not expected consumption. Actuald73 LTintent\u2192firstresourceabsence137.632s, not a promise next run succeeds."
+  },
+  "fullHostAfterNativeQualification": {
+    "proposalOnly": true,
+    "proposedReservationUsd": 40,
+    "maximumHours": 3,
+    "instanceType": "m7a.4xlarge",
+    "vCpuPhysicalCores": 16,
+    "memoryGiB": 64,
+    "rootGiB": 40,
+    "dataGp3GiB": 1024,
+    "nodeMemoryGiB": 24,
+    "proofUnitMemoryGiB": 24,
+    "oneSerialProofWorker": true,
+    "egressMbps": 50,
+    "cloudStop": "freshcreatedAt+3h, requestFleet terminate expiry",
+    "hostStop": "same absolute freshcreatedAt+3h persistenttimer",
+    "commissioningStop": "freshcreatedAt+30min; disable only at existing verified installation milestone",
+    "existingReadinessDeadline": "createdAt+90min (min of existing qualificationdeadline-15min and90min)",
+    "existingQualificationDeadline": "createdAt+105min; NOT extended to3h",
+    "useOfExtraHorizon": "Remaining75min for separately reviewed proof-service qualification/acceptance on same already-qualified host, if prebuilt actual deployment scope and bounded activation step exist; otherwise do not launch a3h proof campaign.",
+    "network": "existing approved P2P and privateproxy topology; no publicnode/admin/SSH/IAM. Never mutate diagnostic zero-ingress SG to convert it.",
+    "proofReadiness": "Query-only pass allocates no proof queue/worker and leaves prover/proxy masked. It is not proof readiness. A separately reviewed existing-unit activation step, actual distinct board/FPC/PrivateBok scope, rate-marking and real circuit/job/transaction acceptance are mandatory.",
+    "performanceLimit": "64GiB capacity permits24+24+OS budget on paper; disk throughput, node sync, CPU contention and120s proof deadline remain unmeasured. No readiness or latency guarantee.",
+    "costItemsUsd": {
+      "compute3h15": "3.0139200",
+      "encryptedGp3_1064GiB_27h15": "3.221555555555555555555555556",
+      "publicIpv4_3h15": "0.01625",
+      "egress80GBAt0195": "15.600",
+      "freshArchiveAndReceipt30dayRetention": "0.5",
+      "crossRegionArtifactTransfer": "0.5",
+      "requestsMonitoring": "0.25",
+      "taxUnpriced": "4",
+      "delayedBillingCleanupBuffer": "12.89827444444444444444444444"
+    },
+    "costTotalUsd": "40",
+    "costAssumptions": [
+      "3h operating horizon+15min billing/cleanup contingency; contingency is not extension authority.",
+      "50Mbps for3h15 is73.125GB; round80GB at conservative0.195USD/GB, no free-tier credit.",
+      "All1064GiB charged27h15 including24h orphan-disk contingency; no snapshots, new NAT/LB/paidmonitoring, or indefinite retention.",
+      "One new archive/receipts30day retention, cross-region transfer, requests, tax and12.898USD residual delayedbilling/cleanup buffer included.",
+      "Existing archival/backup charges remain in215.28; no credits applied."
+    ]
+  },
+  "sequentialBudget": {
+    "newVersionReserveUsd": 10,
+    "newFullHostReserveUsd": 40,
+    "combinedAdditionalUsd": 50,
+    "cumulativeIfBothLaterReservedUsd": 265.28,
+    "remainingUsd": 34.72,
+    "overlapInstances": 0
+  },
+  "prices": {
+    "m7aLargeUsdPerHour": "0.11592",
+    "m7a4xlargeUsdPerHour": "0.92736",
+    "computeEffectiveDate": "2026-10-01",
+    "largeObservedAt": "retained native launch-prerequisites read-only snapshot",
+    "fullObservedAt": "2026-10-12T11:53:41.339959Z",
+    "computeSource": "AWS Price List Query API exact SKU TX58337QN5B6HX4A/TTPYSE2GSHDGSMTX retained snapshots; no new API action this turn",
+    "freshBeforePaidGrantRequired": true,
+    "ancillary": "0.08USD/GiB-month gp3 baseline;0.005publicIPv4/h;0.195USD/GB conservative planning ceiling, not invoice rate"
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
+      "observedAt": "2026-10-13",
+      "facts": "Full node8core/16vCPU,8GBRAM,1TBNVMe,25Mbps. Page currently labels Testnetv6rc1; hardware context only, NOT rc3 qualification."
+    },
+    {
+      "url": "https://aws.amazon.com/ec2/instance-types/m7a/",
+      "facts": "m7a.large2physicalcores8GiB;4xlarge16physicalcores64GiB;M7a eachvCPUphysicalcore."
+    },
+    {
+      "url": "https://aws.amazon.com/ebs/pricing/",
+      "facts": "gp3 baseline3000IOPS/125MBps;storage charged untilrelease;additionalprovisionedperformance costs extra;taxexcluded."
+    },
+    {
+      "url": "https://aws.amazon.com/vpc/pricing/",
+      "facts": "Public IPv4 pricing reference; nofreeallowance assumed."
+    },
+    {
+      "url": "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "facts": "OnDemand pricing/billing reference; exact rates separately anchored to retained API record."
+    }
+  ],
+  "gatesBeforeFullPaidCampaign": [
+    "Independent a282 source acceptance and actual15/69+8 tests; historicalfailure remains retained.",
+    "Separate corrected native grant and actual strict guest/worker/version receipt+cleanup; versionpass is no proof acceptance.",
+    "Independently review version evidence and explicitly add only qualifiedLinuxpin; source/toolchain never auto-mutated byreceipt.",
+    "Compose current lead SDK/Noir/catalog/helper and newbootstrap source; verify coherent complete release, native bytes, CRS and allfiles; no oldrc1 archive reuse.",
+    "Fresh canonicalregistry/selectedrollup/genesis/VK/protocol/liveness and providerordinary/history/debug source checks; no staleconfig or compatibility bypass.",
+    "Actual currentnetwork Rolling/FPC/Bok deployment scope before ordinaryproofservice creation; deployment/transaction costs outside infrastructure-onlyforecast need separateexistingallowance/review.",
+    "Review minimal existing-root-attestor transition afterqueryqualification to existingproofunit, with untouchedabsolute timers/privatecapabilityisolation; no automatic publicroute.",
+    "Fresh account/resources/SG/subnet/AMI/pricing/payloadsize/capabilities/deadlines and reservation+one-shot intents before any launch.",
+    "Failonce andcleanup on blockedgate; no repeated unchanged paid campaigns."
+  ]
+}

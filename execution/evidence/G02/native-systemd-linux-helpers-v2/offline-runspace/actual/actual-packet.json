@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourcePacketSha256": "aa751c307dfccb360ded0e30f290d980b924226b00a59175bff00269c53fbe67",
+  "reviewSha256": "9be7463444ba1dc3164aba4ce660e43e1f3382add3d7299d77bc738bd50a3e0a",
+  "session": 5063,
+  "exitCode": 1,
+  "passed": false,
+  "elapsedMs": 3364,
+  "hostConfinement": true,
+  "systemdBarrier": {
+    "identity": {
+      "pid": 598,
+      "startedAt": "2026-10-13T05:31:40.915632083Z"
+    },
+    "processCount": 2,
+    "status": "ready"
+  },
+  "guestPreflight": {
+    "category": "confined",
+    "passed": true
+  },
+  "checkpoint": {
+    "label": "baseline",
+    "operation": "result-read",
+    "timer": "none"
+  },
+  "originalException": {
+    "category": "unknown"
+  },
+  "failureObservation": {
+    "nativeState": {
+      "ActiveState": "inactive",
+      "ExecMainCode": 0,
+      "ExecMainStartTimestampMonotonic": 0,
+      "ExecMainStatus": 0,
+      "Result": "success",
+      "SubState": "dead",
+      "status": "observed"
+    },
+    "resultAvailability": {
+      "status": "missing"
+    }
+  },
+  "reloadSpace": [
+    {
+      "freeBytes": 32976896,
+      "label": "none",
+      "requiredFreeBytes": 16777216,
+      "status": "observed",
+      "totalBytes": 33554432
+    },
+    {
+      "freeBytes": 32976896,
+      "label": "baseline",
+      "requiredFreeBytes": 16777216,
+      "status": "observed",
+      "totalBytes": 33554432
+    }
+  ],
+  "recordedCases": 0,
+  "sourceUnchanged": true,
+  "containerAbsent": true,
+  "beforeCleanupState": {
+    "Dead": false,
+    "ExitCode": 0,
+    "OOMKilled": false,
+    "Running": true,
+    "Status": "running"
+  },
+  "files": {
+    "before-cleanup.json": "7a23ecbd8c4c04d0af9e547285994349c097f0c7fcabee9e9aca85f769dc31f9",
+    "create-intent.json": "b83bd0a5a015b49f14134a5dbdfb30e643a1b000b8c12ea2b878dd7fe9482670",
+    "host-inspect-projection.json": "1d9c4b069b03c0d1d38acfee08606d2a4f93ae7301b81fa33704e11550144618",
+    "intent.json": "84c2c529da4c8e3b03218f30de5c2e2a6f7f64e5a507c9bc6aacdee9a26143ef",
+    "preflight.json": "9b2f6eea5aa3d977b6a6f7b12efcc0fa4df9a60c9d96b712ede2946d0de294e6",
+    "regression.json": "7f9ceaf25c8090347169fbbe9e21f0f3381a54b3765b0de99bbb782271460f04",
+    "result.json": "5b9ed43651433e3aa5426e1c1533f85fe12f5c4e971cb7e27ab0f9ef9668ab3d",
+    "start-intent.json": "65850bab5839b55f99106e9f59f2016d1b04c6fa2a81d4777130e97f8b59ad9d"
+  },
+  "limits": [
+    "Original first reload and timer starts now completed; baseline reached result-read with missing result.",
+    "Baseline start-wait exception is intentionally swallowed by unchanged case; its outcome was not separately recorded.",
+    "No native BB/systemd retention qualification or retry."
+  ]
+}

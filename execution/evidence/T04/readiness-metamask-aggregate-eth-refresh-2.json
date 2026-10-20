@@ -1,0 +1,179 @@
+{
+  "script": "scripts/test-wallet-extension-browser.mjs",
+  "args": [
+    "--wallet=metamask",
+    "--aggregate-devnet=ETH"
+  ],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "scope": "Retained disposable account initialization only; no signatures, funding, proof or L2 sends",
+      "privateRecoveryRetained": true,
+      "readinessOnly": true,
+      "cleanupComplete": true,
+      "blockedRequests": 0,
+      "blockedDetails": [],
+      "proofRequests": 0,
+      "l2Submissions": 0,
+      "extensionStartupDocuments": 12
+    }
+  ],
+  "deadlineMs": 120000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 3063776,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 496832
+    },
+    {
+      "elapsedMs": 2027,
+      "rssKiB": 1402896
+    },
+    {
+      "elapsedMs": 3052,
+      "rssKiB": 2536592
+    },
+    {
+      "elapsedMs": 4081,
+      "rssKiB": 2930864
+    },
+    {
+      "elapsedMs": 5101,
+      "rssKiB": 3045392
+    },
+    {
+      "elapsedMs": 6130,
+      "rssKiB": 2882256
+    },
+    {
+      "elapsedMs": 7151,
+      "rssKiB": 3063776
+    },
+    {
+      "elapsedMs": 8175,
+      "rssKiB": 2915120
+    },
+    {
+      "elapsedMs": 9196,
+      "rssKiB": 2902656
+    },
+    {
+      "elapsedMs": 10221,
+      "rssKiB": 314848
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-wallet-extension-browser.mjs": "77949cc6076ad9d38497a14989a1d93885d130c5e596136ce6278ce7f87903fd",
+    "apps/rolling/wallet-panel.mjs": "a065c9614f8e36e3cf182539ec59de18d37ca70cde0bebf841c1d34467643919",
+    "scripts/t04-metamask.mjs": "26c6d6da094cf185476179b0446572669cf4fa442d44aab2e4ed17e96fe81319",
+    "scripts/t04-phantom.mjs": "3c813fa3c23f654790b149c5ba1d2c54d7610922e01e9a8b317b69f6842cdab4",
+    "shared/rolling/aggregate-funding.mjs": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+    "shared/rolling/aggregate-recovery.mjs": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+    "shared/ethereum-journal.mjs": "4d3ebcd58ba275e7eddede184bd7674e0f9e12e42c0daa89a18191868d41bab6",
+    ".build/metamask-13.49.0/metamask-chrome-13.49.0.zip": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-recovery-20261014/wallet-acceptance/eth-control.json": "539e140ac3574a1ce61c62ca35427da889a3068aa7d4d1f6b0d763e3bd2483ca",
+    "scripts/run-bounded-browser-check.mjs": "5fffa829838b2103f92c08f1284c59afb3200abd0603e864df1fccce31976a3d",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d"
+  },
+  "peakMemory": {
+    "elapsedMs": 7151,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 88946,
+        "ppid": 88936,
+        "rssKiB": 69248
+      },
+      {
+        "role": "ui",
+        "pid": 88947,
+        "ppid": 88946,
+        "rssKiB": 247072
+      },
+      {
+        "role": "ui",
+        "pid": 88948,
+        "ppid": 88947,
+        "rssKiB": 257664
+      },
+      {
+        "role": "ui",
+        "pid": 88957,
+        "ppid": 88948,
+        "rssKiB": 123280
+      },
+      {
+        "role": "ui",
+        "pid": 88958,
+        "ppid": 88948,
+        "rssKiB": 90688
+      },
+      {
+        "role": "ui",
+        "pid": 88959,
+        "ppid": 88948,
+        "rssKiB": 62416
+      },
+      {
+        "role": "ui",
+        "pid": 88961,
+        "ppid": 88948,
+        "rssKiB": 146272
+      },
+      {
+        "role": "ui",
+        "pid": 88963,
+        "ppid": 88948,
+        "rssKiB": 104528
+      },
+      {
+        "role": "ui",
+        "pid": 88964,
+        "ppid": 88948,
+        "rssKiB": 711840
+      },
+      {
+        "role": "ui",
+        "pid": 88966,
+        "ppid": 88948,
+        "rssKiB": 766336
+      },
+      {
+        "role": "ui",
+        "pid": 88968,
+        "ppid": 88948,
+        "rssKiB": 159312
+      },
+      {
+        "role": "ui",
+        "pid": 88969,
+        "ppid": 88948,
+        "rssKiB": 243056
+      },
+      {
+        "role": "ui",
+        "pid": 88971,
+        "ppid": 88948,
+        "rssKiB": 82064
+      }
+    ]
+  },
+  "elapsedMs": 10674,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

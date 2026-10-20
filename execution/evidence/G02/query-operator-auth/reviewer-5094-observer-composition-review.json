@@ -1,0 +1,101 @@
+{
+  "candidate": "5094c7970917cbf7995bc1feae38a317ab46f373",
+  "base": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+  "verdict": "one narrow read-only observer approval-content binding repair requested before final combined integration verdict",
+  "source": [
+    {
+      "path": "plugins/main.mjs",
+      "sha256": "cfd0086a6d1210877cb00ab1dddb896278e7849dd89e5f1ee5b4b7f271337555",
+      "exactSourceRevision": "905427a0fa7c796a53bbbbd6b950c38520a315c3"
+    },
+    {
+      "path": "plugins/test/hosted-private-bok.test.mjs",
+      "sha256": "72a5515a424b30cb8f992c735ac6d2305be5b3d886f5fad6af4ae4ee0b9ee8e7",
+      "exactSourceRevision": "905427a0fa7c796a53bbbbd6b950c38520a315c3"
+    },
+    {
+      "path": "shared/rolling/public-events.mjs",
+      "sha256": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+      "exactSourceRevision": "a8c22faa923ee550e6e62518c72fe487ffa9f22e"
+    },
+    {
+      "path": "shared/rolling/public-events.test.mjs",
+      "sha256": "587ad8b61ba322a4726753ff0ae6e636a88e9e4eea1cfe62b1776c685f492b6b",
+      "exactSourceRevision": "a8c22faa923ee550e6e62518c72fe487ffa9f22e"
+    },
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sha256": "8c9f99b1790e7a9891ffc75153eea2ed8ede2b0877e6ca960580b6894bfccdf2",
+      "exactSourceRevision": "4b29ce7dc0c0c56864ce56f3abc9975f833dfe6a"
+    },
+    {
+      "path": "deploy/prover/BOOTSTRAP.md",
+      "sha256": "7fd9aed9621356cfd39826950e63f8205592ca99c764c58f98fbfd62e5260b06",
+      "exactSourceRevision": "4b29ce7dc0c0c56864ce56f3abc9975f833dfe6a"
+    },
+    {
+      "path": "scripts/test-prover-bootstrap.py",
+      "sha256": "e8c452d463190c5b47c1922fbe909a75ea8ff4c6c0b1e0fead3fd5c01f988a5a",
+      "exactSourceRevision": "4b29ce7dc0c0c56864ce56f3abc9975f833dfe6a"
+    },
+    {
+      "path": "scripts/t04-metamask.mjs",
+      "sha256": "1e82970a15c35c603836a84fb7e4ff3a790de41642150153fdc8b64162303e48",
+      "exactSourceRevision": "e8d4a6bb5d76f923c3c4fd61f137594fed4588cf"
+    },
+    {
+      "path": "scripts/test-wallet-extension-browser.mjs",
+      "sha256": "e1a19b845a5fea74c03a19f0dbe33fdcf1de58ca11742f35d6e0e07baf302fa1",
+      "exactSourceRevision": "e8d4a6bb5d76f923c3c4fd61f137594fed4588cf"
+    },
+    {
+      "path": "scripts/run-bounded-browser-check.mjs",
+      "sha256": "3872e2a027749c1ef6719e2b49d025d3d02e52ac92ac645b67ab6436ee614750",
+      "exactSourceRevision": "e8d4a6bb5d76f923c3c4fd61f137594fed4588cf"
+    },
+    {
+      "path": "scripts/test-t04-browser-journey.mjs",
+      "sha256": "924e358c6c56a8781750cd43e1245058f28d69538a3df1c06a303fb78de307bf",
+      "exactSourceRevision": "e8d4a6bb5d76f923c3c4fd61f137594fed4588cf"
+    }
+  ],
+  "findings": [
+    {
+      "id": "READONLY-ORIGINAL-CONTENT",
+      "priority": 2,
+      "path": "scripts/t04-metamask.mjs",
+      "symbol": "observeRetainedBokJourney/assertRetainedBokEvents",
+      "problem": "Read-only observer deliberately skips original encrypted workflow inspection; current final canonical event assertions check identifiers, links, scope, budget and fees but do not compare canonical PostPublished message against approval.content/contentSha256. A separately supplied different public intent with the same scope and budget can therefore qualify against the original approval.",
+      "repair": "Compare canonical original post message and length with the exact approved content, using existing field/text decoder, and reject a same-scope/budget wrong-content fixture. No action or retry needed."
+    }
+  ],
+  "closedFindings": [
+    "BOK-DEADLINE-BEFORE-CONFIRM: remaining is now evaluated after inspection and immediately before each confirmation; phase waits use original remaining budget.",
+    "Installed Playwright async Promise truthiness: exact source callback reproduced false result completing early; replacement awaits each page.evaluate result before testing completion."
+  ],
+  "acceptedAssessment": [
+    "Explicit observer mode is mutually exclusive with paid recovery/prepared review/new Bok actions and enters a separate branch before onboarding/unlock or UI action calls.",
+    "Only approval expiry is bypassed for read-only authentication; runtime/scope/allocation/budget and individual fee limits remain checked.",
+    "Original tx/receipt/class/canonical block authentication and public uniform accounting pagination preserved; awaited false values continue polling without claims or additional provider calls.",
+    "Owner remains120s for observer/default wallet and540s only explicit aggregate+Bok actions, with owner-generated original work deadline.",
+    "All eleven candidate blobs exactly match the four source components listed; earlier frozen-port/refund-decoder/activation-delivery verdicts carry unchanged."
+  ],
+  "evidence": {
+    "observerPacket": "rolling-design/execution/evidence/G14/retained-wallet-bok/observer-repair-review.json",
+    "observerPacketSha256": "1311b3a02173ed040c96cfd0c0b8125699112564ac611046a77f7b80eefa42f3",
+    "allFourEvidenceHashesVerified": true,
+    "installedPlaywrightSourceHashVerified": true,
+    "controlledTests": 71,
+    "passed": 71,
+    "failed": 0,
+    "skipped": 0,
+    "reportedOwnerElapsedMs": 1138,
+    "actualLiveObserver": "Parent16596 pending; no result reviewed.",
+    "reviewerHeavyTests": false
+  },
+  "limitations": [
+    "No actual public-feed rebuild/start success or full wallet/provider product qualification inferred.",
+    "Normal generated closure must be checked against changed source by release owner; no unchanged-manifest freshness claim made here.",
+    "Prior paid9 asynchronous failure and all historical failed observations remain failed."
+  ]
+}

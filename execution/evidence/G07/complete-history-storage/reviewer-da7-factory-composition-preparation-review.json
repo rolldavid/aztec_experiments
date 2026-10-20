@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:34:21.459673+00:00",
+  "source": "da7bd5aea1498d389d70af4430d7b197e78edfd8",
+  "base": "276bab92ee4a8cb28dd2742c339bbddc9773512c",
+  "sourcePacketSha256": "6bf793544c9365c16394aa310e8397c1f7b0293085da6d0febc8d3717018d411",
+  "verdict": "PASS source composition and preparation; ordinary49 eligible for one parent-granted run; browser32 conditional on ordinary actual review and separate parent grant",
+  "verified": [
+    "Git diff has exactly the six claimed paths; all six blobs and current file hashes equal previously reviewed e201 source; clean exact da7 HEAD.",
+    "All ordinary557 source and2402 dependency hashes and browser581 source and2578 dependency hashes independently rehashed unchanged.",
+    "Packet bindings, unchanged child, qualified physical-copy provenance, source-expanded32+17 ordinary and32 browser inventories checked.",
+    "Ordinary owner differs from reviewed focused-one only evidence directory and role; browser adds explicit pinned installed Playwright cache/executable and environment path, retaining sanitized HOME and existing descendant ownership.",
+    "Limits remain ordinary60s/2GiB and browser180s/4GiB; strict zero skips, exact labels, positive tree cleanup, original link restoration and owned TMP removal remain required.",
+    "Browser source serves source reader assets with labelled public/session responses or unavailable runtime; no real PXE/proof initialization. Wallet-session is untouched."
+  ],
+  "ordinaryPacketSha256": "28ca2303c3d77fe9e8b7a3a047b65f1846f8dcab273d8bc7b0c866eee657d994",
+  "browserPacketSha256": "261c8d1090cdf9f8ab211893492c94e6a77d7719e2732abaea02ff3782bc73e3",
+  "limitations": [
+    "No tests executed by reviewer.",
+    "No real wallet, chain, dense-wire, complete canonical archive, lifetime resource or deployment qualification.",
+    "Historical6225 failed receipt remains failed; focused44456 does not substitute for full49.",
+    "Current normal-manifest closure and direct source serving determine build necessity; no unrelated frontend rebuild required merely for source-served reader changes."
+  ]
+}

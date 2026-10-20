@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-14T10:00:19.278099+00:00",
+  "scope": "Read-only original nonce15 diagnosis; no journal/source mutation, key loading, signing or transmitted transaction.",
+  "source": "90d735130fe6d03ed3275776ee0b87d392697b0a",
+  "retainedFiles": {
+    "state.json": "7018443d3e1ca35baa8817dbc07d17ccc590d63a8d191dd028122feedf423229",
+    "state.json.cancel-approve-usdc.json": "1fe7f30769019127174410ef89cdf33e9ff9a4c077b1164e14931a8238565d54"
+  },
+  "publicEnvelopeChecks": {
+    "bothType": 2,
+    "bothChainId": 11155111,
+    "bothNonce": 15,
+    "bothSender": "0x0443527ca2fd922e62cda88a087757116c71dc21",
+    "bothSignaturesAndComputedHashMatch": true,
+    "original": {
+      "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+      "gas": 250000,
+      "maxFeePerGas": "1100000",
+      "maxPriorityFeePerGas": "1000000",
+      "value": "0",
+      "dataBytes": 68
+    },
+    "cancellation": {
+      "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+      "selfRecipient": true,
+      "gas": 21000,
+      "maxFeePerGas": "1320000",
+      "maxPriorityFeePerGas": "1200000",
+      "value": "0",
+      "dataBytes": 0
+    }
+  },
+  "readOnlyRpc": {
+    "endpoint": "https://sepolia.gateway.tenderly.co",
+    "requests": 4,
+    "allHttp200": true,
+    "bothTransactionByHash": null,
+    "pendingNonce": 15,
+    "latestBlock": "0xb5c540",
+    "latestHash": "0xcc200986f8348906df51e79eaef4af8ee32572e080999321277791a38c31e7db",
+    "baseFeeWei": "18",
+    "toolOutput": "e6ffbb"
+  },
+  "installedEthersDiscriminator": {
+    "toolOutput": "148dbc",
+    "actualBroadcastMethodInvokedInMemory": true,
+    "sendOverride": "Deny every RPC method except eth_chainId and eth_blockNumber before delegating to transport.",
+    "ethSendRawTransaction": "blocked locally before transport",
+    "auxiliaryReads": "eth_chainId and eth_blockNumber passed through original strict200ms transport",
+    "rawTransmitted": false,
+    "networkWriteRequests": 0
+  },
+  "sourceDiagnosis": [
+    "onceAztecOperation writes signed submission-unknown before broadcast and discards execute exceptions. A retained record therefore proves signed persistence, not endpoint acceptance.",
+    "Installed ethers broadcastTransaction concurrently resolves blockNumber, sendRawTransaction and network; failure of any can reject the aggregate call. Auxiliary failure was not reproduced by the read-only discriminator.",
+    "runSepoliaLiquidityCancellation returns a subsequent inspectSeedResolution result even after the inner once operation fails. Its hash-bearing unresolved output cannot discriminate caught broadcast failure from accepted-but-unmined submission.",
+    "No malformed envelope, wrong chain/nonce, insufficient current basefee cap or current auxiliary-RPC fault was reproduced. Current missing hashes and pending nonce do not prove safe rebroadcast. Historical exception cannot be recovered from existing sanitized log."
+  ],
+  "recommendedNext": "Add finite attempted/acknowledged broadcast and HTTP/RPC/allowlisted ethers error classification at existing boundaries for future authorized operations, with no payload/error-message/raw/key output and no altered retry behavior. Preserve both current intents as reconcile-only; do not transmit them again to obtain diagnostics.",
+  "independentProvider": "No successful independent endpoint observation in this task; prior PublicNode request was HTTP403.",
+  "limitations": [
+    "Lead invalid-envelope probe demonstrates only current method reachability, not acceptance of either historical signed transaction.",
+    "No causal 429, fee-floor, provider policy or transactionpool conclusion is justified from these records."
+  ]
+}

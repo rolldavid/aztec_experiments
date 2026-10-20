@@ -1,0 +1,131 @@
+{
+  "base": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+  "candidate": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+  "task_id": "G07-incomplete-canonical-recovery",
+  "holds": [],
+  "findings": [
+    {
+      "id": "G07-B2-1",
+      "blocking": true,
+      "status": "resolved"
+    }
+  ],
+  "checks": [
+    {
+      "base": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+      "candidate": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "id": "recovery-build-closure",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/sdk-build.log",
+          "sha256": "518cd4fd5c2f6ed894deecd369ce5159c7250c5fd6acd5a861b51c5c09449602"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/combined-checks.log",
+          "sha256": "8ed119ee048cb616c65ca908ad86203fa41d2b93f103ca82110576cafcc571e9"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/materialization.json",
+          "sha256": "03a5171e184a398a6c4d1acdfe0f8f17c246e686de585d1860bec122c7827dc2"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-624aa008-incomplete-closure.json",
+          "sha256": "16e4e509c800f5101fb68c11ccf352fb8f92cae895c4a6eab662c1af66888ec9"
+        }
+      ],
+      "command": "node scripts/build-sdk.mjs && node apps/build.mjs && node scripts/rolling-wallet-assets.mjs && node --test --test-concurrency=1 scripts/test-sdk-manifest.mjs shared/rolling/cold-preference-reader.test.mjs",
+      "environment": "Node24.21.0 macOS, TMPDIR=/private/tmp; stopped consumers, verified pinned original fixtures and normal owning installer",
+      "observed": "Normal SDK/apps/wallet buildsPASS;108testsPASS0FAIL/SKIP1.482s. Independent2057SDKinputs8outputs+97walletinputs25filesverified. Actual complete120s recovery remains open.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+      "candidate": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "id": "RC18-RC21-incomplete-recovery-continuation-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/sdk-build.log",
+          "sha256": "518cd4fd5c2f6ed894deecd369ce5159c7250c5fd6acd5a861b51c5c09449602"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/combined-checks.log",
+          "sha256": "8ed119ee048cb616c65ca908ad86203fa41d2b93f103ca82110576cafcc571e9"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/materialization.json",
+          "sha256": "03a5171e184a398a6c4d1acdfe0f8f17c246e686de585d1860bec122c7827dc2"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-624aa008-incomplete-closure.json",
+          "sha256": "16e4e509c800f5101fb68c11ccf352fb8f92cae895c4a6eab662c1af66888ec9"
+        }
+      ]
+    },
+    {
+      "base": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+      "candidate": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "id": "RC25-RC26-current-head-completion-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/sdk-build.log",
+          "sha256": "518cd4fd5c2f6ed894deecd369ce5159c7250c5fd6acd5a861b51c5c09449602"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/combined-checks.log",
+          "sha256": "8ed119ee048cb616c65ca908ad86203fa41d2b93f103ca82110576cafcc571e9"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-incomplete-closure/materialization.json",
+          "sha256": "03a5171e184a398a6c4d1acdfe0f8f17c246e686de585d1860bec122c7827dc2"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-624aa008-incomplete-closure.json",
+          "sha256": "16e4e509c800f5101fb68c11ccf352fb8f92cae895c4a6eab662c1af66888ec9"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "6c01bb487e87dd99ee3b76e544f2f92ab723de30",
+    "candidate": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-624aa008-incomplete-closure.json",
+        "sha256": "16e4e509c800f5101fb68c11ccf352fb8f92cae895c4a6eab662c1af66888ec9"
+      }
+    ]
+  }
+}

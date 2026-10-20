@@ -1,0 +1,31 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "parent": "lead-20261011",
+  "source": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+  "base": "99e0669ccf98e152f7e4753d591327975064cfd3",
+  "verdict": "approve",
+  "scope": [
+    "RC18",
+    "RC19",
+    "RC22"
+  ],
+  "files": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "scripts/t04-metamask.mjs"
+  ],
+  "findings": [],
+  "commands": [
+    {
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='initial funding entry|funding completion reports refreshed|aggregate funding UI reviews exact allocations|rejected funding connection retains' apps/rolling/wallet-panel.browser.test.mjs",
+      "exit": 0,
+      "passed": 6
+    },
+    {
+      "command": "git diff --check 99e0669ccf98e152f7e4753d591327975064cfd3 e4f201a0",
+      "exit": 0
+    }
+  ],
+  "assessment": "Reviewed changed source and tests before implementer claims. Capability-dependent entry preserves recovery-only deployments. Completion awaits refresh and account-identity fencing; account labels match real readAccountStatus semantics and Bok value is refreshed. No new Ready claim. Harness selectors match configured aggregate capability. No source edits.",
+  "limits": "Focused labelled UI tests and source review only; no proof, real-wallet, recovery journey or full acceptance qualification."
+}

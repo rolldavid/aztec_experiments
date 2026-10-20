@@ -1,0 +1,136 @@
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:519:22
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:519:32
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:525:15
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:525:22
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:531:15
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:531:26
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:538:22
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:538:26
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:544:26
+    │
+544 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:551:32
+    │
+551 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:558:26
+    │
+558 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:565:26
+    │
+565 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:572:26
+    │
+572 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:579:15
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:579:26
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused import FromField
+  ┌─ rolling_contract/src/profiles_tests.nr:3:62
+  │
+3 │     protocol::{address::{AztecAddress, EthAddress}, traits::{FromField, Packable}}};
+  │                                                              --------- unused import
+  │
+
+rolling_contract preferences_tests::actual_stale_update_is_rejected
+rolling_contract preferences_tests::actual_unknown_kind_is_rejected
+rolling_contract preferences_tests::anonymous_name_follow_rejected
+rolling_contract preferences_tests::digest_binds_every_event_field_and_network_contract_scope
+rolling_contract preferences_tests::future_expected_revision_rejected
+rolling_contract preferences_tests::future_read_marker_is_rejected
+rolling_contract preferences_tests::global_toggle_cannot_encode_arbitrary_target
+rolling_contract preferences_tests::marker_cannot_be_written_through_toggle
+rolling_contract preferences_tests::nonexistent_head_cannot_skip_initial_revision
+rolling_contract preferences_tests::preference_encoding_fits_standard_note_and_encrypted_event
+rolling_contract preferences_tests::private_heads_initialize_and_update_independently_without_collateral_or_names
+rolling_contract preferences_tests::read_marker_commits_actual_canonical_header
+rolling_contract preferences_tests::replacement_binds_exact_predecessor_and_increment
+rolling_contract preferences_tests::revision_cannot_wrap
+rolling_contract preferences_tests::stale_update_cannot_replace_head
+rolling_contract preferences_tests::toggle_enum_accepts_main_board_and_global_only_with_correct_targets
+rolling_contract preferences_tests::unknown_head_schema_rejected
+rolling_contract preferences_tests::unsupported_kind_rejected
+rolling_contract preferences_tests::zero_bookmark_rejected
+rolling_contract preferences_tests::zero_initialized_digest_rejected
+rolling_contract preferences_tests::zero_initialized_revision_rejected
+rolling_contract preferences_tests::zero_kind_rejected
+rolling_contract preferences_tests::zero_subscription_rejected
+rolling_contract preferences_tests::zero_thread_marker_is_rejected

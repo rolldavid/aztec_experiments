@@ -1,0 +1,30 @@
+{
+  "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+  "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+  "task_id": "G04-explicit-approval-transport",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "plugins/operations.mjs",
+    "plugins/operator.mjs",
+    "plugins/test/operations.test.mjs"
+  ],
+  "required_checks": [
+    "continuation-provider"
+  ],
+  "requirements": [
+    "RC19-RC22-explicit-recovery-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G04-explicit-approval-transport",
+      "paths": [
+        "plugins/operations.mjs",
+        "plugins/operator.mjs",
+        "plugins/test/operations.test.mjs"
+      ]
+    }
+  ]
+}

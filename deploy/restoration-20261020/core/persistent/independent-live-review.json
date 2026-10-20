@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/restore_review",
+  "verdict": "approved",
+  "sourceRevision": "0205d08b",
+  "operation": "Persistent hosting native amendment on existing core and Bok hosts",
+  "scriptSha256": "af0601bf6a4e98832c3009b132b39ad71a8a49f804229b77508f8222d2b9a57a",
+  "payloadSha256": "ba41b1ccf5405063287dcd387041ea3dfb242188884f628346b66dbdd04484db",
+  "bindingsSha256": "3ebfb5758084a1c3131007493dc8f66eaa6460bc8d00bea2067af23442398771",
+  "checks": [
+    "All seven payload files byte-identical to exact source revision",
+    "Closed USD1500 budget readback policy, original runtime provenance retained",
+    "Original attestor/deadline and active-process guards, exclusive native locks",
+    "Only observer timers paused; no service restart or financial/model replay",
+    "Native elapsed expiry replaced, emergency egress/failure containment preserved",
+    "Current source/module and query/prover observations required before success",
+    "Partial policy write rollback gap repaired before execution",
+    "Independent cloud expirations retained until both native receipts pass"
+  ],
+  "limitations": [
+    "Not a reboot trial or new application acceptance campaign",
+    "Failure rollback restores original native policy, timer and node unit; additive fixed control files and safe boot-order configuration may remain",
+    "Unknown outcome must be reconciled from host receipt, never blindly replayed"
+  ],
+  "reviewedAt": "2026-10-20T07:47:39.893779+00:00"
+}

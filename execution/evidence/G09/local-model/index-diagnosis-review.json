@@ -1,0 +1,41 @@
+{
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "kind": "read-only source diagnosis",
+  "conclusion": "Expected bounded canonical reauthentication on each process reopen; no demonstrated SQLite corruption or moderation/model failure.",
+  "cause": [
+    "Persistent index initializes loaded=false/ready=false and a fresh authentication epoch on construction. First step captures prior control only for comparison and starts a new generation at deployment minus one (public-index.mjs303\u2013307).",
+    "SQLite startGeneration resets cursor and scalars at origin (public-sqlite.mjs157\u2013160). Retained projection rows never confer canonical authority; old segments/events/blocks are compared to freshly authenticated history.",
+    "One step advances only one transaction, block completion, or rollback segment. Every step checks network/class/deployment/canonical target and pre/post commit anchors. Adapter sync limits each list invocation to 512 steps and approximately 20 seconds, then throws the specific catching-up error without marking the persistent instance failed.",
+    "The same instance continues from its in-memory current generation on the next list call; closing/reopening restarts canonical reauthentication. Retained state is integrity comparison and crash recovery, not a portable ready certificate."
+  ],
+  "stopObservation": "processRollingModerationCycle ingests a canonical snapshot before its stopping-gated model loop (worker.mjs107\u2013120). Thus completion of ingestion and two queued jobs during graceful stop with zero evaluations is consistent with source.",
+  "smallestCheck": {
+    "procedure": "Keep exactly one createRollingModerationService instance and perform at most two sequential existing signer.list calls; continue only the exact known catching-up error; retain all canonical/lease checks and close/drain once. No model runtime, evaluate or submission.",
+    "status": "Parent reports this discriminator already running. Reviewer did not execute it or observe its result.",
+    "bound": "Existing 20-second/512-step bounds unchanged. The wrapper checks its wall deadline between steps; each in-flight step remains owned and can finish after that loop deadline. Do not race close against active reads.",
+    "readinessUse": "Success establishes readiness only in that instance. For Design submission, observe the normal daemon own successful canonical ingestion/current checkpoint after its consecutive cycles; do not claim a closed probe warmed authority for reopened daemon."
+  },
+  "existingTestsInspected": [
+    "persistent cold restart rebuilds all canonical events and never trusts a projection row",
+    "persistent interrupted transaction and lost commit reply reopen without duplication",
+    "Rolling persistent index drains multiple bounded steps before moderation",
+    "Rolling index catchup remains bounded and does not infer completion"
+  ],
+  "limitations": [
+    "No timing profile or live index status was captured by reviewer; exact physical RPC/SQLite cost breakdown remains unmeasured.",
+    "Queue ingestion checkpoint change is not independently a measurement of internal index replay progress.",
+    "Normal daemon currently starts model runtime before its first index-backed moderation cycle; no new implementation is required to explain or accept transient bounded startup catch-up.",
+    "Do not skip history authentication, accept disk rows as authority, reset journals, or weaken catching-up/error semantics."
+  ],
+  "sourceHashes": {
+    "censor-daemon/rolling-adapter.mjs": "a81e76e3bb36c493e217c11945c857ebceb14b586e71f21067b5bc78a7ecf103",
+    "censor-daemon/daemon.mjs": "fabc20095461b7c4fdf250d09829c13def52cde6d386a87ccd810907e14ef977",
+    "censor-daemon/worker.mjs": "b5dbd2569f9af73141e4fc4173abca5f4d66d7d9a3c4aa186d8e115743ce9fdf",
+    "shared/rolling/public-index.mjs": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+    "shared/rolling/public-sqlite.mjs": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+    "scripts/rolling-public-server.mjs": "1ce70623dbba8914db90dbdbf54b4ecb232e178ed522a88da3b2a9b7777dae63",
+    "shared/rolling/public-index.test.mjs": "ee62145f57f20365cfbf20777632c85f6a98d9088262e05ad8044449f848f3ec",
+    "censor-daemon/test_worker.mjs": "3fcb3be32cc74afc6305191f03535c9897fd4c722478686f05d90059ff00f2e9"
+  },
+  "execution": "No tests, services, model, network, wallet or chain operations."
+}

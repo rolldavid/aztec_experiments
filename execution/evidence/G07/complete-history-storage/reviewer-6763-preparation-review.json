@@ -1,0 +1,19 @@
+{
+  "subject": "SQLite 6763 dependency materialization and ordinary runner",
+  "source": "6763cc56eef2836a018464a9ecec2f67f6ededef",
+  "packetSha256": "dad75b921baf1f04079b8cc097318e8f658195d952fe5054878e7afbe77ae20d",
+  "verdict": "COPY_ELIGIBLE_IN_STOPPED_IMMUTABLE_SOURCE_WINDOW; ORDINARY_CONDITIONAL_ON_COPY_REVIEW",
+  "checks": [
+    "All six packet file hashes, ten source pins,285 current lead dependency pins checked and matched; package/lock and Supervisor/OwnedBuildTree exact.",
+    "Copy helper has exclusive intent, absent physical destination, same checkout parent, disk reserve, cp -cR only, no install hooks or fallback. Full traversal checks physical non-hardlinked regular files, internal symlinks, path/size/link equality and per-file source/copy byte equality. Only explicit regular .DS_Store omitted and recorded.",
+    "180s/2GiB descendant-aware owner and175s helper fence; partial copy retained on failure, original node_modules symlink unchanged.",
+    "Ordinary runner verifies positive copy receipt and target inode identity plus285 dependency pins, then temporary own symlink swap. Existing Supervisor60s/2GiB, short0700 TMP/HOME and socket bound, exact60 labels/59passes/one specifically named volume skip. Restore and owned temporary removal only after positive process absence.",
+    "No SDK artifact/build or runtime execution by reviewer."
+  ],
+  "conditions": [
+    "Lead must freeze source dependency tree for the entire copy and whole-tree verification; no borrower/install/build. Copy metadata before hashing does not prove absence of concurrent same-sized source mutation, so immutable window is material.",
+    "Source remains6763 and all reviewed runner/preparation bytes must be rechecked at execution; later clock source work must not silently invalidate runner binding.",
+    "Review actual copy receipt, unchanged source inputs, physical target and owned process absence before separate ordinary grant. A failed/partial copy cannot authorize tests.",
+    "Ordinary is synthetic-domain/actualSQLite component coverage only; capacity opt-in remains explicitly skipped and production integration/canonical authentication/peak512MiB not qualified."
+  ]
+}

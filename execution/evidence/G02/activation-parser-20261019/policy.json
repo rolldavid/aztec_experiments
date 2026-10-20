@@ -1,0 +1,28 @@
+{
+  "base": "791297f7e0b075f85201a923c9603c228368ab9a",
+  "candidate": "6aefe9dcf6340703c3d80ae32f336ee4e7e644c1",
+  "task_id": "G02-activation-parser",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py"
+  ],
+  "required_checks": [
+    "native-parser-and-existing-activation-boundary"
+  ],
+  "requirements": [
+    "RC41-pinned-activation-parser"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G02-activation-parser",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "revision": "57c1582cd76770af0ffb6c11573d6bbc701c7da6",
+  "base": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "workerRevision": "aec576a42001f48b0e636a2d379d70eadbbf0815",
+  "verdict": "approve-scoped-source-component",
+  "requirements": [
+    "RC25",
+    "RC26",
+    "RC27",
+    "G07-A08"
+  ],
+  "scope": "Bounded witnessed private-history pages and frame-local immutable authority; not whole cold recovery performance acceptance.",
+  "findings": [
+    {
+      "id": "G07-W256-1",
+      "priority": "P1",
+      "status": "resolved",
+      "initialRevision": "8ed66a9e8d4c1adbfed7121c581c26b5ac6d81fa",
+      "initialReportSha256": "ccf66df47cb27d4c062bfa7083575781e101050c5bf014a740871965c215e732",
+      "repairRevision": "aec576a42001f48b0e636a2d379d70eadbbf0815",
+      "disposition": "Native witnessed-prefix reservation now matches SDK field/header/proof accounting plus2048 per block before flattening; extra512 page reserve and direct-anchor proof overestimate are conservative. Existing actual SDK Body/TxEffect/PublicLog regression failed before and passes after."
+    }
+  ],
+  "independentReview": [
+    "Read all changed production source and changed checks before implementer conclusions.",
+    "Verified fixed anchor hash/header/network and30-level Poseidon membership index/root remain SDK authority; every body authenticated before staging; no invalid supplied-proof fallback.",
+    "Frame-local detached historical contract data cannot replace fresh node/network/proof/anchor authority at entry and both original commit boundaries, including after contributor settlement. Account/context, receipt/effect, staged union, mailbox and reader post-CAS final fences retained.",
+    "Explicit witnessed pages bound256; legacy32;1024B request/2MiB response+SDK input/10s/singleflight unchanged. Serial native work, four-way drained SDK verification, eight physical logs/64 events; stop first log-bearing or unknown block. Full requested physical quota reserved before upstream;600production/1800existingdevelopment unchanged.",
+    "Actual synchronizer fixture now models legal finalized3 with proposed/checkpointed/proven3->4->3; preserves actual ACIR note/event/index/anchor/cache assertions and explicit prune->proposed events. No synchronizer production edit.",
+    "Adaptive counts depend on public hints and cannot establish absence or cursor authority. The comment saying a returned receipt consumed supplied prefix is stronger than replay semantics; bounded scheduling only, nonblocking."
+  ],
+  "independentVerification": {
+    "sourceFilesComparedToWorkerPacket": 11,
+    "sourceHashesMatch": true,
+    "generatedOnlyAboveWorker": [
+      "apps/dist/aztec_bundle.js",
+      "apps/dist/sdk-manifest.json"
+    ],
+    "sdkChangedInputsVerified": 4,
+    "sdkOutputsVerified": 8,
+    "sdkManifestCopiesIdentical": true,
+    "walletInputsVerified": 97,
+    "walletFilesBytesAndHashesVerified": 25,
+    "workerLinkedLogHashesVerified": 14,
+    "measurementHashVerified": true,
+    "newTestExecutionByReviewer": false,
+    "reason": "Lead owned serialized fullSDK/ACIR test slot; reviewer verified source, hashes, exact logs and final outcomes read-only."
+  },
+  "checks": {
+    "rootCombined": {
+      "pass": 397,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 14010.672084
+    },
+    "rootInstalledClosure": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "rootNativeOnlySDK": {
+      "pass": 64,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Earlier NATIVE-only invocation, not full ACIR."
+    },
+    "rootFullSDKACIR": {
+      "pass": 123,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 96012.111875,
+      "log": "sdk-acir.log"
+    },
+    "workerFinalNative": {
+      "pass": 75,
+      "fail": 0,
+      "skip": 0
+    },
+    "sdkCheck": {
+      "inputs": 2057,
+      "outputs": 8,
+      "version": "6.0.0-rc.3"
+    },
+    "normalBuilds": [
+      "SDK",
+      "apps",
+      "wallet"
+    ]
+  },
+  "preservedFailures": [
+    "Worker original122PASS/1old-installed-closure failure remains failed; current installed check and full123 rerun resolve closure.",
+    "Original reorg fixture finality/cache expectation failures preserved; repaired legal normal sync retains all substantive assertions.",
+    "Native/SDK byte budget before regression preserved.",
+    "Prior actual120.023s full cold failure remains unqualified."
+  ],
+  "performanceLimits": [
+    "Actual SDK/ACIR controlledHTTP timing is synthetic-chain evidence, not a deployed fresh-browser120s pass.",
+    "Worker idealized startup+seven256frames+dense-prefix subtotal105.854s omits uncertain original-history adaptive/dense/terminal work;14.146s remaining is not a qualified margin.",
+    "G03 public-feed100 range unchanged; explicit private full-history page interpretation is separately recorded by lead.",
+    "No model, real-proof, production network, privacy audit or whole-application acceptance inferred."
+  ],
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "353756a9ac2146418dad018966e472138c4afb4e5293b6a624b2b670c7417bc8",
+    "prover/compact-block-native.test.mjs": "d0fd7e2ec1b92da15e87fcf617da8967a45b08b253e06d7bb9c696356ee0b4af",
+    "prover/compact-service.test.mjs": "8658dc15db53be579d4848809c7ff21f072fc095331172aeefc6fa976f56e46b",
+    "prover/server.mjs": "f6a6a607ca119e34bdb4f48e6792b4d0a22ae33571970cecf8a9095e556db4b6",
+    "scripts/patch-pxe-preference-page.mjs": "68afcd7d46aed53ef9121e8468c95d29a0ee345b013956a12f2a65b28b7583f6",
+    "scripts/test-pxe-preference-page.mjs": "8e19297791a1dab1667023d0dd14306c2aa8ffa42042db07bcc9b06e68a115a0",
+    "scripts/testing/rolling-preference-browser.test.mjs": "f0ee36df90a8ae8705671dad1e7fc9e338698aee1778a83c0d387411e4e0647a",
+    "shared/rolling/cold-preference-reader.mjs": "693a0c62b43e87c781fec1fe0f7a2ca350bff38cc221056116dbb41f88ed1655",
+    "shared/rolling/cold-preference-reader.test.mjs": "15e87d55f13e21e557b604c6c3e2cd7fdd117a0d20819a2c16df4e94c1455585",
+    "shared/rolling/compact-client.mjs": "3b95801ace5c24329f63a6f90415a58a9f9e4c8c5a35d1c532d37cc4e300c133",
+    "shared/rolling/compact-client.test.mjs": "6a88064fbdba74dabe5c482a0b520160f8121b960e2217c8bbc2f88adb0260b9"
+  },
+  "generatedHashes": {
+    "apps/dist/aztec_bundle.js": "7717b6adee7e1846ffedcabc90264051d77151af10dcc6d7647cc5e694789bf4",
+    "apps/dist/sdk-manifest.json": "dfcdbefd53dcb9e48abb1632253af91d2a3ea114a18ca3191219ff42b6a130be"
+  },
+  "evidence": {
+    "workerPacketSha256": "89aed80edb1df1b73f948a3d6575057ad864b25d2e49876f98fee0bca022f881",
+    "rootLogs": {
+      "sdk-build.log": "ad3cc7a7dd73bf492725e4cc324bd3b1dc063c6ec924a4c256ded932ced1a80b",
+      "apps-build.log": "1e38abd3745bb2781a13b610cb1f4b63e11c2efb2ef118cd36807c1f4935f842",
+      "wallet-build.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd",
+      "sdk-check.log": "0e7caf342520231a9482ff5fcada54c5757085c5e208acbff375838f384941db",
+      "combined.log": "3c975b1976715a0b1391a999ad094d251c88dce0d2c825b064e211a1bb8ec24e",
+      "installed-check.log": "bce940654e96e85d6b3caca3e738e0c9b10b0cb03792439835f87492aedc9615",
+      "sdk-acir.log": "bc6e7e8b1b6865dba2577841c2f9be3b56c1dfa4de93478f820e1f2ec1c07c95"
+    },
+    "walletManifestSha256": "724c7a402cdb4acffe3fdb876f3d067fe473210313616f9a4625ac4a9ab66caa"
+  }
+}

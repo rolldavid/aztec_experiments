@@ -1,0 +1,13 @@
+✔ diagnostics retain bounded numbers/categories, never raw payloads, and detach exactly (6.834625ms)
+✔ read failure is visible and instrumentation does not consume or replace events (0.414458ms)
+✔ changing or throwing event getters cannot leak or interrupt logger forwarding (0.216166ms)
+✔ original logger failure is preserved exactly once (0.126792ms)
+✔ exact timetable selection is observed without changing results, errors, or lifetime (0.203292ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.604375

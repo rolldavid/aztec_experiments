@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "reviewedAt": "2026-10-15T00:58:31.170053+00:00",
+  "sourceRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "runtimeSha256": "ebcb57c33d618df6eea921f994872de44837c440e0bb2a2d374549933720c94b",
+  "verdict": "accept-scoped-development-evidence",
+  "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/W02/fresh-current-accepted-20261015.json",
+  "packetSha256": "87486207a508fc39a1a017a51f120c6d55f7f9cf63480679034220dd6ab5bce5",
+  "checks": [
+    "Independently verified all 16 linked evidence file hashes and byte counts.",
+    "Read actual provider/account/network records and frozen procedure assertions; account selection is label-bound, permission receipt and accountsChanged agree in both tabs.",
+    "Read application invalidation procedure: both tabs show ended-session message, remove action button, and refuse exportRecovery after account and chain changes.",
+    "Both providers report chain0x1 before observed invalidation; callback capture is empty, so no callback delivery/timing conclusion.",
+    "Original account and31337 restored; encoded empty workflow digest unchanged; owned process tree closed.",
+    "Natural operation-lock contention/refusal/release is qualified from earlier partial result; that campaign remains an overall failure. No full campaign pass inferred from that partial."
+  ],
+  "observed": {
+    "invalidationMs": 59909,
+    "peakTreeRSSKiB": 3934976,
+    "accountEventsBothTabs": true,
+    "chainReadbackBothTabs": "0x1",
+    "chainCallbackCaptured": false,
+    "lockPartial": {
+      "realLockObserved": true,
+      "secondRefused": true,
+      "afterRealReleaseSucceeded": true
+    },
+    "zeroObservedL1L2ProofSubmissions": true,
+    "failedRequestObservationsRetained": 13,
+    "responseCaptureCappedAt512": true
+  },
+  "findings": [],
+  "limitations": [
+    "Fresh unfunded disposable development account with native/PXE proofs disabled; not funded-journal or real-proof testnet acceptance.",
+    "No independent claim that chain callback was delayed: packet wording describing delay is an inference; callback itself was not captured.",
+    "Observer records first-hop requests only, with response capture capped at512; no complete upstream trace or privacy audit.",
+    "No production qualification, elapsed soak or network clearance claim."
+  ],
+  "sourceOrServiceMutations": false,
+  "wordingCorrection": {
+    "packetSha256": "87486207a508fc39a1a017a51f120c6d55f7f9cf63480679034220dd6ab5bce5",
+    "disposition": "Accepted evidence-only correction: callback delivery/timing not captured; underlying16 evidence hashes unchanged."
+  }
+}

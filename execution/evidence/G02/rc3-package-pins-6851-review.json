@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "6851dd5da205227813aec7ed4aaffff4a7970b37",
+  "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+  "verdict": "approve-isolated-exact-package-pin-development; native-runtime-build-release-unqualified",
+  "changedPaths": [
+    "package.json",
+    "package-lock.json",
+    "toolchain.json",
+    "scripts/toolchain.mjs",
+    "scripts/test-toolchain-packages.mjs"
+  ],
+  "sourceHashes": {
+    "package.json": "2137e16eb0776688d0a428ab62429a5c1543c639ab2e4b8ae39de7e6fe838cf9",
+    "package-lock.json": "825107bb65912344f28356160e513b30b553fe28e42c4c275ed66c70b1df0320",
+    "toolchain.json": "a553e7f2733568fd1a156b817dc57d56c74505d32c245e05b162a1c53c55232a",
+    "scripts/toolchain.mjs": "d5d822ea9293ebf57fe6be1f4a84b61b744e4fd07071558c398875a30ccd8394",
+    "scripts/test-toolchain-packages.mjs": "580e2a859ba9e76823a1d0bc3824b9f17d40fe152d592770cf55cf9e2c7be8e1"
+  },
+  "packetSha256": "433fd17cb4e56b355db4e38667865b6379d4d47055001241945b096e2b92837d",
+  "checks": {
+    "officialSnapshotLockCoherence": {
+      "directPins": 15,
+      "scopedClosure": 61,
+      "versionIntegrityAndScopedDependencyEdgesMatch": true,
+      "resolvedRegistryOnly": true
+    },
+    "actualInstalled": {
+      "matchingCurrentPlatformScopedPackages": 55,
+      "foreignPlatformOptionalAbsent": 6,
+      "separateNodeModulesDirectory": true,
+      "rootSelectedDependencyAndPatchHashesUnchanged": true
+    },
+    "independentTests": {
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 275.724458,
+      "path": "execution/evidence/G02/rc3-6851-independent-package-tests.log",
+      "sha256": "83586a15ddb25fb644e5fb70bdee3fb2a883c46cf2ecb26adf07caa7dda5c25b"
+    },
+    "actualAssertAztecPackages": "passed with pinned Node24.21.0; no SDK imports/native/provider calls",
+    "bbBinary": "explicit rc1-vs-rc6 qualification mismatch throws before binary filesystem/version execution",
+    "nonAztecResolvedVersionChanges": 91,
+    "newLockPaths": 1,
+    "removedLockPaths": 0
+  },
+  "sourceAssessment": [
+    "Exact per-package mapping correctly separates labs rc3 from foundation rc6; no blanket scope version/range introduced. Direct manifest declarations, root lock sections, lock package versions/integrities and installed identities are cross-checked.",
+    "All61 lock entries match retained official registry version/integrity/scoped dependency metadata snapshots. Registry maps intentionally omit non-Aztec dependency edges; no claim those maps reproduce the entire package manifest.",
+    "Nested scoped lock entries remain checked, path escapes/links rejected, extra/missing direct/closure entries rejected; foreign-platform optional absence permitted but current-platform missing package fails.",
+    "Historical native rc1 bytes/version remain explicitly unqualified for rc6. Existing bbBinary hash and exact version checks remain behind the new package mismatch guard.",
+    "Node pin24.21 remains unchanged. Isolated npm ci ignore-scripts established installation without altering root dependency symlink target; selected original root hashes independently rechecked."
+  ],
+  "findings": [],
+  "limits": [
+    "Approval is package-pin/install development only, not build, SDK API compatibility, native/prover qualification, public network availability or remote Linux startup.",
+    "The validator checks tracked lock SRI format and installed package identity/version; it is not a fresh whole-node_modules byte integrity attestation. Exact SRI content is established separately by lock/registry evidence and npm ci.",
+    "91 non-Aztec resolved upgrades are real additional dependency changes, including AWS tooling. They require affected integration/runtime/package validation before deployment; existing direct pins/overrides alone do not carry those runtime claims.",
+    "Old native provenance intentionally blocks bbBinary. This is not a global interception of arbitrary direct SDK/native imports; those remain unauthorized until separately qualified.",
+    "Reviewed PXE patches, normal artifacts/catalog, SDK/wallet bundles and deployment package must be rebased/revalidated explicitly; no old runtime carry from rc1 to rc3/rc6."
+  ],
+  "execution": "Read-only source/hash checks,27 pure package fixture tests and actual toolchain assertion. No install/native/provider/build operation."
+}

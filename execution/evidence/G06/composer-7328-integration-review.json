@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "base": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "verdict": "approved exact-source bounded development integration",
+  "scope": "Production browser private account recovery and owned-name composer preparation/cancellation; notwholeproduct",
+  "findings": [],
+  "files": {
+    "apps/rolling/wallet-runtime.browser.test.mjs": "c404b67a72f10f3e40f809e38a9905fa71fce1655a79f37352f36094e1bd2e26",
+    "scripts/rolling-wallet-assets.mjs": "a57fd1880f00af1718c2f632e01b299f1865ea6b3c775308f665b8af81fcc3de",
+    "scripts/testing/assets.mjs": "28d8cbfe0602a849c7c5227b25e38ad2cd918ada172033ae5d555477a7d6a378",
+    "scripts/testing/browser-worker.mjs": "327ddab3f87d8e23e83e113f3f17245f592bde41b0813212a562dc446e3a2ba3",
+    "scripts/testing/rolling-application-fixture.mjs": "227fba7ee9c8aa787834e75adb72d287980631dc291cbd5b95f8624925544b4a",
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/testing/rolling-composer-browser.test.mjs": "16a3c94e7cc52e92789470f88229a97218ea00d1672e6463552aaa7bdce08596",
+    "scripts/testing/rolling-composer-fixture.mjs": "02fe21e06187151f537f7777b191bc979c9a5fbe7e7afe1e6fccb40137b22b1e",
+    "scripts/testing/rolling-composer-fixture.test.mjs": "5439d39db3676a59606bd241b3b1b0a362fde758b4a94424ef527cdfa6a3853d",
+    "scripts/testing/run-application.mjs": "c746228245c636190758955c57d2cf86251ea7fa305d3a374fc0f04501bbc494",
+    "scripts/testing/scenario-flows.mjs": "8848dc853e1a1a1191d7949ecaea4060c1c386a86462be993a77e542dd447a08",
+    "scripts/testing/scenarios.mjs": "39c477cbfdfa37eb26e13ad519071947974c2f75cd59a744d581c05890694f76"
+  },
+  "priorReviews": {
+    "execution/evidence/G06/composer-combined-f486-review.json": "e2ab7f9dd51af76fa5bcc99c4e35159168245663b71593136d8e59d085d44b58",
+    "execution/evidence/G06/composer-005e-review.json": "b84319a3cec56c9186ebeab1e53bebbbc2f481d09e817a54455378441c56df1f",
+    "execution/evidence/G06/composer-crs-7328-review.json": "a125463666add8d1ed2dbc47c186d0b4210c961ec394ef7c5c2f1f17dfe9aede"
+  },
+  "equivalence": "All12changedfiles match reviewedf486/005e/7328blobs. Contracts/shared application/prover/packages/SDK unchanged frome3. DerivedCRS addsone strictlyvalidatedasset. Currentgeneratedwallet manifest75inputs24outputs verified.",
+  "runtimeReview": {
+    "execution/evidence/G06/composer-7328-runtime-review.json": "c032b03455a0a2b7fccff62d4626c52c937caf76e0be6b8588e5412141b98447"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinnedNode24.21.0> --test --test-concurrency=1 scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-composer-fixture.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "64passed0failed0skipped2162.852375ms",
+      "log": "/tmp/reviewer-composer-7328-combined.log",
+      "sha256": "d663ac134ef7fa3567c691ec3bc40b189f05725f24ee441963dad79ac141d3db"
+    },
+    {
+      "command": "Independent actualbrowser runtime+walletconfigtests exact7328",
+      "result": "4passed0failed0skipped3410.995166ms",
+      "log": "/tmp/reviewer-composer-crs-7328-tests.log",
+      "sha256": "d8b0d0de33b109c15e76b82d5b97cdc1bff77aa6f1062d50ac68e2f486b5b227"
+    }
+  ],
+  "acceptanceDisposition": "Affected boundedcomposer acceptance passes at exactcandidate. Unchanged priorcontract/prover evidence remains applicable bysourceequivalence; integration stillsubjecttoleadgatepolicy/ownership/checkstate.",
+  "remaining": [
+    "Genuine localchain31337/application proofs; controlled portal/network settlement is not epoch or testnet qualification.",
+    "Browser encrypted real-account import used production SDK/custody/session. Preparation/cancellation only: no browser publication or extension-funding acceptance. Name transactions were completed through production CLI adapters before handoff.",
+    "Aggregate browser counters/exact public field absence do not prove complete request privacy or cryptographic unlinkability.",
+    "WholeG05/G06/G14 and specialist/release gates remain open.",
+    "Earlier missing-await/derived-CRS campaigns remain failed."
+  ]
+}

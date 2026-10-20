@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "ae6ae3a4fa768ad3d4a850f9f9f5eb304bb0bc86",
+  "verdict": "accepted-exact-229-affected-component-runtime",
+  "receiptSha256": "d1c0fc09dc97997909ae14d14311afca3cc17d423500fb366e7c09816306873e",
+  "logSha256": "685215b229bb5f618dc5cd67c3bd92e85c2e70dcdf407c85fe16483d6998f364",
+  "runnerSha256": "9424acb5c702b539ee2ac4266dd1ef8e1fd8dd264c60d98344a237852e8380b0",
+  "planSha256": "19f6dd6e69f039e7c50c0dac778dbcf4f6c8d7157ac768ac6371691905310ed0",
+  "actual": {
+    "exitCode": 0,
+    "elapsedMs": 2811,
+    "peakAggregateRssBytes": 521043968,
+    "tapCounts": {
+      "tests": 229,
+      "pass": 229,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "ownedGroupAbsent": true,
+    "supervisorFailure": null,
+    "originalLinkRestored": true,
+    "sourceUnchanged": true,
+    "dependencyPinsUnchanged": true,
+    "ownedTemporaryDirectoryRemoved": true
+  },
+  "independentVerification": {
+    "exact229LabelMultiset": true,
+    "549SourceArtifactAnd283DependencyHashesRechecked": true,
+    "mismatches": 0,
+    "currentOwnedPidGroupAbsent": true,
+    "currentTemporaryDirectoryAbsent": true,
+    "old42acFailureAndLogUnchanged": true
+  },
+  "carry": "Unchanged actor80 exact source remains covered by accepted c4d/e718285.",
+  "limits": [
+    "Labelled policy/consumer tests do not establish genuine following-first wallet compatibility, browser admission, timing or financial acceptance.",
+    "124s engineering allowance and150s realbrowser gate remain; no guarantee or unchanged retry."
+  ],
+  "reviewerExecutedTests": false
+}

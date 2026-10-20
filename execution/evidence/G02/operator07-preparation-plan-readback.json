@@ -1,0 +1,62 @@
+{
+  "observedAt": "2026-10-12T06:00:32.470181+00:00",
+  "readOnly": true,
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "checks": {
+    "identity": {
+      "status": "PASS",
+      "value": {
+        "Account": "052665140763",
+        "Arn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson"
+      }
+    },
+    "instances": {
+      "status": "PASS",
+      "value": []
+    },
+    "volumes": {
+      "status": "PASS",
+      "value": []
+    },
+    "fleets": {
+      "status": "PASS",
+      "value": [
+        {
+          "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+          "state": "deleted"
+        },
+        {
+          "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+          "state": "deleted"
+        },
+        {
+          "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+          "state": "deleted"
+        },
+        {
+          "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+          "state": "deleted"
+        },
+        {
+          "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+          "state": "deleted"
+        },
+        {
+          "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+          "state": "deleted"
+        }
+      ]
+    }
+  },
+  "plugin": {
+    "httpStatus": 200,
+    "ready": true,
+    "active": 0
+  },
+  "ledger": {
+    "budget_usd": 300,
+    "conservative_committed_and_reserved_usd": 185.28,
+    "remaining_before_new_launch_usd": 114.72
+  }
+}

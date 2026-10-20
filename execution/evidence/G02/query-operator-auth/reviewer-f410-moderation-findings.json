@@ -1,0 +1,39 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "sourceRevision": "f41054b1790e2e76364c993cd4524a203b3ac771",
+  "baseRevision": "f01ff34e8d05c7f39efae5e0867eacaa9c73dff2",
+  "reviewedAt": "2026-10-14T12:28:16.380628+00:00",
+  "verdict": "changes-requested",
+  "requirements": [
+    "RC12",
+    "RC13",
+    "RC39"
+  ],
+  "findings": [
+    {
+      "id": "G08-R1",
+      "severity": "P1",
+      "path": "censor-daemon/job-store.mjs",
+      "line": 65,
+      "scenario": "Authentic kind3 repost can have empty message (posting.nr validate_draft explicitly allows it). Public projection returns text empty; rollingModerationInput preserves it; Rolling snapshotPost calls the legacy nonempty text helper. Entire ingestion batch aborts, blocking unrelated moderation.",
+      "evidence": "Independent0.2s actual Node24 SQLite+production rollingModerationInput/store probe returned BB_MODERATION_STORE Invalid public job text, jobs0. No chain/model operation.",
+      "required": "Handle valid empty repost explicitly within Rolling validation and tests, preserve legacy validation and exact source/reference semantics."
+    },
+    {
+      "id": "G08-R2",
+      "severity": "P1",
+      "path": "censor-daemon/rolling-adapter.mjs",
+      "line": 38,
+      "scenario": "Production persistent index sync advances one bounded transaction/block/publication step. Adapter calls once then asserts complete; daemon catches and sleeps30s. A fresh index behind a live chain cannot normally catch up, and --once fails before work. Current test double always reports complete.",
+      "evidence": "shared/rolling/public-index.mjs returns sync:step; scripts/rolling-public-server.mjs ownRollingPersistentPublicIndex delegates one step; daemon default pollInterval30. Existing plugins/aztec.mjs has bounded512steps/20s ready loop.",
+      "required": "Use existing bounded catch-up pattern and test a multi-step index; keep ownership, timeout and source/finality gates."
+    }
+  ],
+  "otherReviewChecks": [
+    "Exact human/Bok policy union and current content/version identity inspected.",
+    "No private owner lookup; native public removal arguments,target,fee ceiling and network checks present.",
+    "Preparing/unknown-send journals prevent replay; exact event/receipt/reason/policy required and reorg reopens fence.",
+    "Full225 suite consists labelled canonical-index/wallet/model doubles plus realSQLite; actual model/native run and current prompt evaluation still needed."
+  ],
+  "status": "Both findings sent Design and lead for coherent repair; no reviewer source changes."
+}

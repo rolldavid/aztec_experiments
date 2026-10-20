@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+  "equivalentAdapterSource": "3589864121f0f5b5f6401264cd34c4d56071b361",
+  "verdict": "repair-required-before-external-route-enablement",
+  "method": "Read-only actual adapter/tests and installed rc3 middleware source. No native/HTTP test, dependency mutation or service execution.",
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "ad40275ba28bf28b136b9e8b1ef6a3fd56893638fc85dd6835606d94f49625ca",
+    "prover/compact-block-native.test.mjs": "b12881d8551a521ab3e188e0a9413d1820cf8fdb75815d79e82951c427143489",
+    "node_modules/@aztec-labs/aztec/dest/cli/aztec_start_action.js": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+    "node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+    "node_modules/@aztec-labs/aztec-node/dest/aztec-node/register_node_rpc_handlers.js": "c756eff8b0ea0009f9c5abcce77396f53c51f417bcd954c202edb32a589279a8",
+    "node_modules/@aztec-labs/foundation/dest/json-rpc/server/safe_json_rpc_server.js": "a2c697ffc20c4642e2fee15dfa260f34d195f327f8bfdb9713902f86543c62d6",
+    "node_modules/@aztec-labs/stdlib/dest/versioning/versioning.js": "7218e9a88dcc4efe214e52bef50f68855441931382b0ec3338c8764ba1549611"
+  },
+  "findings": [
+    {
+      "priority": 2,
+      "path": "prover/compact-block-native.mjs",
+      "lines": [
+        120,
+        122
+      ],
+      "issue": "Declared oversize is rejected before sole-active acquisition; response Connection:close is set but handler returns without awaiting closure.",
+      "repair": "Admit before declared validation and route413 through same timed try/catch/finally as streamed overflow."
+    },
+    {
+      "priority": 2,
+      "path": "prover/compact-block-native.mjs",
+      "lines": [
+        129,
+        165
+      ],
+      "issue": "Stream overflow uses destroyOnReturn:false; catch replies413 then finally releases active without awaiting actual connection close. Connection:close improves actual cleanup but does not bind slot lifetime.",
+      "repair": "Flush only fixed bounded error, close/destroy connection, await socket close under admitted owner; no unbounded body drain."
+    },
+    {
+      "priority": 2,
+      "path": "prover/compact-block-native.mjs",
+      "lines": [
+        122,
+        165
+      ],
+      "issue": "No own request deadline: incomplete below-cap upload can indefinitely occupy adapter until external server limits intervene; completed request stalled in native await has no response deadline. Existing test incorrectly conflates any timer with detached Promise.race.",
+      "repair": "One admitted request timer (10s aligned with transport) marks aborted and destroys incoming/response socket, while original body/native await is still owned. After native settlement alive guards prohibit later queries/encoding/results; finally clears timer/listeners and releases active. Never Promise.race-release pending native work or add native retries."
+    }
+  ],
+  "nativeAwaitLimit": "Current getBlock/getBlockData/inspector methods expose promises without supported cancellation parameters here. A timer can stop serving and prevent subsequent work, not forcibly settle an in-progress native call. Preserve active until that call settles; a hung call keeps adapter busy fail-closed. External existing node/process supervisor owns eventual recovery. Do not claim10s native CPU/work completion or introduce another node lifecycle.",
+  "officialRegistration": {
+    "main": "@aztec-labs/aztec/dest/cli/aztec_start_action.js:71\u201398; existing middlewares82\u201386",
+    "admin": "Separate adminServices119\u2013125/adminMiddlewares111\u2013118; must remain unchanged and never receive compact middleware.",
+    "ordering": "SafeJsonRpcServer.getApp: compress143, jsonResponse146,CORS150\u2013171,extraMiddlewares173\u2013175,exceptionHandler176,bodyParser177\u2013182. Add after preserved main telemetry/propagation/versioning, before parser through official middlewares option.",
+    "receiver": "register_node_rpc_handlers.js:24\u201328 binds services.aztec=[actual node,AztecNodeApiSchema], node alias same tuple. Capture that actual first element exactly once after startup; bind methods with native receiver and retain current immutable config snapshot. No RPC-client replacement or separate node/server.",
+    "configuration": "Explicit default-off startup option/environment translated once into validated fixed tier and resolved approved network/proof policy. Existing start_node returns nodeConfig; versions uses l1ChainId/rollupAddress/rollupVersion. Require concrete authorized canonical primitives; reject unresolved/missing scope, especially localNetwork path with config undefined unless explicitly validated startup scope supplied. Do not infer expected policy from a caller selector or turn an untrusted observed getNodeInfo into the trust configuration.",
+    "exceptions": "Adapter must contain fixed safe errors: extra middleware precedes official exceptionHandler, and outer jsonResponse formats thrown err.message. Do not let raw native/parser/cleanup errors escape.",
+    "outerBoundary": "No new main/admin listener, port or server lifecycle. Preserve default CORS/auth/version/health/RPC options. Native route rejects any Origin and accepts only fixed public selector; absent-Origin is not authentication. Existing deployment/main-listener admission remains explicit, not granted by this hook."
+  },
+  "minimumPaths": [
+    "prover/compact-block-native.mjs",
+    "prover/compact-block-native.test.mjs",
+    "One narrow hash/count-gated CLI registration transform module and its test (lead chooses path); no broad SDK server/platform patch."
+  ],
+  "requiredChecks": [
+    "Keep existing35 tests for complete body/categories/root consumer validation/readiness/reorg/config receiver and abort-held native await. Replace source regex blanket setTimeout prohibition with explicit no-Promise.race/retry and behavioural lifetime tests.",
+    "Actual unfinished declared/chunked HTTP overflow yields bounded413/connection closure/no native calls; deterministic held-close both paths keeps second429 until closure.",
+    "Incomplete below-cap body and unfinished413response are terminated by existing admitted deadline; all listeners/timer cleaned.",
+    "Deferred original native call: client abort OR timer closes response, second429 remains until original settlement, no late success/further native queries, next explicit request allowed only after settlement.",
+    "Exact installed rc3 Koa/main middleware test: request raw stream not already parsed; valid compact route handled, unrelated RPC/version/health preserved; admin middleware unchanged, disabled config produces no route.",
+    "Pinned registration transform rejects unknown/multiple source matches, missing service and malformed scope; all native constructor captures immutable actual service receiver/config."
+  ],
+  "preservedBoundaries": [
+    "Request1024bytes,response2MiB,field24575/header23,preflight all category/aggregate limits before flattening; canonical tier/header/readiness before and after.",
+    "No duplicate root computation in native server; downstream authenticateCompactBlock remains mandatory.",
+    "No broad early method/origin/busy rejection capacity claim; external connection admission remains separate.",
+    "Existing35 suite is historical context; no runtime acceptance for new repair or rc3 middleware until explicitly tested."
+  ]
+}

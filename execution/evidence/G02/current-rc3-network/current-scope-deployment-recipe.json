@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "scope": "Read-only currentrc3 deployment recipe, no transaction or funding authority exercised",
+  "leadSource": "6b0a68f637c21c28e0af30a29f9b5cde06830fa0",
+  "sourceHashes": {
+    "shared/rolling/deployment.mjs": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+    "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+    "shared/deployment-manifest.mjs": "b546a77ca86585d96ade5a61dee18ee36d587810faae8b2185f7de64675db111",
+    "scripts/prepare-deployment-manifest.mjs": "689dc11f940c6743819816f27b023af840a0dc0b66e17089a8768cfcededeba0",
+    "apps/src/billboard/deploy/engine.js": "cfe330cc53dd7bb027fba6f84fffd4c4dd5b25dc8d7b7d93f6a4ba4c301e0d65",
+    "apps/src/billboard/deploy/cli.mjs": "9a31dc3ed3796582b0522e85d4153f14abc8c38bbf957361e1f0ad44a2509b8a",
+    "scripts/c01-board-flow.mjs": "ed5d3eabb1476d52d6eb505ec8feef7fc015d8daa8ad5e0f37ec6c0940c78c5b",
+    "scripts/testing/rolling-application-fixture.mjs": "9820f2a4326e88de95c28b2236ed001f5824c73318b036d635753727919a7ff5",
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9",
+    "plugins/operator.mjs": "b21419c04b76a06bbceec80b0fcf076885a210414be864efbd846922ed3dae33",
+    "plugins/operations.mjs": "eb773cf2e9a77bc372950e13ad46c158a0fab7464634600f58760764b8725119",
+    "plugins/public/fees.mjs": "14f9b04a1faa66b323b8bb9fd16bd80915c96dd4f401278c0147fe42d433016b",
+    "billboard/portal/src/PluginPortal.sol": "5c4793bd0eb30cad8b1f49f1e37c2cf7fc0d983087df7a04258c7dd205c7f882"
+  },
+  "artifactInputs": {
+    "billboard/target/rolling_contract-RollingBoard.json": {
+      "sha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+      "bytes": 12057522
+    },
+    "apps/src/billboard/private_fee_artifact.json": {
+      "sha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+      "bytes": 2688020
+    },
+    "experiments/private-bok/target/private_bok-PrivateBok.json": {
+      "sha256": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "bytes": 3858261
+    },
+    "shared/portal-runtime.json": {
+      "sha256": "08ba7a4d7af51d2135829265cc8f481de2fa4cf136ac00eabf3ea2325b870ffa",
+      "bytes": 28586
+    },
+    "apps/src/billboard/deploy/portal_bytecode.txt": {
+      "sha256": "6c8003ec45f112bc7cf7b856c3a6492009d1a62852ca179d3d1f1fa856e7c0ba",
+      "bytes": 12463
+    },
+    "billboard/portal/out/PluginPortal.sol/PluginPortal.json": {
+      "sha256": "ccf7bdb0f797179257880957dfb85d064a3e441205ccad3790adc311f9bddf6e",
+      "bytes": 113355
+    },
+    "prover/rolling-artifacts.json": {
+      "sha256": "fafaf3387cdb360e11dff386f30be2fac40e5547ee642cb969aac449b40efb7e",
+      "bytes": 2808
+    }
+  },
+  "currentNetworkEvidence": {
+    "receipt": "live-paced-1.json",
+    "sha256": "f9a66884ba2e91cc82938dfb107c8a58ced155102c2f3bf4c5b239b221f2e05f",
+    "review": "70ba7a8e9ab6a1ac695fd28bc35ce3efb22ccdb664de2397422267105487dbc6",
+    "chainId": "11155111",
+    "version": "3409706519",
+    "rollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "applicationAddressesVerified": false
+  },
+  "historicalReceipts": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/fee-approval.json",
+      "sha256": "3cd11ebd1f3aaed40991bb02311a39e316e4d865c7cb0445def8fa5cf5a227e4",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0xc861fe36935a47bd958bc8b948390ceb4020236ff31e26971791d248733b02f7"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/fee-bridge.json",
+      "sha256": "15818c08841eadd0bc4f3a6698a0de3aabdd620b4c67147a36189eaff15a698b",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0xf1ed4227db3801bea73ea7bb1c416b872e01eb7b78abde7e9b2a0dbe0c817abf",
+      "amount": "200000000000000000000"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/bootstrap-submission.json",
+      "sha256": "3afbd8a02d65f72ecbd0da6f065b51027b2139577951459f91b4dbaf2f1fd40e",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x245d8e895ec99a98de3e2cfa9712be667762ad886a4a88ad7cd42904d3794df9",
+      "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/bootstrap-receipt.json",
+      "sha256": "c82fd228786ffe9719a5834a2fb53f5effd3d8c77de9e58b1887f31a170a6637",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x245d8e895ec99a98de3e2cfa9712be667762ad886a4a88ad7cd42904d3794df9",
+      "status": "checkpointed",
+      "executionResult": "success",
+      "blockNumber": 15248,
+      "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/bootstrap-result.json",
+      "sha256": "6d8bf9d22b2e99416dae21fbd66873b9c1a04c613587270f27c3549f2cbac354",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "status": "funded-and-published",
+      "privateFeeAddress": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/deployment-report.json",
+      "sha256": "8fcc03b7d4eccd7ab252f951e27a244865d5b5e4fc664639cb7ef98e8ff634d7",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "readyTxHash": "0x21dc6047ccf191a84a6402a1929005cc391830844654a7ca004f3da41da99d13",
+      "status": "active",
+      "l2Addr": "0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752",
+      "portalAddr": "0xE664b6b5fd7575616653f75374d5Fc7e8544B982"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-fee-approval.json",
+      "sha256": "a54875129801a968d2ea3c81f3a6be7d49ea73ac0bb1850e12c09f3f98b4ffc7",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0xd7a6512c63f05394b9316c279c0fa8e978c0b94b2e1ff4f5c3c1fd734558908f"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/plugin-fee-bridge.json",
+      "sha256": "7c344b64a462c562a7a9894a655ab8bb800c1e1ca5a6eedb7d0d2f4735fa21fd",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x1c15fd98ceb1a8c41448c6b3f5e937a7efd8b70ec52ea2bc901f272cf09f74f7",
+      "amount": "100000000000000000000"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/browser-usdc-faucet.json",
+      "sha256": "344819471cb13e3528bed9dd6efca197d7cf306e8c29c3c585243230bb381ed4",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x42aa1993a5a447da5222f1a1bfe9c0e686013943115e99bdd4a0839bb582efa1",
+      "status": 1,
+      "amount": "20000000"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/author-claim-submission.json",
+      "sha256": "296152a11f52913460d77a5b4ac53290cfeffcc6881dbb273ac116b897f7e05f",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x09e809e7b8c77fb34bdf7a7ca903969890a6368a235d452f7dbe5471327a3cb6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/moderator-claim-submission.json",
+      "sha256": "2018a8d19522e09952f8eb23dfce32e73f09f61cf54895e2db4043a588b30062",
+      "role": "historical rc1/recovery only; never replay or relabelrc3",
+      "hash": "0x1547a5b9dddcf32d43bd511d86f746ab9e5b3a4b24cc9408de3151635a300c3c"
+    }
+  ],
+  "historicalMintLimit": "Retained browser-usdc-faucet identifies a successful20testUSDC mint. Feeapproval/200AZTECbridge/bootstrap receipt are present. No distinct deployer AZTEC mint receipt identified among inspected top-level records; do not infer a newmint is needed or replay any mint before read-only balance/token/handler/allowance/nonce and journal reconciliation. Old L1token may differ oncurrentrollup; inspect actual currentnodeL1addresses first.",
+  "operatorGaps": [
+    {
+      "path": "apps/src/billboard/deploy/engine.js",
+      "lines": "431-470",
+      "finding": "Hardcoded legacy12args,48policyfields,explicitcensor and universalDeploy. Rolling requires11args/32fields and nonzero transactiondeployer as moderator/configdeployer; old CLI cannot be pointed atRollingartifact unchanged."
+    },
+    {
+      "path": "scripts/prepare-deployment-manifest.mjs",
+      "lines": "14-18",
+      "finding": "Hardcodes legacy apps/src/billboard/deploy/billboard_artifact.json; shared manifest schema has legacycensor/policy1488 shape and no explicitRolling discriminator."
+    },
+    {
+      "path": "scripts/c01-board-flow.mjs",
+      "lines": "76-83",
+      "finding": "Correct Rolling constructor mapping exists but31337local/test-only, fixedNoThreats/fastfixture economics. Reuse mapping, never execute fixture or controlledsettlement onSepolia."
+    },
+    {
+      "path": "plugins/operator.mjs",
+      "lines": "30,81-87",
+      "finding": "Hardcodes legacyadapter/board artifacts. Constructor4args resemblesPrivateBok, but artifact/class identity and publicregistration semantics need explicit reviewedPrivateBok mode; do not swapfiles."
+    },
+    {
+      "path": "plugins/public/fees.mjs",
+      "lines": "49-57",
+      "finding": "Existing phase journals and deterministicFPC helpers useful; currentCLI can rebroadcast savedraw when statusdropped and source washistoricallyqualified. Require exactrc3/API/no-unknown-replay review before invoking, not assume readyoperator."
+    }
+  ],
+  "orderedRecipe": [
+    {
+      "step": 1,
+      "name": "Frozen deployment identity andfunding readiness",
+      "actions": "After coherent normalbuild, prepare explicitnewrc3 campaign publicmanifest withchain/version/rollup/inbox/outbox, canonicalartifactclasses/hashes, distinct freshdisposableL1+Aztecdeployer andBokoperator, freshsalt, approvedpolicy/economics. Persistprivatekeys/journals locally0700/0600; never upload toprover. Queryactualreadyproof-realnode+currentL1bridge/handler/token identity andbalances. Reconcileevery existing relevantintent byexactnetwork/account/hash beforeanymint/approval/send.",
+      "missing": "Currentreadyrc3L2endpoint and freshcurrenttestidentityfunding evidence; no keys createdhere."
+    },
+    {
+      "step": 2,
+      "name": "Canonical PrivateFPC publication",
+      "actions": "derivePrivateFeeInstance on exactPrivateFPCartifact (salt0/deployer0/noinitializer). Atcurrentnode checkinstance/address/current+originalclass; ifmatching reuse withoutpublication. Ifabsent, fundedfreshdeployer publishes with createPrivateFeeDeployment and realproof, persistingexacttx beforebroadcast. Bootstrapdeployer publicFeeJuice may requirecurrentL1freefaucetmint+approval+bridge andactualInboxmembership/claim; those areseparatejournaledphases, not a loop. FPCmustexist beforefundingitsprivatepool.",
+      "source": "shared/private-fee-client.mjs:44-58; historicalbootstrap-fees isrc1referenceonly."
+    },
+    {
+      "step": 3,
+      "name": "RollingBoard class andinstance",
+      "actions": "Publish exactnormalRollingclass ifabsent, then realdeployment with explicitnonzero authorizeddeployer/salt and init arguments [rules32,length,11155111,currentRollup,3409706519,min,max,baseCooldown,k,censorWindow,maxSaveUp]. Deployer ismoderator; do not passlegacycensor/universalzeroidentity orfixtureeconomics. Saveexpectedinstance/hash beforebroadcast; verifycanonicalreceipt/current+originalclass andconstructorpublicstate."
+    },
+    {
+      "step": 4,
+      "name": "Rolling portal andReady activation",
+      "actions": "Reuse existing exactBillboardPortal creation/runtime metadata/CREATE2 derivation logic with currentnetwork/board/configcommitment. JournalL1deploy beforebroadcast andverifycode/immutables. Journalboard set_portal once; waitoutsideboundedruns foractualnetworkfinalizedReady andOutboxwitness, thenjournalportalactivate. VerifydepositsEnabled, code/allimmutables/configcommitment andcanonicalanchors via verifyRollingDeployment. No localepoch/proof-storage overrides onpublictestnet.",
+      "timing": "Existing activateReady is bounded20s read and returns pending-settlement; noassumption thatcurrent23minprovenage or3hhostwindowguaranteesfinality."
+    },
+    {
+      "step": 5,
+      "name": "PrivateBok scope andoptionalfullcreditactivation",
+      "actions": "Deploy exactPrivateBok artifact with init [RollingBoard,currentBokoperator,Fr(11155111),Fr(3409706519)] fromfreshboundowner/salt; bindactualclass+instance+receipt. Constructor-only deployment supplies realproverallowlistscope but isnot Bokservice/creditqualification. ForfullBok requireseparatelyreviewedPluginPortal currenttoken+rollup+escrow/version, set_portal ownercall, actualfinality+activation andprivatecredit/withdrawal acceptance. Keepoldpublicplugin/escrow/privateconfigurationunchanged."
+    },
+    {
+      "step": 6,
+      "name": "Proofservice scope andboundedacceptance",
+      "actions": "OnlyafteractualcurrentRolling+canonicalFPC+PrivateBok bindings populate ordinaryrollingproverconfig, verifyallthree distinct, native/catalog/manifest andfreshnodeidentity. Reuse sameoperatednode, installreviewedexistingunit thenoneexplicitactivation gate afterqueryPASS. Realproof/transaction/fees/feedacceptance remainsmandatory; no proofjobsduringqueryonlyqualifier."
+    }
+  ],
+  "minimumImplementationRecommendation": "Extend existing deployment manifest/prepare/engine through an explicit closed Rollingprofile; preservelegacydefault and existingexactjournal/Readyactivation paths. Do not inventanotherdeployeror use localfixture scripts. Add explicitPrivateBokartifact profile toexistingoperator only afterappropriateclass/state assertionsreview. FPChelpers reusable; fundingwrapper requiresfreshsource/API/recovery review.",
+  "proposedFutureClaims": {
+    "rollingFirst": [
+      "shared/deployment-manifest.mjs",
+      "scripts/prepare-deployment-manifest.mjs",
+      "apps/src/billboard/deploy/engine.js",
+      "apps/src/billboard/deploy/cli.mjs",
+      "scripts/test-deployment-manifest.mjs",
+      "scripts/test-prepare-deployment-manifest.mjs",
+      "scripts/test-w03-deploy-engine.mjs",
+      "scripts/test-c01-deploy-activation.mjs"
+    ],
+    "privateBokLater": [
+      "plugins/operator.mjs",
+      "plugins/devnet/operator-test.mjs"
+    ],
+    "scopeNote": "Proposal only; leadmustassignexactboundedsubset. Preservecurrentrootapplicationwork andavoidunnecessaryCLIUIchanges. Meaningfulconstructor/class/profile/unknownreceipt/replaynegativesbeforeanytransaction."
+  },
+  "activationReviewCorrection": {
+    "reference": "31bb628844802886ae6e94a7a0d22cef0eb3103da592cf1416fde9ae5a53588d",
+    "configOwnership": "Public /etc/board-prover/config.json root:board-prover mode0640, parentroot:board-prover0750; servicegroupread/traverse only, no write. Privatecapability/admin/journals remainrootonly0700/0600. Corrects impossible rootowned0600 plusproverread phrase inoriginalproposal; no permissions changed."
+  },
+  "noTransactions": true,
+  "noFundingOrMint": true,
+  "noCredentialValuesRead": true,
+  "noProviderCalls": true,
+  "noSourceEdits": true,
+  "noRuntime": true,
+  "budget": "235.28retained/64.72remaining;39fullhostproposalnotreserved. DeploymentrequiresfreeSepoliaassets andboundedactualgas accounting; no realfundpurchaseauthorizedbythisrecipe."
+}

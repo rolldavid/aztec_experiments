@@ -1,0 +1,373 @@
+{
+    "GroupDefinitions": [
+        {
+            "Type": "TAG",
+            "Key": "Campaign"
+        },
+        {
+            "Type": "DIMENSION",
+            "Key": "REGION"
+        }
+    ],
+    "ResultsByTime": [
+        {
+            "TimePeriod": {
+                "Start": "2026-10-11",
+                "End": "2026-10-12"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3457048293",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "us-east-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "3.0713230529",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-12",
+                "End": "2026-10-13"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3681458613",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "us-east-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "4.1142429662",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-13",
+                "End": "2026-10-14"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3359781829",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "us-east-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0.0262633553",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-14",
+                "End": "2026-10-15"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3334188177",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "us-east-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0.0000050212",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-15",
+                "End": "2026-10-16"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "10.410181787",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "us-east-1"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "8.4582945607",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-16",
+                "End": "2026-10-17"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3528965427",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        },
+        {
+            "TimePeriod": {
+                "Start": "2026-10-17",
+                "End": "2026-10-18"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "eu-west-2"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "9.3528907695",
+                            "Unit": "USD"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Campaign$",
+                        "global"
+                    ],
+                    "Metrics": {
+                        "UnblendedCost": {
+                            "Amount": "0",
+                            "Unit": "USD"
+                        }
+                    }
+                }
+            ],
+            "Estimated": true
+        }
+    ],
+    "DimensionValueAttributes": []
+}

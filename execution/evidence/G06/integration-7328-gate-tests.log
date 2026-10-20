@@ -1,0 +1,25 @@
+test_actual_deliberate_test_failure_prevents_integration (test_integration_gate.IntegrationGateTest.test_actual_deliberate_test_failure_prevents_integration) ... ok
+test_artifact_tampering_is_rejected (test_integration_gate.IntegrationGateTest.test_artifact_tampering_is_rejected) ... ok
+test_atomic_compare_and_swap_rejects_racing_writer (test_integration_gate.IntegrationGateTest.test_atomic_compare_and_swap_rejects_racing_writer) ... ok
+test_check_states_are_not_passing (test_integration_gate.IntegrationGateTest.test_check_states_are_not_passing) ... ok
+test_checked_out_target_ref_is_rejected (test_integration_gate.IntegrationGateTest.test_checked_out_target_ref_is_rejected) ... ok
+test_conflicting_owner_or_task_is_rejected (test_integration_gate.IntegrationGateTest.test_conflicting_owner_or_task_is_rejected) ... ok
+test_escaping_evidence_is_rejected (test_integration_gate.IntegrationGateTest.test_escaping_evidence_is_rejected) ... ok
+test_hold_and_blocking_finding_are_rejected (test_integration_gate.IntegrationGateTest.test_hold_and_blocking_finding_are_rejected) ... ok
+test_missing_acceptance_is_rejected (test_integration_gate.IntegrationGateTest.test_missing_acceptance_is_rejected) ... ok
+test_missing_check_is_distinct (test_integration_gate.IntegrationGateTest.test_missing_check_is_distinct) ... ok
+test_missing_ownership_is_rejected (test_integration_gate.IntegrationGateTest.test_missing_ownership_is_rejected) ... ok
+test_missing_review_prevents_integration (test_integration_gate.IntegrationGateTest.test_missing_review_prevents_integration) ... ok
+test_out_of_scope_change_is_rejected (test_integration_gate.IntegrationGateTest.test_out_of_scope_change_is_rejected) ... ok
+test_passing_check_then_atomic_integration (test_integration_gate.IntegrationGateTest.test_passing_check_then_atomic_integration) ... ok
+test_policy_digest_mismatch_fails_closed (test_integration_gate.IntegrationGateTest.test_policy_digest_mismatch_fails_closed) ... ok
+test_rename_outside_scope_is_rejected (test_integration_gate.IntegrationGateTest.test_rename_outside_scope_is_rejected) ... ok
+test_self_review_is_rejected (test_integration_gate.IntegrationGateTest.test_self_review_is_rejected) ... ok
+test_stale_source_or_base_fails_every_evidence_kind (test_integration_gate.IntegrationGateTest.test_stale_source_or_base_fails_every_evidence_kind) ... ok
+test_unreadable_artifact_is_distinct (test_integration_gate.IntegrationGateTest.test_unreadable_artifact_is_distinct) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 4.415s
+
+OK
+{"status": "blocked", "reason": "policy digest mismatch"}

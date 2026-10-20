@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T13:22:23.016276+00:00",
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "status": "READ_ONLY_SOURCE_COVERAGE_NOT_RUNTIME_QUALIFICATION",
+  "bindings": {
+    "apps/src/billboard/deploy/cli.mjs": "2015c9706c63e02f1662940b6fbe23c447a932e80762674f32add8907eede098",
+    "apps/src/billboard/deploy/engine.js": "88f5a9db5e376b3f89dba37595bed77650c4de20c0c81fea003d664df4296182",
+    "shared/aztec-node-client.mjs": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+    "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+    "shared/sdk-entry.mjs": "d04e410abbbc898f8c0b49d1b0eec9f5d26150778bcbc57307c55112c4d7c450",
+    "node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js": "44fcd54adefcf4b0cac1c402dc819e9f87664fa94f1fdb9ce65b2bc8c83a5c46",
+    "node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js": "ac2a57281a4314d903fd8c2072cdd150adf4e85812e593fb44a35325693f22df"
+  },
+  "findings": [
+    {
+      "path": "apps/src/billboard/deploy/cli.mjs",
+      "lines": [
+        58,
+        65,
+        75,
+        343,
+        355
+      ],
+      "observation": "CLI installs existing createCliRpcFetch globally before loading SDK; selected exact origin/path receives x-aztec-api-key and redirect:error. Credentials omit plus referrer no-referrer returns original fetch without injection. Passing aztecApiKey in config does not by itself add SDK transport auth."
+    },
+    {
+      "path": "apps/src/billboard/deploy/engine.js",
+      "lines": [
+        281,
+        285,
+        290,
+        406
+      ],
+      "observation": "Maintained deployment flow constructs a.createAztecNodeClient(config.aztecNodeUrl), performs actual preflight, and supplies that node to createPXE. It does not select createTrustedPrivateNode. Existing wrapper exported by shared/sdk-entry uses shared/aztec-node-client and limits official client maxBatchSize to3."
+    },
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js",
+      "lines": [
+        16,
+        21,
+        27,
+        63
+      ],
+      "observation": "Official defaultFetch sends content-type plus extraHeaders, credentials from config, and no no-referrer flag. Under unchanged CLI global wrapper this path should receive the key at exact endpoint (source inference); makeFetch uses retry backoffs from SDK createAztecNodeClient. Full request behavior is not qualified from this source inference."
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "lines": [
+        120,
+        123,
+        137,
+        139
+      ],
+      "observation": "Trust facade has custom bounded silent no-retry/no-redirect privateFetch with credentials:omit and referrerPolicy:no-referrer; API accepts no capability/transport option. It therefore bypasses the CLI injector and will be rejected by authenticated gateway absent an explicit separately reviewed credential transport. This fail-closed result must not be changed by removing the credential-free bypass globally."
+    }
+  ],
+  "pxeStaticCallInventory": {
+    "node_modules/@aztec-labs/pxe/dest/pxe.js": {
+      "methods": [
+        "getBlock",
+        "getNodeInfo",
+        "isValidTx",
+        "simulatePublicCalls"
+      ],
+      "sha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360"
+    },
+    "node_modules/@aztec-labs/pxe/dest/contract/contract_class_service.js": {
+      "methods": [
+        "getContract"
+      ],
+      "sha256": "ab1f98e5d220900bdfe744f2d686cba2b18a2ee6ad4af3c1c1bd4285ae425445"
+    },
+    "node_modules/@aztec-labs/pxe/dest/messages/tx_resolver_service.js": {
+      "methods": [
+        "getTxReceipt"
+      ],
+      "sha256": "54daac35477b80f396adcbee5c87091f3c42be7484a5240bef327a10bb40f9cb"
+    },
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": {
+      "methods": [
+        "getBlock",
+        "getBlockData",
+        "getChainTips"
+      ],
+      "sha256": "9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78"
+    },
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_stream_source.js": {
+      "methods": [
+        "getBlock",
+        "getBlocks",
+        "getChainTips"
+      ],
+      "sha256": "073023b04842ca42b0045b6082765f0d97033a82c4f415d95549101a1566eb61"
+    },
+    "node_modules/@aztec-labs/pxe/dest/notes/note_service.js": {
+      "methods": [
+        "findLeavesIndexes"
+      ],
+      "sha256": "82cdd6d7b5cba8041c181b9bec312ec13b77997ce494d2058f30f7ba25b83b29"
+    },
+    "node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js": {
+      "methods": [
+        "findLeavesIndexes"
+      ],
+      "sha256": "f1a9aa049431f5946b6c1a208ce0d7e62bc090f734a9adfe2f47f9c9330ef2b3"
+    },
+    "node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_oracle.js": {
+      "methods": [
+        "getNoteHashMembershipWitness",
+        "getNullifierMembershipWitness",
+        "getPublicDataWitness",
+        "getPublicStorageAt"
+      ],
+      "sha256": "0892ecea64e898e96b692f0f6808a316ca7be28a5e1e35b4c650843ee80a5122"
+    },
+    "node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js": {
+      "methods": [
+        "findLeavesIndexes",
+        "getBlock",
+        "getBlockHashMembershipWitness",
+        "getLowNullifierMembershipWitness",
+        "getNoteHashMembershipWitness",
+        "getNullifierMembershipWitness",
+        "getPublicDataWitness",
+        "getPublicStorageAt",
+        "getTxReceipt"
+      ],
+      "sha256": "5c2639d7eb2da76867784b7cf22c1c87513637e2d2d5dcb1caef51de315bbeb5"
+    },
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/server/utils.js": {
+      "methods": [
+        "getNodeInfo"
+      ],
+      "sha256": "39b26a2a5b179b882d8a9300732b87b5658cfe1d7bb4abeeb3890fadf0d5e896"
+    },
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/client/bundle/utils.js": {
+      "methods": [
+        "getNodeInfo"
+      ],
+      "sha256": "8ec8513f315a032f95ebcfab8f88aff4db019de981557fe2d03af8697538da3e"
+    },
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js": {
+      "methods": [
+        "getNodeInfo"
+      ],
+      "sha256": "de2efadead22a3c7110375cfcafe39530cd40b6784625fa02cd97f54260216de"
+    },
+    "node_modules/@aztec-labs/pxe/dest/tagging/sender_sync/utils/classify_pending_txs.js": {
+      "methods": [
+        "getTxReceipt"
+      ],
+      "sha256": "c3345f8329a002f56a1fcf55a5d34d657804626a1ecdd5a18124139e5ec2b194"
+    },
+    "node_modules/@aztec-labs/pxe/dest/tagging/sender_sync/utils/resolve_pending_txs.js": {
+      "methods": [
+        "getTxReceipt"
+      ],
+      "sha256": "f479b845246f25e34f1e1bd461855506d3ba3f3c74197df98e0b2c16e2a46144"
+    }
+  },
+  "pxeObservedMethods": [
+    "findLeavesIndexes",
+    "getBlock",
+    "getBlockData",
+    "getBlockHashMembershipWitness",
+    "getBlocks",
+    "getChainTips",
+    "getContract",
+    "getLowNullifierMembershipWitness",
+    "getNodeInfo",
+    "getNoteHashMembershipWitness",
+    "getNullifierMembershipWitness",
+    "getPublicDataWitness",
+    "getPublicStorageAt",
+    "getTxReceipt",
+    "isValidTx",
+    "simulatePublicCalls"
+  ],
+  "pxeObservedMethodsOutsideAllowlist": [],
+  "staticInventoryLimits": "Only literal node/aztecNode method calls in installed PXE dest; aliases, computed dispatch, other SDK layers and manifest-specific paths need actual trace coverage. No claim this is a complete dynamic call graph.",
+  "authoredUnrunCoverage": [
+    "Real HTTP missing key gives401 before inspector/upstream",
+    "Actual CLI helper extraction: ordinary request accepted; credentials-omit/no-referrer string and Request variants denied; different path denied",
+    "Explicit schema-backed fixed49 method policy and mixed batch all-or-nothing admission including sendTx placeholder before forbidden member",
+    "No key forwarded to actual controlled SDK upstream"
+  ],
+  "remainingExternalUseGates": [
+    "Run exact50 suite under separate lead grant and independent runtime review.",
+    "Exercise actual bundled createAztecNodeClient and actual PXE/deployment preflight request shapes through the authenticated controlled endpoint; preserve node identity/freshness, no signing/transactions in coverage test.",
+    "Select and review an explicit operator transport that attaches only a primitive capability for a fixed exact endpoint, handles credential-free trust facade deliberately, has finite request/response limits, no redirects/provider fallback and no automatic send retry; keep keys local and out of manifests/logs/upstream forwarding.",
+    "Trace actual complete deployment method set against the49-method allowlist before cloud route use; deny unknown/new methods rather than widening implicitly.",
+    "CloudFront/private-origin/unit/package/activation scopes remain separate claims and authority."
+  ],
+  "candidateFutureClientClaim": [
+    "shared/trusted-private-node.mjs",
+    "shared/trusted-private-node.test.mjs",
+    "apps/src/billboard/deploy/cli.mjs",
+    "scripts/test-w02-rpc.mjs"
+  ],
+  "proposalLimit": "Only candidate paths if lead chooses trusted operator transport. No source modifications, credentials, provider queries, listeners, SDK imports or execution performed for this assessment."
+}

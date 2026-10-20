@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "scripts/test-w03-proof-replacement.mjs"
+  ],
+  "pid": 53548,
+  "exitCode": 0,
+  "elapsedMs": 44605,
+  "processExited": true,
+  "source": {
+    "shared/l2-journal.mjs": "97a5c8dce2ba34f72ef26e2564cb8ef63daa396f1971df6e91bc6ae8987347b4",
+    "scripts/test-w03-proof-replacement.mjs": "acee6c2d618acd4021bb740b812bdd16c1ca2900116d2e179a9d306144753830",
+    "shared/rolling/application.mjs": "ca86f51a313c8c65c574034242bf9752635e57687e7766cc94a3b3bd4cbf8612",
+    "shared/rolling/application.test.mjs": "62dd44bf37db5aacbccd49e81b10bfc37873d1345aac9d3017a7be0f4be917cd"
+  }
+}

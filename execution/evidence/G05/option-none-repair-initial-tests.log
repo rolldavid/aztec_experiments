@@ -1,0 +1,125 @@
+✔ locked construction does not load or query a wallet (0.810042ms)
+✔ name preparation is encrypted, real ABI encoded and immutable across mutation/restart (9.582042ms)
+✖ all first-slice actions encode against the installed RollingBoard ABI (7.516291ms)
+✔ unknown send stays fenced across replacement instances; absent receipt never authorizes retry (2.297083ms)
+✔ durable fence failure prevents send; successfully saved pre-send fence cannot be retried (1.492208ms)
+✖ saved fee ceiling and saved policy cannot be silently changed on submission (0.463584ms)
+✔ rejects arbitrary calls, fabricated Bok flow and oversized content without truncating (2.09725ms)
+✔ private ownership and status reads never invoke publicReader, and do not overclaim eligibility (3.016833ms)
+✔ reconcile uses exact operation identity and preserves reverted outcomes (1.661ms)
+✔ CAS excludes concurrent writers from sending the same prepared intent twice (1.858084ms)
+✔ cancellation only before send, including cancellation/submission CAS race (4.394083ms)
+✖ live private screening hint round-trips through encrypted store and actual ABI (0.448208ms)
+✔ canonical receipt lost after a reported success returns recovering; changed deployment fails closed (1.849958ms)
+✔ wrong wallet node fails before any personalized wallet/utility call (0.161625ms)
+✔ actual encrypted L2 journal and workflow coexist; restart acknowledges only canonical predecessor (9.106625ms)
+✔ actual journal pending transaction arriving after prepare blocks before private simulation (1.588167ms)
+✔ actual restarted reverted journal still requires finality, and reorg prevents acknowledgement (6.258542ms)
+✔ missing factory PXE provenance rejects before private wallet calls (0.165583ms)
+✔ unverified captured wallet submission route is rejected before personalized calls (0.0585ms)
+✔ newly acknowledged but non-final reverted transaction blocks pre-estimation too (1.410291ms)
+✔ installed BaseWallet field-valued chain identity passes strict application binding (0.493459ms)
+✔ chain binding rejects malformed, missing and out-of-field identities before private reads (0.765125ms)
+✖ actual SDK Option None and Some preserve post ABI bytes across encrypted reopen (0.576208ms)
+✖ utility ABI rejects missing required hint fields and malformed tuples before saving (1.214958ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 19
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1048.370083
+
+✖ failing tests:
+
+test at shared/rolling/application.test.mjs:59:1
+✖ all first-slice actions encode against the installed RollingBoard ABI (7.516291ms)
+  Error: ROLLING_ABI_MISMATCH
+      at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:6:32)
+      at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:7:63)
+      at utility (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:121:5)
+      at argumentsFor (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:159:44)
+      at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:202:30
+      at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:116:81)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:64:52)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ROLLING_ABI_MISMATCH'
+  }
+
+test at shared/rolling/application.test.mjs:84:1
+✖ saved fee ceiling and saved policy cannot be silently changed on submission (0.463584ms)
+  Error: ROLLING_ABI_MISMATCH
+      at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:6:32)
+      at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:7:63)
+      at utility (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:121:5)
+      at argumentsFor (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:159:44)
+      at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:202:30
+      at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:116:81)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:85:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ROLLING_ABI_MISMATCH'
+  }
+
+test at shared/rolling/application.test.mjs:126:1
+✖ live private screening hint round-trips through encrypted store and actual ABI (0.448208ms)
+  Error: ROLLING_ABI_MISMATCH
+      at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:6:32)
+      at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:7:63)
+      at utility (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:121:5)
+      at argumentsFor (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:159:44)
+      at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:202:30
+      at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:116:81)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:130:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ROLLING_ABI_MISMATCH'
+  }
+
+test at shared/rolling/application.test.mjs:250:1
+✖ actual SDK Option None and Some preserve post ABI bytes across encrypted reopen (0.576208ms)
+  Error: ROLLING_ABI_MISMATCH
+      at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:6:32)
+      at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:7:63)
+      at utility (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:121:5)
+      at argumentsFor (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:159:44)
+      at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:202:30
+      at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:116:81)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:259:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ROLLING_ABI_MISMATCH'
+  }
+
+test at shared/rolling/application.test.mjs:267:1
+✖ utility ABI rejects missing required hint fields and malformed tuples before saving (1.214958ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    Comparison {
+  +   code: 'ROLLING_ABI_MISMATCH'
+  -   code: 'ROLLING_INVALID_RESPONSE'
+    }
+  
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:274:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: ROLLING_ABI_MISMATCH
+        at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:6:32)
+        at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:7:63)
+        at utility (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:121:5)
+        at argumentsFor (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:159:44)
+        at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:202:30
+        at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.mjs:116:81)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/shared/rolling/application.test.mjs:274:3)
+        at async Test.run (node:internal/test_runner/test:1409:7),
+    expected: { code: 'ROLLING_INVALID_RESPONSE' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

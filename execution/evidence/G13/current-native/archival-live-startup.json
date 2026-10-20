@@ -1,0 +1,72 @@
+{
+  "source": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "at": "2026-10-14T03:11:21.241614+00:00",
+  "passed": true,
+  "phase": "live-startup-only",
+  "pid": 87784,
+  "session": 65700,
+  "readiness": {
+    "url": "http://127.0.0.1:8080",
+    "profile": "rolling",
+    "readiness": {
+      "core": "configured",
+      "publicIndex": "live-status-required",
+      "nativeProofs": false,
+      "privateBok": "portal-active-registered",
+      "bokAddress": "0x2f18be97736914b34f04beb040b19289b465dc3cceaf152ecf391f8873c35ac8",
+      "bokPortal": "0xfbba87dac7ae9be0d61253f18080c1a51aad9e56",
+      "developmentToken": "0x207dd1c2e57bf1b86a3ae1feace3efff6d09de22",
+      "developmentInventory": {
+        "kind": "official-circle-development-issuance",
+        "amount": "1000000000000",
+        "decimals": 6,
+        "recipient": "0x3745b973aa4cd8a0349299fd5a7b0e911130b18f"
+      },
+      "userBokCredit": "unfunded",
+      "hostedService": false,
+      "fundingRelay": "configured-not-started",
+      "aggregateFunding": "eth-usdc-configured",
+      "localSettlement": "explicitly test-controlled, not a network proof",
+      "usdcRelay": "configured"
+    },
+    "proofsEnabled": false
+  },
+  "status": {
+    "schemaVersion": 1,
+    "state": "syncing",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "3004872005",
+      "rollupAddress": "0x84e2217f12878dcb7614fdf9e09baf8cbc1050c2",
+      "boardAddress": "0x02f534c19f18be1f1d6c7331f64292646426dceba3482baf2c29b9851ddf69ca",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "bok": {
+        "address": "0x2f18be97736914b34f04beb040b19289b465dc3cceaf152ecf391f8873c35ac8",
+        "classId": "0x15ea98a7bb7770e89073fbcd0d4a407aa589411820d90318c7f0c6f9b03c9bdf",
+        "operatorAddress": "0x2c01b4c56dda097f55c8e5b567bcd283adc1175d2a766b9dc3f7a72e66e70984",
+        "deployer": "0x2c01b4c56dda097f55c8e5b567bcd283adc1175d2a766b9dc3f7a72e66e70984",
+        "salt": "0x015eea153a71f68885daeb79ba8665728c07287d09d71a2f2236536d237d1c43",
+        "deployment": {
+          "blockNumber": 7,
+          "blockHash": "0x08562b98b91db0ca3bd7dad71f7fbb053fa0025481214d590220cfb850399328",
+          "txHash": "0x2262846912faa38a2e70c883b0a3c236cdca7054a45b2414d38133ccf450bc11"
+        }
+      }
+    },
+    "complete": false,
+    "authenticationEpoch": "0755d766-a585-4b13-b24d-05ff38793ede",
+    "revision": "0755d766-a585-4b13-b24d-05ff38793ede:1:449",
+    "checkpoint": {
+      "number": 443,
+      "hash": "0x2ab5b99ddd50e9edfda415e86e4977dca5f2fc90165aecd5a1beb562db7dba40"
+    },
+    "cursor": {
+      "blockNumber": "444",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "complete"
+  },
+  "originalStorageEvidence": "original-bok-storage-reconstructed.json",
+  "limits": "Server startup and original deployment reconstruction only; live owned process, no cleanstop claim. Coldindex initiallysyncing, fullwallet/claims/model/testnet acceptance pending."
+}

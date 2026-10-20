@@ -1,0 +1,104 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "at": "2026-10-12T20:47:49.891065+00:00",
+  "verdict": "approve promotion of the exact candidate lock for isolated rc3 development only",
+  "candidate": "rc3-noir-dependencies.candidate.json",
+  "candidateSha256": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+  "promotionPerformedByReviewer": false,
+  "checksRecord": "rc3-noir-730-independent-checks.json",
+  "checksSha256": "2722088ee08c6b5ccdda6d1bb7a2d4b1f0928c8d8ea93c44d76de248a39b3409",
+  "findings": [],
+  "independentChecks": [
+    "Regenerated schema-2 candidate in memory using complete default graph and seven actual raw artifacts; exact object equality with candidate.",
+    "Rehashed seven raw artifacts and checked expected names, artifact/noir versions, function ABI inventories, nonempty valid base64/gzip bytecode for every function and file maps. No ACIR semantics or constraint correctness inferred.",
+    "Rehashed every referenced evidence file and all five saved official archives, then independently read their members and compared all 419 source/manifest hashes across eight packages to candidate and recorded verified inventories.",
+    "Checked three compiler receipts: successful actual processes, unchanged force-compile commands, bounded memory/time, recorded owned-tree cleanup; compiler binary hash matches intent.",
+    "Rehashed historical source/cache/root snapshots and confirmed active lock unchanged and controls tracked tree clean."
+  ],
+  "unchangedSnapshotCounts": {
+    "rootHashes": 10,
+    "sourceHashes": 1120,
+    "lockedCacheHashes": 418
+  },
+  "originScope": {
+    "repositories": [
+      {
+        "repository": "https://github.com/AztecProtocol/aztec-packages",
+        "tag": "v6.0.0-rc.6",
+        "commit": "0df91ba1799012435c62c6108a0926b357fef88c",
+        "archiveSha256": "ea88eff06f19263c5b0ef2bd18669073a75f3b0c8d02009c7243f6776bda49b4",
+        "verifiedFiles": 146
+      },
+      {
+        "repository": "https://github.com/aztec-labs-eng/aztec-nr",
+        "tag": "v6.0.0-rc.3",
+        "commit": "694af4de4b196733819811c896867d5a9572a1b5",
+        "archiveSha256": "ed5bcbe20f3251c362b547fceeadcd16847c1f97e7da7cbec85c891bf54e2ceb",
+        "verifiedFiles": 247
+      },
+      {
+        "repository": "https://github.com/noir-lang/keccak256",
+        "tag": "v0.1.3",
+        "commit": "f64ab3af714aa1a1e2699243037e0f11fe5bf706",
+        "archiveSha256": "9dbaaf0c7c2002c22442d4e487e6ed08ac4684fb1f217f70e1c00a5d4486d54b",
+        "verifiedFiles": 6
+      },
+      {
+        "repository": "https://github.com/noir-lang/poseidon",
+        "tag": "v0.3.0",
+        "commit": "0880c371e88e583d39515fd3f877538657ac41eb",
+        "archiveSha256": "b9dc9d5b210ce04836614ee778ff50d10b0e27cc39906fcdedf6108ec8f00c81",
+        "verifiedFiles": 10
+      },
+      {
+        "repository": "https://github.com/noir-lang/sha256",
+        "tag": "v0.3.0",
+        "commit": "9442e5b6856f98b2ec029882d7e90199ecff91ba",
+        "archiveSha256": "9ad9e46c508b19c6cdd000aaea0b7d625ef6add9e07e2202c6c685c22bb4dc89",
+        "verifiedFiles": 10
+      }
+    ],
+    "method": "Offline independent archive-content comparison to retained official HTTPS tag-resolution/download evidence; no new network requests. Origin consistency is not a third-party source audit."
+  },
+  "rawCompilerDisposition": {
+    "runs": [
+      {
+        "sequence": 1,
+        "elapsedMs": 100301,
+        "peakTreeRSSKiB": 2412976,
+        "cleanup": true,
+        "warningLines": 19,
+        "bugDiagnosticLines": 208
+      },
+      {
+        "sequence": 2,
+        "elapsedMs": 3212,
+        "peakTreeRSSKiB": 326240,
+        "cleanup": true,
+        "warningLines": 0,
+        "bugDiagnosticLines": 0
+      },
+      {
+        "sequence": 3,
+        "elapsedMs": 14547,
+        "peakTreeRSSKiB": 452288,
+        "cleanup": true,
+        "warningLines": 0,
+        "bugDiagnosticLines": 52
+      }
+    ],
+    "constraintDiagnostics": "208 bug diagnostic lines in billboard and 52 in PrivateBok logs remain unresolved compiler/constraint evidence. They do not invalidate matching source provenance, and do not establish safe compiled contract behavior.",
+    "annotatedTagWarning": "Compiler log annotated-tag warning is not used as origin authority; actual resolved commit and independent official archive comparison are bound separately."
+  },
+  "promotionConditions": [
+    "Copy only exact candidate bytes with SHA bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717 into isolated rc3 active lock with an explicit source commit.",
+    "Preserve failed origin metadata-limit and exclusive-file aggregation attempts; no evidence rewriting or old-artifact relabeling.",
+    "Keep root rc1 outputs/lock and historical qualification distinct. Candidate artifactSources bind fresh raw outputs, not future processed/VK artifacts.",
+    "Require normal processed artifact/VK builds, diagnostic disposition, TXE and relevant genuine application/runtime qualification before later integration or deployment."
+  ],
+  "limits": [
+    "No compiler, native tool, installer or network replay run during this review.",
+    "No processed VK, testnet/current canonical compatibility, release readiness or full G07/G14 approval."
+  ]
+}

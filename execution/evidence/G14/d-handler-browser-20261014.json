@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T17:55:17.147700+00:00",
+  "applicationRevision": "391dee212be5aa07d442ada070f3dda0b53aad4c",
+  "generatedRevision": "d96be6ec3cf14d5a43e57d969403c0ab8feae259",
+  "procedure": "CUA latest artifact, initial labelled Metres input1.25, fill2; browser error log",
+  "observed": {
+    "initialMetres": 1.25,
+    "initialCentimetres": 125,
+    "changedMetres": 2,
+    "changedCentimetres": 200,
+    "browserErrors": []
+  },
+  "verdict": "PASS actual unchanged converter UI after generated handler-test repair; other requirements separate"
+}

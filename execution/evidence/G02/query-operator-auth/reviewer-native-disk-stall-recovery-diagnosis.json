@@ -1,0 +1,29 @@
+{
+  "revision": "8342b4527278445f14c65046ae3cd1484d4667c5",
+  "sourceSHA256": "813a2b09d9004fa9f36e676bdcfa272dcdee8d08a578f7a164be67f14a3aaac6",
+  "assessment": [
+    "Native loop catch permanently latches miningError for this owner.",
+    "close attempts all cleanup stages even when earlier ones fail, including settlement, node stop and graceful Anvil SIGTERM.",
+    "Both checkpoint stages reject latched miningError/prior failure; ordinary restart requires successful stopped marker, not merely a dump file.",
+    "Native periodic/graceful dump preserves a possible recovery source but cannot itself authorize clean resume."
+  ],
+  "observations": {
+    "providedReadiness": "L1 and node timestamp1791973660,block1042,proposed477,lag643s",
+    "latestDumpStatBeforeStop": {
+      "filename": "anvil-recovery-3fb71352-d82e-474d-917b-a2c2c5b0ef27.json",
+      "bytes": 1526028124,
+      "mtimeUTC": "2026-10-14T10:38:41.603763+00:00",
+      "mode": "0600"
+    },
+    "diskFree": "5.5GiB observed via df",
+    "liveLog": "No ENOSPC/timeout/miner cause in rc22-withdrawal-credentials-live.log",
+    "singleAdditionalReadonlyRPC": "Connection refused at18546; no retry, owner may already have stopped service"
+  },
+  "recommendation": "Owner normal stop is appropriate. If checkpoint fails, preserve exact cleanup cause/lease and original records; independently qualify newest stopped dump against latest head, settled pending/proven and original withdrawal/payment/recipient state before explicit admission. Never reuse older snapshot or merely change phase.",
+  "limits": [
+    "Disk timing correlation does not prove the latched error cause.",
+    "Dump metadata is not integrity/complete-state qualification.",
+    "No private network record, dump content, key or profile read. No source/service/financial mutation.",
+    "No new framework or source change indicated by current evidence."
+  ]
+}

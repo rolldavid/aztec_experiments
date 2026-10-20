@@ -1,0 +1,114 @@
+{
+  "preparedAt": "2026-10-18T16:21:29.328620+00:00",
+  "recommendationOnly": true,
+  "sharedLedgerChanged": false,
+  "costExplorerCalls": 3,
+  "costExplorerReservedUsd": ".03",
+  "billingBasis": "AWS Cost Explorer UnblendedCost; estimated=true throughout; account052665140763; profile message-board-deploy; daily UTC; end exclusive2026-10-18; no credits or forecast savings assumed",
+  "period": [
+    "2026-10-11",
+    "2026-10-18"
+  ],
+  "accountWideObservedUsd": "82.1693457467",
+  "excludedSeparateLondonComputeAndLightsailUsd": "61.2696",
+  "postOct11CampaignConservativeAttributionUsd": "20.8997457467",
+  "exactCampaignInvoiceAvailable": false,
+  "campaignTagResult": "Campaign$ only, no allocated campaign values",
+  "formula": {
+    "historicalBoundUnchanged": "83.27",
+    "postOct11AllOtherObservedCharges": "20.8997457467",
+    "taxAllowance20Percent": "4.17994914934",
+    "billingDelayCleanupReserve": "20",
+    "retainedStorageNetworkReserve": "10",
+    "thisTaskCostExplorerReads": ".03",
+    "calculatedBoundUsd": "138.37969489604",
+    "recommendedRoundedBoundUsd": "140",
+    "remainingForNewFullyCostedCampaignUsd": "160",
+    "oldLedgerBoundUsd": "296.33",
+    "recommendedReserveReleaseUsd": "156.33"
+  },
+  "conditions": [
+    "Lead must adopt reconciliation before launch; no ledger or resource mutation by this worker.",
+    "All three new CE reads included; monthly estimated results are not invoices.",
+    "Keep full83.27 historical campaign bound; no deduction for older missing receipts or pre11Oct forecasts.",
+    "Count all post11Oct charges other than separately scoped London EC2 compute and Lightsail as campaign, including unrelated London EBS/IP charges; no exact per-instance allocation claimed.",
+    "No outstanding paid campaign compute/storage in us-east-1; fresh inventory recorded separately.",
+    "Future campaign must fit160 all-in, with current rates, bounded runtime, shutdown, storage, transfer, backups, tax and its own buffer; this report does not claim any particular prover/node campaign fits.",
+    "Future retained-state downloads or increased retention require allocation within new budget; current10 reserve covers retained storage, routine requests/network and expiry monitoring, not unrestricted archive transfers."
+  ],
+  "sources": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/infrastructure-ledger.json",
+      "sha256": "f70bbc1b8d59637d64843311e7ace13c5f48521d2885ccc0e16cdd62fa820ffb"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-budget-reconciliation/ce-01-daily-service-region.json",
+      "sha256": "6db096e002aeaa01d0d2a1f07b27869bdf34f4afa042df28db3d0d73cf66eb3e"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-budget-reconciliation/ce-02-daily-usage-region.json",
+      "sha256": "fe670dfece2976f6cf8d5ef5fc65dbe8c69c005705d1a095e3e4b1abf9b89ab2"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-budget-reconciliation/ce-03-daily-campaign-region.json",
+      "sha256": "1673f61065a8f310458c90cc3041e7c7286811d23a5f719d9c24c03996692853"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-budget-reconciliation/current-resources-storage.json",
+      "sha256": "bd451a7959604fa4248c0278581d22e8d740e7489e1ec1c1165db20400aa2e46"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/rolling-node-03-termination.json",
+      "sha256": "24b4558661ceba5d1ec2267ae41d7eb722b7d50c62c6ce33b81b471675e7159b"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/rolling-node-04-cleanup-result.json",
+      "sha256": "87cf9bd2249071e25c171b4802c5108b8623fabc8328321a9637c5566f1d6bbc"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator05b-cleanup-confirmation.json",
+      "sha256": "3e09efc09a1440d5b0b64af686016d63ce3789d4805d1d4d54fcf8cb0529a4fa"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator06-cleanup-confirmation.json",
+      "sha256": "a2eec4c7174990e626ecdb1c27e836e4b672b9ebd3bd1a4ca58a138560675ef1"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator07-cleanup-reconciliation.json",
+      "sha256": "b603cd9f495d1a3edcb3717d78cb9e46852810822edf85611b6b7974c5731fe6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator08-cleanup-reconciliation.json",
+      "sha256": "c38bed2f32d4a5420eaf20dbbe280c55b4cd3010c750f55075ffbae65f9886b6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator09-cleanup-readback.json",
+      "sha256": "638ab5b0f0393ab48893da8772a0bcfb36cb0378c40898651eb580c21eafa34c"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-version-d73-actual/final-cleanup.json",
+      "sha256": "8032d28a97a9ce6553dc0dfe2757835f13a19f9df17a783a07779798f8d53683"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-version-2707-actual/resource-readback-023550.json",
+      "sha256": "4d6e79b7d3bb7180d2dc944fd8f511e2216396281d222c33f5cfdd4be34a8e80"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-retained-successor-56d9f2189226/actual/actual-packet.json",
+      "sha256": "3287d36237fb4188b1260b49fe61f1170cfdb1653cba92a2f4feb0abf0c51333"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-instances.json",
+      "sha256": "fb72675be6aba9d9f44232b43c7056ecb253c6d6cd3fa2283741f56157209589"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-volumes.json",
+      "sha256": "5bb1ef67ec6cda7a24020d0c0ddfa919d96f348d36e16bd083f5960efd321a3e"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-4a1c3edd3114/final-fleet.json",
+      "sha256": "f6414dc06812890ec7123b5b1f29a7aba38b70d917273ba571a6791a845ebd10"
+    }
+  ],
+  "inventoryScope": "AWS EC2 describe-instances, describe-volumes, describe-fleets, describe-addresses unfiltered, all paginated CLI results; describe-snapshots with --owner-ids self. Every call region us-east-1 only. No state filters; zero is all records returned, including terminal records if retained by AWS. No claim about absence in other regions."
+}

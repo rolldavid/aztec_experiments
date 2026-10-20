@@ -1,0 +1,132 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "17e1faa218614900d2024862e4129d805f41fc33",
+  "scope": "Read-only component acceptance gap assessment; no criterion completed by this report",
+  "graph_sha256": "aaf3c622156058782ce7059e967f19e8cfce18709902f4f241fdcbfb7962512f",
+  "inputs": [
+    "execution/tasks/G06.md",
+    "execution/graph.json",
+    "/tmp/rolling-chat-draft3/clean.txt",
+    "shared/rolling/PRIVACY_DESIGN.md",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/reader.mjs",
+    "apps/rolling/reader.browser.test.mjs",
+    "execution/evidence/G05/combined-43f9-runtime-review.json",
+    "execution/evidence/G06/anonymous-687-runtime-review.json",
+    "execution/evidence/G06/repost-e030-runtime-review.json",
+    "execution/evidence/G06/account-reactions-b0b37-runtime-review.json",
+    "execution/evidence/G06/reply-e58-runtime-review.json",
+    "execution/evidence/G05/privacy-gaps-55e0772-review.json",
+    "execution/evidence/G05/wire-combined-17e-review.json"
+  ],
+  "criteria": [
+    {
+      "id": "G06-A01",
+      "disposition": "Behavior evidenced within local genuine-proof development scope",
+      "evidence": [
+        "G05/combined-43f9-runtime-review.json",
+        "G06/anonymous-687-runtime-review.json",
+        "G06/repost-e030-runtime-review.json",
+        "G06/account-reactions-b0b37-runtime-review.json"
+      ],
+      "remaining": "Final source equivalence and A07 privacy conjunction; no new repeat of all successful transactions needed."
+    },
+    {
+      "id": "G06-A02",
+      "disposition": "Tombstone navigation and absence of reusable author field evidenced; byte guards covered by source, ABI tests and circuit tests",
+      "remaining": "Tie genuine user composition to production UI pre-spend byte/character allowance and unchanged draft; broad anonymity reasoning/traces remain A07."
+    },
+    {
+      "id": "G06-A03",
+      "disposition": "Canonical nested root/reply/quote, immutable metadata and redacted tombstones evidenced by anonymous687 plus named43f9",
+      "remaining": "Final combined source binding; no independent new chain scenario identified."
+    },
+    {
+      "id": "G06-A04",
+      "disposition": "Strict UTF8 normalization, circuit bound and safe DOM/link behavior have source and labelled browser/unit evidence",
+      "remaining": "A small real-session UI boundary check should bind actual funded composer to 248 four-byte characters accepted at992 and249 rejected at996 without proof/send/fee or truncation. Reuse real social content to inspect hostile markup/link rendering; no separate payment needed for rejected text."
+    },
+    {
+      "id": "G06-A05",
+      "disposition": "Onchain component behavior evidenced by genuine anonymous687/reposte030/multib0b37 and authenticated decoded events",
+      "remaining": "A07 observer evidence. Bookmarks/follows/notifications/ranking UI remain G07-A03/G09-A08; these descendants must not block G06 component closure."
+    },
+    {
+      "id": "G06-A06",
+      "disposition": "Private readable owned names and named authentication implemented; exactly one Anonymous option at wallet-panel219; UI choice tests currently use supplied session doubles",
+      "remaining": "Production browser wallet/composer with real owned records for A and B, correct current-account choices plus exactly Anonymous, and safe account switch. Pending names-wire can establish private ownership/recovery but is not by itself actual composer evidence."
+    },
+    {
+      "id": "G06-A07",
+      "disposition": "OPEN mandatory component privacy acceptance",
+      "remaining": "Real serialized observer coverage for named and Anonymous publications and reactions, plus source privacy argument. Existing name-wire pending has no social sends. Exact public-address absence, shared FPC and passing proofs alone do not establish unlinkability."
+    },
+    {
+      "id": "G06-A08",
+      "disposition": "Proposed counting/name-policy default implemented with explicit recorded charset assumption. Genuine b0b37 verifies two accounts, duplicate paid no-op, unlike after removal; reposte030 verifies per-post tag separation. Circuit tests cover name alias bypass/normalization/reserved names.",
+      "remaining": "Bind source/circuit evidence to final candidate; no full Unicode expansion inferred beyond owner-delegated recorded policy. Mandatory reaction privacy remains A07."
+    }
+  ],
+  "smallest_next_real_scenarios": [
+    {
+      "name": "social-wire",
+      "human_transactions": 6,
+      "sequence": [
+        "A registers one name",
+        "B registers one name",
+        "A named publication",
+        "A Anonymous publication",
+        "B named publication",
+        "B Anonymous publication"
+      ],
+      "purpose": "Actual serialized private and public request traces for both human roles and both author modes. Reuse canonical root/reply relationships and exact event/fee assertions. Names-wire separately covers two aliases per account.",
+      "ui": "Use one exact992-byte post containing supported link/hostile literal text if consistent with fixture; exercise production composer choices and invalid996-byte draft without submission, either within remaining time or separate bounded browser slice."
+    },
+    {
+      "name": "reaction-wire",
+      "human_transactions": 6,
+      "sequence": [
+        "A Anonymous root1",
+        "A Anonymous root2",
+        "A likes root1",
+        "A likes root2",
+        "B likes root1",
+        "A unlikes root1"
+      ],
+      "purpose": "Actual traces for account-bound reactions, same-post intentional like/unlike linkage, cross-post A tag separation, same-post A/B tag separation; existing b0b37 supplies duplicate/no-op/removal cases so avoid repeating those expensive checks."
+    }
+  ],
+  "required_observer_legs": [
+    "Actual HTTP private query client to explicitly trusted service, with A/B positive controls and real ingress counts",
+    "Trusted service to fixed fullnode upstream; distinct trust classification and actual ingress counts",
+    "Actual private proof HTTP requests and job counts; witnesses opaque and explicitly within allowed trusted prover scope",
+    "Ordinary public-node adapter used by production canonical index; no personalized account/tag/nullifier request leakage",
+    "Actual public reader HTTP fresh/cold ranges and profile/thread reads; no owner-group list or private account field",
+    "Actual SDK-decoded canonical transaction effects, logs, nullifiers and fee payer, separately from opaque serialized transactions"
+  ],
+  "privacy_argument_required": [
+    "Inventory selected-name public value versus private ownership witness; separate registrations avoid explicit transaction grouping but not all timing correlation.",
+    "Anonymous admission commitments randomized without reusable author identifier; no account-derived public grouping field.",
+    "Like tags are domain-separated by authenticated app key, chain, contract and post; intentional same-post linkage only.",
+    "No ordinary-node fallback on trusted endpoint failure and no private owner query through public API.",
+    "Reconcile unknown/truncated/unsupported and opaque observer fields explicitly. Treat action-phase relations as phases, not proof of request ownership when both actors are read in one phase."
+  ],
+  "timing": {
+    "bound_seconds": 540,
+    "memory_gib": 4,
+    "measured_multi_outer_ms": 459390,
+    "measured_multi_inner_ms": 449008,
+    "plan": "Six human jobs plus setup/recovery is supported by prior measurement, not a guarantee. Keep measured natural wall-clock catchup and180s remaining-application admission guard. If actual scope does not fit, split browser acceptance from proof scenarios; do not extend bound or drop assertions. Serialize browser and proof-heavy work."
+  },
+  "not_claimed": [
+    "Pending17e wire result is not counted passing.",
+    "Loopback adapters currently share a disposable underlying node; this is request-boundary evidence, not deployed infrastructure separation.",
+    "Explicit fetch observer excludes runtime-added headers/native network traffic and setup L1 funding before installation. These limits must remain reported and addressed where they affect the scoped privacy conclusion.",
+    "No statistical IP/timing unlinkability or cryptographic specialist assurance from scalar matching.",
+    "G14 paid151micro provider receipt and e58 Bok reply are useful separate facts, not social request-privacy evidence.",
+    "G13 independent audit/elapsed/network gates and G07/G10 complementary product requirements remain open."
+  ],
+  "closure": "Close G06 owned development components only after exact final revision review, affected checks, genuine social/reaction trace evidence, real composer binding and documented source privacy reasoning; preserve full RC conjunction at G13. No need to wait on descendant bookmarks/notifications/workspace implementation to begin G07 once these component criteria genuinely pass.",
+  "tests_run": []
+}

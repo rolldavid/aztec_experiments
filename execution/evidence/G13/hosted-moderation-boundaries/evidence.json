@@ -1,0 +1,81 @@
+{
+  "candidate": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+  "base": "a82aaa13a763099fcd4400f4143234a5e866eb69",
+  "task_id": "G08-G10-G11-runtime-boundaries",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+      "base": "a82aaa13a763099fcd4400f4143234a5e866eb69",
+      "id": "combined-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-0a6-hosted-moderation-composition.json",
+          "sha256": "17f8fd278f79243f26984f9a9f865824d3bab4681dd8e44a55d765d4eb16788c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-317-github-actions-enforcement.json",
+          "sha256": "e44cde792bfb0f8dcc305b35588b8f4f32c6269c0f1a56217cab70cdf570d041"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/github-actions-enforcement.log",
+          "sha256": "ad17244719a8950818816475312c82f7a286b05972a9e04069399d48292ba385"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/hosted-output-limit.log",
+          "sha256": "7330f3ac7409c6b0e3196d84ddcdbee40ba2aad93fe34b38b145a9c43bd9fb45"
+        }
+      ],
+      "command": "Existing57GitHubbroker/96agent-hosted/152moderation suites and independentreal-facadechecks; exact6blobcomposition",
+      "environment": "macOS Node24.21 native/PXEflagsfalse; pinnedNargo",
+      "observed": "57+96+152 scopedchecks pass0skip. Reviewer3realowned-facadechecks pass. Actualmoderator firstBokremovalcanonical867, fullscenario pending; actualGHApp uninstalled, notqualification.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+      "base": "a82aaa13a763099fcd4400f4143234a5e866eb69",
+      "id": "RC12-RC13-RC29-RC32-RC33-RC34-RC39-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-0a6-hosted-moderation-composition.json",
+          "sha256": "17f8fd278f79243f26984f9a9f865824d3bab4681dd8e44a55d765d4eb16788c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-317-github-actions-enforcement.json",
+          "sha256": "e44cde792bfb0f8dcc305b35588b8f4f32c6269c0f1a56217cab70cdf570d041"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/github-actions-enforcement.log",
+          "sha256": "ad17244719a8950818816475312c82f7a286b05972a9e04069399d48292ba385"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/hosted-output-limit.log",
+          "sha256": "7330f3ac7409c6b0e3196d84ddcdbee40ba2aad93fe34b38b145a9c43bd9fb45"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+    "base": "a82aaa13a763099fcd4400f4143234a5e866eb69",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-resume-20261014",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-0a6-hosted-moderation-composition.json",
+        "sha256": "17f8fd278f79243f26984f9a9f865824d3bab4681dd8e44a55d765d4eb16788c"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-317-github-actions-enforcement.json",
+        "sha256": "e44cde792bfb0f8dcc305b35588b8f4f32c6269c0f1a56217cab70cdf570d041"
+      }
+    ]
+  }
+}

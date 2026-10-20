@@ -1,0 +1,113 @@
+{
+  "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+  "task_id": "G11-G13-restricted-mirror-and-wallet-ci",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+      "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+      "id": "restricted-broker-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-449-final-composition.json",
+          "sha256": "a304bbfca3759776a859d41a83e40f43ee5424a08fd89aa75beffd9ebc6c41d1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/restricted-mirror-wallet-ci/checks.json",
+          "sha256": "931fc3df026080331f73e0f010c9e53cb9d26a18ca8e6e7b1ddf7fc1d19628d2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/T04/wallet-browser-portable-gas-current.json",
+          "sha256": "f3b132166a1d8831b6096b612634607e1913bd4360144b648ff7dbf7ca4b8995"
+        }
+      ],
+      "command": "node --test plugins/test/github-app-broker.test.mjs",
+      "environment": "macOS Node24.21.0, installed Playwright browser; local fixture providers only",
+      "observed": "78passed0failed0skipped7.841s",
+      "exit_code": 0
+    },
+    {
+      "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+      "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+      "id": "portable-wallet-browser",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-449-final-composition.json",
+          "sha256": "a304bbfca3759776a859d41a83e40f43ee5424a08fd89aa75beffd9ebc6c41d1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/restricted-mirror-wallet-ci/checks.json",
+          "sha256": "931fc3df026080331f73e0f010c9e53cb9d26a18ca8e6e7b1ddf7fc1d19628d2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/T04/wallet-browser-portable-gas-current.json",
+          "sha256": "f3b132166a1d8831b6096b612634607e1913bd4360144b648ff7dbf7ca4b8995"
+        }
+      ],
+      "command": "node scripts/run-bounded-browser-check.mjs scripts/test-w02-browser.mjs execution/evidence/T04/wallet-browser-portable-gas-current.json",
+      "environment": "macOS Node24.21.0, installed Playwright browser; local fixture providers only",
+      "observed": "4 fresh profiles; real encrypted portable backup/journal/lock checks all passed11.785s",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+      "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+      "id": "RC32-restricted-broker-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-449-final-composition.json",
+          "sha256": "a304bbfca3759776a859d41a83e40f43ee5424a08fd89aa75beffd9ebc6c41d1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/restricted-mirror-wallet-ci/checks.json",
+          "sha256": "931fc3df026080331f73e0f010c9e53cb9d26a18ca8e6e7b1ddf7fc1d19628d2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/T04/wallet-browser-portable-gas-current.json",
+          "sha256": "f3b132166a1d8831b6096b612634607e1913bd4360144b648ff7dbf7ca4b8995"
+        }
+      ]
+    },
+    {
+      "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+      "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+      "id": "RC40-wallet-recovery-ci",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-449-final-composition.json",
+          "sha256": "a304bbfca3759776a859d41a83e40f43ee5424a08fd89aa75beffd9ebc6c41d1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/restricted-mirror-wallet-ci/checks.json",
+          "sha256": "931fc3df026080331f73e0f010c9e53cb9d26a18ca8e6e7b1ddf7fc1d19628d2"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/T04/wallet-browser-portable-gas-current.json",
+          "sha256": "f3b132166a1d8831b6096b612634607e1913bd4360144b648ff7dbf7ca4b8995"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+    "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-449-final-composition.json",
+        "sha256": "a304bbfca3759776a859d41a83e40f43ee5424a08fd89aa75beffd9ebc6c41d1"
+      }
+    ]
+  }
+}

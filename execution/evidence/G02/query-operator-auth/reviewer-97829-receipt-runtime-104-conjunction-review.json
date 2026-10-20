@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "276bab92ee4a8cb28dd2742c339bbddc9773512c",
+  "verdict": "PASS_103_CARRY_PLUS_ONE_CURRENT_CONJUNCTION",
+  "actualPacketSha256": "4cc9da4ca2ba6ca4169a347c8d252845bbf3ec024785e027dd32acc623243e51",
+  "session": 97829,
+  "selectedPassed": 1,
+  "elapsedMs": 332,
+  "rssKiB": null,
+  "protectedHashesRechecked": 4412,
+  "cleanup": true,
+  "carry": [
+    "Exact103 successful labels independently parsed from92012 log and matched104 inventory minus repaired case.",
+    "AST of entire test module excluding repaired method identical2192\u2192276; production bootstrap identical.",
+    "Current repaired case passes both original success and disk-failure assertions plus exact startup call count."
+  ],
+  "historicalFailuresPreserved": [
+    61082,
+    92012,
+    12697
+  ],
+  "notClaimed": "No single full104 passing execution.",
+  "next": "Prepared package9-276 and routes3-276 eligible for sequential separately granted runs after positive cleanup; fresh closure and final component integration review remain required."
+}

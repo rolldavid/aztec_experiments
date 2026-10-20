@@ -1,0 +1,16 @@
+✔ bounded static result carries exact artifact bytes and hash (1.058875ms)
+✔ failed create preserves cause and reconciles absent container (730.499333ms)
+✔ failed create preserves cause and reconciles owned container (716.028417ms)
+✔ failed create preserves cause and reconciles unavailable container (627.907792ms)
+✔ failed create preserves cause and reconciles foreign container (610.401ms)
+✔ failed create preserves cause and reconciles transport container (602.087541ms)
+✔ failed create preserves cause and reconciles timeout container (5586.590125ms)
+✔ exact measured container absence never accepts unknown errors, collisions or another target (0.345083ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8924.646084

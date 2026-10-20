@@ -1,0 +1,15 @@
+{
+  "withdrawal": "0x1c9a6412fecd00dfe008c2f78e9c4dedcf2efd1f79434933704fc0fbad18a4ad",
+  "status": "finalized",
+  "executionResult": "success",
+  "blockNumber": 418,
+  "blockHash": "0x07dc47cb2eba3a265d2d5ff5dbce03fdc7e7473d034c260eb682f4c09f7c9ccc",
+  "canonicalBlock": true,
+  "exactEffect": true,
+  "effectSucceeded": true,
+  "ethereumRecipient": "0x9d93d213938bb564068532645b7ea2afdd60e22f",
+  "latestNonce": "0x0",
+  "pendingNonce": "0x0",
+  "chainId": "0x7a69",
+  "readOnly": true
+}

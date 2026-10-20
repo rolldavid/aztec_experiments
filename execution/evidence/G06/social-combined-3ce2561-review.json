@@ -1,0 +1,58 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "3ce25611bdb130b14ce05b82c98ce59e88619019",
+  "base": "f30a8e3f44092d3452db836969b65861d40efb4b",
+  "verdict": "approved_for_two_bounded_genuine_social_scenarios",
+  "findings": [],
+  "approved_scenarios": [
+    "rolling-anonymous-thread",
+    "rolling-repost-reactions"
+  ],
+  "source_review": "social-wiring-abce4c2-review.json",
+  "consumer_review": "social-acceptance-1c037-review.json",
+  "exact_equivalence": {
+    "comparedCandidate": "abce4c256a9212b26524aceb2e11732811add3c2",
+    "allSixApplicationFilesByteIdentical": true,
+    "remainingDelta": [
+      "execution/infrastructure-ledger.json",
+      "execution/sessions/registry.json"
+    ],
+    "normalProductionArtifactHashesUnchanged": true,
+    "sharedDependenciesChanged": false
+  },
+  "file_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "f75776b7c250cf0801062e2ef6212136975279e27dcbd2dd66fcc1d266b0f660",
+    "scripts/testing/rolling-public-acceptance.mjs": "ebe2c485ec3f651c2ceeb9aafbabd4834b0e789d8af677f6ceb84ad2e2b689e1",
+    "scripts/testing/rolling-social-acceptance.mjs": "9c1b483baffaaba7e7a6888b2ffe8e6d79e110c0e2add4d355c7a473e5e83220",
+    "scripts/testing/rolling-social-acceptance.test.mjs": "7fd3b08c40916c965882b2e480835b26d347974f3412a03a11cedd3fb2cca124",
+    "scripts/testing/scenario-flows.mjs": "bd866ff2767b533f85419088c6acc1f5e68780201583167e451a30a2408455fc",
+    "scripts/testing/scenarios.mjs": "e3e40836cbf479e9fc2ab523fbfb45509ddbd211aca875c6900d79eb8166af94"
+  },
+  "checks": [
+    {
+      "procedure": "Exact git blob SHA256 comparison against independently reviewed/tested abce4c2",
+      "passed": true
+    },
+    {
+      "procedure": "Current normal artifact hashes against actual genuine profile5422 record",
+      "passed": true
+    },
+    {
+      "command": "git diff --check f30a8e3 3ce2561",
+      "exit": 0
+    },
+    {
+      "procedure": "Prior independent45 affected tests apply unchanged to identical source and dependencies; not rerun without material change",
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "limits": [
+    "No genuine social run yet; exact-source transfer plus fresh actual evidence required before runtime acceptance/integration.",
+    "Proof/effect assertions establish bounded behavior, not full observer unlinkability; two-account cases/unlike and trusted/ordinary request traces remain pending.",
+    "Fixed moderator policy decision does not qualify autonomous moderation-model behavior.",
+    "Existing isolated root profile campaign unaffected; this branch not integrated while that run is active.",
+    "Each scenario needs its own fresh real runtime evidence; this source approval does not mark social/privacy requirements complete."
+  ]
+}

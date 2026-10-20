@@ -1,0 +1,5 @@
+{
+    "Status": "Success",
+    "Output": "{\"returncode\": 0, \"intentPresent\": true, \"result\": {\"schemaVersion\": 1, \"status\": \"active-loopback\", \"manifestSha256\": \"71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9\", \"uid\": 995, \"gid\": 986, \"configSha256\": \"c87e4aced6bda0ef5fd3342570499aaf39dd80affac12bf5659dff550ba48285\", \"traffic\": {\"ipv4UidMark\": true, \"ipv6UidMark\": true, \"fwmarkClass20\": true, \"aggregate50Mbps\": true}, \"applicationProofQualified\": false, \"bokScope\": \"constructor-allowlist-only\"}}\n",
+    "Error": ""
+}

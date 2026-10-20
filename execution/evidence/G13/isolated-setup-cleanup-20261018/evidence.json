@@ -1,0 +1,119 @@
+{
+  "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+  "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+  "task_id": "G13-isolated-setup-cleanup",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+      "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+      "task_id": "G13-isolated-setup-cleanup",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing focused isolated-execution CLI boundary tests; exact command in review",
+      "environment": "macOS, pinned Node24.21.0, existing fixed Docker image; no chain/model calls",
+      "observed": "8 passed,0 skipped,8.925s",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/review.json",
+          "sha256": "8d8b1eeca89a706c6dd0893de2a735e108557d39e257319c8729e2b502af14a2"
+        },
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/focused.log",
+          "sha256": "734460d641ac39681b29b6c509a875f99cc39e1767c5031892f2b8bb72d1b020"
+        }
+      ]
+    },
+    {
+      "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+      "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+      "task_id": "G13-isolated-setup-cleanup",
+      "id": "actual-isolated",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOK_STATIC_CONTAINER_TESTS=1 pinned-node24 --test --test-name-pattern=actual-isolated-boundary plugins/test/isolated-execution.test.mjs (exact pattern in actual.log test title)",
+      "environment": "macOS, pinned Node24.21.0, existing fixed Docker image; no chain/model calls",
+      "observed": "1 actual Docker isolated test/build passed,0 skipped,11.899s after daemon restart",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/actual.log",
+          "sha256": "d2b542da38908eac101f0c2dc74dd00f9856669c75d6b1955d8298f44971fe68"
+        },
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/operator-recovery.json",
+          "sha256": "24e3296bf84c9af0fbcae65d8dd25700a6b011c63349a78737cf2e92a8118cd1"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+    "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+    "task_id": "G13-isolated-setup-cleanup",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "controls-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/review.json",
+        "sha256": "8d8b1eeca89a706c6dd0893de2a735e108557d39e257319c8729e2b502af14a2"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+      "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+      "task_id": "G13-isolated-setup-cleanup",
+      "id": "RC29-execution-availability",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/review.json",
+          "sha256": "8d8b1eeca89a706c6dd0893de2a735e108557d39e257319c8729e2b502af14a2"
+        },
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/actual.log",
+          "sha256": "d2b542da38908eac101f0c2dc74dd00f9856669c75d6b1955d8298f44971fe68"
+        }
+      ]
+    },
+    {
+      "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+      "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+      "task_id": "G13-isolated-setup-cleanup",
+      "id": "RC30-owned-cleanup",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/review.json",
+          "sha256": "8d8b1eeca89a706c6dd0893de2a735e108557d39e257319c8729e2b502af14a2"
+        },
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/actual.log",
+          "sha256": "d2b542da38908eac101f0c2dc74dd00f9856669c75d6b1955d8298f44971fe68"
+        }
+      ]
+    },
+    {
+      "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+      "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+      "task_id": "G13-isolated-setup-cleanup",
+      "id": "RC41-failure-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/review.json",
+          "sha256": "8d8b1eeca89a706c6dd0893de2a735e108557d39e257319c8729e2b502af14a2"
+        },
+        {
+          "path": "execution/evidence/G13/isolated-setup-cleanup-20261018/actual.log",
+          "sha256": "d2b542da38908eac101f0c2dc74dd00f9856669c75d6b1955d8298f44971fe68"
+        }
+      ]
+    }
+  ]
+}

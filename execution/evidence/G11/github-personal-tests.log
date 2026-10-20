@@ -1,0 +1,39 @@
+✔ disabled broker neither reads credentials nor calls GitHub (3.417333ms)
+✔ exact source and binary private mirror maps distinct commit identities and advances non-forced parent (826.870125ms)
+✔ lost /repos response reconciles exact original intent without retransmission (194.882459ms)
+✔ lost /blobs response reconciles exact original intent without retransmission (199.286875ms)
+✔ lost /trees response reconciles exact original intent without retransmission (193.415833ms)
+✔ lost /commits response reconciles exact original intent without retransmission (194.532167ms)
+✔ lost /git/refs/heads/main response reconciles exact original intent without retransmission (188.151791ms)
+✔ unknown /repos remains unresolved without replay (57.098208ms)
+✔ unknown /commits remains unresolved without replay (143.340041ms)
+✔ unknown /git/refs/heads/main remains unresolved without replay (171.041792ms)
+✔ owner/install mismatch fails before token mint or repo writes (39.843709ms)
+✔ unrelated existing repository is never adopted (38.848208ms)
+✔ changed remote head rejects subsequent source without forced update (231.763584ms)
+✔ source digest rejected before any API call (19.438667ms)
+✔ source workflow rejected before any API call (15.811084ms)
+✔ source missing cleanup rejected before any API call (19.023875ms)
+✔ source symlink rejected before any API call (20.601375ms)
+✔ source unpassed rejected before any API call (14.525958ms)
+✔ raw upstream errors and tokens never reach safe broker failure (18.244916ms)
+✔ private key symlink or group-readable mode is rejected before API (15.659959ms)
+✔ durable intent failure poisons capability before repository mutation (23.127875ms)
+✔ conflicting accepted identity and unresolved prior revision cannot create new writes (136.670792ms)
+✔ oversized API response and wrong token repository scope fail closed (86.050792ms)
+✔ nested source, binary bytes and ordinary dotfiles match real Git object hashing (527.425375ms)
+✔ all personal repositories is rejected before token mint or repository mutation (22.732917ms)
+✔ organization account is rejected before token mint or repository mutation (23.23775ms)
+✔ wrong login is rejected before token mint or repository mutation (31.219833ms)
+✔ wrong app is rejected before token mint or repository mutation (26.424958ms)
+✔ suspended installation is rejected before token mint or repository mutation (23.111459ms)
+✔ unrequested permission is rejected before token mint or repository mutation (23.185375ms)
+✔ personal creation uses user endpoint and each source token selects only the created repository (190.836667ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3969.981917

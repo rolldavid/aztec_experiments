@@ -1,0 +1,61 @@
+{
+  "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+  "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+  "task_id": "W03-generated-consumers",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+      "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "id": "generated-build",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js Node24 apps/build.mjs",
+      "environment": "Healthy lead checkout; reuse verified current SDK",
+      "observed": "Standard generation passed. Independent review verified2059inputs/8outputs and current embedded CRS consumers; no source edits.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/generated-consumers-20261019/build.log",
+          "sha256": "930f4985f820f180f99f4106ae7e216c3b1138ef9882de8e64fd33db357be2ea"
+        },
+        {
+          "path": "evidence/W03/generated-consumers-20261019/review.json",
+          "sha256": "0cc31b4952c095809d2757041b2700e9fb26f5c9ae44973ff092a993567290e1"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+    "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/generated-consumers-20261019/review.json",
+        "sha256": "0cc31b4952c095809d2757041b2700e9fb26f5c9ae44973ff092a993567290e1"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+      "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "id": "RC-build-reproducibility",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/generated-consumers-20261019/review.json",
+          "sha256": "0cc31b4952c095809d2757041b2700e9fb26f5c9ae44973ff092a993567290e1"
+        },
+        {
+          "path": "evidence/W03/generated-consumers-20261019/build.log",
+          "sha256": "930f4985f820f180f99f4106ae7e216c3b1138ef9882de8e64fd33db357be2ea"
+        }
+      ]
+    }
+  ]
+}

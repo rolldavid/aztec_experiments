@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "8a6f36e6a2684a18dc455cfda31e1d8642bb83c6",
+  "base": "56e141030ee4aefc72ad04d5f759162019faf298",
+  "verdict": "approved source, affected DOM and visual UI repairs",
+  "findings": [],
+  "closes": [
+    "P2 recovery-value horizontal clipping from replacement-ui-56e-visual-review.json",
+    "Stale Loading private account tools after successful connection with retained unknown/replacement-prepared intent"
+  ],
+  "sources": {
+    "apps/rolling/wallet-panel.mjs": "5587f64e29292067d452fc50bc075132e71a8d6d2c0c356c2213a025cfe58088",
+    "apps/rolling/wallet-panel.browser.test.mjs": "8bab782d9b1252782d17ef52192d8493055c34066884adba806571913c1bcfbb",
+    "apps/rolling/style.css": "35bcbb74d554e24256193a4510f39ba784d5e12cd1d3df99e7785b7c93b77f15"
+  },
+  "checks": [
+    "3d03 only scopes wrapping to complete recovery values; no truncation/masking or fee/consent/guard change.",
+    "8a6 captures original account epoch then clears progress only after successful awaited refresh and current-account guard; no generic finally reset that could erase pending/error/custody guidance.",
+    "Independent9 affected Chromium checks pass: four full-size history/marker layouts at390/1280; retained unknown/replacement-ready loading lifecycle; custody/failure; delayed lock; account invalidation during inspection.",
+    "Actual reviewer screenshots inspected: complete hashes/digests fit dialog, renewed/original fee copy remains distinct, stale Loading absent. Vertical scroll remains usable; no horizontal overflow.",
+    "Earlier44 independent DOM checks and worker48 full suite remain applicable to untouched behavior. Failed-before4overflow and2loading cases retained."
+  ],
+  "tests": {
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 4615.476916,
+    "command": "NODE_BACKEND=js pinnedNode24.21.0 --test --test-concurrency=1 --test-name-pattern=\"recovery full values wrap|retained .*intent clears loading|settled connection message cleanup|preference lock driver waits|account invalidation during recovery inspection\" apps/rolling/wallet-panel.browser.test.mjs",
+    "log": "/tmp/reviewer-wrap-loading-8a6.log",
+    "sha256": "bd6e027988bec8012026719bdda4c8927abf61288e053c7cbe6ad00f101c4e18",
+    "browserSlotReleased": true
+  },
+  "screenshots": {
+    "execution/evidence/G07/reviewer-wrap-8a6/replacement-wrap-1280-history.png": "4b45bff54a508008808d63ab369ab6562dba3f1406b4a4f8862aaf926cb28d7a",
+    "execution/evidence/G07/reviewer-wrap-8a6/replacement-wrap-1280-prepared-marker.png": "dc537f69a83d2e669a29d75793f1398c03debaefce4f73a8d3b15004c317857e",
+    "execution/evidence/G07/reviewer-wrap-8a6/replacement-wrap-390-history.png": "395970b480307c8365ad228d365f6f80848870bfc5a263fd03c63f8cb96b6005",
+    "execution/evidence/G07/reviewer-wrap-8a6/replacement-wrap-390-prepared-marker.png": "2bddd2772336f8763e8001be04d58c3f4e0cdba1385dc22bcc2cc53ea8a41a61"
+  },
+  "eligibility": "UI hold in reorg-5bb-source-eligibility-review.json is closed by these exact repairs; final root must transfer exact blobs and rebuild/verify wallet input-output manifest before one initial campaign.",
+  "limits": [
+    "Production DOM/CSS with labelled custody/RPC/storage; not genuine financial/reorg qualification.",
+    "No source changes by reviewer. No native proof/build/service operation performed."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "session": 60549,
+  "sourceReviewSha256": "897c1fb9d24757146e1477bc5a69f4717cf0f0c0a8ed4695e1c55fffe89d7bc1",
+  "controlledActualPacketSha256": "bf2ce04c1028c75bba0d6016277619f0297195d78f933ddcaa887639847c9e86",
+  "outcome": {
+    "passed": false,
+    "elapsedMs": 2144,
+    "exitCode": 1,
+    "hostConfinementPassed": false,
+    "containerStarted": false,
+    "guestExecuted": false,
+    "nativeQualified": false,
+    "beforeCleanupState": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": false,
+      "Status": "created"
+    },
+    "containerAbsent": true,
+    "sourceUnchanged": true
+  },
+  "files": {
+    "intent.json": "d399212c049fed08e134e66d8bc871a8d9dbf7e8ce6973d93648c52d6c8e74a8",
+    "result.json": "369130335864e4f2251283eb921fa655a2aecbd9f70a38f7dfd408bfa381740e",
+    "create-intent.json": "9993cfc6beac6739352a11693a2a92a19d65e64325a5192ff595bb52666df4d2",
+    "before-cleanup.json": "45fda6c9c416adf7646e91db1159d9cf60924a1ac18c1e84f731f98c7364e3d2"
+  },
+  "interpretation": "The second inspect returned successfully, but confined(info) did not return. This is host pre-start projection rejection, not evidence of failed guest cgroup delegation or systemd retention. The rejected field is unknown because full inspect/individual safe predicates were not retained.",
+  "nextProposal": "Preserve this failed evidence. Add finite host-confinement predicate results for namespaces/mount types/limits/capability names/environment-key identity before assertion. Review a separately bounded never-started owned create+inspect+cleanup diagnostic if needed; no identical offline rerun or privilege widening."
+}

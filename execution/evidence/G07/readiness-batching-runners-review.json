@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:40:08.732035+00:00",
+  "source": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+  "disposition": "runner-changes-required-before-execution",
+  "files": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/readiness-batching/component/run-1.py": "a3c818e89f09eaf655869faa03ab66a50190f66b62f772bdf86e3735baaabfa7",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/readiness-batching/component/run-plan-1.json": "94203c82af2265c1fd7001c23dc6b0229280b92951b5f608d328db5ee3d03c85",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/readiness-batching/http/run-1.py": "65cf5552b1a01f7aaee5a313163293e33fdaa918c5cb9915d15599179d2bded5",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/readiness-batching/http/run-plan-1.json": "79a49ba3010f538c21f3e3d08c383dba2ec9b93d109c3b506eb66117d5ba82ad"
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "component/run-1.py:95-103 and http equivalent",
+      "finding": "Counts parser accepts only TAP lines beginning #; command arrays do not explicitly select TAP. Retained23f8 actual log with same pinned Node/file capture emitted spec Unicode counts.",
+      "repair": "Add --test-reporter=tap to both exact command arrays and update final plan hashes before execution; do not discard count/skip/required-label gates."
+    },
+    {
+      "priority": "P2",
+      "path": "component/run-1.py:76 and http equivalent",
+      "finding": "Own node_modules symlink restored regardless of absent flag. If cleanup/readback fails and a child remains, restoring can redirect later resolution to old/root dependency tree before ownership settles.",
+      "repair": "Restore only after positively verified owned group absence. Otherwise retain borrowed link and fresh directories, record cleanup failure, prohibit next stage until explicit reconciliation. No automatic retry."
+    }
+  ],
+  "positiveAssessment": "Exclusive fsynced once-intent, fixed bounded command/env, fresh candidate8+2 included in67pins, immediate Popen ownership, TERM/KILL/reap fallback and posthash checks remain useful; source b3b and installed56c eligibility unchanged.",
+  "execution": "None; do not run these exact runner revisions."
+}

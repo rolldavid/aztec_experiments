@@ -1,0 +1,36 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "triageSha256": "c65b741319bd4c08c17bc8a00a83ef0efbb89ea1246916f2ad26650bfc1ad160",
+  "verdict": "eligible to continue bounded normal artifact compatibility processing; explicit soundness and development/runtime qualification holds remain",
+  "verified": {
+    "bugDiagnosticOccurrences": 260,
+    "sites": 23,
+    "messages": 2,
+    "allRetainedLogHashesMatch": true,
+    "allSiteSourceHashesMatch": true,
+    "allSitesInPreviouslyArchiveVerifiedUpstream": true
+  },
+  "sourceAssessment": [
+    "PublicImmutable source performs a separate nullifier existence request and anchored storage read after the hint assertion. This supports a source-level explanation but does not establish compiler constraint preservation.",
+    "Historical note/public storage/header hints feed explicit membership/address/block-number checks. Confirmed-note helpers and key/address derivation constrain hinted metadata.",
+    "Private call returns, pending/revertible classifications and application-key requests emit deferred kernel requests. Their validation must be checked at actual kernel boundaries, not inferred from local successful execution.",
+    "Tag-source, delivery-mode and sender randomness branches are intentionally conditional. Constrained emission and discoverability/privacy must be assessed separately; comments about malicious senders are not product privacy qualification."
+  ],
+  "normalProcessingConditions": [
+    "Use exact approved fresh raw artifacts and promoted dependency inventory; preserve raw hashes and unsuppressed logs.",
+    "Use existing processArtifact and exact qualified platform bbBinary/installed package gates, normal aztec_process --force and private VK/transpilation/embedded-source assertions. Do not skip Brillig checks, alter assertions or fabricate processed fields.",
+    "Prefer direct processing of existing unchanged raw outputs. Existing buildContracts recompiles with --silence-warnings; such a build does not replace or clear the retained unsuppressed diagnostic record. Any changed-source recompile requires fresh unsuppressed evidence.",
+    "Record outputs separately from raw fixtures and bind processing source/native/package/CRS provenance; stop on mismatch. Execution needs a separate serialized owned-process grant."
+  ],
+  "qualificationHolds": [
+    "260 bug-labelled compiler diagnostics remain unresolved potential underconstraint evidence, not harmless warnings or proven false positives. Matching Rust checker analysis or stronger adversarial constrained-execution evidence is still needed for a soundness disposition.",
+    "Adversarial wrong hints must fail for key/address, contract/owner/storage, note/nullifier memberships, pending/revertible counters and forged private-call/key-validation results; ordinary honest proofs alone cannot establish this.",
+    "Normal VK output, TXE positives/negatives and genuine application/private-kernel journeys remain required. Specialist soundness/privacy and production release gates remain unchanged."
+  ],
+  "notClaimed": [
+    "No matching compiler-checker implementation audited.",
+    "No compiler/native/proof/network test executed by reviewer.",
+    "No rc3 testnet, fullG07/G14 or release approval."
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "e1a44f157efe2759d9bec18bba791782c42cd4bb",
+  "base": "54e95810713d62caae0a4fbf2045292c43aa1853",
+  "verdict": "changes_requested",
+  "scope": "Test-only serialized request observer supporting G05-A11/G06-A07; never full privacy acceptance",
+  "fileSha256": {
+    "scripts/testing/rolling-wire-trace.mjs": "fcd4dca59041f656314322350bad63bf93bf595288c9339f5a43ec90031b87ec",
+    "scripts/testing/rolling-wire-trace.test.mjs": "cf1343697856c858c71b54090da0798705bbc91887e1732d0c94314b3468aba8"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs",
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 328.122,
+      "log": "/tmp/reviewer-wire-e1a-tests.log"
+    },
+    {
+      "procedure": "Three in-memory ordinary-node requests containing known human address respectively in RPC id, dynamic params object key, request X-Account header",
+      "observed": "Each forwarded once and produced requestCoverageComplete:true, roles:[]"
+    },
+    {
+      "procedure": "Original transport returns actual resolved Promise with throwing own constructor getter; wrapper called normally",
+      "observed": "Wrapper synchronously throws and does not return original Promise; observation attachment changed behavior"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-wire-trace.mjs",
+      "functions": [
+        "classify",
+        "walk",
+        "snapshot"
+      ],
+      "scenario": "RPC IDs, parameter object keys and request headers bypass observation and unsupported counters; known human values can reach ordinary-node while complete/no-role is reported. Raw L1 transaction serialization and unsafe numeric JSON leaves also lack incomplete classification.",
+      "repair": "Boundedly observe the relevant serialized components without persisting raw data, or explicitly mark unsupported/incomplete. Treat encoded L1 raw transactions opaque pending separate decoded evidence; flag unsupported numeric values. Add the three actual reproduced no-role false-complete cases and opaque/unsafe negatives."
+    },
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-wire-trace.mjs",
+      "function": "wrapFetch",
+      "scenario": "Promise.prototype.then attachment invokes Promise species/constructor machinery outside a guard; a throwing constructor getter replaces original return with synchronous observer error. Promise detection can likewise throw on hostile object.",
+      "repair": "Guard post-call result detection/attachment, retain original result identity and record an observer coverage gap; preserve original synchronous throw identity. Regression actual Promise getter and unsupported proxy/thenable boundaries."
+    }
+  ],
+  "positiveChecks": [
+    "Original arguments/receiver/ordinary native Promise and response identity preserved in existing real-loopback test; response body remains caller-owned.",
+    "Fixed endpoint/method/phase rows and HMAC-in-memory scalar relationship aggregates, no raw identities or salt persisted.",
+    "Bounded requests/body/JSON traversal/relations; explicit unknown and opaque node transaction gaps and external inventory/ingress requirements.",
+    "Actual public reader and prover health routing exercised without real wallet/proof campaign."
+  ],
+  "limitations": [
+    "No private witness, real user, model call, proof, browser, Docker or cloud operation performed.",
+    "Full actual transport inventory, receiver positive controls, decoded public effects and deployed trust boundary remain parent-owned acceptance."
+  ]
+}

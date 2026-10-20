@@ -1,0 +1,20 @@
+{
+  "executionAuthorized": false,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "offlineSourcePacketSha256": "17f6e7361cbb70b596d46fe0bab7f36f27c55c9cba777b5a877cd7da443204d6",
+  "files": {
+    "preparation.json": "77af9a9576de3aa0d0e0c82c96ad06fa09a8f26c977d6935092005ce181bd158",
+    "before-source.json": "6861e3e02c8a6d955e0ee92b99fcd9d604951ae458fdd2a2a4e87108e983f37a",
+    "run.mjs": "8b15e7a519dfe2bda7741fec7189623fd34a27a8403c1a7a23e40e3ccbf4cbac",
+    "suite.py": "4b2d90c2a7cf6d371c5f5cc3ff3151d081d2d09b5cd5b0c4773cbbf287c12883",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+  },
+  "tests": 7,
+  "protectedCount": 803,
+  "bounds": {
+    "seconds": 60,
+    "rssLimitKiB": 524288
+  },
+  "delta": "Exact approved71ae runner with evidence directory substitution only; child.py unchanged. Collector selects only7 actual controlled test methods. Fresh owned TMPDIR and source hashes.",
+  "pending": "Independent exact source/runner eligibility; parent conditional once grant activates after eligibility."
+}

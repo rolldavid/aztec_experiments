@@ -1,0 +1,96 @@
+{
+  "authorityBindings": "All operator/preparation/launch/payload review hashes unset; allpayload/deadline/networkbindings unset; no private directory. Future source/data fields alone provide noauthority.",
+  "baselineCoreSha256": "97b3ea096852089bd1c4963b6c7bab07193bfa585a2f3f3e1ce3258559cb34da",
+  "campaign": "native-version-20261013-ddf00d729a91",
+  "capabilitiesCreated": false,
+  "coreLogicExact2707": true,
+  "executionAuthorized": false,
+  "files": {
+    "cleanup": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-cleanup.py",
+      "sha256": "03971928c2a2b2ae212db3420ebbc07e84b81ea79a357ea6c2b5d77c0d4a67a1"
+    },
+    "core": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-core.py",
+      "sha256": "fb9bdfd0edd7636f0632fa6e0a88cdb2d3f167e6293e2225c1ecce62e8b296a0"
+    },
+    "launch": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-launch.py",
+      "sha256": "9d93d2c99c446cdba5cbe46ac54f0d32456e9f1d7b4286d1d0aa800c67bdbb9a"
+    },
+    "observe": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-observe.py",
+      "sha256": "c5463821eddc84eade784b75722dd8098ad3a28cafddf63fe288ddbdbbb4826c"
+    },
+    "test": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-test.py",
+      "sha256": "6895a059c0e122f49992e65caeab16fae3797361975b0b38105cd746578fdb33"
+    }
+  },
+  "financialIntentCreated": false,
+  "launchAuthorized": false,
+  "oldOperatorFiles": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-cleanup.py": "d5541da217fcf789bffd77baa14a7f0f3b6e47f36410637cb213141e3b92294c",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-core.py": "97b3ea096852089bd1c4963b6c7bab07193bfa585a2f3f3e1ce3258559cb34da",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-launch.py": "16667e601c79c0916443cdc8d0889ee2f5cdfe7becdd4554bb162310636a002d",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-observe.py": "5cf57bfcba46d41c54305e6dfbbbe94771dc80a6f7540e1ace3121d1d585edde",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-test.py": "d249179ffb9e9e1595a0199bd642b996ce4b049cddf3177ed35568faf6aa041b"
+  },
+  "payloadCreated": false,
+  "planReviewSha256": "c86ace0aef908236eff58878741021217d2162ed1f7161c8286ec68bbacb3dd9",
+  "prefix": "native-version-operator-ddf00d729a91",
+  "preservedPrivateCount": 72,
+  "preservedPrivateHashesSha256": "c26e98e14f667395976c63a5791c71f01c05ab8b14c35ef244fd779477d790cc",
+  "priceRefreshSha256": "5b27fcc89a411d3231235d8600f0351e5849b1a9c512faf038f519e91d815252",
+  "privateDirectoryCreated": false,
+  "proposedCumulativeUsd": 235.28,
+  "remainingGates": [
+    "source+runnerreview then parentcontrolled16grant",
+    "parentbudgetreservation and timedpreparationgrant",
+    "newprivatecampaign/caps/actualpayload/freshdeadlines reviewed",
+    "finalauthorityliterals+wrapperpins review and one launch/sharedslot grant"
+  ],
+  "schemaVersion": 1,
+  "sourceBindings": {
+    "binaryBytes": 44698432,
+    "binarySha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "controlSourceSha256": "802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84",
+    "controlsSha256": "acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090",
+    "expectedVersion": "6.0.0-rc.6",
+    "extraction": "read-only AST exact original-order NATIVE_REUSE/NATIVE_GLOBALS; no runtime execution/payload generation",
+    "localPublicBinary": {
+      "bytes": 44698432,
+      "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f"
+    },
+    "nativeHostSha256": "6f248d8281efc09ffbe2695feeb71f835df659f965f2ab30ff88c3c1a316ffdf",
+    "productionBootstrapCopies": {
+      "aztec_experiments": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+      "rolling-lead-runtime": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535"
+    },
+    "runtimeBytes": 35855,
+    "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+    "workerBytes": 3281,
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878"
+  },
+  "sourceHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "testCount": 16,
+  "testDelta": "Only candidatefilename, newcampaign/control expectedliterals and old2707 receiptcontrol rejection. Original16labels/assertions retained; no testexecution.",
+  "testInventory": [
+    "NativeOperator.test_unbound_is_no_authority_and_upload_does_not_need_future_payload",
+    "NativeOperator.test_exclusive_journal_preserves_prior_on_collision",
+    "NativeOperator.test_strict_receipt_known_private_fields_and_false_success",
+    "NativeOperator.test_guest_facts_are_closed_and_required_for_success",
+    "NativeOperator.test_state_transport_projection_and_timeout_remain_distinct",
+    "NativeOperator.test_launch_exact_limits_and_intent_before_each_single_mutation",
+    "NativeOperator.test_unknown_launch_never_replayed_and_ingress_never_changed",
+    "NativeOperator.test_reused_binary_head_exact_region_owner_version_and_safe_projection",
+    "NativeOperator.test_reuse_missing_or_malformed_head_fails_before_financial_journal_or_call",
+    "NativeOperator.test_reuse_timeout_has_no_fallback_or_mutation",
+    "NativeOperator.test_successor_runtime_binding_rejects_old_control_receipt_and_unbound_authority",
+    "NativeOperator.test_upload_unknown_is_durable_and_no_rebroadcast",
+    "NativeOperator.test_cleanup_gate_one_send_and_readback_still_required",
+    "NativeOperator.test_root_mapping_and_independent_volume_observation_required",
+    "NativeOperator.test_malformed_empty_wrong_fleet_delete_ack_is_not_success_or_replayed",
+    "NativeOperator.test_missing_receipt_preserves_resource_observation"
+  ]
+}

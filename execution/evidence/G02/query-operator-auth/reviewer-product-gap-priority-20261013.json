@@ -1,0 +1,49 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T19:13:39.399519+00:00",
+  "source": "eeb0abe7510de91e41ee42d5a7bcb416cddafe4a",
+  "scope": "Read-only SPEC application priorities after user removed pre-run review gates",
+  "requirements": "Draft3 RC18/19/22, RC29/30/32/34/41; graph G04 depends G01/G02/G14; G08 depends G04/G07; G10 depends G08/G14; G11 depends G10. Completion dependencies remain; source work need not await all qualification.",
+  "sourceBindings": {
+    "apps/rolling/wallet-panel.mjs": "2b96bae77fd9172b6fb0b883d33a379bc569a77db06dd7dff82ac9fa182bc35f",
+    "shared/rolling/application.mjs": "ca86f51a313c8c65c574034242bf9752635e57687e7766cc94a3b3bd4cbf8612",
+    "shared/rolling/funding-receipts.mjs": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+    "shared/fee-onboarding.mjs": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+    "plugins/main.mjs": "bd47ced5d30812b45c2dec3263a30c94974f596502f19882196743572c296e8e",
+    "plugins/private-bok-escrow.mjs": "009a9c56d80507fba9c37c09ca88907a4105bcac8bb94d3fe1ff709e6352beab",
+    "plugins/private-bok-metering.mjs": "6b39eed0d2c6750efcc7fac9385782bb08f84c19e92239252109d75e47a01320",
+    "plugins/agent.mjs": "b407517c6d0ffadccaa909dfa797c19944721c1e7cc7d960a4ea55040f0345fc",
+    "plugins/github-tools.mjs": "00a141f259da1e035c28018dd4b7ed38866565856995537e7bd779b631a83011"
+  },
+  "priorities": [
+    {
+      "order": 1,
+      "component": "G14 hosted Rolling PrivateBok composition needed to make Bok usable",
+      "evidence": "plugins/main.mjs still loads legacy billboard/adapter and aztecEscrowPort/meteredModel. Existing private-bok-escrow and private-bok-metering implementations are not used there.",
+      "next": "Use existing hosted lifecycle with canonical PrivateBok request/payment ports and authenticated Rolling reply; preserve uncertain paid-call fences. Constructor-only qualification remains insufficient."
+    },
+    {
+      "order": 2,
+      "component": "G04/G08 recoverable funding and truthful Ready in actual wallet UI",
+      "evidence": "wallet-panel.mjs explicitly says funding is not connected. application.mjs excludes bridge/deposit claims/L1 exits/composite Bok request. funding-receipts verifies claims but does not submit.",
+      "next": "Connect authenticated saved receipt/claim preparation to existing private transaction journals, then one resumable setup view with distinct collateral/fee/Bok allocations. Ready requires usable posting and private Bok invocation; implement actual ETH/USDC routes without silent one-transaction or named-wallet downgrade."
+    },
+    {
+      "order": 3,
+      "component": "G10 persistent thread workspace and conversation context",
+      "evidence": "agent.mjs initializes only system plus latest text; github-tools opens a fresh temporary checkout and deletes it on each invocation.",
+      "next": "Canonical full thread context, persistent accepted revision per thread, within-thread serialization/cross-thread isolation, separately metered prior-history summary plus latest message and durable uncertain-call handling."
+    },
+    {
+      "order": 4,
+      "component": "G11 accepted-revision publication and scoped broker",
+      "evidence": "Current GitHub tooling creates PRs; it does not provide dedicated GitHub App broker, isolated generated-code execution or atomic latest artifact/source publication.",
+      "next": "Consume G10 accepted revisions through a narrowly scoped GitHub App broker and credential-free execution; atomically publish matching static artifact/source at separate origin with stable latest URL and retained history."
+    }
+  ],
+  "limits": [
+    "No source changes, tests, runtime or provider calls performed.",
+    "No additional pre-run gates requested; workers run focused checks and coherent batches receive independent pre-integration review.",
+    "Real-wallet/testnet proof acceptance, complete privacy/recovery checks, release and retention gates remain mandatory."
+  ]
+}

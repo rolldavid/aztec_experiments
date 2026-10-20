@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "revision": "37c204cb1d64f8e30a5d9c8edf91e76c12511101",
+  "parent": "8a8f88e211de6944ae2055f4a6ebe97f37871112",
+  "reviewStatus": "pending independent repair review",
+  "finding": "P2 same-revision changed preference digest could be newly reviewed because original head was not retained",
+  "source": {
+    "shared/rolling/application.mjs": "7042c547adc1be50b63cae144bd512defca21c4e5bc0c6dfdc700728f37747a1",
+    "shared/rolling/application.test.mjs": "59e0b22a9bad02a5e2a80b3b39835d995526f9a9d8882e9d32146615383f7401"
+  },
+  "repair": "Initial preference/read-marker prepare captures full originalPreferenceHead and rejects stale expectedRevision before fee estimation. Recovery eligibility and every replacement context check require exact original head equality. Missing original head fails context-changed. Inspector returns detached originalPreferenceHead.",
+  "testChanges": "Existing ABI-only extreme revision cases now provide a matching labelled authenticated head and assert owner-private head read; all exact ABI argument/payer/fee/lifecycle assertions retained. No acceptance weakening.",
+  "verification": {
+    "command": "<pinned Node24.21.0> --test --test-concurrency=1 shared/rolling/application.test.mjs shared/rolling/synchronized-application.test.mjs",
+    "passed": 80,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 12843.251708,
+    "exitCode": 0,
+    "cleanup": "test process exited; no services/heavy jobs",
+    "beforeFix": "New same-revision changed-digest regression fails on8a8 before source repair",
+    "coverage": "Full digest mismatch rejection, stale initial expectedRevision before fees/write, detached retained original head, all earlier summary and replacement checks"
+  },
+  "evidence": {
+    "replacement-original-head-before-fix.log": "a7883bd2a48fe5b3b19d483c9f58800fe79e125d99c656b212979299394ed8fd",
+    "replacement-original-head-first.log": "5403ad9cd18a4cb1047566cf316bc39a179e63c13e2ab63237772d3a46870b06",
+    "replacement-original-head-final.log": "a78a45e310e0f04b8dc827160fd06ff2112525a2a81860601e2385d09918af5c"
+  },
+  "limits": [
+    "Actual SDK Tx/ABI/AEAD with labelled chain/fork doubles, no genuine reorg acceptance.",
+    "Records prepared before original-head capture cannot infer historical head; replacement remains fenced.",
+    "UI/session/harness wiring remains lead-owned."
+  ]
+}

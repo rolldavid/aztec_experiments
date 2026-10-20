@@ -1,0 +1,47 @@
+{
+  "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+  "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "verdict": "approved",
+  "changedFiles": {
+    "plugins/escrow-service.mjs": "da91d3f0297ac79b05492ec9f047b8774d7286bdacd41373173d57efd3d329d3",
+    "plugins/private-bok-escrow.mjs": "55bd6a28c45367b9278fdc974915d76c42b3230155ac4b23d21ed25e340e451d",
+    "plugins/private-bok-metering.mjs": "ccd313beedd388fa40f3417e1cf753661e55d20cd5516a6985f58398bcba081e",
+    "plugins/private-bok-metering.test.mjs": "94fb484126aaf59d2e707c55d8c755901e253cb0e14f19974a464150a4a0a37d",
+    "plugins/test/hosted-private-bok.test.mjs": "9b3c3fea33154fa472ef2c796fab9743c60f579a8f1cd96f0f99eb1d84783879",
+    "plugins/test/private-bok-escrow.test.mjs": "b3a04cf74d045140dd8fc58936ffe1db5ba76bbdba31700e58b67ad764af3ac5"
+  },
+  "findings": [],
+  "reasoning": [
+    "Paid response remains bounded and digest-bound after responseDelivered is durably set. Delivered responses still cannot be handed off or invoke provider/tools again.",
+    "Before each new quote/reserve/provider call, retained bodies plus maximum next1MiB response must fit4MiB; every metering write checks whole serialized store<=8MiB.64-call limit remains.",
+    "Response purge occurs only after existing canonical finish conservation/receipt checks; billing, response digest and delivered flags remain. Normal hosted path has durable reply-intent and canonical reply before finish. Explicit accounting-only closure remains no-reply.",
+    "Escrow uses pinned native waitForTx timeout0/dontThrowOnRevert for exact persisted hash, then existing canonical receipt/block/effect/state inspection. Signed unknown never reproves/resends.",
+    "Restored reply-intent/reply-confirmed waits on saved operation only when pending, then freshly inspects method/digest/canonical result and authenticated reply before finish. Same-invocation transport exception does not introduce a second orchestration waiter.",
+    "Changed full-call test comparisons remove only intentionally purged response and retain equality for all accounting metadata."
+  ],
+  "validation": {
+    "independentRetentionAndHosted": {
+      "passed": 8,
+      "failed": 0,
+      "durationMs": 2311.232208,
+      "log": ".build/bok-retention-independent.log"
+    },
+    "priorIndependentEscrow": {
+      "passed": 30,
+      "failed": 0,
+      "review": "review-0230b339.json"
+    },
+    "combinedLead": {
+      "passed": 174,
+      "failed": 0,
+      "cancelled": 0,
+      "durationMs": 3608.943417,
+      "log": ".build/bok-combined-repair.log"
+    }
+  },
+  "limits": [
+    "Component/provider/native receipt doubles are labelled; no new model/proof/network or service execution.",
+    "Retention prevents paid-body destruction; it does not implement general resumption of partially executed tools or authorize replay. Accepted-revision and original-intent fences still govern recovery.",
+    "No live Bok completion or dedicated-host cutover acceptance inferred."
+  ]
+}

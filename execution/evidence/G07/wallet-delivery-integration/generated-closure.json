@@ -1,0 +1,10 @@
+{
+  "source": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "scripts": 9,
+  "proofsEnabled": false,
+  "runtimeBytes": 289359,
+  "runtimeSha256": "fe1e40b9b34adaad744b269123bb8e0b5ee54a264b29deb618bf6c725768c652",
+  "manifestSha256": "f17ed446e45fc77d3c68dbcf727b154d0ecb64056640f614dfaa46f8fc3f3148",
+  "sourceClosureVerified": true,
+  "noNetworkCalls": true
+}

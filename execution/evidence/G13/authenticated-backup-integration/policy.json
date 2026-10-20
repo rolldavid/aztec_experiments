@@ -1,0 +1,28 @@
+{
+  "candidate": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+  "base": "90d735130fe6d03ed3275776ee0b87d392697b0a",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-authenticated-backup-import",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "shared/journal-backup.mjs",
+    "shared/journal-backup.test.mjs"
+  ],
+  "required_checks": [
+    "authenticated-restore-regression-and-build"
+  ],
+  "requirements": [
+    "RC22-RC26-RC37-authenticated-restore-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-authenticated-backup-import",
+      "paths": [
+        "shared/journal-backup.mjs",
+        "shared/journal-backup.test.mjs"
+      ]
+    }
+  ]
+}

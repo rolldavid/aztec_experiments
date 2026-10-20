@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "createdAt": "2026-10-12T16:37:13.833141+00:00",
+  "candidate": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+  "verdict": "CONFIRMED application-store atomicity blocker; proposed narrow pinned repair direction is reasonable, implementation and real-browser regression approval pending.",
+  "evidence": {
+    "execution/evidence/G07/indexeddb-atomicity-browser-baseline-local-copy.log": "2b752bd851fec4bb7f4dfbcbbf6081ff76ddf45820a2d92907f4d30886c54133",
+    "execution/evidence/G07/indexeddb-atomicity-browser-baseline-local-copy.json": "1e70ea857baa6e6592fd8eaefdaf39cc5fa86fdb1e2db67a6669264e15492c2c",
+    "execution/evidence/G07/indexeddb-atomicity-baseline-diagnosis.json": "7681e7dfae730da4374527eb4a14de11f384e18687b8a7db5798d98330227de2"
+  },
+  "sourceSnapshotVerified": {
+    "scripts/test-sdk-storage-browser.mjs": "b5870dc2aedff387b1dd38e3917031d0b069c255d083699a8a9f1c9e0ca110be",
+    "scripts/test-sdk-storage.mjs": "60e12da4bb7610039f622f3fd2e1db6f619fd659903c335bb4f0ed47b5c6d4a2"
+  },
+  "currentBundleSha256": "10b38f0665fcc733bff485797f7cf28b923c08e97ebef46d9569f81038100c5f",
+  "observed": {
+    "browser": "Real Chromium, actual built SDK openPXEStore, disposable two-map sentinel records; no RPC or wallet",
+    "immediateCallbackFailure": "Both overwrite and insertion remained visible live and after close/reopen despite rejection",
+    "delayed20msCallbackFailure": "Same persistent partial-commit failure",
+    "pageErrors": [
+      "DISPOSABLE_LATE_STORE_FAILURE"
+    ],
+    "queueAfterFailure": "Next transaction succeeds; this does not cure persisted failed writes",
+    "cleanup": true,
+    "disposableDatabasesRemaining": 0,
+    "elapsedMs": 2275,
+    "peakTreeRSSKiB": 1031696
+  },
+  "cause": "Installed deprecated IndexedDB transactionAsync calls callback then awaits tx.done before observing callback rejection. There is no explicit abort on callback failure or request keepalive across asynchronous gaps. Containers opened during callback are not initially bound to the active transaction. Shared Rolling SDK explicitly supplies this backend in wallet-session and CLI actor.",
+  "repairAssessment": {
+    "preferredScope": "Hash-gated matching TS/dest patch to current IndexedDB adapter, reproducible explicit installer/build provenance. Preserve schema16/name/key encoding/current databases; no automatic migration or data reset.",
+    "whyNotBackendSwap": "SQLite-OPFS switch changes browser capabilities, worker/runtime, persistent storage namespace and migration/recovery assumptions. It is broader than this demonstrated transaction defect and would need separate product migration and browser qualification.",
+    "requiredSemantics": [
+      "Capture callback completion/rejection immediately, including synchronous/falsy throws; attach tx.done failure handling immediately to avoid unhandled rejection.",
+      "Keep exactly one harmless request outstanding on the SAME readwrite transaction until callback settles. Schedule continuation within an active IDB request event; a timer or only microtask pumping after IDB becomes inactive is not reliable. Never use a second transaction as keepalive.",
+      "On callback error abort while active, stop keepalive, drain transaction outcome, preserve the original callback failure; handle abort/request failure without losing it. On transaction error do not report callback success.",
+      "Do not release serial queue or restore container fallbacks before callback, transaction and keepalive are settled. Otherwise late continuation could write outside aborted transaction into a new auto-committed transaction.",
+      "Bind every newly opened map/set/multimap/array/singleton to the current transaction; restore all bindings in finally on every outcome. Handle failure while binding/starting a request.",
+      "Keep successful return value unchanged; delayed successful writes must commit together. Queue next operation only after preceding outcome is fully drained.",
+      "Do not add silent retry, transaction replay, automatic data reset, or detached timeout loser. If callback never settles, existing bounded owner supervision remains necessary.",
+      "Explicitly retain current non-reentrant queue semantics; do not accidentally introduce awaited nested transaction deadlock as a claimed supported path. External concurrent accesses share container bindings and still require existing operation-queue ownership."
+    ]
+  },
+  "requiredTests": [
+    "Real built SDK Chromium: original immediate and delayed throws restore original value and absent new key live and after reopen; no pageerror/unhandled rejection.",
+    "Synchronous and falsy throws preserve failure; callback success with delayed writes returns exact value and commits atomically.",
+    "Actual IDB request failure/abort and keepalive failure stop scheduling, drain all continuations and leave queue usable.",
+    "Containers opened during callback for every implemented container type participate and roll back.",
+    "Next queued transaction cannot run before failure drains; late callback continuation cannot escape into rootDB after bindings restore.",
+    "Preserve network/account/schema isolation, close/reopen persistence and disposable cleanup.",
+    "Then actual operation coordinator multi-store rollback and relevant PXE reorg behavior on the repaired application backend; earlier native-v2 success is not a substitute."
+  ],
+  "integrationDisposition": "G07-application-store-atomicity remains blocking application integration. Successful b612/f799 flows remain historical successful-path evidence, not failure rollback qualification. Repaired storage needs fresh exact-source build/asset provenance and affected checks before deciding genuine-evidence carry.",
+  "sourceHashes": {
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "apps/rolling/wallet-session.mjs": "4ec5ffcdc5de053a64a1550686cfeb48b135fa5494794b499a75d16b089054de",
+    "scripts/testing/rolling-application-actor.mjs": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638",
+    "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js": "2f1a33c8bbcdd16af817eb7c0d5dc0e1c944f5f5055f99d280da4f8d0e321cdf",
+    "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/map.js": "806835a15b70b26be0308637aa02b5573eaeb5a87d94a041b8a1f0d46913f21f"
+  },
+  "reviewActivity": "Read-only source/log/hash analysis only; no browser/native/network execution or production edits."
+}

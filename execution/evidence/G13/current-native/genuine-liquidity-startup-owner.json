@@ -1,0 +1,144 @@
+{
+  "source": "2d4844d",
+  "purpose": "retained native-disabled startup after genuine Circle V3 and private relay activation on original retained chain",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1979872,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 351568
+    },
+    {
+      "elapsedMs": 2048,
+      "rssKiB": 732864
+    },
+    {
+      "elapsedMs": 3075,
+      "rssKiB": 911360
+    },
+    {
+      "elapsedMs": 4103,
+      "rssKiB": 1217840
+    },
+    {
+      "elapsedMs": 5227,
+      "rssKiB": 939712
+    },
+    {
+      "elapsedMs": 6254,
+      "rssKiB": 940976
+    },
+    {
+      "elapsedMs": 7280,
+      "rssKiB": 1019888
+    },
+    {
+      "elapsedMs": 8308,
+      "rssKiB": 1527056
+    },
+    {
+      "elapsedMs": 9358,
+      "rssKiB": 1503312
+    },
+    {
+      "elapsedMs": 10384,
+      "rssKiB": 1615408
+    },
+    {
+      "elapsedMs": 11410,
+      "rssKiB": 1936656
+    },
+    {
+      "elapsedMs": 12442,
+      "rssKiB": 1979872
+    },
+    {
+      "elapsedMs": 13469,
+      "rssKiB": 924576
+    },
+    {
+      "elapsedMs": 14496,
+      "rssKiB": 1071360
+    },
+    {
+      "elapsedMs": 15522,
+      "rssKiB": 1253264
+    }
+  ],
+  "failures": [
+    {
+      "stage": "retained-development-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "retained-development",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 12442,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 70156,
+        "ppid": 59636,
+        "rssKiB": 55936
+      },
+      {
+        "role": "retained-development",
+        "pid": 70166,
+        "ppid": 70156,
+        "rssKiB": 35584
+      },
+      {
+        "role": "retained-development",
+        "pid": 70167,
+        "ppid": 70166,
+        "rssKiB": 716912
+      },
+      {
+        "role": "retained-development",
+        "pid": 70170,
+        "ppid": 70167,
+        "rssKiB": 3648
+      },
+      {
+        "role": "retained-development",
+        "pid": 70171,
+        "ppid": 70167,
+        "rssKiB": 3664
+      },
+      {
+        "role": "retained-development",
+        "pid": 70173,
+        "ppid": 70167,
+        "rssKiB": 84976
+      },
+      {
+        "role": "retained-development",
+        "pid": 70179,
+        "ppid": 70167,
+        "rssKiB": 7824
+      },
+      {
+        "role": "retained-development",
+        "pid": 70180,
+        "ppid": 70167,
+        "rssKiB": 1616
+      },
+      {
+        "role": "retained-development",
+        "pid": 70182,
+        "ppid": 70167,
+        "rssKiB": 1069712
+      }
+    ]
+  },
+  "elapsedMs": 16436,
+  "ownedTreeAbsent": true
+}

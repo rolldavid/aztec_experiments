@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-13T07:58:04.443284+00:00",
+  "owner": "lead-20261011",
+  "action": "one-paced-public-read",
+  "packetSha256": "b178ff7ab4f617fe7e605bf21e0621c75ee9d4e7de0e69745e5233aee268afb8",
+  "reviewSha256": "7003b277212a28ac3d6219c2b5a58bf4a25e201645f2d0648d1a53cacf3a0547",
+  "limits": "Unchanged59s work/65s parent,32requests,8s/request,64KiBresponse,16KiBreceipt,1250ms all starts. Sanitized environment,owned-tree cleanup.",
+  "authority": "Existing user development mandate; public read only. No retry/fallback, signing, paid mutation or source change.",
+  "output": "live-paced-1.json",
+  "grantCount": 1
+}

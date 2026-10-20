@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-10-20T07:37:27.839219+00:00",
+  "distribution": "E1M12FHGQ0S5ST",
+  "origin": "vo_6ujPhXLuxnuG1hnAFME247",
+  "checks": {
+    "latest/": {
+      "status": 200,
+      "sha256": "cceb89d0393b25e95f8058378414feef665aa73ce8a9de08dcace6915a1fe59a",
+      "originalMatches": true,
+      "cacheControl": "no-store"
+    },
+    "source.json": {
+      "status": 200,
+      "sha256": "30ed61c77f0def38de656206ee6d4d0249347b32f227e91a97a6712ad7091b46",
+      "originalMatches": true,
+      "cacheControl": "no-store"
+    }
+  }
+}

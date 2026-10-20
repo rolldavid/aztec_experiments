@@ -1,0 +1,34 @@
+{
+  "task_id": "G02-bok-response-durability",
+  "implementer": "funding_resume2",
+  "candidate": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+  "base": "5d0c46dbfadc8c9f1073e4d70b8d2893a1b4866c",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "plugins/escrow-service.mjs",
+    "plugins/main.mjs",
+    "plugins/private-bok-metering.mjs",
+    "plugins/private-bok-metering.test.mjs",
+    "plugins/test/hosted-private-bok.test.mjs"
+  ],
+  "required_checks": [
+    "response-durability"
+  ],
+  "requirements": [
+    "RC41-received-response-durability-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "G02-bok-response-durability",
+      "paths": [
+        "plugins/escrow-service.mjs",
+        "plugins/main.mjs",
+        "plugins/private-bok-metering.mjs",
+        "plugins/private-bok-metering.test.mjs",
+        "plugins/test/hosted-private-bok.test.mjs"
+      ]
+    }
+  ]
+}

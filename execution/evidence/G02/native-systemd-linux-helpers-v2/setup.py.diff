@@ -1,0 +1,63 @@
+--- preserved-v1/setup.py
++++ successor-v2/setup.py
+@@ -5,7 +5,7 @@
+ D=pathlib.Path(__file__).resolve().parent
+ DOCKER='/usr/local/bin/docker'
+ IMAGE='ubuntu@sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7'
+-EXPECTED_INPUTS={'setup.sh': 'cf9cf56c884fd0805ec5e8fe80d30920a88a74c3265ec5390d9b8d1a5256809d', 'closure.py': '703275dbb8eb60cae7b035c82f9f30cc82bd51cfc0d60e4ae077cac22eff0046'}  # Fixed public bytes; no CLI override.
++EXPECTED_INPUTS={'setup.sh': '8d9128e5b8c8a86e0a42bc79f81e898bc1cff1388a48d2fbc656687204e81089', 'closure.py': '7b9ac5a5736f0fe1688fcc83ea4820d7d67d8430c09d51e0bd9d449564decae4'}  # Fixed public bytes; no CLI override.
+ 
+ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+ def save(path,value):
+@@ -15,6 +15,26 @@
+  fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+  try:os.fsync(fd)
+  finally:os.close(fd)
++
++def capture_setup_diagnostics(cid,call,out,report):
++ # Only fixed public files from this owned public-only container. Capture failure
++ # is diagnostic, never a precondition for subsequent owned-ID cleanup.
++ diagnostics={}
++ for name,maximum in [('setup-stage',64),('setup.log',65536)]:
++  dest=out/('public-'+name)
++  try:
++   if dest.exists() or dest.is_symlink():raise ValueError('Diagnostic collision')
++   call(['cp',cid+':/opt/rolling-systemd-regression/'+name,str(dest)],limit=2,cleanup=True)
++   if dest.is_symlink() or not dest.is_file() or dest.stat().st_size>maximum:raise ValueError('Diagnostic bounds')
++   dest.chmod(0o600);data=dest.read_bytes()
++   row={'status':'captured','bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
++   if name=='setup-stage':
++    stage=data.decode('ascii').strip()
++    if stage not in ('apt-index','apt-plan','apt-download','apt-install','closure','complete'):raise ValueError('Stage projection')
++    row['stage']=stage
++   diagnostics[name]=row
++  except Exception:diagnostics[name]={'status':'unavailable'}
++ report['publicDiagnostics']=diagnostics
+ 
+ def cleanup_owned(cid,call,persist,report,*,owned=False):
+  # cid is accepted only from our successful exclusive create response or exact
+@@ -81,9 +101,9 @@
+   if p.stdout.strip():raise ValueError('Name collision')
+   report['containerAbsent']=True
+   save(out/'intent.json',{'name':name,'tag':tag,'sourceSha256':label,'image':IMAGE,'attempts':1,'deadlineSeconds':180,'memoryMiB':512,'cpu':2,'network':'public setup only','archiveBytesMax':104857600})
+-  call(['pull','--platform=linux/arm64',IMAGE],limit=100) # One call; unknown pull is not repeated.
++  # Reuse the exact public base retained by the failed predecessor. No pull or fallback.
+   image=json.loads(call(['image','inspect',IMAGE,'--format','{{json .}}']).stdout)
+-  if image['Architecture']!='arm64' or image['Os']!='linux' or not any(x.endswith(IMAGE.split('@')[1]) for x in image.get('RepoDigests',[])):raise ValueError('Image identity')
++  if image['Id']!='sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7' or image['Architecture']!='arm64' or image['Os']!='linux' or not any(x.endswith(IMAGE.split('@')[1]) for x in image.get('RepoDigests',[])):raise ValueError('Image identity')
+   report['baseImageId']=image['Id'];report['baseBytes']=image['Size']
+   if image['Size']>268435456:raise ValueError('Base size')
+   create=['create','--pull=never','--platform=linux/arm64','--name',name,'--label','rolling.setup-source='+label,'--network=bridge','--memory=512m','--memory-swap=512m','--cpus=2','--pids-limit=128','--cap-drop=NET_RAW','--cap-drop=NET_BIND_SERVICE','--security-opt=no-new-privileges','--log-driver=none','--tmpfs','/run:rw,nosuid,nodev,size=16m','--tmpfs','/var/lib/apt/lists:rw,nosuid,nodev,size=64m','--tmpfs','/var/cache/apt/archives:rw,nosuid,nodev,size=100m','--entrypoint','/bin/sh',IMAGE,'/opt/rolling-setup.sh']
+@@ -118,7 +138,11 @@
+  finally:
+   try:
+    if attempted and cid is None:cid=inspect_owned(cleanup=True) # Read-only reconcile unknown create, never recreate.
+-   if cid:cleanup_owned(cid,call,lambda value:save(out/'before-cleanup.json',value),report,owned=True)
++   if cid:
++    def persist_cleanup(value):
++     capture_setup_diagnostics(cid,call,out,value)
++     save(out/'before-cleanup.json',value)
++    cleanup_owned(cid,call,persist_cleanup,report,owned=True)
+   except Exception:report['cleanupError']='cleanup-unverified';report['containerAbsent']=None
+   report['elapsedMs']=round((time.monotonic()-started)*1000)
+   report['passed']=report['passed'] and report['containerAbsent'] is True and not report.get('cleanupDiagnosticErrors') and not report.get('cleanupError')

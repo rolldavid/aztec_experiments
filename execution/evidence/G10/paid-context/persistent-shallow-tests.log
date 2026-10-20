@@ -1,0 +1,15 @@
+✔ actual accepted commit survives restart; failed invocation leaves previous source intact (732.760916ms)
+✔ same-thread operations wait; a different thread opens independently (125.129708ms)
+✔ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (463.179667ms)
+✔ lease loss prevents acceptance; user paths and changed repository identity fail closed (127.58425ms)
+✔ existing toolbox edits and accepts actual thread source across independent invocations (901.444167ms)
+✔ failed validation cannot advance accepted source and cannot be retried in same session (471.94325ms)
+✔ bounded revision and storage budgets refuse new accepted source (410.398875ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3298.481

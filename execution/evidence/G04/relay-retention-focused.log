@@ -1,0 +1,32 @@
+✔ one user-reimbursed transaction durably saves signed bytes and verifies every canonical leg (145.412042ms)
+✔ lost broadcast acknowledgement survives restart and never signs or sends again (70.805541ms)
+✔ unknown predecessor blocks a different plan, including after restart (55.67025ms)
+✔ relay refuses wrongChain before budget reservation or signing (10.76175ms)
+✔ relay refuses wrongCode before budget reservation or signing (10.3385ms)
+✔ relay refuses upgrade before budget reservation or signing (11.333333ms)
+✔ relay refuses revert before budget reservation or signing (11.572708ms)
+✔ relay refuses expensive before budget reservation or signing (11.259834ms)
+✔ relay refuses underfunded before budget reservation or signing (12.977125ms)
+✔ relay refuses reorg before budget reservation or signing (11.8465ms)
+✔ cumulative conservative gas budget remains consumed even after successful reimbursement (71.298333ms)
+✔ HTTP data cannot replace signer, change network, select a destination or call arbitrary methods (12.472666ms)
+✔ malformed or reorged canonical effects cannot finish an unknown payment (60.355292ms)
+✔ a concurrent submission cannot allocate the same signer nonce twice (58.338625ms)
+✔ private relay directory rejects existing writable before signer reads (11.357416ms)
+✔ private relay directory rejects existing symlink before signer reads (9.906625ms)
+✔ durable gas reservation without a plan file remains unresolved after restart (11.25475ms)
+✔ development relay preserves pending status recovery without requiring new-plan terms (2758.834ms)
+✔ development USDC capability requires matching private relay configuration before opening (14.707334ms)
+✔ development relay refuses remote network and escaping signer paths before opening (10.590541ms)
+✔ retained relay initialization refuses missing budget without recreating spending state (20.278208ms)
+✔ retained relay initialization refuses missing directory without recreating spending state (18.841125ms)
+✔ retained relay initialization refuses missing marker without recreating spending state (18.644125ms)
+✔ relay initialization crash and changed policy cannot grant a fresh budget (15.6125ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4064.200792

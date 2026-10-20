@@ -1,0 +1,30 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "eligible-existing-runner-preparation-and-tiny-preflight-first; actual-runner-review-and-parent-grants-still-required",
+  "source": "1bb186074e0e079ebcb9909dfbf41a5131e1019f",
+  "proposalSha256": "bd67f89370148911ac5be9f7544b84e6758a24e94757daabd41fecd86a77e86f",
+  "helperSha256": "15ebba576fd81c3c86d109cf201def8cb48083310b176a317514e6b01254bf45",
+  "preflightSha256": "55e5329fb885c81ba3d0f6d6b2981ab25da1327e2b4022febe68801f42313f55",
+  "sourceFindings": [],
+  "scope": [
+    "Existing full SQLite 30-case suite with volume enabled, including three original crash children; no test changes or filtered pass claim.",
+    "105005 synthetic plugin events, over old event/range/encoded-byte caps; 20001 inverse-segment rollbacks.",
+    "Existing 512MiB final RSS and 64MiB final-minus-near assertions remain unchanged.",
+    "Sampled aggregate 512MiB owner rejection plus individual Node kernel maxRSS <=512MiB measured at exit; neither constitutes an instantaneous aggregate hard limit."
+  ],
+  "requiredRunnerChecks": [
+    "Fresh owned canonical 0700 resource directory and exclusive files; exact pinned NODE_OPTIONS only in child environment; preserve original exit codes 71/72/73.",
+    "Tiny real store preflight under same preload/imports before volume admission; explicit actual receipt, source/dependency/owner checks and positive process cleanup.",
+    "Reconcile receipts with observed Node processes, including test runner, test worker and all three crash children. Missing receipt or any kernelPeakWithin512MiB false prevents success regardless of child exit code.",
+    "Keep original deadline, sampler-gap, cleanup/link-restoration and hash gates. Fail on first preflight/memory/time/test failure; no automatic rerun or limit increase.",
+    "Verify available disk and short owned TMP before launch; source/test remains unchanged."
+  ],
+  "openRequirements": [
+    "Four-times history growth and later-post retrieval are not covered by this ~2.1x plugin-only test.",
+    "No dense-wire, production SQL query/factory/GC, genuine archive, proof or overall capacity acceptance.",
+    "No memory subtraction for native ABI initialization; kernel maxima are per-process, measured before final receipt-write/exit work."
+  ],
+  "primarySource": "https://nodejs.org/docs/latest-v24.x/api/process.html#processresourceusage",
+  "primarySourceFinding": "Node v24.21 documents maxRSS as current-process maximum resident set size in KiB from uv_getrusage.",
+  "runtimeExecutedByReviewer": false
+}

@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T15:07:30.610Z",
+  "method": "Read-only reconciliation after completed browser exit; no transaction repeated",
+  "originalBrowserRunPassed": false,
+  "originalReport": ".build/hosted-v6-onboarding-20261010/withdraw-failed-commitment-input-20261010T1505.json",
+  "originalReportSha256": "3f1950bba54b70a7326bf910dc22cfd11b4f84c9023495b5beae61811e47de45",
+  "networkIdentityVerified": true,
+  "beforeFixRejected": true,
+  "checksummedDepositorRejected": true,
+  "receipt": {
+    "hash": "0x195cf29c310c001b4479aebe727f661c1f72dd0b59d7e2b4d7e2856a57b1f3d6",
+    "status": "checkpointed",
+    "blockNumber": 15548,
+    "blockHash": "0x1a4904ac511e54520299d253fa8c01e220865593ad260faa6064e7183ee59113",
+    "transactionFee": "903720144595200000"
+  },
+  "exitLeaf": "0x000cc2070e7f43c1b5b48ff1a2c2c21be1f530ba7bb51eaa8d29a1f5a1b1a458",
+  "amount": "10000000000000",
+  "ethereumNonceBefore": 7,
+  "ethereumNonceAfter": 7,
+  "portalPrincipal": "10000000000000",
+  "canonicalEffectBinding": true,
+  "exactlyOneExitLeaf": true,
+  "moderationDeadline": 1791643692,
+  "chainTimeAtExit": 1791644556,
+  "onboardingIdentityVerified": true
+}

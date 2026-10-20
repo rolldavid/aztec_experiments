@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T21:32:45.363920+00:00",
+  "source": "536c068c1764192edf8380da0f953eaa8e62c633",
+  "base": "125a69175b8a9df388f6f2938339090fa1bfb6cc",
+  "verdict": "accepted_bounded_component_composition_only",
+  "findings": [],
+  "scope": "Eight exact component files; no application consumer or native endpoint is enabled and no shared PXE prototype patch is applied. No integration advance approved.",
+  "sourceAssessment": {
+    "all8FilesByteIdenticalToReviewedDesign59d": true,
+    "fullRollingNoirTreeEqualsDesign59d": true,
+    "processed799ArtifactLocalSourcesMatchCurrentCandidate": true,
+    "all13ExplicitBindingsRehashed": true,
+    "sharedSdkPrototypeOriginalsRemainUnchanged": true,
+    "actualGeneratedPageAndIsolatedQueueTransformationCovered": true,
+    "sourceHashes": {
+      "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+      "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+      "prover/compact-block-native.mjs": "ad40275ba28bf28b136b9e8b1ef6a3fd56893638fc85dd6835606d94f49625ca",
+      "prover/compact-block-native.test.mjs": "b12881d8551a521ab3e188e0a9413d1820cf8fdb75815d79e82951c427143489",
+      "scripts/patch-pxe-preference-page.mjs": "f27c2b0677bed2059c0e7ec5f2dbed738906b83ce4196c788651318022d9c860",
+      "scripts/test-pxe-preference-page.mjs": "72a8042199feff02b81a041b354e2072dcd604404c7e0b5937ec1996113ef283",
+      "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+      "shared/rolling/compact-block.test.mjs": "ee8ccaabf52d711945a114a302a0dd1689b6fd048366262d2f57d4feb9ed39f9"
+    }
+  },
+  "runtime": {
+    "elapsedMs": 26394,
+    "peakTreeRSSKiB": 982736,
+    "ownedTreeAbsent": true,
+    "deadlineMs": 180000,
+    "rssLimitKiB": 4194304
+  },
+  "tests": {
+    "tests": 127,
+    "pass": 127,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "independentAudit": {
+    "path": "execution/evidence/G07/recovery-components-536c-independent-audit.json",
+    "sha256": "89511a7bc9a9948ef768818ffa1a961d3fae924d69fe79c03433c50c24059232",
+    "scriptSha256": "4b8b0d639690daa2cec461302fcd236ed2450b022a9d6a220a9f9d9019512c41"
+  },
+  "evidence": {
+    "preparation.json": "cc3ea2074432930d8d309323cd9bba123c6d088a7fc99283a98595ec3ade4096",
+    "before-source.json": "9682b2be9a66e57d60667b8e6c69c97731da03a02ab6bf92e319bd769335b884",
+    "run.mjs": "a3d988cd74e85965aef9bbb153ac1d07278eef59b4c3e752ef323c7dc22dbab1",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "execution-intent.json": "7f8b4d3ffc34a9d5a4571f43ac37d1f207b5d47339de7e84d6995c07686ef7e4",
+    "result.json": "c0918e80da168205b5a033e5bde89a85cac840dccbae7b6dd731f1510f31ec7c",
+    "build.log": "931e7cdc58ea42aa7bea669e7a60ee4e8869bb786a79c4b2dd439b1cbe867575"
+  },
+  "carriedPriorReviews": {
+    "compact-d9e-final-review.json": "615ac511dc6bbb6debbf9ce935c09c5f0aa61b4e901ab29fad89b887fbddefd9",
+    "compact-native-ef368-final-review.json": "d0b1680401dbc01f84528d95d0cfdf22682c8ac30c4024db93a229c85036b2dc",
+    "preference-page-091-source-review.json": "bb008a81f6eafd0f1f401657d1a7faf216e915dc0834574286d51887922852ef",
+    "preference-page-c6bbe-actual-acir-runtime-review.json": "2afb94e52cda5a36954fc801c205d48ecdea0fcfa507a125037c27c20930c08b",
+    "preference-page-59d0-source-review.json": "d0a7a92034466bc351e6fe3ccf06e0807fd8c46339b1dee9c26ea914e2895733",
+    "preference-page-59d-runtime-review.json": "98d74d270e0bf68fbaba79cd5b20bd7fae5334fffc4dbe63e2c9c3c998b973a0"
+  },
+  "interpretation": [
+    "127 actual serial tests cover compact verifier, native HTTP adapter and the 59d component/ACIR experiment together without skips; same 180s/4GiB owner and actual zero exit, cleanup complete.",
+    "Supervisor role label normal-base and builder field are copied generic wrapper labels. Explicit argv is the three serial test files, and no compile or contract build is claimed by this run.",
+    "Compact whole-block ordered-root authentication, public-only closed native selector and allocation/wire guards retain their separately reviewed limitations. Client verification remains mandatory; native response bytes alone carry no authority.",
+    "Processed artifact799 is an isolated experimental artifact. Its current embedded local Noir sources match, but canonical root artifacts/catalog/normal current-rc3 closure have not been rebuilt or qualified for these new two Noir files."
+  ],
+  "remainingGates": [
+    "No current-rc3 API/pins/artifact qualification follows from rc1-derived component pins; separately review rebinding and normal processing under the intended distribution.",
+    "Keep unresolved compiler diagnostics and specialist soundness requirements open.",
+    "No complete bounded history enumeration, authenticated preference-head publication, persisted cursor/cold completeness or large encrypted discovery capacity acceptance.",
+    "No new browser execution or real deployed chain/proof/fee acceptance for this page method. The actual utility test uses Node fake-indexeddb and synthetic chain state.",
+    "Final guard cannot freeze external chain state during local commit; consumer publication requires final canonical/context checks.",
+    "Do not enable installer/distribution hook/native endpoint or ship changed contract class from this source-only composition without the remaining consumer, artifact and genuine acceptance gates."
+  ],
+  "nextDisposition": "Source and actual component conjunction is acceptable for continued isolated development. Keep integration held pending current source/artifact/package composition review and explicit scope approval."
+}

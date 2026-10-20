@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T05:34:33.857299+00:00",
+  "verdict": "approved-bounded-static-image-binding-and-Mac-prerequisite-evidence",
+  "candidate": "72e4f6dffb9f779de4b9951f0392e8202b95eebd",
+  "root": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "findings": [],
+  "checks": [
+    "Independently recomputed all six retained image-module bytes and both earlier retained Ethereum module bytes against installed SDK and diagnostic pins. All eight match.",
+    "Recomputed extraction proposal/evidence and actual split-provider receipt hashes; actual receipt source matches immutable 72e git blob.",
+    "All twelve prerequisite stages passed; debug chain and finalized anchor match ordinary provider before trace, with final continuity check. Actual traceTransaction support passes while debugTrace support remains false.",
+    "Receipt/process agree on success, cleanup, no timeout, 3.481-second elapsed execution, no operator retry. No reviewer network/container/provider operation performed."
+  ],
+  "moduleSha256": {
+    "archiver/dest/factory.js": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+    "archiver/dest/archiver.js": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+    "archiver/dest/l1/validate_trace.js": "6fca83f140c3da28950121661081f29360e690b26c18d53e3f63577fc84b0584",
+    "archiver/dest/l1/validate_historical_logs.js": "8125975052ab85070a193eecce0b72290b50a0aec8ae676624da585a7c825727",
+    "blob-client/dest/client/factory.js": "3ecb8952034a058ef69b35191933ca18c9dc351818997566b0ba8dfb60ed01c3",
+    "blob-client/dest/client/http.js": "311a662c12aa687d513dda693286fa95b0680d586afdbab32028e9fe164d2d6f",
+    "ethereum/dest/client.js": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+    "ethereum/dest/contracts/rollup.js": "52f1abedbd8220a87eddea5b65e6cefcebcce129409f09294714972df5ac91a2"
+  },
+  "evidence": {
+    "archiver-six-image-equivalence-20261012.json": "3a15479b8ab4ad475d24236a6c05e7f2329667752265e800f00b54a37455a74a",
+    "split-prerequisites-72e-image-binding-proposal.json": "f5b97157bdbf57a99c95a3ce09a472883a644ca49ccc84978c2622db5b7df79e",
+    "archiver-prerequisites-f32-image-binding.json": "571ecb8923c7fa25362eb7c6d90868e2e75f7e33c2089bd2fcbb8ea6911578ac",
+    "operator05b-image-module-equivalence.json": "0b36f52a9053493fcc1d3a5a425f13a07d43783a9e35525d7d9287ca82acac97",
+    "split-prerequisites-72e-live-1.json": "f4ed2187437ae67cf348b2c2c74484375ebe1a7df699dc9d8435d22eb22a3033",
+    "split-prerequisites-72e-live-1-process.json": "f14f75cd0a900c577d62a72b9ff1b4c0a606ed0ae6a6b4c8f79ac28c2bb8ec5b"
+  },
+  "limits": [
+    "Static extracted-byte provenance relies on retained extraction records; reviewer did not rerun Docker extraction. Eight named JavaScript modules are bound, not the entire image/dependency closure. Earlier package.json version bytes differ and are not declared equivalent.",
+    "Actual prerequisite success was on macOS, not execution of the Linux image, full-node synchronization or prover qualification. Source bindings do not prove identical platform/environment behavior.",
+    "Existing SDK read retries remain disclosed. No automatic fallback is authorized; selected split providers are explicit.",
+    "Historical remote06 failure cause remains unproven; repeated start-block eth_call versus historical-log ambiguity is not retroactively resolved.",
+    "Any Linux launch still requires reviewed bootstrap provider wiring, fresh package/config/user-data <=16384 bytes, budget and shutdown controls, live readbacks and actual qualification."
+  ]
+}

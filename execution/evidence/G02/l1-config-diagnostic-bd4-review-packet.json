@@ -1,0 +1,37 @@
+{
+  "sourceRevision": "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+  "baseRevision": "ac4b5064ba4e7ee080b83333ccafd83f9a9c3ca4",
+  "changedFiles": {
+    "deploy/prover/l1-config-diagnostic.mjs": "add279e6b11177c6735f03e251a1106ddbce00c283ab7578f319e721f88c4fb6",
+    "deploy/prover/l1-config-diagnostic.test.mjs": "d45b98d0c67ea7389f08d45589bb651c0f36000ca2e7c429ed91287452a294b4"
+  },
+  "requirements": [
+    "G14-A01",
+    "G14-A02"
+  ],
+  "acceptance": "Bounded trusted-development public-read diagnostic; no node/startup qualification. Source must independently pass before one live probe.",
+  "command": "'/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test deploy/prover/l1-config-diagnostic.test.mjs",
+  "tests": {
+    "passed": 13,
+    "failed": 0,
+    "durationMs": 1485.619459,
+    "label": "development doubles, actual installed source pins/SDK error types, disposable child processes; no provider calls",
+    "log": "l1-config-diagnostic-bd4-tests.log",
+    "sha256": "bcd67734047c676960268b7f05a89f88147984365cb53f707aaa6ad266466435"
+  },
+  "proposedLaterCommand": "<pinnedNode> deploy/prover/l1-config-diagnostic.mjs --output <fresh absolute receipt>",
+  "limits": [
+    "fixed public Tenderly only; no URL/config input",
+    "59s worker deadline plus250ms TERM grace and process startup; operator outer60s applies",
+    "16KiB exclusive0600 fsynced receipt; no raw stdout/stderr/provider error fields",
+    "official SDK retries unchanged and disclosed",
+    "readonly finalized continuity does not pin every SDK contract read",
+    "no live probe paid action or service run in this assignment"
+  ],
+  "reviewFocus": [
+    "exact typed numeric projection, accessor/cycle/depth handling",
+    "no endpoint fallback or operator retry",
+    "actual phase operations preserve pinned getL1Config semantics",
+    "partial failure/deadline receipt and child cleanup"
+  ]
+}

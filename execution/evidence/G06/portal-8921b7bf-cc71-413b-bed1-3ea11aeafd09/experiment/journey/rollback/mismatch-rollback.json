@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "reason": "mismatch",
+  "passed": true,
+  "applicationProofs": false,
+  "networkProofs": false,
+  "payerMode": "private",
+  "sourceHashes": {
+    "billboard/rolling_contract/callback-rollback.mjs": "8d5adcccda5609d583dc5ceca9e18782891669f56e7272d03ab4ab5fb07c6455",
+    "billboard/rolling_contract/src/main.nr": "d9a95b1df3e764072019c94cf574cc39e57795cd159b2b6c915d6e455e958499",
+    "billboard/rolling_contract/src/posting.nr": "ee9864837ba6ea243afbf65779e7bb7cf5c49e41fe60c4443ff2b623051dd2e5",
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "experiments/private-bok/escrow/src/main.nr": "fdd45a3ebf90d28df3aa59894d523a034835249c3781e370cb5dd1d1c710a46b",
+    "experiments/private-bok/rejection.mjs": "e178ca01a3be777acedd0635bf7a9afc657aac5e4537a863c909b5faad181f8e",
+    "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b"
+  },
+  "artifactHashes": {
+    "billboard/target/rolling_contract-RollingBoard.json": "5efc8d3063717355bf04f81bfac568f5cf58e1c7a7ee5c17d00eef814815abe8",
+    "experiments/private-bok/target/private_bok-PrivateBok.json": "4975cf4699f75a030007fe5b1dc752609675b07c1e1cdd6b9fdfa37e363cbc16"
+  },
+  "contractClasses": {
+    "board": "0x0c45dfd005e7f862153158e0f075b7dc364bbda82e0f99dcaa2b48ee76a84185",
+    "bok": "0x278905ff308f40e32500b5241820f55ff506830652adb53ce57783b6200b5dff"
+  },
+  "submission": "canonical reverted",
+  "txHash": "0x08957c011e4c3207e4ef6564e30c1804c48bbb5f347fd942f155f3f899c1282e",
+  "blockNumber": 28,
+  "blockHash": "0x0365b384697a2eba26655dd2c1a19ba3d872a5783bf001b9f99de7926e962e92",
+  "effectSha256": "7b9e3ea4e26e93c4e9a731a0b892aab7a5e3aec211821f8f2d3ce6c730b8672f",
+  "effectFile": "mismatch-effect.bin",
+  "checks": [
+    "post-count-unchanged",
+    "no-post-record",
+    "private-deposit-unchanged",
+    "owned-names-unchanged",
+    "request-unchanged",
+    "private-credit-unchanged",
+    "canonical-revert",
+    "no-exit-message"
+  ]
+}

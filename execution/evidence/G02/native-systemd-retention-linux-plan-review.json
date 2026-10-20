@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:50:58.288669+00:00",
+  "candidate": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "planSha256": "0e1d57af1f7c774cae22fc96752c73a70d4b2a7aa78aed382eca423051587bbe",
+  "verdict": "plan-suitable-for-exact-runner-preparation-not-execution-grant",
+  "findings": [],
+  "scope": "Disposable ARM64 Linux systemd255 semantic regression with true/false/sleep; does not run Aztec binary, prove AMD64 compatibility or qualify native Linux toolchain.",
+  "necessaryBoundaries": [
+    "Separate setup and offline execution grants; no implicit pull/build/run on reviewer approval.",
+    "Pin exact official base digest and verify downloaded signed package closure/version/archive hashes before binding output image ID. Record actual download/disk sizes and enforce stated caps, not only estimate after completion.",
+    "Pass only new public helper/unit bytes; no whole repository, credentials, Docker socket, host bind mounts/namespace or private runtime config.",
+    "SYS_ADMIN is materially broad even inside DockerVM. Keep private PID/IPC/cgroup/mount namespaces, default seccomp/AppArmor, read-only root, no privileged/unconfined fallback. Verify actual confined cgroup root/mount and resource limits before any writable remount; otherwise stop with fixed blocked receipt.",
+    "Explicit container=docker and deterministic machine-id/container startup prerequisites should be handled in reviewed public image/helper; no accidental host login/network services.",
+    "Success reference must be from active timer toward test service; baseline GC is diagnostic not a mandatory reproduced failure. Require postwait CLD_EXITED/status0/start>0 and unchanged identity after3s.",
+    "Nonzero and timeout must remain rejected by actual unchanged classifier; retain actual manager identity/build and fixed unit/order readbacks.",
+    "Host watchdog owns one immutable container ID from exclusive intent; collect finite State before removal, reconcile unknown create without replay, confirm process/container absence. Never remove preexisting containers/images."
+  ],
+  "runtimeUnknown": "Whether DockerDesktop grants a confined writable cgroup hierarchy under proposed capabilities is unproven. Failure must not trigger privilege escalation or repeat.",
+  "nextReview": "Exact executable setup/probe/host watchdog and immutable input/output hashes before any setup/runtime grant.",
+  "primarySources": [
+    "https://systemd.io/CONTAINER_INTERFACE/",
+    "https://docs.docker.com/reference/cli/docker/container/run/",
+    "https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd.unit.xml"
+  ],
+  "reviewExecution": "Read-only plan/source/official-documentation review; no Docker/setup/native/provider actions."
+}

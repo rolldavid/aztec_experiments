@@ -1,0 +1,37 @@
+✔ pool allocation precedes source and persists one unique repository per thread across restart (257.164875ms)
+✔ pool simultaneous reservations cannot allocate the same slot or lose prior allocations (64.87425ms)
+✔ pool owner tamper refuses allocation without remote mutation (39.310625ms)
+✔ pool public tamper refuses allocation without remote mutation (36.503834ms)
+✔ pool fork tamper refuses allocation without remote mutation (36.373958ms)
+✔ pool archived tamper refuses allocation without remote mutation (34.022208ms)
+✔ pool marker tamper refuses allocation without remote mutation (37.326792ms)
+✔ pool actions tamper refuses allocation without remote mutation (33.333708ms)
+✔ pool head tamper refuses allocation without remote mutation (35.529375ms)
+✔ pool genesis tamper refuses allocation without remote mutation (39.070792ms)
+✔ pool manifest admission is append-only and cannot replace or remove a reserved slot (54.179291ms)
+✔ pool crash after allocation persistence resumes allocation without fake creation or reassignment (54.670125ms)
+✔ pool uncertain commit reconciles without replay (196.225375ms)
+✔ pool uncertain commit blocks without replay (144.49975ms)
+✔ pool source cannot allocate after paid work and invalid identities never reserve (42.237625ms)
+✔ allocated pool checks Actions before each new mutation and never repairs settings (188.921167ms)
+✔ pool selected-token admission rejects an unselected numeric repository before reservation (40.542541ms)
+✔ pool cannot reuse connected or legacy repository identities (40.657792ms)
+✔ pool refuses unknown remote head after accepted source and retains the assignment (190.366167ms)
+✔ pool source file limit 512 retains per-write Actions checks within bounded calls (10306.547875ms)
+✔ pool source file limit 513 retains per-write Actions checks within bounded calls (46.939583ms)
+✔ pool appends new slots without changing prior admission or allocation (79.710042ms)
+✔ pool admission preserves legacy creation template and mirror journals byte-for-byte in meaning (379.000417ms)
+✔ pool lost ref acknowledgement retains unique slot and reconciles exact head without replay (201.79175ms)
+✔ thread pool exhaustion reaches hosted caller before reservation or provider and cannot replay saved agent intent (2.756292ms)
+✔ trusted allocation precedes every paid call, including summary=false (170.785792ms)
+✔ trusted allocation precedes every paid call, including summary=true (70.062042ms)
+✔ invalid or changed local identity cannot consume a remote pool slot (73.131125ms)
+✔ connected thread never consumes an empty-thread pool slot (52.965959ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12680.588666

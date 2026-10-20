@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_TINY_ACTUAL_AND_ELIGIBLE_ONE_SELECTED_VOLUME_AFTER_LEAD_GRANT",
+  "actualPacketSha256": "bd1c80117694afe967c719b07d98a9a89acbd4fa02092bc47486a91e9b77b95d",
+  "actualSession": 80406,
+  "elapsedMs": 354,
+  "setupKernelKiB": 63040,
+  "postSupervisorKernelKiB": 65312,
+  "childKernelKiB": 137792,
+  "aggregateSampleCount": 0,
+  "aggregatePeakMeasured": false,
+  "verified": {
+    "actualFileBindings": true,
+    "sourcePins": 553,
+    "dependencyPins": 2402,
+    "ownedCleanupAndLink": true,
+    "successorOriginalSourceAndDependencyMapsIdentical": true,
+    "successorDiff": "directory, exact qualified reusable64KiB SHA, setup-only128MiB guard before TMP/link/child, report field, immutable successful preflight carry"
+  },
+  "successorPacketSha256": "bd345fa5d7f6d748ae279bdd15abc14fee1551eedca5fdd196a725542b13f028",
+  "successorRunnerSha256": "0b027024a339418bf66f1806e787a201c54b7828544c2cb93f796dbfa0d1527b",
+  "successorPreparationSha256": "7e352a61d8f206feee2dbb9887a29bfb0def8963f8084fce0b2b43d5fbfb79ea",
+  "limits": {
+    "deadlineMs": 180000,
+    "sampledTreeRSSKiB": 524288,
+    "setupSupervisorKernelKiB": 131072
+  },
+  "scope": "One unchanged selected105005-event volume case;29 excluded with prior ordinary and corrected crash carry. No instantaneous aggregate cap,4x/later-post,densewire,production factory or genuine archive qualification. Failed43018 retained. No reviewer runtime."
+}

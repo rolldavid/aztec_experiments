@@ -1,0 +1,34 @@
+✔ aggregate session validates canonical none bindings before custody capture (5656.6295ms)
+✔ aggregate session validates canonical bok-portal bindings before custody capture (5690.275ms)
+✔ aggregate session validates canonical fee-portal bindings before custody capture (2557.262917ms)
+✔ aggregate session validates canonical token-decimals bindings before custody capture (3623.732542ms)
+✔ USDC session exposes only explicitly pinned relay capability and retains authenticated custody ordering (2186.936125ms)
+✔ aggregate quote scope reuses immutable native anchor and rejects none (13.733416ms)
+✔ aggregate quote scope reuses immutable native anchor and rejects native-reorg (3.596083ms)
+✔ aggregate quote scope reuses immutable native anchor and rejects l1-reorg (5.579209ms)
+✔ aggregate quote scope reuses immutable native anchor and rejects token-decimals (8.170208ms)
+✔ aggregate quote scope reuses immutable native anchor and rejects context (5.112791ms)
+✔ ETH signature preflight rejects expired or forged quotes before consent (135.580625ms)
+✔ USDC signature preflight rejects expired or forged quotes before consent (61.766917ms)
+✔ lost send reply retains original context; recovery never rebroadcasts (1297.588875ms)
+✔ aggregate confirmation fails closed for expired (39.576208ms)
+✔ aggregate confirmation fails closed for account (17.540416ms)
+✔ aggregate confirmation fails closed for signature (41.603083ms)
+✔ aggregate confirmation fails closed for pending-state (156.530792ms)
+✔ aggregate retained completion rechecks canonical L2 receipt before preparation and again before payment (2271.5915ms)
+✔ USDC uses two real signatures, retained random custody and one relay post without user Ethereum send (458.147666ms)
+✔ ETH rejected consent preserves custody and permits only a fresh reviewed quote (4001) (213.215375ms)
+✔ ETH rejected consent preserves custody and permits only a fresh reviewed quote (ACTION_REJECTED) (109.389375ms)
+✔ USDC rejected consent preserves custody and permits only a fresh reviewed quote (4001) (280.048417ms)
+✔ USDC rejected consent preserves custody and permits only a fresh reviewed quote (ACTION_REJECTED) (285.542ms)
+✔ consent opens before repeated scope reads, but a changed scope prevents payment and durable intent (137.494667ms)
+✔ rejected consent does not hide an actual changed account (25.678709ms)
+✔ USDC consent delay cannot open an already expired authorization prompt (74.323625ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60394.025542

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:26:26.213995+00:00",
+  "intentSha256": "94d493068428fada62693e5e3a9c72e39f3b4dd091ac32c874f25e226de8850f",
+  "sourceCommit": "dd3e2bc4e4cf9fe37bf5269deae108d0c4d89d7a",
+  "elapsedMs": 4034,
+  "exitCode": 1,
+  "pid": 53862,
+  "parentTimeout": false,
+  "processReaped": true,
+  "receiptPresent": true,
+  "receiptSha256": "5f65b48db1ee0ef7e18ba6561d6a9e48712bc15274e012f7533d1ae0839f051d",
+  "receiptBytes": 8726,
+  "stdoutBytes": 67,
+  "stderrBytes": 0,
+  "rawOutputPersisted": false,
+  "passed": false,
+  "readsComplete": true,
+  "nodeStartupQualified": false,
+  "operatorRetried": false,
+  "stages": [
+    {
+      "name": "source-and-effective-config",
+      "status": "passed"
+    },
+    {
+      "name": "chain",
+      "status": "passed"
+    },
+    {
+      "name": "anchor-before",
+      "status": "passed"
+    },
+    {
+      "name": "registry-code",
+      "status": "passed"
+    },
+    {
+      "name": "registry-addresses",
+      "status": "passed"
+    },
+    {
+      "name": "canonical-constants",
+      "status": "passed"
+    },
+    {
+      "name": "candidate-constants",
+      "status": "passed"
+    },
+    {
+      "name": "anchor-after",
+      "status": "passed"
+    }
+  ],
+  "canonical": {
+    "address": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "version": "3409706519",
+    "runtimeBytecodeSha256": "a5eaa68d7e0d622865b19d9b55b061585cb070aabbf6ea8abf4e88780aa740f6",
+    "runtimeBytecodeBytes": 24222,
+    "constants": {
+      "genesisArchiveRoot": "0x29eb2c527f8d45276430363214e6c8d709ef3f657a3670ebac3179373d41e5c4",
+      "vkTreeRoot": "0x13eeb174d4119b221a22721853261759f57a65a57e864ad78b840b23cde69e02",
+      "protocolContractsHash": "0x0f54271c52865841a77aaa66036eed901aff22fdce9f08e123ec8b205c9854d7"
+    },
+    "mismatches": [
+      "genesisArchiveRoot",
+      "vkTreeRoot",
+      "protocolContractsHash"
+    ],
+    "compatible": false
+  },
+  "candidate": {
+    "address": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "version": "2914217885",
+    "runtimeBytecodeSha256": "9c7b822206c4db42504a94fd087262e36abf9d830cf5eee2fcf4d0ae30c648e6",
+    "runtimeBytecodeBytes": 24418,
+    "constants": {
+      "genesisArchiveRoot": "0x2ef904bbd5edc11a43cf48c4270edbf631d14aeaddafe307f8fa959e8113bfb6",
+      "vkTreeRoot": "0x2d89003cc2dc62b06f07d83d3635c66c63fc43668369d30e7ee516f908ee10e3",
+      "protocolContractsHash": "0x0030cdae9792549b9edb5b865f4e10e91bb87565f22ab80d405213f7e991b378"
+    },
+    "mismatches": [],
+    "compatible": true
+  },
+  "targetScopeUnchanged": false
+}

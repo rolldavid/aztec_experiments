@@ -1,0 +1,56 @@
+{
+  "base": "72a7019a002657e089d29d13f6c81ded58113152",
+  "candidate": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+  "task_id": "G04-ci-artifact-binding",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "72a7019a002657e089d29d13f6c81ded58113152",
+      "candidate": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+      "task_id": "G04-ci-artifact-binding",
+      "id": "current-build-constructor",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 existing targeted SDK constructor/missing/altered artifact tests",
+      "environment": "Independent installed actualSDK",
+      "observed": "3 targeted pass894ms; worker29focused. Productionrelease guards unchanged.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/ci-artifact-binding-20261018/review.json",
+          "sha256": "e3c731be19bc9af95496c37efe637c212d3ab95d717d4491e0b57728e2050496"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "72a7019a002657e089d29d13f6c81ded58113152",
+    "candidate": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+    "task_id": "G04-ci-artifact-binding",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/ci-artifact-binding-20261018/review.json",
+        "sha256": "e3c731be19bc9af95496c37efe637c212d3ab95d717d4491e0b57728e2050496"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "72a7019a002657e089d29d13f6c81ded58113152",
+      "candidate": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+      "task_id": "G04-ci-artifact-binding",
+      "id": "RC36-current-build-binding",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/ci-artifact-binding-20261018/review.json",
+          "sha256": "e3c731be19bc9af95496c37efe637c212d3ab95d717d4491e0b57728e2050496"
+        }
+      ]
+    }
+  ]
+}

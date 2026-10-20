@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T05:42:44.826898+00:00",
+  "reviewer": "reviewer-20261011",
+  "candidate": "a3f7e200b4b4806842d52863c2807e84646a8610",
+  "base": "d941042545eea332b31329e3cc50e387566624bf",
+  "verdict": "approved-bounded-shared-validation-interface",
+  "findings": [],
+  "sourceSha256": {
+    "scripts/testing/rolling-composer-browser.mjs": "39657ce04523e498374f450f51fa53923224d0c1e6aa48749a2b2591384c84e1",
+    "scripts/testing/rolling-composer-browser.test.mjs": "1b42a3198da3afda12a0d13a8372d555afa37b5bc4780d55a6f03ee63942c52a"
+  },
+  "checks": [
+    "Read two changed paths before tests. Existing private backup validator exported; mandatory absolute canonical parent path, nonsymlink directory, current UID and exact0700 checked inside shared function before file inspection.",
+    "Existing composer control validator retains captured primitive snapshots, two distinct backup paths, parent validation and fixed sanitized outer error. Existing file0600/UID/regular-file/size/realpath/O_NOFOLLOW/fstat inode-device-size validation and strict encrypted-envelope schema remain unchanged. File descriptor always closes.",
+    "Independent complete cheap suite 48/48 passes, zero skipped, 791.969708ms. New direct exported-validator tests cover valid encrypted backup, parent0755, wrong parent and symlink file. No browser/network/secret read."
+  ],
+  "tests": {
+    "command": "NODE_BACKEND=js pinned-Node24.21.0 --test scripts/testing/rolling-composer-browser.test.mjs",
+    "log": "/tmp/reviewer-backup-interface-a3f-tests.log",
+    "sha256": "abadf5571956573a67784159f295bdbccbf11881aadf92a976774c6cbca78b76",
+    "passed": 48,
+    "failed": 0
+  },
+  "consumerRequirements": [
+    "Parent owns immutable private directory/files for full worker lifetime, including after validation: validator returns a path, not a held descriptor or content snapshot.",
+    "Future consumer must retain a fixed sanitized outer error boundary like validateRollingComposerControl; raw filesystem/JSON errors from exported low-level helper must not enter public evidence/logs.",
+    "Actual single-account browser handoff, encrypted import, proof/send accounting and lifecycle need separate source/runtime review."
+  ],
+  "limits": [
+    "No genuine browser or chain acceptance established by this extraction.",
+    "No protections against malicious same-UID concurrent file mutation beyond documented parent immutability ownership."
+  ]
+}

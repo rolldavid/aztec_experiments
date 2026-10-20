@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-timeout=20000",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "pid": 59002,
+  "exitCode": 0,
+  "elapsedMs": 28744,
+  "processExited": true,
+  "source": {
+    "apps/rolling/wallet-panel.mjs": "cecca39139e6ba679045471269971c6e6ff78a2ff3f09a690d182909b84a6616",
+    "apps/rolling/wallet-panel.browser.test.mjs": "71013c05fe8b94403c653ce98095f09f1dfc49baae7b089d585220806d83e3a4"
+  }
+}

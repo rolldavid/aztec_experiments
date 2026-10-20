@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-11T22:23:25.383073+00:00",
+  "scope": "Read-only local runtime metadata. No start/pull/container/build/API mutation.",
+  "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "checks": {
+    "dockerVersion": {
+      "available": false,
+      "exitCode": 1,
+      "category": "RUNTIME_UNAVAILABLE"
+    },
+    "dockerInfo": {
+      "available": false,
+      "exitCode": 1,
+      "category": "RUNTIME_UNAVAILABLE"
+    },
+    "image": {
+      "available": false,
+      "exitCode": 1,
+      "category": "RUNTIME_UNAVAILABLE"
+    }
+  },
+  "dockerDesktop": {
+    "CFBundleIdentifier": "com.docker.docker",
+    "CFBundleShortVersionString": "4.41.2",
+    "CFBundleVersion": "191736"
+  },
+  "additionalMetadata": {
+    "cliVersion": "Docker version 28.1.1, build 4eba377",
+    "userDockerSocketExists": true,
+    "systemDockerSocketExists": true,
+    "orbStackAppExists": false,
+    "connectionCategory": "CANNOT_CONNECT_DAEMON",
+    "exactDockerBackendProcessObserved": true,
+    "dockerHostOverridePresent": false,
+    "dockerContextOverridePresent": false,
+    "selectedContextTransport": "unix",
+    "selectedUnixSocketExists": true
+  },
+  "explicitDesktopContext": {
+    "desktopLinuxContextPresent": true,
+    "explicitDesktopDaemonAvailable": false,
+    "category": "CANNOT_CONNECT_DAEMON"
+  }
+}

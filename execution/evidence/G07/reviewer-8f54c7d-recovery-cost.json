@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T23:31:21.848833+00:00",
+  "sourceRevision": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+  "baseRevision": "78ad4718583ca14a4bdc005f949e5db2db277744",
+  "workerRevision": "dba0f4281c320a113bf70016144fba0d82a36cf6",
+  "requirements": [
+    "RC25",
+    "RC26"
+  ],
+  "performanceRequirement": "RC40 fresh whole recovery120s remains unqualified; page10s unchanged",
+  "verdict": "approve",
+  "scope": "Four existing source/test paths plus two normal generated SDK artifacts; authenticated recovery component and generated closure only.",
+  "findings": [],
+  "resolvedFindings": [
+    {
+      "id": "G07-OPT-1",
+      "severity": "P1",
+      "originalRevision": "36fad1c81feab9c8c99e0efd7ed222aacb19793a",
+      "scenario": "After an incomplete encrypted receipt, a changed or missing canonical old anchor failed before the optimistic catch set resumeMailbox. Every next explicit read could repeat the stale-anchor failure without reaching SDK reset.",
+      "repairRevision": "dba0f4281c320a113bf70016144fba0d82a36cf6",
+      "resolution": "The catch now covers speculative anchor recheck and fetch. First failure remains an error with no SDK call or encrypted CAS; only the next explicit read invokes the ordinary authoritative mailbox/reset. Existing source and tests independently inspected; both changed/missing regressions pass."
+    }
+  ],
+  "changedFiles": [
+    {
+      "path": "apps/dist/aztec_bundle.js",
+      "sha256": "f4b4794e27c257ec2a2a0a29a4e9768bb87bf53ebf091748d4e0e19013a29f92"
+    },
+    {
+      "path": "apps/dist/sdk-manifest.json",
+      "sha256": "a7043e0716466c519488da38db7b564aac964bb002d9f9e8823d184c7f0b38c0"
+    },
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "sha256": "a4904190ad523aa38bc47bc5aa1e3ada490d41d293f8f3a7676972a84a25eda8"
+    },
+    {
+      "path": "scripts/test-pxe-preference-page.mjs",
+      "sha256": "93d2d771b1b21aa948bcb2986553da60e795f544f6fdd4a79182ccea3da8c4c4"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "sha256": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.test.mjs",
+      "sha256": "0700538deea46351ce6b3e7c055aa2423c20fc0ea6df8ee8248a2729465af087"
+    }
+  ],
+  "reviewChecks": [
+    "Inspected production diff and changed tests before packet conclusions. All four final source/test blobs equal frozen repaired worker; no additional source changes in composition.",
+    "Optimistic request requires expected sequence and no restart. Queued helper validates exact epoch/sequence or one lost reply, or exact predecessor of committed promotion; database/generation reset and canonical descendant handshake precede speculative body authentication. No speculative body grants promotion, ownership or preference authority.",
+    "Encrypted receipt is only a public transport range hint. Original body/archive/receipt/witness/utility validation, physical log/block/byte bounds, atomic stage seals, account/network/context guards and pre/post encrypted CAS plus final authoritative mailbox/canonical checks remain.",
+    "Failed speculative transport or stale-anchor check is not hidden by an alternate call. Explicit next-read mailbox recovery preserves the initial failure. Lost reply/CAS, terminal mailbox, promotion and rollback coverage remains; reorg liveness regression repaired.",
+    "Artifact cache is per binding, at most one exact official serialized artifact and expected hash/class tuple. Hashing uses schema-decoded detached bytes, validates both identities and reserializes original after await before installing cache. Installed official ABI serializer/parser inspected. Current on-chain class, network and canonical header are rechecked at original boundaries; no mutable-object-identity authority cache.",
+    "Canonical node identity/header/contract reads are independent fixed public requests, detached and allSettled-drained before any authority/ingestion. Wrong network may issue two public peers but cannot stage notes/events or run utility; original page path unchanged. Held peer/account mutation tests retain ownership and reject.",
+    "Independently ran71 reader/transport tests on36fad:71PASS0FAIL0SKIP14742.149ms. Independently ran repaired changed/missing orphan-anchor cases on dba:2PASS0FAIL0SKIP2920.846ms. No expensive SDK, browser, service, provider or financial operation.",
+    "Verified all packet log/report hashes. Actual SDK/ACIR identity, replay/advance/bad-body and cursor32checks passed; separate settlement/reset31checks passed. Canonical peer and empty-batch named cases passed within a later overall30s timeout; that run remains partial/nonpass. Initial selection errors and fixture failures preserved; no full native suite pass inferred.",
+    "Final scripts/check-sdk.mjs independently passes2057inputs/8outputs Aztec6.0.0-rc.3. Both committed SDK artifacts equal normal .build/sdk output; all97 wallet input hashes and25 output sizes/hashes match. Final four source blobs equal dba. Root normal SDK/apps/wallet logs plus165PASS0FAIL0SKIP2194.499ms helper/manifest/reader checks inspected.",
+    "Owning materialization archived previous helper and restored exact original eight SDK inputs before normal installer; recovery helper12143bb09f9a17918b5514a4ff6b0118492f51a5fbe3b1b5d71f4e3d86788c5a. Reader-only P1 repair does not alter helper. Initial missing-forge build failure remains retained, subsequent normal build uses existing pinned Foundry."
+  ],
+  "workerPacket": {
+    "path": "rolling-design/execution/evidence/G07/native-social-wire/recovery-cost-36fad-review-packet.json",
+    "sha256": "1ced3d5c89d0e61b0725711705b5de7bff3cf3c0cb8169675f08af61ed771f40"
+  },
+  "closureLogs": [
+    {
+      "path": "rolling-lead-bok/.build/g07-recovery-cost/apps-build.log",
+      "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+    },
+    {
+      "path": "rolling-lead-bok/.build/g07-recovery-cost/closure-checks.log",
+      "sha256": "fe4c8ab3606e46b9cc1fe7e0e345b377828486abf9456e8f27f90a4b6fba49fe"
+    },
+    {
+      "path": "rolling-lead-bok/.build/g07-recovery-cost/sdk-build-missing-forge.log",
+      "sha256": "176aa744d3a186172b34f743ef1da8b1cc4ed879f13c525d8fc13794e3004e09"
+    },
+    {
+      "path": "rolling-lead-bok/.build/g07-recovery-cost/sdk-build.log",
+      "sha256": "4131e9273ed9246dbc06db48d0a43b4eccb4f1bfca329f71dd575f366dfc29ef"
+    },
+    {
+      "path": "rolling-lead-bok/.build/g07-recovery-cost/wallet-build.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    }
+  ],
+  "limits": [
+    "No actual integrated throughput or fresh keys-only recovery within120s established by this source review. Existing bounded native/page/whole thresholds remain required.",
+    "SDK/ACIR tests use genuine utilities/stores with labelled chain fixtures, not actual inclusion or testnet real-proof acceptance.",
+    "No specialist privacy/soundness audit, network release clearance or fourteen-day qualification inferred."
+  ]
+}

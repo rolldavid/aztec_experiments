@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-14T10:54:24.951637+00:00",
+  "candidate": "eb1bd4b09e859c09e58022b3f872c477bebf5c95",
+  "disposition": "approved-source-component",
+  "sourceHashes": {
+    "apps/rolling/wallet-runtime.mjs": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+    "apps/rolling/wallet-session.test.mjs": "8e312317e8f1491bfc98dc068f668a9757acfe003237eb9d00a88fedab0fabdf"
+  },
+  "findingClosed": "The actual guarded custody capability omitted chainId, so original collateral/Bok refund prepare rejected before any send. Returning normalized chainId after the existing live chain/address/context guard supplies the already-verified identity required by the withdrawal capability.",
+  "failurePaths": [
+    "Chain/address/account/transport/context guards unchanged and still re-run at confirmation and actual send.",
+    "Frozen capability exposes normalized chain string only; it adds no signing authority, network request, or replay behavior.",
+    "Original canonical L2 exit, Ethereum journal, gas cap and finality guards remain unchanged."
+  ],
+  "checks": {
+    "before": {
+      "failed": 2,
+      "cause": "ROLLING_WITHDRAWAL_RECOVERY_REQUIRED at wallet-session.mjs:106"
+    },
+    "after": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1558.376833
+    },
+    "regressionSemantics": "Actual captureRollingFundingWallet composed with actual createCollateralWithdrawal and encrypted journal; controlled EIP1193/node/Ethereum provider. Both collateral and Bok prepare succeed without send, chain switch before confirm rejects without send."
+  },
+  "normalWalletManifest": {
+    "sha256": "09214b635b3bed4a65a72f7fbb211dfed1e3c794d5039229a37a7beb8ec25b7b",
+    "inputsVerified": 97,
+    "outputsVerified": 25,
+    "mismatches": []
+  },
+  "logs": {
+    "custody-chain-before.log": "e0a4fb3a972a6c7e44a7dc6255ccb0ddf11677e872e113a3b0ec19c0ba31a0b6",
+    "custody-chain-after.log": "d8dfd8affc17120941d3edaf07eef023fb45f1eb9261a6ace5ef2c93ce6a5e4f",
+    "custody-chain-build.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+  },
+  "blockingFindings": [],
+  "limitations": [
+    "No actual financial transaction or wallet browser acceptance inferred from controlled checks. Updated served immutable wallet manifest requires the owner-managed restart."
+  ]
+}

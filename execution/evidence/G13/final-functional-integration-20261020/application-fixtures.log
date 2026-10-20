@@ -1,0 +1,12 @@
+✔ actual restarted checkpointed revert permits the next action, and reorg prevents acknowledgement (14.991458ms)
+✔ acknowledged checkpointed revert rechecks its canonical anchor before estimation: false (3.727208ms)
+✔ acknowledged checkpointed revert rechecks its canonical anchor before estimation: true (1.491791ms)
+✔ RC22 real persistent-index cursor crosses both wallet accounting boundaries and resumes its producer (511.99125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2395.619

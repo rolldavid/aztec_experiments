@@ -1,0 +1,10 @@
+✔ account invalidation synchronously removes private DOM and partial recovery never requests public pages (660.251917ms)
+✔ invalid private names cursor page preserves current list and stops without retry (270.536042ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1227.799917

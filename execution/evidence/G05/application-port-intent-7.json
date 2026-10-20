@@ -1,0 +1,17 @@
+{
+  "createdAt": "2026-10-11T21:19:29.654574+00:00",
+  "source": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+  "attempt": 7,
+  "scenario": "rolling-application-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "hypothesis": "Installed decoder uses undefined for Option::None. Verified ABI-aware utility normalization maps only optional absence to null before encrypted persistence;24 independent actualSDK encoder/reopen checks pass. Required values remain failclosed; no addedRPC/retry or acceptance change.",
+  "priorFailure": "application-a7615508-10c0-40fa-95d6-284da5eb7fe4.json",
+  "diagnosis": "option-none-a761-diagnosis.json",
+  "review": "option-none-43f9-review.json",
+  "combinedSourceReview": "combined-8a1-source-review.json",
+  "scope": "Five genuine application actions, encrypted journal recovery, actual canonical public HTTP and SQLite cold reopen.",
+  "status": "launching once",
+  "serialization": "Avatar browser15 and combinedreader21 ended. No other localheavyjob. Remote04 queryonly, no remoteproof."
+}

@@ -1,0 +1,35 @@
+from pathlib import Path
+import json,hashlib,subprocess,os
+w=Path.cwd();root=w.parent/'aztec_experiments';d=Path('/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/full-prover-coherent/base-preparation');report=json.loads((d/'result.json').read_text());sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+prep=json.loads((d/'preparation.json').read_text()); assert str(w)==prep['cwd']; assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=w,text=True).strip()==prep['source']
+before={'head':prep['rootSnapshot']};rootdiff=[]
+source=json.loads((d/'before-source.json').read_text());sourcediff=[p for p,h in source.items() if not(w/p).is_file() or sha(w/p)!=h]
+manifest=json.loads((w/'.build/contracts-manifest.json').read_text());inputdiff=[p for p,h in manifest['inputs'].items() if sha(w/p)!=h]
+rows={};lock=json.loads((w/'noir-dependencies.json').read_text());raw=json.loads((d/'raw-snapshots.json').read_text())
+for name,p in [('Billboard','billboard/target/billboard_contract-Billboard.json'),('PrivateFPC','billboard/target/private_fee_contract-PrivateFPC.json'),('PluginAdapter','billboard/target/plugin_adapter-PluginAdapter.json')]:
+ a=json.loads((w/p).read_text());fns=[f for f in a['functions'] if 'abi_private' in f.get('custom_attributes',[])];embedded={v['path']:hashlib.sha256(v['source'].encode()).hexdigest() for v in a['file_map'].values() if v['path'].startswith('dependencies/')};locals_={v['path']:v['source']==(w/v['path']).read_text() for v in a['file_map'].values() if not v['path'].startswith(('dependencies/','std/'))};original=json.loads(Path(raw[name]['snapshot']).read_text());std=lambda artifact:{v['path']:v['source'] for v in artifact['file_map'].values() if v['path'].startswith('std/')}
+ rows[name]={'path':p,'sha256':sha(w/p),'transpiled':a.get('transpiled'),'privateFunctions':len(fns),'privateVKs':sum(bool(f.get('verification_key')) for f in fns),'embeddedDependenciesMatch':embedded==lock['embeddedSourcesByContract'][name],'localSourceEntries':len(locals_),'allLocalSourcesExact':all(locals_.values()),'compilerStdSameAsReviewedRaw':std(a)==std(original)};assert rows[name]['transpiled'] and rows[name]['privateFunctions']==rows[name]['privateVKs'] and rows[name]['embeddedDependenciesMatch'] and rows[name]['allLocalSourcesExact'] and rows[name]['compilerStdSameAsReviewedRaw']
+canon={'apps/src/billboard/billboard_artifact.json':rows['Billboard']['sha256'],'apps/src/billboard/deploy/billboard_artifact.json':rows['Billboard']['sha256'],'apps/src/billboard/censor/billboard_artifact.json':rows['Billboard']['sha256'],'apps/src/billboard/private_fee_artifact.json':rows['PrivateFPC']['sha256'],'plugins/adapter_artifact.json':rows['PluginAdapter']['sha256']};assert all(sha(w/p)==h for p,h in canon.items())
+portal={}
+for name in ['BillboardPortal','PluginPortal']:
+ p=w/f'billboard/portal/out/{name}.sol/{name}.json';a=json.loads(p.read_text());m=a['metadata'];m=json.loads(m) if isinstance(m,str) else m;portal[name]={'sha256':sha(p),'compiler':m['compiler']['version'],'creationPresent':bool(a['bytecode']['object']),'runtimePresent':bool(a['deployedBytecode']['object']),'creationSha256':hashlib.sha256(a['bytecode']['object'].encode()).hexdigest()}
+portalbytes=json.loads((w/'billboard/portal/out/BillboardPortal.sol/BillboardPortal.json').read_text())['bytecode']['object'];assert all((w/p).read_text()==portalbytes+'\n' for p in ['apps/src/billboard/portal_bytecode.txt','apps/src/billboard/deploy/portal_bytecode.txt'])
+assert not inputdiff and manifest['noir']==rows['Billboard']['sha256'] and manifest['privateFee']==rows['PrivateFPC']['sha256'] and manifest['pluginAdapter']==rows['PluginAdapter']['sha256'] and manifest['pluginPortal']==portal['PluginPortal']['sha256'] and manifest['portal']==hashlib.sha256(portalbytes.encode()).hexdigest()
+changed=subprocess.check_output(['git','status','--porcelain'],text=True).splitlines();preserved=all(sha(Path(r['snapshot']))==r['sha256'] for r in raw.values())
+claim=json.loads((d/'generated-write-claim.json').read_text()); oldowned=json.loads((d/'before-owned.json').read_text()); generated={}
+for rel in claim['fixedFiles']:
+ assert (w/rel).is_file() and not (w/rel).is_symlink();generated[rel]=sha(w/rel)
+for boundary in claim['boundedGeneratedDirectories']:
+ for f in (w/boundary).rglob('*'):
+  assert not f.is_symlink()
+  if f.is_file(): generated[f.relative_to(w).as_posix()]=sha(f)
+  else: assert f.is_dir()
+assert not any((w/r).exists() for r in claim['transientFiles'])
+for absolute,h in json.loads((d/'before-tools.json').read_text()).items(): assert sha(Path(absolute))==h
+assert all(sha(d/'prior'/r)==v['backupSha256'] for r,v in oldowned.items())
+allowed=lambda r:r in claim['fixedFiles'] or any(r.startswith(x) for x in claim['boundedGeneratedDirectories'])
+assert all(allowed(line[3:]) for line in changed),changed
+with (d/'generated-snapshot.json').open('x') as f:json.dump({'files':generated,'created':sorted(set(generated)-set(oldowned)),'deleted':sorted(set(oldowned)-set(generated)),'changed':sorted(r for r in set(generated)&set(oldowned) if generated[r]!=oldowned[r]['sha256'])},f,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+s={'source':report['source'],'finishedAt':report['finishedAt'],'sessionId':json.loads((d/'tool-session.json').read_text()).get('sessionId') if (d/'tool-session.json').exists() else None,'passed':report['passed'] and not rootdiff and not sourcediff and preserved,'elapsedMs':report['elapsedMs'],'peakTreeRSSKiB':report['peakTreeRSSKiB'],'ownedTreeAbsent':report['ownedTreeAbsent'],'nativeEnvironment':report['env'],'processed':rows,'portal':portal,'manifestSha256':sha(w/'.build/contracts-manifest.json'),'manifestInputsExact':not inputdiff,'rootHeadBefore':before['head'],'rootHeadAfter':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'rootChangedFiles':rootdiff,'rootSnapshotChecked':False,'rootSnapshotNote':'Context only; all target worktree source/dependencies are checked.','nonGeneratedSourceChanges':sourcediff,'reviewedRawSnapshotsPreserved':preserved,'changedTrackedAndNewOutputs':changed,'resultSha256':sha(d/'result.json'),'buildLogSha256':sha(d/'build.log'),'limitations':['Only first normalbuilder executed; Rolling output nowraw fromfullworkspace compile, notVKqualified. Avatar/PrivateBok remaining.','NormalSDK/portalAST/TXE/realproofs/catalog updates notrun.','260 original unsuppressed compiler-bug diagnostics remainopen; silencednormalcompilelogs do notclear4c77. Forge lint warnings retained infulllog.']}
+with (d/'handoff.json').open('x') as f:json.dump(s,f,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+print(json.dumps({'handoffSha256':sha(d/'handoff.json'),'passed':s['passed'],'elapsedMs':s['elapsedMs'],'peakTreeRSSKiB':s['peakTreeRSSKiB'],'ownedTreeAbsent':s['ownedTreeAbsent'],'processed':rows,'rootChangedFiles':rootdiff,'rootSnapshotChecked':False,'rootSnapshotNote':'Context only; all target worktree source/dependencies are checked.','nonGeneratedSourceChanges':sourcediff,'changes':len(changed),'manifestSha256':s['manifestSha256']}))

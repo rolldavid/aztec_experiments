@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "scope": "G07 production preference reader design guidance only; no implementation or acceptance",
+  "applicationRevision": "a00a0187047df11db71482f669ae17e33954e1ff",
+  "replayRevision": "2f31b43b6596aa5ec6b3d6da9d6c1b956e142038",
+  "sourceSha256": {
+    "node_modules/@aztec-labs/pxe/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "node_modules/@aztec-labs/pxe/src/operation_queue.ts": "96ead2127505711319430a525c3a12604e25936cda330ab04e57d6e36fb17409",
+    "node_modules/@aztec-labs/pxe/src/events/private_event_filter_validator.ts": "85511286bab4b1c07e6b888d7953308b9c25c8f616a8417791c181217122a8e6",
+    "node_modules/@aztec-labs/pxe/src/events/event_service.ts": "fa5aab36e77834ac74fbb8509a5359073116bd6e05575cf8ac4beca1c55add32",
+    "node_modules/@aztec-labs/pxe/src/storage/private_event_store/private_event_store.ts": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+    "node_modules/@aztec-labs/pxe/src/tagging/recipient_sync/sync_tagged_private_logs.ts": "89d2d94153511b6636d2ea044226948ffe0c21a4a4ce127f7a891c45a1a94c19",
+    "node_modules/@aztec-labs/wallet-sdk/src/base-wallet/base_wallet.ts": "014283ecdc329bebae13a2901a09df6d589fad358a1232a0e30232a67614ed61",
+    "node_modules/@aztec-labs/stdlib/src/interfaces/aztec-node.ts": "6d8291e49a0f0bf1e0ffcbea360305edda94ae7dc5590459c605385142765fbe"
+  },
+  "smallestAPI": {
+    "factory": "createRollingPreferenceReader({sdk,pxe,node,owner,deployment,readHead,contextGuard,privateStore}) -> read({signal,deadlineAt})",
+    "ownership": "Session constructs using captured, provenance-verified PXE/wallet/node and raw guarded application.readPreferenceHead capability. Expose one session readPreferences entry through existing locked() (wallet-session22..24), not calls to public session.application methods while already holding that lock. Reader owns no PXE/node/prover/miner lifecycle. Do not expose arbitrary account/board/filter arguments.",
+    "scope": "Encrypted cache domain ROLLING_PREFERENCES_V1 + chainId/version/rollup/board/classId/account/schema. Use existing authenticated encrypted CAS store with distinct framed key; no public cache/API, no plaintext owner/preference log. Class/schema mismatch invalidates cache rather than migrating silently."
+  },
+  "supportedAuthenticity": [
+    "PXE.getPrivateEvents at1378 invokes official operationQueue.runSynced and contractSyncService.ensureContractSynced then store query with caller scopes. Use exact event selector/ABI derived from normally built registered PreferenceChanged artifact, contractAddress fixedboard and scopes:[capturedowner]. Prefer packed PXE result to enforce exactly8fields before ABI decode; BaseWallet getPrivateEvents599 performs ABI decode but omits ordering indexes too.",
+    "EventService49..115 recomputes private event commitment from selector/randomness/content, siloes bycontract and requires commitment in canonical tx nullifiers before storing recipient scope. This is the supported authenticated delivery path; no direct store read/prototype event injection.",
+    "readHead from a00 remains utility-local, NHK-gated state with strict schema/revision/digest. It is not an independent proof. Require actual scoped PXE sync and canonical header continuity; missing/unavailable/unauthorized never becomes empty.",
+    "Node canonical read must use branded trusted node for all personal history/header/event queries. Official node interface offers getBlock/getBlockData, not getBlockHeader. PXE exposes getSyncedBlockHeader() and BlockHeader.hash(). Use actual returned block.hash/current class validation; do not fabricate genesis header if height0 is needed."
+  ],
+  "algorithm": [
+    "Hold existing per-account browser lock/busy ownership for whole reader call; guard/provenance before and after every awaited operation. Await pxe.sync() once via official API (autoSync:false), then capture getSyncedBlockHeader number/hash and raw head. Do not call private operationQueue.run around public PXE methods: nested queue calls can deadlock.",
+    "Initial/reopened start from immutable deployment lowerbound (or1), not a learned public user cursor. Verify persisted checkpoint block still canonical before incremental use. Explicit closed-open ranges [from,to), to<=capturedAnchor+1: SDK validator otherwise silently clamps to current synced bound. Read anchor again around pages; changed anchor means no completed result.",
+    "Validate each exact8field record and metadata selector/block range/blockhash/txhash. Preserve SDK canonical return order; revision must be contiguous1..head, previous_digest chained. Reject duplicate/reordered/missing revisions; do not sort/deduplicate away defects. SDK PackedPrivateEvent omits tx/event index; revision+hash chain is authoritative ordering proof, metadata only binds inclusion.",
+    "Authenticate canonical block hashes for all event-containing blocks and stored checkpoint, using same trusted node, then recheck fixedanchor and head exactly before commit. A concurrent included write or reorg gives explicit changed-snapshot/recovery-needed, never partial success or silent automatic retry. An unchanged older complete snapshot at a stillcanonical anchor is valid with explicit anchor label; it is not a newest-tip guarantee.",
+    "Replay2f31 with exact scope and official Poseidon callback verifies every revision and terminal digest. Only completed verified result replaces committed snapshot through encrypted CAS. Staging progress is marked incomplete and never exposed as empty preferences/notification defaults.",
+    "Readmarkers remain private {thread,throughBlock,blockHash}; compare marker header hash to current canonical header via trusted query before suppressing notifications. Orphaned/unknown markers cannot suppress new replies; do not automatically write replacement markers. Subscriptions,follow sets and global toggle are local derived state, no server per-name subscription/watch requests."
+  ],
+  "bounds": {
+    "recommendedReversibleDefaults": "32blocks/query,512matchingevents/page,512KiB decoded serialized page,32pages/reader step,5s application work budget excluding in-flight official PXE work; all are engineering choices requiring measured validation, not product count ceilings.",
+    "completeOrFail": "If any single page exceeds row/byte limit, fail capacity with no advancement; optional deterministic smaller block windows may be chosen before querying, but never truncate returned data. A single dense block cannot be fixed by block-range paging alone. Query patch must count/limit candidate reads/staged data before array materialization to qualify hard work bounds.",
+    "initialAndReorg": "Stage encrypted verified pages across explicit resumable steps. Return recovering/incomplete until whole1..head verified. Reorg invalidates orphaned checkpoint and derived state; safe smallest fallback restart fromdeployment, bounded perstep. Do not silently trust persisted JSON+checkpoint as content authority.",
+    "incremental": "Reuse only authenticated encrypted previouslyverified prefix whose checkpoint is canonical, read new blocks, verify tail previousdigest/revision and terminalhead. Newcomplete snapshot derived state must be authenticated with prefix; cache mutation/conflict fails, not merged.",
+    "importantLimit": "Reviewed replay2f31 requires full events array and uses O(totalhistory) memory/hash work. It does not implement prefix continuation. A genuinely bounded production incremental reader therefore needs a separately reviewed pure streaming/prefix fold plus encrypted verified-state checkpoint, or explicitly bounded complete replay with capacity limitation left open. Do not advertise current fullreplay as bounded ingestion."
+  },
+  "coldSyncGap": [
+    "getPrivateEvents runs ensureContractSynced before range filtering. sync_tagged_private_logs94..145 discovers all windows and accumulates allLogs to completion regardless requested block range. Block-index query patch alone cannot bound cold decryption/network/staged store allocation.",
+    "No supported per-call cancellation/page limit or historical-anchor override was found on public PXE.sync/getPrivateEvents. Do not invent it or release account lock using Promise.race while underlying queue continues writing. On timeout/abort, suppress publication, preserve busy ownership and await supported operation completion/disposal; operational hard supervisor bounds are acceptance-test controls, not browser cancellation implementation.",
+    "If measurement exceeds budget, either explicitly report recovery capacity unavailable or review a narrow pinned resumable discovery/processing SDK change. That is a separate claim/patch/rebuild, not rawstore bypass."
+  ],
+  "minimalMeasurementsAndTests": [
+    "Actual patched store1k/10k/50k unrelated and matchinghistory: instrument KV read counts, peak returnedbufferbytes and event counts; vary block density and staged changes; identical query CPU/read count should depend on selected range not fullhistory.",
+    "Actual sameowner two updates and a secondowner privateevent isolation, exactselector/8field/corruption/missing/tamperedheader tests, scope/chain/class cache collisions, concurrenthead update, checkpointreorg, quota/CAS failure, and logout duringeveryawait.",
+    "Genuine key-only newPXE/store against growing finalized event history; measure first getPrivateEvents discovery RPCcount/bytes/decrypttime/heap separately from repeated query. Test window/index behavior and prune rollback. No fake keys/events or low-level store preload qualifies cold recovery.",
+    "Trace every actual serialized private query through trustednode and require no ordinary backend preference/account identifiers; suppress stock verbose event/PXE contextual logs containing decrypted content."
+  ],
+  "reservedGates": [
+    "Query patch source/runtime review",
+    "Streaming/replay and encrypted staging source review if required for bounded productionhistory",
+    "Genuine preferenceproofs/fees/head+encrypted events/coldrecovery/reorg acceptance",
+    "Specialist constraint/privacy and deployed archive retention/capacity qualification"
+  ]
+}

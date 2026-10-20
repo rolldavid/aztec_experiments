@@ -1,0 +1,257 @@
+{
+  "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "task_id": "W03-saved-action-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+      "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+      "id": "application-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/review-packet.json",
+          "sha256": "b2a3dcef465441b2680002fccfeaa7a23beb98d1041df8c6ca85bdb778dd8347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/application-all.log",
+          "sha256": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/guards.log",
+          "sha256": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/unknown-fence-final.log",
+          "sha256": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-all.log",
+          "sha256": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-copy-repair.log",
+          "sha256": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/verified.json",
+          "sha256": "f1cf0bf7ab77d015e40d1cfd428ebfc6025d9c929ba9c89afe54994cb734f2dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/live.json",
+          "sha256": "70e4099c0fe3fe018520b5436b603392efd7d3c83ae71c3b1e40acd7cae669bf"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+          "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+        }
+      ],
+      "command": "Node24 --test --test-concurrency=1 shared/rolling/application.test.mjs plus final selection inpacket",
+      "environment": "Node24.21.0 Chrome155 pinned rc3 dependencies; controlled tests labelled, live native proof flags false",
+      "observed": "229full application+4final fence checksPASS; independent41PASS; no production change aftersuite",
+      "exit_code": 0
+    },
+    {
+      "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+      "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+      "id": "wallet-presentation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/review-packet.json",
+          "sha256": "b2a3dcef465441b2680002fccfeaa7a23beb98d1041df8c6ca85bdb778dd8347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/application-all.log",
+          "sha256": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/guards.log",
+          "sha256": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/unknown-fence-final.log",
+          "sha256": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-all.log",
+          "sha256": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-copy-repair.log",
+          "sha256": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/verified.json",
+          "sha256": "f1cf0bf7ab77d015e40d1cfd428ebfc6025d9c929ba9c89afe54994cb734f2dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/live.json",
+          "sha256": "70e4099c0fe3fe018520b5436b603392efd7d3c83ae71c3b1e40acd7cae669bf"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+          "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+        }
+      ],
+      "command": "Node24 --test apps/rolling/wallet-panel.browser.test.mjs and existing named selection",
+      "environment": "Node24.21.0 Chrome155 pinned rc3 dependencies; controlled tests labelled, live native proof flags false",
+      "observed": "Original120PASS1oldcopyassertionFAIL retained; only assertion repaired; affected8PASS independent16PASS, no skips",
+      "exit_code": 0
+    },
+    {
+      "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+      "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+      "id": "normal-wallet-assets",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/review-packet.json",
+          "sha256": "b2a3dcef465441b2680002fccfeaa7a23beb98d1041df8c6ca85bdb778dd8347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/application-all.log",
+          "sha256": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/guards.log",
+          "sha256": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/unknown-fence-final.log",
+          "sha256": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-all.log",
+          "sha256": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-copy-repair.log",
+          "sha256": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/verified.json",
+          "sha256": "f1cf0bf7ab77d015e40d1cfd428ebfc6025d9c929ba9c89afe54994cb734f2dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/live.json",
+          "sha256": "70e4099c0fe3fe018520b5436b603392efd7d3c83ae71c3b1e40acd7cae669bf"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+          "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+        }
+      ],
+      "command": "Node24 scripts/rolling-wallet-assets.mjs; loadRollingWalletAssets; HTTP bundlehash and readiness; CUA profile reload",
+      "environment": "Node24.21.0 Chrome155 pinned rc3 dependencies; controlled tests labelled, live native proof flags false",
+      "observed": "Existing normalbuild+load verified97inputs25files; exactservedbundle and retainedchain ready, native/PXEproofsfalse",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+      "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+      "id": "W03-A02-authenticated-saved-action-resumption-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/review-packet.json",
+          "sha256": "b2a3dcef465441b2680002fccfeaa7a23beb98d1041df8c6ca85bdb778dd8347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/application-all.log",
+          "sha256": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/guards.log",
+          "sha256": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/unknown-fence-final.log",
+          "sha256": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-all.log",
+          "sha256": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-copy-repair.log",
+          "sha256": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/verified.json",
+          "sha256": "f1cf0bf7ab77d015e40d1cfd428ebfc6025d9c929ba9c89afe54994cb734f2dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/live.json",
+          "sha256": "70e4099c0fe3fe018520b5436b603392efd7d3c83ae71c3b1e40acd7cae669bf"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+          "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+        }
+      ]
+    },
+    {
+      "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+      "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+      "id": "W03-A04-missing-anchor-replacement-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/review-packet.json",
+          "sha256": "b2a3dcef465441b2680002fccfeaa7a23beb98d1041df8c6ca85bdb778dd8347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/application-all.log",
+          "sha256": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/guards.log",
+          "sha256": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/unknown-fence-final.log",
+          "sha256": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-all.log",
+          "sha256": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/ui-copy-repair.log",
+          "sha256": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/verified.json",
+          "sha256": "f1cf0bf7ab77d015e40d1cfd428ebfc6025d9c929ba9c89afe54994cb734f2dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/saved-action-integration/live.json",
+          "sha256": "70e4099c0fe3fe018520b5436b603392efd7d3c83ae71c3b1e40acd7cae669bf"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+          "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+    "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+    "implementer": "design-resume-20261014",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/W03/reviewer-88944cd-saved-actions.json",
+        "sha256": "54f1fd932e3e17ab9ce2f785978db90185bc378d917d465e6d834c35f5497740"
+      }
+    ]
+  }
+}

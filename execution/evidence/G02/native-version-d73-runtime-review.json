@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "campaign": "native-version-20261013-d73c2bc3015b",
+  "sourceCommit": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+  "verdict": "FAILED_NATIVE_VERSION_DIAGNOSTIC_WITH_PARTIAL_PREREQUISITE_EVIDENCE_AND_COMPUTE_ABSENCE;FINAL_FLEET_DELETED_PENDING",
+  "findings": [
+    {
+      "priority": "P2",
+      "scope": "source-derived diagnostic launch defect",
+      "file": "deploy/prover/bootstrap.py",
+      "lines": [
+        1266,
+        1270,
+        1305
+      ],
+      "description": "Generated shell sets umask077. NATIVE_ROOT.mkdir(mode0755) is subject to that mask and therefore creates0700; no explicit directory chmod follows. DynamicUser service must traverse this directory to read capture.py. File permissions0444/0555 do not repair parent traversal.",
+      "historicalAttribution": "Consistent with Python wrapper exit2 and absent worker result, not proven exact historical cause: no remote modes/worker stderr retained.",
+      "minimumNextEvidence": "Use bounded local actual filesystem mode/traversal regression with same umask and least-privileged reader, plus source repair explicit final directory mode and pre-execution verification. Preserve all private directories and unit isolation; no paid retry without separately reviewed changed source/payload/budget/grant."
+    }
+  ],
+  "observed": {
+    "receiptSha256": "67be145f83762f3312a526c0aeac5acd634a197d4b5d71d8ef7292b58c814726",
+    "guestPreflight": {
+      "status": "passed",
+      "architecture": "x86_64",
+      "libc": {
+        "status": "observed",
+        "major": 2,
+        "minor": 39
+      },
+      "loaderAvailable": true,
+      "os": {
+        "status": "observed",
+        "ubuntu2404": true
+      },
+      "cpu": {
+        "status": "observed",
+        "processors": 2,
+        "vendor": "amd",
+        "flags": {
+          "sse4_2": true,
+          "avx": true,
+          "avx2": true,
+          "avx512f": true,
+          "bmi2": true,
+          "adx": true
+        }
+      }
+    },
+    "hostControlsVerified": true,
+    "systemdState": {
+      "status": "observed",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "Result": "exit-code",
+      "ExecMainCode": 1,
+      "ExecMainStatus": 2,
+      "ExecMainStartTimestampMonotonic": 16430211
+    },
+    "workerResultStatus": "absent",
+    "outcome": "nonzero",
+    "binaryExecutionEstablished": false,
+    "binaryVersionEstablished": false,
+    "proofJobs": 0
+  },
+  "sourceAndControlBindings": {
+    "priorPayloadReview": "e89cab85d37515e7f4aa3df71c5cb8859c73394d06690840489c8e00c1c37c4d",
+    "priorFinalBindingsReview": "360c89cbeebfa36ee257b2e8f318314fec1f83dd2cb824cd98d68f3cd90de03e",
+    "payloadEmbeddedInActualTemplateMatches": true,
+    "exactRuntimeAndWorkerReceiptHashesMatch": true,
+    "singleCapacityFleetAndFixedExpiry": true,
+    "commissioningStop": "2026-10-13T01:52:30Z",
+    "budgetStop": "2026-10-13T02:07:30Z",
+    "immediateShutdown": "Source finally calls shutdown even after persistence/publication failure; actual instance terminated before deadline. Exact termination causal path not independently captured."
+  },
+  "cleanup": {
+    "singleDeleteAcknowledged": true,
+    "fleetState": "deleted_terminating",
+    "instancesTerminated": true,
+    "volumesAbsent": true,
+    "finalFleetDeletedPending": true,
+    "liveRootVolumeProperties": "Not observed before termination: actual projection correctly records controlsVerified/rootMappingVerified false after mappings disappear. Template readback is evidence of requested configuration, not a live volume measurement.",
+    "repeatDeleteForbidden": true
+  },
+  "budget": {
+    "reservedUsd": 10,
+    "cumulativeCommittedAndReservedUsd": 215.28,
+    "remainingUsd": 84.72,
+    "reserveReleased": false,
+    "actualBilledCost": "Not yet reconciled; no savings inferred from short instance lifetime."
+  },
+  "evidenceHashes": {
+    "packet": "74e0aeef8c5eab45bb264184c0885efa7ed5a2c7c36edec7bd6528bcbc61e641",
+    "ledgerAtReview": "48cefa54921c01c50dba7211603c7a733e6d0455a2ea072712fa76fa6b6317f4",
+    "fleet-intent.json": "5dbb7650cb2b8e36b4f2f0a734f6a9bb355d2691947d85e52214316d2f130a4f",
+    "fleet-request.json": "224aff75cb5a4f80d159c58e26eed36bb1bec5c007eba2fd379d2580a7357468",
+    "lt-data.json": "ca31b2b73432d14d04739ded48bdf8a2199e9475fa79a244a5afae2a6952ebba",
+    "delete-intent.json": "ec13616fe8cd9fcbe6436ae6bb697d83d045e1687180e6adb3e05e0f0be7d854",
+    "delete-response.json": "1f7287417b0716b3eda3dcef4324dad9b3fe126d45c7cec76e1fb78f541b106a",
+    "cloud-controls.json": "a4f3c223be1068a2b4341811adee58e66a574db19c654577a888ffa241584df3"
+  },
+  "qualificationLimits": [
+    "Guest native x86_64/AMD two processors,glibc2.39,Ubuntu24.04 and fixed flag facts passed observed preflight only.",
+    "Systemd observed exit-code/status2 belongs to Python capture service; do not label as bb exit2, SIGILL,OOM or incompatible binary.",
+    "No Linux active pin promotion, node/startup/proving/CRS or production qualification.",
+    "Final read-only Fleet DELETED confirmation remains; no repeat financial action or replacement authorized."
+  ]
+}

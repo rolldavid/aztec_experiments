@@ -1,0 +1,23 @@
+{
+  "candidate": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+  "scenario": "rolling-preference-browser",
+  "recordedAt": "2026-10-12T06:34:19.420210+00:00",
+  "status": "completed-failed",
+  "attempt": 2,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "hypothesis": "Actual production RPC serializes aztec_ methods. ActualSDK transport regression reproduces ad1 observer denial, reviewed842 fixes exact namespace; no product/source/assets changes otherwise. First failed1bbf retained.",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/preference-browser-842-repair-review.json",
+  "reviewSha256": "a5240ee823ecfc9130bb2c113130575c89de44aca3d060c571c5b29c8d1c6981",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-browser",
+  "scope": "Three real local private proofs then production Chromium native IDB keys-only recovery; browser zero proof/transaction sends.",
+  "result": "execution/evidence/G07/application-3aea2b2f-beea-428d-b975-eb43e753c53b.json",
+  "resultSha256": "de707eac7fdfa6ceeedf21f2e736b27fdb2a91823c6db7b95214b521aa3f12c6",
+  "finishedAt": "2026-10-12T06:42:20.796Z",
+  "elapsedMs": 481272,
+  "peakTreeRSSKiB": 2184832,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "nextAction": "New lock-stage failure: independent source diagnosis and small actual-DOM delayed refresh reproduction before any changed genuine attempt. No unchanged retry."
+}

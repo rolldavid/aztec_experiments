@@ -1,0 +1,22 @@
+✖ bounded read checkpoints useful progress with labelled remote metadata latency inside unchanged ten seconds (8.688ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.674625
+
+✖ failing tests:
+
+test at shared/rolling/cold-preference-reader.test.mjs:304:1
+✖ bounded read checkpoints useful progress with labelled remote metadata latency inside unchanged ten seconds (8.688ms)
+  Error: Saved choices could not be recovered. Keep your recovery data and try again after checking the connection.
+      at failure (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-controls/shared/rolling/cold-preference-reader.mjs:11:35)
+      at Object.read (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-controls/shared/rolling/cold-preference-reader.mjs:223:17)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-controls/shared/rolling/cold-preference-reader.test.mjs:312:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'ROLLING_COLD_PREFERENCES_UNAVAILABLE'
+  }

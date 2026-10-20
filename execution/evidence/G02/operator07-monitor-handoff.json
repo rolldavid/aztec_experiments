@@ -1,0 +1,20 @@
+{
+  "owner": "controls-20261011",
+  "at": "2026-10-12T06:17:35.284918+00:00",
+  "sessionId": 51527,
+  "script": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/watch07-readonly.py",
+  "scriptSha256": "89dbd26a26015e99fdeae8a8cd5b480a63621532c4e625d26ddd74ae01b843e6",
+  "readScriptSha256": "ec86cf5560b9cf19c28df60fd632ed23ace52a6deffabde5768158717e615c3e",
+  "pollSeconds": 120,
+  "until": "2026-10-12T07:08:50Z",
+  "liveExecution": "Current agent-owned foreground caffeinate process; no claim it survives session loss or machine restart.",
+  "independentControls": "Fleet termination and persistent host budget07:06:50Z; commissioning06:36:50Z; readiness06:50:50Z; qualification07:05:50Z",
+  "instance": "i-04979326aaeb3506d",
+  "fleet": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+  "volumeIds": [
+    "vol-0e83a11eddee065c9",
+    "vol-078beb192cd3ed16c"
+  ],
+  "privateReference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-07",
+  "resume": "Verify monitor PID/liveness and latest safe receipt first; never launch second monitor/writer or replay any upload/LT/Fleet/delete intent. Readonly helper is bounded; cleanup requires terminal/control/deadline evidence from scopedgrant."
+}

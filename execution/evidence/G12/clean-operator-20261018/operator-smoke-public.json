@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "kind": "fresh-operator-native-wallet-smoke",
+  "notQualified": [
+    "browser-user-funding",
+    "real-wallet-matrix",
+    "testnet-proofs",
+    "privacy-unlinkability",
+    "production-release"
+  ],
+  "proofsEnabled": false,
+  "operator": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "2058581665",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "boardAddress": "0x0c3c3f5c343d30b98e00caf36b87ad758e7abc7ae518790862f2d2b7cf74297c",
+    "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+    "bok": {
+      "address": "0x2bad40fc40ed86bd59d6cf5cc6125875ef65258bde9083e29c7d96e38a9093ee",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+      "deployer": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+      "salt": "0x24d7d6bd7d3ceb1652ac352c82d56afb11795389e825cecddf2e83fbfbd534ef",
+      "deployment": {
+        "blockNumber": 6,
+        "blockHash": "0x2ee4f1e2ba4e8b21edc1eb76f7f18d86afe03efbafa20eee3c89c599630d322d",
+        "txHash": "0x228251c38fdf264282588d28579e826e671edda4946ac2b518207601ce5e6ee5"
+      }
+    }
+  },
+  "nameId": "15975315181197277278076113612575618602826632606903064360054596679627570813892",
+  "result": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x16a0e88202cc0ba6c9f7deb3d067b8a462754d00caa535a15c9136392c9f451a",
+    "blockNumber": 9,
+    "blockHash": "0x23b4860401894deee598c358d739517f45292f885ecb8bffa7ae9336387fbf5d"
+  },
+  "publicReadback": {
+    "schemaVersion": 1,
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "2058581665",
+      "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+      "boardAddress": "0x0c3c3f5c343d30b98e00caf36b87ad758e7abc7ae518790862f2d2b7cf74297c",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "bok": {
+        "address": "0x2bad40fc40ed86bd59d6cf5cc6125875ef65258bde9083e29c7d96e38a9093ee",
+        "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+        "operatorAddress": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+        "deployer": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+        "salt": "0x24d7d6bd7d3ceb1652ac352c82d56afb11795389e825cecddf2e83fbfbd534ef",
+        "deployment": {
+          "blockNumber": 6,
+          "blockHash": "0x2ee4f1e2ba4e8b21edc1eb76f7f18d86afe03efbafa20eee3c89c599630d322d",
+          "txHash": "0x228251c38fdf264282588d28579e826e671edda4946ac2b518207601ce5e6ee5"
+        }
+      }
+    },
+    "checkpoint": {
+      "number": 9,
+      "hash": "0x23b4860401894deee598c358d739517f45292f885ecb8bffa7ae9336387fbf5d"
+    },
+    "complete": true,
+    "identity": {
+      "id": "15975315181197277278076113612575618602826632606903064360054596679627570813892",
+      "first": "Independent",
+      "last": "Operator",
+      "profile": {
+        "bio": {
+          "version": "0",
+          "digest": "0",
+          "length": "0",
+          "text": ""
+        },
+        "avatar": {
+          "version": "0",
+          "digest": "0",
+          "width": "0",
+          "height": "0",
+          "length": "0",
+          "encoding": "base64",
+          "data": "",
+          "removal": null
+        }
+      }
+    },
+    "posts": [],
+    "names": {},
+    "boards": {},
+    "nextCursor": null,
+    "revision": "5e16bd62-5c43-44c4-8987-277fca8391d2:2:18"
+  }
+}

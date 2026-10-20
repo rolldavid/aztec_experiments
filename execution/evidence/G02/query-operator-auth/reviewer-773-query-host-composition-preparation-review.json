@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "773dc67174e2954ebc6e40f51f0a288a78a84737",
+  "base": "834beb1c61be6fb3a1e8e40dd69be9b0dfb6c9b8",
+  "verdict": "approve-exact-source-composition-and-serial-bounded103-9-3-eligibility",
+  "sourceTransfer": "f2d0551bb0cbdf9b76670c950e3122283d3e8584345623be230a269e4499c94b",
+  "packets": {
+    "bootstrap103": "f452ab03fb3ceb365c9d8db707aa7a8454a3d010ec2c5de5427344fe984a94f3",
+    "package9": "6a26d9f32688fc66d51d75a43578ac4177710bb61bbfccbd868bbb14b500eaf5",
+    "routes3": "be8078fa7a34cd250271cfb6fbac6a1dffcaf8ba41dc811180a724ce8113bf89"
+  },
+  "checks": [
+    "Exactly six reviewed2643 blobs transferred onto834, before/after SHA andGitblob identities verified; nootherpaths andclean773HEAD.",
+    "All4412 current protected pins independently rehashed unchanged; three packet artifact hashes match.",
+    "All three owner deltas directory-only; child identical. Package9 uses qualified corrected prefix-label parser, not failed historical whole-line parser.",
+    "Python AST declares103 and9 unique test methods matching selected full inventories; route source exactly3 labels.",
+    "Each existing60s2GiB owner,isolatedHOME/ownedTMP,originalcleanup/source/label/exitgates retained; no runtime by reviewer."
+  ],
+  "conditions": [
+    "Parent serial grants103 then9 then3 only following positivecleanup; stop on failure and diagnose smallest source-backed issue.",
+    "Actual results plus fresh current normal closure required before integration.",
+    "No actual Linux systemd/queryorigin/CloudFront/provider/proof/payload or paid qualification from controlled tests."
+  ]
+}

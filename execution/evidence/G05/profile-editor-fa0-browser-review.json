@@ -1,0 +1,47 @@
+{
+  "reviewer": "reviewer-20261011",
+  "editor_candidate": "fa0cef01a9798d9e61ec4fd5fe76964b21cb6a07",
+  "root_candidate": "1c320becffff3241d95c03c42f44bf5cbee5375c",
+  "verdict": "approved_bounded_source_and_browser_behavior",
+  "checks": [
+    {
+      "cwd": "../rolling-design",
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/wallet-panel.browser.test.mjs",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 9055.39225
+    },
+    {
+      "cwd": "root",
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/profile-view.browser.test.mjs apps/rolling/reader.browser.test.mjs apps/rolling/start.test.mjs",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 2612.74075
+    }
+  ],
+  "file_sha256": {
+    "apps/rolling/wallet-panel.mjs": "67e5dc261d5d1e56b8500ec7965c4fb7d5e2ffd01f0cd2b9ec8ecb474ec61cfc",
+    "apps/rolling/wallet-panel.browser.test.mjs": "8fd240b1f0609ef126bb68e7eded5f8054f9beb0e1dfcdf1c7845138473fb729"
+  },
+  "root_file_sha256": {
+    "apps/rolling/profile-view.mjs": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+    "apps/rolling/profile-view.browser.test.mjs": "86ce734abbda85a7159b4511a8152d814d3b52292ae4aa13b207f0d78e8885e7",
+    "apps/rolling/reader.mjs": "2567aece7a6dc79b8978299ae786e3a84991a3f2c5faf3b155c8176fdb2ff4fc",
+    "apps/rolling/reader.browser.test.mjs": "467ce035d7137a9a98cbf9fdc6c92b4c17979a57b7181b9ae903d8e6dbc28862",
+    "apps/rolling/start.mjs": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+    "apps/rolling/start.test.mjs": "89dfec1200781b1e92aa8ffc31bfa0f616997e8eb59c24ef907a874d21c80dc5"
+  },
+  "observed": [
+    "Prepared/recovered exact avatar Blob preview survives uncertainty and terminal profile outcomes require fresh explicit version check.",
+    "Removal hides bytes and renders public reason/bio as text; unsafe raster metadata/limits rejected; bounded native decoder failures remain placeholders.",
+    "Actual public reader separates named/anonymous/Bok and performs no private requests.",
+    "Production static allowlist serves required modules and excludes private paths."
+  ],
+  "limitations": [
+    "Browser tests use labelled synthetic API and wallet doubles; no actual funded browser transaction or real chain privacy acceptance.",
+    "Native decode timeout is not a hard native-memory sandbox.",
+    "No automatic image-policy decision qualified."
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "offlineOnly": true,
+  "networkCalls": 0,
+  "sourceCommit": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "bootstrapSha256": "006470c66eb718a3e626f24b23b9b264b144fcc8993f6116cdacae925c10296c",
+  "operatorSha256": "ffdea3bc5f96bc84e4c027a13c081a837bc292c9c9619114f150c07f10a3da4a",
+  "checks": [
+    "adapter retained with valid partial-stage history",
+    "invalid runtimeAdapter rejected 1",
+    "invalid runtimeAdapter rejected 2",
+    "invalid helperSha256 rejected 3",
+    "invalid schemaVersion rejected 4",
+    "invalid history rejected 5",
+    "invalid history rejected 6",
+    "invalid extraSecret rejected 7",
+    "wrong archive binding cannot pass",
+    "fresh exact package binding mandatory",
+    "pin matches actual reviewed helper"
+  ],
+  "passed": true,
+  "historicalUrlShapeLengths": {
+    "runtimeUrl": {
+      "versionId": 32,
+      "X-Amz-Security-Token": 1016,
+      "X-Amz-Algorithm": 16,
+      "X-Amz-Credential": 55,
+      "X-Amz-Date": 16,
+      "X-Amz-Expires": 4,
+      "X-Amz-SignedHeaders": 4,
+      "X-Amz-Signature": 64
+    },
+    "receiptPutUrl": {
+      "X-Amz-Security-Token": 1016,
+      "X-Amz-Algorithm": 16,
+      "X-Amz-Credential": 55,
+      "X-Amz-Date": 16,
+      "X-Amz-Expires": 4,
+      "X-Amz-SignedHeaders": 4,
+      "X-Amz-Signature": 64
+    }
+  },
+  "syntheticPayloadMeasurements": [
+    {
+      "seed": 0,
+      "syntheticRuntimeUrlBytes": 1570,
+      "syntheticReceiptUrlBytes": 1521,
+      "compressedBytes": 16359,
+      "fits": true,
+      "headroomBytes": 25,
+      "decodedSha256": "e29fbd7a7cc23329698068d614db50e0678c0a581dfa8df3bb5efa230c6f4f3c",
+      "shellSyntax": true,
+      "decodedSyntax": true
+    },
+    {
+      "seed": 1,
+      "syntheticRuntimeUrlBytes": 1570,
+      "syntheticReceiptUrlBytes": 1521,
+      "compressedBytes": 16364,
+      "fits": true,
+      "headroomBytes": 20,
+      "decodedSha256": "9eca3faca8bdad31016bbbafa9401ce6b5da30bcee9563d34037b2f8b4c9314b",
+      "shellSyntax": true,
+      "decodedSyntax": true
+    },
+    {
+      "seed": 2,
+      "syntheticRuntimeUrlBytes": 1570,
+      "syntheticReceiptUrlBytes": 1521,
+      "compressedBytes": 16362,
+      "fits": true,
+      "headroomBytes": 22,
+      "decodedSha256": "7827ce8539592553446d41b5fc18f163416aae2f1f1901a7d9c9bc6201cc78b9",
+      "shellSyntax": true,
+      "decodedSyntax": true
+    }
+  ],
+  "actualFreshPayloadQualified": false,
+  "limitations": [
+    "Synthetic high-entropy substituted capabilities are not credentials and not exact future compression predictions.",
+    "Payload must be regenerated with exact fresh archive/version/capabilities/deadlines and independently verified <=16384 before any launch.",
+    "No runtime archive, private08 capability, deadline or send intent was created."
+  ]
+}

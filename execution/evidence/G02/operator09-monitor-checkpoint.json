@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-12T12:21:14.741448+00:00",
+  "owner": "controls-20261011",
+  "runtimeSession": 78374,
+  "watcherPid": 28234,
+  "watcherSha256": "df3223c8228061d6d8289702d3e29ee58f88545684e2d5eb7ffb0999a5578f59",
+  "monitorSha256": "6d88df4088c11e28401f2a13e03c1761ed69c8a27261f620927a9bc863ddf32d",
+  "latestEvidence": "execution/evidence/G02/operator09-readonly-122044.json",
+  "budgetStop": "2026-10-12T13:03:58Z",
+  "readinessStop": "2026-10-12T12:47:58Z",
+  "oneActiveWatcher": true,
+  "resume": "Check PID identity/liveness and current session before starting any second reader; preserve once-only launch/delete journals. No replay of paid actions."
+}

@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-14T17:03:35.718310+00:00",
+  "sourceRevision": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+  "acceptedRevision": "c1fce1b48d4f0b656f213713bf8cff838817a862",
+  "environment": "native devnet/PXE proof flagsfalse, real hosted model-generated artifact, Codex browser",
+  "url": "http://127.0.0.1:18788/t/7b109ea75ebed29c10aad697e2f0cee3f739826317b04be3e4ad6ebca6a2b07e/r/c1fce1b48d4f0b656f213713bf8cff838817a862/files/index.html",
+  "procedure": [
+    "Open exact accepted artifact",
+    "Observed Count:0 and accessible Increment count button",
+    "Click button: Count:1",
+    "Focus button and press Return: Count:2",
+    "Inspect screenshot: plain native counter/button layout, visible focus outline"
+  ],
+  "outcome": "Actual increment behavior observed; no model replay or transactions. Published source automated test was weaker than behavior, preserved as limitation.",
+  "limitations": [
+    "Cross-user revision update not yet exercised",
+    "C/D concurrency not yet established",
+    "Generic step-limit reply incorrectly emphasizes PR publication in app-only mode",
+    "No testnet proof qualification"
+  ]
+}

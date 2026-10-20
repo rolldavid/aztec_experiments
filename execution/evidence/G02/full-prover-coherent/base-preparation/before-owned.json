@@ -1,0 +1,557 @@
+{
+  ".build/contracts-manifest.json": {
+    "sha256": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36",
+    "backupSha256": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36",
+    "bytes": 6439
+  },
+  "apps/src/billboard/billboard_artifact.json": {
+    "sha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "backupSha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "bytes": 8057654
+  },
+  "apps/src/billboard/censor/billboard_artifact.json": {
+    "sha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "backupSha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "bytes": 8057654
+  },
+  "apps/src/billboard/deploy/billboard_artifact.json": {
+    "sha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "backupSha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "bytes": 8057654
+  },
+  "apps/src/billboard/deploy/portal_bytecode.txt": {
+    "sha256": "6c8003ec45f112bc7cf7b856c3a6492009d1a62852ca179d3d1f1fa856e7c0ba",
+    "backupSha256": "6c8003ec45f112bc7cf7b856c3a6492009d1a62852ca179d3d1f1fa856e7c0ba",
+    "bytes": 12463
+  },
+  "apps/src/billboard/portal_bytecode.txt": {
+    "sha256": "6c8003ec45f112bc7cf7b856c3a6492009d1a62852ca179d3d1f1fa856e7c0ba",
+    "backupSha256": "6c8003ec45f112bc7cf7b856c3a6492009d1a62852ca179d3d1f1fa856e7c0ba",
+    "bytes": 12463
+  },
+  "apps/src/billboard/private_fee_artifact.json": {
+    "sha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "backupSha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "bytes": 2688020
+  },
+  "billboard/portal/out/AddressSnapshotLib.sol/AddressSnapshotLib.json": {
+    "sha256": "f4ae6cb7f341b7b48785a18e6c4f5ba8ace6c3c7d6cb0e879f23ab9c1e2cb3e5",
+    "backupSha256": "f4ae6cb7f341b7b48785a18e6c4f5ba8ace6c3c7d6cb0e879f23ab9c1e2cb3e5",
+    "bytes": 9156
+  },
+  "billboard/portal/out/AttestationLib.sol/AttestationLib.json": {
+    "sha256": "5f37cfdf9de82de6c7223aa18ccbc5b58f20c7a8fc4ba03df629e914ae3405db",
+    "backupSha256": "5f37cfdf9de82de6c7223aa18ccbc5b58f20c7a8fc4ba03df629e914ae3405db",
+    "bytes": 12691
+  },
+  "billboard/portal/out/BN254Lib.sol/BN254Lib.json": {
+    "sha256": "d3aaf5ab01fbea706e3cb1143ec16cde14a43b8c54c49c00404bcb3def0670a9",
+    "backupSha256": "d3aaf5ab01fbea706e3cb1143ec16cde14a43b8c54c49c00404bcb3def0670a9",
+    "bytes": 10015
+  },
+  "billboard/portal/out/Ballot.sol/BallotLib.json": {
+    "sha256": "50d15842dfbd859c0f3b384fd58e62b42d2a3e338dc97f3493e97cef015fb767",
+    "backupSha256": "50d15842dfbd859c0f3b384fd58e62b42d2a3e338dc97f3493e97cef015fb767",
+    "bytes": 6259
+  },
+  "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": {
+    "sha256": "f633b1e1720cc199fb2c5aa73d36133fc9834bf7377334f0a91c14e844e52155",
+    "backupSha256": "f633b1e1720cc199fb2c5aa73d36133fc9834bf7377334f0a91c14e844e52155",
+    "bytes": 124268
+  },
+  "billboard/portal/out/BitMaps.sol/BitMaps.json": {
+    "sha256": "735dcf0209876d5957e894ebf58e98186ab5873e9d640339c38d414d75377f51",
+    "backupSha256": "735dcf0209876d5957e894ebf58e98186ab5873e9d640339c38d414d75377f51",
+    "bytes": 6233
+  },
+  "billboard/portal/out/BlobLib.sol/BlobLib.json": {
+    "sha256": "44af6252011da45235f9c0356211972b5c045801c9174adb48ca7b46b3e399ec",
+    "backupSha256": "44af6252011da45235f9c0356211972b5c045801c9174adb48ca7b46b3e399ec",
+    "bytes": 14308
+  },
+  "billboard/portal/out/Bn254LibWrapper.sol/Bn254LibWrapper.json": {
+    "sha256": "0dbb4b5cef860c7ab31bf140a45575b16337f71e667857cba60e3857e64b2ecf",
+    "backupSha256": "0dbb4b5cef860c7ab31bf140a45575b16337f71e667857cba60e3857e64b2ecf",
+    "bytes": 29533
+  },
+  "billboard/portal/out/CheckpointLog.sol/CompressedTempCheckpointLogLib.json": {
+    "sha256": "ac0eb60484a7621c38ceee27adfb49ede242515df4c24bbdedc68b5200c42180",
+    "backupSha256": "ac0eb60484a7621c38ceee27adfb49ede242515df4c24bbdedc68b5200c42180",
+    "bytes": 9956
+  },
+  "billboard/portal/out/CheckpointedUintLib.sol/CheckpointedUintLib.json": {
+    "sha256": "98e1978c9bde55bba96fc8b9696cb8fd983619905418bce83f9cdaecbbc1f404",
+    "backupSha256": "98e1978c9bde55bba96fc8b9696cb8fd983619905418bce83f9cdaecbbc1f404",
+    "bytes": 10810
+  },
+  "billboard/portal/out/Checkpoints.sol/Checkpoints.json": {
+    "sha256": "d5d3a5ad407458f5ecad629f629680ad105c2bfd06ca3e7f22e60b454a8c7f5b",
+    "backupSha256": "d5d3a5ad407458f5ecad629f629680ad105c2bfd06ca3e7f22e60b454a8c7f5b",
+    "bytes": 8504
+  },
+  "billboard/portal/out/CompressedTimeMath.sol/CompressedTimeMath.json": {
+    "sha256": "d07c85cdeeffe76fa59694ac69055f1e6495b619b37c52aa43de716a79f0fdf6",
+    "backupSha256": "d07c85cdeeffe76fa59694ac69055f1e6495b619b37c52aa43de716a79f0fdf6",
+    "bytes": 6948
+  },
+  "billboard/portal/out/Configuration.sol/CompressedConfigurationLib.json": {
+    "sha256": "4a5541cd15faa49124b3ac5b849d996edfe5b3eec062fcb36b5bbdc519b8febc",
+    "backupSha256": "4a5541cd15faa49124b3ac5b849d996edfe5b3eec062fcb36b5bbdc519b8febc",
+    "bytes": 9936
+  },
+  "billboard/portal/out/ConfigurationLib.sol/ConfigurationLib.json": {
+    "sha256": "f6d33ceb6bbbc0f1f4ee84e3258787da1716b82b3a5c6c577f6b761fc544b264",
+    "backupSha256": "f6d33ceb6bbbc0f1f4ee84e3258787da1716b82b3a5c6c577f6b761fc544b264",
+    "bytes": 11327
+  },
+  "billboard/portal/out/ConstantsGen.sol/Constants.json": {
+    "sha256": "2e05b62b9648dcc6c08c7a4492a310e4a5cdd3ab1369bc1daf94e7298e8f14ee",
+    "backupSha256": "2e05b62b9648dcc6c08c7a4492a310e4a5cdd3ab1369bc1daf94e7298e8f14ee",
+    "bytes": 5589
+  },
+  "billboard/portal/out/Context.sol/Context.json": {
+    "sha256": "5a3458fc6dc9df8b31d2abd9f474a3115b92b4512141d8db9ec74d0b1f04dde2",
+    "backupSha256": "5a3458fc6dc9df8b31d2abd9f474a3115b92b4512141d8db9ec74d0b1f04dde2",
+    "bytes": 5451
+  },
+  "billboard/portal/out/CoordinationSignatureLib.sol/CoordinationSignatureLib.json": {
+    "sha256": "f5e61bcb5f23cfe6b68cd3b5a3a8181d1ed82d04bf961e29102f32e90cd3d2c8",
+    "backupSha256": "f5e61bcb5f23cfe6b68cd3b5a3a8181d1ed82d04bf961e29102f32e90cd3d2c8",
+    "bytes": 5552
+  },
+  "billboard/portal/out/DataStructures.sol/DataStructures.json": {
+    "sha256": "08773a62cae5749cea5924d0ecf6a4ec7c0078f54eae42dc2953c8acef400a01",
+    "backupSha256": "08773a62cae5749cea5924d0ecf6a4ec7c0078f54eae42dc2953c8acef400a01",
+    "bytes": 5619
+  },
+  "billboard/portal/out/DepositDelegationLib.sol/DepositDelegationLib.json": {
+    "sha256": "dfb3d561eadcb08f3f354e37d73b456bf9a85b20679c0095a9ba67f74be9d05b",
+    "backupSha256": "dfb3d561eadcb08f3f354e37d73b456bf9a85b20679c0095a9ba67f74be9d05b",
+    "bytes": 13341
+  },
+  "billboard/portal/out/ECDSA.sol/ECDSA.json": {
+    "sha256": "f6300453bc13133ac7bb8fa83859beb5cdf197e5f7e33978bbfc388a00afad40",
+    "backupSha256": "f6300453bc13133ac7bb8fa83859beb5cdf197e5f7e33978bbfc388a00afad40",
+    "bytes": 7012
+  },
+  "billboard/portal/out/EIP712.sol/EIP712.json": {
+    "sha256": "7ee5f7388790d4e4129af7c1a546409dd23e83a90cbe2c33495bed393026a5e5",
+    "backupSha256": "7ee5f7388790d4e4129af7c1a546409dd23e83a90cbe2c33495bed393026a5e5",
+    "bytes": 17000
+  },
+  "billboard/portal/out/EmpireBase.sol/EmpireBase.json": {
+    "sha256": "2546b7675ab61ce7f11f503728b0e5cec82534564453ec43acec393cd4169364",
+    "backupSha256": "2546b7675ab61ce7f11f503728b0e5cec82534564453ec43acec393cd4169364",
+    "bytes": 49313
+  },
+  "billboard/portal/out/EnumerableSet.sol/EnumerableSet.json": {
+    "sha256": "a07cc69426ddf7ef6a7bca50023136f9712ffc3bc7f1a0f17a96c0055d1acfb3",
+    "backupSha256": "a07cc69426ddf7ef6a7bca50023136f9712ffc3bc7f1a0f17a96c0055d1acfb3",
+    "bytes": 6587
+  },
+  "billboard/portal/out/Errors.sol/Errors.json": {
+    "sha256": "98efd972c0d5eff7cd0d6d72d8fb9c2aa75505aa72cfdadefbfd1a73ec05474a",
+    "backupSha256": "98efd972c0d5eff7cd0d6d72d8fb9c2aa75505aa72cfdadefbfd1a73ec05474a",
+    "bytes": 115808
+  },
+  "billboard/portal/out/FeeConfig.sol/FeeConfigLib.json": {
+    "sha256": "75c9daa47970f6d4a06887fb6ae53c838f2b81ec6e60058d2ce764a7f84f6f09",
+    "backupSha256": "75c9daa47970f6d4a06887fb6ae53c838f2b81ec6e60058d2ce764a7f84f6f09",
+    "bytes": 7744
+  },
+  "billboard/portal/out/FeeConfig.sol/PriceLib.json": {
+    "sha256": "b2794091ad27213183b63cde4d097edae11ee12cdb39e830fa69a71c13b1e562",
+    "backupSha256": "b2794091ad27213183b63cde4d097edae11ee12cdb39e830fa69a71c13b1e562",
+    "bytes": 7831
+  },
+  "billboard/portal/out/FeeLib.sol/FeeLib.json": {
+    "sha256": "ade0337766979cf8f0ce0ca23b6277d051e613cabfd8d7b6d155b5332dfd2375",
+    "backupSha256": "ade0337766979cf8f0ce0ca23b6277d051e613cabfd8d7b6d155b5332dfd2375",
+    "bytes": 69603
+  },
+  "billboard/portal/out/FeeStructs.sol/FeeHeaderLib.json": {
+    "sha256": "66d778e2ec7d6101d1c58a86415210e8b162434247a417c8fc7b0f297d33bc13",
+    "backupSha256": "66d778e2ec7d6101d1c58a86415210e8b162434247a417c8fc7b0f297d33bc13",
+    "bytes": 9180
+  },
+  "billboard/portal/out/FeeStructs.sol/FeeStructsLib.json": {
+    "sha256": "16dba60ca0d2e29bcfc5ac661e8b673577d50b4f1ebf3168788cca3be5daf1d5",
+    "backupSha256": "16dba60ca0d2e29bcfc5ac661e8b673577d50b4f1ebf3168788cca3be5daf1d5",
+    "bytes": 9182
+  },
+  "billboard/portal/out/FieldLib.sol/FieldLib.json": {
+    "sha256": "fd5d21144f86ee498ccfa51ce2071ed88454dc0b6ab2cabd94aa945fe106d88f",
+    "backupSha256": "fd5d21144f86ee498ccfa51ce2071ed88454dc0b6ab2cabd94aa945fe106d88f",
+    "bytes": 11518
+  },
+  "billboard/portal/out/GSE.sol/GSE.json": {
+    "sha256": "d5e8892edd9cb677d9192508808479f124dc70ba717679263abc6ef2a35ca30c",
+    "backupSha256": "d5e8892edd9cb677d9192508808479f124dc70ba717679263abc6ef2a35ca30c",
+    "bytes": 207600
+  },
+  "billboard/portal/out/GSE.sol/GSECore.json": {
+    "sha256": "9315a3b9f4e2d50a845dd9351ae58686bfaff8a2ff71327bb46795cd28b91eb9",
+    "backupSha256": "9315a3b9f4e2d50a845dd9351ae58686bfaff8a2ff71327bb46795cd28b91eb9",
+    "bytes": 169772
+  },
+  "billboard/portal/out/GSE.sol/IGSE.json": {
+    "sha256": "390dc213bdab2aa25f09f883523c1c17eb2763bf9fedd7c7156d9b0e32c2b75f",
+    "backupSha256": "390dc213bdab2aa25f09f883523c1c17eb2763bf9fedd7c7156d9b0e32c2b75f",
+    "bytes": 56307
+  },
+  "billboard/portal/out/GSE.sol/IGSECore.json": {
+    "sha256": "89f8f74d46b43f36a2c04bf85636f31f57cbe9379180408cc162dad1729e18c7",
+    "backupSha256": "89f8f74d46b43f36a2c04bf85636f31f57cbe9379180408cc162dad1729e18c7",
+    "bytes": 40930
+  },
+  "billboard/portal/out/GSEPayload.sol/GSEPayload.json": {
+    "sha256": "0cddbae800db75db5817c81e3756fbeea1e0bf408e4e03c404c69b0e99b030e1",
+    "backupSha256": "0cddbae800db75db5817c81e3756fbeea1e0bf408e4e03c404c69b0e99b030e1",
+    "bytes": 60469
+  },
+  "billboard/portal/out/Governance.sol/Governance.json": {
+    "sha256": "ab59d021411858c201e8206cb9744020d968cd303d089e0fc358c5487eeb7493",
+    "backupSha256": "ab59d021411858c201e8206cb9744020d968cd303d089e0fc358c5487eeb7493",
+    "bytes": 203055
+  },
+  "billboard/portal/out/GovernanceProposer.sol/GovernanceProposer.json": {
+    "sha256": "7737ba24d674e8293d0a9956eac4d462a0e12c7d1e6f8a3ed1f817db9efda3ed",
+    "backupSha256": "7737ba24d674e8293d0a9956eac4d462a0e12c7d1e6f8a3ed1f817db9efda3ed",
+    "bytes": 131095
+  },
+  "billboard/portal/out/Hash.sol/Hash.json": {
+    "sha256": "0ed7bd02260ae9add5680df75121f0390a91d2ed7760c3f62129b420910839cd",
+    "backupSha256": "0ed7bd02260ae9add5680df75121f0390a91d2ed7760c3f62129b420910839cd",
+    "bytes": 7132
+  },
+  "billboard/portal/out/IBn254LibWrapper.sol/IBn254LibWrapper.json": {
+    "sha256": "e4e08934519abe0b69682bb4703b145126f6c45ebc0be96d10ce702c7eb76d99",
+    "backupSha256": "e4e08934519abe0b69682bb4703b145126f6c45ebc0be96d10ce702c7eb76d99",
+    "bytes": 10042
+  },
+  "billboard/portal/out/IERC1363.sol/IERC1363.json": {
+    "sha256": "76bc2f7db7993e66fffda0b64d46505dd0e811085ac2ec61af4a36a9a239720a",
+    "backupSha256": "76bc2f7db7993e66fffda0b64d46505dd0e811085ac2ec61af4a36a9a239720a",
+    "bytes": 31686
+  },
+  "billboard/portal/out/IERC165.sol/IERC165.json": {
+    "sha256": "5c09b72f3997c2392fde343a10e7027a73d61cd46aff74656cbb81c838d4ed2d",
+    "backupSha256": "5c09b72f3997c2392fde343a10e7027a73d61cd46aff74656cbb81c838d4ed2d",
+    "bytes": 6639
+  },
+  "billboard/portal/out/IERC20.sol/IERC20.json": {
+    "sha256": "f525e1520aad0e6923a128d7769f1b3ea006724337d5fdf226eda63db46d5e8e",
+    "backupSha256": "f525e1520aad0e6923a128d7769f1b3ea006724337d5fdf226eda63db46d5e8e",
+    "bytes": 15108
+  },
+  "billboard/portal/out/IERC5267.sol/IERC5267.json": {
+    "sha256": "11782b762e817fded9e73e8364cc222b2de99dcfb36d3c33f16997bebe143fb7",
+    "backupSha256": "11782b762e817fded9e73e8364cc222b2de99dcfb36d3c33f16997bebe143fb7",
+    "bytes": 7334
+  },
+  "billboard/portal/out/IEmpire.sol/IEmperor.json": {
+    "sha256": "a06988d9a72469b7cead414874f62f85e89f91b89b35055ad347a8c12c2dcfd1",
+    "backupSha256": "a06988d9a72469b7cead414874f62f85e89f91b89b35055ad347a8c12c2dcfd1",
+    "bytes": 8834
+  },
+  "billboard/portal/out/IEmpire.sol/IEmpire.json": {
+    "sha256": "ecb0d27a7823b071d26da04a77d71d5669759fe4df5919d9716ed6fd70905aa4",
+    "backupSha256": "ecb0d27a7823b071d26da04a77d71d5669759fe4df5919d9716ed6fd70905aa4",
+    "bytes": 15488
+  },
+  "billboard/portal/out/IEscapeHatch.sol/IEscapeHatch.json": {
+    "sha256": "f0c08296706161421374110b9c1d1be2581b0474577752184df4ad267efc3453",
+    "backupSha256": "f0c08296706161421374110b9c1d1be2581b0474577752184df4ad267efc3453",
+    "bytes": 30735
+  },
+  "billboard/portal/out/IEscapeHatch.sol/IEscapeHatchCore.json": {
+    "sha256": "d9cb7d51b16cd0f85d42546b222c86e199c3359e7be827836405ff3201d79929",
+    "backupSha256": "d9cb7d51b16cd0f85d42546b222c86e199c3359e7be827836405ff3201d79929",
+    "bytes": 14092
+  },
+  "billboard/portal/out/IFeeJuicePortal.sol/IFeeJuicePortal.json": {
+    "sha256": "b7f666ae049575a914f54a1cc66828344f13ca8c824e9284cab4fed5df0fbc48",
+    "backupSha256": "b7f666ae049575a914f54a1cc66828344f13ca8c824e9284cab4fed5df0fbc48",
+    "bytes": 75723
+  },
+  "billboard/portal/out/IGovernance.sol/IGovernance.json": {
+    "sha256": "78b0c0da5131c42ded71c955ca1486cafbbaba5f088b9bd81a2788520840d3f5",
+    "backupSha256": "78b0c0da5131c42ded71c955ca1486cafbbaba5f088b9bd81a2788520840d3f5",
+    "bytes": 39518
+  },
+  "billboard/portal/out/IGovernanceProposer.sol/IGovernanceProposer.json": {
+    "sha256": "aaa3a28b6becbdf4cbac9e93e2831a6332f88dd5ade057d1347f74f63b0e44c6",
+    "backupSha256": "aaa3a28b6becbdf4cbac9e93e2831a6332f88dd5ade057d1347f74f63b0e44c6",
+    "bytes": 17499
+  },
+  "billboard/portal/out/IInbox.sol/IInbox.json": {
+    "sha256": "8dd69b02e4faf630bb2f560326da7e01a26b8af2ff3281b6f21aa9a6ac5c52a9",
+    "backupSha256": "8dd69b02e4faf630bb2f560326da7e01a26b8af2ff3281b6f21aa9a6ac5c52a9",
+    "bytes": 26891
+  },
+  "billboard/portal/out/IOutbox.sol/IOutbox.json": {
+    "sha256": "ee36e95182e1617a3f89a0c5bbdc7c82d2de08a840e43139c8c907f27733e1d2",
+    "backupSha256": "ee36e95182e1617a3f89a0c5bbdc7c82d2de08a840e43139c8c907f27733e1d2",
+    "bytes": 23333
+  },
+  "billboard/portal/out/IPayload.sol/IPayload.json": {
+    "sha256": "d0b855b9c7982d83cf2e0d84ecae01c701be1c8f76a78546eb375c2eca461a52",
+    "backupSha256": "d0b855b9c7982d83cf2e0d84ecae01c701be1c8f76a78546eb375c2eca461a52",
+    "bytes": 6933
+  },
+  "billboard/portal/out/IProposerPayload.sol/IProposerPayload.json": {
+    "sha256": "5173e8f80e28c388a4bc5ee084b0651aba912a15d5626d4553e7c12b95527e64",
+    "backupSha256": "5173e8f80e28c388a4bc5ee084b0651aba912a15d5626d4553e7c12b95527e64",
+    "bytes": 8699
+  },
+  "billboard/portal/out/IRegistry.sol/IHaveVersion.json": {
+    "sha256": "ac11e027efa4ac7558914a8761b30836eafe58179d34139c06403dc883005554",
+    "backupSha256": "ac11e027efa4ac7558914a8761b30836eafe58179d34139c06403dc883005554",
+    "bytes": 6154
+  },
+  "billboard/portal/out/IRegistry.sol/IRegistry.json": {
+    "sha256": "dd8070b934c597c26fcfa569393637260628dd598ac443235d4d43622ba999fb",
+    "backupSha256": "dd8070b934c597c26fcfa569393637260628dd598ac443235d4d43622ba999fb",
+    "bytes": 11621
+  },
+  "billboard/portal/out/IRewardDistributor.sol/IRewardDistributor.json": {
+    "sha256": "413fb5f6a835973a3b7575344bb6d39f596b9146ace26f2f0a380696c6057517",
+    "backupSha256": "413fb5f6a835973a3b7575344bb6d39f596b9146ace26f2f0a380696c6057517",
+    "bytes": 12567
+  },
+  "billboard/portal/out/IRollup.sol/IRollup.json": {
+    "sha256": "a1fd4f6a5406a011804f0de9ec3f1f451f96d28d659421765ba2ec4c910246cf",
+    "backupSha256": "a1fd4f6a5406a011804f0de9ec3f1f451f96d28d659421765ba2ec4c910246cf",
+    "bytes": 159932
+  },
+  "billboard/portal/out/IRollup.sol/IRollupCore.json": {
+    "sha256": "2e33539ecb842d6382f039a293b54e69b46ca4f9c27501318451eca4d26acbfa",
+    "backupSha256": "2e33539ecb842d6382f039a293b54e69b46ca4f9c27501318451eca4d26acbfa",
+    "bytes": 101663
+  },
+  "billboard/portal/out/ISlasher.sol/ISlasher.json": {
+    "sha256": "f4ba0b8a6f0672eb6eff30aeccadcf68126939c0881ac98ea6bb7ee8d1f94e5c",
+    "backupSha256": "f4ba0b8a6f0672eb6eff30aeccadcf68126939c0881ac98ea6bb7ee8d1f94e5c",
+    "bytes": 9004
+  },
+  "billboard/portal/out/IStaking.sol/IStaking.json": {
+    "sha256": "04c156f4c8bb8a0717e64df3acbfb1650160bebada4393d3a5a8832bd303e3d7",
+    "backupSha256": "04c156f4c8bb8a0717e64df3acbfb1650160bebada4393d3a5a8832bd303e3d7",
+    "bytes": 127112
+  },
+  "billboard/portal/out/IStaking.sol/IStakingCore.json": {
+    "sha256": "97a6952332cb6c4ccd53060b87cc5678fc9eb44f890f0714e29855369cf5f707",
+    "backupSha256": "97a6952332cb6c4ccd53060b87cc5678fc9eb44f890f0714e29855369cf5f707",
+    "bytes": 104158
+  },
+  "billboard/portal/out/IValidatorSelection.sol/IValidatorSelection.json": {
+    "sha256": "57275fd784f08be7be8234b39f2857e79cf0f249d783e4ed4486ddbda4ce9632",
+    "backupSha256": "57275fd784f08be7be8234b39f2857e79cf0f249d783e4ed4486ddbda4ce9632",
+    "bytes": 30589
+  },
+  "billboard/portal/out/IValidatorSelection.sol/IValidatorSelectionCore.json": {
+    "sha256": "0656737433b24e1ff646aa422f9e3c8cac59cdda61bfe6716cb987735eb2cd14",
+    "backupSha256": "0656737433b24e1ff646aa422f9e3c8cac59cdda61bfe6716cb987735eb2cd14",
+    "bytes": 14651
+  },
+  "billboard/portal/out/IVerifier.sol/IVerifier.json": {
+    "sha256": "02cbc947bdf2bea2eb556a744ac403b3a0dfadb94783d990913fa482a4641105",
+    "backupSha256": "02cbc947bdf2bea2eb556a744ac403b3a0dfadb94783d990913fa482a4641105",
+    "bytes": 5771
+  },
+  "billboard/portal/out/Math.sol/Math.json": {
+    "sha256": "4c05339eb736f78c1003dc6dfc1507af60ee4b3215544e7c314734b5f0108ff5",
+    "backupSha256": "4c05339eb736f78c1003dc6dfc1507af60ee4b3215544e7c314734b5f0108ff5",
+    "bytes": 7062
+  },
+  "billboard/portal/out/MessageHashUtils.sol/MessageHashUtils.json": {
+    "sha256": "f588a6d645d7656c04b76a71e8767f0058367ebd61f18618719d9031b9204e84",
+    "backupSha256": "f588a6d645d7656c04b76a71e8767f0058367ebd61f18618719d9031b9204e84",
+    "bytes": 9630
+  },
+  "billboard/portal/out/Ownable.sol/Ownable.json": {
+    "sha256": "dfc3cbba7985632f01eaceccfa5166fad717639e8e1419bbe79924145986b32b",
+    "backupSha256": "dfc3cbba7985632f01eaceccfa5166fad717639e8e1419bbe79924145986b32b",
+    "bytes": 10597
+  },
+  "billboard/portal/out/Panic.sol/Panic.json": {
+    "sha256": "2f6c1060f65f863789aa227fd28590023f45716240e903eec723311f7da4e3f1",
+    "backupSha256": "2f6c1060f65f863789aa227fd28590023f45716240e903eec723311f7da4e3f1",
+    "bytes": 6648
+  },
+  "billboard/portal/out/PluginPortal.sol/PluginPortal.json": {
+    "sha256": "ccf7bdb0f797179257880957dfb85d064a3e441205ccad3790adc311f9bddf6e",
+    "backupSha256": "ccf7bdb0f797179257880957dfb85d064a3e441205ccad3790adc311f9bddf6e",
+    "bytes": 113355
+  },
+  "billboard/portal/out/Proposal.sol/CompressedProposalLib.json": {
+    "sha256": "40d1c97a5d0bcd35d4ae0bf78186726244613990c66d8d9f31e47fa42cbb0d5e",
+    "backupSha256": "40d1c97a5d0bcd35d4ae0bf78186726244613990c66d8d9f31e47fa42cbb0d5e",
+    "bytes": 10662
+  },
+  "billboard/portal/out/ProposalLib.sol/ProposalLib.json": {
+    "sha256": "31549218a3ba13b34dd63d4ad28698a5281ec4c589a1e38d249c5f53a0b70a38",
+    "backupSha256": "31549218a3ba13b34dd63d4ad28698a5281ec4c589a1e38d249c5f53a0b70a38",
+    "bytes": 16054
+  },
+  "billboard/portal/out/ProposeLib.sol/ProposeLib.json": {
+    "sha256": "b76fc492625eca2bb2c2313065a7e8ad3fcf7c088be1c79c9fe0fc3f56d774eb",
+    "backupSha256": "b76fc492625eca2bb2c2313065a7e8ad3fcf7c088be1c79c9fe0fc3f56d774eb",
+    "bytes": 72358
+  },
+  "billboard/portal/out/ProposedHeaderLib.sol/ProposedHeaderLib.json": {
+    "sha256": "4078bc5407bc3392e5fc698b36c99c249d1979c2ecaf62067f889b5f9e61c7cc",
+    "backupSha256": "4078bc5407bc3392e5fc698b36c99c249d1979c2ecaf62067f889b5f9e61c7cc",
+    "bytes": 9928
+  },
+  "billboard/portal/out/RewardBooster.sol/IBooster.json": {
+    "sha256": "297c7e2546d5df28a2bf52898a16287d5e280283b57730223dbe293776f00ee0",
+    "backupSha256": "297c7e2546d5df28a2bf52898a16287d5e280283b57730223dbe293776f00ee0",
+    "bytes": 20543
+  },
+  "billboard/portal/out/RewardBooster.sol/IBoosterCore.json": {
+    "sha256": "a1c00bc3dc9b960b86498f231170c73406784b374b035e8aea3d4d51b13b9442",
+    "backupSha256": "a1c00bc3dc9b960b86498f231170c73406784b374b035e8aea3d4d51b13b9442",
+    "bytes": 17913
+  },
+  "billboard/portal/out/RewardBooster.sol/RewardBooster.json": {
+    "sha256": "c1bbc0cdff787978ba82228dedda03d56d30d38452f9571fdda2bf5e14cc8d1a",
+    "backupSha256": "c1bbc0cdff787978ba82228dedda03d56d30d38452f9571fdda2bf5e14cc8d1a",
+    "bytes": 41367
+  },
+  "billboard/portal/out/RewardLib.sol/BpsLib.json": {
+    "sha256": "582fd21112e03af640d37de8ecde73e5a2da2c0128e44047447573e2f05706fa",
+    "backupSha256": "582fd21112e03af640d37de8ecde73e5a2da2c0128e44047447573e2f05706fa",
+    "bytes": 69603
+  },
+  "billboard/portal/out/RewardLib.sol/RewardLib.json": {
+    "sha256": "4e7585f4a4e2179de1fbd6182114aab7f15938a3607247122f5f6ccaf0a1cf19",
+    "backupSha256": "4e7585f4a4e2179de1fbd6182114aab7f15938a3607247122f5f6ccaf0a1cf19",
+    "bytes": 69615
+  },
+  "billboard/portal/out/STFLib.sol/STFLib.json": {
+    "sha256": "bb7a2336be7edb4b674b8b50427edce33392015a46377c8af1d00e3b634997ac",
+    "backupSha256": "bb7a2336be7edb4b674b8b50427edce33392015a46377c8af1d00e3b634997ac",
+    "bytes": 73651
+  },
+  "billboard/portal/out/SafeCast.sol/SafeCast.json": {
+    "sha256": "c1cb99f940f55ac8873210c0b91566e9b077cdad0adf8337696d4fd8a9e51b21",
+    "backupSha256": "c1cb99f940f55ac8873210c0b91566e9b077cdad0adf8337696d4fd8a9e51b21",
+    "bytes": 8449
+  },
+  "billboard/portal/out/SafeERC20.sol/SafeERC20.json": {
+    "sha256": "5802dc3e2316ccee86095c2c4ef400b412d5b7e450a16804ac484f707f0358a2",
+    "backupSha256": "5802dc3e2316ccee86095c2c4ef400b412d5b7e450a16804ac484f707f0358a2",
+    "bytes": 11236
+  },
+  "billboard/portal/out/SampleLib.sol/SampleLib.json": {
+    "sha256": "1f9830d959b05efa51bd65bc9cdcf0e5dde5833033f3bddbc82fa5f256e8950f",
+    "backupSha256": "1f9830d959b05efa51bd65bc9cdcf0e5dde5833033f3bddbc82fa5f256e8950f",
+    "bytes": 12094
+  },
+  "billboard/portal/out/ShortStrings.sol/ShortStrings.json": {
+    "sha256": "2237a10c367b0c8a462d1af0e08cf21e4fab5d696aca1e540f1288547cd313a6",
+    "backupSha256": "2237a10c367b0c8a462d1af0e08cf21e4fab5d696aca1e540f1288547cd313a6",
+    "bytes": 7602
+  },
+  "billboard/portal/out/SignatureLib.sol/SignatureLib.json": {
+    "sha256": "7464c32a81c79b43615d22c283d60b8da59bcb5cea6828f05c771fd3fa896da6",
+    "backupSha256": "7464c32a81c79b43615d22c283d60b8da59bcb5cea6828f05c771fd3fa896da6",
+    "bytes": 6216
+  },
+  "billboard/portal/out/SignedMath.sol/SignedMath.json": {
+    "sha256": "032ee9ad0824e2ed15e3a23a48c345a19271b1de9f2375a44e8d8cfd97c2b8e9",
+    "backupSha256": "032ee9ad0824e2ed15e3a23a48c345a19271b1de9f2375a44e8d8cfd97c2b8e9",
+    "bytes": 6372
+  },
+  "billboard/portal/out/SlashRoundLib.sol/CompressedSlashRoundMath.json": {
+    "sha256": "585a92a66acaa70f8c48019f08ec5bb62423f606b75b880709d449c3fb8eddde",
+    "backupSha256": "585a92a66acaa70f8c48019f08ec5bb62423f606b75b880709d449c3fb8eddde",
+    "bytes": 6229
+  },
+  "billboard/portal/out/Slasher.sol/Slasher.json": {
+    "sha256": "1b62f4693e7f2d3436fb0e89efbffaf3f51cc520051222b95b1f5bab8ab7ea9d",
+    "backupSha256": "1b62f4693e7f2d3436fb0e89efbffaf3f51cc520051222b95b1f5bab8ab7ea9d",
+    "bytes": 34168
+  },
+  "billboard/portal/out/SlotDerivation.sol/SlotDerivation.json": {
+    "sha256": "2fe3236f038bd47a0c4e80791125a26a9f0e4f7a4e5c714e340359a898ea437b",
+    "backupSha256": "2fe3236f038bd47a0c4e80791125a26a9f0e4f7a4e5c714e340359a898ea437b",
+    "bytes": 6838
+  },
+  "billboard/portal/out/StakingLib.sol/StakingLib.json": {
+    "sha256": "e97fbb33631559387f192fe5f82dd9af3da1f2741c884ade6cbdddd12723c61a",
+    "backupSha256": "e97fbb33631559387f192fe5f82dd9af3da1f2741c884ade6cbdddd12723c61a",
+    "bytes": 69619
+  },
+  "billboard/portal/out/StakingQueue.sol/StakingQueueLib.json": {
+    "sha256": "68c28a14dd607c9f1eecdb9ec0cf41bcbe6b62715ed4dc4592654cc0849db586",
+    "backupSha256": "68c28a14dd607c9f1eecdb9ec0cf41bcbe6b62715ed4dc4592654cc0849db586",
+    "bytes": 11145
+  },
+  "billboard/portal/out/StakingQueueConfig.sol/StakingQueueConfigLib.json": {
+    "sha256": "0964957f434256b25d854a76cb9881de95724783ad77f541c5a52e1d31ed205c",
+    "backupSha256": "0964957f434256b25d854a76cb9881de95724783ad77f541c5a52e1d31ed205c",
+    "bytes": 6310
+  },
+  "billboard/portal/out/StorageSlot.sol/StorageSlot.json": {
+    "sha256": "f54720a266014837a1c0a00a6a8954137a3f7e717d03a6de06b33124d624cb4f",
+    "backupSha256": "f54720a266014837a1c0a00a6a8954137a3f7e717d03a6de06b33124d624cb4f",
+    "bytes": 6650
+  },
+  "billboard/portal/out/Strings.sol/Strings.json": {
+    "sha256": "46feea10111efc6305a19fa99031bc4913109cf1c3d51327b37b5bfb2c3191cf",
+    "backupSha256": "46feea10111efc6305a19fa99031bc4913109cf1c3d51327b37b5bfb2c3191cf",
+    "bytes": 9870
+  },
+  "billboard/portal/out/TimeLib.sol/TimeLib.json": {
+    "sha256": "3f83bfac675a8c301e4d31aed5cabdb31b2081ae7b44f8558686adc08cee7371",
+    "backupSha256": "3f83bfac675a8c301e4d31aed5cabdb31b2081ae7b44f8558686adc08cee7371",
+    "bytes": 6877
+  },
+  "billboard/portal/out/Tips.sol/ChainTipsLib.json": {
+    "sha256": "76b1f0308cad34a47b2cfd82b9a8df70f01962814eae56e01c1b94d6b660f167",
+    "backupSha256": "76b1f0308cad34a47b2cfd82b9a8df70f01962814eae56e01c1b94d6b660f167",
+    "bytes": 6233
+  },
+  "billboard/portal/out/TransientSlot.sol/TransientSlot.json": {
+    "sha256": "2743344125ab1b3ee86a0ce51bea456bb12066059947b00bff2d50646146d1e7",
+    "backupSha256": "2743344125ab1b3ee86a0ce51bea456bb12066059947b00bff2d50646146d1e7",
+    "bytes": 6417
+  },
+  "billboard/portal/out/ValidatorSelectionLib.sol/ValidatorSelectionLib.json": {
+    "sha256": "1ea5ffede0be653dbf29b2ff753d2ba3aefa3377f1637e5334b814644e4ea9f1",
+    "backupSha256": "1ea5ffede0be653dbf29b2ff753d2ba3aefa3377f1637e5334b814644e4ea9f1",
+    "bytes": 74206
+  },
+  "billboard/portal/out/libraries/Errors.sol/Errors.json": {
+    "sha256": "63eb474d8432f7c3179ba30b05861f010d8b65a368b3b6adb50e9423e9628198",
+    "backupSha256": "63eb474d8432f7c3179ba30b05861f010d8b65a368b3b6adb50e9423e9628198",
+    "bytes": 34236
+  },
+  "billboard/target/billboard_contract-Billboard.json": {
+    "sha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "backupSha256": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "bytes": 8057654
+  },
+  "billboard/target/plugin_adapter-PluginAdapter.json": {
+    "sha256": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+    "backupSha256": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+    "bytes": 1870992
+  },
+  "billboard/target/private_fee_contract-PrivateFPC.json": {
+    "sha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "backupSha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "bytes": 2688020
+  },
+  "billboard/target/rolling_contract-RollingBoard.json": {
+    "sha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+    "backupSha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+    "bytes": 12057522
+  },
+  "plugins/adapter_artifact.json": {
+    "sha256": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+    "backupSha256": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+    "bytes": 1870992
+  }
+}

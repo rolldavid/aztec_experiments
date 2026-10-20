@@ -1,0 +1,56 @@
+{
+  "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+  "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+  "task_id": "G04-explicit-approval-transport",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+      "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+      "task_id": "G04-explicit-approval-transport",
+      "id": "continuation-provider",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent nine focused cases and exact source/base transfer comparison; see review",
+      "environment": "Pinned Node24.21.0; synthetic ports; no signing",
+      "observed": "Explicit immutable broadcast authority and single-use exact saved approval429 admission preserve all history/economics/expiry/final-state checks.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/explicit-approval-transport/review.json",
+          "sha256": "5a6c54ffcb832c3c249b89f11aef4b4fd8fc8c6c6aec9a8d89df42c2ee1bb720"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+    "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+    "task_id": "G04-explicit-approval-transport",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume2",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/current-nonce-lineage-20261018/explicit-approval-transport/review.json",
+        "sha256": "5a6c54ffcb832c3c249b89f11aef4b4fd8fc8c6c6aec9a8d89df42c2ee1bb720"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+      "candidate": "35ce657c248941d28a44496c189797ef4f95f8ed",
+      "task_id": "G04-explicit-approval-transport",
+      "id": "RC19-RC22-explicit-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/explicit-approval-transport/review.json",
+          "sha256": "5a6c54ffcb832c3c249b89f11aef4b4fd8fc8c6c6aec9a8d89df42c2ee1bb720"
+        }
+      ]
+    }
+  ]
+}

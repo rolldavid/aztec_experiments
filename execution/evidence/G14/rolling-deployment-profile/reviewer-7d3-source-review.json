@@ -1,0 +1,48 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "7d3af620fecef9c92fa127d5f26ed6ca556d44f5",
+  "base": "6b0a68f637c21c28e0af30a29f9b5cde06830fa0",
+  "packetSha256": "b9dd0752be6603f9e239606e2bbcfc920631bd55e97f0b29872b6a15335be39f",
+  "verdict": "SOURCE_REPAIR_REQUIRED_BEFORE_COMPONENT_QUALIFICATION",
+  "scope": "Exact eight-path explicit Rolling operator adaptation. No runtime, transaction, funding, credential or provider activity.",
+  "subjects": {
+    "apps/src/billboard/deploy/cli.mjs": "2015c9706c63e02f1662940b6fbe23c447a932e80762674f32add8907eede098",
+    "apps/src/billboard/deploy/engine.js": "88f5a9db5e376b3f89dba37595bed77650c4de20c0c81fea003d664df4296182",
+    "scripts/prepare-deployment-manifest.mjs": "3cf7ce23ba2880f7762b3d349020e27244f7b8cecf85099a80211edc19a032cf",
+    "scripts/test-c01-deploy-activation.mjs": "9c1d0f189f1a84d94e506b747218a2cf847e7d8d17d56862e622a71add09bcce",
+    "scripts/test-deployment-manifest.mjs": "f21bb56e0e4d63ef8301c8ddbaed601cfd95b187a751d66fc12cf1449f5f9e8b",
+    "scripts/test-prepare-deployment-manifest.mjs": "48020d2dd0ca6cc5c765fd346aec12eb6ca34fd3c61556919aa9146b4832037b",
+    "scripts/test-w03-deploy-engine.mjs": "dce21c89a6b3582aaf9e07f39e91b1acd3c1b340ebcdadf62acc3ffa9721de98",
+    "shared/deployment-manifest.mjs": "ad818034f4c1a9b03425bafc6a443746568b8972cf5f4491fd336568de012db6"
+  },
+  "checks": [
+    "All eight subject bytes and clean candidate independently matched. Read deployment recipe c59d and prior ordering review7d50 before changed source/tests.",
+    "Installed Contract.deploy accepts initializer init and explicit nonzero deployer in fifth parameter; getInstance uses that deployer in deterministic preimage. Constructor matches actual11 parameters/rules32; legacy branch preserved.",
+    "SDK entry already exports computeContractAddressFromInstance and poseidon2HashWithSeparator; getContract(address,reference) and getPublicStorageAt(reference,address,slot) signatures match pinned interfaces.",
+    "Canonical state helper binds actual original/current class, computed address, expected deployer,14 public storage values including portal/config/moderator/version/digest and final checkpoint hash/height. Artifact storage layout follows existing accepted verifier.",
+    "Actual current Rolling artifact20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24 contains get_config_hash. Other four legacy getters are absent. Source constructor binds moderator/config deployer to sender; policy digest domain and config/Ready commitment framing retained.",
+    "Explicit manifest schema2/kind rolling and32field policy bound are distinct from operator/local-test profile. Artifact choice occurs in both preparer and CLI; exact JSON/class/portal metadata bindings retained.",
+    "Publication, preserved signed journal/reconciliation, CREATE2 runtime and immutables, original Ready/Outbox activation and pending-settlement path remain. New operation name deploy-rolling-board correctly follows reconciliation checks. No new automatic replay introduced.",
+    "Added tests use actual ABI/artifact plus inert signer/node state and real encrypted journal controls. They do not qualify an actual live deployment or fresh canonical network."
+  ],
+  "findings": [
+    {
+      "priority": 2,
+      "path": "scripts/test-c01-deploy-activation.mjs",
+      "line": 162,
+      "title": "Do not reject the actual Rolling get_config_hash function",
+      "evidence": "The new absent-getter list includes get_config_hash, but the frozen20c494 artifact contains it (is_unconstrained true) and Rolling main.nr defines it. This assertion deterministically rejects the supported artifact.",
+      "requestedRepair": "Remove get_config_hash from absent list and preferably include it in the positive actual-ABI list. Keep the four truly legacy getters absent. Production storage verification need not change."
+    }
+  ],
+  "componentPrerequisites": [
+    "Review exact repaired candidate; preserve all existing and newly authored cases.",
+    "shared/deployment-manifest.mjs is an SDK manifest input. The current normal SDK manifest still records predecessor b546a77c, so prepareDeploymentManifest/checkSdk and CLI bundle must use a coherently rebuilt normal SDK, not stale manifest or a check bypass. Rebind component preparation accordingly.",
+    "Runner must bind actual current20c494 artifact and installed ABI closure; do not treat inert address/compute mocks as real constructor deployment proof."
+  ],
+  "laterGates": [
+    "Actual deployment through a fresh current rc3 node with exact local actor, funded canonical FPC, chain/registry/rollup scope and journals.",
+    "Query-only node access, paid forecast/host controls and separate proof activation remain independent. No funding, transaction or paid grant here.",
+    "Normal full artifact/source closure and live canonical portal/Ready verification required; this source review is not release qualification."
+  ]
+}

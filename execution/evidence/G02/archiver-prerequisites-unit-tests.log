@@ -1,0 +1,23 @@
+✔ labelled fake complete path persists running then exact stages, never startup qualification (1.632ms)
+✔ wrong chain stops before personalized or further provider reads (0.126083ms)
+✔ wrong rollup version and missing code fail the actual identity boundary (0.226708ms)
+✔ historical logs require nonempty exact deployblock/hash/contract and not removed (0.67525ms)
+✔ strict 300-second SDK L1 drift boundary preserved (0.38825ms)
+✔ trace acceptance exactly requires at least one actual supported method (0.179833ms)
+✔ SDK blob source rejection is retained, no success fallback (0.256583ms)
+✔ finalized anchor mutation rejects the otherwise passing probe (0.239875ms)
+✔ provider thrown objects, messages, causes and changing getters never enter receipt (0.194ms)
+✔ source projection rejects arbitrary digest values and extra private source fields (0.305458ms)
+✔ cleanup failure cannot turn checks into an overall pass (0.28075ms)
+✔ actual disposable child enforces deadline, kills ignored TERM and preserves partial receipt (824.973458ms)
+✔ existing or symlinked receipt refuses execution without modifying target (1.992834ms)
+✔ fixed locally-branded failure categories discriminate empty logs, clock, trace and reorg (1.581958ms)
+✔ actual installed source bytes match every declared SDK pin without RPC (3.507833ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 875.841458

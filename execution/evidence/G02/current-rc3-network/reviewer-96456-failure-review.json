@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T07:47:59.154240+00:00",
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_FAILED_SNAPSHOT_WITH_PARTIAL_COMPATIBILITY_ONLY",
+  "packetSha256": "0688fcbf39f1682fcc804a385b1fa4d0e65f9433134b2fbc05ca0e2a913d8363",
+  "receiptSha256": "43d6c7e62c2de150809c69ebe2e770fe25897695c45a651b3453fbe90c487817",
+  "observed": {
+    "chainId": 11155111,
+    "canonicalAndSelected": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "version": "3409706519",
+    "threeConstantsMatch": true,
+    "requests": 14,
+    "networkElapsedMs": 892,
+    "ownerElapsedMs": 1255,
+    "peakTreeRSSKiB": 315360,
+    "failure": "HTTP429 canonical-liveness",
+    "continuityChecked": false,
+    "livenessComplete": false,
+    "pinsRehashed": 30,
+    "cleanupPositive": true
+  },
+  "diagnosis": [
+    "HTTP429 demonstrates rate rejection;14 sequential requests in892ms is a burst compatible with that outcome. It does not uniquely establish the quota/window or exclude shared-IP/provider load or longer-term capacity limits.",
+    "Exact source sequence reaches getTimestampForSlot as request14 after successful earlier liveness requests, but no partial liveness values persisted, so no progress conclusion is available.",
+    "Canonical/selected address/version/constants matched at initial captured L1 anchor; final anchor/registry continuity never ran. No fresh network readiness or deployment qualification."
+  ],
+  "nextMinimalProposal": {
+    "kind": "One changed fully paced fresh snapshot, not resume/retry failed request",
+    "pacing": "Fixed conservative minimum1250ms between request starts, sequential only, applied to every RPC before invocation. This is an engineering choice, not an asserted documented Sepolia public quota.",
+    "bounds": "Keep32max/27planned,8s each constrained by same59s total and65s owner,64KiB response/16KiB receipt; sleep consumes total budget and must refuse rather than start beyond it.",
+    "preserve": [
+      "same fixed provider/chain/selected scope and full independent continuity checks",
+      "no SDK/operator retries, no fallback, no quota evasion",
+      "exclusive fresh successor output/intents; historical failure immutable",
+      "exact changed pacing source/arguments reviewed before one parent grant",
+      "a second429 is a failed snapshot; no automatic repeated probing"
+    ],
+    "diagnostics": "Optional fixed request ordinal/stage and bounded Retry-After classification may be retained; no raw headers/error body required."
+  },
+  "documentationBoundary": "Primary Tenderly search did not establish an exact current unauthenticated Sepolia public rate limit. Older plan/TU quotas and other-network public statements cannot be applied to this endpoint.",
+  "sourceLinks": [
+    "https://tenderly.co/blog/changelog/pro-pricing-plan-reinstated",
+    "https://tenderly.co/blog/changelog/tenderly-is-a-polygon-public-rpc-provider/"
+  ],
+  "noExecutionAuthorizedByReview": true
+}

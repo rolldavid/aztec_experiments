@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-d73c2bc3015b",
+  "recordedAt": "2026-10-13T01:35:36.842711+00:00",
+  "sourceCommit": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+  "launchSession": 10962,
+  "launchExitCode": 0,
+  "fleetId": "fleet-87719d54-e165-4f5b-86e1-ffd26f39228b",
+  "instanceId": "i-0d023f41f8a8e4f8a",
+  "receiptSha256": "67be145f83762f3312a526c0aeac5acd634a197d4b5d71d8ef7292b58c814726",
+  "nativeQualified": false,
+  "nodeStartupQualified": false,
+  "proofJobs": 0,
+  "cleanup": {
+    "singleDeleteAcknowledged": true,
+    "fleetState": "deleted_terminating",
+    "instancesTerminated": true,
+    "volumesAbsent": true,
+    "finalFleetDeletedPending": true
+  },
+  "observedFacts": {
+    "hostControlsVerified": true,
+    "nativeGuestPreflightPassed": true,
+    "systemdExitCode": 2,
+    "workerResultStatus": "absent"
+  },
+  "files": [
+    {
+      "path": "launch-process-outcome.json",
+      "sha256": "83046055d263b1df8ae33e5697d3f9ed06745ae18a528159e3536dc70e70daf8"
+    },
+    {
+      "path": "cloud-controls.json",
+      "sha256": "a4f3c223be1068a2b4341811adee58e66a574db19c654577a888ffa241584df3"
+    },
+    {
+      "path": "terminal-observation.json",
+      "sha256": "225c732776ffe0d7c50d535dbfce24e34ddad024db1dde89f8225440a5e744ee"
+    },
+    {
+      "path": "observe-safe-5cdd6b4b053d4a4e939899b47b05cb54.json",
+      "sha256": "30c10fb9993538502f348b6863033abd74aad8e7159219e85eef63f10ee728a9"
+    },
+    {
+      "path": "observe-safe-c4c72f5cd8c04303b6c148c178afe153.json",
+      "sha256": "225c732776ffe0d7c50d535dbfce24e34ddad024db1dde89f8225440a5e744ee"
+    },
+    {
+      "path": "cleanup-safe-89929af8e8cc4ad58d348ab0ff86f044.json",
+      "sha256": "16c4db6487b236171b23607287eda4cfeed3ecaf186adc7a53111fe3ba063fda"
+    }
+  ],
+  "limits": [
+    "No remote directory modes retained; permission diagnosis is source-derived.",
+    "No raw worker stderr retained; no exact binary failure inferred.",
+    "No replacement or retry authorized."
+  ]
+}

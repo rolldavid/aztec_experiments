@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "6589f3e25d274036b7cfff46a2cd47a978f86baf",
+  "base": "af82de330e9d273237a4d915a599422af156b703",
+  "verdict": "approved_source_only",
+  "scope": "Distinct rejected-subboard pre-spend result; not actual chain moderation acceptance",
+  "findings": [],
+  "files": {
+    "shared/rolling/application.mjs": "643109c5a5f74239b43f7da7e63d3ec5e6757b6b2bbad14309e7b75ba7795e68",
+    "shared/rolling/application.test.mjs": "d3e12f83bb2e89448ffef68947a6c6b4348cb75e3ce541ddcc33a2066b61a3ff"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processed artifact> pinnedNode24 --test --test-concurrency=1 shared/rolling/application.test.mjs",
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 1124.345584,
+      "log": "/tmp/reviewer-subboard-rejection-6589-tests.log",
+      "sha256": "1edfc2ccf55b6d9648e7699a024e87d06eb8e5cd67dd3d195ea7c2c3081b9fb6"
+    }
+  ],
+  "reasoning": [
+    "Actual ABI utility normalization validates exact tuple shape and boolean field before policy guard. Only non-main subboard effective_policy index4===true produces ROLLING_SUBBOARD_REJECTED.",
+    "Malformed/null/short/string-boolean replies still fail invalid response; original transport error propagated without relabeling. Validfalse still estimates; main board branch unchanged.",
+    "Rejection occurs before hints, estimation, encrypted prepared intent, proof or send. Input draft preserved; simulation/circuit authoritative rejection remains unaffected.",
+    "No protocol/ABI/SDK bundle dependency changed, only error classification. Existing assertion split retains both shape and rejection guards."
+  ],
+  "conditions": [
+    "Future parent must use trusted production application path and bind canonical rejected policy evidence; do not accept arbitrary message text or broad ROLLING_POLICY_UNAVAILABLE.",
+    "Regenerate/check affected browser wallet assets after transfer before any browser acceptance because application.mjs is a manifest input.",
+    "Actual subboard moderator receipts/proofs/deposit preservation/reconstruction remain pending."
+  ]
+}

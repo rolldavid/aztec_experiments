@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "8c90e59ed8b80be67646759b43cd87711723e888",
+  "base": "da27893d018409be1c4e825111ac5544266b06dc",
+  "verdict": "approved-source-for-bounded-genuine-composer-campaign",
+  "scope": "G05-A09/G06-A06 source and failure-finalization only; actual Chromium acceptance pending",
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json pinned Node v24.21.0 --test --test-concurrency=1 scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-composer-fixture.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "63 passed,0 failed/skipped,1606.712334ms",
+      "log": "/tmp/reviewer-composer-8c90-tests.log"
+    }
+  ],
+  "disposition": [
+    "A and B accounting now attempted independently; fixed per-role results retained. Regression A failure still calls B and preserves original failure after persist/ack.",
+    "Final receiver counters captured after accounting and asserted before persistence: zero new proof jobs/node sends, positive L1 forwarding and no rejected/error/pending L1 requests. Both late-counter mutations fail saved evidence.",
+    "Evidence persistence precedes acknowledgement; failed persistence does not acknowledge and retains its original error. Missing acknowledgement remains a bounded failure.",
+    "Failed browser result remains fatal after durable observation; no global supervisor, proof, accounting or acceptance guard weakened.",
+    "Prior a60 source inspection and0379 driver approval compose without changes to production app, real cryptography or transport ownership."
+  ],
+  "files": {
+    "scripts/testing/rolling-application-fixture.mjs": "227fba7ee9c8aa787834e75adb72d287980631dc291cbd5b95f8624925544b4a",
+    "scripts/testing/rolling-composer-fixture.mjs": "e400e9054979d7a5228a29576c9e4fc6125cf2f5571028e04b8e1f1249686f18",
+    "scripts/testing/rolling-composer-fixture.test.mjs": "e332d7bd5ddc8e572619e5f4d0c02ccc99b6d01bd4d6a0223a28a7f95f75fb89"
+  },
+  "limitations": [
+    "No actual browser/proof run here; pending campaign must prove real imported private names, exact992 prepare/cancel,996 retention,A/B switch, independent counters,fee conservation and all cleanup.",
+    "Acknowledgement wait is30s maximum and overall540s/4GiB supervisor remains authoritative; timeout/crash/persistence failure is failed or unknown evidence, never success.",
+    "This milestone does not accept browser publication, extension funding, complete wire privacy or production release."
+  ]
+}

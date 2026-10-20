@@ -1,0 +1,38 @@
+{
+  "reviewer": "independent-reviewer",
+  "candidate": "39ad42cf1603497d8a0dea04301477b82f1b315a",
+  "base": "4ee6b1cd068655399b39826e3b726f67fd591cb9",
+  "deltaBase": "1d43ac50d90d469d4fe76ef4c2b026ca6ddb1c82",
+  "disposition": "approved-scoped-source-component",
+  "sourceHashes": {
+    "TESTING.md": "b88a14e58f7d14759600197ab4165f2e6a10bd5641d78a1889076dfa6bf36737",
+    "scripts/run-bounded-browser-check.mjs": "fb562179dfce9294ac76b4119136acb49870fe339f832faf09076f4dfec8c403",
+    "scripts/t04-metamask.mjs": "cd4cab898011d39eb9b4e790c5b537289669a15bbd9787b1bbed391fa6cc88e6",
+    "scripts/test-t04-browser-journey.mjs": "c0c5e6fba6d7e0c4efcb5e656d69cebc6f2f6dcc6236955b07accfa1aa5fddb4",
+    "scripts/test-wallet-extension-browser.mjs": "6c8fbf6857f97a92e17f98aa0284132a14f5e45e46665ca8765f9d655bb3ef76"
+  },
+  "priorReview": {
+    "file": "reviewer-1d43-chromium-unsigned-continuation-review.json",
+    "sha256": "7ca139b37fa852d945134eeefa425034d29141cfafa9ea8392335fd88f6e0b94"
+  },
+  "packetSha256": "781bbfa24e76e98a3c0c4e3dee7c69571f76c45d0fdae929bfbe92f515654173",
+  "verification": {
+    "packetBindings": 7,
+    "allMatch": true,
+    "focusedCases": 4,
+    "reviewerExpensiveRuns": 0
+  },
+  "assessment": [
+    "The only admitted relay POST is counted and validated before route continuation. Status polling is disabled until its actual response is received with200; missing/non200 response records a finite status and fails without POST retry. Server source sends200 only after awaiting the original serialized relay submit.",
+    "Status GET remains read-only, exact plan-bound, redirect-refusing and3s bounded. Result scope/status/canonical shape and hash are checked; the original canonical transaction and all-three-effects verifier remains authoritative rather than trusting relay status.",
+    "Paid recovery retains the exact canonical original router transaction, relayer identity and nonce, saved encrypted relay request and all three claim receipt bindings. New test confirms the original USDC relay-request form and rejects a beneficiary substituted for the actual relayer.",
+    "Paid provider admission remains only exact account permission and account/chain reads. Permission observations are finite and cannot replace provider result or original rejection. Completed selection reuses existing exact account/chain/MetaMask snapshot checks; visible prompts still require literal Connect. No signing, funding POST or Ethereum send is admitted.",
+    "The previous Chrome155 pins, original encrypted claims equality, unsigned-only admission,120s4GiB limits and cleanup/late-traffic counters carry unchanged. No new framework or application financial behavior."
+  ],
+  "actualEvidence": {
+    "63989": "FAILED14625ms after2typed signatures and1relay POST; no userEthereum send,proof orL2 send; strengthened export/custody/cap admission passed and cleanup positive.",
+    "diagnosisLimit": "The original status HTTP code was not captured. Source race is consistent with failure; do not claim proven historical503. Root separately verified original canonical payment; this review performed no financial action.",
+    "remaining": "Actual original-payment private claim/Ready and wholeUSDC acceptance remain open; source approval is not an actual journey pass."
+  },
+  "findings": []
+}

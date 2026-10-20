@@ -1,0 +1,33 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "verdict": "approved conditional on actual new scheduler and role readbacks before retiring old Fleet",
+  "files": {
+    "procedure.txt": "f0c9e1df276e9f11fb373a9aac8c7c2ac42f54d63e638666037a0086d74dd36e",
+    "scheduler-trust.json": "fcadca1a7688cb0d937141c1be8a2235eab305b3ffcb4fc1b14a48895b99f922",
+    "scheduler-permissions.json": "ae1c05b42d4681b5a0721ae9aca051f3cf955d2548e3c2635e4817d4b8d86781",
+    "host-shutdown-schedule.json": "61e670e50633203ee18ee8f0673c304bfddcc0f066b2fd43418ce0171f0605e3",
+    "endpoint-cleanup-schedule.json": "65ddcea9144b302ba63a491b5f8aeff42f9b754c56c94b32f4148aff2016f466",
+    "retire-fleet.json": "4e777e61fab96e6b341f419f2e0a539ab7c753f5fd7c1993cb4509fa8f7463cf",
+    "extend-host.sh": "519790964d5be0ffa9f0596cb0adeefc5a8cfe297189b70465bd6eec2a4ba2ef"
+  },
+  "scope": "Existing host only; replace immutable request-Fleet expiry with AWS-native one-shot exact-resource shutdown, preserve local independent budget timer",
+  "assessment": [
+    "Trust limited to scheduler service, exact account and correct schedule-group/default ARN. AWS requires group-scoped SourceArn, not per-schedule ARN. Permissions restrict TerminateInstances to exact current instance and DeleteVpcEndpoints to exact two endpoints. No unrelated capacity/admin permission.",
+    "Native SDK universal target ARN/input forms are supported. UTC at06:30 host and06:35 endpoints, flexible windowOFF, retry age300s/count2, automatic completed-schedule deletion and stable idempotency tokens.",
+    "Order retains old02:30 Fleet/host controls until both ENABLED schedules plus exact trust/policy/target/role readbacks. Delete request Fleet with TerminateInstancesfalse only, verify deleted_running and unchanged host; instantFleet would not be safe and must not substitute.",
+    "Host helper locks BASE, checks exact old deadline/time8h ceiling/active controls, persists original record intent, atomically updates only timercalendar and budgetStop. daemon-reload without stopping timer, exact next-elapse and existing controls check. Ordinary exception restores old record/timer.",
+    "No source/package/qualification/node/journal changes. Active config copy may be updated for future operations, historical signed records retained. Tags remain metadata; verified schedules provide actual independent cloud action."
+  ],
+  "limitations": [
+    "Prepared files are not deployed controls. IAM/scheduler API success and exact readback required before Fleet retirement. If permissions unavailable, keep old controls; do not extend host alone.",
+    "An ambiguous helper/schedule mutation must reconcile existing named controls and intent before retry.",
+    "EC2 endpoint deletion can return per-resource unsuccessful results; lead still verifies endpoint absence after scheduled cleanup. Existing24h orphan/delayed billing allowance remains."
+  ],
+  "references": [
+    "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-universal.html",
+    "https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteFleets.html",
+    "https://docs.aws.amazon.com/service-authorization/latest/reference/list_ec2.html"
+  ],
+  "actions": "Read-only file/API documentation review; no cloud mutation, tests or qualification rerun."
+}

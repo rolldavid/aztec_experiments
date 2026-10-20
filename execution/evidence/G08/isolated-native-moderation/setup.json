@@ -1,0 +1,116 @@
+{
+  "at": "2026-10-14T13:53:06.313635+00:00",
+  "sourceRevision": "1ec5604618ca80c9ae6640a847284e925feaf5c8",
+  "scope": "Separate native development board; no moderation verdict/removal acceptance yet",
+  "proofs": {
+    "nodeRealProofs": false,
+    "pxeProverEnabled": false
+  },
+  "board": {
+    "status": "active",
+    "l2Addr": "0x19f48d93ab7bbbbf40fc952ac5cd084b203ab2a3f783ae5b511692daf15f0186",
+    "portalAddr": "0xb9Cb0AD4F59057987DcC3F6a2593bF33B886802f",
+    "readyTxHash": "0x0bfac5277d92d20a48e2593d6c455916689c6d7c82817d612c84b6721183570e",
+    "boardDeployment": {
+      "txHash": "0x0b8ee6a473c179034a536a736de4ff20f0579bbe38dcfe5326f927ccc1f8888d",
+      "blockNumber": 775,
+      "blockHash": "0x0cc5a56b6bc216c31fe698cd9f2c86d37f1b80a038dbe1ac12bf29ac2875d7ad"
+    }
+  },
+  "bok": [
+    {
+      "command": "deploy-escrow",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "constructor-only",
+        "escrow": "0x2a5e807fb491d7c026a972c8ff611d4b1065fdd2449c994f27b815a8cb301a86",
+        "transactionHash": "0x10b150eced459d6350f4a0fff3cf886c9e50fa2abac99737a0acc53723b65310",
+        "blockNumber": 802,
+        "blockHash": "0x0a0edc73c48a414e746426251cc9c070d1cf793dc967c10fee7a4210cf10dd56",
+        "portalReady": false,
+        "registrationReady": false
+      }
+    },
+    {
+      "command": "deploy-portal",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "portal-registration",
+        "portal": "0xe0f547a3f03be93b64cf46c35d20685e8541a4dd",
+        "transactionHash": "0x29b947862272b3ee24f04536327bcf6d17b79cf18a12359bcbef91c3381282c7",
+        "blockNumber": 1700,
+        "blockHash": "0x1a39737cf4d6ac95905af19226d49226a818c2a5823ed317a2da38a3da8829f2"
+      }
+    },
+    {
+      "command": "bind",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "portal-registration",
+        "transactionHash": "0x28fda1748612bfb092b120665859f23e4be10047e656c8c80a13260369af70e9",
+        "blockNumber": 803,
+        "blockHash": "0x2b4d08e695daa6618ce8716e18e317174b568241dead90b7c2909e93fdb2ec49",
+        "portalReady": false,
+        "registrationReady": false
+      }
+    },
+    {
+      "command": "activate",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "portal-registration",
+        "transactionHash": "0x0769ce0bb6b6f99ef2ac678d73682c9b7059a6d66257b65fd4bb0b3f9c11b033",
+        "blockNumber": 1705,
+        "blockHash": "0x05c968ced5589c88ba5279c11131035df38598548fc62820bcd434ae82029970",
+        "portalReady": true
+      }
+    },
+    {
+      "command": "register",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "portal-registration",
+        "transactionHash": "0x05242b49eccb8ff3308762fe1bfeba0f6eadc50f17fb4ff0919b610e8aab4bd4",
+        "blockNumber": 805,
+        "blockHash": "0x246529cb2b43330f29cb7d094725a9bebfe0284d4105c8bdcdc86f561f0a4fd6",
+        "portalReady": true,
+        "registrationReady": true
+      }
+    },
+    {
+      "command": "status",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "scope": "portal-registration",
+        "escrow": "0x2a5e807fb491d7c026a972c8ff611d4b1065fdd2449c994f27b815a8cb301a86",
+        "portal": "0xe0f547a3f03be93b64cf46c35d20685e8541a4dd",
+        "pluginId": "0x0000000000000000000000000000000000000000000000000000000000626f6b",
+        "portalReady": true,
+        "registrationReady": true
+      }
+    }
+  ],
+  "originalCampaign": "rolling-devnet-rc22-20261014 unchanged board/funding/journals",
+  "paidCloudAction": false,
+  "modelCalls": 0,
+  "deploymentLogs": [
+    {
+      "path": "rolling-design/.build/g08-moderation-acceptance/deployment-first.log",
+      "sha256": "b08114e1975295029550ff1a163ab2b6f09f4932d2046c0a3e9dbe2b38bb7b90"
+    },
+    {
+      "path": "rolling-design/.build/g08-moderation-acceptance/deployment-finality-resume.log",
+      "sha256": "f4aaeead94bff50b8814444a33819f00189217f76b3654012986de8151b18760"
+    },
+    {
+      "path": "rolling-design/.build/g08-moderation-acceptance/bok-lifecycle-first.log",
+      "sha256": "d5ef4168f2bb579e2bfb4ad849a7e348ae6624731e3411092b6fd344d55e1b0d"
+    }
+  ]
+}

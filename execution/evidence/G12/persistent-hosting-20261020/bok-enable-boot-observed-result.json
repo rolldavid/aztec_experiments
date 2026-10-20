@@ -1,0 +1,36 @@
+{
+  "CommandId": "52a0345f-21e7-4e20-8115-3b5cd23b4d41",
+  "InstanceId": "i-0a7d9957f2b3d7f19",
+  "Comment": "Restore original Bok enable-boot-observed",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-20T07:37:15.072Z",
+  "ExecutionElapsedTime": "PT0.271S",
+  "ExecutionEndDateTime": "2026-10-20T07:37:15.072Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"bootEnabled\": {\"rolling-bok-testnet.service\": \"enabled\", \"rolling-bok-artifact-proxy.service\": \"enabled\"}, \"units\": {\"rolling-bok-testnet.service\": {\"MainPID\": \"7372\", \"Restart\": \"on-failure\", \"RestartUSec\": \"5s\", \"StartLimitBurst\": \"3\"}, \"rolling-bok-artifact-proxy.service\": {\"MainPID\": \"7373\", \"Restart\": \"on-failure\", \"RestartUSec\": \"5s\", \"StartLimitBurst\": \"3\"}}, \"health\": {\"status\": \"ready\", \"active\": 0, \"lastFailure\": null, \"lastSuccess\": null}, \"restarted\": false}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "f42c4196-bf7d-484f-b816-7ad5602384b1",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Tue, 20 Oct 2026 07:37:37 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1163",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "f42c4196-bf7d-484f-b816-7ad5602384b1",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

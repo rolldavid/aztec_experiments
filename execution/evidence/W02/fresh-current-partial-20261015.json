@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-15T00:46:28.409371+00:00",
+  "sourceRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "runtimeSha256": "ebcb57c33d618df6eea921f994872de44837c440e0bb2a2d374549933720c94b",
+  "scope": "Fresh disposable devnet with native/PXE proofs disabled; actual Chrome155/MetaMask13.49; no financial, quote, claim, proof or model action. Original U1/U2 untouched.",
+  "status": "partial-not-accepted",
+  "verified": {
+    "actualProviderAndDevelopmentNetwork": true,
+    "naturalPrivateLockContention": {
+      "realLockObserved": true,
+      "secondRefused": true,
+      "afterRealReleaseSucceeded": true
+    },
+    "twoRealMetaMaskBindings": {
+      "bothRealWalletsConnected": true,
+      "sameOriginalAccount": true,
+      "chain31337": true
+    },
+    "originalSelectionRestoredAfterFailedAccountPhase": true,
+    "unfundedDevelopmentAccount2Created": true,
+    "allOwnedProcessesClosed": true
+  },
+  "notQualified": [
+    "actual account-change invalidation in both tabs",
+    "actual chain-change invalidation in both tabs",
+    "complete W02 journey"
+  ],
+  "nonpasses": [
+    "Initial invocation supplied wrong browser environment variable; pinned executable helper refused before browser.",
+    "Initial onboarding composition attempted provider discovery before loading private modules; stopped early.",
+    "First retained extension prefix used immediate visibility and timed out.",
+    "Next prefix attempted Recover funding before account existed; fixed actual sequence is Your account -> Unlock -> provider discovery.",
+    "Account creation reached all assertions and complete marker, but exclusive report write collided with prior interrupted setup-result; preserve as evidence limitation, never recreate account.",
+    "Full W02 reached Account2 global selection but invalidation wait timed out; global selection versus site-authorized account not yet distinguished.",
+    "Focused account-only run failed during sequential private initialization; exact second-tab wait sentinel not retained, cause unclassified."
+  ],
+  "traffic": {
+    "walletAssets": 32,
+    "privateRequests": 262,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 0,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 11,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "focusedTraffic": {
+    "walletAssets": 32,
+    "privateRequests": 213,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 0,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 8,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "backup": {
+    "path": ".build/w02-fresh/wallet/initial-recovery.json",
+    "sha256": "9f54ec32f4031213bf5968b5209546ca99a8d899ead207cab5471ce53d521355",
+    "mode": "0600",
+    "ciphertextOnly": true
+  },
+  "privateControlReference": ".build/w02-fresh/control.json",
+  "evidence": [
+    {
+      "path": ".build/w02-fresh/run.mjs",
+      "bytes": 24921,
+      "sha256": "6c550d913b1ec626266b66343036211bf7388488429f3dd9dfa7da6f7222494c"
+    },
+    {
+      "path": ".build/w02-fresh/supervise.mjs",
+      "bytes": 1406,
+      "sha256": "1f3183941beb045281b0f04397b27a5e47a586bba8c5280f4c5d23e39a9f066b"
+    },
+    {
+      "path": ".build/w02-fresh/setup-result.json.prelaunch-failure",
+      "bytes": 1087,
+      "sha256": "9b724be667adcd3fd54f2a45094d2b7ea9951774598505c3896564f6c10229c2"
+    },
+    {
+      "path": ".build/w02-fresh/setup-supervisor.json.prelaunch-failure",
+      "bytes": 2142,
+      "sha256": "13eb2767fa1d07b90d39e35d93b7fbd8509bc8b299bb78b827ae5f6281b74ba3"
+    },
+    {
+      "path": ".build/w02-fresh/setup-supervisor.json.provider-order-failure",
+      "bytes": 9575,
+      "sha256": "08ed1fdefc867331062420d6dbb722cacdcaeeded4ccfeadd63451da9e0fbeab"
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-result.json.unlock-prefix-failure",
+      "bytes": 2421,
+      "sha256": "13dbd61cb32cdcaaec9e642b4a139af0b3bb4b196e6d77041bc7eae330c87373"
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-result.json.wrong-view-failure",
+      "bytes": 2941,
+      "sha256": "dc177fa679197da7f95df81853b51d15e61b89843d431c37f90da962e7965581"
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-result.json",
+      "bytes": 6173,
+      "sha256": "48a3ccb98c8fc18a85742cb3988b8d508ce00626951f65b69a835d8cfb2a95df"
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-supervisor.json",
+      "bytes": 10724,
+      "sha256": "854002d0f642824e01a8f5ecddbfd6390011956f22882c037dc500744530437d"
+    },
+    {
+      "path": ".build/w02-fresh/setup-result.json",
+      "bytes": 2698,
+      "sha256": "cef77636077c060258fadc5aaa7dfeb8ad8597998d4245f2c0488836c830322e"
+    },
+    {
+      "path": ".build/w02-fresh/setup-supervisor.json",
+      "bytes": 4043,
+      "sha256": "f763898217a24b74249b2a487c6498cd537ac9b6f06f36acfdeeac56de742031"
+    },
+    {
+      "path": ".build/w02-fresh/setup-run.log",
+      "bytes": 353,
+      "sha256": "e3677d33284e1f77510bb64c764fd85dbdb65280d14a6a63dfb66244bbc29996"
+    },
+    {
+      "path": ".build/w02-fresh/result.json",
+      "bytes": 56869,
+      "sha256": "a964e9dc4d67112b67efcfacb7ed40270cfe242314fc4fe0361b344e2c7760cf"
+    },
+    {
+      "path": ".build/w02-fresh/supervisor.json",
+      "bytes": 78036,
+      "sha256": "e2bd6d34a03d7351948fcdbbdb5dda8bc210da5defec3b6e4adee76d6854f2b2"
+    },
+    {
+      "path": ".build/w02-fresh/account-result.json",
+      "bytes": 47087,
+      "sha256": "1d0b9f1a4e48bc6dbd5576092cb857027a2a3770f62f0a1685b7e582647b1a75"
+    },
+    {
+      "path": ".build/w02-fresh/account-supervisor.json",
+      "bytes": 61158,
+      "sha256": "067b2395bf540e8f66cbc8c96be381da574e505e2488eba9b4b0072da01efb57"
+    }
+  ],
+  "nextAction": "Independent source diagnosis, then only bounded per-tab/provider observation with exact fixed wait result and known error stack. Import saved backup; never recreate account or rerun full passed lock test."
+}

@@ -1,0 +1,50 @@
+{
+  "reviewer": "reviewer-20261011",
+  "protocol_candidate": "d530a69fbe017298974b091f55bf7d9e1474d4ee",
+  "client_candidate": "2f31b43b6596aa5ec6b3d6da9d6c1b956e142038",
+  "verdict": "bounded source approval for protocol and pure replay composition; normal build/TXE and actual authenticated preference recovery pending",
+  "findings": [],
+  "protocol_sha256": {
+    "billboard/rolling_contract/src/main.nr": "0f690fef381b8342cf0030132ccefa1b724ee308fdf5939ce482eb7bf448bfd0",
+    "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+    "billboard/rolling_contract/src/preferences_tests.nr": "7d9a4aecdca5f0ebf42c01f091c9f8960f3e38a18fb0de9f7fa114de3b8f9fe8"
+  },
+  "client_sha256": {
+    "shared/rolling/preferences.mjs": "5b17433fe5e0c6d6f7971e3abc1893f3744e0003520fc27594b0322a8c83fdd4",
+    "shared/rolling/preferences.test.mjs": "9b534df23ecf2c75fcf9c2e89c7a996e96f15a495d9006915e75a01d92b9b507"
+  },
+  "requirement_sources": [
+    "Draft3 pp2,6,9,11",
+    "execution/tasks/G07.md A01/A02/A03/A06/A07/A08/A10",
+    "execution/evidence/G07/preference-protocol-decision.json"
+  ],
+  "assessment": [
+    "Owner constrained to msg_sender for writes; no caller-provided recipient/owner or public preference mapping/event. Standard PrivateMutable initialization uses slot+owner+NHKapp and replacement nullifies old head, preventing stale parallel updates. No unkeyed owner-only initialization claim.",
+    "Exact pinned PrivateMutable source SHA58d93dd8b3fb98509c7573948eff6f2d7f76de40d2b4c503287dc6f1c6e226aa verified from actual artifact embedded dependency; initialize_or_replace constraints, note return, utility NHK request and view_note semantics inspected.",
+    "Private utility checks NHK-bearing is_initialized before view_note, including absence. Returned unconstrained head remains local observation requiring canonical event/head authentication; no false independent proof claim.",
+    "Schema/revision/digest constraints and explicit overflow; hash commits chain/version/contract and all eight event fields with predecessor. Encrypted head4fields/event8fields onchain constrained delivery; no arbitrary public existence lookups for preference targets.",
+    "mark_thread_read accepts no clienthash; bounded through_block<=anchor, canonical context headerhash included. Earlier read marker is permitted last-revision user intent, not inferred monotonicity; client must recognize reorg-invalidated markers.",
+    "Preferences slot appended after all existing slots; prior storage positions preserved by source order. New VK/artifact/catalog/prover selectors still require normal verification before integration.",
+    "Pure replay captures strict accessor-free detached input before awaited hash; exact canonical fields/bools/kinds/targets, contiguous1..head revisions and hashchain; no implicit sorting/dedup/partial fallback. Latest global notification value overrides documented defaulttrue. Reorg uses complete authenticated replacement, not retained orphan authority.",
+    "Hash dependency and all errors return fixed private-safe invalid error; no network/storage/decryption/trust claim. Pure full replay is explicitly history-proportional, not bounded ingestion."
+  ],
+  "independent_checks": {
+    "pure_replay_command": "NODE_BACKEND=js <pinnedNode24.21.0> --test --test-concurrency=1 <immutable2f31 extraction>/shared/rolling/preferences.test.mjs",
+    "passed": 81,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 197.167833,
+    "log": "/tmp/reviewer-pref-2f31-tests.log",
+    "log_sha256": "0656dfbba56db08f97a8ceb111c37f2279bb5f77aaa4919dbbb3a14f3ac4203b",
+    "tests_label": "Synthetic histories with actual pinned Poseidon; not actual encrypted private event delivery or proof."
+  },
+  "required_pending_checks": [
+    "Normally processed artifact/privateVKs, exact dependency inventory and all prior+newTXE retained;119 raw compiler diagnostics need source/log disposition, not blanket pass from count or exit0.",
+    "Genuine scoped account A cannot read B absent or initialized head; distinct accounts initialize/update, stale revision and concurrent updates fail canonically, old notes nullified.",
+    "Actual EventService authenticated encrypted event emission/recipient scope and keys-only freshPXE reconstruction through current canonical head; missing/reordered/corrupt/duplicate/mixedscope data fails.",
+    "Canonical reorg removes orphan history and read markers, no false complete head on missing archive retention.",
+    "Private event lookup and cold sync work bounded/measured separately per private-event-ingestion-review; full array replay not accepted as bounded ingestion.",
+    "Public effects/wire traces, real fees/proofs, UI/private notification/subscription behavior, operated retention/costs and independent specialist/release gates remain."
+  ],
+  "no_actions": "No source edits, new compilation/TXE/proof/browser/services by reviewer."
+}

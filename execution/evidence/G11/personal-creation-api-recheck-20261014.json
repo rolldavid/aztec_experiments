@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T20:31:27.283687+00:00",
+  "agent": "controls-resume-20261014",
+  "scope": "Read-only official API/documentation reassessment; no OAuth/API/configuration/repository mutations",
+  "finding": "GitHub App user tokens support creation and selection endpoints, but resource access remains user/App intersection. Not a demonstrated remedy for missing automatic grant after successful personal creation. Existing201 then exact-repository422 contradicts documented automatic accessibility; prior request IDs preserved.",
+  "decision": "Retain assisted selected-repository mirror, no new OAuth tooling or blindcreation retry. Automatic provisioning remainsblocked pending providerautomaticgrant behavior/verified supported route.",
+  "sources": [
+    "https://docs.github.com/en/rest/repos/repos#create-a-repository-for-the-authenticated-user",
+    "https://docs.github.com/en/rest/apps/installations#add-a-repository-to-an-app-installation",
+    "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app",
+    "https://github.blog/changelog/2026-10-13-github-app-improvements-for-least-privilege-and-management/",
+    "https://docs.github.com/en/apps/using-github-apps/installing-your-own-github-app"
+  ]
+}

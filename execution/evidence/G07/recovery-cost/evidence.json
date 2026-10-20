@@ -1,0 +1,117 @@
+{
+  "base": "78ad4718583ca14a4bdc005f949e5db2db277744",
+  "candidate": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+  "task_id": "G07-recovery-cost",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "78ad4718583ca14a4bdc005f949e5db2db277744",
+      "candidate": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+      "id": "affected-source-and-generated-closure",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/source-binding.json",
+          "sha256": "309d685c792a5e5917dae2c43d9053e45bb5bd7f413b35a445f3cbc95361f077"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/materialization.json",
+          "sha256": "8e9a8c0829cf559a3daeff950cfd3487eda8694d8c409d2991f7f7ccbb22d637"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/sdk-build.log",
+          "sha256": "4131e9273ed9246dbc06db48d0a43b4eccb4f1bfca329f71dd575f366dfc29ef"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/closure-checks.log",
+          "sha256": "fe4c8ab3606e46b9cc1fe7e0e345b377828486abf9456e8f27f90a4b6fba49fe"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/recovery-cost-36fad-review-packet.json",
+          "sha256": "1ced3d5c89d0e61b0725711705b5de7bff3cf3c0cb8169675f08af61ed771f40"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/recovery-cost-dba0-orphan-repair.json",
+          "sha256": "bf6a0a454f4476fce4912419fffe18810c70ce6d3ac42c705b05724063323220"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-8f54c7d-recovery-cost.json",
+          "sha256": "b830597833762929fc42cc248697db0ef31d247854b7640583c435041cf753ba"
+        }
+      ],
+      "command": "Normal SDK/apps/wallet build; existing helper/manifest/reader tests; exact worker SDK evidence and independent review",
+      "environment": "Pinned Node24.21.0 macOS, native/PXE development flags disabled, services stopped",
+      "observed": "Root165PASS0skip; worker73reader and32+31actualSDK selections; independent71+2 plus generatedclosure. Failed/partial runs retained. Fresh120s notqualified.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "78ad4718583ca14a4bdc005f949e5db2db277744",
+      "candidate": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+      "id": "RC25-RC26-authenticated-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/source-binding.json",
+          "sha256": "309d685c792a5e5917dae2c43d9053e45bb5bd7f413b35a445f3cbc95361f077"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/materialization.json",
+          "sha256": "8e9a8c0829cf559a3daeff950cfd3487eda8694d8c409d2991f7f7ccbb22d637"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/sdk-build.log",
+          "sha256": "4131e9273ed9246dbc06db48d0a43b4eccb4f1bfca329f71dd575f366dfc29ef"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/closure-checks.log",
+          "sha256": "fe4c8ab3606e46b9cc1fe7e0e345b377828486abf9456e8f27f90a4b6fba49fe"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/recovery-cost-36fad-review-packet.json",
+          "sha256": "1ced3d5c89d0e61b0725711705b5de7bff3cf3c0cb8169675f08af61ed771f40"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/recovery-cost/recovery-cost-dba0-orphan-repair.json",
+          "sha256": "bf6a0a454f4476fce4912419fffe18810c70ce6d3ac42c705b05724063323220"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-8f54c7d-recovery-cost.json",
+          "sha256": "b830597833762929fc42cc248697db0ef31d247854b7640583c435041cf753ba"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "78ad4718583ca14a4bdc005f949e5db2db277744",
+    "candidate": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-8f54c7d-recovery-cost.json",
+        "sha256": "b830597833762929fc42cc248697db0ef31d247854b7640583c435041cf753ba"
+      }
+    ]
+  }
+}

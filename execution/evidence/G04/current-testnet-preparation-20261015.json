@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "task": "G04-current-testnet-preparation",
+  "agentSession": "design-resume-20261014",
+  "parentSession": "lead-20261011",
+  "recordedAt": "2026-10-15T05:32:31.538218+00:00",
+  "sourceRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "workerRevision": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "status": "prepared; no deployment or funding performed",
+  "scope": "Trusted local zero-send preparation, actual existing SDK derivation and network preflight, no wallet signing/proof jobs/AWS/service changes.",
+  "campaign": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015",
+  "manifest": {
+    "schemaVersion": 2,
+    "profile": "operator",
+    "network": {
+      "nodeUrl": "https://aztec-testnet.drpc.org",
+      "ethRpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+      "chainId": "11155111",
+      "rollupVersion": "3409706519",
+      "rollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+      "inbox": "0xb3b95295823ad313edc9e498eff7b672b3c6b209",
+      "outbox": "0x25519d3c79e39143accf358ba07d200b534fa400"
+    },
+    "actors": {
+      "aztecDeployer": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+      "ethereumDeployer": "0x0443527ca2fd922e62cda88a087757116c71dc21"
+    },
+    "board": {
+      "kind": "rolling",
+      "salt": "1044314239179053158873515785018893680526811293884981023458087774559842314861",
+      "minDeposit": "1000000000000000",
+      "maxDeposit": "10000000000000000",
+      "baseCooldown": "60",
+      "kMultiplier": "2",
+      "censorWindow": "3600",
+      "maxSaveUp": "2",
+      "policy": "Test board: flag credible threats of violence against people. Do not flag ordinary criticism, disagreement, or clearly fictional discussion."
+    },
+    "artifacts": {
+      "boardJsonSha256": "0x948ca3b45ccf8a6f228c595545bbae483314255b7f6c911a542fa6fca27b3049",
+      "boardClassId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "portalCreationSha256": "0x4c627a49ebbc09876457f1be6b44bcd733d063cdb798ddb3531f684fe4734b52",
+      "portalRuntimeMetadataSha256": "0x91bb18702fa94371957059b8acac2826aaefb43d6dbbaf5bb09c8afd98987f71"
+    }
+  },
+  "actor": {
+    "reference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/operator.json",
+    "sha256": "1b8c2ee2093669df39985d2c47c8a271cf2ff6eaa6c8d6bd7094eee9d35acac5",
+    "recordedAddress": "0x2df4c7fbe754a1fceeacb0a87ef63a3d318defd36de6a10ad28fe77be9325193",
+    "rc3DerivedAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+    "sameAddress": false,
+    "published": false,
+    "publicFeeJuice": "0"
+  },
+  "privateFpc": {
+    "artifactPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/src/billboard/private_fee_artifact.json",
+    "artifactSha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "address": "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e",
+    "classId": "0x1ad3e32858dbad312b2e035d70ddfc6d381e8c61ef2068c0a32b913dd58380e4",
+    "published": false
+  },
+  "ethereum": {
+    "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/secrets/ethereum.json",
+    "address": "0x0443527ca2fd922e62cda88a087757116c71dc21",
+    "originalSha256": "fe0d4d5767ecdac35eb7e772bd2a2e9ca17005441a6fe58e3159b520377f25d9",
+    "derivedAddressMatches": true
+  },
+  "networkPreflight": {
+    "passed": true,
+    "proofsEnabled": true,
+    "chainId": 11155111,
+    "rollupVersion": 3409706519,
+    "rollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "bridgeCodeVerified": true
+  },
+  "anchor": {
+    "number": 3262,
+    "hash": "0x2c559530e24176db62a364d0a05ea4af9f50708450297525f8474b54ea37fbcb"
+  },
+  "originalFilesUnchanged": true,
+  "allSixPriorLiquidityFilesUnchanged": {
+    "plan.json": true,
+    "state.json": true,
+    "nonce15-resolution.json": true,
+    "state.json.cancel-approve-usdc.json": true,
+    "nonce15-successor.json": true,
+    "state.json.successor-cancel-approve-usdc.json": true
+  },
+  "decisions": [
+    "Reuse retained Aztec operator secret/salt/signing key only in a fresh normalized CLI wallet; do not overwrite old rc1 address or journals. rc3 derivation is independently checked by the existing account helper.",
+    "Keep current Rolling collateral bounds 0.001\u20130.01 ETH; testnet cooldown60s, moderation3600s, multiplier2/saveUp2 and credible-threat policy retain historical testnet settings. These explicit staging choices are reviewable, not production clearance.",
+    "New random contract salt and new campaign transaction-journal-v1. Existing CLI derives journal location from the new Aztec wallet directory; no old journal path is reused.",
+    "Existing schema2 operator manifest tool and checkSdk bind current reviewed RollingBoard and portal artifact identities. No dependency/toolchain changes."
+  ],
+  "commandsExecuted": [
+    "NODE_BACKEND=js HARDWARE_CONCURRENCY=1 /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/inspect.mjs",
+    "NODE_BACKEND=js HARDWARE_CONCURRENCY=1 /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/scripts/prepare-deployment-manifest.mjs /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/intent.json /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/deployment.json",
+    "NODE_BACKEND=js HARDWARE_CONCURRENCY=1 LOG_LEVEL=silent /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/finish.mjs"
+  ],
+  "files": [
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/inspect.mjs",
+      "sha256": "d488930c84060e7987775e54df62236cbe2266e305c4bb36bd8ee1297ca22f68",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/inspection.json",
+      "sha256": "26967692dac979e1736795507259b02e0131a08eb0a5cc82cc11b34dca22293d",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/intent.json",
+      "sha256": "1b43a833039e7bd18e6b6904d4096eef60b2f4ce46d2cc545be78eec2b4c4227",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/deployment.json",
+      "sha256": "fc76f25c7d519b0109f7f096f83eb4780567d304e42636058b286028c877e70b",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/finish.mjs",
+      "sha256": "09172e17a23e5de096397e9ba5801a1d6f1df4be471a59022d07c5470624411e",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/preflight.json",
+      "sha256": "875f5deb9c90c8bd478ba66b5106feb8f309eeb3a05c83916ced262accfa85eb",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/references.json",
+      "sha256": "45c7bae245fec33625235c2f6ae1633a81cc986425d2b99fb7fcfa3fa267ec0d",
+      "mode": "0o600",
+      "private": false
+    },
+    {
+      "reference": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g04-current-testnet-preparation-20261015/aztec-wallet.json",
+      "sha256": "315cd2cc54a86de5659c000d0728b1095ae53104ff1ac953c1d639b23f07819b",
+      "mode": "0o600",
+      "private": true
+    }
+  ],
+  "blockers": [
+    "Project sender nonce15 retained approval/cancellation lineage remains unresolved; preparation is not replay permission. Lead owns reconciliation.",
+    "Derived rc3 Aztec actor is absent and has zero public FeeJuice at the checked canonical checkpoint; it requires independently journalled current-network fee funding/claim and deployment.",
+    "Current canonical PrivateFPC is unpublished. Board/portal/PrivateBok/router still require genuine current-network deployment and normal Ready/finality.",
+    "Historical remote prover health timed out; real-proof capacity must be verified before acceptance. Consumer remote profile does not permit administrative init/set_portal operations.",
+    "Official docs network table still names rc1/oldrollup while live node and independent L1 agree on rc3/newrollup; current-network release clearance remains open."
+  ],
+  "nextAction": "Independent review of manifest/actor bindings, then lead resolution of original nonce15 and separately journalled current-network operator FeeJuice funding. Do not run deployment CLI yet.",
+  "reversal": "No chain or service state changed. Archive or remove ONLY this fresh campaign if abandoned; preserve original V6 actor, Ethereum identity, original deployment and all six liquidity files. Never remove this directory once future signed intents exist.",
+  "limitations": [
+    "Actual reads and derivations only; no testnet proof, funding, deployment, claim, model, browser or service acceptance.",
+    "New normalized wallet contains secrets and remains mode0600 under0700 ignored .build; safe evidence contains only public identities and file hashes.",
+    "Initial historical host identity examined earlier was inventory374f, not project0443; final manifest uses exact lead-provided0443 key reference and verified derivation."
+  ]
+}

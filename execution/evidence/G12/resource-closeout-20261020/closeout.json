@@ -1,0 +1,73 @@
+{
+  "observedAt": "2026-10-20T06:31:40.095243+00:00",
+  "sourceRevision": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+  "environment": "Trusted local lead, message-board-deploy, us-east-1; STS account052665140763 verified",
+  "operations": "Read-only AWS STS/EC2/Scheduler/CloudTrail and GitHub checks; no launch, transaction, backup or service mutation",
+  "observations": {
+    "knownInstances": [],
+    "knownVolumes": [],
+    "allRegionActiveOrStoppedInstances": [],
+    "allRegionVpcEndpoints": [],
+    "allRegionElasticAddresses": [],
+    "endpointCleanupSchedule": "ResourceNotFound after one-shot cleanup"
+  },
+  "instances": [
+    "i-09e2dbeea10854dc8",
+    "i-0a56b0bc2dd7727b2"
+  ],
+  "volumes": [
+    "vol-0f03dfb636c65ad05",
+    "vol-0ba74b7fa17135f81",
+    "vol-03207e708c4034c81"
+  ],
+  "cloudTrail": [
+    {
+      "event": "TerminateInstances",
+      "eventId": "66bdcfdf-6eec-4516-a36e-ae464da9d1b6",
+      "at": "2026-10-20T03:00:49Z",
+      "instance": "i-09e2dbeea10854dc8",
+      "previousState": "terminated",
+      "currentState": "terminated",
+      "error": null
+    },
+    {
+      "event": "TerminateInstances",
+      "eventId": "b463f0a1-d277-46b6-b1ac-ced770d6bcfa",
+      "at": "2026-10-20T03:00:13Z",
+      "instance": "i-0a56b0bc2dd7727b2",
+      "previousState": "stopped",
+      "currentState": "terminated",
+      "error": null
+    },
+    {
+      "event": "DeleteVpcEndpoints",
+      "eventId": "ced62681-5853-4e46-8786-bea4892fedb7",
+      "at": "2026-10-20T03:05:30Z",
+      "endpoints": [
+        "vpce-0ce422d6d08d15b9f",
+        "vpce-024f100ef8184a868"
+      ],
+      "unsuccessful": [],
+      "error": null
+    }
+  ],
+  "postPushChecks": [
+    {
+      "run": 39337714270,
+      "status": "SUCCESS"
+    },
+    {
+      "run": 39337701869,
+      "status": "SUCCESS"
+    }
+  ],
+  "costDisposition": {
+    "ceilingUsd": 500,
+    "conservativeForecastUsd": 479.248472398,
+    "reservationUsd": 480,
+    "forecastReleased": false,
+    "reason": "Compute, attached disks and endpoints removed at authorized deadline. No additional operating period or cleanup overrun observed. Preserve prior historical-spend bound, billing-delay/cleanup and retained-storage/static-delivery allowances; final invoice not obtained by these resource checks."
+  },
+  "preserved": "Encrypted archives, source/configuration amendments and static publication untouched; prior preservation evidence retained, no backup exercise repeated.",
+  "remaining": "X1 specialist audit and X2 applicable production-network clearance; no active engineering campaign or current compute authority."
+}

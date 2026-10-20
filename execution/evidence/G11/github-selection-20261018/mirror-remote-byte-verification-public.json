@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "repositoryId": 1424177099,
+  "repository": "zac-williamson/bok-54d789bb150f3a982144c42c02ceeb3e4b7a7fbf252cf2b7aac6184ed3e5de9c",
+  "private": true,
+  "appId": 5317701,
+  "installationId": 171412624,
+  "actionsDisabled": true,
+  "acceptedRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+  "remoteCommit": "b0f3cedf1881677ae9171dfc25432b8c64af9dd0",
+  "remoteTree": "e29638f3a931aa91ebc6e7352812a2c0f3b6e9b6",
+  "exactSourceFiles": 4,
+  "exactRemoteBytes": true
+}

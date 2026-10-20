@@ -1,0 +1,53 @@
+{
+  "task_id": "G13-portable-handover",
+  "candidate": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+  "base": "d188738461dc6358b3c679703c24353b997dba90",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+      "base": "d188738461dc6358b3c679703c24353b997dba90",
+      "id": "portable-exact-transfer",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent changed-blob comparison with reviewed5626167f",
+      "environment": "Documentation-only transfer over unchanged application d188",
+      "observed": "81 changed-path blobs identical;69/69 portable evidence hashes retained;46 stableIDs. Pending acceptance honestly retained.",
+      "artifacts": [
+        {
+          "path": "evidence/G13/portable-handover-20261019/review.json",
+          "sha256": "7361f839e407854bb4ddc40e92a7d7e62bed1c4531fcd8cb21979d94f60e039e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+    "base": "d188738461dc6358b3c679703c24353b997dba90",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G13/portable-handover-20261019/review.json",
+        "sha256": "7361f839e407854bb4ddc40e92a7d7e62bed1c4531fcd8cb21979d94f60e039e"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+      "base": "d188738461dc6358b3c679703c24353b997dba90",
+      "id": "RC46-portable-handover-records",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G13/portable-handover-20261019/review.json",
+          "sha256": "7361f839e407854bb4ddc40e92a7d7e62bed1c4531fcd8cb21979d94f60e039e"
+        }
+      ]
+    }
+  ]
+}

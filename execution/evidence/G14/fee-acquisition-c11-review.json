@@ -1,0 +1,46 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "c11a0127a1ac89becf6435b06994495e1404da01",
+  "base": "49bf979563f7ba9973ca49ea8a5fcd70ce25590d",
+  "verdict": "approved_bounded_trusted_operator_helper_source",
+  "prior_review": "fee-acquisition-49bf-review.json",
+  "findings": [],
+  "resolved": [
+    "FEE-ACQUIRE-P2-1: bounded firstObserved/firstAccounted/firstFinalized snapshots retained; current unknown/reorged never restores stale pass or replay authority.",
+    "FEE-ACQUIRE-P2-2: potentially throwing code accessor captured once under guard; fixed known-code set prevents arbitrary code/message/cause leakage."
+  ],
+  "file_sha256": {
+    "scripts/fee-asset-acquisition.mjs": "1bfe7a80636dc4cb4494ce675f042b626d1ede06d4fb7e48b1f38d6d563e3940",
+    "scripts/fee-asset-acquisition.test.mjs": "919039032378fe2493bc947331a48be254c431fea1255768ed021701eb3d26a3"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/fee-asset-acquisition.test.mjs",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 1924.430208
+    },
+    {
+      "command": "git diff --check 49bf979 c11a012",
+      "exit": 0
+    }
+  ],
+  "verification": [
+    "New disappearance tests cover before and after finality, followed by reorg and restoration; full historical records unchanged, current passedfalse, exactlyone signature/broadcast.",
+    "New getter tests cover changing, throwing and arbitrary prefixed secret values; each readonce, fixed safeoutput, no send/sign.",
+    "No changes to code/amount/recipient/signature/fee accounting, one-send durability or operator exclusivity assumptions."
+  ],
+  "mandatory_operator_preconditions": [
+    "Caller must acquire sender-wide exclusive operational lease across all journals, wallet sessions and tools; helper lock is per journal path only.",
+    "Use fresh live Sepolia chain/code/delegation/recipient/fee checks and trusted provider; supplied runtime constants/snapshots are not a current health claim.",
+    "Private0700 dedicated directory and0600 journal hold broadcastable signed bytes; preserve it through any uncertainty, never start another attempt due missing receipt.",
+    "Caller owns bounded provider lifetime/deadline and supported signer custody; use exact reviewed source."
+  ],
+  "limits": [
+    "Provider/receipt/log tests use labelled doubles; only disposable ethers signing is real.",
+    "No purchase, fee mint or credential access performed.",
+    "Strict accounting may remain blocked by same-block incoming ETH or other sender traffic; do not waive to report pass.",
+    "Source approval is not live faucet/network acceptance, does not authorize automatic repeated minting or another attempt after an uncertain receipt."
+  ]
+}

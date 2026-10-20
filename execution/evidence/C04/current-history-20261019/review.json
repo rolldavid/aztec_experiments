@@ -1,0 +1,22 @@
+{
+  "sourceRevision": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+  "baseRevision": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+  "verdict": "approved",
+  "scope": "Current C04 layered synthetic persisted PXE capacity and native TXE authenticated tail continuation/exit",
+  "findings": [],
+  "review": [
+    "Inspected exact three-file diff and existing contract setup/funding/posting semantics before evidence. No production behavior changed.",
+    "Verified installed native staging API requires begin/transactional commit/discard; reads retain actual NoteService and selector-before-limit pickNotes. Reopen uses actual same LMDB store.",
+    "Native TXE seed uses actual generated storage layout, PostNote properties and keyed authenticated links; synthetic deposit head explicitly seeded. Actual subsequent post/screen/withdraw checks establish tail authentication, not 1000 historical transactions.",
+    "Verified source, SDK implementation and unchanged generated artifact/catalog SHA256 against retained result.",
+    "Read actual filtered TXE success log, including native mined blocks and owned-process cleanup; did not repeat TXE.",
+    "Independently ran existing scripts/test-screening-history-pxe.mjs with pinned Node24.21.0, NODE_BACKEND=js, physical TMPDIR. Eleven named assertions pass;302ms; physical seeded LMDB1458176bytes and actual1015808bytes."
+  ],
+  "evidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/current-history-capacity/result.json",
+  "limitations": [
+    "No public10k authenticated rebuild/archiver measurement",
+    "No fresh proof or live-chain mutation",
+    "Existing browser storage helper uses SDK estimateSize, whose IndexedDB implementation reports zeros; accepted storage figures here are native LMDB only"
+  ],
+  "integrationCondition": "Lead derives existing build manifest test-input update using unchanged generated output equality; no stale full build represented as newly executed."
+}

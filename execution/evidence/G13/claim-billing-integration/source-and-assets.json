@@ -1,0 +1,53 @@
+{
+  "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+  "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+  "changedPaths": {
+    "apps/dist/aztec_bundle.js": "f0b909dca863164bf70375b7c393dd404b119f61aacad033c2066785f2162a77",
+    "apps/dist/sdk-manifest.json": "177609f0f4d452c826800ea31f847ed2301e448aa5b6b18d9d4f5e0df26358a1",
+    "apps/rolling/wallet-panel.browser.test.mjs": "b4ac0a8223ad8310bac3c62702b024415cd6191ea314c1afd4e0ad524f690858",
+    "apps/rolling/wallet-panel.mjs": "ad8fd984e3a91e10832d3d013ae64bc248ec1876be7e5da30c4f09ab2e8a4648",
+    "apps/rolling/wallet-session.mjs": "6da243c0d9eef79eab84068d68550377ec70e727730913640c621503da0bd47e",
+    "apps/rolling/wallet-session.test.mjs": "f9b62381703e42c95e2ab4115146d303ad14df56be197868d4a2e3915a1eb084",
+    "plugins/DEPLOYMENT.md": "0444a9b00b32d3340c1e0d8ff57d065cae3ab7ba970826906b3361aa94902268",
+    "plugins/devnet/network.mjs": "7c4e5cb561f7a3d594d9e753e8fdc239b6743dc4c11586ba2b527a6179f71179",
+    "plugins/devnet/operator-test.mjs": "a92fff06c31920c0baf3cc46b9aec5e3c9e3bcbd2ae25f9e4f1d111731db79b3",
+    "plugins/escrow-service.mjs": "ae53b90c151cbbd4298607e610ceccae58bd278df3d40eacc0e102a52d842ca4",
+    "plugins/main.mjs": "7926fccd3a29c9328ef66c5cc1b720e1f2f3a8525671464415f933f3cee3510d",
+    "plugins/operations.mjs": "af011710abd76ea1f34ae3eed50e28c8d01c6da3d778c11920ef986273c49c43",
+    "plugins/private-bok-metering.mjs": "132133810553411fe122f838937473cd9bdb0a3bc221f76401dc07a11e2632e3",
+    "plugins/private-bok-metering.test.mjs": "472ea2968fd9c86338dafc37deaf47feed8647ea18978a5c8eee0ef7d06e7027",
+    "plugins/test/hosted-private-bok.test.mjs": "b682f33ed90d8393334ac3444386c2a6e2ab731a2c65d57fd85f7e4f09979437",
+    "plugins/test/operations.test.mjs": "81611eed1e2b2efbb8b1c105cb48cc2c1aa648a50761179570b0ec52cf0f7e13",
+    "scripts/t04-metamask.mjs": "f39b0a94a00f2639893cb14fb6f52f875ee45e9f873268e0c9b89041eaf6aa42",
+    "scripts/test-t04-browser-journey.mjs": "3daddf9fd0558ee2d5f16a3d2a5363f20dfae7d043561088b6328111c1bb6ae7",
+    "scripts/test-wallet-extension-browser.mjs": "8fd9376900a10c06f1a9685b202f8c2f6d0dbb54d0bcf636bcd1120efd8e5258",
+    "shared/rolling/aggregate-wallet.mjs": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+    "shared/rolling/aggregate-wallet.test.mjs": "73d65c47f96f3e33a438cb1268bceec3e112520c8de414eafcc96d23f77e452d",
+    "shared/rolling/funding-receipts.mjs": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+    "shared/rolling/funding-receipts.test.mjs": "9f4ba74d0fc5600c0e90e996d8ca6215b038947b891b383302bfa95b8f7c131d"
+  },
+  "manifestChecks": [
+    {
+      "path": ".build/sdk/sdk-manifest.json",
+      "sha256": "177609f0f4d452c826800ea31f847ed2301e448aa5b6b18d9d4f5e0df26358a1",
+      "inputs": 2057,
+      "outputs": 8,
+      "allVerified": true
+    },
+    {
+      "path": ".build/apps-manifest.json",
+      "sha256": "b4627ae000355c503de18a12573437014c7b2f6ba399c2f0fccabda96827b780",
+      "inputs": 97,
+      "outputs": 10,
+      "allVerified": true
+    },
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "sha256": "73a9bd2ec58ad3b71be87218cf585886649f7dad1d27d41c75482df495f88fb6",
+      "inputs": 97,
+      "outputs": 25,
+      "allVerified": true
+    }
+  ],
+  "qualification": "Source components only. Real revised wallet claim/Bok run pending; existing failed evidence retained, no full product acceptance claim."
+}

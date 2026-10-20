@@ -1,0 +1,28 @@
+--- historical/driver.py
++++ candidate/driver.py
+@@ -2,12 +2,23 @@
+ import json,os,pathlib,time,hashlib
+ exec(pathlib.Path('/run/native-subset.py').read_text(),globals())
+ receipt={'schemaVersion':1,'passed':False,'nativeQualified':False,'cases':[],'sourceFunctionHashes':SOURCE_FUNCTION_HASHES}
++RECEIPT_DIRECTORY='/run'
+ 
+ def save():
+  data=json.dumps(receipt,sort_keys=True).encode()
+  if len(data)>16384:raise ValueError('Receipt size')
+- fd=os.open('/run/regression.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o444)
+- try:os.write(fd,data);os.fsync(fd)
++ pending=pathlib.Path(RECEIPT_DIRECTORY)/'regression.pending'
++ final=pathlib.Path(RECEIPT_DIRECTORY)/'regression.json'
++ fd=os.open(pending,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o444)
++ try:
++  if os.write(fd,data)!=len(data):raise OSError('Incomplete receipt')
++  os.fsync(fd)
++ finally:os.close(fd)
++ # Same-directory exclusive publication: readers see no file or complete JSON.
++ # Existing final/pending records are never replaced or silently reseeded.
++ os.link(pending,final,follow_symlinks=False);os.unlink(pending)
++ fd=os.open(RECEIPT_DIRECTORY,os.O_RDONLY|os.O_DIRECTORY)
++ try:os.fsync(fd)
+  finally:os.close(fd)
+ 
+ def case(label,args,timeout,retained):

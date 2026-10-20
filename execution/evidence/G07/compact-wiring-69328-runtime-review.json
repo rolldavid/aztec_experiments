@@ -1,0 +1,50 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "69328c85b5e1814f7f9b89030ad7fe675820d8a8",
+  "verdict": "approve-bounded-compact-wiring-components",
+  "findings": [],
+  "actualCLI": {
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 1541,
+    "peakTreeRSSKiB": 230224,
+    "ownedTreeAbsent": true,
+    "coverage": [
+      "Exact pinned CLI transform and drift refusal; main-only inverse restores original, admin tail remains identical.",
+      "Default-off/unresolved/invalid configuration and getter rejection.",
+      "Actual installed SafeJSONRPC raw compact route before one-byte body parser; original registered receiver captured; fixed503/malformed400 and version headers.",
+      "Ordinary ping RPC, CORS, status and version headers; native compact route rejects browser Origin.",
+      "Disabled compact route reaches no labelled native method."
+    ]
+  },
+  "sourceAndDependencyBinding": {
+    "sourceHashesChecked": 13,
+    "borrowedPackageMetadataChecked": 55,
+    "sourceAndPackageUnchanged": true,
+    "ownedDependencyDirectoryRestored": true,
+    "intentRunnerChildPreparationHashesChecked": true
+  },
+  "carry": {
+    "sixServicePlus24Gateway": "The actual31/4 run on863 includes six service and24 gateway passes; all their production/test blobs are unchanged at693. Prior run remains failed overall. Those30 passes plus current5 establish the bounded composition evidence, not a fabricated35-pass rerun.",
+    "references": [
+      "execution/evidence/G07/compact-service-86372-source-review.json",
+      "execution/evidence/G07/compact-wiring-69328-repair-review.json",
+      "execution/evidence/G07/compact-caecccf-runtime-review.json"
+    ]
+  },
+  "evidence": {
+    "result.json": "a69b1a407df05cf99f0dffd60a411a01d2e3678f96e0019c32fa07fb32e0784c",
+    "build.log": "84c289680b6c80f330814551905920fa1db10d8e317ce252522931bc07add1ee",
+    "cleanup.json": "340056a68693b7c2a6774c47918289a62c8901ee2def3a5794689e455bcbe7b9",
+    "execution-intent.json": "96d1755c0af74c7e092f18f227392b82ad2756f66227162758188f9cece3c440",
+    "before-source.json": "faa407d0f7aec84ff7a0766c4732e187c8afbb2e3e7925d7b7e61743a671a6d0",
+    "packages-before.json": "0104483bb48799ded075d5778929eb49bbfd10cc9d16bae08e91cad17bda0579"
+  },
+  "limitations": [
+    "Official listener and HTTP middleware are real; native node and gateway upstream/inspection are labelled doubles. No actual node start/deployed endpoint/browser/full cold qualification.",
+    "Registration transform is still not composed into existing startup loader or deployment. That exact composition/default-off authority is a separate source and runtime gate.",
+    "Native success encoding/root authentication remains supported by separate bounded adapter/verifier tests, not by this503 registration path.",
+    "Read budget600/minute is a development bound, not measured long-history capacity or cold recovery SLO."
+  ]
+}

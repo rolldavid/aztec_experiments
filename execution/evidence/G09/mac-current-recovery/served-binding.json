@@ -1,0 +1,247 @@
+{
+  "at": "2026-10-15T08:55:05.571Z",
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "sessionId": 86149,
+  "ownerPid": 34438,
+  "urls": [
+    {
+      "path": "/wallet/runtime.json",
+      "bytes": 3898,
+      "sha256": "e8a4ac80e143784c25719f9fab6cd5025cc7d425f8f391469477e2b548ad8e57"
+    },
+    {
+      "path": "/wallet/runtime.mjs",
+      "bytes": 292836,
+      "sha256": "a0386194a869ea4a0ca75c0fe75d676ce49738c805316ec386f8895fdc9e0aea"
+    },
+    {
+      "path": "/api/status",
+      "bytes": 1244,
+      "sha256": "316acc2ee786d86d2eeaf7d283cf1602a59ce9d3a6c2d74c02678c1838fb131e"
+    },
+    {
+      "path": "/api/board?id=0&limit=1",
+      "bytes": 3982,
+      "sha256": "e6dadfc58c3d4ac30c641fb0a339204dab396af5298d92514ae5d3e7ac720f7e"
+    }
+  ],
+  "metadata": {
+    "schemaVersion": 1,
+    "config": {
+      "network": {
+        "chainId": "31337",
+        "rollupVersion": "2529018267",
+        "rollupAddress": "0x708dc0586077ef4822711bcaf55ec74f29cce9bb",
+        "ethRpcUrl": "http://127.0.0.1:18547"
+      },
+      "board": {
+        "contractAddress": "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+        "portalAddress": "0xbfda86c46a5dbbc7e18793ba3d3dc9cd83d463a1"
+      },
+      "privateFee": {
+        "contractAddress": "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e",
+        "gasSettings": {
+          "gasLimits": {
+            "daGas": "271200",
+            "l2Gas": "6540000"
+          },
+          "teardownGasLimits": {
+            "daGas": "135600",
+            "l2Gas": "817500"
+          },
+          "maxFeesPerGas": {
+            "feePerDaGas": "0",
+            "feePerL2Gas": "17272731"
+          },
+          "maxPriorityFeesPerGas": {
+            "feePerDaGas": "0",
+            "feePerL2Gas": "0"
+          }
+        }
+      },
+      "bok": {
+        "contractAddress": "0x15b4402f1c7243006cfaec74a009360ff00f8265b52e2207394783da434cdf68",
+        "operatorAddress": "0x25cf2ffff1aa94b24191bbc9dcc693311cdd0572490f512a68930a1adf5b5926",
+        "pluginId": "0x0000000000000000000000000000000000000000000000000000000000626f6b"
+      },
+      "aggregateFunding": {
+        "chainId": "31337",
+        "router": "0x614f1c0817383c7bb50dc8e0a2afdf662ce8803f",
+        "routerCodeHash": "0x91f8af4ef5c72e0f617c96b2ae82ca5f7b158f2e5ad22d0bac9c1cd7d2ee34ca",
+        "collateralPortal": "0xbfda86c46a5dbbc7e18793ba3d3dc9cd83d463a1",
+        "feePortal": "0xfa576c502e564fc6a9574540b028c9795ea69edb",
+        "bokPortal": "0xbec4491eff1688cf35e8cdceede9bd0a67f6a81a",
+        "weth": "0x24cebac380236cf7bcb9bb039dce3a036fdca9d1",
+        "swapRouter": "0xd9470d4349ecef3d3735bea00fa06928a3a91c02",
+        "feeToken": "0xac5ac5d569b9fe82c452291c322c195c5de398c4",
+        "bokToken": "0x303ffa92c613cb550af9133ae6e9c6d6f81a12df",
+        "privateFpc": "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e",
+        "quoter": "0x191c546933c56a80e2ad41f71d90abaf5fb2450d",
+        "quoterCodeHash": "0xc6cb2f0099144bc782c29ca6adaf5eb7474ca4a52eef4d96332f3faf314eb31d",
+        "usdcCodeHash": "0xc9987bd3af6b26a030951faa7eacc017b68343aeedf3ce5fe68f821c4b93939d",
+        "usdcImplementation": "0x331198ec0b5ba3ac3adcce57be826c087aa40fa2",
+        "usdcImplementationCodeHash": "0xdcf3f601bc390a0cc24cd694e15cef5e3737fbfa83c7f7e0b7675c22a42be137",
+        "usdcDomain": {
+          "name": "Local USD Coin",
+          "version": "2"
+        },
+        "usdcRelayAddress": "0x580520fea660387495847495fbcf54be15de47c0"
+      }
+    },
+    "trustedQuery": {
+      "url": "http://127.0.0.1:62239/v1/node",
+      "allowLocalDev": true
+    },
+    "remoteProver": null,
+    "proofsEnabled": false,
+    "scripts": [
+      {
+        "url": "/wallet/ethers.js",
+        "bytes": 526551,
+        "sha256": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b"
+      },
+      {
+        "url": "/wallet/aztec_bundle.js",
+        "bytes": 62963453,
+        "sha256": "7d7fc810cddc0eeea1cbcbba7e7306104ca15321777df8280afc8949df7b8db9"
+      },
+      {
+        "url": "/wallet/crs-client.js",
+        "bytes": 7769,
+        "sha256": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3"
+      },
+      {
+        "url": "/wallet/wallet-providers.js",
+        "bytes": 1511,
+        "sha256": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1"
+      },
+      {
+        "url": "/wallet/passkey-wallet.js",
+        "bytes": 4772,
+        "sha256": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060"
+      },
+      {
+        "url": "/wallet/wallet-backup.js",
+        "bytes": 8265,
+        "sha256": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc"
+      },
+      {
+        "url": "/wallet/claim-secret-store.js",
+        "bytes": 12002,
+        "sha256": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca"
+      },
+      {
+        "url": "/wallet/account.js",
+        "bytes": 18377,
+        "sha256": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059"
+      },
+      {
+        "url": "/wallet/engine.js",
+        "bytes": 133624,
+        "sha256": "518147420ab6fc3caf7df5a90a311358dd8ffe73e4c371741fdb0a767b7d4b39"
+      }
+    ],
+    "crs": {
+      "url": "/crs/crs-manifest.json",
+      "bytes": 3754,
+      "sha256": "1a488ea4458c0269f7da2080e354ba1d1c413355fa982d62579e7862ba4f4abf"
+    },
+    "artifacts": {
+      "board": {
+        "url": "/wallet/board.json",
+        "bytes": 12057381,
+        "sha256": "91b9a2fe0b2e886b26cc012a3edcbbcaae40724b3d596d56a5f1701028993c59"
+      },
+      "privateFee": {
+        "url": "/wallet/private-fee.json",
+        "bytes": 2688020,
+        "sha256": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827"
+      },
+      "bok": {
+        "url": "/wallet/bok.json",
+        "bytes": 4001146,
+        "sha256": "0095bc9599401ef052436c1e6aec34903fad7745e3ff8bee2ea682d4586b65af"
+      }
+    }
+  },
+  "status": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "2529018267",
+      "rollupAddress": "0x708dc0586077ef4822711bcaf55ec74f29cce9bb",
+      "boardAddress": "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "bok": {
+        "address": "0x15b4402f1c7243006cfaec74a009360ff00f8265b52e2207394783da434cdf68",
+        "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+        "operatorAddress": "0x25cf2ffff1aa94b24191bbc9dcc693311cdd0572490f512a68930a1adf5b5926",
+        "deployer": "0x25cf2ffff1aa94b24191bbc9dcc693311cdd0572490f512a68930a1adf5b5926",
+        "salt": "0x00a3129cc3ebfe966b84eaf0fde557416fb37de10f78aa2c22ecfd6611d64227",
+        "deployment": {
+          "blockNumber": 8,
+          "blockHash": "0x1c7692d4599bffba7e8ca8e3427b05027ab269d5a135f46065f1b33d2a6c50de",
+          "txHash": "0x2414e2a1ad025fafb14212d0a627f6285224aa8b85e8b78a85121de7062b3977"
+        }
+      }
+    },
+    "complete": true,
+    "authenticationEpoch": "5cbf3206-7ae0-48fa-a7d4-f75e0ceeaadf",
+    "revision": "5cbf3206-7ae0-48fa-a7d4-f75e0ceeaadf:2:1237",
+    "checkpoint": {
+      "number": 606,
+      "hash": "0x04521bb44f54a852ee1cedc3b941c47d3d49e19f048c83fbdb1366150d612b9a"
+    },
+    "cursor": {
+      "blockNumber": "607",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "complete"
+  },
+  "publicPost": {
+    "id": "12149458384919124989847482452722011620626189287225894869695977437752594159673",
+    "record": {
+      "subboard": "0",
+      "parent": "0",
+      "root": "12149458384919124989847482452722011620626189287225894869695977437752594159673",
+      "kind": "1",
+      "name_id": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+      "reference": "0",
+      "content_digest": "20470574332678758571230994670309337899667996939605316041384716983140515855119"
+    },
+    "text": null,
+    "timestamp": "1792052582",
+    "mainVersion": "1",
+    "localVersion": "0",
+    "position": {
+      "blockNumber": "597",
+      "blockHash": "0x1ffcb97ec8c5e90472bdd5395e8ff0813e499b7f023c294e67433dc04892c915",
+      "txHash": "0x105b0a82716c1ec30edb261cbd684d475882f88472bdb76b0d3b8e291f3fd62f",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "order": "0",
+    "likes": "0",
+    "removal": {
+      "reason": "The post contains a direct threat to cause physical harm to an individual.",
+      "policy": "1",
+      "penalized": true,
+      "position": {
+        "blockNumber": "598",
+        "blockHash": "0x149102440d77047211baf22799f3baa28f5c865c4fbbf1c8c84cc9a30c996f6b",
+        "txHash": "0x1eb6847a3027233bf8a31384892b8cc4d65a3f7b0353ff483e6aeadf919459ad",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      }
+    },
+    "invocation": null,
+    "bot": null
+  },
+  "boardPolicy": {
+    "version": "1",
+    "digest": "19222328848760308624277369113847665349661069980220624057416038094065873769087",
+    "text": "No threats."
+  }
+}

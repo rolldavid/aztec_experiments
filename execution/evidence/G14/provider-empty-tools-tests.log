@@ -1,0 +1,28 @@
+✔ operator preflight failure prevents quoting an executable paid request (1.140542ms)
+✔ reasoning cap, disabled billable extras and measured usage are preserved (1.818917ms)
+✔ concurrent low-credit quotes share one replenishment and recheck credits (1.696625ms)
+✔ mock billing: missing result yields fixed stage and no second call (0.393666ms)
+✔ mock billing: missing usage yields fixed stage and no second call (0.111583ms)
+✔ mock billing: malformed token usage yields fixed stage and no second call (0.113833ms)
+✔ mock billing: cap yields fixed stage and no second call (0.105583ms)
+✔ mock billing: cached billing yields fixed stage and no second call (0.095291ms)
+✔ mock billing: receipt validation yields fixed stage and no second call (0.148542ms)
+✔ mock billing: throwing result getter yields fixed stage and no second call (0.139625ms)
+✔ changing usage getter cannot alter validated billing facts on a second read (0.16075ms)
+✔ mock HTTP200 malformed billing preserves actual HTTP status and stops after one completion (2.26725ms)
+✔ outgoing model request omits empty tools and preserves real tools: 0 absent (0.15375ms)
+✔ outgoing model request omits empty tools and preserves real tools: 0 (0.086375ms)
+✔ outgoing model request omits empty tools and preserves real tools: 1 (0.223084ms)
+✔ only exact documented code/param survive; arbitrary text, details, ids and headers never do (2.571791ms)
+✔ unknown huge values project null, never truncated provider strings (0.17275ms)
+✔ throwing/changing getters are not executed during projection (0.292875ms)
+✔ ordinary errors, forged records and arbitrary error getters are never traversed (0.767041ms)
+✔ billing stages and categories are fixed values (0.169209ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 359.229708

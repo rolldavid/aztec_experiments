@@ -1,0 +1,53 @@
+{
+  "task_id": "W03-funding-confirmation-progress",
+  "candidate": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+  "base": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "funding-progress",
+      "candidate": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+      "base": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing focused held-confirm, aggregate and pause browser cases",
+      "environment": "Chromium component with labelled funding fixture",
+      "observed": "Four affected cases passed84.7s; independent exact source/test/log review approved presentation change without redundant rerun.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funding-confirmation-progress-20261019/review.json",
+          "sha256": "45d86f6de3c3a1174ccc8c3cfa701f47b25b2e57c6821264b125ca6f93538b1a"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+    "base": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/funding-confirmation-progress-20261019/review.json",
+        "sha256": "45d86f6de3c3a1174ccc8c3cfa701f47b25b2e57c6821264b125ca6f93538b1a"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "RC19-funding-confirmation-progress-component",
+      "candidate": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+      "base": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funding-confirmation-progress-20261019/review.json",
+          "sha256": "45d86f6de3c3a1174ccc8c3cfa701f47b25b2e57c6821264b125ca6f93538b1a"
+        }
+      ]
+    }
+  ]
+}

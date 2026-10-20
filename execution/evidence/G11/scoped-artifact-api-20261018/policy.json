@@ -1,0 +1,40 @@
+{
+  "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+  "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+  "task_id": "G11-scoped-artifact-api",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/artifact-api.mjs",
+    "plugins/main.mjs",
+    "plugins/rolling-hosted-config.example.json",
+    "plugins/static-publication.mjs",
+    "plugins/test/artifact-api.test.mjs",
+    "plugins/test/static-publication.test.mjs"
+  ],
+  "required_checks": [
+    "api-capability",
+    "artifact-http-browser"
+  ],
+  "requirements": [
+    "RC35-scoped-secret-api",
+    "RC35-public-external-assets"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G11-scoped-artifact-api",
+      "paths": [
+        "plugins/DEPLOYMENT.md",
+        "plugins/artifact-api.mjs",
+        "plugins/main.mjs",
+        "plugins/rolling-hosted-config.example.json",
+        "plugins/static-publication.mjs",
+        "plugins/test/artifact-api.test.mjs",
+        "plugins/test/static-publication.test.mjs"
+      ]
+    }
+  ]
+}

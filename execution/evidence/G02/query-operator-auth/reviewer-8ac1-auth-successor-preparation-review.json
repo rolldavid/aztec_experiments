@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_ONE_REBOUND_AUTH_ONLY_RUN_AFTER_PARENT_GRANT",
+  "source": "8ac1e7c1b71f322b0d9ad89f81f6efb47649a9bb",
+  "preparationPacketSha256": "6ee4239a69a9d35fa182ec27fc5b80be9600367f7b4da9b2265427db2aad22bc",
+  "runnerSha256": "47bb3f8da977d88343c196610f3a820b291a1a2000d6e118925adad4a6baf549",
+  "verifiedPins": 5377,
+  "basis": "Constructor actual78639 accepted; same exact auth-only argv/label as failed99958 with reviewed constructor repair; directory-only qualified owner/child delta. No other source changes.",
+  "limits": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "eachChildTimeoutMs": 20000,
+    "eachChildJsHeapMiB": 1024
+  },
+  "holds": "No PXE/drain/whole30 grant or qualification. Historical99958 retained. No reviewer execution."
+}

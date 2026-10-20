@@ -1,0 +1,10 @@
+{
+  "capturedAt": 1791955106.2889018,
+  "head": {
+    "number": "0x4a7",
+    "hash": "0xa06e46b72fe2c479e265c6b28aa0c918eb4b992201ecf13956683dab536a994a",
+    "timestamp": "0x6acefe0b"
+  },
+  "paymentReceiptStatus": "0x1",
+  "purpose": "Before controlled stop following stale development clock; no writes/replay"
+}

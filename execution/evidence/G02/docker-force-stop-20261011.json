@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-11T22:54:42.060360+00:00",
+  "action": "docker desktop stop --force --timeout 30",
+  "exitCode": 0,
+  "knownBackendAbsent": true,
+  "processObservation": "",
+  "dataReset": false
+}

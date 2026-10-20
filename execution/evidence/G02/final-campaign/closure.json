@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-15T13:32:02.025122+00:00",
+  "source": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "campaign": "rolling-shared-20261015-4a1c3edd3114",
+  "result": "No application runtime or qualification launched; independent termination survived session quota interruption.",
+  "passed": [
+    "isolated build and wallet closure",
+    "asset probe",
+    "original1572 full immutable restore"
+  ],
+  "failure": "Current626 snapshot rename crossed root/data filesystems (EXDEV) before runtime.",
+  "repair": {
+    "sha256": "bb611a4f72727f953658a08eb102714642aa93e31e6b716fa67ea549d3cb52fe",
+    "reviewSha256": "505f938e8fb4650f41ed3910aeceb87090420436f88d130eabfa67608b0611b1",
+    "result": "Focused destination repair verified; no cloud rerun. Old prestage archive remains historical and must not be reused as repaired."
+  },
+  "budget": "296.30 cumulative conservative bound,3.70 unreserved; not invoice",
+  "backup": "Timer never enabled; no mutable financial action; original Mac and immutable S3 recovery retained."
+}

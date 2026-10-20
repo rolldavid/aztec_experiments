@@ -1,0 +1,94 @@
+✖ actual accepted commit survives restart; failed invocation leaves previous source intact (9.044959ms)
+✖ same-thread operations wait; a different thread opens independently (2.680334ms)
+✖ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (1.524791ms)
+✖ lease loss prevents acceptance; user paths and changed repository identity fail closed (7.999416ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.510917
+
+✖ failing tests:
+
+test at plugins/test/thread-repositories.test.mjs:16:1
+✖ actual accepted commit survives restart; failed invocation leaves previous source intact (9.044959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-WUHjkL/threads'
+  - '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-WUHjkL/threads'
+  
+      at Object.open (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/thread-repositories.mjs:31:90)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/test/thread-repositories.test.mjs:17:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-WUHjkL/threads',
+    expected: '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-WUHjkL/threads',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at plugins/test/thread-repositories.test.mjs:22:1
+✖ same-thread operations wait; a different thread opens independently (2.680334ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-RIHXiq/threads'
+  - '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-RIHXiq/threads'
+  
+      at Object.open (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/thread-repositories.mjs:31:90)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/test/thread-repositories.test.mjs:23:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-RIHXiq/threads',
+    expected: '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-RIHXiq/threads',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at plugins/test/thread-repositories.test.mjs:26:1
+✖ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (1.524791ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-CUOoVV/threads'
+  - '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-CUOoVV/threads'
+  
+      at Object.open (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/thread-repositories.mjs:31:90)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/test/thread-repositories.test.mjs:28:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-CUOoVV/threads',
+    expected: '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-CUOoVV/threads',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at plugins/test/thread-repositories.test.mjs:31:1
+✖ lease loss prevents acceptance; user paths and changed repository identity fail closed (7.999416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-3hdADo/threads'
+  - '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-3hdADo/threads'
+  
+      at Object.open (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/thread-repositories.mjs:31:90)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/plugins/test/thread-repositories.test.mjs:33:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-3hdADo/threads',
+    expected: '/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/bok-thread-3hdADo/threads',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

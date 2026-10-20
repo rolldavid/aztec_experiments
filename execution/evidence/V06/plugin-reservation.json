@@ -1,0 +1,18 @@
+{
+  "postCount": "4",
+  "requestCount": "2",
+  "balance": "0",
+  "postId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+  "invocation": [
+    "0x1ad525f91a610ac17693a40fa1a0a10125d69ca0af502b7d9005baaa3ea31b06",
+    "2",
+    "0",
+    "1000000",
+    "0",
+    "1791728076"
+  ],
+  "postText": "@bok Reply with exactly: V6 testnet plugin works. Do not use tools, add formatting, or create a pull request.",
+  "postFlagged": false,
+  "verifiedAt": "2026-10-10T14:22:35Z",
+  "interpretation": "New request is running with1testUSDC reserved, zero charged, no reply yet. Current service must remain running until normal reservation finality and completion."
+}

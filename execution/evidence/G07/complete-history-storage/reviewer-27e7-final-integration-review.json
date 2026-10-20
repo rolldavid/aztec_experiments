@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:50:33.171347+00:00",
+  "candidate": "27e7eadb6d849ecd7dcae4ce248447655dace433",
+  "base": "276bab92ee4a8cb28dd2742c339bbddc9773512c",
+  "verdict": "PASS exact six-path component integration eligibility; bind this review then existing negative gates and exact CAS",
+  "componentAcceptanceSha256": "b8d151f485bc2ecbcf9da25de2c6db241c31745ffad0917d3a18cff2695fb8f2",
+  "policySha256": "08ce9b63337efca275147c8e10a5a266a95468efc2c6c9074706c7705c8fdfee",
+  "closureSha256": "ebd93d2f4c2c2f31228e56d4ca7741a804704d28fd4d28bb4aa64d69201948b1",
+  "runtimeReview": "a4b247753e8acdf05377e015aba0d430226da509aedda9220cdf42d30efed57b",
+  "verified": [
+    "Exact six current lead source hashes/clean27e7HEAD and policy/base matched.",
+    "All component evidence artifact hashes and3157 current normal closure bindings independently rehashed.",
+    "49 ordinary pass carry plus32 distinct browser coverage19unchanged+1focused+12current accepted;73047 retains failed status.",
+    "No generated rebuild required for source-served reader; final current closure verified.",
+    "Parent visual inspection record and exact screenshot bytes bound; reviewer did not infer realwallet functionality from screenshots."
+  ],
+  "limitations": [
+    "LabelledrendererAPI/session fixtures; actualbrowsernativePXE/proofs notqualified.",
+    "Full densewire/archive/canonicalreaderperformance and completeproductrecovery remainmandatory.",
+    "No cloudlaunch or realtestnetproof acceptance from these checks."
+  ],
+  "noRuntimeByReviewer": true
+}

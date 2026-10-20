@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-14T10:51:02.515393+00:00",
+  "candidate": "936b1bdae139dc120e81c66a285e98154e235d72",
+  "base": "8342b4527278445f14c65046ae3cd1484d4667c5",
+  "requirements": [
+    "RC31",
+    "G10-A08",
+    "G11 existing repository permission boundaries"
+  ],
+  "disposition": "changes-required",
+  "sourceHashes": {
+    "plugins/DEPLOYMENT.md": "7619cc1ed10caa13a0edb83c8fd33de57cf73e20997646b2a4409e7adf41f6e9",
+    "plugins/agent.mjs": "090ca44fc69362d4aa1f259af8637a50636b1d74011484b9ce5b2e004028f9c1",
+    "plugins/github-app-broker.mjs": "140c7fa605e49e4a9da997849d21fcb3a20469c38c5443b6feb053c89596863d",
+    "plugins/github-tools.mjs": "72c821ee9f19e84137e3ea7e195883cdd6193bd548e48f6c8f7458da675c3f08",
+    "plugins/main.mjs": "600df3e9c8d535739ba9a0ee15400044343734640fe770549bf45ac3b1c088ae",
+    "plugins/rolling-hosted-config.example.json": "40959bb85d830db91d872de8c27a10965df4843f91b25b2e05dba1991f2a3139",
+    "plugins/test/github-app-broker.test.mjs": "40feae0083b051306e4c507123aa4c8555acd94e66f3d20a8d502dec13bb3718",
+    "plugins/test/github-checkout.test.mjs": "52e1f9abb8658b419880c34445b46b259d29fa88ceb7ecf4e845ce703bb424c0",
+    "plugins/test/hosted-private-bok.test.mjs": "4f31088f7fc28037de85e356a3a2fb3e2303ea5584b4a918e756a39911854eb5",
+    "plugins/test/model.test.mjs": "4c9ce3b14bcdae67e1c7ffc089ee7bd48ef3321030b68a16df24e88c3cb0cc30",
+    "plugins/test/thread-repositories.test.mjs": "a99e9a3673ef82ffbed401ed0b020e7880d933f4f6bc6d9716b8619009854e7e",
+    "plugins/thread-repositories.mjs": "17ac9cbdfc91fde0d92a073e7764417374df55c87a58fbd94743f2526ba1e7be"
+  },
+  "sourceAndEvidenceVerified": {
+    "packetSha256": "86bfb4feb3b5171f27871948e8e02541576dca97fa776e2d20614bf4ea3957f8",
+    "sourceFiles": 12,
+    "logAndReceiptFiles": 6,
+    "mismatches": []
+  },
+  "findings": [
+    {
+      "id": "connected-pr-admission",
+      "priority": "P1",
+      "file": "plugins/github-app-broker.mjs",
+      "lines": [
+        119,
+        134
+      ],
+      "problem": "Git object/ref writes occur before existing or historical PR admission. A closed/colliding PR can be discovered after advancing its branch; prResult also omits draft===true and accepts an operator-converted non-draft PR.",
+      "requiredRepair": "Validate exact open draft PR repository/base/head/expected-parent identity, or absence of any initial PR collision, before Git mutations. Retain post-write validation and original uncertain-write reconciliation. Add zero-write controls for closed, ready, and historical-collision cases.",
+      "ownerNotified": true
+    }
+  ],
+  "reviewedBoundaries": [
+    "Exact operator-controlled thread/repository-ID/owner/base/work-branch mapping, selected App installation, connected token limited to one numeric repository and contents/pull_requests writes.",
+    "Original Git tree hashed including preserved control paths, symlinks and submodules; excluded content not loaded into generated workspace. Fixed trusted Git environment and existing isolated validation remain.",
+    "Durable intent precedes each remote mutation. Uncertain responses reconcile by exact hash/ref/PR without retransmission. Local accepted revisions and publication remain serialized under existing leases.",
+    "Connected source bypasses static/default mirror publication; public model text suppressed in favor of fixed trusted PR result, including no-change/limit responses.",
+    "Private source bounded by file/count/byte limits, token/error messages sanitized, no credential clone or new model-visible GitHub capability."
+  ],
+  "evidenceScope": {
+    "stagedDistinctPassing": 101,
+    "explicitContainerSkips": 2,
+    "newReviewerRuntimeTests": 0,
+    "actualGitHubMutations": 0,
+    "actualProviderCalls": 0
+  },
+  "remainingQualification": [
+    "Real selected GitHub App installation and live mapped-repository draft PR/protected-branch behavior.",
+    "Representative connected project through isolated validation and hosted participants/threads."
+  ],
+  "notes": [
+    "Source inspected before implementer packet. Design independently identified admission ordering; reviewer additionally identified absent draft-state validation. No application source edits or live operations performed."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T21:44:11.648655+00:00",
+  "sourceRevision": "78ad4718583ca14a4bdc005f949e5db2db277744",
+  "baseRevision": "4628b9916842f6cf0ab946cb329f1e4b0723cc51",
+  "workerRevision": "a416fd4aa06db3917083acc754b5b5ec49620575",
+  "requirements": [
+    "RC25",
+    "RC26",
+    "G05-A02",
+    "G05-A04",
+    "G05-A05"
+  ],
+  "verdict": "approve",
+  "findings": [],
+  "changedFiles": [
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a"
+    },
+    {
+      "path": "prover/private-query.test.mjs",
+      "sha256": "3ac7fd29b35712322bef65b3f26c5d988d8074a97db9f5a815bfd97dfd2f853a"
+    }
+  ],
+  "checks": [
+    "Reviewed exact source and tests before packet. Both final transferred blobs equal frozen worker revision.",
+    "Only fixed canonical public getBlock/getBlockData share inspected synced-world latest upper bound; generic/latest selectors and mixed nonhistorical batches remain strict proposed readiness.",
+    "Stateful witness/storage selectors retain selected-tier upper bound and oldest snapshot pruning; no pending transaction, identity, freshness or proof-policy relaxation.",
+    "Canonical hash-selector resolution via numbered block, returned BlockResponse identity, selected/world post-fences and drained final records remain unchanged. Future blocks and orphan resolution/final reorg refuse.",
+    "Independent25 existing historical gateway tests PASS0FAIL0SKIP530.215ms, including new exact checkpoint7/world8 boundary cases, state/pruning/future refusal, genesis, receipt pending policy and held-sibling drain.",
+    "All three worker test log hashes and preserved actual failure packet hash verify; worker56case full suite pass retained. Original deliberate503!=200 failure remains a nonpass.",
+    "Exactly two prover paths absent from SDK and wallet manifest inputs; no generated consumers or artifacts changed, so no SDK/wallet rebuild required. No live service or financial operation performed."
+  ],
+  "packet": {
+    "path": "rolling-controls/execution/evidence/G05/subboard-current/body-bound-fix.json",
+    "sha256": "7f485af71a93d50170c87f06815bc1c34781bb7c05e5574391a27544553b84a5"
+  },
+  "limits": [
+    "Actual public probe independently reproduced gateway getBlock1551 failure while native/getBlockData succeeded; original failed subboard selectors were not recorded, so exact attribution remains unproved.",
+    "Source approval does not establish actual subboard creation acceptance or authorize replay of its entered reservation. Lead must preserve and reconcile the exact prepared workflow before any authorized continuation.",
+    "RC40 fresh recovery, real-proof testnet, specialist privacy review and release gates remain unchanged."
+  ]
+}

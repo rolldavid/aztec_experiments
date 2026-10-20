@@ -1,0 +1,71 @@
+{
+  "supervisorPid": 73854,
+  "candidate": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+  "kind": "Read-only numeric native child configuration, not measured CPU parallelism",
+  "observerSha256": "7b5b07ead0266f6b30e6922906fb6880c9239d2829c7e209f678106ebe2ff095",
+  "observations": [
+    {
+      "at": "2026-10-12T14:24:21.256695+00:00",
+      "pid": 73891,
+      "ppid": 73875,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T14:24:21.260638+00:00",
+      "pid": 73893,
+      "ppid": 73875,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T14:24:21.266727+00:00",
+      "pid": 74032,
+      "ppid": 73875,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T14:24:21.270065+00:00",
+      "pid": 73977,
+      "ppid": 73875,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T14:28:27.401960+00:00",
+      "pid": 76818,
+      "ppid": 76815,
+      "HARDWARE_CONCURRENCY": 1,
+      "PROVER_THREADS": 1
+    },
+    {
+      "at": "2026-10-12T14:29:08.401383+00:00",
+      "pid": 77023,
+      "ppid": 77021,
+      "HARDWARE_CONCURRENCY": 1,
+      "PROVER_THREADS": 1
+    },
+    {
+      "at": "2026-10-12T14:29:42.005066+00:00",
+      "pid": 77140,
+      "ppid": 77137,
+      "HARDWARE_CONCURRENCY": 1,
+      "PROVER_THREADS": 1
+    },
+    {
+      "at": "2026-10-12T14:30:12.430606+00:00",
+      "pid": 77276,
+      "ppid": 77269,
+      "HARDWARE_CONCURRENCY": 1,
+      "PROVER_THREADS": 1
+    },
+    {
+      "at": "2026-10-12T14:30:48.199286+00:00",
+      "pid": 77416,
+      "ppid": 77400,
+      "HARDWARE_CONCURRENCY": 1,
+      "PROVER_THREADS": 1
+    }
+  ],
+  "errors": [],
+  "supervisorAbsentAtEnd": true,
+  "elapsedSeconds": 424.814,
+  "finished": true
+}

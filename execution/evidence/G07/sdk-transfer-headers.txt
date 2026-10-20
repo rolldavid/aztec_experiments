@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: http://127.0.0.1:18546 http://127.0.0.1:62412; worker-src 'self' blob:; img-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Resource-Policy: same-origin
+Content-Type: text/javascript
+Vary: Accept-Encoding
+Content-Length: 28081827
+Content-Encoding: gzip
+Date: Thu, 15 Oct 2026 03:31:29 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

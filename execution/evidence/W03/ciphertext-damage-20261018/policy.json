@@ -1,0 +1,26 @@
+{
+  "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "task_id": "W03-deterministic-ciphertext-damage",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "scripts/test-w03-journal-backup.mjs"
+  ],
+  "required_checks": [
+    "descriptor-damage"
+  ],
+  "requirements": [
+    "W03-recovery-authentication"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-deterministic-ciphertext-damage",
+      "paths": [
+        "scripts/test-w03-journal-backup.mjs"
+      ]
+    }
+  ]
+}

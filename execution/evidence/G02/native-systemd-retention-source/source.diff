@@ -1,0 +1,167 @@
+diff --git a/deploy/prover/BOOTSTRAP.md b/deploy/prover/BOOTSTRAP.md
+index e641f82..69c7efc 100644
+--- a/deploy/prover/BOOTSTRAP.md
++++ b/deploy/prover/BOOTSTRAP.md
+@@ -775,3 +775,23 @@ remain explicit and block execution. No raw host text, arbitrary vendor/version
+ string, environment, process argument or URL enters the receipt. The operator
+ must validate this object and its new control-source hash before accepting a
+ passing version receipt. This does not replace later genuine native proof tests.
++
++The native-only mode retains execution metadata across `systemctl start --wait`
++and the separate state read. A fixed drop-in declares
++`Before=rolling-native-version.service` on the **already-active** budget timer.
++Systemd file ordering dependencies retain the referenced unit; this direction
++follows the ordinary timer-before-service order. It adds no `Wants`, `Requires`,
++start/restart or stop propagation, and changes neither absolute shutdown time.
++After reloading, both timers must still be active and bounded ordering readbacks
++must show the incoming reference and no reverse edge before the binary starts.
++The version unit, `--wait`, strict exit/start-timestamp predicates, final shutdown
++and ordinary Linux qualification gate remain unchanged.
++
++Campaign2707 observed an independently reaped zero-exit matching version, but its
++later systemd read showed zero execution fields. The unchanged gate rejected it.
++Systemd's documented collection of inactive unreferenced units explains how such
++state can be lost; the historical collection itself was not captured. This
++reference repair requires an actual harmless Linux systemd lifecycle regression
++before another paid version attempt. Local transport doubles are not that proof.
++`RemainAfterExit=yes` alone is unsuitable because `--wait` would not complete;
++`CollectMode=inactive` is already the default and permits successful collection.
+diff --git a/deploy/prover/bootstrap.py b/deploy/prover/bootstrap.py
+index efaad20..41b0656 100644
+--- a/deploy/prover/bootstrap.py
++++ b/deploy/prover/bootstrap.py
+@@ -1192,6 +1192,34 @@ def native_fetch(url,path):
+     try:os.fsync(directory)
+     finally:os.close(directory)
+ 
++def native_ordering(unit):
++    if unit not in ('rolling-budget.timer',NATIVE_UNIT):raise ValueError('Invalid retention unit')
++    capture,raw=bounded_capture(['systemctl','show',unit,'--property=Before,After'],3,4096)
++    if capture['timeout'] or capture['returnCode']!=0 or not capture['reaped'] or capture['stdout']['truncated']:raise ValueError('Retention readback unavailable')
++    fields={}
++    for line in raw['stdout'].decode('ascii').splitlines():
++        key,value=line.split('=',1)
++        if key not in ('Before','After') or key in fields:raise ValueError('Invalid retention readback')
++        names=value.split()
++        if len(names)>128 or len(names)!=len(set(names)) or any(not re.fullmatch(r'[A-Za-z0-9_.:@\\-]{1,255}',name) for name in names):raise ValueError('Invalid retention dependencies')
++        fields[key]=set(names)
++    if set(fields)!={'Before','After'}:raise ValueError('Incomplete retention readback')
++    return fields
++
++def native_retain_execution():
++    # A file-declared ordering edge also holds a reference. The already-active
++    # timer retains this inactive service across --wait / show, without starting
++    # it. Before follows the normal timer -> basic.target -> service ordering.
++    # Neither timer deadline nor its activation/stop dependencies are changed.
++    write('/etc/systemd/system/rolling-budget.timer.d/native-version-reference.conf',
++          '[Unit]\nBefore='+NATIVE_UNIT+'\n',0o644)
++    run(['systemctl','daemon-reload'],timeout=5)
++    for timer in ('budget','commissioning'):
++        run(['systemctl','is-active','--quiet','rolling-'+timer+'.timer'],timeout=3)
++    timer=native_ordering('rolling-budget.timer');service=native_ordering(NATIVE_UNIT)
++    if NATIVE_UNIT not in timer['Before'] or NATIVE_UNIT in timer['After'] or 'rolling-budget.timer' not in service['After'] or 'rolling-budget.timer' in service['Before']:
++        raise ValueError('Retention ordering mismatch')
++
+ def native_state():
+     try:
+         capture,raw=bounded_capture(['systemctl','show',NATIVE_UNIT,'--property=ActiveState,SubState,Result,ExecMainCode,ExecMainStatus,ExecMainStartTimestampMonotonic'],3,4096)
+@@ -1272,7 +1300,7 @@ def native_execute(config,worker):
+         native_fetch(config['binaryUrl'],NATIVE_ROOT/'bb')
+         write(NATIVE_ROOT/'capture.py',worker,0o444)
+         unit='[Unit]\nDescription=Closed public binary version diagnostic\nAfter=rolling-egress.service\n[Service]\nType=exec\nDynamicUser=yes\nStateDirectory=rolling-native-version\nStateDirectoryMode=0700\nExecStart=/usr/bin/python3 /opt/rolling-native-version/capture.py\nRestart=no\nRuntimeMaxSec=20s\nTimeoutStopSec=2s\nKillMode=control-group\nMemoryMax=512M\nMemorySwapMax=0\nCPUQuota=200%\nTasksMax=64\nUMask=0077\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nPrivateNetwork=yes\nIPAddressDeny=any\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nProtectKernelTunables=yes\nProtectControlGroups=yes\nRestrictSUIDSGID=yes\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud\nStandardOutput=null\nStandardError=null\n'
+-        write('/etc/systemd/system/'+NATIVE_UNIT,unit,0o644);run(['systemctl','daemon-reload'],timeout=5)
++        write('/etc/systemd/system/'+NATIVE_UNIT,unit,0o644);native_retain_execution()
+         receipt['stage']='version'
+         try:run(['systemctl','start','--wait',NATIVE_UNIT],timeout=25)
+         except Exception:pass # Exact state/result observed before stopping, never retry.
+diff --git a/scripts/test-prover-bootstrap.py b/scripts/test-prover-bootstrap.py
+index ee19e61..ba8e4b8 100644
+--- a/scripts/test-prover-bootstrap.py
++++ b/scripts/test-prover-bootstrap.py
+@@ -1213,6 +1213,47 @@ class NativeVersionDiagnostic(unittest.TestCase):
+             self.assertNotEqual(second.returncode,0);self.assertEqual(output.read_bytes(),before)
+             self.assertEqual((ROOT/'toolchain.json').read_bytes(),toolchain)
+ 
++    def test_native_retention_is_incoming_order_only_before_execution(self):
++        # Labelled systemd transport: exercise the actual generated host helper.
++        ns=self.host();events=[];writes={}
++        ns['write']=lambda path,text,mode: (events.append(('write',path)),writes.update({str(path):(text,mode)}))
++        ns['run']=lambda args,**kw:events.append(tuple(args))
++        def capture(args,seconds,limit):
++            events.append(tuple(args));self.assertEqual((seconds,limit),(3,4096))
++            raw=('Before=rolling-native-version.service timers.target\nAfter=sysinit.target\n' if args[2]=='rolling-budget.timer'
++                 else 'Before=shutdown.target\nAfter=rolling-budget.timer basic.target rolling-egress.service\n')
++            return {'timeout':False,'returnCode':0,'reaped':True,'stdout':{'truncated':False}},{'stdout':raw.encode()}
++        ns['bounded_capture']=capture;ns['native_retain_execution']()
++        self.assertEqual(writes,{'/etc/systemd/system/rolling-budget.timer.d/native-version-reference.conf':('[Unit]\nBefore=rolling-native-version.service\n',0o644)})
++        for timer in ('budget','commissioning'):
++            self.assertIn(('systemctl','is-active','--quiet','rolling-'+timer+'.timer'),events)
++        self.assertEqual([e for e in events if e[0]=='systemctl' and e[1] in ('start','stop','restart','enable')],[])
++
++    def test_native_retention_rejects_missing_reverse_or_cyclic_edges(self):
++        ns=self.host();ns['write']=lambda *a:None;ns['run']=lambda *a,**k:None
++        good_timer={'Before':{ns['NATIVE_UNIT']},'After':set()}
++        good_service={'Before':set(),'After':{'rolling-budget.timer'}}
++        cases=[({'Before':set(),'After':set()},good_service),
++               ({'Before':{ns['NATIVE_UNIT']},'After':{ns['NATIVE_UNIT']}},good_service),
++               (good_timer,{'Before':set(),'After':set()}),
++               (good_timer,{'Before':{'rolling-budget.timer'},'After':{'rolling-budget.timer'}})]
++        for timer,service in cases:
++            with self.subTest(timer=timer,service=service):
++                ns['native_ordering']=lambda unit:timer if unit=='rolling-budget.timer' else service
++                with self.assertRaises(ValueError):ns['native_retain_execution']()
++
++    def test_native_retention_transport_and_projection_fail_closed(self):
++        ns=self.host();good={'timeout':False,'returnCode':0,'reaped':True,'stdout':{'truncated':False}}
++        for data in (b'Before=x\n',b'Before=x\nAfter=y\nBefore=z\n',b'Before=x x\nAfter=y\n',b'Before=bad name/secret\nAfter=y\n',b'Before=x\nAfter='+b'z'*256):
++            ns['bounded_capture']=lambda *a:(good,{'stdout':data})
++            with self.assertRaises(ValueError):ns['native_ordering']('rolling-budget.timer')
++        for change in ({'timeout':True},{'returnCode':1},{'reaped':False},{'stdout':{'truncated':True}}):
++            ns['bounded_capture']=lambda *a:({**good,**change},{'stdout':b'PRIVATE_SENTINEL'})
++            with self.assertRaises(ValueError):ns['native_ordering']('rolling-budget.timer')
++        calls=[];ns['bounded_capture']=lambda *a:calls.append(a)
++        with self.assertRaises(ValueError):ns['native_ordering']('PRIVATE_SENTINEL')
++        self.assertEqual(calls,[])
++
+     def test_state_transport_projection_and_finite_valid_fields(self):
+         ns=self.host();raw='ActiveState=inactive\nSubState=dead\nResult=success\nExecMainCode=1\nExecMainStatus=0\nExecMainStartTimestampMonotonic=100\n'
+         capture={'timeout':False,'returnCode':0,'reaped':True,'stdout':{'truncated':False}}
+@@ -1234,7 +1275,8 @@ class NativeVersionDiagnostic(unittest.TestCase):
+         cases=[(self.state(),good,'passed'),(self.state(),self.result(timeout=True),'timeout'),
+                (self.state(Result='oom-kill'),None,'oom'),(self.state(Result='signal'),None,'signal'),
+                (self.state(),self.result(returnCode=1),'nonzero'),(self.state(ActiveState='active'),None,'started'),
+-               ({'status':'projection-error'},good,'state-unreadable'),(self.state(),None,'unqualified')]
++               ({'status':'projection-error'},good,'state-unreadable'),(self.state(),None,'unqualified'),
++               (self.state(ExecMainCode=0,ExecMainStartTimestampMonotonic=0),good,'unqualified')]
+         for state,result,expected in cases:self.assertEqual(ns['native_classify'](state,result),expected)
+     def test_download_size_hash_before_executable_permission_no_redirect_proxy(self):
+         ns=self.host();payload=b'public-test-binary';ns['BINARY_BYTES']=len(payload);ns['PINS']['bb']=hashlib.sha256(payload).hexdigest()
+@@ -1323,6 +1365,7 @@ class NativeVersionDiagnostic(unittest.TestCase):
+         ns['write']=lambda path,text,mode=0o600:writes.update({str(path):text})
+         ns['run']=lambda args,**kw:events.append(tuple(args))
+         ns['native_state']=lambda:self.state()
++        ns['native_ordering']=lambda unit: {'Before':{ns['NATIVE_UNIT']},'After':set()} if unit=='rolling-budget.timer' else {'Before':set(),'After':{'rolling-budget.timer'}}
+         ns['native_guest']=lambda:self.guest()
+         ns['read_bounded_json']=lambda path:self.result()
+         ns['upload_receipt']=lambda data:events.append('upload')
+@@ -1336,11 +1379,20 @@ class NativeVersionDiagnostic(unittest.TestCase):
+         if fail=='upload':ns['upload_receipt']=lambda data:(_ for _ in ()).throw(OSError('PRIVATE_SENTINEL'))
+         if fail=='controls':ns['verify_controls']=lambda:(_ for _ in ()).throw(ValueError('PRIVATE_SENTINEL'))
+         if fail=='guest':ns['native_guest']=lambda:{**self.guest(),'status':'failed'}
++        if fail=='retention':ns['native_ordering']=lambda unit:{'Before':set(),'After':set()}
+         with patch.object(ns['platform'],'system',return_value='Linux'),patch.object(ns['platform'],'machine',return_value='x86_64'),patch.object(ns['os'],'geteuid',return_value=0):
+             if fail in ('receipt','upload'):
+                 with self.assertRaises(OSError):ns['native_execute'](self.config(),'public worker')
+             else:ns['native_execute'](self.config(),'public worker')
+         return ns,events,writes
++    def test_retention_failure_blocks_native_start_and_preserves_shutdown(self):
++        with tempfile.TemporaryDirectory() as t:
++            ns,events,writes=self.exercise(pathlib.Path(t),fail='retention')
++            self.assertNotIn(('systemctl','start','--wait',ns['NATIVE_UNIT']),events)
++            self.assertEqual(events[-1],'shutdown')
++            receipt=json.loads((ns['BASE']/'native-final.json').read_text())
++            self.assertFalse(receipt['passed']);self.assertEqual(receipt['outcome'],'precondition-or-io-failure')
++
+     def test_public_directory_traversable_under_private_umask_before_download(self):
+         # Actual local filesystem modes; service/network calls remain labelled
+         # doubles. Other-user execute permission models DynamicUser traversal.

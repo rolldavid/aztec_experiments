@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "trackedTreeClean": true,
+  "executionAuthorized": false,
+  "testsExecuted": false,
+  "authoredTests": 37,
+  "purpose": "Classify original outer exception using exact stdlib type and bounded own primitive fields; no extra command, output/message inspection or retry",
+  "historicalActualPacketSha256": "ac4dd12c0b223ee6e1f618210ec89328baf94f0fa36a86ae748df984b69b5b19",
+  "checks": {
+    "case": true,
+    "checkpoint": true,
+    "failure_observation": true,
+    "result_availability": true,
+    "save": true,
+    "confined": true,
+    "cleanup": true,
+    "read_after_barrier": true,
+    "systemd_barrier": true,
+    "productionSubset": true
+  },
+  "bounds": {
+    "seconds": 60,
+    "workSeconds": 43,
+    "cleanupSeconds": 17,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "network": "none",
+    "pull": false,
+    "hostMounts": false,
+    "privilegeFallback": false
+  },
+  "projection": {
+    "categories": [
+      "called-process-error",
+      "timeout-expired",
+      "os-error",
+      "unknown"
+    ],
+    "returnCode": "exact int -255..255, only CalledProcessError",
+    "timeoutSeconds": "exact finite int/float >0..120, only TimeoutExpired",
+    "unknownSubclasses": "not inspected",
+    "omitted": "str/repr/args/cmd/output/stderr/errno/paths"
+  },
+  "files": {
+    "boot-bound.py": "59246a5be77158dfb003cca9f8547820901b80c125fd78661ca46d04cb712830",
+    "boot-template.py": "2e3f04821124e9e672e7e13c63c795efeefb745feed7950099a71f663a04c3ea",
+    "driver.py": "5f9c15a2addb767f5c306470b936694ad94fcf773ed965c2df0914d12c89c8fe",
+    "driver.py.diff": "2a8fdfa31cdf8037fbf011b514425ef1d0a4085136a9e7538135c510635d24fa",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176",
+    "receipt-reader.py": "4971d13b9c73d7366b87f6e5ff80455b78eb1ef5b5310a808c78b4949b13ae29",
+    "run.py": "b05af6fb211fec58fa7048f7bf4ea2ffd7c53533d05994523aeff1eba2d4a1a6",
+    "run.py.diff": "812b165b3025e7e56f055f7ac88fbc06bf46880c793274e9e306aee57c4a3cd7",
+    "test-runner.py": "bcb7786f21fd1967a478a485d1cd7f09ec01498cdb4df181dc33d07bd1e54c79",
+    "test-runner.py.diff": "7f3239f99a4a11a60bb292f986ba8d00720124ec41b5a47d73dc2fac46bec247"
+  }
+}

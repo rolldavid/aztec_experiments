@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "verdict": "approved_bounded_development_integration",
+  "scope": "20 declared paths: owned-name/wire acceptance harness and reviewed deployment/package/qualification diagnostics. Full product criteria and all prior release holds retained.",
+  "findings": [],
+  "changedPaths": {
+    "deploy/prover/BOOTSTRAP.md": {
+      "reviewedRevision": "b0f8f432bbab554caf0122ad8ff43038cf6d8df1",
+      "sha256": "05e83a31141906d51be6add5b4b20455dbdadba28bfebbe9a027f4dbbfb03480",
+      "exactBlobEquivalent": true
+    },
+    "deploy/prover/bootstrap.py": {
+      "reviewedRevision": "b0f8f432bbab554caf0122ad8ff43038cf6d8df1",
+      "sha256": "cb07715697fdb02e3147a041c366603032e9f7162a59ee4f49086c8569c58f0d",
+      "exactBlobEquivalent": true
+    },
+    "deploy/prover/package.py": {
+      "reviewedRevision": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+      "sha256": "2de694fe076e8cf24d79b495363f5a27c041e0d067d4cb1d00879aceff0933ff",
+      "exactBlobEquivalent": true
+    },
+    "prover/qualify-runtime.mjs": {
+      "reviewedRevision": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+      "sha256": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+      "exactBlobEquivalent": true
+    },
+    "prover/qualify-runtime.test.mjs": {
+      "reviewedRevision": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+      "sha256": "bbbb7877266bb05e313f2f3a02e33f6d69578be6f71efe577feb7fe4fb05c6c6",
+      "exactBlobEquivalent": true
+    },
+    "scripts/test-prover-bootstrap.py": {
+      "reviewedRevision": "b0f8f432bbab554caf0122ad8ff43038cf6d8df1",
+      "sha256": "545280aa8cbd1a3c41e83973a287401cc1c770f1f8120ab012978a8a03ff0f36",
+      "exactBlobEquivalent": true
+    },
+    "scripts/test-prover-package.py": {
+      "reviewedRevision": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+      "sha256": "b676bef419d5f0722e9c15508573dacfa3e39b66069de6a5c7091edc310bc089",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-application-fixture.mjs": {
+      "reviewedRevision": "17e1faa218614900d2024862e4129d805f41fc33",
+      "sha256": "b8455806a00220b663d28e6235b85b2c36d054a4c3cbbc89d3d1c19303fc5bfb",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-application-fixture.test.mjs": {
+      "reviewedRevision": "17e1faa218614900d2024862e4129d805f41fc33",
+      "sha256": "6c53787f04a6f06d48bedd4e956d6718abbdf71d21ab5dc0b768bb698f529f90",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-owned-names.mjs": {
+      "reviewedRevision": "c0861f8c129e299a9e0cf6131d58e483f224c38c",
+      "sha256": "2769f0c513977289a9128aa7c807a7169cb4e698d034f645f5bd0c4648e15d7d",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-owned-names.test.mjs": {
+      "reviewedRevision": "fc560f695296cb22503e12eeee3afa43def9281a",
+      "sha256": "aa95c24335dd6b6cc040c68744877e9fd2f8b778fea72439e0deaf22ac9ed81a",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-public-acceptance.mjs": {
+      "reviewedRevision": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+      "sha256": "4e22f7bccb41252d4b65d2031ac468a7ee42186d62baf2a4b1a46573f9d889ad",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-public-acceptance.test.mjs": {
+      "reviewedRevision": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+      "sha256": "bda0a402074a535ac593fd43b8319420c84bfc6c254d41e34c3328e5085c8a00",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-wire-campaign.mjs": {
+      "reviewedRevision": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+      "sha256": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-wire-campaign.test.mjs": {
+      "reviewedRevision": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+      "sha256": "475709532b6c42dbaccb6def7c276ba311fe8149f23d0d48bffbf98159d96543",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-wire-trace.mjs": {
+      "reviewedRevision": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "sha256": "025dfe1d5d5aeddcec215861a65f6b4f0b7cf9a9b03ad0eb7b10828913e6cc92",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/rolling-wire-trace.test.mjs": {
+      "reviewedRevision": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "sha256": "2b710401bbdad174a07a9f5036d153c900f6781f125925e8b83afe41104c243e",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/scenario-flows.mjs": {
+      "reviewedRevision": "17e1faa218614900d2024862e4129d805f41fc33",
+      "sha256": "a8daee90543955d26d689d5d9455d0a00403bcbf6bfc91f8e263d5f532bfd2f5",
+      "exactBlobEquivalent": true
+    },
+    "scripts/testing/scenarios.mjs": {
+      "reviewedRevision": "17e1faa218614900d2024862e4129d805f41fc33",
+      "sha256": "127b68320f0a0725c850e588dcb7e7f5b6999968592e5db6687cac054659492d",
+      "exactBlobEquivalent": true
+    },
+    "shared/rolling/public-index.test.mjs": {
+      "reviewedRevision": "5fd3141bdc0b0c7cb5d5d6e0a77a693543686ff0",
+      "sha256": "cfe30b187d4ae981d0aa9e8e2b3bb17e755f6e9c940d153be0bd8e17450942a2",
+      "exactBlobEquivalent": true
+    }
+  },
+  "priorSourceReviews": {
+    "G05/owned-names-combined-54e-review.json": "f4b3a1671215dd400dc31a024307914fb70ff8cb647269f2eb4c96978664a267",
+    "G05/wire-parent-c086-review.json": "cd9f1b9822478ff1a9ac47bf76a5591f34168afcc82e6d8dba18fac3b8b91598",
+    "G05/wire-trace-5d7-review.json": "8d6d15338714bb1cecc1b4f1ac41ed6fb6f7897f1ac074f720de81392fe7341b",
+    "G05/wire-combined-17e-review.json": "6f7d6c96fd57f1bd153e95c3f13929766cb48d03af166d45e50df1514a8f129c",
+    "G05/http-oracle-5fd-review.json": "c90d39937cf42ffb06c7c616564891f302532b48be43ce80ec7faf414d06f984",
+    "G05/wire-observer-646-review.json": "8ccbe90cb3f3114afc7e6dad4206c38ad756e02b7d6ad0ef8d269fc27476dac3",
+    "G05/wire-combined-dd86-review.json": "9b93f67fadd7b9239a3415348b801872c72cc86bfa099c3ecfc5d790c29ce455",
+    "G05/wire-ca9a880-review.json": "9a2b7f97ea40198519c6ecbbb0b0b422e84a7c33a65ec94ce1420bad3fab7b7b",
+    "G05/wire-e3c9-review.json": "e8e0f148e626f5864dca64228078cedd9ca3b0b8dc01e4da304a61b4fbd3c8e3",
+    "G14/startup-combined-7db-review.json": "68320072a2853ec71553c4410629e78a58ac9a85bc20511b4ef104bf0293cf38",
+    "G14/bootstrap-compression-b0f-review.json": "30322e2c278dc345201f69368bc735e3b3a150556fc5ee56b79e8b66cd809b8b"
+  },
+  "actualAcceptanceReview": {
+    "path": "execution/evidence/G05/owned-wire-e3-runtime-review.json",
+    "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processed Rolling artifact> pinned Node24 --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs scripts/testing/rolling-wire-campaign.test.mjs shared/rolling/public-index.test.mjs scripts/testing/rolling-owned-names.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs prover/qualify-runtime.test.mjs",
+      "passed": 193,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 7044.564458,
+      "log": "/tmp/reviewer-e3-combined-tests.log",
+      "logSha256": "cf39b8506e20539d34798f2b8573a5c17d675ccb45ac09e1be9923ab64d47880"
+    },
+    {
+      "command": "PROVER_VALIDATION_NODE=<pinned Node24> python3 scripts/test-prover-bootstrap.py",
+      "passed": 48,
+      "failed": 0,
+      "seconds": 3.504,
+      "log": "/tmp/reviewer-e3-bootstrap-tests.log",
+      "logSha256": "ed28eb277f4a0e3881fff1f71f45ecbd8d30a163685d82a33b0c03fa698b4af6"
+    },
+    {
+      "command": "PROVER_VALIDATION_NODE=<pinned Node24> python3 scripts/test-prover-package.py",
+      "passed": 6,
+      "failed": 0,
+      "seconds": 0.165,
+      "log": "/tmp/reviewer-e3-package-tests.log",
+      "logSha256": "57f837966c18a2720785dc380ac58c57875abd19a7d3c42590b643a56f32ac5d"
+    }
+  ],
+  "testTotal": 247,
+  "sourceDisposition": [
+    "Exact blob equivalence independently checked for every changed file against its reviewed revision; later trace repair e3 reviewed directly and rechecked with actual runtime.",
+    "Production Rolling/PrivateBok source, processed artifact inputs, SDK application/projection/index implementation, package-lock and toolchain unchanged from base. Earlier protocol/TXE/build evidence remains source-applicable; no needless rebuild claimed.",
+    "Unchanged runtime product code now exercised by four genuine name transactions and fresh PXE recovery plus cold HTTP/SQLite reconstruction. The acceptance-only parent branch preserves other variants; this run does not requalify every historical scenario.",
+    "Deployment additions are source and lightweight packaging/control checks only; no remote Linux/fullnode service qualification inferred from local application run. Fresh paid action still requires current ledger/resources/payload/package/shutdown verification.",
+    "No isolated race/composer/social-wire consumer or parent commits are included in this candidate. No push/release authorization inferred."
+  ],
+  "limitations": [
+    "Local chain31337 with genuine application proofs and controlled settlement; no network epoch-proof/testnet or remote Linux qualification.",
+    "Exact private ownership/readable labels for two accounts with two names each. Sequential registration does not prove concurrent collision behavior.",
+    "Fresh PXE namespaces within same process retain disposable account secrets and encrypted journals. No device-loss, seed recovery or browser-persistence qualification.",
+    "Five ingress counts cover same-process loopback adapters. Public L1 fetch calls observed but native transports/Anvil ingress/runtime-added headers are not comprehensively captured.",
+    "112 opaque serialized transaction/proof/blob observations remain explicitly excluded; requestCoverageComplete=false and privacyAcceptance=not-evaluated. HMAC scalar correlations are not anonymity evidence.",
+    "Ordinary node and trusted upstream use separate HTTP roles over the same local underlying node; deployed trust separation, traffic/timing correlation, derived identifiers and independent specialist review remain open.",
+    "Canonical runtime assertions used actual SDK receipts/full blocks/refetches; reviewer redecoded retained effect binaries offline, without requerying the terminated chain.",
+    "No full G05/G06/G14 completion, full browser composer acceptance, production release, image moderation qualification or remote service claim."
+  ],
+  "historicalFailures": "c18,60df,4a1f,f54 and preceding failed captures remain failed; new exact-source59c does not retroactively alter them.",
+  "integrationConditions": "Lead gate must still require candidate-specific checks, this independent verdict, affected acceptance, and no active hold/ownership conflict. Approval is for bounded development integration only."
+}

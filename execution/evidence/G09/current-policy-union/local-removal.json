@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "scope": "Existing public API read-only observation, within original human180s window",
+  "startedAt": 1792075713.766345,
+  "reads": 1,
+  "postId": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+  "publicationTxHash": "0x0a63e860e5d8fa386fbaa8e1f0a6e03d9ffd3e21df479c4c9c674105147d1cdc",
+  "post": {
+    "id": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+    "record": {
+      "subboard": "15871475757490455924480017165732741444175512285364576713417295448282780379210",
+      "parent": "0",
+      "root": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+      "kind": "1",
+      "name_id": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+      "reference": "0",
+      "content_digest": "21543675808071675165534271388905800120306063222959840328032499500989756353068"
+    },
+    "text": null,
+    "timestamp": "1792075652",
+    "mainVersion": "1",
+    "localVersion": "1",
+    "position": {
+      "blockNumber": "788",
+      "blockHash": "0x139c60b6f635e29c8a5b7145a8bd26fe0e985c1c9cf68604921872ac88316d4d",
+      "txHash": "0x0a63e860e5d8fa386fbaa8e1f0a6e03d9ffd3e21df479c4c9c674105147d1cdc",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "order": "3",
+    "likes": "0",
+    "removal": {
+      "reason": "The post violates the rule against advertising products for sale by offering a handmade chair for purchase.",
+      "policy": "4294967297",
+      "penalized": true,
+      "position": {
+        "blockNumber": "790",
+        "blockHash": "0x237def27b72fcc47420b4b37e8dd4dba82ae02c17788ddc000122db7366e2021",
+        "txHash": "0x0e5987d99d1394098b516ca2714d78ae727a35cefae0af0c993e58f0cfe1df9e",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      }
+    },
+    "invocation": null,
+    "bot": null
+  },
+  "checkpoint": {
+    "number": 790,
+    "hash": "0x237def27b72fcc47420b4b37e8dd4dba82ae02c17788ddc000122db7366e2021"
+  },
+  "finishedAt": 1792075713.787744
+}

@@ -1,0 +1,12 @@
+{
+  "revision": "7a976068b90f8cb8496b36f24559466447109a9c",
+  "application": "application-8b8b0974-ea0d-47ad-b754-112b24b4ad0e.json",
+  "outcome": "invalidated byhostexecutionpause",
+  "lastResourceSampleMs": 219651,
+  "elapsedMs": 1127171,
+  "failure": "HARNESS_SAMPLING_GAP",
+  "actualExpiryAttempted": false,
+  "cleanupComplete": true,
+  "evidence": "publicfixture reservecompleted; nextfinalitydeadline assertion afterresume. powerd reportsrecentlidopen; no claim exactsleepcause fromreadonlyassertions alone.",
+  "nextControl": "caffeinate -i -s -t600 aroundsingleboundedcommand; preventsidle sleep (system sleep only onAC), doesnot guaranteecontinuationthroughlidclosure/forcedsleep"
+}

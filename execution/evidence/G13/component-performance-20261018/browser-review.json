@@ -1,0 +1,23 @@
+{
+  "reviewer": "reviewer_20261018",
+  "revision": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "datasetRevision": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "verdict": "approved_as_scoped_browser_observations_with_synthetic_backend",
+  "priorComponentReviewUnchanged": true,
+  "checks": [
+    "Inspected serve-reader.mjs: real production startRollingReader/frontend and SQLite query API, with explicit synthetic unauthenticated index/status/cursors. It verifies source477096 and10k/100/100 dataset before serving.",
+    "Verified all13 referenced file hashes; independent JSONL tally12 rows, first identified setup preflight excluded leaves11 browser API queries:home2/thread6/directory2/board1. Max30 posts/response; recorded thread9901 pagination page rows30,30,30,10.",
+    "Four lead CUA command-to-visible samples141/133/149/141ms are retained as observed single samples, not first-paint or percentile measurements; no additional run."
+  ],
+  "assessment": [
+    "Actual renderer can navigate and paginate this synthetic dataset. Total11 queries span repeated navigation, not one initial-page budget; one Home first-page API query does not count static resources or authenticated backend chain traffic.",
+    "Synthetic adapter replaces production authentication and cursor validation. This is appropriate labelled UI data, but cannot certify full private/public node or rebuild/network path. SQLite materializedBytes is not HTTP response bytes; packet states payload boundary unmeasured.",
+    "Initial measurementScope saying no renderer/browser applies to original SQLite phase. Browser addition is separately identified and does not retroactively widen component timing scope."
+  ],
+  "limits": [
+    "No prescribed cold-cache,1280x900/390 viewport qualification, full-page usable/paint metric, screenreader,input latency or30second scroll95th percentile.",
+    "Lead reports100 unique displayed posts; API counts/row totals corroborate100 returned rows but alone do not independently establish DOM uniqueness or absence of anchor jumps.",
+    "No chain RPC in synthetic backend is not zero-RPC acceptance; original batching/short-text/no-avatar limitations remain."
+  ],
+  "packetSha256": "c846b54bc59af5b906e26857b3cb9c776e70e1edd66c549f9c15cb231dfedab5"
+}

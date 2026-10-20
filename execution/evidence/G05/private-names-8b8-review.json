@@ -1,0 +1,39 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "8b8fc427e93561e28c5db4c0d3bda64e5dc103e8",
+  "base": "4ad1d5506aa136823c268183784af3291b3d1906",
+  "verdict": "approved bounded private names presentation source and labelled DOM regressions",
+  "blocking_findings": [],
+  "source_sha256": {
+    "apps/rolling/wallet-panel.mjs": "0d9bfb6fdabfe2cd7ae3734d24b955a7198ab3b0376b99bcfd57b504ada1358c",
+    "apps/rolling/wallet-panel.browser.test.mjs": "c6e421e9563c9e0db27428421e816a557e8a3131dc5d8035158009dccd41e6db"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/wallet-panel.browser.test.mjs",
+      "cwd": "rolling-design",
+      "result": "pass",
+      "tests": 26,
+      "skipped": 0,
+      "duration_ms": 10145.796916,
+      "log": "/tmp/reviewer-private-names-8b8-tests.log"
+    },
+    {
+      "command": "git diff --check4ad1d55..8b8fc427",
+      "result": "pass"
+    }
+  ],
+  "assessment": [
+    "Your names reuses private session.application.ownedIdentities; explicit pagination only, no automatic per-name public fetch. Publicprofile links contain one chosen name and navigate only onuserclick afterclosingpanel; no groupedownerlist sent.",
+    "Ownedrecords validated beforeassignment with matching IDs/labels, duplicate-page andnonadvancingcursor rejection. Failedpage retains priorlist; retryrequiresuseraction. ActualSDKapplication remains authoritative for ownership and eight-record ABI bound.",
+    "Epoch checked before/after awaitedstatus,owned andprofile reads. Accountinvalidation immediatelyclearsnames/intentdisplay/drafts/profilepreviewURLs andrerenders evenbusy; lateoldresponse cannotrepopulateprivateDOM. Lockcloses session then custody andclearview. Durableencryptedjournal is not deleted byviewclear.",
+    "Registration andselectedbio/avatar actions use existing prepare/version/maximumfee/confirm/cancel protocol; namesview cannotbypass intent/recovery/blocked/busyguards. Postingidentity preservesAnonymous.",
+    "Existing17 profile/fee/unknownsubmission/recovery/preview regression cases retained;9newcases independentlypass forprivatepagination/publicnavigation,explicitretry,registration/profilemanagement,invalidationduringowned/profileawait,lock,emptylist,duplicateandcursorfailures.",
+    "Alllabels/reasons use textnodes; getAccount used onlyasunlockboolean. NoSDK/lifecycle/provenance/funding changes."
+  ],
+  "limits": [
+    "DOMsuite uses explicitlylabelled runtime/application doubles andsessionStorageintentfixture. It does not independentlyprove realprivatequeryrouting, encryptedcustody persistence, actual registration/profileproofs or publicchain behavior.",
+    "Userchosenpublicprofileinterest is visible as designed; this UI does not establish globalunlinkability or specialistprivacy acceptance.",
+    "Actualintegratedwallet/browser workflow evidence stillneeded fornewYournames view; G05/G06 fullscope remainsopen."
+  ]
+}

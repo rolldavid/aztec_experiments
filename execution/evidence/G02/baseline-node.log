@@ -1,0 +1,9 @@
+
+> test:e2e
+> node scripts/test-c01-application.mjs node
+
+{"role":"fixture","stage":"start-disposable-l1","elapsedMs":1075}
+{"role":"fixture","stage":"prepare-genesis","elapsedMs":1195}
+{"role":"fixture","stage":"deploy-local-protocol-fixture","elapsedMs":2588}
+{"role":"fixture","stage":"start-application-node","elapsedMs":3840}
+{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/C01/application-f54590cd-3cef-4d54-8f1e-700dd753730b.json","passed":true,"scenario":"node"}

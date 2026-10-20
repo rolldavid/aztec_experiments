@@ -1,0 +1,35 @@
+{
+  "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "candidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "W03-saved-action-recovery",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs"
+  ],
+  "required_checks": [
+    "application-recovery",
+    "wallet-presentation",
+    "normal-wallet-assets"
+  ],
+  "requirements": [
+    "W03-A02-authenticated-saved-action-resumption-component",
+    "W03-A04-missing-anchor-replacement-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "W03-saved-action-recovery",
+      "paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs"
+      ]
+    }
+  ]
+}

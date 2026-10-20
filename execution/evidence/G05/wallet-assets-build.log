@@ -1,0 +1,21 @@
+/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:1467
+  let error = new Error(text);
+              ^
+
+Error: Build failed with 1 error:
+node_modules/colorette/index.js:1:21: ERROR: Could not resolve "tty"
+    at failureErrorWithLog (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:1467:15)
+    at /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:926:25
+    at /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:878:52
+    at buildResponseToResult (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:924:7)
+    at /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:951:16
+    at responseCallbacks.<computed> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:568:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+Node.js v24.21.0

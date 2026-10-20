@@ -1,0 +1,46 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "70e3a2a7b7af6900a8c215a71c835ff5f3a02125",
+  "session": 67445,
+  "verdict": "FAILED at outer deadline; no clock/inclusion/marker qualification",
+  "actualPacketSha256": "5f1a5f10442fc23be4bcc024a65af6054bf56b03f624b49d97f87dbfd9d916ce",
+  "reportSha256": "c54fb9def8c7b230dfe70bf0219ec2306008c00f877af20aba71044ff362b840",
+  "elapsedMs": 120077,
+  "peakTreeRSSKiB": 922320,
+  "checks": [
+    "Actual packet/report/launcher/preparation/intent/log bindings verified",
+    "3164 approved bindings verified against current bytes or exact historical70e3 Git bytes for11 explicitly later transferred tracked paths; immediate postrun packet records allunchanged",
+    "Real proof/local mode and board proof serialization19188ms,node validation19214ms,board inclusion entry19646ms retained",
+    "SIGKILL fixture at outerdeadline; no final worker or durable four numeric clock rows; positive ownedtree and temporary removal"
+  ],
+  "sourceDiagnosis": [
+    "includeC01Board default local window starts Date.now()+120000 at inclusion, later than outer120000 window by setup duration;105000 application deadline is not consumed by this helper",
+    "Existing sequencer-inclusion-diagnostic supplies diagnostic:true, selecting45000 window and retaining timing.length>0 success gate; included-board-clock currently does not",
+    "Pinned TestDateProvider starts atwall and is reset to L1timestamp before includeC01Board send/start and everyordinaryminedblock; same injected instance flows through nodefactory/epochcache/sequencer/validator. Source alone does not prove one failingtiming predicate",
+    "Existing finite sequencer event/skip/timetable/sync observations live in memory and are only attached onreturn/throw; outerkill loses them. Cannot distinguish await/start hang, pending sync, committee/proposal/timing/publish failure fromstagealone"
+  ],
+  "minimalProposal": {
+    "paths": [
+      "scripts/c01-real-node.mjs",
+      "scripts/testing/fixture-worker.mjs",
+      "scripts/test-c01-native-profile.mjs"
+    ],
+    "change": [
+      "Exact included-board-clock also uses existing diagnostic45s inclusion path; no marker/default change and no guard relaxation",
+      "Persist only four existing validated numeric clock observations before node in exclusive unique root-evidence records using existingfilepattern; no repeatedRPC/newlogger/lifecycle",
+      "Keep first original/falsy error through any diagnostic persistence failure, preserving failure details without rawerror/privatepayload"
+    ],
+    "tests": [
+      "Exact two diagnostic scenario selection vs untouchedmarker/default",
+      "Actual-used persistence ordered four closednumeric rows before node entry",
+      "Malformed/getter/read original/falsy failures preserved; no extraRPC; persistence failure doesnotmaskoriginal"
+    ],
+    "limits": "Original120s/4GiB diagnostic,105s advertised application deadline remains no global cancellation guarantee; marker540/525 and150/45/15 gates unchanged"
+  },
+  "holds": [
+    "No unchanged retry",
+    "No unique clock or Anvil/sequencer root cause inferred",
+    "Actual diagnostic source/component/runner review required before any newrun",
+    "Full marker remains open"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-14T17:28:52.303921+00:00",
+  "applicationRevision": "85ba37b4058586076936856fff1d7052845c4db4",
+  "generatedRevision": "46a0fa8df6d4c68d8dff6bcabdca4eb643c5080f",
+  "url": "http://127.0.0.1:18788/t/049c461a256c70189e108dc9bc8f98051bacc8e65dcedf382f5064b0361e34b1/r/46a0fa8df6d4c68d8dff6bcabdca4eb643c5080f/files/index.html",
+  "environment": "Mac native devnet/PXE proofsdisabled; CUA actual IAB tab7",
+  "observations": [
+    "Initial labelled Metres spinbutton1.25 gives125centimetres",
+    "Changedinput2.5 gives250centimetres",
+    "Changedinput0 gives0centimetres"
+  ],
+  "limits": "Generatedapp acceptance; not realproof/testnet or concurrency qualification"
+}

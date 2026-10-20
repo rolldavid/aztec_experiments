@@ -1,0 +1,32 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "verdict": "approve",
+  "findings": [],
+  "source_sha256": {
+    "scripts/test-w03-journal-backup.mjs": "fdd83227dee585917d7fb0ee416c577a0140f2e8a28d2092db10e6017948e7d0"
+  },
+  "assessment": [
+    "Only the existing negative test changes; production code and all restore-rejection/no-write assertions remain unchanged.",
+    "Replacing first ciphertext byte with00 could leave valid original data unchanged when original byte was00. XOR1 changes exactly one bit for every possible original byte while preserving ciphertext length and valid hex syntax, so rejection exercises authenticated descriptor integrity rather than invalid formatting.",
+    "Explicit notEqual guards against an accidentally unchanged corruption fixture. Foreign-wallet, moved-key, duplicated-record and empty destination-store assertions remain intact."
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp <pinned Node v24.21.0> --test --test-name-pattern='foreign wallet, moved key, descriptor damage and duplicated records fail before restore writes' scripts/test-w03-journal-backup.mjs",
+      "result": "1 passed;0 failed/skipped;673.646542ms"
+    },
+    {
+      "check": "Pure256-prefix exhaustive arithmetic",
+      "result": "Every byte changes exactly bit0; suffix and hex length preserved."
+    },
+    {
+      "command": "git diff --check 0cf442741c910b1e2b9856ef98f1929c879d817e b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+      "result": "pass; only approved test path changed"
+    }
+  ],
+  "limits": [
+    "Narrow deterministic-fixture repair; no full-suite, backup journey or CI rerun by reviewer. No services, chain actions or production writes."
+  ]
+}

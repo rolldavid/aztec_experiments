@@ -1,0 +1,37 @@
+✔ portal V1 preserves domain padding, word order and commitment position (0.599375ms)
+✔ exit destination, amount, nonce and domain each change the bound bytes (0.42175ms)
+✔ reject ambiguous portal domains, arity and out-of-field values (0.565208ms)
+✔ fenced liabilities remain conserved and exact flags are required (0.193292ms)
+✔ diagnostics retain only fixed categories and source coordinates (0.350958ms)
+✔ unknown diagnostic messages and unresolved locations never become evidence text (0.075375ms)
+✔ diagnostics reject arbitrary source names, excessive lengths and invalid coordinates (0.103792ms)
+✔ throwing diagnostic getters and methods cannot replace the original failure (0.1055ms)
+✔ changing getters cannot exchange validated diagnostic values for private data (0.164ms)
+✔ ordinary PXE note failures expose only fixed categories and installed source locations (0.191541ms)
+✔ ordinary diagnostic accessors are captured once and source coordinates are bounded (0.103833ms)
+✔ tagging age/finality classification omits private tagging indices (1.207708ms)
+✔ rolling mixed payload permits only its exact board/Bok/private fee calls (1.104542ms)
+✔ all padding and fee/network conditions fail closed (0.193375ms)
+✔ every private application circuit is address/network/function bound, including continuations (0.204625ms)
+✔ fragmented private fee balance permits only bound self-recursion, never a direct payload call (65.8285ms)
+✔ artifact provenance rejects missing, stale, raw and symlinked release inputs (11.195625ms)
+✔ service health and failed bind use production lifecycle without leaking queue directories (181.521375ms)
+✔ rolling configuration rejects missing fee/Bok, aliases and unknown profiles before listening (0.255958ms)
+✔ actual isolated worker accepts configured board and rejects forged board/network metadata (1725.070042ms)
+✔ native route switched to local delegates to its SDK implementation (70.552167ms)
+✔ standalone fee funding is limited to the configured fee contract and network (2426.894917ms)
+✔ plugin-only proofs require configured receivers, exact entrypoint calls and network (5924.750708ms)
+✔ board and fee calls cannot bypass a private plugin claim binding (2572.375625ms)
+✔ actual fee payloads and plugin calls encode into the accepted account policy (7.615917ms)
+✔ catalog pins V6 circuit kinds with both hiding variants and application verification keys (64.585875ms)
+✔ rolling job checks every signed payload and private binding even in a mixed batch (64.65475ms)
+✔ fixture evidence crosses strict worker JSON boundary without losing token precision or cleanup (0.506375ms)
+✔ evidence encoding preserves failure and rejects unserializable observations (0.35725ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13563.140166

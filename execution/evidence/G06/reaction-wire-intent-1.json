@@ -1,0 +1,11 @@
+{
+  "candidate": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "scenario": "rolling-reaction-wire",
+  "startedAt": "2026-10-12T01:42:27.192914+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G06/social-combined-2397-review.json",
+  "reviewSha256": "4ffef2a1c761820c1f28dd49109bc8aab059e994aed98741276f6f6dffe33afa",
+  "status": "launch once",
+  "scope": "Genuine6actions,2privateaccounts perposttag separation and samepostunlike, bounded request observers"
+}

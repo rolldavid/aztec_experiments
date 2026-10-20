@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T23:41:27.912339+00:00",
+  "sourceRevision": "d877853b3877f1a07587fd0bb58a8060b21a15fd",
+  "disposition": "both06a test findings closed at source; eligible for exactly three affected test files under60s/2GiB, not genuine run eligibility",
+  "sourceUnion": {
+    "base": "72c71b4c8292a83fd488fcafbfea8ea0827e0348",
+    "changedFileCount": 23,
+    "design79fFilesExact": 16,
+    "fourHarnessProductionFilesIdentical06a": [
+      "scripts/testing/rolling-application-actor.mjs",
+      "scripts/testing/rolling-application-fixture.mjs",
+      "scripts/testing/rolling-preference-recovery.mjs",
+      "scripts/testing/assets.mjs"
+    ],
+    "files": {
+      "BUILDING.md": "4abde6d054c0b58eaac43d8ea509268e654825a61f3ee85910d7511fd5351197",
+      "package.json": "cadc7d1c1ec51ff897dc2473217a8f0c65a168c0a2c937b888ab9df6838c12be",
+      "scripts/build-sdk.mjs": "1b1a2ed6ad6f03f9c02523a8bc268dcad4fc36dc21961773d4f47c4cca48a561",
+      "scripts/check-sdk.mjs": "3ea3212f2a6c54eb176bc098f545a26141c6aa89fb0b99f6d870a0b30855fb58",
+      "scripts/patch-pxe-preference-page.mjs": "18318b26c720285bbe3c2b502307a97c62673c54a1ac9fbb5dc066ea77922380",
+      "scripts/test-pxe-preference-page.mjs": "8367a4771752d93380a13b34263cb94e782b8a600bff991f7106ebac5b581853",
+      "scripts/test-sdk-manifest.mjs": "20982438a0027bde55ae85e36640b493155d64edaa22d3646eed51d573f4b55e",
+      "scripts/testing/assets.mjs": "dc3657900eae39c00e59202f1a9920881a0bd103b4e9dc15de3f77b66c039d40",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/operation_lifecycle.js": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/operation_queue.js": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/storage/note_store/note_store.js": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/operation_lifecycle.ts": "c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/operation_queue.ts": "a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+      "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/storage/note_store/note_store.ts": "35faa7333be56582580115602ef63fee798f80d18f65637b9fbf5a5d39a089ea",
+      "scripts/testing/rolling-application-actor.mjs": "519d1ae366ddafaa51f9a2f1305d5cd9baee8f521a726587ed7dac6afae15bdd",
+      "scripts/testing/rolling-application-actor.test.mjs": "9a0606c264caa50354feead93aced11efffc0390b942cbbca264f9c15fa495b2",
+      "scripts/testing/rolling-application-fixture.mjs": "fd5ee17432f6101ff73b88cc9d9bac3dd48920c03d576122cd692b646c6204df",
+      "scripts/testing/rolling-application-fixture.test.mjs": "b488cbf3bdc7d104b3f70efd5bfcc6f234ee216301b6310383701736b9e0505e",
+      "scripts/testing/rolling-preference-recovery.mjs": "3b8c5bdf78dec66f175c9a925d5365ee6a7231399cd9c0a6aa8f5f185a9879fb",
+      "scripts/testing/rolling-preference-recovery.test.mjs": "b8782d9e3fdfda74621bb613277b33098f2d3d2585e68d1cbd731c102720d253",
+      "shared/sdk-entry.mjs": "d04e410abbbc898f8c0b49d1b0eec9f5d26150778bcbc57307c55112c4d7c450"
+    }
+  },
+  "repairs": [
+    {
+      "finding": "Obsolete fresh actor signature",
+      "revision": "576cbb0f9c2067ef3a6822596dcee4591627f56f",
+      "disposition": "closed source-wise: exact fifth argument updated; closed>=0&&constructed>closed predicate retained; original failure offsets retained"
+    },
+    {
+      "finding": "Vacuous missing-extension rejection",
+      "revision": "d877853b3877f1a07587fd0bb58a8060b21a15fd",
+      "disposition": "closed source-wise: actual stdlib computeArtifactHash executes via counted callback; specific ROLLING_COLD_PREFERENCES_INVALID expected and hash count1, no signing/send and ordinary lazy initialization assertions retained; runtime still pending"
+    }
+  ],
+  "actualInstallation": {
+    "acceptedEvidence": true,
+    "source": "d877853b3877f1a07587fd0bb58a8060b21a15fd",
+    "state": "exact complete8+2 patched closure",
+    "eightFilesRehashed": [
+      {
+        "path": "src/pxe.ts",
+        "sha256": "8d683958befb11a03e1dad775e1dc213a5f8d12ce026ad1c8a6532e1d8a72c5b"
+      },
+      {
+        "path": "dest/pxe.js",
+        "sha256": "dc66b54d0e2e802b807f81fee43cee9baf476e4afbe79ee8df3e3bf11e647d43"
+      },
+      {
+        "path": "src/operation_queue.ts",
+        "sha256": "d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db"
+      },
+      {
+        "path": "dest/operation_queue.js",
+        "sha256": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360"
+      },
+      {
+        "path": "src/operation_lifecycle.ts",
+        "sha256": "52211b30b977c07b7ed4ea8fe074aa8a35c879ea195a29182e9746305f98eb99"
+      },
+      {
+        "path": "dest/operation_lifecycle.js",
+        "sha256": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7"
+      },
+      {
+        "path": "src/storage/note_store/note_store.ts",
+        "sha256": "1840f842b22b3adff161bc402a2b4bdf32d0d02fde93495d3d1a976e71ec74af"
+      },
+      {
+        "path": "dest/storage/note_store/note_store.js",
+        "sha256": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478"
+      }
+    ],
+    "helpers": {
+      "compact": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+      "recovery": "d1431574e4c00686f7f50d6b782e8d2bef4db310bca65019612503b651384360"
+    },
+    "originalBackupsRehashed": 8,
+    "independentPhysicalOwnerChecked": true,
+    "targetsRegularSingleLink": true,
+    "leadSocialEightOriginalsUnchanged": true,
+    "installerExitCode": 0,
+    "explicitStoppedOwnerWindow": "Lead-runtime owning APFS tree just copied/fully verified, no consumers ever started from this new tree. All prior test groups terminated; previous readonly borrower link was removed before independent copy. No worker borrows this new tree. Other existing services use other dependency trees and remain untouched. This operational record is not an automatic process-detector guarantee.",
+    "caveat": "Stopped-consumer assertion is an explicit operational attestation, not automatically inferred from filesystem ownership. No whole-tree post-install rerun by reviewer; exact installer mutation scope was source-reviewed."
+  },
+  "materialization": {
+    "audit": "d4707a937365a25f624d8c28850581c902457fc1ca896cc1f992dcfc19004e1b",
+    "files": 164672,
+    "links": 58,
+    "bytes": 1393442651,
+    "elapsedSeconds": 71.087,
+    "assessment": "Reviewed full equality auditor and result: exact sets/bytes/symlink targets and distinct regular-file inodes; only approved .DS_Store exception recorded. Original copy failure on optional absent Forge cache retained, existing copied data preserved. No full1.393GB repeat performed."
+  },
+  "evidence": {
+    "execution/evidence/G02/runtime-rc3-materialization-72c/verify-copy.py": "b9ca5760a678ef28f71a215f45bed0e2031939b77d2d30a101b87d8982d7a7f4",
+    "execution/evidence/G02/runtime-rc3-materialization-72c/full-dependency-verification.json": "1b19cfb8a6706fc1d83459f6fef2796b1937b5fc04c17f04e2691b0b65908890",
+    "execution/evidence/G02/runtime-rc3-materialization-72c/copy-failure.json": "a6a5d5fe8586f8df5ce51dfc1e6a28905e01dd62f57aa511bd6825c92bfc8dc9",
+    "execution/evidence/G02/runtime-rc3-materialization-72c/repair-intent.json": "3f9a8ad7417eae728ee92b69409d96159edd6d718daea811025e216d02f207b4",
+    "execution/evidence/G02/cold-sdk-install-d877/intent.json": "5ce21c36c10aa00037ae12cdd06ddda71cbfb9cda35d62ec6925e9dd96b22bfb",
+    "execution/evidence/G02/cold-sdk-install-d877/before.json": "4a993cf1ac6528e664620891bbc8d3d6f0445e389aad76fbaf102a1ff5422413",
+    "execution/evidence/G02/cold-sdk-install-d877/result.json": "d53f2cfccde16e3c3e048f0fdfdcbcc3edbca9066d083629148562a25cb96cd4",
+    "execution/evidence/G02/cold-sdk-install-d877/installer.stdout": "e0c6108955a265e1b60377218f0771c4cbf2f1d43c653824c2df1a2b9829b564",
+    "execution/evidence/G02/cold-sdk-install-d877/installer.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "execution/evidence/G07/genuine-cold-06a/lifetime-predicate-failure.json": "08e657bb978bae225f64bbf8ef4239e1c392becb99dba933e2ad836270f65218"
+  },
+  "testEligibility": {
+    "files": [
+      "scripts/testing/rolling-application-fixture.test.mjs",
+      "scripts/testing/rolling-application-actor.test.mjs",
+      "scripts/testing/rolling-preference-recovery.test.mjs"
+    ],
+    "deadlineSeconds": 60,
+    "aggregateRssBytes": 2147483648,
+    "requirements": [
+      "Pinned Node, NODE_BACKEND=js, serial test files and actual normal20c494 Rolling artifact.",
+      "Use this independent owned rc3 tree and preserve exact source/installed8+2 bytes; actual complete cleanup/postchecks before other consumers.",
+      "No proving/browser/service campaign in this unit-test grant."
+    ]
+  },
+  "remainingGates": [
+    "Normal SDK/wallet provenance rebuild/check after installed extension and source composition; copied prior bundle is not fresh acceptance.",
+    "Actual affected tests and exact combined source/fingerprint closure.",
+    "Separately reviewed single540s/4GiB genuine cold relationships intent with unchanged5writes/canonicalfees/noadditionalproofsend/fullterminalstate.",
+    "No fullcold capacity/browser/currentLinux or compiler260 clearance."
+  ],
+  "readOnlyReview": true
+}

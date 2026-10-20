@@ -1,0 +1,9 @@
+{
+    "ActiveInstances": [
+        {
+            "InstanceId": "i-04a91ddf4b8f834b3",
+            "InstanceType": "m7a.4xlarge"
+        }
+    ],
+    "FleetId": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4"
+}

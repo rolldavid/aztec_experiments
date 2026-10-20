@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T12:57:28.685Z",
+  "flag": {
+    "schemaVersion": 1,
+    "scope": {
+      "l1ChainId": "11155111",
+      "rollupVersion": "2914217885",
+      "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+      "boardAddress": "0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752",
+      "portalAddress": "0xe664b6b5fd7575616653f75374d5fc7e8544b982"
+    },
+    "type": "PostFlagged",
+    "position": {
+      "blockNumber": "15402",
+      "blockHash": "0x1aefe16ca256a6dfe8391c205a61178ee6788789c27b02e914519b361fb47550",
+      "txHash": "0x0cf507e4a92f5fe6a7b2cfe9a7f3dabdaaeeac22788dc61aa7b2af89619bf8e8",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "payload": {
+      "postId": "0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2",
+      "reason": "The post contains a credible threat of physical violence against a specific person.",
+      "flaggedAt": "1791634188",
+      "censorAddress": "0x21d6775865a9c5e62c28dc784edd367de074d4752f7319cf7f80f0ddbf6c102d",
+      "policyVersion": "0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa"
+    }
+  },
+  "receipt": {
+    "hash": "0x0cf507e4a92f5fe6a7b2cfe9a7f3dabdaaeeac22788dc61aa7b2af89619bf8e8",
+    "status": "finalized",
+    "blockNumber": 15402,
+    "blockHash": "0x1aefe16ca256a6dfe8391c205a61178ee6788789c27b02e914519b361fb47550",
+    "transactionFee": "1554301498688200000"
+  },
+  "chainTips": {
+    "proposed": {
+      "number": 15442,
+      "hash": "0x0aa4cf2949dada5f60ae09322916dc5fe939b0a2ded1e25577082beb5631a0d9"
+    },
+    "checkpointed": {
+      "block": {
+        "number": 15441,
+        "hash": "0x0aa2afb8050caeac1f7e9cacfdf2c9a55314d06ef52e763b62d0755ba123712f"
+      },
+      "checkpoint": {
+        "number": 14416,
+        "hash": "0x00ea7fa7ea0fa0ba95623b15d14a918ef891b7c53dd8a022c45d718b1a8d46fc"
+      }
+    },
+    "proven": {
+      "block": {
+        "number": 15424,
+        "hash": "0x2fab8e596702262097ad5f89f75350772d09cce3a9f78128643f351b73c2d9d4"
+      },
+      "checkpoint": {
+        "number": 14399,
+        "hash": "0x003e62a10d4531edbd7e90da32814f9b570e3581c1af30f3747e2ff63ef5301b"
+      }
+    },
+    "finalized": {
+      "block": {
+        "number": 15424,
+        "hash": "0x2fab8e596702262097ad5f89f75350772d09cce3a9f78128643f351b73c2d9d4"
+      },
+      "checkpoint": {
+        "number": 14399,
+        "hash": "0x003e62a10d4531edbd7e90da32814f9b570e3581c1af30f3747e2ff63ef5301b"
+      }
+    }
+  }
+}

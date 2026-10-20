@@ -1,0 +1,56 @@
+{
+  "verifiedInstances": [
+    "i-0a9b5b9ba55815cda",
+    "i-0a7d9957f2b3d7f19"
+  ],
+  "monthlyBudgetUsd": 1500,
+  "nativeExpiryRemoved": true,
+  "receipts": {
+    "core": {
+      "commandId": "6457574f-fff8-446b-8970-68feb016c856",
+      "sha256": "d4a00b7cdcab5f9be775bc7b1a50ea97a30f53e2177dc331583113506717115a",
+      "observed": {
+        "persistentHostingVerified": true,
+        "source": "0205d08b",
+        "controlSourceSha256": "475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38",
+        "admittedManifestUnchanged": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+        "attestorSha256": "d407762c8b6f81cd8419a6d06f1aa5f4c490c536fff7f165dba900de7e9f4163",
+        "monthlyUsd": 1500,
+        "noLifetimeExpiry": true,
+        "elapsedTimerMasked": true,
+        "pidsUnchanged": {
+          "rolling-node.service": "4287",
+          "rolling-query.service": "10004",
+          "board-prover.service": "10376",
+          "board-prover-proxy.service": "10554",
+          "rolling-application.service": "11283",
+          "rolling-application-proxy.service": "11285"
+        },
+        "egressMbps": 50,
+        "oldDeadlineHistorical": "2026-10-20T14:46:12Z",
+        "cloudExpiryRetirementPending": true
+      }
+    },
+    "bok": {
+      "commandId": "d2d5a1dc-b9aa-400c-a648-4ce96a60c341",
+      "sha256": "36c89783531a6a960cb77f1d13b9f739e287389c7949bbd2df6d9c3ef361ca5a",
+      "observed": {
+        "persistentHostingVerified": true,
+        "source": "0205d08b",
+        "controlSourceSha256": "475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38",
+        "admittedManifestUnchanged": "05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e",
+        "attestorSha256": "561ab85a9418474cc1416d672728c522d96e83ecc21776f7279f10eaa5dcc61e",
+        "monthlyUsd": 1500,
+        "noLifetimeExpiry": true,
+        "elapsedTimerMasked": true,
+        "pidsUnchanged": {
+          "rolling-bok-testnet.service": "7372",
+          "rolling-bok-artifact-proxy.service": "7373"
+        },
+        "egressMbps": 10,
+        "oldDeadlineHistorical": "2026-10-21T06:42:00Z",
+        "cloudExpiryRetirementPending": true
+      }
+    }
+  }
+}

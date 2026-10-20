@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "5e9171680687b867b159096527794b771f9d6f7c",
+  "base": "f6b995b576e1dd5d86285400a47cf218d0fbc455",
+  "verdict": "ELIGIBLE_ONE_SEPARATELY_GRANTED_FULL28_COMPONENT_RUN",
+  "packetSha256": "e0dc667ee9e4db135b5f5679a5cfddba473f2dae10c1382faca287b50b4cfb99",
+  "runnerSha256": "0a1815c1c14ca86945f925c5e179178feba1c4d4aad2b813cfe8a34b0cda0afa",
+  "verification": [
+    "Exact4 Git changed paths and candidate blobs match reviewed df3 source.",
+    "All4274 current input hashes checked; only4 transferred source hashes differ from prior f6 map.",
+    "All28 test labels independently extracted match expected inventory; whole file unfiltered, zero skips required.",
+    "Previously accepted TAP Supervisor/child unchanged except directory;60s/2GiB, owned TMP/HOME, source/pins/cleanup checks preserved.",
+    "Copied unrelated Linux-pin repair evidence corrected before execution; stale preparation and packet preserved."
+  ],
+  "scope": "Source component qualification only; real clock120s diagnostic and full marker remain separately gated."
+}

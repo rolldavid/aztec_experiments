@@ -1,0 +1,43 @@
+✔ source: protocol limits, no duplicate effects-root hashing and no detached timeout (1.513334ms)
+✔ actual SDK/HTTP: compact body authenticates at configured proposed (94.64675ms)
+✔ actual SDK/HTTP: compact body authenticates at configured checkpointed (12.248583ms)
+✔ actual SDK/HTTP: compact body authenticates at configured proven (6.807458ms)
+✔ actual SDK/HTTP: compact body authenticates at configured finalized (6.344333ms)
+✔ actual SDK/HTTP: empty block stays complete (3.696333ms)
+✔ HTTP: rejects closed selector extra before native queries (2.4785ms)
+✔ HTTP: rejects closed selector tier before native queries (2.646375ms)
+✔ HTTP: rejects closed selector zero before native queries (2.245708ms)
+✔ HTTP: rejects closed selector fraction before native queries (2.804958ms)
+✔ HTTP: rejects closed selector hash before native queries (3.297708ms)
+✔ HTTP: rejects closed selector version before native queries (2.974916ms)
+✔ HTTP: rejects malformed, oversized, browser-origin and non-JSON requests (6.13225ms)
+✔ HTTP: route is exact, nonPOST denied and middleware leaves unrelated requests alone (3.050542ms)
+✔ readiness: stale blocks native body reads (2.66475ms)
+✔ readiness: wrongScope blocks native body reads (1.957041ms)
+✔ readiness: wrongProof blocks native body reads (2.50575ms)
+✔ canonical: reorg during body await produces no successful result (3.23775ms)
+✔ canonical: wrong native response hash and header network are rejected (4.380875ms)
+✔ tier: a block above configured tier is unavailable even with synchronized proposed tip (2.382334ms)
+✔ bounds: oversized transaction array rejects before reading an element or flattening (2.386041ms)
+✔ bounds: notes rejects before flattening (2.121875ms)
+✔ bounds: nullifiers rejects before flattening (2.151667ms)
+✔ bounds: private rejects before flattening (2.329625ms)
+✔ bounds: public rejects before flattening (2.222583ms)
+✔ bounds: class rejects before flattening (2.274958ms)
+✔ bounds: padding rejects before flattening (2.381958ms)
+✔ bounds: aggregate protocol field limit rejects before flattening (5.646875ms)
+✔ native errors are sanitized and subsequent explicit requests can run (4.056833ms)
+✔ singleflight: abort does not release ownership before original native await settles (5.883417ms)
+✔ configuration: malformed/accessor capabilities fail without getter side effects (0.431042ms)
+✔ HTTP: chunked byte overflow is bounded and returns a fixed failure (3.972625ms)
+✔ captured native receiver/method and immutable configuration survive caller changes (3.155667ms)
+✔ actual SDK: all effect categories are preserved without padding inflation (29.228042ms)
+✔ readiness: missing canonical metadata is not treated as an empty block (2.788833ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1262.088042

@@ -1,0 +1,25 @@
+{
+  "sourceRevision": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+  "baseRevision": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+  "verdict": "approved",
+  "scope": "Three documentation files only; current application access/resume and final testnet boundaries",
+  "files": {
+    "README.md": "7bf305967aa4a6ce9a71a02f949bf118c19e2f35ddc973fae65e32e78159ada1",
+    "apps/rolling/README.md": "bd73dccc99ab5adca34da88be5b38c0b4176c84f0b793c1f4bc97337aedf0760",
+    "docs/rolling-deployment.md": "41dc224aace36342768af8481eb24c07060bd0805d4217a0a94fc6830431ee86"
+  },
+  "checks": [
+    "Read complete three-file diff before conclusion; no runtime/source changes.",
+    "Verified default8080/18080/18545 in devnetPorts and explicit alternate ports in existing startup command.",
+    "Verified SIGHUP registration only on owning CLI, complete wallet asset inventory swap, previous handler retained on reload error; no chain restart/funding needed.",
+    "Verified acquireDevelopmentLease rejects retained owner.json and no same-chain snapshot/restart exists; native mineBlock/prove controls are actual development interfaces.",
+    "Matched testnet entrypoint/current bounded capture behavior, optional public-role file, missing-role/receiver/cryptographic limitations, and source-bound acceptance distinction.",
+    "Matched owner removal of fixed14day soak and all accessibility qualification; ordinary functional navigation/error states retained.",
+    "Reviewed changed relative file/section references and git diff --check; no tests, services, wallet or proof actions warranted."
+  ],
+  "findings": [],
+  "limits": [
+    "Docs do not certify current preview liveness, cloud readiness or complete acceptance.",
+    "Historical deployment remains preserved as evidence, not current endpoint or fresh-install account configuration."
+  ]
+}

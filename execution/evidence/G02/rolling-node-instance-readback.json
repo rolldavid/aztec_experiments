@@ -1,0 +1,46 @@
+[
+    {
+        "Id": "i-0b898476b2a8f5f7f",
+        "State": "running",
+        "LaunchTime": "2026-10-11T18:21:47+00:00",
+        "ImageId": "ami-0fa5967347d08d2df",
+        "Type": "m7a.4xlarge",
+        "Subnet": "subnet-aa91f4ce",
+        "SecurityGroups": [
+            {
+                "GroupId": "sg-03065d3c141f9b030",
+                "GroupName": "board-prover-ux-east1"
+            }
+        ],
+        "Metadata": {
+            "State": "applied",
+            "HttpTokens": "required",
+            "HttpPutResponseHopLimit": 1,
+            "HttpEndpoint": "enabled",
+            "HttpProtocolIpv6": "disabled",
+            "InstanceMetadataTags": "disabled"
+        },
+        "Volumes": [
+            {
+                "DeviceName": "/dev/sda1",
+                "Ebs": {
+                    "AttachTime": "2026-10-11T18:21:48+00:00",
+                    "DeleteOnTermination": true,
+                    "Status": "attached",
+                    "VolumeId": "vol-0e76826daf7e40da8",
+                    "EbsCardIndex": 0
+                }
+            },
+            {
+                "DeviceName": "/dev/sdf",
+                "Ebs": {
+                    "AttachTime": "2026-10-11T18:21:47.571000+00:00",
+                    "DeleteOnTermination": true,
+                    "Status": "attached",
+                    "VolumeId": "vol-08b18efdb31a113ca",
+                    "EbsCardIndex": 0
+                }
+            }
+        ]
+    }
+]

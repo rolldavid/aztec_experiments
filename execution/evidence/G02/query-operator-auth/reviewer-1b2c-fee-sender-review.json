@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "candidate": "1b2c3fa3cc0431c36d3c47eadfe7f00bd2bfe23d",
+  "parent": "d667310b53016538da799f4b559cce6b03268714",
+  "verdict": "approve-scoped-source-component",
+  "blockingFindings": [],
+  "sourceBindings": {
+    "shared/rolling/funding-receipts.mjs": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+    "shared/rolling/funding-receipts.test.mjs": "9f4ba74d0fc5600c0e90e996d8ca6215b038947b891b383302bfa95b8f7c131d",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Inbox.sol": "7dc210e25c63154ea759814d1d93675f1e431ced5438c0983ee6104c62fee46e",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/FeeJuicePortal.sol": "44150701815935bf8f60af5bbb3d4d9bf52561c207b05bcc16f0a0fa41b4c284",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/libraries/ConstantsGen.sol": "37d454f5c18ac96f95098f291f3a597a59ab99bdcb09c959f94c6155f83244ce",
+    "node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract_data.js": "9214e2fbc3dc27f331a6c63d70bec1dd0b74546de15e146a59bf7b82b62236df"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/claim-preparation/fee-sender-handoff.json",
+    "sha256": "ffa60bdc6de9f9a45c554fb5f6a24a839050241586773481648f90e334398703"
+  },
+  "assessment": [
+    "Installed official Inbox.sol line106 replaces only its authenticated FEE_ASSET_PORTAL sender with Constants.FEE_JUICE_ADDRESS. The SDK protocol FeeJuice address supplies that same value; collateral/Bok message senders remain their physical portals.",
+    "Recovery still authenticates configured fee portal through trusted node identity and original helper, original payment/aggregate effects, receipt-anchor portal getters, secret hash, exact content and leaf index. Only the reconstructed fee message sender changes; no alternative hash or guard bypass is admitted.",
+    "New independently literal 0x03 fixture matches protocol behavior. Self-consistent physical-portal-sender and changed-content roots are rejected before witness reads.",
+    "Read-only original public payment evidence confirms corrected fee key matches emitted message while old physical sender does not. This establishes the message-key mismatch, not completion of private claim or every remaining dependency."
+  ],
+  "checks": {
+    "oldBad": {
+      "tests": 1,
+      "fail": 1,
+      "durationMs": 1141.027875,
+      "expectedFailure": "ROLLING_FUNDING_MISMATCH original message-key comparison"
+    },
+    "currentWhole": {
+      "tests": 64,
+      "pass": 64,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2865.306708
+    }
+  },
+  "verification": "All two Git source hashes, four installed source hashes and ten evidence hashes independently matched. No reviewer chain/test execution.",
+  "remainingGates": [
+    "Affected normal SDK/wallet rebuild and actual retained private claim.",
+    "Native node freshness and separately qualified preserved-state restart."
+  ],
+  "historicalFailure": "Corrected protocol fixture on old verifier fails; preserved. No claim prior paid recovery passed."
+}

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-12T05:35:23.844838+00:00",
+  "proposalOnly": true,
+  "launchAuthorized": false,
+  "sourceCandidate": "28ca0e100e1afce7d0a437eeab2bb235cb34610a",
+  "priorLedgerBoundUsd": 160.28,
+  "proposedReservationUsd": 25,
+  "proposedCumulativeUsd": 185.28,
+  "remainingAfterReservationUsd": 114.72,
+  "ledgerMutationPerformed": false,
+  "liveReadback": {
+    "path": "operator07-readonly-20261012.json",
+    "sha256": "e3613e5fc2b9147f6eb8ce2854b6997fe0aadb34a65baebbbdc1d247acab514c"
+  },
+  "instance": {
+    "type": "m7a.4xlarge",
+    "region": "us-east-1",
+    "memoryGiB": 64,
+    "architecture": "x86_64",
+    "rateUsdHour": 0.92736,
+    "priceSku": "TTPYSE2GSHDGSMTX",
+    "rateEffectiveDate": "2026-10-01",
+    "rootGp3GiB": 40,
+    "dataGp3GiB": 1024,
+    "encrypted": true,
+    "deleteOnTermination": true,
+    "iamInstanceProfile": false,
+    "sshIngress": false,
+    "egressMbps": 50
+  },
+  "period": {
+    "operatingMinutes": 60,
+    "commissioningMinutes": 30,
+    "readinessDeadlineMinutes": 45,
+    "qualificationRemainingMinutes": 15,
+    "shutdownDelayForecastMinutes": 30,
+    "orphanEbsContingencyHours": 24,
+    "archiveRetentionDays": 30,
+    "absoluteDeadlines": "Generate fresh after new immutable archive upload; never reuse expired06 capabilities or deadlines."
+  },
+  "costComponentsUsd": {
+    "compute_1_5_hours": 1.3910399999999998,
+    "ebs_1064GiB_25_5_hours": 2.9733698630136987,
+    "ipv4_1_5_hours": 0.0075,
+    "egress_45GB_conservative_multiple_path_rate": 8.775,
+    "new_archive_receipt_30_days": 0.5,
+    "cross_region_operator_reads": 0.5,
+    "requests": 0.25,
+    "tax_buffer_20_percent": 2.87938197260274,
+    "additional_delayed_billing_cleanup_buffer": 7.7237081643835594,
+    "total": 25
+  },
+  "networkBoundExplanation": "50Mbps for1.5h is33.75GB; reserve45GB at0.195USD/GB for multiple-path/network charges, no free tier credit assumed. Existing global retention and billing reserves retained. No replacement overlap observed; recheck immediately prelaunch.",
+  "retainedCharges": "New archive+receipt30days included;24h orphan disk contingency included. Existing archives remain in prior ledger. No new snapshots/backups/elastic IP requested. Delete-on-termination must be read back; actual volume absence ends retention only when verified.",
+  "shutdownControls": [
+    "Independent request Fleet ValidUntil=createdAt+60min and TerminateInstancesWithExpiration=true, actual readback",
+    "Persistent host budget+commissioning timers and shaper verified before download/node, automatic safe final receipt before shutdown",
+    "No extension/replacement/restart on failure, owned-resource cleanup and volume/fleet final readback"
+  ],
+  "changedHypothesis": "06 stopped inside archiver; PublicNode historical query rejected4444. Exact SDK split pair passed12gates and all8 image module hashes match. This supports one changed diagnostic, not cause-proof or startup qualification.",
+  "prelaunchGates": [
+    "Independent exact-source review and lead reservation before any mutation",
+    "Lead grants serialized fresh Linux package build; use current integrated reviewed catalog/processed artifacts, exact full file inventory and hashes including changed bootstrap",
+    "Fresh immutable archive key with durable once-only upload intent, verify checksum/version/size and exact GET Range206",
+    "Private0700/0600 config, scoped retrieval/receipt capabilities; measured actual gzip<=16384 and independent decoded program/source comparison",
+    "Fresh STS/no-overlap/plugin, live template/AMI/SG/noIAM/noSSH checks, independent absolute deadlines not stale",
+    "Exclusive fsynced LT/Fleet intents before each single retry-disabled API request; ambiguous response reconciles token/name, never replay",
+    "No public routing or proof jobs; query-only qualification and fixed stage/final receipts; fullnode archive trust boundary remains required"
+  ],
+  "commandsForLaterGrantedPreparation": [
+    "python3 deploy/prover/package.py /private/tmp/rolling-prover-release-startup07-20261012 --node-archive <verified cached Linux Node24.21.0 archive> --application-profile rolling --validation-node <absolute pinned Mac Node24.21.0>",
+    "python3 deploy/prover/bootstrap.py --config <private07/config.json> --output <private07/user-data.gz>",
+    "AWS_MAX_ATTEMPTS=1 aws --profile message-board-deploy --region us-east-1 ec2 create-launch-template --cli-input-json file://<private07/launch-template.json>",
+    "AWS_MAX_ATTEMPTS=1 aws --profile message-board-deploy --region us-east-1 ec2 create-fleet --cli-input-json file://<private07/fleet-policy.json>"
+  ],
+  "commandWarning": "Placeholders are not executable approval; reuse reviewed operator once-intent wrappers after separate lead grants. Do not execute prior hardcoded campaign scripts.",
+  "pricingSources": [
+    "AWS Pricing GetProducts live m7a.4xlarge SKU TTPYSE2GSHDGSMTX recorded in readback",
+    "https://aws.amazon.com/ec2/pricing/on-demand/",
+    "https://aws.amazon.com/ebs/pricing/",
+    "https://aws.amazon.com/vpc/pricing/"
+  ],
+  "qualificationLimits": [
+    "One hour may reveal a new failure or fail to sync; it does not promise fullnode readiness. Earliest legitimate next action depends on retained final stages.",
+    "Tenderly public throughput/free daily quota may be insufficient for steady archive service; do not silently buy capacity or switch endpoints.",
+    "Mac prerequisites and exact source bindings do not verify native Linux startup or cryptographic privacy."
+  ]
+}

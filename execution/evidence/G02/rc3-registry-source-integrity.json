@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 1,
+  "readOnlyPackageData": true,
+  "installed": false,
+  "evaluated": false,
+  "packages": {
+    "constants": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/constants/6.0.0-rc.3",
+      "metadataSha256": "03a91e7aeba908f5372849fa44827fc0a73be9e5ca8031ffc8090cfe3faeb375",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "tslib": "^2.4.0",
+        "@aztec-labs/foundation": "6.0.0-rc.3"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "adf6dad0188b05e619cd0ff0f9da9dc3f6138a10",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/constants/-/constants-6.0.0-rc.3.tgz",
+        "fileCount": 9,
+        "integrity": "sha512-N5IAD5iVc75BmyoyLEcjSz47pf3Bnjc6Zd4JBjy8VfQNpYx2dMnZNg+yr0eq1j+THG8k0MLAdtYhrnLk9i4GoQ==",
+        "signatures": [
+          {
+            "sig": "MEUCIQD1HhX4snyKSCsstQ3oHG/lzVWyW/jF4SFz64gkKpQgbAIgYEc7DuDwkFOmSn5efnAGHqYr7TVRiRvmQZc7ZNsmRJk=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIHZSWgDHYXx7UYzAAVHevBNXkGS+JDZy21fP4DAWYZKHAiEA9m9hp2Xz6XEoShEmhAj95vr8tQbhrDqoKcjeDWuEZwM=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 154570
+      },
+      "registryIntegrityVerified": true,
+      "compressedBytes": 31890,
+      "archiveSha256": "e028592f7ef0193aabac561da4a45ff97332497ac1fad82a1e52aee4a515ee85",
+      "files": {
+        "dest/constants.gen.js": {
+          "sha256": "957e8534dc1f4aa04949274bb936fa6a7d357d00479c3e229c01fc20f2a52919",
+          "bytes": 34534,
+          "evidence": "rc3-registry-constants-dest_constants.gen.js.txt"
+        }
+      },
+      "requestedPathsMissing": []
+    },
+    "noir-protocol-circuits-types": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/noir-protocol-circuits-types/6.0.0-rc.3",
+      "metadataSha256": "8d5841202f411fe1e6c78c4c8a10e97884dbdb879fde9700711677595271e015",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "tslib": "^2.4.0",
+        "change-case": "^5.4.4",
+        "@aztec-labs/stdlib": "6.0.0-rc.3",
+        "@aztec-labs/blob-lib": "6.0.0-rc.3",
+        "@aztec-labs/constants": "6.0.0-rc.3",
+        "@aztec-labs/foundation": "6.0.0-rc.3",
+        "@aztec-foundation/noir-types": "6.0.0-rc.6",
+        "@aztec-foundation/noir-acvm_js": "6.0.0-rc.6",
+        "@aztec-foundation/noir-noirc_abi": "6.0.0-rc.6",
+        "@aztec-foundation/noir-noir_codegen": "6.0.0-rc.6"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "a3b6d176582139315fa6db024571cad34975ab3a",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/noir-protocol-circuits-types/-/noir-protocol-circuits-types-6.0.0-rc.3.tgz",
+        "fileCount": 290,
+        "integrity": "sha512-EP1n+vtVbvau78ENEy12w7wrqNxsvXhW9G2iytYOIHf7CZPJuxdUmD4ypvpISLcpyh8Jpx4n3g8kZZqAwA6uuw==",
+        "signatures": [
+          {
+            "sig": "MEYCIQDJHDUmN7QMlA5id1swEOrtd+M513KvN/OD26NYBT6lMwIhAPNyNBrWeOYzQisuDNmHpBHNas4EEhyBlbJ3eXW4VsEh",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIC/DM8TAhXNiqyExvYOo1xTzFPSoq20nwcoNwusxanGKAiB1VXpI8FdDaE2yvkMpqOdpp80BNlBU+N1+GwhOX67a8g==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 117013474
+      },
+      "failureCategory": "AssertionError"
+    },
+    "protocol-contracts": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/protocol-contracts/6.0.0-rc.3",
+      "metadataSha256": "3acd2e5793902ca2ede89fa6ce137102560755b7723c3ef72bd1fa9d8e8d42ad",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "tslib": "^2.4.0",
+        "lodash.omit": "^4.5.0",
+        "lodash.chunk": "^4.2.0",
+        "@aztec-labs/stdlib": "6.0.0-rc.3",
+        "@aztec-labs/constants": "6.0.0-rc.3",
+        "@aztec-labs/foundation": "6.0.0-rc.3"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "229f52ba311da21714edbb13a1c06843530e6044",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/protocol-contracts/-/protocol-contracts-6.0.0-rc.3.tgz",
+        "fileCount": 84,
+        "integrity": "sha512-WZzBPhkaSTi83NfnK9ncns+RXvhWjifJahVz/bG4DP/ae/4YJyBbuPK5PD20Vtp54AxagM5vEc1zgZaoqnJ9Ug==",
+        "signatures": [
+          {
+            "sig": "MEYCIQC//cdWy8vPhf2fAZAin/3xS8b63Q3T9+1qCtxFUodYLAIhAP2ceXDytNsE8q5oJHViVxrdSbi1AL4LbwAU2i8rWJJA",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQCwZt6oSDnfQkZ1FtKjMj+gNgnKZh7/q+ssyZviN1Hw4QIgZWMQHi+HA2zlSCkXHIIovgJ8gJxweOKlQtmdNEbyrpI=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 2439656
+      },
+      "registryIntegrityVerified": true,
+      "compressedBytes": 844043,
+      "archiveSha256": "e2cb01274ebfb142fa50ded63b08d9ab30092970efab5d8959b5cbb5494fc3d2",
+      "files": {
+        "dest/genesis_data.js": {
+          "sha256": "abab3ae9470571515f0da89aa884df44bae95d103b37a9c4f1ddf7e3093599c0",
+          "bytes": 877,
+          "evidence": "rc3-registry-protocol-contracts-dest_genesis_data.js.txt"
+        },
+        "dest/protocol_contract_data.js": {
+          "sha256": "9214e2fbc3dc27f331a6c63d70bec1dd0b74546de15e146a59bf7b82b62236df",
+          "bytes": 6397,
+          "evidence": "rc3-registry-protocol-contracts-dest_protocol_contract_data.js.txt"
+        }
+      },
+      "requestedPathsMissing": []
+    },
+    "aztec": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/aztec/6.0.0-rc.3",
+      "metadataSha256": "d1f5e5e2baad444d1344508810c54af951cd12e6303d853a67b10031dc3e5983",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "koa": "^2.16.1",
+        "viem": "npm:@aztec/viem@2.38.3",
+        "chalk": "^5.3.0",
+        "abitype": "^0.8.11",
+        "commander": "^12.1.0",
+        "koa-router": "^13.1.1",
+        "@iarna/toml": "^2.2.5",
+        "@types/chalk": "^2.2.0",
+        "@aztec-labs/bot": "6.0.0-rc.3",
+        "@aztec-labs/cli": "6.0.0-rc.3",
+        "@aztec-labs/p2p": "6.0.0-rc.3",
+        "@aztec-labs/pxe": "6.0.0-rc.3",
+        "@aztec-labs/txe": "6.0.0-rc.3",
+        "@aztec-labs/stdlib": "6.0.0-rc.3",
+        "@aztec-labs/builder": "6.0.0-rc.3",
+        "@aztec-labs/wallets": "6.0.0-rc.3",
+        "@aztec-labs/accounts": "6.0.0-rc.3",
+        "@aztec-labs/archiver": "6.0.0-rc.3",
+        "@aztec-labs/aztec.js": "6.0.0-rc.3",
+        "@aztec-labs/ethereum": "6.0.0-rc.3",
+        "@aztec-labs/kv-store": "6.0.0-rc.3",
+        "@aztec-labs/node-lib": "6.0.0-rc.3",
+        "@aztec-labs/constants": "6.0.0-rc.3",
+        "@aztec-labs/aztec-node": "6.0.0-rc.3",
+        "@aztec-labs/foundation": "6.0.0-rc.3",
+        "@aztec-foundation/bb.js": "6.0.0-rc.6",
+        "@aztec-labs/blob-client": "6.0.0-rc.3",
+        "@aztec-labs/prover-node": "6.0.0-rc.3",
+        "@aztec-labs/world-state": "6.0.0-rc.3",
+        "@aztec-labs/prover-client": "6.0.0-rc.3",
+        "@aztec-labs/sequencer-client": "6.0.0-rc.3",
+        "@aztec-labs/telemetry-client": "6.0.0-rc.3",
+        "@aztec-labs/noir-contracts.js": "6.0.0-rc.3",
+        "@aztec-labs/protocol-contracts": "6.0.0-rc.3",
+        "@aztec-labs/standard-contracts": "6.0.0-rc.3",
+        "@aztec-labs/validator-ha-signer": "6.0.0-rc.3",
+        "@aztec-labs/noir-protocol-circuits-types": "6.0.0-rc.3"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "88a595a2530cc1bb20857c912a811e6de7a0e748",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/aztec/-/aztec-6.0.0-rc.3.tgz",
+        "fileCount": 187,
+        "integrity": "sha512-gpChJYrjb5D3FQDP5yFoWuYt3CK7bKuqfpdyjoSWl27Utfcyvqa2PGwolV4e0lV6mFpCIWEoohS/XSh7q7CxjA==",
+        "signatures": [
+          {
+            "sig": "MEYCIQDJhDG5lWJPdWmW7pdNfg9N8t2vBXuxd+vmiQtWVzgLVQIhAJ08qpYVoc+f4HhYyCp0xy4TaoQZwPAbXhO/6VpNng6e",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCICMCQNeIZJ4XQxxAfJWlapRem9tl2AncvSOKt6pB2medAiEAgmavuT0aEV9Rf8LJTvPHws13YxHQzs1nomoqyiRSqu0=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 361733
+      },
+      "registryIntegrityVerified": true,
+      "compressedBytes": 98292,
+      "archiveSha256": "45997804cc4b4d18fc59936770fcc51d39dfcf90fa1b9ba74c48a40e2d6ab34a",
+      "files": {
+        "dest/cli/cmds/standby.js": {
+          "sha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+          "bytes": 7410,
+          "evidence": "rc3-registry-aztec-dest_cli_cmds_standby.js.txt"
+        },
+        "dest/cli/cmds/start_node.js": {
+          "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+          "bytes": 7742,
+          "evidence": "rc3-registry-aztec-dest_cli_cmds_start_node.js.txt"
+        }
+      },
+      "requestedPathsMissing": []
+    },
+    "pxe": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/pxe/6.0.0-rc.3",
+      "metadataSha256": "c72f94f1ec3284528c3f722ac1393a3cff3cd170a8ac20e3d82dc302c543fb6d",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "koa": "^2.16.1",
+        "sha3": "^2.1.4",
+        "viem": "npm:@aztec/viem@2.38.3",
+        "tslib": "^2.4.0",
+        "koa-router": "^13.1.1",
+        "lodash.omit": "^4.5.0",
+        "@aztec-labs/stdlib": "6.0.0-rc.3",
+        "@aztec-labs/ethereum": "6.0.0-rc.3",
+        "@aztec-labs/kv-store": "6.0.0-rc.3",
+        "@aztec-labs/bb-prover": "6.0.0-rc.3",
+        "@aztec-labs/constants": "6.0.0-rc.3",
+        "@aztec-labs/key-store": "6.0.0-rc.3",
+        "@aztec-labs/simulator": "6.0.0-rc.3",
+        "@aztec-labs/foundation": "6.0.0-rc.3",
+        "@aztec-foundation/bb.js": "6.0.0-rc.6",
+        "@aztec-foundation/noir-types": "6.0.0-rc.6",
+        "@aztec-foundation/noir-acvm_js": "6.0.0-rc.6",
+        "@aztec-labs/protocol-contracts": "6.0.0-rc.3",
+        "@aztec-labs/standard-contracts": "6.0.0-rc.3",
+        "@aztec-foundation/noir-noirc_abi": "6.0.0-rc.6",
+        "@aztec-labs/noir-protocol-circuits-types": "6.0.0-rc.3"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "1de2c1fa9ae260b54bdcc45b0eea52a565397b05",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/pxe/-/pxe-6.0.0-rc.3.tgz",
+        "fileCount": 611,
+        "integrity": "sha512-o8vjivPXqwOGcA+jC9c0vTygfc2Uo7nDzegT9YkveuZVPBDE3sQT2Y3oQWrxxR41g5sixlD6dmsgCfgaZLoAww==",
+        "signatures": [
+          {
+            "sig": "MEYCIQD9nBqx/epn5VqH3ia4jrO+CfDVuzBkF90FbX/JcDzldgIhAJITGKtftGT+Y3Mo7mT8OlZnMIPZbPNyzXCSkTt5U4V2",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIAlqsaCQcecs+NdgdCUOjJ8KlV+V0C4iNwZFai3yCxB1AiEA8m+gdR+eue0k3DnaGjgU4QWv3Yr3/tAVfCU6FGMWIog=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 2352581
+      },
+      "registryIntegrityVerified": true,
+      "compressedBytes": 545554,
+      "archiveSha256": "ebae3f09f48a8ee9fc675e839ff067b4197f37334be467efd20c8eb649c28de7",
+      "files": {
+        "dest/pxe.js": {
+          "sha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+          "bytes": 49265,
+          "evidence": "rc3-registry-pxe-dest_pxe.js.txt"
+        }
+      },
+      "requestedPathsMissing": [
+        "dest/contract_class_service/contract_class_service.js",
+        "dest/contract_class_service.js",
+        "dest/note_processor/produce_note_daos.js"
+      ]
+    },
+    "aztec.js": {
+      "metadataUrl": "https://registry.npmjs.org/@aztec-labs/aztec.js/6.0.0-rc.3",
+      "metadataSha256": "0551269c788024be73a509a5da3f0ba7116e18ef7186ea28b20c91dc107217a7",
+      "version": "6.0.0-rc.3",
+      "dependencies": {
+        "zod": "~4.4.3",
+        "viem": "npm:@aztec/viem@2.38.3",
+        "axios": "^1.15.1",
+        "tslib": "^2.4.0",
+        "@aztec-labs/stdlib": "6.0.0-rc.3",
+        "@aztec-labs/ethereum": "6.0.0-rc.3",
+        "@aztec-labs/constants": "6.0.0-rc.3",
+        "@aztec-labs/foundation": "6.0.0-rc.3",
+        "@aztec-labs/entrypoints": "6.0.0-rc.3",
+        "@aztec-foundation/l1-artifacts": "6.0.0-rc.6",
+        "@aztec-labs/protocol-contracts": "6.0.0-rc.3",
+        "@aztec-labs/standard-contracts": "6.0.0-rc.3"
+      },
+      "engines": {
+        "node": ">=20.10"
+      },
+      "dist": {
+        "shasum": "79c03711efdeada60d678031c777e89c07c08d07",
+        "tarball": "https://registry.npmjs.org/@aztec-labs/aztec.js/-/aztec.js-6.0.0-rc.3.tgz",
+        "fileCount": 275,
+        "integrity": "sha512-y8ZCgrJ+XX+ea/b3D0WFfWpuvd1/hO0h91MDqVdNmyIyXyZ/dwLzA2Kiz6vTEyOYFB6lPZ8TIi+iu0L+uKufNQ==",
+        "signatures": [
+          {
+            "sig": "MEQCICkIe1swWp3wyH2N1BC4GUUe39U/Ux4HDXGkP9oFwk0eAiAgdWacv0+vzkIRYcSx2UI4HijL3pfdk+YsXQYuAfCGHA==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIAOoDqgbZNiCzlk8JqQ+i9SVdroIpwJCgTAzDdwuwEzCAiB058MBpGs0kbF2+ozOkvM+aDLSvpsL1YiyXCTY6euY8w==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 881785
+      },
+      "registryIntegrityVerified": true,
+      "compressedBytes": 181558,
+      "archiveSha256": "7bd47a9835fbef6cb4d782b8e440cc3317e1ef648cb6d8cc3eb5d78834b13c29",
+      "files": {
+        "dest/contract/contract_function_interaction.js": {
+          "sha256": "3dc5bfd4dd0b2a7ce16a39ad6f5d6e9a5213c0bde0aa7e9e0755a16c17cb88a4",
+          "bytes": 11428,
+          "evidence": "rc3-registry-aztec.js-dest_contract_contract_function_interaction.js.txt"
+        }
+      },
+      "requestedPathsMissing": [
+        "dest/wallet/base_wallet.js"
+      ]
+    }
+  },
+  "elapsedSeconds": 35.727
+}

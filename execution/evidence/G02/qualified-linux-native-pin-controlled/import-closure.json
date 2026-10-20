@@ -1,0 +1,45 @@
+{
+  "closure": {
+    "scripts/test-toolchain-packages.mjs": "ab491be264306d8cf0173c0aa438a81697ee405e24a06af8c9a5f917bdfffc3b",
+    "scripts/toolchain.mjs": "d5d822ea9293ebf57fe6be1f4a84b61b744e4fd07071558c398875a30ccd8394",
+    "toolchain.json": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83"
+  },
+  "imports": {
+    "scripts/test-toolchain-packages.mjs": [
+      "node:assert/strict",
+      "node:test",
+      "node:fs",
+      "node:os",
+      "node:path",
+      "node:child_process",
+      "node:crypto",
+      "node:module",
+      "./toolchain.mjs"
+    ],
+    "scripts/toolchain.mjs": [
+      "node:fs",
+      "node:path",
+      "node:crypto",
+      "node:url",
+      "node:child_process"
+    ],
+    "scripts/testing/supervisor.mjs": [
+      "node:assert/strict",
+      "node:path",
+      "node:child_process",
+      "../owned-test-process-tree.mjs"
+    ],
+    "scripts/owned-test-process-tree.mjs": [
+      "node:assert/strict",
+      "node:child_process",
+      "node:util"
+    ]
+  },
+  "externalNpmDependencies": [],
+  "dynamicImportPresent": false,
+  "unchangedSupervisorAndChild": true,
+  "childPredecessorSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "collectorChange": "Python unittest to exact TAP33 count/pass/fail/skip/cancel/todo/label multiset; no supervisor changes"
+}

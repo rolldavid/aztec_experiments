@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "7d9dd5dc27afd3a64b6d4cebe5f5e3536be2b1b0",
+  "packetSha256": "f51e1524efca7f0472cf4df3c468252c3ed89dc9ce3f221671f8eada068534b6",
+  "verdict": "source eligible for separately reviewed bounded169 component runner; no chain retry grant",
+  "checks": {
+    "exactTwoPathScopeAndHashes": true,
+    "sourceOutsideColdSnapshotsHelperByteIdentical": true,
+    "fixedCatalog111AndInventoryHashesVerified": true,
+    "existingPredicateExpressionsAndBusyFenceRetained": true,
+    "fixedIDsNoRemoteKeysOrValues": true,
+    "getterReceiverRepeatedReadAndShortCircuitPreserved": true,
+    "syncThrowVersusAwaitRejectionFirstFailure": true,
+    "innerExactFalsyErrorRethrowAndExistingExternalSanitizer": true,
+    "physicalOracleRemainsOpaqueSingleOperation": true
+  },
+  "testAssessment": {
+    "retained": 95,
+    "newAuthored": 74,
+    "total": 169,
+    "unrun": true,
+    "wrapperExtraction": "Covers finite IDs and generic trace behavior, not proof every production predicate wiring is reached.",
+    "actualConsumerControls": "Separately mutate terminal result/head/progress/anchor, counters, append/rebuild, callbacks, getters, abort/deadline, thenable, observer persistence and busy ownership. Meaningful alongside retained acceptance cases."
+  },
+  "behaviorNotes": [
+    "Failed-status observation exceptions now remain within established read sanitizer instead of escaping through the catch; this is deliberate narrow diagnostic containment and has authored negative coverage.",
+    "Async observation wrappers add promise continuation overhead; no timing improvement or prior full-chain timing carry is inferred.",
+    "No historical predicate cause assigned; exact fixed identifier should discriminate the next measured failure if separately authorized."
+  ],
+  "holds": [
+    "Matching whole169 runner/source bindings and separate grant before component execution.",
+    "No genuine reorg/marker acceptance or unchanged full-chain retry authorized."
+  ],
+  "findings": []
+}

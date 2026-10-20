@@ -1,0 +1,70 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+  "base": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "verdict": "approved exact observer repair for one changed bounded genuine preference-browser attempt; actual acceptance pending",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/testing/rolling-preference-browser.mjs": "fc25dbddb021c54dbf3f2af44b599221b3ba3fae8fe024db099a313143c03b27",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7e4adbee3546c8cc46667902bb6aa93f98cfbdacc65d9db3de39d3b9ec3e5dcb"
+  },
+  "failedRuntime": {
+    "application": "execution/evidence/G07/application-1bbf40e7-5b40-46bc-a4f7-e8c1f29b800a.json",
+    "revision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+    "elapsedMs": 359353,
+    "peakTreeRSSKiB": 1882928,
+    "browserStage": "import",
+    "browserElapsedMs": 2096,
+    "traffic": {
+      "walletAssets": 13,
+      "privateRequests": 1,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 1
+    },
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "innerAccountingPreserved": true,
+    "browserReaderAndL1Closed": {
+      "reader": true,
+      "l1": true
+    },
+    "qualification": "Failure retained; no complete native preference recovery or view acceptance."
+  },
+  "diagnosis": {
+    "cause": "Test driver allowed node_ read namespace while actual production createTrustedPrivateNode uses safe RPC namespaceMethods aztec. Its first aztec_getNodeInfo singleton batch was rejected by the driver before forwarding.",
+    "evidence": "Actual failed run shows exactly1 private request/1inspection error at import, no L1/proof/send and a connection-unavailable UI state. Independent no-network reproduction executes actual production client serializer: old ad1 observer false, repaired observer true for aztec_getNodeInfo. Historical request body was deliberately not retained; source/reproduction supplies attribution rather than fabricated wire capture.",
+    "affectedBoundary": "Harness observer only, not production wallet/deployment/network readiness."
+  },
+  "independentChecks": {
+    "tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 526.615916,
+    "log": "/tmp/reviewer-browser-842-tests.log",
+    "logSha256": "d6af80b4cbed7be53e63e414ff701ab39d43d1f81a4d7d5517ae44ce11ef8604",
+    "transportProbe": "execution/evidence/G07/browser-842-independent-transport-probe.json"
+  },
+  "preserved": [
+    "Exact aztec_ read namespace and installed method inventory required; node_ read alias now rejected",
+    "Both aztec_sendTx and node_sendTx counted and denied; proof/L1 submissions still denied",
+    "Public route/limit/cursor/private-ID restrictions, body/batch bounds and unknown-request failure unchanged",
+    "Parent receiver/fee/canonicalproof/cleanup assertions and540s4GiB/150s admission/120s browser limits unchanged",
+    "Only2harness paths changed; production/generated assets/Noir/catalog/SDK remain exact approved ad1, so no new build required"
+  ],
+  "evidenceHashes": {
+    "execution/evidence/G07/application-1bbf40e7-5b40-46bc-a4f7-e8c1f29b800a.json": "4f763c08c12942bf5ac814e774df232f353dbd483e0371e65616430dc1e568fe",
+    "execution/evidence/G06/application-port-bf931b17-6bcb-4727-98f0-5f7604b9f2cc/observation.json": "2d53b4ea31f06530d10c5c1192d0492df2d518ea5a3dd66fbbd92fc017b37fa5",
+    "execution/evidence/G07/browser-842-independent-transport-probe.json": "af8ec8f3615fe239eaa51f099fb04c207d9c5dfa992ff79793992363942888a7"
+  },
+  "limitations": [
+    "59 checks and controlled503 production serializer test do not qualify actual funded native browser recovery.",
+    "Failed setup real transactions/fees retained, not labelled failed funding or lost accounting; no new proof/send during failed browser stage.",
+    "Runtime must independently show3setup proofs, keys-only native restore, local private views and zero browser submissions."
+  ]
+}

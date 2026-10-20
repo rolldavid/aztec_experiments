@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "72cf151ae2428949992b99818f09078566d118dc",
+  "verdict": "Architecture eligible for narrow implementation; exact source and deployment composition still require review",
+  "scope": "One existing synchronous startup hook composing fixed startup observation and default-off compact main RPC insertion; no execution or source edit",
+  "findings": [
+    {
+      "severity": "P2 if unaddressed in implementation",
+      "issue": "Current compact transform cannot be serially applied after startup transform: both require original CLI hash. Importing compact runtime helper before registerHooks also imports SDK-dependent graph too early.",
+      "required": "Pure module containing fixed CLI hash/anchor/insertion descriptor and built-in-only validation. Startup computes both insertions from original source, validates unique anchors/disjoint edit ranges, emits once through existing hook. Do not transform a transformed string or accept a second hash."
+    },
+    {
+      "severity": "P2 if unaddressed in deployment",
+      "issue": "Mounting helper under a release root with its own node_modules can cause distinct SDK class instances from actual CLI, despite byte-identical packages. Existing registration checks rollup instanceof EthAddress.",
+      "required": "Deployed source mount/resolution must resolve runtime helper SDK imports to exact image SDK URLs; avoid nearer packaged node_modules. Verify module/class identity in real composed import fixture. Merely relocating HOOK_URL does not prove this."
+    }
+  ],
+  "observed": {
+    "cliSha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+    "compactAnchorCount": 1,
+    "compactInsertionOriginalOffset": 4520,
+    "publicRpcBeginOriginalOffset": 4782,
+    "publicRpcCompleteOriginalOffset": 5018,
+    "adminSectionOriginalOffset": 5102,
+    "offsetsDisjoint": true
+  },
+  "minimalComposition": [
+    "New explicitly owned prover/compact-node-transform.mjs may export fixed descriptor and original-source transform; no SDK imports, arbitrary replacement API or hook installation. Runtime compact-node-registration imports this pure module and retains middleware implementation.",
+    "Startup imports only pure descriptor before hook; adds fixed import of runtime middleware to transformed CLI, where SDK dependencies load after hook registration. Descriptor import URL must resolve sibling runtime registration, not pure descriptor itself.",
+    "Preserve all six source whole-file gates and actual nextLoad original hash validation, fixed configuration-provider adapter, phase order and no SDK disk writes. Merge pure insertions in original offset order; reject conflicting offsets/edit spans rather than silently choosing order.",
+    "Undefined tier remains default-off; invalid configured tier fails closed. Main middleware position and prewritten official version headers retained; admin/listener/body-parser/CORS remain unchanged.",
+    "Separate later bootstrap claim updates fixed path/mounts/helper pin/package closure and any added helper byte bindings; current /etc-only mount cannot satisfy repository relative imports. Keep diagnostic runtimeAdapter truthfully descriptive of both enabled changes."
+  ],
+  "requiredChecks": [
+    "Reverse all declared combined insertions to exact original CLI and independently verify startup-only and compact-only semantics, untouched admin suffix.",
+    "Unknown source/missing or duplicated anchors/conflicting edits fail before register; actual loader target validates original bytes, unrelated modules preserve identity/errors.",
+    "Actual Node hook import test proves registration occurs before SDK target imports and transformed CLI resolves exact runtime helper once; existing official server default-off/main/version/CORS tests carry only after byte-equivalence or rerun.",
+    "Deployment path and same SDK identity check must precede any node endpoint qualification; no implementation grant for cloud operations implied."
+  ]
+}

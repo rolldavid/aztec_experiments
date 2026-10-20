@@ -1,0 +1,8 @@
+{
+  "CommandId": "2fc73a2c-2e2f-4bbf-9e6d-6a81ab7e3f71",
+  "InstanceId": "i-05977895ed0395a5a",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"controlsPassed\": true, \"deadline\": {\"createdAt\": \"2026-10-15T01:32:35Z\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"runtimeArchiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"manifestSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\"}, \"setupReceipt\": {\"sourceRevision\": \"b1fc992b6abdb94d030851376e51fefdd2f55957\", \"archiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"controlSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"jobsStarted\": 0}}\n{\"kind\": \"build\", \"metadataDenied\": true, \"networkPolicyPassed\": true}\n{\"kind\": \"native\", \"metadataDenied\": true, \"networkPolicyPassed\": true}\n{\"rootMetadataPositiveControl\": 401, \"unprivilegedActualNetworkIsolation\": true}\n",
+  "StandardErrorContent": ""
+}

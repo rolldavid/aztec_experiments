@@ -1,0 +1,62 @@
+{
+  "kind": "read-only source and canonical effect metadata diagnosis",
+  "headAtDiagnosis": "0cc564a478dfad9246e7e661f4a34be6a3e93516",
+  "finding": "PrivateBok refund emits a standard PartialUintNote completion transport log before AccountingChanged. Application decoder incorrectly demands every log from the contract be an application event.",
+  "source": {
+    "artifactPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/experiments/private-bok/target/private_bok-PrivateBok.json",
+    "artifactSha256": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+    "embeddedPath": "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.3/uint-note/src/uint_note.nr",
+    "embeddedSha256": "8aa6b858ba460528bc8daad5209c0e8ab5c11ca6c77f50f726456d86b34f289a",
+    "embeddedLines": [
+      189,
+      213
+    ],
+    "caller": "experiments/private-bok/escrow/src/main.nr:309-320",
+    "applicationEmitter": "experiments/private-bok/escrow/src/main.nr:301-306"
+  },
+  "format": {
+    "fields": 3,
+    "tag": "Poseidon domain-separated commitment; no inspectable namespace prefix",
+    "payload": [
+      "artifact balances storage slot",
+      "nonzero u128 amount"
+    ],
+    "privateOwnerOrCommitmentPrinted": false
+  },
+  "actualReadOnlyObservation": {
+    "endpoint": "http://127.0.0.1:18080",
+    "method": "getTxEffect",
+    "transactionHash": "0x0e0f89a9a1e352a353cef13a69ff805aaf06ec4389e87c30a56b558f074cf31c",
+    "blockNumber": 614,
+    "logs": [
+      {
+        "index": 0,
+        "fieldCount": 3,
+        "balancesSlotMatches": true,
+        "lastPositiveU128": true
+      },
+      {
+        "index": 1,
+        "fieldCount": 10,
+        "balancesSlotMatches": false,
+        "lastPositiveU128": true
+      }
+    ],
+    "allLogAddressesSame": true,
+    "elapsedSeconds": 0.463,
+    "noPrivateFieldsPrinted": true,
+    "noWrites": true
+  },
+  "recommendedRepair": [
+    "Keep known application tags first: malformed known events always reject, including a known-tag three-field collision.",
+    "Recognize only exact configured Bok address, three actual Fr fields, authenticated artifact balances slot, nonzero u128 amount.",
+    "Require co-resident fully valid AccountingChanged with refunded at least the completion amount.",
+    "Retain existing successful receipt, exact full-block/effect equality, source class/constructor/storage authentication and final anchor checks before returning any application events.",
+    "Reject unknown logs of every other address/shape/slot/range. Do not expose completion tag/recipient grouping in public application projection."
+  ],
+  "rationale": "The inspected pinned class has one PartialUintNote.complete call, only in Accounting.refund, and one public application event emitter. Canonical successful execution of this authenticated class establishes the emission provenance; the proposed narrow shape exclusion is not general unknown-event tolerance and does not claim cryptographic validation of the tag preimage.",
+  "limitations": [
+    "Actual metadata query itself is diagnostic and does not replace decoder canonical full-effect verification.",
+    "No decoder repair reviewed yet, no public-feed recovery success claimed."
+  ]
+}

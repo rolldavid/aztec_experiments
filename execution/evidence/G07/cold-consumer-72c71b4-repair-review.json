@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "failedCandidate": "dbb8e62a1635220c776f9198d7878e56a226d458",
+  "repairCandidate": "72c71b4c8292a83fd488fcafbfea8ea0827e0348",
+  "disposition": "failed-run-preserved-and-narrow-fixture-environment-repair-eligible-for-one-changed-bounded-run",
+  "evidence": [
+    {
+      "path": "execution/evidence/G07/cold-consumer-dbb/result.json",
+      "sha256": "a68b84296417fbdd628159580b2eda1ae3638da494ef18cd740cb4470893b5e8"
+    },
+    {
+      "path": "execution/evidence/G07/cold-consumer-dbb/build.log",
+      "sha256": "b3cd3f0faf0292163e2136b7462422bd5aa55e8bb3dc264184d10446cc51db26"
+    },
+    {
+      "path": "execution/evidence/G07/cold-consumer-dbb/postcheck.json",
+      "sha256": "f807890fb588daf88ca8beb3149a5f8bcfbb3c24b792f88e77a896896957951b"
+    },
+    {
+      "path": "execution/evidence/G07/cold-consumer-dbb/before-source.json",
+      "sha256": "4c69de148908ac52ab13f9af48c25d4f895b68d3faa6cf547a85859795923bf8"
+    }
+  ],
+  "actual": {
+    "counts": {
+      "tests": 92,
+      "pass": 20,
+      "fail": 72,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "elapsedMs": 9255,
+    "peakTreeRSSKiB": 708624,
+    "ownedTreeAbsent": true,
+    "sourceRows": 1142,
+    "postcheck": {
+      "source": "dbb8e62a1635220c776f9198d7878e56a226d458",
+      "trackedInputs": 1142,
+      "changed": [],
+      "ownedTreeAbsent": true,
+      "borrowerLinkRemoved": true,
+      "targetPreserved": true,
+      "resultSha256": "a68b84296417fbdd628159580b2eda1ae3638da494ef18cd740cb4470893b5e8"
+    }
+  },
+  "diagnosis": [
+    {
+      "cases": 70,
+      "cause": "Isolated HOME moved Playwright default cache path; no explicit PLAYWRIGHT_BROWSERS_PATH. Each fails before Chromium process launch at missing chromium_headless_shell-1243 executable. Product DOM assertions did not run.",
+      "evidence": "All 70 launch errors name identical missing isolated-home executable; result environment has HOME and no Playwright override."
+    },
+    {
+      "cases": 2,
+      "cause": "Cold mailbox fixture overrides getBlockData before createRollingWalletSession, asserting only numeric10. Unchanged verifyRollingDeployment first requests checkpointed, so fixture assertion is caught and normalized to ROLLING_DEPLOYMENT_INVALID before cold-reader or cancellation assertions.",
+      "evidence": "Both failures originate session initialization/deployment; exact source has checkpointed query before numeric anchor recheck."
+    }
+  ],
+  "repair": {
+    "path": "apps/rolling/wallet-session.test.mjs",
+    "sha256": "d7425166085196b040db98c9494bf3a3d5a634b34b70509205a91b566a150568",
+    "assessment": "Accept only numeric10 or literal checkpointed while preserving same block10/header/hash and all original cold/lease/abort assertions. Exactly one test-line change; production and browser test source unchanged.",
+    "browserEnvironment": {
+      "PLAYWRIGHT_BROWSERS_PATH": "/Users/zac/Library/Caches/ms-playwright",
+      "installedPlaywrightHeadlessRevision": {
+        "name": "chromium-headless-shell",
+        "revision": "1243",
+        "installByDefault": true,
+        "browserVersion": "153.0.8010.12",
+        "title": "Chrome Headless Shell"
+      },
+      "browsersManifestSha256": "545d52f8382c391e605562c330e9c1c534a16045898203037a49bb8bd769a946",
+      "executableExists": true,
+      "executableSha256": "a0bfe7b4da4787b66058477d696cd1d09065d25f06a548947722b9af77ee8282",
+      "noInstallOrDownloadRequired": true
+    }
+  },
+  "nextEligibility": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "files": [
+      "apps/rolling/wallet-session.test.mjs",
+      "apps/rolling/wallet-panel.browser.test.mjs"
+    ],
+    "conditions": [
+      "Fresh exact72c source/runner/environment intent, pin existing read-only browser cache path and current matching Playwright manifest.",
+      "Retain isolated HOME, source/artifact/dependency checks and readonly borrow cleanup.",
+      "Run all cases with no skips or assertion relaxation; interpret 70 browser cases as first actual DOM execution for this candidate, not evidence carried from failed run."
+    ],
+    "genuineAcceptance": false
+  },
+  "limits": [
+    "No tests/browser/native execution by reviewer.",
+    "No pass for first-mailbox/cancellation positive branch established by failed dbb run; repaired execution must demonstrate it.",
+    "Normal distribution/build and actual enabled cold-chain recovery gates remain open."
+  ]
+}

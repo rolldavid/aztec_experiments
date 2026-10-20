@@ -1,0 +1,26 @@
+{
+  "base": "35ce657c248941d28a44496c189797ef4f95f8ed",
+  "candidate": "99891365eaf3c73254f06a1844702ee05fd980ba",
+  "task_id": "G04-unpaced-clone-check",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "plugins/test/operator-lifecycle.test.mjs"
+  ],
+  "required_checks": [
+    "real-ethers-clones"
+  ],
+  "requirements": [
+    "RC19-RC22-transport-request-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G04-unpaced-clone-check",
+      "paths": [
+        "plugins/test/operator-lifecycle.test.mjs"
+      ]
+    }
+  ]
+}

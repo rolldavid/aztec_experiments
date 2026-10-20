@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewType": "independent-source-and-existing-controlled-evidence",
+  "candidate": "fe89343ba031a87c7d7806e8923015a43ed7f9ce",
+  "packetSha256": "b9b712087b9682f737af680cd4b506f4d2256a0f9a31ae366d3265ef03e70e90",
+  "files": {
+    "probe.py": {
+      "sha256": "6c6d3dd9f2923c36934dcfaf0b30d27991a2d15c0e970c3fc740f4a56d510ada",
+      "bytes": 14010
+    },
+    "probe.test.py": {
+      "sha256": "7d5c6ac181d5bdcebc9798ec830495f45a7b939fd392b25d7d8e5c64fd3817a7",
+      "bytes": 9899
+    },
+    "preparation.json": {
+      "sha256": "51586e39a30e2eaee39b02ffe15ce4190a68e26c18388922543c43f1455dcf46",
+      "bytes": 1525
+    },
+    "run.mjs": {
+      "sha256": "060f5fd49ee7f23d31b2ef06d8f9a7131b9871e0e840fb0a637497a5efd975b5",
+      "bytes": 2336
+    },
+    "tests.log": {
+      "sha256": "6fd55d4971b9d37efd06cfd45b4a3cdeb0bd8501ce70e4fad15364f93d323986",
+      "bytes": 1969
+    },
+    "tests-final.log": {
+      "sha256": "3024dc052618048015584917c04205d847a4f6f77041ede7264f9f3d157304b9",
+      "bytes": 2509
+    }
+  },
+  "disposition": "eligible-one-version-state-diagnostic-subject-to-parent-exclusive-slot-grant",
+  "executionByReviewer": false,
+  "checks": {
+    "sourceAndPins": "Parsed both Python sources; independently rehashed all six packet files and five exact preparation inputs including immutable Linux binary and prior image/module evidence. No installed/source mutation.",
+    "ownership": "Exclusive outer/create/start receipts precede one attempt; existing named container or public-binary collision is preserved. Unknown create is inspected, never repeated; removal requires exact owned ID/name/image and fresh identity inspection. No absence claim on unknown inspect.",
+    "capture": "15s native attach with bounded partial stdout/stderr capture and hashes/counts; only exact expected version text projected. Docker State is inspected and persisted before removal. Attempted vs observed start distinguished; timeout/nonzero/unknown never promoted to pass.",
+    "cleanup": "One fixed container with no network, read-only filesystem, no pull, 512MiB/2CPU/64pid/tmpfs64MiB; bounded inspect/remove operations and full outer120s/1GiB process supervisor. Public file deleted only if created by invocation. Write failures still attempt owned cleanup; unknown cleanup remains failure.",
+    "testEvidence": "22 controlled tests recorded passing0.240s: transport doubles plus disposable Python child timeout/cap/nonzero; collision, unknowncreate, state, OOM, malformed/secret fields, durability and cleanup cases. These are not Docker/native executions; reviewer did not rerun."
+  },
+  "limits": {
+    "supervisorSeconds": 120,
+    "hostRssMiB": 1024,
+    "versionSeconds": 15,
+    "containerMemoryMiB": 512,
+    "cpus": 2,
+    "pids": 64,
+    "tmpfsMiB": 64,
+    "captureBytesPerStream": 8192,
+    "stateInspectSeconds": 3,
+    "removeSeconds": 5
+  },
+  "requiredActualReceipt": [
+    "Exact packet/probe/runner/preparation/binary/image pins unchanged at launch and one exclusive intent only.",
+    "Retain command partial capture and pre-cleanup State even when version fails; separately report owned-container and process absence.",
+    "If engine identity/readback unavailable, report diagnostic/cleanup unqualified and do not auto-retry."
+  ],
+  "qualificationLimits": [
+    "Only offline version observation in Mac amd64 emulation; not Linux native proof or query/fullnode readiness.",
+    "No active Linux pin promotion authorized.",
+    "Original15s timeout and seven-module historical evidence remain unchanged; no SIGILL/OOM causal assertion without actual state."
+  ],
+  "trackedTreeStatusAtReview": ""
+}

@@ -1,0 +1,115 @@
+{
+  "source_revision": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "at": "2026-10-14T06:12:55.565716+00:00",
+  "procedure": "GET /api/feed after normal asset build and retained-chain restart; CUA reload Home then View conversation",
+  "observation": {
+    "schemaVersion": 1,
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "3004872005",
+      "rollupAddress": "0x84e2217f12878dcb7614fdf9e09baf8cbc1050c2",
+      "boardAddress": "0x02f534c19f18be1f1d6c7331f64292646426dceba3482baf2c29b9851ddf69ca",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "bok": {
+        "address": "0x2f18be97736914b34f04beb040b19289b465dc3cceaf152ecf391f8873c35ac8",
+        "classId": "0x15ea98a7bb7770e89073fbcd0d4a407aa589411820d90318c7f0c6f9b03c9bdf",
+        "operatorAddress": "0x2c01b4c56dda097f55c8e5b567bcd283adc1175d2a766b9dc3f7a72e66e70984",
+        "deployer": "0x2c01b4c56dda097f55c8e5b567bcd283adc1175d2a766b9dc3f7a72e66e70984",
+        "salt": "0x015eea153a71f68885daeb79ba8665728c07287d09d71a2f2236536d237d1c43",
+        "deployment": {
+          "blockNumber": 7,
+          "blockHash": "0x08562b98b91db0ca3bd7dad71f7fbb053fa0025481214d590220cfb850399328",
+          "txHash": "0x2262846912faa38a2e70c883b0a3c236cdca7054a45b2414d38133ccf450bc11"
+        }
+      }
+    },
+    "checkpoint": {
+      "number": 648,
+      "hash": "0x035b79f0d2221f54f4bd83edf15275f1f3c9968152c7de404c9975151d646f59"
+    },
+    "complete": true,
+    "posts": [
+      {
+        "id": "17391090012946578739736582163935922356041858947097629744910204973509921908298",
+        "record": {
+          "subboard": "0",
+          "parent": "11871635679130648631187212866750691225302314497767333218634103931968272445208",
+          "root": "11871635679130648631187212866750691225302314497767333218634103931968272445208",
+          "kind": "4",
+          "name_id": "0",
+          "reference": "0",
+          "content_digest": "9353616647389164666383758706177496610045702508344255881929756346659826601513"
+        },
+        "text": " Rolling Chat is ready.",
+        "timestamp": "1791957226",
+        "mainVersion": "1",
+        "localVersion": "0",
+        "position": {
+          "blockNumber": "613",
+          "blockHash": "0x11dd9d4dbd0464b3791dcf2e06afa83a176d3a6de3a2597e676829baa9e9af15",
+          "txHash": "0x0f47ba98114e8a275aab94d1a0c57061282ac8029a107b21a197c56be51b31fe",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        },
+        "order": "1",
+        "likes": "0",
+        "removal": null,
+        "invocation": null,
+        "bot": {
+          "pluginId": "6451051",
+          "requestId": "2486166864885528285815126211739479690875563127995380154418248313752990333815",
+          "target": "21104785813332668630760877038856302699018912638532229574592987453226975724628",
+          "parent": "11871635679130648631187212866750691225302314497767333218634103931968272445208"
+        }
+      },
+      {
+        "id": "11871635679130648631187212866750691225302314497767333218634103931968272445208",
+        "record": {
+          "subboard": "0",
+          "parent": "0",
+          "root": "11871635679130648631187212866750691225302314497767333218634103931968272445208",
+          "kind": "1",
+          "name_id": "0",
+          "reference": "0",
+          "content_digest": "4368509601690700606925518204410657626087618776157809798220507848257900770015"
+        },
+        "text": "Reply with exactly this sentence: Rolling Chat is ready.",
+        "timestamp": "1791956836",
+        "mainVersion": "1",
+        "localVersion": "0",
+        "position": {
+          "blockNumber": "596",
+          "blockHash": "0x02d788732b612259a0bc13b4c05f8439e26fa479ebfb3046d76e2b968dca849c",
+          "txHash": "0x2661955b5a3efae387dd6800324a556a723217c161c62568823f003f82d75db5",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        },
+        "order": "0",
+        "likes": "0",
+        "removal": null,
+        "invocation": {
+          "pluginId": "6451051",
+          "adapter": "21302423627880179725135839042751208433150208178835944248461724319268278065864",
+          "requestId": "2486166864885528285815126211739479690875563127995380154418248313752990333815",
+          "target": "21104785813332668630760877038856302699018912638532229574592987453226975724628",
+          "parent": "11871635679130648631187212866750691225302314497767333218634103931968272445208",
+          "reply": "17391090012946578739736582163935922356041858947097629744910204973509921908298"
+        },
+        "bot": null
+      }
+    ],
+    "names": {},
+    "boards": {},
+    "nextCursor": null,
+    "revision": "05ae9daf-eb27-43fb-894a-059c1579f29e:4:2382"
+  },
+  "visual": {
+    "url": "http://127.0.0.1:8080/#/thread/11871635679130648631187212866750691225302314497767333218634103931968272445208",
+    "human_label": "Anonymous",
+    "bot_label": "Bok / Authenticated bot",
+    "reply": "Rolling Chat is ready.",
+    "parent_link": true,
+    "layout": "Readable desktop sidebar, central thread and participation panel; no overlapping content observed",
+    "limitations": "Public browser view only; no authenticated wallet balance or full accessibility qualification claim"
+  }
+}

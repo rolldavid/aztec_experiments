@@ -1,0 +1,52 @@
+{
+  "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-recovery-combined-integration-20261018",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "AGENTS.md",
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/deploy.html",
+    "apps/dist/sdk-manifest.json",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "apps/src/billboard/deploy/engine.js",
+    "scripts/test-w03-deploy-engine.mjs",
+    "scripts/test-w03-ethereum-journal.mjs",
+    "shared/ethereum-journal.mjs"
+  ],
+  "required_checks": [
+    "combined-recovery-tests",
+    "saved-refund-ui",
+    "normal-generated-closure"
+  ],
+  "requirements": [
+    "W03-RC22-saved-refund-component",
+    "RC37-policy-restart-component",
+    "G13-skill-reference"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "paths": [
+        "AGENTS.md",
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/deploy.html",
+        "apps/dist/sdk-manifest.json",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs",
+        "apps/src/billboard/deploy/engine.js",
+        "scripts/test-w03-deploy-engine.mjs",
+        "scripts/test-w03-ethereum-journal.mjs",
+        "shared/ethereum-journal.mjs"
+      ]
+    }
+  ]
+}

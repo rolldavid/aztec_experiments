@@ -1,0 +1,13 @@
+test_control_overlay_is_fixed_root_owned_source_bound_and_keeps_runtime_pin (__main__.Bootstrap.test_control_overlay_is_fixed_root_owned_source_bound_and_keeps_runtime_pin) ... ok
+test_packaged_qualification_helpers_require_exact_source_before_execution (__main__.Bootstrap.test_packaged_qualification_helpers_require_exact_source_before_execution) ... ok
+test_persistent_policy_is_closed_and_source_bound (__main__.Bootstrap.test_persistent_policy_is_closed_and_source_bound) ... ok
+test_persistent_install_masks_elapsed_timer_keeps_emergency_and_commissioning (__main__.Bootstrap.test_persistent_install_masks_elapsed_timer_keeps_emergency_and_commissioning) ... ok
+test_persistent_monitor_requires_bound_private_policy_mask_and_egress (__main__.Bootstrap.test_persistent_monitor_requires_bound_private_policy_mask_and_egress) ... ok
+test_persistent_query_admission_after_historical_deadline_keeps_native_checks (__main__.QueryHost.test_persistent_query_admission_after_historical_deadline_keeps_native_checks) ... ok
+test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent (__main__.ProverActivation.test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent) ... ok
+test_persistent_delivery_has_one_finite_window_after_historical_deadline (__main__.ActivationDelivery.test_persistent_delivery_has_one_finite_window_after_historical_deadline) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.150s
+
+OK

@@ -1,0 +1,96 @@
+{
+  "passed": false,
+  "stages": [
+    "node-resume",
+    "constructor-read-only"
+  ],
+  "financialOperations": 0,
+  "receipt": {
+    "status": "finalized",
+    "executionResult": "success",
+    "blockNumber": 7,
+    "canonical": true,
+    "effectCanonical": true
+  },
+  "worldState": {
+    "latestBlockNumber": 421,
+    "latestBlockHash": "0x0600e08f796e3c0cbcd1ee7939e294d94c7f779bf4f084f54100dfdaea92fb1e",
+    "finalizedBlockNumber": 420,
+    "oldestHistoricBlockNumber": 357,
+    "treesAreSynched": true
+  },
+  "instanceMatches": true,
+  "storage": {
+    "board": {
+      "original": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      },
+      "current": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      }
+    },
+    "operator": {
+      "original": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      },
+      "current": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      }
+    },
+    "owner": {
+      "original": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      },
+      "current": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      }
+    },
+    "l1_chain": {
+      "original": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      },
+      "current": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      }
+    },
+    "version": {
+      "original": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      },
+      "current": {
+        "errorClass": "TypeError",
+        "frames": [
+          "retained-bok-history-2.mjs:13:284"
+        ]
+      }
+    }
+  },
+  "cleanStopped": false
+}

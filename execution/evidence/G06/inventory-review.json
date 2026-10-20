@@ -1,0 +1,20 @@
+{
+  "revision": "caebabfb2282ece459879810ba4016493b634cae",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source/checks",
+  "checks": [
+    "8pinnedpackages/418files unchanged",
+    "129 embedded sources valid",
+    "RollingBoard10privateVKs exactsources",
+    "PrivateBok5privateVKs exactsources",
+    "89 distinctexpectedTXEtests, no missing/extra, cleanupreported",
+    "matchingbuild/testloghashes"
+  ],
+  "pending": [
+    "combinedintegrationreview",
+    "minedbehavior",
+    "genuineproof",
+    "privacy",
+    "compilerassurance"
+  ]
+}

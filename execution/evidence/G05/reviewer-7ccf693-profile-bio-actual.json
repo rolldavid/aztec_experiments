@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T21:16:47.795834+00:00",
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "runtimeSha256": "9b09eb139cc9048bcf71950ae68c586a261d25ee139b44e453c0147f40296310",
+  "verdict": "accept-scoped-development-evidence",
+  "requirements": [
+    "RC14",
+    "RC15",
+    "RC16",
+    "G05-A08",
+    "G05-A09",
+    "G05-A10"
+  ],
+  "packet": {
+    "path": "rolling-controls/execution/evidence/G05/profile-bio-7cc/acceptance.json",
+    "sha256": "fc676e34197078ed8ad67f90a02044450ef165937e65d4ffc48964307e3103c2"
+  },
+  "checks": [
+    "Read actual procedure and result, cross-checked all five bound artifact hashes and encrypted prior-history backup hash.",
+    "Confirmed entered once-only sentinel remains; procedure fsyncs its exclusive reservation before confirmation, admits one separately counted send, and verifies saved immutable intent and content after confirmation.",
+    "Procedure uses existing canonical receipt verifier and scoped event decoder; decoded BioPublished name, version1, digest, transaction and canonical block1530 agree with confirmed saved bio expectedVersion0.",
+    "Procedure asserts restored owned-name/composer options Anonymous and River Ledger, valid random suggestion without preparation or send, and actual public profile route and exact requested bio text.",
+    "Supervisor reports 79.900 seconds, clean child exit and absent owned process tree. No live calls or test reruns performed during independent evidence review."
+  ],
+  "canonical": {
+    "transactionHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+    "blockNumber": 1530,
+    "blockHash": "0x276883e8121ccaf769a689d39bcc6802d4e5fdcd6524cbab312dfcd64eae9567",
+    "nameId": "12235830793786600782179573182796452112376447600860118680335542525392465568298",
+    "version": "1",
+    "sendCount": 1
+  },
+  "findings": [],
+  "limits": [
+    "Accepts this development component observation, not full RC14/15/16 acceptance. Native and PXE proofs were disabled by configuration.",
+    "Restored name was observed after ordinary unlock, not fresh keys-only recovery. Avatar, posting history, concurrent bio edits and real-proof testnet acceptance remain separate.",
+    "Browser observer reports zero nodeSubmissions because its separately guarded send branch records the one actual send. Node-side canonical reads are outside browser counters; no stronger no-fee-estimation claim is inferred.",
+    "396 private RPCs and 46 tag discovery requests do not establish privacy qualification. Existing independent topology assessment and specialist-release gate remain applicable.",
+    "Review validates retained source-bound evidence, not a new live canonical read. Original entered reservation must not be replayed."
+  ]
+}

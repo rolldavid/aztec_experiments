@@ -1,0 +1,84 @@
+{
+  "candidate": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "reviewedCodeBase": "482e88778042f819f3c008ba5b5449b4f9805533",
+  "sameSource": {
+    "scripts/testing/rolling-application-actor.mjs": {
+      "sha256": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/rolling-application-actor.test.mjs": {
+      "sha256": "648c97e54319c3005e1a2acb3d83379acefd20f4e7c8245db26ec4bea444d93c",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/rolling-private-recovery-metrics.mjs": {
+      "sha256": "6d9bb3043243ede17c7a9bba966859a163f6547603e639e1811a16435bd1b058",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/rolling-private-recovery-metrics.test.mjs": {
+      "sha256": "30e68d4216b7933e37ccc23166f9fa098a0548fae1da0d9ad222737c62dcaac6",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/rolling-preference-recovery.mjs": {
+      "sha256": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/rolling-preference-recovery.test.mjs": {
+      "sha256": "d8aaa0dc8c9d54dedc3d5ed60fd676797a243e22dd2c734014147495d32f9365",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/scenarios.mjs": {
+      "sha256": "1495e4cccff12757b23325db1b236b2f472f1cb600a4267b838340ef675d5e1d",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/scenario-flows.mjs": {
+      "sha256": "e24300a0a66bdc288bf02958fda4e95ef2a889e08323c4af92594ca8629509f9",
+      "unchangedFrom482": true
+    },
+    "scripts/testing/assets.mjs": {
+      "sha256": "7d75ec9e7e75c02a99eb2981c2146c29533e7478eb55f27e3b78be75405ca139",
+      "unchangedFrom482": true
+    },
+    "shared/rolling/preference-reader.mjs": {
+      "sha256": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+      "unchangedFrom482": true
+    },
+    "shared/rolling/application.mjs": {
+      "sha256": "ca86f51a313c8c65c574034242bf9752635e57687e7766cc94a3b3bd4cbf8612",
+      "unchangedFrom482": true
+    },
+    "shared/rolling/synchronized-application.mjs": {
+      "sha256": "fa2023757d297e063953d558401338a090a6d5be084cc215bffd548911612178",
+      "unchangedFrom482": true
+    }
+  },
+  "coldSectionSha256": "e7135209e04ab9d2a730dda969a11faa8f6e1a7c85fd0799587d3840c648511f",
+  "coldSectionUnchanged": true,
+  "currentFixtureSha256": "b328eac71f79d5f0719aa4e5f309d77b49016bc74daa7fa4c26af2b6216140c2",
+  "manifests": {
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+      "unchangedFromIndependentlyRehashedF898": true,
+      "inputs": 2040,
+      "outputs": 8,
+      "walletOutputSizesMatch": null
+    },
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+      "unchangedFromIndependentlyRehashedF898": true,
+      "inputs": 81,
+      "outputs": 24,
+      "walletOutputSizesMatch": true
+    }
+  },
+  "installedPatchHashes": {
+    "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20",
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78"
+  },
+  "changedSince482": [
+    "execution/infrastructure-ledger.json",
+    "execution/sessions/registry.json",
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs"
+  ],
+  "validation": "Source/hash/manifest/stat-only. No native or browser process. Full SDK/output content hash checks carried from frozen f898 independent eligibility; no claim full repeat here."
+}

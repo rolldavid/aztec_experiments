@@ -1,0 +1,21 @@
+{
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "files": [
+    {
+      "key": "releases/rolling-shared-20261015-22d2224caaab/current1591-final-1591-3ad6775a8fd54440b69c90490ee1a122/current1591-final-state.tar.gz",
+      "bytes": 15417507,
+      "sha256": "73aaf7369e1fbf7445e48cb07d97c580ebfe938ef879b365ac12b0bfa89a1362",
+      "versionId": "zwyLWdtrAZxRzLmumzuw7Rd2vR67jVZk",
+      "transportChecksum": "WwhdROxOnoTb/y3wGq/bQ4vcXceUn/qxbBkdjzzw2ak=-2",
+      "checksumType": "COMPOSITE"
+    }
+  ],
+  "deleteBy": "2026-11-14",
+  "withinExisting20GBReservation": true,
+  "developmentEvidenceOnly": true,
+  "restoreMustVerifyFullSha256": true,
+  "trustedLocalVersionVerified": true,
+  "commandId": "893019ef-0ba1-4a38-9077-9c3c811be264",
+  "advancedReadOnlySnapshotIncluded": false,
+  "original1572FullBackupRetained": true
+}

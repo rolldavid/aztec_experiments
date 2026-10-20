@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T07:41:48.282078+00:00",
+  "verdict": "ELIGIBLE_ONE_BOUNDED_PUBLIC_READ_AFTER_PARENT_GRANT",
+  "packetSha256": "60fbdd7555dcf48af95bf511372ebf1a63e4afb1faf4764d474b13660ac8b5d9",
+  "helpers": {
+    ".build/rc3-current-network-readonly.mjs": "95757fcd1d31f62366588c01b6b3695f68549818e4e97f88edbde608a3ad44e9",
+    ".build/rc3-current-network-liveness.mjs": "e1db6d5f684e61bcf8a8a88b5351c14a1be9711e0c1044942b1c565584aa1846"
+  },
+  "moduleBindingSha256": "0dd27060a5a5fbb28162894d03f9f0ec146240fb772a146108f0e04b02c4ce45",
+  "checks": [
+    "Exact two helpers and22 own/lead installed module hashes independently verified; three constants independently extracted from bound literals and official tree final-node representation.",
+    "Only fixed public Sepolia RPC eth_chainId,eth_getBlockByNumber,eth_getCode,eth_call; registry/rollup ABI reads. No wallet/signing/account creation, tx/proof/native/fullnode actions or dependency writes.",
+    "No provider/target fallback or retries. Fixed public endpoint omits credentials and errors on redirects;32-call limit,8s per-request limited by59s total,64KiB streaming response cap and16KiB exclusive0600 receipt.",
+    "At most27 planned requests if canonical differs; current/300-block-old anchors, registry and constants/version/progress plus final continuity checks preserved.",
+    "Finite failure categories preserve partial progress without rawRPC error text; stdout is fixed safe summary.",
+    "Exact command sanitizes credential variables; fresh output intent/65s existing owner and positive process cleanup required."
+  ],
+  "concurrency": "This performs bounded public network reads and small ABI/source parsing only, no heavy native/build/service work or mutations to frozen lead tree. It may overlap genuine run only under explicit parent allowance.",
+  "limits": [
+    "This is a provider snapshot, not cryptographic L1 proof, application deployment authenticity, exact-image three-constant proof, fullnode sync or proof-service qualification.",
+    "Historical reference note and changed-canonical results are observations, not automatic target update or causation of prior failures.",
+    "No actual read was executed by reviewer; exact result and cleanup need later review."
+  ]
+}

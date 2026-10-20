@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T02:13:23.614272+00:00",
+  "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "noExecution": true,
+  "noPull": true,
+  "noNetwork": true,
+  "files": {
+    "aztec/dest/cli/aztec_start_action.js": {
+      "sha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+      "installedSha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+      "byteEquivalent": true
+    },
+    "aztec-node/dest/factory.js": {
+      "sha256": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259",
+      "installedSha256": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259",
+      "byteEquivalent": true
+    },
+    "cli/dest/config/generated/networks.js": {
+      "sha256": "734f27302fe306f7125eb73cdc6b982be85bcc038d7a1ce8a1b61a3922aa5399",
+      "installedSha256": "734f27302fe306f7125eb73cdc6b982be85bcc038d7a1ce8a1b61a3922aa5399",
+      "byteEquivalent": true
+    },
+    "cli/dest/config/network_config.js": {
+      "sha256": "303158b2170388fb198068ac84ac1afc5dbefb8c50cdb8a0032fdbcd5cbc08c9",
+      "installedSha256": "303158b2170388fb198068ac84ac1afc5dbefb8c50cdb8a0032fdbcd5cbc08c9",
+      "byteEquivalent": true
+    },
+    "cli/dest/config/chain_l2_config.js": {
+      "sha256": "8b488ab8cf50599a9c92695da43d01a809548689d7b742774551eabb68898fe8",
+      "installedSha256": "8b488ab8cf50599a9c92695da43d01a809548689d7b742774551eabb68898fe8",
+      "byteEquivalent": true
+    }
+  },
+  "cleanupConfirmed": true,
+  "imageId": "sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "nodeVersionEnvironmentAvailable": false,
+  "nodeVersionMetadata": "24.21.0",
+  "nodeVersionHeaderSha256": "bd056729fddf4bfa58687036219f07417c334c4ecfcb513ac256fa254451bfc9",
+  "allModuleBytesEquivalent": true
+}

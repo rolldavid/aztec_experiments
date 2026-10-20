@@ -1,0 +1,93 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+  "verdict": "approved-bounded-development-runtime",
+  "scope": "Genuine empty-comment repost and same-account cross-post like separation plus canonical recovery",
+  "evidence": {
+    "execution/evidence/G06/application-e030a9fa-7c27-429e-bfba-5642cccbd021.json": "7eb91bea0ebe3d84f21392a2ed89797bc95195d7812a4d72ba50f6ea748f938e",
+    "execution/evidence/G06/application-port-12b5102b-b752-4185-a865-09cd41187464/observation.json": "7041a0d2423a22b695a0459c37928bcd78a68a1b440b982f12910220bd2624d4",
+    "execution/evidence/G06/repost-e030-independent-effects.json": "a5a181f8feec914a89b8d2b8f904f4c4c5dd859f12c1271c8605c5ec6a0a493d"
+  },
+  "sourceVerification": {
+    "outerFiles": 206,
+    "innerFiles": 49,
+    "artifacts": 2,
+    "bokInputs": 14,
+    "nativeInputs": 70,
+    "innerTrackedRevisionEquality": true
+  },
+  "runtime": {
+    "passed": true,
+    "elapsedMs": 419388,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 2507168,
+    "rssLimitKiB": 4194304,
+    "allCleanup": true,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "failures": [],
+    "applicationProofs": true,
+    "submittedNativeHTTPJobs": 4,
+    "completed": 4,
+    "failed": 0,
+    "chainId": "31337",
+    "rollupVersion": "3524394854",
+    "controlledSettlement": true,
+    "networkProofs": false
+  },
+  "independentEffects": {
+    "count": 4,
+    "binaryHashesTxHashesRoundtripFeesVerified": true,
+    "decoded": [
+      "PostPublished",
+      "PostPublished",
+      "LikeChanged",
+      "LikeChanged"
+    ],
+    "emptyRepostCanonicalStandaloneRoot": true,
+    "originalReference": true,
+    "bothCountsOne": true,
+    "sameActorCrossPostTagsDistinctNonzero": true,
+    "canonicalViewsCompared": 5,
+    "writes": [
+      14,
+      14,
+      3,
+      3
+    ],
+    "limit": 63,
+    "policySeedLimit": "Offline projection uses synthetic empty version1 initial policy because original setup effect not persisted; actual runtime refetches5transactions including setup."
+  },
+  "recovery": {
+    "canonicalRefetches": 5,
+    "encryptedJournalSameHash": true,
+    "newProofJobs": 0,
+    "freshAndColdSQLiteHTTP": true,
+    "routes": [
+      "feed",
+      "thread",
+      "thread",
+      "post",
+      "post"
+    ],
+    "authenticatedRangesEach": 3,
+    "sameCheckpoint": 23,
+    "listenersClosed": true
+  },
+  "accounting": {
+    "fourActions": "58029350400000",
+    "claim": "8418947400000",
+    "humanTotal": "66448297800000",
+    "standalone": "12869316000000",
+    "totalPrivateDebit": "79317613800000",
+    "privateRemaining": "999999920682386200000",
+    "funded": "1000000000000000000000",
+    "humanPublicFeeJuiceZero": true
+  },
+  "limits": [
+    "Exactknownrolefieldabsence/crossposttagdifference is not full observer privacy",
+    "Two-account duplicate/unlike/removed-like pending separate campaign",
+    "HTTP transport not DOM or browser wallet acceptance",
+    "Local controlled settlement not Aztec testnet/epoch proof; externalaudit gates unchanged"
+  ]
+}

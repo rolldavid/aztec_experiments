@@ -1,0 +1,58 @@
+{
+    "Fleets": [
+        {
+            "ActivityStatus": "pending_fulfillment",
+            "CreateTime": "2026-10-11T18:41:44+00:00",
+            "FleetId": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+            "FleetState": "active",
+            "ClientToken": "3ef587b1-3243-4157-a5f5-18ece856b28e",
+            "ExcessCapacityTerminationPolicy": "termination",
+            "FulfilledCapacity": 0.0,
+            "FulfilledOnDemandCapacity": 0.0,
+            "LaunchTemplateConfigs": [
+                {
+                    "LaunchTemplateSpecification": {
+                        "LaunchTemplateId": "lt-02bde80c40c9f7003",
+                        "Version": "1"
+                    },
+                    "Overrides": [
+                        {
+                            "SubnetId": "subnet-aa91f4ce"
+                        },
+                        {
+                            "SubnetId": "subnet-a705ce88"
+                        }
+                    ]
+                }
+            ],
+            "TargetCapacitySpecification": {
+                "TotalTargetCapacity": 1,
+                "OnDemandTargetCapacity": 1,
+                "SpotTargetCapacity": 0,
+                "DefaultTargetCapacityType": "on-demand"
+            },
+            "TerminateInstancesWithExpiration": true,
+            "Type": "request",
+            "ValidUntil": "2026-10-12T02:41:10+00:00",
+            "ReplaceUnhealthyInstances": false,
+            "SpotOptions": {
+                "AllocationStrategy": "lowestPrice",
+                "InstanceInterruptionBehavior": "terminate",
+                "InstancePoolsToUseCount": 1
+            },
+            "OnDemandOptions": {
+                "AllocationStrategy": "lowest-price"
+            },
+            "Tags": [
+                {
+                    "Key": "Task",
+                    "Value": "G14"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "rolling-chat-development-node-03"
+                }
+            ]
+        }
+    ]
+}

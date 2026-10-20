@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T18:19:42.467640+00:00",
+  "candidate": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+  "base": "628a0d64b28221756c22765b1d9e269cad8695df",
+  "verdict": "approve_scoped_source",
+  "findings": [],
+  "sourceHashes": {
+    "plugins/operations.mjs": "2c832f463157bccddc1fb51ad241f6c3ab0d17538946b840cf86df07569d797f",
+    "plugins/operator.mjs": "a731754322fead07176747d43c429063fe061a91dc0fd574fd9502a70942fdde",
+    "plugins/test/operations.test.mjs": "8a96030d3507c7a42252aa1f02306e5699275002487ac36aec732a1bbef8a34d"
+  },
+  "carriedReview": "review-9a186d1c.json",
+  "checks": [
+    {
+      "procedure": "Compare git blob bytes for all three changed paths at worker base dad13fb8 vs lead base 628a0d64, and worker candidate 9a186d1c vs lead candidate 279f56d1; compare SHA256 to original independent review.",
+      "result": "All six comparisons equal; all three SHA256 equal prior independent review. Exact delta has only the three reviewed paths; git diff --check passed."
+    },
+    {
+      "procedure": "Inspect combined base differences and changed production expressions/test.",
+      "result": "Only unrelated previously reviewed deployment package files differ between worker and lead bases. Explicit continuation HTTPS transport selection does not alter cancellation lineage provider selection or immutable economics. No conflicting combined-source change found."
+    }
+  ],
+  "limits": [
+    "Reused the independent seven focused checks bound to byte-identical source; no redundant test run.",
+    "Approval of source and exact transfer, not live provider history, transaction receipt or completed funding qualification. Normal integration gate remains.",
+    "No services, private journals, keys, transactions or network mutated."
+  ]
+}

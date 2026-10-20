@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-18T15:54:47.184Z",
+  "directory": "/private/tmp/rolling-final-reorg-vxOSIc",
+  "source": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "proofs": false,
+  "automaticSettlement": false,
+  "scope": "Real main-policy/public index and private follow/notification reorg; no orphaned post/browser/real-proof claim",
+  "stages": [
+    {
+      "name": "native-network",
+      "at": "2026-10-18T15:54:47.342Z"
+    },
+    {
+      "name": "deploy-real-board",
+      "at": "2026-10-18T15:54:49.968Z"
+    },
+    {
+      "name": "retained-private-follow",
+      "at": "2026-10-18T15:54:59.337Z"
+    }
+  ],
+  "passed": false,
+  "failure": {
+    "name": "AggregateError",
+    "message": "2 of 2 concurrent operations failed: 3 of 3 concurrent operations failed: Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/ContractInstanceRegistry.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/ContractClassRegistry.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/FeeJuice.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/standard-contracts/artifacts/MultiCallEntrypoint.json\" needs an import attribute of \"type: json\"",
+    "stack": [
+      "AggregateError: 2 of 2 concurrent operations failed: 3 of 3 concurrent operations failed: Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/ContractInstanceRegistry.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/ContractClassRegistry.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/protocol-contracts/artifacts/FeeJuice.json\" needs an import attribute of \"type: json\" | Module \"file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/standard-contracts/artifacts/MultiCallEntrypoint.json\" needs an import attribute of \"type: json\"",
+      "    at allToCompletion (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/foundation/dest/promise/utils.js:17:15)",
+      "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "    at async PXE.create (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/pxe/dest/pxe.js:167:9)",
+      "    at async createPXE (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-independent-deploy/node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js:64:17)"
+    ]
+  },
+  "cleanup": {
+    "closed": true,
+    "errors": []
+  },
+  "stateBytes": 4096,
+  "within8GiB": true
+}

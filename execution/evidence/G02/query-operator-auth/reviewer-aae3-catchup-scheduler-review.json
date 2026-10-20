@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "candidate": "aae3e8a552e7cf1bf7d2efd4d18977d11c331470",
+  "base": "8621065d41d2c223502ffbbec64ec5f9856d423c",
+  "verdict": "approve scoped source/component integration",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "scripts/rolling-public-server.mjs": "efa1fe35dc5cd0efe6b4a7e9d129d244b70405346c66c26650229aeaf2bab51b",
+    "scripts/rolling-public-server.test.mjs": "91f0e06a82834ff008ed698422c7eae64117f5ac346767229b07d49543eea38c"
+  },
+  "packet": "execution/evidence/G07/cold-index-catchup/handoff.json",
+  "packetSha256": "3ff56eecb8c0a3b763b6b65c1b5e6534c28610e1ce5b97495e99dff0de066987",
+  "review": [
+    "Successful index.sync plus after.state syncing and changed string durable revision schedules setTimeout0. Ready, unchanged/unknown revision and errors retain pollMs. Actual persistent index status exposes epoch:generation:revision, and committed segments/rollback update it.",
+    "The same single active owner drains each step before scheduling the next timer. Per-sync fetch, decoding, storage and publication limits are unchanged; no request-owned sync or concurrent catchup added. setTimeout yields to I/O/timers rather than recursively consuming microtasks.",
+    "HTTP waits for the current step and refuses partial publication with503. Close sets closed, cancels scheduled timer, awaits active step and original handlers before disposing index/relay. New close test covers an in-flight immediate turn and prevents successor scheduling.",
+    "Harness420-step timing uses a controlled index with real HTTP/timers; it demonstrates scheduler overhead/responsiveness and single concurrency, not actual SQLite/node catchup speed. Related lifecycle tests remain scoped, not a new whole-file result."
+  ],
+  "tests": {
+    "focusedPass": 6,
+    "relatedPass": 12,
+    "fail": 0,
+    "skip": 0,
+    "focusedDurationMs": 1206.259167,
+    "relatedDurationMs": 4573.968208,
+    "verifiedLogHashes": true
+  },
+  "remainingGates": [
+    "Actual fresh-cache420-block catchup under60s is unmeasured. Real RPC/SQLite cost and live HTTP responsiveness must be observed before performance acceptance; no per-step cap relaxation is justified.",
+    "No service/cache changes or reviewer expensive run performed."
+  ],
+  "reviewerExecution": "Read-only source and evidence verification; no tests or browser/service run."
+}

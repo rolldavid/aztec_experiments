@@ -1,0 +1,16 @@
+{
+  "recordedAt": "2026-10-13T02:26:02.789803+00:00",
+  "campaign": "native-version-20261013-2707fd93cc0e",
+  "files": {
+    "cleanup-safe-079d4564493c4bf9b99ff58ce66b0cbe.json": "528e6360451485db8abeee5e0997c4eebe4ed089f8c236512b70ba4c588bf985",
+    "terminal-summary.json": "19be0de6a7370e607da311d852797e1c11dbb68de160918ee50f290b9f269f38",
+    "observe-safe-07d771249bc3451985c11aaff709fe89.json": "47dc75abbf6e90f448e91114554dc666dce6a78ed10a660c529b667f1e8a472f",
+    "observe-safe-ad55dd69a3874757996c1949f7676546.json": "d15bfb036e84bda97811f8b1add08e5df93197d601689692f305274a7bc92cfb",
+    "observe-safe-8cf0d66d29234b18a40f126a3a3d6dd0.json": "c06cd41ba87eb14def854215fa405d5b317f6189a53948d8f7f751cf360b9986",
+    "launch.json": "df4f80bfe8c65797ffa4c82f76536adad31fdfbe3d3652b80272f805fca59bb5",
+    "cleanup-readback.json": "519d47481877996124693b7715ff8109f2a299b9718effb6b05f676b9bbb4c37",
+    "terminal-observation.json": "d15bfb036e84bda97811f8b1add08e5df93197d601689692f305274a7bc92cfb"
+  },
+  "limits": "Actual binary version result succeeded; overall strict qualification unqualified due zero systemd execution fields. No gate relaxed or pin promoted. Final Fleet deleted pending.",
+  "privateEvidenceDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-2707fd93cc0e"
+}

@@ -1,0 +1,16 @@
+{
+  "revision": "1307296017d92a5b8f2e9eb79e98638a45f00333",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved source only",
+  "checks": [
+    "five independently rerun tests passed none skipped",
+    "same installed timetable result, receiver and exception; original method restored",
+    "only diagnostic inner45s total120s",
+    "bounded finite observations and fixed reason categories"
+  ],
+  "sourceHashes": {
+    "scripts/c01-board-inclusion.mjs": "b63401c164c0bee9002c21037c004fe6b21739af60a2a11db291fb2858b9d7c4",
+    "scripts/testing/sequencer-observation.mjs": "e1f35df1e975b2fa9bb0870ac911e4624ec3b145e83d3ab75ff130aa21ba9683",
+    "scripts/testing/sequencer-observation.test.mjs": "2e533fce31648a9369c02af8e1e70e70307de957f72031475ed6536b573492b3"
+  }
+}

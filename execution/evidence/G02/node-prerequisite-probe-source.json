@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "candidate": "33414f6e25193f8649d081af5053a3873ae17579",
+  "base": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "paths": [
+    "scripts/probe-node-l1-prerequisites.mjs",
+    "scripts/probe-node-l1-prerequisites.test.mjs"
+  ],
+  "tests": {
+    "command": "pinned Node24.21.0 --test scripts/probe-node-l1-prerequisites.test.mjs",
+    "passed": 15,
+    "failed": 0,
+    "kind": "labelled unit doubles plus actual installed-module byte hashes",
+    "log": "execution/evidence/G02/node-prerequisite-probe-unit.log"
+  },
+  "actualSdkImportSmoke": {
+    "passed": true,
+    "networkCallsInvoked": false,
+    "processExited": true
+  },
+  "actualProviderProbe": "not run; independent source review required",
+  "imageSourceComparison": "execution/evidence/G02/operator05b-image-module-equivalence.json",
+  "limitations": [
+    "No independent expected-genesis root retained; comparison unavailable by default.",
+    "SDK latest reads unchanged; finalized before/after anchor continuity does not make reads atomic.",
+    "Exact getL1Config retains installed internal readonly retries. CLI fixed deadline ends process; exported test runner only stops subsequent stages.",
+    "No node/factory/genesis/archiver/proof/production qualification."
+  ]
+}

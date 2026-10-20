@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T21:10:30.190726+00:00",
+  "source": "1c7a6d7a26e4340fc36cdfb1aad4176749bf321e",
+  "verdict": "PASS bounded native-artifact adapter/CRS tests and fresh rc6 WASM CRS derivation",
+  "findings": [],
+  "handoffSha256": "111c9a444afc43548aea69be3719f07ec0d67c00451fdf74173253362924bfc3",
+  "resultSha256": "6987c0c1c18c5ba4995f3b186e602896b61cd4efe39773b023ac3619b0011160",
+  "intentSha256": "8e4d95a70c2082c846a2651e0b813cfc33422f5241033210a977a3b6e939e826",
+  "tests": {
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 3852,
+    "actualPinnedProviders": true
+  },
+  "freshDerivation": {
+    "elapsedMs": 9009,
+    "backend": "Explicit BackendType.Wasm using pinned foundation rc6 WASM",
+    "g1Bytes": 75497472,
+    "g1Sha256": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac",
+    "manifestSha256": "ddd5c7d0e30d42c4cc781e61b4301acdc3a7f9b227d73468abb82d8c80f72a64",
+    "evidence": "Reviewer independently verified fresh derived/manifest absence before execution in d20d review; reviewed runner rejects existing outputs. Stage1 tests do not target output directory. Stage2 exact normal build path must invoke worker when output absent, whose srsInitSrs result is fully verified and atomic-written after successful child closure. Actual log, worker RSS descendant, timestamps and output match."
+  },
+  "cleanup": {
+    "elapsedMs": 13210,
+    "peakTreeRSSKiB": 639584,
+    "allOwnedGroupsAbsent": true,
+    "zeroFailures": true
+  },
+  "bindingsVerified": [
+    "All six copied intent/stage/result evidence files match original qualification-directory bytes and declared hashes.",
+    "Exact runner fbfd4a44/child30e27e,13 source pins, clean1c7 revision, two unchanged command vectors.",
+    "Full output bytes independently SHA256 rehashed, manifest byte-identical reviewed source, source CRS assets and actual rc6 WASM hash match."
+  ],
+  "nextDisposition": "Safe to prepare the exact normal contract artifact-processing command and pinned provenance/ownership wrapper. Actual execution still requires separate lead slot grant and exact plan review; no lock or artifact relabeling.",
+  "qualificationLimits": [
+    "Not processed VK, TXE, genuine contract proof/application, SDK build, remote Linux/node/prover or testnet qualification.",
+    "260 unsuppressed compiler bug-labelled diagnostics and soundness investigation remain open per4c77; this mathematical CRS result does not clear them.",
+    "CRS source mathematically unchanged output hash is a checked constraint, not evidence that old artifacts are compatible with new packages."
+  ],
+  "reviewerExecution": "Read/hash/source checks only; no native tests, WASM, compiler or network replay."
+}

@@ -1,0 +1,29 @@
+{
+  "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+  "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+  "verdict": "approved",
+  "scope": "Six tracked generated outputs refreshed by the existing apps/build.mjs; no application source change.",
+  "files": {
+    "apps/dist/aztec_bundle.js": "2cd8acf54283cd16dce47b45b9ec8b96144ab08c2519aca91ecea5c83769b09a",
+    "apps/dist/censor.html": "5924a449b56ee1e9066c7e89e2fd8d43928ff2d58e48c5c9f1fb52da50d014d0",
+    "apps/dist/deploy.html": "98b79bd8fd2a75583a2f3f67f599b1d403b7efae92dcc00f89bf96bc82d96cd7",
+    "apps/dist/fee-juice.html": "552146ff871d50bf2a637385d74fa0751df5cd166354da3b776d9ebb2a02aa3f",
+    "apps/dist/sdk-manifest.json": "26361af8dc87fe33d7da8f61fb160285a3d7aff9e307e7c71acae45fc9aac17a",
+    "apps/dist/user.html": "bec554704a3c4102520040c9b0aa16139abb9a4be3ba9bc1119b45d6b330d67a"
+  },
+  "checks": [
+    "Exactly six changed paths, all apps/dist outputs. No source/build script/contract changes.",
+    "Generated SDK bundle and manifest byte-identical to current .build/sdk; expected bundle2cd8acf54283cd16dce47b45b9ec8b96144ab08c2519aca91ecea5c83769b09a and manifest26361af8dc87fe33d7da8f61fb160285a3d7aff9e307e7c71acae45fc9aac17a.",
+    "All2059 SDK manifest input hashes and8 output hashes match actual current files.",
+    "All four changed HTML consumers embed exact current shared/crs-client.js and crs-manifest.json. The changes reflect the already-reviewed verifier CRS support.",
+    "Existing normal build log reports completion of all consumers; no rebuild performed by reviewer.",
+    "Approved ccc292 application source and hosted Rolling publication bytes are unaffected."
+  ],
+  "buildLog": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/generated-consumers-20261019.log",
+    "sha256": "930f4985f820f180f99f4106ae7e216c3b1138ef9882de8e64fd33db357be2ea"
+  },
+  "limitations": [
+    "Generated closure/source equivalence review only; no new runtime or live acceptance claim."
+  ]
+}

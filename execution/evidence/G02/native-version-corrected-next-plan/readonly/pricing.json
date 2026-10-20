@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-13T01:48:45.309057+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "exitCode": 0,
+  "available": true,
+  "incomplete": false,
+  "observation": {
+    "rows": [
+      {
+        "sku": "TX58337QN5B6HX4A",
+        "instanceType": "m7a.large",
+        "effectiveDate": "2026-10-01T00:00:00Z",
+        "unit": "Hrs",
+        "usd": "0.1159200000",
+        "beginRange": "0",
+        "endRange": "Inf"
+      }
+    ]
+  },
+  "finishedAt": "2026-10-13T01:48:46.066316+00:00"
+}

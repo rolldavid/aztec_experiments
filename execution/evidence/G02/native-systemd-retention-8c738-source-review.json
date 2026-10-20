@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:39:40.593457+00:00",
+  "candidate": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "base": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "verdict": "source-approved-for-bounded-labelled-tests-and-separately-reviewed-harmless-systemd-regression",
+  "findings": [],
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-systemd-retention-source/review-packet.json",
+    "sha256": "5101c9739c5487e0473aed5bb5c6c822d8df44589eee34b2df046f8929e49376"
+  },
+  "files": {
+    "deploy/prover/bootstrap.py": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+    "scripts/test-prover-bootstrap.py": "f2469c70e94e3d519417c842dcb45d96f1185ace239f218b5830a7acba631c60",
+    "deploy/prover/BOOTSTRAP.md": "40d2c60081ba6f382f6749d932ebb10b2e4bf819dd76b15b052c112430819f6c"
+  },
+  "independentChecks": [
+    "Exact3path diff; clean worktree and packet hashes match.",
+    "Ordinary HOST, capture worker and native_classify AST unchanged; only existing native_execute invokes new helper.",
+    "Active budget timer has incoming Before diagnostic file reference. The chosen direction aligns timer-before-service defaults and does not introduce activation or stop propagation.",
+    "Actual bounded Before/After reads require incoming and inverse ordering and reject direct contradictory edges, malformed/duplicate/oversize data and transport failure. This is not a general transitive-cycle detector.",
+    "Both absolute timers must remain active after daemon-reload. No timer deadline value or workload resource limit changes.",
+    "Retention failure reaches existing shutdown/final receipt path before native start; original zero-state receipt remains unqualified."
+  ],
+  "authoredTests": "Four new labelled helper/negative/shutdown cases and historical zero-state classification regression inspected, not executed by reviewer.",
+  "limitations": [
+    "Not runtime qualification; actual Linux systemd lifecycle regression still required before paid replay.",
+    "No proof that historical2707 zeros were caused by collection; successful binary evidence remains separate.",
+    "No active Linux pin or ordinary package gate change; no paid grant."
+  ],
+  "primarySource": "https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd.unit.xml#L498",
+  "nextChecks": [
+    "Run focused native cases under existing bounded supported-Python supervisor.",
+    "Review exact disposable Linux systemd regression plan before execution, with real retained success/nonzero/timeout identity and cleanup, no native BB/network/provider workload."
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "preference-root-effect.bin",
+    "bytes": 4995,
+    "sha256": "575c78caabdeb4300754f6e30f985700f1005c50018aff3e3720107c79e01ed5",
+    "txHash": "0x104235dbde4ca6f89cfeee476a6ab929a740929de0bb921f15b14f56c180b07f",
+    "fee": "0x000000000000000000000000000000000000000000000000000013035a838b80",
+    "revertCode": "[object Object]",
+    "publicLogs": 2,
+    "notes": 4,
+    "nullifiers": 6
+  },
+  {
+    "name": "reorg-original-effect.bin",
+    "bytes": 2655,
+    "sha256": "0caf5600caa8caf394f0f18ece7874dd3623fdf8bfd4ecfe103191273866c523",
+    "txHash": "0x1e7efe962ae086cf56758bede590fdd3380194a9620651509f9dd04b29320f82",
+    "fee": "0x000000000000000000000000000000000000000000000000000007bd9f465500",
+    "revertCode": "[object Object]",
+    "publicLogs": 1,
+    "notes": 3,
+    "nullifiers": 7
+  },
+  {
+    "name": "reorg-replacement-effect.bin",
+    "bytes": 2655,
+    "sha256": "b23e6256f9fd718c34ba0d4d1c5d6b8485a68b0167727ee33e53e8272f5174a2",
+    "txHash": "0x05be474653fc39a155b30e859b3bb5864b9e41dcceec4056fe08f54678897d9a",
+    "fee": "0x000000000000000000000000000000000000000000000000000007bd9f465500",
+    "revertCode": "[object Object]",
+    "publicLogs": 1,
+    "notes": 3,
+    "nullifiers": 7
+  },
+  {
+    "name": "reorg-original-tx.bin",
+    "bytes": 194496,
+    "sha256": "8db53d56d481fccbf7ed358939760e0e99c05980f427f66e9f4499d96f7cc012",
+    "decoded": false,
+    "reason": "Compressed proof decoding requires BB singleton; not initialized in this pure codec review"
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "taskId": "G07",
+  "sourceRevision": "c99d79a86764f5839b8d2abc7b2e87bc6df61682",
+  "sdkVersion": "6.0.0-rc.1",
+  "method": "read-only installed source and processed artifact embedded Noir inspection",
+  "qualified": false,
+  "findings": [
+    {
+      "source": "pxe.ts:1378-1406",
+      "finding": "getPrivateEvents completes ensureContractSynced before applying requested block range; autoSync:false does not disable contract sync."
+    },
+    {
+      "source": "contract/contract_sync_service.ts:175-219",
+      "finding": "Completion includes note nullifiers and sync_state; nested/speculative sync contributors must settle."
+    },
+    {
+      "source": "tagging/recipient_sync/sync_tagged_private_logs.ts:101-144",
+      "finding": "Discovery advances tag windows across finalized history and accumulates all logs; page limits do not bound total work."
+    },
+    {
+      "source": "tagging/get_all_logs_by_tags.ts:51-97",
+      "finding": "All tag batches and all per-tag afterLog pages are consumed. Node cursor primitive exists but PXE exposes no bounded incremental contract-sync API."
+    },
+    {
+      "source": "artifact embedded aztec/src/messages/delivery/handshake.nr:188-208; messages/discovery/mod.nr:201-245",
+      "finding": "All handshake pages derive secrets before pending-log processing; normal processing also handles offchain inbox and pending partial notes."
+    },
+    {
+      "source": "notes/note_service.ts:77; events/event_service.ts:35-132",
+      "finding": "Nullifier sync scans scoped active notes. Event acceptance must preserve commitment, siloed-nullifier membership and authenticated transaction/block validation."
+    },
+    {
+      "source": "operation_lifecycle.ts:40-63",
+      "finding": "Failure drains contributors then aborts whole changeset. A capacity throw alone cannot retain incremental recovery progress; partial return must not be cached as synced."
+    },
+    {
+      "source": "storage/tagging_store/recipient_tagging_store.ts",
+      "finding": "Persisted aged/finalized indices have no-op rollback by design; unfinalized partial cursors require distinct canonical-anchor/rollback semantics."
+    }
+  ],
+  "proposedOnly": {
+    "interface": "Explicit incomplete scoped sync-step, using original operation queue and normal Noir validation; atomic validated data plus continuation commit; no synced cache until complete.",
+    "bounds": "Before secret/tag/page fan-out and byte allocation; separate handshake enumeration and note-nullifier scans. Drain all started work on errors; no Promise.race or lowered anchor.",
+    "tests": [
+      "interrupted commit and restart",
+      "dense same-tag pagination",
+      "invalid membership",
+      "both tag modes",
+      "nested handshakes",
+      "reorg and rollback",
+      "no skipped events",
+      "ordinary simulation remains blocked until synchronized"
+    ]
+  },
+  "next": "Measure genuine keys-only recovery and 1000/10000/50000 retained-event capacity before considering a larger SDK patch. No synchronization patch authorized or applied.",
+  "sourceSha256": {
+    "pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "operation_queue.ts": "96ead2127505711319430a525c3a12604e25936cda330ab04e57d6e36fb17409",
+    "operation_lifecycle.ts": "c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d",
+    "contract/contract_sync_service.ts": "fcf818f7900b38c4edaa776685e530b02abadbeb9435b86de2747395d3887817",
+    "logs/log_service.ts": "a663753f47305666af5133be200aaa36dbc84eb3fad5387d1f05112d86b9a7b6",
+    "tagging/recipient_sync/sync_tagged_private_logs.ts": "89d2d94153511b6636d2ea044226948ffe0c21a4a4ce127f7a891c45a1a94c19",
+    "tagging/get_all_logs_by_tags.ts": "db6e5f279a9df7ca17a714b879cf70358e9554673ba1c14665aceab0b8e91075",
+    "events/event_service.ts": "fa5aab36e77834ac74fbb8509a5359073116bd6e05575cf8ac4beca1c55add32",
+    "notes/note_service.ts": "da02bf076263644a1f9d1d330a5e7b536e4214633d538bde97a930ca57eb5924",
+    "storage/tagging_store/recipient_tagging_store.ts": "2d55bcd932710e4bdd46b31ed03ef6721648441319fc7b49ae62aefb1db92819"
+  }
+}

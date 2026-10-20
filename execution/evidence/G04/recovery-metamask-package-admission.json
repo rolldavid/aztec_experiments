@@ -1,0 +1,8 @@
+{
+  "source": "1068070",
+  "previousRun": "recovery-metamask-aggregate-eth-1.json",
+  "failure": "Missing official extension archive in lead worktree, before browser allocation",
+  "repair": "Copied existing verified official archive from isolated worker; pinned SHA256 verified before and after",
+  "sha256": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+  "sourceChanges": false
+}

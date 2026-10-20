@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "3f34bcf95eee655fbbca4703fc485f400ba0c7fe",
+  "application": "application-0fbb562d-ac53-4da1-9fd2-4f8098e11342.json",
+  "verdict": "source_backed_fixture_sync_defect",
+  "observed": {
+    "failedAssertion": "rolling-application-fixture.mjs:330:59",
+    "successfulNameTx": "0x08b72962cfaed7f844a41c2286853405a9a1f320e5b4253b1336f0ea82597113",
+    "block": 15,
+    "status": "checkpointed",
+    "executionResult": "success",
+    "event": "NameRegistered",
+    "fee": "10177386600000",
+    "elapsedMs": 309190,
+    "cleanup": true
+  },
+  "evidence": [
+    "Fixture creates PXE autoSync:false; syncs before action, then raw ownedIdentities read after send without explicit sync",
+    "BaseWallet.executeUtility delegates to PXE.executeUtility, which calls OperationQueue.runSynced without forceSync",
+    "Installed operation_queue.ts skips synchronizer.sync when autoSync=false, reads existing anchor",
+    "Production wallet-session wrapper explicitly syncs before each application operation"
+  ],
+  "independentProbe": {
+    "installedClass": "@aztec-labs/pxe/dest/operation_queue.js OperationQueue",
+    "controlledDependencies": true,
+    "autoSync": false,
+    "beforeExplicitSync": 14,
+    "afterExplicitSync": 15,
+    "syncs": 1,
+    "recordingsClosed": 2,
+    "passed": true,
+    "noNetworkProofOrTransactions": true
+  },
+  "repair": "Use production-equivalent guarded per-operation synchronization before ownedIdentities, retain exact ownership assertion; save public before/after anchors and require canonical receipt coverage. No cache reset, fake notes or contract change.",
+  "limits": [
+    "Actual assertion operands and private PXE anchor at failed read were not recorded; no invented empty-list observation",
+    "Successful name inclusion does not complete the five-action journey",
+    "Production session already synchronizes; current evidence does not identify a production ownership contract failure"
+  ]
+}

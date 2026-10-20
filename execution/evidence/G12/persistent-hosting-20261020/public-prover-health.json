@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-10-20T07:37:02.021348+00:00",
+  "health": {
+    "ready": true,
+    "proofs": "real",
+    "queue": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "query": {
+      "enabled": true,
+      "ready": true
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T03:57:34.781939+00:00",
+  "resource": "i-01b6bdaf005878edf",
+  "metric": "AWS/EC2.NetworkOut.Sum",
+  "windowStart": "2026-10-12T03:15:00Z",
+  "windowEnd": "2026-10-12T03:57:00Z",
+  "periodSeconds": 300,
+  "sumBytes": 1526073.0,
+  "datapoints": 8,
+  "billingMayLag": true,
+  "notBillableChargeReport": true,
+  "conservativePriorReservationUsd": 25,
+  "recommendedRetainedBoundUsd": 15,
+  "rationale": "Resource absence verified; retain full 1.5h/50Mbps network forecast plus storage/request/archive and billing buffer despite low observed traffic. Lead owns ledger reconciliation.",
+  "costComponentsUsd": {
+    "computeOneHourBound": 0.92736,
+    "storageOneHour1064GiBBound": 0.1166027397260274,
+    "ipv4OneHour": 0.005,
+    "network45GBAt0195": 8.775,
+    "newArchiveReceipt30Days": 0.5,
+    "crossRegionAndOperatorReads": 0.5,
+    "requests": 0.25,
+    "taxBuffer20Percent": 2.2147925479452057,
+    "additionalDelayedBillingBuffer": 1.7112447123287673,
+    "total": 15
+  },
+  "storageRetentionBoundEndedByVerifiedVolumeAbsence": true,
+  "resourceOperatingWindowLessThanOneHour": true,
+  "measuredTrafficNotUsedToLowerNetworkBound": true,
+  "priorObservationSha256": "7afc20cab58a1daebfe2cdd687f8be708c071308ecc29bd9563f39df336036a5"
+}

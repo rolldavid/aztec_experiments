@@ -1,0 +1,127 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "reviewed_at": "2026-10-12T01:39:12.526632+00:00",
+  "scope": "Read-only G05/G06 component acceptance inventory; no task closure or source modification",
+  "source_sha256": {
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "prover/private-query.mjs": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+    "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+    "shared/rolling/synchronized-application.mjs": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+    "shared/l2-journal.mjs": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+    "scripts/testing/rolling-application-actor.mjs": "fe2af0833ad6282e4a2e18974851a2fe9e64e6279458c2ca5bdb32e925bd1696",
+    "prover/private-query.integration.test.mjs": "e54fbcffab5c45ec210c11006ff1bd8ed9b05d9a8e0e91f43d9999013eb76d14",
+    "execution/graph.json": "6927eeae197fc3d6cadc0ea932ac065503c0791dfd79dcd7ceaaaf390a8a9787"
+  },
+  "current_evidence": [
+    {
+      "criteria": [
+        "G05-A08",
+        "G05-A09",
+        "G05-A11",
+        "G06-A06"
+      ],
+      "evidence": [
+        "G05/owned-wire-e3-runtime-review.json",
+        "G06/composer-7328-runtime-review.json"
+      ],
+      "established": "Two humans, two names each; genuine registration, exact private owned sets, cold PXE and encrypted journal recovery; actual production browser owned choices plus Anonymous, account switch,992-byte prepare/cancel and996-byte preservation. Wire e3 reconciles actual receivers with zero unknown/unsupported/truncation; opacity/runtime headers/funding-before-observer limitations remain."
+    },
+    {
+      "criteria": [
+        "G05-A10"
+      ],
+      "evidence": [
+        "G05/application-5422b57a-0567-45ef-af4c-2a0715e05105.json"
+      ],
+      "established": "Genuine bio/max8192-byte avatar, authorized removal/clear/replacement, canonical reconstruction. Fixed moderation decision is not actual image-policy/model acceptance."
+    },
+    {
+      "criteria": [
+        "G06-A01",
+        "G06-A02",
+        "G06-A03",
+        "G06-A05",
+        "G06-A08"
+      ],
+      "evidence": [
+        "G06/anonymous-687-runtime-review.json",
+        "G06/repost-e030-runtime-review.json",
+        "G06/account-reactions-b0b37-runtime-review.json",
+        "G06/reply-e58-runtime-review.json"
+      ],
+      "established": "Canonical named/anonymous thread relationships, quotes/reposts, tombstones, duplicate/no-op likes, account separation, cross-post tags, unlike after removal, authenticated Bok reply. No need blindly repeat unchanged successful behavior; final source equivalence is required."
+    },
+    {
+      "criteria": [
+        "G06-A07"
+      ],
+      "evidence": [
+        "G06/social-combined-2397-review.json"
+      ],
+      "established": "Two-account social and reaction wire scenarios source approved; social actual run is pending at review time. Reaction actual wire run remains queued. Neither is counted passed here."
+    }
+  ],
+  "queued_not_acceptance": {
+    "normalized_name_race": "Approved source with genuine two-pending barrier, canonical winner/reverted loser attribution and fee/recovery controls; actual result missing (G05-A01/A08).",
+    "subboard_home": "Approved creation without collateral, main/local policy, authorized rejection, full directory/feed and curated Home source; actual combined result missing (G05-A02..A07/A12).",
+    "rejected_withdrawal": "Approved two-phase actual post/rejection/screen/L2 exit/original-depositor L1 refund source; actual result missing.10s/20s local timing is explicit test configuration, not production60s qualification.",
+    "social_reaction": "Current2397 social in flight; reaction wire remains to execute. Required source privacy argument remains in addition to traces."
+  },
+  "denial_staleness_gap": {
+    "status": "Open real component evidence, not a newly established source defect",
+    "existing_real": "G14/trusted-query-fa615-review.json establishes actual local HTTP bootstrap healthy/mismatched proof identity/healthy and0jobs; it does not exercise an already-live personalized actor during outage.",
+    "existing_controlled": "prover/private-query.integration.test.mjs109 changes upstream identity/sync/L1lag/unavailability after actual HTTP client creation and rejects getContract before forwarding. Actual transport/inspector with controlled SDK upstream, not real live-node outage. shared/trusted-private-node.test.mjs87 verifies single attempt on redirect/HTTPfailure/invalidJSON.",
+    "source_argument": [
+      "shared/trusted-private-node.mjs104-134 fixes one endpoint, omits credentials/referrer, rejects redirects, has one transport attempt and sanitized errors; immutable branded facade has no ordinary-node alternate.",
+      "prover/private-query.mjs validates entire batch then performs actual inspector before any personalized forward; fixed loopback upstream must be inside prover trust. Readiness is a snapshot, not atomic continuity or proof of operator identity.",
+      "shared/rolling/application.mjs guard checks actual construction provenance and trusted readiness; synchronized-application performs PXE sync through that same trusted route before every operation. An outage during synchronization must fail, not consult the public reader.",
+      "submitPrepared writes durable submitting before wallet lifecycle and guarded send. l2-journal retains exact signed transaction/hash, canonical recovery checks and finalized-revert fence. Outage must not be interpreted as absence/free/retry permission."
+    ]
+  },
+  "smallest_actual_procedure": [
+    "Use existing rolling application actor, actual production HTTP gateway/client, real node/PXE and existing wire campaign receivers. Start with one genuine owned name and its saved journal; no new service supervisor or separate lifecycle. Keep current540s/4GiB and serialize proof work.",
+    "After healthy discovery, deny only the owned trusted-query HTTP listener through a test-only front transport seam. Call ownedIdentities and submitPrepared for a genuinely prepared intent. Assert failure, unchanged intent/ciphertext where no transition occurred, zero new native proof jobs/wallet submissions/node sends, no ordinary-node or cache fallback, and bounded one-attempt transport. Preserve local auth-witness activity separately rather than demand zero witnesses for arbitrary simulation failures.",
+    "Restore the same listener and require actual readiness plus exact private name recovery without new proof/send. Preserve an intentional prepared intent, or cancel it explicitly only after healthy recovery. Do not recreate a hidden alternate endpoint.",
+    "For live staleness, pause only the disposable node synchronization/feed through supported controls and let its real synced timestamp age beyond the configured bound while ordinary public reader remains responsive. Do not forge timestamp/state or pass nowSeconds. Observe real STALE or sanitized UNAVAILABLE at the gateway, zero personalized upstream forward after failed readiness, zero proof/send/fallback, then resume and prove exact canonical recovery. A stricter gateway lag setting can shorten a clearly labelled configured-bound test; default120-second qualification needs actual120-second aging.",
+    "Exercise failure after readiness but before a personalized response using the same fault seam to cover the snapshot race; downstream must fail without redirect/fallback. Do not describe initial readiness failure alone as mid-operation evidence.",
+    "If claiming actual uncertain-send recovery under endpoint loss, use a separate bounded one-genuine-action variant: upstream accepts exactly one original sendTx, front response is dropped once, save intent/hash/fence, restore and reconcile the exact canonical transaction without any second send/new intent. Existing mocked journal evidence does not by itself prove this live boundary. Do not replay to obtain a receipt."
+  ],
+  "required_observation": [
+    "Actual gateway/upstream/ordinary-node/public-reader ingress counts and method classes before/during/after fault",
+    "All unknown/unsupported/truncated/pending counters zero for inspected portions; opaque transaction/proof and runtime-header exclusions explicitly retained",
+    "Exact encrypted intent/journal bytes/hashes, before/after proof jobs/wallet submissions/transport sends, canonical receipt/effects/fees if a send occurred",
+    "Both cleanup and fault restoration; no surviving listener/worker or hidden ordinary-node route"
+  ],
+  "scheduling_disposition": {
+    "G06": "Independent deployed query unavailability does not by itself block local component behavior, social/reaction request routing or outage/no-fallback acceptance. G06 can close its owned components only after actual social/reaction outcomes, local failure/recovery evidence, source privacy argument and exact final-source review. Do not mark full anonymity achieved while trace gaps or topology claims remain unresolved.",
+    "G07": "Current graph still names G06 as prerequisite; this report does not bypass it. Once scoped G06 criteria pass, G07 implementation may proceed without waiting for unrelated Linux hosting. Until then independently bounded preparation or a lead-defined explicit protocol checkpoint may be scheduled only with preserved full completion criteria and validated graph\u2014not silently treating G06 as done.",
+    "remote_prerequisites": "Actual operated fullnode/archiver ownership, independent deployment topology, retention/rebuild/capacity/cost and Linux/native/transport configuration remain G07-A08/G14 and final deployment/privacy acceptance prerequisites. A proxy to an untrusted ordinary upstream cannot satisfy them merely because client metadata matches.",
+    "release": "G13 independent specialist privacy review, elapsed/network/release gates remain mandatory. Allowed prover witness trust does not authorize general backend/node ownership disclosure. No owner decision is needed simply to run the already authorized local failure tests."
+  },
+  "remaining_source_argument": [
+    "Private ownership witness versus intentionally public selected name; separate registrations avoid explicit grouping but not timing correlation.",
+    "Anonymous admission/nullifiers/fee refund/public effects contain no reusable cross-post author field; shared FPC alone is not sufficient proof.",
+    "Like tags domain-separated by authenticated account key, chain, contract and post; intentional same-post linkage versus forbidden cross-post or cross-name grouping.",
+    "Document exact trusted fullnode/archive/feed operator boundary, malicious frontend distribution assumption, setup funding and native/runtime network observation exclusions.",
+    "Future G07 follows/bookmarks/notifications and G10 workspaces need their own private subscription/state evidence; they are not erased by component scoping."
+  ],
+  "checks": [
+    {
+      "command": "python3 execution/graph.py validate",
+      "result": "pass",
+      "packages": 53,
+      "criteria": 269
+    },
+    {
+      "command": "python3 execution/graph.py next",
+      "result": "read-only current G05/G06/G14 selection inspected"
+    }
+  ],
+  "tests_run": [],
+  "limitations": [
+    "No new real failure injection, service calls, paid work, proof or browser tests performed.",
+    "No graph changes or task/requirement completion by reviewer.",
+    "Current source review does not certify cryptographic unlinkability or an independent deployed trust boundary."
+  ]
+}

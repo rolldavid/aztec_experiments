@@ -1,0 +1,38 @@
+✔ perfect complete corpus reports distinct denominators and ambiguous decisions (3.982167ms)
+✔ FP and FN budgets use their own denominators (3.281209ms)
+✔ errors cannot improve pass even with zero FP/FN (2.508333ms)
+✔ ambiguous errors are separate but still prevent qualification (1.632333ms)
+✔ partial perfect subset is incomplete, never pass (1.881375ms)
+✔ coverage counts scored non-English and injection examples only (1.532791ms)
+✔ latency uses nearest-rank percentiles and includes errors (1.858375ms)
+✔ capacity is unresolved without measured flag evidence, even with supplied number (1.415375ms)
+✔ analytical capacity rejects unstable arrival rate and preserves window margin (3.143209ms)
+✔ duplicate/mismatched results and unknown policies are rejected (1.217334ms)
+✔ atomic resume continues remaining cases, retains identities and stops owned runtime (65.165083ms)
+✔ corpus/model binding mismatch cannot alter saved results (27.288291ms)
+✔ failed inference is durable and not retried to cherry-pick results (55.8455ms)
+✔ existing lock prevents concurrent runtime creation (0.937542ms)
+✔ cleanup failure is explicit and cannot pass (22.984ms)
+✔ flag capacity evidence must retain distinct actual measured transaction samples (1.329792ms)
+✔ partial rate reports total, attempted and evaluated denominators explicitly (0.822958ms)
+✔ multilingual and injection slices retain independent errors, latency and FP/FN counts (1.635958ms)
+✔ post-run runtime verification is saved and precedes owned cleanup (22.330208ms)
+✔ post-run identity change is explicit failure and still cleans up (24.655667ms)
+✔ expected input rejection is separately reported and cannot dilute semantic accuracy or latency (1.994084ms)
+✔ unexpected boundary acceptance or different rejection prevents qualification (3.153625ms)
+✔ unattempted boundary case keeps the complete gate closed (1.88225ms)
+✔ boundary exemptions require actual input rejection and cannot hide model errors (0.954167ms)
+✔ checked-in corpus separates input rejection from semantic labels (5.165958ms)
+✔ runner durably records expected boundary rejection without counting model failure (23.93575ms)
+✔ remaining batch budget defers the next case without shortening its model timeout (43.808417ms)
+✔ runtime startup time cannot consume part of an admitted model deadline (15.042167ms)
+✔ an admitted request retains the full timeout and its real error through resume (48.116ms)
+✔ a valid short work budget stops incomplete without inventing a successful evaluation (14.549ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 469.597041

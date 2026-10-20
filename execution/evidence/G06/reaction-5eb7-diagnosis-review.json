@@ -1,0 +1,117 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "verdict": "confirmed harness readiness scheduling defect; actual campaign remains failed",
+  "evidence": {
+    "outer": "execution/evidence/G06/application-5eb7d2ad-dae6-40b5-8aa6-fdb4466709a2.json",
+    "sha256": "cb98b31f0b3c8f52fcb4073f8ab5c9b441a5d5bbd45c264bf930039f48d0abd8",
+    "inner": "execution/evidence/G06/application-port-4c53f636-5bd7-45a5-b712-f29d237896d1/observation.json",
+    "inner_sha256": "c5708f24388881d5207b19d1f11fd9b82f51b4a7a84d5ab894c9fc8e3d99f801"
+  },
+  "finding": {
+    "severity": "P2",
+    "location": "scripts/testing/rolling-public-acceptance.mjs:55,70,74",
+    "trigger": "Actual reaction final block24 requires3 canonical10-block ranges. Factory uses default pagesPerSync2, while acceptance sets server poll30000 and a total30000 window with1500ms reserve.",
+    "failure": "Initial sync can reach only20. No next page pass can start before28500ms readiness deadline; fresh session fails before first public-reader request. This is not evidence of wrong like totals or failed canonical event decoding.",
+    "source": [
+      "shared/rolling/public-index.mjs:27-28 default rangeSize10/pagesPerSync2",
+      "shared/rolling/public-index.mjs:122-132 bounded pages and ready iff checkpoint equals tip",
+      "scripts/rolling-public-server.mjs:15-16 next pass scheduled only after poll delay",
+      "scripts/rolling-public-server.mjs:68 default factory",
+      "scripts/testing/rolling-public-acceptance.mjs:74 readiness deadline"
+    ]
+  },
+  "observed": {
+    "failure": {
+      "stage": "rolling-application:canonical-public-http-reopen",
+      "errorClass": "AssertionError",
+      "code": null,
+      "frames": [
+        "rolling-public-acceptance.mjs:74:5",
+        "rolling-application-fixture.mjs:524:7",
+        "c01-client-mining.mjs:81:12",
+        "rolling-application-fixture.mjs:288:5"
+      ]
+    },
+    "transactions_blocks": [
+      {
+        "action": "reaction-wire-root-1",
+        "block": 16,
+        "events": [
+          "PostPublished"
+        ]
+      },
+      {
+        "action": "reaction-wire-root-2",
+        "block": 20,
+        "events": [
+          "PostPublished"
+        ]
+      },
+      {
+        "action": "reaction-wire-change-1",
+        "block": 21,
+        "events": [
+          "LikeChanged"
+        ]
+      },
+      {
+        "action": "reaction-wire-change-2",
+        "block": 22,
+        "events": [
+          "LikeChanged"
+        ]
+      },
+      {
+        "action": "reaction-wire-change-3",
+        "block": 23,
+        "events": [
+          "LikeChanged"
+        ]
+      },
+      {
+        "action": "reaction-wire-change-4",
+        "block": 24,
+        "events": [
+          "LikeChanged"
+        ]
+      }
+    ],
+    "public_reader": {
+      "passed": false,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true
+        }
+      ]
+    },
+    "public_reader_requests": 0,
+    "outer_elapsed_ms": 493413,
+    "peak_rss_kib": 2114880,
+    "all_cleanup": true
+  },
+  "reproduction": {
+    "type": "Cheap controlled SDK data, actual processed ABI/decoder/index/SQLite/HTTP server; no actual chain acceptance",
+    "setup": "Existing public-index.test fixture extended to24 canonical blocks; rangeSize10/pagesPerSync2.",
+    "old": "Actual server poll30000 reaches checkpoint20/state syncing, /api/feed503. Acceptance readiness deadline is28500ms, necessarily before next pass.",
+    "control": "Reopen same SQLite with default server poll1000; actual authenticated cold passes reach24, /api/feed200 in bounded3s.",
+    "elapsed_ms": 2222.636792,
+    "result": "pass; all listeners/SQLite temp/singletons cleaned"
+  },
+  "repair_recommendation": "Perform bounded sequential successful index.sync catch-up before starting the sole server polling owner. Preserve default2pages/range10, total30s and1500ms cleanup reserve, propagate first error without retry, require genuine authenticated progress or ready. Then normal initial server sync and all exact HTTP content/metadata checks. Alternative normal1s polling requires retaining readiness/metadata consistency gates; do not raise batch size/deadline or bypass complete.",
+  "regression_requirements": [
+    "Fresh >20-block index needs >=3 ranges and returns no partial ready views.",
+    "Cold reopen >=3 retained ranges must authenticate every range and progress even if stored head already24.",
+    "Final feed/thread/post exact like counts, tags/events and metadata/enrichment remain mandatory.",
+    "No-progress/error abort and cleanup; no fallback/retry or second simultaneous sync owner."
+  ],
+  "passed_subresults_not_full_acceptance": [
+    "All6 genuine actions, encrypted journal reopen and canonical projection rebuild reached before failure. Their retained evidence may be independently reviewed for exact historical subclaims, but final HTTP/wire/accounting acceptance did not finish.",
+    "Unknown and unsupported observer counters are0 in failed report; no public-reader request occurred, so complete receiver/reader privacy acceptance is not satisfied."
+  ],
+  "tests_or_services_not_run": [
+    "No new funded/proof/browser campaign or external service operation."
+  ],
+  "status": "Await exact reviewed harness repair and changed real run; do not rerun2397 unchanged."
+}

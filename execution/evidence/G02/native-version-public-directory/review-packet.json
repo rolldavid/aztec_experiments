@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "base": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+  "recordedAt": "2026-10-13T01:38:36.244337+00:00",
+  "sourceFiles": [
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sha256": "28646b535b163540934302816effa920ed4e92a8f2126f40c93770dc80f15c83"
+    },
+    {
+      "path": "scripts/test-prover-bootstrap.py",
+      "sha256": "c7d140bb85e5adcbcdc715416b185a4f428555ab4cf968172a4822511f5d7e4e"
+    },
+    {
+      "path": "deploy/prover/BOOTSTRAP.md",
+      "sha256": "a13552ad79ca4ba83ba0670c2269bbe4e70eaff125ddc241e9709b02df494066"
+    }
+  ],
+  "productionChange": "fchmod0755 and fsync the exclusively created public-only directory through O_DIRECTORY|O_NOFOLLOW before download; private umask and directory modes unchanged",
+  "evidence": {
+    "filesystemReproductionSha256": "b956695c23f6dbb6eb6e6e1767cdfef1e61e4a4a0dbfe3b9b6c3e90f6183c5fb",
+    "actualReceiptSha256": "67be145f83762f3312a526c0aeac5acd634a197d4b5d71d8ef7292b58c814726"
+  },
+  "checksExecuted": [
+    "AST parse of both changed Python files",
+    "git diff --check",
+    "bounded actual local filesystem mode reproduction with owned-temp cleanup"
+  ],
+  "testsAuthoredNotExecuted": [
+    "test_public_directory_traversable_under_private_umask_before_download",
+    "test_public_directory_collision_never_chmods_existing_directory",
+    "test_public_directory_permission_failure_stops_before_download_and_shuts_down"
+  ],
+  "pending": [
+    "Independent source review",
+    "Focused/full test grant",
+    "New control-source digest and payload/operator binding for any future explicitly authorized campaign",
+    "Genuine native version qualification"
+  ],
+  "historicalRemoteCauseProven": false,
+  "paidRetryAuthorized": false
+}

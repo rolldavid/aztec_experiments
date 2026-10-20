@@ -1,0 +1,59 @@
+{
+  "candidate": "989d53ff8c5ccf1c83584be206c91583b0fbb83e",
+  "base": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+  "verdict": "PASS_SCOPED_SOURCE_AND_STAGED_COMPONENT_CARRY",
+  "blockingSourceFindings": [],
+  "sourceHashes": {
+    "docs/rolling-deployment.md": "3bb02d2c99b8853122931e76e4440276b27b1938122f3414ebf56c68e5a7b1c9",
+    "plugins/DEPLOYMENT.md": "f07234f61884b279117f9ff905b0a1d6f8466c103982e02cfb0df33348f2ef97",
+    "plugins/github-app-broker.mjs": "e2cffce7e2ef04d8848ef218bc3d25329bed26c305ba5980e493bb40d023fd85",
+    "plugins/operations.mjs": "617842d35dd6c30063d4a7a2fdbce23b57e5c9be6747553b6ac86e53955f2b6a",
+    "plugins/operator-config.example.json": "b302c7c215d4c30b90ee76f49b4ef86a552b977287b56261b5764ad4eb400d4f",
+    "plugins/operator.mjs": "143d7ae05a93eb1649ff2497713271c4d4c09ec769ef3f63809deaac74259044",
+    "plugins/rolling-hosted-config.example.json": "5fe13a781ac26af444c7bbd3bb81cd397ea345aa12a8dc603a068c8a0b6cf4a6",
+    "plugins/test/github-app-broker.test.mjs": "7dc82265c60113669d9de1e22ea28d86e7a05785962395cc8fa2d1b85bac82ea",
+    "plugins/test/operator-lifecycle.test.mjs": "ec4f964b2030341ffdad4f6bf2d0733754044020f00aafc7c5a48a1cd0b50674"
+  },
+  "personalBroker": {
+    "priorReview": "reviewer-47b-personal-broker-review.json",
+    "sha256": "4adf730b1219e5b6df6fdb68d0172ea2c550de40ec8b3468153976699224c047",
+    "referencedDeploymentGuideFindingResolved": true,
+    "scope": "Current guide owner/ownerId, personal User, selected repositories and App-created automatic access are coherent. Explicit operator-only Bok selection prerequisite is retained; broker does not enumerate selected ownership."
+  },
+  "lifecycle": {
+    "workerCandidate": "e03a4fd23e25f7e9599a0e6a13453ed5ad5572d6",
+    "handoff": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G11/rolling-deployment-reuse/lifecycle-handoff.json",
+    "sha256": "c316b4308dfc4f54c31ee117cf302508e1521112d8ebdf447d02fccf5bc62c81",
+    "actualLogSha256": "251eec4ce548b13f53e58e656e6e82aea0e8b8eb69acda9492ccef2f71cbb8c5",
+    "actual": "52 controlled component passes, zero skips,2294.542125ms. Original30+new22; no actual whole lifecycle.",
+    "exactFourNonDocumentationSourceHashesMatch": true,
+    "findings": [
+      "Optional lifecycle config is captured outside existing constructor identity, preserving retained constructor salt and journal scope. Lifecycle records additionally bind lifecycle settings plus normal portal artifact identity.",
+      "Deployment consumes exact normal PluginPortal creation bytes and requires canonical constructor reconciliation. Complete portal runtime verifies compiler-declared immutable locations and every other byte; canonical-block getters bind token, escrow, chain/version and rollup inbox/outbox; token decimals must be six.",
+      "Bind uses actual set_portal; Ready requires exact original successful canonical transaction/block and unique computed leaf. Activate uses the existing real outbox membership witness path. Registration uses actual three-argument configure_plugin and checks canonical adapter/enabled storage plus moderator authority.",
+      "Saved preparing/submission-unknown operations reconcile without signer reconstruction, nonce refresh, proof, resend or replacement. New L1 intent is durable before signing, signed bytes before broadcast; redirect/throttle transport rejects hidden retry. New L2 sends retain the existing once-only interception.",
+      "Native development uses proverEnabled:false while testnet uses native proving; no application verification bypass. All successful portal/registration results preserve hostedServiceReady:false. Canonical state/finality/prerequisites are rechecked and sanitized failures preserve journal."
+    ],
+    "contractInspection": [
+      "PluginPortal.sol constructor/activate and six immutables",
+      "PrivateBok set_portal Ready words/owner check",
+      "Rolling PluginRecord layout and configure_plugin ABI",
+      "Installed Contract.at synchronous implementation and Ready hash functions"
+    ]
+  },
+  "combinedDependency": {
+    "fileStateBodyByteIdenticalTo5734": true,
+    "brokerUsesNoChangedOperationHelper": true,
+    "result": "No broker persistence semantic change from shared operations module additions."
+  },
+  "runtimeLimit": {
+    "currentCombinedLog": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G12/personal-lifecycle-combined.log",
+    "sha256": "6d8366b9752f70d4d2d330494ff277f3a9a82deb057adeb99f02f9f98582f793",
+    "status": "Observed failed setup for missing ignored PrivateBok target; not a combined passing run. Preserve record; current coherent-source component carry uses owner52 plus broker31, not a fabricated fresh83 pass."
+  },
+  "remaining": [
+    "Actual nativefalse full portal/bind/activate/register/status journey remains unrun.",
+    "No real GitHub App installation/API mutation, testnet proof/deployment, hosted service or funding acceptance.",
+    "L1 and L2 observations are separately canonical, not a cross-chain atomic snapshot; later configuration/moderation changes can invalidate previously observed readiness."
+  ]
+}

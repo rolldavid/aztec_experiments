@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "PASS_SCOPED_RUNTIME",
+  "source": "58c215350a003ae680007b5df7f2e1575f69746c",
+  "sessionId": 89544,
+  "actualPacketSha256": "c07dd630275bbd180371dc280d1c7bb468d57314d1e394a54d9f4944246d30ae",
+  "verified": [
+    "Actual packet file hashes, exact one TAP label and all six footer counts match.",
+    "All 5383 protected bindings independently rehashed unchanged.",
+    "2473ms and measured peak 1094640KiB; owned tree, temporary directory and launcher absent; tracked source clean."
+  ],
+  "scope": "Actual normal CLI-loaded bundle exact embedded sync WASM initialization/get/destroy and strict asset/RequestInit negative boundaries. No PXE, CRS, network, transaction or proof qualification.",
+  "limitation": "SDK synchronous destroy discards an asynchronous destructor promise; positive process cleanup is verified, awaited destructor completion is not claimed.",
+  "nextGate": "Separately prepared and parent-granted selected readOnly PXE with native proverEnabled:false; no automatic runtime authorization."
+}

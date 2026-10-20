@@ -1,0 +1,116 @@
+✔ current development defaults are Rolling, loopback ports and no provider prerequisite (1.203167ms)
+✔ development flags reject real proofs, duplicate ports and unknown arguments before startup (0.433042ms)
+✔ selected state and separate loopback ports are explicit (0.118167ms)
+✔ occupied development port fails before changing an existing listener (7.569792ms)
+✔ private state uses exclusive creation, closed reads and atomic replacement (35.33925ms)
+✔ clean restart preserves exact original identity scope (0.263833ms)
+✔ restart refuses unclean without reset (0.100416ms)
+✔ restart refuses starting without reset (0.064208ms)
+✔ restart refuses other genesis without reset (0.06075ms)
+✔ restart refuses other ports without reset (0.106458ms)
+✔ restart refuses other binary scope without reset (0.0505ms)
+✔ restart refuses missing snapshot without reset (0.058042ms)
+✔ development lease rejects symlinked parent and preserves a replaced owner inode (158.017208ms)
+✔ actual checkpoint boundary surfaces miner failure and incomplete shutdown without saving (0.368458ms)
+✔ missing network metadata cannot reset retained chain snapshots, node data or deployment journals (3.107417ms)
+✔ actual lifecycle composition exposes wallet Bok only after ordered canonical status (controlled operator) (1.658583ms)
+✔ lifecycle refuses failed, noncanonical or unresolved retained operation without later activation (1.4225ms)
+✔ settlement failure and canonical status drift cannot publish wallet Bok configuration (0.384458ms)
+✔ actual development token journal signs once and reconciles exact creation/runtime/inventory (controlled chain) (56.710875ms)
+✔ development token unknown/preparing state is retained and never resubmitted (14.218958ms)
+✔ development inventory refuses another chain or changed creation scope before any send (12.968792ms)
+✔ missing token or lifecycle records cannot reset an advanced retained Bok campaign (0.318792ms)
+✔ lost binding response resumes from encrypted transaction without supplied hash or another binding (53.782833ms)
+✔ lost board deployment response resumes original transaction and deploys the board only once (10.592917ms)
+✔ unresolved saved binding cannot start another transaction or falsely complete setup (28.937292ms)
+✔ missing journal fails closed before any deployment signature and closes PXE (2.496708ms)
+✔ definitively stale deploy proof regenerates only the same deployment operation (18.920958ms)
+✔ definitively stale binding proof regenerates only the same deployment operation (20.689833ms)
+✔ stale binding cannot silently accept another binding that appeared meanwhile (10.077375ms)
+✔ stale binding cannot redeploy a missing original Ethereum portal (14.831917ms)
+✔ stale board deployment cannot silently accept a board that appeared meanwhile (6.481417ms)
+✔ deployment preflight rejects missing manifest before any transaction (1.51875ms)
+✔ deployment preflight rejects Aztec actor before any transaction (1.706583ms)
+✔ deployment preflight rejects Ethereum actor before any transaction (1.658ms)
+✔ deployment preflight rejects chain before any transaction (3.422584ms)
+✔ deployment preflight rejects bridge before any transaction (1.485625ms)
+✔ deployment preflight rejects artifact before any transaction (1.114625ms)
+✔ existing deployment rejects runtime mismatch before binding (5.761ms)
+✔ existing deployment rejects inbox mismatch before binding (6.025875ms)
+✔ existing deployment rejects outbox mismatch before binding (5.100958ms)
+✔ existing deployment rejects policy mismatch before binding (3.073416ms)
+✔ existing deployment rejects censor mismatch before binding (2.865917ms)
+✔ owned preflight provider is disposed even before wallet/PXE startup (1.679791ms)
+✔ external browser provider is not disposed (7.65825ms)
+✔ deployed originalContractClassId mismatch blocks binding (2.350834ms)
+✔ deployed currentContractClassId mismatch blocks binding (3.097791ms)
+✔ critical is_portal_set read is bounded (23.156125ms)
+✔ critical get_config_hash read is bounded (23.983667ms)
+✔ critical get_portal read is bounded (24.388708ms)
+✔ malformed portal binding boolean null fails closed (2.947291ms)
+✔ malformed portal binding boolean undefined fails closed (2.660375ms)
+✔ malformed portal binding boolean 0 fails closed (2.519167ms)
+✔ malformed portal binding boolean "false" fails closed (9.161291ms)
+✔ malformed portal binding boolean {} fails closed (2.419292ms)
+✔ preactivation deposit state is bounded and malformed value fails (30.832625ms)
+✔ deployment initialization exposes typed preparation and synchronization progress (6.175125ms)
+✔ Rolling actual ABI profile and encrypted recovery: none (506.5925ms)
+✔ Rolling actual ABI profile and encrypted recovery: binding (627.121583ms)
+✔ Rolling actual ABI profile and encrypted recovery: deployment (570.0175ms)
+✔ Rolling canonical moderator mismatch blocks portal binding (334.227458ms)
+✔ Rolling canonical main_rules mismatch blocks portal binding (290.392125ms)
+✔ Rolling canonical main_version mismatch blocks portal binding (287.418375ms)
+✔ Rolling canonical config mismatch blocks portal binding (290.599875ms)
+✔ Rolling canonical portal_address mismatch blocks portal binding (255.879084ms)
+✔ Rolling deployer mismatch cannot authorize portal binding (241.928ms)
+✔ Rolling address mismatch cannot authorize portal binding (244.192833ms)
+✔ Rolling canonical-hash mismatch cannot authorize portal binding (257.63825ms)
+✔ Rolling checkpoint-height mismatch cannot authorize portal binding (252.743208ms)
+✔ Rolling raw NodeInfo without alias uses nativefalse PXE and never prepares CRS (260.136083ms)
+✖ Rolling local native real proofs fail before PXE or deployment (265.4595ms)
+✔ Rolling restart never resends dropped valid original deployment (402.52175ms)
+✔ Rolling restart does not silently replace a stale rejected deployment (391.866416ms)
+✔ old SDK preflight without explicit native proof mode fails before wallet or PXE (251.290041ms)
+✔ Rolling creation anchor survives distinct portal journal and repeat deployment command (394.77875ms)
+✔ Rolling missing historical creation receipt remains explicit and never inferred from binding (397.81225ms)
+✔ Rolling recovered original creation reorg refuses before another binding (392.12475ms)
+✔ Rolling anchor reader guards original receipt twice and rejects terminal failure (0.741625ms)
+✔ deployment provider observes changed code immediately without weakening runtime verification (4.67425ms)
+ℹ tests 78
+ℹ suites 0
+ℹ pass 77
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8441.505625
+
+✖ failing tests:
+
+test at scripts/test-w03-deploy-engine.mjs:202:1
+✖ Rolling local native real proofs fail before PXE or deployment (265.4595ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    Comparison {
+  +   code: 'ERR_ASSERTION'
+  -   code: 'BB_DEPLOYMENT_MANIFEST'
+    }
+  
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:202:212)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: No PXE
+        at f.env.aztec.createPXE (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:202:197)
+        at g.runDeploy (evalmachine.<anonymous>:422:25)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:202:212)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: { code: 'BB_DEPLOYMENT_MANIFEST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

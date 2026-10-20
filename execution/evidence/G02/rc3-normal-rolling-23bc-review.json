@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+  "verdict": "approved-bounded-normal-Rolling-processing-evidence",
+  "artifactSha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+  "audit": {
+    "path": "execution/evidence/G02/rc3-normal-rolling-23bc-independent-audit.json",
+    "sha256": "a2e88d6eb032a0c0683deb9a0f70c5426c22ccbb29b7ab624e879055a9c5e99e"
+  },
+  "findings": [],
+  "verified": [
+    "Actual existing Rolling builder runs package-only Nargo compile --force without silence-warnings, then normal shared processArtifact/native aztec_process; no fabricated/transferred processed output.",
+    "Processed artifact and evidence copy hash20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24; transpiledtrue,14privatefunctions each has decodable4832-byte VK and nonempty bytecode. Actual log records14native VK derivations.",
+    "Independent exact ordered raw-to-processed name mapping strips one leading __aztec_nr_internals__ only; count/uniqueness/order preserved. First failed verifier receipt0879e5e retained; correcting this representation check did not rerun build or rewrite artifact.",
+    "132embeddeddependency entries match promotedNoir lock;7local source entries match exact current source, including preference_recovery.nr; raw/processed compilerstd sources match. New recover_preference_page is abi_utility with nonempty actual bytecode.",
+    "151protectedoutputs,1028sourcebindings,28rootfiles and7historicalraw snapshots unchanged; temporary processing file absent. Existing base manifest unchanged; Rolling builder has no separate manifest, so exact artifact/source/command evidence binds this step.",
+    "Actual109683ms1547168KiB,exit0,no failures, all children closed/cleaned and owned tree absent; evidence/runner/child/intent hashes match."
+  ],
+  "diagnosticDisposition": {
+    "currentRollingBugLines": 119,
+    "overallOriginalBugDiagnosticHold": 260,
+    "status": "Unresolved. Normal compilation/VK generation does not establish soundness or justify suppression; original raw logs and current119 bug lines remain evidence."
+  },
+  "remainingGates": [
+    "Avatar and PrivateBok normal builders; exact catalogue/SDK/artifact provenance composition.",
+    "TXE/adversarial tests and actual application/utility/recovery acceptance under current rc3.",
+    "Main/admin middleware registration, lifecycle repair execution, full bounded cold recovery and truebrowser/integration gates remain separate.",
+    "Current-network/remote/platform/specialist/release qualification not granted."
+  ],
+  "authorization": "Evidence disposition only; later worker execution still follows parent serial slot/explicit scope."
+}

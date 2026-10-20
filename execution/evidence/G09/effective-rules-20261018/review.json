@@ -1,0 +1,36 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "parent": "lead-20261011",
+  "candidate": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+  "base": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+  "verdict": "approve",
+  "requirements": [
+    "RC12",
+    "Show current effective rules before posting; inspect rejection reason"
+  ],
+  "findings": [],
+  "prior_finding": {
+    "severity": "P2",
+    "status": "resolved",
+    "detail": "rulesView inserts the section before the first direct primary control. Long-rule geometry/order assertions pass for initial review, prepared confirmation, saved exact-byte send, replacement review/send and authorized Bok continuation."
+  },
+  "commands": [
+    {
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='Effective rules|ordinary saved post' apps/rolling/wallet-panel.browser.test.mjs",
+      "exit": 0,
+      "passed": 12
+    },
+    {
+      "command": "git diff --check f7bbfd06f413bdd72243d9a46c382926617f2000 8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+      "exit": 0
+    }
+  ],
+  "assessment": [
+    "Reviewed both changed files against integrated base and placement repair against prior candidate.",
+    "Prior independent public-projection/API and contract/event validation remains applicable: current parent policy and immutable local v1 semantics match actual producer.",
+    "Fresh checks before prepare/send still block changed, rejected, unavailable or mismatched policies. Destination changes avoid per-keystroke reads, share in-flight requests and reject stale response overwrite.",
+    "Rule strings remain inert text. Cancel/reconciliation and funded Bok release paths remain available independently of publication readiness.",
+    "Long valid rule content now occurs before the primary action in both DOM and geometry; no checkbox or new framework introduced."
+  ],
+  "limits": "Focused browser checks and source/API-producer review only; no chain, build, service or full journey. Normal integration and affected runtime asset delivery remain root-owned."
+}

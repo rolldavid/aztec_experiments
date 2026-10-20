@@ -1,0 +1,32 @@
+{
+  "candidate": "d9f1480a8bf075eb0944dfd83c9757062aaea3f1",
+  "base": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G10-canonical-message-composition",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/agent.mjs",
+    "plugins/test/model.test.mjs",
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json"
+  ],
+  "required_checks": [
+    "canonical-message-and-generated-composition"
+  ],
+  "requirements": [
+    "RC30-canonical-original-message-retrieval-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G10-canonical-message-composition",
+      "paths": [
+        "plugins/agent.mjs",
+        "plugins/test/model.test.mjs",
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/sdk-manifest.json"
+      ]
+    }
+  ]
+}

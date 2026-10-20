@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared-not-started",
+  "executionAuthorized": false,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "reviewSha256": "a544a6de83c3b1fc29807fb8ab1b297b4385ca8ea78e124f40ef75da0b9ae3fc",
+  "planReviewSha256": "633bcde3f73fd876edc8ab5cfac7e35b19ce094202d678ff6a8f8c0d8dbf75fe",
+  "sourcePins": {
+    "setup.py": "5d513e1fd6f5de28d6a9f62aa6e69f50c8737208ccdc7e74eb75ff1517c5843d",
+    "setup.sh": "cf9cf56c884fd0805ec5e8fe80d30920a88a74c3265ec5390d9b8d1a5256809d",
+    "closure.py": "703275dbb8eb60cae7b035c82f9f30cc82bd51cfc0d60e4ae077cac22eff0046",
+    "cleanup-repair-packet.json": "39df6bc7e5c2633cc44b6fa0201e47206bfb909d46f80f1d3051b90a8a0deced",
+    "setup-preflight-readonly.json": "6df61125ec78076b2dab6561b8c1298cdd04754d34e64bf8e7d9d0cc875b1646"
+  },
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers/setup.py",
+    "--execute-reviewed-once"
+  ],
+  "bounds": {
+    "operationSeconds": 150,
+    "cleanupSeconds": 30,
+    "memoryMiB": 512,
+    "cpu": 2
+  },
+  "onceOnly": {
+    "existingActualDirectory": false,
+    "fixedNoReplayDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers/setup-actual",
+    "internalIntent": "Exclusive fsynced intent before pull and individual create/start/commit intents; no replay uncertain outcome"
+  },
+  "releaseRequired": "Lead full73 session11072 owns heavy slot; no setup until explicit release and grant.",
+  "notAuthorized": [
+    "offline lifecycle/native version",
+    "paid/cloud actions",
+    "privilege fallback",
+    "second setup attempt"
+  ]
+}

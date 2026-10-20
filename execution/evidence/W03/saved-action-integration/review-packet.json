@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "task": "W03-saved-action-recovery",
+  "source": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "base": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "branch": "codex/rolling-saved-action-recovery",
+  "at": "2026-10-15T02:22:35.920582+00:00",
+  "requirements": [
+    "W03-A01",
+    "W03-A02",
+    "W03-A04"
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "7fe7b5d167d9ce18b205e9f83559d7c4475ef0ef4a2bbaba618915fe409805cd",
+    "apps/rolling/wallet-panel.mjs": "756f5e5a5da2947c2fd541a9d7c222a0c27dcaab386de12f1cb6a14302c5c7b6",
+    "shared/rolling/application.mjs": "e80112d4879fffea8296b3af72bc737c08e6fba65e4b7a2c3c816eb3a51afb24",
+    "shared/rolling/application.test.mjs": "4871adebd6a6d4f17a072a6e32374a3970da9bc92b5c78f9c4023c070db69a80"
+  },
+  "scope": {
+    "application": "Generalize explicit saved-byte and definitive missing-anchor recovery from preferences to all durable Rolling action intents. Reuse existing journal authority and original submission preconditions, plus unchanged post/screen policy/hints, profile version, canonical name availability, original funded receipt and Bok target checks. No transaction journal or SDK changes.",
+    "ui": "Expose the same explicit recovery review for ordinary saved actions; retain exact fee/hash consent, renewed replacement fee review and avatar preview requirement.",
+    "tests": "Existing actual Tx serialization/AEAD fixture extended to posts, claims and withdrawals; chain/proof/funding remain labelled doubles. Browser suite is labelled presentation doubles."
+  },
+  "preserved": [
+    "Uncertain or pending sends are never retransmitted by read-only reconcile.",
+    "A submitting fence with no authenticated Tx bytes remains blocked, including through all new recovery APIs.",
+    "Replacement requires every predecessor definitively missing-anchor invalid; retains operation ID, nonce, immutable arguments, original fee ceiling and separate renewed fee review.",
+    "Exact-byte resume never estimates, proves, replaces or initiates another L1 payment.",
+    "Account, ciphertext CAS, private claims, withdrawal eligibility, moderator, Bok and policy checks remain at relevant final boundaries.",
+    "No application code disables proofs; no service, account, model, funds, SDK or generated artifact changed."
+  ],
+  "results": [
+    {
+      "log": "before.log",
+      "pass": 0,
+      "fail": 6,
+      "durationMs": 1988.371292,
+      "meaning": "New ordinary post/claim/withdrawal regressions fail on unchanged preference-only recovery."
+    },
+    {
+      "log": "focused.log",
+      "pass": 12,
+      "fail": 0,
+      "durationMs": 23038.320334
+    },
+    {
+      "log": "guards.log",
+      "pass": 24,
+      "fail": 0,
+      "durationMs": 7980.024334
+    },
+    {
+      "log": "ui-focused.log",
+      "pass": 4,
+      "cancelled": 1,
+      "durationMs": 17129.791333,
+      "meaning": "Old history-heading fixture text timed out after intentional generalization. Original log retained; updated exact heading assertion passes in subsequent runs. Browser executable env was initially wrong variable; subsequent qualified tests explicitly pin Chrome155."
+    },
+    {
+      "log": "ui-repaired.log",
+      "pass": 7,
+      "fail": 0,
+      "durationMs": 6260.758708
+    },
+    {
+      "log": "application-all.log",
+      "pass": 229,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 73125.430708,
+      "meaning": "Full affected application suite, before append-only final unknown-fence test."
+    },
+    {
+      "log": "ui-all.log",
+      "pass": 120,
+      "fail": 1,
+      "skip": 0,
+      "durationMs": 89776.585375,
+      "meaning": "Full panel suite; sole failure exact old preference-only context wording. No-send assertions passed. Fixture-only copy assertion then corrected; production source unchanged."
+    },
+    {
+      "log": "ui-copy-repair.log",
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 5888.34525,
+      "meaning": "All five saved-transaction refusal statuses plus ordinary recovery and avatar checks pass after exact-copy assertion repair."
+    },
+    {
+      "log": "unknown-fence-final.log",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1134.916334,
+      "meaning": "Added real authenticated empty Tx-journal regression plus retained original unknown-fence cases. No production change after full application run."
+    }
+  ],
+  "logHashes": {
+    "before.log": "5c11035ea00e1b46492afb630d461b54d2a7e447ea7ad767ad7cbd41ebecaf41",
+    "focused.log": "37dfb7d38b7a809c00522504f6c170f83dc7631d2840e3f77e8754cc432be169",
+    "guards.log": "a2b497036f46925fac473e2428901b37b9d86e2143b8c973b4bec6757b104854",
+    "ui-focused.log": "9606a08da799322be677205d13a8c4001174e63f2dbe9e360ca470b74d27a998",
+    "ui-repaired.log": "5bea86cb7911d6982d72a9fecb6bd7cbd7fc3f16f5fb467e3d8c9eab79179edb",
+    "application-all.log": "54f97e115b8ad6b6b6b435b57b4d2ed67e5889d0663013c0c19013e95db2a06a",
+    "ui-all.log": "6ae586a6118d18979a6ced295684dbaa9ed46dad893d37636bdebc0d0ba2c592",
+    "ui-copy-repair.log": "7db50fc953d86372d5fb00910202b07c1aea78ba21219aa6758bb6f755e1b6b0",
+    "unknown-fence-final.log": "e3545da9910e2b18d49abe34982cb3cf11e4463090a1d1cef729f32f38222294"
+  },
+  "environment": {
+    "node": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "NODE_BACKEND": "js",
+    "TMPDIR": "/private/tmp",
+    "T04_CHROMIUM_EXECUTABLE": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/cft-155.0.8059.79-mac-arm64/unpacked/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    "dependencies": "Read-only ../rolling-lead-bok/node_modules (rc3); existing generated artifacts, no install/build."
+  },
+  "commands": {
+    "application": "NODE_BACKEND=js TMPDIR=/private/tmp \"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node\" --test --test-concurrency=1 shared/rolling/application.test.mjs",
+    "browser": "NODE_BACKEND=js TMPDIR=/private/tmp T04_CHROMIUM_EXECUTABLE=\"/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/cft-155.0.8059.79-mac-arm64/unpacked/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing\" \"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node\" --test --test-concurrency=1 --test-timeout=15000 apps/rolling/wallet-panel.browser.test.mjs",
+    "finalBrowserSelection": "saved transaction .* never exposes a send action|ordinary saved post|saved avatar recovery",
+    "finalApplicationSelection": "ordinary unknown fence|durable fence failure|unknown send stays"
+  },
+  "limits": [
+    "No current native or real-proof acceptance claimed. Root must integrate after independent review and perform normal affected wallet asset build.",
+    "W03-A03 current Rolling-specific >500-block acceptance remains separately open; preserved real withdrawal/refund evidence must not be replayed.",
+    "W03-A02 submitting fence without signed bytes remains deliberately unresolved, not a completed every-stage recovery claim.",
+    "Changed immutable policy/screening/profile/Bok/claim context remains refused; replacement does not silently revise the original action."
+  ],
+  "reviewFocus": [
+    "Exact saved transaction/operation/consent binding for ordinary actions.",
+    "Shared action preconditions and late beforeSubmit checks, including funding/withdrawal/moderation/Bok.",
+    "Generic replacement API accepts only expectedTxHash; preference/read-marker still require exact head/marker review.",
+    "Original uncertain fence and missing-byte failure semantics preserved.",
+    "UI avatar preview cannot be bypassed by saved-byte confirmation."
+  ]
+}

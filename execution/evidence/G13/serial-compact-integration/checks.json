@@ -1,0 +1,21 @@
+{
+  "base": "16dea3808c5366e456ec50c001c2502436191230",
+  "candidate": "a3afd8ffd27b886b9dbe3424d4c85da274fed79e",
+  "paths": {
+    "shared/rolling/compact-client.mjs": "d539722e1e6cdd07336b5bee731a65871be2a82b846cc772096fb525f8417d00",
+    "shared/rolling/compact-client.test.mjs": "88762b91dc8b0085166c17f5c1f8898efbe28e88dbcef85c24a339c32ae76426"
+  },
+  "readerTransport": {
+    "passed": 42,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 151.964333,
+    "logSha256": "9e575ce99a3d5f7af75a966c46f5218ff20198fa73283a8124f4c3082f8c6cde"
+  },
+  "walletAssets": {
+    "outputs": 25,
+    "inputs": 97,
+    "logSha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+  },
+  "limits": "Actual two-batch timing and complete120s keys-only recovery remainunqualified. Native/PXEflagsfalse; no realproofclaim."
+}

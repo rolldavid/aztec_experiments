@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-14T18:21:29.290739+00:00",
+  "source": "https://ethereum.org/developers/docs/networks#sepolia",
+  "provider": "https://eth-sepolia.blockscout.com",
+  "reads": [
+    {
+      "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+      "http": 403,
+      "outcome": "unavailable"
+    },
+    {
+      "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+      "http": 403,
+      "outcome": "unavailable"
+    },
+    {
+      "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+      "http": 403,
+      "outcome": "unavailable"
+    }
+  ],
+  "mutations": false
+}

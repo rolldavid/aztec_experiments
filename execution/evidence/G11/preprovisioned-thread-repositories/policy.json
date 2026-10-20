@@ -1,0 +1,41 @@
+{
+  "base": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "candidate": "9bf9cfc94b56530ccc3c884af1b946115e0c1ec7",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G11-preprovisioned-thread-repositories",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/escrow-service.mjs",
+    "plugins/github-app-broker.mjs",
+    "plugins/main.mjs",
+    "plugins/test/github-app-broker.test.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/thread-repositories.test.mjs",
+    "plugins/thread-repositories.mjs"
+  ],
+  "required_checks": [
+    "focused-source-and-repair",
+    "real-selected-app-transport"
+  ],
+  "requirements": [
+    "RC29-RC31-RC32-thread-allocation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "G11-preprovisioned-thread-repositories",
+      "paths": [
+        "plugins/DEPLOYMENT.md",
+        "plugins/escrow-service.mjs",
+        "plugins/github-app-broker.mjs",
+        "plugins/main.mjs",
+        "plugins/test/github-app-broker.test.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/thread-repositories.test.mjs",
+        "plugins/thread-repositories.mjs"
+      ]
+    }
+  ]
+}

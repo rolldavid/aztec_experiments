@@ -1,0 +1,34 @@
+{
+  "base": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "candidate": "7c9a9b5931813ef6c4d747d9c128e9cc77d3f387",
+  "task_id": "G02-final-testnet-source",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-feature-20261018",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "deploy/prover/package.py",
+    "deploy/prover/BOOTSTRAP.md",
+    "scripts/test-prover-bootstrap.py",
+    "scripts/test-prover-package.py"
+  ],
+  "required_checks": [
+    "focused-source-controls"
+  ],
+  "requirements": [
+    "RC27-RC36-RC38-source-components"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-feature-20261018",
+      "task_id": "G02-final-testnet-source",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "deploy/prover/package.py",
+        "deploy/prover/BOOTSTRAP.md",
+        "scripts/test-prover-bootstrap.py",
+        "scripts/test-prover-package.py"
+      ]
+    }
+  ]
+}

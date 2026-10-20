@@ -1,0 +1,29 @@
+{
+  "candidate": "989d53ff8c5ccf1c83584be206c91583b0fbb83e",
+  "verdict": "PASS_STAGED_CURRENT_COMBINED_COMPONENT_82_PLUS_1",
+  "priorReview": "reviewer-989-personal-lifecycle-review.json",
+  "priorReviewSha256": "ed9d075c1ccc631855192670a657f943f5ff373a5248fdd2c5c4ad9d16c9f2c4",
+  "sourceUnchangedClean": true,
+  "normalBokReuse": {
+    "all14InputHashesMatchCurrentAndSource": true,
+    "all3FilesExactSourceCopy": {
+      "experiments/private-bok/target/private-bok-build.json": "f74b10399936746cf9fc1d33628b01ef1be238ae1c1d0629b8587ee1806eafbc",
+      "experiments/private-bok/target/private_bok-PrivateBok.json": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb"
+    },
+    "bothArtifactManifestHashesVerified": true
+  },
+  "runtime": {
+    "original": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G12/personal-lifecycle-combined.log",
+      "sha256": "6d8366b9752f70d4d2d330494ff277f3a9a82deb057adeb99f02f9f98582f793",
+      "status": "82 passed,1 failed missing ignored artifact; original overall failure preserved"
+    },
+    "focused": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G12/lifecycle-constructor-focused.log",
+      "sha256": "bb420ca0dac47c4f7177818847689960b4cdb9c82b023a6b515360f31b37d80a",
+      "status": "Same previously failing constructor case passes; all other selected cases excluded. No whole83 rerun."
+    }
+  },
+  "scope": "Current-source83-case conjunction; no actual lifecycle, installed GitHub App, proof/testnet or hosted service claim."
+}

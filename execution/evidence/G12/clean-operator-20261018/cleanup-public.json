@@ -1,0 +1,16 @@
+{
+  "signal": "SIGTERM",
+  "pid": 6159,
+  "execSession": 80662,
+  "exitCode": 0,
+  "portsClosed": {
+    "4318": true,
+    "8082": true,
+    "8546": true
+  },
+  "ownedNativeChildrenRemaining": 0,
+  "networkPhase": "stopped",
+  "leaseReleased": true,
+  "allBuildsJournalsEvidenceRetained": true,
+  "trackedSourceUnchanged": true
+}

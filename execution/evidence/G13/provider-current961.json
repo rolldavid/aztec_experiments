@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-15T16:02:07.047Z",
+  "balanceUsd": 4.86996733,
+  "canConsume": true,
+  "primary": {
+    "model": "kimi-k2-5",
+    "maxTokens": 4096,
+    "maximum": "157696"
+  },
+  "summary": {
+    "model": "zai-org-glm-4.7-flash",
+    "maxTokens": 1200,
+    "maximum": "8160",
+    "reasoningDisabledCapabilityAdmitted": true
+  },
+  "modelCalls": 0,
+  "topups": 0
+}

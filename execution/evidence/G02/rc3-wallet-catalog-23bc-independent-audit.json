@@ -1,0 +1,54 @@
+{
+  "source": "23bcbd1094a6bf0d7cee2c784137271ec04f9579",
+  "passed": true,
+  "readOnly": true,
+  "wallet": {
+    "protectedCount": 1203,
+    "rootFiles": 28,
+    "rootHistoricalHead": "125a69175b8a9df388f6f2938339090fa1bfb6cc",
+    "rawSnapshots": 7,
+    "contractInputs": 53,
+    "inputs": 82,
+    "servedFiles": 24,
+    "sdkInputs": 2044,
+    "sdkOutputs": 8,
+    "frontendInputs": 97,
+    "frontendOutputs": 10,
+    "manifest": "be52f1753801b8ba1f8b43c0e2dce8b0a8cfe2d166f7351c0923354da62314d4",
+    "runtime": "ca61a5b26f86095e14b890925481acd4b4b45bfbfec45ab3efc5f4d8bb86edd3",
+    "elapsedMs": 1061,
+    "peakTreeRSSKiB": 207456,
+    "cleanup": true
+  },
+  "catalog": {
+    "preflight": "86300ec6e59f0d343a4cbf62017ed094dfeeaebafabb202e7856d3e8af7f27c2",
+    "generator": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+    "loader": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+    "current": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+    "proposedInputs": 21,
+    "artifactChecks": [
+      {
+        "name": "RollingBoard",
+        "privateVKs": 14,
+        "local": 7,
+        "embedded": {
+          "embeddedSources": 132
+        }
+      },
+      {
+        "name": "PrivateBok",
+        "privateVKs": 6,
+        "local": 1,
+        "embedded": {
+          "embeddedSources": 129
+        }
+      }
+    ],
+    "trees": {
+      "packages": 8,
+      "checkedFiles": 419
+    },
+    "proposedCatalogSha256": "fafaf3387cdb360e11dff386f30be2fac40e5547ee642cb969aac449b40efb7e",
+    "notWritten": true
+  }
+}

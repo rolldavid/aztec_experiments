@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "source": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+  "startedAt": "2026-10-11T23:40:26.213317+00:00",
+  "output": "/private/tmp/rolling-prover-release-7db-20261012",
+  "archive": "/private/tmp/rolling-prover-release-7db-20261012.tar.gz",
+  "applicationProfile": "rolling",
+  "qualificationScope": "Mixed legacy/Rolling prover-query runtime; node remains pinned separate fullnode image on nativeAMD64; not standalone nativefullnode qualification",
+  "manifestSha256": "3af66adac4f3d8a30166dbce81c65221c070733c32ec77c02031cffb3f94c045",
+  "bootstrapSha256": "37fd5627c3c63ac319fc4a132dcbdbbbd4394f58fa790a68527ff7f4161f98d8",
+  "pins": {
+    "NODE_SHA": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+    "BB_SHA": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+    "CATALOG_SHA": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+  },
+  "verifiedFiles": 72535,
+  "internalSymlinks": [
+    "node/bin/corepack",
+    "node/bin/npx",
+    "node/bin/npm"
+  ],
+  "completeFileSetVerified": true,
+  "rollingCatalogLoadPassed": true,
+  "archivePassed": true,
+  "noUpload": true,
+  "noPaidAction": true,
+  "archiveBytes": 383489549,
+  "archiveSha256": "217f69920a971c7c45bb08f686380f187f2e2e37b6798ce3f12f796752efb608",
+  "archiveRegularFiles": 72533,
+  "archiveSymlinks": 3,
+  "finishedAt": "2026-10-11T23:40:54.016454+00:00"
+}

@@ -1,0 +1,37 @@
+{
+  "candidate": "f32a1037bd8e95b2994795e1cfe3053f72fd2930",
+  "base": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved source eligibility for one bounded read-only public prerequisite diagnostic",
+  "findings": [],
+  "sourceSha256": {
+    "deploy/prover/archiver-prerequisites.mjs": "99a3c23fc00cf4dda7437a1a99de719f9ba23d96b1d3f28b0988ff59b1a94049",
+    "deploy/prover/archiver-prerequisites.test.mjs": "9373dfa3ac428f78f918926e88dbfa8db1a06181e9992afa53bcd6e350bdd065"
+  },
+  "checks": {
+    "independent": "Pinned Node24 --test --test-concurrency=1 extracted exact candidate archiver-prerequisites.test.mjs",
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 876.771083,
+    "log": "/tmp/reviewer-f32-tests.log",
+    "actualProviderRequests": 0,
+    "childTests": "Actual disposable child TERM-ignored then KILL/reaped; fresh0600 receipt and partial stage retained; existing/symlink output rejected"
+  },
+  "sourceAssessment": [
+    "Fixed public Sepolia RPC/beacon/blob URLs and rollup/version; no configurable upstream, credential environment, wallet, transaction submission, cloud operation or datastore",
+    "Pinned installed eight SDK module hashes checked before provider construction; actual getter/trace/blob API compatibility inspected",
+    "Source/report projection fixed public types and bounded16KiB; provider exception objects never accessed; child stdout/stderr discarded",
+    "Single supervised invocation;59s external child deadline then500ms TERM-to-KILL escalation, waits child close; fresh exclusive O_NOFOLLOW0600 receipt",
+    "Finalized anchor sampled and checked again; deploy block/log binding, current chain/version/code presence,300s SDK drift gate, supported trace booleans and strict blob source checks",
+    "Process and close failures cannot produce pass; no nodeStartupQualified/imageExecution claim"
+  ],
+  "retryDisposition": "No operator rerun/retry loop. Exact installed getPublicClient transport and blob/trace methods retain their SDK internal read retries/scans; report explicitly says installed SDK defaults. Approval does not mean one network request per logical read. No SDK behavior override proposed.",
+  "limits": [
+    "No live provider call performed by reviewer",
+    "Mac prerequisite outcome cannot establish historical AWS cause or Linux/image startup qualification",
+    "Runtime code hash is observed, not a separately pinned deployment-code identity claim",
+    "External process deadline is the authoritative bound; imported runChecks alone has no timeout",
+    "Source instrumentation, fresh package/image equivalence, actual receipt and runtime qualification remain separate gates"
+  ]
+}

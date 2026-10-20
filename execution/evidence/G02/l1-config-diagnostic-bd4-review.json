@@ -1,0 +1,32 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+  "verdict": "approved source for one bounded fixed public diagnostic",
+  "findings": [],
+  "sources": {
+    "deploy/prover/l1-config-diagnostic.mjs": "add279e6b11177c6735f03e251a1106ddbce00c283ab7578f319e721f88c4fb6",
+    "deploy/prover/l1-config-diagnostic.test.mjs": "d45b98d0c67ea7389f08d45589bb651c0f36000ca2e7c429ed91287452a294b4"
+  },
+  "checks": [
+    "Read source before packet; fixed Tenderly URL, Sepolia registry/rollup/version with no endpoint input/fallback/wallet/signing.",
+    "Compared actualOperations to installed getL1Config: same getPublicClient, collectAddresses then getL1ContractsConfig; default SDK retries/timeout retained.",
+    "Source phase verifies pinned Node/Aztec and five exact installed source hashes before network. Chain/identity/config bounds and finalized before/after same-number/hash/timestamp are mandatory.",
+    "Numeric error projection only captures own data descriptors from bounded typed cause chain; arbitrary messages/name/code, getters/cycles/proxies fail safely without raw output.",
+    "Fresh exclusive NOFOLLOW0600 receipt,16KiB limit, fsync stages and directory; child stdout/stderr ignored;59s timeout TERM then250msKILL, waits child close. Spawn and TERM-ignoring real disposable child tests verify cleanup/partial evidence."
+  ],
+  "independentTests": {
+    "command": "NODE_BACKEND=js pinned Node24.21.0 --test --test-concurrency=1 deploy/prover/l1-config-diagnostic.test.mjs",
+    "pass": 13,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 1539.61,
+    "log": "/tmp/reviewer-l1-config-bd4-tests.log",
+    "sha256": "09153baae1660c9885e0899463fd8c96ec6d9169082b5d7c2f46fb34ad4fabc8"
+  },
+  "limits": [
+    "No reviewer live RPC/service action. Lead must use one fresh absolute receipt and existing outer60s process deadline.",
+    "SDK contract reads remain latest and retried by installed SDK; finalized continuity is not atomic configuration snapshot.",
+    "Source binding is local pinned modules, not image execution or full-node/startup qualification. No prior remote failure declared repaired.",
+    "Receipt writer may fail if filesystem unavailable; process failure and original partial receipt must be retained."
+  ]
+}

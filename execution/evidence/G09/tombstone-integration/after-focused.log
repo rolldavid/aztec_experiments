@@ -1,0 +1,17 @@
+✔ labelled social records: removed navigation, literal reasons and distinct authored/removal/current policy provenance (870.351875ms)
+✔ real panel opening from removed Unlike stays lazy and sanitizes an unavailable runtime (758.849583ms)
+✔ Following and Notifications use only ordinary feed parameters and explicit subscription filtering (1133.020959ms)
+✔ tombstone notifications: removed reply supports read without revealing content (1025.104ms)
+✔ tombstone notifications: removed reply supports unsubscribe without revealing content (1012.254167ms)
+✔ tombstone notifications: rejected reply supports read without revealing content (994.790292ms)
+✔ tombstone notifications: rejected reply supports unsubscribe without revealing content (1000.544375ms)
+✔ contextual moderator actions use public targets only after local authorization and clear on invalidation (819.009209ms)
+✔ moderator context actions respect rejected and already removed public state (681.971209ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8546.953584

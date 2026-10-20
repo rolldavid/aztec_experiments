@@ -1,0 +1,77 @@
+{
+  "originalCandidate": "7da998ed73ede5e3ff108dc68a7d37f5d2cc109b",
+  "finalCandidate": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "originalRun": {
+    "exitCode": 1,
+    "total": 734,
+    "passCount": 731,
+    "failCount": 3,
+    "skipped": 0,
+    "elapsedMs": 125198.112666,
+    "log": ".build/g05-g07-historical-final/combined-checks.log"
+  },
+  "changesSinceRun": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json",
+    "apps/rolling/wallet-session.test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs"
+  ],
+  "unchangedTestedFiles": [
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "blob": "ba7879b7326e03b523b3432861a45976b490b16c"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "blob": "d31f683e0d71ee528e47040768c50e3444e2b859"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "blob": "9337e803a9d9b65bfbe3386e9bd4e212bfb4c2ff"
+    },
+    {
+      "path": "prover/compact-block-native.mjs",
+      "blob": "8bdb34bf890da3e3ac00e2758dc2e77a7b9f4a80"
+    },
+    {
+      "path": "prover/compact-block-native.test.mjs",
+      "blob": "f084d0d0ac7434ae38b1dca8a0a34e7ad285fb55"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "blob": "c3d35347d26ca882a972055a28af235808962145"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "blob": "be1c5352e8e2f44b2f8e010f9d2256e48df6283c"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "blob": "06621a9246f3d6c5eeaa725103afb9ac3b053f7e"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.test.mjs",
+      "blob": "cd38a2b024cc2e131c801cf0eaa54f3ada042e28"
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "blob": "e0f2a8a38241dea90d283fccea0497daa249c37c"
+    },
+    {
+      "path": "shared/trusted-private-node.test.mjs",
+      "blob": "71a410d6c72b7a132fed7772c36cab99459fcc15"
+    }
+  ],
+  "repairVerification": {
+    "exitCode": 0,
+    "total": 240,
+    "passCount": 240,
+    "failCount": 0,
+    "skipped": 0,
+    "elapsedMs": 25363.401708,
+    "command": "node --test --test-concurrency=1 scripts/test-sdk-manifest.mjs prover/private-query.test.mjs apps/rolling/wallet-session.test.mjs",
+    "log": ".build/g05-g07-historical-final/repaired-checks.log"
+  },
+  "scope": "Original failed run is preserved as failed. Unchanged component source/tests retain their successful individual checks; complete affected query/session suites and manifest checks rerun after repair. No broad full-suite pass claimed."
+}

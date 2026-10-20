@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/lib/node_modules/npm/bin/npm-cli.js",
+    "install",
+    "--package-lock-only",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 98.714,
+  "scriptsDisabled": true,
+  "isolatedCache": true
+}

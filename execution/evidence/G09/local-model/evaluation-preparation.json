@@ -1,0 +1,39 @@
+{
+  "preparedAt": "2026-10-15T14:24:45.149006+00:00",
+  "source": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeConfigSha256": "55b1bcc386f225f1561e01db9329dd6cfd87e8257b4494f03dcc90f6ef2a206c",
+  "manifestSha256": "3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+  "files": {
+    "censor-daemon/evaluate-model.mjs": "3abfd61aee9a073cb806b6d3ac72414cb86c5d90e40d579cbdeaf7dd3b910c59",
+    "censor-daemon/evaluation-corpus.json": "84fbfdd59fb7ebccf1c598a368b4310d49bc1d3e2a4e926d2353ba85a38034c9",
+    "censor-daemon/model-runtime.mjs": "f7663e839c821cfc752805264dc660268b69a68dae76e0986789c96713c0fab0",
+    "censor-daemon/runtime-identity.mjs": "846553d06b259914a6f3035f3d3398df5c277e319621adc094ea12a37c7c8e19"
+  },
+  "port": {
+    "host": "127.0.0.1",
+    "port": 5094,
+    "bindAvailable": true,
+    "mustRecheckBeforeRun": true
+  },
+  "command": "'/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/censor-daemon/evaluate-model.mjs' --corpus '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/censor-daemon/evaluation-corpus.json' --output '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/evaluation-arm64-two-case.json' --runtime-config '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/runtime-options-arm64.json' --model-manifest '/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/b11058-arm64-manifest.json' --max-cases 2 --work-budget-ms 240000",
+  "argv": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/censor-daemon/evaluate-model.mjs",
+    "--corpus",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/censor-daemon/evaluation-corpus.json",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/evaluation-arm64-two-case.json",
+    "--runtime-config",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/runtime-options-arm64.json",
+    "--model-manifest",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g09-local-model-inputs/b11058-arm64-manifest.json",
+    "--max-cases",
+    "2",
+    "--work-budget-ms",
+    "240000"
+  ],
+  "executed": false,
+  "scope": "Two-case ARM64 compatibility and bounded-resource observation only, not full quality or throughput qualification.",
+  "rationale": "Same pinned engine revision and weights; ctx4096 unchanged. Eight CPU threads and7168MiB model limit selected for existing12CPU DockerVM. Proxy remains existing512MiB. Declared total7680MiB leaves little VM overhead and is not proof of fit; measure actual run, preserve failure if insufficient. No VM resize/new backend/isolation change.",
+  "resultInterpretation": "Existing evaluator exit2/report pass=false is expected for incomplete2/332 corpus; only actual decisions, runtime identity/post-run weights verification and cleanup can establish scoped success. Do not modify thresholds/corpus or merge with remote evaluation results."
+}

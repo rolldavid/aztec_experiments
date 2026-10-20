@@ -1,0 +1,12 @@
+✔ actual accepted commit survives restart; failed invocation leaves previous source intact (818.17025ms)
+✔ same-thread operations wait; a different thread opens independently (110.810625ms)
+✔ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (346.431792ms)
+✔ lease loss prevents acceptance; user paths and changed repository identity fail closed (101.849125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1431.313458

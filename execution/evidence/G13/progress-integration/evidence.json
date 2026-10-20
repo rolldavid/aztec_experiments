@@ -1,0 +1,93 @@
+{
+  "base": "39dbff586a5092349c32d93b721d5417733e3532",
+  "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "task_id": "G13-funding-progress-copy",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "39dbff586a5092349c32d93b721d5417733e3532",
+      "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "id": "focused-progress-ui",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test --test-concurrency=1 --test-timeout=15000 --test-name-pattern=\"claim progress|initialization projection|refresh diagnostic\" apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "Mac Node24.21 Chrome155; labelled UI doubles; source/base match shared branch; no realproof claim",
+      "observed": "Before regression fails;4worker+4independent pass,0skip. Actualautomaticonboarding failure unchanged.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/progress-integration/packet.json",
+          "sha256": "28eff0784c15e7563d5437595b6129a15df35f583faa662d5dba2b3d4ac48178"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/before.log",
+          "sha256": "e7bccce26c568c4c21d48b6b58ff53569d96f2d5bcd09b0dd56f66a2a4f89005"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/after.log",
+          "sha256": "0a52fd25ba95b866e00465e5c4fa0fbf202f2165364b9f436435f295119c5eec"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/review.json",
+          "sha256": "a2db0d43bf340ab07ebb7dc6cb25cf9fc0dc6d35314924170958030f574a5830"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/independent.log",
+          "sha256": "d6ca4d27439c6b14345b0aa9a9ede225fa690c0289835f27e8fad0557007fb5b"
+        }
+      ]
+    },
+    {
+      "base": "39dbff586a5092349c32d93b721d5417733e3532",
+      "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "id": "unchanged-wallet-closure",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "SHA256 verify existing97input25output manifest; changedpaths outsideinputs",
+      "environment": "Mac Node24.21 Chrome155; labelled UI doubles; source/base match shared branch; no realproof claim",
+      "observed": "97inputs/25outputs unchanged, no rebuild needed",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/progress-integration/closure.json",
+          "sha256": "21ebb1a1b859fd7644493a4a86b5dc304cb0e70a4e3a5a44eb901ba975dee736"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "39dbff586a5092349c32d93b721d5417733e3532",
+    "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "controls-resume-20261014",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/progress-integration/review.json",
+        "sha256": "a2db0d43bf340ab07ebb7dc6cb25cf9fc0dc6d35314924170958030f574a5830"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "39dbff586a5092349c32d93b721d5417733e3532",
+      "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "id": "G13-RC19-funding-progress-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/progress-integration/packet.json",
+          "sha256": "28eff0784c15e7563d5437595b6129a15df35f583faa662d5dba2b3d4ac48178"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/review.json",
+          "sha256": "a2db0d43bf340ab07ebb7dc6cb25cf9fc0dc6d35314924170958030f574a5830"
+        },
+        {
+          "path": "execution/evidence/G13/progress-integration/closure.json",
+          "sha256": "21ebb1a1b859fd7644493a4a86b5dc304cb0e70a4e3a5a44eb901ba975dee736"
+        }
+      ]
+    }
+  ]
+}

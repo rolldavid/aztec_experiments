@@ -1,0 +1,109 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "68e7c326f1ca946463ebc8cfd04848e62ff7cfb8",
+  "verdict": "failed fullcampaign retained; source-backed harness expectation defect confirmed",
+  "severity": "P2",
+  "evidence": {
+    "execution/evidence/G06/application-f61bd071-35e6-4839-9298-1a97b64ba2e3.json": "b28559db72735801ba31a40ed2ba7caa229a335dfbb7628010f4d2d40851cadf",
+    "execution/evidence/G06/application-port-2f4cfdeb-ee3f-4eae-9e6a-79b0c93b61c5/observation.json": "0c82d42476a088004b0bf480b51162dd1c479e9814acbd6197430ce7a37ab7c9"
+  },
+  "root_cause": "assertRollingRecoveryWire requires oneHTTP400 personalized getContract response based on manual single-object request test. Actual pinned safeclient always sends request arrays; pinned safeserver returnsHTTP200 for arrayresults even when result contains JSON-RPCerror. Privatequery likewise returns200 for per-method errorResponse. Transportstatus therefore cannot identify application rejection.",
+  "source_refs": [
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js",
+      "line": 68,
+      "fact": "fetch receives rpcCalls.map(request), including singleton."
+    },
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/json-rpc/server/safe_json_rpc_server.js",
+      "line": 210,
+      "fact": "Batch array response uses HTTP200."
+    },
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/json-rpc/server/safe_json_rpc_server.js",
+      "line": 219,
+      "fact": "Single-object error uses400 unlesshttp200OnError."
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "line": 109,
+      "fact": "Per-method exception projects fixedRPCerror response then whole validatedresponseHTTP200."
+    },
+    {
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "line": 138,
+      "fact": "Incorrect mandatory one400 wirecounter rejects realbatchresult."
+    }
+  ],
+  "reproduction": {
+    "path": "/tmp/reviewer-recovery-f61-sdk-repro.json",
+    "sha256": "e6f8652f27bdf8e3bbe55d8666aa41e7e2a943a83d94a2f10340e5f9f970d785",
+    "result": "Actual installed safeclient plus unchanged root startNodeRpc, one controlled fault each: manualsingleobject400 vsclient singletonbatch200; bothRPCerror/rejection, personalizedDenied2, underlyingforward0, listenerfinallyclosed. No model, proof, paidservice, realaccount orrawerrorpersisted.",
+    "probe_correction": "First throwaway probe used nonexistentAztecAddress.fromString; process exited. Corrected toinstalledfromBigIntUnsafe beforecreatinglistener; finalreproductionpassed. No application source changed."
+  },
+  "actual_observation": {
+    "elapsed_ms": 443510,
+    "peak_tree_rss_kib": 1964384,
+    "trusted_recovery_passed": true,
+    "natural_lag_seconds": 121,
+    "public_http_views": 12,
+    "recovery_count": 3,
+    "personalized_transport_rows": [
+      {
+        "label": "trusted-upstream",
+        "phase": "outage",
+        "methods": [
+          "aztec_getContract"
+        ],
+        "status": 200,
+        "count": 1,
+        "outcome": "resolved"
+      },
+      {
+        "label": "trusted-query",
+        "phase": "outage",
+        "methods": [
+          "aztec_getContract"
+        ],
+        "status": 200,
+        "count": 1,
+        "outcome": "resolved"
+      }
+    ],
+    "wire": {
+      "requests": 6955,
+      "completed": 6955,
+      "pending": 0,
+      "unknown": 0,
+      "unsupported": 0,
+      "truncated": 0,
+      "observerErrors": 0,
+      "opaqueTransactions": 36
+    },
+    "cleanup": {
+      "applicationActorA": true,
+      "applicationActorB": true,
+      "fundingWallet": true,
+      "fundingWalletB": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "ordinaryRPC": true,
+      "wireCapture": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "owned_tree_absent": true,
+    "temporary_directory_removed": true
+  },
+  "repair_recommendation": [
+    "Retain primitiveBB_TRUSTED_NODE_UNAVAILABLE and exactparentpersonalizedDenied+1/readinesspass/no-forward checks as semanticrejection authority. Persist their bounded actualcounter deltas.",
+    "Add dedicatedpersonalized-failure phase around oneactualgetContract attempt (andfixedobserverphaseallowlist ifneeded), so exactoneupstream200 andonequery200 getContractrow areunambiguous and distinctfromnormalrecovery. Retainallbefore/afterreceiver/no-proof/send/fallback accounting.",
+    "Replace assumedHTTP400 requirement with actualSDKtransportshape+explicitsemanticevidence conjunction; do not merely allowany200 oromitdenialrequirement. Keep unavailable503, statusallowlists, malformed/missing/multiplerow/errorcounter rejections.",
+    "Regression must drive actualinstalledsafeclient throughactualserver fault asbatch and showsemanticrejection/no-forward despite200; mutations missingdenial,wrongphase/method/count,unexpected400/otherstatus orforwardedprivatecall fail. No responsebody reading added totransparentwireobserver.",
+    "Reviewexactrepair thenonechangedgenuinecampaign; historicalf61staysfailed despitevalidpassing recovery subresults."
+  ],
+  "limits": [
+    "This diagnosis doesnotretroactivelyapprove fullf61/runtimeprivacyacceptance.",
+    "No accepted-send lostreceipt, remote deployment, fullprivacy assurance orG06closure."
+  ]
+}

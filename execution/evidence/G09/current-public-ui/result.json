@@ -1,0 +1,117 @@
+{
+  "passed": true,
+  "sourceRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "scope": "Actual public UI only; fresh disposable browser context, no wallet initialization/import/unlock",
+  "startedAt": "2026-10-15T13:32:59.522Z",
+  "checks": {
+    "noRemovedText": true,
+    "noBody": true,
+    "reason": true,
+    "publicationPolicy": true,
+    "removalPolicy": true,
+    "threadRoot": true,
+    "routeHeadingFocus": true,
+    "stableBack": true,
+    "backLinkFocus": true,
+    "publicBio": true,
+    "avatarReady": true,
+    "mobileWorkspaceInert": true,
+    "mobileMenuFocus": true,
+    "mobileMenuRestoresFocus": true,
+    "mobileWorkspaceEnabled": true,
+    "profileNoOverflow": true,
+    "directoryActualEmpty": true,
+    "searchQueryPreserved": true,
+    "directoryNoOverflow": true,
+    "tombstoneNoOverflow": true,
+    "skipLink": true
+  },
+  "observations": {
+    "homeVisible": true,
+    "backOffsetDelta": 0,
+    "profileNameId": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+    "avatar": {
+      "bytes": "597",
+      "width": "100",
+      "height": "100",
+      "version": "1"
+    },
+    "tombstoneButtons": [
+      "Unlike",
+      "Bookmark"
+    ],
+    "new39dbControlsIntegrated": false
+  },
+  "traffic": {
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/"
+      },
+      {
+        "method": "GET",
+        "path": "/style.css"
+      },
+      {
+        "method": "GET",
+        "path": "/reader.mjs"
+      },
+      {
+        "method": "GET",
+        "path": "/reader-client.mjs"
+      },
+      {
+        "method": "GET",
+        "path": "/profile-view.mjs"
+      },
+      {
+        "method": "GET",
+        "path": "/model.mjs"
+      },
+      {
+        "method": "GET",
+        "path": "/navigation.mjs"
+      },
+      {
+        "method": "GET",
+        "path": "/api/home"
+      },
+      {
+        "method": "GET",
+        "path": "/api/board"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thread"
+      },
+      {
+        "method": "GET",
+        "path": "/api/board"
+      },
+      {
+        "method": "GET",
+        "path": "/api/profile"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directory"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directory"
+      },
+      {
+        "method": "GET",
+        "path": "/api/post"
+      }
+    ],
+    "denied": 0,
+    "routeErrors": 0
+  },
+  "pageErrors": [],
+  "cleanup": {
+    "contextClosed": true,
+    "browserClosed": true
+  },
+  "finishedAt": "2026-10-15T13:33:01.551Z"
+}

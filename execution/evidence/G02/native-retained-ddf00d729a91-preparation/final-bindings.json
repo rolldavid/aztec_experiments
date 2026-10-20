@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-ddf00d729a91",
+  "authorityPins": {
+    "launchGrantSha256": "dbe5715315e97f191fd3b630c3e3416f1f54741541a1301f97d4d290fdd66763",
+    "payloadReviewSha256": "5a8b882833609d9265edf5a208d9a24b38089088b90444cc7abd0f4279fc4091"
+  },
+  "files": {
+    "core": "9652631606e8414b3965c330419be62c6a85ee55b1415f29cc9cc443689cd321",
+    "launch": "1f21bebff7bc25df8a12df031af741251de647cfd013875a0f881b318aa88cd5",
+    "observe": "778777aed97bd764ae788387cc469474e8812193e8967c0703fe76c3df5f79d3",
+    "cleanup": "b17f5331e7b39c24eb35952fbe980cd537f35e400f38ba623c5a99c4bb71ba9f"
+  },
+  "diffSha256": "01a5fcded98faa3184dcc3dc205bb4c94fe97960e417eac9394b2ca76c4d495f",
+  "latestLaunch": "2026-10-13T06:51:46Z",
+  "onlyTwoLiteralsAndThreeWrapperPins": true,
+  "launched": false
+}

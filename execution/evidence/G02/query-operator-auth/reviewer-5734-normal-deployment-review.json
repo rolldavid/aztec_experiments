@@ -1,0 +1,90 @@
+{
+  "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+  "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+  "verdict": "PASS_SCOPED_NORMAL_DEPLOYMENT_BUILD_COMPONENT",
+  "blockingFindings": [],
+  "scope": "Exact six deployment source/test paths plus four generated tracked outputs; no fresh deployment qualification.",
+  "sourceCarry": {
+    "review": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-6414-deployment-mode-review.json",
+    "sha256": "da06884628a379f7b1595d274f1596faa48df626f1346be1d8d57bfcaaf90f63",
+    "originalCandidate": "6414158410976582f2acbee5951f4cc1cfbb16e5",
+    "allSixSourceHashesExactlyEqual": true,
+    "sources": {
+      "apps/src/billboard/deploy/engine.js": "9ae0f23077ebc42bd12e63fa1c3d00e2652f813426f91b18b77e1a905d5ad301",
+      "shared/deployment-manifest.mjs": "44cccad9a4a6727e478304daba78e072b6a393db90972f1e1d86d3c5b1972936",
+      "scripts/test-w03-deploy-engine.mjs": "5372c04fbb9d26d77160c704116b2b5dfcc16d4270d1e7d7375224853cab734b",
+      "scripts/test-deployment-manifest.mjs": "e224e7393ba3d119fbb959d6f7b5a919636b94b614dffbc44947bc43807fd04d",
+      "shared/l2-journal.mjs": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+      "scripts/test-w03-journal.mjs": "37fe09613a4603a8c0a5a89133d773a61e034069232ecf5e4eca47aac8b5d3bb"
+    }
+  },
+  "buildEvidence": {
+    "result": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/G12/deployment-build/result.json",
+    "sha256": "002a27dc070e5c1d931feaa9be9448f33fa210e4b94ff086f6e9ef7e4c380f2b",
+    "session": 50585,
+    "exitCode": 0,
+    "buildSource": "cca233ec5ccf826caaa84773c43d9386a3fb35e2",
+    "commands": [
+      "scripts/build-sdk.mjs",
+      "apps/build.mjs",
+      "scripts/rolling-wallet-assets.mjs"
+    ],
+    "logsVerified": {
+      "sdk.log": "6d8bd775432e814ca77b85b420f75c253c265f8cfc17773e26a1f88b56276a44",
+      "apps.log": "13c62523ec7684f8a7d67ed2cf0b91ae6b21575f41e3f0459dd0d3cd49fde210",
+      "wallet.log": "b31680a552968b56fd0bb489d84ace5a388638dd5c54d6f1a9570a9aaeaa2890"
+    },
+    "trackedOutputsVerifiedInBothWorktrees": {
+      "apps/dist/aztec_bundle.js": "7c347cc2b3f1dbaea0e978739d835bea09be6a6ef9ec6042a9866d9d6f0680e0",
+      "apps/dist/deploy.html": "a9de6b34b635fae7814a6e548fe8a6efb8e60519882d40085a2cda7c31c368a7",
+      "apps/dist/plugins.js": "05f022f9d1517f53379b722ce8c507740ca8eec85380d3f4ee96f1a354e117c9",
+      "apps/dist/sdk-manifest.json": "c290ce30200b934c832d9bf7f09ad764df9c63e286ce42301f200beac9ee92a4"
+    },
+    "reusedBok": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/G12/deployment-build/reused-normal-bok.json",
+      "sha256": "4ae46a7c6ce9495d1f3566d058f94bfce396752f2e4286293186bc20912f6fab",
+      "all14InputsRehashedOnBuildAndCandidate": true,
+      "all3ReusedOutputHashesVerified": true,
+      "compiledArtifactAndProbeHashesUnchanged": true
+    }
+  },
+  "independentChecks": {
+    "workingTreeClean": true,
+    "gitDeltaExactly10Paths": true,
+    "sdk": {
+      "inputs": 2053,
+      "outputs": 8,
+      "allHashesVerified": true,
+      "lockfileAndBuildScriptVerified": true,
+      "appsDistSdkCopyVerified": true
+    },
+    "frontend": {
+      "inputs": 97,
+      "outputs": 10,
+      "allHashesVerified": true
+    },
+    "wallet": {
+      "inputs": 94,
+      "servedFiles": 25,
+      "allHashesAndSizesVerified": true
+    },
+    "candidateTrackedInputComparisons": 224,
+    "allPassed": true,
+    "toolChunks": [
+      "61cdef",
+      "7536f8",
+      "c471e0"
+    ]
+  },
+  "assessment": [
+    "Native getConfig.realProofs strict own boolean is captured by preflight: local-test chain31337 false; operator Sepolia11155111 true. Actual engine feeds the same captured native flag to CRS/PXE and rejects stale SDK missing the flag. No application proof-verification bypass or SDK source patch introduced.",
+    "Rolling alone sets reconcileOnly; dropped/unknown recovery never authorizes automatic retransmission or replacement. Legacy default journal behavior remains unchanged. Exact source/test carry from prior independent review is valid.",
+    "Normal SDK, frontend and wallet builders ran; retained logs and all resulting manifests/output hashes match actual files. Generated SDK also incorporates already-integrated funding exports and Ethereum journal bytes whose prior tracked dist was stale. Those inputs match candidate source, rather than being an unexplained source delta.",
+    "Reused normal PrivateBok manifest has all14 exact current inputs; both compiled output artifacts remain identical to the qualified reused outputs. No compiler rerun or manual manifest patch is claimed."
+  ],
+  "limits": [
+    "No fresh local or testnet deployment, real proof, portal settlement, actual funded account, or PrivateBok lifecycle acceptance.",
+    "Build qualification pertains to normal output locations in rolling-lead-social plus the four tracked output files committed to5734; it does not assert ignored build trees in another checkout were copied.",
+    "Prior staged source test coverage remains staged; no fresh whole engine suite or actual browser deployment run was performed for this review."
+  ]
+}

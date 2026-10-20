@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "282a1e1df46c7aa20ff85f82dbb826545ac687c0",
+  "proposalSha256": "b6bb9a5b3cb010ff77de16d038d1262546b5c8ba87875c19236e06a2a730b5f8",
+  "verdict": "source-feasibility-investigation-permitted; redesign-not-source-or-genuine-approved",
+  "assessment": [
+    "Agree282 timing evidence does not support a genuine run under unchanged150s admission. No blind retry or deadline increase. Thread-only is smaller but historicalrc1 timings cannot establish currentrc3 fork margin.",
+    "One required native proof and independent read can theoretically overlap without creating a second proof; separate same-owner PXE/cache/journal namespace and exact job admission baseline are necessary. An empty bootstrap fullscan plus authenticated suffix could preserve full enumeration, provided the original retained-head/state and later full reorg rebuild assertions remain unchanged."
+  ],
+  "blockingDesignProofsBeforeImplementationAcceptance": [
+    {
+      "subject": "Cancellation and late financial forwarding",
+      "source": "rolling-application-fixture.mjs:startNodeRpc lines274-285; prover/private-query.mjs QUERY_LIMITS.timeoutMs10000 and upstream AbortSignal.timeout",
+      "requirement": "Gate must be before both onSend counter and node.sendTx, bind exactly the original authorized operation/hash/bytes, reject every other send, observe actual HTTP/client/context/deadline cancellation, and never release after failed/aborted/timed-out read or disconnected writer. Merely awaiting/draining the native promise does not prevent late forwarding."
+    },
+    {
+      "subject": "No deadlock during failure cleanup",
+      "requirement": "Gate rejection must settle the original writer without waiting on actor.close; preserve falsy original read/write errors and signed-unsent journal evidence, then await all started work before disposing either actor. Never retry automatically or reset an uncertain transaction."
+    },
+    {
+      "subject": "No-effects and discovery attribution",
+      "source": "actor.activity uses observer-local auth/wallet plus parent service.stats().submitted and native-forward transportSends",
+      "requirement": "Keep original counters and observed both-tag metrics unchanged. Source-prove writer post-admission phase cannot introduce tag/private discovery while the read window is active; do not subtract allowed writer traffic or reinterpret submitted as completed. Record one exact pre-admitted job and its completion separately."
+    },
+    {
+      "subject": "Same retained state across marker/fork",
+      "requirement": "Observer store remains identical through required marker close/reopen and rollback; writer journal/store requirements remain independently enforced. New bootstrap is extra read coverage, never a substitute for retained/orphaned/restored/replacement-height/replacement state assertions."
+    },
+    {
+      "subject": "Budget evidence",
+      "requirement": "Measure overlap duration, service admission/native options, all phase durations, aggregate memory and latest actualfork before any marker grant. Two-thread history is guidance only; preserve540s/4GiB and all original checks."
+    }
+  ],
+  "factualCorrection": "edddbdaa requested/reported2 but actual trusted child HARDWARE_CONCURRENCY12; it must not be classified as measured2-thread evidence. f799 actual2 and later1b1c are stronger historical references, stillrc1/other workload.",
+  "nextDisposition": "Parent may assign narrowly bounded source work after choosing design. Prefer existing APIs and reject overlap if exact cancel/job attribution cannot be enforced without broad financial lifecycle changes. Current282 component148 evidence remains valid; no genuine eligibility follows.",
+  "execution": "Read-only source/evidence inspection; no edits/tests/native/provider work."
+}

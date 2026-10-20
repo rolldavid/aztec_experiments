@@ -1,0 +1,57 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "5a62b5213aefc6e6ae398488ced38d235b1b5f22",
+  "base": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "verdict": "approved source for one bounded genuine trusted-recovery campaign",
+  "blocking_findings": [],
+  "source_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "a68c8f8314e125de05911b69d06bbfac8d828d851e6c76577500f76e5a419df9",
+    "scripts/testing/rolling-application-fixture.test.mjs": "5acbd7064e57c4a54af5809a22d161cb9c76843b13644b14caf4fd07b4d80361",
+    "scripts/testing/rolling-public-acceptance.mjs": "88e8d89626203a0a25dd85a7729cae97afab5efc5dc1ae5f62cf3131d5283abf",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "26c5d8785fe50242abdc7c9b263060026617370e29b116e878335967e50be487",
+    "scripts/testing/rolling-trusted-recovery.mjs": "2b153489345016f156c0578c6f0a486ce78fbb4d9072adcce372ae8e46a48c1d",
+    "scripts/testing/rolling-trusted-recovery.test.mjs": "b5d80470bc655278e24dd23baf58646eb999074d7462a334bbc40b7e2953a878",
+    "scripts/testing/scenario-flows.mjs": "6f7fab7dee2a13c41db51e2e452b80ee2f5ab94151b1303b2e070142d98beecd",
+    "scripts/testing/scenarios.mjs": "8f72cfd2bddbe848dac7dec58328368b3c7c31ee45ac012f17d3cd58e7cc72d9",
+    "shared/rolling/public-index.test.mjs": "048f611b527588a356ca270a119e20c9ea38a19347f7f86e281d08c72f5483ef"
+  },
+  "resolved_findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "scenario": "First public acceptance registers the public-reader observer label. The second stale-state acceptance allocated another reader endpoint and registered the same label, which the actual observer rejects; the required stale recovery journey would fail before its HTTP assertions.",
+      "required_repair": "Retain one observer endpoint identity across serial listener lifetimes without weakening duplicate registration or omitting observations.",
+      "disposition": "Explicit validated readerPort records the first listener endpoint and reuses it for subsequent fresh/reopened stale-state sessions. Existing duplicate-registration guard remains intact. Actual ABI/SQLite/HTTP regression closes all four listener lifetimes on the same port."
+    }
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-trusted-recovery.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs shared/rolling/public-index.test.mjs",
+      "result": "pass",
+      "tests": 105,
+      "skipped": 0,
+      "duration_ms": 5772.519291,
+      "log": "/tmp/reviewer-trusted-recovery-5a62-tests.log"
+    },
+    {
+      "command": "git diff --check2397d2e..5a62b521",
+      "result": "pass"
+    }
+  ],
+  "source_disposition": [
+    "Existing genuinely funded actors, production synchronized application, branded trusted node, actual RPC/prover and private fee machinery retained. Optional upstream fault controls absent by default; no fabricated SDK responses or alternate private route.",
+    "Unavailable faults reject before underlying forwarding. Personalized fault occurs only after ordinary readiness passes and before underlying getContract; exact400 attribution and counters remain mandatory.",
+    "Ciphertext lookup agrees with actual encrypted workflow/L2 key framing and private file adapter. Exact prepared intent, private owned names, original canonical signed predecessor and byte hashes survive each fault; no proof/submission or public fallback permitted.",
+    "Initial real-wall miner fully stops and restores automining before sequencer pause and natural default120-second aging. Public timestamp and latest L1 number must stay unchanged; no clock override or freshness relaxation. Recovery uses one second sequential miner only after restoration; finally attempts automining and sequencer restoration on failure.",
+    "Catch-up ef533 source repair retained: actual bounded index pages sequentially before sole server owner, original30-second acceptance budget and error propagation. Reader port has safeinteger0..65535 validation and exact listener equality.",
+    "Intentional outage503 and exactly one getContract400 are explicitly distinguished from missing observations. All five receiver legs reconcile, both trusted human roles must be positive, public-reader/ordinary roles absent, and unknown/unsupported/pending/truncation/errors fail closed.",
+    "Default540s/4GiB unchanged; admission requires natural aging plus60s recovery reserve and subsequent operations remain under parent deadline. Slow setup or recovery is a genuine bounded failure, not permission to extend limits.",
+    "Production contract, artifact, SDK/prover/private-node code unchanged. Existing actor/resource cleanup owns every handle and restores observer/native loader only after their users close."
+  ],
+  "limitations": [
+    "105 checks use labelled control/upstream fixtures and real local HTTP/SQLite/SDK composition; no genuine live recovery campaign has run at this revision.",
+    "Scope is retained prepared state and successful signed predecessor through unavailable, post-readiness denial and naturally stale service. Lost receipt after an accepted send is not covered.",
+    "Same local trusted/ordinary node topology, opaque payload and transport limits remain; this is not full human unlinkability, deployed Linux qualification, specialist audit, G06 completion or production release approval.",
+    "Cold recovery is not claimed by this scenario. No new private operation is submitted after recovery; the prepared intent is cancelled."
+  ]
+}

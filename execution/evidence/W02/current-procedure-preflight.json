@@ -1,0 +1,16 @@
+{
+  "sourceRevision": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "procedureDirectory": ".build/w02-current",
+  "files": {
+    "run.mjs": "1bdeff816841480c0bba68306913e94bc9a8d609490084f011e45f5c8028fbc5",
+    "supervise.mjs": "7396fa13ff26947d0cf6f40b7b1368878bf18d941fa918fa4dd98fb38675d0fd"
+  },
+  "syntaxChecks": "both files passed node --check",
+  "focusedImportCheck": {
+    "command": "node .build/w02-current/run.mjs --check-only",
+    "passed": true,
+    "networkOrBrowserStarted": false
+  },
+  "dependencies": "physical rolling-lead-bok; Controls node_modules remains absent",
+  "status": "ready for explicit live slot and fresh served-runtime SHA; no actual acceptance yet"
+}

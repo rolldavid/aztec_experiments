@@ -1,0 +1,57 @@
+{
+  "candidate": "9e2b8202139e260fc8608b770e43a49c5babc9ec",
+  "base": "55d24de1e0fae6bd93b3a91e3a3607e4e84d768f",
+  "verdict": "approved-scoped-source-component",
+  "source": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "77a23fb5b9b518e7323218f6e814658688374447fcb046c1f5fa3ce4553dbebd",
+    "apps/rolling/wallet-panel.mjs": "e3046626154037f0a50150af388a2eb57a27f50ccca90659b2f62e76a18a30db",
+    "apps/rolling/wallet-session.mjs": "516fb7af0c91a317384bd21eb5c9dcb53adb0911861dd6722ab4fa2c37e45dde",
+    "apps/rolling/wallet-session.test.mjs": "54beaae324c84016311639a2eeaa2c1faf661ae607baff59af2086980952125a",
+    "shared/rolling/application.mjs": "51c2f1631b661193262b1ef702bff489e5007ebdd4279453d2c3353d2a983d6e",
+    "shared/rolling/application.test.mjs": "753d579cb5a88e38da1fcf521da55ad7863b2b10f83ee35dff1b975ab30680e3",
+    "shared/rolling/synchronized-application.mjs": "f4a362cfc4af078503b429ea808edb31c2e5a900592410a006ef6a77a3f18ef4",
+    "shared/rolling/synchronized-application.test.mjs": "024faa0531fe0fb9a448fae3b14a985436763d2806b077bac8338bf621babc17",
+    "shared/sdk-entry.mjs": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248"
+  },
+  "blockingFindings": [],
+  "review": [
+    "Private balances use owner-local utility calls, fixed10 collateral page, exact receipt identity and field bounds, PXE anchor before/after plus canonical block check. Opaque continuation is session-bound and consumed on success; moving anchor fails closed. Public node requests do not include a grouped owner-ID list.",
+    "FEE and Bok free balances remain distinct. Unresolved fee reservation is explicit and not double deducted. FEE redemption is not invented; Bok request accounting is explicitly incomplete.",
+    "Eligibility matches actual Rolling withdraw screening/time-lock predicates. Encrypted withdrawal metadata preserves original depositor/amount before L2 submission and is rechecked before send; no public moderation policy requirement added.",
+    "Original L2 exit stays protected against unrelated workflow replacement until separate original-depositor refund verification. Successful canonical L2 transaction/effect must contain exactly one domain-bound exit leaf, with canonical block and native witness.",
+    "Refund preparation and confirmation require original depositor wallet, exact chain, actual portal call and bounded gas including doubled estimate; selected wallet and membership rechecked at signer boundary. Original encrypted Ethereum journal supplies nonce, one broadcast and read-only ambiguous outcome recovery.",
+    "Successful L1 refund is validated via actual transaction/canonical receipt/exact portal effect; nonlocal chains additionally require finalized Ethereum height plus same block hash before releasing workflow.",
+    "Outstanding underlying reads are tracked and drained before releasing session ownership. UI separates private exit fee, L1 gas cap and refund amount; cancel review does not send. No fee-token redemption or Bok withdrawal claim."
+  ],
+  "verification": {
+    "packetSha256": "118b4ca91468f6ad56c07d9408be529cf7e5eba9e60d95676fcc20a80a707399",
+    "sourceAndEvidenceHashChecks": 33,
+    "allMatch": true,
+    "sourceReferences": [
+      "billboard/rolling_contract/src/main.nr withdraw/get_deposit_info",
+      "shared/ethereum-journal.mjs validateIntent/verifyEthereumIntentReceipt/broadcast",
+      "installed archiver outbox_trees_resolver getL2ToL1MembershipWitness"
+    ],
+    "newReviewerRuntime": false
+  },
+  "tests": {
+    "currentFocused": {
+      "pass": 21,
+      "elapsedMs": 1947,
+      "logSha256": "e0a79ce9dd8cfa05686e54fbf020772c24df2ad9a30fbf6afb2300eabf55b95a"
+    },
+    "browser": {
+      "pass": 3,
+      "elapsedMs": 1971,
+      "logSha256": "18378de7fa0fb6136a29c562ccc9556a3eaba05cbe936a7192e888c82805ae6d",
+      "scope": "Actual Chromium with labelled application/provider doubles"
+    },
+    "historical": "178 completed labels in failed60s owner plus59 separately completed labels and sync5 retained. No clean full-suite pass inferred."
+  },
+  "limits": [
+    "Actual named-wallet L2 withdrawal/L1 refund and genuine proof/testnet acceptance remain open.",
+    "Complete Bok request accounting requires uniform complete public pages filtered locally; requestsComplete:false is accurate. Bok withdrawal UI remains separate.",
+    "Per-page bounds and moving-anchor refusal do not establish full large-history/live-pagination acceptance.",
+    "Normal SDK/wallet rebuild is required after new SDK export; generated artifacts are not part of this candidate."
+  ]
+}

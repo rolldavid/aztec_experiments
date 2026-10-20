@@ -1,0 +1,20 @@
+{
+  "purpose": "Selected unchanged actual SDK constructor using correct normal artifact",
+  "passed": true,
+  "deadlineMs": 60000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [],
+  "children": [
+    {
+      "role": "actual-sdk-constructor",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "elapsedMs": 1009,
+  "ownedTreeAbsent": true
+}

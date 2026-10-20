@@ -1,0 +1,73 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+  "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "verdict": "coverage carry approved in principle; final integration withheld pending current genuine runtime and final closure",
+  "policySha256": "646f06a16d8cdf56128ae18037325424c3797dfd5125c4da42278d92de9a9244",
+  "proposalSha256": "9062bfef038c51ed8e5ccec65fd81eeccbe2f6bc547c035a9f0b59b1995920da",
+  "exactDiffPathCount": 51,
+  "unchangedPriorTestFiles": 10,
+  "totalPriorTestFiles": 11,
+  "sdkInputDelta": [
+    {
+      "path": "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js",
+      "previous": "2f1a33c8bbcdd16af817eb7c0d5dc0e1c944f5f5055f99d280da4f8d0e321cdf",
+      "current": "e6efed86ab1f05b268cf11bfe02ecd0e9fe6462e6747585285090d00232c3100"
+    },
+    {
+      "path": "node_modules/@aztec-labs/kv-store/src/deprecated/indexeddb/store.ts",
+      "previous": null,
+      "current": "e71b52af584c9e2285c80f635503c1f4d1989948a3b8b21db860d8178f7ae0f6"
+    },
+    {
+      "path": "scripts/patch-indexeddb-atomicity.mjs",
+      "previous": null,
+      "current": "ee0cca283d835ea2624cee5acdceaf0ee540f62d674387bc2aa5ff63ca2bc6fb"
+    }
+  ],
+  "sdkOutputDelta": [
+    "aztec_bundle.js"
+  ],
+  "receiptBindings": {
+    "integration-a75-affected-union": {
+      "sha256": "1af33127c88cb3d1927d950b521790ec86e7655cca074ad9d2e8f0d64d6130e7",
+      "logSha256": "75e2eeb3bbd303ad1466c6b0711fb16e749aaac4ac58c6e265904a7450fe787c",
+      "elapsedMs": 61400
+    },
+    "fresh-evidence-directory-final-tests": {
+      "sha256": "9eccbfeb13998746ae88d04d756e4138b969e2f041db5b1d76845ea22c22d7b9",
+      "logSha256": "d8afb19ffa2608bd2eabcef73809ea41ea8a42218ac2ba4d7aef6a5330865721",
+      "elapsedMs": 2595
+    },
+    "indexeddb-04bf-independent-components": {
+      "sha256": "ef813ba29f89abd025816d72413a18863e2ca7a7974db732b2de51a438479b7e",
+      "logSha256": "1fd27ee8974871ff3319461681ba6f13d3e4719ed0f0c38da976e7b2a45e7b0d",
+      "elapsedMs": 1245
+    },
+    "indexeddb-04bf-independent-browser": {
+      "sha256": "600d9a9393134e4ca26b0302689a5e2fa5538daf0511bd4a0183f5df755fe240",
+      "logSha256": "c39d98c169b39a70b36ca03cbee3d659c37f173124659ae22a85d9a7a90bb80b",
+      "elapsedMs": 3367
+    }
+  },
+  "disposition": {
+    "affected-source-checks": "Carry prior424 union as historical regression evidence for unchanged ten test files and unchanged subjects. Its one changed fixture/test is superseded by current72, with three filesystem cases independently run. Changed dependency behavior is NOT established merely by same test blobs: independent80storage/manifest/installer checks and actual currentChromium address that affected surface. No additional blanket union rerun necessary absent new source/failure.",
+    "indexeddb-real-browser": "Independent04bf tested current unchanged exact built SDK and actual coordinator with labelled map contributors, both callback failure timing modes/request errors/new containers/queue and collection success. Closes observed storage-level failure blocker, not full encrypted-PXE or allbrowser qualification.",
+    "source-build-closure": "At final gate rehash candidate51paths, installedTS/dest+installer, allSDK2042/8, frontend97/10,wallet81/24,contract/catalog/PrivateBok and current native binary pins. Include corrected isolated generatedoutputs; exclude stale root frontend closure after wrong-cwd build.",
+    "genuine-notification": "Current b440 run pending. Must independently establish four canonical writes, real B browser subscription/marker, A reply, unread\u2192read and fresh keys-only restore, both account fees/private/public/pool conservation, no unintended sends, exact source/newstore fingerprints, unchanged540s4GiB/admission and full cleanup. No success inferred from current progress.",
+    "default-native-profile": "Carry genuineb612 default1 proof/resource and boundedCLIrelationship functional evidence by exact nativeworker/profile/protocol/application sources. IndexedDB has changed, so b612 is not postpatch cold-store evidence; currentnotification plus storage/browser checks supply affected normalwrite/recovery conjunction. No source-based need to repeat allfiveproofrelationshipscurrentsolelyforresource1.",
+    "infrastructure-source-carry": "Carry exact unchanged seven approved diagnostic files and their39Node/51Python checks by blob identity frompriora75; immutable package09/failedremote09 do not qualify currentwholedeployment."
+  },
+  "remainingHolds": [
+    "Current genuine notification success and independent exact receipt review.",
+    "Final committed source/dependency/generated closure and unchanged artifact/native qualification hashes.",
+    "Final gate evidence maps each required check explicitly and preserves all failed attempts, including80b000."
+  ],
+  "noAdditionalMandatoryBroadRun": true,
+  "excluded": [
+    "FullG07,large-historyboundedcoldPXE,proofsoundnessspecialistaudit,productionrelease,remoteLinuxavailability/compatibility",
+    "Controlsisolatedrc3lock/native/CRSmigration",
+    "Designpreferencepage/commitguardprototype/nativecrashdiagnostic"
+  ],
+  "execution": "Read-onlygit/hash/receipt/manifestcomparison; no native/browser/test/proof/network job."
+}

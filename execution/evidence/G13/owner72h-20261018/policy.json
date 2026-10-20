@@ -1,0 +1,31 @@
+{
+  "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+  "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+  "task_id": "T06-owner-delivery-policy",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "AGENTS.md",
+    "execution/DRAFT3.md",
+    "execution/specification-clarifications.md"
+  ],
+  "required_checks": [
+    "owner-policy-and-existing-gate"
+  ],
+  "requirements": [
+    "Owner-72-hour-delivery",
+    "T06-bounded-reliability"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "T06-owner-delivery-policy",
+      "paths": [
+        "AGENTS.md",
+        "execution/DRAFT3.md",
+        "execution/specification-clarifications.md"
+      ]
+    }
+  ]
+}

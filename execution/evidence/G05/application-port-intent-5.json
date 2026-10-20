@@ -1,0 +1,17 @@
+{
+  "createdAt": "2026-10-11T20:51:15.609669+00:00",
+  "source": "3f34bcf95eee655fbbca4703fc485f400ba0c7fe",
+  "attempt": 5,
+  "scenario": "rolling-application-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "hypothesis": "Actual installed BaseWallet Fr values were compared to decimal text. Independent source diagnosis and22checks confirm strictnumeric repair; SDK routing/proofs/fees/checks unchanged. Also narrow panelfailureclassification approved8browserchecks. No timeout/acceptance relaxation.",
+  "priorFailure": "application-3baf8636-bff2-4c9c-b327-85faabc76f20.json",
+  "diagnosis": "chain-info-3baf-diagnosis.json",
+  "review": "combined-campaign-3f34-review.json",
+  "scope": "Five genuineapplicationportactions +canonicalpublicHTTP/SQLite +encryptedjournalreopen. Localcontrolledsettlement, no provider/paidaction.",
+  "status": "launching once",
+  "launchRecordedAt": "2026-10-11T20:52:11.294218+00:00",
+  "serialization": "No other localheavyjob. Remote04 reviewedbootstrap downloads/startsnode andonlyqueryqualification, requiresproofJobs0; nosecondprovingjob."
+}

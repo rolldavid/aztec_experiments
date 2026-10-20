@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "scope": "Read-only pinned Anvil lifecycle investigation; not actual reorg acceptance",
+  "anvilCommit": "f83bad912a9dba7bf0371def1e70bb1896048356",
+  "sources": [
+    {
+      "label": "anvil-api",
+      "url": "https://raw.githubusercontent.com/foundry-rs/foundry/f83bad912a9dba7bf0371def1e70bb1896048356/crates/anvil/src/eth/api.rs",
+      "lines": "3005-3101",
+      "sha256": "cf1a729d68e87d3708ce32b473c5b9d797d8b329d279bc54c10baac43ae967cc"
+    },
+    {
+      "label": "anvil-backend",
+      "url": "https://raw.githubusercontent.com/foundry-rs/foundry/f83bad912a9dba7bf0371def1e70bb1896048356/crates/anvil/src/eth/backend/mem/mod.rs",
+      "lines": "2729-2749;3376-3455",
+      "sha256": "74420bfc71e9b2aacbd1dc5890647d6ef3ae44fdbda742619dedda42191a3620"
+    }
+  ],
+  "finding": "The pinned anvil_reorg empty replacement path does not reinsert orphaned mined L1 transactions into its Pool. It constructs an empty replacement map; backend rollback unwinds chain/state and then explicitly mines empty vectors. Existing pending Pool transactions are not cleared by this path.",
+  "recommendation": [
+    "No transaction deletion or nonce/state override.",
+    "Observe empty pending L1 pool before and after replacement while publishers are paused; preserve actual chain, archiver, world-state and original-transaction validation gates.",
+    "Require same retained ancestor and exact replacement suffix, and fail on unexpected pending transactions."
+  ],
+  "draftParentFeedback": [
+    "Fresh explicit sequencer pause and three-way checkpoint barrier address prior restart-in-finally concern.",
+    "Marker cold reopen precedes first post-fork preference read and uses same store.",
+    "Replacement paid outcome must be collected and persisted before mandatory success assertions, including failed submit/reconcile outcomes."
+  ],
+  "limits": [
+    "No Anvil service or actual fork executed.",
+    "Uncommitted parent draft is not source-approved.",
+    "SDK publishers independently resubmitting work are not ruled out solely by Anvil source."
+  ]
+}

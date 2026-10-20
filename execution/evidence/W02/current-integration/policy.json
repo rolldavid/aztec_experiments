@@ -1,0 +1,30 @@
+{
+  "base": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "candidate": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "W02",
+  "implementer": "controls-resume-20261014",
+  "allowed_paths": [
+    "shared/journal-backup.test.mjs"
+  ],
+  "required_checks": [
+    "portable-backup-regression",
+    "current-w02-closure"
+  ],
+  "requirements": [
+    "W02-A01",
+    "W02-A02",
+    "W02-A03",
+    "W02-A04"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-resume-20261014",
+      "task_id": "W02",
+      "paths": [
+        "shared/journal-backup.test.mjs"
+      ]
+    }
+  ]
+}

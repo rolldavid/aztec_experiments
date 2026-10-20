@@ -1,0 +1,28 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourceReviewSha256": "1a40ce649b9f81ee127e9ed9a4e10335b29c08f36cbec510fa80dd33495c1e83",
+  "preparationSha256": "653eaf03fd2eb40daf6d94f11265dda2b323b268c79a923052459d6fdd3ae781",
+  "passed": true,
+  "tests": 11,
+  "skipped": 0,
+  "elapsedMs": 160,
+  "exitCode": 0,
+  "rssMeasured": false,
+  "protectedCount": 813,
+  "protectedUnchanged": true,
+  "ownedTreeAbsent": true,
+  "tempRemoved": true,
+  "files": {
+    "run.mjs": "4f38cbf2893d944aa05c40405fcee60c80fe49368c5f0a80cf21aceaa4799cd6",
+    "suite.py": "05d17691d432cfa6f0a8cb4dcf474d14781dd1f749fee7483075bc41fe74698e",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "result.json": "a82b825f7d7cdbedc154af9cc423b20721cada229400a66fff6e8effecdbf3a9",
+    "execution-intent.json": "a53f0d05882dd677122235ec08a0afc1ba75304ede23cbb3ee0eecc9cb543940",
+    "build.log": "73b5bcb326e1fca0f6acf756922ed3b479555d044d417ac715f902d2eb05ff4c",
+    "before-source.json": "e5e30cd6fd7fd9112ac3abce31017139d1f6c1c3317128764bc8ef5dfb407771"
+  },
+  "limits": [
+    "Labelled controlled tests only; no Docker/network/native/guest actions.",
+    "Actual never-started container diagnostic remains separately gated."
+  ]
+}

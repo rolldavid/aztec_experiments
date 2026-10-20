@@ -1,0 +1,8 @@
+{
+  "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "inputs": 97,
+  "outputs": 25,
+  "result": "pass",
+  "reason": "Only test-only observation modules and tests changed; all existing manifest input/output hashes verified unchanged."
+}

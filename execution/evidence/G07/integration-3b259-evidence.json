@@ -1,0 +1,274 @@
+{
+  "task_id": "G07-explicit-saved-and-reorg-recovery-components",
+  "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "affected-source-checks",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node serial affected test suites; exact-source composition and carry review",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Current157pass0fail0skip; prior exact journal/app/saved suites retained with independent current binding and SDK-impact disposition.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/pxe-3b259-composition-checks.json",
+          "sha256": "f7aaa7b587263a18eed1baecedc9ca258625c15242b8e80d7d205f8028d3b557"
+        },
+        {
+          "path": "execution/evidence/G07/pxe-3b259-combined-tests.log",
+          "sha256": "252e266da91f30c7516e8bef9dbee8900d470ec7de68ede6b506dd795cabc213"
+        },
+        {
+          "path": "execution/evidence/G07/pxe-3b259-source-eligibility-review.json",
+          "sha256": "e6b12c5288041186a80f264ec7372ed09b0e08c758561eac95ed8a37df7f814c"
+        },
+        {
+          "path": "execution/evidence/G07/saved-f52-composition.json",
+          "sha256": "ddd4766cb4629f1bab0cbd21402944937260ff0f4906bfd4b95912f0761e5202"
+        },
+        {
+          "path": "execution/evidence/G07/saved-f52-combined-tests.log",
+          "sha256": "7d7e66c93ae63df3304cfc787299120055b177b0d9afb59fe69a246044f60fab"
+        },
+        {
+          "path": "execution/evidence/G07/saved-f52-source-eligibility-review.json",
+          "sha256": "127ba801c93163f0eae8be277a279caec13aac0a28af53b3e66cf74dae6edc8d"
+        },
+        {
+          "path": "execution/evidence/G07/recovery-a552-source-eligibility-review.json",
+          "sha256": "4b5b0b20aaace2dc38fe07a4df52fbfd25546247c9a2e6f540382c4c379166e7"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    },
+    {
+      "id": "normal-sdk-wallet-assets",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned node scripts/build-sdk.mjs; scripts/rolling-wallet-assets.mjs; independent actual manifests",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Normal SDK2040inputs/8outputs; wallet81inputs/24files; patched exact TS/dest, canonical artifacts and catalogs independently checked.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/pxe-3b259-composition-checks.json",
+          "sha256": "f7aaa7b587263a18eed1baecedc9ca258625c15242b8e80d7d205f8028d3b557"
+        },
+        {
+          "path": "execution/evidence/G07/pxe-3b259-sdk-build.log",
+          "sha256": "fda8e158a36994c2b0161b24f9b098fd64d675f9c45bd18bfd5e15be26117102"
+        },
+        {
+          "path": "execution/evidence/G07/pxe-3b259-wallet-build.log",
+          "sha256": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890"
+        },
+        {
+          "path": "execution/evidence/G07/pxe-3b259-source-eligibility-review.json",
+          "sha256": "e6b12c5288041186a80f264ec7372ed09b0e08c758561eac95ed8a37df7f814c"
+        }
+      ]
+    },
+    {
+      "id": "explicit-recovery-ui",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Production-panel DOM and visual checks on final unchanged UI blobs; independent current carry review",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Separate inspection and explicit savedtransaction confirmation, exact signed fees/hash/marker; no automatic send. Labelled DOM/visual fixtures, not a real browser saved-send claim.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/saved-ui-3bead1a-final-review.json",
+          "sha256": "4c67da337fc59c4e9ecd0b23efecb80d0f044237c36a68215a0b6dd6bbecf908"
+        },
+        {
+          "path": "execution/evidence/G07/saved-ui-3bead-independent-dom.log",
+          "sha256": "a9c6258c137052a4a14636a1116dbcd17bb9068a04a73e0ea121f03716aff6b4"
+        },
+        {
+          "path": "execution/evidence/G07/saved-f52-source-eligibility-review.json",
+          "sha256": "127ba801c93163f0eae8be277a279caec13aac0a28af53b3e66cf74dae6edc8d"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    },
+    {
+      "id": "genuine-saved-byte-recovery",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinned-node scripts/test-c01-application.mjs rolling-preference-saved",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Historical f52/d6ba genuine exactbytes same-store recovery accepted independently. Current carry explicitly limited to unchanged journal/application/saved path with current SDK regressions + genuine reorg/fees/reopen, never relabelled current execution.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/application-d6baaa0d-f3f9-4619-9f64-c396a0ec4d97.json",
+          "sha256": "73242671e83226520548b8b98dd88b503f36c2bb5324b9994a176358a6ffbc8b"
+        },
+        {
+          "path": "execution/evidence/G07/saved-d6ba-runtime-review.json",
+          "sha256": "a28b2fc6c2f8fdc3d07da3c2cae9f5d7419c14387e528b748fbf038004064f8a"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    },
+    {
+      "id": "genuine-initial-reorg",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i pinned-node scripts/test-c01-application.mjs rolling-preference-reorg-initial",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Current3b/e1cad pass450654ms1917568KiB; actualfork/archiver+hotPXE rollback, originaltx removal, authenticatedfees and explicitreplacement; allcleanup.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/application-e1cad0a5-1ab2-4fa6-adcf-135b5038020c.json",
+          "sha256": "ed943d8ae88138e1b8861bd0c5d6dec7878589407cfa975c7438964c79184169"
+        },
+        {
+          "path": "execution/evidence/G07/preference-reorg-initial-intent-4.json",
+          "sha256": "d6247299cf336862634e63b22f110b2138c2818501fcb04044ae45bc080f0772"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-e1cad-runtime-review.json",
+          "sha256": "7e0da6c35aa4db455170980cf1ed02f223cc6feac4e6664ddf4af4cf67000630"
+        }
+      ]
+    },
+    {
+      "id": "genuine-marker-reorg",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i pinned-node scripts/test-c01-application.mjs rolling-preference-reorg-marker",
+      "environment": "Pinned Node24.21.0 / Aztec6.0.0-rc.1; local Mac arm64. Historical source carries explicitly reviewed, not relabelled as current runs.",
+      "observed": "Current3b/bcbe7 actualPASS484835ms2167968KiB; initialized head and cold same-store rollback, explicit same-height marker replacement, exact fees/history and allcleanup independently reviewed. Private digest assertions executed source-bound; no independent offline digest recomputation claim.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/application-bcbe7cc0-5a6c-4117-b052-c24007bc3284.json",
+          "sha256": "2e1a74b1fc0fbae550d822fd2230cf7873302283eb2eae8c338ab5e082c4d5e3"
+        },
+        {
+          "path": "execution/evidence/G07/preference-reorg-marker-intent-1.json",
+          "sha256": "8169723bb6e53bac6b1de7c63fb526138678228934e4b438f7a7b11770ff70b0"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-bcbe-runtime-review.json",
+          "sha256": "fee011cbe82e11fac8a27f9feb269b771147a05edf261949fc5095243ce741aa"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+    "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/integration-3b259-final-review.json",
+        "sha256": "170f15b696d5e5f2a82f08c3dd13a1de46f64e539f1d0e8c24353bc0a1a6ec09"
+      },
+      {
+        "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+        "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G07-A02-explicit-canonical-rollback-component",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/integration-3b259-final-review.json",
+          "sha256": "170f15b696d5e5f2a82f08c3dd13a1de46f64e539f1d0e8c24353bc0a1a6ec09"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-e1cad-runtime-review.json",
+          "sha256": "7e0da6c35aa4db455170980cf1ed02f223cc6feac4e6664ddf4af4cf67000630"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-bcbe-runtime-review.json",
+          "sha256": "fee011cbe82e11fac8a27f9feb269b771147a05edf261949fc5095243ce741aa"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    },
+    {
+      "id": "G07-A07-saved-byte-and-replacement-component",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/integration-3b259-final-review.json",
+          "sha256": "170f15b696d5e5f2a82f08c3dd13a1de46f64e539f1d0e8c24353bc0a1a6ec09"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-e1cad-runtime-review.json",
+          "sha256": "7e0da6c35aa4db455170980cf1ed02f223cc6feac4e6664ddf4af4cf67000630"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-bcbe-runtime-review.json",
+          "sha256": "fee011cbe82e11fac8a27f9feb269b771147a05edf261949fc5095243ce741aa"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    },
+    {
+      "id": "G07-A10-reorg-read-marker-component",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/integration-3b259-final-review.json",
+          "sha256": "170f15b696d5e5f2a82f08c3dd13a1de46f64e539f1d0e8c24353bc0a1a6ec09"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-e1cad-runtime-review.json",
+          "sha256": "7e0da6c35aa4db455170980cf1ed02f223cc6feac4e6664ddf4af4cf67000630"
+        },
+        {
+          "path": "execution/evidence/G07/reorg-bcbe-runtime-review.json",
+          "sha256": "fee011cbe82e11fac8a27f9feb269b771147a05edf261949fc5095243ce741aa"
+        },
+        {
+          "path": "execution/evidence/G07/integration-3b259-coverage-review.json",
+          "sha256": "0a2101abf603513de75775fb52827de9968a177e8849c68e0fd17879e7dba38d"
+        }
+      ]
+    }
+  ],
+  "limits": "Development recovery components only. Full G07 cold discovery bounds, actual reply notification native actions, operated archive and full privacy remain open. All other product requirements and specialist audit,14day soak,current-network release gates retained. Historical evidence needs explicit independent exact-blob and SDK-impact carry disposition; missing/skipped checks never passing."
+}

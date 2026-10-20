@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-10-12T02:40:27.679655+00:00",
+  "status": "PROPOSAL_ONLY_REVIEW_AND_SEPARATE_BUILD_LAUNCH_AUTHORIZATION_REQUIRED",
+  "candidate": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+  "candidateReview": "approved source only; rootG02/startup-stages-c062-review.json SHA5eec3b1d158b464df208895d7e0fddfa797b0aa7032d9b8f35a90b06877e616b",
+  "noPaidAction": true,
+  "noPackageBuild": true,
+  "noNodeExecution": true,
+  "noLedgerMutation": true,
+  "evidence": {
+    "startup-stage-infra-reconciliation-20261012.json": "b0c85906ce3b744f3b8d49a2ae595e61979c5c5607afa661866594a8831eae32",
+    "startup-stage-resource-prices.json": "735a1bf897d91382d99d24719ef17ecf60a90c82018818383b6ec038f5d0fdbe",
+    "startup-stages-c062-handoff.json": "8fda098406cbde32da0e758a7408d70c306312813a9bec8986207923277f8e43",
+    "startup-stage-image-equivalence-complete.json": "6074e9defd65a36a59a12c9faeace58eb122b8e721cf62c35c5ea88173de31d4",
+    "operator05b-cleanup-confirmation.json": "3e09efc09a1440d5b0b64af686016d63ce3789d4805d1d4d54fcf8cb0529a4fa"
+  },
+  "sourcePins": {
+    "deploy/prover/bootstrap.py": "a6c5e725d9294872ff88cd8d179be432737826fb43357d7d044ccbe632cafadd",
+    "deploy/prover/startup-stages.mjs": "cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49",
+    "deploy/prover/package.py": "b418397c323884a9d1c1608ed6c3fea1b069d617a7de6b9da78657584178e5af",
+    "prover/rolling-artifacts.json": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+  },
+  "ledgerInput": {
+    "sha256": "5a868d86d5827b83c4f632276f39819ca568116f8c7674293f4bc6c865afc7db",
+    "committedBoundUsd": 145.28,
+    "remainingUsd": 154.72
+  },
+  "liveSummary": {
+    "asOf": "2026-10-12T02:37:12.342641+00:00",
+    "identityVerified": true,
+    "region": "us-east-1",
+    "liveInstances": 0,
+    "terminatedInstancesListed": 1,
+    "volumes": 0,
+    "snapshots": 0,
+    "elasticAddresses": 0,
+    "activeFleets": 0,
+    "deletedFleets": 5,
+    "scheduledShutdowns": 0,
+    "eventRules": 0,
+    "plugin": "ready",
+    "pluginActive": 0,
+    "noCostExplorerQuery": true,
+    "historical05bReceiptUnchanged": true
+  },
+  "diagnosticChange": {
+    "scope": "native AMD64 execution of the same pinned fullnode image with finite exact-source-gated stages; no prover job/public routing",
+    "known": "05b succeeded native genesis then exited1 before observable readiness. Current Mac public L1 read probe passes. Independent image-generated genesis constant equals onchain root; image default/enrichment closure now byte-matched. None of this identifies prior AWS failure cause.",
+    "newEvidence": "Protected dedicated stage begin/completion records bind exact helper and module hashes. Never retain arbitrary stdout/error/config/capability. Nodes/public wallets are not given developer AWS privileges.",
+    "notUnmodifiedImage": true,
+    "notMaliciousProcessAttestation": true,
+    "noAutomaticReplacement": true
+  },
+  "proposal": {
+    "instanceType": "m7a.4xlarge",
+    "architecture": "x86_64/native AMD64",
+    "vCPU": 16,
+    "physicalCores": 16,
+    "memoryGiB": 64,
+    "nodeMemoryLimitGiB": 24,
+    "region": "us-east-1",
+    "hourlyUsd": 0.92736,
+    "pricingSKU": "TTPYSE2GSHDGSMTX",
+    "pricingEffective": "2026-10-01",
+    "ami": "ami-0fa5967347d08d2df",
+    "amiOwner": "099720109477",
+    "amiState": "available",
+    "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+    "rootGiB": 40,
+    "dataGiB": 1024,
+    "volumeType": "encrypted gp3, baseline3000IOPS125MiBs, DeleteOnTermination",
+    "gp3GbMonthUsd": 0.08,
+    "operatingMinutes": 60,
+    "why60": "Smallest practical diagnostic window preserving existing30min commissioning and15min qualification allocation plus startup/sync observation. Existing code computes deadline=min(budgetStop-60s,createdAt+105min), readiness=min(deadline-900s,createdAt+90min); with60min budget this gives44min readiness and59min qualification cutoff, then60min absolute stop. No source clock/gate change. Shorter budget risks leaving little readiness time if30min commissioning is consumed.",
+    "deadlineMinutesFromFreshCreatedAt": {
+      "commissioning": 30,
+      "readiness": 44,
+      "qualification": 59,
+      "hostBudget": 60,
+      "fleetExpiry": 60
+    },
+    "earlyFailure": "Once exact receipt/service observation confirms terminal node failure, preserve sanitized stage receipt and stop owned instance/retire fleet through a separately authorized once-only cleanup. Do not spend whole hour polling a known-dead process. Dedicated record is not remotely readable before a finalizer receipt unless an actual existing safe observation exposes terminal status; no assumption of early visibility.",
+    "syncLimitation": "A healthy node needing longer initial sync may miss44min; record prerequisite blocker, no automatic extension or waived readiness. This proposal does not guarantee sync or qualification.",
+    "ioLimitation": "Current official hardware page targets50000+random IOPS; baseline gp3 and m7a4xl are deliberately retained for bounded startup diagnosis, not sustained-throughput acceptance. Root cause has not been attributed to I/O; any production sizing qualification remains separate.",
+    "egressMbps": 50,
+    "ports": "Existing SG unchanged; P2P40400TCP/UDP. Node8082/admin8882 loopback. No SSH/keypair/instance IAM profile/Docker API. Prover/proxy remain masked.",
+    "independentControls": "requestFleet Type=request, ValidUntil=createdAt+60min, TerminateInstancesWithExpiration=true; persistent absolute host budget timer installed before downloads;30min commissioning,50Mbps shaper; verify actual deadlines/DOT/termination behavior and receipt source bindings.",
+    "readinessQualification": "Exact actual node identity/proofmode/canonical sync/freshness plus existing isolated Linux query qualifier; no proofs/jobs/routing. Historical legacy addresses only for query qualification, current Rolling catalog separately verified."
+  },
+  "forecast": {
+    "usdComponents": {
+      "compute_1h_plus30min": 1.3910399999999998,
+      "gp3_1064GiB_1_5h_plus24h_orphan": 2.9733698630136987,
+      "publicIPv4_1_5h": 0.0075,
+      "egress45GB_bound_0_195": 8.775,
+      "newArchiveReceipt30dayRetention": 0.5,
+      "crossRegionAndOperatorReads": 0.5,
+      "requestAllowance": 0.25,
+      "newSnapshots": 0
+    },
+    "subtotalUsd": 14.396909863013699,
+    "taxBuffer20PercentUsd": 2.87938197260274,
+    "additionalBillingCleanupBufferUsd": 7.723708164383561,
+    "proposedReservationUsd": 25,
+    "proposedCumulativeUsd": 170.28,
+    "remainingAfterReservationUsd": 129.72,
+    "computeOverrunMinutes": 30,
+    "orphanVolumeAllowanceHours": 24,
+    "fullRateEgressPhysical1_5hGb": 33.75,
+    "reservedEgressGb": 45,
+    "networkRateMethod": "Conservative0.195USD/GB allowance retained from prior multi-path forecast, above ordinary internet-out rate; not claimed a new measured invoice rate. No free-tier credit assumed.",
+    "retention": "New archive/receipt30days allowance0.50; older retained archives covered by existing145.28 bound and global reserve. No snapshots or new persistent backup capacity. Both volumes must be confirmed absent after cleanup; delayed cleanup/charges not treated aszero.",
+    "noOverlap": "No live instance, volume or active fleet observed. All prior costs remain in145.28; proposed25 is new reservation, not reset."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
+      "observed": "2026-10-12",
+      "fact": "v6rc1 fullnode16vCPU,8GB,1TB,25Mbps floor"
+    },
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/concepts/hardware",
+      "observed": "2026-10-12",
+      "fact": "1TB SSD/NVMe recommended;50000+random IOPS target;25Mbpsfloor/100Mbpscomfortableproduction"
+    },
+    {
+      "url": "https://aws.amazon.com/ebs/pricing/",
+      "fact": "gp3 price and baseline public reference; exactus-east1 rate separatelyverified GetProducts evidence"
+    }
+  ],
+  "prelaunchGates": [
+    "Independent approval of exactc062 or repaired descendant; integrate one reviewed source into lead checkout.",
+    "Separate sole packaging slot: fresh source-bound rolling-profile runtime, full fileset+hash+nativepins+catalog/helper verification and deterministic archive; no reuse0502 archive as current.",
+    "Lead reserve25 in shared ledger before upload/launch; refresh complete forecast with currentprice ifchanged.",
+    "New private0700 operator06 directory; preserve05b journals and finalfailure. All generated configs/capabilities/intent files0600. No replay05b uploads/probe/LT/Fleet.",
+    "Fresh archive and manifest hashes, unique immutableS3key/exactversion; one upload with fsynced intent and checksum. Preserve unknown result and reconcile, do not resend.",
+    "Fresh scoped GET/PUT capabilities via existing message-board-deploy provider; actualcredentialexpiry must cover horizon+cleanup. ExactGETRange206 in eu-west2, boundversion/checksum. Reuse known receipt protocol; no duplicate oldprobe.",
+    "Fresh actual private userdata <=16384bytes, gzip/LZMA roundtrip/source/hash/shell/Python syntax. HOST literal unchanged atc062 but actualcompressed payload stillmustberechecked.",
+    "At launch require at least20min left in30min commissioning window; if stale regenerate untouched new preparation version before any LT/Fleet intent, not modify launched inputs.",
+    "Live identity/account/noactivecompute/noEBS/noactivefleets/plugin check. Terminated listed instance is not overlap; filter active/stopped states explicitly.",
+    "Single retry-disabled LT/Fleet calls after separate exclusivefsynced intents/clienttokens; missingacknowledgement reconciles token/name/state and neverpermitsblind replay.",
+    "Actual cloud+host controls readback, stagehelper/mount/hash sourcebound, recorddirectoryprotected; failure->safe receipt thenauthorizedcleanup, no publicrouting."
+  ],
+  "requiredCommandsReference": "startup-stage-operator06-proposal.md",
+  "commandHandoffSha256": "6c57d108db6e6547cdbbc688b41d39fcb6013891f96d4a1875f298f37647e94a"
+}

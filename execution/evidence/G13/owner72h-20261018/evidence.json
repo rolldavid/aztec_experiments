@@ -1,0 +1,69 @@
+{
+  "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+  "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+  "task_id": "T06-owner-delivery-policy",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+      "task_id": "T06-owner-delivery-policy",
+      "id": "owner-policy-and-existing-gate",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent review of owner amendment plus seven changed/dependent execution graph checks and graph validate; exact commands in linked review",
+      "environment": "Existing repository-local Python graph controls; no application transaction",
+      "observed": "Seven cases passed; graph validates53packages269criteria; duration removed, actual interval/coverage preserved",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/owner72h-20261018/review.json",
+          "sha256": "ae0981b91637683ccdf047ac75878446fa925a3710bde6068efe0469ed9667f2"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+    "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+    "task_id": "T06-owner-delivery-policy",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/owner72h-20261018/review.json",
+        "sha256": "ae0981b91637683ccdf047ac75878446fa925a3710bde6068efe0469ed9667f2"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+      "task_id": "T06-owner-delivery-policy",
+      "id": "Owner-72-hour-delivery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/owner72h-20261018/review.json",
+          "sha256": "ae0981b91637683ccdf047ac75878446fa925a3710bde6068efe0469ed9667f2"
+        }
+      ]
+    },
+    {
+      "base": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "candidate": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+      "task_id": "T06-owner-delivery-policy",
+      "id": "T06-bounded-reliability",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/owner72h-20261018/review.json",
+          "sha256": "ae0981b91637683ccdf047ac75878446fa925a3710bde6068efe0469ed9667f2"
+        }
+      ]
+    }
+  ]
+}

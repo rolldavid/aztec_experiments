@@ -1,0 +1,54 @@
+{
+  "reviewedAt": "2026-10-13T22:09:50.373313+00:00",
+  "status": "EARLY FINDINGS ONLY; final coherent funding/USDC verdict deferred",
+  "rootCandidate": "ab899223d1692a420ad35a286a425b538d65e576",
+  "designHead": "a1e54bf4f45347938e59fb6df170ec99004a3af5",
+  "designWorkingBytes": {
+    "shared/rolling/aggregate-wallet.mjs": "46c45f0137ec04fb8819ea49a672b3bda6e34930beb57cbc62161d7115706d43",
+    "apps/rolling/wallet-session.mjs": "2fd0a67c201ff3679ceca7cf07596a7b88107059b145c1c0f2a18c41ec06bf6a",
+    "apps/rolling/wallet-panel.mjs": "6e0619895aeb9973d81a5e39a7d8c8a352c19fd9f1aa53a31d75e10310f8d4e6",
+    "shared/journal-backup.mjs": "e2c4ecd095eb375a1fbedd6f3fe5f0e4160fb7ba6d9c8320c1a16a4972d066c8"
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "priority": 1,
+      "owner": "root/design",
+      "location": "application.fundingClaim -> aggregate-wallet.loadAggregate",
+      "issue": "Unconditional aggregate lookup requires a saved aggregate intent even for old valid direct receipts, breaking direct collateral/private-fee receipt recovery when aggregate configuration is enabled.",
+      "repair": "Return null only for no/unrelated aggregate intent; preserve matching ambiguous aggregate failures; never blanket catch canonical recovery errors."
+    },
+    {
+      "id": "F2",
+      "priority": 1,
+      "owner": "design",
+      "location": "wallet-panel.advanceFunding between prepare and checkpointClaim",
+      "issue": "Durable application prepared intent can exist before aggregate claim pointer is saved. Restart tries prepare again and original workflow correctly rejects replacement, leaving automatic funding recovery stuck.",
+      "repair": "Recover and bind exact existing claim intent/receipts under original journal guards, without creating a replacement or repeating payment."
+    },
+    {
+      "id": "F3",
+      "priority": 2,
+      "owner": "design",
+      "location": "wallet-panel.advanceFunding attempted branch",
+      "issue": "Crash after attempted:true before submitPrepared leaves application prepared; reconcile returns prepared and panel polls indefinitely.",
+      "repair": "Expose explicit saved-claim recovery/review on this state, preserve no automatic replay after ambiguous attempt."
+    },
+    {
+      "id": "F4",
+      "priority": 2,
+      "owner": "design",
+      "location": "aggregate-wallet.prepare previous.value.intent fence",
+      "issue": "Any historical intent permanently blocks later funding, including after all claims confirmed; additional funding is mandatory G04.",
+      "repair": "Support an explicit finalized successor cycle preserving old recovery and refusing unknown/reverted-unresolved replacements."
+    }
+  ],
+  "positiveReview": [
+    "Ethereum transaction nonce is captured separately from portal consent nonce; derivation currently uses actual sender and transaction nonce. USDC sender/beneficiary variant must stay explicit.",
+    "Aggregate exact calldata/runtime hash/all-three effects are checked before separate original canonical-finality/L1-to-L2 witness claim checks.",
+    "BatchCall combines board and Bok private claims, original private-fee helper supplies bridge claim plus mint/pay, all revalidated before submit with saved maximumFee.",
+    "Random Bok recipientSalt/bridgeSecret stored in encrypted aggregate slot before Ethereum submission; aggregate backup key domain added; secrets not returned in renderer quote or public action.",
+    "Ethereum aggregate retry is explicitly disabled; fixed maximum gas price times gas limit bounded by reviewed gasBudget; finality remains required for claims."
+  ],
+  "limits": "No runtime performed. Working source is still being repaired. Findings communicated directly to parent and Design; final approval deferred until coherent batch."
+}

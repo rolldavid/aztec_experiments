@@ -1,0 +1,119 @@
+{
+  "task": "G07",
+  "requirements": [
+    "RC25",
+    "RC26"
+  ],
+  "sourceRevision": "4628b9916842f6cf0ab946cb329f1e4b0723cc51",
+  "runtimeSHA256": "0e658970492df5c01e20b10d22c2ec68f8de1628b4038e952d2286fb89d7cb3a",
+  "result": "PASS actual interrupted independent keys-only recovery of nonempty preferences",
+  "scope": "Original U1 wrote three canonical preferences through normal application. A separate retained keys-only profile, which never wrote those preferences, reconstructed exact values from authenticated physical history. This is warm interrupted recovery, not fresh whole-history performance acceptance.",
+  "writeSourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "writerProfile": "original U1; newest workflow subsequently confirmed bio1530 remains authoritative",
+  "readerProfile": {
+    "retained": true,
+    "device": 16777232,
+    "inode": 233425597
+  },
+  "keysOnlyBackupSHA256": "43c3eda3d5871c725a139db0f0ca00621dfec5c2c11aee2904d4951b3a565fd4",
+  "actualReconstructed": {
+    "complete": true,
+    "anchor": {
+      "blockNumber": 1542,
+      "blockHash": "0x2dc64adcc0d6cd93e7f0fb58e9bec94ad60ca3c019ffc3c31e139ef2d19a4518"
+    },
+    "progress": {
+      "nextBlock": 1543,
+      "anchorBlock": 1542,
+      "processedRevision": "3",
+      "markersChecked": 1,
+      "markersTotal": 1
+    },
+    "revision": "3",
+    "bookmarksMatch": true,
+    "boardsMatch": true,
+    "markerMatch": true,
+    "noOrphans": true
+  },
+  "execution": [
+    {
+      "run": "mixed throughput",
+      "seconds": 15.455,
+      "result": "focused64-block progress878->942; one initialization bodyinspection failure preserved"
+    },
+    {
+      "run": "warm completion",
+      "seconds": 87.111,
+      "result": "UI complete revision3 at anchor1537; failed final comparison because an extra read selected newer anchor1540 and returned recovering. Raw failure preserved; no application error inferred.",
+      "responseBodyInspectionFailures": 1
+    },
+    {
+      "run": "same-read comparison",
+      "seconds": 12.585,
+      "result": "three existing bounded reads complete suffix and compare exact same returned snapshot; no repeated whole-history scan",
+      "responseBodyInspectionFailures": 0
+    }
+  ],
+  "finalTraffic": {
+    "walletAssets": 16,
+    "privateRequests": 233,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 6,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "cleanup": {
+    "contextClosed": true,
+    "ownedTreeAbsent": true,
+    "linkRestored": true,
+    "tempRemoved": true,
+    "originalBackupUnchanged": true
+  },
+  "evidence": [
+    {
+      "path": "execution/evidence/G07/keys-only-current/nonempty-writes-7cc.json",
+      "sha256": "202e7f944d92dce2206ece39067b688e231bae8a7ba61aecc6105c7fa586b947"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/actual-result-nonempty-7cc-recovery.json",
+      "sha256": "cf440e6cbc67cb8e731372686aba2aa0b3bee95a30431795177f20fe1fcc9a3f"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/actual-result-mixed-4628-throughput.json",
+      "sha256": "2992d3dede933be157579d141a4fba03dc80201a45702d8dd42b96c732464880"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/keys-only-mixed-4628-throughput.json",
+      "sha256": "5b064a33510b3efe43600c10f47c060ddcb57b53513b5d74cae848c1756268dc"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/actual-result-mixed-4628-nonempty-completion.json",
+      "sha256": "87dcfa184c506b02d4faee6af672e190c4b53296754a4ec13a354819eaab32b5"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/keys-only-mixed-4628-completion.json",
+      "sha256": "50817fc1db2211c6afce87422519bf8f32ebeb7476acbdddeff65d59d8fe2cb9"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/actual-result-mixed-4628-same-read-values.json",
+      "sha256": "84c268a2e3cad3f30ddd26c99f075594ede43bfa9ea0ff93a40266d9e0d51d21"
+    },
+    {
+      "path": "execution/evidence/G07/keys-only-current/keys-only-mixed-4628-same-read.json",
+      "sha256": "9aafe2d84961d9d343f8952892f782edb84f48dd6a42d51954fd66bcc4189d96"
+    }
+  ],
+  "limits": [
+    "Whole fresh120-second gate remains unproved; earlier observed rate extrapolated beyond120 for1540 blocks.",
+    "Every page retains10-second deadline; actual completed comparison read calls2.754,1.644,1.371 seconds.",
+    "Earlier traces have explicitly counted response inspection failures; final same-read trace has zero.",
+    "No real-proof testnet/privacy audit/soak/network release gate is substituted by native proof-disabled development acceptance."
+  ],
+  "resume": "Retained independent profile is complete next1543/anchor1542/revision3. Do not rewrite preferences here or replay original financial actions. Original U1 remains separate under Controls ownership. Root owns services and next acceptance allocation."
+}

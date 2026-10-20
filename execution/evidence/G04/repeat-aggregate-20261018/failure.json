@@ -1,0 +1,11 @@
+{
+  "source": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "actualWallet": "MetaMask13.49.0.0 cleanprofile/localdevelopmentmnemonic/31337",
+  "operation": "Getfreshquote after completedfunding, post, privatepreferences; freshbrowserrestore",
+  "result": "ROLLING_INTENT_NOT_FOUND",
+  "stage": "aggregateWallet.archivePrevious -> reconcileClaim(oldintentId) -> application.savedIntent",
+  "smallReproduction": "Same failure from existing session.funding.prepare(valid ETHallocation) withoutconfirmation/send",
+  "newPayments": 0,
+  "originalPayment": "0xc80ba5da75de3c2002a79ff99187f2c7791ac0df9f9a47c7d80e90d657718522",
+  "remedy": "Durable canonical confirmedclaim receipt independent of mutable currentworkflow; reuse standalone topup pattern"
+}

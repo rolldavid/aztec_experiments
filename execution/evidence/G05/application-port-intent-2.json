@@ -1,0 +1,14 @@
+{
+  "createdAt": "2026-10-11T19:57:31.455359+00:00",
+  "source": "7cead066cafda7baaabc37034ef795b91a38c439",
+  "scenario": "rolling-application-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "attempt": 2,
+  "hypothesis": "Actual Anvil reproduced interval+warp+automining future timestamps. Reviewed real-wall application miner queues transactions and stamps blocks with actual wall time, preserves freshness rules and restores automining. Exercise five actual port actions, encrypted journals, canonical public HTTP and SQLite reopen.",
+  "priorFailure": "application-e0ebf27d-846c-441c-8e18-5f43f50e014c.json",
+  "scope": "Local genuine application proofs, controlled settlement, no provider calls or paid actions",
+  "reviewedClockWorker": "2b416da60234b308615488d09ff1a8246487a577",
+  "publicAcceptanceSource": "86249752ec6bd8df5500ba921b242d85b8e93c5f"
+}

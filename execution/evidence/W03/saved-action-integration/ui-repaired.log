@@ -1,0 +1,15 @@
+✔ uncertain submission cannot resend; reopening and replacement reconcile the retained intent (1627.033875ms)
+✔ replacement inspection and review never send; confirmation shows distinct ceiling and historical fees (734.83375ms)
+✔ saved original transaction needs explicit confirmation with its own fee ceiling (759.8685ms)
+✔ saved replacement transaction needs explicit confirmation with its own fee ceiling (782.805167ms)
+✔ ordinary saved post exact-byte recovery is explicit and preserves its draft (735.534833ms)
+✔ ordinary saved post replacement review is explicit and preserves its draft (701.593125ms)
+✔ saved avatar recovery cannot bypass the exact preview requirement (659.852417ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6260.758708

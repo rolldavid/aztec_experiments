@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-name-pattern=actual saved-versus-reorg dispatch",
+    "scripts/testing/rolling-application-fixture.test.mjs"
+  ],
+  "exitCode": 1,
+  "elapsedMs": 336,
+  "source": "3e1aec9 production, added regression"
+}

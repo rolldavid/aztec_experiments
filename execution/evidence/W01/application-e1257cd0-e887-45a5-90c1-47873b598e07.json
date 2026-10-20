@@ -1,0 +1,2067 @@
+{
+  "applicationProofs": true,
+  "remoteProver": false,
+  "schemaVersion": 2,
+  "scenario": "private-fees",
+  "profile": "Private fee claim exit and refund",
+  "startedAt": "2026-10-10T09:49:56.525Z",
+  "passed": true,
+  "stages": [
+    {
+      "role": "fixture",
+      "stage": "start-disposable-l1",
+      "elapsedMs": 777
+    },
+    {
+      "role": "fixture",
+      "stage": "prepare-genesis",
+      "elapsedMs": 892
+    },
+    {
+      "role": "fixture",
+      "stage": "deploy-local-protocol-fixture",
+      "elapsedMs": 2563
+    },
+    {
+      "role": "fixture",
+      "stage": "wait-for-local-validator-activation",
+      "elapsedMs": 3797
+    },
+    {
+      "role": "fixture",
+      "stage": "start-application-node",
+      "elapsedMs": 3826
+    },
+    {
+      "role": "fixture",
+      "stage": "prove-board-deployment",
+      "elapsedMs": 7820
+    },
+    {
+      "role": "fixture",
+      "stage": "board-create-proving-wallet",
+      "elapsedMs": 7858
+    },
+    {
+      "role": "fixture",
+      "stage": "board-build-deployment-request",
+      "elapsedMs": 8128
+    },
+    {
+      "role": "fixture",
+      "stage": "board-genuine-client-proof",
+      "elapsedMs": 8810
+    },
+    {
+      "role": "fixture",
+      "stage": "board-serialize-proof",
+      "elapsedMs": 22368
+    },
+    {
+      "role": "fixture",
+      "stage": "board-real-node-validation",
+      "elapsedMs": 22379
+    },
+    {
+      "role": "fixture",
+      "stage": "board-close-wallet",
+      "elapsedMs": 22651
+    },
+    {
+      "role": "fixture",
+      "stage": "board-inclusion",
+      "elapsedMs": 22662
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-reopen-wallet",
+      "elapsedMs": 37055
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-deploy-disabled-portal",
+      "elapsedMs": 37677
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-prove-update-portal",
+      "elapsedMs": 37690
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-serialize-proof",
+      "elapsedMs": 47463
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-validate-update-portal",
+      "elapsedMs": 47473
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-close-wallet",
+      "elapsedMs": 47703
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-inclusion",
+      "elapsedMs": 47704
+    },
+    {
+      "role": "fixture",
+      "stage": "ready-settlement",
+      "elapsedMs": 57882
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:fund-disposable-user",
+      "elapsedMs": 88255
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:bridge-user-funds",
+      "elapsedMs": 88295
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:wait-inbox",
+      "elapsedMs": 88996
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:prove-standalone-funding",
+      "elapsedMs": 99228
+    },
+    {
+      "role": "fixture",
+      "stage": "private-fee:include-standalone-funding",
+      "elapsedMs": 112473
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:reopen-claim-wallet",
+      "elapsedMs": 123252
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:deposit-real-l1",
+      "elapsedMs": 123713
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:wait-real-inbox-anchor",
+      "elapsedMs": 123736
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:prove-real-claim",
+      "elapsedMs": 131231
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:include-real-claim",
+      "elapsedMs": 146657
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:check-delivered-deposit-note",
+      "elapsedMs": 154568
+    },
+    {
+      "role": "fixture",
+      "stage": "claim:reject-real-claim-replay",
+      "elapsedMs": 154752
+    },
+    {
+      "role": "fixture",
+      "stage": "exit:reopen-exit-wallet",
+      "elapsedMs": 154998
+    },
+    {
+      "role": "fixture",
+      "stage": "exit:wait-eligible-canonical-anchor",
+      "elapsedMs": 155592
+    },
+    {
+      "role": "fixture",
+      "stage": "exit:prove-real-withdrawal",
+      "elapsedMs": 185002
+    },
+    {
+      "role": "fixture",
+      "stage": "exit:include-real-withdrawal",
+      "elapsedMs": 198178
+    },
+    {
+      "role": "fixture",
+      "stage": "exit:verify-consumed-note",
+      "elapsedMs": 207427
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2313040,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 528928
+    },
+    {
+      "elapsedMs": 2028,
+      "rssKiB": 655840
+    },
+    {
+      "elapsedMs": 3058,
+      "rssKiB": 843904
+    },
+    {
+      "elapsedMs": 4082,
+      "rssKiB": 927200
+    },
+    {
+      "elapsedMs": 5109,
+      "rssKiB": 997200
+    },
+    {
+      "elapsedMs": 6133,
+      "rssKiB": 997920
+    },
+    {
+      "elapsedMs": 7159,
+      "rssKiB": 1088976
+    },
+    {
+      "elapsedMs": 8184,
+      "rssKiB": 1415872
+    },
+    {
+      "elapsedMs": 9212,
+      "rssKiB": 1336624
+    },
+    {
+      "elapsedMs": 10238,
+      "rssKiB": 1416272
+    },
+    {
+      "elapsedMs": 11263,
+      "rssKiB": 1728032
+    },
+    {
+      "elapsedMs": 12290,
+      "rssKiB": 1736752
+    },
+    {
+      "elapsedMs": 13314,
+      "rssKiB": 1640704
+    },
+    {
+      "elapsedMs": 14339,
+      "rssKiB": 1769696
+    },
+    {
+      "elapsedMs": 15363,
+      "rssKiB": 1928672
+    },
+    {
+      "elapsedMs": 16389,
+      "rssKiB": 1976752
+    },
+    {
+      "elapsedMs": 17414,
+      "rssKiB": 1976608
+    },
+    {
+      "elapsedMs": 18441,
+      "rssKiB": 1982304
+    },
+    {
+      "elapsedMs": 19466,
+      "rssKiB": 2010144
+    },
+    {
+      "elapsedMs": 20490,
+      "rssKiB": 2063888
+    },
+    {
+      "elapsedMs": 21514,
+      "rssKiB": 2080592
+    },
+    {
+      "elapsedMs": 22539,
+      "rssKiB": 2070160
+    },
+    {
+      "elapsedMs": 23563,
+      "rssKiB": 2075584
+    },
+    {
+      "elapsedMs": 24589,
+      "rssKiB": 2075680
+    },
+    {
+      "elapsedMs": 25614,
+      "rssKiB": 2077152
+    },
+    {
+      "elapsedMs": 26638,
+      "rssKiB": 2077440
+    },
+    {
+      "elapsedMs": 27661,
+      "rssKiB": 2078528
+    },
+    {
+      "elapsedMs": 28686,
+      "rssKiB": 2090464
+    },
+    {
+      "elapsedMs": 29711,
+      "rssKiB": 2091680
+    },
+    {
+      "elapsedMs": 30736,
+      "rssKiB": 2092256
+    },
+    {
+      "elapsedMs": 31762,
+      "rssKiB": 2092560
+    },
+    {
+      "elapsedMs": 32787,
+      "rssKiB": 2092752
+    },
+    {
+      "elapsedMs": 33812,
+      "rssKiB": 2094160
+    },
+    {
+      "elapsedMs": 34837,
+      "rssKiB": 2101712
+    },
+    {
+      "elapsedMs": 35862,
+      "rssKiB": 2132720
+    },
+    {
+      "elapsedMs": 36887,
+      "rssKiB": 2204080
+    },
+    {
+      "elapsedMs": 37912,
+      "rssKiB": 2229824
+    },
+    {
+      "elapsedMs": 38937,
+      "rssKiB": 2272256
+    },
+    {
+      "elapsedMs": 39964,
+      "rssKiB": 2288976
+    },
+    {
+      "elapsedMs": 40989,
+      "rssKiB": 2301440
+    },
+    {
+      "elapsedMs": 42014,
+      "rssKiB": 2301712
+    },
+    {
+      "elapsedMs": 43039,
+      "rssKiB": 2301792
+    },
+    {
+      "elapsedMs": 44064,
+      "rssKiB": 2303104
+    },
+    {
+      "elapsedMs": 45089,
+      "rssKiB": 2303552
+    },
+    {
+      "elapsedMs": 46113,
+      "rssKiB": 2304160
+    },
+    {
+      "elapsedMs": 47139,
+      "rssKiB": 2304448
+    },
+    {
+      "elapsedMs": 48164,
+      "rssKiB": 2303856
+    },
+    {
+      "elapsedMs": 49189,
+      "rssKiB": 2304080
+    },
+    {
+      "elapsedMs": 50216,
+      "rssKiB": 2304320
+    },
+    {
+      "elapsedMs": 51242,
+      "rssKiB": 2304624
+    },
+    {
+      "elapsedMs": 52266,
+      "rssKiB": 2305472
+    },
+    {
+      "elapsedMs": 53290,
+      "rssKiB": 2305728
+    },
+    {
+      "elapsedMs": 54315,
+      "rssKiB": 2306592
+    },
+    {
+      "elapsedMs": 55340,
+      "rssKiB": 2306704
+    },
+    {
+      "elapsedMs": 56365,
+      "rssKiB": 2306816
+    },
+    {
+      "elapsedMs": 57390,
+      "rssKiB": 2308592
+    },
+    {
+      "elapsedMs": 58414,
+      "rssKiB": 2311696
+    },
+    {
+      "elapsedMs": 59440,
+      "rssKiB": 2313040
+    },
+    {
+      "elapsedMs": 60465,
+      "rssKiB": 2138640
+    },
+    {
+      "elapsedMs": 61491,
+      "rssKiB": 2138672
+    },
+    {
+      "elapsedMs": 62516,
+      "rssKiB": 2139680
+    },
+    {
+      "elapsedMs": 63541,
+      "rssKiB": 2141008
+    },
+    {
+      "elapsedMs": 64565,
+      "rssKiB": 2142448
+    },
+    {
+      "elapsedMs": 65590,
+      "rssKiB": 2142912
+    },
+    {
+      "elapsedMs": 66615,
+      "rssKiB": 2143072
+    },
+    {
+      "elapsedMs": 67640,
+      "rssKiB": 2143104
+    },
+    {
+      "elapsedMs": 68665,
+      "rssKiB": 2143152
+    },
+    {
+      "elapsedMs": 69689,
+      "rssKiB": 2144320
+    },
+    {
+      "elapsedMs": 70715,
+      "rssKiB": 2032816
+    },
+    {
+      "elapsedMs": 71740,
+      "rssKiB": 2064448
+    },
+    {
+      "elapsedMs": 72766,
+      "rssKiB": 2183792
+    },
+    {
+      "elapsedMs": 73790,
+      "rssKiB": 2196784
+    },
+    {
+      "elapsedMs": 74815,
+      "rssKiB": 2217536
+    },
+    {
+      "elapsedMs": 75839,
+      "rssKiB": 2218144
+    },
+    {
+      "elapsedMs": 76864,
+      "rssKiB": 2218352
+    },
+    {
+      "elapsedMs": 77887,
+      "rssKiB": 2218752
+    },
+    {
+      "elapsedMs": 78913,
+      "rssKiB": 2218976
+    },
+    {
+      "elapsedMs": 79936,
+      "rssKiB": 2127152
+    },
+    {
+      "elapsedMs": 80961,
+      "rssKiB": 1970080
+    },
+    {
+      "elapsedMs": 81984,
+      "rssKiB": 2040880
+    },
+    {
+      "elapsedMs": 83008,
+      "rssKiB": 2063904
+    },
+    {
+      "elapsedMs": 84033,
+      "rssKiB": 2062480
+    },
+    {
+      "elapsedMs": 85056,
+      "rssKiB": 2062528
+    },
+    {
+      "elapsedMs": 86082,
+      "rssKiB": 2062560
+    },
+    {
+      "elapsedMs": 87107,
+      "rssKiB": 2062656
+    },
+    {
+      "elapsedMs": 88132,
+      "rssKiB": 2064048
+    },
+    {
+      "elapsedMs": 89156,
+      "rssKiB": 2066864
+    },
+    {
+      "elapsedMs": 90181,
+      "rssKiB": 1943520
+    },
+    {
+      "elapsedMs": 91205,
+      "rssKiB": 1944400
+    },
+    {
+      "elapsedMs": 92228,
+      "rssKiB": 1944480
+    },
+    {
+      "elapsedMs": 93253,
+      "rssKiB": 1944800
+    },
+    {
+      "elapsedMs": 94278,
+      "rssKiB": 1944688
+    },
+    {
+      "elapsedMs": 95302,
+      "rssKiB": 1944736
+    },
+    {
+      "elapsedMs": 96327,
+      "rssKiB": 1944768
+    },
+    {
+      "elapsedMs": 97352,
+      "rssKiB": 1944928
+    },
+    {
+      "elapsedMs": 98375,
+      "rssKiB": 1945824
+    },
+    {
+      "elapsedMs": 99400,
+      "rssKiB": 1949872
+    },
+    {
+      "elapsedMs": 100425,
+      "rssKiB": 1867680
+    },
+    {
+      "elapsedMs": 101450,
+      "rssKiB": 1905344
+    },
+    {
+      "elapsedMs": 102475,
+      "rssKiB": 1926192
+    },
+    {
+      "elapsedMs": 103500,
+      "rssKiB": 1946944
+    },
+    {
+      "elapsedMs": 104522,
+      "rssKiB": 1980608
+    },
+    {
+      "elapsedMs": 105547,
+      "rssKiB": 2033136
+    },
+    {
+      "elapsedMs": 106572,
+      "rssKiB": 2042048
+    },
+    {
+      "elapsedMs": 107597,
+      "rssKiB": 1828832
+    },
+    {
+      "elapsedMs": 108621,
+      "rssKiB": 1833648
+    },
+    {
+      "elapsedMs": 109647,
+      "rssKiB": 1901152
+    },
+    {
+      "elapsedMs": 110672,
+      "rssKiB": 1929136
+    },
+    {
+      "elapsedMs": 111697,
+      "rssKiB": 1960976
+    },
+    {
+      "elapsedMs": 112722,
+      "rssKiB": 1959120
+    },
+    {
+      "elapsedMs": 113747,
+      "rssKiB": 1959184
+    },
+    {
+      "elapsedMs": 114771,
+      "rssKiB": 1959248
+    },
+    {
+      "elapsedMs": 115796,
+      "rssKiB": 1959440
+    },
+    {
+      "elapsedMs": 116821,
+      "rssKiB": 1959952
+    },
+    {
+      "elapsedMs": 117846,
+      "rssKiB": 1959824
+    },
+    {
+      "elapsedMs": 118870,
+      "rssKiB": 1959904
+    },
+    {
+      "elapsedMs": 119895,
+      "rssKiB": 1959936
+    },
+    {
+      "elapsedMs": 120921,
+      "rssKiB": 1960256
+    },
+    {
+      "elapsedMs": 121944,
+      "rssKiB": 1960464
+    },
+    {
+      "elapsedMs": 122970,
+      "rssKiB": 1961872
+    },
+    {
+      "elapsedMs": 123995,
+      "rssKiB": 2017456
+    },
+    {
+      "elapsedMs": 125020,
+      "rssKiB": 2018016
+    },
+    {
+      "elapsedMs": 126045,
+      "rssKiB": 2018336
+    },
+    {
+      "elapsedMs": 127070,
+      "rssKiB": 2018416
+    },
+    {
+      "elapsedMs": 128096,
+      "rssKiB": 2018272
+    },
+    {
+      "elapsedMs": 129119,
+      "rssKiB": 2018384
+    },
+    {
+      "elapsedMs": 130145,
+      "rssKiB": 2018688
+    },
+    {
+      "elapsedMs": 131170,
+      "rssKiB": 2020464
+    },
+    {
+      "elapsedMs": 132195,
+      "rssKiB": 2033952
+    },
+    {
+      "elapsedMs": 133220,
+      "rssKiB": 2033552
+    },
+    {
+      "elapsedMs": 134244,
+      "rssKiB": 1959552
+    },
+    {
+      "elapsedMs": 135269,
+      "rssKiB": 1822256
+    },
+    {
+      "elapsedMs": 136293,
+      "rssKiB": 1924048
+    },
+    {
+      "elapsedMs": 137318,
+      "rssKiB": 1930224
+    },
+    {
+      "elapsedMs": 138343,
+      "rssKiB": 1989872
+    },
+    {
+      "elapsedMs": 139368,
+      "rssKiB": 2018608
+    },
+    {
+      "elapsedMs": 140394,
+      "rssKiB": 2022752
+    },
+    {
+      "elapsedMs": 141420,
+      "rssKiB": 2024912
+    },
+    {
+      "elapsedMs": 142445,
+      "rssKiB": 2031904
+    },
+    {
+      "elapsedMs": 143469,
+      "rssKiB": 2035120
+    },
+    {
+      "elapsedMs": 144495,
+      "rssKiB": 1997104
+    },
+    {
+      "elapsedMs": 145517,
+      "rssKiB": 2006960
+    },
+    {
+      "elapsedMs": 146541,
+      "rssKiB": 2020080
+    },
+    {
+      "elapsedMs": 147567,
+      "rssKiB": 2025616
+    },
+    {
+      "elapsedMs": 148595,
+      "rssKiB": 2027216
+    },
+    {
+      "elapsedMs": 149622,
+      "rssKiB": 2030336
+    },
+    {
+      "elapsedMs": 150647,
+      "rssKiB": 2037472
+    },
+    {
+      "elapsedMs": 151674,
+      "rssKiB": 2045296
+    },
+    {
+      "elapsedMs": 152706,
+      "rssKiB": 2047808
+    },
+    {
+      "elapsedMs": 153739,
+      "rssKiB": 2051888
+    },
+    {
+      "elapsedMs": 154763,
+      "rssKiB": 1998032
+    },
+    {
+      "elapsedMs": 155788,
+      "rssKiB": 2033616
+    },
+    {
+      "elapsedMs": 156812,
+      "rssKiB": 2033632
+    },
+    {
+      "elapsedMs": 157837,
+      "rssKiB": 2034080
+    },
+    {
+      "elapsedMs": 158861,
+      "rssKiB": 2034096
+    },
+    {
+      "elapsedMs": 159886,
+      "rssKiB": 2034112
+    },
+    {
+      "elapsedMs": 160909,
+      "rssKiB": 1945472
+    },
+    {
+      "elapsedMs": 161934,
+      "rssKiB": 1945504
+    },
+    {
+      "elapsedMs": 162959,
+      "rssKiB": 1946800
+    },
+    {
+      "elapsedMs": 163983,
+      "rssKiB": 1947648
+    },
+    {
+      "elapsedMs": 165009,
+      "rssKiB": 1947664
+    },
+    {
+      "elapsedMs": 166033,
+      "rssKiB": 1950576
+    },
+    {
+      "elapsedMs": 167059,
+      "rssKiB": 1950496
+    },
+    {
+      "elapsedMs": 168083,
+      "rssKiB": 1951296
+    },
+    {
+      "elapsedMs": 169108,
+      "rssKiB": 1951952
+    },
+    {
+      "elapsedMs": 170133,
+      "rssKiB": 1862944
+    },
+    {
+      "elapsedMs": 171157,
+      "rssKiB": 1677360
+    },
+    {
+      "elapsedMs": 172189,
+      "rssKiB": 1677824
+    },
+    {
+      "elapsedMs": 173265,
+      "rssKiB": 1677616
+    },
+    {
+      "elapsedMs": 174290,
+      "rssKiB": 1677712
+    },
+    {
+      "elapsedMs": 175314,
+      "rssKiB": 1677584
+    },
+    {
+      "elapsedMs": 176338,
+      "rssKiB": 1677600
+    },
+    {
+      "elapsedMs": 177361,
+      "rssKiB": 1677616
+    },
+    {
+      "elapsedMs": 178386,
+      "rssKiB": 1677776
+    },
+    {
+      "elapsedMs": 179413,
+      "rssKiB": 1684048
+    },
+    {
+      "elapsedMs": 180437,
+      "rssKiB": 1685472
+    },
+    {
+      "elapsedMs": 181460,
+      "rssKiB": 1685488
+    },
+    {
+      "elapsedMs": 182483,
+      "rssKiB": 1685824
+    },
+    {
+      "elapsedMs": 183508,
+      "rssKiB": 1685728
+    },
+    {
+      "elapsedMs": 184531,
+      "rssKiB": 1518800
+    },
+    {
+      "elapsedMs": 185558,
+      "rssKiB": 1505664
+    },
+    {
+      "elapsedMs": 186583,
+      "rssKiB": 1262896
+    },
+    {
+      "elapsedMs": 187607,
+      "rssKiB": 1299136
+    },
+    {
+      "elapsedMs": 188634,
+      "rssKiB": 1297760
+    },
+    {
+      "elapsedMs": 189658,
+      "rssKiB": 1025072
+    },
+    {
+      "elapsedMs": 190684,
+      "rssKiB": 1052544
+    },
+    {
+      "elapsedMs": 191708,
+      "rssKiB": 1175888
+    },
+    {
+      "elapsedMs": 192732,
+      "rssKiB": 1187040
+    },
+    {
+      "elapsedMs": 193756,
+      "rssKiB": 1190112
+    },
+    {
+      "elapsedMs": 194780,
+      "rssKiB": 1192688
+    },
+    {
+      "elapsedMs": 195804,
+      "rssKiB": 1225568
+    },
+    {
+      "elapsedMs": 196829,
+      "rssKiB": 1291872
+    },
+    {
+      "elapsedMs": 197854,
+      "rssKiB": 1310032
+    },
+    {
+      "elapsedMs": 198880,
+      "rssKiB": 1335680
+    },
+    {
+      "elapsedMs": 199915,
+      "rssKiB": 1346960
+    },
+    {
+      "elapsedMs": 200947,
+      "rssKiB": 1347472
+    },
+    {
+      "elapsedMs": 201972,
+      "rssKiB": 1348112
+    },
+    {
+      "elapsedMs": 203005,
+      "rssKiB": 1348816
+    },
+    {
+      "elapsedMs": 204037,
+      "rssKiB": 1348944
+    },
+    {
+      "elapsedMs": 205074,
+      "rssKiB": 1349344
+    },
+    {
+      "elapsedMs": 206105,
+      "rssKiB": 1349680
+    },
+    {
+      "elapsedMs": 207141,
+      "rssKiB": 1354976
+    },
+    {
+      "elapsedMs": 208166,
+      "rssKiB": 1379696
+    },
+    {
+      "elapsedMs": 209190,
+      "rssKiB": 1379760
+    },
+    {
+      "elapsedMs": 210214,
+      "rssKiB": 1379872
+    },
+    {
+      "elapsedMs": 211238,
+      "rssKiB": 1380448
+    },
+    {
+      "elapsedMs": 212261,
+      "rssKiB": 1380320
+    },
+    {
+      "elapsedMs": 213285,
+      "rssKiB": 1380352
+    },
+    {
+      "elapsedMs": 214309,
+      "rssKiB": 1380416
+    },
+    {
+      "elapsedMs": 215332,
+      "rssKiB": 1380432
+    },
+    {
+      "elapsedMs": 216356,
+      "rssKiB": 1380464
+    },
+    {
+      "elapsedMs": 217379,
+      "rssKiB": 1380464
+    },
+    {
+      "elapsedMs": 218403,
+      "rssKiB": 677600
+    },
+    {
+      "elapsedMs": 219427,
+      "rssKiB": 677680
+    },
+    {
+      "elapsedMs": 220460,
+      "rssKiB": 678320
+    },
+    {
+      "elapsedMs": 221498,
+      "rssKiB": 678320
+    },
+    {
+      "elapsedMs": 222535,
+      "rssKiB": 678608
+    },
+    {
+      "elapsedMs": 223571,
+      "rssKiB": 679232
+    },
+    {
+      "elapsedMs": 224606,
+      "rssKiB": 679232
+    },
+    {
+      "elapsedMs": 225640,
+      "rssKiB": 679248
+    },
+    {
+      "elapsedMs": 226675,
+      "rssKiB": 679744
+    },
+    {
+      "elapsedMs": 227709,
+      "rssKiB": 679744
+    },
+    {
+      "elapsedMs": 228744,
+      "rssKiB": 679744
+    },
+    {
+      "elapsedMs": 229781,
+      "rssKiB": 679744
+    },
+    {
+      "elapsedMs": 230819,
+      "rssKiB": 680544
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "fixture",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "localAnvilBinary": "22d5eeb9e70e198d0feb76a15bb97d2061b653798080dad0cc328ab20495b0bd",
+    "scripts/t04-metamask.mjs": "baf8d647048e525c32a478f4ec621f563f0f9fbb21b706cd5ef22d850a1fe574",
+    "scripts/t04-browser-performance.mjs": "da670983c6fb7bde4d05a3feceba5bbefbd47bfa5c79f961a5e74dc4deaed47b",
+    "scripts/t04-browser-funding.mjs": "7d7b65059be0a9bc1e4737065da6b7bb6449424b5d4bdc6cdd601e091d591eae",
+    "scripts/t04-cold-browser-fees.mjs": "9d6d558bdf7ec53b1b1ebd1e0d81ef771f9add3e460b56ddb43e19b53d250466",
+    "scripts/w01-unfunded-wallet.mjs": "88fcd03eba4bcd651986305d2d7a2d79d7e6df5812b92d17a14aa25fee224400",
+    "scripts/application-post.mjs": "f214dc792bedc75cc54fc65c4f4872b281f9b6b200cc16e5d5e04f5249eddcbe",
+    "scripts/t04-wallet-absence.mjs": "68bbd62f8ce00c6f9bb28603c4604ea37399c422d70d555f29af48b0e9b1aaff",
+    "scripts/t04-withdraw-traffic.mjs": "bd117106e45c71e5dac839c5b0a068cdc372c47ce123330b5f9a80bfc3049a3c",
+    "scripts/t03-repeated-posts.mjs": "32a689127efa9c5bfc4b6439c44d60b5c6007e3872baa957399427db5614548b",
+    "scripts/o01-censor-command-flow.mjs": "084cbe32ce4cf9d6d2f499b7fcd14caea7bc6087639b302085f411dd46c18620",
+    "scripts/o01-censor-command-io.mjs": "33241513fa6d7b1fcd02a0b282c8eb2dec9529020ba8d69b7e8ef165afce0ac8",
+    "scripts/t04-browser-journey.mjs": "89de5797546bf7013641af3f8fce3ebc5b4ea7096c73f96d9660de0e318cb0cc",
+    "scripts/t04-browser-journey-verify.mjs": "048e22fc5a84d0a6bcb170d813cc256c8c94a6ea7588ffe1dbb8ff8f67db9ce1",
+    "scripts/t04-browser-post-recovery.mjs": "0883fbea8e5d11bfe16bd2ae3a4d3c4950452828f1b2104ccb05740ddd86b129",
+    "scripts/t04-post-response-loss.mjs": "e2252661599cd245a749cb5d5a02be97be3eaee8446e67c8cda0d1c815fee46f",
+    "scripts/run-bounded-browser-check.mjs": "7af2410c85fe52dde3d655d64f271a1f6eefb18d0bbf7fc55f731f00bd85e9f0",
+    "scripts/u01-browser-flow.mjs": "1702d8bba00bc3d65862e7762bac93896ab4cd27fd47237ec6d9509aa1fb9f8b",
+    "scripts/u01-browser-post-verify.mjs": "bae85ddbf6c393b2ad7c6bf0a51b6d6a7a5ae944da2d7d6f2105b940411ee031",
+    "scripts/u01-browser-post.mjs": "a9bd16d3a7ef7b3c6f9846738fe7d20ac5d621a777da65400017ea104dee97a3",
+    "scripts/browser-error-observer.mjs": "0a54ad2eb04df064622f580c9f47dda956e1f0d1d226367f58f2034fba84c432",
+    "scripts/u01-browser-rpc.mjs": "953c1e5b0544c6eda2bc02d14d80917d63c144ebd5f1e918cfe79cd1592049c9",
+    "scripts/t03-rpc-observer.mjs": "384ef12f6980f04932e3f0a37e60434cb649293f9621787ca9bc0f23c2adafd5",
+    "scripts/t03-public-footprint.mjs": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d",
+    "scripts/c01-native-profile.mjs": "a3e5b526210247329bf1c936d3590e826db8fcf5e0cc6700d266986ec15967d0",
+    "scripts/test-c01-application.mjs": "3268aebedef1afa5ae1ee23158a425de1918f73e26ba2366e5112ff6f45c19a8",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "scripts/c01-settle-application-message.mjs": "13cb8cfe07b27382e1a160765f487fcecb8b3b306a8601623f864837578458ba",
+    "scripts/c01-application-deployment.mjs": "3f02b5d3076321cc85fcf94309571f86ff892cc5381411258b8d0bdbfef71aa1",
+    "scripts/w03-note-attribution.mjs": "779e2a17762688ff8977f3af73dea93a17a6c5f57d640e1e0b60b2994f734924",
+    "shared/application-nullifier.mjs": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+    "scripts/w03-proof-recovery.mjs": "d59facfb1a0809a771a4619671d6c85f6058a87911e331342b645832b4b25de3",
+    "shared/l2-journal.mjs": "97a7643a67876464b71cdce62a4fdfc876947aea6aa29319155961895b67dad1",
+    "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+    "shared/journal-backup.mjs": "3743dfb810a79feb27cf428b4cef7d41487065c0ef5fb29d2122fb0d1ce786b6",
+    "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+    "scripts/w02-wallet-restore.mjs": "075e36e2ad77486618e002b99a162a739ace47364ce9bbe4e35dc8fd60afa672",
+    "shared/wallet-backup.js": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+    "scripts/w01-private-fee-standalone.mjs": "465942a9e7f8f20ac02f586e24e40b408883c0234a57fe4e3991b6bd229e373e",
+    "scripts/w01-refund-revert.mjs": "e92db072157b2f59de86882645544820fb22be27461f119de9e68bc19394ba97",
+    "scripts/w01-private-fee-flow.mjs": "9ccf8bff3bf2aa388850cabaed62077e4e29dab1bd75292a2b75153af1a4e970",
+    "scripts/w01-private-funding.mjs": "ecdfa61d8348e29e49df61d6fdb41c9711d63ec25751901f96fe741a6a550f71",
+    "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+    "shared/private-fee-payment.mjs": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+    "shared/private-fee-funding.mjs": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+    "shared/ethereum-journal.mjs": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "apps/src/billboard/user/transaction-journal-store.mjs": "abb9af112709a4e4ed3197de86ef058a4b06e3c63b1588861f6411b1629c443a",
+    "scripts/c01-settle-ready.mjs": "cf0a0e4a531e938b601f4fdf13ce336a9d453435f3df70e2be38f6d2e2d93d1c",
+    "scripts/c01-settle-message.mjs": "4e9bc2eeb7dad873311045c49f89b0b53c5ccd4f34d0516924e47338773ed132",
+    "scripts/c01-bridge-flow.mjs": "689ab68736d338ef5edc34e9d49c5e33b726e55dcda7867ba019b2c1305ee723",
+    "scripts/c02-screening-flow.mjs": "7daafd8514503ab82b5e2617dd625109dc17f56ade75fe7b016526cd641e7914",
+    "scripts/t02-screening-journey.mjs": "2c08053db902d145d500cb5e63278072c4aa5a1fac6491ce43063f2d24d6c852",
+    "scripts/t02-redeposit-flow.mjs": "6f54801b7836a6a6558056df41521fadeac3470b619b6fa0d05d5414ef979b99",
+    "scripts/t02-wrong-origin.mjs": "5deae0a6f636ca1cddfe8bd074141cd04c2b5ed2ba5fa024d3fc0e99810dd36b",
+    "scripts/t02-claim-boundary.mjs": "eafb7afa9ed897f30aa71c64b2ab8d8c2b05dbf827d08833c307e438040cf321",
+    "scripts/test-t02-claim-boundary.mjs": "9f2ce2549f4d7718250f4a27026e41996a7f77c5c278dc0a8c400ba962f8119f",
+    "node_modules/@aztec-labs/pxe/src/node/caching_aztec_node.ts": "637cf1f3c53c5115a6c6ba4073d769a72930f4cf5b3e3a4c9d801da6e644db52",
+    "node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js": "f1e9cf066fb78c47c0ec836413247a085502af99a521129833bf99c281eb7865",
+    "node_modules/@aztec-labs/pxe/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "node_modules/@aztec-labs/pxe/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+    "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/InboxAbi.js": "cda5a4580d11c0f7ec7bd88911b928d6f42379739c3abb411888a779842c43f2",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Inbox.sol": "7dc210e25c63154ea759814d1d93675f1e431ced5438c0983ee6104c62fee46e",
+    "scripts/t02-redeposit-replay.mjs": "c8a358b33d08f205464d18d91e22312e661b07bbfa0491e8a72ea63d3363c53b",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/OutboxAbi.js": "858df4a22ebe4f45f2ea28757a69aab34417abb0651da58e549a1d34e2b11d7b",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Outbox.sol": "de268cae33268c6ce8538d687b3612b090d37052a270846e233717520f9df212",
+    "scripts/c03-author-claims.mjs": "e4b4914ef83000bc8bf80395926fef1d4f0b57ccddb0b83d506d8ec299231ec9",
+    "scripts/c03-contention-flow.mjs": "0caf070196e2ec1e1ca411dcfce1e00f9eb582c6438b6686d49e37435e5fe7f5",
+    "scripts/c01-client-mining.mjs": "a10abf9d1798fac6ddae89a0f62ce2b3e30b9ddd69a77512d5f83f8dc33ff332",
+    "scripts/c01-deposit-flow.mjs": "f41221b68ea27ccf2c05f22898f8f18a68dd0e9e83f27114c40b0196adeda658",
+    "scripts/c01-exit-flow.mjs": "b98fc5c964238871d6a83fc7d863b0dd3a698a0d12b7171ee3943f6fc17322a7",
+    "scripts/c01-withdraw-l1.mjs": "09323ce30632abd6180c6530adedf63eee4f453f5ce8e3ce1da19f85b24915fe",
+    "scripts/c01-ready-flow.mjs": "44f504ec867f74f776f86b9962c36ad87aec12261ec1b569a9f9fffb3fbfe698",
+    "scripts/c01-board-inclusion.mjs": "da1608b59681b40bb6538ee333ed772fe84ce0712188eaea50468042f7467f34",
+    "scripts/c01-board-flow.mjs": "aba12f00f9f5daebc38e3e1f9217d4519eb01e2f357e15e932a17529e710e0b4",
+    "scripts/c01-real-node.mjs": "2b5ebc262b91874a0458cf57886fca4538b0d56e0ab56170814d2652c8306fd4",
+    "scripts/toolchain.mjs": "072a82f69135f7c98468141debf2a83bc16baf187a3d8c6d5eb1090caf255f7f",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "node_modules/@aztec-labs/ethereum/dest/deploy_aztec_l1_contracts.js": "3d0d212408324359a3501fc4ab35ca546b6fae1c5ea432ee45fe4b3006941da9",
+    "prover/catalog.mjs": "3de599cec548bd4131f5d8c8f39c9ce7d90f029e44a9e23d3eada3f17e0f4898",
+    "prover/interfaces.mjs": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+    "prover/native-binary.mjs": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+    "prover/plugin-policy.mjs": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+    "prover/process-worker.mjs": "8ca1c75811f618f0ce887be974990059bd0499678ffcb17d1cd3eec32ce15178",
+    "prover/queue.mjs": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+    "prover/runtime.mjs": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+    "prover/server.mjs": "ff016cfee72ae4d255d57f281bb1e6f95f4bffb4da5f614577b4aff8bbc62b17",
+    "prover/service.mjs": "06d734546a7f67fd623333f4c7dc8638fd31dc3b4f9867341836c3a7f767ccf4",
+    "prover/start.mjs": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+    "prover/worker.mjs": "34af085117275c9c4cf339cfaa9088a65226bed8df4365618eccf7f9efb71ce0",
+    "scripts/testing/assets.mjs": "001018a130b4ceb52593c4b80c572370a0fe583315cf99d996cea738d7340f06",
+    "scripts/testing/browser-worker.mjs": "2c90754b2a459f7e78b8204abf5ef6b3287236fc27de01420b78aff0ab21f46c",
+    "scripts/testing/fixture-worker.mjs": "95467bca34910f6b1d7721813f6d7629621f9fc4bd44cd7cb663864f4a8dec49",
+    "scripts/testing/process-tree.test.mjs": "8779a55199ed6a475faa6ceee7ad4c8eb866ce3b16b7a661ebbf042fdcd255a2",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+    "scripts/testing/remote-prover-fixture.mjs": "4570271e9c07b99e9255d270629eb493cbab8013221e75102b07bc7b97ffe5e4",
+    "scripts/testing/run-application.mjs": "b786059985a44e68fd11ef79a8cad3972b8d52bb9a8f69fee25d7c4650996608",
+    "scripts/testing/scenario-flows.mjs": "706b1fd8890ff9ef7c09d57947595cc47c4ed717a1cb717bdc879f6152a2d247",
+    "scripts/testing/scenarios.mjs": "ff94ffe70264478f884126ca79a24fe64a02cce338281ad9c2b2e0700580ae42",
+    "scripts/testing/supervisor.mjs": "a5cdd5d62f354b46c4a97e27e5993e7dec559bc469919068790e3bf37e1ffcbd",
+    "scripts/testing/supervisor.test.mjs": "3999906fafc8be9551bc070cb1ba4f83076843e707fdf369cb1eb62b5a837a88"
+  },
+  "setup": [
+    {
+      "name": "bn254_g1.dat",
+      "sha256": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac",
+      "bytes": 75497472
+    },
+    {
+      "name": "bn254_g2.dat",
+      "sha256": "01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f",
+      "bytes": 128
+    },
+    {
+      "name": "grumpkin_g1_v2.flat.dat",
+      "sha256": "b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9",
+      "bytes": 4194368
+    }
+  ],
+  "networkProofs": false,
+  "controlledSettlement": true,
+  "binarySha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953",
+  "applicationBBThreads": 1,
+  "nodeBBThreads": 1,
+  "worldStateHardwareConcurrency": 1,
+  "peakMemory": {
+    "elapsedMs": 59440,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 10368,
+        "ppid": 10345,
+        "rssKiB": 212848
+      },
+      {
+        "role": "fixture",
+        "pid": 10371,
+        "ppid": 10368,
+        "rssKiB": 1089168
+      },
+      {
+        "role": "fixture",
+        "pid": 10374,
+        "ppid": 10371,
+        "rssKiB": 151296
+      },
+      {
+        "role": "fixture",
+        "pid": 10377,
+        "ppid": 10371,
+        "rssKiB": 649680
+      },
+      {
+        "role": "fixture",
+        "pid": 10433,
+        "ppid": 10371,
+        "rssKiB": 9856
+      },
+      {
+        "role": "fixture",
+        "pid": 10464,
+        "ppid": 10371,
+        "rssKiB": 10320
+      },
+      {
+        "role": "fixture",
+        "pid": 10465,
+        "ppid": 10371,
+        "rssKiB": 7840
+      },
+      {
+        "role": "fixture",
+        "pid": 10466,
+        "ppid": 10371,
+        "rssKiB": 152400
+      },
+      {
+        "role": "fixture",
+        "pid": 10569,
+        "ppid": 10371,
+        "rssKiB": 29632
+      }
+    ]
+  },
+  "worker": {
+    "passed": true,
+    "profile": "application transaction proofs with official local protocol fixture and controlled settlement",
+    "nonlocalNetworkDenied": true,
+    "deployment": {
+      "passed": true,
+      "profile": "official SDK local application fixture",
+      "realVerifier": false,
+      "networkProofs": false,
+      "rollupVersion": "573916010",
+      "addresses": {
+        "rollupAddress": "0xb833e689c3e044876fcccedb148be3419207857d",
+        "registryAddress": "0xf1607cc2f17d1857f7e9c273f26c10d94e651427",
+        "inboxAddress": "0x6cb4eb2bc2154aa1f05f7553ffb75bb5912f444c",
+        "outboxAddress": "0xa3f1a0c3b46427e103e62acd86106d6588020017",
+        "feeJuiceAddress": "0xe9b47177985fdb8e2ceb86fbc6f9e5ca008c2808",
+        "feeJuicePortalAddress": "0x5f5ed6988e06182000d1f531654bb397e84143e0",
+        "coinIssuerAddress": "0x037bc193a4a3e9becdb1521b7ed88b39fc01b1c0",
+        "rewardDistributorAddress": "0x6ef66347a20f9cc10f50962329a9a917d1da2a5e",
+        "governanceProposerAddress": "0x75d070f3dc8241d43e7870f6275516cbf8c4f3a4",
+        "governanceAddress": "0x2d4470214f3bc5f885c72be86309f922df3f1405",
+        "stakingAssetAddress": "0x890798db9cb4daba66ef419d390283394a9f81fc",
+        "feeAssetHandlerAddress": "0x169bc44947883bf627a3614770792b82d0a97c6b",
+        "stakingAssetHandlerAddress": "0xaa704628d0178a4495e94ce902a8d97f17948f46",
+        "zkPassportVerifierAddress": "0x465065fdb66fa5ba68ac1f3e0ae718e1badcac82",
+        "gseAddress": "0xd368b0a2ae74db75a5ed4bf224ef4a157cc33de3",
+        "dateGatedRelayerAddress": "0xacc224e09d79ddb08833430017106f37c33657c3"
+      }
+    },
+    "validatorActivation": {
+      "committee": [
+        "0xe359270212a99b01e2b8d8a20682c618c1dcfe18"
+      ],
+      "ordinaryTimeAdvancesSeconds": [
+        {
+          "seconds": 20,
+          "timestamp": "1791625856",
+          "epoch": "1",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791625876",
+          "epoch": "2",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791625896",
+          "epoch": "3",
+          "committee": null
+        }
+      ]
+    },
+    "node": {
+      "passed": true,
+      "scope": "Private fee claim exit and refund",
+      "realProofs": true,
+      "proverSubsystemCreated": false,
+      "ordinarySequencerConstructed": true,
+      "sequencerStarted": true,
+      "rollupVersion": 573916010,
+      "board": {
+        "passed": true,
+        "scope": "real client deployment transaction proof and node admission validation only",
+        "initializerVisibility": "public; client proof authenticates private account/transaction path",
+        "sent": false,
+        "included": false,
+        "epochProofAccepted": false,
+        "proofMs": 13569,
+        "artifactHashes": {
+          "apps/src/billboard/billboard_artifact.json": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+          ".build/contracts-manifest.json": "d2145e6f68e7c5bc8827d458e3e94b2bf23d28ede2e5180a880061dd4dd63e8f"
+        },
+        "clientProverBackend": "NativeUnixSocket",
+        "threads": 1,
+        "nodeValidation": "valid",
+        "txHash": "0x25f8382fdc87d3cea092988fb31b1d5af85cebd86fe6bd69bd4d29c0d77462b3",
+        "boardAddress": "0x0a9a975e3adc26b5c6b047f366c20ae076575e02adb1e9d88ed9b35371b739b8",
+        "proofBytes": 111556,
+        "proofSha256": "ea3e1c627e9c6d52db6e50615424b2c22b0a726663cd022bb4e48e0e60ccac80",
+        "feePayerBalance": "10000000000000000000000",
+        "nextRequired": "Submit this exact in-memory tx, observe inclusion, then use official test settlement before local Ready activation.",
+        "walletStopped": true
+      },
+      "inclusion": {
+        "passed": true,
+        "txHash": "0x25f8382fdc87d3cea092988fb31b1d5af85cebd86fe6bd69bd4d29c0d77462b3",
+        "adjustments": [
+          {
+            "block": "43",
+            "timestamp": "1791625897"
+          },
+          {
+            "block": "44",
+            "timestamp": "1791625898"
+          },
+          {
+            "block": "45",
+            "timestamp": "1791625899"
+          },
+          {
+            "block": "46",
+            "timestamp": "1791625900"
+          },
+          {
+            "block": "47",
+            "timestamp": "1791625901"
+          },
+          {
+            "block": "48",
+            "timestamp": "1791625902"
+          },
+          {
+            "block": "49",
+            "timestamp": "1791625903"
+          },
+          {
+            "block": "50",
+            "timestamp": "1791625904"
+          },
+          {
+            "block": "51",
+            "timestamp": "1791625905"
+          },
+          {
+            "block": "52",
+            "timestamp": "1791625906"
+          },
+          {
+            "block": "53",
+            "timestamp": "1791625907"
+          },
+          {
+            "block": "54",
+            "timestamp": "1791625908"
+          },
+          {
+            "block": "55",
+            "timestamp": "1791625909"
+          },
+          {
+            "block": "56",
+            "timestamp": "1791625910"
+          }
+        ],
+        "initialClockLeadSeconds": -77,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "sequencerState": "IDLE",
+        "nodeClockSeconds": 1791625911,
+        "blockNumber": "1",
+        "transactionFee": "425631338403900000",
+        "ordinarySequencer": true,
+        "syntheticSettlement": false,
+        "epochProofAccepted": false,
+        "clockProfile": "controlled disposable L1 mining and node clock synchronization; no throughput/finality claim"
+      },
+      "readyMining": {
+        "clientMining": {
+          "passed": true,
+          "ordinaryBlocksMined": 11,
+          "stopped": true,
+          "maxObservedClockLeadSeconds": 0,
+          "clockSynchronization": "every mined block, including correction of wall-clock lead",
+          "lastBlock": "69",
+          "lastTimestamp": "1791625923"
+        }
+      },
+      "ready": {
+        "passed": true,
+        "scope": "disabled portal deployment and genuine update_portal client proof",
+        "bindingSubmitted": true,
+        "readyEmitted": true,
+        "epochProofAccepted": false,
+        "portalActivated": true,
+        "portalAddress": "0x0b33721df8a30573a47a16395ca117bbb5be51a7",
+        "portalDeploymentTxHash": "0xb5fc48eae0a77b7d4c463e92671b2ffa559cb3e018c449a3590a449d0ee47278",
+        "portalDeploymentBlock": "59",
+        "depositsEnabled": false,
+        "boardAddress": "0x0a9a975e3adc26b5c6b047f366c20ae076575e02adb1e9d88ed9b35371b739b8",
+        "configHash": "0x00ecd7130ed658c73dc55be5e55707d2dfe53c9f13610b5fdb9f0369d94dbd18",
+        "artifactHashes": {
+          "apps/src/billboard/billboard_artifact.json": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+          "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850",
+          ".build/contracts-manifest.json": "d2145e6f68e7c5bc8827d458e3e94b2bf23d28ede2e5180a880061dd4dd63e8f"
+        },
+        "txHash": "0x2e679ef0828d5fbe1774c1f34e7a5db240d522ef4e37eef214b9f321e651b2e0",
+        "nodeValidation": "valid",
+        "proofSha256": "6f33835146a97baa5210e5fb5ac761c422c7045d00713fea69e01fdc2fd2c83d",
+        "expectedReadyContent": "0x00e2aa026ae05203373118138f08f15c5e247443fca6af234764129bcd26c7d2",
+        "expectedReadyLeaf": "0x0032e37d7ce252845b4ea2cb22150343b43eb16794b03b29b35d225787ed886b",
+        "nextRequired": "Include exact binding tx; require SUCCESS and actual Ready leaf, official test settlement of the emitted message before local portal activation.",
+        "walletStopped": true,
+        "controlledSettlement": true
+      },
+      "readyInclusion": {
+        "passed": true,
+        "txHash": "0x2e679ef0828d5fbe1774c1f34e7a5db240d522ef4e37eef214b9f321e651b2e0",
+        "adjustments": [
+          {
+            "block": "70",
+            "timestamp": "1791625924"
+          },
+          {
+            "block": "71",
+            "timestamp": "1791625925"
+          },
+          {
+            "block": "72",
+            "timestamp": "1791625926"
+          },
+          {
+            "block": "73",
+            "timestamp": "1791625927"
+          },
+          {
+            "block": "74",
+            "timestamp": "1791625928"
+          },
+          {
+            "block": "75",
+            "timestamp": "1791625929"
+          },
+          {
+            "block": "76",
+            "timestamp": "1791625930"
+          },
+          {
+            "block": "77",
+            "timestamp": "1791625931"
+          },
+          {
+            "block": "78",
+            "timestamp": "1791625932"
+          },
+          {
+            "block": "79",
+            "timestamp": "1791625933"
+          }
+        ],
+        "initialClockLeadSeconds": 0,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "sequencerState": "IDLE",
+        "nodeClockSeconds": 1791625934,
+        "blockNumber": "2",
+        "transactionFee": "2334865764500000",
+        "ordinarySequencer": true,
+        "syntheticSettlement": false,
+        "epochProofAccepted": false,
+        "clockProfile": "controlled disposable L1 mining and node clock synchronization; no throughput/finality claim"
+      },
+      "settlement": {
+        "passed": true,
+        "scope": "controlled test settlement, test-controlled Ready membership and enabled portal",
+        "kind": "ready",
+        "deadlineMs": 60000,
+        "testControlled": true,
+        "syntheticSettlement": true,
+        "proofReceipts": [],
+        "finalized": false,
+        "epochs": [
+          {
+            "epoch": 4,
+            "firstCheckpoint": 1,
+            "lastCheckpoint": 1,
+            "testControlledCheckpoint": 1
+          },
+          {
+            "epoch": 5,
+            "firstCheckpoint": 2,
+            "lastCheckpoint": 2,
+            "testControlledCheckpoint": 2
+          }
+        ],
+        "sequencerPaused": true,
+        "sequencerResumed": true,
+        "applicationProofs": true,
+        "targetCheckpoint": 2,
+        "messageBlock": "2",
+        "messageBlockHash": "0x2b5eba0b85eff9299b9fe4381baf151d7df351ae97482d68ccfdd5b6ff2c61f3",
+        "messageTxHash": "0x2e679ef0828d5fbe1774c1f34e7a5db240d522ef4e37eef214b9f321e651b2e0",
+        "expectedLeaf": "0x0032e37d7ce252845b4ea2cb22150343b43eb16794b03b29b35d225787ed886b",
+        "initialProvenCheckpoint": 0,
+        "forcedProvenCheckpoint": 2,
+        "localEpoch": 6,
+        "membership": {
+          "epochNumber": 5,
+          "checkpointCount": 1,
+          "leafIndex": "0",
+          "pathLength": 5,
+          "root": "0x0096579eb6571c58cdb6e169442a426e9cffc49438c84bda1c9989f5ff0a6924"
+        },
+        "localSettlement": {
+          "l1Block": "81",
+          "l1Hash": "0xda84b29ce5cea2ff12066efaf940e6a74e2d28456dda89a66826479aedeaedce",
+          "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+        },
+        "elapsedMs": 11740,
+        "activation": {
+          "txHash": "0x180af3e2c8cebca2bb8647eab3a676dcd510a7d536852182895dac3d83d22d25",
+          "blockNumber": "82",
+          "blockHash": "0x1c5b64b7694faa605dfe63c3b1e0bba3df97a48db78054e47ed7cd0e2efb048d",
+          "depositsEnabled": true
+        }
+      },
+      "bridge": {
+        "passed": true,
+        "scope": "Private fee claim exit and refund",
+        "applicationProofs": true,
+        "controlledSettlement": true,
+        "networkProofs": false,
+        "clientMining": {
+          "passed": true,
+          "ordinaryBlocksMined": 136,
+          "stopped": true,
+          "maxObservedClockLeadSeconds": 0,
+          "clockSynchronization": "every mined block, including correction of wall-clock lead",
+          "lastBlock": "238",
+          "lastTimestamp": "1791626100"
+        },
+        "privateFee": {
+          "passed": true,
+          "ownerless": true,
+          "offchainIssuer": false,
+          "operatorFunding": false,
+          "chargesMaximumFee": false,
+          "walletRestore": {
+            "encryptedRoundTrip": true,
+            "freshRestoreContext": true,
+            "fullSaltPreserved": true,
+            "derivedSigningKeyFromRestoredSecret": true,
+            "sameApplicationAddress": true,
+            "applicationSigningDerivation": true,
+            "noIndependentTestSigningKeyReused": true
+          },
+          "funding": {
+            "passed": true,
+            "realL1Deposit": true,
+            "amount": "1000000000000000000000",
+            "l1TxHash": "0x12ac047f23797534e7f9ab68dad8414fb3b2d8cb9bc5d0a5036f7f48028d4e55",
+            "recipient": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+            "independentL1Sender": true,
+            "testFaucetFunding": true,
+            "productionFundingHelper": true,
+            "productionRecoveryHelper": true,
+            "publicRecoveryPersistedBeforeDeposit": true,
+            "depositSends": 1,
+            "privateSecretsStored": false
+          },
+          "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "standalone": {
+            "passed": true,
+            "applicationProof": true,
+            "networkProof": false,
+            "standaloneFunding": true,
+            "proofMilliseconds": 13100,
+            "txHash": "0x0c8062bd68e085ebb011fee90070f7a1301b025fa36e2d45e449c77965b732c0",
+            "payer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+            "nodeValidation": "valid",
+            "transactionFee": "9148068000000",
+            "status": "checkpointed",
+            "executionResult": "success",
+            "canonicalCheckpoint": true
+          },
+          "coldStart": true,
+          "poolBefore": "0",
+          "netOtherPoolChange": "0",
+          "privateDebit": "24941370600000",
+          "privateBalance": "999999975058629400000",
+          "actualProtocolFees": "24941370600000",
+          "authorPublicBalanceZero": true
+        },
+        "claim": {
+          "passed": true,
+          "scope": "local real deposit and genuine private claim with ordinary checkpoint inclusion",
+          "syntheticMessages": false,
+          "syntheticProofs": false,
+          "claimEpochProofAccepted": false,
+          "depositTxHash": "0xdc78702175c4332796d7751f68833e934e8b15f91a52da93f081e3532186ec9a",
+          "depositBlock": "144",
+          "amount": "1000000000000000",
+          "inboxMessageKey": "0x0063927b55ed1cc5b8b97f94798f6feb6a370bcc28bc91c435712d63efd76ad1",
+          "messageContentChecked": true,
+          "artifactHashes": {
+            "apps/src/billboard/billboard_artifact.json": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+            "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850",
+            ".build/contracts-manifest.json": "d2145e6f68e7c5bc8827d458e3e94b2bf23d28ede2e5180a880061dd4dd63e8f"
+          },
+          "feePayer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "privateFees": true,
+          "gasUsed": {
+            "totalGas": {
+              "daGas": 3296,
+              "l2Gas": 822635
+            },
+            "teardownGas": {
+              "daGas": 192,
+              "l2Gas": 27510
+            }
+          },
+          "claimTxHash": "0x24a6e3d7cd8a3cab797229163f51aa2c9618919916aedffc301b09e0a82bdb9c",
+          "proofSha256": "e604edd0bde932367ccbd9e2e28bc20ba3777f39a43dcc70bd3957f1fe151ca3",
+          "nodeValidation": "valid",
+          "inclusionSnapshots": [
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "169",
+              "l1Timestamp": "1791626031",
+              "nodeTime": 1791626031
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "170",
+              "l1Timestamp": "1791626032",
+              "nodeTime": 1791626032
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "171",
+              "l1Timestamp": "1791626033",
+              "nodeTime": 1791626033
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "172",
+              "l1Timestamp": "1791626034",
+              "nodeTime": 1791626034
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "173",
+              "l1Timestamp": "1791626035",
+              "nodeTime": 1791626035
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "174",
+              "l1Timestamp": "1791626036",
+              "nodeTime": 1791626036
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "175",
+              "l1Timestamp": "1791626037",
+              "nodeTime": 1791626037
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "176",
+              "l1Timestamp": "1791626038",
+              "nodeTime": 1791626038
+            },
+            {
+              "status": "checkpointed",
+              "executionResult": "success",
+              "blockNumber": 9,
+              "l1Block": "178",
+              "l1Timestamp": "1791626040",
+              "nodeTime": 1791626040
+            }
+          ],
+          "replay": {
+            "rejected": true,
+            "reason": "consumed-claim-message",
+            "freshAccountRequest": true,
+            "originalMessageNullifierChecked": true,
+            "originalInboxLeafPresent": true,
+            "originalNoteUnchanged": true,
+            "noSecondNote": true,
+            "stage": "PXE witness generation; no second proof accepted or transaction sent"
+          },
+          "claimBlock": "9",
+          "claimStatus": "checkpointed",
+          "executionResult": "success",
+          "fee": "8418947400000",
+          "anchorBlock": 7,
+          "membershipRootChecked": true,
+          "logicalFieldCount": 10,
+          "physicalFieldCount": 8,
+          "exactDeliveredNoteChecked": true,
+          "nextRequired": "Wait eligibility; prove/include no-post exit, then use official test Outbox settlement and withdraw L1.",
+          "walletStopped": true
+        },
+        "exit": {
+          "passed": true,
+          "scope": "genuine no-post L2 withdrawal and ordinary checkpoint inclusion",
+          "syntheticProofs": false,
+          "syntheticSettlement": false,
+          "exitEpochProofAccepted": false,
+          "l1Withdrawn": false,
+          "feePayer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+          "privateFees": true,
+          "gasUsed": {
+            "totalGas": {
+              "daGas": 1568,
+              "l2Gas": 720224
+            },
+            "teardownGas": {
+              "daGas": 192,
+              "l2Gas": 27510
+            }
+          },
+          "txHash": "0x142d1f7d04cfc35348f10abe11d66793ed3718fd4da9db3735f242d50aecb6b1",
+          "proofSha256": "f85ad38c8af8300fdf2e85c43bbffd5496ea461cdd6184704a1f5250ff2e58ce",
+          "nodeValidation": "valid",
+          "inclusionSnapshots": [
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "227",
+              "l1Timestamp": "1791626089",
+              "nodeTime": 1791626089
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "228",
+              "l1Timestamp": "1791626090",
+              "nodeTime": 1791626090
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "229",
+              "l1Timestamp": "1791626091",
+              "nodeTime": 1791626091
+            },
+            {
+              "status": "pending",
+              "executionResult": null,
+              "blockNumber": null,
+              "l1Block": "230",
+              "l1Timestamp": "1791626092",
+              "nodeTime": 1791626092
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "231",
+              "l1Timestamp": "1791626093",
+              "nodeTime": 1791626093
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "232",
+              "l1Timestamp": "1791626094",
+              "nodeTime": 1791626094
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "233",
+              "l1Timestamp": "1791626095",
+              "nodeTime": 1791626095
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "234",
+              "l1Timestamp": "1791626096",
+              "nodeTime": 1791626096
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "235",
+              "l1Timestamp": "1791626097",
+              "nodeTime": 1791626097
+            },
+            {
+              "status": "proposed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "236",
+              "l1Timestamp": "1791626098",
+              "nodeTime": 1791626098
+            },
+            {
+              "status": "checkpointed",
+              "executionResult": "success",
+              "blockNumber": 17,
+              "l1Block": "238",
+              "l1Timestamp": "1791626100",
+              "nodeTime": 1791626100
+            }
+          ],
+          "blockNumber": "17",
+          "status": "checkpointed",
+          "executionResult": "success",
+          "fee": "7374355200000",
+          "anchorBlock": 15,
+          "eligibilityChecked": true,
+          "expectedExitContent": "0x00bf8da95e12144bfa1ca9e846bda7800cea69c95e3a2f400994f30efad6c7da",
+          "expectedExitLeaf": "0x001bf74d99478e4db22811881adfe2e9aa55156a2ea8aa13fb4db2d199889d92",
+          "exitEmitted": true,
+          "exactNoteNullifierEmitted": true,
+          "activeNoteAbsent": true,
+          "logicalNoteAbsent": true,
+          "exitStateKind": "original-unposted-claim",
+          "originalCollateralReceiptPreserved": true,
+          "nextRequired": "Official test Outbox settlement and actual L1 portal withdrawal/accounting.",
+          "walletStopped": true
+        },
+        "exitSettlement": {
+          "passed": true,
+          "kind": "exit",
+          "deadlineMs": 60000,
+          "testControlled": true,
+          "syntheticSettlement": true,
+          "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+          "proofReceipts": [],
+          "finalized": false,
+          "epochs": [
+            {
+              "epoch": 4,
+              "firstCheckpoint": 1,
+              "lastCheckpoint": 1,
+              "testControlledCheckpoint": 1
+            },
+            {
+              "epoch": 5,
+              "firstCheckpoint": 2,
+              "lastCheckpoint": 2,
+              "testControlledCheckpoint": 2
+            },
+            {
+              "epoch": 7,
+              "firstCheckpoint": 3,
+              "lastCheckpoint": 4,
+              "testControlledCheckpoint": 4
+            },
+            {
+              "epoch": 8,
+              "firstCheckpoint": 5,
+              "lastCheckpoint": 5,
+              "testControlledCheckpoint": 5
+            },
+            {
+              "epoch": 9,
+              "firstCheckpoint": 6,
+              "lastCheckpoint": 8,
+              "testControlledCheckpoint": 8
+            },
+            {
+              "epoch": 10,
+              "firstCheckpoint": 9,
+              "lastCheckpoint": 9,
+              "testControlledCheckpoint": 9
+            },
+            {
+              "epoch": 11,
+              "firstCheckpoint": 10,
+              "lastCheckpoint": 12,
+              "testControlledCheckpoint": 12
+            },
+            {
+              "epoch": 12,
+              "firstCheckpoint": 13,
+              "lastCheckpoint": 16,
+              "testControlledCheckpoint": 16
+            },
+            {
+              "epoch": 13,
+              "firstCheckpoint": 17,
+              "lastCheckpoint": 17,
+              "testControlledCheckpoint": 17
+            }
+          ],
+          "sequencerPaused": true,
+          "sequencerResumed": true,
+          "applicationProofs": true,
+          "targetCheckpoint": 17,
+          "messageBlock": "17",
+          "messageBlockHash": "0x1051fae82af12cf1fbf6b4856cc72c424b069c3efd243816cd9ee1a24a7820f1",
+          "messageTxHash": "0x142d1f7d04cfc35348f10abe11d66793ed3718fd4da9db3735f242d50aecb6b1",
+          "expectedLeaf": "0x001bf74d99478e4db22811881adfe2e9aa55156a2ea8aa13fb4db2d199889d92",
+          "initialProvenCheckpoint": 2,
+          "forcedProvenCheckpoint": 17,
+          "localEpoch": 14,
+          "membership": {
+            "epochNumber": 13,
+            "checkpointCount": 1,
+            "leafIndex": "0",
+            "pathLength": 5,
+            "root": "0x0096f51d005935da674b12e9deb445ee0c7e6fc8340624309876d3bdf2d333e9"
+          },
+          "localSettlement": {
+            "l1Block": "239",
+            "l1Hash": "0xac78737f91ae767eec229035b0a3231d6647cb0c205736d54da4b370aaf4103e",
+            "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+          },
+          "elapsedMs": 10192
+        },
+        "refund": {
+          "passed": true,
+          "scope": "application Outbox consumption and L1 escrow withdrawal with controlled settlement",
+          "syntheticSettlement": true,
+          "targetCheckpoint": 17,
+          "exitBlock": "17",
+          "exitBlockHash": "0x1051fae82af12cf1fbf6b4856cc72c424b069c3efd243816cd9ee1a24a7820f1",
+          "testControlled": true,
+          "networkProofs": false,
+          "withdrawalTxHash": "0xdf9033323e4309a19325b2249794cfc62db449ca2f518717d52ccf4157ffc294",
+          "withdrawalBlock": "240",
+          "amount": "1000000000000000",
+          "gasCost": "84036000588252",
+          "l1Withdrawn": true,
+          "activeReceiptCleared": true,
+          "totalDepositedDelta": "1000000000000000",
+          "portalBalanceDelta": "1000000000000000",
+          "depositorBalanceReconciled": true,
+          "repeatWithdrawalRejected": true,
+          "membership": {
+            "epochNumber": "13",
+            "checkpointCount": 1,
+            "leafIndex": "0",
+            "pathLength": 5
+          }
+        },
+        "networkProverCreated": false,
+        "cleanupComplete": true
+      },
+      "epochSchedulingStarted": false,
+      "idleProverAgentCreated": false,
+      "nodeStopped": true
+    },
+    "anvilExit": {
+      "code": null,
+      "signal": "SIGKILL"
+    },
+    "singletonsStopped": true
+  },
+  "elapsedMs": 231250,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "finishedAt": "2026-10-10T09:53:47.785Z"
+}

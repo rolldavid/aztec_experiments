@@ -1,0 +1,23 @@
+{
+  "source": "e03bc65678d0260e179f6d058b563978085b5e66",
+  "payment": "0xdf38548e93cd9527f3624deea826d2e8734e3c1540393bcb4c696cc12466fbef",
+  "diagnostic": "Read-only debugger logpoints; no altered execution, no proof or payment submitted",
+  "trace": [
+    {
+      "event": "read",
+      "remainingMs": 18500,
+      "at": 527076.5200000405
+    },
+    {
+      "event": "read",
+      "remainingMs": 8634,
+      "at": 536942.4950000048
+    },
+    {
+      "event": "read-failure",
+      "remainingMs": -2,
+      "at": 545578.2400000095
+    }
+  ],
+  "proofs": 0
+}

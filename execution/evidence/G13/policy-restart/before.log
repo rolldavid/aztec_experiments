@@ -1,0 +1,26 @@
+✖ Rolling bound deployment resumes after an authorized main policy update without another transaction (513.288625ms)
+✔ Rolling bound deployment rejects invalid main policy version 0 (171004.854583ms)
+✔ Rolling bound deployment rejects invalid main policy version 4294967296 (482.1575ms)
+✔ Rolling bound initial policy still must match the deployment manifest (382.092916ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172989.377708
+
+✖ failing tests:
+
+test at scripts/test-w03-deploy-engine.mjs:201:1
+✖ Rolling bound deployment resumes after an authorized main policy update without another transaction (513.288625ms)
+  Error: Rolling deployment state differs from manifest
+      at fail (evalmachine.<anonymous>:256:27)
+      at readRollingDeploymentState (evalmachine.<anonymous>:274:108)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async readPortal (evalmachine.<anonymous>:580:63)
+      at async g.runDeploy (evalmachine.<anonymous>:582:40)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:208:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

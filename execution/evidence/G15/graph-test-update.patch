@@ -1,0 +1,31 @@
+--- a/execution/tests/test_graph.py
++++ b/execution/tests/test_graph.py
+@@ -65,7 +65,9 @@
+     def test_prepared_graph_and_rendered_plans_validate(self):
+         graph.render(self.g, self.base)
+         self.assertEqual(graph.validate(self.g, self.base), [])
+-        self.assertEqual([n["id"] for n in graph.available(self.g)], ["P01"])
++        # Draft3 adds independent control/baseline roots; none may be hidden by
++        # the older single-root readiness expectation.
++        self.assertEqual([n["id"] for n in graph.available(self.g)], ["P01", "G01", "G02"])
+ 
+     def parallel_fixture(self, count=2):
+         self.g["execution_state"] = "running"
+@@ -179,7 +181,16 @@
+ 
+     def test_risk_priority_selects_shell_boundary_after_toolchain(self):
+         self.node("P01")["status"] = self.node("P02")["status"] = "done"
+-        self.assertEqual(graph.available(self.g)[0]["id"], "M01")
++        # Retain the original security work's ordering while the separately
++        # authorized Draft3 roots are also eligible.
++        legacy_ready = [n for n in graph.available(self.g) if n["phase"] != "rolling-chat-draft3"]
++        self.assertEqual(legacy_ready[0]["id"], "M01")
++
++    def test_foundation_does_not_remove_full_identity_acceptance_from_release(self):
++        self.assertEqual(self.node("G06")["depends_on"], ["G15"])
++        self.assertIn("G05", self.node("G13")["completion_requires"])
++        self.node("G13")["completion_requires"].remove("G05")
++        self.assertTrue(any("disconnected" in e and "G05" in e for e in graph.graph_errors(self.g)))
+ 
+     def test_missing_dependency_rejected(self):
+         self.node("P01")["depends_on"] = ["Z99"]

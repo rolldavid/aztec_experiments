@@ -1,0 +1,27 @@
+{"role":"fixture","stage":"start-disposable-l1","elapsedMs":1023}
+{"role":"fixture","stage":"prepare-genesis","elapsedMs":1143}
+{"role":"fixture","stage":"deploy-local-protocol-fixture","elapsedMs":2733}
+{"role":"fixture","stage":"wait-for-local-validator-activation","elapsedMs":4073}
+{"role":"fixture","stage":"start-application-node","elapsedMs":4141}
+{"role":"fixture","stage":"prove-board-deployment","elapsedMs":7619}
+{"role":"fixture","stage":"board-create-proving-wallet","elapsedMs":7670}
+{"role":"fixture","stage":"board-build-deployment-request","elapsedMs":7935}
+{"role":"fixture","stage":"board-genuine-client-proof","elapsedMs":8545}
+{"role":"fixture","stage":"board-serialize-proof","elapsedMs":9323}
+{"role":"fixture","stage":"board-real-node-validation","elapsedMs":9332}
+{"role":"fixture","stage":"board-close-wallet","elapsedMs":9458}
+{"role":"fixture","stage":"board-inclusion","elapsedMs":9469}
+{"role":"fixture","stage":"private-fee:fund-disposable-user","elapsedMs":30067}
+{"role":"fixture","stage":"private-fee:bridge-user-funds","elapsedMs":30101}
+{"role":"fixture","stage":"private-fee:wait-inbox","elapsedMs":30792}
+{"role":"fixture","stage":"private-fee:fund-disposable-user","elapsedMs":40818}
+{"role":"fixture","stage":"private-fee:bridge-user-funds","elapsedMs":40856}
+{"role":"fixture","stage":"private-fee:wait-inbox","elapsedMs":41614}
+{"role":"fixture","stage":"private-fee:prove-standalone-funding","elapsedMs":50284}
+{"role":"fixture","stage":"private-fee:include-standalone-funding","elapsedMs":53167}
+{"role":"fixture","stage":"private-bok:deploy-board","elapsedMs":63557}
+{"role":"fixture","stage":"private-bok:deploy-escrow","elapsedMs":77678}
+{"role":"fixture","stage":"private-bok:set-portal","elapsedMs":91964}
+{"role":"fixture","stage":"private-bok:normal-claim","elapsedMs":120871}
+{"role":"fixture","stage":"private-bok:normal-authorize","elapsedMs":134304}
+{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/application-ba2c2707-e84c-4618-aad2-1e3f7e6233d3.json","passed":false,"scenario":"private-bok-private-normal"}

@@ -1,0 +1,11 @@
+{
+  "candidate": "08793a575c91ad45caee2de88920e04a466f613c",
+  "verdict": "fifth-selected-runtime-accepted",
+  "supplements": "reviewer-08793-private-request-discovery-review.json",
+  "receiptSha256": "04b85675ba67524226a93501c15260e7cd095f88d8d2db682f5dbcaa1607c53d",
+  "selected": "owned_requests_track_reservation_charge_and_release_without_public_owner",
+  "elapsedMs": 13422,
+  "peakTreeRSSKiB": 1115712,
+  "independentChecks": "All four named files match hashes; selected log contains actual1 test passed; result cleanup and pins positive. Historical sleep receipt preserved under named suffix.",
+  "scope": "Five selected Noir cases now passed across staged runs, not whole-suite acceptance; other limits unchanged."
+}

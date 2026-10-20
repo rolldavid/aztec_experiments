@@ -1,0 +1,37 @@
+{
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-pxe-forward-anchor-integration",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "scripts/patch-pxe-reorg-anchor.mjs",
+    "scripts/patch-pxe-reorg-anchor.test.mjs",
+    "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.ts",
+    "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.js",
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json"
+  ],
+  "required_checks": [
+    "combined-126",
+    "generated-closure"
+  ],
+  "requirements": [
+    "G07-A08-canonical-forward-synchronization-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-pxe-forward-anchor-integration",
+      "paths": [
+        "scripts/patch-pxe-reorg-anchor.mjs",
+        "scripts/patch-pxe-reorg-anchor.test.mjs",
+        "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.ts",
+        "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.js",
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/sdk-manifest.json"
+      ]
+    }
+  ]
+}

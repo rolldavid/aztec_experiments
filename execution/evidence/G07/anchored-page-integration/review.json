@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+  "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+  "verdict": "approve scoped anchored compact-page source component; normal generated closure, assigned actual SDK check and full cold120 qualification remain pending",
+  "requirements": [
+    "RC25",
+    "RC26",
+    "G07-A08",
+    "unchanged RC40 wholecold120000ms"
+  ],
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "5ef64de5e070f9640f24e96b6d992600e016bade71ba14cb7fc9207f2518c1e0",
+    "prover/compact-block-native.test.mjs": "6af03560f1b4ec5c9135aaa5172012dfbd6df19e44e1dfc3e7866abe20e666ef",
+    "prover/compact-node-registration.test.mjs": "57690be8d51f415f28b6c2de7d8e147d410e9a7b71e74625bf315dd8bd3d13b6",
+    "prover/compact-service.test.mjs": "c49d74a9f2f5e05aa11edc9e5a237f04702832687a9f161d8be4365b80ccde04",
+    "prover/private-query.mjs": "dbba9518ba2a2d072610352e73643edacea23b35fed3dea0648e53ea044a51da",
+    "prover/server.mjs": "3f177de25b28d96de3d6b9e5bbb3ac8d9cdb109091d0dc4a36f48f1b3840a3f7",
+    "shared/rolling/cold-preference-reader.mjs": "3be04beaad5e33e88de9541744646e73b64c3ee1e2fbf14095313ca1b83c8d36",
+    "shared/rolling/cold-preference-reader.test.mjs": "91f6016507e7da8c5fed02a6f3981d73317726403b85a9fc322dd379f6fd86f1",
+    "shared/rolling/compact-client.mjs": "5e8336fef6839646994ead19ed296d2101500ebe1a73177616a0b5f00205b1d9",
+    "shared/rolling/compact-client.test.mjs": "001451b8426d4e903a36ede8ef51aaf27c80cdc4e7da0e5bca17591da1e1a43a"
+  },
+  "findings": [],
+  "assessment": [
+    "Closed page selector admits public from/count1..32 and exact pinned anchor/tier only. Client captures own-data fields before await, shares singleflight ownership across scalar/page/batch, and retains1024-byte request/2MiB decoded response/10000ms bounds. There is no account/filter field or page-to-scalar retry.",
+    "Response validation enforces nonempty contiguous ordered block numbers, bounded count/fields, exact anchor identity, and no intermediate declared private-log body. Each returned block hash remains untrusted. Short byte-limited prefixes are explicitly legal, so only authenticated returned blocks can advance the SDK cursor.",
+    "Reader removes per-height RPC discovery only on captured page capability. Reviewed unchanged SDK createRollingPreferenceArchive verifies each header hash/network/height and30-level archive membership under the immutable pinned anchor, or exact direct-anchor hash. authenticateCompactBlock then verifies body, with validators retained before staged commit. Existing receipt/effect/utility/account/canonical/CAS/mailbox/final-readiness fences remain.",
+    "Native page serially validates each member before/after body encoding and the pinned anchor before/after the page. Original body count/shape preflight runs before flattening. Conservative encoded-byte reservation stops before flattening the next member when total2MiB would be exceeded; returned prefix is contiguous and nonempty. Unknown-large bodies retain scalar SDK treatment. Any upstream exception, canonical change or final readiness error rejects the entire response.",
+    "Gateway reuses its existing fixed route/upstream endpoint and authorization/origin/header policy, before/after readiness and cancellation ownership. Pending inspection/transport stays owned until completion; no next native member starts after abort.",
+    "Rate admission charges one request immediately, then the remaining requested physical count once before any upstream inspection/read. Same original admission bucket is retained across body awaits; scalar requests keep cost1. Defaults600production/1800development, proof quota and client-table bounds unchanged. Short/failed admitted pages receive no refund.",
+    "The only registration-fixture change includes the new shared compact-client import in its source-only image model; production package already includes that module. No new listener, scheduler, process lifecycle or SDK patch introduced."
+  ],
+  "independentChecks": [
+    {
+      "command": "Node24 --test shared/rolling/compact-client.test.mjs shared/rolling/cold-preference-reader.test.mjs prover/compact-service.test.mjs prover/compact-block-native.test.mjs prover/private-query.test.mjs prover/compact-node-registration.test.mjs",
+      "passed": 254,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1701.966083,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-anchored-compact-page/reviewer-scoped.log",
+      "sha256": "7099e2cc4dcd94b9017f4ff26e6678f1df86f4a7bb679ec31be8ee1fb7fd6902"
+    },
+    {
+      "command": "Node24 --test scripts/test-prover-service.mjs",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1502.256708,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-anchored-compact-page/reviewer-service.log",
+      "sha256": "d3397d759133a5d5b53ca88ad990b3aefb68816bc63e9a53942d95aaa78e8b0f"
+    }
+  ],
+  "testEnvironment": "Pinned Node24, NODE_BACKEND=js, LOG_LEVEL=silent, HARDWARE_CONCURRENCY=1, TMPDIR=/private/tmp; loopback test servers/real SDK compact bodies plus labelled readiness/reader doubles. No browser, remote runtime or model.",
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-anchored-compact-page/packet.json",
+    "sha256": "c68360b7c1838c02049fa33c9bfe64e2841764edf1bf53d586d1052c6ba7aca2",
+    "allSourceAnd7LogHashesVerified": true,
+    "beforeAndIntermediateFailuresPreserved": true
+  },
+  "limits": [
+    "Actual SDK/ACIR archive suite is expressly deferred to the lead slot. Source review and compact-body tests do not substitute for that scheduled integration check.",
+    "Normal wallet generated closure and coherent native/gateway/wallet deployment remain required; no reviewer build or installed dependency mutation.",
+    "The prior6b actual82.420s run remains failed, with10.283s masked scan failure. This component does not prove the precise original failing await.",
+    "Full remote cold recovery within120000ms remains mandatory and unqualified. A single dense block or source allocation can exceed per-read work bounds.",
+    "Conservative requested-count quota can bind on dense history: with1800/min,56 requests of count32 consume1792 units even if each returns only one block. Smaller wire RTT alone is not an acceptance result; actual campaign must account for requested units.",
+    "Native Body allocation occurs upstream before encoder preflight, an existing limitation. No new blanket memory, privacy, real-proof or testnet qualification."
+  ],
+  "cleanup": {
+    "temporaryDependencySymlinkRemoved": true,
+    "noSourceChanges": true,
+    "noSharedCoordinationWrites": true
+  }
+}

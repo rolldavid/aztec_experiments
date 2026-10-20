@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-15T08:37:17.202443+00:00",
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "runtimeSha256": "b4ccb1f46963e66be50f16e52b68ffc92825e3322cd856f27a5e9593ef346cc8",
+  "runtimeModuleSha256": "a0386194a869ea4a0ca75c0fe75d676ce49738c805316ec386f8895fdc9e0aea",
+  "publicIndex": {
+    "state": "syncing",
+    "complete": false,
+    "checkpoint": 853
+  },
+  "launchDeadline": "2026-10-15T08:37:20Z",
+  "browserLaunched": false,
+  "profileCreated": false,
+  "prepareOnly": {
+    "prepared": true,
+    "networkChecked": false,
+    "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+    "backupSHA256": "43c3eda3d5871c725a139db0f0ca00621dfec5c2c11aee2904d4951b3a565fd4",
+    "expectedRevision": "3",
+    "profileAbsent": true,
+    "retainedOneStep": false,
+    "configScopeBound": true
+  },
+  "disposition": "Not launched: public readiness prerequisite absent before cutoff. No cold acceptance result."
+}

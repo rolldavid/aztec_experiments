@@ -1,0 +1,7 @@
+{
+  "recorded_at": "2026-10-19T01:11:02.043728+00:00",
+  "checkpoint": "Current app source791297f7 (runtime7a36784b). Real testnet reader now running on current host; actual private /, reader module, APIstatus ready at7980 and home return200. CloudFront app default update InProgress; newprivateorigin vo_EyjLIA1PwUXFv2gbUx4KRh Deployed. Dependency package metadata and systemd physical cache path corrected in deployment configuration only; source unchanged. Original deployerclaim finalized7948; operator/board/Ready/Bok all successfulcheckpointed; nativeFINALIZED observer87464 running with sanitized transport diagnostics, no retries/sends. Originalboardreport pending-settlement; continue originalboardactivation andBokportal afterfinality. Dedicatedrelay0xe6c6f747c7f94ac3238a10f6ba4fd1d5367b2c4e funded0.002SepoliaETH once tx30ace985 nonce27; userwallets60USDC/0ETH untouched. Actual06:30host/AWSstop,06:35endpointcleanup unchanged; reserved290USD. Neverreplay originaldeposits/transactions.",
+  "private_history": "V6/private/rolling-final-20261018-c71ecfaa7e/replacement-4683d4c7/app-publication",
+  "reader_ready_ssm": "4272d153-a6a4-4dbf-b1d4-2a7efd22bc3a",
+  "scope": "actualreader only; wallet/relay not yet enabled"
+}

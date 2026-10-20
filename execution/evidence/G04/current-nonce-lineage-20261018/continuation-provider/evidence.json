@@ -1,0 +1,56 @@
+{
+  "base": "628a0d64b28221756c22765b1d9e269cad8695df",
+  "candidate": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+  "task_id": "G04-continuation-provider",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "628a0d64b28221756c22765b1d9e269cad8695df",
+      "candidate": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+      "task_id": "G04-continuation-provider",
+      "id": "continuation-provider",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent seven focused checks plus exact source/base blob transfer comparison; see review",
+      "environment": "Pinned Node24.21.0; synthetic ports; no signing",
+      "observed": "Explicit HTTPS continuation endpoint retained in immutable remaining-plan binding; strict historical and economic checks preserved.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/continuation-provider/review.json",
+          "sha256": "b95bc7a05efa24b04abab772035d14891c852c7e2caf57c8bce10fca47816cec"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "628a0d64b28221756c22765b1d9e269cad8695df",
+    "candidate": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+    "task_id": "G04-continuation-provider",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume2",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/current-nonce-lineage-20261018/continuation-provider/review.json",
+        "sha256": "b95bc7a05efa24b04abab772035d14891c852c7e2caf57c8bce10fca47816cec"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "628a0d64b28221756c22765b1d9e269cad8695df",
+      "candidate": "279f56d1c9a48ed205c6caa876eebcf0a425b1f4",
+      "task_id": "G04-continuation-provider",
+      "id": "RC19-RC22-explicit-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/continuation-provider/review.json",
+          "sha256": "b95bc7a05efa24b04abab772035d14891c852c7e2caf57c8bce10fca47816cec"
+        }
+      ]
+    }
+  ]
+}

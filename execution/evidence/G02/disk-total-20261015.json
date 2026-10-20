@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T23:34:58.653686+00:00",
+  "originalAllocatedBytes": 87556743168,
+  "currentAllocatedBytes": 44437377024,
+  "netReductionBytes": 43119366144,
+  "netReductionDecimalGB": 43.119366144,
+  "netReductionGiB": 40.15803909301758,
+  "targetDecimalGB": 40,
+  "conservativeTargetGiB": 40,
+  "decimalTargetMet": true,
+  "conservativeTargetMet": true,
+  "currentQualifiedSnapshotsAndCacheRetained": true,
+  "thisCleanupAllocatedBytes": 14566703104
+}

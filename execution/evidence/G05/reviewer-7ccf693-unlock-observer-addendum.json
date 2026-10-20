@@ -1,0 +1,14 @@
+{
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "priorReportSha256": "2039e89621a7c53aff349d67d32c8d4f6d177954c41a8ed5574fcb6df834f8b3",
+  "result": "Correcting observer timeout to existing remaining budget advanced original U1 beyond contracts registration and session initialization without application/profile repair. The30second diagnostic then expired during ordinary private refresh; this is a preserved nonpass, not full name acceptance.",
+  "evidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g05-name-availability/unlock-bounded-result.json",
+    "sha256": "39800154e963187efb8d1a324f61049568d980e658314cbb815318ca9d8eede1"
+  },
+  "limits": [
+    "No completed name registration/collision acceptance yet",
+    "No sends or profile reset in diagnostic",
+    "Lead owns next campaign within preexisting acceptance deadline"
+  ]
+}

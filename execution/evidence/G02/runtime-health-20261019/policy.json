@@ -1,0 +1,28 @@
+{
+  "base": "6aefe9dcf6340703c3d80ae32f336ee4e7e644c1",
+  "candidate": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+  "task_id": "G02-runtime-health",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py"
+  ],
+  "required_checks": [
+    "runtime-health-boundary"
+  ],
+  "requirements": [
+    "RC41-state-driven-runtime-readiness"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G02-runtime-health",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py"
+      ]
+    }
+  ]
+}

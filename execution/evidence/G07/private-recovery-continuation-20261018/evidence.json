@@ -1,0 +1,82 @@
+{
+  "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+  "task_id": "G07-private-recovery-continuation",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "task_id": "G07-private-recovery-continuation",
+      "id": "private-recovery-ui",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 focused existing wallet-panel and reader browser cases; exact command in review.json",
+      "environment": "macOS Chromium, labelled component fixtures, no chain/build",
+      "observed": "9 independent selected browser checks pass14.35s; exact candidate clean",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/private-recovery-continuation-20261018/review.json",
+          "sha256": "0c184cc822a5d6e2eb74d10a45d4fa26759d5500cba8a88041025ca6ec4f22a5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+    "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+    "task_id": "G07-private-recovery-continuation",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/private-recovery-continuation-20261018/review.json",
+        "sha256": "0c184cc822a5d6e2eb74d10a45d4fa26759d5500cba8a88041025ca6ec4f22a5"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "task_id": "G07-private-recovery-continuation",
+      "id": "RC04-recovery-and-identity-ui",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/private-recovery-continuation-20261018/review.json",
+          "sha256": "0c184cc822a5d6e2eb74d10a45d4fa26759d5500cba8a88041025ca6ec4f22a5"
+        }
+      ]
+    },
+    {
+      "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "task_id": "G07-private-recovery-continuation",
+      "id": "RC26-complete-private-views-only",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/private-recovery-continuation-20261018/review.json",
+          "sha256": "0c184cc822a5d6e2eb74d10a45d4fa26759d5500cba8a88041025ca6ec4f22a5"
+        }
+      ]
+    },
+    {
+      "base": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "candidate": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "task_id": "G07-private-recovery-continuation",
+      "id": "RC40-cancellable-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/private-recovery-continuation-20261018/review.json",
+          "sha256": "0c184cc822a5d6e2eb74d10a45d4fa26759d5500cba8a88041025ca6ec4f22a5"
+        }
+      ]
+    }
+  ]
+}

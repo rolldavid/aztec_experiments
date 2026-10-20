@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "fleetId": "fleet-8f167360-a3df-4a04-89c7-9d7d28e83c0c",
+  "fleetState": "deleted_terminating",
+  "resources": {
+    "instances": [
+      {
+        "id": "i-05ca1ad4ebeaf06f8",
+        "state": "terminated",
+        "controlsVerified": false,
+        "rootMappingVerified": false,
+        "shutdownReadback": "not-applicable-terminated",
+        "volumes": [],
+        "rootVolumeObserved": false
+      }
+    ],
+    "volumes": [],
+    "instancesTerminated": true,
+    "volumesAbsent": true
+  },
+  "receiptStatus": "observed",
+  "receiptSha256": "b5c70e2421737afb8f1e767dc6a52778acf515e4f158cea2504de84495965f2f",
+  "receipt": {
+    "schemaVersion": 1,
+    "mode": "native-version-only",
+    "passed": true,
+    "nodeStartupQualified": false,
+    "proofJobs": 0,
+    "binarySha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "binaryBytes": 44698432,
+    "expectedVersion": "6.0.0-rc.6",
+    "controlSourceSha256": "802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84",
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878",
+    "budgetStop": "2026-10-13T07:44:32Z",
+    "commissioningStop": "2026-10-13T07:29:32Z",
+    "stage": "complete",
+    "state": {
+      "status": "observed",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Result": "success",
+      "ExecMainCode": 1,
+      "ExecMainStatus": 0,
+      "ExecMainStartTimestampMonotonic": 17723071
+    },
+    "resultStatus": "observed",
+    "guestPreflight": {
+      "status": "passed",
+      "architecture": "x86_64",
+      "libc": {
+        "status": "observed",
+        "major": 2,
+        "minor": 39
+      },
+      "loaderAvailable": true,
+      "os": {
+        "status": "observed",
+        "ubuntu2404": true
+      },
+      "cpu": {
+        "status": "observed",
+        "processors": 2,
+        "vendor": "amd",
+        "flags": {
+          "sse4_2": true,
+          "avx": true,
+          "avx2": true,
+          "avx512f": true,
+          "bmi2": true,
+          "adx": true
+        }
+      }
+    },
+    "controlsVerified": true,
+    "result": {
+      "started": true,
+      "timeout": false,
+      "reaped": true,
+      "returnCode": 0,
+      "stdout": {
+        "bytes": 11,
+        "sha256": "2853e82e9aa603c73e91b813b1ce13bc48672ac94fa3b3495f31b6fa882e9475",
+        "truncated": false
+      },
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "truncated": false
+      },
+      "schemaVersion": 1,
+      "versionMatches": true
+    },
+    "outcome": "passed"
+  }
+}

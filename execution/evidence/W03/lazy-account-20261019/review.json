@@ -1,0 +1,24 @@
+{
+  "candidate": "d47c8a9f79ee8d9c404fb021ba85cc8f4208acda",
+  "base": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+  "verdict": "approved",
+  "reviewer": "reviewer_resume2",
+  "component": "3028a1b4cff4cb4209755d7099e2be427064c796",
+  "scope": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs"
+  ],
+  "checks": {
+    "exactTransferredBlobs": true,
+    "independentBrowserCasesPassed": 3,
+    "failed": 0,
+    "durationMs": 19225.150375,
+    "log": "../rolling-independent-deploy/.build/lazy-account-independent.log"
+  },
+  "reasoning": [
+    "Overview reads account/recovery status without eagerly querying names/moderator/Bok. Explicit names and action views load selected dependencies under existing serialized work/session locks.",
+    "Saved intents retain precedence; no action form before required capabilities load. Failure keeps funding navigation and explicit retry without empty-name success.",
+    "Refresh and account invalidation clear caches; epoch/account guards prevent late view data becoming visible. Existing explicit composer fields and confirmed-funding Bok feedback remain."
+  ],
+  "limits": "Browser cases use labeled application doubles; no native operation or live latency result."
+}

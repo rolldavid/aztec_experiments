@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-13T01:48:43.527036+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "exitCode": 0,
+  "available": true,
+  "incomplete": false,
+  "observation": {
+    "rows": []
+  },
+  "finishedAt": "2026-10-13T01:48:44.450048+00:00"
+}

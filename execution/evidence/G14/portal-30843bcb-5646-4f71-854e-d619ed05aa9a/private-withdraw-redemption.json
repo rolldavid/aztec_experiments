@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "amount": "880",
+  "recipientBalanceBefore": "0",
+  "recipientBalanceAfter": "880",
+  "portalBalanceBefore": "1000",
+  "portalBalanceAfter": "120",
+  "controlledSettlement": true,
+  "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-30843bcb-5646-4f71-854e-d619ed05aa9a/private-withdraw-redemption.json"
+}

@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "at": "2026-10-15T15:09:22.233855+00:00",
+  "uninterruptedAcceptancePassed": false,
+  "scope": "One fresh zero-ETH/nonce0 payer, existing local Circle/V3 aggregate USDC flow; native/PXE proofs false",
+  "result": {
+    "inventoryTransfer": {
+      "passed": true,
+      "at": "2026-10-15T15:00:49.119Z",
+      "canonical": true,
+      "hash": "0x9aac05040bd8e239b25c4036794458679e8e061f8b32b2e201119bc31aa706ea",
+      "blockNumber": 1722,
+      "blockHash": "0xc59240cb240f902b3f599fde2a95d0246ea4822cc733e4e9af11270d591bc598",
+      "recipientZeroEthNonce": true,
+      "recipientUsdc": "250000000",
+      "journalSha256": "9f3430857179df54de3ac5a88737fb1fea2d38d302ad6006fdbb7b23c09fc085",
+      "noResend": true,
+      "priorWaitFailurePreserved": true
+    },
+    "payment": {
+      "asset": "USDC",
+      "transactionHash": "0x8b52ab41dbc2baffa320df70af23e0e83b94ad7757995a9feb88459f25f9af8d",
+      "planHash": "0x220fb067fc1adfce24c76c6fca1215e1b0699b6ad1d72c6425f4aadd4ceac3d5",
+      "userSends": 0,
+      "relayPosts": 1,
+      "signatures": 2,
+      "canonicalEffectsVerified": true,
+      "collateral": "1000000000000000",
+      "privateFee": "1000000000000000",
+      "bok": "100000",
+      "privateClaimQualified": false,
+      "postQualified": false
+    },
+    "claimSubmissionCount": 1,
+    "originalBrowser": {
+      "elapsedMs": 105904,
+      "deadlineMs": 120000,
+      "failure": {
+        "stage": "aggregate-automatic-private-claim",
+        "errorClass": "TimeoutError",
+        "browserLifecycle": {
+          "contextClosed": false,
+          "disconnected": false,
+          "pageCrashed": false
+        },
+        "location": "t04-metamask.mjs:599:21"
+      },
+      "initialization": {
+        "stage": "funding-claim",
+        "step": "submit",
+        "deploymentStep": null,
+        "state": "started",
+        "code": null
+      },
+      "automaticClaim": {
+        "saved": {
+          "paymentMatches": true,
+          "claimMatches": true,
+          "claimConfirmed": false,
+          "claimTxHash": null,
+          "paymentSaved": true,
+          "claimPresent": true,
+          "attempted": true,
+          "workflowPrepared": false,
+          "workflowStatus": "submitting",
+          "feeWithinSavedCap": true,
+          "explicitClaimReview": false
+        }
+      },
+      "ownedTreeAbsent": true,
+      "proofRequests": 0,
+      "blockedRequests": 0
+    },
+    "laterClaimJournal": {
+      "hash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+      "operation": "ROLLING_WORKFLOW_V1:0x1ff4596aa34266b91aee8e20669999649a09a11a9f72c09aa8126cf508be592d",
+      "signedBytesSha256": "1e7da679f477e857bf9f733df88999e7925ab5945f3e772c1188c0ad993bf397",
+      "signedBytesLength": 122148,
+      "workflowPhase": "submitting",
+      "workflowHash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+      "action": "claim-deposit",
+      "exactOriginalPaymentBound": true
+    },
+    "laterCanonicalReceipt": {
+      "at": "2026-10-15T15:07:45.814Z",
+      "hash": "0x2530bc77bec6894636f461c8264fec9b728fa9b98b1026abd85a508c606d35ca",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 824,
+      "blockHash": "0x264cb8615215a4690e280be9244dd1e74e83ae59427e4ca1b56eb0732d6f3784",
+      "transactionFee": "10399767000000",
+      "canonical": true,
+      "blockTimestamp": "1792076577"
+    },
+    "readyOrCurrentExport": "Not established; no later reconciliation/advanceClaim/export attempted"
+  },
+  "diagnosis": {
+    "known": [
+      "Real relay payment canonical with2typed signatures/1relayPOST/0userL1sends",
+      "Exactly one L2send observed; encrypted signed journal hash matches actual typed transaction and three originalpayment receipts",
+      "Claim canonical successful at824, but original saved UI workflow submitting and automaticReady observation timed out",
+      "Original browser filesystem creation15:01:17.656Z, preparedbackup15:01:44.405Z, claim block timestamp15:02:57Z, browser end15:03:03.565Z",
+      "Silent native log provides no matching claim timeline; standard observer records stages without timestamps and L2 counts without individual RPC timing"
+    ],
+    "sourceBoundary": [
+      "apps/src/billboard/user/engine.js:185 sendTx covers simulation, proof-disabled construction, durablejournal, submitOnceWithReconciliation and receipt wait",
+      "apps/src/billboard/user/engine.js:279 defaults5s receipt polling; shared/transaction-outcomes.mjs:55 accepts checkpointed/proven/finalized and canonicalblock only",
+      "shared/rolling/aggregate-wallet.mjs:297 awaits entire submitPrepared before complete; apps/rolling/wallet-panel.mjs:590 displays completion afterward"
+    ],
+    "cause": "Unclassified long submit/confirmation boundary. Timestamp proximity alone does not establish dominant phase or prove a product defect. No source repair proposed without finer existing-boundary evidence.",
+    "smallestNext": "Read-only normal reconciliation/export of this exact claim can restore current UI/custody but cannot qualify uninterrupted acceptance. For performance diagnosis, retain per-phase timings from existing engine measured hook and RPC observer on an independently authorized future action, without replaying current payment or claim.",
+    "forbidden": [
+      "No second payment, claim, transfer, approval or signature",
+      "No timeout increase or inferred unknown-tx replay",
+      "No old attempt3 profile access",
+      "No Docker/service change"
+    ]
+  },
+  "references": {
+    "rolling-lead-bok/execution/evidence/T04/g13-current-usdc-01.json": {
+      "sha256": "075064f99d70d71f36e922fa4a882557471b0567f27fc044cb82c622cd2f16ff",
+      "bytes": 19376
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/setup.mjs": {
+      "sha256": "37175761ce8c3d766886dce6efb6d4f26aee40e00fe6b54476c8a2764a1c1533",
+      "bytes": 7426
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/setup-path-failure.json": {
+      "sha256": "e2dad8dd4e49cf493d2af7d1352459ebf1a453160d35c30cd4dbdbcab0f74edc",
+      "bytes": 193
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/setup-result.json": {
+      "sha256": "ee5fc537252bc61ad713f9a8c49f2efb1da8a41c49b7e9374bfe3f5b81c9eb02",
+      "bytes": 684
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/transfer-result.json": {
+      "sha256": "5f5b9239b386eeca5c1f89b4d91c8af9a00cd10306749bcfc08bfeeb704b0a34",
+      "bytes": 761
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/transfer-reconciled.json": {
+      "sha256": "d6cc72020832635ebd3b2f8ad597b358f154f61a94cf27b66a009d2b48df159d",
+      "bytes": 475
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/inspect-claim.mjs": {
+      "sha256": "a191f5e1287d4cc159e6f5f9f368843742e1baeaaa7f869c3664fce4bcc13190",
+      "bytes": 5707
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/claim-inspection.json": {
+      "sha256": "7672702d1b0df2b8182bdabdb4a3fb9c81537c72be08ba08a83891ae287b5d69",
+      "bytes": 940
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/claim-receipt-readonly.json": {
+      "sha256": "92b4043fd31685ba6f42a8fc796930cc8690a01a1aaa5bddd0b9dff4b4b394e8",
+      "bytes": 376
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/wallet/initial-recovery.json": {
+      "sha256": "7ee764eb8672f205e90b6bf774eb04c0a1e2955c96b90556df124429ca49e9c1",
+      "bytes": 651,
+      "encrypted": true
+    },
+    "rolling-controls/.build/g13-current-local-funding-gap/usdc-01/wallet/prepared-recovery.json": {
+      "sha256": "3fe73f24c44957dab8f41dbe4ef8c04738aa62b94582061afcd4042688061aae",
+      "bytes": 7987,
+      "encrypted": true
+    }
+  },
+  "cleanup": {
+    "fundProcessClosed": true,
+    "originalBrowserOwnedTreeAbsent": true,
+    "focusedInspectionContextClosed": true,
+    "focusedInspectionBlockedRequests": 0,
+    "focusedInspectionNoSessionOrImport": true,
+    "allOriginalProfilesNotOpened": true
+  },
+  "limitations": [
+    "Canonical receipt read is later evidence, not original uninterruptedReady success",
+    "Private balances/currentportableencryptedexport not yet qualified",
+    "Native development only; testnet/realproof/Phantom gates unchanged"
+  ]
+}

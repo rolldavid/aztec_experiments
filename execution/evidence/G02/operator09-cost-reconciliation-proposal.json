@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T12:53:05.200447+00:00",
+  "recommendationOnly": true,
+  "ledgerWriter": "lead",
+  "priorBoundUsd": 190.28,
+  "currentReservationUsd": 25,
+  "currentTotalBoundUsd": 215.28,
+  "proposedRetained09Usd": 15,
+  "proposedTotalBoundUsd": 205.28,
+  "proposedRemainingUsd": 94.72,
+  "condition": "Only adopt after Fleet finalDELETED readback; instance terminated and both volumes absent alreadyverified. No replacement allocation.",
+  "accountingBasis": "Conservative forecast/reconciliation, not metered AWS bill; CostExplorer not called.",
+  "actualWindow": {
+    "instanceLaunched": "2026-10-12T12:14:00Z",
+    "terminationObserved": "2026-10-12T12:49:21Z",
+    "volumesAbsentObserved": "2026-10-12T12:50:33Z",
+    "budgetStop": "2026-10-12T13:03:58Z"
+  },
+  "retainedComponentsUsd": {
+    "computeFullHour": 0.92736,
+    "encrypted1064GiB_gp3FullHour": 0.118223,
+    "publicIPv4FullHour": 0.005,
+    "network22_5GBAt0_195": 4.3875,
+    "newArchiveReceipt30days": 0.5,
+    "crossRegionArchive": 0.5,
+    "apiRequests": 0.25,
+    "taxUnpricedAllowance": 3,
+    "delayedBillingCleanupBuffer": 5.311917
+  },
+  "limits": [
+    "Uses fullhournetwork50Mbps envelope despite muchlowerobservedegress; no traffic-based savings claimed.",
+    "RetainedpublicS3archive/receipt storage30days included; no retainedEBS volumes ornew snapshots.",
+    "Allpriorcampaign costs/retention remain190.28; this15replaces09reservation25, not additionalauthority.",
+    "ActualFleetdeleted confirmation pending; acknowledgedDeleteFleets mustnotbereplayed."
+  ],
+  "evidence": {
+    "operator09-readonly-124921.json": "c6b247d43b3751321ad0eb095ad5d515fb8db4f8158471d1f703e207eebbaf4d",
+    "operator09-launch.json": "fd460c6431385cc64414c56d483329d24a6c038f106373c3df2bd880fd0dbb8c",
+    "operator09-resource-readback.json": "687b6a2142027d8e503b9639e635095bf110002bbd722cdd0743ec9633e71633",
+    "operator09-failure-cleanup.json": "39c697ddbe0e5cac2051dd06cf671c109e1393d693ea4daa424acbb6d9be4547",
+    "operator09-cleanup-readback.json": "638ab5b0f0393ab48893da8772a0bcfb36cb0378c40898651eb580c21eafa34c",
+    "operator09-archiver-counter-interpretation.json": "867ddcf158ebbcbf52293f2fbaf4f96aecabf314fc8d42ad1ad271b9ca29324c",
+    "operator09-monitor-review.json": "0c63956e57e53e5045c3188643f0d07de53d54c93c2c7e24be71c0f8b8435221",
+    "operator09-cleanup-helper-review.json": "8402e9b1afaad11d49d9b3fdd84d8c5c1e478b5f5729f8dd816c55cdd7a537c7"
+  }
+}

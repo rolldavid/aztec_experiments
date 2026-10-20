@@ -1,0 +1,34 @@
+{
+  "base": "158473578bd49d59e2200f25f07a27ec5be2ad69",
+  "candidate": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-bounded-native-storage-and-current-inbox",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "docs/rolling-deployment.md",
+    "scripts/test-w03-ethereum-anvil.mjs"
+  ],
+  "required_checks": [
+    "native-storage-component",
+    "ethereum-recovery-current-inbox"
+  ],
+  "requirements": [
+    "RC01-RC40-development-checkpoint-preservation",
+    "RC01-RC40-current-protocol-interface-pin"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-bounded-native-storage-and-current-inbox",
+      "paths": [
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "docs/rolling-deployment.md",
+        "scripts/test-w03-ethereum-anvil.mjs"
+      ]
+    }
+  ]
+}

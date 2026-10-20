@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "ca9a8802697fb30d215f125ee4f0858f9ecec83c",
+  "base": "0502b168214669977eddcf4320e52c7f3cd437f5",
+  "verdict": "approved-source-for-one-bounded-actual-campaign",
+  "scope": "G05 owned-name wire observation support; actual acceptance remains pending",
+  "files": {
+    "scripts/testing/rolling-wire-trace.mjs": "376b143b37f85f6cf6ac0b0f6af79d1a91de55615518e535baf16282f61d10a9",
+    "scripts/testing/rolling-wire-trace.test.mjs": "94368a3342650ae252667e26fe525298178033ef200456ae623fb247cba4ae36"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs scripts/testing/rolling-wire-campaign.test.mjs shared/rolling/public-index.test.mjs scripts/testing/rolling-owned-names.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "168 passed, 0 failed/skipped, 6629.372292 ms; includes 98 observer checks",
+      "log": "/tmp/reviewer-wire-ca9-tests.log"
+    },
+    {
+      "procedure": "Read installed viem getBlobBaseFee/formatTransactionRequest and sequencer-publisher validateBlobs estimateGas call",
+      "result": "Exact omitted-params method and blob-bearing estimate request are installed-client paths. Actual viem serialization test uses explicitly synthetic receiver."
+    }
+  ],
+  "reasoning": [
+    "Only eth_blobBaseFee is added to fixed supported and omitted-zero-argument methods. Null/object params remain unknown; extra params unsupported and inspected.",
+    "Only eth_estimateGas params[0].blobs array with 1..6 exact 131072-byte hexadecimal values is newly opaque. Overall body limit remains enforced; malformed length/type/count and other paths fail closed.",
+    "RPC ID, transaction field keys/from/to/blobVersionedHashes, extra fields/params/state overrides and headers retain existing traversal and role detection. No arbitrary large-string exemption introduced.",
+    "Opaque count remains nonzero and requestCoverageComplete remains false for these transactions. Fixed aggregates contain no raw blob bytes or identifiers.",
+    "No fetch/Promise/lifecycle, proof/send, accounting, campaign resource limit or acceptance assertion changed."
+  ],
+  "historical_evidence": {
+    "failedRun": "G05/application-4a1fb67d-dfdf-417b-87a4-a0facf0603d0.json",
+    "diagnosis": "G05/wire-4a1f-diagnosis-review.json",
+    "disposition": "Preserved failed. Historical bodies were not retained; current source-backed reproduction is not retroactive attribution or a pass."
+  },
+  "limitations": [
+    "One changed genuine owned-names-wire campaign may run within unchanged 540-second/4-GiB controls. Its actual counters, receiver reconciliation, canonical effects, fees, cold PXE and cleanup must pass independently.",
+    "Recognizing an opaque blob shape does not inspect its private/public contents; full wire privacy and independent specialist qualification remain open.",
+    "No real proof, browser or cloud job was run for this review."
+  ]
+}

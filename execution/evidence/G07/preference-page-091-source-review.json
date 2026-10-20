@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T12:50:23.821101+00:00",
+  "candidate": "0918743130f9d66f611f8b1e68cebc7ed70bd5f4",
+  "base": "ef36801ef215eeff400583e8454c3845744d580b",
+  "verdict": "approved for isolated bounded source prototype experiments only; not production installation or genuine recovery acceptance",
+  "sourceHashes": {
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+    "scripts/patch-pxe-preference-page.mjs": "9a61445de3b704cfe4d6ddb8104740fe0dde041976f19ededbdf64cf6fcec702",
+    "scripts/test-pxe-preference-page.mjs": "20da3904f0f6c613e46f6eebca401b59f444861e21b06013968da4260b512464"
+  },
+  "packet": {
+    "path": "execution/evidence/G07/preference-page/review-packet.json",
+    "sha256": "0330ddc8290c43c9d416db5e074170cf2b9521a9e22336bc1e8d3a3bf8639942"
+  },
+  "independentChecks": {
+    "path": "execution/evidence/G07/preference-page-091-independent-tests.log",
+    "sha256": "428b9104a94ec59715323f239bc87dd3c3bc8183ee18624cc9502349279ff01d",
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "testDurationMs": 1204.917583,
+    "processElapsedMs": 1248,
+    "command": "pinned Node --test --test-concurrency=1 scripts/test-pxe-preference-page.mjs; ROLLING_PREFERENCE_PAGE_NATIVE=1 NODE_BACKEND=js LOG_LEVEL=silent",
+    "scope": "Actual pinned SDK TxEffect/header/ordered compact root/membership/EventService/LMDB/OperationQueue with labelled class registry, node and utility-execution doubles. Positive utility invocation reached; not real ACIR/decryption."
+  },
+  "sourceAssessment": [
+    "Inputs are detached own-data primitives before awaits; canonical field/range/network/proof-mode/class/artifact pins and <=8 selected ciphertexts remain closed. Local approved manifest and exclusive account lease are required authority.",
+    "Full authenticated TxEffect membership alone does not establish ordinal. Candidate additionally authenticates general ordered compact block under canonical header and matches all selected transaction ciphertexts, log indexes and receipt txIndexInBlock; depth-specific witness leafIndex is not mistaken for ordinal.",
+    "Fee and success/revert bind to authenticated effect; slot binds to header. Receipt primitive snapshot and fresh per-call receipt/effect reconstruction prevent later mutation of captured metadata. Original node canonical and receipt rechecks remain after utility.",
+    "Actual installed address constructor corrected to AztecAddress.fromFieldUnsafe(Fr.fromString(...)); prior434 positive failure retained. Independent091 positives now reach utility and standard event validation.",
+    "Normal utility/sync paths unchanged. Scoped simulator uses exactly one authenticated receipt; all other original node methods preserve receiver. No global SDK patch, direct store writer, syncedContracts-complete update or arbitrary generic skip-sync flag.",
+    "Noir fixed page filters head-note owner/base-slot/type/length/schema and event selector/length/schema before standard dispatch; standard note/nullifier/event validators remain writers. Deliberate second decrypt is bounded. Filter admission counts do not count stored records.",
+    "Installer restricts canonical nonsymlink standalone copied package, exact original/whole-patched states and helper SHA; shared installed node_modules installation refused. Interrupted partial application fails verification rather than masquerading as valid."
+  ],
+  "blockingQualificationGates": [
+    {
+      "id": "commit-boundary",
+      "severity": "production integration blocker, disclosed prototype limit",
+      "source": "scripts/patch-pxe-preference-page.mjs:217-225; @aztec-labs/pxe/src/operation_lifecycle.ts:41-47",
+      "finding": "Final canonical/account guard precedes contributor settle and commit. Installed settle may take arbitrarily long. A chain/account change during settlement is not rechecked by this method before commit. Existing tests use empty contributor list and an awaited validator; they do not establish this final gap is closed.",
+      "required": "Before production recovery, exercise actual contributor settle with lock/reorg/abort races and demonstrate supported coordinated final validation plus staged rollback/account lease semantics. Do not label pre-return guard atomic commit validation."
+    },
+    {
+      "id": "actual-noir",
+      "severity": "genuine ingestion qualification blocker",
+      "source": "billboard/rolling_contract/src/main.nr:147-156; preference_recovery.nr:38-75",
+      "finding": "Raw compile success and JS utility doubles do not establish actual compiled utility encrypted note/event recovery, missing-owner NHK gate, nullifier rejection or note storage.",
+      "required": "Normal changed-artifact processing and disposable deployment/actual utility execution; run six new Noir tests and real encrypted notes/events, wrong owner/slot/type/malformed metadata, nullified note, missing NHK even absent head/empty result, retained record and rollback cases. Changed artifact/class must not reuse old deployed identity."
+    },
+    {
+      "id": "completeness-and-capacity",
+      "severity": "full G07 acceptance remains open",
+      "finding": "processed is selected log count; admitted is filter acceptance, not authenticated stored count. Full ordered block authentication and normal global synchronization/contributor work are outside the eight-ciphertext decrypt bound. No full enumeration/cursor/head completion, cold history or capacity established.",
+      "required": "Keep page output separate from preference state and completion. Qualify authenticated enumeration and bounded cold pipeline independently; future transport must cap streaming bytes before parsing."
+    }
+  ],
+  "compileDisposition": {
+    "rawCompileExit": 0,
+    "sourceHashesMatchFinalNoir": true,
+    "elapsedMs": 148083,
+    "diagnostics": 119,
+    "manualConstraintCoverage": 111,
+    "separateSubgraph": 8,
+    "warnings": 16,
+    "meaning": "Successful raw compile only; unresolved constraint diagnostics, no soundness assurance. Six added tests not executed; no normal VK/TXE/ACIR qualification."
+  },
+  "limits": [
+    "No shared dependencies installed or source changed by reviewer.",
+    "No real private-note soundness, historical FPC fee result, complete cold discovery or native-browser claim.",
+    "No production root source/assets altered; isolated experiment approval does not authorize endpoint exposure or trusted caller pins sourced from HTTP."
+  ],
+  "nextMinimalExperiment": [
+    "Normally process this exact changed artifact into isolated outputs under separately granted resource slot.",
+    "Use actual utility ACIR and genuine encrypted preference note/event input with standard staged stores, explicit owner key/scope and canonical effect/root pins.",
+    "Measure bounded page admission and verified stored outcome separately; keep contributor/commit timing and completeness unqualified until their own negatives pass."
+  ]
+}

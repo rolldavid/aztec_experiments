@@ -1,0 +1,117 @@
+{
+  "candidate": "c5ac24d2e28ea9ddb30529aadd7f8aa94be48acf",
+  "base": "9dc16fcd4d7e81e5cef0ef00670f6eaa0fdfeecf",
+  "verdict": "approve exact combined code/component and normal build integration; actual G13 startup remains separate",
+  "blockingFindings": [],
+  "changedPaths": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/deploy.html",
+    "apps/dist/sdk-manifest.json",
+    "apps/rolling/README.md",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "apps/src/billboard/deploy/engine.js",
+    "docs/rolling-deployment.md",
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "plugins/devnet/start.mjs",
+    "scripts/test-c01-mining-clock.mjs",
+    "scripts/test-deployment-manifest.mjs",
+    "scripts/test-w03-deploy-engine.mjs",
+    "shared/deployment-manifest.mjs",
+    "shared/journal-backup.mjs",
+    "shared/journal-backup.test.mjs",
+    "shared/rolling/aggregate-wallet.mjs",
+    "shared/rolling/aggregate-wallet.test.mjs"
+  ],
+  "pathCount": 22,
+  "sourceCarry": {
+    "method": "Every one of19 changed non-generated files compared by exact Git blob against prior reviewed revisions; all match.",
+    "edb6723": [
+      "apps/rolling/README.md",
+      "apps/src/billboard/deploy/engine.js",
+      "docs/rolling-deployment.md",
+      "plugins/devnet/bootstrap.mjs",
+      "plugins/devnet/operator-test.mjs",
+      "scripts/test-w03-deploy-engine.mjs"
+    ],
+    "d801f1e": "Exact eight reviewed standalone top-up files",
+    "a578733": [
+      "shared/deployment-manifest.mjs",
+      "scripts/test-deployment-manifest.mjs"
+    ],
+    "5d2abd8": [
+      "plugins/devnet/start.mjs"
+    ],
+    "c5ac24d": [
+      "plugins/devnet/network.mjs",
+      "scripts/test-c01-mining-clock.mjs"
+    ]
+  },
+  "reviewCarry": {
+    "reviewer-edb6723-devnet-repair-review.json": "4916b6bcf23a3c631266b19bfe5db042b0cafa31dd5d85f6c6805d4d06ccf4f6",
+    "reviewer-a578-public-node-mode-review.json": "a29878f94d6082eaca002099eced1742c231db697e8e71a1c14b14f3f434e529",
+    "reviewer-5d2-devnet-snapshot-review.json": "04b2a27db48137a4fdb082259135ede47a3474917a08c4c7abd834a34bb71365",
+    "reviewer-c5ac-devnet-clock-review.json": "679feaa7fb7c247195ee2a653298feb1b72db8188bd4741fb7dc950c5323794c",
+    "reviewer-d801-standalone-topup-review.json": "6b584b5a9a14527568983d72ba3f0a3d8f943ef294c654d3dae890edc901d5a8"
+  },
+  "normalManifests": {
+    ".build/contracts-manifest.json": {
+      "sha256": "1bb52c9d1479b7ae35df2899fd70cdf7aaa22c4dd09fe417fb5c8ad173591512",
+      "inputs": 55
+    },
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "a8bea92690cc0f16d81db06bec042da4d7d0017a46018edcd6f46b1f94881f27",
+      "inputs": 2057,
+      "outputs": 8
+    },
+    ".build/apps-manifest.json": {
+      "sha256": "7b7e3e63aace16aea1bd302bccb9de74a47f7e947da249bfcc85f718b981a807",
+      "inputs": 97,
+      "outputs": 10
+    },
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "5c7ec909f3ff735e1ef9bd11616f17202235c83b41a8c63c8600d08ba072f405",
+      "inputs": 97,
+      "servedFiles": 25
+    },
+    "experiments/private-bok/target/private-bok-build.json": {
+      "sha256": "f940d3f6a28ec524bdcb13c5668d694bb6c756fd911c1cb8c419eacc72b6d0c0",
+      "inputs": 14
+    }
+  },
+  "manifestVerification": {
+    "allInputAndOutputHashesMatched": true,
+    "walletServedByteLengthsMatched": true,
+    "sdkOutputsCopiedToAppsDist": 8,
+    "sdkManifestDistByteMatch": true,
+    "sdkLockAndBuilderMatched": true,
+    "privateBokArtifactsMatched": 2,
+    "note": "Contracts and PrivateBok manifests remain exact accepted9dc hashes. Final clock repair touches no normal manifest input; current SDK/apps/wallet closure remains valid."
+  },
+  "normalBuildEvidence": {
+    "topup-build-owner.json": "1d260ea46e29d59bf4f0b30c5be82fbaba53fa791813616fbf36042a54d3aaf5",
+    "topup-sdk.log": "f57c02ba759586635475b3a534262fe73e16eaa9053d5a19122db2e394e9f765",
+    "topup-apps.log": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac",
+    "topup-wallet.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd",
+    "api-build-owner.json": "09adc94966f73c757fb822b9e72269073eb7d1975bc4d60c1770d9bd4fe09cf5",
+    "api-sdk.log": "968ca3c5399130b53561daaca6727e7973f5f3c84875250c5fcd0e014f064df8",
+    "api-apps.log": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac",
+    "api-wallet.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+  },
+  "normalBuildDisposition": "Top-up build at9b922e9 passed9957ms/718512KiB and positive owned cleanup; public API build passed10563ms/1125296KiB and cleanup. Generated apps SDK/deploy/manifest match actual outputs; no handwritten manifest repair.",
+  "componentEvidenceScope": [
+    "Standalone direct-token top-up154 ordinary staged +3 Chromium labelled adapter cases; matching receipt attempt checkpoint and predecessor reorg repairs included.",
+    "Retained devnet original deployment/anchor cases carried with current startup15, public-mode47+1, snapshot-size Anvil check, clock2 as individually scoped in carry reviews. No combined whole-suite rerun asserted."
+  ],
+  "runtimeExclusions": [
+    "Actual retained startup42354 is in progress, not accepted here.",
+    "Prior72800/3306/80177 failures remain failures; successful focused checks do not relabel them.",
+    "No full G13 readiness/clean restart claim, no genuine direct top-up chain acceptance, no fullG04 or testnet release qualification.",
+    "Bok activation fd466 separate later component is not included."
+  ],
+  "reviewExecution": "Read-only source composition/evidence/manifests verified; no heavy runtime or repeated gate negatives."
+}

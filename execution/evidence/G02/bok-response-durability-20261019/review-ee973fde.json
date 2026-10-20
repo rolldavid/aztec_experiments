@@ -1,0 +1,11 @@
+{
+  "candidate": "ee973fde306f1d9d9ce24d714daaedfc644c1898",
+  "base": "5d0c46dbfadc8c9f1073e4d70b8d2893a1b4866c",
+  "verdict": "approved",
+  "findings": [],
+  "basis": "All five plugin component blobs byte-identical to reviewed6b93c1a5; both wallet source/test blobs byte-identical to approved5d0c46db. Disjoint clean transfer; no check repetition.",
+  "priorReviews": [
+    "review-6b93c1a5.json",
+    "review-5d0c46db.json"
+  ]
+}

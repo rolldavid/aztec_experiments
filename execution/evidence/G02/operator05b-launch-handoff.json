@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T00:16:03.222558+00:00",
+  "campaign": "rolling-node-20261012-05",
+  "instanceId": "i-02281bf3f22119f45",
+  "launchTemplateId": "lt-0c91eae17cc765d87",
+  "launchTemplateVersion": "1",
+  "fleetId": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+  "volumes": [
+    "vol-0dfd3646600a78799",
+    "vol-0236621a2c6bd0c2e"
+  ],
+  "phase": "installed; awaiting actual node readiness and query qualification",
+  "cloudControlsVerified": true,
+  "hostControlsVerified": true,
+  "qualificationPassed": false,
+  "deadlines": {
+    "commissioningStop": "2026-10-12T00:39:37Z",
+    "readinessStop": "2026-10-12T01:39:37Z",
+    "qualificationStop": "2026-10-12T01:54:37Z",
+    "budgetStop": "2026-10-12T02:09:37Z"
+  },
+  "proverPolicy": "masked-pending-qualification",
+  "publicRoutingChanged": false,
+  "proofJobsAuthorized": false,
+  "mutatingLaunchCalls": {
+    "launchTemplate": 1,
+    "requestFleet": 1
+  },
+  "evidenceSha256": {
+    "operator05b-launch.json": "5fda59afa078b5a616a5ea8634ee7129845afe9bd274132516a87e57a0770d9f",
+    "operator05b-cloud-controls.json": "880224464891c8d4d08e3df518c5341248509b1a9cda0733c17f1761181cc8b3",
+    "rolling-node-05-readonly-001526.json": "fec375e07585a59f3c79f1bd22020c6a3c369f843cac4dfe52ff028e9a1ebc9a"
+  },
+  "nextReadOnlyCommand": "python3 .build/rolling-node-05-readonly.py",
+  "commandWorktree": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls",
+  "monitorSourceSha256": "8a8ae584a51780bfb8a861d4fdc4a7bc1acc9b0d7cd73502ab59f687084c3c81",
+  "receiptReference": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "region": "eu-west-2",
+    "key": "receipts/rolling-node-20261012-05/final.json"
+  },
+  "doNotReplay": "Existing LT/Fleet/upload/receipt-probe intents are immutable; reconcile missing receipts only."
+}

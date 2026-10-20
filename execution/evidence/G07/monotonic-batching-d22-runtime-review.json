@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T01:13:57.594819+00:00",
+  "source": "d22f64f52a6a9a031697d2c27fac54c88e33a883",
+  "verdict": "actual-isolated-component-acceptance-with-independent-count-plan-correction",
+  "evidence": {
+    "runtime-packet-1.json": "90da936cabe92fc717aa9bde433186fa497fdc0a01ab9a433b5b238aa3974e6a",
+    "run-1.json": "f0a0e3b9952fd03d450d4b2a70fe6dad826984536bcbfc4478adb9a0936d42d4",
+    "run-1.log": "e8a403118e4150c6cd6c9f7cf477764fdff0acc567423cdb58a7ea2149e22b77",
+    "run-1-count-reconciliation.json": "b6cc9fe6206200bafdc98aa70bd715f6f18e2ba7ebf45d15f2e201086954dc62",
+    "run-1.py": "0cf50068ba51c91ce27614f5b5da3b63817ec48b89f3f1bfe7121c4b19b0ca09",
+    "run-plan-1.json": "f928668a3476de9e0233bb83b0b53e0ed617092167d75f1095550a1fb9fc5b2f"
+  },
+  "actual": {
+    "nodeExit": 0,
+    "supervisorExit": 1,
+    "elapsedMs": 85149,
+    "peakAggregateRssBytes": 1129709568,
+    "tests": 169,
+    "pass": 169,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "historicalSuiteCountsValid": false
+  },
+  "independentCountDisposition": {
+    "baselineTapLabels": 135,
+    "missingBaselineLabels": [],
+    "newSdkCases": 7,
+    "oldReaderCases": 17,
+    "newReaderCases": 10,
+    "readerTotal": 27,
+    "combined": 169,
+    "allRequiredLabelsPresent": true,
+    "sourceEvidence": "Original b3 reader source is an exact prefix of current reader test; its 10 individual cases plus2 loss variants plus5 mutation variants total17. Added reader source has1+2+1+4+1+1=10. Seven explicit awaited SDK cases are separately present. Multiset comparison of full TAP subtest labels finds135 retained and34 additions, no removals.",
+    "disposition": "The originally predicted170 was arithmetic error in preparation and reviewer eligibility, not an omitted or skipped case. Original failed count gate, runner, plan and receipt remain unchanged. This independent correction accepts169 actual component cases without retry or retrospective supervisor-PASS relabel."
+  },
+  "closure": {
+    "sourceFixtureHashesMatched": 24,
+    "dependencyFileHashesMatched": 65,
+    "helpersStillAbsent": 2,
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "temporaryDirectoriesAfterCleanup": [],
+    "originalLinkRestored": true,
+    "supervisorFailure": null
+  },
+  "acceptanceScope": [
+    "All prior135 b3 component/SDK/ACIR/trusted tests actually retained. Seven additional real SDK/ACIR monotonic tests exercised former-head original-validator revalidation, empty append, zero-admitted rejection, wrong block/settlement veto, multiple active heads, old-anchor discontinuity and old-format restart.",
+    "All27 reader tests exercised actual AEAD/fold with labelled delivery, lost reply/CAS predecessor binding, missing cache, marker and post-CAS invalidation.",
+    "Own pristine physical dependency tree remained original; candidate applied only in suite-owned temporary PXE copies. Real original crypto/validators/coordinator/application store on Node fake-indexeddb and synthetic canonical chain, extracted receiver."
+  ],
+  "holds": [
+    "No installed d22 distribution or normal build qualification.",
+    "No genuine suffix/reorg/browser/full-history capacity acceptance or integration.",
+    "Separate matched HTTP measurement needs exact runner review and parent slot; this report itself authorizes no execution.",
+    "Legacy evidence and compiler260 qualification holds remain."
+  ]
+}

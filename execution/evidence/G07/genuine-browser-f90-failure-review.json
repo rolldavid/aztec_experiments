@@ -1,0 +1,56 @@
+{
+  "reviewer": "reviewer-20261011",
+  "time": "2026-10-13T04:05:47.015562+00:00",
+  "source": "f90fec9eb94bb479fbe688bbeb71c1e153034e91",
+  "verdict": "confirmed early budget-admission failure; no browser or full financial acceptance; no unchanged retry",
+  "packetSha256": "ad9804ca3a574b654a55aa4d9d9a2a599f335cec7442dd91e8ba6657d0e84982",
+  "receiptSha256": "889164f59787ec584c027244cfa9b63d576b892d4e1797ce05678d77bab963d1",
+  "actual": {
+    "elapsedMs": 269997,
+    "peakTreeRSSKiB": 1354528,
+    "outerLimitMs": 540000,
+    "applicationLimitMs": 525000,
+    "remainingAtAdmissionMs": 267191,
+    "requiredMs": 274000,
+    "deficitMs": 6809,
+    "postingDelayMs": 13907,
+    "extraEligibilityMs": 0,
+    "applicationTransactions": 0,
+    "browserLaunched": false,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "currentBindingsRehashed": 3158
+  },
+  "diagnosis": {
+    "directFailure": "AssertionError at fixture1051, saved admitted:false. The guard deliberately prevents first preference proof; no test of following-first real action or cold Chromium occurred.",
+    "clockDebtObserved": {
+      "setupWallStageMs": 156077,
+      "syncedAheadSeconds": 98,
+      "catchupMs": 97852,
+      "nodeRpcStageMs": 254833,
+      "applicationPXEStageMs": 255401,
+      "setupOrdinaryBlocksMined": 94
+    },
+    "sourceAttribution": "Setup uses warped disposable mining, with prior validator activation and controlled Ready settlement time advances. Browser skips only posting eligibility. Setup completes with synced L1 ahead of wall; original real-wall readiness correctly waits while sequencer paused. The98s is observed aggregate debt, not attributed entirely to Bok or a single warp.",
+    "notEstablished": [
+      "Exact avoidable portion of setup clock advance.",
+      "Actual following-first proof/cold/read timing or potential savings.",
+      "Any wallet/browser/compact/SDK defect from this refusal."
+    ]
+  },
+  "financialScope": {
+    "setupFundingAndClaimSucceeded": true,
+    "recordedHumanClaimFee": "8622947400000",
+    "standaloneFundingFee": "9065964000000",
+    "finalPrivateFeesVerified": false,
+    "explanation": "Zero preference jobs does not mean no genuine setup proofs or fees. Setup deployment/funding/collateral/Bok occurred; final fees/proverJobs acceptance was not reached."
+  },
+  "reorgImpact": {
+    "hold": "Do not launch initial reorg from the earlier source-compatibility note alone. Review startup timing hypothesis and exact current admission packet first.",
+    "reason": "Reorg shares the setup/wall-readiness path and retains setup posting-eligibility work skipped by browser. Overlap begins after job admission and cannot recover elapsed pre-root setup.",
+    "remainingAt375FromBrowserAdmissionMs": 117191,
+    "interpretation": "117.191s would remain to375s fork cutoff from this browser admission point; not a reorg timing bound. Root/bootstrap contention, extra observer, retained suffix, empty checkpoint, original preference and orphan suffix/public work remain unmeasured. Initial is not mathematically proven impossible, but no positive timing qualification follows.",
+    "required": "Source-trace each required epoch/settlement/cooldown advance and any avoidable drift; preserve actual validator activation, Ready inclusion/settlement, collateral eligibility, all readiness and540/4GiB/45/15/150 gates. Any changed setup must be reviewed/tested before another genuine."
+  },
+  "runtimeExecutedByReviewer": false
+}

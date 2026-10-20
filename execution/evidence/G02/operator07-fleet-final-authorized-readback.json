@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-12T07:04:00.380438+00:00",
+  "readOnly": true,
+  "fleet": [
+    {
+      "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+      "state": "deleted"
+    }
+  ],
+  "available": true,
+  "deleteCalls": 1,
+  "noReplay": true
+}

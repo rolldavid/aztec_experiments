@@ -1,0 +1,1 @@
+{"state":"patched","files":[{"path":"src/block_synchronizer/block_synchronizer.ts","sha256":"5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20"},{"path":"dest/block_synchronizer/block_synchronizer.js","sha256":"9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78"}]}

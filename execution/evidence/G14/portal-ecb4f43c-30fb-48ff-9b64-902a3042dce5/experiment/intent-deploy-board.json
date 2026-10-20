@@ -1,0 +1,7 @@
+{
+  "label": "deploy-board",
+  "sourceRevision": "30ccb2f1ac5792c88c7b78ca04daa1f53334e883",
+  "proofMode": "real",
+  "txHash": "0x1db97dd3a2c8e101e42a93b2e3d9e5cf7c1b1c85a1236f963361d5ad063561e3",
+  "artifactSha256": "4975cf4699f75a030007fe5b1dc752609675b07c1e1cdd6b9fdfa37e363cbc16"
+}

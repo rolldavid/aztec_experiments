@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T06:14:45.815858+00:00",
+  "status": "READ_ONLY_PROPOSAL_NO_RESERVATION_OR_LAUNCH",
+  "sourceHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourceBindings": {
+    "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+    "controlSourceSha256": "802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84",
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878",
+    "controlsSha256": "acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090",
+    "nativeHostSha256": "6f248d8281efc09ffbe2695feeb71f835df659f965f2ab30ff88c3c1a316ffdf",
+    "binarySha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "expectedVersion": "6.0.0-rc.6",
+    "binaryBytes": 44698432,
+    "runtimeBytes": 35855,
+    "workerBytes": 3281,
+    "extraction": "read-only AST exact original-order NATIVE_REUSE/NATIVE_GLOBALS; no runtime execution/payload generation",
+    "productionBootstrapCopies": {
+      "aztec_experiments": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+      "rolling-lead-runtime": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535"
+    },
+    "localPublicBinary": {
+      "bytes": 44698432,
+      "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f"
+    }
+  },
+  "sourceEligibility": {
+    "productionRetentionReviewSha256": "d2c166f22fdce99ea304ab288130c0a7d6d8ca7dbf3b0ba916e1d699d115173d",
+    "actualHarmlessLinuxReviewSha256": "21ac2f2b626e1e0d82a1047fb1786971126017b744883a030b2f7c7b2a209c90",
+    "actualHarmlessLinuxPacketSha256": "f0d0f58528a705b62678bb4aecc5379991decc473862bcb0307ff83c3306c904",
+    "scope": "Actual systemd255 retained execution identity with original unit/capture/classifier; does not itself qualify nativeAMD64 BB."
+  },
+  "historical": {
+    "campaign": "native-version-20261013-2707fd93cc0e",
+    "payloadReviewSha256": "f7ac965c9c8b94224998bc202bf6d3dfaee9870d834465e4009e6e9b4f3dc033",
+    "terminalObservationSha256": "d15bfb036e84bda97811f8b1add08e5df93197d601689692f305274a7bc92cfb",
+    "binaryExecuted": "worker started/reaped rc0 exact version, but original strict systemd metadata gate failed",
+    "cleanup": "Fleet deleted, instance terminated, volumes absent; no outstanding replay authority"
+  },
+  "newCampaign": {
+    "identifier": null,
+    "privateDirectoryCreated": false,
+    "intentsCreated": false,
+    "createdAt": null,
+    "latestLaunch": null,
+    "commissioningStop": null,
+    "budgetStop": null,
+    "capabilitiesCreated": false,
+    "payloadBytes": null,
+    "payloadSha256": null,
+    "reason": "Fresh exact caps/deadlines/payload require future preparation grant; historical12046-byte payload is not reusable."
+  },
+  "minimalRuntime": {
+    "instanceType": "m7a.large",
+    "vcpu": 2,
+    "memoryMiB": 8192,
+    "region": "us-east-1",
+    "ami": "ami-0fa5967347d08d2df",
+    "amiOwner": "099720109477",
+    "securityGroup": "sg-076e39ea1d8dbf8d0",
+    "subnets": [
+      "subnet-aa91f4ce",
+      "subnet-a705ce88"
+    ],
+    "root": {
+      "device": "/dev/sda1",
+      "GiB": 40,
+      "type": "gp3",
+      "encrypted": true,
+      "deleteOnTermination": true
+    },
+    "noSSH": true,
+    "noIAMInstanceProfile": true,
+    "zeroIngress": true,
+    "nativeWorker": {
+      "command": [
+        "/opt/rolling-native-version/bb",
+        "--version"
+      ],
+      "timeoutSeconds": 15,
+      "unitRuntimeMaxSeconds": 20,
+      "memoryMiB": 512,
+      "cpu": 2,
+      "network": "private namespace +IPAddressDeny=any",
+      "restart": "no"
+    },
+    "hostEgressMbps": 50,
+    "runtimeInstall": "none: reuse fixed public binary; no Node/Docker/compiler/proof/package deployment",
+    "shutdown": {
+      "createdToLatestLaunchMinutes": 10,
+      "commissioningMinutes": 30,
+      "budgetMinutes": 45,
+      "independentCloud": "request Fleet ValidUntil=budgetStop and TerminateInstancesWithExpiration=true actual readback",
+      "independentHost": "persistent absolute budget timer plus commissioning timer; active/readback before download",
+      "retention": "Existing active budget.timer Before=rolling-native-version.service; verify reciprocal After and no direct inverse edge before one start--wait",
+      "terminal": "finally shuts down after fixed receipt attempt, including persistence/publication failure; owned Fleet once cleanup/readback"
+    },
+    "sameServerProverHandoff": "Not authorized or implemented: this closed mode unconditionally shuts down. Do not weaken it for a handoff; full-prover package remains separate after actual qualification."
+  },
+  "binaryReuse": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/native-bb-fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f/bb",
+    "versionId": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+    "bytes": 44698432,
+    "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "version": "6.0.0-rc.6",
+    "headVerifiedAt": "2026-10-13T06:14:45.782898+00:00",
+    "uploadRequired": false,
+    "guestIntegrity": "exact full bytes+SHA beforechmod/execute; fixed scope URL grammar, redirects rejected",
+    "capabilityLimit": "Existing validator excludes versionId query; versionedHEAD plus guest exacthash remain required, no URL-schema change proposed."
+  },
+  "operatorReuse": {
+    "core": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-core.py",
+      "sha256": "97b3ea096852089bd1c4963b6c7bab07193bfa585a2f3f3e1ce3258559cb34da",
+      "use": "read-only historical reference; never redispatch existing bound campaign"
+    },
+    "launch": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-launch.py",
+      "sha256": "16667e601c79c0916443cdc8d0889ee2f5cdfe7becdd4554bb162310636a002d",
+      "use": "read-only historical reference; never redispatch existing bound campaign"
+    },
+    "observe": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-observe.py",
+      "sha256": "5cf57bfcba46d41c54305e6dfbbbe94771dc80a6f7540e1ace3121d1d585edde",
+      "use": "read-only historical reference; never redispatch existing bound campaign"
+    },
+    "cleanup": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-cleanup.py",
+      "sha256": "d5541da217fcf789bffd77baa14a7f0f3b6e47f36410637cb213141e3b92294c",
+      "use": "read-only historical reference; never redispatch existing bound campaign"
+    },
+    "test": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-test.py",
+      "sha256": "d249179ffb9e9e1595a0199bd642b996ce4b049cddf3177ed35568faf6aa041b",
+      "use": "read-only historical reference; never redispatch existing bound campaign"
+    }
+  },
+  "proposedOwnedPaths": [
+    ".build/native-version-operator-<fresh>-core.py",
+    ".build/native-version-operator-<fresh>-launch.py",
+    ".build/native-version-operator-<fresh>-observe.py",
+    ".build/native-version-operator-<fresh>-cleanup.py",
+    ".build/native-version-operator-<fresh>-test.py",
+    "execution/evidence/G02/native-amd64-resumption-20261013/**"
+  ],
+  "operatorDelta": [
+    "Fresh distinctcampaign/privatejournals; no copying old capability bytes or authority",
+    "Bind8c source31cd and control802f; worker151d/binaryfa4b unchanged",
+    "Retain exact existing versionedHEAD guard/no upload entry invocation",
+    "No proposed operator logic change: update data literals/wrapper pins only; verify exact normalized AST before approval",
+    "Strict receipt projection already expects native metadata+guest+controls and recomputes pass; no schema relaxation",
+    "Retain sourcehash-before-provider, exclusive fsynced LT/Fleet/delete intents/clienttokens, retrydisabled calls and reconcile-only unknown outcome"
+  ],
+  "payloadProcedure": {
+    "generatorSource": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/deploy/prover/bootstrap.py",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/deploy/prover/bootstrap.py",
+      "--native-version-only",
+      "--config",
+      "<fresh0700campaign>/config.json",
+      "--output",
+      "<same>/user-data.gz"
+    ],
+    "configFields": [
+      "mode",
+      "createdAt",
+      "budgetStop",
+      "commissioningStop",
+      "binaryUrl",
+      "binarySha256",
+      "binaryBytes",
+      "expectedVersion",
+      "receiptPutUrl"
+    ],
+    "acceptance": [
+      "new scoped GET+new receiptPUT only after preparation grant; existing object versionHEAD/checksum",
+      "actual gzip<=16384 and syntax/decoded SOURCE/WORKER/CONFIG equality",
+      "exact immutable absolute+10/+30/+45 deadlines and capability expiry after budget+receipt margin; never silently redate",
+      "new private files0600/dir0700; no capability output",
+      "independent actualpayload+finalauthorityliteral review before launch"
+    ]
+  },
+  "freshReadOnly": {
+    "sha256": "c32505356e5f4c92a7a5e6689ddbfa6867caae903a76d9d378a01d22746de120",
+    "identitiesExpected": true,
+    "activeInstances": 0,
+    "volumes": 0,
+    "fleetsDeleted": 11,
+    "zeroIngressVerified": true,
+    "amiAvailable": true,
+    "plugin": {
+      "available": true,
+      "status": "degraded",
+      "active": 0,
+      "lastFailurePresent": true,
+      "readinessClaim": false
+    },
+    "apiCalls": 8,
+    "costExplorerCalls": 0,
+    "mutationCount": 0,
+    "limits": "Refresh prelaunch identities/nooverlap/SG/AMI/subnet/offering/currentprice and exactHOST controls; this observation is not a launch gate for a later timestamp."
+  },
+  "forecast": {
+    "ledgerSha256": "b82a584549da98cc0034159ab354e5275e28487467da36afbc44105cda24ef4d",
+    "priorRetainedUsd": 225.28,
+    "existingRemainingUsd": 74.72,
+    "newProposedReserveUsd": 10,
+    "newReservationPerformed": false,
+    "cumulativeIfLeadReservesUsd": 235.28,
+    "remainingAfterProposedReserveUsd": 64.72,
+    "priceSource": {
+      "type": "official AWS PriceList API retained same-day snapshot",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-version-corrected-next-plan/readonly/pricing.json",
+      "sha256": "38901b96142f9fbef60ba64f640fea2c66edd8918bd0991896454fa5dbc38b8b",
+      "observedAt": "2026-10-13T01:48:46.066316+00:00",
+      "sku": "TX58337QN5B6HX4A",
+      "effectiveDate": "2026-10-01T00:00:00Z",
+      "computeUsdPerHour": "0.1159200000",
+      "freshAtProposal": false,
+      "refreshRequiredBeforePaidPreparation": true
+    },
+    "itemsUsd": {
+      "compute_1h": ".116",
+      "root_gp3_40GiB_25h": ".112",
+      "public_ipv4_1h": ".005",
+      "egress_25GB_at_conservative_0195": "4.875",
+      "new_binary_receipt_30day_retention": ".250",
+      "cross_region_download_verification": ".250",
+      "api_object_requests": ".250",
+      "tax_unpriced_buffer": "1.250",
+      "cleanup_delayed_billing_buffer": "2.892"
+    },
+    "totalUsd": 10,
+    "assumptions": [
+      "45minmaximum plus15mincleanup accounted as1hcompute/IP",
+      "40GiB root up to25h including24h orphancleanup allowance; DOT required",
+      "25GBegress atconservative0.195 includes1h50Mbps~22.5GB andcrossregion/reconciliation separately",
+      "No overlappingcompute; no snapshots/newbackup required; retain separate0.25storage30dayallowance andpriorglobal retention bound",
+      "Tax/unpriced1.25 pluscleanup/billing2.892 explicitly included",
+      "All prior225.28 retained; no unverified savings deducted."
+    ]
+  },
+  "remainingGates": [
+    "Lead accepts forecast/reservesnew10, source+operator ownership claim; no paid authority from this proposal",
+    "Fresh fixedsource operatorcopies reviewed, meaningful existing16 controlledcases +newcontrolbinding negatives onlyifneeded",
+    "Freshactualcaps/payload/absoluteclockreview under preparationgrant",
+    "Finalauthorityliterals+wrapperpins independentlyreviewed and sharedslot released",
+    "One exactrequestFleet, verify actualhost/cloudcontrols andguest x86_64/glibc/CPU preflight, strict systemd/result pass",
+    "Once cleanup and actualreceipt independentreview before any active Linux toolchain pin promotion or full package/prover action"
+  ],
+  "noActions": [
+    "no capability/payload generation",
+    "no upload/newfinancialintent",
+    "no launch/template/Fleet mutation",
+    "no service/dependency change",
+    "no native/offline execution",
+    "no budgetledger mutation"
+  ]
+}

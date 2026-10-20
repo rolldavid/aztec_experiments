@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:43:36.489562+00:00",
+  "candidate": "f827a66bd3989d7a8a05c1a014642f8be3a16bde",
+  "parent": "282a1e1df46c7aa20ff85f82dbb826545ac687c0",
+  "verdict": "browser-profile-delta-approved-pending-exact-transplant-and-tests",
+  "findings": [],
+  "packetSha256": "0bd6ba58ecf25f44af8486c259d5991a307ce43110fb20e7ae4d7ed2bf87d9ea",
+  "exactGitBlobsVerified": [
+    {
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "sha256": "877e20bdb41587ec1da063b27e5b2b4c58efcf7d2edf161c9a43290e7bca5511"
+    },
+    {
+      "path": "scripts/testing/rolling-application-fixture.test.mjs",
+      "sha256": "d29f05f91fc85bf8063ff18bfbb7a1f1f76785db70a943306a296a02af65b350"
+    },
+    {
+      "path": "scripts/testing/scenarios.mjs",
+      "sha256": "19ffcb19c21ad8fec30613a7ff90da11cc7d19942b98cccdc60ab6fca8899dfd"
+    }
+  ],
+  "scope": [
+    "Only preference-browser applicationThreads changes1to2.",
+    "Actual trusted worker threads derive from same named-scenario helper; explicit C01_APPLICATION_BB_THREADS2 required for preference browser.",
+    "Notification stays2; other existing scenario selections stay1. Existing native singleton checks remain.",
+    "One new profile/source-wiring case and existing scenario expectation updated; tests unrun."
+  ],
+  "preserved": [
+    "540000ms campaign/525000ms application,150000ms browser admission,4GiB limit and three genuine writes.",
+    "No parent/gateway/browser lifecycle, transaction/accounting/privacy/readback changes."
+  ],
+  "compositionCondition": "Parent282 contains separately unintegrated reorg work. Transplant only this commit delta onto integrated2f; independently compare resulting three-file diff and preserve all other source bytes before tests. Full fixture/test Git blobs must not be copied wholesale.",
+  "nextChecks": [
+    "Bounded profile+fixture tests on final composition using existing serialized grant.",
+    "Rehash exact existing installed/artifact closure; no build required solely for harness profile if manifest inputs unchanged.",
+    "One changed measured browser trial remains separately gated, without timing guarantee or reserve weakening."
+  ],
+  "reviewExecution": "Read-only Git/source review; no runtime tests, source writes, dependency mutations or genuine run."
+}

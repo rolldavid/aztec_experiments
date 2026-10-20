@@ -1,0 +1,61 @@
+{
+  "base": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "candidate": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "task_id": "G13-privacy-copy",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "e9a0df20c8064b3a135f03de088831e483ae423c",
+      "candidate": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "id": "copy-syntax-review",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G13/privacy-copy/checks.json",
+          "sha256": "0ef30213ac539d6747a3aa9164866c1c298856286c045ca8f89d18b7e980a905"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G13/reviewer-d5f4138-privacy-copy.json",
+          "sha256": "215b4958f9ae9f813c1240aeaab939854c9bce14d10b7bb41646209e94ba5823"
+        }
+      ],
+      "command": "PinnedNode24 --check apps/rolling/reader.mjs; PinnedNode24 --check apps/rolling/wallet-panel.mjs",
+      "environment": "PinnedNode24 macOS",
+      "observed": "Two existingUI modules parse; only two literal strings changed; independent source/assetclosure review. No behavior or generatedinputs changed.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "e9a0df20c8064b3a135f03de088831e483ae423c",
+      "candidate": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "id": "PRIV-E9A-1",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G13/privacy-copy/checks.json",
+          "sha256": "0ef30213ac539d6747a3aa9164866c1c298856286c045ca8f89d18b7e980a905"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G13/reviewer-d5f4138-privacy-copy.json",
+          "sha256": "215b4958f9ae9f813c1240aeaab939854c9bce14d10b7bb41646209e94ba5823"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "e9a0df20c8064b3a135f03de088831e483ae423c",
+    "candidate": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G13/reviewer-d5f4138-privacy-copy.json",
+        "sha256": "215b4958f9ae9f813c1240aeaab939854c9bce14d10b7bb41646209e94ba5823"
+      }
+    ]
+  }
+}

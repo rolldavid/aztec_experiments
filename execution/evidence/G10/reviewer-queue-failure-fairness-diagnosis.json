@@ -1,0 +1,55 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "sourceRevision": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "kind": "read-only design diagnosis; no candidate approval",
+  "sourceHashes": {
+    "plugins/escrow-service.mjs": "3bc67e942aa2ee495864ba20d8d049bd94e27969e15f201a3eb9f2d444010e83",
+    "plugins/aztec.mjs": "9074570133f3e503c32672fd4c25c492ceb39d7f6ab25c09efd013963288ce82",
+    "plugins/main.mjs": "7a6e7ac49c74f1f17394e3c2859f05bbaf0c3955968eb3f0d8a2d026fcfc8443",
+    "shared/rolling/public-sqlite.mjs": "5bf82c3a4b923c42c3bade89ad3cdf65e38542fb3d9e932707ed2697206b0375",
+    "plugins/test/server.test.mjs": "2bb52e4114d61f92a66cb0ff2f2bf9ee74d1d86094d7c58b43e41c67fb99423d"
+  },
+  "finding": {
+    "severity": "P1",
+    "scenario": "A permanently fenced early request rejects immediately. Its finally handler clears every queued row and resets the canonical cursor. Repeated failures at early rows can indefinitely prevent later independent threads from starting, despite free capacity.",
+    "cause": "The global completion reset intended to recover compacted same-thread predecessors executes equally after successful work and immediate permanent failures."
+  },
+  "recommendedMinimalDesign": [
+    "Keep the existing bounded queue and cyclic canonical page cursor; drain attempted rows rather than resetting all discovery on each completion.",
+    "Enforce FIFO through a current indexed earliest-unreplied/predecessor check scoped to plugin, adapter and thread. Later same-thread requests stay blocked behind an unreplied fenced predecessor even when that row is no longer in RAM. Avoid unbounded failed-ID or thread maps.",
+    "Keep one active job per thread, duplicate removal, bounded pages and existing request owner checks. An awaited admission lookup needs fresh active-thread/stop checks before starting.",
+    "Preserve exact reply-intent/reply-confirmed recovery even when public pending excludes its already replied post. Canonical numeric ordering and bounded merging must distinguish these hints from new pending requests; do not require replied recovery to equal an absent pending head.",
+    "Do not repeatedly prepend the same failing recovery hints ahead of a retained public batch. Drain the bounded merged batch or provide bounded alternation so both sources progress. All canonical operation and billing fences remain unchanged."
+  ],
+  "focusedExistingRegressionCases": [
+    "Early permanently failing threads plus later independent requests on the same page.",
+    "More than 64 pending rows with failures on early pages; later independent thread eventually starts and queue remains bounded.",
+    "Later same-thread request on another page remains blocked behind failed unreplied predecessor.",
+    "Completion while discovery/admission is awaited cannot discard unrelated work or start stale same-thread successors.",
+    "Reply-confirmed recovery absent from public pending still finishes exactly once, without provider calls; repeated recovery failures cannot monopolize all public work.",
+    "Mixed recovery/public duplicates, numeric order beyond single-digit values, and active-thread duplicates retain FIFO and shutdown drains.",
+    "Fulfilled accounted-without-reply request ahead of unrelated work must not reset discovery forever."
+  ],
+  "limits": [
+    "No tests, service actions, provider calls or source edits performed in this diagnosis.",
+    "Current actual A/B fences and C/D canonical orders are parent/Controls observations; this report independently establishes the source mechanism, not new chain evidence."
+  ],
+  "additionalConcreteFailure": "Success-only reset remains insufficient: runPrivateBokRequest fulfills with status accounted-without-reply for that durable phase, while public pending excludes only replied posts. Repeated fulfilled no-op can therefore reset discovery forever. Finished work may also precede public-index visibility. Fulfillment is not canonical disappearance.",
+  "terminalBarrierAssessment": {
+    "requirements": [
+      "RC33",
+      "RC41"
+    ],
+    "conclusion": "Permanently blocking a thread after a fully reconciled accounted-without-reply predecessor is an application recovery defect. Unknown fenced predecessors must remain blocked.",
+    "sourceEvidence": [
+      "reconcileHostedBilling calls metering.finish before persisting accounted-without-reply.",
+      "privateBokMetering.finish requires every call settled, original reserved balance zero, canonical request state4 with available/reserved0 and unchanged charges/budget, then journal.finished=true."
+    ],
+    "recommendation": "Use existing canonical escrow and exact original journal facts to distinguish terminal completed failure from unresolved uncertainty during bounded predecessor admission. No provider replay, synthetic historical reply, or assumption that an unreplied public row is permanently active.",
+    "failureChecks": [
+      "Canonical terminal state4 plus exact finished accounting permits later same-thread request.",
+      "State3/fenced, stale state, unsettled call, mismatched identity or incomplete reconciliation does not permit bypass.",
+      "Unrelated threads remain fair in both cases."
+    ]
+  }
+}

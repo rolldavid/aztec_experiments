@@ -1,0 +1,30 @@
+[
+    {
+        "id": "i-03924731281f5fcfd",
+        "type": "t3.micro",
+        "state": "stopped",
+        "launch": "2026-01-30T22:24:51+00:00",
+        "name": "Zac's web server"
+    },
+    {
+        "id": "i-0da34023c8d31a313",
+        "type": "t3.micro",
+        "state": "stopped",
+        "launch": "2026-01-30T22:47:14+00:00",
+        "name": "Afra's web server"
+    },
+    {
+        "id": "i-06dd4da34ca313a77",
+        "type": "t2.medium",
+        "state": "running",
+        "launch": "2026-06-13T15:59:41+00:00",
+        "name": "arena-backend"
+    },
+    {
+        "id": "i-0cb8555882d6cfecc",
+        "type": "m6a.xlarge",
+        "state": "running",
+        "launch": "2026-09-20T17:02:36+00:00",
+        "name": "anonymous-message-board-testnet-moderator"
+    }
+]

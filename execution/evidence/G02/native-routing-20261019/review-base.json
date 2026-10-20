@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "2b5fb269b4f934657a8c6af7dbe4888221afa51f",
+  "baseRevision": "8cc56ff93741ef3236545d14279834348cb22471",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "scope": [
+    "CloudFront origin-facing unit allowlist",
+    "real native state stricter freshness policy and exact projection",
+    "corresponding focused tests and qualification documentation"
+  ],
+  "checks": [
+    {
+      "kind": "independent source review",
+      "outcome": "pass",
+      "details": "All five changed paths inspected before checks. Query authentication/private binding/managed SG and default-deny remain. Existing unit exact readback remains. No node pause/resume or normal freshness policy mutation. Strict service closes on success/failure. Identity/transport/UNSYNCED cannot satisfy STALE observation. Final projection requires exact coverage, 1-second strict and 120-second normal bounds, observed integer lag 2..120, STALE and cleanup. Full qualification/prover activation gates remain."
+    },
+    {
+      "kind": "prefix snapshot comparison",
+      "outcome": "pass",
+      "prefixList": "pl-3b927c52",
+      "name": "com.amazonaws.global.cloudfront.origin-facing",
+      "version": null,
+      "count": 49,
+      "readbackSha256": "3ca99830fa2e36cb450dd8d38fcf0775d719b9a54e93408aa02b023cf6a749ca",
+      "details": "Exact sorted tuple matches captured AWS CIDRs; observed 130.176.113.6 permitted; arbitrary 8.8.8.8 excluded. systemd restriction applies in both directions."
+    },
+    {
+      "kind": "independent focused Python checks",
+      "command": "python3 scripts/test-prover-bootstrap.py Bootstrap.test_query_qualification_requires_exact_scope_and_absent_proof_lifecycle Bootstrap.test_packaged_qualification_helpers_require_exact_source_before_execution QueryHost.test_fixed_query_unit_confines_identity_and_preserves_secret_boundary",
+      "outcome": "pass",
+      "passed": 3,
+      "seconds": 0.224
+    },
+    {
+      "kind": "independent focused Node checks",
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp <pinned Node24.21.0> --test --test-name-pattern=\"pure fake freshness|missing-helper child\" prover/qualify-runtime.test.mjs",
+      "outcome": "pass",
+      "passed": 6,
+      "skipped": 0,
+      "seconds": 0.612
+    }
+  ],
+  "limits": [
+    "No live CloudFront reachability or native freshness exercise performed by reviewer; rollout must preserve exact new unit/source binding.",
+    "Stricter-policy real-state coverage is not an actual 120-second outage or sync recovery claim. Other retained outage/reliability evidence is separate.",
+    "CloudFront snapshot intentionally allows egress to the same edge CIDRs; it is not general Internet egress.",
+    "Initial readback inspection expected raw Entries shape but captured file uses normalized cidrs; corrected read-only comparison passed, no production change."
+  ],
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "8898cd6191a78d8208bd1b74b3a9b218354519b853c495ad6b911d29f9e72223",
+    "prover/qualify-runtime.mjs": "2e97224d79b77b8430f6d73967a33974286c8592f73030ae83982daf4ce23552",
+    "scripts/test-prover-bootstrap.py": "c211c06c9d3027461fe1248dbfbc7bdea9ce4e501534252e432dd3522cc94b1c",
+    "prover/qualify-runtime.test.mjs": "07c123e7ea82748b59505ede914e27eeafe6447006d5e9cf3b93d39a21220235",
+    "deploy/prover/BOOTSTRAP.md": "a3eb1f116711de53347b8bf5452744440ee7f2df0aef5e220c8a0f31650d7517"
+  }
+}

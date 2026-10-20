@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "locations": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard/target",
+      "exists": true,
+      "symlink": false,
+      "resolved": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard/target",
+      "files": [
+        {
+          "path": "rolling_contract-RollingBoard.json",
+          "bytes": 11155046,
+          "sha256": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace"
+        }
+      ],
+      "links": []
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar/target",
+      "exists": false,
+      "symlink": false,
+      "resolved": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar/target"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok/target",
+      "exists": true,
+      "symlink": false,
+      "resolved": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok/target",
+      "files": [
+        {
+          "path": "invocation_probe_board-InvocationProbeBoard.json",
+          "bytes": 975909,
+          "sha256": "0884fd5e35816d9672495ca47c6a2935a2d342d25c5d0d553f99e9e9d1b578b7"
+        },
+        {
+          "path": "private_bok-PrivateBok.json",
+          "bytes": 3842674,
+          "sha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935"
+        }
+      ],
+      "links": []
+    },
+    {
+      "path": "/Users/zac/nargo",
+      "exists": true,
+      "symlink": false,
+      "resolved": "/Users/zac/nargo"
+    },
+    {
+      "path": "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1",
+      "exists": true,
+      "symlink": false,
+      "resolved": "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1"
+    },
+    {
+      "path": "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.3",
+      "exists": false,
+      "symlink": false,
+      "resolved": "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.3"
+    },
+    {
+      "path": "/Users/zac/nargo/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.1",
+      "exists": true,
+      "symlink": false,
+      "resolved": "/Users/zac/nargo/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.1"
+    },
+    {
+      "path": "/Users/zac/nargo/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.6",
+      "exists": false,
+      "symlink": false,
+      "resolved": "/Users/zac/nargo/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.6"
+    }
+  ],
+  "executed": false,
+  "sourceClean": true,
+  "compiler": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+    "sha256": "e1e5a7534b4ad7659fdc0f14d5877e24b7c4831a057aa38259556518583b1a96",
+    "previousMeasuredVersion": "1.0.0-rc.3",
+    "previousMeasuredCommit": "5a7ee9bf5ed8973076df7bb0d2b723024db09ae7",
+    "notExecutedHere": true
+  },
+  "rawCommands": [
+    {
+      "sequence": 1,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    },
+    {
+      "sequence": 2,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    },
+    {
+      "sequence": 3,
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "compile",
+        "--force"
+      ]
+    }
+  ],
+  "sevenFreshArtifacts": {
+    "Billboard": "billboard/target/billboard_contract-Billboard.json",
+    "PrivateFPC": "billboard/target/private_fee_contract-PrivateFPC.json",
+    "PluginAdapter": "billboard/target/plugin_adapter-PluginAdapter.json",
+    "RollingBoard": "billboard/target/rolling_contract-RollingBoard.json",
+    "AvatarLogProbe": "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+    "PrivateBok": "experiments/private-bok/target/private_bok-PrivateBok.json",
+    "InvocationProbeBoard": "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json"
+  },
+  "supervision": {
+    "mode": "One serializedcampaign, no overlappingcompiler or nativeworkers",
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "existingOwnerPrimitives": [
+      "scripts/testing/supervisor.mjs",
+      "scripts/owned-test-process-tree.mjs"
+    ],
+    "logs": "Compiler stdout/stderr to exclusive owned stage logfiles, supervisingworker emitsboundedJSONstatus only. Do not feed compilerplaintext directly to Supervisor JSONline parser.",
+    "sleep": "Foregroundcaffeinate -i pluscurrentlid/powerpreflight; no guardrelaxation.",
+    "environment": "Minimal trustedbuild environment; no AWS/provider/model credentials or privateconfig. Do not repurposeHOME/NARGO_HOME oroverrideSDKsource.",
+    "grantRequired": true
+  },
+  "targetPreservation": {
+    "before": "Under futuregrant exclusivelycreate .build/rc3-rawcompile-730-<freshid>/ andfsyncedrunintent; move ONLY listedownedexistingtargetdirectories to uniqueprior/ destinations beforecompilation. Verifybackupfilesmatchthissnapshot. Createfreshdefaulttargetpaths; neveroverwriteorreset rootartifacts.",
+    "afterFailure": "Stoponfirstfailure, preservepartialfreshoutputs as failedrun, preserveoldbackups; no candidategeneration or promotion. Confirmownedtreeabsent."
+  },
+  "cacheOwnership": {
+    "existingCache": "/Users/zac/nargo",
+    "newExclusivePaths": [
+      "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.3",
+      "/Users/zac/nargo/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.6"
+    ],
+    "bothAbsentAtPreparation": true,
+    "existingTrees": "rc1 and previouslypinned noir-lang utilitytagtrees are preserved/fingerprinted beforeandafter; no alternatewriter allowed duringresolution.",
+    "fetchNotPerformed": true,
+    "isolationLimit": "PinnedNargo hasfixedhome/nargo cache, not a demonstratedNARGO_HOME override. Separateversionpaths + exclusivewriter preventoverlap; this isnotfullyseparateOS cache."
+  },
+  "freshArtifactChecks": [
+    "All3compilerprocesses exit0 underunchangedbounds andsourcefingerprints; processgroupsabsent.",
+    "All7 paths are newlycreated regularnonsymlinkJSONfiles inownfreshoutputs; expectednameexactlymatchesmap; nonempty functions/file_map/bytecode as actualschema; no processed/VKstatusclaim.",
+    "Retain rawbytehashes/logs/compileridentity and source/dependency fingerprints. Checkmtime/runidentity but do notrelyonmtimealone for freshness.",
+    "Run reviewedc155generator onlyafterall7exist: it rejects oldrc1embeddedpaths, localfilemismatch, empty/incomplete/duplicate/conflictingcontractsources against newlyresolvedactualgraphs.",
+    "Do not includehistoricalportalout or anyoldprocessedNoirartifact innewprovenance. Portal730 isonlypackagealignment, noSolidityqualification."
+  ],
+  "candidateCommand": {
+    "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls",
+    "argv": [
+      "python3",
+      "scripts/prepare-noir-lock.py",
+      "--output",
+      "execution/evidence/G02/rc3-noir-dependencies.candidate.json",
+      "--artifact",
+      "billboard/target/billboard_contract-Billboard.json",
+      "--artifact",
+      "billboard/target/private_fee_contract-PrivateFPC.json",
+      "--artifact",
+      "billboard/target/plugin_adapter-PluginAdapter.json",
+      "--artifact",
+      "billboard/target/rolling_contract-RollingBoard.json",
+      "--artifact",
+      "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+      "--artifact",
+      "experiments/private-bok/target/private_bok-PrivateBok.json",
+      "--artifact",
+      "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json"
+    ]
+  },
+  "officialOriginProcedure": {
+    "afterCandidateAndSeparateDownloadGrant": [
+      "python3",
+      "scripts/verify-noir-origins.py",
+      "--lock",
+      "execution/evidence/G02/rc3-noir-dependencies.candidate.json",
+      "--output",
+      "execution/evidence/G02/rc3-noir-origin-verification.json",
+      "--download-dir",
+      ".build/rc3-noir-origin-archives"
+    ],
+    "expectedOrigins": {
+      "aztec-labs-eng/aztec-nr@v6.0.0-rc.3": "694af4de4b196733819811c896867d5a9572a1b5",
+      "AztecProtocol/aztec-packages@v6.0.0-rc.6": "0df91ba1799012435c62c6108a0926b357fef88c"
+    },
+    "otherOrigins": "Existingdeclared sha256/poseidon/keccak/librarytags mustalso be resolvedtoactualofficialcommits andeverymanifest/sourcefilecompared; nounverifiedcacheasauthority.",
+    "promotion": "Noactive lockwriteuntilallofficialoriginchecks pass + exactfreshcandidate/artifacts independentreview; thenleadsoleintegrationclaim. NormalVKprocess,TXE,SDK,CRSandapplicationchecks remainseparategates."
+  },
+  "missingPrerequisites": [
+    "Explicitserializedrawcompile/cache-resolutiongrant and noothercachewriter; queuecurrentlyownedbydesign/lead.",
+    "Fresh outputbackup/runintent+wholecampaign supervision, basedexistinghelperprimitives.",
+    "Actualnetworkdownload/resolution of currentlyabsentrc3/rc6Noirdependencytrees.",
+    "Actualrawcompiler/APIcompatibility outcome andseven freshartifacts; existingoldlockcannotauthenticate newbuild.",
+    "Officialarchiveoriginverification andindependentlock/artifactreview aftercandidate; no lockpromotionnow."
+  ],
+  "notRequiredForRawPreparation": [
+    "No additionalnpm install, PXEpatchapplication, lifecyclehooks, BBproving, Forge, catalogpins, deployment or servicechange. These arelaternormalqualificationdependencies."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "base": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "candidate": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+  "task_id": "G07-retained-native-startup",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+      "candidate": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+      "id": "native-startup",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-6a9494-readiness.log",
+          "sha256": "e983accea0215119918d7b3b044cdb74701a0273d45297ec776524ee5394f2ef"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/native-load-startup-review-packet.json",
+          "sha256": "658997e25e46b5feee683e24c2c7901454488cab2b5d56ffc83501a0307f4a2f"
+        }
+      ],
+      "command": "node --test --test-name-pattern='native startup readiness' plugins/devnet/operator-test.mjs",
+      "environment": "macOS Node24.21.0 existing pure diagnostic env",
+      "observed": "Independent3PASS0skip0fail2176ms; worker3PASS3282ms",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+      "candidate": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+      "id": "RC26-retained-native-startup-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-6a9494-readiness.log",
+          "sha256": "e983accea0215119918d7b3b044cdb74701a0273d45297ec776524ee5394f2ef"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-6a9494-retained-startup.json",
+          "sha256": "d0b2c5893bf7e0c6f142bc29a04e573f10e6fbb2a25386332947b9b310362db4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/native-load-startup-review-packet.json",
+          "sha256": "658997e25e46b5feee683e24c2c7901454488cab2b5d56ffc83501a0307f4a2f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+    "candidate": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+    "implementer": "design-resume-20261014",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-6a9494-retained-startup.json",
+        "sha256": "d0b2c5893bf7e0c6f142bc29a04e573f10e6fbb2a25386332947b9b310362db4"
+      }
+    ]
+  }
+}

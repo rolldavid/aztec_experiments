@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-05",
+  "observedAt": "2026-10-12T01:39:59.080500+00:00",
+  "readOnly": true,
+  "readinessDeadline": "2026-10-12T01:39:37Z",
+  "deadlineElapsed": true,
+  "instance": {
+    "available": true,
+    "data": [
+      {
+        "id": "i-02281bf3f22119f45",
+        "state": "shutting-down",
+        "type": "m7a.4xlarge",
+        "launchTime": "2026-10-12T00:12:42+00:00",
+        "volumes": []
+      }
+    ]
+  },
+  "fleet": {
+    "available": true,
+    "data": [
+      {
+        "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+        "state": "active",
+        "activity": "fulfilled",
+        "type": "request",
+        "validUntil": "2026-10-12T02:09:37+00:00",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "console": {
+    "available": true,
+    "timestamp": "2026-10-12T00:20:26+00:00",
+    "bootstrapObservations": [
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T02:09:37Z",
+        "egressBytes": 2989548,
+        "runtimeArchiveSha256": "6d4813b4d9cf0f5826639ac616673eea5fd62bdcc5d17670aa4f07c5ea9485fd",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T02:09:37Z",
+        "egressBytes": 2991160,
+        "runtimeArchiveSha256": "6d4813b4d9cf0f5826639ac616673eea5fd62bdcc5d17670aa4f07c5ea9485fd",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T02:09:37Z",
+        "egressBytes": 2992324,
+        "runtimeArchiveSha256": "6d4813b4d9cf0f5826639ac616673eea5fd62bdcc5d17670aa4f07c5ea9485fd",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      }
+    ],
+    "bootstrapDiagnostics": [
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "tc-package",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "observed",
+        "step": "tc-package",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      }
+    ],
+    "finalReceiptMarkers": []
+  },
+  "finalReceipt": {
+    "available": true,
+    "ContentLength": 1104,
+    "LastModified": "2026-10-12T01:39:38+00:00",
+    "ETag": "\"50cb18974030c8812e57a75c097b1fd9\"",
+    "VersionId": "kY.T7mKuBt2nzRaThpkaxtHZQkVyrikH",
+    "downloadAvailable": true,
+    "sha256": "ed97166c35e4e5ee7d1bc01085b67bfe9635460f3d2e151406f9573e0e9e06b6",
+    "observation": {
+      "bindings": {
+        "schemaVersion": 1,
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a"
+      },
+      "qualification": {
+        "schemaVersion": 1,
+        "passed": false,
+        "stage": "readiness-failed",
+        "scope": "legacy-query-only",
+        "manifestSha256": "7e590e4d546f1504e0a53314c8e09ae4cdf1cf8f3a13624765601139f125c528"
+      },
+      "readiness": {
+        "attempts": 325,
+        "ready": false,
+        "category": "UNAVAILABLE"
+      },
+      "services": {
+        "node": {
+          "available": true,
+          "LoadState": "loaded",
+          "ActiveState": "failed",
+          "SubState": "failed",
+          "Result": "exit-code",
+          "ExecMainCode": 1,
+          "ExecMainStatus": 1,
+          "NRestarts": 0
+        },
+        "qualification": {
+          "available": true,
+          "LoadState": "loaded",
+          "ActiveState": "deactivating",
+          "SubState": "stop-post",
+          "Result": "success",
+          "ExecMainCode": 1,
+          "ExecMainStatus": 0,
+          "NRestarts": 0
+        },
+        "container": {
+          "available": true,
+          "status": "exited",
+          "running": false,
+          "restarting": false,
+          "oomKilled": false,
+          "exitCode": 1
+        }
+      },
+      "checks": {},
+      "startup": {
+        "available": true,
+        "schemaVersion": 1,
+        "oversizedLines": 0,
+        "complete": true,
+        "exitCode": 1,
+        "signal": null,
+        "stages": [
+          "process-spawned",
+          "crs",
+          "genesis"
+        ],
+        "errors": [
+          "unknown"
+        ]
+      },
+      "bindingMatches": {
+        "manifest": true,
+        "bootstrap": true
+      }
+    }
+  },
+  "diagnostics": {
+    "finalReceiptSource": "/var/lib/rolling-bootstrap-private/final-receipt.json",
+    "readinessSource": "/var/lib/rolling-bootstrap/qualification/readiness-observation.json",
+    "uploadIntent": "/var/lib/rolling-bootstrap-private/upload-intent.json",
+    "uploadResult": "/var/lib/rolling-bootstrap-private/upload-result.json",
+    "remoteRead": "Exact S3 final receipt or ROLLING_QUALIFICATION_RECEIPT console marker; no host SSH/SSM assumed",
+    "pendingReadinessRemainsHostLocal": true
+  }
+}

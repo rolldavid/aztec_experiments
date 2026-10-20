@@ -1,0 +1,19 @@
+--- operator09.approved-unbound
++++ operator09.package-bound
+@@ -4,12 +4,12 @@
+ No AWS, provider, credential, or service operation at import or execution.
+ """
+ import pathlib,re,hashlib,json,stat
+-SOURCE_ROOT=pathlib.Path(__file__).resolve().parent.parent
+-SOURCE_COMMIT='1070a8fad6cb2b1b0068fe6b9f73267475b55b90'
++SOURCE_ROOT=pathlib.Path('/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments')
++SOURCE_COMMIT='1ec67f406645442965ced41e56b4e93c7097a050'
+ BOOTSTRAP_SHA='f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1'
+ HELPER_SHA='259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c'
+-EXPECTED_MANIFEST=None # No new package has been built or reviewed.
+-EXPECTED_ATTESTOR=None # No generated host program is bound yet.
++EXPECTED_MANIFEST='d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41' # Independently reviewed09 package.
++EXPECTED_ATTESTOR='c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3' # Actual generated09 attestor source.
+ def bound_source():
+  # Execute only these exact public, trusted module bytes; never a receipt path.
+  bootstrap=SOURCE_ROOT/'deploy/prover/bootstrap.py'

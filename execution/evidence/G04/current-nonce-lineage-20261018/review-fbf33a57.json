@@ -1,0 +1,42 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T17:35:22.156077+00:00",
+  "candidate": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+  "base": "7c9a9b5931813ef6c4d747d9c128e9cc77d3f387",
+  "equivalentReviewedNonceSource": "3e061fba0fbce9b9d739b795554b71499b49a01a",
+  "verdict": "approve_scoped_source",
+  "findings": [],
+  "sourceHashes": {
+    "plugins/operations.mjs": "fdd5ca18dc2967169d93cef5373ae76de22ede247530ec063fa04dc56bd6a2ef",
+    "plugins/operator.mjs": "e25d833c06306c6d522e304bcb298dbbeaeaf3c3b2c836fc02e7065ac3b2b5bf",
+    "plugins/test/operations.test.mjs": "da3660fa5d1292ad0eb6feee569210f741fe023b20fff86e0f34f09b9055cd1a"
+  },
+  "carriedReview": {
+    "path": "review-final.json",
+    "sha256": "aeff8828cd62e3d3a9b5bc48f9dbfc45bfb96b4869fdbc4e4f22b922ae49c0c2"
+  },
+  "checks": [
+    {
+      "command": "git diff --name-only 7c9a9b59..fbf33a57",
+      "result": "Exactly operations.mjs,operator.mjs,operations.test.mjs; no other changes."
+    },
+    {
+      "command": "git diff --exit-code fbf33a57 3e061fba -- plugins/operations.mjs plugins/operator.mjs plugins/test/operations.test.mjs",
+      "result": "All three paths byte-identical; SHA256 also matches final reviewer source hashes."
+    },
+    {
+      "command": "git diff --exit-code 7c9a9b59 fbf33a57 -- deploy/prover/bootstrap.py deploy/prover/package.py deploy/prover/BOOTSTRAP.md scripts/test-prover-bootstrap.py scripts/test-prover-package.py package-lock.json toolchain.json",
+      "result": "Deployment five paths and shared lock/toolchain unchanged."
+    },
+    {
+      "command": "git diff --check 7c9a9b59..fbf33a57; git status --short",
+      "result": "Clean."
+    }
+  ],
+  "testCarryForward": "Prior27 focused checks plus8 repaired lineage cases retained for exact unchanged inputs; no redundant rerun. Deployment source review7c9 remains with its explicit runtime launch hold.",
+  "limits": [
+    "Source approval only, not live provider readiness, nonce resolution or transaction success.",
+    "Lead normal integration gate and validation of the actual immutable intent remain before any authorized single dispatch.",
+    "No live RPC, private key/intent access, signing, broadcast or deployment action by reviewer."
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "candidate": "1a2a3f2cc8bf444c3243b363ac31d19b8d983820",
+  "verdict": "helper semantics supported; committed smoke setup changes requested before candidate approval",
+  "reviewer": "reviewer-20261011",
+  "diagnosis": "Pinned Anvil interval setter selects interval/disabled mining mode and disables automining, even for interval0. Old fixture setAutomine(true) followed by interval0 therefore creates false/null, not desired true/null. Failure is setup ordering, before helper invocation.",
+  "independentActualProbe": {
+    "cases": [
+      {
+        "automine": true,
+        "interval": null,
+        "paused": true,
+        "restored": true,
+        "intentAbsent": true
+      },
+      {
+        "automine": false,
+        "interval": null,
+        "paused": true,
+        "restored": true,
+        "intentAbsent": true
+      },
+      {
+        "automine": false,
+        "interval": 60,
+        "paused": true,
+        "restored": true,
+        "intentAbsent": true
+      }
+    ],
+    "oldSetupReproduced": true,
+    "cleanup": true
+  },
+  "recommendedSetup": "Select interval mode first with setIntervalMining(interval??0); then enable automining only for true. Disabled and positive interval cases remain autominefalse. Read back expected pair before invoking helper.",
+  "verifiedHelper": "All3 real modes reach callback with autominefalse/intervalnull, preserve exact intentional callback error, record no mutation intent and restore exact original controls. No chain reorg attempted.",
+  "checks": {
+    "probeSha256": "25ec32d75b02d0e9249341de9f029bb502e5a3058e9b3348a3bda61149aeca8d",
+    "logSha256": "e8221823264211970879d80a9bd1f95d483a99561b968c95f38a80ac016abaed",
+    "helperSha256": "5edaf28d11950f0b63b530b82398344efbc6c338637c8326482c03f0bcae517a"
+  },
+  "requiredNext": [
+    "Repair test setup only and run complete helper suite once; retain previous failed logs.",
+    "Exact candidate source review after commit. Genuine initial/marker reorg acceptance remains pending."
+  ],
+  "limitations": [
+    "Tiny disposable Anvil controls smoke is not genuine Aztec reorg/application acceptance.",
+    "No application source or assets edited; only ignored reviewer probe/report."
+  ]
+}

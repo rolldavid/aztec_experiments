@@ -1,0 +1,14 @@
+{
+  "reviewer": "reviewer-20261011",
+  "packetSha256": "11863cfa963d64692fe78d7e657f6c25850a02c811e8da941d6c0b7b07dd07de",
+  "runnerSha256": "9d702d85788d3e84a37a196feca8635f01c3c2c7fbb8b2ea3aecbdde9c3d6327",
+  "planSha256": "a033bc6f01142368b6de75f9ac482ff95a31ed5cfb6f7e6ad3094e02301ce073",
+  "verdict": "Eligible for ONE separately granted original before-begin crash probe",
+  "scope": "15s512MiB existing Supervisor; one real empty SQLite generation, original child emitted script exactly equivalent after URL-base substitution; same exit71 and empty-state assertions. Historical measurement preload unchanged.",
+  "observer": "Entire uncaughtExceptionMonitor body now contained, including property reads/coercions; per-thread bounded private observations do not replace/catch application failure.",
+  "closure": "550 bound inputs and2402 qualified physical-copy dependencies rehashed; same owned link restore/TMP removal only after process absence.",
+  "limits": [
+    "No history volume or automatic retry.",
+    "Historical15860 remains failed; prior generic Worker termination did not establish cause."
+  ]
+}

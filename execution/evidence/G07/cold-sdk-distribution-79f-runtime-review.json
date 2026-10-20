@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T23:37:03.273037+00:00",
+  "sourceRevision": "79f3133c90c6a0c7a3b3599c32f081abe893fcb3",
+  "disposition": "accepted bounded distribution and SDK/ACIR component runtime evidence; installation, rebuild and genuine cold integration remain separate",
+  "sourceReview": {
+    "path": "execution/evidence/G07/cold-sdk-distribution-79f-source-review.json",
+    "sha256": "6fbd1bb19925ea06b3557f13e7b1ffd6276d2c3d9f1930396c50bcad8f8bf8ea"
+  },
+  "runtimePacket": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-79f-runtime-packet.json",
+    "sha256": "4adec10deeceaf2f83def39670b99c70e0128e914884f7e34bf6743a50037d2f"
+  },
+  "stages": [
+    {
+      "stage": "manifest",
+      "artifacts": {
+        "receipt": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-manifest-1.json",
+          "sha256": "23b884a364f35818b4d881a25d39d9e105945d83fce5711e872429411097352c"
+        },
+        "log": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-manifest-1.log",
+          "sha256": "06d7a6bb18bbc8363146321cfe14d2b1460da60b0dfcd0fb1e4656c60bd45950"
+        },
+        "plan": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-manifest-1-plan.json",
+          "sha256": "acc58c8e1d844ae64da722cea517238bac8abfa0e26eaa7ae4d069c46b56166e"
+        },
+        "runner": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/run-cold-sdk-distribution-manifest-1.py",
+          "sha256": "59b066d37c60d1211e79653c6c74c2fdfb0f00bf3ac73f4523ebda69d687ecc8"
+        }
+      },
+      "counts": {
+        "tests": 107,
+        "pass": 107,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceFixtureRowsRehashed": 44,
+      "dependencyRowsRehashed": 65,
+      "elapsedMs": 1866,
+      "peakAggregateRssBytes": 147980288,
+      "limits": {
+        "seconds": 60,
+        "rssBytes": 2147483648,
+        "scope": "aggregate owned process group; serial stages, stop after any failure"
+      },
+      "cleanupAccepted": true,
+      "command": [
+        "/usr/bin/caffeinate",
+        "-i",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "scripts/test-sdk-manifest.mjs",
+        "scripts/test-pxe-preference-page.mjs"
+      ],
+      "environment": {
+        "NODE_BACKEND": "js",
+        "LOG_LEVEL": "silent"
+      }
+    },
+    {
+      "stage": "component-acir",
+      "artifacts": {
+        "receipt": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-component-acir-1.json",
+          "sha256": "2ea39e1b1088fa5ea418759f157312b0f4eb5c6972ce4e97a545d130c8197625"
+        },
+        "log": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-component-acir-1.log",
+          "sha256": "c389c3189f9e8df544edbb336c996536dd909384c4dcfd3f67d1ba9bf7df284c"
+        },
+        "plan": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-sdk-distribution-component-acir-1-plan.json",
+          "sha256": "a7c4434398ea5550ddc61d4f61b043c20e9179086cdc7e52bef6f563fe35c9a0"
+        },
+        "runner": {
+          "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/run-cold-sdk-distribution-component-acir-1.py",
+          "sha256": "23f452c062fb9157dbac41ccee159bc1e43471a0d64df7f2aa845f83b532a5dd"
+        }
+      },
+      "counts": {
+        "tests": 81,
+        "pass": 81,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceFixtureRowsRehashed": 44,
+      "dependencyRowsRehashed": 65,
+      "elapsedMs": 39142,
+      "peakAggregateRssBytes": 1032028160,
+      "limits": {
+        "seconds": 180,
+        "rssBytes": 4294967296,
+        "scope": "aggregate owned process group; serial stages, stop after any failure"
+      },
+      "cleanupAccepted": true,
+      "command": [
+        "/usr/bin/caffeinate",
+        "-i",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "scripts/test-pxe-preference-page.mjs"
+      ],
+      "environment": {
+        "NODE_BACKEND": "js",
+        "LOG_LEVEL": "silent",
+        "ROLLING_PREFERENCE_PAGE_NATIVE": "1",
+        "ROLLING_PREFERENCE_PAGE_ACIR": "1"
+      }
+    }
+  ],
+  "reviewActions": [
+    "Read actual logs, receipts, immutable plans and runner; checked no test-name filter, explicit native+ACIR opt-ins in second stage and test environment cleanup.",
+    "Independently rehashed each source/fixture/dependency row, runner, plan, receipt, log and pinned Node; exact source clean and original symlink restored.",
+    "Confirmed positive actual encrypted ACIR head/event, two actual private revisions with original handshake discovery, historical spent-head rejection, multiple-active-head rollback, missing-head failure, physical foreign-log paging, original queue/coordinator settle guards and store rollback cases executed.",
+    "Confirmed installed-mode tests operate on disposable repository copies and preserve mismatch/mixed/symlink/hardlink/helper closure rejection before writes; manifest tests exercise actual checker with synthetic manifests."
+  ],
+  "limitations": [
+    "Node fake-indexeddb through actual application store adapter; canonical chain/inclusion and RPC replies are labelled fixtures. This is not real Chromium, genuine chain, native proof generation, enabled cold wallet or full history capacity acceptance.",
+    "No installation to real dependencies or SDK/wallet build occurred. Explicit stopped physical owning-tree bootstrap and fresh normal provenance/build closure remain required.",
+    "Original 69 semantic cases are retained plus 12 distribution cases in full81; focused107 overlaps source cases and is not 107 additional independent semantic cases.",
+    "Cleanup uses actual owned process-group receipt; no new process execution or whole dependency-tree re-audit performed by reviewer.",
+    "260 compiler diagnostics and Linux/current-network/full-product qualification holds remain."
+  ],
+  "blockingFindings": [],
+  "readOnlyReview": true
+}

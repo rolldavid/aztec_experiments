@@ -1,0 +1,22 @@
+✖ claim progress distinguishes saved records, preparation and confirmation without claiming submission success (2632.982083ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2951.972417
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:874:1
+✖ claim progress distinguishes saved records, preparation and confirmation without claiming submission success (2632.982083ms)
+  locator.waitFor: Timeout 1000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Checking saved funding records…', { exact: true }) to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-panel.browser.test.mjs:879:46) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Checking saved funding records…', { exact: true }) to be visible" ]
+  }

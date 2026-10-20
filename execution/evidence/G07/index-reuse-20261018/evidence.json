@@ -1,0 +1,56 @@
+{
+  "base": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+  "candidate": "72a7019a002657e089d29d13f6c81ded58113152",
+  "task_id": "G07-index-reuse",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+      "candidate": "72a7019a002657e089d29d13f6c81ded58113152",
+      "task_id": "G07-index-reuse",
+      "id": "focused-index-boundaries",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test existing public-index focused boundary and final-reorg cases",
+      "environment": "Exact72a installedSDK; independent reviewer",
+      "observed": "20 focused checks passed, no skipped/cancelled; deployment guards and canonical/CAS boundaries retained",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/index-reuse-20261018/review.json",
+          "sha256": "64aa595198a0cc350d9225e0ae5cd0f5d697e192c775c0040902136036ef5fb5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+    "candidate": "72a7019a002657e089d29d13f6c81ded58113152",
+    "task_id": "G07-index-reuse",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/index-reuse-20261018/review.json",
+        "sha256": "64aa595198a0cc350d9225e0ae5cd0f5d697e192c775c0040902136036ef5fb5"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+      "candidate": "72a7019a002657e089d29d13f6c81ded58113152",
+      "task_id": "G07-index-reuse",
+      "id": "RC27-canonical-index-read-reuse",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/index-reuse-20261018/review.json",
+          "sha256": "64aa595198a0cc350d9225e0ae5cd0f5d697e192c775c0040902136036ef5fb5"
+        }
+      ]
+    }
+  ]
+}

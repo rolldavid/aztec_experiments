@@ -1,0 +1,15 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_ONE_FOCUSED_RUN_AFTER_SEPARATE_PARENT_SERIAL_GRANT",
+  "source": "8ac1e7c1b71f322b0d9ad89f81f6efb47649a9bb",
+  "packetSha256": "c9f0e90ed8a5563f10b6fc2db1d0f7b1e5a698caef5dd6594c3f48aa057b5568",
+  "runnerSha256": "5bf7bf015bd3d22f8c3f71560e4eb651d2f5b6e55e7cc1952a472761abb1b3fe",
+  "preparationSha256": "b5191ac0a2c09134101de613fb019cf37ce053e2e868e4a16eff263a5e9bb7df",
+  "verifiedPins": 5379,
+  "expectedTests": 1,
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "basis": "Accepted93117 auth prerequisite; same frozen8ac1 source with real bundled readOnlyPXE, actualstore/cache, proof prohibition and upstream/no-worker checks. Drain/whole30 still held.",
+  "runnerDelta": "Evidence directory only; original child/Supervisor/cleanup/TAP/hash gates unchanged.",
+  "reviewerRuntimeExecuted": false
+}

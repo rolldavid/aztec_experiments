@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-18T07:46:13.222239+00:00",
+  "candidate": "a2c08af364df9788cee13165bc533e02025f97b2",
+  "command": "Native SDK createAztecNodeDebugClient(http://127.0.0.1:8080).mineBlock(); .prove(); observe node.getBlockNumber()",
+  "observed": {
+    "chainId": 31337,
+    "nativeProofs": false,
+    "before": 8,
+    "after": 9,
+    "settled": 9,
+    "elapsedSeconds": 0.582,
+    "passed": true
+  },
+  "environment": "Actual disposable native node and contracts; native local synthetic settlement, not real proofs",
+  "runtimeDirectory": "../rolling-lead-bok/.build/rolling-devnet-cce1b42c-0818-453c-852f-4f6274419bff",
+  "runnerSession": 24711,
+  "preview": "http://127.0.0.1:4317",
+  "limits": [
+    "Whole product and realwallet/testnet acceptance open"
+  ]
+}

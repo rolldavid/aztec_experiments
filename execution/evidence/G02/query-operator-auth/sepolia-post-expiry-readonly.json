@@ -1,0 +1,73 @@
+{
+  "at": "2026-10-14T14:14:12.340973+00:00",
+  "scope": "read-only after frozen plan expiry; no keys/signing/broadcast/replay",
+  "endpoint": "https://sepolia.gateway.tenderly.co",
+  "planExpiredAt": "2026-10-14T14:07:57Z",
+  "results": [
+    {
+      "method": "eth_chainId",
+      "params": [],
+      "result": "0xaa36a7",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getBalance",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "latest"
+      ],
+      "result": "0xd12c0614b14ba4",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "latest"
+      ],
+      "result": "0xf",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "pending"
+      ],
+      "result": "0xf",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61"
+      ],
+      "result": null,
+      "errorCode": null
+    }
+  ]
+}

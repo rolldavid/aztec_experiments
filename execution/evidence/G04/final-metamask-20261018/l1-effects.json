@@ -1,0 +1,88 @@
+{
+  "observedAt": "2026-10-18T16:24:42.905Z",
+  "chainId": "31337",
+  "scope": "read-only L1 funding effects; not independent source review or L2 claim verification",
+  "hashDiscovery": "Original ETH hash supplied by lead; USDC hash read only from the named original relay operation journal. No chain scan.",
+  "transactions": [
+    {
+      "kind": "ETH",
+      "hash": "0x636352dcf72a69f5695c33257c6aa5684d31c0a96ff08e9a8710bbabb193e709",
+      "blockNumber": 114,
+      "blockHash": "0xb6f9c14400e1512a3ebeec4cf2bdf063870bd5cf47450e0b32ab4d1fc7dedea5",
+      "canonical": true,
+      "from": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+      "beneficiary": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+      "ethereumNonce": 0,
+      "planHash": "0x81706bf5cbbf7de936d9e1b2e6df98860ba1031c303331282a56b910471614ed",
+      "successful": true,
+      "exactThreePortalEventsVerified": true,
+      "collateralWei": "1000000000000000",
+      "privateFeeTokenBaseUnits": "10000000000000000000",
+      "bokMicroUsdc": "1000000",
+      "gasPaidWei": "555512307753648",
+      "gasPayer": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+      "receiptMessageIndices": [
+        "3",
+        "4",
+        "5"
+      ],
+      "sentWei": "163396665871624588",
+      "feeSwapWei": "160738626134814702",
+      "bokSwapWei": "50151955902710",
+      "refundWei": "1607887780907176",
+      "netFundingWei": "161788778090717412",
+      "observedBeneficiaryEthDecreaseWei": "162344290398471060",
+      "fundingPlusGasBalanced": true
+    },
+    {
+      "kind": "USDC",
+      "hash": "0x3daa511d6960b40e3a0aa6e5d264e4c6b4dfd9a260e66d0038325a3102d94f30",
+      "blockNumber": 122,
+      "blockHash": "0xf673ed6b9b8b38e7d868d536d27e087daddd8f41694b537bd4f56411ae4d0d9b",
+      "canonical": true,
+      "from": "0x19616de97fd233b4c8b7125bde57b966361a4ba7",
+      "beneficiary": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+      "ethereumNonce": 0,
+      "planHash": "0x129481c79b0ca8da40e74b1df1bc8a8acc38322dbd3638bc8fb235ddc17613e0",
+      "successful": true,
+      "exactThreePortalEventsVerified": true,
+      "collateralWei": "1000000000000000",
+      "privateFeeTokenBaseUnits": "10000000000000000000",
+      "bokMicroUsdc": "1000000",
+      "gasPaidWei": "681196132152024",
+      "gasPayer": "0x19616de97fd233b4c8b7125bde57b966361a4ba7",
+      "receiptMessageIndices": [
+        "6",
+        "7",
+        "8"
+      ],
+      "collateralSwapMicroUsdc": "20063392",
+      "feeSwapMicroUsdc": "2046957199",
+      "relayFeeMicroUsdc": "211054005",
+      "authorizedMicroUsdc": "2299744802",
+      "refundMicroUsdc": "20670206",
+      "spentMicroUsdc": "2279074596",
+      "beneficiaryMicroUsdcBefore": "10000000000",
+      "beneficiaryMicroUsdcAfter": "7720925404",
+      "beneficiaryEthBeforeWei": "0",
+      "beneficiaryEthAfterWei": "0",
+      "tokenSpendBalanced": true
+    }
+  ],
+  "final": {
+    "beneficiary": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+    "beneficiaryEthWei": "0",
+    "beneficiaryNonce": 0,
+    "relayer": "0x19616de97fd233b4c8b7125bde57b966361a4ba7",
+    "relayLatestNonce": 1,
+    "relayPendingNonce": 1
+  },
+  "sourceHashes": {
+    "shared/rolling/aggregate-funding.mjs": "8dd0a4a4c6030f655b4ecad92faf1fef577b0807f8f8ed8a39f54257215383fb",
+    "shared/rolling/aggregate-recovery.mjs": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+    "shared/ethereum-journal.mjs": "19a9dfa3fc400fd4d3afe772ffbc25549a240c816b80084e09360674a81cb62e"
+  },
+  "passed": true,
+  "integratedRevision": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "verifierMatchesIntegratedSource": true
+}

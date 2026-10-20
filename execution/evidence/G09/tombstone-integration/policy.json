@@ -1,0 +1,29 @@
+{
+  "base": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "candidate": "39dbff586a5092349c32d93b721d5417733e3532",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G09-tombstone-notification-controls",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "apps/rolling/reader.mjs",
+    "apps/rolling/reader.browser.test.mjs"
+  ],
+  "required_checks": [
+    "focused-tombstone-ui",
+    "unchanged-wallet-closure"
+  ],
+  "requirements": [
+    "G09-RC26-tombstone-controls-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "G09-tombstone-notification-controls",
+      "paths": [
+        "apps/rolling/reader.mjs",
+        "apps/rolling/reader.browser.test.mjs"
+      ]
+    }
+  ]
+}

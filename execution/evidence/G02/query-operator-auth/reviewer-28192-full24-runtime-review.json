@@ -1,0 +1,21 @@
+{
+  "source": "0e2cffc7bcb87215dcf5caf8c6ff291a80a389f8",
+  "verdict": "ACCEPT_CONTROLLED_FULL24",
+  "actualPacketSha256": "6a8b5a453d11be075356b42c69c5612e3e8906c8f6105c5835f350be828ccb17",
+  "tests": 24,
+  "pass": 24,
+  "fail": 0,
+  "skipped": 0,
+  "elapsedMs": 16569,
+  "sampledPeakTreeRSSKiB": 870672,
+  "protectedCount": 3303,
+  "findings": [
+    "All bound actual file hashes verified; raw TAP24 exact reviewed labels and all6 footer counts, exit0 and no supervisor failures.",
+    "Owned tree/TMP cleanup and unchanged protected source/dependencies recorded; unchanged source0e2c."
+  ],
+  "scope": "Actual SDK/readOnly PXE/store/cache and pinned adapter with controlled public HTTP; no live provider, signing, send, proof or full deployment.",
+  "holds": [
+    "Normal bundled CLI remains separately unqualified."
+  ],
+  "reviewer": "reviewer-20261011"
+}

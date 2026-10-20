@@ -1,0 +1,138 @@
+{
+  "ResponseMetadata": {
+    "RequestId": "8178f370-a19a-4840-b264-f771dd55aae6",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "x-amzn-requestid": "8178f370-a19a-4840-b264-f771dd55aae6",
+      "etag": "E1PA6795UKMFR9",
+      "content-type": "text/xml",
+      "content-length": "3435",
+      "date": "Tue, 20 Oct 2026 07:36:53 GMT"
+    },
+    "RetryAttempts": 0
+  },
+  "ETag": "E1PA6795UKMFR9",
+  "Distribution": {
+    "Id": "E1M12FHGQ0S5ST",
+    "ARN": "arn:aws:cloudfront::052665140763:distribution/E1M12FHGQ0S5ST",
+    "Status": "Deployed",
+    "LastModifiedTime": "2026-10-20 07:35:25.548000+00:00",
+    "InProgressInvalidationBatches": 0,
+    "DomainName": "dy2q03rao3se7.cloudfront.net",
+    "ActiveTrustedSigners": {
+      "Enabled": false,
+      "Quantity": 0
+    },
+    "ActiveTrustedKeyGroups": {
+      "Enabled": false,
+      "Quantity": 0
+    },
+    "DistributionConfig": {
+      "CallerReference": "rolling-final-c71ecfaa7e-bok-artifacts-791297f7",
+      "Aliases": {
+        "Quantity": 0
+      },
+      "DefaultRootObject": "",
+      "Origins": {
+        "Quantity": 1,
+        "Items": [
+          {
+            "Id": "bok-artifacts",
+            "DomainName": "ip-172-31-45-95.ec2.internal",
+            "OriginPath": "",
+            "CustomHeaders": {
+              "Quantity": 0
+            },
+            "VpcOriginConfig": {
+              "VpcOriginId": "vo_6ujPhXLuxnuG1hnAFME247",
+              "OriginReadTimeout": 30,
+              "OriginKeepaliveTimeout": 5
+            },
+            "ConnectionAttempts": 1,
+            "ConnectionTimeout": 10,
+            "OriginShield": {
+              "Enabled": false
+            },
+            "OriginAccessControlId": ""
+          }
+        ]
+      },
+      "OriginGroups": {
+        "Quantity": 0
+      },
+      "DefaultCacheBehavior": {
+        "TargetOriginId": "bok-artifacts",
+        "TrustedSigners": {
+          "Enabled": false,
+          "Quantity": 0
+        },
+        "TrustedKeyGroups": {
+          "Enabled": false,
+          "Quantity": 0
+        },
+        "ViewerProtocolPolicy": "https-only",
+        "AllowedMethods": {
+          "Quantity": 2,
+          "Items": [
+            "HEAD",
+            "GET"
+          ],
+          "CachedMethods": {
+            "Quantity": 2,
+            "Items": [
+              "HEAD",
+              "GET"
+            ]
+          }
+        },
+        "SmoothStreaming": false,
+        "Compress": false,
+        "LambdaFunctionAssociations": {
+          "Quantity": 0
+        },
+        "FunctionAssociations": {
+          "Quantity": 0
+        },
+        "FieldLevelEncryptionId": "",
+        "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+        "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+        "ResponseHeadersPolicyId": "cff4c5ff-a069-45f6-b998-09c016449de5",
+        "GrpcConfig": {
+          "Enabled": false
+        }
+      },
+      "CacheBehaviors": {
+        "Quantity": 0
+      },
+      "CustomErrorResponses": {
+        "Quantity": 0
+      },
+      "Comment": "Original Bok accepted artifacts restored with scoped private origin",
+      "Logging": {
+        "Enabled": false,
+        "IncludeCookies": false,
+        "Bucket": "",
+        "Prefix": ""
+      },
+      "PriceClass": "PriceClass_100",
+      "Enabled": true,
+      "ViewerCertificate": {
+        "CloudFrontDefaultCertificate": true,
+        "SSLSupportMethod": "vip",
+        "MinimumProtocolVersion": "TLSv1",
+        "CertificateSource": "cloudfront"
+      },
+      "Restrictions": {
+        "GeoRestriction": {
+          "RestrictionType": "none",
+          "Quantity": 0
+        }
+      },
+      "WebACLId": "",
+      "HttpVersion": "http2",
+      "IsIPV6Enabled": false,
+      "ContinuousDeploymentPolicyId": "",
+      "Staging": false
+    }
+  }
+}

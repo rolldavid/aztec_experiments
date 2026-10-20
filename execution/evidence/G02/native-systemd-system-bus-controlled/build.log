@@ -1,0 +1,30 @@
+test_absence_transport_failure_is_not_absence (local_fixture_0.OwnedCleanup.test_absence_transport_failure_is_not_absence) ... ok
+test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup (local_fixture_0.OwnedCleanup.test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup) ... ok
+test_malformed_or_missing_state_cannot_skip_owned_cleanup (local_fixture_0.OwnedCleanup.test_malformed_or_missing_state_cannot_skip_owned_cleanup) ... ok
+test_multiple_failure_still_attempts_removal_and_absence (local_fixture_0.OwnedCleanup.test_multiple_failure_still_attempts_removal_and_absence) ... ok
+test_normal_owned_cleanup_requires_positive_absence (local_fixture_0.OwnedCleanup.test_normal_owned_cleanup_requires_positive_absence) ... ok
+test_removal_failure_still_checks_actual_absence (local_fixture_0.OwnedCleanup.test_removal_failure_still_checks_actual_absence) ... ok
+test_state_timeout_cannot_skip_owned_cleanup (local_fixture_0.OwnedCleanup.test_state_timeout_cannot_skip_owned_cleanup) ... ok
+test_unknown_or_foreign_identity_never_mutates (local_fixture_0.OwnedCleanup.test_unknown_or_foreign_identity_never_mutates) ... ok
+test_valid_shaped_unknown_id_never_mutates (local_fixture_0.OwnedCleanup.test_valid_shaped_unknown_id_never_mutates) ... ok
+test_absent_false_malformed_or_private_owner_reply_rejects (local_fixture_1.BusReadiness.test_absent_false_malformed_or_private_owner_reply_rejects) ... ok
+test_actual_case_capture_classifier_and_boot_unchanged (local_fixture_1.BusReadiness.test_actual_case_capture_classifier_and_boot_unchanged) ... ok
+test_capture_failure_preserves_fixed_status_only (local_fixture_1.BusReadiness.test_capture_failure_preserves_fixed_status_only) ... ok
+test_each_missing_prerequisite_prevents_start_and_capture (local_fixture_1.BusReadiness.test_each_missing_prerequisite_prevents_start_and_capture) ... ok
+test_nonzero_timeout_unreaped_or_unstarted_rejects (local_fixture_1.BusReadiness.test_nonzero_timeout_unreaped_or_unstarted_rejects) ... ok
+test_ready_requires_exact_full_bus_owner_after_bounded_vendor_start (local_fixture_1.BusReadiness.test_ready_requires_exact_full_bus_owner_after_bounded_vendor_start) ... ok
+test_source_places_readiness_before_timers_and_all_cases (local_fixture_1.BusReadiness.test_source_places_readiness_before_timers_and_all_cases) ... ok
+test_start_failure_stops_before_owner_check (local_fixture_1.BusReadiness.test_start_failure_stops_before_owner_check) ... ok
+test_truncated_either_channel_rejects (local_fixture_1.BusReadiness.test_truncated_either_channel_rejects) ... ok
+test_exact_bus_identity_requires_matching_nonroot_uid_gid (local_fixture_1.SetupBinding.test_exact_bus_identity_requires_matching_nonroot_uid_gid) ... ok
+test_missing_duplicate_root_mismatched_or_malformed_bus_identity_rejects (local_fixture_1.SetupBinding.test_missing_duplicate_root_mismatched_or_malformed_bus_identity_rejects) ... ok
+test_original_bounded_setup_cleanup_function_unchanged (local_fixture_1.SetupBinding.test_original_bounded_setup_cleanup_function_unchanged) ... ok
+test_parent_closure_preserved_and_machine_identity_vendor_units_required (local_fixture_1.SetupBinding.test_parent_closure_preserved_and_machine_identity_vendor_units_required) ... ok
+test_parent_packages_unchanged_rejects_upgrade_removal_duplicate (local_fixture_1.SetupBinding.test_parent_packages_unchanged_rejects_upgrade_removal_duplicate) ... ok
+test_setup_hashes_bind_actual_inputs_and_parent_image (local_fixture_1.SetupBinding.test_setup_hashes_bind_actual_inputs_and_parent_image) ... ok
+test_signed_setup_all_three_plans_pin_same_six_dbus_packages (local_fixture_1.SetupBinding.test_signed_setup_all_three_plans_pin_same_six_dbus_packages) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.049s
+
+OK

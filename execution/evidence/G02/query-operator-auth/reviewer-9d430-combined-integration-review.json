@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "candidate": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+  "base": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "verdict": "approve scoped component integration; full G04/private-wallet acceptance not approved",
+  "blockingSourceFindings": [],
+  "sourceHashes": {
+    "docs/rolling-deployment.md": "6492e520ec6202e30550f01779c8b71ca2810fdc5267305fffa6c14bd1295a8d",
+    "plugins/DEPLOYMENT.md": "5be52e320f7dbae3e6721cedb9c9316aa28d5850e469542d8bcd0f986d1190c0",
+    "plugins/escrow-service.mjs": "f44a70cb9d94cda7ac3601ed71d14305891a13c9a673d6970df320bd76eaecd1",
+    "plugins/main.mjs": "01051c2ede85d05e04b5fbb2e5619935cfef4161a4ecbc405aa1e074799e1384",
+    "plugins/test/hosted-private-bok.test.mjs": "9afef1f9c04d6f77bc81851f85d000d001a0092514bef17ccfaf3d49c91ee747",
+    "plugins/test/private-bok-escrow.test.mjs": "d5d02f0b934528c4a79521ec0c0d36a5190fd15818ee12308e4e67c0fd905205",
+    "scripts/rolling-public-server.mjs": "efa1fe35dc5cd0efe6b4a7e9d129d244b70405346c66c26650229aeaf2bab51b",
+    "scripts/rolling-public-server.test.mjs": "91f0e06a82834ff008ed698422c7eae64117f5ac346767229b07d49543eea38c",
+    "scripts/t04-metamask.mjs": "12c117d2a030b0af8bdf698d4adba70a735f95c533d9b7e7683020621f537260",
+    "scripts/test-t04-browser-journey.mjs": "2475b44389311790a967e02ad55528bcc2e7caaf133f4b9084d6eb2f36b1adf3",
+    "shared/rolling/public-events.mjs": "ff844b64c6db90c108b01c16ba85fd9ab7b93efac63b969cf5ec961f1799004a",
+    "shared/rolling/public-events.test.mjs": "64da646eb2e3f05bb173d74dd8dd0575fdaf5ae3a254e8b9b49918ca79d89529",
+    "shared/rolling/public-index.test.mjs": "52b083d0a55f3c0374d47501eed3e33da08a6cf22a3f2188324bd2d48d9774d3",
+    "skills/rolling-chat-deploy/SKILL.md": "d59f40cbfd058e9185388cbb02485a791e7516b70fc637a54438c88948975015"
+  },
+  "exactApprovedBlobs": true,
+  "reviewCarry": {
+    "docs": {
+      "artifact": "reviewer-e1e357-deployment-rc22-docs-review.json",
+      "sha256": "839ff582ac58332bf54c3ce1d58db220b65f2f0ca952385f6c291c37012da070"
+    },
+    "hosted": {
+      "artifact": "reviewer-73ca-hosted-recovery-memo-review.json",
+      "sha256": "23a9d26ef9eab21f3bbfa916000264e994d9bd7dfc02b64cbd863e7d0d34b0d1"
+    },
+    "memo": {
+      "artifact": "reviewer-9bdf-bok-memo-cold-review.json",
+      "sha256": "b7b77825187e84c7ffcf74f21114eadfbe2d1c1528bb4dae918e157cd362a298"
+    },
+    "scheduler": {
+      "artifact": "reviewer-aae3-catchup-scheduler-review.json",
+      "sha256": "e5565b4af3150c2ae1d6625ea7f388a05df7b36d97ad95828253154ee2bf9f8a"
+    },
+    "driver": {
+      "artifact": "reviewer-208-paid-observation-review.json",
+      "sha256": "b5036d9a63de5d939e8efa16cdc9e89fa5f9960a81c78043178d90a03986a960"
+    },
+    "readiness": {
+      "artifact": "reviewer-fa7-retained-readiness-review.json",
+      "sha256": "ccfbacca53b4b68c6c4832d5a4b97bd6fe09f0479954f79bdd61e90228fb9fee"
+    }
+  },
+  "composition": [
+    "Exactly14 changed paths; all final blobs match independently approved source hashes. Hosted FIFO repair closed; memo, scheduler, driver and docs remain separate reviewed capabilities.",
+    "No application/contract funding logic or new wallet accounting methods included. Expiryb413 and reviewednewownership/walletcomposition remain outside this candidate.",
+    "Generated manifests and43 output files freshly hashed: no changed file is a manifest input, hashes match prior normal build. No rebuild or dependency/test replay performed."
+  ],
+  "normalArtifacts": [
+    {
+      "path": ".build/sdk/sdk-manifest.json",
+      "sha256": "1c36b8c1ae876db7ca78ec84fe4a4b97e6d979a86fc043b2b7ef54cc91215013",
+      "inputs": 2057,
+      "changedInputIntersection": [],
+      "outputsVerified": 8,
+      "mismatches": []
+    },
+    {
+      "path": ".build/apps-manifest.json",
+      "sha256": "ce4dae06267b4703bdffa67201f427b018de71d0a6c8e1da25b24154c7c0f77d",
+      "inputs": 97,
+      "changedInputIntersection": [],
+      "outputsVerified": 10,
+      "mismatches": []
+    },
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "sha256": "a6ff90b4a824d2fa10e7454512196aa460257328c4f41e8101656ef1ca7ed0e3",
+      "inputs": 97,
+      "changedInputIntersection": [],
+      "outputsVerified": 25,
+      "mismatches": []
+    }
+  ],
+  "tests": "Staged reviewed component results retained: hosted49 coverage48old+1FIFOrepair; memo12 and realcold82832; scheduler6+12; driver52; docs no runtime. Do not label these as one whole integration suite.",
+  "actuals": {
+    "readiness-metamask-aggregate-eth-refresh-2.json": {
+      "sha256": "0f93ca0dac20a7700b3b28a5c85587d3630495e57b4b040ce152c98183d0dc6f",
+      "passed": true,
+      "elapsedMs": 10674,
+      "ownedTreeAbsent": true
+    },
+    "recovery-metamask-aggregate-eth-paid-3.json": {
+      "sha256": "a9ea88d4454163dade58271599608aec17b106208a6b2fc9b5fcd6064bc6c9d4",
+      "passed": false,
+      "elapsedMs": 92813,
+      "ownedTreeAbsent": true
+    },
+    "recovery-metamask-aggregate-eth-paid-4.json": {
+      "sha256": "2e526b269cd96548b9e346458c7f0260fb80019d17b68f0b4a8749b292189495",
+      "passed": false,
+      "elapsedMs": 14600,
+      "ownedTreeAbsent": true
+    }
+  },
+  "runtimeQualification": {
+    "coldCache": "82832 ready28.648s,484empty blocks,clean isolatedowner; one local native-disabled measurement.",
+    "readiness": "7483 retained account import/initialization passed; not private funding success.",
+    "paid3": "FAILED92.813s timeout, no proof/L2send/forbidden wallet calls.",
+    "paid4": "FAILED14.600s settled surface error before claim: original payment matches, claim absent, workflow absent, no attempt. No fee-review or bridge-wait cause inferred; underlying preparation failure still unresolved."
+  },
+  "remainingGates": [
+    "Repair and qualify actual original paid claim/privateReady without another Ethereum payment. Both paid failures remain failures.",
+    "Live hosted finish recovery, fresh complete product journey, actualUSDC/named-wallet matrix and live withdrawals remain separate.",
+    "Audit, real proof/testnet/prover, GitHubApp installation, targetnetwork clearance,soak/freshoperator restore are not closed."
+  ],
+  "reviewerActions": "Read-only exact Git/hash/evidence review; no heavy tests, service mutation, gate modifications or negative-gate replay."
+}

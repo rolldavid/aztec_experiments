@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "83ed41bb55e7489a74f3498e593fde047cd950ce",
+  "base": "e0d7679c663b02b51dd3cf5dc28b9994f4c02e02",
+  "verdict": "approved_source_conditional_on_current_root_composition",
+  "scope": "G06A01/A02/A07 two distinct actual private actors, six social or reaction transactions and bounded serialized HTTP evidence; actual acceptance pending",
+  "findings": [],
+  "files": {
+    "scripts/testing/rolling-application-fixture.mjs": "2631090da19f98d0594330cacb6d8a8f5b91a4a20d709638f22399f7749f250f",
+    "scripts/testing/rolling-public-acceptance.mjs": "cc049ec3228ca08924a4dcbdd70288153928ec48abfb9170f81b2757017a045b",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "886e1371d02a65fcf9a15135e8109f8702734ee74ccc03d2a633ea8a8e145b4f",
+    "scripts/testing/scenario-flows.mjs": "cce5828d87d71face83924042ac1d21042670bf7665e4f2adc89c735f8550710",
+    "scripts/testing/scenarios.mjs": "f1e042bd0538bb0abb24934f1931c7ddfc479fe286d96536ceafd40ce99e674f"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root processed artifact> pinnedNode24 --test --test-concurrency=1 scripts/testing/rolling-social-wire.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+      "passed": 73,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 1730.9625,
+      "log": "/tmp/reviewer-social-parent-83ed-tests.log",
+      "sha256": "e25ae0ee306e7471e483c82e49ea4dd2dc23c418e63169720d7a5e5f7919d2a0"
+    },
+    {
+      "procedure": "Compared exact helper blobs with approved4aa078ab; read actual depositAndClaimC01, W01 fee verification, event projection, canonical HTTP and wire phase APIs",
+      "result": "Helper unchanged; actual private claim metadata is nonenumerable and exposes the depositor/depositChainId used by parent. All supplied phase strings are fixed supported phases."
+    }
+  ],
+  "disposition": [
+    "Fresh second local L1 depositor is funded with an explicit single transaction intent/hash/status before its receipt is accepted; signer is retained in memory only. Second portal claim reuses B owned private-fee wallet, preserves exact-node registration guard, different depositor and chain ID checks.",
+    "Only social-wire gives B collateral and suppresses its standalone FPC transaction; B first claim consumes the real fee-credit bridge message. Reaction-wire keeps B standalone funding and no B collateral. Both scenario accounting includes their actual claim fees plus application fees and subtracts standalone only when present; independent shared-pool equations retained.",
+    "Wait admission selects each actor actual PXE/wallet/owner/deposit, synchronizes and uses existing parent miner/checkpoint controls, no fabricated timestamps or new miner.",
+    "All six actions still use production prepare/submit, actual encrypted journals, canonical receipts/binary effects before policy assertions and real processed-event decoder. Two actor journal reopen and final full canonical refetch remain.",
+    "Source-bound helper produces exact profiles/posts/metadata and newly added canonical profile comparator demands identity/posts/cursor while HTTP retains names/boards/scope/checkpoint/revision assertions. Fresh and reopened public HTTP both checked.",
+    "Actual service submitted/completed must equal6 with0failed; final wire unknown/unsupported/truncated/pending/errors remain fatal and both trusted actor positive controls remain mandatory. Cleanup retains existing single owner for actors/funding/service/RPC/observer.",
+    "Partial B collateral error is recorded separately instead of overwriting A successful collateral evidence. Existing variants keep their prior selection and acceptance branches."
+  ],
+  "preCampaignConditions": [
+    "Transfer only reviewed helper and five parent paths onto current integrated e3-or-later root and recheck combined exact source. Isolated83ed still carries pre-e3 observer; running that branch directly would reintroduce known eth_simulateV1 unknown requests. Preserve current e3 trace blobs.",
+    "Use unchanged540s/4GiB and genuine proofs; actual second collateral may affect remaining time. Do not waive limits to obtain a pass.",
+    "Reconcile actual per-account funding/fees, six canonical effects, HTTP fresh/cold content, observer receiver counts and cleanup before acceptance."
+  ],
+  "limitations": [
+    "Source and labelled mutation checks only; no actual social/reaction proof run reviewed here.",
+    "Setup funding/collateral occurs before observer installation, so this does not establish funding unlinkability. Test-only common source of depositor ETH is intentionally visible.",
+    "Same local underlying node behind distinct trusted/public HTTP roles; opaque payloads and deployed topology, timing/derived-linkability and specialist assurance remain separate.",
+    "Does not replace existing anonymous/quote/repost/duplicate/unlike-after-removal evidence or close fullG06/product requirements."
+  ]
+}

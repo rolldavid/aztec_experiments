@@ -1,0 +1,15 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "7d74e7c2cddaac6e1cc3bd3774efe98d059e36ad",
+  "actualPacketSha256": "d117d601dcccea298e86599dc7e9b2d296dd01011ae09f1bbdf1ac29f965a50d",
+  "verdict": "focused3 accepted; full48 eligible for separate serialized parent grant",
+  "verified": [
+    "Actual packet file hashes and exact three log labels match;45excluded",
+    "860ms and RSS unmeasured, no false zero measurement",
+    "All4274current pins match; positive owned tree/TMP cleanup",
+    "Full packet0283ca53cbc0d78a42b4eb56e8d70ef3f132dcc30f800592ccdb55b58ff424dc all file hashes match; no filter/full48 inventory",
+    "Runner only evidence directory differs; unchanged60s2GiB/child and cleanup gates"
+  ],
+  "scope": "Configuration/actor component tests only; native proofs disabled development policy, browser hold and separate real TESTNET acceptance retained",
+  "runtimePerformedByReviewer": false
+}

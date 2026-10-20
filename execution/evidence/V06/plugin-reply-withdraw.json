@@ -1,0 +1,79 @@
+{
+  "phase": "plugin-reply-withdraw",
+  "passed": true,
+  "startedAt": "2026-10-10T14:58:53.626Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T14:58:59.519Z"
+    },
+    {
+      "stage": "verify-public-asset:user.html",
+      "at": "2026-10-10T14:58:59.519Z"
+    },
+    {
+      "stage": "verify-public-asset:aztec_bundle.js",
+      "at": "2026-10-10T14:59:01.632Z"
+    },
+    {
+      "stage": "verify-public-asset:plugins.js",
+      "at": "2026-10-10T14:59:34.906Z"
+    },
+    {
+      "stage": "load-live-application",
+      "at": "2026-10-10T14:59:36.392Z"
+    },
+    {
+      "stage": "restore-disposable-aztec-account",
+      "at": "2026-10-10T14:59:38.894Z"
+    },
+    {
+      "stage": "reconnect-disposable-ethereum-account",
+      "at": "2026-10-10T14:59:39.399Z"
+    },
+    {
+      "stage": "wait-restored-application",
+      "at": "2026-10-10T14:59:39.839Z"
+    },
+    {
+      "stage": "withdraw-unused-plugin-credit",
+      "at": "2026-10-10T15:00:06.866Z"
+    },
+    {
+      "stage": "phase-complete",
+      "at": "2026-10-10T15:01:49.173Z"
+    }
+  ],
+  "ethereumNonceBefore": 7,
+  "requestReport": "plugin-request.json",
+  "invocation": {
+    "postId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+    "state": 3,
+    "call": 1,
+    "reserved": "0",
+    "charged": "348",
+    "deadline": 1791728076,
+    "status": "Reply published",
+    "canCancel": false,
+    "canRelease": false
+  },
+  "reply": {
+    "postId": "0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203",
+    "text": " V6 testnet plugin works"
+  },
+  "withdrawal": {
+    "amount": "999652",
+    "recipient": "0x374f2eEB49A9Cc4a8BB732BB45b3C1fd751fdFC7",
+    "nonce": "0x21e1a864923b5b8b65942669247bd3f2dc650bf036d98646808023439d01379b",
+    "txHash": "0x11fd9f0d422af2e5891a349727dba787181994db8e287617499aaf3f6a77a3f4"
+  },
+  "receipt": {
+    "hash": "0x11fd9f0d422af2e5891a349727dba787181994db8e287617499aaf3f6a77a3f4",
+    "status": "checkpointed",
+    "blockNumber": 15545,
+    "blockHash": "0x06f9320865b6d4bb97237dcaa65a4c805214219f7fc7996ce9969002bbc66ff5",
+    "transactionFee": "1519565243130400000"
+  },
+  "ethereumNonceAfter": 7,
+  "finishedAt": "2026-10-10T15:01:49.303Z"
+}

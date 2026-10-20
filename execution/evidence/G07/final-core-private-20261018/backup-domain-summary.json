@@ -1,0 +1,8 @@
+{
+  "journalDomains": [
+    "AZTEC_BB_ETH_JOURNAL_KEY_V1",
+    "ROLLING_WORKFLOW_V1",
+    "ROLLING_AGGREGATE_FUNDING_V1",
+    "AZTEC_BB_L2_JOURNAL_KEY_V1"
+  ]
+}

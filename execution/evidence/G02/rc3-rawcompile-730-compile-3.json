@@ -1,0 +1,118 @@
+{
+  "sequence": 3,
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "startedAt": "2026-10-12T20:35:34.561Z",
+  "command": {
+    "sequence": 3,
+    "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+    "argv": [
+      "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+      "compile",
+      "--force"
+    ]
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-3.log",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 452288,
+  "rssSamples": [
+    {
+      "elapsedMs": 1004,
+      "rssKiB": 350736
+    },
+    {
+      "elapsedMs": 2086,
+      "rssKiB": 288288
+    },
+    {
+      "elapsedMs": 3127,
+      "rssKiB": 220416
+    },
+    {
+      "elapsedMs": 4157,
+      "rssKiB": 416128
+    },
+    {
+      "elapsedMs": 5178,
+      "rssKiB": 374096
+    },
+    {
+      "elapsedMs": 6200,
+      "rssKiB": 292576
+    },
+    {
+      "elapsedMs": 7220,
+      "rssKiB": 377760
+    },
+    {
+      "elapsedMs": 8241,
+      "rssKiB": 384384
+    },
+    {
+      "elapsedMs": 9264,
+      "rssKiB": 393840
+    },
+    {
+      "elapsedMs": 10284,
+      "rssKiB": 422720
+    },
+    {
+      "elapsedMs": 11303,
+      "rssKiB": 430208
+    },
+    {
+      "elapsedMs": 12321,
+      "rssKiB": 422448
+    },
+    {
+      "elapsedMs": 13340,
+      "rssKiB": 318160
+    },
+    {
+      "elapsedMs": 14364,
+      "rssKiB": 452288
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "raw-3",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 14364,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 20121,
+        "ppid": 59636,
+        "rssKiB": 54656
+      },
+      {
+        "role": "raw-3",
+        "pid": 20731,
+        "ppid": 20121,
+        "rssKiB": 4304
+      },
+      {
+        "role": "raw-3",
+        "pid": 20732,
+        "ppid": 20731,
+        "rssKiB": 393328
+      }
+    ]
+  },
+  "compiler": {
+    "code": 0,
+    "elapsedMs": 14434
+  },
+  "elapsedMs": 14547,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-12T20:35:49.108Z",
+  "passed": true,
+  "logSha256": "0cc17a15e3d3c09f0b871127b133a80602a9117eaee020b6a98bdb9db674dd02"
+}

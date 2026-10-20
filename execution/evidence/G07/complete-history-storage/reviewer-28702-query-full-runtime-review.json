@@ -1,0 +1,28 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "full affected query component actual accepted",
+  "source": "4a45c39e0e4d1c1e283f800ea582623295fc81d6",
+  "actualPacketSha256": "50945687db30c93dd50b1c5e898b6ade38e0c43dd8d2644b8e8826d866cd4351",
+  "verified": {
+    "allActualFileHashes": true,
+    "exact118LabelMultiset": true,
+    "tests": 118,
+    "pass": 117,
+    "fail": 0,
+    "skipped": 1,
+    "onlySkip": "opt-in real SQLite exceeds historical event/range/byte caps and rolls back deep suffix",
+    "elapsedMs": 19916,
+    "peakRSSKiB": 657680,
+    "all548Source2402DependencyPinsCurrent": true,
+    "ownedTreeAndTmpAbsent": true,
+    "originalLinkRestored": true
+  },
+  "scope": "Real SQLite and SDK decoder controlled canonical/HTTP fixtures; complete affected suites and bounded query semantics. No live chain/proof or production factory activation.",
+  "openGates": [
+    "Growing4x history and later-post retrieval under original512MiB/64MiB bounds",
+    "Dense authenticated wire/per-transaction resource bounds",
+    "Production factory and explicit empty-continuation UI",
+    "Actual operated archive reconstruction/reorg/cleanup/capacity/cost"
+  ],
+  "runtimePerformedByReviewer": false
+}

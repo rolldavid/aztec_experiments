@@ -1,0 +1,36 @@
+{
+  "text": "Unlock",
+  "outlineColor": "rgb(176, 135, 237)",
+  "outlineStyle": "solid",
+  "outlineWidth": "3px",
+  "outlineOffset": "3px",
+  "ancestors": [
+    {
+      "tag": "BUTTON",
+      "class": "button primary",
+      "background": "rgb(102, 84, 190)"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "tag": "DIALOG",
+      "class": "",
+      "background": "rgb(255, 255, 255)"
+    },
+    {
+      "tag": "BODY",
+      "class": "",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "tag": "HTML",
+      "class": "",
+      "background": "rgb(244, 246, 249)"
+    }
+  ],
+  "outlineContrastOnWhite": 2.787180684615946,
+  "outlineContrastOnPaper": 2.5744042352654617
+}

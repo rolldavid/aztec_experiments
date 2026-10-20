@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "verdict": "approved bounded component development integration",
+  "findings": [],
+  "changedPathCount": 67,
+  "policy": {
+    "path": "execution/evidence/G07/integration-50ff-policy.json",
+    "sha256": "1eb36da389aa9ca2f0dea14f27e5fc478b13af02d17c7119df1d042b21bbf863"
+  },
+  "policyDisposition": "Exact67path allowlist and all eight required checks cover the bounded four-component integration. No additional check required for this bounded gate; scope_limits are mandatory and do not close full tasks.",
+  "sourceComposition": {
+    "path": "execution/evidence/G07/combined-50ff-independent-composition.json",
+    "sha256": "3ca8166d982faff86bdb9693073776c6e180c7d91f1054894b1eb6d975dad055"
+  },
+  "sourceDisposition": "Every final changed blob matches the latest applicable previously reviewed revision; no unreviewed extra delta. Historical CLI evidence carries only for verified identical protocol/reader/application sources; later browser/UI/harness changes receive separate exact-candidate evidence.",
+  "currentAssets": {
+    "revision": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+    "sdkInputs": 2038,
+    "sdkOutputs": 8,
+    "walletInputs": 81,
+    "walletOutputs": 24,
+    "canonicalInputs": 52,
+    "patch": {
+      "state": "patched",
+      "files": [
+        {
+          "path": "src/storage/private_event_store/private_event_store.ts",
+          "sha256": "03e6c42214af82b82c6e2b46c44efc2f0a9f5c77fcb3f60b007d26b6e54c9376"
+        },
+        {
+          "path": "dest/storage/private_event_store/private_event_store.js",
+          "sha256": "918ea32152a22abcb7d63b43fc7a04b653dba8369e322b242c9efbdf4ea589ff"
+        }
+      ]
+    },
+    "bok": {
+      "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+      "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+      "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+      "inputCount": 14
+    },
+    "catalogKeys": [
+      "0",
+      "1"
+    ],
+    "manifestHashes": {
+      ".build/sdk/sdk-manifest.json": "e52d16464ac1b8051baf91291222acc2dda0b345f1551464af96e33c55df3493",
+      ".build/rolling-wallet/manifest.json": "d11839541e9e8f1aeb814a0b71724aeccf889360898182a7155950ee463fdd10",
+      ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+      "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+    }
+  },
+  "independentAssetEvidence": {
+    "path": "execution/evidence/G07/combined-50ff-independent-assets.json",
+    "sha256": "8ce84b1702467a1ec067a40e912d07a7e2374675970cfe51357ce9bcb7c3f40a"
+  },
+  "checks": [
+    {
+      "name": "source-tests",
+      "disposition": "pass",
+      "basis": "Exact reviewed blob composition, prior425/122 and664 source checks; independent current117 serial tests pass with zero skips/failures.",
+      "independentLogSha256": "6b0cf5b8c54e4df35129cad7367cfadff69aa72e4583a97ba08691631894c4e8"
+    },
+    {
+      "name": "normal-build-and-txe",
+      "disposition": "pass-carried-with-current-provenance",
+      "basis": "Normal Rolling14 and PrivateBok6 private VKs;175 unique TXE cases from hash-bound log. Current actual loadRollingArtifacts, canonical52-input contract manifest, SDK and PrivateBok14-input preflight pass. No protocol inputs changed since the reviewed build/TXE.119 compiler/manual diagnostics remain assurance limitations."
+    },
+    {
+      "name": "browser-assets-and-ui",
+      "disposition": "pass",
+      "basis": "Actual current checkSdk2038inputs/8outputs; wallet81inputs/24outputs independently hash/size verified. Prior exact applicable ad1 59 browser checks plus independent50ff delayed-refresh DOM test and actual a8eb native-browser execution.",
+      "independentLockLogSha256": "c5f931f88a99b333e3a56b2903ac046c04e775ddd01e1e6d8b5870f8c9df342e"
+    },
+    {
+      "name": "warm-query-capacity",
+      "disposition": "pass-bounded-synthetic-store",
+      "basis": "Six completed nativeLMDB/nativeChromium1k/10k/50k reports; exact8reads,0history-index scans,peak1,equality; five-warm maximum meets250ms and per-process1GiB. Capacity does not qualify end-to-end encrypted cold sync or statistical tail latency.",
+      "review": {
+        "path": "execution/evidence/G07/capacity-cb7-runtime-review.json",
+        "sha256": "c9a86c244f4dfb3eb6368e5764bd261ed281a1c871d814bc354033b1eed76bd1"
+      }
+    },
+    {
+      "name": "genuine-relationships",
+      "disposition": "pass-historical-identical-core",
+      "review": {
+        "path": "execution/evidence/G07/preference-relationships-2aafe-runtime-review.json",
+        "sha256": "ada9489c189eee396e93b26786919f62772cb9053ed677b902089db6f58306a4"
+      }
+    },
+    {
+      "name": "genuine-notification-settings",
+      "disposition": "pass-historical-identical-core",
+      "review": {
+        "path": "execution/evidence/G07/preference-notifications-38ce-runtime-review.json",
+        "sha256": "6d42f1784cd7596340a35d6981dd4a72f046dd78bd7aad04cd12ec290eef586a"
+      }
+    },
+    {
+      "name": "genuine-browser-recovery",
+      "disposition": "pass-exact-candidate",
+      "review": {
+        "path": "execution/evidence/G07/preference-browser-a8eb-runtime-review.json",
+        "sha256": "44bdea0f761b7498056fa56afbf9ece23f73eb2338eeede68b18d4d026066506"
+      }
+    },
+    {
+      "name": "bootstrap-development",
+      "disposition": "pass-source-package-only",
+      "basis": "Reviewed exact968 diagnostics/bootstrap/catalog package closure and51Python/45Node checks carried unchanged; no operated Linux success or paid launch approval implied.",
+      "review": {
+        "path": "execution/evidence/G02/startup07-968-package-review.json",
+        "sha256": "1b8da40a52ada2077d39372a1f71be6a01c2784be28ee3794fbcfa7475cb3f6a"
+      }
+    }
+  ],
+  "openAcceptance": [
+    "Local chain31337 uses genuine application proofs with controlled local network settlement; no network/epoch-proof qualification.",
+    "Native Chromium actually recovers the complete authenticated preference state and exposes expected bookmarks, Following and main-board-follow views. This browser campaign does not directly compare the entire recovered private snapshot to CLI memory; exact full-state CLI recovery is separate historical evidence.",
+    "No browser publication/funding/replacement/reorg, concurrent-device recovery, long-history cold synchronization, notification delivery, comprehensive wire unlinkability or specialist audit qualification.",
+    "Remote07 remains failed; static image, package and prerequisite evidence cannot qualify the operated full node. Full G07/G14 and release gates remain open.",
+    "Real reorg/replacement, reply delivery, cross-account/device recovery and comprehensive privacy acceptance are not satisfied by this gate. Isolated journal/application/reorg/UI candidates are excluded.",
+    "Manual circuit constraints/compiler warnings, independent audit,14-day soak and current-network release clearance remain mandatory.",
+    "Warm synthetic capacity and small native-browser recovery do not establish production-scale cold PXE synchronization bounds."
+  ],
+  "failedEvidenceRetained": [
+    "876c stale PrivateBok manifest preflight",
+    "1bbf namespace observer failure",
+    "3aea lock timeout",
+    "91550k host-sleep interruption",
+    "remote07 operated service failure"
+  ],
+  "writes": "Only unique ignored review/evidence reports; no source, graph, package, SDK or service mutation."
+}

@@ -1,0 +1,179 @@
+✔ pinned pristine/dest transform; verify-only leaves installed tree untouched; TS/JS syntax (48.363292ms)
+✔ unknown/mixed pair and symlink targets fail closed before any write (2.9575ms)
+✔ pristine actual SDK reproduces sparse checkpoint anchor stuck10 after both sync calls (71.237292ms)
+✔ actual LMDB proposed: sparse conservative rollback then canonical12, unchanged second sync (12.008833ms)
+✔ actual LMDB checkpointed: sparse conservative rollback then canonical12, unchanged second sync (19.131333ms)
+✔ actual LMDB proven: sparse conservative rollback then canonical12, unchanged second sync (9.24375ms)
+✔ actual LMDB witnessed12 rollback restores retained note and removes orphan spend/change (8.943459ms)
+✔ configured proposed uses exact canonical header and cannot acknowledge missing selected event (6.045ms)
+✔ configured checkpointed uses exact canonical header and cannot acknowledge missing selected event (5.522959ms)
+✔ configured proven uses exact canonical header and cannot acknowledge missing selected event (6.05675ms)
+✔ configured finalized uses exact canonical header and cannot acknowledge missing selected event (6.510458ms)
+✔ same-height fork rolls back conservatively and delivers new typed-hash canonical tip (8.114708ms)
+✔ missing target after stream prefetch cannot commit partial rollback or prune cursor (6.989667ms)
+✔ stale/wrong returned header rejects before any rollback (13.000167ms)
+✔ rollback failure after actual NoteStore mutation aborts every store/anchor/tip atomically (9.008291ms)
+[06:52:26.885] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ tips acknowledgement starts only after rollback and canonical anchor commit (7.785875ms)
+[06:52:26.900] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.912] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.930] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.940] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.949] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.955] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.960] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.966] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.973] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.981] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:26.988] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.001] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.007] ERROR: kv-store:lmdb-v2 Failed to commit transaction: Error: PRIVATE_SENTINEL
+    at Object.rollbackToBlock (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/patch-pxe-reorg-anchor.test.mjs:81:86)
+    at async file:///private/tmp/rolling-pxe-anchor-BTSvfc/patched/dest/block_synchronizer/block_synchronizer.js:170:58
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/kv-store/dest/lmdb-v2/store.js:111:29
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/serial_queue.js:58:33
+    at async FifoMemoryQueue.process (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/base_memory_queue.js:113:17)
+[06:52:27.010] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.018] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical source contradiction during selected lookup fails closed before rollback (6.363333ms)
+[06:52:27.024] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ finalized tier remains below proposed reorg; no illegal rollback of finalized state (6.051708ms)
+✔ SDK build/check and explicit bootstrap require exact patched source+dest hashes (0.884959ms)
+✔ concurrent sync and stop drain the same queued work; no detached mutation (5.446708ms)
+[06:52:27.031] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.037] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ contradictory same-height finalized source cannot replace anchor without private rollback (4.982625ms)
+[06:52:27.042] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward proposed advance during-header acknowledges its exact captured pass (6.58725ms)
+[06:52:27.048] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward proposed advance after-stream acknowledges its exact captured pass (5.77225ms)
+[06:52:27.054] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward checkpointed advance during-header acknowledges its exact captured pass (5.869292ms)
+[06:52:27.060] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward checkpointed advance after-stream acknowledges its exact captured pass (11.402167ms)
+✔ canonical forward proven advance during-header acknowledges its exact captured pass (5.524417ms)
+[06:52:27.071] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.077] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward proven advance after-stream acknowledges its exact captured pass (6.075875ms)
+[06:52:27.083] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward finalized advance during-header acknowledges its exact captured pass (6.101458ms)
+[06:52:27.089] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ canonical forward finalized advance after-stream acknowledges its exact captured pass (7.219917ms)
+[06:52:27.096] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ captured snapshot rejects same-height-fork after stream acknowledgement (4.094667ms)
+[06:52:27.100] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ captured snapshot rejects advanced-orphan after stream acknowledgement (3.58125ms)
+[06:52:27.104] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ captured snapshot rejects tier-retreat after stream acknowledgement (3.590166ms)
+✔ swallowed tips source failure cannot report successful sync (3.566292ms)
+[06:52:27.108] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.111] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ swallowed block source failure cannot report successful sync (4.2365ms)
+[06:52:27.116] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ missing proposed acknowledgement rejects an otherwise completed stream (4.963042ms)
+[06:52:27.121] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ missing checkpointed acknowledgement rejects an otherwise completed stream (4.965917ms)
+✔ missing proven acknowledgement rejects an otherwise completed stream (4.926625ms)
+[06:52:27.126] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.130] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ missing finalized acknowledgement rejects an otherwise completed stream (10.502042ms)
+✔ selected tier retreat during final canonical header check remains a veto (3.726584ms)
+✔ exact previous patched pair upgrades to identical pinned output; mixed or modified predecessors refuse (4.703958ms)
+[06:52:27.141] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+[06:52:27.150] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ final advancing header cannot hide captured anchor reorg (4.013792ms)
+[06:52:27.154] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ discarded source prefetch remains owned until rejection drains (37.83375ms)
+✔ stop drains a discarded successful prefetch before releasing sync ownership (7.213166ms)
+[06:52:27.191] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 16
+✔ labelled SDK delivery: real AEAD/fold complete only after dense events and key-gated terminal head (14.544542ms)
+✔ stable encrypted cursor advances with one queued step and the original final mailbox fence (2.90075ms)
+✔ orphaned cached anchor changed fails once then the next explicit read reaches the authoritative reset (2.666292ms)
+✔ orphaned cached anchor missing fails once then the next explicit read reaches the authoritative reset (2.160084ms)
+✔ failed speculative transport stays failed; the next explicit read resumes the mailbox (3.167084ms)
+✔ labelled reply loss replays durable delivery without a second SDK page (4.499791ms)
+✔ labelled CAS loss replays durable delivery without a second SDK page (4.5905ms)
+✔ labelled same-store reader reconstruction consumes authenticated encrypted prefix (3.994292ms)
+✔ lost encrypted cache restarts scope instead of treating last delivery as complete history (2.517708ms)
+✔ new SDK database cannot authenticate an old prefix (2.707417ms)
+✔ labelled authenticated-record mutation rejects missing revision without partial publication (1.465458ms)
+✔ labelled authenticated-record mutation rejects wrong previous digest without partial publication (1.241333ms)
+✔ labelled authenticated-record mutation rejects foreign selector without partial publication (1.088125ms)
+✔ labelled authenticated-record mutation rejects wrong canonical metadata without partial publication (1.233958ms)
+✔ labelled authenticated-record mutation rejects duplicate event without partial publication (1.250875ms)
+✔ terminal full-head mismatch never publishes a digest-valid prefix as complete (3.178417ms)
+✔ post-CAS canonical change suppresses result; existing encrypted record is retained (0.964292ms)
+✔ pending SDK operation keeps busy after abort until actual await settles (0.497875ms)
+✔ account invalidation suppresses publication and performs no page after validation fails (0.854083ms)
+✔ canonical read markers alone suppress notifications (3.601416ms)
+✔ foreign/extra mailbox fields do not become authority (0.992417ms)
+✔ incomplete canonical continuation preserves exact encrypted prefix and partial-log position (5.153666ms)
+✔ incomplete promotion reply loss preserves authenticated predecessor (5.718458ms)
+✔ incomplete promotion CAS loss preserves authenticated predecessor (6.039417ms)
+✔ chain advance drains an unacknowledged mailbox before promoting its prefix (5.598125ms)
+✔ incomplete promotion mismatched predecessor fails closed: epoch (2.636458ms)
+✔ incomplete promotion mismatched predecessor fails closed: sequence (2.420958ms)
+✔ incomplete promotion mismatched predecessor fails closed: nextBlock (2.510917ms)
+✔ incomplete promotion mismatched predecessor fails closed: nextLog (2.241667ms)
+✔ incomplete promotion without encrypted predecessor restarts full enumeration (2.77075ms)
+✔ authenticated completed prefix extends with only former-head block and new suffix; choices preserved (7.138083ms)
+✔ lost promotion reply resumes exact encrypted predecessor without replaying original logs (7.266125ms)
+✔ lost promotion CAS resumes exact encrypted predecessor without replaying original logs (9.060209ms)
+✔ lost terminal mailbox drains without publishing completion at a known older anchor (10.149333ms)
+✔ canonical advance during final CAS confirmation retains incomplete mailbox without stale publication (4.68575ms)
+✔ canonical advance during final CAS confirmation retains terminal mailbox without stale publication (6.595208ms)
+✔ new final-confirmation advance cannot hide a changed prior mailbox (1.537167ms)
+✔ new final-confirmation advance requires its new canonical anchor (1.501791ms)
+✔ lost predecessor encrypted cache cannot resume promoted suffix (4.446666ms)
+✔ promotion predecessor mismatch fails closed: epoch (4.153334ms)
+✔ promotion predecessor mismatch fails closed: sequence (3.901292ms)
+✔ promotion predecessor mismatch fails closed: head (3.628333ms)
+✔ promotion predecessor mismatch fails closed: anchor (3.502958ms)
+✔ promotion post-CAS canonical change suppresses stale preferences and retains encrypted recovery state (4.187875ms)
+✔ new anchor resets marker classification and rechecks canonical marker before publishing (5.871291ms)
+✔ bounded empty physical history batches preserve encrypted CAS and reduce 64 cursor commits to two (4.396916ms)
+✔ history reader stops transport lookahead at nonempty block 1 and preserves SDK authority (2.211459ms)
+✔ history reader stops transport lookahead at nonempty block 2 and preserves SDK authority (1.458625ms)
+✔ history reader stops transport lookahead at nonempty block 7 and preserves SDK authority (1.537709ms)
+✔ short empty transport prefix fails before any SDK advance or encrypted CAS (1.107125ms)
+✔ transaction-only physical history batches without treating transport hint as authentication (2.898125ms)
+✔ mixed transport prefix shares one SDK request only within the unchanged eight-log budget (1.667209ms)
+✔ bounded read checkpoints useful progress with labelled remote metadata latency inside unchanged ten seconds (4.826292ms)
+✔ entry readiness rejection performs no SDK page or encrypted write (0.837958ms)
+✔ final BB_TRUSTED_NODE_IDENTITY veto after durable recovering mailbox publishes no result (3.500875ms)
+✔ final BB_BROWSER_PROVER_CONFIGURATION veto after durable recovering mailbox publishes no result (3.713209ms)
+✔ final BB_TRUSTED_NODE_STALE veto after durable recovering mailbox publishes no result (3.536ms)
+✔ final BB_TRUSTED_NODE_UNSYNCED veto after durable recovering mailbox publishes no result (3.034166ms)
+✔ final BB_TRUSTED_NODE_IDENTITY veto after durable complete mailbox publishes no result (3.94825ms)
+✔ final BB_BROWSER_PROVER_CONFIGURATION veto after durable complete mailbox publishes no result (4.046042ms)
+✔ final BB_TRUSTED_NODE_STALE veto after durable complete mailbox publishes no result (4.1505ms)
+✔ final BB_TRUSTED_NODE_UNSYNCED veto after durable complete mailbox publishes no result (3.771291ms)
+✔ labelled client fixes endpoint/tier and forwards public selector only, with two context checks (13.072292ms)
+✔ configuration rejects arbitrary paths, credentials, unsupported schemes and implicit dev (0.267125ms)
+✔ exact public selector rejects account/filter/tier changes/accessors before requests (0.438542ms)
+✔ own input and context capability captured before asynchronous guard (0.3635ms)
+✔ all response fields, counts, scalar range and identity checked (0.265667ms)
+✔ oversize declared array rejected before enumeration (0.187375ms)
+✔ decoded stream cap cancels before JSON parsing and waits for cancellation (2.454375ms)
+✔ malformed UTF8/JSON/media/status rejected with fixed error and no retry (0.696417ms)
+✔ pre/post account context failures yield no result; first prevents request (0.374708ms)
+✔ abort keeps single-flight ownership until actual ignoring transport settles (1.006125ms)
+✔ an already aborted signal never enters guard or transport (0.18825ms)
+✔ guard remains owned while pending; no detached Promise race (0.187625ms)
+✔ bounded public history batch respects single-flight gateway admission and preserves order (2.539042ms)
+✔ failed public history read settles before batch release and never starts the next selector (0.40825ms)
+✔ empty-prefix selection stops at nonempty body 1 before unavailable future body (0.355542ms)
+✔ empty-prefix selection stops at nonempty body 3 before unavailable future body (0.269792ms)
+✔ empty-prefix selection stops at nonempty body 32 before unavailable future body (1.457917ms)
+✔ empty-prefix option is captured own boolean and never forwarded as a selector (0.233791ms)
+✔ conservative zero-ciphertext hint recognizes transaction bodies without granting authority (0.351834ms)
+✔ zero-ciphertext prefix passes transaction-only bodies and stops before log-bearing body (0.270917ms)
+✔ mixed transport hint and exact budget stop before a ninth declared log (0.922791ms)
+ℹ tests 126
+ℹ suites 0
+ℹ pass 126
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 892.848375

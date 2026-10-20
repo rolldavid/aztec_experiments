@@ -1,0 +1,3685 @@
+{
+  "applicationProofs": false,
+  "remoteProver": false,
+  "schemaVersion": 2,
+  "scenario": "private-bok",
+  "profile": "Private Bok escrow with real local portal accounting and controlled settlement",
+  "startedAt": "2026-10-11T13:13:00.173Z",
+  "passed": true,
+  "stages": [
+    {
+      "role": "fixture",
+      "stage": "start-disposable-l1",
+      "elapsedMs": 862
+    },
+    {
+      "role": "fixture",
+      "stage": "prepare-genesis",
+      "elapsedMs": 976
+    },
+    {
+      "role": "fixture",
+      "stage": "deploy-local-protocol-fixture",
+      "elapsedMs": 2579
+    },
+    {
+      "role": "fixture",
+      "stage": "wait-for-local-validator-activation",
+      "elapsedMs": 3570
+    },
+    {
+      "role": "fixture",
+      "stage": "start-application-node",
+      "elapsedMs": 3589
+    },
+    {
+      "role": "fixture",
+      "stage": "prove-board-deployment",
+      "elapsedMs": 6387
+    },
+    {
+      "role": "fixture",
+      "stage": "board-create-proving-wallet",
+      "elapsedMs": 6409
+    },
+    {
+      "role": "fixture",
+      "stage": "board-build-deployment-request",
+      "elapsedMs": 6608
+    },
+    {
+      "role": "fixture",
+      "stage": "board-genuine-client-proof",
+      "elapsedMs": 7101
+    },
+    {
+      "role": "fixture",
+      "stage": "board-serialize-proof",
+      "elapsedMs": 7851
+    },
+    {
+      "role": "fixture",
+      "stage": "board-real-node-validation",
+      "elapsedMs": 7859
+    },
+    {
+      "role": "fixture",
+      "stage": "board-close-wallet",
+      "elapsedMs": 7933
+    },
+    {
+      "role": "fixture",
+      "stage": "board-inclusion",
+      "elapsedMs": 7941
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:deploy-board",
+      "elapsedMs": 22815
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:deploy-escrow",
+      "elapsedMs": 33805
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:set-portal",
+      "elapsedMs": 42914
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-claim",
+      "elapsedMs": 71509
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-authorize",
+      "elapsedMs": 85207
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-activate",
+      "elapsedMs": 99867
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-reserve",
+      "elapsedMs": 112932
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-settle",
+      "elapsedMs": 122328
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:normal-finish",
+      "elapsedMs": 131410
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:private-withdraw",
+      "elapsedMs": 141409
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:operator-withdraw",
+      "elapsedMs": 158384
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-claim",
+      "elapsedMs": 188109
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-authorize",
+      "elapsedMs": 201276
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-activate",
+      "elapsedMs": 210290
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-reserve",
+      "elapsedMs": 219376
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-expire",
+      "elapsedMs": 314322
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:uncertain-reconcile",
+      "elapsedMs": 328898
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:late-private-withdraw",
+      "elapsedMs": 342003
+    },
+    {
+      "role": "fixture",
+      "stage": "private-bok:late-operator-withdraw",
+      "elapsedMs": 359019
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 871168,
+  "rssSamples": [
+    {
+      "elapsedMs": 1000,
+      "rssKiB": 488976
+    },
+    {
+      "elapsedMs": 2018,
+      "rssKiB": 597168
+    },
+    {
+      "elapsedMs": 3035,
+      "rssKiB": 809424
+    },
+    {
+      "elapsedMs": 4058,
+      "rssKiB": 781920
+    },
+    {
+      "elapsedMs": 5075,
+      "rssKiB": 791632
+    },
+    {
+      "elapsedMs": 6091,
+      "rssKiB": 871168
+    },
+    {
+      "elapsedMs": 7109,
+      "rssKiB": 713648
+    },
+    {
+      "elapsedMs": 8127,
+      "rssKiB": 774800
+    },
+    {
+      "elapsedMs": 9144,
+      "rssKiB": 775952
+    },
+    {
+      "elapsedMs": 10161,
+      "rssKiB": 776624
+    },
+    {
+      "elapsedMs": 11177,
+      "rssKiB": 739776
+    },
+    {
+      "elapsedMs": 12195,
+      "rssKiB": 713424
+    },
+    {
+      "elapsedMs": 13212,
+      "rssKiB": 713696
+    },
+    {
+      "elapsedMs": 14229,
+      "rssKiB": 725536
+    },
+    {
+      "elapsedMs": 15245,
+      "rssKiB": 726048
+    },
+    {
+      "elapsedMs": 16262,
+      "rssKiB": 726400
+    },
+    {
+      "elapsedMs": 17279,
+      "rssKiB": 726608
+    },
+    {
+      "elapsedMs": 18297,
+      "rssKiB": 726864
+    },
+    {
+      "elapsedMs": 19315,
+      "rssKiB": 728704
+    },
+    {
+      "elapsedMs": 20332,
+      "rssKiB": 736400
+    },
+    {
+      "elapsedMs": 21350,
+      "rssKiB": 652784
+    },
+    {
+      "elapsedMs": 22370,
+      "rssKiB": 680784
+    },
+    {
+      "elapsedMs": 23391,
+      "rssKiB": 627248
+    },
+    {
+      "elapsedMs": 24411,
+      "rssKiB": 592512
+    },
+    {
+      "elapsedMs": 25436,
+      "rssKiB": 591664
+    },
+    {
+      "elapsedMs": 26458,
+      "rssKiB": 594448
+    },
+    {
+      "elapsedMs": 27475,
+      "rssKiB": 568368
+    },
+    {
+      "elapsedMs": 28490,
+      "rssKiB": 570464
+    },
+    {
+      "elapsedMs": 29507,
+      "rssKiB": 572320
+    },
+    {
+      "elapsedMs": 30522,
+      "rssKiB": 572672
+    },
+    {
+      "elapsedMs": 31540,
+      "rssKiB": 567920
+    },
+    {
+      "elapsedMs": 32556,
+      "rssKiB": 548864
+    },
+    {
+      "elapsedMs": 33573,
+      "rssKiB": 558928
+    },
+    {
+      "elapsedMs": 34589,
+      "rssKiB": 630112
+    },
+    {
+      "elapsedMs": 35606,
+      "rssKiB": 632224
+    },
+    {
+      "elapsedMs": 36622,
+      "rssKiB": 632496
+    },
+    {
+      "elapsedMs": 37639,
+      "rssKiB": 634864
+    },
+    {
+      "elapsedMs": 38655,
+      "rssKiB": 635168
+    },
+    {
+      "elapsedMs": 39672,
+      "rssKiB": 635904
+    },
+    {
+      "elapsedMs": 40689,
+      "rssKiB": 620976
+    },
+    {
+      "elapsedMs": 41705,
+      "rssKiB": 622224
+    },
+    {
+      "elapsedMs": 42722,
+      "rssKiB": 625856
+    },
+    {
+      "elapsedMs": 43741,
+      "rssKiB": 629696
+    },
+    {
+      "elapsedMs": 44758,
+      "rssKiB": 629920
+    },
+    {
+      "elapsedMs": 45775,
+      "rssKiB": 631136
+    },
+    {
+      "elapsedMs": 46792,
+      "rssKiB": 631264
+    },
+    {
+      "elapsedMs": 47810,
+      "rssKiB": 631584
+    },
+    {
+      "elapsedMs": 48827,
+      "rssKiB": 631600
+    },
+    {
+      "elapsedMs": 49845,
+      "rssKiB": 632816
+    },
+    {
+      "elapsedMs": 50862,
+      "rssKiB": 635552
+    },
+    {
+      "elapsedMs": 51880,
+      "rssKiB": 637216
+    },
+    {
+      "elapsedMs": 52897,
+      "rssKiB": 637360
+    },
+    {
+      "elapsedMs": 53916,
+      "rssKiB": 637536
+    },
+    {
+      "elapsedMs": 54934,
+      "rssKiB": 633760
+    },
+    {
+      "elapsedMs": 55955,
+      "rssKiB": 518832
+    },
+    {
+      "elapsedMs": 57007,
+      "rssKiB": 459792
+    },
+    {
+      "elapsedMs": 58028,
+      "rssKiB": 403264
+    },
+    {
+      "elapsedMs": 59055,
+      "rssKiB": 382400
+    },
+    {
+      "elapsedMs": 60074,
+      "rssKiB": 385600
+    },
+    {
+      "elapsedMs": 61092,
+      "rssKiB": 398784
+    },
+    {
+      "elapsedMs": 62108,
+      "rssKiB": 400208
+    },
+    {
+      "elapsedMs": 63125,
+      "rssKiB": 401920
+    },
+    {
+      "elapsedMs": 64140,
+      "rssKiB": 402208
+    },
+    {
+      "elapsedMs": 65158,
+      "rssKiB": 406016
+    },
+    {
+      "elapsedMs": 66175,
+      "rssKiB": 426064
+    },
+    {
+      "elapsedMs": 67191,
+      "rssKiB": 430448
+    },
+    {
+      "elapsedMs": 68210,
+      "rssKiB": 430752
+    },
+    {
+      "elapsedMs": 69227,
+      "rssKiB": 435872
+    },
+    {
+      "elapsedMs": 70244,
+      "rssKiB": 436704
+    },
+    {
+      "elapsedMs": 71262,
+      "rssKiB": 447120
+    },
+    {
+      "elapsedMs": 72277,
+      "rssKiB": 542224
+    },
+    {
+      "elapsedMs": 73293,
+      "rssKiB": 553408
+    },
+    {
+      "elapsedMs": 74310,
+      "rssKiB": 554640
+    },
+    {
+      "elapsedMs": 75326,
+      "rssKiB": 556048
+    },
+    {
+      "elapsedMs": 76343,
+      "rssKiB": 556160
+    },
+    {
+      "elapsedMs": 77361,
+      "rssKiB": 556224
+    },
+    {
+      "elapsedMs": 78391,
+      "rssKiB": 562304
+    },
+    {
+      "elapsedMs": 79408,
+      "rssKiB": 563632
+    },
+    {
+      "elapsedMs": 80429,
+      "rssKiB": 565168
+    },
+    {
+      "elapsedMs": 81446,
+      "rssKiB": 565376
+    },
+    {
+      "elapsedMs": 82464,
+      "rssKiB": 565504
+    },
+    {
+      "elapsedMs": 83482,
+      "rssKiB": 565600
+    },
+    {
+      "elapsedMs": 84499,
+      "rssKiB": 570736
+    },
+    {
+      "elapsedMs": 85516,
+      "rssKiB": 601280
+    },
+    {
+      "elapsedMs": 86532,
+      "rssKiB": 629888
+    },
+    {
+      "elapsedMs": 87550,
+      "rssKiB": 630464
+    },
+    {
+      "elapsedMs": 88566,
+      "rssKiB": 630720
+    },
+    {
+      "elapsedMs": 89583,
+      "rssKiB": 630560
+    },
+    {
+      "elapsedMs": 90600,
+      "rssKiB": 630720
+    },
+    {
+      "elapsedMs": 91618,
+      "rssKiB": 630912
+    },
+    {
+      "elapsedMs": 92635,
+      "rssKiB": 634160
+    },
+    {
+      "elapsedMs": 93652,
+      "rssKiB": 634304
+    },
+    {
+      "elapsedMs": 94670,
+      "rssKiB": 634352
+    },
+    {
+      "elapsedMs": 95686,
+      "rssKiB": 634464
+    },
+    {
+      "elapsedMs": 96704,
+      "rssKiB": 634432
+    },
+    {
+      "elapsedMs": 97720,
+      "rssKiB": 636656
+    },
+    {
+      "elapsedMs": 98739,
+      "rssKiB": 639088
+    },
+    {
+      "elapsedMs": 99755,
+      "rssKiB": 656064
+    },
+    {
+      "elapsedMs": 100773,
+      "rssKiB": 658976
+    },
+    {
+      "elapsedMs": 101790,
+      "rssKiB": 662256
+    },
+    {
+      "elapsedMs": 102807,
+      "rssKiB": 662368
+    },
+    {
+      "elapsedMs": 103824,
+      "rssKiB": 663216
+    },
+    {
+      "elapsedMs": 104841,
+      "rssKiB": 663488
+    },
+    {
+      "elapsedMs": 105859,
+      "rssKiB": 663728
+    },
+    {
+      "elapsedMs": 106876,
+      "rssKiB": 665056
+    },
+    {
+      "elapsedMs": 107894,
+      "rssKiB": 665216
+    },
+    {
+      "elapsedMs": 108912,
+      "rssKiB": 665392
+    },
+    {
+      "elapsedMs": 109931,
+      "rssKiB": 665616
+    },
+    {
+      "elapsedMs": 110949,
+      "rssKiB": 665856
+    },
+    {
+      "elapsedMs": 111965,
+      "rssKiB": 666096
+    },
+    {
+      "elapsedMs": 112981,
+      "rssKiB": 669456
+    },
+    {
+      "elapsedMs": 113999,
+      "rssKiB": 668752
+    },
+    {
+      "elapsedMs": 115017,
+      "rssKiB": 668816
+    },
+    {
+      "elapsedMs": 116035,
+      "rssKiB": 669600
+    },
+    {
+      "elapsedMs": 117051,
+      "rssKiB": 669920
+    },
+    {
+      "elapsedMs": 118068,
+      "rssKiB": 670160
+    },
+    {
+      "elapsedMs": 119085,
+      "rssKiB": 670224
+    },
+    {
+      "elapsedMs": 120103,
+      "rssKiB": 670320
+    },
+    {
+      "elapsedMs": 121120,
+      "rssKiB": 670720
+    },
+    {
+      "elapsedMs": 122137,
+      "rssKiB": 674304
+    },
+    {
+      "elapsedMs": 123155,
+      "rssKiB": 677408
+    },
+    {
+      "elapsedMs": 124171,
+      "rssKiB": 677520
+    },
+    {
+      "elapsedMs": 125188,
+      "rssKiB": 677632
+    },
+    {
+      "elapsedMs": 126203,
+      "rssKiB": 677776
+    },
+    {
+      "elapsedMs": 127225,
+      "rssKiB": 659824
+    },
+    {
+      "elapsedMs": 128245,
+      "rssKiB": 660256
+    },
+    {
+      "elapsedMs": 129262,
+      "rssKiB": 660560
+    },
+    {
+      "elapsedMs": 130278,
+      "rssKiB": 664688
+    },
+    {
+      "elapsedMs": 131296,
+      "rssKiB": 664608
+    },
+    {
+      "elapsedMs": 132315,
+      "rssKiB": 667984
+    },
+    {
+      "elapsedMs": 133331,
+      "rssKiB": 668144
+    },
+    {
+      "elapsedMs": 134347,
+      "rssKiB": 668576
+    },
+    {
+      "elapsedMs": 135373,
+      "rssKiB": 669168
+    },
+    {
+      "elapsedMs": 136390,
+      "rssKiB": 664032
+    },
+    {
+      "elapsedMs": 137407,
+      "rssKiB": 664160
+    },
+    {
+      "elapsedMs": 138424,
+      "rssKiB": 664208
+    },
+    {
+      "elapsedMs": 139441,
+      "rssKiB": 666416
+    },
+    {
+      "elapsedMs": 140458,
+      "rssKiB": 669840
+    },
+    {
+      "elapsedMs": 141477,
+      "rssKiB": 681200
+    },
+    {
+      "elapsedMs": 142493,
+      "rssKiB": 674704
+    },
+    {
+      "elapsedMs": 143515,
+      "rssKiB": 675040
+    },
+    {
+      "elapsedMs": 144532,
+      "rssKiB": 675136
+    },
+    {
+      "elapsedMs": 145549,
+      "rssKiB": 675376
+    },
+    {
+      "elapsedMs": 146565,
+      "rssKiB": 675744
+    },
+    {
+      "elapsedMs": 147581,
+      "rssKiB": 675888
+    },
+    {
+      "elapsedMs": 148598,
+      "rssKiB": 676160
+    },
+    {
+      "elapsedMs": 149615,
+      "rssKiB": 676224
+    },
+    {
+      "elapsedMs": 150634,
+      "rssKiB": 674928
+    },
+    {
+      "elapsedMs": 151650,
+      "rssKiB": 674992
+    },
+    {
+      "elapsedMs": 152666,
+      "rssKiB": 672736
+    },
+    {
+      "elapsedMs": 153682,
+      "rssKiB": 674464
+    },
+    {
+      "elapsedMs": 154698,
+      "rssKiB": 652944
+    },
+    {
+      "elapsedMs": 155714,
+      "rssKiB": 653184
+    },
+    {
+      "elapsedMs": 156730,
+      "rssKiB": 653280
+    },
+    {
+      "elapsedMs": 157746,
+      "rssKiB": 653792
+    },
+    {
+      "elapsedMs": 158762,
+      "rssKiB": 664400
+    },
+    {
+      "elapsedMs": 159780,
+      "rssKiB": 660624
+    },
+    {
+      "elapsedMs": 160798,
+      "rssKiB": 660864
+    },
+    {
+      "elapsedMs": 161814,
+      "rssKiB": 661552
+    },
+    {
+      "elapsedMs": 162832,
+      "rssKiB": 661568
+    },
+    {
+      "elapsedMs": 163850,
+      "rssKiB": 661712
+    },
+    {
+      "elapsedMs": 164868,
+      "rssKiB": 662080
+    },
+    {
+      "elapsedMs": 165885,
+      "rssKiB": 662224
+    },
+    {
+      "elapsedMs": 166902,
+      "rssKiB": 664304
+    },
+    {
+      "elapsedMs": 167919,
+      "rssKiB": 664256
+    },
+    {
+      "elapsedMs": 168935,
+      "rssKiB": 664384
+    },
+    {
+      "elapsedMs": 169954,
+      "rssKiB": 665360
+    },
+    {
+      "elapsedMs": 170970,
+      "rssKiB": 649888
+    },
+    {
+      "elapsedMs": 171988,
+      "rssKiB": 652256
+    },
+    {
+      "elapsedMs": 173005,
+      "rssKiB": 652768
+    },
+    {
+      "elapsedMs": 174024,
+      "rssKiB": 652848
+    },
+    {
+      "elapsedMs": 175041,
+      "rssKiB": 653152
+    },
+    {
+      "elapsedMs": 176059,
+      "rssKiB": 653504
+    },
+    {
+      "elapsedMs": 177076,
+      "rssKiB": 653888
+    },
+    {
+      "elapsedMs": 178094,
+      "rssKiB": 654048
+    },
+    {
+      "elapsedMs": 179112,
+      "rssKiB": 654112
+    },
+    {
+      "elapsedMs": 180129,
+      "rssKiB": 654192
+    },
+    {
+      "elapsedMs": 181146,
+      "rssKiB": 654432
+    },
+    {
+      "elapsedMs": 182164,
+      "rssKiB": 655440
+    },
+    {
+      "elapsedMs": 183181,
+      "rssKiB": 656608
+    },
+    {
+      "elapsedMs": 184198,
+      "rssKiB": 658048
+    },
+    {
+      "elapsedMs": 185215,
+      "rssKiB": 658208
+    },
+    {
+      "elapsedMs": 186233,
+      "rssKiB": 658336
+    },
+    {
+      "elapsedMs": 187251,
+      "rssKiB": 658448
+    },
+    {
+      "elapsedMs": 188269,
+      "rssKiB": 661312
+    },
+    {
+      "elapsedMs": 189288,
+      "rssKiB": 663024
+    },
+    {
+      "elapsedMs": 190309,
+      "rssKiB": 663136
+    },
+    {
+      "elapsedMs": 191325,
+      "rssKiB": 663056
+    },
+    {
+      "elapsedMs": 192342,
+      "rssKiB": 663184
+    },
+    {
+      "elapsedMs": 193359,
+      "rssKiB": 663200
+    },
+    {
+      "elapsedMs": 194376,
+      "rssKiB": 663456
+    },
+    {
+      "elapsedMs": 195395,
+      "rssKiB": 663776
+    },
+    {
+      "elapsedMs": 196412,
+      "rssKiB": 663888
+    },
+    {
+      "elapsedMs": 197428,
+      "rssKiB": 663968
+    },
+    {
+      "elapsedMs": 198446,
+      "rssKiB": 664112
+    },
+    {
+      "elapsedMs": 199463,
+      "rssKiB": 663808
+    },
+    {
+      "elapsedMs": 200482,
+      "rssKiB": 665152
+    },
+    {
+      "elapsedMs": 201499,
+      "rssKiB": 669040
+    },
+    {
+      "elapsedMs": 202518,
+      "rssKiB": 664688
+    },
+    {
+      "elapsedMs": 203536,
+      "rssKiB": 664176
+    },
+    {
+      "elapsedMs": 204554,
+      "rssKiB": 664896
+    },
+    {
+      "elapsedMs": 205572,
+      "rssKiB": 666080
+    },
+    {
+      "elapsedMs": 206589,
+      "rssKiB": 666384
+    },
+    {
+      "elapsedMs": 207606,
+      "rssKiB": 667168
+    },
+    {
+      "elapsedMs": 208622,
+      "rssKiB": 667328
+    },
+    {
+      "elapsedMs": 209639,
+      "rssKiB": 668832
+    },
+    {
+      "elapsedMs": 210657,
+      "rssKiB": 658032
+    },
+    {
+      "elapsedMs": 211676,
+      "rssKiB": 655248
+    },
+    {
+      "elapsedMs": 212693,
+      "rssKiB": 648240
+    },
+    {
+      "elapsedMs": 213711,
+      "rssKiB": 649632
+    },
+    {
+      "elapsedMs": 214729,
+      "rssKiB": 649824
+    },
+    {
+      "elapsedMs": 215746,
+      "rssKiB": 649936
+    },
+    {
+      "elapsedMs": 216764,
+      "rssKiB": 650128
+    },
+    {
+      "elapsedMs": 217782,
+      "rssKiB": 650384
+    },
+    {
+      "elapsedMs": 218799,
+      "rssKiB": 652800
+    },
+    {
+      "elapsedMs": 219818,
+      "rssKiB": 655040
+    },
+    {
+      "elapsedMs": 220835,
+      "rssKiB": 655520
+    },
+    {
+      "elapsedMs": 221852,
+      "rssKiB": 655968
+    },
+    {
+      "elapsedMs": 222876,
+      "rssKiB": 656560
+    },
+    {
+      "elapsedMs": 223894,
+      "rssKiB": 657840
+    },
+    {
+      "elapsedMs": 224910,
+      "rssKiB": 657904
+    },
+    {
+      "elapsedMs": 225926,
+      "rssKiB": 658736
+    },
+    {
+      "elapsedMs": 226943,
+      "rssKiB": 660096
+    },
+    {
+      "elapsedMs": 227958,
+      "rssKiB": 661456
+    },
+    {
+      "elapsedMs": 228975,
+      "rssKiB": 663744
+    },
+    {
+      "elapsedMs": 229992,
+      "rssKiB": 664064
+    },
+    {
+      "elapsedMs": 231008,
+      "rssKiB": 664112
+    },
+    {
+      "elapsedMs": 232024,
+      "rssKiB": 663840
+    },
+    {
+      "elapsedMs": 233043,
+      "rssKiB": 663840
+    },
+    {
+      "elapsedMs": 234060,
+      "rssKiB": 664016
+    },
+    {
+      "elapsedMs": 235077,
+      "rssKiB": 664080
+    },
+    {
+      "elapsedMs": 236094,
+      "rssKiB": 664256
+    },
+    {
+      "elapsedMs": 237113,
+      "rssKiB": 664416
+    },
+    {
+      "elapsedMs": 238132,
+      "rssKiB": 664480
+    },
+    {
+      "elapsedMs": 239148,
+      "rssKiB": 664896
+    },
+    {
+      "elapsedMs": 240164,
+      "rssKiB": 664976
+    },
+    {
+      "elapsedMs": 241181,
+      "rssKiB": 665072
+    },
+    {
+      "elapsedMs": 242196,
+      "rssKiB": 666272
+    },
+    {
+      "elapsedMs": 243213,
+      "rssKiB": 666464
+    },
+    {
+      "elapsedMs": 244229,
+      "rssKiB": 666576
+    },
+    {
+      "elapsedMs": 245244,
+      "rssKiB": 666432
+    },
+    {
+      "elapsedMs": 246261,
+      "rssKiB": 646416
+    },
+    {
+      "elapsedMs": 247279,
+      "rssKiB": 646848
+    },
+    {
+      "elapsedMs": 248295,
+      "rssKiB": 646912
+    },
+    {
+      "elapsedMs": 249312,
+      "rssKiB": 646928
+    },
+    {
+      "elapsedMs": 250328,
+      "rssKiB": 647440
+    },
+    {
+      "elapsedMs": 251345,
+      "rssKiB": 648128
+    },
+    {
+      "elapsedMs": 252364,
+      "rssKiB": 648224
+    },
+    {
+      "elapsedMs": 253381,
+      "rssKiB": 648384
+    },
+    {
+      "elapsedMs": 254399,
+      "rssKiB": 648448
+    },
+    {
+      "elapsedMs": 255416,
+      "rssKiB": 648464
+    },
+    {
+      "elapsedMs": 256434,
+      "rssKiB": 648752
+    },
+    {
+      "elapsedMs": 257451,
+      "rssKiB": 648160
+    },
+    {
+      "elapsedMs": 258471,
+      "rssKiB": 648224
+    },
+    {
+      "elapsedMs": 259489,
+      "rssKiB": 648432
+    },
+    {
+      "elapsedMs": 260505,
+      "rssKiB": 649600
+    },
+    {
+      "elapsedMs": 261523,
+      "rssKiB": 649616
+    },
+    {
+      "elapsedMs": 262539,
+      "rssKiB": 650016
+    },
+    {
+      "elapsedMs": 263559,
+      "rssKiB": 650224
+    },
+    {
+      "elapsedMs": 264580,
+      "rssKiB": 650320
+    },
+    {
+      "elapsedMs": 265598,
+      "rssKiB": 650608
+    },
+    {
+      "elapsedMs": 266615,
+      "rssKiB": 650784
+    },
+    {
+      "elapsedMs": 267633,
+      "rssKiB": 650848
+    },
+    {
+      "elapsedMs": 268651,
+      "rssKiB": 650880
+    },
+    {
+      "elapsedMs": 269667,
+      "rssKiB": 651600
+    },
+    {
+      "elapsedMs": 270685,
+      "rssKiB": 651760
+    },
+    {
+      "elapsedMs": 271702,
+      "rssKiB": 652544
+    },
+    {
+      "elapsedMs": 272723,
+      "rssKiB": 645776
+    },
+    {
+      "elapsedMs": 273774,
+      "rssKiB": 646864
+    },
+    {
+      "elapsedMs": 274791,
+      "rssKiB": 648576
+    },
+    {
+      "elapsedMs": 275810,
+      "rssKiB": 650128
+    },
+    {
+      "elapsedMs": 276828,
+      "rssKiB": 650944
+    },
+    {
+      "elapsedMs": 277846,
+      "rssKiB": 651328
+    },
+    {
+      "elapsedMs": 278865,
+      "rssKiB": 652400
+    },
+    {
+      "elapsedMs": 279882,
+      "rssKiB": 653776
+    },
+    {
+      "elapsedMs": 280899,
+      "rssKiB": 655360
+    },
+    {
+      "elapsedMs": 281917,
+      "rssKiB": 656528
+    },
+    {
+      "elapsedMs": 282935,
+      "rssKiB": 645680
+    },
+    {
+      "elapsedMs": 283953,
+      "rssKiB": 639040
+    },
+    {
+      "elapsedMs": 284974,
+      "rssKiB": 624320
+    },
+    {
+      "elapsedMs": 285991,
+      "rssKiB": 624768
+    },
+    {
+      "elapsedMs": 287007,
+      "rssKiB": 625376
+    },
+    {
+      "elapsedMs": 288023,
+      "rssKiB": 625568
+    },
+    {
+      "elapsedMs": 289039,
+      "rssKiB": 625744
+    },
+    {
+      "elapsedMs": 290055,
+      "rssKiB": 625968
+    },
+    {
+      "elapsedMs": 291072,
+      "rssKiB": 626432
+    },
+    {
+      "elapsedMs": 292090,
+      "rssKiB": 626944
+    },
+    {
+      "elapsedMs": 293108,
+      "rssKiB": 628736
+    },
+    {
+      "elapsedMs": 294126,
+      "rssKiB": 628560
+    },
+    {
+      "elapsedMs": 295143,
+      "rssKiB": 628688
+    },
+    {
+      "elapsedMs": 296159,
+      "rssKiB": 629600
+    },
+    {
+      "elapsedMs": 297174,
+      "rssKiB": 630288
+    },
+    {
+      "elapsedMs": 298195,
+      "rssKiB": 630928
+    },
+    {
+      "elapsedMs": 299213,
+      "rssKiB": 670688
+    },
+    {
+      "elapsedMs": 300230,
+      "rssKiB": 596288
+    },
+    {
+      "elapsedMs": 301247,
+      "rssKiB": 619824
+    },
+    {
+      "elapsedMs": 302272,
+      "rssKiB": 603840
+    },
+    {
+      "elapsedMs": 303289,
+      "rssKiB": 574656
+    },
+    {
+      "elapsedMs": 304306,
+      "rssKiB": 605984
+    },
+    {
+      "elapsedMs": 305323,
+      "rssKiB": 641776
+    },
+    {
+      "elapsedMs": 306350,
+      "rssKiB": 638720
+    },
+    {
+      "elapsedMs": 307369,
+      "rssKiB": 624368
+    },
+    {
+      "elapsedMs": 308388,
+      "rssKiB": 634512
+    },
+    {
+      "elapsedMs": 309406,
+      "rssKiB": 636320
+    },
+    {
+      "elapsedMs": 310423,
+      "rssKiB": 636528
+    },
+    {
+      "elapsedMs": 311441,
+      "rssKiB": 637984
+    },
+    {
+      "elapsedMs": 312458,
+      "rssKiB": 638112
+    },
+    {
+      "elapsedMs": 313476,
+      "rssKiB": 640400
+    },
+    {
+      "elapsedMs": 314492,
+      "rssKiB": 690112
+    },
+    {
+      "elapsedMs": 315508,
+      "rssKiB": 702144
+    },
+    {
+      "elapsedMs": 316524,
+      "rssKiB": 702304
+    },
+    {
+      "elapsedMs": 317540,
+      "rssKiB": 702656
+    },
+    {
+      "elapsedMs": 318557,
+      "rssKiB": 702384
+    },
+    {
+      "elapsedMs": 319574,
+      "rssKiB": 702416
+    },
+    {
+      "elapsedMs": 320591,
+      "rssKiB": 703232
+    },
+    {
+      "elapsedMs": 321607,
+      "rssKiB": 703280
+    },
+    {
+      "elapsedMs": 322625,
+      "rssKiB": 703280
+    },
+    {
+      "elapsedMs": 323644,
+      "rssKiB": 702032
+    },
+    {
+      "elapsedMs": 324661,
+      "rssKiB": 702080
+    },
+    {
+      "elapsedMs": 325677,
+      "rssKiB": 702112
+    },
+    {
+      "elapsedMs": 326692,
+      "rssKiB": 704096
+    },
+    {
+      "elapsedMs": 327710,
+      "rssKiB": 707680
+    },
+    {
+      "elapsedMs": 328727,
+      "rssKiB": 709616
+    },
+    {
+      "elapsedMs": 329744,
+      "rssKiB": 710304
+    },
+    {
+      "elapsedMs": 330762,
+      "rssKiB": 710672
+    },
+    {
+      "elapsedMs": 331779,
+      "rssKiB": 710656
+    },
+    {
+      "elapsedMs": 332799,
+      "rssKiB": 710320
+    },
+    {
+      "elapsedMs": 333817,
+      "rssKiB": 710048
+    },
+    {
+      "elapsedMs": 334833,
+      "rssKiB": 710432
+    },
+    {
+      "elapsedMs": 335854,
+      "rssKiB": 710608
+    },
+    {
+      "elapsedMs": 336870,
+      "rssKiB": 710736
+    },
+    {
+      "elapsedMs": 337888,
+      "rssKiB": 710816
+    },
+    {
+      "elapsedMs": 338906,
+      "rssKiB": 710928
+    },
+    {
+      "elapsedMs": 339923,
+      "rssKiB": 715056
+    },
+    {
+      "elapsedMs": 340941,
+      "rssKiB": 718672
+    },
+    {
+      "elapsedMs": 341960,
+      "rssKiB": 719552
+    },
+    {
+      "elapsedMs": 342977,
+      "rssKiB": 723696
+    },
+    {
+      "elapsedMs": 343993,
+      "rssKiB": 723760
+    },
+    {
+      "elapsedMs": 345010,
+      "rssKiB": 723568
+    },
+    {
+      "elapsedMs": 346028,
+      "rssKiB": 723696
+    },
+    {
+      "elapsedMs": 347047,
+      "rssKiB": 723792
+    },
+    {
+      "elapsedMs": 348064,
+      "rssKiB": 723808
+    },
+    {
+      "elapsedMs": 349080,
+      "rssKiB": 723200
+    },
+    {
+      "elapsedMs": 350098,
+      "rssKiB": 723232
+    },
+    {
+      "elapsedMs": 351115,
+      "rssKiB": 723312
+    },
+    {
+      "elapsedMs": 352133,
+      "rssKiB": 723456
+    },
+    {
+      "elapsedMs": 353150,
+      "rssKiB": 723600
+    },
+    {
+      "elapsedMs": 354167,
+      "rssKiB": 724528
+    },
+    {
+      "elapsedMs": 355183,
+      "rssKiB": 727040
+    },
+    {
+      "elapsedMs": 356201,
+      "rssKiB": 727120
+    },
+    {
+      "elapsedMs": 357217,
+      "rssKiB": 727184
+    },
+    {
+      "elapsedMs": 358235,
+      "rssKiB": 727440
+    },
+    {
+      "elapsedMs": 359255,
+      "rssKiB": 728864
+    },
+    {
+      "elapsedMs": 360271,
+      "rssKiB": 728320
+    },
+    {
+      "elapsedMs": 361288,
+      "rssKiB": 728448
+    },
+    {
+      "elapsedMs": 362303,
+      "rssKiB": 728816
+    },
+    {
+      "elapsedMs": 363319,
+      "rssKiB": 728944
+    },
+    {
+      "elapsedMs": 364336,
+      "rssKiB": 729104
+    },
+    {
+      "elapsedMs": 365352,
+      "rssKiB": 729152
+    },
+    {
+      "elapsedMs": 366404,
+      "rssKiB": 721664
+    },
+    {
+      "elapsedMs": 367430,
+      "rssKiB": 713456
+    },
+    {
+      "elapsedMs": 368449,
+      "rssKiB": 713408
+    },
+    {
+      "elapsedMs": 369466,
+      "rssKiB": 713120
+    },
+    {
+      "elapsedMs": 370483,
+      "rssKiB": 713280
+    },
+    {
+      "elapsedMs": 371500,
+      "rssKiB": 713456
+    },
+    {
+      "elapsedMs": 372516,
+      "rssKiB": 615664
+    },
+    {
+      "elapsedMs": 373532,
+      "rssKiB": 615696
+    },
+    {
+      "elapsedMs": 374548,
+      "rssKiB": 615712
+    },
+    {
+      "elapsedMs": 375564,
+      "rssKiB": 615712
+    },
+    {
+      "elapsedMs": 376582,
+      "rssKiB": 615776
+    },
+    {
+      "elapsedMs": 377599,
+      "rssKiB": 615776
+    },
+    {
+      "elapsedMs": 378616,
+      "rssKiB": 615856
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "fixture",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "localAnvilBinary": "22d5eeb9e70e198d0feb76a15bb97d2061b653798080dad0cc328ab20495b0bd",
+    "scripts/t04-metamask.mjs": "557d3f1088fc5a7e49ebb716ee06f7fb86e278dab37770a0bc04e0af514c5baa",
+    "scripts/t04-browser-performance.mjs": "da670983c6fb7bde4d05a3feceba5bbefbd47bfa5c79f961a5e74dc4deaed47b",
+    "scripts/t04-browser-funding.mjs": "7d7b65059be0a9bc1e4737065da6b7bb6449424b5d4bdc6cdd601e091d591eae",
+    "scripts/t04-cold-browser-fees.mjs": "9d6d558bdf7ec53b1b1ebd1e0d81ef771f9add3e460b56ddb43e19b53d250466",
+    "scripts/w01-unfunded-wallet.mjs": "88fcd03eba4bcd651986305d2d7a2d79d7e6df5812b92d17a14aa25fee224400",
+    "scripts/application-post.mjs": "b353f152b9699d407a8e32af659c730e85429757ee5c721d2532bb1ff46cb11f",
+    "scripts/t04-wallet-absence.mjs": "68bbd62f8ce00c6f9bb28603c4604ea37399c422d70d555f29af48b0e9b1aaff",
+    "scripts/t04-withdraw-traffic.mjs": "bd117106e45c71e5dac839c5b0a068cdc372c47ce123330b5f9a80bfc3049a3c",
+    "scripts/t03-repeated-posts.mjs": "32a689127efa9c5bfc4b6439c44d60b5c6007e3872baa957399427db5614548b",
+    "scripts/o01-censor-command-flow.mjs": "084cbe32ce4cf9d6d2f499b7fcd14caea7bc6087639b302085f411dd46c18620",
+    "scripts/o01-censor-command-io.mjs": "33241513fa6d7b1fcd02a0b282c8eb2dec9529020ba8d69b7e8ef165afce0ac8",
+    "scripts/t04-browser-journey.mjs": "89de5797546bf7013641af3f8fce3ebc5b4ea7096c73f96d9660de0e318cb0cc",
+    "scripts/t04-browser-journey-verify.mjs": "24273b6875e77bdb62b7e7af59f745e3fadb4676b83a3239a371792fff6ccfc9",
+    "scripts/t04-browser-post-recovery.mjs": "0883fbea8e5d11bfe16bd2ae3a4d3c4950452828f1b2104ccb05740ddd86b129",
+    "scripts/t04-post-response-loss.mjs": "e2252661599cd245a749cb5d5a02be97be3eaee8446e67c8cda0d1c815fee46f",
+    "scripts/run-bounded-browser-check.mjs": "7af2410c85fe52dde3d655d64f271a1f6eefb18d0bbf7fc55f731f00bd85e9f0",
+    "scripts/u01-browser-flow.mjs": "01c6b294aab8261ed5caab1274761f8fbdef06aab67e5bca0ee4e1a783033c79",
+    "scripts/u01-browser-post-verify.mjs": "e7de1e7f1c4c1a55e937b1ca4a18766c7c3e26d8006284c35b9f974e2775cec7",
+    "scripts/u01-browser-post.mjs": "d619f0019261cf879e9c53cacd17c70046f59b48bd0f9a97a8c6ef3373aa31d2",
+    "scripts/browser-error-observer.mjs": "0a54ad2eb04df064622f580c9f47dda956e1f0d1d226367f58f2034fba84c432",
+    "scripts/u01-browser-rpc.mjs": "03b79a31ceed9e849fec185500c7e406f410fc94d3460e34a71ea0676d440ced",
+    "scripts/t03-rpc-observer.mjs": "384ef12f6980f04932e3f0a37e60434cb649293f9621787ca9bc0f23c2adafd5",
+    "scripts/t03-public-footprint.mjs": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d",
+    "scripts/c01-native-profile.mjs": "a3e5b526210247329bf1c936d3590e826db8fcf5e0cc6700d266986ec15967d0",
+    "scripts/test-c01-application.mjs": "3268aebedef1afa5ae1ee23158a425de1918f73e26ba2366e5112ff6f45c19a8",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "scripts/c01-settle-application-message.mjs": "13cb8cfe07b27382e1a160765f487fcecb8b3b306a8601623f864837578458ba",
+    "scripts/c01-application-deployment.mjs": "3f02b5d3076321cc85fcf94309571f86ff892cc5381411258b8d0bdbfef71aa1",
+    "scripts/w03-note-attribution.mjs": "779e2a17762688ff8977f3af73dea93a17a6c5f57d640e1e0b60b2994f734924",
+    "shared/application-nullifier.mjs": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+    "scripts/w03-proof-recovery.mjs": "d59facfb1a0809a771a4619671d6c85f6058a87911e331342b645832b4b25de3",
+    "shared/l2-journal.mjs": "97a7643a67876464b71cdce62a4fdfc876947aea6aa29319155961895b67dad1",
+    "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+    "shared/journal-backup.mjs": "3743dfb810a79feb27cf428b4cef7d41487065c0ef5fb29d2122fb0d1ce786b6",
+    "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+    "scripts/w02-wallet-restore.mjs": "075e36e2ad77486618e002b99a162a739ace47364ce9bbe4e35dc8fd60afa672",
+    "shared/wallet-backup.js": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+    "scripts/w01-private-fee-standalone.mjs": "3d44f41fdf94a8c150cc9475bbbfe49d35d62fd31f2dc62bfcbe3c7d9efa93b8",
+    "scripts/w01-refund-revert.mjs": "e92db072157b2f59de86882645544820fb22be27461f119de9e68bc19394ba97",
+    "scripts/w01-private-fee-flow.mjs": "9ccf8bff3bf2aa388850cabaed62077e4e29dab1bd75292a2b75153af1a4e970",
+    "scripts/w01-private-funding.mjs": "ecdfa61d8348e29e49df61d6fdb41c9711d63ec25751901f96fe741a6a550f71",
+    "shared/private-fee-client.mjs": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+    "shared/private-fee-payment.mjs": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+    "shared/private-fee-funding.mjs": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+    "shared/ethereum-journal.mjs": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "apps/src/billboard/user/transaction-journal-store.mjs": "abb9af112709a4e4ed3197de86ef058a4b06e3c63b1588861f6411b1629c443a",
+    "scripts/c01-settle-ready.mjs": "cf0a0e4a531e938b601f4fdf13ce336a9d453435f3df70e2be38f6d2e2d93d1c",
+    "scripts/c01-settle-message.mjs": "4e9bc2eeb7dad873311045c49f89b0b53c5ccd4f34d0516924e47338773ed132",
+    "scripts/c01-bridge-flow.mjs": "170e8eb6642a083d127ee58dfa3e11db95e12ead5a6153607285783827387080",
+    "scripts/c02-screening-flow.mjs": "b4211db1a37473344be664c90fc52a46b89b48bd4c02f72f4d7c1cd008c48091",
+    "scripts/t02-screening-journey.mjs": "cc929409563a4254b3abf0b6f5edc3969807a19d1edb8d64797add5ccd1558b9",
+    "scripts/t02-redeposit-flow.mjs": "7166acd8e072bac5156d103be317790bfd6226543204c7ca3335bb72fc9cdd3d",
+    "scripts/t02-wrong-origin.mjs": "fb669443a3a42973cf53fbf6656fcb7ebb457764951a92b8717c3904f18369d7",
+    "scripts/t02-claim-boundary.mjs": "e3eb38f5644a56a4ac3d8c0a425d78d6857118a2d7716e15f71c1891dad207c5",
+    "scripts/test-t02-claim-boundary.mjs": "d02fe4102d85c4d510b707a2b64781c3d37512eb68fac1f9cccabd5c87724ccc",
+    "node_modules/@aztec-labs/pxe/src/node/caching_aztec_node.ts": "637cf1f3c53c5115a6c6ba4073d769a72930f4cf5b3e3a4c9d801da6e644db52",
+    "node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js": "f1e9cf066fb78c47c0ec836413247a085502af99a521129833bf99c281eb7865",
+    "node_modules/@aztec-labs/pxe/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "node_modules/@aztec-labs/pxe/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+    "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/InboxAbi.js": "cda5a4580d11c0f7ec7bd88911b928d6f42379739c3abb411888a779842c43f2",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Inbox.sol": "7dc210e25c63154ea759814d1d93675f1e431ced5438c0983ee6104c62fee46e",
+    "scripts/t02-redeposit-replay.mjs": "c8a358b33d08f205464d18d91e22312e661b07bbfa0491e8a72ea63d3363c53b",
+    "node_modules/@aztec-foundation/l1-artifacts/dest/OutboxAbi.js": "858df4a22ebe4f45f2ea28757a69aab34417abb0651da58e549a1d34e2b11d7b",
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/core/messagebridge/Outbox.sol": "de268cae33268c6ce8538d687b3612b090d37052a270846e233717520f9df212",
+    "scripts/c03-author-claims.mjs": "f3b64689b874503b338df22eb9092dc97aadf0d5dba935b36db90ac209ddd0f4",
+    "scripts/c03-contention-flow.mjs": "66c03662704036fd0dccd101334af34aacadc1e6db8d957960117aa330ea3024",
+    "scripts/c01-client-mining.mjs": "a10abf9d1798fac6ddae89a0f62ce2b3e30b9ddd69a77512d5f83f8dc33ff332",
+    "scripts/c01-deposit-flow.mjs": "5c7f26f934cd4b9c207ce282f379914a16cc5448772c71105da20effbd7e6201",
+    "scripts/c01-exit-flow.mjs": "b98fc5c964238871d6a83fc7d863b0dd3a698a0d12b7171ee3943f6fc17322a7",
+    "scripts/c01-withdraw-l1.mjs": "09323ce30632abd6180c6530adedf63eee4f453f5ce8e3ce1da19f85b24915fe",
+    "scripts/c01-ready-flow.mjs": "44f504ec867f74f776f86b9962c36ad87aec12261ec1b569a9f9fffb3fbfe698",
+    "scripts/c01-board-inclusion.mjs": "da1608b59681b40bb6538ee333ed772fe84ce0712188eaea50468042f7467f34",
+    "scripts/c01-board-flow.mjs": "c45184bc1a16955dd57a579eadc0f9fc6f43a9e9b960bf19e0dc22fc26466330",
+    "scripts/c01-real-node.mjs": "2b5ebc262b91874a0458cf57886fca4538b0d56e0ab56170814d2652c8306fd4",
+    "scripts/toolchain.mjs": "072a82f69135f7c98468141debf2a83bc16baf187a3d8c6d5eb1090caf255f7f",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "node_modules/@aztec-labs/ethereum/dest/deploy_aztec_l1_contracts.js": "3d0d212408324359a3501fc4ab35ca546b6fae1c5ea432ee45fe4b3006941da9",
+    "prover/application-policy.mjs": "dd36aa7ebd67b7badbbf51147ca4c093edcbe9f1693a1fcd6a3c9ffcba56d2f8",
+    "prover/application-policy.test.mjs": "285ab1c39448bb66f1264a2d215b6c3ad81ffbe5d400c4f53e749f14e3e40a79",
+    "prover/catalog.mjs": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+    "prover/interfaces.mjs": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+    "prover/native-binary.mjs": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+    "prover/pin-rolling-artifacts.mjs": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+    "prover/plugin-policy.mjs": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+    "prover/process-worker.mjs": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+    "prover/queue.mjs": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+    "prover/rolling-artifacts.mjs": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+    "prover/runtime.mjs": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+    "prover/server.mjs": "ff016cfee72ae4d255d57f281bb1e6f95f4bffb4da5f614577b4aff8bbc62b17",
+    "prover/service.mjs": "d3850a21f850e783d8952ce4e0e8251a5c8f3b00257cca6904305b7992c8d5ee",
+    "prover/start.mjs": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+    "prover/worker.mjs": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+    "scripts/testing/assets.mjs": "001018a130b4ceb52593c4b80c572370a0fe583315cf99d996cea738d7340f06",
+    "scripts/testing/browser-worker.mjs": "2c90754b2a459f7e78b8204abf5ef6b3287236fc27de01420b78aff0ab21f46c",
+    "scripts/testing/fixture-worker.mjs": "95467bca34910f6b1d7721813f6d7629621f9fc4bd44cd7cb663864f4a8dec49",
+    "scripts/testing/private-bok-fixture.mjs": "b0191febfa316f6b5cc4cd0420d2642e2f4d350e37e6184509e151c5cf4811b3",
+    "scripts/testing/private-bok-fixture.test.mjs": "60de3c60a4aa6c04b28fdbbd1f6d46f38875c0963c96371e06f7f398cc514deb",
+    "scripts/testing/process-tree.test.mjs": "8779a55199ed6a475faa6ceee7ad4c8eb866ce3b16b7a661ebbf042fdcd255a2",
+    "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+    "scripts/testing/remote-prover-fixture.mjs": "be11a671a67564dae3a5be6a991d9fc82fff6694e51a9b9038d55b3b5414f1b0",
+    "scripts/testing/run-application.mjs": "b786059985a44e68fd11ef79a8cad3972b8d52bb9a8f69fee25d7c4650996608",
+    "scripts/testing/scenario-flows.mjs": "689d5b9ff7efb6c3ad7687d38e21b216e03ce3993b02d32b1109fd339ce3af92",
+    "scripts/testing/scenarios.mjs": "db19896b295c97ae473dd6a1d57a0790d23c13a59a657c1fce33b9907a8ab3e1",
+    "scripts/testing/supervisor.mjs": "a5cdd5d62f354b46c4a97e27e5993e7dec559bc469919068790e3bf37e1ffcbd",
+    "scripts/testing/supervisor.test.mjs": "3999906fafc8be9551bc070cb1ba4f83076843e707fdf369cb1eb62b5a837a88"
+  },
+  "setup": [
+    {
+      "name": "bn254_g1.dat",
+      "sha256": "2aefa0bc53704a61d887ff316d56b6f8bed968859b8b894c3677f11797779dac",
+      "bytes": 75497472
+    },
+    {
+      "name": "bn254_g2.dat",
+      "sha256": "01797bfc4de5a96f0e516a9ea4537d18786dc30cb991aca4274c95822b69c32f",
+      "bytes": 128
+    },
+    {
+      "name": "grumpkin_g1_v2.flat.dat",
+      "sha256": "b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9",
+      "bytes": 4194368
+    }
+  ],
+  "networkProofs": false,
+  "controlledSettlement": false,
+  "binarySha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953",
+  "applicationBBThreads": 1,
+  "nodeBBThreads": 1,
+  "worldStateHardwareConcurrency": 1,
+  "peakMemory": {
+    "elapsedMs": 6091,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 26824,
+        "ppid": 59636,
+        "rssKiB": 60176
+      },
+      {
+        "role": "fixture",
+        "pid": 26836,
+        "ppid": 26824,
+        "rssKiB": 775728
+      },
+      {
+        "role": "fixture",
+        "pid": 26839,
+        "ppid": 26836,
+        "rssKiB": 28608
+      },
+      {
+        "role": "fixture",
+        "pid": 26842,
+        "ppid": 26836,
+        "rssKiB": 3312
+      },
+      {
+        "role": "fixture",
+        "pid": 26844,
+        "ppid": 26836,
+        "rssKiB": 3344
+      }
+    ]
+  },
+  "worker": {
+    "passed": true,
+    "profile": "application transaction proofs with official local protocol fixture and controlled settlement",
+    "nonlocalNetworkDenied": true,
+    "deployment": {
+      "passed": true,
+      "profile": "official SDK local application fixture",
+      "realVerifier": false,
+      "networkProofs": false,
+      "rollupVersion": "3535237176",
+      "addresses": {
+        "rollupAddress": "0x23ef0771df71a2a47b094edf4dcdc5dd8b5e1167",
+        "registryAddress": "0x01876a0f1effd5e693c94e1219bf6a21a6423768",
+        "inboxAddress": "0xe1fcbd3377abcbe5f86a40185501cb8f99457f04",
+        "outboxAddress": "0xc80da573ce439863f9743237bc4bcc907cc789ea",
+        "feeJuiceAddress": "0x23cc07da2fcd7b3bdb45b287e633273bd37474ab",
+        "feeJuicePortalAddress": "0x881dc91d269e8a60258834aa850b2063b573787f",
+        "coinIssuerAddress": "0x1baff93a4d303e86256b4db0d9640f3a8e8c561c",
+        "rewardDistributorAddress": "0x24b81524a84eefeae1318796426f2bdf23a0cae2",
+        "governanceProposerAddress": "0x442a29bac3c8749812a13360de21020b2f093db0",
+        "governanceAddress": "0x7b3098cb7fb026ef206b4671d18c5b9bace7f321",
+        "stakingAssetAddress": "0x8f16b248a7b7c50fdda31439d61c84e00fc24508",
+        "feeAssetHandlerAddress": "0x3e329d09ecd2b9edeb45ab2edc53436761794747",
+        "stakingAssetHandlerAddress": "0x0549c54cea7d82f5b7134f69c99fc864b21e1222",
+        "zkPassportVerifierAddress": "0xc516c31ad871a1d1dfd872ce859d25ca96e39887",
+        "gseAddress": "0x090f4aa0e7fea74c582755b86b943a5c2d4560a4",
+        "dateGatedRelayerAddress": "0x7ea8a0750f51a196e7a96752b974f5b8e52b5921"
+      }
+    },
+    "validatorActivation": {
+      "committee": [
+        "0x1893799fb76abb685adb9b63ca579d4165a06bf8"
+      ],
+      "ordinaryTimeAdvancesSeconds": [
+        {
+          "seconds": 20,
+          "timestamp": "1791724439",
+          "epoch": "1",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791724459",
+          "epoch": "2",
+          "committee": null
+        },
+        {
+          "seconds": 20,
+          "timestamp": "1791724479",
+          "epoch": "3",
+          "committee": null
+        }
+      ]
+    },
+    "node": {
+      "passed": true,
+      "scope": "Private Bok escrow with real local portal accounting and controlled settlement",
+      "realProofs": false,
+      "proverSubsystemCreated": false,
+      "ordinarySequencerConstructed": true,
+      "sequencerStarted": true,
+      "rollupVersion": 3535237176,
+      "board": {
+        "passed": true,
+        "scope": "real client deployment transaction proof and node admission validation only",
+        "initializerVisibility": "public; client proof authenticates private account/transaction path",
+        "sent": false,
+        "included": false,
+        "epochProofAccepted": false,
+        "proofMs": 759,
+        "artifactHashes": {
+          "apps/src/billboard/billboard_artifact.json": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+          ".build/contracts-manifest.json": "dee2f7cce72cb3a4e17ff822c6842e56a2c1059d853cadc584ab16be430ee545"
+        },
+        "clientProverBackend": "NativeUnixSocket",
+        "threads": 1,
+        "nodeValidation": "valid",
+        "txHash": "0x195ab58c206fd70a47197155364a741e757e5f87597e784eb61de697fba57e80",
+        "boardAddress": "0x255a6f12f01fa10c407e92aebea7aabb1663520d849b85a531ef0d0039e69079",
+        "proofBytes": 39076,
+        "proofSha256": "a55813bed71e023b7f04bee7b3137b247e2a49f4a998af6012d3231035afade1",
+        "feePayerBalance": "10000000000000000000000",
+        "nextRequired": "Submit this exact in-memory tx, observe inclusion, then use official test settlement before local Ready activation.",
+        "walletStopped": true
+      },
+      "inclusion": {
+        "passed": true,
+        "txHash": "0x195ab58c206fd70a47197155364a741e757e5f87597e784eb61de697fba57e80",
+        "adjustments": [
+          {
+            "block": "43",
+            "timestamp": "1791724480"
+          },
+          {
+            "block": "44",
+            "timestamp": "1791724481"
+          },
+          {
+            "block": "45",
+            "timestamp": "1791724482"
+          },
+          {
+            "block": "46",
+            "timestamp": "1791724483"
+          },
+          {
+            "block": "47",
+            "timestamp": "1791724484"
+          },
+          {
+            "block": "48",
+            "timestamp": "1791724485"
+          },
+          {
+            "block": "49",
+            "timestamp": "1791724486"
+          },
+          {
+            "block": "50",
+            "timestamp": "1791724487"
+          },
+          {
+            "block": "51",
+            "timestamp": "1791724488"
+          },
+          {
+            "block": "52",
+            "timestamp": "1791724489"
+          },
+          {
+            "block": "53",
+            "timestamp": "1791724490"
+          },
+          {
+            "block": "54",
+            "timestamp": "1791724491"
+          },
+          {
+            "block": "55",
+            "timestamp": "1791724492"
+          },
+          {
+            "block": "56",
+            "timestamp": "1791724493"
+          }
+        ],
+        "initialClockLeadSeconds": -91,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "sequencerState": "IDLE",
+        "nodeClockSeconds": 1791724494,
+        "blockNumber": "1",
+        "transactionFee": "425631338403900000",
+        "ordinarySequencer": true,
+        "syntheticSettlement": false,
+        "epochProofAccepted": false,
+        "clockProfile": "controlled disposable L1 mining and node clock synchronization; no throughput/finality claim"
+      },
+      "scenario": {
+        "passed": true,
+        "caseProfile": "both",
+        "applicationProofs": false,
+        "networkProofs": false,
+        "controlledSettlement": true,
+        "fundingMode": "real-portal-deposit",
+        "payerMode": "genesis",
+        "privacyAcceptance": "missing: public genesis fee payer",
+        "l1": [
+          {
+            "label": "deploy-token",
+            "txHash": "0xa7a30c163c20a1343cb59ca8185d4b1685d06791d756e64ecdcb190e8d268b9b",
+            "submission": "included",
+            "blockNumber": 58,
+            "blockHash": "0x149ac4f6b5e76d9b7fbfdc4dff8c53aad9673ec21ad534a096f38232a12968d2",
+            "gasUsed": "542500",
+            "fee": "651425712227500"
+          },
+          {
+            "label": "deploy-portal",
+            "txHash": "0xb7b3b781a09368561279ac233061e8256145521e96357ce7700a7123586c1dd5",
+            "submission": "included",
+            "blockNumber": 82,
+            "blockHash": "0x8201a2919c1eff021e26a21f0208142041a77fb3ea7f382c128f23357b8eda1a",
+            "gasUsed": "996964",
+            "fee": "996996144113288"
+          },
+          {
+            "label": "activate-portal",
+            "txHash": "0x030c09b55bb48adeabd493ce10b939145c48b699a1727d807b87bec274e72077",
+            "submission": "included",
+            "blockNumber": 96,
+            "blockHash": "0x4660d1895df08b1ed1214d20334312d4ed7c20758a60e645958a996dbc7f9603",
+            "gasUsed": "90423",
+            "fee": "90423455912766"
+          },
+          {
+            "label": "normal-fund-approve",
+            "txHash": "0xa64396b05216981a00c7f1d4babbd3d2735c0ecb3c5d8e7a8e9cce20e56d066a",
+            "submission": "included",
+            "blockNumber": 97,
+            "blockHash": "0x443013f29c569f626e0871d9cba334c79e2308bff1cd940c22d0666c43cbe6b5",
+            "gasUsed": "46318",
+            "fee": "46318204540288"
+          },
+          {
+            "label": "normal-fund-deposit",
+            "txHash": "0x1f1a063df472727899ef3be871446be46ac6254b051f4ff062ca65e31b979769",
+            "submission": "included",
+            "blockNumber": 99,
+            "blockHash": "0xa65fb44e961f20806071dd41127be1d948b91286939d381637b43b4e5440f699",
+            "gasUsed": "149673",
+            "fee": "149673506343759"
+          },
+          {
+            "label": "private-withdraw-redeem",
+            "txHash": "0xbbd6945acb364268410d5efa2f36744889816f729dfb0b13e2a5de85540000f9",
+            "submission": "included",
+            "blockNumber": 212,
+            "blockHash": "0x3638f6ae8682b9fb893b6e20f1bdcb32f1d429943a2f270016bdde49929ddc19",
+            "gasUsed": "104184",
+            "fee": "104184000729288"
+          },
+          {
+            "label": "operator-withdraw-redeem",
+            "txHash": "0x9f061d17689cd2699ebfabc6862f1b15c1d2c07e617787324b8279d99b27fc16",
+            "submission": "included",
+            "blockNumber": 229,
+            "blockHash": "0xc246a75fedeecc8acf66264286e1fc224e8aed7c886d84ff7be659dc836837d1",
+            "gasUsed": "99360",
+            "fee": "99360000695520"
+          },
+          {
+            "label": "uncertain-fund-approve",
+            "txHash": "0xfc8abbf6cf99867a39007bf5944d62240bc156357c867ef2833d7973323f7608",
+            "submission": "included",
+            "blockNumber": 230,
+            "blockHash": "0x3f60cb6fd5f3db7101a769bc29fcbee4ae8732b88282646fad21544a8383c229",
+            "gasUsed": "46318",
+            "fee": "46318000324226"
+          },
+          {
+            "label": "uncertain-fund-deposit",
+            "txHash": "0x3bb3edddf451e7e685ac33b1b9342c2016f76020e0b4c6339ac67beda1f51c8b",
+            "submission": "included",
+            "blockNumber": 231,
+            "blockHash": "0x72144ccee5d80bccf29fa3a1bfa3bb0d16686e700a4f7be2a2f2d574ca9ac806",
+            "gasUsed": "132610",
+            "fee": "132610000928270"
+          },
+          {
+            "label": "late-private-withdraw-redeem",
+            "txHash": "0x570112f56ac9be71ed8cc90d1f1c2bef26191d7071e179f5f37de91e6e4e139e",
+            "submission": "included",
+            "blockNumber": 431,
+            "blockHash": "0x33af856b2697d1df7c6f9bedbb77daa63a3ce883aac079c4247bad4283898b09",
+            "gasUsed": "87096",
+            "fee": "87096000609672"
+          },
+          {
+            "label": "late-operator-withdraw-redeem",
+            "txHash": "0xf3046e3bdef2e53621611433f340e8696f027d4a9028332196d7f40a4879e435",
+            "submission": "included",
+            "blockNumber": 446,
+            "blockHash": "0x9f6baa9a1472ea3561c39c2b8235764bf3aa719839dc4cc1a3cc6e4f1b07582c",
+            "gasUsed": "82284",
+            "fee": "82284000575988"
+          }
+        ],
+        "artifactHashes": {
+          "billboard/portal/out/DevUSDC.sol/DevUSDC.json": "02b3f1631dee076615b6e413e9ad1d5d8915c36bebd3adecc8413e19f8baff8e",
+          "billboard/portal/out/PluginPortal.sol/PluginPortal.json": "f7034218d801721ce2b39917c11f86055380868f6adbc3da36e6e115fed10e39"
+        },
+        "clientMining": {
+          "passed": true,
+          "ordinaryBlocksMined": 349,
+          "stopped": true,
+          "maxObservedClockLeadSeconds": 0,
+          "clockSynchronization": "every mined block, including correction of wall-clock lead",
+          "lastBlock": "447",
+          "lastTimestamp": "1791811228"
+        },
+        "settlements": [
+          {
+            "passed": true,
+            "kind": "ready",
+            "deadlineMs": 60000,
+            "testControlled": true,
+            "syntheticSettlement": true,
+            "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+            "proofReceipts": [],
+            "finalized": false,
+            "epochs": [
+              {
+                "epoch": 4,
+                "firstCheckpoint": 1,
+                "lastCheckpoint": 1,
+                "testControlledCheckpoint": 1
+              },
+              {
+                "epoch": 5,
+                "firstCheckpoint": 2,
+                "lastCheckpoint": 3,
+                "testControlledCheckpoint": 3
+              },
+              {
+                "epoch": 6,
+                "firstCheckpoint": 4,
+                "lastCheckpoint": 4,
+                "testControlledCheckpoint": 4
+              }
+            ],
+            "sequencerPaused": true,
+            "sequencerResumed": true,
+            "applicationProofs": false,
+            "targetCheckpoint": 4,
+            "messageBlock": "4",
+            "messageBlockHash": "0x07d15f2fea60d1bb57c1150652ef58e37f6323010cfb716d6d9d974fe9cec5c5",
+            "messageTxHash": "0x24fc97fd9674efcdcb5c82e9a2f72b8282702b3981d047b28ed08ce7f04af284",
+            "expectedLeaf": "0x008ebedc05d587ec23ef4d3696b418a69bc948770408ede61f69c7a00e1389dc",
+            "initialProvenCheckpoint": 0,
+            "forcedProvenCheckpoint": 4,
+            "localEpoch": 7,
+            "membership": {
+              "epochNumber": 6,
+              "checkpointCount": 1,
+              "leafIndex": "0",
+              "pathLength": 5,
+              "root": "0x002f3115ae144abf094d3c5a4dedc7aa3b1cf64d154933fc1c9e221da6b49329"
+            },
+            "localSettlement": {
+              "l1Block": "95",
+              "l1Hash": "0x486d3fc8a739f2c8ccc63b3416d95c81cb93044fbae01341ef9b6774a33712ab",
+              "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+            },
+            "elapsedMs": 3698
+          },
+          {
+            "passed": true,
+            "kind": "exit",
+            "deadlineMs": 60000,
+            "testControlled": true,
+            "syntheticSettlement": true,
+            "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+            "proofReceipts": [],
+            "finalized": false,
+            "epochs": [
+              {
+                "epoch": 4,
+                "firstCheckpoint": 1,
+                "lastCheckpoint": 1,
+                "testControlledCheckpoint": 1
+              },
+              {
+                "epoch": 5,
+                "firstCheckpoint": 2,
+                "lastCheckpoint": 3,
+                "testControlledCheckpoint": 3
+              },
+              {
+                "epoch": 6,
+                "firstCheckpoint": 4,
+                "lastCheckpoint": 4,
+                "testControlledCheckpoint": 4
+              },
+              {
+                "epoch": 7,
+                "firstCheckpoint": 5,
+                "lastCheckpoint": 5,
+                "testControlledCheckpoint": 5
+              },
+              {
+                "epoch": 8,
+                "firstCheckpoint": 6,
+                "lastCheckpoint": 7,
+                "testControlledCheckpoint": 7
+              },
+              {
+                "epoch": 9,
+                "firstCheckpoint": 8,
+                "lastCheckpoint": 8,
+                "testControlledCheckpoint": 8
+              },
+              {
+                "epoch": 10,
+                "firstCheckpoint": 9,
+                "lastCheckpoint": 10,
+                "testControlledCheckpoint": 10
+              },
+              {
+                "epoch": 11,
+                "firstCheckpoint": 11,
+                "lastCheckpoint": 12,
+                "testControlledCheckpoint": 12
+              },
+              {
+                "epoch": 12,
+                "firstCheckpoint": 13,
+                "lastCheckpoint": 13,
+                "testControlledCheckpoint": 13
+              }
+            ],
+            "sequencerPaused": true,
+            "sequencerResumed": true,
+            "applicationProofs": false,
+            "targetCheckpoint": 13,
+            "messageBlock": "13",
+            "messageBlockHash": "0x2040e35b8579a6a53063faf6df99fe08706a1e53913ba5afbafeea9bc2df5573",
+            "messageTxHash": "0x0a5070b8f471e805f341bb5eed61aa192e8ff021be3e554ceb7f50e6463d1bde",
+            "expectedLeaf": "0x00a651b9b13f9f857872069a6c4b370f77cf71e47a3341ab9739b76511076c6f",
+            "initialProvenCheckpoint": 4,
+            "forcedProvenCheckpoint": 13,
+            "localEpoch": 13,
+            "membership": {
+              "epochNumber": 12,
+              "checkpointCount": 1,
+              "leafIndex": "0",
+              "pathLength": 5,
+              "root": "0x00590213db1a0178b608cdfd9d2827670a97080db243de20fdbcce0bcb73042a"
+            },
+            "localSettlement": {
+              "l1Block": "211",
+              "l1Hash": "0xe1130784bc98db4fb92b4adf5e8c7048bb996c85e040ff4d90f46a7f57ceb934",
+              "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+            },
+            "elapsedMs": 3787
+          },
+          {
+            "passed": true,
+            "kind": "exit",
+            "deadlineMs": 60000,
+            "testControlled": true,
+            "syntheticSettlement": true,
+            "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+            "proofReceipts": [],
+            "finalized": false,
+            "epochs": [
+              {
+                "epoch": 4,
+                "firstCheckpoint": 1,
+                "lastCheckpoint": 1,
+                "testControlledCheckpoint": 1
+              },
+              {
+                "epoch": 5,
+                "firstCheckpoint": 2,
+                "lastCheckpoint": 3,
+                "testControlledCheckpoint": 3
+              },
+              {
+                "epoch": 6,
+                "firstCheckpoint": 4,
+                "lastCheckpoint": 4,
+                "testControlledCheckpoint": 4
+              },
+              {
+                "epoch": 7,
+                "firstCheckpoint": 5,
+                "lastCheckpoint": 5,
+                "testControlledCheckpoint": 5
+              },
+              {
+                "epoch": 8,
+                "firstCheckpoint": 6,
+                "lastCheckpoint": 7,
+                "testControlledCheckpoint": 7
+              },
+              {
+                "epoch": 9,
+                "firstCheckpoint": 8,
+                "lastCheckpoint": 8,
+                "testControlledCheckpoint": 8
+              },
+              {
+                "epoch": 10,
+                "firstCheckpoint": 9,
+                "lastCheckpoint": 10,
+                "testControlledCheckpoint": 10
+              },
+              {
+                "epoch": 11,
+                "firstCheckpoint": 11,
+                "lastCheckpoint": 12,
+                "testControlledCheckpoint": 12
+              },
+              {
+                "epoch": 12,
+                "firstCheckpoint": 13,
+                "lastCheckpoint": 13,
+                "testControlledCheckpoint": 13
+              },
+              {
+                "epoch": 13,
+                "firstCheckpoint": 14,
+                "lastCheckpoint": 14,
+                "testControlledCheckpoint": 14
+              }
+            ],
+            "sequencerPaused": true,
+            "sequencerResumed": true,
+            "applicationProofs": false,
+            "targetCheckpoint": 14,
+            "messageBlock": "14",
+            "messageBlockHash": "0x2c5166e9af45f6d89e1b089d0613c1c626368f3dddb53a739f2e0487b9ca4332",
+            "messageTxHash": "0x07ece105066d87401c5a8dc2db4f9e74bdc5d71fff9988b6a433275ee6ebbb6f",
+            "expectedLeaf": "0x00c5c6b004c0c24cea8167ab2cfd27f20258b60b1a9216f33c73f7c5f72ea92d",
+            "initialProvenCheckpoint": 13,
+            "forcedProvenCheckpoint": 14,
+            "localEpoch": 14,
+            "membership": {
+              "epochNumber": 13,
+              "checkpointCount": 1,
+              "leafIndex": "0",
+              "pathLength": 5,
+              "root": "0x005b1d66e90049bf9c5f7b65a869003ff7b1fb9d9b57df32283b71667ca6f612"
+            },
+            "localSettlement": {
+              "l1Block": "228",
+              "l1Hash": "0x8c798096da6752ea97e0b1b200abd38e160e7daf2fae6de3853b2ca9fcecdde2",
+              "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+            },
+            "elapsedMs": 4005
+          },
+          {
+            "passed": true,
+            "kind": "exit",
+            "deadlineMs": 60000,
+            "testControlled": true,
+            "syntheticSettlement": true,
+            "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+            "proofReceipts": [],
+            "finalized": false,
+            "epochs": [
+              {
+                "epoch": 4,
+                "firstCheckpoint": 1,
+                "lastCheckpoint": 1,
+                "testControlledCheckpoint": 1
+              },
+              {
+                "epoch": 5,
+                "firstCheckpoint": 2,
+                "lastCheckpoint": 3,
+                "testControlledCheckpoint": 3
+              },
+              {
+                "epoch": 6,
+                "firstCheckpoint": 4,
+                "lastCheckpoint": 4,
+                "testControlledCheckpoint": 4
+              },
+              {
+                "epoch": 7,
+                "firstCheckpoint": 5,
+                "lastCheckpoint": 5,
+                "testControlledCheckpoint": 5
+              },
+              {
+                "epoch": 8,
+                "firstCheckpoint": 6,
+                "lastCheckpoint": 7,
+                "testControlledCheckpoint": 7
+              },
+              {
+                "epoch": 9,
+                "firstCheckpoint": 8,
+                "lastCheckpoint": 8,
+                "testControlledCheckpoint": 8
+              },
+              {
+                "epoch": 10,
+                "firstCheckpoint": 9,
+                "lastCheckpoint": 10,
+                "testControlledCheckpoint": 10
+              },
+              {
+                "epoch": 11,
+                "firstCheckpoint": 11,
+                "lastCheckpoint": 12,
+                "testControlledCheckpoint": 12
+              },
+              {
+                "epoch": 12,
+                "firstCheckpoint": 13,
+                "lastCheckpoint": 13,
+                "testControlledCheckpoint": 13
+              },
+              {
+                "epoch": 13,
+                "firstCheckpoint": 14,
+                "lastCheckpoint": 14,
+                "testControlledCheckpoint": 14
+              },
+              {
+                "epoch": 14,
+                "firstCheckpoint": 15,
+                "lastCheckpoint": 15,
+                "testControlledCheckpoint": 15
+              },
+              {
+                "epoch": 15,
+                "firstCheckpoint": 16,
+                "lastCheckpoint": 17,
+                "testControlledCheckpoint": 17
+              },
+              {
+                "epoch": 16,
+                "firstCheckpoint": 18,
+                "lastCheckpoint": 19,
+                "testControlledCheckpoint": 19
+              },
+              {
+                "epoch": 17,
+                "firstCheckpoint": 20,
+                "lastCheckpoint": 20,
+                "testControlledCheckpoint": 20
+              },
+              {
+                "epoch": 4336,
+                "firstCheckpoint": 21,
+                "lastCheckpoint": 21,
+                "testControlledCheckpoint": 21
+              },
+              {
+                "epoch": 4337,
+                "firstCheckpoint": 22,
+                "lastCheckpoint": 23,
+                "testControlledCheckpoint": 23
+              },
+              {
+                "epoch": 4338,
+                "firstCheckpoint": 24,
+                "lastCheckpoint": 24,
+                "testControlledCheckpoint": 24
+              },
+              {
+                "epoch": 4339,
+                "firstCheckpoint": 25,
+                "lastCheckpoint": 25,
+                "testControlledCheckpoint": 25
+              }
+            ],
+            "sequencerPaused": true,
+            "sequencerResumed": true,
+            "applicationProofs": false,
+            "targetCheckpoint": 25,
+            "messageBlock": "25",
+            "messageBlockHash": "0x1224aeea555994451c204cb487242426c87d797f26ef8f95be331c4dc8a96b0e",
+            "messageTxHash": "0x17a3ef34f53977543e7abdd9ad4c47439c14ec3d65c308c40aa47ee7b98a5668",
+            "expectedLeaf": "0x002ced12add5a72e1f5020a40f2e5b1d83affe8d1dcd2572b76a8f4c1f9be7f5",
+            "initialProvenCheckpoint": 20,
+            "forcedProvenCheckpoint": 25,
+            "localEpoch": 4340,
+            "membership": {
+              "epochNumber": 4339,
+              "checkpointCount": 1,
+              "leafIndex": "0",
+              "pathLength": 5,
+              "root": "0x004d0afa5b8631ca1e34dca8d4d43392790136db6f3e7205d07ee90216573e73"
+            },
+            "localSettlement": {
+              "l1Block": "429",
+              "l1Hash": "0xae0bf0c765742b340df10b88aad9d979f9b667d723c20ecb0aa77b6690822ffb",
+              "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+            },
+            "elapsedMs": 3859
+          },
+          {
+            "passed": true,
+            "kind": "exit",
+            "deadlineMs": 60000,
+            "testControlled": true,
+            "syntheticSettlement": true,
+            "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+            "proofReceipts": [],
+            "finalized": false,
+            "epochs": [
+              {
+                "epoch": 4,
+                "firstCheckpoint": 1,
+                "lastCheckpoint": 1,
+                "testControlledCheckpoint": 1
+              },
+              {
+                "epoch": 5,
+                "firstCheckpoint": 2,
+                "lastCheckpoint": 3,
+                "testControlledCheckpoint": 3
+              },
+              {
+                "epoch": 6,
+                "firstCheckpoint": 4,
+                "lastCheckpoint": 4,
+                "testControlledCheckpoint": 4
+              },
+              {
+                "epoch": 7,
+                "firstCheckpoint": 5,
+                "lastCheckpoint": 5,
+                "testControlledCheckpoint": 5
+              },
+              {
+                "epoch": 8,
+                "firstCheckpoint": 6,
+                "lastCheckpoint": 7,
+                "testControlledCheckpoint": 7
+              },
+              {
+                "epoch": 9,
+                "firstCheckpoint": 8,
+                "lastCheckpoint": 8,
+                "testControlledCheckpoint": 8
+              },
+              {
+                "epoch": 10,
+                "firstCheckpoint": 9,
+                "lastCheckpoint": 10,
+                "testControlledCheckpoint": 10
+              },
+              {
+                "epoch": 11,
+                "firstCheckpoint": 11,
+                "lastCheckpoint": 12,
+                "testControlledCheckpoint": 12
+              },
+              {
+                "epoch": 12,
+                "firstCheckpoint": 13,
+                "lastCheckpoint": 13,
+                "testControlledCheckpoint": 13
+              },
+              {
+                "epoch": 13,
+                "firstCheckpoint": 14,
+                "lastCheckpoint": 14,
+                "testControlledCheckpoint": 14
+              },
+              {
+                "epoch": 14,
+                "firstCheckpoint": 15,
+                "lastCheckpoint": 15,
+                "testControlledCheckpoint": 15
+              },
+              {
+                "epoch": 15,
+                "firstCheckpoint": 16,
+                "lastCheckpoint": 17,
+                "testControlledCheckpoint": 17
+              },
+              {
+                "epoch": 16,
+                "firstCheckpoint": 18,
+                "lastCheckpoint": 19,
+                "testControlledCheckpoint": 19
+              },
+              {
+                "epoch": 17,
+                "firstCheckpoint": 20,
+                "lastCheckpoint": 20,
+                "testControlledCheckpoint": 20
+              },
+              {
+                "epoch": 4336,
+                "firstCheckpoint": 21,
+                "lastCheckpoint": 21,
+                "testControlledCheckpoint": 21
+              },
+              {
+                "epoch": 4337,
+                "firstCheckpoint": 22,
+                "lastCheckpoint": 23,
+                "testControlledCheckpoint": 23
+              },
+              {
+                "epoch": 4338,
+                "firstCheckpoint": 24,
+                "lastCheckpoint": 24,
+                "testControlledCheckpoint": 24
+              },
+              {
+                "epoch": 4339,
+                "firstCheckpoint": 25,
+                "lastCheckpoint": 25,
+                "testControlledCheckpoint": 25
+              },
+              {
+                "epoch": 4340,
+                "firstCheckpoint": 26,
+                "lastCheckpoint": 26,
+                "testControlledCheckpoint": 26
+              }
+            ],
+            "sequencerPaused": true,
+            "sequencerResumed": true,
+            "applicationProofs": false,
+            "targetCheckpoint": 26,
+            "messageBlock": "26",
+            "messageBlockHash": "0x28d8b4e427d6b6cf22790325528c15bd0023fff71dcc36e5c097c8eacd77e7c9",
+            "messageTxHash": "0x01764d5d20169a93f533759afdac7052103db83f0fb7a4ae76c4c978b53cc076",
+            "expectedLeaf": "0x0063f3db9f2fff62f076bab9dda0de27ba7e70b2da6e1ad4efff27312b56b27d",
+            "initialProvenCheckpoint": 25,
+            "forcedProvenCheckpoint": 26,
+            "localEpoch": 4341,
+            "membership": {
+              "epochNumber": 4340,
+              "checkpointCount": 1,
+              "leafIndex": "0",
+              "pathLength": 5,
+              "root": "0x00f684fc899b7cc325c9382eaec8758dc9d6621f2501c1d3321744e6975337b4"
+            },
+            "localSettlement": {
+              "l1Block": "445",
+              "l1Hash": "0x1673de5747a1afb3484404c195139ae9d7946740801f1b6827856bcad60c034e",
+              "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+            },
+            "elapsedMs": 3604
+          }
+        ],
+        "deadlineAdvance": {
+          "target": "1791811131",
+          "reservationTxHash": "0x055b4121746a47f6c821d64424aefd6f0889d5118bd7c403c4b5963e8f267b7f",
+          "reservationBlock": 20,
+          "reservationBlockHash": "0x2403f82e84da6b6731430e15db0b1000d9115c92eb47094a107d8fbe9cd23d65",
+          "testControlled": true,
+          "epochProof": false,
+          "passed": true,
+          "tipsBefore": {
+            "checkpointed": 20,
+            "proven": 14,
+            "finalized": 14,
+            "anchorBlock": 20,
+            "anchorTimestamp": "1791724751"
+          },
+          "pendingBefore": 20,
+          "provenBefore": 14,
+          "testControlledProvenCheckpoint": 20,
+          "finalityBeforeWarp": {
+            "checkpointed": 20,
+            "proven": 20,
+            "finalized": 20,
+            "anchorBlock": 20,
+            "anchorTimestamp": "1791724751"
+          },
+          "finalityWaitMs": 64660,
+          "pendingAfter": 22,
+          "provenAfter": 20,
+          "tipsAfter": {
+            "checkpointed": 22,
+            "proven": 20,
+            "finalized": 20,
+            "anchorBlock": 22,
+            "anchorTimestamp": "1791811146"
+          }
+        },
+        "experiment": {
+          "passed": true,
+          "caseProfile": "both",
+          "completedCases": [
+            "normal",
+            "uncertain"
+          ],
+          "proofMode": "proofs-disabled",
+          "realProofs": false,
+          "realProofAcceptance": "missing",
+          "fundingMode": "real-portal-deposit",
+          "payerMode": "genesis",
+          "measurements": [
+            {
+              "label": "deploy-board",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 882,
+              "txHash": "0x2afdd046bdb6cfa7653184abbe93e6ac4e70311c6cdeac26e727d6c2d85f7468",
+              "serializedTxBytes": 218688,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 7840,
+                  "l2Gas": 813662
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 9945,
+              "blockNumber": 2,
+              "blockHash": "0x1007bfe81df6b8741e82affb4503a39a414e503a124e1a2e762a22f39b6f1999",
+              "transactionFee": "1098199601400000",
+              "effectBytes": 97587,
+              "effectSha256": "263f91bdb6090ac9583db1cec9c51955c8d1f00a1f7a9f614d15612999696d0d",
+              "blobFields": 247,
+              "publicWrites": 1,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 5
+            },
+            {
+              "label": "deploy-escrow",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 821,
+              "txHash": "0x20931f594f990eca1160726f3719347340a125dd25debdcafa2b956d1781f631",
+              "serializedTxBytes": 218816,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 33472,
+                  "l2Gas": 1307765
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8047,
+              "blockNumber": 3,
+              "blockHash": "0x2cd2b6934bc648f5d98367d32fb2794881e4a80661715586b0dac7e32355aacb",
+              "transactionFee": "1765090420500000",
+              "effectBytes": 98387,
+              "effectSha256": "30a705087e3b01b3c5255223537c5e946b0e7a365a068eec5e0f5d0d077e6795",
+              "blobFields": 1048,
+              "publicWrites": 11,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 10
+            },
+            {
+              "label": "set-portal",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 370,
+              "txHash": "0x24fc97fd9674efcdcb5c82e9a2f72b8282702b3981d047b28ed08ce7f04af284",
+              "serializedTxBytes": 121984,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 320,
+                  "l2Gas": 977936
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 7460,
+              "blockNumber": 4,
+              "blockHash": "0x07d15f2fea60d1bb57c1150652ef58e37f6323010cfb716d6d9d974fe9cec5c5",
+              "transactionFee": "71389328000000",
+              "effectBytes": 363,
+              "effectSha256": "90c277cabbda2935a13303da30232423ec37d666a165306e7a81de909e1c66f7",
+              "blobFields": 12,
+              "publicWrites": 3,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 2
+            },
+            {
+              "label": "normal-fund",
+              "fundingMode": "real-portal-deposit",
+              "txHash": "0x1f1a063df472727899ef3be871446be46ac6254b051f4ff062ca65e31b979769",
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/normal-fund-deposit.json",
+              "amount": "1000",
+              "leafIndex": "0",
+              "messageHash": "0x00ba83a712746bd5d14c05cb1fd09e15b147594554b1cd4da52016f2bf1166d0",
+              "anchorBlock": 6
+            },
+            {
+              "label": "normal-claim",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 839,
+              "txHash": "0x1b71c1ae0c3324789ecbf35d94341c617618eb1b0675c4ee8f0a095a74b12af6",
+              "serializedTxBytes": 77719,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1984,
+                  "l2Gas": 529900
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12458,
+              "blockNumber": 7,
+              "blockHash": "0x09a6d68fe864f3046e73c8a65d48dc14b19f875c6f2255709f9353dbfd01dd5f",
+              "transactionFee": "5881890000000",
+              "effectBytes": 1879,
+              "effectSha256": "6be628e19fba2ff18052d51620a57e816e8246b8fd413a3c931b58555af79312",
+              "blobFields": 62,
+              "publicWrites": 1,
+              "publicLogFields": 0,
+              "noteHashes": 2,
+              "nullifiers": 4
+            },
+            {
+              "label": "normal-authorize",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 654,
+              "txHash": "0x00565c9b48ab4d4fedbb24000ad7ab9a8cbdb3e251c16e517537bdd3c4aa5ee1",
+              "serializedTxBytes": 122112,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 3808,
+                  "l2Gas": 1291165
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12969,
+              "blockNumber": 8,
+              "blockHash": "0x21cba3ae8e6c0cc7930a6a4e23a82409b97d3da0823f3c6e1ef6a6b7195aef14",
+              "transactionFee": "14331931500000",
+              "effectBytes": 3711,
+              "effectSha256": "1771e3bdc4890f43d3da2d68d0364cb8542a94039cc2e7e741a1a276a3c2df81",
+              "blobFields": 121,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 2,
+              "nullifiers": 6
+            },
+            {
+              "label": "normal-activate",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 352,
+              "txHash": "0x0a57f5b52f8cb7e1d74e8a1aed5ac5fd4a495d8d905f7a5a89201018a737480a",
+              "serializedTxBytes": 123296,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1408,
+                  "l2Gas": 1722827
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12634,
+              "blockNumber": 9,
+              "blockHash": "0x1de95b2a6f1afcb23ff3706915e188f26821a64b7574fcfeb5b209c97efbbf24",
+              "transactionFee": "17572835400000",
+              "effectBytes": 1423,
+              "effectSha256": "c286e302e04d1a9cd733a93c346459148b1289b6f94dc0c33f8c2d7e625fcc2e",
+              "blobFields": 46,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 0,
+              "nullifiers": 1
+            },
+            {
+              "label": "normal-reserve",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 366,
+              "txHash": "0x2b330c2b92e087217e17457e6bea6928268e8402117f3bec8c6301dd37926910",
+              "serializedTxBytes": 122048,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1408,
+                  "l2Gas": 1097030
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8569,
+              "blockNumber": 10,
+              "blockHash": "0x2bcc62606bd198f36eba06f676e08516e56c8d27e945b979f3693b4054e1daa8",
+              "transactionFee": "11189706000000",
+              "effectBytes": 1423,
+              "effectSha256": "fc38685ccff65c715c2fa05ff996ca2b85b581f35c8c540fec969c521bb899de",
+              "blobFields": 46,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 0,
+              "nullifiers": 1
+            },
+            {
+              "label": "normal-settle",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 360,
+              "txHash": "0x0ef3811b0f90a1926d93975678f1ddb74e371f5a904a3a08ce9f50d63c55bb03",
+              "serializedTxBytes": 122080,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1504,
+                  "l2Gas": 1163742
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8262,
+              "blockNumber": 11,
+              "blockHash": "0x230f539cc5f0ae3bd74bfb38d33754db2583103962e0a4a87e94a8811f7f8945",
+              "transactionFee": "11870168400000",
+              "effectBytes": 1519,
+              "effectSha256": "88f7e7c7339d249141dc441c0d9fc2e780880685585affb633b68bf881899c78",
+              "blobFields": 49,
+              "publicWrites": 16,
+              "publicLogFields": 12,
+              "noteHashes": 0,
+              "nullifiers": 2
+            },
+            {
+              "label": "normal-finish",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 364,
+              "txHash": "0x151fc72e9f9727b395f374978c9c2a4737f3554504ca169883269eab25148fcf",
+              "serializedTxBytes": 121984,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1600,
+                  "l2Gas": 1123571
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8163,
+              "blockNumber": 12,
+              "blockHash": "0x14bc6786c88db73215a00e4145989b94b3457ad79ba7e3a43f4b29e0a13c8ea5",
+              "transactionFee": "11460424200000",
+              "effectBytes": 1587,
+              "effectSha256": "4b2093c01a474f10f23763b03e04eec07f64d9e7ed54f2b702b4a3478a9215cc",
+              "blobFields": 52,
+              "publicWrites": 15,
+              "publicLogFields": 17,
+              "noteHashes": 1,
+              "nullifiers": 1
+            },
+            {
+              "label": "private-withdraw",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 468,
+              "txHash": "0x0a5070b8f471e805f341bb5eed61aa192e8ff021be3e554ceb7f50e6463d1bde",
+              "serializedTxBytes": 77719,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 320,
+                  "l2Gas": 509200
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12172,
+              "blockNumber": 13,
+              "blockHash": "0x2040e35b8579a6a53063faf6df99fe08706a1e53913ba5afbafeea9bc2df5573",
+              "transactionFee": "5193840000000",
+              "effectBytes": 299,
+              "effectSha256": "7e2924675056a5143233d695195ac48a4c7a4b214f9ffd437e6bda5c69ac67ee",
+              "blobFields": 10,
+              "publicWrites": 1,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 4
+            },
+            {
+              "label": "private-withdraw",
+              "txHash": "0x0a5070b8f471e805f341bb5eed61aa192e8ff021be3e554ceb7f50e6463d1bde",
+              "expectedLeaf": "0x00a651b9b13f9f857872069a6c4b370f77cf71e47a3341ab9739b76511076c6f",
+              "recipient": "0x0000000000000000000000000000000000000456",
+              "amount": "880",
+              "nonce": "0x2a44ddca615f8f71095d5e025bf6cf175219f497bbdeb19528684a92cefdb1e5",
+              "passed": true,
+              "recipientBalanceBefore": "0",
+              "recipientBalanceAfter": "880",
+              "portalBalanceBefore": "1000",
+              "portalBalanceAfter": "120",
+              "controlledSettlement": true,
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/private-withdraw-redemption.json"
+            },
+            {
+              "label": "operator-withdraw",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 373,
+              "txHash": "0x07ece105066d87401c5a8dc2db4f9e74bdc5d71fff9988b6a433275ee6ebbb6f",
+              "serializedTxBytes": 122048,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 256,
+                  "l2Gas": 1097667
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8270,
+              "blockNumber": 14,
+              "blockHash": "0x2c5166e9af45f6d89e1b089d0613c1c626368f3dddb53a739f2e0487b9ca4332",
+              "transactionFee": "11196203400000",
+              "effectBytes": 299,
+              "effectSha256": "284ae2887b12e0b94928b403d8639450282e3c86b894ffd974a14096a948c0a7",
+              "blobFields": 10,
+              "publicWrites": 2,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 2
+            },
+            {
+              "label": "operator-withdraw",
+              "txHash": "0x07ece105066d87401c5a8dc2db4f9e74bdc5d71fff9988b6a433275ee6ebbb6f",
+              "expectedLeaf": "0x00c5c6b004c0c24cea8167ab2cfd27f20258b60b1a9216f33c73f7c5f72ea92d",
+              "recipient": "0x0000000000000000000000000000000000000457",
+              "amount": "120",
+              "nonce": "0x02b135002b0671b239553e3ce82d0983c1e8aa855752d54b40856d95392888d2",
+              "passed": true,
+              "recipientBalanceBefore": "0",
+              "recipientBalanceAfter": "120",
+              "portalBalanceBefore": "120",
+              "portalBalanceAfter": "0",
+              "controlledSettlement": true,
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/operator-withdraw-redemption.json"
+            },
+            {
+              "label": "uncertain-fund",
+              "fundingMode": "real-portal-deposit",
+              "txHash": "0x3bb3edddf451e7e685ac33b1b9342c2016f76020e0b4c6339ac67beda1f51c8b",
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/uncertain-fund-deposit.json",
+              "amount": "1000",
+              "leafIndex": "1",
+              "messageHash": "0x00b61be3c9383d0374bc46d86453b85a3c8a3028e8037d517ff415e93ece1caf",
+              "anchorBlock": 16
+            },
+            {
+              "label": "uncertain-claim",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 780,
+              "txHash": "0x1092fb14e96f138c06c1e24a609e4a88592be05c820660d85cb55011338f7736",
+              "serializedTxBytes": 77719,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 832,
+                  "l2Gas": 499700
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12292,
+              "blockNumber": 17,
+              "blockHash": "0x013c5770fa2de44eab309cc2be3535a635a3bfc9df66091b43468b912e16703c",
+              "transactionFee": "5096940000000",
+              "effectBytes": 783,
+              "effectSha256": "e635f243f83eb3b2897b8147a8f8c986b1f878f55576f95a2a62f5a8b5a563f2",
+              "blobFields": 26,
+              "publicWrites": 1,
+              "publicLogFields": 0,
+              "noteHashes": 1,
+              "nullifiers": 3
+            },
+            {
+              "label": "uncertain-authorize",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 1003,
+              "txHash": "0x09ef02c4db60bcbdc38b9e77a595d5826695a322974b98f883e1cacbf102a7eb",
+              "serializedTxBytes": 122112,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 3808,
+                  "l2Gas": 1291165
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 7945,
+              "blockNumber": 18,
+              "blockHash": "0x0bdebcb6f925ccc2e9942420cf07e6f345b118779178937fb528032ec678442c",
+              "transactionFee": "13169883000000",
+              "effectBytes": 3711,
+              "effectSha256": "460e796bded011876660f67111266a4d1b9920d03abea751c0c6853973271a3b",
+              "blobFields": 121,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 2,
+              "nullifiers": 6
+            },
+            {
+              "label": "uncertain-activate",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 435,
+              "txHash": "0x2f9e4a19d53f993779adbe2a4340cd1498321028aa981895a5fa862bc1bf126e",
+              "serializedTxBytes": 123296,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1408,
+                  "l2Gas": 1722827
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8557,
+              "blockNumber": 19,
+              "blockHash": "0x2f24f1876829b5c9bdf24eecb7430b925cfeb34a57ec70fae7f1fa93cccc0038",
+              "transactionFee": "17572835400000",
+              "effectBytes": 1423,
+              "effectSha256": "1fb2a15e3d2dcabc9d952bbd2d354a6d54507bb9d7a812b8161f4f6ac1a2ac0d",
+              "blobFields": 46,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 0,
+              "nullifiers": 1
+            },
+            {
+              "label": "uncertain-reserve",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 367,
+              "txHash": "0x055b4121746a47f6c821d64424aefd6f0889d5118bd7c403c4b5963e8f267b7f",
+              "serializedTxBytes": 122048,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1408,
+                  "l2Gas": 1097030
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8600,
+              "blockNumber": 20,
+              "blockHash": "0x2403f82e84da6b6731430e15db0b1000d9115c92eb47094a107d8fbe9cd23d65",
+              "transactionFee": "11189706000000",
+              "effectBytes": 1423,
+              "effectSha256": "a57cf9b3b4b0c6e5ed56f1fdb0cf098ad7b774b8a71d085d43f1d5550fa4b063",
+              "blobFields": 46,
+              "publicWrites": 15,
+              "publicLogFields": 12,
+              "noteHashes": 0,
+              "nullifiers": 1
+            },
+            {
+              "label": "uncertain-expire",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 362,
+              "txHash": "0x1f0d3c1199356c8c4dc9dc15a9db3cf182a26b3b7fe8f345a4e72d8d9f52f47c",
+              "serializedTxBytes": 121984,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1600,
+                  "l2Gas": 1120532
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12125,
+              "blockNumber": 23,
+              "blockHash": "0x029ee7357536c484619d35334308141d2ee3d45c016a54d73fda6ab53d6a08b2",
+              "transactionFee": "11429426400000",
+              "effectBytes": 1587,
+              "effectSha256": "f20c49dab40a2948e98f4fce2913d7b7169e43f3f58336d7ff740f443bdcf5bf",
+              "blobFields": 52,
+              "publicWrites": 15,
+              "publicLogFields": 17,
+              "noteHashes": 1,
+              "nullifiers": 1
+            },
+            {
+              "label": "uncertain-reconcile",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 336,
+              "txHash": "0x218b998f4cb225cd61bfa3171a1feeca836965299f74d432bbf9cbaf014741f4",
+              "serializedTxBytes": 122080,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 1696,
+                  "l2Gas": 1190913
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 11606,
+              "blockNumber": 24,
+              "blockHash": "0x0a6f694e285d9f4587283e868a05a0f7e55b07bfe4217e31531d3b16e2a62354",
+              "transactionFee": "12147312600000",
+              "effectBytes": 1683,
+              "effectSha256": "e85a63e66ee37e99300dcb15ebd3218383bbe8411e9561efd3e12ff94bf078b0",
+              "blobFields": 55,
+              "publicWrites": 16,
+              "publicLogFields": 17,
+              "noteHashes": 1,
+              "nullifiers": 2
+            },
+            {
+              "label": "late-private-withdraw",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 566,
+              "txHash": "0x17a3ef34f53977543e7abdd9ad4c47439c14ec3d65c308c40aa47ee7b98a5668",
+              "serializedTxBytes": 77719,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 352,
+                  "l2Gas": 525200
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 12356,
+              "blockNumber": 25,
+              "blockHash": "0x1224aeea555994451c204cb487242426c87d797f26ef8f95be331c4dc8a96b0e",
+              "transactionFee": "5357040000000",
+              "effectBytes": 331,
+              "effectSha256": "0a14f1da81448f0deab74ee40b1e34551a5e3cbfa584019c8aa119363e3f4c1b",
+              "blobFields": 11,
+              "publicWrites": 1,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 5
+            },
+            {
+              "label": "late-private-withdraw",
+              "txHash": "0x17a3ef34f53977543e7abdd9ad4c47439c14ec3d65c308c40aa47ee7b98a5668",
+              "expectedLeaf": "0x002ced12add5a72e1f5020a40f2e5b1d83affe8d1dcd2572b76a8f4c1f9be7f5",
+              "recipient": "0x0000000000000000000000000000000000000456",
+              "amount": "880",
+              "nonce": "0x25e1feeef539bedd9bdbd9b8e1c5f93da093b87a62e24a28eb2e81d3fa3cf41e",
+              "passed": true,
+              "recipientBalanceBefore": "880",
+              "recipientBalanceAfter": "1760",
+              "portalBalanceBefore": "1000",
+              "portalBalanceAfter": "120",
+              "controlledSettlement": true,
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/late-private-withdraw-redemption.json"
+            },
+            {
+              "label": "late-operator-withdraw",
+              "proofMode": "proofs-disabled",
+              "prepareMs": 360,
+              "txHash": "0x01764d5d20169a93f533759afdac7052103db83f0fb7a4ae76c4c978b53cc076",
+              "serializedTxBytes": 122048,
+              "submission": "included",
+              "gas": {
+                "totalGas": {
+                  "daGas": 256,
+                  "l2Gas": 1097667
+                },
+                "teardownGas": {
+                  "daGas": 0,
+                  "l2Gas": 0
+                }
+              },
+              "inclusionMs": 8575,
+              "blockNumber": 26,
+              "blockHash": "0x28d8b4e427d6b6cf22790325528c15bd0023fff71dcc36e5c097c8eacd77e7c9",
+              "transactionFee": "11196203400000",
+              "effectBytes": 299,
+              "effectSha256": "d1f8139b15d1b655c5a0409f08b33dea10fa81fc0acd7e2386db568162a52377",
+              "blobFields": 10,
+              "publicWrites": 2,
+              "publicLogFields": 0,
+              "noteHashes": 0,
+              "nullifiers": 2
+            },
+            {
+              "label": "late-operator-withdraw",
+              "txHash": "0x01764d5d20169a93f533759afdac7052103db83f0fb7a4ae76c4c978b53cc076",
+              "expectedLeaf": "0x0063f3db9f2fff62f076bab9dda0de27ba7e70b2da6e1ad4efff27312b56b27d",
+              "recipient": "0x0000000000000000000000000000000000000457",
+              "amount": "120",
+              "nonce": "0x25f9755db2217d4442aaacae31968af96848ae76d7e7e63abb97e949bbe7ec02",
+              "passed": true,
+              "recipientBalanceBefore": "120",
+              "recipientBalanceAfter": "240",
+              "portalBalanceBefore": "120",
+              "portalBalanceAfter": "0",
+              "controlledSettlement": true,
+              "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/late-operator-withdraw-redemption.json"
+            }
+          ],
+          "states": [
+            {
+              "label": "waiting",
+              "request": {
+                "state": "1",
+                "invocation_hash": "975318764560706908631924092613011052133537174188898851354448316685218308535",
+                "sequence": "0",
+                "deadline": "1791810996",
+                "budget": "600",
+                "available": "600",
+                "reserved": "0",
+                "charged": "0",
+                "refunded": "0",
+                "primary_refund": "19446639246673658248123127505986194458863445355172526402857030621627896935288",
+                "secondary_refund": "4091563427897966700075463954006660780582985764309412623960396939316285321632",
+                "primary_done": false,
+                "secondary_done": false,
+                "receipt": "0"
+              },
+              "privateBalance": "400",
+              "earnings": "0"
+            },
+            {
+              "label": "reserved",
+              "request": {
+                "state": "2",
+                "invocation_hash": "975318764560706908631924092613011052133537174188898851354448316685218308535",
+                "sequence": "0",
+                "deadline": "1791810996",
+                "budget": "600",
+                "available": "200",
+                "reserved": "400",
+                "charged": "0",
+                "refunded": "0",
+                "primary_refund": "19446639246673658248123127505986194458863445355172526402857030621627896935288",
+                "secondary_refund": "4091563427897966700075463954006660780582985764309412623960396939316285321632",
+                "primary_done": false,
+                "secondary_done": false,
+                "receipt": "0"
+              },
+              "privateBalance": "400",
+              "earnings": "0"
+            },
+            {
+              "label": "settled",
+              "request": {
+                "state": "2",
+                "invocation_hash": "975318764560706908631924092613011052133537174188898851354448316685218308535",
+                "sequence": "1",
+                "deadline": "1791810996",
+                "budget": "600",
+                "available": "480",
+                "reserved": "0",
+                "charged": "120",
+                "refunded": "0",
+                "primary_refund": "19446639246673658248123127505986194458863445355172526402857030621627896935288",
+                "secondary_refund": "4091563427897966700075463954006660780582985764309412623960396939316285321632",
+                "primary_done": false,
+                "secondary_done": false,
+                "receipt": "1416739435212770782259946816670985336369928058562773074422188780647838746130"
+              },
+              "privateBalance": "400",
+              "earnings": "120"
+            },
+            {
+              "label": "normal-closed",
+              "request": {
+                "state": "4",
+                "invocation_hash": "975318764560706908631924092613011052133537174188898851354448316685218308535",
+                "sequence": "1",
+                "deadline": "1791810996",
+                "budget": "600",
+                "available": "0",
+                "reserved": "0",
+                "charged": "120",
+                "refunded": "480",
+                "primary_refund": "19446639246673658248123127505986194458863445355172526402857030621627896935288",
+                "secondary_refund": "4091563427897966700075463954006660780582985764309412623960396939316285321632",
+                "primary_done": true,
+                "secondary_done": true,
+                "receipt": "1416739435212770782259946816670985336369928058562773074422188780647838746130"
+              },
+              "privateBalance": "880",
+              "earnings": "120"
+            },
+            {
+              "label": "uncertain-before-expiry",
+              "request": {
+                "state": "2",
+                "invocation_hash": "10380266668549711076687171806536978316752585173527616436552939901453647075863",
+                "sequence": "0",
+                "deadline": "1791811131",
+                "budget": "600",
+                "available": "200",
+                "reserved": "400",
+                "charged": "0",
+                "refunded": "0",
+                "primary_refund": "17260263579959332313989584548351157079639414790205204259688593111641848987585",
+                "secondary_refund": "19089259737740143949386610622866155058695770595277936760907240187888860891199",
+                "primary_done": false,
+                "secondary_done": false,
+                "receipt": "0"
+              },
+              "privateBalance": "400",
+              "earnings": "0"
+            },
+            {
+              "label": "uncertain-after-advance",
+              "request": {
+                "state": "2",
+                "invocation_hash": "10380266668549711076687171806536978316752585173527616436552939901453647075863",
+                "sequence": "0",
+                "deadline": "1791811131",
+                "budget": "600",
+                "available": "200",
+                "reserved": "400",
+                "charged": "0",
+                "refunded": "0",
+                "primary_refund": "17260263579959332313989584548351157079639414790205204259688593111641848987585",
+                "secondary_refund": "19089259737740143949386610622866155058695770595277936760907240187888860891199",
+                "primary_done": false,
+                "secondary_done": false,
+                "receipt": "0"
+              },
+              "privateBalance": "400",
+              "earnings": "0"
+            },
+            {
+              "label": "fenced",
+              "request": {
+                "state": "3",
+                "invocation_hash": "10380266668549711076687171806536978316752585173527616436552939901453647075863",
+                "sequence": "0",
+                "deadline": "1791811131",
+                "budget": "600",
+                "available": "0",
+                "reserved": "400",
+                "charged": "0",
+                "refunded": "200",
+                "primary_refund": "17260263579959332313989584548351157079639414790205204259688593111641848987585",
+                "secondary_refund": "19089259737740143949386610622866155058695770595277936760907240187888860891199",
+                "primary_done": true,
+                "secondary_done": false,
+                "receipt": "0"
+              },
+              "privateBalance": "600",
+              "earnings": "0"
+            },
+            {
+              "label": "late-closed",
+              "request": {
+                "state": "4",
+                "invocation_hash": "10380266668549711076687171806536978316752585173527616436552939901453647075863",
+                "sequence": "1",
+                "deadline": "1791811131",
+                "budget": "600",
+                "available": "0",
+                "reserved": "0",
+                "charged": "120",
+                "refunded": "480",
+                "primary_refund": "17260263579959332313989584548351157079639414790205204259688593111641848987585",
+                "secondary_refund": "19089259737740143949386610622866155058695770595277936760907240187888860891199",
+                "primary_done": true,
+                "secondary_done": true,
+                "receipt": "8518034095574562385497339426641810650608403037222524767190796480062871773278"
+              },
+              "privateBalance": "880",
+              "earnings": "120"
+            }
+          ],
+          "negativeChecks": [
+            {
+              "label": "waiting-target-hijack",
+              "expected": "Invocation target mismatch",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "normal-finish-replay",
+              "expected": "Request not active",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "normal-secondary-replay",
+              "expected": "Request not fenced",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "fenced-new-call",
+              "expected": "Request not active",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "fenced-normal-settle",
+              "expected": "Request not active",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "fenced-owner-cancel",
+              "expected": "Request not cancellable",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "fenced-expiry-replay",
+              "expected": "Request not expirable",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "late-same-receipt-replay",
+              "expected": "Request not fenced",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            },
+            {
+              "label": "late-new-receipt-replay",
+              "expected": "Request not fenced",
+              "outcome": "rejected",
+              "errorClass": "Error"
+            }
+          ],
+          "limitations": [
+            "Disposable local tokens and identities only",
+            "Synthetic provider receipt identifiers; no model call or provider billing acceptance",
+            "Probe board does not implement product admission, ownership, UTF-8 or full relationship policy",
+            "No node observer or independent privacy qualification",
+            "Compiler diagnostic disposition is a separate gate"
+          ],
+          "privacyAcceptance": "missing",
+          "publicHumanFeePayer": true,
+          "sourceRevision": "a9ea6c1d738d3bfd944eadbc006443d998201b25",
+          "environment": {
+            "node": "v24.21.0",
+            "nodeVersion": "6.0.0-rc.1",
+            "chainId": "31337",
+            "rollupVersion": "3535237176",
+            "platform": "darwin",
+            "arch": "arm64",
+            "startedAt": "2026-10-11T13:13:22.945Z"
+          },
+          "build": {
+            "inputs": {
+              "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
+              "experiments/private-bok/escrow/Nargo.toml": "8a83e1f7dc7e5043fa2332b698a1e6dde6ddd9c79e32b2c6bfc2ece05fac6e4c",
+              "experiments/private-bok/escrow/src/main.nr": "e4cc533c8c8f3e0ef69e488fa04bb5914629e9454c0b6327c2e82a2bddd006d0",
+              "experiments/private-bok/tests/Nargo.toml": "d2d23aa424ec7535e3ff2565e3bf06685f6ff695de4139c253d14009b6b8b33e",
+              "experiments/private-bok/tests/src/lib.nr": "fe9daef3efa2b80fa8868c1835a172f13ac703c70d991acf34d840b7cf0770a0",
+              "experiments/private-bok/probe-board/Nargo.toml": "8415a5b8d1b4c699802e33f6616034f1dba0e14dc95b85feefff6f4891339e6d",
+              "experiments/private-bok/probe-board/src/main.nr": "79e5744879232e6202da2240abb37cf64733dfa76ed34e61b07e5d72701df771",
+              "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
+              "noir-dependencies.json": "df1309ab6458d5f2193399d9a2fc482b7a696fa4e0a41e851c8a62c93551d98f",
+              "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+              "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+              "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+              "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+              "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d"
+            },
+            "artifactSha256": "f8bea66c1673579ad66943d899f15d391e3deb88ceeba82ed44ff7fb7eb907ee",
+            "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925"
+          },
+          "driverAndHarness": {
+            "experiments/private-bok/measure.mjs": "d7415001996cc93236541fa0d7501151bf19b2791d5ba90761e29a1097cde467",
+            "experiments/private-bok/wire.mjs": "9d5856bfb15716dba1d2d1fe40a32a6adfb5e45167a3717843ab85bbf5f53c47",
+            "shared/rolling/invocation.mjs": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+            "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+            "scripts/c01-settle-application-message.mjs": "13cb8cfe07b27382e1a160765f487fcecb8b3b306a8601623f864837578458ba",
+            "scripts/c01-client-mining.mjs": "a10abf9d1798fac6ddae89a0f62ce2b3e30b9ddd69a77512d5f83f8dc33ff332",
+            "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+            "scripts/u01-browser-flow.mjs": "01c6b294aab8261ed5caab1274761f8fbdef06aab67e5bca0ee4e1a783033c79",
+            "scripts/testing/private-bok-fixture.mjs": "b0191febfa316f6b5cc4cd0420d2642e2f4d350e37e6184509e151c5cf4811b3",
+            "scripts/testing/scenarios.mjs": "db19896b295c97ae473dd6a1d57a0790d23c13a59a657c1fce33b9907a8ab3e1",
+            "scripts/testing/scenario-flows.mjs": "689d5b9ff7efb6c3ad7687d38e21b216e03ce3993b02d32b1109fd339ce3af92"
+          },
+          "contractAddress": "0x13781fc5837fd67bcc916fee7c0b13588a24e6d03710f412289a7e342cb4d420",
+          "boardAddress": "0x26ead4582fe1ae901e923abea9ed999e84d4c16ce4431c9b69cc01ee05a4bab2",
+          "portalAddress": "0x1b80db808e18e0ddbffa3af74ab42bce25157c19",
+          "portalActivation": {
+            "activated": true,
+            "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-4184fc6c-7465-40db-aa6c-412c2c21cb14/fixture.json"
+          },
+          "remainingActualChainCases": [
+            "zero normal/late refunds",
+            "waiting cancellation and unreserved expiry",
+            "global receipt replay",
+            "all operator and only-self forgeries",
+            "claim tampering/replay"
+          ],
+          "withdrawals": [
+            {
+              "label": "private-withdraw",
+              "txHash": "0x0a5070b8f471e805f341bb5eed61aa192e8ff021be3e554ceb7f50e6463d1bde",
+              "expectedLeaf": "0x00a651b9b13f9f857872069a6c4b370f77cf71e47a3341ab9739b76511076c6f",
+              "recipient": "0x0000000000000000000000000000000000000456",
+              "amount": "880",
+              "nonce": "0x2a44ddca615f8f71095d5e025bf6cf175219f497bbdeb19528684a92cefdb1e5"
+            },
+            {
+              "label": "operator-withdraw",
+              "txHash": "0x07ece105066d87401c5a8dc2db4f9e74bdc5d71fff9988b6a433275ee6ebbb6f",
+              "expectedLeaf": "0x00c5c6b004c0c24cea8167ab2cfd27f20258b60b1a9216f33c73f7c5f72ea92d",
+              "recipient": "0x0000000000000000000000000000000000000457",
+              "amount": "120",
+              "nonce": "0x02b135002b0671b239553e3ce82d0983c1e8aa855752d54b40856d95392888d2"
+            },
+            {
+              "label": "late-private-withdraw",
+              "txHash": "0x17a3ef34f53977543e7abdd9ad4c47439c14ec3d65c308c40aa47ee7b98a5668",
+              "expectedLeaf": "0x002ced12add5a72e1f5020a40f2e5b1d83affe8d1dcd2572b76a8f4c1f9be7f5",
+              "recipient": "0x0000000000000000000000000000000000000456",
+              "amount": "880",
+              "nonce": "0x25e1feeef539bedd9bdbd9b8e1c5f93da093b87a62e24a28eb2e81d3fa3cf41e"
+            },
+            {
+              "label": "late-operator-withdraw",
+              "txHash": "0x01764d5d20169a93f533759afdac7052103db83f0fb7a4ae76c4c978b53cc076",
+              "expectedLeaf": "0x0063f3db9f2fff62f076bab9dda0de27ba7e70b2da6e1ad4efff27312b56b27d",
+              "recipient": "0x0000000000000000000000000000000000000457",
+              "amount": "120",
+              "nonce": "0x25f9755db2217d4442aaacae31968af96848ae76d7e7e63abb97e949bbe7ec02"
+            }
+          ]
+        },
+        "walletStopped": true
+      },
+      "epochSchedulingStarted": false,
+      "idleProverAgentCreated": false,
+      "nodeStopped": true
+    },
+    "anvilExit": {
+      "code": null,
+      "signal": "SIGKILL"
+    },
+    "singletonsStopped": true
+  },
+  "elapsedMs": 379277,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "finishedAt": "2026-10-11T13:19:19.462Z"
+}

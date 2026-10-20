@@ -1,0 +1,34 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T17:05:09.057959+00:00",
+  "source": "a3604f278ee7089371de928490c39025b8328f59",
+  "packetSha256": "54e9e8ae8086f1916749a4e33a6957d47cf5b691b648547a4dab6f2de4d85cdc",
+  "verdict": "HOLD final source/runtime eligibility for narrow least-privilege readback repair and meaningful readback tests",
+  "verifiedFiles": 6,
+  "findings": [
+    {
+      "priority": 2,
+      "function": "query_host_readback",
+      "issue": "The /proc Groups check only demands that publicGid is present. Any additional supplementary groups, including0, are accepted. This does not enforce the advertised dedicated least-privilege identity under drift.",
+      "repair": "Validate a bounded unique numeric supplementary-group list; publicGid is mandatory and every entry must be query primary gid or publicGid. Preserve existing actual UID/GID fields and exact unit checks.",
+      "validation": "Use actual query_host_readback with finite filesystem/process fixtures: positive expected group set, extra/root group, missing public group, malformed/duplicate tokens, UID/config/unit drift."
+    }
+  ],
+  "testCoverageGap": "Seven new cases do not execute successful query_host commissioning or complete query_host_readback; the pending/failure cases stop before allocation. Their passes alone would not establish once-intent/start/readback lifecycle. Add a meaningful actual-function success/failure ordering test before integration.",
+  "additionalReviewQuestion": "attest chooses whether to monitor solely via query-host-request.json.exists(). A missing request with retained intent/result/unit can silently omit query monitoring. Bind opt-in from immutable campaign configuration or fail on inconsistent artifact presence; cover disappearance without creating another state owner.",
+  "retainedPositiveAssessment": [
+    "Existing attestor owns commissioning; no new daemon/controller. Intent precedes identity/config/start; repeated intent cannot restart.",
+    "Shared public runtime group preserves query access when prover identity is later allocated; private capability paths remain separate.",
+    "Exact private-origin /v1/node transform preserves unrelated routes and forwards capability via managed AllViewerExceptHostHeader; server authenticates before body/inspector.",
+    "ViewerHTTPS and managed-SG string are not actual origin isolation. PrivateHTTP8083 origin protocol/SG/port/logging readback remains an explicit later gate."
+  ],
+  "primarySource": {
+    "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html",
+    "checkedFact": "Policy b689b0a8-53d0-40ab-baf2-68738e2966ac forwards all viewer headers exceptHost, supporting x-aztec-api-key forwarding."
+  },
+  "remainingGates": [
+    "Actual payload<=16384 cannot be assumed after new HOST bytes; prior realistic payload16363 was near limit.",
+    "Full package/ordinary suites and actualLinux service/auth/TLS-or-private-origin/readback remain unrun.",
+    "No paid/cloud/proving/runtime performed or authorized by this review."
+  ]
+}

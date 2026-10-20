@@ -1,0 +1,94 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:25:02.270661+00:00",
+  "source": "fc784ceb582c6e4bb8ee24d84c8d99d477e470c0",
+  "base": "ae6ae3a4fa768ad3d4a850f9f9f5eb304bb0bc86",
+  "packetSha256": "2dee9e1634c93eed4c5ce16131f0cd12fbdcb4957d84c70f79fc37424a8eb23c",
+  "subjects": [
+    {
+      "path": "prover/application-policy.mjs",
+      "sha256": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    },
+    {
+      "path": "prover/application-policy.test.mjs",
+      "sha256": "f83735b5485d32b7db9a8ec475567c7400a55d46f6002f191da6ecbc4f9bab20",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    },
+    {
+      "path": "prover/service.mjs",
+      "sha256": "47665e1ed180881c1b88679651b3cbc2d4650207059bbced43377d51b44a93d6",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    },
+    {
+      "path": "scripts/test-prover-service.mjs",
+      "sha256": "2438af085bc3570a45c52486f0268f769ae2185b02234b7623b917d5ae9b05a7",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    },
+    {
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "sha256": "cb7b7c26372bea0cf776f6c10d216798e361226ae3248a4aee5349d4c117a12d",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    },
+    {
+      "path": "scripts/testing/rolling-application-fixture.test.mjs",
+      "sha256": "b35d5213189cbc303462300d6598a87a5089bc02ab9cb7a580ed4abc96fba73e",
+      "matchesPacket": true,
+      "workingTreeMatches": true
+    }
+  ],
+  "sourceVerdict": "Approved for bounded affected component execution; no blocking source finding",
+  "reasoning": [
+    "Six paths only; no worker, contract, dependency, lifecycle or timeout changes.",
+    "Own-data scope descriptors captured and validated before first await; frozen primitive scope overrides caller copy and supplies captured worker addresses. Disabled false requires undefined/absent Bok, default enabled preserves required distinct board/Bok/fee addresses.",
+    "Actual worker code remains unchanged, explicit child env and direct worker read have no inherited Bok fallback. Authored harmless child exercises production createProcessWorker environment/cleanup while replacing only entry file.",
+    "Disabled policy rejects all PrivateBok circuit names before decoded input access, denies absent-address payload roles, and blocks exact ABI-derived board post_with_bok/configure_plugin selectors in both visibility modes. Missing restricted selector set fails closed.",
+    "Existing full catalog/ABI decoding, network, private fee and signed account checks remain. Full-mode original allowlists remain.",
+    "Only the three explicit preference-browser and initial/marker-reorg scenarios disable capability. Full deployment branch retains genuine proof/send/checkpoint/class assertions; disabled report has no address or tx hash.",
+    "New setup observations only add fixed public L1 block/time fields at existing stage boundaries; no extra miner, retry, deadline, or readiness changes."
+  ],
+  "testAssessment": {
+    "newCases": 7,
+    "unrun": true,
+    "coverage": [
+      "Contradictions/accessors/coercion before allocation",
+      "Caller mutation during first awaited service setup for disabled and enabled modes",
+      "Real harmless child environment absence under hostile parent variable",
+      "Real artifact selector denial with labelled decoded witnesses",
+      "Signed account and private fee requirement preservation",
+      "Actual fixture branch extraction and three-scenario scope",
+      "Actual-used public setup clock projection and malformed input rejection"
+    ],
+    "limitations": [
+      "Lifecycle stubs do not prove service operation against a real node.",
+      "Decoded witness controls do not prove cryptographic rejection of an actual native proof.",
+      "Fixture fragment controls do not qualify a genuine chain or browser journey."
+    ]
+  },
+  "eligibility": {
+    "tests": [
+      "scripts/test-prover-service.mjs",
+      "prover/application-policy.test.mjs",
+      "scripts/testing/rolling-application-fixture.test.mjs"
+    ],
+    "maxSeconds": 60,
+    "maxRssGiB": 2,
+    "conditions": [
+      "Parent exclusive slot and exact reviewed runner/source/dependency/artifact pins",
+      "Serial complete affected cases without filter or skips, explicit inventory/count",
+      "Short owned TMPDIR and bounded cleanup of real harmless child descendants",
+      "No native proof, installed dependency mutation or genuine launch implied"
+    ]
+  },
+  "remaining": [
+    "Actual affected component result and current composed source closure",
+    "Separate unchanged-bound genuine investigation eligibility",
+    "Full Bok product qualification remains mandatory",
+    "Timing savings remain unmeasured"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T19:20:02.390698+00:00",
+  "source": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "priorSession": 21001,
+  "priorExit": 0,
+  "checkpointFile": "anvil-recovery-5b091278-4a1d-4b41-97a0-fac48bb3fb6c.json",
+  "checkpointBytes": 5035668156,
+  "checkpointSha256": "6e760a431e5a4c661682f18a0043900a76b4f0b38f669e0afc025250bb7cc07b",
+  "restartSession": 36362,
+  "restartExit": 1,
+  "result": "Local Ethereum failed to start within retainedNative30000ms; node/deployment not reached",
+  "log": "../rolling-lead-bok/.build/rolling-devnet-diagnostics/readiness-d815-native.log",
+  "next": "Design standalone exactsnapshot load withboundeddeadline, rootreconciles immutablecheckpoint/state after actualcause"
+}

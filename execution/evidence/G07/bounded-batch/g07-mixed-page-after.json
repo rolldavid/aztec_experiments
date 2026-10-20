@@ -1,0 +1,113 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-skip-pattern=^source\\ pin\\ is\\ exact\\ pristine\\ rc3\\ original;\\ transformed\\ TS\\ and\\ JS\\ are\\ exact\\ output\\ pins|^installed\\ package\\ inspection\\ accepts\\ only\\ a\\ complete\\ original\\ or\\ complete\\ reviewed\\ patched\\ closure|^installed\\ mode\\ applies\\ only\\ to\\ its\\ physical\\ owning\\ repository\\ and\\ is\\ byte\\-idempotent|^installed\\ mode\\ rejects\\ mismatched\\ version\\ metadata:\\ |^installed\\ mode\\ rejects\\ arbitrary\\ destinations,\\ coercion\\ and\\ borrowed\\ dependency\\ trees\\ before\\ writes|^installed\\ mode\\ rejects\\ symlink\\ ownership\\ at\\ |^installed\\ mode\\ rejects\\ hard\\-linked\\ writable\\ targets\\ before\\ changing\\ their\\ other\\ owner|^installed\\ mode\\ rejects\\ mixed\\ and\\ unknown\\ bytes\\ before\\ any\\ helper\\ or\\ sibling\\ write|^installed\\ mode\\ rejects\\ changed\\ compact\\ source\\ even\\ for\\ an\\ otherwise\\ complete\\ patched\\ package|^installed\\ mode\\ rejects\\ missing\\ or\\ changed\\ |^rc3\\ queue\\ pressure,\\ wait\\ timer\\ cleanup\\ and\\ error\\ handling\\ remain\\ byte\\-identical|^unknown\\ source\\ and\\ already\\ transformed\\ source\\ cannot\\ be\\ transformed\\ again|^isolated\\ complete\\ apply,\\ verify\\ and\\ repeated\\ apply\\ preserve\\ exact\\ bytes|^mixed/unknown\\ state\\ rejects\\ before\\ changing\\ either\\ copied\\ file|^shared\\ installed\\ package\\ and\\ symlink\\ target\\ are\\ never\\ writable\\ by\\ prototype|^isolated\\ helper\\ is\\ exact\\ reviewed\\ source\\ and\\ a\\ missing/tampered\\ copy\\ fails\\ verification|^cursor\\ helper\\ bytes\\ are\\ pinned\\ and\\ missing/tampered\\ helper\\ never\\ confer\\ patched\\ state|^added\\ method\\ does\\ not\\ rewrite\\ original\\ executeUtility,\\ discovery,\\ private\\ calls\\ or\\ event\\ retrieval|^transformed\\ JS\\ parses\\ without\\ importing\\ SDK\\ or\\ starting\\ native\\ work|^Noir\\ page\\ uses\\ original\\ dispatcher\\ and\\ original\\ validator,\\ has\\ no\\ direct\\ store\\ or\\ sync\\ frontier|^generated\\ batch\\ control\\ drains\\ peers\\ and\\ preserves\\ exact\\ rejection\\ |^generated\\ batch\\ control\\ preserves\\ declaration\\-order\\ error\\ and\\ result\\ ordering|^labelled\\ boundary\\ double\\ preserves\\ account\\ guard\\ failure\\ and\\ exposes\\ no\\ raw\\ cause|^labelled\\ boundary\\ double\\ calls\\ exactly\\ one\\ existing\\ queue\\ after\\ valid\\ capture|^awaited\\ suite\\ owns\\ delayed\\ copy\\ and\\ failed\\ partial\\ initialization\\ cleanup|^held\\-copy\\ owner|^copied\\ resource\\ remains\\ owned\\ for\\ child|^expected\\ partial\\ setup\\ failure|^actual\\ official\\ loader\\ rejects\\ unprocessed\\ candidate\\ rather\\ than\\ claiming\\ normal\\ artifact\\ authority|^actual\\ public\\ loader\\ preserves\\ raw\\ utility\\ bytes\\ but\\ cannot\\ supply\\ missing\\ private\\ verification\\ keys|^application\\ store\\ fixture\\ owns\\ full\\ isolated\\ namespaces\\ and\\ deletes\\ them\\ after\\ settled\\ hooks|^real\\ application\\ metadata\\ and\\ isolated\\ data\\ on\\ labelled\\ Node\\ IndexedDB|^failed\\ identity\\ preparation\\ retains\\ cleanup\\ ownership\\ without\\ opening\\ a\\ database|^actual\\ patched\\ NoteStore\\ direct\\ lookup\\ preserves\\ scope/status/contract\\ and\\ avoids\\ historical\\ index|^actual\\ staging/coordinator:\\ cursor\\ is\\ atomic,\\ survives\\ replacement\\ store,\\ rollback\\ invalidates\\ generation|^generated\\ page\\ /\\ actual\\ SDK\\ rejects\\ consistent\\ |^generated\\ multi\\-tx\\ page\\ uses\\ authenticated\\ ordinal\\ and\\ detaches\\ original\\ mutable\\ receipt|^generated\\ page\\ final\\ original\\-node\\ receipt\\ change\\ discards\\ validated\\ staged\\ event|^cold\\ HTTP\\ progress\\ with\\ actual\\ encrypted\\ ACIR\\ and\\ original\\ bounded\\ cursor|^labelled\\ chain\\ tag\\ RPC\\ serves\\ only\\ retained\\ actual\\ encrypted\\ logs\\ with\\ canonical\\ metadata\\ and\\ exact\\ query\\ bounds|^actual\\ SDK/ACIR\\ fixture:\\ canonical\\ groups\\ start\\ peers,\\ drain\\ failures\\ and\\ fence\\ account\\ changes|^fulfilled\\ headers\\ are\\ detached\\ before\\ the\\ pending\\ class\\ peer\\ can\\ rewrite\\ them|^account\\ change\\ while\\ grouped\\ class\\ read\\ awaits\\ rejects\\ before\\ utility\\ or\\ cursor\\ commit|^actual\\ SDK\\ empty\\ batch\\ authenticates\\ every\\ physical\\ block\\ and\\ advances\\ one\\ durable\\ sequence|^actual\\ ACIR\\ cursor\\ scans\\ empty\\ history\\ then\\ authentic\\ ciphertexts,\\ replays\\ mailbox,\\ gates\\ terminal\\ head|^labelled\\ page\\ double\\ /\\ original\\ EventService:\\ tx\\-complete\\ mailbox\\ orders\\ by\\ authenticated\\ event\\ index,\\ not\\ log\\ page|^actual\\ ACIR\\ scans\\ dense\\ foreign\\ ciphertext\\ pages\\ without\\ publishing\\ partial\\ transaction\\ records|^real\\ ACIR\\ multi\\-revision\\ heads:\\ historical\\ spent\\ head\\ is\\ not\\ selected;\\ current\\ head\\ completes|^actual\\ ACIR\\ incomplete\\ cursor\\ advertises\\ monotonic\\ continuation\\ without\\ discarding\\ its\\ prefix|^actual\\ ACIR\\ incomplete\\ promotion\\ preserves\\ position,\\ mailbox\\ replay\\ and\\ current\\ head\\ revalidation|^incomplete\\ promotion\\ preserves\\ original\\ staged\\ pending\\ event\\ order\\ across\\ physical\\ pages|^incomplete\\ promotion\\ settlement\\ veto\\ and\\ old\\-anchor\\ reorg\\ preserve\\ atomic\\ safety|^actual\\ ACIR\\ monotonic\\ promotion\\ revalidates\\ former\\ head\\ and\\ emits\\ no\\ duplicate\\ fold\\ records|^actual\\ ACIR\\ empty\\ append\\ preserves\\ validated\\ active\\ former\\ head\\ with\\ fixed\\ promotion\\ work|^promotion\\ cannot\\ use\\ committed\\ note\\ presence\\ when\\ original\\ page\\ admits\\ zero\\ notes|^promotion\\ refuses\\ wrong\\ compact\\ block,\\ and\\ settlement\\ veto\\ rolls\\ back\\ revalidation\\ with\\ cursor|^monotonic\\ suffix\\ cannot\\ hide\\ two\\ active\\ heads\\ after\\ inconsistent\\ former\\-nullifier\\ observation|^canonical\\ old\\-anchor\\ discontinuity\\ invalidates\\ extension\\ and\\ restarts\\ full\\ enumeration|^old\\-format\\ completed\\ cursor\\ honestly\\ restarts\\ rather\\ than\\ inferring\\ a\\ head\\ locator|^actual\\ authenticated\\ head\\ envelopes\\ with\\ inconsistent\\ nullifier\\ source\\ cannot\\ hide\\ two\\ active\\ candidates|^actual\\ cursor\\ settlement\\ context\\ veto\\ rolls\\ back\\ progress\\ together\\ with\\ decrypted\\ notes/events|^actual\\ cursor\\ canonical\\ rollback\\ changes\\ epoch\\ and\\ starts\\ complete\\ physical\\ enumeration\\ again|^expected\\ authenticated\\ head\\ missing\\ from\\ actual\\ store\\ cannot\\ become\\ an\\ uninitialized\\ completion|^real\\ processed\\ ACIR:\\ emitted\\ encrypted\\ preference\\ head/event,\\ scoped\\ keys,\\ validators\\ and\\ atomic\\ discard|^absent\\ owner\\ key\\ rejects\\ even\\ though\\ the\\ complete\\ public\\ address\\ is\\ registered|^absent\\ head\\ and\\ absent\\ key\\ cannot\\ turn\\ recovery\\ into\\ a\\ successful\\ empty\\ result|^original\\ utility\\ denies\\ owner\\ key\\ outside\\ actual\\ execution\\ scope|^late\\ account\\ failure\\ drains\\ and\\ discards\\ real\\ decrypted\\ staged\\ records|^canonical\\ change\\ after\\ actual\\ decryption\\ discards\\ both\\ staged\\ stores|^original\\ lifecycle\\ contributor\\ veto\\ after\\ final\\ guard\\ discards\\ decrypted\\ staged\\ records|^receipt\\ mutation\\ during\\ successful\\ settlement\\ is\\ rejected\\ by\\ original\\-node\\ revalidation|^held\\ successful\\ contributor\\ prevents\\ commit\\ and\\ next\\ operation\\ until\\ fresh\\ context\\ veto\\ and\\ complete\\ drain|^failure\\ in\\ a\\ later\\ staged\\ store\\ rolls\\ back\\ actual\\ note\\ and\\ event\\ database\\ writes|^actual\\ BlockSynchronizer\\ prunes\\ committed\\ ACIR\\ head\\ and\\ event\\ with\\ indexes\\ on\\ canonical\\ reorg|^canonical\\ encrypted\\ head\\ and\\ event\\ commit\\ without\\ contract\\-sync\\ completion|^patched\\ real\\ queue:\\ post\\-settle\\ hook\\ once,\\ callback\\ capture,\\ no\\-hook\\ defaults\\ and\\ failure\\ drainage|^actual\\ SDK\\ synthetic\\ complete\\ effect\\ membership\\ rejects\\ changed\\ ciphertext\\ and\\ changed\\ root|^actual\\ application\\ store/SDK\\ on\\ labelled\\ Node\\ IndexedDB:\\ valid\\ event\\ commits,\\ forged\\ payload/missing\\ nullifier\\ does\\ not|^actual\\ application\\ store/SDK\\ on\\ labelled\\ Node\\ IndexedDB:\\ staged\\ valid\\ event\\ discarded\\ on\\ final\\ context\\ or\\ canonical\\ receipt\\ failure|^actual\\ application\\ store/SDK\\ on\\ labelled\\ Node\\ IndexedDB\\ retains\\ operation\\ until\\ awaited\\ validator\\ settles;\\ no\\ detached\\ write",
+    ".build/g07-keys-only-current/test-empty-batch.mjs"
+  ],
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/native-social-wire/g07-mixed-page-after.log",
+  "deadlineMs": 30000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 1022272,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 363328
+    },
+    {
+      "elapsedMs": 2023,
+      "rssKiB": 732624
+    },
+    {
+      "elapsedMs": 3043,
+      "rssKiB": 726464
+    },
+    {
+      "elapsedMs": 4061,
+      "rssKiB": 908608
+    },
+    {
+      "elapsedMs": 5078,
+      "rssKiB": 745728
+    },
+    {
+      "elapsedMs": 6094,
+      "rssKiB": 830704
+    },
+    {
+      "elapsedMs": 7110,
+      "rssKiB": 730816
+    },
+    {
+      "elapsedMs": 8127,
+      "rssKiB": 899440
+    },
+    {
+      "elapsedMs": 9144,
+      "rssKiB": 952480
+    },
+    {
+      "elapsedMs": 10161,
+      "rssKiB": 1022272
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "focused-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 10161,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 33031,
+        "ppid": 1682,
+        "rssKiB": 56656
+      },
+      {
+        "role": "focused-components",
+        "pid": 33037,
+        "ppid": 33031,
+        "rssKiB": 17024
+      },
+      {
+        "role": "focused-components",
+        "pid": 33038,
+        "ppid": 33037,
+        "rssKiB": 52096
+      },
+      {
+        "role": "focused-components",
+        "pid": 33039,
+        "ppid": 33038,
+        "rssKiB": 891264
+      },
+      {
+        "role": "focused-components",
+        "pid": 33041,
+        "ppid": 33039,
+        "rssKiB": 5232
+      },
+      {
+        "role": "focused-components",
+        "pid": 33042,
+        "ppid": 33039,
+        "rssKiB": 0
+      }
+    ]
+  },
+  "result": {
+    "code": 0,
+    "elapsedMs": 10286
+  },
+  "elapsedMs": 10351,
+  "ownedTreeAbsent": true,
+  "linkRestored": true,
+  "tempRemoved": true
+}

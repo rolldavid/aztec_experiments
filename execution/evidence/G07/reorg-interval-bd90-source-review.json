@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "bd90d8fced55e330577df6070d83e230dafeeeed",
+  "base": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+  "verdict": "eligible for ONE bounded genuine rolling-preference-reorg-initial changed retry; marker remains held pending independent initial runtime acceptance",
+  "findings": [],
+  "changedPaths": [
+    "scripts/testing/rolling-preference-reorg.mjs",
+    "scripts/testing/rolling-preference-reorg.test.mjs"
+  ],
+  "sourceHashes": {
+    "scripts/testing/rolling-preference-reorg.mjs": "5edaf28d11950f0b63b530b82398344efbc6c338637c8326482c03f0bcae517a",
+    "scripts/testing/rolling-preference-reorg.test.mjs": "2073aee304fa5b80bd0ba7b4d4d3c3f94987bb2cc4257c75606d08fb7c30c4d4"
+  },
+  "reviewedBehavior": [
+    "Original interval accepts null or positive safe integer; rejects malformed, zero, fractional, unsafe/negative inputs before control mutation.",
+    "Paused callback requires actual pinned disabled representation null plus autominingfalse.",
+    "Durable once-intent still precedes official replacement; unknown reorg outcomes never retry. Exact original mining controls independently read back after SDK restoration; error/restore/persist aggregation retained.",
+    "Actual test setup disables auto then selects interval and enables auto only when desired; all3 supported pairs tested. Child is TERM/KILL bounded and exited/port-rebind verified."
+  ],
+  "evidence": {
+    "completeHelperTests": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedMs": 3745.070708,
+      "logSha256": "431bd3945590053adc1944153a663ec861ebeb608fc3ac7feca7c429fac6fe6e"
+    },
+    "independentActualProbe": {
+      "log": "reorg-interval-independent-probe.log",
+      "sha256": "e8221823264211970879d80a9bd1f95d483a99561b968c95f38a80ac016abaed",
+      "threeModesPassed": true,
+      "noReorgMutation": true,
+      "cleanup": true
+    }
+  },
+  "carry": {
+    "priorSourceEligibility": "recovery-a552-source-eligibility-review.json",
+    "sha256": "4b5b0b20aaace2dc38fe07a4df52fbfd25546247c9a2e6f540382c4c379166e7",
+    "allOtherTrackedBlobsIdentical": true,
+    "scope": "304 checks, normal SDK/wallet and normal contract/catalog bindings carry because all corresponding source blobs unchanged; only helper fingerprint changes. No rebuild required.",
+    "currentManifestHashes": {
+      ".build/sdk/sdk-manifest.json": "87563cf9a86e9267a9e04c460b38722ea66f8d2d7fd85090706fd9a92b59c628"
+    }
+  },
+  "limits": [
+    "Prior c7f1 failure remains failed before mutation; no initial or marker reorg runtime acceptance.",
+    "Unchanged540s/4GiB supervisor, current host-awake controls, cleanup and complete source fingerprint prerequisites apply.",
+    "Independent real Anvil probe reused; no redundant child or heavy job launched in this review."
+  ]
+}

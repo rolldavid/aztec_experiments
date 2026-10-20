@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-18T11:36:34.391283+00:00",
+  "revision": "bc6bfb6754882259ef24927316cbc97ced31442d",
+  "environment": {
+    "reader": "http://127.0.0.1:4319",
+    "query": "http://127.0.0.1:8093",
+    "node": "http://127.0.0.1:8080",
+    "chainHead": 93,
+    "nativeProofs": false,
+    "pxeProofs": false,
+    "originalChainReused": true
+  },
+  "procedure": "Fresh browser origin; import existing disposable encrypted backup; one Recover private views click; normal bounded state-driven continuation. No contract deployment or transaction action.",
+  "observed": [
+    "UI reports follows, bookmarks and notification settings recovered",
+    "Your saved choices are ready; Disable reply notifications visible",
+    "No manual per-chunk recovery clicks"
+  ],
+  "screenshot": "recovery.png",
+  "limitations": [
+    "Exact recovered feeds not yet visually verified: new public SQLite cache fails initial authentication, separately assigned G07-cold-public-index",
+    "No performance claim from timing, no real-proof acceptance or authentic extension wallet interaction"
+  ]
+}

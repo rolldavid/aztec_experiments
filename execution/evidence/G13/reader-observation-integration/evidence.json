@@ -1,0 +1,89 @@
+{
+  "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "task_id": "G13-complete-public-reader-observation",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "id": "affected-observer-tests",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test scripts/testing/rolling-preference-browser.test.mjs scripts/testing/rolling-wire-campaign.test.mjs",
+      "environment": "Mac Node24.21; isolated Node tests/loopback, no chain or cryptographic privacy claim",
+      "observed": "159worker+159independent pass,0skip;31 focused include true Node ingress equality and missing/unknown/overflow negatives. Actualreceiverjourney pending.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/packet.json",
+          "sha256": "e7b4b0c37aeccce0024fedf63e5ae76252de23e92d75665dd4fc98b7ed9b36c3"
+        },
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/focused.log",
+          "sha256": "4749ecf0966d226cf59ed7d837de0d1879000075f000e8e4d5612830c2f6189d"
+        },
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/review.json",
+          "sha256": "a202c0476e002349d90a382de21f48d386d6280b9f05df89dc85f265720285d3"
+        },
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/independent.log",
+          "sha256": "23850d9928e4de5857447f535781c95573e4e38938aed5f3c0abe4d87c4dc0eb"
+        }
+      ]
+    },
+    {
+      "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "id": "unchanged-wallet-closure",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "SHA256 verify existing97input25output manifest; changedpaths outsideinputs",
+      "environment": "Mac Node24.21; isolated Node tests/loopback, no chain or cryptographic privacy claim",
+      "observed": "97inputs/25outputs unchanged, no rebuild needed",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/closure.json",
+          "sha256": "a4dc4979f46d202311f3e5507c537a31db73d81ab4f1922e11b86d534b8f91cf"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+    "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "design-resume-20261014",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/reader-observation-integration/review.json",
+        "sha256": "a202c0476e002349d90a382de21f48d386d6280b9f05df89dc85f265720285d3"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+      "candidate": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "id": "G13-RC25-observation-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/packet.json",
+          "sha256": "e7b4b0c37aeccce0024fedf63e5ae76252de23e92d75665dd4fc98b7ed9b36c3"
+        },
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/review.json",
+          "sha256": "a202c0476e002349d90a382de21f48d386d6280b9f05df89dc85f265720285d3"
+        },
+        {
+          "path": "execution/evidence/G13/reader-observation-integration/closure.json",
+          "sha256": "a4dc4979f46d202311f3e5507c537a31db73d81ab4f1922e11b86d534b8f91cf"
+        }
+      ]
+    }
+  ]
+}

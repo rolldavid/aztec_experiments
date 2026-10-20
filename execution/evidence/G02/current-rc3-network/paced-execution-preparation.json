@@ -1,0 +1,63 @@
+{
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "argv": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/live-paced-1.json"
+  ],
+  "environment": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/usr/bin:/bin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "NODE_OPTIONS": "",
+    "NODE_PATH": "",
+    "HOME": "/private/tmp/rc3-paced-ov4pkz4p/home",
+    "TMPDIR": "/private/tmp/rc3-paced-ov4pkz4p"
+  },
+  "pins": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec/dest/cli/cmds/standby.js": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/ethereum/dest/client.js": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/ethereum/dest/contracts/registry.js": "093ad3ca90969b860284375410af6fa90b75452348e6690ced494b57e8d13914",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/ethereum/dest/contracts/rollup.js": "e0a17adb6d9032fcf41aaa91af784dc0eb44963b9d510e6270c5935abfc3f356",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/ethereum/dest/config.js": "37d567225cee4c70b1d4942c7cb60af25fc9c86584e4148dcd13c118d34959fc",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/constants/dest/constants.gen.js": "957e8534dc1f4aa04949274bb936fa6a7d357d00479c3e229c01fc20f2a52919",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/world-state/dest/testing.js": "dde01e2bdfd18068492c2f83d7c1f6bf9f72b07501a109f7f371a8f5b0f3b20b",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/protocol-contracts/dest/genesis_data.js": "abab3ae9470571515f0da89aa884df44bae95d103b37a9c4f1ddf7e3093599c0",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract_data.js": "9214e2fbc3dc27f331a6c63d70bec1dd0b74546de15e146a59bf7b82b62236df",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/noir-protocol-circuits-types/dest/entrypoint/vk-tree.js": "fc716a72d87dc93329a2ddb87c7a25f81f9ca5926dfd2e4252d53457788b8f56",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/noir-protocol-circuits-types/dest/artifacts/vks/tree.js": "9408c70902f7e28a22957be8af8365b6d2e2fd11b2c31d257bc0d37beb31096d",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/noir-protocol-circuits-types/dest/vk_tree.js": "c0a0ccb6ff8a59181e64d774abf37cd647ae367ab8b1ea63baa2f5907e2cd3a6",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/foundation/dest/trees/merkle_tree.js": "8e21bf54bcffb50488493abc4f882e0cb18f71a8c1821863da470a7a8223db39",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-foundation/l1-artifacts/dest/RegistryAbi.js": "95cd16083131cc7fc31efd851b043ae99ae44a17df95119b3f77bd712b0a512c",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-foundation/l1-artifacts/dest/RollupAbi.js": "aeea24becf25afcb4eb1222c320c91c6993fbf6d9bfad8e87679bc1965aad127",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/ethereum/package.json": "170a6f9d9a207046b09f7567b936c8cc7d6dced3d4b74ad549ec605ff3b833d7",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/constants/package.json": "25f2100fedd956d9a905ee47dcd937d5d7c6d3ffcc1b4719506f5ad618515021",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/protocol-contracts/package.json": "8a67b28716de427a99663712abb4a59ac15f1d613a555aa53cd393b3b611afb1",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/noir-protocol-circuits-types/package.json": "47681d8404e6c6358932300fae5336f7ae6d46e01fccf9682dee28268aa6854e",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-foundation/l1-artifacts/package.json": "e61e5eea86765ca59be2493a1ec0f99056c7fe51e0a59594568da6b9800f9333",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/viem/package.json": "37fa0db4c1af7b4fa2a7615b0774305513e20337b99d9cd2cce88339da9000aa",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs": "8d1315d4120b29e21c03aea0231f4f25337459b1d096362f798f725b591181fb",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-liveness.mjs": "e1db6d5f684e61bcf8a8a88b5351c14a1be9711e0c1044942b1c565584aa1846",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/reviewer-source-argument-review.json": "5a9063cb220d83d8112a6cdcf5863662d4036a0fa3c9b80cce00b761642d91c9",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/current-rc3-network/source-argument-packet.json": "60fbdd7555dcf48af95bf511372ebf1a63e4afb1faf4764d474b13660ac8b5d9",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/current-rc3-network/module-bindings.json": "0dd27060a5a5fbb28162894d03f9f0ec146240fb772a146108f0e04b02c4ce45",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/current-rc3-network/paced-source-packet.json": "b178ff7ab4f617fe7e605bf21e0621c75ee9d4e7de0e69745e5233aee268afb8",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/reviewer-paced-source-review.json": "7003b277212a28ac3d6219c2b5a58bf4a25e201645f2d0648d1a53cacf3a0547",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/paced-lead-grant.json": "7707560094e2ea9ddfa86142b93ded6f7a54f8dee596bf73557fe1cb268a3e7c"
+  },
+  "review": "7003b277212a28ac3d6219c2b5a58bf4a25e201645f2d0648d1a53cacf3a0547",
+  "grant": "7707560094e2ea9ddfa86142b93ded6f7a54f8dee596bf73557fe1cb268a3e7c",
+  "temporaryDirectory": "/private/tmp/rc3-paced-ov4pkz4p",
+  "temporaryIdentity": {
+    "dev": 16777233,
+    "ino": 230749728
+  }
+}

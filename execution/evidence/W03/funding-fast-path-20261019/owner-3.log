@@ -1,0 +1,37 @@
+✔ credit below board ceiling funds a real-priced measured reservation (964.167708ms)
+✔ allocation respects both priced dimensions [object Object] (44.164125ms)
+✔ allocation respects both priced dimensions [object Object] (24.0745ms)
+✔ allocation respects both priced dimensions [object Object] (12.197166ms)
+✔ only exact expected refund OOG is accepted as the zero-teardown probe (9.239042ms)
+✔ an application shortage grows the probe and never returns its incomplete gas as a quote (14.690458ms)
+✔ search exhaustion is distinct from insufficient balance and cannot send (10.840875ms)
+✔ a ceiling above credit can be affordable, while one gas unit priced above credit cannot (8.92625ms)
+✔ fragmentation cannot silently trigger another funding payment (3.754083ms)
+✔ setup throws and final failures stop before any proof or submission (13.359334ms)
+✔ context changes stop measurement before simulation (0.97575ms)
+✔ cold claim retains bridge witness and application payload (18.386667ms)
+✔ SDK adapter sends zero-priced private measurement only to local PXE, with account scopes (0.783792ms)
+✔ SDK adapter retains native public revert gas while strict wallet validation still rejects it (1.217542ms)
+✔ native refund out-of-gas spelling is measured, never accepted as a final result (9.898625ms)
+✔ refund probe cannot accept wrong-selector native out-of-gas (10.497125ms)
+✔ refund probe cannot accept nested native out-of-gas (6.455583ms)
+✔ operator ceilings above node limits do not reject a small measured transaction (2.391208ms)
+✔ reverted final simulation without optional reason cannot be accepted (7.850584ms)
+✔ cold setup out-of-gas fails closed rather than disguising rejection as funding shortage (6.883833ms)
+✔ actual wallet preserves the measured proof budget and refuses late reasonless reverts: false (170.407166ms)
+✔ actual wallet preserves the measured proof budget and refuses late reasonless reverts: true (12.198416ms)
+✔ adequate credit uses one strict native simulation at the configured fee maximum (3.171916ms)
+✔ adequate-credit maximum and teardown stay inside current native gas caps (4.350792ms)
+✔ adequate-credit gas failure propagates without another simulation or send (2.137042ms)
+✔ adequate-credit contract failure propagates without another simulation or send (3.417459ms)
+✔ adequate-credit transport failure propagates without another simulation or send (4.087625ms)
+✔ adequate-credit strict result must fit its declared limits and remain successful (6.211333ms)
+✔ adequate-credit bridge payload retains its claim and positive reservation at zero fees (1.752375ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11371.044083

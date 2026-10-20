@@ -1,0 +1,16 @@
+✔ recovery full values wrap inside the dialog at 390px: history (683.959625ms)
+ℹ {"width":390,"phase":"history","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 390px: prepared-marker (248.097292ms)
+ℹ {"width":390,"phase":"prepared-marker","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 1280px: history (329.312167ms)
+ℹ {"width":1280,"phase":"history","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ recovery full values wrap inside the dialog at 1280px: prepared-marker (258.744916ms)
+ℹ {"width":1280,"phase":"prepared-marker","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1676.389333

@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-20261011",
+  "actualPacketSha256": "eb1b356885ab3b47f50e54f85e9f9d261c9ee4e19d8576ebc063d16b95f41a83",
+  "candidate": "aa558b54497405f2b172e41e161382624c879c4c",
+  "verdict": "FAILED:89 pass,one fixture error,one real compressed-payload size failure",
+  "diagnosis": [
+    {
+      "case": "Bootstrap.test_console_qualification_projection_rejects_unknown_fields",
+      "cause": "Fixture ns.run remains real. New attestor reads both masked units; missing macOS systemctl sets good=false and then invokes real fail-stop commands. Supply exact allowlisted masked-unit readbacks in this fixture and assert expected calls; preserve projection checks and production fail-stop."
+    },
+    {
+      "case": "FinalReceipt.test_lzma_roundtrip_executes_definitions_and_binds_runtime_hash",
+      "cause": "Exact realistic synthetic 1024-character capability test produces16532 compressed bytes, exceeding unchanged16384 limit. Production generated data must shrink, not assertion/guard relaxation."
+    }
+  ],
+  "smallestRepairBoundary": "Measure serializer-only LZMA tuning on identical decoded program bytes first. Require byte-exact decompression, same PINS runtime/startup binding, no removal of activation/control code; retain real CLI size check and focused failed fixture. No guarantee compression tuning suffices until measured.",
+  "runtime": "6432ms384800KiB;4274 protected pins reported unchanged and cleanup positive in exact rehashed result. No qualification or repeat authorization.",
+  "next": "Exactly the two failed checks before any full91 repeat. Package9/toolchain33 not run by this reviewer."
+}

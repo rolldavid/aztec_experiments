@@ -1,0 +1,176 @@
+{
+  "passed": true,
+  "scope": "local real deposit and private claim with ordinary checkpoint inclusion",
+  "applicationProofs": false,
+  "proofMode": "proofs-disabled",
+  "networkProofs": false,
+  "syntheticMessages": false,
+  "syntheticProofs": true,
+  "claimEpochProofAccepted": false,
+  "walletOwnership": "parent",
+  "walletCleanup": "retained-by-parent",
+  "depositTxHash": "0x741fca7b9d6cdb1509a79894b2fb342368435e0e39e0e2d63fb58492a067e491",
+  "depositBlock": "189",
+  "amount": "1000000000000000",
+  "inboxMessageKey": "0x001511f370b32e5034faa6c8728821ed9dc654bc1050a059929348e7bb3a88d1",
+  "messageContentChecked": true,
+  "artifactHashes": {
+    "billboard/target/rolling_contract-RollingBoard.json": "5efc8d3063717355bf04f81bfac568f5cf58e1c7a7ee5c17d00eef814815abe8",
+    ".build/contracts-manifest.json": "66283c1384820cee6687a71a2dda01db5df93b788037cb934d713e0e612c9355",
+    "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "671fde28df7828039122756a3caec2fa59786fc69d874be551af0aee2b820850"
+  },
+  "claimPublicationBarrier": {
+    "proposedBlock": 14,
+    "checkpointedBlock": 14,
+    "l1PendingCheckpoint": 14
+  },
+  "claimAnchor": {
+    "number": 14,
+    "hash": "0x05865b7f14353d2796c66680ef78afb801ec4f0c481d63cf29c58f3ea11cec5c"
+  },
+  "feePayer": "0x22ce1b66cdd0b8d62e4cc10bfcab5c2870a55f9a8d9907a23102490efaac8484",
+  "privateFees": true,
+  "provenAnchor": {
+    "number": 14,
+    "hash": "0x05865b7f14353d2796c66680ef78afb801ec4f0c481d63cf29c58f3ea11cec5c"
+  },
+  "gasUsed": {
+    "totalGas": {
+      "daGas": 2752,
+      "l2Gas": 820135
+    },
+    "teardownGas": {
+      "daGas": 192,
+      "l2Gas": 27510
+    }
+  },
+  "claimTxHash": "0x1004bc094761f58d4df2a849ace8de823b3717cfe3f87491653b1d79b55a5d17",
+  "proofSha256": "f3661ec05aa3082a298d2ebf42efb13c10e7e6341b741d05cd950a1a97cb8fab",
+  "nodeValidation": "valid",
+  "inclusionSnapshots": [
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "205",
+      "l1Timestamp": "1791734774",
+      "nodeTime": 1791734774
+    },
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "206",
+      "l1Timestamp": "1791734775",
+      "nodeTime": 1791734775
+    },
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "207",
+      "l1Timestamp": "1791734776",
+      "nodeTime": 1791734776
+    },
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "208",
+      "l1Timestamp": "1791734777",
+      "nodeTime": 1791734777
+    },
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "209",
+      "l1Timestamp": "1791734778",
+      "nodeTime": 1791734778
+    },
+    {
+      "status": "pending",
+      "executionResult": null,
+      "blockNumber": null,
+      "l1Block": "210",
+      "l1Timestamp": "1791734779",
+      "nodeTime": 1791734779
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "211",
+      "l1Timestamp": "1791734780",
+      "nodeTime": 1791734780
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "212",
+      "l1Timestamp": "1791734781",
+      "nodeTime": 1791734781
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "213",
+      "l1Timestamp": "1791734782",
+      "nodeTime": 1791734782
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "214",
+      "l1Timestamp": "1791734783",
+      "nodeTime": 1791734783
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "215",
+      "l1Timestamp": "1791734784",
+      "nodeTime": 1791734784
+    },
+    {
+      "status": "proposed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "216",
+      "l1Timestamp": "1791734785",
+      "nodeTime": 1791734785
+    },
+    {
+      "status": "checkpointed",
+      "executionResult": "success",
+      "blockNumber": 15,
+      "l1Block": "218",
+      "l1Timestamp": "1791734787",
+      "nodeTime": 1791734787
+    }
+  ],
+  "replay": {
+    "rejected": true,
+    "reason": "consumed-claim-message",
+    "freshAccountRequest": true,
+    "originalMessageNullifierChecked": true,
+    "originalInboxLeafPresent": true,
+    "originalNoteUnchanged": true,
+    "noSecondNote": true,
+    "stage": "PXE witness generation; no second proof accepted or transaction sent"
+  },
+  "claimBlock": "15",
+  "claimStatus": "checkpointed",
+  "executionResult": "success",
+  "fee": "8393447400000",
+  "anchorBlock": 14,
+  "membershipRootChecked": true,
+  "logicalFieldCount": 10,
+  "physicalFieldCount": 8,
+  "exactDeliveredNoteChecked": true,
+  "nextRequired": "Wait eligibility; prove/include no-post exit, then use official test Outbox settlement and withdraw L1."
+}

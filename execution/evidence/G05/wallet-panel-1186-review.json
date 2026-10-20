@@ -1,0 +1,25 @@
+{
+  "candidate": "1186d297be4a4ef09c2d635d02ed0ca2b6fe607c",
+  "base": "582652fb9bb04e84e9e162026e0355bd20c9c829",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source",
+  "findings": [],
+  "checks": [
+    "NODE_BACKEND=js Node24.21.0 --test apps/rolling/wallet-panel.browser.test.mjs:7 passed,0 failed/skipped/cancelled"
+  ],
+  "observations": [
+    "Read changed source before tests; compared actual shared/account.js, wallet-backup.js and shared/rolling/application.mjs API/action shapes.",
+    "Explicit Unlock is sole runtime loader trigger. Recovery/create/export delegated to custody module, passwords cleared, only validated encrypted envelope downloaded. No raw signing/address/error data rendered.",
+    "Busy/uncertain submission and failed prepare preserve read-only recovery; no automatic resend, direct state reset, or transaction bypass. Confirm uses saved immutable intent.",
+    "DOM text nodes, UTF8 992 byte bound/well-formed input, keyboard dialog focus, exact action targets and literal preview covered by real Chromium with labelled UI doubles.",
+    "Actual custody shares wallet recovery lock; failed session cleanup prevents account end; ownership/application lifecycle remains delegated."
+  ],
+  "limitations": [
+    "Presentation source approval only; custody/RPC/proofs/persistence are test doubles in browser tests.",
+    "Funding is explicitly unavailable; complete name display, funding and actual chain/browser wallet acceptance remain product tasks."
+  ],
+  "source_sha256": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "cc8be2e6c0296c12683d0fa9f394ef04e3206ab26e9d1a671a71f67275a9bf4b",
+    "apps/rolling/wallet-panel.mjs": "5846ecbb5d2ec33031d8b8acd89616c3afd360ca5361293f77a54da99767c45a"
+  }
+}

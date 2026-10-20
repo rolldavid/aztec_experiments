@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "c770fd1d3d1e66ce99657bcd9ff0d98ad2681252",
+  "base": "71943392fcd29ac0f41558eaed3c0da828dba671",
+  "verdict": "PASS_SOURCE_AND_FOCUSED_27_ELIGIBILITY",
+  "sourcePacketSha256": "5ec8269744f557715c6fefc19fa7caac5dcc3a621cfa02f135089b6dadaf1e1e",
+  "preparationSha256": "f4263c102497733562ac4c94de4563f09ebb05d0ae2d275b2db64eef7f000d9b",
+  "runnerSha256": "8d6b1d888642e1b7f272a9231ddbe5e423363c21d02ade74d8b4150de33e97a1",
+  "checks": [
+    "Exact four claimed paths; successor changes three existing paths only.",
+    "Typed SDK receipt hashes projected to detached strings before unchanged finite canonical reconciliation; provider error omitted.",
+    "Actual CLI dispatch validates rolling command and closed config before actor read.",
+    "Development requires 31337 and native disabled flags; real mode limited to configured Sepolia11155111.",
+    "Durable preparing before wallet/claim reads and submission-unknown raw/hash before sole send; retained operations only reconcile or refuse.",
+    "Scoped endpoint transport bounded, no redirect/retry and public fixed errors.",
+    "All 1163 protected hashes re-read unchanged, clean exact HEAD, 27 source-declared labels match inventory.",
+    "Existing 60s/2GiB Supervisor, unchanged child, isolated HOME/owned TMP and positive cleanup gates."
+  ],
+  "limits": [
+    "No runtime performed by reviewer.",
+    "Parent separately grants serialized focused27 only.",
+    "Typed-hash case is SDK-shaped; actual installed SDK constructor/receipt and real HTTP adapter acceptance remain required.",
+    "No native proof, provider, testnet deployment, portal, registration or hosted lifecycle qualification."
+  ],
+  "prior": "ea64 preserved unrun; three identified corrections resolved"
+}

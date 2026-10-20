@@ -1,0 +1,193 @@
+{"role":"service","pid":8829,"port":50370,"realProofs":false}
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":50370}
+{"role":"tests","pid":8831,"port":50370,"realProofs":false}
+[12:59:52.946] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[rolling_contract] Running 40 test functions
+[rolling_contract] Testing tests::competing_case_variant_registration_rejected ... [0m[32mok[0m
+[13:00:00.924] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:00.926] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:00.949] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:00.983] INFO: txe_node Aztec Node version: txe
+[13:00:00.983] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:00.999] INFO: txe:top_level_context Created block 1 with timestamp 1791720000
+[13:00:01.093] INFO: txe:top_level_context Created block 2 with timestamp 1791720000
+[13:00:01.202] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.03196249999999964s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.03196249999999964,"rate":31894063.355495084,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:01.522] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.01730412500000057s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01730412500000057,"rate":13477480.080616172,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:01.754] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.016187874999999623s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.016187874999999623,"rate":9257855.030385612,"totalPublicGas":{"daGas":0,"l2Gas":149865},"totalBlockGas":{"daGas":1888,"l2Gas":848315},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:01.760] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0xc975017a' when enriching error callstack
+[13:00:01.762] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:01.821] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:01.841] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:01.864] INFO: txe_node Aztec Node version: txe
+[13:00:01.864] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:01.873] INFO: txe:top_level_context Created block 1 with timestamp 1791720001
+[13:00:01.910] INFO: txe:top_level_context Created block 2 with timestamp 1791720001
+[13:00:01.968] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.027987875000000714s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027987875000000714,"rate":36423415.49688835,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::creator_cannot_change_parent_rules ... [0m[32mok[0m
+[13:00:02.133] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.032501666000000116s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.032501666000000116,"rate":42697565.10327794,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:02.166] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.009050000000001092s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.009050000000001092,"rate":3554917.127071394,"totalPublicGas":{"daGas":0,"l2Gas":32172},"totalBlockGas":{"daGas":0,"l2Gas":32172},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:02.168] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0xe555a3de' when enriching error callstack
+[13:00:02.170] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:02.223] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:02.231] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:02.255] INFO: txe_node Aztec Node version: txe
+[13:00:02.255] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:02.264] INFO: txe:top_level_context Created block 1 with timestamp 1791720002
+[13:00:02.299] INFO: txe:top_level_context Created block 2 with timestamp 1791720002
+[13:00:02.358] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02839983299999949s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02839983299999949,"rate":35895070.22805445,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::creator_cannot_reject_a_subboard ... [0m[32mok[0m
+[13:00:02.520] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.03131620899999871s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.03131620899999871,"rate":44313856.76344341,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:02.551] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008729542000000947s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.008729542000000947,"rate":1174632.0711898617,"totalPublicGas":{"daGas":0,"l2Gas":10254},"totalBlockGas":{"daGas":0,"l2Gas":10254},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:02.553] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0x41e99ab9' when enriching error callstack
+[13:00:02.555] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:02.619] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:02.627] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:02.650] INFO: txe_node Aztec Node version: txe
+[13:00:02.650] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:02.660] INFO: txe:top_level_context Created block 1 with timestamp 1791720002
+[13:00:02.697] INFO: txe:top_level_context Created block 2 with timestamp 1791720002
+[13:00:02.756] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02862591699999939s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02862591699999939,"rate":35611575.34272253,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:02.917] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.03183550000000105s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.03183550000000105,"rate":43591022.60055455,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::duplicate_slug_is_atomic_public_conflict ... [0m[32mok[0m
+[rolling_contract] Testing tests::embedded_nul_rejected ... [0m[32mok[0m
+[13:00:03.071] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.023788916999999857s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.023788916999999857,"rate":46909953.90836862,"totalPublicGas":{"daGas":0,"l2Gas":1115937},"totalBlockGas":{"daGas":128,"l2Gas":1706737},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:03.073] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0x06768f31' when enriching error callstack
+[13:00:03.074] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::empty_name_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::exact_992_byte_policy_boundary_is_accepted ... [0m[32mok[0m
+[rolling_contract] Testing tests::hidden_name_suffix_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::incomplete_utf8_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::last_byte_of_32_byte_component_uses_high_byte_of_second_field ... [0m[32mok[0m
+[rolling_contract] Testing tests::leading_space_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::name_preimage_matches_javascript_vector ... [0m[32mok[0m
+[rolling_contract] Testing tests::names_are_case_insensitive_but_pair_boundaries_and_surnames_matter ... [0m[32mok[0m
+[13:00:03.687] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:03.707] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:03.720] INFO: txe_node Aztec Node version: txe
+[13:00:03.720] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:03.729] INFO: txe:top_level_context Created block 1 with timestamp 1791720003
+[13:00:03.765] INFO: txe:top_level_context Created block 2 with timestamp 1791720003
+[13:00:03.823] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.027479584000000615s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027479584000000615,"rate":37097140.91741626,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.041] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.016596666999999798s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.016596666999999798,"rate":14051978.026672635,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.265] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.014692708000000493s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.014692708000000493,"rate":15872907.839725133,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":1152,"l2Gas":876591},"totalSizeInBytes":1152,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.296] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008101833000000624s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008101833000000624,"rate":1026804.6749419989,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.319] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008261042000000088s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008261042000000088,"rate":1007015.8219749895,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.522] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008118500000000495s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008118500000000495,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:04.728] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.0070989170000011655s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.0070989170000011655,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:05.214] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.006979416999998648s {"blockNumber":8,"successfulCount":1,"failedCount":0,"duration":0.006979416999998648,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::names_register_and_ownership_survives_reauthentication ... [0m[32mok[0m
+[13:00:05.645] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:05.686] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:05.704] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:05.732] INFO: txe_node Aztec Node version: txe
+[13:00:05.732] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:05.741] INFO: txe:top_level_context Created block 1 with timestamp 1791720005
+[13:00:05.780] INFO: txe:top_level_context Created block 2 with timestamp 1791720005
+[13:00:05.856] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.030751791000000594s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.030751791000000594,"rate":33149744.026290383,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:06.084] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02039741600000161s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.02039741600000161,"rate":11433605.119392652,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::other_account_cannot_authenticate_registered_name ... [0m[32mok[0m
+[rolling_contract] Testing tests::overlong_utf8_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::oversized_name_rejected ... [0m[32mok[0m
+[13:00:06.222] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::oversized_policy_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::owned_names_call_preserves_requested_page_offset ... [0m[32mok[0m
+[13:00:06.602] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:06.621] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:06.644] INFO: txe_node Aztec Node version: txe
+[13:00:06.644] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:06.653] INFO: txe:top_level_context Created block 1 with timestamp 1791720006
+[13:00:06.688] INFO: txe:top_level_context Created block 2 with timestamp 1791720006
+[13:00:06.746] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.026922082999999476s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.026922082999999476,"rate":37865346.451833606,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:06.961] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.01710383299999921s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01710383299999921,"rate":13635306.19130874,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::owning_one_name_does_not_authorize_another ... [0m[32mok[0m
+[rolling_contract] Testing tests::policy_hidden_bytes_rejected ... [0m[32mok[0m
+[13:00:07.126] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:07.173] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:07.180] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:07.203] INFO: txe_node Aztec Node version: txe
+[13:00:07.203] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:07.212] INFO: txe:top_level_context Created block 1 with timestamp 1791720007
+[13:00:07.246] INFO: txe:top_level_context Created block 2 with timestamp 1791720007
+[13:00:07.303] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02732379199999923s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02732379199999923,"rate":37308657.5977459,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:07.335] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008853417000002082s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.008853417000002082,"rate":6336875.355581557,"totalPublicGas":{"daGas":0,"l2Gas":56103},"totalBlockGas":{"daGas":0,"l2Gas":56103},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::public_registration_cannot_bypass_private_mint ... [0m[32mok[0m
+[13:00:07.337] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0xc975017a' when enriching error callstack
+[13:00:07.338] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:07.375] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:07.394] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:07.406] INFO: txe_node Aztec Node version: txe
+[13:00:07.406] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:07.415] INFO: txe:top_level_context Created block 1 with timestamp 1791720007
+[13:00:07.450] INFO: txe:top_level_context Created block 2 with timestamp 1791720007
+[13:00:07.508] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.027995749999998223s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027995749999998223,"rate":36413169.85614119,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::public_subboard_creation_cannot_bypass_account_entrypoint ... [0m[32mok[0m
+[13:00:07.539] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.009096000000001369s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.009096000000001369,"rate":7990765.171502755,"totalPublicGas":{"daGas":0,"l2Gas":72684},"totalBlockGas":{"daGas":0,"l2Gas":72684},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:07.541] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0x06768f31' when enriching error callstack
+[13:00:07.542] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::punctuation_and_collapsed_ascii_space_are_supported ... [0m[32mok[0m
+[13:00:07.611] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:07.629] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:07.655] INFO: txe_node Aztec Node version: txe
+[13:00:07.655] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:07.663] INFO: txe:top_level_context Created block 1 with timestamp 1791720007
+[13:00:07.699] INFO: txe:top_level_context Created block 2 with timestamp 1791720007
+[13:00:07.757] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.02789270899999974s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02789270899999974,"rate":36547687.0676136,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::rejection_cannot_silently_overwrite_reason ... [0m[32mok[0m
+[13:00:07.920] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.03184287499999846s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.03184287499999846,"rate":43580926.65941964,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:07.955] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.012854082999998354s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.012854082999998354,"rate":17976155.903149962,"totalPublicGas":{"daGas":640,"l2Gas":231067},"totalBlockGas":{"daGas":640,"l2Gas":231067},"totalSizeInBytes":768,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:07.985] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008550749999998516s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008550749999998516,"rate":1754582.9313221183,"totalPublicGas":{"daGas":0,"l2Gas":15003},"totalBlockGas":{"daGas":0,"l2Gas":15003},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:07.987] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0x41e99ab9' when enriching error callstack
+[13:00:07.989] INFO: simulator:avm-pool AVM simulator pool destroyed
+[13:00:08.055] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:08.063] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:08.097] INFO: txe_node Aztec Node version: txe
+[13:00:08.097] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:08.106] INFO: txe:top_level_context Created block 1 with timestamp 1791720008
+[13:00:08.140] INFO: txe:top_level_context Created block 2 with timestamp 1791720008
+[13:00:08.198] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.027664333000000624s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027664333000000624,"rate":36849397.38109634,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::rejection_retains_identity_and_authenticated_reason ... [0m[32mok[0m
+[rolling_contract] Testing tests::repeated_slug_hyphen_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::repeated_space_must_be_normalized_before_registration ... [0m[32mok[0m
+[rolling_contract] Testing tests::reserved_bot_first_name_cannot_use_another_surname ... [0m[32mok[0m
+[rolling_contract] Testing tests::short_slug_rejected ... [0m[32mok[0m
+[13:00:08.354] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.030352875000000494s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.030352875000000494,"rate":45720281.85138895,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.389] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.013092124999999214s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.013092124999999214,"rate":17649312.08646525,"totalPublicGas":{"daGas":640,"l2Gas":231067},"totalBlockGas":{"daGas":640,"l2Gas":231067},"totalSizeInBytes":768,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.419] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008359791999999288s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008359791999999288,"rate":2189049.679705136,"totalPublicGas":{"daGas":0,"l2Gas":18300},"totalBlockGas":{"daGas":0,"l2Gas":18300},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.442] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008181625000001077s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008181625000001077,"rate":1997647.16666895,"totalPublicGas":{"daGas":0,"l2Gas":16344},"totalBlockGas":{"daGas":0,"l2Gas":16344},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.444] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::slug_cannot_hide_suffix ... [0m[32mok[0m
+[13:00:08.551] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:08.569] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:08.582] INFO: txe_node Aztec Node version: txe
+[13:00:08.582] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:08.591] INFO: txe:top_level_context Created block 1 with timestamp 1791720008
+[13:00:08.625] INFO: txe:top_level_context Created block 2 with timestamp 1791720008
+[13:00:08.681] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.026852584000000207s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.026852584000000207,"rate":37963348.33176547,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.830] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.030990915999998835s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.030990915999998835,"rate":44778992.65707578,"totalPublicGas":{"daGas":2368,"l2Gas":1387742},"totalBlockGas":{"daGas":2496,"l2Gas":1978542},"totalSizeInBytes":2496,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.861] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.00845287499999904s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.00845287499999904,"rate":2164943.8800410605,"totalPublicGas":{"daGas":0,"l2Gas":18300},"totalBlockGas":{"daGas":0,"l2Gas":18300},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.884] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.00832945800000016s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.00832945800000016,"rate":1962192.497999232,"totalPublicGas":{"daGas":0,"l2Gas":16344},"totalBlockGas":{"daGas":0,"l2Gas":16344},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.920] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.020305749999999536s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.020305749999999536,"rate":39741600.28563429,"totalPublicGas":{"daGas":1376,"l2Gas":806983},"totalBlockGas":{"daGas":1376,"l2Gas":806983},"totalSizeInBytes":1504,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.949] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008356708999999683s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008356708999999683,"rate":1955793.8418102893,"totalPublicGas":{"daGas":0,"l2Gas":16344},"totalBlockGas":{"daGas":0,"l2Gas":16344},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::subboard_usable_without_collateral_and_tracks_current_parent_policy ... [0m[32mok[0m
+[13:00:08.973] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008639999999999417s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008639999999999417,"rate":2118055.5555556985,"totalPublicGas":{"daGas":0,"l2Gas":18300},"totalBlockGas":{"daGas":0,"l2Gas":18300},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:08.975] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::text_accepts_multibyte_utf8_and_empty_local_rules ... [0m[32mok[0m
+[rolling_contract] Testing tests::text_field_cannot_smuggle_a_32nd_byte ... [0m[32mok[0m
+[rolling_contract] Testing tests::trailing_hyphen_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::unicode_name_bytes_rejected ... [0m[32mok[0m
+[13:00:09.245] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[13:00:09.263] INFO: world-state:ipc-database Created IPC-backed world state instance
+[13:00:09.287] INFO: txe_node Aztec Node version: txe
+[13:00:09.287] INFO: txe_node Aztec Node started on chain 0x1
+[13:00:09.297] INFO: txe:top_level_context Created block 1 with timestamp 1791720009
+[13:00:09.330] INFO: txe:top_level_context Created block 2 with timestamp 1791720009
+[13:00:09.387] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.027323833000002195s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027323833000002195,"rate":37308601.61529746,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::unknown_subboard_has_no_effective_policy ... [0m[32mok[0m
+[rolling_contract] Testing tests::uppercase_slug_is_not_an_alias ... [0m[32mok[0m
+[13:00:09.418] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008197416999999405s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.008197416999999405,"rate":1024347.0595677405,"totalPublicGas":{"daGas":0,"l2Gas":8397},"totalBlockGas":{"daGas":0,"l2Gas":8397},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[13:00:09.420] WARN: txe:top_level_context Could not find function artifact in contract RollingBoard for function '0xf570c7f5' when enriching error callstack
+[13:00:09.421] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::utf8_above_max_codepoint_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::utf8_surrogate_rejected ... [0m[32mok[0m
+[rolling_contract] [0m[32m40 tests passed[0m
+RollingBoard foundation checks passed; owned TXE and test processes cleaned up.

@@ -1,0 +1,208 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "baseRevision": "20a2fc80de2c894f219afbf96f5e67a279fec5f8",
+  "requirements": [
+    "RC14",
+    "RC25",
+    "RC26"
+  ],
+  "verdict": "approve",
+  "scope": "Independent development-source and generated-closure review; not live recovery/production qualification",
+  "findings": [],
+  "resolvedFindings": [
+    {
+      "id": "HIST-1",
+      "severity": "P1",
+      "resolution": "canonicalRecord now distinguishes immutable getBlock/getBlockData metadata from historical state. Genesis at0 is read from the actual node and canonical height/hash rechecked even when world oldest=1; no synthetic fallback. Stateful witness/state selectors keep oldest boundary. Upper bounds and final selected/world fences unchanged. Installed BlockResponse schema exercised by regression, with final orphan rejection."
+    }
+  ],
+  "checks": [
+    {
+      "kind": "independent existing focused tests",
+      "revision": "7da998ed73ede5e3ff108dc68a7d37f5d2cc109b",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 604.73025
+    },
+    {
+      "kind": "independent final genesis/pruning/canonical regression tests",
+      "revision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 594.074083
+    },
+    {
+      "kind": "lead original combined run",
+      "revision": "7da998ed73ede5e3ff108dc68a7d37f5d2cc109b",
+      "passed": 731,
+      "failed": 3,
+      "status": "FAILED, preserved; not reclassified passing",
+      "failure": "Existing session fixture omitted new canonical name slot reader/export and attempted registering already-owned River Stone."
+    },
+    {
+      "kind": "lead final affected query/session and manifest checks",
+      "revision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+      "passed": 240,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 25363.401708
+    },
+    {
+      "kind": "independent SDK closure",
+      "inputs": 2057,
+      "outputs": 8,
+      "aztecVersion": "6.0.0-rc.3",
+      "normalCheckSdkPassed": true,
+      "committedBundleAndManifestEqualBuild": true
+    },
+    {
+      "kind": "independent wallet closure",
+      "inputs": 97,
+      "files": 25,
+      "allInputAndOutputHashesAndSizesMatch": true,
+      "note": "First reviewer verification resolved output file references relative to build directory and failed path lookup; corrected to manifest repository-relative paths, all hashes/sizes pass. No source or evidence assertions changed."
+    }
+  ],
+  "reviewedContracts": [
+    "Default inspector/health remains proposed; explicit historical tier authenticates selected<=world<=proposed with own-height canonical hash, selected canonical hash, exact finality, identity/proof policy, freshness and pruning. Both canonical groups drain before resolution.",
+    "Complete official argument validation before classification and forwarding; closed historical method+typed selector list only. Mixed latest/send/unknown methods retain strict preflight.",
+    "Mined transaction observation binds requested tx hash, canonical block/hash within checkpoint and witness root. Pending/above-checkpoint requires stricter proposed readiness; no false missing result, financial replay or write introduced.",
+    "Immutable header metadata can predate world-state oldest; stateful queries cannot. Original body/response/concurrency/timeouts and diagnostic privacy remain.",
+    "Cold reader canonical/CAS/account lifecycle and SDK cryptographic archive/transaction proofs unchanged. Wallet initial selected tier matches configured checkpointed PXE; mutable preparation/deployment remains strict.",
+    "Name availability derives exact artifact map slot from normalized hash, reads canonical checkpoint, checks0/1, rechecks canonical hash and context before fees/new journal. Collision distinct from unavailable. UI retains editable draft; availability is explicitly not reservation. Atomic onchain registration unchanged.",
+    "Fixture repair uses actual installed derivation and distinguishes owned River Stone from available Fresh Willow, asserts captured slot/read/anchor, retains unknown-send fence and failed-reader intent assertions."
+  ],
+  "source": [
+    {
+      "path": "apps/dist/aztec_bundle.js",
+      "gitBlob": "a80754ff6b1ffd95c6c2314833a5d6ae7c902de6",
+      "sha256": "e3a34ebad4724e66109fe4fdf34b7425d5c172015461ef123014bfbce7dcbb46"
+    },
+    {
+      "path": "apps/dist/sdk-manifest.json",
+      "gitBlob": "06500ed3c3ad289850af5e606b27b04dbfa9001d",
+      "sha256": "8354806aa06470134bae1b4c2a48dc2992f080648d0c74bd7208ab7c80c36c37"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "gitBlob": "ba7879b7326e03b523b3432861a45976b490b16c",
+      "sha256": "a8c614ad86d61a20d61f87538d8a857a35a8f5eb98c54392dc75a4407bb0f7c3"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "gitBlob": "d31f683e0d71ee528e47040768c50e3444e2b859",
+      "sha256": "111b7d7c4ceaeb342e4c64e06943b0a38285818b02e85f5c4f140ec2a87d7c6d"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "gitBlob": "9337e803a9d9b65bfbe3386e9bd4e212bfb4c2ff",
+      "sha256": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "gitBlob": "9285ee6cee68e52eb13728e35797f89b4a68f3dc",
+      "sha256": "5b4de9037571cbfd38786c4d6aacedfd2c2554ad4c675ca7344678fc5b903a33"
+    },
+    {
+      "path": "prover/compact-block-native.mjs",
+      "gitBlob": "8bdb34bf890da3e3ac00e2758dc2e77a7b9f4a80",
+      "sha256": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef"
+    },
+    {
+      "path": "prover/compact-block-native.test.mjs",
+      "gitBlob": "f084d0d0ac7434ae38b1dca8a0a34e7ad285fb55",
+      "sha256": "410c35f94cc397f600dfb74c7ab3e4f09c405147ae57fd5e79dd65256f61cc1b"
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "gitBlob": "b8573ccdc38136d1bc66a0c63916bd3e7a8c93b6",
+      "sha256": "e8a615d6f5c0183aad1327a598fd819f71ddda77d9a23c76d800f234e2354d36"
+    },
+    {
+      "path": "prover/private-query.test.mjs",
+      "gitBlob": "489285b1d5c83c8c3f46ed2b8746d3e4ecd01116",
+      "sha256": "89e2f3f5f8b5105f53dfeb540065e3ad5bba4620fec3f5e0efa9968e1f6004f9"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "gitBlob": "c3d35347d26ca882a972055a28af235808962145",
+      "sha256": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "gitBlob": "be1c5352e8e2f44b2f8e010f9d2256e48df6283c",
+      "sha256": "b1fae9dbfe007bcdc55f48e84009dbf6ebe18b37b56f86aaec6139c9459da5ee"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "gitBlob": "06621a9246f3d6c5eeaa725103afb9ac3b053f7e",
+      "sha256": "76624647146025d7275f5dee257b205adaf0556bf8ea0bde682d50f92722adad"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.test.mjs",
+      "gitBlob": "cd38a2b024cc2e131c801cf0eaa54f3ada042e28",
+      "sha256": "1e5dd24f6c0cc42321335aed0f59a057a148f8207999bfd060862cb9e3d28065"
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "gitBlob": "e0f2a8a38241dea90d283fccea0497daa249c37c",
+      "sha256": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a"
+    },
+    {
+      "path": "shared/trusted-private-node.test.mjs",
+      "gitBlob": "71a410d6c72b7a132fed7772c36cab99459fcc15",
+      "sha256": "efc032fc7685eca14c2afef58b294994031b046b6aaca2d3a46f95c1aeff1485"
+    }
+  ],
+  "unchangedFromInitialReviewedCandidate": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "prover/compact-block-native.mjs",
+    "prover/compact-block-native.test.mjs",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs",
+    "shared/trusted-private-node.mjs",
+    "shared/trusted-private-node.test.mjs"
+  ],
+  "repairChangedPaths": [
+    "apps/rolling/wallet-session.test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs"
+  ],
+  "repairIntersectsSdkInputs": [],
+  "repairIntersectsWalletInputs": [],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/reviewer-7da998-historical.log",
+      "sha256": "e3c74d0b1cf7647d7e6bb77fe7b61df9cdfd7427d3fa1061d7c41306bc29be04"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/reviewer-7ccf693-focused.log",
+      "sha256": "b9cc5496ab14ef9c261470e467c44e36a4a0510cfde20a6aa3699001327363e4"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/g05-g07-historical-final/combined-checks.log",
+      "sha256": "56b33b1908cf3d86f33ae1ee0ddaede573a2f6b5ab4a279f326938823b6953b7"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/g05-g07-historical-final/repaired-checks.log",
+      "sha256": "8816dc98aff9b7b84daeb217d253338adf2840623f947f6802728b95141a1535"
+    }
+  ],
+  "priorComponentReview": {
+    "path": "execution/evidence/G05/reviewer-ec42330-name-component.json",
+    "sha256": "e4ec93491c09b0826ac1c6cffe9e9671729c6ffa683b291721d41921d83343e6"
+  },
+  "limits": [
+    "Actual full key-only recovery under120seconds remains unqualified; RC40 performance not accepted by this source review.",
+    "Actual normalized-name registration/collision UI chain acceptance still requires measured environment evidence.",
+    "Real proofs/testnet and independent specialist review,14day soak and network release gates remain open.",
+    "No service, browser, model, financial or GitHub mutation performed during review."
+  ]
+}

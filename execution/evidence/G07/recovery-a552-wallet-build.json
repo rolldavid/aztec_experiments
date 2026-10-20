@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "scripts/build-rolling-wallet.mjs"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments",
+  "sourceRevision": null,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "passed": false,
+  "peakTreeRSSKiB": 544,
+  "samples": 1,
+  "cleanupComplete": true,
+  "elapsedMs": 77,
+  "exitCode": 1,
+  "signal": null,
+  "samplingFailure": false,
+  "logSha256": "6485cae7112207d820d67e501d02ea48f3bad97831af38c299a2f8d42a953c06"
+}

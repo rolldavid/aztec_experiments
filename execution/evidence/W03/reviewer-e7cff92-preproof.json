@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent exact source review",
+  "sourceRevision": "e7cff92479a4f5de96512b20b1aa7c297ef699ea",
+  "baseRevision": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "requirements": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "verdict": "changes requested",
+  "changedPaths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "apps/src/billboard/user/engine.js",
+    "scripts/test-receipt-baseline.mjs",
+    "shared/journal-backup.mjs",
+    "shared/journal-backup.test.mjs",
+    "shared/journal-indexeddb.mjs",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/synchronized-application.mjs",
+    "shared/rolling/synchronized-application.test.mjs"
+  ],
+  "sourceSha256": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "116e1672caf798e6f561c1d3b16c1c212b2ba0667c9922b96fa710b4c673c421",
+    "apps/rolling/wallet-panel.mjs": "6bc3b9c1492a82b9eecf218fc316591d7bbe4b35e630b2b5928a66e3c07d7f94",
+    "apps/rolling/wallet-session.mjs": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617",
+    "apps/rolling/wallet-session.test.mjs": "ffef314dde43bfb30b489a508080fddaa8944dc13b11b3bd203412bfddeff5b9",
+    "apps/src/billboard/user/engine.js": "518147420ab6fc3caf7df5a90a311358dd8ffe73e4c371741fdb0a767b7d4b39",
+    "scripts/test-receipt-baseline.mjs": "d73b50c623657fa05cf75aa6b27f5bfe3bcae39ad8ca7293bcc6b4499255a735",
+    "shared/journal-backup.mjs": "13dd4698a506f6816d5141e2c07e3e2f6ada2aef1baced6bcbd260ddaa6673ba",
+    "shared/journal-backup.test.mjs": "fd925ef44eec84ce202c3902592457d6d09af40c533c94a9387bc78d291f8a93",
+    "shared/journal-indexeddb.mjs": "15af7055dc0f24f2c78785da86acc78525e5e10b5293092f84e3277bf88688c3",
+    "shared/rolling/application.mjs": "717404fe4dbe8f4a7361c4ff77926942bc46b2cd57498d7ec5151b9078c761c7",
+    "shared/rolling/application.test.mjs": "281663fea2f1e28efa00346e0b1ff7c450d9344a576911fd578d294182d0ee16",
+    "shared/rolling/synchronized-application.mjs": "a5c86495c2b872275f9983b77df4a3eb6c0789911f8206637bcd5cecdee79aaa",
+    "shared/rolling/synchronized-application.test.mjs": "9e7f124a55ff87ccc83688f1d8e008b4e468d8ecf408705402cc64292f226b67"
+  },
+  "packetSha256": "e88a530acca419da075466931c6cd9310c0a99c76f0b9c6b788deb5b2229c08e",
+  "packetSourceHashesMatch": true,
+  "findings": [
+    {
+      "id": "PREPROOF-1",
+      "severity": "P1",
+      "path": "shared/rolling/application.mjs",
+      "location": "prepareInterrupted lines835-844; preproofReview validation lines889-892 and lifecycle verify lines910-921",
+      "problem": "Renewed pre-proof review calls checkActionRecoveryContext, which has no preference-head or original read-marker block-hash validation. Its subsequent submission only binds local provenance/predecessor, not these saved semantic contexts. Unlike existing saved-byte and replacement recovery, a read-marker can be re-proved against a different canonical block at the same throughBlock after reorg. The head or marker can also change after renewed review before persistence/broadcast.",
+      "required": "Reuse the existing exact originalPreferenceHead/expectedRevision/originalMarker checks for renewed preparation and late renewed submission. Refuse changed head/hash rather than silently rebasing. Retain original generic action-specific late context checks too. Add focused changed-marker and late-change regressions in existing application tests.",
+      "evidence": "Direct source path comparison to savedContextMatches/checkSavedResumeContext/checkReplacementReview; not yet executed adversarial regression."
+    },
+    {
+      "id": "PREPROOF-2",
+      "severity": "P1",
+      "path": "shared/rolling/application.mjs",
+      "location": "prepareBokPost record creation lines800-802; submitPrepared lines889-892",
+      "problem": "prepareBokPost spreads the prior confirmed authorization into a new id/operation, retaining preproofReview from an authorization that previously renewed after a proof interruption. That review contains the predecessor BEFORE authorization. Current journal now contains the confirmed authorization, so new post submit deterministically rejects its predecessor equality. The same stale-attempt leak can affect another post after a renewed reverted post.",
+      "required": "When constructing the explicitly new Bok post operation, remove prior-attempt preproof/preproofReview authority while preserving funded draft, authorization and canonical predecessor bindings. Add interrupted authorization -> explicit renewed review -> confirmation -> normal Bok post regression.",
+      "evidence": "Direct source dataflow; no live or model operation. Ordinary uninterrupted authorization tests do not exercise inherited preproofReview."
+    }
+  ],
+  "passedStructuralChecks": [
+    "Factory WeakMap binds exact wallet/node/PXE/journal and original sendTx; send captures lifecycle functions and uses an unforgeable internal token.",
+    "Engine checks pre-proof authority before journal.prepare, performs mandatory signed workflow callback after durable Tx persistence, and final signed guard after mutable progress/before-submit hooks before sole broadcast.",
+    "New epoch metadata is outside exported records; strict IndexedDB transaction completion, concurrent initialization, blocked upgrade eventual connection close, malformed metadata refusal preserved.",
+    "Restore rotates before individual record insertion, including idempotent restore and partial failure; unsupported storage cannot restore provenance-bearing workflow.",
+    "Existing session account Web Lock spans full call/proof; close and another operation refuse while active. Same normal backup import uses account lock. Application busy alone is not advertised as cross-tab ownership.",
+    "Matching signed journal disables new pre-proof renewal even if workflow callback was interrupted. Historical unknown or missing/restored/unsupported epoch remains fenced.",
+    "Explicit UI review does not send, displays renewed maximum fee, and uses ordinary separate confirmation. No new service or scheduler introduced."
+  ],
+  "independentChecks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp LOG_LEVEL=silent HARDWARE_CONCURRENCY=1 Node24.21.0 --test --test-concurrency=1 scripts/test-receipt-baseline.mjs shared/journal-backup.test.mjs",
+      "passed": 104,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1213.829833,
+      "log": "execution/evidence/W03/reviewer-e7cff92-persistence-engine.log",
+      "sha256": "ff0968fceb39079aab289215d8782374887a6a0146157d55d447a101d5769acb",
+      "scope": "Actual engine VM and IndexedDB/backup component checks; controlled SDK/network. No actual proof/send or browser."
+    }
+  ],
+  "workerEvidenceScope": "Packet full469 is before final narrow repairs, not a full final-revision rerun. Final affected application21, persistence-engine111, engine65, session2 and UI6 are separately attributed. Passing existing cases do not cover the two dataflow findings.",
+  "limitations": [
+    "No live wallet, proof, model, financial or remote operations. No source edits.",
+    "Normal SDK/apps/wallet generated closure still required; shared journal adapters are SDK inputs.",
+    "No guarantee against restoring an entire origin database plus metadata from OS snapshot.",
+    "Repair review must bind exact successor revision; this report does not approve integration."
+  ]
+}

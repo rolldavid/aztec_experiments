@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "revision": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "sourcePacketSha256": "930367a146c0bd606a7a3dc84292edb6ea0e06a2fe9200ea99bba2e085a0d6b9",
+  "sourceReviewPending": true,
+  "qualifiedTemplate": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/qualified-linux-native-pin-controlled",
+  "files": {
+    "preparation.json": "cb5afa1e54ffbf7ce550ad2bc427924b49189cec54fa391de2710d8a24acd0f9",
+    "before-source.json": "2f4a4488423ef29df6821913c92ceb5f81e809785133a2164a21c0c0e4c2b05f",
+    "test-inventory.json": "64cc0c21f9f8248ddd34f1f1f50d3b587ed73374d42ad23c258cb2a3c19b3a76",
+    "run.mjs": "7d78a66b24378323884eb720c32d4226e0d4290bd5e8b9fa6f6f9388323ad576",
+    "runner.diff": "d9f7f8561fe7cfc7d2c954b8c5703e2ac700ac73e7b5ac44dd3c2fd29f20b96b",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+  },
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "protectedCount": 3165,
+  "expectedTests": 50,
+  "skipsPermitted": 0,
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/query-operator-auth/controlled/run.mjs"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls",
+  "executionAuthorized": false,
+  "wrapperChanges": "Directory and relative Supervisor import-depth only. Child/TAP collector/owner/temp cleanup byte behavior unchanged. Current Supervisor and dependency bytes pinned.",
+  "dependencyOwnership": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules",
+    "symlink": false,
+    "mutation": false,
+    "restoration": "No dependency link or source changes are performed; posthash verifies all protected inputs. Owned short TMP removed only after positive tree absence and identity check. Evidence HOME retained."
+  },
+  "actualScope": "Controlled local HTTP, SDK schemas/catalog imports and harmless worker tests. No public provider, signing, transaction, native proof or service mutation.",
+  "coverageLimit": "No actual full deployment/PXE run; client coverage gaps recorded separately."
+}

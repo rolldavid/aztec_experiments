@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-13T01:48:44.431916+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "exitCode": 0,
+  "available": true,
+  "incomplete": false,
+  "observation": {
+    "rows": [
+      {
+        "id": "subnet-aa91f4ce",
+        "vpc": "vpc-4585113d",
+        "az": "us-east-1b",
+        "state": "available",
+        "availableIpCount": 4090,
+        "mapPublicIp": true
+      },
+      {
+        "id": "subnet-a705ce88",
+        "vpc": "vpc-4585113d",
+        "az": "us-east-1c",
+        "state": "available",
+        "availableIpCount": 4090,
+        "mapPublicIp": true
+      }
+    ]
+  },
+  "finishedAt": "2026-10-13T01:48:45.308381+00:00"
+}

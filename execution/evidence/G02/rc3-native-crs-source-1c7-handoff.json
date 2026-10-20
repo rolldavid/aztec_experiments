@@ -1,0 +1,90 @@
+{
+  "source": "1c7a6d7a26e4340fc36cdfb1aad4176749bf321e",
+  "base": "a3fb6afdbaf9131dd6d5385fd2bfd83a6fcc9665",
+  "recordedAt": "2026-10-12T20:52:22.543128+00:00",
+  "commits": [
+    {
+      "sha": "5824d4d0ca4e3b3e55b8f287eb2b2662501059a7",
+      "scope": [
+        "scripts/testing/rolling-native-artifacts.mjs",
+        "scripts/testing/rolling-native-artifacts.test.mjs"
+      ]
+    },
+    {
+      "sha": "1c7a6d7a26e4340fc36cdfb1aad4176749bf321e",
+      "scope": [
+        "crs-manifest.json",
+        "scripts/build-crs.mjs",
+        "shared/crs-client.js",
+        "scripts/test-crs-build.mjs",
+        "scripts/test-crs-consumers.mjs"
+      ]
+    }
+  ],
+  "changedSourceSha256": {
+    "scripts/testing/rolling-native-artifacts.mjs": "ee4c66029a17260d0b84f7e484722900069dd2d67047e08f72a827b938c3cbb2",
+    "scripts/testing/rolling-native-artifacts.test.mjs": "5e6a5b2753d56bd3c9ff3ebbcf11992d3ae705450b05d2694d1675786323383e",
+    "crs-manifest.json": "ddd5c7d0e30d42c4cc781e61b4301acdc3a7f9b227d73468abb82d8c80f72a64",
+    "scripts/build-crs.mjs": "4bfa26787ac3b65ada1c9a373268ed116436baf2a2c4ad4ee4e69132cb96e81b",
+    "shared/crs-client.js": "2684eed3a6da091f5ad345f6e9a16b0af4b32d2c877fc873954520f370c99f71",
+    "scripts/test-crs-build.mjs": "c5bbde0bc8a6b529d3fa1b2505cfc4329c5fa2adc0030dee6d2015bcc02a9ca9",
+    "scripts/test-crs-consumers.mjs": "ce58bdaad647e590e7a12bdbd3055a9c23d52cb0991a313845f2984a82fb1b63"
+  },
+  "checksPerformed": [
+    {
+      "kind": "Node24 syntax only",
+      "files": [
+        "scripts/testing/rolling-native-artifacts.mjs",
+        "scripts/testing/rolling-native-artifacts.test.mjs",
+        "scripts/build-crs.mjs",
+        "shared/crs-client.js",
+        "scripts/test-crs-build.mjs",
+        "scripts/test-crs-consumers.mjs"
+      ],
+      "passed": true,
+      "importsExecuted": false
+    },
+    {
+      "kind": "Static exact installed loader/artifact map hashing",
+      "loaderCount": 7,
+      "artifactCount": 60,
+      "passed": true
+    },
+    {
+      "kind": "Manifest before/after byte-value comparison",
+      "sourceAssetsUnchanged": true,
+      "derivedHashLengthPointCountUnchanged": true,
+      "installedFoundationWasmAndDownloaderHashesMatch": true
+    },
+    {
+      "kind": "git diff --check and clean committed worktree",
+      "passed": true
+    }
+  ],
+  "scopeLimits": [
+    "No dependency patch applied",
+    "No unit tests importing actual SDK/providers executed during lead proof",
+    "No CRS download/derivation executed",
+    "No native processing/compiler/Forge/SDK/browser build executed",
+    "No source outside claimed seven files changed"
+  ],
+  "runtimeValidationPending": [
+    [
+      "node",
+      "--test",
+      "scripts/testing/rolling-native-artifacts.test.mjs"
+    ],
+    [
+      "node",
+      "--test",
+      "scripts/test-crs-build.mjs",
+      "scripts/test-crs-consumers.mjs"
+    ],
+    [
+      "node",
+      "scripts/build-crs.mjs",
+      ".build/rc3-crs"
+    ]
+  ],
+  "qualificationNote": "Use pinned absolute Node under later explicit serialized slot. Native adapter enumerates actual official maps at install time and retains fixed loader/hash/URL confinement. CRS preserves expected mathematical output hash as constraint; manifest method explicitly records fresh rc6 derivation still pending. Source/metadata qualification does not qualify application proofs."
+}

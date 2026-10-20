@@ -1,0 +1,44 @@
+{
+  "status": "Focused and real MetaMask lifecycle verification passed; hosted publication in progress",
+  "twoHintEvidence": "execution/evidence/T02/application-df03392d-85d4-4588-9661-d5734069b85b.json",
+  "standaloneClaimEvidence": "execution/evidence/T04/author-fee-claim-gas-20260921.json",
+  "gasLimitBasis": {
+    "maximumMeasured": {
+      "daGas": 5824,
+      "l2Gas": 3141744
+    },
+    "padding": 0.1,
+    "limits": {
+      "daGas": 6407,
+      "l2Gas": 3455919
+    }
+  },
+  "scope": "Hosted flow funds Fee Juice separately. Limits cover measured action states, not arbitrary fragmented fee balances or CLI combined bootstrap actions. Actual transaction simulation now rejects limits exceeded before proof; no gas increase or payment fallback.",
+  "tests": {
+    "passed": 121,
+    "log": ".build/aws-testnet/fee-preflight-195.log"
+  },
+  "diagnostics": [
+    {
+      "log": ".build/aws-testnet/claim-state-187.log",
+      "cause": "Saved-claim success fixture never delivered a note. Corrected success fixture; separate absent-note rejection retained."
+    },
+    {
+      "log": ".build/aws-testnet/fee-preflight-189.log",
+      "cause": "Scope fixtures used obsolete deploy factory arguments and omitted performance API. Explicit fixture inputs corrected; real SDK scope regression assertions unchanged."
+    },
+    {
+      "evidence": "execution/evidence/T04/application-c2256cbe-45c0-49e9-adbf-1578376499b8.json",
+      "cause": "Incorrect new guard required publicOutput for entirely private claim. SDK PXE only returns publicOutput for publicInputs.forPublic. Corrected condition with real SDK private-only result regression; not a network or harness failure."
+    }
+  ],
+  "sourceHashes": {
+    "apps/src/billboard/user/engine.js": "aeb542e0c2ae8c0a003d9224e0575fd2cd86b2ea00519a37e462e32ca04e8c20",
+    "scripts/test-engine-private-fee.mjs": "e41ce9043b519a0cdfd64e6f196515213b0a5116a1e36cbf542daa59bdd78b44",
+    "scripts/test-wallet-scope-compatibility.mjs": "5ff0b97b1dcad02d85dd301ade1fd5035cb469f55c73ef7fd780cd00a7d6bb8d"
+  },
+  "browserEvidence": "execution/evidence/T04/application-57cfa893-b857-4394-a721-180f5ca0b79e.json",
+  "browserElapsedMs": 450880,
+  "browserPeakRssKiB": 3665904,
+  "cleanupComplete": true
+}

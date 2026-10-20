@@ -1,0 +1,41 @@
+✔ installed mode rejects mismatched version metadata: toolchain.json (139.865541ms)
+✔ installed mode rejects mismatched version metadata: node_modules/@aztec-labs/pxe/package.json (64.553833ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs (85.30575ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs/pxe (69.424167ms)
+✔ installed mode rejects missing or changed rolling-preference-compact.mjs (131.827458ms)
+✔ installed mode rejects missing or changed rolling-preference-recovery.mjs (92.409541ms)
+✔ generated batch control drains peers and preserves exact rejection undefined (3.142791ms)
+✔ generated batch control drains peers and preserves exact rejection null (1.725833ms)
+✔ generated batch control drains peers and preserves exact rejection false (0.942083ms)
+✔ generated batch control drains peers and preserves exact rejection 0 (0.883375ms)
+✔ generated batch control drains peers and preserves exact rejection Error: labelled rejection (0.815042ms)
+✔ labelled boundary double rejects zero count before queue or utility (4.799458ms)
+✔ labelled boundary double rejects nine logs before queue or utility (2.134583ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (2.326166ms)
+✔ labelled boundary double rejects unknown key before queue or utility (1.869209ms)
+✔ labelled boundary double rejects negative block before queue or utility (2.111208ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (2.105291ms)
+✔ labelled boundary double rejects scope getter before queue or utility (3.036666ms)
+✔ labelled boundary double rejects network getter before queue or utility (3.831375ms)
+✔ labelled boundary double rejects proof policy before queue or utility (6.377583ms)
+✔ labelled boundary double rejects symbol property before queue or utility (2.396583ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (1.704125ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (1.04475ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (5.022459ms)
+▶ owned isolated SDK and ACIR suite
+  ✔ generated page / actual SDK rejects consistent wrong ordinal before utility (606.809042ms)
+  ✔ generated page / actual SDK rejects consistent wrong fee before utility (135.319791ms)
+  ✔ generated page / actual SDK rejects consistent wrong execution before utility (29.288417ms)
+  ✔ generated page / actual SDK rejects consistent wrong slot before utility (31.161417ms)
+  ✔ actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing (10153.150666ms)
+  ✔ actual optimistic recovery advances once, replays without body ingestion and advertises anchor promotion (3116.826375ms)
+  ✔ actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head (3562.510084ms)
+✔ owned isolated SDK and ACIR suite (23622.24625ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24579.507875

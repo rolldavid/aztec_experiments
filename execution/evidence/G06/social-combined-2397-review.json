@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "verdict": "approved exactcombinedsource for bounded genuine social/reaction campaigns; actualacceptancepending",
+  "requirements": [
+    "G06A01/A02/A07 distinct private actors,six real social/reaction jobs,canonicalmetadata/accounting/publicHTTP and boundedwire evidence"
+  ],
+  "files": {
+    "scripts/testing/rolling-application-fixture.mjs": "2631090da19f98d0594330cacb6d8a8f5b91a4a20d709638f22399f7749f250f",
+    "scripts/testing/rolling-public-acceptance.mjs": "cc049ec3228ca08924a4dcbdd70288153928ec48abfb9170f81b2757017a045b",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "886e1371d02a65fcf9a15135e8109f8702734ee74ccc03d2a633ea8a8e145b4f",
+    "scripts/testing/rolling-social-wire.mjs": "005f64dd1c70792cfa48afd23ce9b19484f8c4f2eab79f79a1a505401707276c",
+    "scripts/testing/rolling-social-wire.test.mjs": "68bbc94aa970667f591209e80f122ae3597bf3d9575e39d72d6ff65a24223c82",
+    "scripts/testing/scenario-flows.mjs": "cce5828d87d71face83924042ac1d21042670bf7665e4f2adc89c735f8550710",
+    "scripts/testing/scenarios.mjs": "f1e042bd0538bb0abb24934f1931c7ddfc479fe286d96536ceafd40ce99e674f"
+  },
+  "equivalence": "All7changed files byteidentical priorreviewed83ed/helper4aa composition. Root7328composerawait/finalization,CRSinventory ande3eth_simulateV1/opaque wireblobs unchanged. No productioncontracts/shared/prover/UI/packages changed.",
+  "preservedFiles": {
+    "scripts/testing/rolling-wire-trace.mjs": "025dfe1d5d5aeddcec215861a65f6b4f0b7cf9a9b03ad0eb7b10828913e6cc92",
+    "scripts/testing/rolling-wire-campaign.mjs": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+    "scripts/testing/rolling-composer-fixture.mjs": "02fe21e06187151f537f7777b191bc979c9a5fbe7e7afe1e6fccb40137b22b1e",
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/rolling-wallet-assets.mjs": "a57fd1880f00af1718c2f632e01b299f1865ea6b3c775308f665b8af81fcc3de"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-social-wire.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs scripts/testing/rolling-composer-fixture.test.mjs",
+      "result": "83passed0failed0skipped2562.86575ms",
+      "log": "/tmp/reviewer-social-2397-tests.log",
+      "sha256": "93fee9e85db01b1f201fef7f835b8a810c4740855eb94e14f3b890c2e5312cd8"
+    }
+  ],
+  "review": [
+    "Social B gets distinct real local depositor/collateral and coldFPCclaim;reaction B retains feesonly standalone. Existing exactnode/owner/chain isolation and bothfeeledgers preserved.",
+    "Bothactors realprepare/send/journal/canonicaleffect/event paths reused;sixactualHTTPnativeproofjobs mandatory. Sameexistingminer/service lifecycle, fixed540s/4GiB.",
+    "Selectedactor admission sync uses correctowneddeposit;two encryptedjournalsreopenwithoutnewactivity; fullcanonical+fresh/coldHTTP comparisons preserveidentity/posts/cursor/names/boards.",
+    "Actualwire observer installedbeforeprivateclientcreation;receiverreconciliation andunknown/unsupported/truncation/pending/error checks remainfatal.",
+    "Bpartialcollateral failures do not overwriteAsuccess evidence; existingcomposer andownednames variants unchanged."
+  ],
+  "priorReviews": {
+    "execution/evidence/G06/social-parent-83ed-review.json": "2a141c9f561d9a10a670b1f3474813d13bb0599f1bd1916e809348e4dc4b7a6a",
+    "execution/evidence/G06/social-wire-consumer-4aa-review.json": "3f50d324c794d64d9588d0bac3b471fb6585c6dc4a88b50e22800322edd0873b"
+  },
+  "remaining": [
+    "Actual sixproof social/reaction results withperactoraccounting,canonicalpubliceffects/HTTP,receivercounts andallcleanup stillrequired.",
+    "Setupfunding occursbeforeobserver; visiblecommon local funding and opaque/runtimeaddedheaders/topology/timing/derivedlinkability remain explicit limitations.",
+    "This sourceapproval doesnotclosewholeG06 or replace existingquote/repost/duplicate/unlike-removal evidence,remotequalification,specialistreview or releasegates."
+  ]
+}

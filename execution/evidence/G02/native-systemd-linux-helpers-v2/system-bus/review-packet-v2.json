@@ -1,0 +1,123 @@
+{
+  "candidate": "authenticated-system-bus-prerequisite",
+  "comparisons": {
+    "bootExactUnchanged": true,
+    "caseExactUnchanged": true,
+    "cleanupOwnedExactUnchanged": true,
+    "nativeSubsetExactUnchanged": true
+  },
+  "diagnosisSha256": "7514439d1bb20c2b1ac321fd500c4f7f7fe17f0b368fa726f1c48d3f22269db2",
+  "executionAuthorized": false,
+  "files": {
+    "boot-template.py": "2e3f04821124e9e672e7e13c63c795efeefb745feed7950099a71f663a04c3ea",
+    "closure.py": "178dd968a782fa19a7c6596c532d762d376b8d97b86935da653b6f74fbe499b9",
+    "driver.py": "f72d82a5a59fa7640f8d1dafac2fb8f2c76f6a3596dd7b9a49e4f1805f0dc1c1",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176",
+    "setup.py": "3a9b34b0922e3f895a6fafe3518fa6328e31487d5a610d05b7185356063ce1c1",
+    "setup.sh": "5879c43a83ce38422a85c901df00162735fdde3083256e1b619f8aa1d5eabcd8",
+    "test-setup-cleanup.py": "66db120717f5c135aa2c0f285adeb21b0063acbd4429a85c61fe87db6f9bcb9f",
+    "test-system-bus.py": "75fe6859f6db26fbbe83cbc9dc2c04c139402f0c905ab2584102ab62a9860617"
+  },
+  "limitations": [
+    "No Linux systemd regression pass",
+    "No native BB qualification or active Linux pin promotion",
+    "No new paid action; USD225.28 bound unchanged",
+    "Original generic baseline failure remains preserved"
+  ],
+  "offlineFollowOn": {
+    "cleanupSeconds": 17,
+    "cpus": 2,
+    "deadlineSeconds": 60,
+    "memoryBytes": 536870912,
+    "mounts": [],
+    "network": "none",
+    "privilegeFallback": false,
+    "readiness": [
+      "four public executable/vendor paths regular",
+      "ordinary systemctl start dbus.service timeout3s (private manager connection)",
+      "production bounded_capture busctl --system NameHasOwner org.freedesktop.systemd1 timeout3s, exact b true newline, reaped/nonzero/timeout/truncation gates"
+    ],
+    "reason": "bind actual successor image/closure after independently accepted setup",
+    "runnerPrepared": false,
+    "tmpfsTotalBytes": 70254592,
+    "unchanged": [
+      "production case function",
+      "native subset/capture/classifier",
+      "boot singleton/private cgroup assertions",
+      "host confinement and read-only root",
+      "original start --wait",
+      "all positive/nonzero/timeout/baseline checks",
+      "owned cleanup and no replay"
+    ],
+    "workSeconds": 43
+  },
+  "parentClosureSha256": "41001f37ac6c7cd235bebe934c46e42c9060cc1f880104df60c3d4fffa791975",
+  "parentImage": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+  "revisionReason": "Review preparation adds exact fixed messagebus UID/GID prerequisite and two controlled cases; no runtime executed.",
+  "schemaVersion": 1,
+  "setup": {
+    "additionalPackages": "six pinned D-Bus family plus only signed resolver dependencies within existing archive caps",
+    "aptListTmpfsBytes": 67108864,
+    "archiveBytesMax": 104857600,
+    "archiveCountMax": 64,
+    "archiveTmpfsBytes": 104857600,
+    "cleanupSeconds": 30,
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers-v2/system-bus/setup.py",
+      "--execute-reviewed-once"
+    ],
+    "cpus": 2,
+    "deadlineSeconds": 180,
+    "diskFreePreconditionBytes": 2147483648,
+    "existing116Packages": "exact name/version/architecture unchanged required",
+    "existingImageDeleted": false,
+    "logFinalBytesMax": 131072,
+    "logTransientBytesMax": 196608,
+    "memoryBytes": 536870912,
+    "network": "public authenticated Noble main-only APT; no inherited developer environment or host mounts",
+    "packageVersion": "1.14.10-4ubuntu4.1",
+    "pids": 128,
+    "pull": false,
+    "receivedBytesWatchdogMax": 157286400,
+    "retention": "parent image+closure and new immutable image+authenticated closure retained; no pruning",
+    "unknownCreatePolicy": "owned-name/source reconciliation only; never repeat create",
+    "workSeconds": 150,
+    "writableBytesWatchdogMax": 1073741824
+  },
+  "supersedesDraftSha256": "cb3f4d76298420b94f02c320b9e081cb28553411e872488e0a35291af590423c",
+  "tests": {
+    "controlledOnly": true,
+    "count": 25,
+    "executed": false,
+    "inventory": [
+      "test-setup-cleanup.py:OwnedCleanup.test_normal_owned_cleanup_requires_positive_absence",
+      "test-setup-cleanup.py:OwnedCleanup.test_state_timeout_cannot_skip_owned_cleanup",
+      "test-setup-cleanup.py:OwnedCleanup.test_malformed_or_missing_state_cannot_skip_owned_cleanup",
+      "test-setup-cleanup.py:OwnedCleanup.test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup",
+      "test-setup-cleanup.py:OwnedCleanup.test_multiple_failure_still_attempts_removal_and_absence",
+      "test-setup-cleanup.py:OwnedCleanup.test_removal_failure_still_checks_actual_absence",
+      "test-setup-cleanup.py:OwnedCleanup.test_unknown_or_foreign_identity_never_mutates",
+      "test-setup-cleanup.py:OwnedCleanup.test_valid_shaped_unknown_id_never_mutates",
+      "test-setup-cleanup.py:OwnedCleanup.test_absence_transport_failure_is_not_absence",
+      "test-system-bus.py:BusReadiness.test_ready_requires_exact_full_bus_owner_after_bounded_vendor_start",
+      "test-system-bus.py:BusReadiness.test_each_missing_prerequisite_prevents_start_and_capture",
+      "test-system-bus.py:BusReadiness.test_start_failure_stops_before_owner_check",
+      "test-system-bus.py:BusReadiness.test_capture_failure_preserves_fixed_status_only",
+      "test-system-bus.py:BusReadiness.test_absent_false_malformed_or_private_owner_reply_rejects",
+      "test-system-bus.py:BusReadiness.test_nonzero_timeout_unreaped_or_unstarted_rejects",
+      "test-system-bus.py:BusReadiness.test_truncated_either_channel_rejects",
+      "test-system-bus.py:BusReadiness.test_source_places_readiness_before_timers_and_all_cases",
+      "test-system-bus.py:BusReadiness.test_actual_case_capture_classifier_and_boot_unchanged",
+      "test-system-bus.py:SetupBinding.test_signed_setup_all_three_plans_pin_same_six_dbus_packages",
+      "test-system-bus.py:SetupBinding.test_original_bounded_setup_cleanup_function_unchanged",
+      "test-system-bus.py:SetupBinding.test_setup_hashes_bind_actual_inputs_and_parent_image",
+      "test-system-bus.py:SetupBinding.test_parent_packages_unchanged_rejects_upgrade_removal_duplicate",
+      "test-system-bus.py:SetupBinding.test_exact_bus_identity_requires_matching_nonroot_uid_gid",
+      "test-system-bus.py:SetupBinding.test_missing_duplicate_root_mismatched_or_malformed_bus_identity_rejects",
+      "test-system-bus.py:SetupBinding.test_parent_closure_preserved_and_machine_identity_vendor_units_required"
+    ],
+    "runner": "mechanical reuse of qualified descendant-aware controlled runner after source review; no execution under this packet"
+  },
+  "trackedHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9"
+}

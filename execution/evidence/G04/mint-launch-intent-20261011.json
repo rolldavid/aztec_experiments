@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-11T22:29:24.378545+00:00",
+  "action": "One authorized Sepolia fee mint",
+  "source": "c11a0127a1ac89becf6435b06994495e1404da01",
+  "wrapperSha256": "2e9344d003db909a4886dcd1d3aec5d2ed32b60ce16190dc70d46d7b5d843535",
+  "reviewer": "reviewer-20261011",
+  "maxGasCostWei": "200000000000",
+  "deadlineSeconds": 120,
+  "replay": "Forbidden; permanent sender lease and private journal retained; inspect only after this call"
+}

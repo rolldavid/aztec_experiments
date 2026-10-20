@@ -1,0 +1,63 @@
+{
+  "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+  "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+  "verdict": "approved-component-integration",
+  "changedPaths": 22,
+  "source": {
+    "apps/dist/sdk-manifest.json": "479af55cccd94c4014c1f51827de77752acef8321534905a635afe34537348fc",
+    "apps/rolling/README.md": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+    "deploy/prover/bootstrap.py": "230383a747c3ecc267de9d583cabf510785e3ff222eea5688120273045d50ea4",
+    "docs/rolling-deployment.md": "03e4aeb7903547b0c90e94296513094aa06efdc6c3973a435371b168f3f769e4",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "package.json": "43d513a0b22fb46ef40ab9237db19e709af08c6a62fe7336481829101e20ae74",
+    "plugins/devnet/bootstrap.mjs": "62cc6e0c662136ab7435c0b0c24da71f042bd486d71304ae23e23dd8518818ac",
+    "plugins/devnet/liquidity.mjs": "fe0d39a3dd4e41170964ea263489f98ca90cafd7f4866c66c513db548059f4a6",
+    "plugins/devnet/network.mjs": "412dff7f0469ea59d4be6cdce1965ec1f0f20182277650cd7acb8f6ccdcabd02",
+    "plugins/devnet/operator-test.mjs": "4dcad0ab3c9a5d8d7afc8ff83a83bf65739aa9ba49279f5f0b9442f586d0ffdc",
+    "plugins/devnet/start.mjs": "f2a7085dc3c7d3b531485f33bd4c2dd50c6e649889824a6258a96885cb49cf43",
+    "plugins/rolling-funding-relay.mjs": "2598f7a89c6e1b1c4610ed9ea524f8c88c8c10afb08d7968dd4ee36957a07cbe",
+    "plugins/test/rolling-funding-relay.test.mjs": "64b64c2cc2abe6bf6c7276073354e9e74fc124bf1bc73332d84713c1e680bc47",
+    "prover/rolling-artifacts.json": "88adc039c9aa97fcf2b8f6f84359e1d13b7d519300873a2f70467d90382d5ed4",
+    "scripts/build-contracts.mjs": "1bd2d6ed0d608989180e08070b1ef46f45429c1b5855328e87fc818eec456cb8",
+    "scripts/check-artifacts.mjs": "88fbe20e2e6858793735839450c9a3618ef6679e1468d4d2926a349db08c1657",
+    "scripts/run-bounded-browser-check.mjs": "f25c62312071f3187b520a619633804541475a40413c0d9e9ab3b956d9c61f24",
+    "scripts/t04-metamask.mjs": "22f1b93f1faea1cdeec7832bc0eb64fb0d5c2150e2a7f5954b0ef26d39374586",
+    "scripts/t04-phantom.mjs": "3c813fa3c23f654790b149c5ba1d2c54d7610922e01e9a8b317b69f6842cdab4",
+    "scripts/test-artifacts.mjs": "1ee996774040b11dd170488fa5770b0471d997012a3def7464640240e4533c2a",
+    "scripts/test-t04-browser-journey.mjs": "c858636ecf114c297633ecd32f564d3497ff52d78f69895c7f3fb2bda69e6f6e",
+    "scripts/test-wallet-extension-browser.mjs": "435a0c2cda12b8c27ccca3bc1cfda830b2c766c0afd6bc051cb5c048cfe7493f"
+  },
+  "carry": [
+    "reviewer-93d-native-liquidity-final-review.json",
+    "reviewer-be720-metamask-final-review.json"
+  ],
+  "exactCarryChecks": {
+    "prior17PathsOnlyTwoRouterRepairChanges": true,
+    "allFiveFinalDesignPathsExact": true,
+    "bothControlsRepairPathsExact": true
+  },
+  "repair": "Actual SwapRouter02 pinned ABI exports inherited factory(), not constructor argument name factoryV3. Changed actual-used verification preserves both swap/quoter factory and WETH identity checks. Controlled actual Contract/ABI regression rejects wrong identity.",
+  "test": {
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "actual pinned ethers Contract/ABI calls through controlled read-only transport; mismatch rejected",
+    "log": "swap-router-abi-focused.log",
+    "logSha256": "f486bdbb1192733b0fd035f3be80969784eec235f26d5a3d95f78a1119937ae7",
+    "elapsedMs": 3342.088417
+  },
+  "artifactSha256": "dbdb4aa0db4de4a11b0ac53d3b756b007a6b614b7d568e644310793163de7d21",
+  "blockingFindings": [],
+  "historicalFailure": {
+    "session": 56295,
+    "status": "failed; preserved",
+    "scope": "Reported settled checkpoints and Circle/DEX deployments do not make complete startup pass"
+  },
+  "actualResume": "56936 reported running by parent; not accepted or inferred here",
+  "limits": [
+    "No reviewer heavy execution",
+    "No live wallet payment, full funding/private claims or testnet acceptance",
+    "Actual fresh startup/stop/reopen remains separate integration evidence"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "base": "b140728d9c933eab5502d14d467900d020e10626",
+  "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-wallet-asset-transfer",
+  "implementer": "controls-resume-20261014",
+  "allowed_paths": [
+    "apps/rolling/start.mjs",
+    "apps/rolling/start.test.mjs"
+  ],
+  "required_checks": [
+    "wallet-transfer-http",
+    "combined-transfer-http"
+  ],
+  "requirements": [
+    "G07-A08-public-wallet-transfer-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-resume-20261014",
+      "task_id": "G07-wallet-asset-transfer",
+      "paths": [
+        "apps/rolling/start.mjs",
+        "apps/rolling/start.test.mjs"
+      ]
+    }
+  ]
+}

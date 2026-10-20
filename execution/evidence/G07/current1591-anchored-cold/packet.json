@@ -1,0 +1,87 @@
+{
+  "kind": "actual-anchored-page-cold-recovery",
+  "passed": false,
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "productionEquivalent": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+  "runtimeSha256": "b4ccb1f46963e66be50f16e52b68ffc92825e3322cd856f27a5e9593ef346cc8",
+  "moduleSha256": "a0386194a869ea4a0ca75c0fe75d676ce49738c805316ec386f8895fdc9e0aea",
+  "acceptanceDeadlineMs": 120000,
+  "elapsedMs": 120023,
+  "result": "Whole cold deadline reached before complete preferences; no120s qualification.",
+  "lastAcknowledged": {
+    "complete": false,
+    "progress": {
+      "nextBlock": 135,
+      "anchorBlock": 1601,
+      "processedRevision": "0",
+      "markersChecked": 0,
+      "markersTotal": null
+    }
+  },
+  "firstRecoveryStartedAfterApproxMs": 65655,
+  "emptyPageDurationsMs": [
+    4641,
+    4809,
+    4899,
+    5257
+  ],
+  "emptyPageBlocks": 32,
+  "emptyPageMeanMs": 4901.5,
+  "traffic": {
+    "walletAssets": 16,
+    "privateRequests": 386,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 9,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "cleanup": {
+    "contextClosed": true,
+    "ownedTreeAbsent": true,
+    "tempRemoved": true,
+    "peakTreeRSSKiB": 1806832
+  },
+  "files": {
+    "current1591-anchored-page-cold-01-result.json": {
+      "sha256": "82266f363ef566001cd14a5ddf1705bb38b5fa7894ed168537b4d7e1a16c094f",
+      "bytes": 28330
+    },
+    "current1591-anchored-page-cold-01-supervisor.json": {
+      "sha256": "b05c3d2ce3eccbc45560a88596566d1cd7bb41184c34b5c609f28cc0b425f10a",
+      "bytes": 9683
+    },
+    "current1591-anchored-page-cold-01.log": {
+      "sha256": "a2e3058a22551c47ada2ea45d71077c9442bd13c2a7e84b3786e88b1e9f20796",
+      "bytes": 220
+    },
+    "current1591-anchored-page-cold-01-admission.json": {
+      "sha256": "4ac0143c629df41d923b31fb24d8c8af7b7497ad7f8a711aca16274874323a7c",
+      "bytes": 940
+    },
+    "current1591-anchored-page-cold-01-renewed-admission.json": {
+      "sha256": "7930ffc227339763014388423d8f42548ce7af810c30705b95bbd9f6afafa55b",
+      "bytes": 264
+    },
+    "run.mjs": {
+      "sha256": "1bf569851d2a02aafb6c68397b05c026c7fe2dbfc1b62a80f2b35c4192c047ec",
+      "bytes": 21612
+    },
+    "supervise.mjs": {
+      "sha256": "a86dccc80f8e0f6e5d29d1e7763513db6b452a21593073ab3110b606088e415a",
+      "bytes": 2930
+    }
+  },
+  "limits": [
+    "No native receiver trace/general privacy qualification.",
+    "Some requestfailed callbacks observed alongside200 responses; no causal attribution from counters alone.",
+    "Acknowledged progress only; no inference of final interrupted call persisted cursor.",
+    "All remote assets included, local Mac browser through SSM.",
+    "Original failed6b and initial admission refusal preserved; onlyone actual revised run."
+  ]
+}

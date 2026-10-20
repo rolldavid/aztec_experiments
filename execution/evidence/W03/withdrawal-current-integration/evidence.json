@@ -1,0 +1,129 @@
+{
+  "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "task_id": "W03-current-withdrawal-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "id": "withdrawal-consumer",
+      "status": "pass",
+      "command": "Node24 --test existing wallet-session >500block cases; reader/compact tests",
+      "environment": "macOS pinnedNode24; realencryptedjournals+labelledchaindoubles",
+      "observed": "129workerwalletsuitepass;6independentwithdrawalpass;combined6+83pass0skip. No productionbehavior change or realchainclaim. Exactreviewedblobmappingverified.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/packet.json",
+          "sha256": "0e7f5a0f27cba11b6061072f4cae090902e4d46d7f184b98268a9e22f94cea97"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-packet.json",
+          "sha256": "c6a4d32c83e69266018698dfe5f9f456e8dab1a538ce04591e35539004affd7d"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-withdrawal.log",
+          "sha256": "1151596f168516aa7c40ef8c75c703bc220e034bc8bd117a719ed296a44addf3"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-reader.log",
+          "sha256": "2c6f649e9f2db25f3bb7625a8fa6f6f2114e5543aa2cba4888819c7aae1b80ea"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-07293b5-withdrawal.json",
+          "sha256": "7723f3207860b48b89bf066da1209ed487fc308447e375d99c12f87c5a7071dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-34e7816-combined.json",
+          "sha256": "dcfd04a9e2a28c6ee07ab967d3b7fb6d8e56531642e8baeb678c7ad948768954"
+        }
+      ]
+    },
+    {
+      "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "id": "combined-reader",
+      "status": "pass",
+      "command": "Node24 --test existing wallet-session >500block cases; reader/compact tests",
+      "environment": "macOS pinnedNode24; realencryptedjournals+labelledchaindoubles",
+      "observed": "129workerwalletsuitepass;6independentwithdrawalpass;combined6+83pass0skip. No productionbehavior change or realchainclaim. Exactreviewedblobmappingverified.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/packet.json",
+          "sha256": "0e7f5a0f27cba11b6061072f4cae090902e4d46d7f184b98268a9e22f94cea97"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-packet.json",
+          "sha256": "c6a4d32c83e69266018698dfe5f9f456e8dab1a538ce04591e35539004affd7d"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-withdrawal.log",
+          "sha256": "1151596f168516aa7c40ef8c75c703bc220e034bc8bd117a719ed296a44addf3"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-reader.log",
+          "sha256": "2c6f649e9f2db25f3bb7625a8fa6f6f2114e5543aa2cba4888819c7aae1b80ea"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-07293b5-withdrawal.json",
+          "sha256": "7723f3207860b48b89bf066da1209ed487fc308447e375d99c12f87c5a7071dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-34e7816-combined.json",
+          "sha256": "dcfd04a9e2a28c6ee07ab967d3b7fb6d8e56531642e8baeb678c7ad948768954"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+      "id": "W03-A03-current-consumer-synthetic-coverage",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/packet.json",
+          "sha256": "0e7f5a0f27cba11b6061072f4cae090902e4d46d7f184b98268a9e22f94cea97"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-packet.json",
+          "sha256": "c6a4d32c83e69266018698dfe5f9f456e8dab1a538ce04591e35539004affd7d"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-withdrawal.log",
+          "sha256": "1151596f168516aa7c40ef8c75c703bc220e034bc8bd117a719ed296a44addf3"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/withdrawal-current-integration/combined-reader.log",
+          "sha256": "2c6f649e9f2db25f3bb7625a8fa6f6f2114e5543aa2cba4888819c7aae1b80ea"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-07293b5-withdrawal.json",
+          "sha256": "7723f3207860b48b89bf066da1209ed487fc308447e375d99c12f87c5a7071dc"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/W03/reviewer-34e7816-combined.json",
+          "sha256": "dcfd04a9e2a28c6ee07ab967d3b7fb6d8e56531642e8baeb678c7ad948768954"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+    "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "design-resume-20261014",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/W03/reviewer-34e7816-combined.json",
+        "sha256": "dcfd04a9e2a28c6ee07ab967d3b7fb6d8e56531642e8baeb678c7ad948768954"
+      }
+    ]
+  }
+}

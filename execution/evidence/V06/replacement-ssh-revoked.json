@@ -1,0 +1,15 @@
+{
+    "Return": true,
+    "RevokedSecurityGroupRules": [
+        {
+            "SecurityGroupRuleId": "sgr-0b6a1fe51216fa308",
+            "GroupId": "sg-03065d3c141f9b030",
+            "IsEgress": false,
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIpv4": "85.255.236.254/32",
+            "Description": "Temporary V6 capacity replacement install"
+        }
+    ]
+}

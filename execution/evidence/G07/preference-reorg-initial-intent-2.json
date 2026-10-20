@@ -1,0 +1,39 @@
+{
+  "candidate": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+  "scenario": "rolling-preference-reorg-initial",
+  "recordedAt": "2026-10-12T09:02:40.714946+00:00",
+  "status": "finished-failed",
+  "attempt": 2,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/recovery-a552-source-eligibility-review.json",
+  "reviewSha256": "4b5b0b20aaace2dc38fe07a4df52fbfd25546247c9a2e6f540382c4c379166e7",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-reorg-initial",
+  "changesSinceAttempt1": [
+    "Actual clamshellsleep cause51c9 confirmed; freshlidopen readback andforegroundidleassertion; user informed lidmuststayopen",
+    "Independentlatecontextfindinga699 repairedreviewedc6; exactsixfiletransfera552,304combinedchecks andnormalSDK/walletbuilds pass"
+  ],
+  "lidOpen": true,
+  "scope": "Three genuine LOCAL private proof jobs; real disposable L1 fork/natural archiver/PXE rollback/explicitreplacement. No persistenttestnet or paid operation by this test.",
+  "exitCode": 1,
+  "finishedAt": "2026-10-12T09:09:16.565Z",
+  "evidence": "execution/evidence/G07/application-c7f1e021-9e25-4900-9765-ea9a5080f2e9.json",
+  "evidenceSha256": "4cfac7594b6fed7cb7d34e34a52ef25b9d2025af20bbfdeb6408fe1be90d91f4",
+  "elapsedMs": 395748,
+  "peakTreeRSSKiB": 1911072,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "failure": {
+    "stage": "rolling-application:preference-real-l1-reorg",
+    "errorClass": "AssertionError",
+    "code": null,
+    "frames": [
+      "rolling-preference-reorg.mjs:25:51",
+      "rolling-application-fixture.mjs:571:13",
+      "rolling-application-fixture.mjs:1148:25",
+      "c01-real-node.mjs:74:18"
+    ]
+  },
+  "nextAction": "Diagnose unsupported Anvil interval shape assumption at helper25 before retry; no reorg mutation occurred before this assertion."
+}

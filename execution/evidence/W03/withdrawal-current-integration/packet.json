@@ -1,0 +1,86 @@
+{
+  "task": "W03-current-withdrawal-recovery",
+  "requirements": [
+    "W03-A02",
+    "W03-A03",
+    "W03-A04"
+  ],
+  "agentSession": "design-resume-20261014",
+  "parentSession": "lead-20261011",
+  "base": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "candidate": "07293b594fc8d1723a0703c92287e3efdca8c7cd",
+  "branch": "codex/rolling-withdrawal-recovery-current",
+  "changedPaths": [
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-session.test.mjs": "fc1d625b47965e0ac6bf480fd40fa7594c47c98896eddc3d3b7a015e98a008e2",
+    "apps/rolling/wallet-session.mjs": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617",
+    "shared/ethereum-journal.mjs": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08"
+  },
+  "checks": [
+    {
+      "name": "baseline",
+      "command": [
+        "env",
+        "NODE_BACKEND=js",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-name-pattern=RC22 (collateral refund|lost refund|refund receipt reorg|Bok refund)",
+        "apps/rolling/wallet-session.test.mjs"
+      ],
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/baseline.log",
+      "sha256": "40db1d0c770c437795b917a851222ec7393573d11b164e371290d8e70d44c3e7"
+    },
+    {
+      "name": "focused",
+      "command": [
+        "env",
+        "NODE_BACKEND=js",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "--test-name-pattern=W03 .*refund recovers",
+        "apps/rolling/wallet-session.test.mjs"
+      ],
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/focused.log",
+      "sha256": "52e21aae7907a23d8ccda095d727b842aad99182dc971c16412942e3e0a4431f"
+    },
+    {
+      "name": "wallet-session",
+      "command": [
+        "env",
+        "NODE_BACKEND=js",
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "--test",
+        "apps/rolling/wallet-session.test.mjs"
+      ],
+      "passed": 129,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/wallet-session.log",
+      "sha256": "71111c83bd0e9f62cf21e138b1c2c63a8f15f2fae520adef7a14da1c8ce83df9"
+    }
+  ],
+  "scope": "Synthetic Ethereum/Aztec providers with actual current Rolling withdrawal capability and authenticated encrypted journal; no real-chain or proof acceptance claim.",
+  "cases": [
+    "Collateral and Bok lost send response: actual journal has null Ethereum transaction hash; scan from 11 reaches inclusion 711 after head advances to 1110, with one original send.",
+    "Interrupted scan fails at 541 after durable checkpoint 540; reopened consumer resumes at 541 and finds exact receipt at 711.",
+    "Reorg invalidates saved checkpoint 540; same transaction is included at replacement-fork block 520; reopened consumer scans from genesis and authenticates exact effect instead of skipping history or paying twice."
+  ],
+  "invariants": [
+    "Original L2 workflow unchanged.",
+    "Exact amount, transaction hash and gas cost returned only after authenticated recovery.",
+    "Repeat prepare after success refused; send count remains one.",
+    "Every scanned height is contiguous; persisted cursor and null hash inspected through authenticated read only."
+  ],
+  "applicationDefectReproduced": false,
+  "baselineMeaning": "Existing 14 related checks passed before edit. New coverage passed first run; this adds missing current-consumer regression evidence, not a claimed source bug repair.",
+  "remainingAcceptance": "Real current Rolling long-absence/reorg withdrawal acceptance and final proof/release gates remain separate. Existing completed bio crash phases were not rerun."
+}

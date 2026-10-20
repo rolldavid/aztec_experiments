@@ -1,0 +1,15 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "ac35fd3cc2e01ef670bf4ab225cc1f561de3cef4",
+  "verdict": "ELIGIBLE_ONE_SEPARATELY_GRANTED_FOCUSED_TWO",
+  "sourcePacketSha256": "d5615c0ab537bfa79c52fc50a0ed1c617de298b05b162d4a5d72ee1fdaf77bb8",
+  "preparationPacketSha256": "bc1f52350ff6b7ead04dc29bb221a8070ed9898633c4d8925630dba14678080c",
+  "runnerSha256": "5ed8d4b264ad4481ffd2e97a6d3847d83520f179501f5d22e9822405b64cb788",
+  "verification": [
+    "One test-file delta preserves existing cases and production source. Exact CLI URL/hash and unique final anchor required; changed/missing/duplicate/moved terminal negatives exercise the same seam.",
+    "Actual module prelude and original loadAztecSDK/createStoreNode are invoked in a fresh child. Fetch fails closed/counts all attempts; synthetic manifest/key only, no wallet/main/PXE/proof invocation.",
+    "Actual normal bundle manifest/input/output checks before and after; unchanged simulator initializer invoked by loader; store open/write/read/close/delete verified; hook deregistered.",
+    "All5370 protected bindings independently rehashed. Supervisor/child unchanged except directory, focused2 anchored selection,60s2GiB and20s/1GiB inner bound, owned cleanup retained."
+  ],
+  "scope": "Normal bundled CLI loader/store compatibility preflight only. Transaction main, auth transport/PXE/drain and real deployment remain separate gates."
+}

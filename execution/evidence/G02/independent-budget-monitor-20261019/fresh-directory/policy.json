@@ -1,0 +1,30 @@
+{
+  "base": "4683d4c7926128a89b5600a5fdc87c91181189b8",
+  "candidate": "506ca88234424152d7438dcee016ae57d7fa06cc",
+  "task_id": "G02-independent-budget-monitor",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "deploy/prover/BOOTSTRAP.md"
+  ],
+  "required_checks": [
+    "focused-monitor-containment"
+  ],
+  "requirements": [
+    "RC36-RC37-RC38-monitor-boundary"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G02-independent-budget-monitor",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md"
+      ]
+    }
+  ]
+}

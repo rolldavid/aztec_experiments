@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "runtimeSha256": "9b09eb139cc9048bcf71950ae68c586a261d25ee139b44e453c0147f40296310",
+  "scope": "Original U1 three ordinary preference writes; independent recovery is separate evidence. Native and PXE proofs disabled by configuration.",
+  "passed": true,
+  "elapsedMs": 92828,
+  "originalPredecessor": {
+    "type": "name",
+    "status": "confirmed",
+    "txHash": "0x2db62eb14903e95829b9dae9ea23a1a2aefb1c6b10a91ca2c27f3ceb8cafb01b"
+  },
+  "initialRevision": "0",
+  "expected": {
+    "bookmarks": [
+      "9903641385085472279294715149930801404724970396828103863882657273810886808161"
+    ],
+    "followedBoards": [
+      "0"
+    ],
+    "readMarker": {
+      "thread": "9903641385085472279294715149930801404724970396828103863882657273810886808161",
+      "throughBlock": 1271,
+      "blockHash": "4614911975191567648766951559396942953175148326621638242449476060228716336792"
+    },
+    "revision": "3"
+  },
+  "actions": [
+    {
+      "type": "preference",
+      "expectedRevision": "0",
+      "status": "confirmed",
+      "maximumFee": "16181560764537",
+      "canonical": {
+        "transactionHash": "0x004484e1aaee411e382bc8e8ef06d26709352c075dc6645dc905b2c33a5f8b29",
+        "blockNumber": 1517,
+        "blockHash": "0x02a27e65cbad83e18cae2a212f758ae2506138d24b03cc52b1b041175d9c56a8",
+        "canonical": true
+      }
+    },
+    {
+      "type": "preference",
+      "expectedRevision": "1",
+      "status": "confirmed",
+      "maximumFee": "16181560764537",
+      "canonical": {
+        "transactionHash": "0x04479e1e436add99ae5fec2be19ffd992afe3d058529323fedf3c952928896f4",
+        "blockNumber": 1518,
+        "blockHash": "0x1e3bcd2f1dc80cfc9482a16c0085ae9cab15c1245e8f3b8bc13cdef71a998b39",
+        "canonical": true
+      }
+    },
+    {
+      "type": "read-marker",
+      "expectedRevision": "2",
+      "status": "confirmed",
+      "maximumFee": "16181560764537",
+      "canonical": {
+        "transactionHash": "0x28a975b4e7d306a08673550538df1e6f0f99088a3aa1b6d3ccc04f2afc12f65e",
+        "blockNumber": 1519,
+        "blockHash": "0x05a8e8ebc7295400f0dde6102281eae94cb6c4a72e3b0a5d8bc4df606ec3eea1",
+        "canonical": true
+      }
+    }
+  ],
+  "sends": 3,
+  "traffic": {
+    "walletAssets": 16,
+    "privateRequests": 877,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 0,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 76,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "contextClosed": true,
+  "rawPrivateResult": ".build/g07-keys-only-current/nonempty-writes-result.json",
+  "rawResultSha256": "d8f1745a875325191ea09c379330e8cdeb556f20ce949db8d0741043bcb56298",
+  "preservedEncryptedHistorySha256": "7659faf66b77c9383fdb58486891ecbf3bcad1ecadd8cce85cc25e7ef9c6adf9",
+  "limits": [
+    "Three canonical native development transactions do not satisfy real-proof testnet acceptance.",
+    "Tag discovery during ordinary action preparation is outside zero-tag cold-recovery measurement.",
+    "Expected preferences were never injected into independent recovery profile."
+  ]
+}

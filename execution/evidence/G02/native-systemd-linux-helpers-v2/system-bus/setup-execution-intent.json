@@ -1,0 +1,38 @@
+{
+  "createdAt": "2026-10-13T05:59:14.767595+00:00",
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "preparationSha256": "af781af09863851bf9c69329c27089b43255c762108d43f143ce4b778d0b0a5f",
+  "reviewSha256": "504a09c9277b8591bbf6d2febc0e98854ad566313e9309197d4a001b376c7917",
+  "image": {
+    "id": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+    "architecture": "arm64",
+    "os": "linux",
+    "size": 53964743
+  },
+  "runningContainers": 0,
+  "sourcePins": {
+    "setup.py": "3a9b34b0922e3f895a6fafe3518fa6328e31487d5a610d05b7185356063ce1c1",
+    "setup.sh": "5879c43a83ce38422a85c901df00162735fdde3083256e1b619f8aa1d5eabcd8",
+    "closure.py": "178dd968a782fa19a7c6596c532d762d376b8d97b86935da653b6f74fbe499b9"
+  },
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers-v2/system-bus/setup.py",
+    "--execute-reviewed-once"
+  ],
+  "attempts": 1,
+  "bounds": {
+    "operationSeconds": 150,
+    "cleanupSeconds": 30,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "pids": 128,
+    "receivedBytesWatchdogMax": 157286400,
+    "archiveBytesMax": 104857600,
+    "writableBytesWatchdogMax": 1073741824
+  },
+  "noPull": true,
+  "noOfflineOrNativeExecution": true
+}

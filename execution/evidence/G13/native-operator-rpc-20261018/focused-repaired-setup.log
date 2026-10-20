@@ -1,0 +1,11 @@
+✔ development native RPC retains ordinary and compact APIs and delegates standard SDK operator controls (34.661375ms)
+✔ development operator RPC rejects public chains and enabled or unspecified proofs before native access (0.267541ms)
+✔ development compact shutdown waits for its original pending native request (24.595583ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2339.133958

@@ -1,0 +1,32 @@
+✔ private selection preserves chronological union, anonymous bookmarks, unread reply boundary and public tombstones (1.174ms)
+✔ empty private page preserves public continuation and never invents exhaustion (0.165458ms)
+✔ overlapping follows never duplicate a post and global opt-out suppresses reply delivery (0.139042ms)
+✔ new explicit subscription includes historical replies; marker at the same block includes none from that block (0.17575ms)
+✔ private view refuses wrong chain (0.225167ms)
+✔ private view refuses wrong version (0.485375ms)
+✔ private view refuses wrong board (0.081083ms)
+✔ private view refuses incomplete public page (0.065ms)
+✔ private view refuses malformed head (0.075417ms)
+✔ private view refuses zero notification thread (0.120875ms)
+✔ private view refuses duplicate follows (0.076042ms)
+✔ private view refuses unsorted follows (0.062958ms)
+✔ private view refuses duplicate markers (0.073083ms)
+✔ private view refuses invalid marker (0.077042ms)
+✔ private view refuses invalid marker hash (0.070542ms)
+✔ private view refuses duplicate post (0.071917ms)
+✔ private view refuses future public post (0.071792ms)
+✔ private view refuses reordered page (0.083708ms)
+✔ private view refuses duplicate position (0.105208ms)
+✔ private view refuses malformed parent (0.14ms)
+✔ private view refuses too many source posts (0.110958ms)
+✔ private view refuses empty cursor (0.0625ms)
+✔ read model neither mutates caller data nor leaks malformed values in an error (0.156958ms)
+✔ uninitialized preferences and a public snapshot behind a read marker fail closed (0.195417ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.69175

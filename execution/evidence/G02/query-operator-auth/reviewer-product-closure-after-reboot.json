@@ -1,0 +1,127 @@
+{
+  "sourceRevision": "3fc51f58362755ac6f3173d2c98c53710d8e8866",
+  "reviewer": "reviewer-resume-20261014",
+  "scope": "Bounded read-only acceptance-map/source assessment; no tests, model/network operations or application edits. Complements existing map rather than replacing requirements.",
+  "reviewedAt": "2026-10-14T11:55:46.441707+00:00",
+  "resolvedPriorImplementationGaps": [
+    "Private request ownership utilities, complete private balances and separate Bok exit are composed; actual originalwithdraw/refund retained.",
+    "Explicit expire-bok-request application/UI action exists and preserves uncertain reserved liabilities.",
+    "Trusted operator --reconcile-billing entrypoint exists; actual recovery exercise remains qualification.",
+    "Deployment skill and Rolling runbook exist on current lead source; their absence in old coordination checkout is not an application gap."
+  ],
+  "priorities": [
+    {
+      "priority": 1,
+      "kind": "genuine implementation gap",
+      "requirements": [
+        "REQ08",
+        "RC12",
+        "RC13",
+        "RC36",
+        "RC37"
+      ],
+      "item": "Rolling automated moderation adapter and service wiring",
+      "evidence": [
+        "censor-daemon/daemon.mjs uses createSigner/list/processModerationCycle with legacy feed schema.",
+        "censor-daemon/signer.mjs113-135 invokes list/declare-immoral and parses legacy billboard moderation journals.",
+        "Rolling remove_post/reject_subboard/remove_avatar are present in application and acceptance fixture, not current daemon adapter.",
+        "docs/rolling-deployment.md246-250 explicitly leaves Rolling moderation service wiring/model evaluation open."
+      ],
+      "next": "Reuse current isolated moderation runtime, signer boundary and durable jobs with exact Rolling canonical policy union/version and action/event adapters. Keep human and Bok removal authority, reason, tombstones and withdrawal invariants. Then evaluate actual configured model; do not invent a new moderation framework."
+    },
+    {
+      "priority": 2,
+      "kind": "implementation repair already assigned",
+      "requirements": [
+        "REQ01",
+        "RC01",
+        "RC38"
+      ],
+      "item": "Clean CI build must produce normal PrivateBok artifact before actual SDK constructor check",
+      "next": "Design five-path scoped build fix, existing focused constructor/provenance checks and clean CI; no custom artifact copying or assertion weakening."
+    },
+    {
+      "priority": 3,
+      "kind": "current acceptance campaign",
+      "requirements": [
+        "RC29",
+        "RC30",
+        "RC31",
+        "RC33",
+        "RC34",
+        "RC35",
+        "RC41"
+      ],
+      "item": "Four original-wallet Bok calls with actual summaries, model-generated tests/code, canonical settlement and separate-origin latest/source artifact",
+      "next": "Complete current Controls campaign; verify both users same repository ordering, cross-thread independence/concurrency, exact request costs, accepted commit restore and uncertain-call recovery. Four successful call reports alone do not prove all concurrency/restart/billing clauses."
+    },
+    {
+      "priority": 4,
+      "kind": "missing integrated qualification; implementation exists",
+      "requirements": [
+        "RC08",
+        "RC25",
+        "RC26",
+        "RC28",
+        "RC39",
+        "RC40"
+      ],
+      "item": "Current-source notification/read-marker/cold preference restore, core Bok-outage rebuild and full public/private observer traces",
+      "evidence": [
+        "Existing G07 development-acceptance-map is historical2026-10-12 and cannot be treated as current status.",
+        "Later handoff records actual preference/social runs and notification4443 partial success followed by cold timeout; preserve failures and reuse qualified portions.",
+        "Existing G03 targets and G07 recovery scenarios already supply thresholds and tools."
+      ],
+      "next": "Reconcile existing exact-source evidence first, then execute only missing affected integrated scenarios on retained environment where safe; no new harness or automatic rerun of paid preference writes."
+    },
+    {
+      "priority": 5,
+      "kind": "operational qualification",
+      "requirements": [
+        "RC27",
+        "RC36",
+        "RC37",
+        "RC38"
+      ],
+      "item": "Operated archive capacity/cost and clean independent installation/recovery",
+      "next": "Rehearse existing skill/runbook from clean checkout with separate identities/origin, verify services and core+Bok backup/restore. Paid node capacity requires current ledger forecast and verified shutdown; do not treat local health or source documentation as operated archive acceptance."
+    }
+  ],
+  "externalDependencies": [
+    {
+      "requirements": [
+        "RC20"
+      ],
+      "blocker": "Authentic Phantom extension availability/compatibility; current official package403 is not qualified wallet acceptance."
+    },
+    {
+      "requirements": [
+        "RC32",
+        "RC31"
+      ],
+      "blocker": "Dedicated personal zac-williamson GitHub App creation/installation and selected repository access; source broker mocks do not qualify live permissions."
+    },
+    {
+      "requirements": [
+        "RC01",
+        "RC18",
+        "RC19",
+        "RC39"
+      ],
+      "blocker": "Target testnet genuine proof/node/prover availability and unresolved Sepolia nonce15 original/cancellation; no financial replay. Funds have been provided and are not the current blocker."
+    },
+    {
+      "requirements": [
+        "RC42",
+        "REQ11",
+        "REQ12"
+      ],
+      "blocker": "Independent specialist audit, complete14-day representative soak, current target-network clearance remain mandatory external release gates."
+    }
+  ],
+  "limits": [
+    "No exhaustive new security audit claimed; distinction between source-backed gap and missing evidence is explicit.",
+    "No task ownership or graph state changed; root alone assigns/integrates.",
+    "Current component reviews and native flags never substitute for real-proof testnet acceptance."
+  ]
+}

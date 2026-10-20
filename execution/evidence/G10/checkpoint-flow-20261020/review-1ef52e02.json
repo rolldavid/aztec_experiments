@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "candidate": "1ef52e02df0fc5a6aed38d804bea885fc062ba2c",
+  "base": "84a5c525077de41fba86376f48e6a0d3bc60f9a4",
+  "verdict": "approved",
+  "findings": [],
+  "resolvedFinding": "Common generic escrow waiter used180-second pending-state cutoff. Final1ef52e02 changes only this to installed SDK-supported timeout0, retaining CHECKPOINTED/no custom retry.",
+  "changedBlobs": {
+    "plugins/account-client.mjs": "af2b69f16abe17e143f203de050d14fafd53c7e8",
+    "plugins/aztec.mjs": "16f76ca2993408d1464bd7b1c671eda6f00e5c4c",
+    "plugins/escrow-service.mjs": "7b1c3056bdec2a8751451b3df3310f51063608cb",
+    "plugins/escrow.mjs": "e29b0824099414f4c8e1e565f72cd8814c8f01d0",
+    "plugins/interfaces.d.ts": "316c5c2b6dead786e3843f1348b594608631fbb9",
+    "plugins/main.mjs": "5a06702aea3207e409b4dbbeaab38389a6c88f18",
+    "plugins/metering.mjs": "b43902b545ca7b2bf625a8e3192baac29ca28daa",
+    "plugins/operations.mjs": "9bea8e83b062ac8ef5f8432be0204ee4db78b3e3",
+    "plugins/operator.mjs": "4650be8dbb80b3c8206e31b5e30870996e7b2c74",
+    "plugins/public/browser.mjs": "44c18b94895be512d84711014db4ac37d95ddfd9",
+    "plugins/test/operations.test.mjs": "9ecaa4747b3cc1f9a33b6e105a21951adbbace0c",
+    "plugins/test/server.test.mjs": "b2ae9e4da175585ae95ec05a2f2134e4a6a832f8",
+    "plugins/test/treasury.test.mjs": "78a8ebe681e8e6b1b1d97f24d3cd6f7a917608ac",
+    "plugins/treasury-cctp.mjs": "7ee0f127b4a492675120c77a94f47d834d770847",
+    "plugins/treasury.mjs": "e28490d4b4482528660edb344ddc4dfda66e7a85",
+    "scripts/test-hosted-followup.mjs": "67e222ba102c934a87fc73acdf7691a9361fa46d",
+    "scripts/test-hosted-onboarding.mjs": "5840d1f1acb8efe603753b74022545f66489083f",
+    "scripts/test-protocol-schema.mjs": "0af4c038c08138d07a90548ff9a527928682ddd9",
+    "scripts/test-w03-journal.mjs": "437792434c044e68f82de142641b091d712c0a8d",
+    "scripts/testing/rolling-application-fixture.mjs": "4be778aa057dc072b1f2ef8e3d669cc2ef94588b",
+    "shared/app-env.js": "a34f92f2e39bfaddf26b307823b064581ff64340",
+    "shared/l2-journal.mjs": "fa3fa195bc7d2468ff8d3a012f69e139128d97df",
+    "shared/protocol-schema.mjs": "5ca2526f2110a2cf910148dd70cdfc4790e093f8"
+  },
+  "assessment": [
+    "Generic plugin readiness uses truthful confirmed field at checkpoint policy; reservation sequence/amount/deadline checks remain before provider work.",
+    "Rolling constructor reconciliation retains exact signed bytes, original receipt/effect/block/revert identity, exact instance/class/address, current immutable values and current/original canonical rechecks at checkpointed head.",
+    "Ethereum operation reconciliation retains canonical mined receipt, exact effect and original block recheck. One-use signed operation/unknown fences unchanged.",
+    "Outbox source requires checkpoint-or-later success and native witness. Existing portal staticCall/estimateGas before intent/send enforces actual consumability, not immediate withdrawal.",
+    "Treasury destination retains exact attested message/nonce/recipient/token/fee and canonical successful receipt. CCTP standard2000 attestation thresholds/signed burn unchanged.",
+    "Wallet-wide revert finality fence removed only after exact acknowledgment/fresh canonical receipt. No PXE tagging mutation: per-secret missing predecessor remains native simulation/proof responsibility.",
+    "Protocol checkpoint default retains explicit higher-policy override and independent execution-result validation."
+  ],
+  "independentChecks": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-abf25c21.log",
+    "sha256": "59cec900af44e5eb7c627c1dedabf41bf8bc1826d84fcc98796be6a8ef590eac",
+    "passed": 207,
+    "failed": 0,
+    "durationMs": 19086.003292,
+    "scope": "existing operations,treasury,server,protocol-schema,W03 journal suites",
+    "binding": "abf source tested; final one-line timeout0 follow-on inspected without redundant rerun"
+  },
+  "limitations": [
+    "Canonical mined/checkpointed is reorgable, not finalized assurance.",
+    "No live model/proof/chain/service/cloud/treasury action. Dirty execution dossier excluded."
+  ]
+}

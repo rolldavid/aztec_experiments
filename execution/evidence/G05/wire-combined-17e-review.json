@@ -1,0 +1,64 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "17e1faa218614900d2024862e4129d805f41fc33",
+  "base": "54e95810713d62caae0a4fbf2045292c43aa1853",
+  "verdict": "approved_source_only",
+  "scope": "Bounded four-owned-name HTTP observer support and fresh PXE namespace recovery; runtime pending",
+  "fileSha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "b8455806a00220b663d28e6235b85b2c36d054a4c3cbbc89d3d1c19303fc5bfb",
+    "scripts/testing/rolling-application-fixture.test.mjs": "6c53787f04a6f06d48bedd4e956d6718abbdf71d21ab5dc0b768bb698f529f90",
+    "scripts/testing/rolling-owned-names.mjs": "2769f0c513977289a9128aa7c807a7169cb4e698d034f645f5bd0c4648e15d7d",
+    "scripts/testing/rolling-public-acceptance.mjs": "ea1d5ba36cfa76050b7946aa8b1945492ceaffa156ea54461f9cc67efada7f6c",
+    "scripts/testing/rolling-wire-campaign.mjs": "7394de3d885f6f5024e0b693b60afd3bd8065ea0e4c338c1d8ac17572ca1a945",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "0d881069e64abddce8f5a7a54713c2d0c0ddff38b68d05f91d212f77b9eaaadd",
+    "scripts/testing/rolling-wire-trace.mjs": "50a59cbd61896bbe11530eabddf6e4668c783884cb5cbefd8ebe37d3b6dbee1a",
+    "scripts/testing/rolling-wire-trace.test.mjs": "c19c0c8192083721a7f22ac7b88fd20826b1ccac0d56342355d4cb36dcbc6d3e",
+    "scripts/testing/scenario-flows.mjs": "a8daee90543955d26d689d5d9455d0a00403bcbf6bfc91f8e263d5f532bfd2f5",
+    "scripts/testing/scenarios.mjs": "127b68320f0a0725c850e588dcb7e7f5b6999968592e5db6687cac054659492d"
+  },
+  "sourceComposition": [
+    "Observer5d7e2d247d2886edc6617878ec7a9ef0be23c145 exact byte-equivalent in both observer paths; priorP2 findings closed.",
+    "Parentc0861f8 structural review applies unchanged except measuredclock/freshPXE17e delta.",
+    "ProductionSDK/contracts/proof/client/synchronizer unchanged; new logic is harness-owned only."
+  ],
+  "checks": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=../aztec_experiments/billboard/target/rolling_contract-RollingBoard.json <pinnedNode24.21.0> --test --test-concurrency=1 scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-owned-names.test.mjs scripts/testing/rolling-public-acceptance.test.mjs scripts/testing/rolling-wire-campaign.test.mjs scripts/testing/rolling-wire-trace.test.mjs",
+    "passed": 110,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1716.022875,
+    "log": "/tmp/reviewer-wire-17e-tests.log"
+  },
+  "clockDiagnosis": {
+    "evidence": "execution/evidence/G05/application-c18f30ef-1450-4b26-913b-3a36bfdca6f8.json",
+    "sha256": "12aee9cf80aa77f17aaa6ffffd7953cae34782e9d42862d9df134e781e58338c",
+    "initialClock": {
+      "initialWallSeconds": 1791761013,
+      "deadlineAt": 1791761123786,
+      "initialSyncedL1Timestamp": "1791761124"
+    },
+    "naturalReadyAtMs": 1791761124000,
+    "oldDeadlineTooEarlyMs": 214,
+    "outcome": "Prior failure preserved; fixed110second deadline expired before measured prerequisite. Not a product freshness failure.",
+    "repair": "Deadline max(now, actual initial chain timestamp in ms)+2000, fail unless at least180000ms remains before unchanged absolute540000ms campaign deadline. Pause existing sequencer then real-wall wait; no clock/freshness override."
+  },
+  "freshPXESourceChecks": [
+    "Wire-only; original owned-names scenario retains prior scope.",
+    "Capture exact private owned sets; close old actor and assert guard rejection before replacement.",
+    "Actual SDK store identity absent before and present after creation under random fresh namespace; same retained private account and encrypted journal directory.",
+    "Old/newPXE and journal object inequality, same owner, transfer last intent to replacement.",
+    "Both actors exact2-name records and empty cursor8 reread after each replacement.",
+    "New wallet submission0, shared proof/transport unchanged, inactive actor full activity unchanged; constructor local auth count separately recorded.",
+    "Private ciphertext filenames and byte hashes compared in memory only; no plaintext or private grouping persisted.",
+    "Replacement assigned immediately after successful factory return so later failure closes it; factory owns partial initialization cleanup. Old closed actors close idempotently; parent retains shared miner/service/IndexedDB lifetime."
+  ],
+  "findings": [],
+  "limits": [
+    "Actual fresh store recovery/proofs/HTTP receiver reconciliation still required; no genuine run performed by reviewer.",
+    "Fresh namespace within same process and retained secrets, not device/seed/process-cold recovery.",
+    "Loopback adapter separation not deployed trust-topology qualification.",
+    "Request observer explicitly excludes runtime-added headers/native transports; opaque transaction evidence remains separately decoded.",
+    "Phase-based equality includes both actors reread during action phases and cannot establish request ownership or anonymity.",
+    "No fullG05/G06/privacy/audit completion; existing resource gates and cleanup failures remain mandatory."
+  ]
+}

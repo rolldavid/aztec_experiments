@@ -1,0 +1,30 @@
+{
+  "base": "d65d576c39fad507e4a4f07c52da9f06edbda79f",
+  "candidate": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+  "task_id": "C04-current-layered-capacity",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "billboard/rolling_contract/src/posting_tests.nr",
+    "scripts/screening-history-fixture.mjs",
+    "scripts/test-screening-history-pxe.mjs"
+  ],
+  "required_checks": [
+    "current-layered-capacity"
+  ],
+  "requirements": [
+    "REQ04-current-layered-capacity"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "C04-current-layered-capacity",
+      "paths": [
+        "billboard/rolling_contract/src/posting_tests.nr",
+        "scripts/screening-history-fixture.mjs",
+        "scripts/test-screening-history-pxe.mjs"
+      ]
+    }
+  ]
+}

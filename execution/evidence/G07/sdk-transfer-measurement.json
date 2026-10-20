@@ -1,0 +1,10 @@
+{
+  "command": "curl --compressed --header Accept-Encoding:gzip --max-time30 SDK via existing SSM8081, decoded bytes hashed streaming",
+  "exit": 28,
+  "elapsedSeconds": 30.01951541699964,
+  "decodedBytes": 43024973,
+  "sha256": "e7ac2cd8d8b7f9d3d1394d679bacfbadd768928d5f2b6e99df2e9645ef526ada",
+  "curl": "curl: (28) Operation timed out after 30006 milliseconds with 21847360 out of 28081827 bytes received\n{\"httpCode\":200,\"wireBytes\":21847360,\"seconds\":30.006137,\"bytesPerSecond\":728096}\n",
+  "passed": false,
+  "scope": "actual public asset transport only, no native/index/API/wallet/privacy acceptance"
+}

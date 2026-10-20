@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "createdAt": "2026-10-12T20:28:09.697717+00:00",
+  "subject": "IndexedDB repaired browser failure: pending is not active",
+  "verdict": "CHANGES REQUIRED. Keep delayed-success requirement and application-store atomicity integration hold. No repeat unchanged run.",
+  "evidence": {
+    "execution/evidence/G07/indexeddb-atomicity-browser-repaired.json": "286378d4c7bc737d5181f627e308a70d760f78a4783485e4107a7afe33c36bd7",
+    "execution/evidence/G07/indexeddb-atomicity-browser-repaired.log": "9d41c2a487847e15b91736290c66185713f8258bbec281b361e03dddc288ada7"
+  },
+  "sourceSnapshot": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/scripts/patch-indexeddb-atomicity.mjs": "f148f34b08f3cc352f5578facb9ff2a7978d5f44ecd31313f71698f2aece3ede",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/scripts/test-sdk-storage-browser.mjs": "a53da3ccb28a0ab4e0d95d5be7b10c183c943916bb2484068d2809f39ad0e4b0"
+  },
+  "actualObservation": {
+    "browserFailure": "TransactionInactiveError at actual IndexedDBAztecMap.set -> IDBObjectStore.put after timer await in successful callback",
+    "elapsedMs": 2656,
+    "peakTreeRSSKiB": 950096,
+    "cleanupComplete": true,
+    "earlierRollbackModes": "Not independently qualified by this run: final structured observation was never returned.",
+    "labelled80Pass": "Cannot substitute for real browser transaction activity semantics."
+  },
+  "standardsBasis": {
+    "url": "https://w3c.github.io/IndexedDB/#transaction-lifecycle",
+    "interpretation": "A transaction can remain pending yet inactive between event tasks. New requests must be issued while active. An outstanding request prevents auto-commit but does not make unrelated timer continuations active."
+  },
+  "sourceDiagnosis": [
+    "Patch heartbeat queues native get requests from success handlers, preserving lifetime, but binds actual tx.store directly to containers. Delayed application continuation directly invokes put from an inactive timer task.",
+    "Only wrapping the entire callback or async container method in an active event is insufficient: any later await can return to an inactive task before its next IDB call.",
+    "Map getMany, index reads, async cursor iteration, cursor continuation/delete, array and multimap multi-step operations all need a complete activity-safe route; fixing only map.set would leave hidden failures."
+  ],
+  "recommendedSmallestCompatibleRoute": {
+    "approach": "Preserve existing database/schema and serial transaction ownership. Add narrow explicit operation scheduling for all raw IDB requests and cursor movements inside an active request callback of the same transaction. Keep harmless heartbeat only while callback or queued/inflight work remains.",
+    "requiredProperties": [
+      "Queue primitive-operation closures, not whole asynchronous callback bodies. Dispatch synchronously from active request event; resolve each existing async API with original result/error.",
+      "Audit every objectStore/index method used by map/multimap/array/singleton/set/clear and bulk helpers. Schedule initial cursor open and every cursor continuation/update/delete; async generator consumer delays must be covered.",
+      "Do not hand out an active raw transaction store that callers can use outside event context, or fall back to rootDB while transaction is owned. New containers must bind the same scheduler.",
+      "Preserve strict operation ordering/read-your-writes and request structured-clone timing; mutable values queued across time need captured input semantics.",
+      "Drain submitted operations, heartbeat and callback before commit or queue release. Abort on callback/request failure, preserve falsy/original errors, attach all rejections immediately, and clear bindings only after all work settles.",
+      "On abort, reject queued requests and prevent late continuations from creating independent transactions. Keep existing non-reentrancy and bounded owner supervision; no silent retry."
+    ],
+    "implementationAssessment": "A complete explicit scheduler may require changes beyond store.ts/js. A generic proxy must not be accepted merely because map.set passes; cursor/idb wrapping invariants need source review and actual browser coverage."
+  },
+  "alternatives": {
+    "sqliteOPFS": "Broader migration: storage format/namespace, workers/browser features, persistence/restore and existing users require separate migration and product recovery qualification. Official support does not make it drop-in or already atomic for this application.",
+    "restrictCallbackContract": "Not justified by current async transaction API or multi-store coordinator. Could only narrow after proving every production callback/container primitive obeys an explicit supported await contract; must fail before writes for unsupported callbacks. Removing delayed-success test alone is unacceptable."
+  },
+  "minimumChangedEvidence": [
+    "Keep original baseline and repaired failure logs untouched.",
+    "Real Chromium delayed success writes before and after timer plus read-your-writes, clear and newly opened containers; exact return value and reopen state.",
+    "Immediate/delayed/synchronous/falsy callback failure and actual request error roll back all writes live and after reopen, with no unhandled rejection.",
+    "Delayed async cursor consumption and all container methods, cursor deletion and multi-request operations.",
+    "Queued second callback enters only after first fully settles; failure/abort leaves no detached writer and subsequent transaction succeeds.",
+    "Actual production coordinator multi-store failure on repaired application backend, plus existing isolation/persistence tests."
+  ],
+  "reviewActivity": "Read-only source/evidence plus public W3C specification; no native/browser/build execution or source mutation."
+}

@@ -1,0 +1,17 @@
+{
+  "revision": "a332db6cc95a9172ffddbea73225aa36648d6dbd",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved onebounded actualdiagnostic",
+  "checks": [
+    "14tests independentpass",
+    "Installed PXE localcontractStore andexportedPrivateExecutionOracle verified",
+    "Markerhashformula pinnedNoir1653084894",
+    "Exactreceiver/promise/result/error preserved",
+    "Privatevalues closureonly bounded andcleared, fixedrole/booleans evidence",
+    "Descriptorrestoration ownershipchecked",
+    "Preflightflag onlyafterestimate succeeds",
+    "Existingrollback andpositiveassertions unchanged"
+  ],
+  "findings": [],
+  "notEstablished": "Applicationrepair or actualpositiveacceptance"
+}

@@ -1,0 +1,94 @@
+{
+  "candidate": "505961f2d84a4934dc0bffc214b10c7a3a363e6b",
+  "base": "72eed3d80f80d7f00f1f92787880f05ab6c6830b",
+  "scope": "Approved subboard/Home/screen/rejectedwithdrawal plusHomewire composition; sourceonly; actualpending",
+  "transfers": [
+    [
+      "af82de3",
+      "10af422"
+    ],
+    [
+      "6589f3e",
+      "d6e815f"
+    ],
+    [
+      "c2336b3",
+      "da9c474"
+    ],
+    [
+      "0c0765e",
+      "bf25901"
+    ],
+    [
+      "0f65336",
+      "789f2fc"
+    ],
+    [
+      "a2718c5",
+      "3a54997"
+    ],
+    [
+      "99d99a9",
+      "e050c39"
+    ],
+    [
+      "33f0e01",
+      "7332804"
+    ],
+    [
+      "c9d42d0",
+      "6ecfeb4"
+    ],
+    [
+      "858e12c",
+      "505961f"
+    ]
+  ],
+  "changed_paths": [
+    "apps/rolling/reader-client.mjs",
+    "apps/rolling/reader-client.test.mjs",
+    "apps/rolling/reader.browser.test.mjs",
+    "apps/rolling/reader.mjs",
+    "scripts/rolling-public-server.mjs",
+    "scripts/rolling-public-server.test.mjs",
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-public-acceptance.mjs",
+    "scripts/testing/rolling-public-acceptance.test.mjs",
+    "scripts/testing/rolling-rejected-withdrawal.mjs",
+    "scripts/testing/rolling-rejected-withdrawal.test.mjs",
+    "scripts/testing/rolling-subboard-acceptance.mjs",
+    "scripts/testing/rolling-subboard-acceptance.test.mjs",
+    "scripts/testing/rolling-wire-campaign.mjs",
+    "scripts/testing/rolling-wire-campaign.test.mjs",
+    "scripts/testing/rolling-wire-trace.mjs",
+    "scripts/testing/rolling-wire-trace.test.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/scenarios.mjs",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/public-index.mjs",
+    "shared/rolling/public-index.test.mjs",
+    "shared/rolling/public-projection.mjs",
+    "shared/rolling/public-projection.test.mjs"
+  ],
+  "conflict_disposition": [
+    "Union sourceinventory and exclusive scenarioflags; race2jobs,recovery1job retained, subboard2job andwithdrawal4HTTPprivatejobs plus1separatelyproven publicmoderator transaction exact",
+    "Canonical rebuild retains recovery/raceprofile branch andadds authenticmainpolicy/subboardmoderation hashes",
+    "Publichelper retains ef533boundedcatchup +5aexplicitreaderPort +Homecuration/sixsessions; alltests retained",
+    "Privateclose-before-withdrawalsettlement exclusive towithdrawal; actualrecoverycompletion afterminer retained",
+    "Homewire visitors union withfixedpersonalized-denialphase; no route/errorwaiver"
+  ],
+  "tests": {
+    "command": "NODE_BACKEND=js pinnedNode --test --test-concurrency=1 14 affectedpure/integrationtestmodules",
+    "result": "579 passed, zero failure/skip",
+    "durationMs": 14001.908959,
+    "log": "/tmp/rolling-subboard-recovery-combined-tests.log",
+    "sha256": "b2cfcb6b34b7018fe9be7bb35f016a34ea98691b1e64ebed7b13ff32e45e79a0"
+  },
+  "remaining": [
+    "Independent exactcombinedsource review",
+    "Productionwallet assets normalbuild forscreen/rejectedguard",
+    "Genuine subboard/Home and rejectedwithdrawal campaigns",
+    "FullUI/boardAPI composition separate"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261011-04",
+  "observedAt": "2026-10-11T21:33:50.569428+00:00",
+  "readOnly": true,
+  "sourceRevision": "51c60fb9d15213c73c0289956754a2ff5050ca75",
+  "readinessDeadline": "2026-10-11T22:12:35Z",
+  "deadlineElapsed": false,
+  "instance": {
+    "available": true,
+    "data": [
+      {
+        "id": "i-0dc273607f11cedb7",
+        "state": "running",
+        "type": "m7a.4xlarge",
+        "launchTime": "2026-10-11T20:48:36+00:00",
+        "volumes": [
+          {
+            "id": "vol-0d52c339556efda66",
+            "deleteOnTermination": true
+          },
+          {
+            "id": "vol-048a9b54f9cf32848",
+            "deleteOnTermination": true
+          }
+        ]
+      }
+    ]
+  },
+  "fleet": {
+    "available": true,
+    "data": [
+      {
+        "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+        "state": "active",
+        "activity": "fulfilled",
+        "type": "request",
+        "validUntil": "2026-10-12T04:42:35+00:00",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "console": {
+    "available": true,
+    "timestamp": "2026-10-11T21:33:50+00:00",
+    "bootstrapObservations": [
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:42:35Z",
+        "egressBytes": 3557833,
+        "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+        "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:42:35Z",
+        "egressBytes": 3558367,
+        "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+        "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:42:35Z",
+        "egressBytes": 3559081,
+        "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+        "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      }
+    ],
+    "finalReceiptMarkers": []
+  },
+  "finalReceipt": {
+    "available": false,
+    "category": "NOT_FOUND"
+  }
+}

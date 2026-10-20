@@ -1,0 +1,22 @@
+{"role":"fixture","stage":"start-disposable-l1","elapsedMs":786}
+{"role":"fixture","stage":"prepare-genesis","elapsedMs":899}
+{"role":"fixture","stage":"deploy-local-protocol-fixture","elapsedMs":2293}
+{"role":"fixture","stage":"wait-for-local-validator-activation","elapsedMs":3292}
+{"role":"fixture","stage":"start-application-node","elapsedMs":3317}
+{"role":"fixture","stage":"prove-board-deployment","elapsedMs":5934}
+{"role":"fixture","stage":"board-create-proving-wallet","elapsedMs":5958}
+{"role":"fixture","stage":"board-build-deployment-request","elapsedMs":6079}
+{"role":"fixture","stage":"board-genuine-client-proof","elapsedMs":6556}
+{"role":"fixture","stage":"board-serialize-proof","elapsedMs":14733}
+{"role":"fixture","stage":"board-real-node-validation","elapsedMs":14740}
+{"role":"fixture","stage":"board-close-wallet","elapsedMs":14931}
+{"role":"fixture","stage":"board-inclusion","elapsedMs":14933}
+{"role":"fixture","stage":"ready-reopen-wallet","elapsedMs":29266}
+{"role":"fixture","stage":"ready-deploy-disabled-portal","elapsedMs":29557}
+{"role":"fixture","stage":"ready-prove-update-portal","elapsedMs":29563}
+{"role":"fixture","stage":"ready-serialize-proof","elapsedMs":35494}
+{"role":"fixture","stage":"ready-validate-update-portal","elapsedMs":35500}
+{"role":"fixture","stage":"ready-close-wallet","elapsedMs":35607}
+{"role":"fixture","stage":"ready-inclusion","elapsedMs":35608}
+{"role":"fixture","stage":"ready-settlement","elapsedMs":44771}
+{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/application-876c30c3-6522-4d69-8791-d14711480a3d.json","passed":false,"scenario":"rolling-preference-relationships"}

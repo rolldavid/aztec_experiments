@@ -1,0 +1,39 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T12:59:24.088283+00:00",
+  "source": "6bc12653fd767ec6b14d74359d8899fc323bc1a3",
+  "base": "2e481871278e040128bd19ad5e85d44442fecc7e",
+  "requirements": [
+    "RC12 Draft3 p3 effective parent/local union",
+    "RC13 Draft3 p3 same moderation for human and Bok",
+    "RC39 Draft3 p9 executable acceptance"
+  ],
+  "verdict": "approved",
+  "findings": [],
+  "sourceHashes": {
+    "censor-daemon/README.md": "01f13e67cf1e80e4bfeb64f3e0e566bb593779882ac5f769d4f7bbc2bf217f69",
+    "censor-daemon/moderation.mjs": "5448100e0686f613ac93c72fd5b8132bd760ac2150a6328087ff0274156f6dca",
+    "censor-daemon/test_moderation.mjs": "216b0eeee0e9fce340ad9eeff010f8944292a2bbde2c4e34832733e830fe1ddf",
+    "censor-daemon/test_worker.mjs": "ab39ff1aaa9fe07d57aa08b9f9818fa1c91b8e6e32efcc9e4ddb98bbf97f4b0d",
+    "censor-daemon/worker.mjs": "b5dbd2569f9af73141e4fc4173abca5f4d66d7d9a3c4aa186d8e115743ce9fdf",
+    "docs/rolling-deployment.md": "037fbc4d2820332645db868fd64da8d8c7a03324f82f4343cb0fd7702067e92b"
+  },
+  "packetSha256": "1bfad415c56c4ab3698278430f678c49b47e5f00ad2d1a791396e04d98b4abd9",
+  "checksPerformed": [
+    "Read six-file diff before implementation conclusions; checked main/local adapter construction, actual model parser/timeouts, worker durable leases and runtime identity asset hashing.",
+    "Verified exact source and packet/log hashes; existing coherent focused suite 243PASS0FAIL0SKIP in4171.752875ms.",
+    "Independently ran six existing focused main/local/empty-local and actual SQLite worker failure-path tests:6PASS0FAIL0SKIP99.567667ms. No model/wallet/service operations."
+  ],
+  "assessments": [
+    "Parent evaluation receives only main rules and post text; hostile local rules cannot enter that request. Main violation short-circuits. Local inference is required only after main allows, establishing deterministic union.",
+    "No source changes to legacy moderatePost or legacy worker. Existing provider parser validates both verdict fields before helper receives production result. Invalid/error stages cannot create removal intent; worker durable unresolved paths preserved.",
+    "After both calls, existing canonical policy/context ingest and owned lease check remain before any verdict is acted on. Two120s upper bounds fit default360s lease; expiry still refuses owned transition and cannot authorize a stale send.",
+    "Changed moderation implementation is already an input to existing modelVersion; old unsubmitted decisions do not masquerade as current-source evaluation, while submitted uncertain intents retain original reconciliation.",
+    "Changed inference count assertions reflect required conditional second call; coverage/assertions were not removed. Human/Bok same adapter, policy snapshots and durable paths preserved."
+  ],
+  "limitations": [
+    "No actual model success inferred from doubles. Current 1.7B remains rejected and remote9B prior combined-prompt evidence is invalid for new union behavior.",
+    "Run exact new implementation against retained nine cases plus predeclared hostile-local variation, then unchanged full frozen quality/capacity requirements if viable. Up to two sequential calls requires fresh full latency and end-to-end capacity measurements.",
+    "Native signed removal, real-proof testnet acceptance and all independent/elapsed gates remain open."
+  ]
+}

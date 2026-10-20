@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-11T18:58:16.812Z",
+  "application": "28b68e72-fc8e-4272-b49c-b8d44f182416",
+  "balanceBeforeUsd": 4.97272274,
+  "balanceAfterUsd": 4.97257182,
+  "deltaUsd": 0.0001509200000002764,
+  "providerReportedChargeMicroUsdc": "151",
+  "independentTransactionReceipt": false,
+  "scope": "Read-only account balance observation; no exclusive-account or exactdebit attribution claim",
+  "modelCalls": 0,
+  "topUp": false
+}

@@ -1,0 +1,84 @@
+{
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "requirements": [
+    "RC23",
+    "RC25"
+  ],
+  "priorGapReportSha256": "0a8c470d3a17189fe6b1bf4209830c3d800979b3c806b700c41116daa0f79c87",
+  "verdict": "No demonstrated query-boundary escape in current local topology; production topology and current full identity trace remain unqualified",
+  "topology": [
+    "Current saved public wallet configuration selects loopback53877/v1/node, remoteProver:null and native/PXE proofsfalse. This is local development, not evidence of a remote prover operator.",
+    "bootstrap starts query service with exact net.nodeUrl; private-query admits fixed loopback upstream and forwards approved parsed method arguments.",
+    "network constructs native AztecNodeService in process, localL1 RPC and p2pdisabled. Installed node factory creates local archiver and assigns logsSource:archiver.",
+    "NodeLogsProvider resolves reference then calls local logsSource; archiver data_source_base delegates tag reads to its local indexed log store. No per-tag miss path forwards personal queries to an external node.",
+    "PublicL1/blob ingestion is distinct from per-user tag lookups; localAnvil is selected. This source review does not assert all OS/network egress monitored."
+  ],
+  "documentedTrust": {
+    "source": "deploy/prover/README.md:54\u201368,103\u2013110",
+    "requirement": "Operate fullnode, persistent worldstate, archiver, contract-data and logs in the same explicitly disclosed trusted prover boundary; do not forward user-specific misses to boardbackend or another node. Matching URL/network does not establish operator identity.",
+    "interpretation": "This extends the explicitly allowed witness trust only by keeping query processing inside that same operator boundary, not by declaring arbitrary node operators trusted. Local development currently has one operator; production deployment must demonstrate containment and upstream behavior."
+  },
+  "batchSemantics": [
+    "PXE LogService groups tag retrieval requests by range and contract, derives siloed private tags, then getAllPrivateLogsByTags batches up to installedMAX_RPC_LEN and requests includeEffects:true.",
+    "Installed LogResultSchema returns block/hash/txHash/logposition and optional noteHashes/nullifiers. The query operator can associate each requested tag with matching public transaction effects and group requested interests in one batch. This is stronger than pure network timing.",
+    "A matching tag response does not itself prove caller can decrypt/owns every matching note/name; batches include discovery candidates and potentially other sender/recipient relations. Current method-only counts cannot establish that one observed batch contained multiple owned-name registration notes. No actual cross-name ownership disclosure is claimed."
+  ],
+  "smallestCompliantPath": [
+    "Retain current local/trusted gateway+localarchiver and existing cryptographically checked SDK APIs. Do not replace ordinary note discovery with a new archive scanner solely from counts.",
+    "For remote acceptance, use the existing deployment runbook topology and one controlled operator for proving/query/worldstate/archive, verify fixed ingestion and no user-specific forwarding. Independent node access is not an allowed fallback.",
+    "Keep specialized cold preference recovery using canonical compact ranges/local processing and zero-tag window checks. Separate its observations from ordinary account-status/signing discovery.",
+    "When next required multiidentity flow runs, reuse existing known-role wire/effect projection and receiver reconciliation to answer whether actual request/result linkage groups ownednames; label opaque/response/native gaps. No additional financial or expensive acceptance run merely for a new observer."
+  ],
+  "decision": "Evidence/deployment-qualification gap today, not sufficient evidence for an application defect or broad rewrite. A demonstrated personal query forwarded to a separate untrusted operator would be a concrete blocker requiring routing/deployment repair.",
+  "source": [
+    {
+      "path": "plugins/devnet/bootstrap.mjs",
+      "sha256": "e68e2d2d7c1b11ce5459c49ceabf141ea3b8fdfc2ecebf10ad21d25ad30a6939"
+    },
+    {
+      "path": "plugins/devnet/network.mjs",
+      "sha256": "a622abced4e4c95f12006eef26173693ac55f5151fa841af38ce385570690b27"
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "e8a615d6f5c0183aad1327a598fd819f71ddda77d9a23c76d800f234e2354d36"
+    },
+    {
+      "path": "deploy/prover/README.md",
+      "sha256": "4701ece5073aab640f46ec3f882b9f254a4b5a28aa950a01cd98264656036735"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/factory.js",
+      "sha256": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/modules/node_logs_provider.js",
+      "sha256": "22c526e343bb5cde44c20f3f3b37dfece736cccadd1baf0f651de4dc9148bc0d"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/factory.js",
+      "sha256": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/modules/data_source_base.js",
+      "sha256": "ef021eaf9ce56398636a9589070558d5e8546f136b635f05e59775b1d71fdb98"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/store/log_store.js",
+      "sha256": "ede554b718b87842c97af5f7afefc4b1a8589bcee7fdbeb06a42d9024b9a5d26"
+    },
+    {
+      "path": "node_modules/@aztec-labs/pxe/dest/logs/log_service.js",
+      "sha256": "550699709c5616e58abc56886e9a99e428345aa0d76a56d1fbe6ea65be225aba"
+    },
+    {
+      "path": "node_modules/@aztec-labs/pxe/dest/tagging/get_all_logs_by_tags.js",
+      "sha256": "2778c52f49cfd289bcfee5c92ac3bf45f26f2792dc1656f3cb4e90560ca11c87"
+    },
+    {
+      "path": "node_modules/@aztec-labs/stdlib/dest/logs/log_result.js",
+      "sha256": "61e70863633774caa361524a42d720832d4a954a0f16b0cde728619c4f37f116"
+    }
+  ],
+  "constraints": "Read-only files/source only, no live network/browser/services/credential discovery."
+}

@@ -1,0 +1,8 @@
+{
+  "label": "deploy-portal",
+  "sourceRevision": "1b8f36c4e74ec2e46aa5ae7c3a9c8d0e45554383",
+  "proofMode": "proofs-disabled",
+  "escrow": "0x12de5a9f1d6016def3e83debc6bec29a7d1942e7428785024a4d41cde3751129",
+  "chainId": "31337",
+  "rollupVersion": "1440071566"
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1ce3c986f3bcc6904ecf60e153f6d99dda7dca3f",
+  "verdict": "failed-runtime-confirmed; fixture-only source repair required before changed attempt",
+  "receipt": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/C01/application-fc39714b-e70e-492e-82ee-94f4c165ce6e.json",
+    "sha256": "477df0fbcd7547d23ba0ae7b1bb7a09e6400420a5f22998c7c78886e22801b8f",
+    "elapsedMs": 10277,
+    "peakTreeRSSKiB": 788320,
+    "passed": false,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "failure": {
+      "stage": "start-application-node",
+      "errorClass": "Error",
+      "code": null,
+      "frames": [
+        "sequencer.js:641:15",
+        "sequencer.js:607:14",
+        "sequencer.js:576:30",
+        "sequencer.js:562:14"
+      ]
+    }
+  },
+  "sourceHashes": {
+    "scripts/testing/fixture-worker.mjs": "ad7e5261fe59104fb12162dd0e188012dbc97fbbe935492d445765b23e230fbe",
+    "scripts/c01-real-node.mjs": "7090858471f1331aafa1d9289507a666cf657874f0215f5260e61766c6355822",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/sequencer.js": "236a577062a713710e2395e39cbec998bd8c8396c99ca79a11230eb47070595a",
+    "node_modules/@aztec-labs/sequencer-client/src/config.ts": "0a5f0cd08a34c07f2aa19f6be5a0bec79c66bc9a920a70140dd4097c9d30d158",
+    "node_modules/@aztec-labs/aztec/src/local-network/local-network.ts": "46c443048c357e90e5a1a99cdc8bf70df24ddf67d8f6e7831252fc3fce90ee10",
+    "node_modules/@aztec-labs/stdlib/src/timetable/proposer_timetable.ts": "2cb3a9e5908fb73eef10dffc9633074b6af8779ae3021bb7a19116bdc765ae6e",
+    "node_modules/@aztec-labs/stdlib/src/timetable/budgets.ts": "2270bfc8ef58f36c17a4f1ef332bb9ed38f94a310f569ac8376b4cae2f2cd34e",
+    "node_modules/@aztec-labs/constants/src/constants.gen.ts": "07f0bc09cf97e07d875a393324538062cbb97007e671ef6169c2288ae055731e"
+  },
+  "finding": {
+    "severity": "P2",
+    "source": "scripts/c01-real-node.mjs:17 and installed sequencer.js:641",
+    "cause": "The ordinary sequencer constructor now rejects effective block opportunities below the streaming Inbox catch-up floor. Existing disposable LOCAL_TIMING derives one block, while the required floor is four and the explicit test-only exception defaults false.",
+    "sourceDerivedArithmetic": "floor((5 - 1 - 1 - 2*0.5 - 0.5)/1)=1; ceil(1024/256)=4. This is source-derived, not a separately recorded runtime capacity measurement.",
+    "recommendation": "Use the SDK explicit allowUnsafeInboxCatchupCapacity only within the disposable C01 local fixture, guarded by loopback Anvil identity, chain31337, p2p false and exact local timing. Record actual constructed flag and derived capacity; reject nonlocal inputs before factory invocation. Keep real application proofs, fee/receipt assertions, no network prover and all budgets unchanged.",
+    "alternative": "A compliant current-budget geometry requires slot >=7.5 seconds (8 integer); increasing maxBlocksPerCheckpoint alone cannot help. Geometry changes affect all fixture readiness/inclusion timing and require separate review.",
+    "basis": "Official local-network.ts:124 explicitly selects this exception for local network; config.ts:291 has no environment variable, deliberately preventing accidental deployment opt-out."
+  },
+  "requiredChecks": [
+    "Actual installed timetable derives one at existing LOCAL_TIMING and default guard rejects; explicit disposable profile allows construction.",
+    "Negative nonlocal/incorrect chain/timing cannot opt out.",
+    "Fresh one bounded node attempt after exact-source review; no unchanged retry."
+  ],
+  "limitations": [
+    "No node readiness, sequencer start, genuine Rolling proof/inclusion or backlog capacity accepted.",
+    "Official local protocol deployment passed; later node construction failed.",
+    "Compiler260 diagnostic and full rc3 qualification holds remain."
+  ],
+  "execution": "Read-only source/receipt inspection and hashing only; no native test or rerun."
+}

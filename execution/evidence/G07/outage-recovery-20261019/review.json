@@ -1,0 +1,47 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "reviewedAt": "2026-10-19T07:35:22.718184+00:00",
+  "candidate": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+  "base": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "verdict": "approved",
+  "approved": true,
+  "changedFiles": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "shared/rolling/public-index.mjs",
+    "shared/rolling/public-index.test.mjs"
+  ],
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "5f956ecd6920ae7ff61356747723c65f170e0292e157796b2fe5f2037b10e1cd",
+    "scripts/test-prover-bootstrap.py": "0f411e8837b37ec93e720b046b17ae2a4d16782a5f69a79e488f5644c19876c8",
+    "shared/rolling/public-index.mjs": "91282ab4f9329cf9f42d68efa6c67ada7ce044b9a4a25807f60e9700ad4eb803",
+    "shared/rolling/public-index.test.mjs": "c81ecd30877567b51a717c821e19f87cb3aa5ea8a4c017694ea6b7f6632483a8"
+  },
+  "findings": [],
+  "reviewed": [
+    "Native wrapper holds a nonblocking owned regular0600 lock throughout process lifetime; validates pinned startup closure before retiring any container.",
+    "Only exact stopped/created named container with matching immutable image, node entrypoint, full command and exact persistent/config/helper binds is renamed by full container ID. Live/unrelated/Docker failure cases stop admission. No container removal or database mutation.",
+    "Previous owned700 directories and600 summary are archived intact under unique private directory; fresh pinned helper closure recreates transient startup mounts. Native child signal/error/ENOSPC reaping remains intact. Original systemd controls precheck/Restart=no and resource flags unchanged.",
+    "Persistent index tracks rejected native read boundaries separately from returned-value ABI/identity/anchor validation and storage failures. Recovery permits a later caller-owned sync only; unavailable publication stays blocked, no internal retries or detached work.",
+    "Every later step repeats network/deployment/canonical anchors and storage ownership checks. Committed cursor is retained, transient block body discarded, per-step failure brand reset. Integrity/CAS/malformed returned values remain terminal and cannot publish.",
+    "Timeout releases recovery eligibility only after original awaited work settles; exclusive busy ownership remains while pending. It is not a time-based success or fallback."
+  ],
+  "checks": {
+    "native": {
+      "path": ".build/reviewer-evidence/outage-recovery/native-checks.log",
+      "sha256": "b440c5463aedc298372ee332d0a940f658f90129a72d22cb9d6d949327b1ffe5",
+      "result": "5 focused cases passed,2.276s; inspected exact candidate assertions and disposable-child lifecycle tests"
+    },
+    "index": {
+      "path": ".build/reviewer-evidence/outage-recovery/index-checks.log",
+      "sha256": "7ddc723b57ecbd6634fc2c7a9646c6cd188f3d68a4f1378db42abe933d8db583",
+      "result": "86 existing index cases passed,21.465s; includes new pre/post-commit transport recovery, decoder interruption, changed identity/storage ownership rejection and existing reorg/CAS cases"
+    }
+  },
+  "limitations": [
+    "Tests executed by lead on exact combined candidate; reviewer inspected source/tests/logs without repeating completed checks.",
+    "No Linux/Docker/cloud/native-chain restart performed by reviewer; stopped-container inspection is covered with labelled Docker doubles, child lifetime with real disposable processes.",
+    "Upstream exception eligibility does not assert every exception is transient; it permits fresh revalidation while keeping all publication gates closed.",
+    "This source review does not qualify new wallet journeys or general final acceptance."
+  ]
+}

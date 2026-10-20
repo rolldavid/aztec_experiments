@@ -1,0 +1,22 @@
+{
+  "aztec-node": {
+    "url": "https://api.github.com/repos/aztec-labs-eng/aztec-node/git/tags/c5cf1822921c39e0ccfabcf1b12a26d1ca5fae20",
+    "tag": "v6.0.0-rc.3",
+    "commit": "b37a5869760fb55faa8d4697d3ccbecc6f913fce",
+    "type": "commit",
+    "taggerDate": "2026-10-08T12:06:38Z",
+    "signatureVerified": false
+  },
+  "aztec-nr": {
+    "url": "https://api.github.com/repos/aztec-labs-eng/aztec-nr/git/tags/200f5fcca561463ce8ae5385446f86e9aa0923c8",
+    "tag": "v6.0.0-rc.3",
+    "commit": "694af4de4b196733819811c896867d5a9572a1b5",
+    "type": "commit",
+    "taggerDate": "2026-10-08T12:13:16Z",
+    "signatureVerified": false
+  },
+  "vkSource": {
+    "url": "https://raw.githubusercontent.com/aztec-labs-eng/aztec-node/b37a5869760fb55faa8d4697d3ccbecc6f913fce/yarn-project/noir-protocol-circuits-types/src/vk_tree.ts",
+    "failureCategory": "HTTPError"
+  }
+}

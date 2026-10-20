@@ -97,3 +97,7 @@ The owner requires Bok to run on a separate server as an independently operated 
 ## Owner correction — transaction progress, 20 October 2026
 
 Ordinary application and plugin operations advance on canonical checkpointed Aztec success or a canonical mined Ethereum receipt, not full network finality. Funding claims require actual message consumability at the consuming PXE's configured tip; withdrawals require the native Outbox witness and successful portal preflight. Do not add a second finalized-head gate. Preserve original transaction identity, reorg checks and native per-secret PXE dependencies; do not lock unrelated wallet actions behind a reverted transaction's finality. Use native state waiters and local mining/settlement controls. Canonical inclusion must never be labelled finalized. This owner direction supersedes older blanket finality requirements in the specification, fixtures and operating notes.
+
+## Owner hosting and scheduling amendments — 20 October 2026
+
+The owner authorizes USD1,500/month for ongoing hosting, asks that the application remain online, and supersedes the old cumulative campaign ceiling and demo shutdown intent. Persistent native/cloud cutover is complete; preserve security and failure containment. The owner subsequently requested stopping all scheduled project tasks: the Codex monitor was deleted, while live application services remain running. Do not recreate scheduled agent work without a new request. See START_HERE.md for actual resources, known readiness limits and forecast.

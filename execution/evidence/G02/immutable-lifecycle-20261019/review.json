@@ -1,0 +1,33 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "baseRevision": "5ebeff1cbc024424af5b36b5bd898a4dc6f1a990",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/operations.mjs": "89724a6133043a74e68fb797b34720288d90e5858d7f0647824d2d906af788e8",
+    "plugins/operator.mjs": "7f5e77afc30fa682a54ca4020ae437cbf4b98874e44c089a90493c1afb2d5592",
+    "plugins/test/operations.test.mjs": "01bafd37d7bc33b0f1b6448a6ad1c13bd011faa09167bae9a1b8415c95abadc4"
+  },
+  "checks": [
+    "Reviewed exact three-file diff before execution; worker checkout clean at candidate",
+    "Verified all five checked constructor fields are PublicImmutable in PrivateBok and initialized in init; mutable portal/request state not included",
+    "Original signed transaction, finalized receipt, block/effect, constructor instance/class/address and original canonical recheck retained",
+    "New separate state anchor comes from native getBlock(finalized), or checkpointed only in development, must not precede original inclusion, validates current instance/class/address, and is canonically rechecked after immutable reads",
+    "Installed SDK accepts these block tags and getPublicStorageAt requires a world-state snapshot; observed oldestHistoric7983 exceeds original deployment7959",
+    "No signing, send, journal mutation, fallback to unanchored latest or qualification upgrade introduced"
+  ],
+  "independentTests": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-name-pattern='rolling constructor|old deployment|current immutable|missing pending|retained signed|unknown send|reconcil|canonical|immutable|reorg' plugins/test/operations.test.mjs",
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 4784.247958,
+    "scope": "Existing local component checks; broad name selection also selected related once-only Ethereum reconciliation cases; no real network/proof/financial action"
+  },
+  "limitations": [
+    "No live operation executed by reviewer",
+    "Success remains constructor-only, not portal registration or hosted-service acceptance",
+    "Current finalized world state must be available; unavailable or changing anchors remain unresolved without replay"
+  ]
+}

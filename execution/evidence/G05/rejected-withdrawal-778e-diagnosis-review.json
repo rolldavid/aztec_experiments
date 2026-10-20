@@ -1,0 +1,59 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-12T03:59:03.501322+00:00",
+  "candidate": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+  "verdict": "failed runtime retained; confirmed native BlockHash argument defect in fixture admission query",
+  "severity": "P2",
+  "evidence": {
+    "outer": "execution/evidence/G05/application-778e4478-dc87-40a7-9e95-9d2daf7080a8.json",
+    "outerSha256": "e65d8554a7eb26c6ad9faa3f1c24be743dbbb45128099400db4090d99e93cf9a",
+    "inner": "execution/evidence/G06/application-port-2b790344-e2dc-41c2-9e4f-b392e5445779/observation.json",
+    "innerSha256": "bee3da4b972efb18f9f369ae25dc7b810a2ffbea8f5824be3fd8a978122bec61",
+    "elapsedMs": 327304,
+    "peakTreeRSSKiB": 2009552,
+    "cleanup": {
+      "applicationActorA": true,
+      "fundingWallet": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true
+  },
+  "cause": {
+    "application": "scripts/testing/rolling-application-fixture.mjs:679 builds ref={hash:String(head.blockHash)} then directly calls ctx.node.getPublicStorageAt. ctx.node is native, so no JSON-RPC schema conversion occurs.",
+    "contract": "Installed stdlib/src/block/block_parameter.ts:32-78 requires hash:BlockHash. Native aztec-node/modules/block_parameter normalizer preserves object hash value rather than deserializing it.",
+    "path": [
+      "aztec-node/src/modules/node_world_state_queries.ts:270 getPublicStorageAt ->getWorldState",
+      "node_world_state_queries.ts:297 normalizeBlockParameter ->resolveBlockNumberAndHash",
+      "aztec-node/dest/modules/unseen_block_hold_off.js:73/101 blockSource.getBlockData",
+      "archiver/dest/modules/data_source_base.js:251/276 query.hash.equals(initialBlockHash)"
+    ],
+    "failure": "String has no equals method, yielding TypeError at exact recorded source frame before reading public storage. This is a native API boundary defect, not maturity, pruning, note loss, policy rejection or withdrawal protocol evidence."
+  },
+  "independentProbe": {
+    "script": "/tmp/reviewer-withdrawal-778e-probe.mjs",
+    "log": "/tmp/reviewer-withdrawal-778e-probe.log",
+    "logSha256": "d97e4f5fe636098f69d6331a3f37e4130006fb81ccc371300459c6661bc61fdd",
+    "command": "NODE_BACKEND=js pinned Node v24.21.0 /tmp/reviewer-withdrawal-778e-probe.mjs",
+    "exitCode": 0,
+    "checks": [
+      "Actual installed ArchiverDataSourceBase and UnseenBlockHoldOff, labelled in-memory backing block metadata only; no real service.",
+      "String hash reproduces TypeError including exact276:31 and101:29 frames before backing read.",
+      "Actual BlockHash same reference succeeds for three sequential reads, no active hold.",
+      "Actual BlockParameterSchema converts wire JSON string to BlockHash, explaining why schema-backed client doubles fail to expose native boundary."
+    ]
+  },
+  "minimalRepair": "Preserve head.blockHash actual typed SDK value in ref; optionally include same header block number as anchored parameter. Keep all three derived storage slots and final same-height canonical hash recheck. No fallback/tag downgrade, retry, clock/fee/acceptance change.",
+  "requiredRegression": "Exercise the actual readAdmission helper/native boundary with installed resolver or strict typed node adapter: old String conversion must fail; typed reference succeeds for all three values; final canonical replacement must still reject. Extract only if needed to exercise real caller code, not a stand-alone test that mirrors proposed expression.",
+  "reachedScope": [
+    "Two canonical included successful actions reported: withdrawal-create and withdrawal-post; paid effects saved.",
+    "Final journal identifies post success. Overall scenario failed before admission/rejection/screen/exit/refund completion. No full ownership/collateral recovery or L1 refund acceptance claimed."
+  ],
+  "remaining": [
+    "Exact repaired source review before one changed genuine retry.",
+    "Genuine rejection, screen maturity, actual L2 exit, controlled settlement, original-depositor L1 refund and canonical continuity remain unfulfilled."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:47:24.514904+00:00",
+  "sourceHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "verdict": "eligible-for-one-controlled-31-case-run-after-parent-slot-release",
+  "sourcePacket": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-systemd-linux-helpers-v2/offline-phase/review-packet.json",
+    "sha256": "f561f396abfe2b869265c615fcad5844faaf5792e48da1e7c97655906a39fe1d"
+  },
+  "controlledPacket": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-systemd-phase-controlled/preparation-packet.json",
+    "sha256": "819bb7bcf1a96f533a309ad7b518719ff21200cf98546b248264b3ecbf34bcfe"
+  },
+  "bindings": {
+    "offlineRunner": "c2b60157018eaa5a63a8e02f662ebc083114a903182fb3989553b3b242f90d77",
+    "driver": "dcd97f8228dc82eb73359712f43038c6cceff4321297f2e6f0d684dd922c6b1b",
+    "tests": "ee9c517322b4c67b17cb73862c7523e91ca615dacb1252fac6839a8972cd4d29",
+    "controlledRunner": "9fdb88a4344d4b34363d54d6092e8f134324f8add14b614bc457d9b8a3e3a8ec",
+    "runtimePreparation": "ccafe876316e080c9615d1d90097c7e013f554d858169d2576cca1d95509208c",
+    "beforeSource": "1e3ec2c3da804d856d5289311d09cff07a50c86ff111d30d12492c51a62ec488"
+  },
+  "independentChecks": {
+    "packetFileHashes": true,
+    "protectedHashesRehashed": 850,
+    "protectedMismatches": 0,
+    "sourceCleanAndHeadExact": true,
+    "astTestInventoryExact": 31,
+    "prior25TestsRetained": true,
+    "productionSubsetAndReaderByteIdentical": true,
+    "hostFunctionsAndCleanupUnchangedExceptFreshName": true,
+    "caseBodyIdenticalAfterRemovingCheckpointExpressions": true,
+    "atomicSaveUnchanged": true,
+    "bootPublicFilesMatchCandidate": true,
+    "controlledRunnerDirectoryOnlyDelta": true,
+    "childUnchanged": true
+  },
+  "assessment": [
+    "Closed operation/label/timer enums are captured before the existing operation, so a failed operation can be located without raw exception or output disclosure.",
+    "Failure-only native_state uses the existing bounded capture and finite projection; fixed result-path lstat reports availability and size without opening content. Diagnostic failure cannot turn the primary failed result into success.",
+    "Six new groups execute extracted actual driver functions and top-level control flow with labelled operation doubles: timer/case failures, all four successful cases, lstat-only availability, secondary diagnostic failure and closed schema. These are controlled tests, not Linux execution.",
+    "Original true/false/timeout workload assertions, retention delay/state checks, confinement, production capture/classifier, receipt transport, single-attempt ownership and cleanup remain unchanged."
+  ],
+  "bounds": {
+    "controlledSeconds": 60,
+    "controlledRssKiB": 2097152,
+    "offlineSeconds": 60,
+    "offlineWorkSeconds": 43,
+    "offlineCleanupSeconds": 17,
+    "offlineMemoryMiB": 512,
+    "offlineCpu": 2
+  },
+  "findings": [],
+  "conditions": [
+    "No controlled execution until browser99636 has positive owned cleanup and parent explicitly releases the sole heavy slot.",
+    "Require all31 tests/no skips, exact850 protected hashes and positive process/temp cleanup in the actual receipt.",
+    "Actual offline Docker execution requires a separate parent grant after controlled outcome review; this source verdict does not grant it."
+  ],
+  "limitations": [
+    "No reviewer runtime tests, Docker, native binary or network operation performed.",
+    "Historical85080 precise failure remains unknown. The checkpoint is diagnostic location, not proof of its underlying cause.",
+    "Harmless systemd fixture cannot qualify the production AMD64 binary or promote its pin."
+  ]
+}

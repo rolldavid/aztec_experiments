@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "4628b9916842f6cf0ab946cb329f1e4b0723cc51",
+  "runtimeSha256": "0e658970492df5c01e20b10d22c2ec68f8de1628b4038e952d2286fb89d7cb3a",
+  "status": "blocked-before-submission",
+  "creation": {
+    "elapsedMs": 15675,
+    "peakTreeRSSKiB": 2984592,
+    "ownedTreeAbsent": true,
+    "stage": "subboard-send-once",
+    "waitResults": [
+      "ready",
+      "ready",
+      "ready",
+      "operation-failed"
+    ],
+    "observedSends": 0,
+    "prepared": {
+      "digest": "0c7e77b81c909e7350ad6bb707aeb88858ec68dad3c1b3564d1cc58cfc40a526",
+      "type": "subboard",
+      "status": "prepared",
+      "txHash": null,
+      "intentId": "0x161b818a248fbe106ff7490656dfb88d8a92a2fa4c621289dfc31025d587785c",
+      "maximumFee": "42062761803972",
+      "first": null,
+      "last": null,
+      "nameAvailability": null,
+      "subboardMetadata": {
+        "slug": "field-notes-1531",
+        "name": "Field Notes",
+        "description": "Development acceptance of authentic subboard creation.",
+        "rules": "Posts here may ignore the parent rules."
+      }
+    },
+    "previousCanonical": {
+      "transactionHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f",
+      "blockNumber": 1530,
+      "blockHash": "0x276883e8121ccaf769a689d39bcc6802d4e5fdcd6524cbab312dfcd64eae9567",
+      "canonical": true
+    },
+    "historyExportSha256": "323a126e5161fc0d612202ba503ee916a55e916f0827112bf33a03d09462a6c3",
+    "failedRpcResponses": [
+      {
+        "atMs": 13142,
+        "path": "/v1/node",
+        "method": "POST",
+        "rpc": [
+          "aztec_getBlock"
+        ],
+        "status": 503
+      },
+      {
+        "atMs": 13170,
+        "path": "/v1/node",
+        "method": "POST",
+        "rpc": [
+          "aztec_getBlock"
+        ],
+        "status": 503
+      }
+    ]
+  },
+  "readonly": {
+    "elapsedMs": 9586,
+    "ownedTreeAbsent": true,
+    "workflow": {
+      "digest": "0c7e77b81c909e7350ad6bb707aeb88858ec68dad3c1b3564d1cc58cfc40a526",
+      "type": "subboard",
+      "status": "prepared",
+      "txHash": null,
+      "intentId": "0x161b818a248fbe106ff7490656dfb88d8a92a2fa4c621289dfc31025d587785c",
+      "maximumFee": "42062761803972",
+      "first": null,
+      "last": null,
+      "nameAvailability": null,
+      "subboardMetadata": {
+        "slug": "field-notes-1531",
+        "name": "Field Notes",
+        "description": "Development acceptance of authentic subboard creation.",
+        "rules": "Posts here may ignore the parent rules."
+      }
+    },
+    "journal": {
+      "operation": "ROLLING_WORKFLOW_V1:0x1cc58cc194f8a8c923947fa1e06163e84490f269299968eefed4da98e08e1065",
+      "txHash": "0x18091601ad6f8f38f372d979c6d296ffe96b79240ff7db9148ac332ddcc2ce3f"
+    },
+    "buttons": {
+      "Confirm and send": true,
+      "Recover saved action": false,
+      "Check action and review fee": false,
+      "Cancel unsent action": false
+    },
+    "traffic": {
+      "walletAssets": 16,
+      "privateRequests": 63,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "compactRequests": 0,
+      "compactPreflights": 0,
+      "tagDiscoveryRequests": 0,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    }
+  },
+  "publicBoundary": {
+    "samples": 29,
+    "gapFound": true,
+    "tipsBefore": {
+      "proposed": {
+        "number": 1551,
+        "hash": "0x1e1a3aa3e7925c50b5b20f77958f918b461fc694e4e5ba8fcf31cc194ca125fd"
+      },
+      "checkpointed": {
+        "block": {
+          "number": 1550,
+          "hash": "0x1b0f9af0b02c980970fa457fcab942ace8e7cf6b0160cac20e8d92e082f6f8ce"
+        },
+        "checkpoint": {
+          "number": 1550,
+          "hash": "0x001a9cf13e78f39234c4b44f7d7e046fb76b5f48371ff1f15e35cd5dbc0695e4"
+        }
+      },
+      "proven": {
+        "block": {
+          "number": 1550,
+          "hash": "0x1b0f9af0b02c980970fa457fcab942ace8e7cf6b0160cac20e8d92e082f6f8ce"
+        },
+        "checkpoint": {
+          "number": 1550,
+          "hash": "0x001a9cf13e78f39234c4b44f7d7e046fb76b5f48371ff1f15e35cd5dbc0695e4"
+        }
+      },
+      "finalized": {
+        "block": {
+          "number": 1549,
+          "hash": "0x254940f8180ef3cb76976b92380d2aa66e929a2904e683648945706e2e8c866f"
+        },
+        "checkpoint": {
+          "number": 1549,
+          "hash": "0x0079e2693a5cd0c9bfbfae02dc80719c24e8b371c83c2813356b4310af5c3f5f"
+        }
+      }
+    },
+    "selector": 1551,
+    "nativeBlock": {
+      "status": 200,
+      "number": 1551,
+      "hash": "0x1e1a3aa3e7925c50b5b20f77958f918b461fc694e4e5ba8fcf31cc194ca125fd",
+      "errorCode": null,
+      "id": 17
+    },
+    "gatewayBlock": {
+      "status": 503,
+      "number": null,
+      "hash": null,
+      "errorCode": -32000,
+      "id": null
+    },
+    "gatewayData": {
+      "status": 200,
+      "number": null,
+      "hash": null,
+      "errorCode": null,
+      "id": 17
+    },
+    "tipsAfter": {
+      "proposed": {
+        "number": 1551,
+        "hash": "0x1e1a3aa3e7925c50b5b20f77958f918b461fc694e4e5ba8fcf31cc194ca125fd"
+      },
+      "checkpointed": {
+        "block": {
+          "number": 1551,
+          "hash": "0x1e1a3aa3e7925c50b5b20f77958f918b461fc694e4e5ba8fcf31cc194ca125fd"
+        },
+        "checkpoint": {
+          "number": 1551,
+          "hash": "0x00509707b98d7eefaa522ae8c449ff72101b09a8af60ff3e3b9030c0b4e35d2f"
+        }
+      },
+      "proven": {
+        "block": {
+          "number": 1550,
+          "hash": "0x1b0f9af0b02c980970fa457fcab942ace8e7cf6b0160cac20e8d92e082f6f8ce"
+        },
+        "checkpoint": {
+          "number": 1550,
+          "hash": "0x001a9cf13e78f39234c4b44f7d7e046fb76b5f48371ff1f15e35cd5dbc0695e4"
+        }
+      },
+      "finalized": {
+        "block": {
+          "number": 1550,
+          "hash": "0x1b0f9af0b02c980970fa457fcab942ace8e7cf6b0160cac20e8d92e082f6f8ce"
+        },
+        "checkpoint": {
+          "number": 1550,
+          "hash": "0x001a9cf13e78f39234c4b44f7d7e046fb76b5f48371ff1f15e35cd5dbc0695e4"
+        }
+      }
+    },
+    "elapsedMs": 14233
+  },
+  "conclusion": "Fixed getBlock above checkpointed but at proposed returned503, while native body and gateway getBlockData succeeded. Exact failed original selectors were not recorded; the precise original failure remains inferred. No resubmission, rejection, or source mutation. Prepared intent and entered sentinel preserved.",
+  "next": "Repair existing stateless canonical getBlock upper-bound handling after lead claim; independent review/integration, then reconcile exact saved intent before continuation.",
+  "files": [
+    {
+      "path": ".build/g05-subboard-current/run-ui.mjs",
+      "sha256": "1703cf1fd06ae13f5f53bb321372f157ec0bf54ab5b860d244e20f584d3983ea",
+      "bytes": 16621
+    },
+    {
+      "path": ".build/g05-subboard-current/supervise-ui.mjs",
+      "sha256": "afce9545c0af0b8df5cf813568d8687d82f5c797291d7d19229ec55cfa3851f7",
+      "bytes": 1174
+    },
+    {
+      "path": ".build/g05-subboard-current/result.json",
+      "sha256": "80a5c77a8c9c843664b3d7ed432881492d0d0e06303dc8db74adb5a13d6c7536",
+      "bytes": 40047
+    },
+    {
+      "path": ".build/g05-subboard-current/supervisor.json",
+      "sha256": "5e133ce3bedd52b54ea8d2b9a6f5f0dd9a257d8f4e4e8645822320775002e479",
+      "bytes": 52124
+    },
+    {
+      "path": ".build/g05-subboard-current/inspect-saved.mjs",
+      "sha256": "c131e59995082ca4e70c61f15075ff7e30a57490a73704a20431c7073af542cb",
+      "bytes": 12483
+    },
+    {
+      "path": ".build/g05-subboard-current/readonly-result.json",
+      "sha256": "b5dec6f474b12eaf6db82eca769207d95135df2a7fb563aecdfe832343925bb9",
+      "bytes": 19240
+    },
+    {
+      "path": ".build/g05-subboard-current/readonly-supervisor.json",
+      "sha256": "7cf62129b37610e992e31f79fd8eba86120e2a0f23d36163758c1e963395c698",
+      "bytes": 26089
+    },
+    {
+      "path": ".build/g05-subboard-current/public-block-boundary.json",
+      "sha256": "abb5678e3031dde921d9b2e43d245548a196e62a0cad68f82c9508dac4e36f50",
+      "bytes": 2605
+    },
+    {
+      "path": ".build/g05-subboard-current/creation-once-observation.json",
+      "sha256": "4044c7a1d56998dface110ea3adff60faf3e91d971c9d3bfc5298c746ba94876",
+      "bytes": 38
+    }
+  ]
+}

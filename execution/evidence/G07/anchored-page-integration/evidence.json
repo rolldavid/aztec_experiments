@@ -1,0 +1,113 @@
+{
+  "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+  "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+  "task_id": "G07-anchored-compact-page",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+      "id": "focused-combined",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test six component suites plus existing prover service suite",
+      "environment": "Mac Node24.21 pinned6.0.0rc3 dependencies; exactcandidate isolated leadcheckout; native/PXEproofsdisabled",
+      "observed": "266 PASS, zero fail/skip; independent254+12 PASS",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/combined.log",
+          "sha256": "633a95f65c2a6ce9d1a5f6bdd77a8b7f9b3e082f6620452690300bcc43f2d3ef"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/packet.json",
+          "sha256": "c68360b7c1838c02049fa33c9bfe64e2841764edf1bf53d586d1052c6ba7aca2"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/review.json",
+          "sha256": "af237001a34ebfffda61120cb86baa1b61dfbf11701ddbb4e4405684bde513e2"
+        }
+      ]
+    },
+    {
+      "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+      "id": "actual-sdk-archive",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "ROLLING_PREFERENCE_PAGE_NATIVE=1 LOG_LEVEL=silent TMPDIR=/private/tmp Node24 --test --test-name-pattern=\"owned isolated SDK and ACIR suite\" scripts/test-pxe-preference-page.mjs",
+      "environment": "Mac Node24.21 pinned6.0.0rc3 dependencies; exactcandidate isolated leadcheckout; native/PXEproofsdisabled",
+      "observed": "17 PASS0fail0skip, actual SDK/archive; labelled synthetic chain, no realproof",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/sdk-archive.log",
+          "sha256": "92511010a45c6f67b5fadccf89f77a34f2a34fd77fb2d4e2f9ce57fba8c60b90"
+        }
+      ]
+    },
+    {
+      "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+      "id": "generated-wallet-closure",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 scripts/rolling-wallet-assets.mjs then loadRollingWalletAssets",
+      "environment": "Mac Node24.21 pinned6.0.0rc3 dependencies; exactcandidate isolated leadcheckout; native/PXEproofsdisabled",
+      "observed": "97inputs25files9scripts validated, native/PXEproofconfigurationfalse",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/generated-closure.json",
+          "sha256": "cc7193d7342e84838aa8efe9eb342b0be9851d1aa57459fe0d80616234492ad2"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+    "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "controls-resume-20261014",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/anchored-page-integration/review.json",
+        "sha256": "af237001a34ebfffda61120cb86baa1b61dfbf11701ddbb4e4405684bde513e2"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "candidate": "bfe4f2fc61983cc181242d3db36f1747800efc58",
+      "id": "G07-anchored-page-authenticated-progress-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/packet.json",
+          "sha256": "c68360b7c1838c02049fa33c9bfe64e2841764edf1bf53d586d1052c6ba7aca2"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/review.json",
+          "sha256": "af237001a34ebfffda61120cb86baa1b61dfbf11701ddbb4e4405684bde513e2"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/combined.log",
+          "sha256": "633a95f65c2a6ce9d1a5f6bdd77a8b7f9b3e082f6620452690300bcc43f2d3ef"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/sdk-archive.log",
+          "sha256": "92511010a45c6f67b5fadccf89f77a34f2a34fd77fb2d4e2f9ce57fba8c60b90"
+        },
+        {
+          "path": "execution/evidence/G07/anchored-page-integration/generated-closure.json",
+          "sha256": "cc7193d7342e84838aa8efe9eb342b0be9851d1aa57459fe0d80616234492ad2"
+        }
+      ]
+    }
+  ]
+}

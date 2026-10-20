@@ -1,0 +1,81 @@
+{
+  "task_id": "W02",
+  "outcome": "pass",
+  "recorded_at": "2026-10-15T01:40:31.638176+00:00",
+  "source_fingerprint": "b0539fcf2a9cfc944d4f57f19bc749a6b1f00d865a5490eacf8f3550c7fe5e04",
+  "source_inventory": "evidence/W02/current-integration/source-current.json",
+  "artifacts": [
+    {
+      "path": "evidence/W02/current-integration/source-current.json",
+      "sha256": "adae01b30fb7c353f19011f04ef33137471d3019092f339c28589c552915f763"
+    },
+    {
+      "path": "evidence/W02/current-integration/review.json",
+      "sha256": "863f7545f555a6a6fc47387c89994636c703e1813272167e1f1fece03dbde2f1"
+    },
+    {
+      "path": "evidence/W02/current-integration/closure.json",
+      "sha256": "dcc363db88294a15c1f3486f08d181ca734fe6baa9807e89999c68d2b7ffb641"
+    },
+    {
+      "path": "evidence/W02/current-integration/independent-check.log",
+      "sha256": "18cefb9d6990557c505fb9b54b3719cad8f1b315893cbaeff887503bba8c430e"
+    },
+    {
+      "path": "evidence/W02/current-integration/affected-check.log",
+      "sha256": "1ed96cd7a4c350323708cabc692c7ea65106f763c1c654b5563d1e13c7281d37"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "W02-A01",
+      "result": "pass",
+      "summary": "Current custody/CLI/malformed-key/error projection checks, daemon safe error paths, silent SDK/session logging, real AEAD no-plaintext export assertions and60-file exact-known-secret evidence scan. Actual outputs retain fixed booleans/public canonical values rather than keys. Limit: Exact occurrence scan and adversarial tests are bounded engineering evidence, not proof against every encoding/derived leak or all historical logs. Specialist/T03 privacy review remains separate.",
+      "artifacts": [
+        "evidence/W02/current-integration/closure.json",
+        "evidence/W02/current-integration/review.json",
+        "evidence/W02/current-integration/affected-check.log"
+      ]
+    },
+    {
+      "id": "W02-A02",
+      "result": "pass",
+      "summary": "Actual empty independent profile imports same key/full salt plus four portable journal records, restored owned name and canonical confirmed avatar workflow; original profile regular-file paths/content and backup unchanged. Current AEAD tests cover bad passwords/tamper/foreign ownership/newer local conflict/partial idempotent restore/uncertain no-replay, and custody tests reject active-wallet replacement. Limit: Actual import deliberately makes no new transaction. No real proof is required to validate this configuration-independent backup/import behavior; proof-dependent application acceptance remains elsewhere. Not a full-history/key-only reconstruction claim.",
+      "artifacts": [
+        "evidence/W02/current-integration/closure.json",
+        "evidence/W02/current-integration/review.json",
+        "evidence/W02/current-integration/affected-check.log"
+      ]
+    },
+    {
+      "id": "W02-A03",
+      "result": "pass",
+      "summary": "Actual natural cross-tab operation-lock refusal/release plus both origin-bound MetaMask tabs receive correct account-change events and invalidate; old contexts refuse export. Actual chain0x1 readback followed by both app invalidations, original account/31337 restored. Current controlled checks exercise context guards at initialization/read/send boundaries and cleanup-before-lock-release. Limit: Chain callback delivery/timing was not captured; no event-timing inference. Actual account event and actual chain state/subsequent invalidation are distinct evidence.",
+      "artifacts": [
+        "evidence/W02/current-integration/closure.json",
+        "evidence/W02/current-integration/review.json",
+        "evidence/W02/current-integration/affected-check.log"
+      ]
+    },
+    {
+      "id": "W02-A04",
+      "result": "pass",
+      "summary": "Actual UI shows encrypted backup/password no-reset, lost-key/raw-file warnings and backup freshness after random claims. d5 privacy wording accurately states trusted prover/query visibility. Source/docs distinguish browser unlocked-page/PXE limitations, full salts and scoped journals; legacy passkey/CLI routes remain applicable separately. Limit: No anonymity against arbitrary network/operator observers or specialist qualification claimed.",
+      "artifacts": [
+        "evidence/W02/current-integration/closure.json",
+        "evidence/W02/current-integration/review.json",
+        "evidence/W02/current-integration/affected-check.log"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "reviewer-resume-20261014",
+    "summary": "Exact0a one-file fixture and all4 current engineering criteria approved; source carry-forward d5/b1 explicitly verified. Independent33PASS. T03/G13/testnet/audit/soak/network/finalrelease remain separate.",
+    "artifacts": [
+      "evidence/W02/current-integration/review.json",
+      "evidence/W02/current-integration/independent-check.log"
+    ]
+  },
+  "integration_requirement": "Proposed record only; root must integrate exact candidate, preserve historical W02.json, recheck final source fingerprint and copy supporting files before publishing task completion."
+}

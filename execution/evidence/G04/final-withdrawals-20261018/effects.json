@@ -1,0 +1,93 @@
+{
+  "observedAt": "2026-10-18T16:48:28.205Z",
+  "source": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "walletRuntime": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "chainId": 31337,
+  "proofsEnabled": false,
+  "withdrawals": [
+    {
+      "kind": "bok",
+      "l1Hash": "0x378c55cafd9e79acc0876353a1bf33db920eb12b5bf9bc1eb139796cea132e46",
+      "l1Block": 130,
+      "l1BlockHash": "0x761fc40ce7119de4f2d214b7fc4696490c3bf7b20bf3629fafe60e707e5903f9",
+      "canonical": true,
+      "recipient": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+      "portal": "0xc351628eb244ec633d5f21fbd6621e1a683b1181",
+      "amount": "500000",
+      "gasCostWei": "97895006852650",
+      "recipientEthBeforeWei": "10000000000000000",
+      "recipientEthAfterWei": "9902104993147350",
+      "recipientEthDeltaWei": "-97895006852650",
+      "gasAdjustedAmountMatches": true,
+      "recipientMicroUsdcBefore": "7720925404",
+      "recipientMicroUsdcAfter": "7721425404",
+      "recipientMicroUsdcDelta": "500000",
+      "l2": {
+        "hash": "0x09cece8f37f78b5360db3fdba6db89bd233a7e5d4604bd53410ad62e1e81989c",
+        "block": 20,
+        "blockHash": "0x1dc34789a412f2d52a4dcdd19f3f0c14fc53bd829645da9e76f59033d8442e7a",
+        "status": "finalized",
+        "executionResult": "success",
+        "privateFee": "9007225900000",
+        "exactExitMessageInEffect": true
+      },
+      "outbox": {
+        "messageHash": "0x00f5bbddcc4795bd8e750c9c77ccd01c2268b0e7ba5dfd1bbaebc18d4bcdb38d",
+        "epoch": "6",
+        "checkpoints": "3",
+        "leafIndex": "2",
+        "leafId": "34",
+        "consumed": true
+      }
+    },
+    {
+      "kind": "collateral",
+      "l1Hash": "0x8f0ccdfdf5340b4369a16bf336b4d8e1315701d447a2e1f98149068f4969fc99",
+      "l1Block": 133,
+      "l1BlockHash": "0xfa488da5d700812972f0e03b67ddc02fa8a32ede297a1870a1d0760119cd3b3c",
+      "canonical": true,
+      "recipient": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+      "portal": "0xc738c729d582dad3cf2ca4f892c7b98122d09d58",
+      "amount": "1000000000000000",
+      "gasCostWei": "70660003462340",
+      "recipientEthBeforeWei": "9902104993147350",
+      "recipientEthAfterWei": "10831444989685010",
+      "recipientEthDeltaWei": "929339996537660",
+      "gasAdjustedAmountMatches": true,
+      "collateralRecordCleared": true,
+      "l2": {
+        "hash": "0x1ac032c7a4c3fb4135bccabb504b70a9c984c1ab75701913915e44a6f3a64241",
+        "block": 21,
+        "blockHash": "0x0293b4bcf2c0322de37717a0ea2abb8f24fafedcda32359269fc5af85fa90371",
+        "status": "finalized",
+        "executionResult": "success",
+        "privateFee": "7578355200000",
+        "exactExitMessageInEffect": true
+      },
+      "outbox": {
+        "messageHash": "0x00e3ec268bddad3558f0d65f5e40144cb9233d163c9a236af28a4e907e9e3ab0",
+        "epoch": "6",
+        "checkpoints": "4",
+        "leafIndex": "3",
+        "leafId": "35",
+        "consumed": true
+      }
+    }
+  ],
+  "limits": [
+    "Read-only observed effects, not independent source review.",
+    "Browser private journals and backups not opened or decrypted.",
+    "Native locally settled proof-disabled chain; no real-proof/testnet assurance."
+  ],
+  "passed": true,
+  "sourceHashes": {
+    "shared/ethereum-journal.mjs": "19a9dfa3fc400fd4d3afe772ffbc25549a240c816b80084e09360674a81cb62e",
+    "shared/protocol-commitments.mjs": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+    "shared/transaction-outcomes.mjs": "95f8f44a93c681f5c5b8de98fa5a2b14182c679dbbe9d81780e4834dc95e6279"
+  },
+  "verifierMatchesCandidate": true,
+  "procedureCorrections": [
+    "Read-only inspection initially used nonexistent AztecAddress.fromString; replaced with installed SDK constructor.",
+    "Outbox leafId is (1 << path.length) + leafIndex per installed Outbox.sol:159; corrected inspection comparison and consumed-flag lookup. No application defect or mutation."
+  ]
+}

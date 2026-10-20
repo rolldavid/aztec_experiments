@@ -1,0 +1,20 @@
+HTTP/2 200 
+content-type: text/javascript
+content-length: 28104564
+cache-control: no-store
+content-encoding: gzip
+content-security-policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: https://d30njln0kead8n.cloudfront.net https://ethereum-sepolia-rpc.publicnode.com; worker-src 'self' blob:; img-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+date: Mon, 19 Oct 2026 03:51:23 GMT
+referrer-policy: no-referrer
+via: 1.1 Caddy, 1.1 48283955a47e27de2f30b7fc4699cc7e.cloudfront.net (CloudFront)
+x-content-type-options: nosniff
+vary: Accept-Encoding
+x-cache: Miss from cloudfront
+x-amz-cf-pop: MRS53-P4
+x-amz-cf-id: GHzNK_wpmx8j67t59vg1BT0RAqf1tt6t0i_vbi1mVrkkPJ3kzGtyrQ==
+strict-transport-security: max-age=31536000
+permissions-policy: camera=(), microphone=(), geolocation=()
+

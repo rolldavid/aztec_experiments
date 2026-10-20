@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "sourcePreparation": "86c6228e8c04cc7d07c7d6e99f31f00d3b5f194b",
+  "combinedBase": "c1550212458320e1675d11331933cff5184d0432",
+  "changedPaths": [
+    "billboard/portal/package-lock.json",
+    "billboard/portal/package.json",
+    "scripts/build-contracts.mjs"
+  ],
+  "scope": "Complete isolatedportal packagealignment; notSolidity/native/compiler acceptance",
+  "actualInstalledIdentity": {
+    "name": "@aztec-foundation/l1-artifacts",
+    "version": "6.0.0-rc.6"
+  },
+  "npm": {
+    "lockSeconds": 1.058,
+    "ciSeconds": 0.809,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "ownedProcessGroupsAbsent": true,
+    "ignoreScripts": true,
+    "officialRegistryIntegrityMatched": true,
+    "noReplay": true
+  },
+  "partialRuntimeFailureDisposition": "Parent received an apparentcapacityfailure after the tooloperation hadalreadycompleted. Agent reconciled successful durableoutcomesandprocessabsence beforefollowup. Bothpreviousactionsretained; neitherrepeated.",
+  "tests": {
+    "syntheticCasesPassed": 11,
+    "actualInstalledCheck": "PASS",
+    "syntaxAndDiffCheck": "PASS"
+  },
+  "preserved": [
+    "Rootportal/shareddependency/sourcebefore/after snapshotsunchanged",
+    "Existingownedportaloutfilesbyte-for-byteunchanged; notincorporatedinto newartifactprovenance",
+    "AllFoundry/Solidityconstructor/bytecode and Noir/VK/source gates retained",
+    "ActiveNoirlockunchangeduntilfreshcompile/originauthentication"
+  ],
+  "limitations": [
+    "No lifecycle scripts, Forge, rawNoir, nativeprover, service, wallet, provider or paid actions.",
+    "PortalSoliditybuildmustbequalifiedlaterwithnewL1interfaces beforeuse.",
+    "6851/b3f5/c155 and86sourcepreparation remainseparate reviewed/prerequisitecommits; thiscandidate includesportal lockresolution only atop86."
+  ],
+  "evidence": {
+    "rc3-portal-install-before.json": "466d90457f8b267f302b5577499301500d57e71447e8f1d2d0f48e1c7eb1c9b1",
+    "rc3-portal-lock.log": "1e2518b4e605e89cd3b0bd43e4f2895da83bf0e60eb00f528d1e34f22a8ed781",
+    "rc3-portal-ci.log": "c364a4674f9637914916c35128e15f01cc3443baad1396ae6919bde7eb7fdf19",
+    "rc3-portal-install-result.json": "3c5af7b40d219556fa0a0688e1773cdae77f348dca2ab14420e6fea44d2c0be7",
+    "rc3-portal-installed-check.log": "a77da452c5aa5215ced6e3f4d5cc59c23e0abf14eb52d3bf1909ab37617a4ba7"
+  }
+}

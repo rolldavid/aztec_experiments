@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T07:36:32.388521+00:00",
+  "verdict": "PASS_COMPONENT_184_AND_CURRENT_CLOSURE",
+  "candidate": "a9da602b38cf00d47e40f8fb5d201809f1b48c0d",
+  "actualPacketSha256": "471b1b796e051c0193c64931e59c01dc53e42100fc968da08f6e9064928b2fc8",
+  "logSha256": "57dcadec6d6ad58c91859f14a38e311206de45a66003a2e6e773f3737f212c57",
+  "closureSha256": "d544945f9f9d05dbca8620cede465f3686eaead1eaf1828e161c4b85f1950c93",
+  "testCounts": {
+    "tests": 184,
+    "pass": 184,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "exactLabelMultiset": true,
+  "elapsedMs": 2617,
+  "peakTreeRSSKiB": 775392,
+  "protectedBindingsRehashed": 3236,
+  "closureBindingsRehashed": 3157,
+  "cleanup": {
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryAbsent": true
+  },
+  "scope": "Actual pinned SDK metadata/full-response projection plus actual-used physical oracle over labelled finite block source; genuine chain is not exercised by these components.",
+  "carry": "Normal SDK2052/8,frontend97/10,wallet84/24,contracts53 and installed8+2 bindings remain exact; test-only fixture delta does not require rebuild. Recovery169 retained unchanged.",
+  "next": "One changed genuine initial-reorg investigation may be prepared with existing limits and full original acceptance. Exact launch/source bindings and parent serialized grant still required; no timing or reorg pass inferred."
+}

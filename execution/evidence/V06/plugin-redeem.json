@@ -1,0 +1,80 @@
+{
+  "phase": "plugin-redeem",
+  "passed": true,
+  "startedAt": "2026-10-10T15:32:49.079Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T15:32:54.953Z"
+    },
+    {
+      "stage": "verify-public-asset:user.html",
+      "at": "2026-10-10T15:32:54.953Z"
+    },
+    {
+      "stage": "verify-public-asset:aztec_bundle.js",
+      "at": "2026-10-10T15:32:56.236Z"
+    },
+    {
+      "stage": "verify-public-asset:plugins.js",
+      "at": "2026-10-10T15:33:14.106Z"
+    },
+    {
+      "stage": "load-live-application",
+      "at": "2026-10-10T15:33:16.905Z"
+    },
+    {
+      "stage": "restore-disposable-aztec-account",
+      "at": "2026-10-10T15:33:19.348Z"
+    },
+    {
+      "stage": "reconnect-disposable-ethereum-account",
+      "at": "2026-10-10T15:33:19.864Z"
+    },
+    {
+      "stage": "wait-restored-application",
+      "at": "2026-10-10T15:33:20.832Z"
+    },
+    {
+      "stage": "redeem-unused-plugin-credit",
+      "at": "2026-10-10T15:33:31.607Z"
+    },
+    {
+      "stage": "phase-complete",
+      "at": "2026-10-10T15:33:54.745Z"
+    }
+  ],
+  "ethereumNonceBefore": 7,
+  "walletFees": [
+    {
+      "balanceBefore": "111079892145933",
+      "nonce": "7",
+      "gasLimit": "725770",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "baseFeePerGas": "18"
+    }
+  ],
+  "ethereumPayments": [
+    {
+      "hash": "0xbf32ef99658d9e4109d6156cecde8997b616cd2415f8527bc7ae5a23670e97ed",
+      "nonce": 7,
+      "requestedTo": "0x62126e7be3695809b1f9f40df3b1ab2a99f10ed8",
+      "minedTo": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "wrapped": true,
+      "gasLimit": "725520",
+      "uiGasLimit": "725770",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "518397",
+      "blockNumber": 11885461,
+      "blockHash": "0xd9f97895e1f171556ccd614f7baa8a3e3161650adda1b6242d3b163d5443800f",
+      "status": 1,
+      "exactContractEffect": true
+    }
+  ],
+  "amount": "999652",
+  "replayRejected": true,
+  "ethereumNonceAfter": 8,
+  "finishedAt": "2026-10-10T15:33:54.871Z"
+}

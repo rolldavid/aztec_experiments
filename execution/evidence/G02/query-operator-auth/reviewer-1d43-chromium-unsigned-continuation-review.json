@@ -1,0 +1,53 @@
+{
+  "reviewer": "independent-reviewer",
+  "candidate": "1d43ac50d90d469d4fe76ef4c2b026ca6ddb1c82",
+  "base": "4ee6b1cd068655399b39826e3b726f67fd591cb9",
+  "disposition": "approved-scoped-source-component",
+  "requirements": [
+    "RC18",
+    "RC19",
+    "RC38",
+    "RC39"
+  ],
+  "sourceHashes": {
+    "TESTING.md": "b88a14e58f7d14759600197ab4165f2e6a10bd5641d78a1889076dfa6bf36737",
+    "scripts/run-bounded-browser-check.mjs": "fb562179dfce9294ac76b4119136acb49870fe339f832faf09076f4dfec8c403",
+    "scripts/t04-metamask.mjs": "85ac61c57e4c41242c3df13d7a4314e478ba16778deec6060b4a4dddb100ee44",
+    "scripts/test-t04-browser-journey.mjs": "26089013359897e4eb00bae9b20330899072e2e73437db12489c6d5f278f58e8",
+    "scripts/test-wallet-extension-browser.mjs": "6c8fbf6857f97a92e17f98aa0284132a14f5e45e46665ca8765f9d655bb3ef76"
+  },
+  "predecessorReview": {
+    "file": "reviewer-1f70-chromium-export-review.json",
+    "sha256": "f532923aba3e130d1659ccf3651c6bf60423a43084e2406cba56909a3b008c73",
+    "findingClosed": "Exact original claims are captured with saved aggregate/journals, compared to unchanged live records and decrypted payload claims. Missing/substituted/live-mutated claims reject."
+  },
+  "evidence": {
+    "browserRepairPacketSha256": "ff16d003807c511f632f1fc6b90d732f042a8f0a166a6df2edbb6a676f6a5d75",
+    "successorPacketSha256": "ea01a826b4896fbd6b7e0bc0b4b87311757b5f9d6ca55ca469ede2c758283c4f",
+    "predecessorBindingsVerified": 19,
+    "successorBindingsVerified": 8,
+    "installedExecutableAndFrameworkHashesVerified": true,
+    "successorControlledCases": 6,
+    "logs": "Five selected cases and one launch-ownership case pass in separate actual runs; no whole-file or new browser pass inferred."
+  },
+  "assessment": [
+    "Exact Chrome155 executable and framework hashes are mandatory for aggregate modes; missing or altered binary fails without153 fallback. Other browser modes retain their defaults. No History deletion, security-flag relaxation or deadline/memory increase.",
+    "Unsigned continuation is an explicit exclusive USDC mode. It requires the owned0600 exact-hash encrypted export, matching current journals/claims/account custody, exact scope and beneficiary, no intent/claim/submitted relay/request/hash/prior payment, no prepared backup, and zero Ethereum pending and portal consent nonces.",
+    "The fresh quote follows existing UI and original private control allocation limits. The retained encrypted private fee cap must match before signing. A prepared backup is downloaded before Confirm; existing typed-consent checks, two-signature/one-relay/zero-user-ETH/one-L2/canonical-three-effects/Ready guards remain.",
+    "Export-only retains its60s4GiB bounds and no quote/signature/payment/relay/claim boundary. Normal aggregate continuation remains120s4GiB. Post-close traffic counters and owned cleanup remain.",
+    "Only fixed observations leave the page; original claims, journals, wallet custody and decrypted exports remain private. Original download exceptions propagate with bounded failure categories."
+  ],
+  "actualScope": {
+    "originalExport97218": "10599ms, peak3301600KiB, cleanup positive, download succeeded without financial actions. Historical weak claim-completeness assertion is not retroactively strengthened.",
+    "pureBlob155": "Both persistent-profile downloads passed; prior153 reopen crash preserved.",
+    "newExactClaimAndUnsignedContinuation": "Controlled source checks only; no new actual browser run reviewed.",
+    "fullUsdcAcceptance": "OPEN"
+  },
+  "structuralReview": "Reuses existing browser launch, retained-account, encrypted backup, quote and payment guards. No additional framework, new journal, store clearing or automatic retry. No blocking source finding remains.",
+  "reviewerActions": {
+    "browserRuns": 0,
+    "chainOrServiceMutations": 0,
+    "financialActions": 0,
+    "sourceEdits": 0
+  }
+}

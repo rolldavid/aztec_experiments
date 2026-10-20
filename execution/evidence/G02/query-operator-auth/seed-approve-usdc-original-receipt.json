@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-14T09:25:03.448098+00:00",
+  "originalTransactionHash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+  "receipt": null,
+  "stage": "approve-usdc",
+  "source": "069759295c10f161068db738521b9912b4c4f797",
+  "noReplay": true
+}

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-14T11:08:20.452509+00:00",
+  "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+  "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+  "disposition": "approved-coherent-source-composition",
+  "sourceHashes": {
+    "scripts/run-bounded-browser-check.mjs": "5b6c7d37c983d008c75cad17d7c1258372836a0785590b185558826f35eaef99",
+    "scripts/t04-metamask.mjs": "5e0e02fc2a09f79b4eeba4ccd969db2dbfeb67aad2b97475ec3c5c4db94f0f3e",
+    "scripts/test-t04-browser-journey.mjs": "01d2caf0f31df6a12aa1c52e09754564145956d2cdb99d168f1ba0f2f5cace73",
+    "scripts/test-wallet-extension-browser.mjs": "dbac3254c672542302682b2f79d956ad7fae92fe6ab1701e181638a8d8aaf466"
+  },
+  "exactEquivalentSource": "f7e1fbde266314764ef3da814b164da00496aac3",
+  "priorReview": "reviewer-f7e-refund-completion-review.json",
+  "priorReviewSha256": "0b2931fd2000d0345b21ac572624d81e6d29a95599e1b6668c7bd56d6388def3",
+  "combinedChecks": {
+    "tests": 118,
+    "passed": 117,
+    "failed": 0,
+    "cancelled": 0,
+    "explicitSkipped": 1,
+    "durationMs": 2185.974833,
+    "environment": "TMPDIR=/private/tmp",
+    "logs": {
+      "refund-driver-combined.log": "7318fbd7f6ad360034909ec386ac8e24d5cce23a54ed2969d351da4f184656c6",
+      "refund-driver-combined-canonical-tmp.log": "52def26eb364c5397b5cce9c085e397a1ba1523ff7b176ad15a07c5c0dfae5f1"
+    },
+    "earlierFailurePreserved": "Canonical realpath assertion saw /private/tmp versus /tmp. Environment corrected without source or assertion changes."
+  },
+  "actualCarry": "Original refund and full encrypted backup reopen actual239c PASS, followed by f7e observation-only repair/focused tests. No repeated financial action or final-source fresh financial run claimed.",
+  "blockingFindings": [],
+  "limits": [
+    "Native-development original-refund scope only; no real-proof/testnet/expiry/two-user acceptance.",
+    "No application asset changes or new reviewer runtime. Existing explicit browser skip is not counted as passed."
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-12T13:30:04.640Z",
+  "readOnly": true,
+  "provider": "fixed-public-Tenderly-Sepolia",
+  "passed": true,
+  "nodeStartupQualified": false,
+  "retries": 0,
+  "maxRequests": 16,
+  "requestTimeoutMs": 8000,
+  "totalDeadlineMs": 59000,
+  "responseBytesMax": 65536,
+  "stages": [
+    {
+      "name": "chain",
+      "status": "passed",
+      "observation": {
+        "chainId": 11155111
+      }
+    },
+    {
+      "name": "head",
+      "status": "passed",
+      "observation": {
+        "number": "11899198",
+        "timestamp": "1791811788",
+        "hash": "0x153ab287fd9cb0fbfcfecae4d9ba9c65edc4a14d4322fba5652e3fbd28ead356"
+      }
+    },
+    {
+      "name": "past-head",
+      "status": "passed",
+      "observation": {
+        "number": "11898898",
+        "timestamp": "1791808176",
+        "hash": "0xe6f5814236484fda626aec5bb0ec48e8bd09c806130ed5be7e8e4cf3efd3f506"
+      }
+    },
+    {
+      "name": "registry-scope",
+      "status": "passed",
+      "observation": {
+        "candidate": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+        "canonical": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+        "candidateVersion": "2914217885"
+      }
+    },
+    {
+      "name": "candidate-liveness",
+      "status": "passed",
+      "observation": {
+        "address": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+        "past": {
+          "pending": "16668",
+          "proven": "16668"
+        },
+        "current": {
+          "pending": "16668",
+          "proven": "16668"
+        },
+        "windowSeconds": "3612",
+        "pendingIncreased": false,
+        "provenIncreased": false,
+        "latestProvenCheckpoint": {
+          "number": "16668",
+          "slot": "19231",
+          "timestamp": "1791799356",
+          "ageSeconds": "12432"
+        }
+      }
+    },
+    {
+      "name": "canonical-liveness",
+      "status": "passed",
+      "observation": {
+        "address": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+        "past": {
+          "pending": "36",
+          "proven": "0"
+        },
+        "current": {
+          "pending": "87",
+          "proven": "64"
+        },
+        "windowSeconds": "3612",
+        "pendingIncreased": true,
+        "provenIncreased": true,
+        "latestProvenCheckpoint": {
+          "number": "64",
+          "slot": "2559",
+          "timestamp": "1791810132",
+          "ageSeconds": "1656"
+        }
+      }
+    },
+    {
+      "name": "continuity",
+      "status": "passed",
+      "observation": {
+        "number": "11899198",
+        "timestamp": "1791811788",
+        "hash": "0x153ab287fd9cb0fbfcfecae4d9ba9c65edc4a14d4322fba5652e3fbd28ead356",
+        "unchanged": true
+      }
+    }
+  ],
+  "finishedAt": "2026-10-12T13:30:05.954Z",
+  "elapsedMs": 1314,
+  "requests": 15
+}

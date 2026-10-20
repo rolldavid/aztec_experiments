@@ -1,0 +1,28 @@
+{
+  "base": "506ca88234424152d7438dcee016ae57d7fa06cc",
+  "candidate": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "task_id": "D1-query-codec",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs"
+  ],
+  "required_checks": [
+    "retained-compressed-transaction"
+  ],
+  "requirements": [
+    "RC18-RC21-native-transaction-transport"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "D1-query-codec",
+      "paths": [
+        "prover/private-query.mjs",
+        "prover/private-query.test.mjs"
+      ]
+    }
+  ]
+}

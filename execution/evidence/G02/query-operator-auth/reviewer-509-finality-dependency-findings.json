@@ -1,0 +1,39 @@
+{
+  "candidate": "50979606215c79fff36882d3e1d0a7b2fa88b623",
+  "base": "ca4fa4d5a4bb3b80e6bc55b81b5a6922dd95948b",
+  "verdict": "repair default per-read timeout before component approval",
+  "blockingFindings": [
+    {
+      "path": "plugins/devnet/bootstrap.mjs",
+      "symbol": "waitDevelopmentFinality",
+      "finding": "Default120000ms overall deadline is passed directly to boundedTransactionRead, which rejects any timeout over20000ms before invoking RPC. All focused tests use5\u2013100ms and miss this default path.",
+      "repair": "Cap each read at min(20000, remaining overall deadline); add immediate-finalized helper case with default options."
+    }
+  ],
+  "reviewedPreservedBoundaries": [
+    "Original canonical receipt/block identity and final engine guards remain unchanged.",
+    "Persistent-only Anvil slots-in-an-epoch1 matches installed official SDK start_anvil.js70; snapshot size/hash/privacy and restored clock guards remain unchanged.",
+    "Error cause retained privately through cleanup; CLI still emits fixed generic message.",
+    "No provisional DevUSDC activation introduced."
+  ],
+  "focusedEvidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/G13/current-native/finality-composition-focused.log",
+    "sha256": "12c3a38f418b62eeb5e39aecf5ea3147bd534022f0e163f738092339e6b9aeea",
+    "result": "5pass3636.942667ms, controlled helper reads; insufficient default-timeout coverage identified"
+  },
+  "dependencyReview": {
+    "candidate": "182e0d9b7a05ea6f44b4b5ce24a5c1be0b7f7643",
+    "newLockEntries": 168,
+    "removedEntries": 0,
+    "existingVersionResolvedIntegrityChanges": 0,
+    "otherExistingChanges": "Root devDependencies; peer:true removed from is-glob/is-extglob, all other fields equal.",
+    "newOrigins": "All registry.npmjs.org",
+    "newInstallScript": "Optional fsevents; ignore-scripts reported by parent, not independently proven by log body",
+    "scope": "Pinned component build dependencies; no deployed liquidity or compiler qualification",
+    "normalClosure": "Lockfile changed; regenerate affected normal manifests before claiming current closure."
+  },
+  "runtimeExclusions": [
+    "No heavy test or actual startup executed by reviewer.",
+    "Existing component passes do not qualify live readiness or full product/proof acceptance."
+  ]
+}

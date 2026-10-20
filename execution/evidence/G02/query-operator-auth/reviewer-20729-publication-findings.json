@@ -1,0 +1,23 @@
+{
+  "candidate": "20729d31a8cfaf3d0b1e79cbc7cf6c2b9dffac18",
+  "verdict": "REPAIR_REQUIRED",
+  "findings": [
+    {
+      "priority": 1,
+      "path": "plugins/static-publication.mjs",
+      "issue": "Retained immutable orphan revisions are not charged to content/file limits after reopen.",
+      "reproduction": {
+        "toolChunk": "78c671",
+        "wallTimeSeconds": 0.26554475,
+        "method": "Actual publisher module and original labelled receipt helper; private temporary filesystem only. Injected catalog rename failure after immutable directory rename, restored fs.rename, reopened, published unrelated receipt. All temp removed; no source edits.",
+        "maxBytes": 2000,
+        "catalogBytes": 1135,
+        "retainedBytes": 2270,
+        "unrelatedPublishAccepted": true
+      },
+      "repair": "Preserve exact orphan receipt recovery, but block unrelated writes until reconciliation or validate/charge every retained immutable directory against bounded quotas."
+    }
+  ],
+  "qualificationNote": "Sandbox removes document storage/cookie access and service supplies no credentials. It does not force omit on arbitrary generated HTTPS fetch(credentials:include); browser evidence explicitly used omit and empty cookie context. Avoid claiming universal ambient network credential stripping absent supported credentialless boundary.",
+  "ownerNotified": true
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "8503d7a7ae1bc8508bb6a0d25517b89edb9d17db",
+  "base": "7142ca398954be3316ca3bbd54db0c4c74217a67",
+  "verdict": "approved-bounded-source-for-one-explicit-full-prerequisite-run",
+  "findings": [],
+  "sourceHashes": {
+    "deploy/prover/archiver-prerequisites.mjs": "4b3f0d2ad1c1ad94ddfe1b28d82b479c2ba62839154e30a7cdbdb5a6f9deb945",
+    "deploy/prover/archiver-prerequisites.test.mjs": "5f242b6fe6f0de8ce45cf36a94e2f752cda5aec601b73f02da0f6245dde1cab3"
+  },
+  "checks": {
+    "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 deploy/prover/archiver-prerequisites.test.mjs",
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1273.133833,
+    "log": "/tmp/reviewer-full-prereq-8503-tests.log"
+  },
+  "sourceDisposition": [
+    "Closed provider enum and explicit new CLI/worker route select Tenderly full mode; default full and historical behavior preserved. Mixed historical/full selection rejected before receipt creation. No arbitrary URL or automatic alternate-provider retry.",
+    "Frozen single l1RpcUrls array feeds actual getPublicClient; RollupContract and validateTraceAvailability share that client. Blob factory receives same fixed L1 array with exact EthAddress conversion; installed HttpBlobClient uses it for execution block lookups. Beacon and Aztec read-only filestore URLs unchanged; no upload URL configured.",
+    "All11 prerequisite stages unchanged: exact source/version, chain, finalized anchor, rollup identity/constants, deployment/history, latest-clock, trace, strict blob testSources and final anchor continuity. Failure and cleanup semantics preserved.",
+    "Source pins checked before client use. Fresh0600 exclusive no-follow fsynced safe receipt, child discarded stdout/stderr,59s outer deadline plus500ms kill escalation remain mandatory.",
+    "Independent actual SDK construction test confirms selected transport URL without network requests. Mutation tests reject identity/history/clock/trace/blob/anchor failures and preserve safe provider on early worker failure."
+  ],
+  "priorRuntimeContext": {
+    "path": "execution/evidence/G02/archive-provider-7142-tenderly-live-1.json",
+    "observedPassed": true,
+    "httpStatus": 200,
+    "requests": 1,
+    "rawCount": 1,
+    "sdkCount": 1,
+    "strictDecodedCount": 1,
+    "limitation": "Existing evidence inspected only; not reviewer live execution and does not qualify full prerequisite sequence."
+  },
+  "limitations": [
+    "No reviewer provider request or service work. One explicit full diagnostic run may use installed SDK read retries/scans as disclosed; not a one-wire-request claim.",
+    "Full diagnostic success would not qualify Linux node startup, current deployed endpoint, proofs or historical AWS06 cause.",
+    "Six image-module byte bindings remain separately unresolved; source matches installed SDK only.",
+    "No deployment configuration or paid launch authorization inferred."
+  ]
+}

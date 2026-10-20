@@ -1,0 +1,71 @@
+✔ installed mode rejects mismatched version metadata: toolchain.json (12.643542ms)
+✔ installed mode rejects mismatched version metadata: node_modules/@aztec-labs/pxe/package.json (7.7685ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs (11.067792ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs/pxe (10.077ms)
+✔ installed mode rejects missing or changed rolling-preference-compact.mjs (14.785875ms)
+✔ installed mode rejects missing or changed rolling-preference-recovery.mjs (17.092292ms)
+✔ generated batch control drains peers and preserves exact rejection undefined (0.46675ms)
+✔ generated batch control drains peers and preserves exact rejection null (0.151666ms)
+✔ generated batch control drains peers and preserves exact rejection false (0.116333ms)
+✔ generated batch control drains peers and preserves exact rejection 0 (0.124416ms)
+✔ generated batch control drains peers and preserves exact rejection Error: labelled rejection (0.104416ms)
+✔ labelled boundary double rejects zero count before queue or utility (1.093042ms)
+✔ labelled boundary double rejects nine logs before queue or utility (0.71175ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (0.368875ms)
+✔ labelled boundary double rejects unknown key before queue or utility (0.295916ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.313167ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.301416ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.289334ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.300209ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.668834ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.337167ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (0.317958ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.341375ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.327458ms)
+▶ owned isolated SDK and ACIR suite
+  ✔ generated page / actual SDK rejects consistent wrong ordinal before utility (122.474084ms)
+  ✔ generated page / actual SDK rejects consistent wrong fee before utility (5.235625ms)
+  ✔ generated page / actual SDK rejects consistent wrong execution before utility (3.597333ms)
+  ✔ generated page / actual SDK rejects consistent wrong slot before utility (14.675083ms)
+  ✖ actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing (1399ms)
+  ✖ actual optimistic recovery advances once, replays without body ingestion and advertises anchor promotion (1388.803416ms)
+  ✔ actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head (1857.798375ms)
+✖ owned isolated SDK and ACIR suite (5722.571875ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 29
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6308.095583
+
+✖ failing tests:
+
+test at scripts/test-pxe-preference-page.mjs:296:31
+✖ actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing (1399ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:609:48)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:599:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/test-pxe-preference-page.mjs:296:31
+✖ actual optimistic recovery advances once, replays without body ingestion and advertises anchor promotion (1388.803416ms)
+  Error: PXE_PREFERENCE_RECOVERY_FAILED
+      at runRollingPreferenceRecovery (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/preference-recovery-sdk-YxjQWw/rolling-preference-recovery.mjs:311:15)
+      at Object.processRollingPreferenceRecovery (eval at receiver (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:759:21), <anonymous>:16:12)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1168:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1163:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

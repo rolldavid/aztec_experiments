@@ -1,0 +1,27 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+  "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "sourceRevision": "5cdc69da61b162998c451672a63979f6fc15cc25",
+  "baseRevision": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "changedPaths": [
+    "docs/rolling-deployment.md"
+  ],
+  "originalReviewedRevision": "21c88493f3b67a05ee672c38a32cf95ed40d9579",
+  "transferVerification": {
+    "candidateAndOriginalDocumentBlob": "ba7b4c8cb3799f9dc50b3e81597926c58a2ff933",
+    "delta": "Exact same18-line documentation addition; sole changed file against integration base",
+    "runtimeChanges": false
+  },
+  "checks": [
+    "Exact candidate/base diff reviewed",
+    "Transferred documentation blob identical to independently reviewed worker revision",
+    "Existing review-wallet-gzip.json binds source/official AWS semantics and config packet"
+  ],
+  "verification": "Read-only Git source comparison; no runtime tests repeated for documentation-only change",
+  "limitations": [
+    "No new application acceptance or production qualification claim"
+  ]
+}

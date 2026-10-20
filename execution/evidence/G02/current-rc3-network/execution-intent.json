@@ -1,0 +1,27 @@
+{
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "startedAt": "2026-10-13T07:43:54.951Z",
+  "pid": 24406,
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/live-1.json"
+  ],
+  "environment": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/usr/bin:/bin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "NODE_OPTIONS": "",
+    "NODE_PATH": "",
+    "HOME": "/private/tmp/rc3-network-jffp4w65/home",
+    "TMPDIR": "/private/tmp/rc3-network-jffp4w65"
+  },
+  "reviewSha256": "5a9063cb220d83d8112a6cdcf5863662d4036a0fa3c9b80cce00b761642d91c9",
+  "preparationSha256": "ff16dc3a6551e2a0da2c1947814303e72beba46c705d2c72f720b346a18e8879",
+  "runnerSha256": "24933b1eb1b015e16c67b2d420d903e794205110d65bae7a5d8a87de1b819dd8",
+  "retry": false
+}

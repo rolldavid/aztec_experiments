@@ -1,0 +1,33 @@
+{
+  "reviewer": "independent-reviewer",
+  "candidate": "1f70ca1ed747a414a2a91eaf8951106133d10004",
+  "base": "4ee6b1cd068655399b39826e3b726f67fd591cb9",
+  "disposition": "hold-for-exact-claim-backup-verification",
+  "scope": "Five driver/documentation paths; source component review only, no USDC acceptance waiver",
+  "packetSha256": "ff16d003807c511f632f1fc6b90d732f042a8f0a166a6df2edbb6a676f6a5d75",
+  "verification": {
+    "sourceAndEvidenceBindings": 19,
+    "allMatch": true,
+    "pinnedExecutableAndFrameworkRehashed": true,
+    "reviewerBrowserRuns": 0
+  },
+  "findings": [
+    {
+      "priority": 1,
+      "file": "scripts/t04-metamask.mjs",
+      "line": 375,
+      "finding": "completeEncryptedExport accepts any nonempty payload.claims rather than the exact original claim-secret records. Missing or substituted records can therefore pass the current completeness assertion. The controlled positive uses claims:[{}].",
+      "requiredRepair": "Capture the original BillboardClaimBackup.exportRecords(wallet) alongside journals in page RAM; compare unchanged live records and exact decrypted payload.claims, and reject missing/substituted records without exposing their values."
+    }
+  ],
+  "nonBlockingAssessment": [
+    "Aggregate browser modes require exact Chrome 155 executable and framework hashes, fail when unavailable, and retain original memory/deadline/security settings. No History deletion or browser security bypass was introduced.",
+    "Export-only excludes payment and Bok modes, uses the retained account and original unsigned aggregate slot, and preserves network/write/proof guards and post-close counters.",
+    "Download errors preserve the original failure and report only finite categories. Original crashes and failed owner evidence remain retained."
+  ],
+  "actualEvidence": {
+    "export97218": "PASS download 10599ms, peak3301600KiB, cleanup positive; no quote, signature, payment, relay, proof or L2 submission",
+    "limitation": "Exact journal and account binding were checked, but complete claim-secret preservation is not established by the weak predecessor assertion. Actual USDC funding/claim readiness remains open."
+  },
+  "structuralReview": "Small extension of existing launch/download/export paths; no new framework or production application behavior. Approval held only on the concrete claim-backup completeness finding."
+}

@@ -1,0 +1,75 @@
+{
+  "actual": 13465,
+  "source": "5a25892f8e1861b13f052b54c9d41b683829adbf with coherent parent composition",
+  "report": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G06/application-616b2058-2156-43d1-8c27-47ec788a17a7.json",
+  "reportSha256": "32f22659bacb9b364577ab6e2a823a6c8bcbdceee2be0e58e7fdbc7197fb40ba",
+  "verdict": "FAILED_ACTUAL_RETAINED; SOURCE_BACKED_SETUP_CLOCK_INCOMPATIBILITY",
+  "sourceHashes": {
+    "scripts/c01-board-inclusion.mjs": "b7958b1267b0f1c88d2afbab417dc85250eb502dabbffd7269763c72d0c355c7",
+    "scripts/c01-client-mining.mjs": "a71e800a541776464f7479ea9fa4ea5e0edc6d44f3745f2fcb5c1639d9b07197",
+    "scripts/c01-real-node.mjs": "c1e7dbc527f47d7822a0a073cb632c07135dafb69997e47f3057905285b4a2f1",
+    "scripts/testing/fixture-worker.mjs": "692a2a34915072e60c0cb41d79ac3f1dd55cb954cbe87cafd34078359a3ddcdf",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/checkpoint_proposal_job.js": "71d7bca664363cc1c9b4505a77c131169918a058de32f63226f02d971b348356",
+    "node_modules/@aztec-labs/sequencer-client/dest/publisher/sequencer-publisher.js": "8a87fbcbdd70dda4e4da8dfc49a2c4a54c5726f467496b6bc343671792510cb4"
+  },
+  "actualFacts": {
+    "elapsedMs": 151474,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "initialClock": {
+      "offsetSeconds": 120,
+      "capturedWallSeconds": 1791927196,
+      "genesisTimestamp": 1791927076,
+      "genesis": {
+        "blockNumber": 0,
+        "timestamp": 1791927076,
+        "wallSeconds": 1791927197,
+        "leadSeconds": -121
+      },
+      "firstProtocolBlock": {
+        "blockNumber": 1,
+        "timestamp": 1791927079,
+        "wallSeconds": 1791927201,
+        "leadSeconds": -122
+      },
+      "postActivation": {
+        "blockNumber": 43,
+        "timestamp": 1791927177,
+        "wallSeconds": 1791927201,
+        "leadSeconds": -24
+      },
+      "nodeHandoff": {
+        "blockNumber": 43,
+        "timestamp": 1791927177,
+        "wallSeconds": 1791927201,
+        "leadSeconds": -24
+      }
+    },
+    "inclusionInitialNodeLeadSeconds": 34,
+    "status": "proposed",
+    "executionResult": "success",
+    "checkpointedBlock": 0,
+    "checkpointPublishFailures": 11
+  },
+  "diagnosis": [
+    "The selected120s old genesis passes its own genesis guards but remains24s behind real wall at node handoff. About10s of board preparation later, inclusion records34s and resets its TestDateProvider backwards to this stale L1 timestamp.",
+    "The inclusion loop mines with evm_mine([]) and sleeps1000ms. Standing disposable timestamp interval plus loop work preserves or grows this lag; the later scenario consumer real-wall miner has not started.",
+    "Pinned checkpoint job getL1PublishDeadline uses target slot timestamp + slotDuration - ethereumSlotDuration. Pinned publisher forwardWithPublisherRotation compares that deadline against actual new Date(), independently of TestDateProvider, and returns undefined before forwarding if expired. Thus the two clocks are structurally inconsistent.",
+    "This is a publisher client deadline mismatch, not demonstrated L1 contract timestamp rejection. Existing report retains only checkpoint-publish-failed slot events; no exact branch/error was captured. Do not assert every historical failure was measured at the expiration branch."
+  ],
+  "smallestRepair": [
+    "Use existing withC01ClientMining real-wall mode for this scenario setup inclusion, before submission/sequencer publication. Preserve original parent deadline and existing helper automine restoration/first wall-stamped tick.",
+    "Give includeC01Board an explicit externally-owned mining/tick path for this selected scenario; its existing default warped loop remains unchanged. Never run its internal evm_mine loop concurrently with the real-wall miner. Pass the captured scenario choice and original deadline through existing c01-real-node call.",
+    "Existing actual publisher-method controlled tests can demonstrate past deadline returns beforeforward while a future deadline reaches the controlled forward seam; existing miner tests should verify one miner and cleanup. No need for another full application run solely to rediscover this clock interaction."
+  ],
+  "alternatives": [
+    "A one-time wall-stamped block immediately before inclusion could remove initial lag but does not keep subsequent publication clock aligned; prefer the already-supported sustained real-wall miner.",
+    "Do not disable publisher deadline/slot validation, override global Date, lengthen deadlines, or guess a different fixedgenesis offset.",
+    "The prior disposable chains were destroyed after owned cleanup; there is no current retained chain to reuse. A new persistent environment is a separate product/infrastructure choice, not a way to resume those receipts."
+  ],
+  "limits": [
+    "No source edits, runtime or provider calls performed for this diagnosis.",
+    "Actual full Bok authorization/post/hosted journey remains open;13465 did not reach it.",
+    "Real-proof testnet acceptance remains separate; native-disabled configuration is unchanged."
+  ]
+}

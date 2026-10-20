@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-12T11:27:08.717631+00:00",
+  "scope": "Read-only compatibility diagnosis; existing Mac Bok identity may be public; no human wallet queries or transactions",
+  "repositoryRevisionObserved": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "configurationReference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/service.json",
+  "deploymentReference": "deploy/prover/live-deployment.json",
+  "deploymentRecordSha256": "e485cf1f86af4f1837988b46ba787a6638ac14acfe0e9032c9bf9544fbcc6dab",
+  "configurationComparisons": {
+    "chainIdMatchesRecordedV6": true,
+    "rollupVersionMatchesRecordedV6": true,
+    "rollupAddressMatchesRecordedV6": true,
+    "boardMatchesRecordedV6": true,
+    "escrowMatchingDeploymentPaths": [],
+    "nodeRouteMatchesRecordedDeployment": true,
+    "nodeRouteEqualsCurrentOfficialTestnetEndpoint": true,
+    "configuredDevelopmentFalse": true,
+    "receiverMatchesV6Handover": true
+  },
+  "sourceBindings": [
+    {
+      "path": "plugins/main.mjs",
+      "installedSha256": "bd47ced5d30812b45c2dec3263a30c94974f596502f19882196743572c296e8e",
+      "repositorySha256": "bd47ced5d30812b45c2dec3263a30c94974f596502f19882196743572c296e8e",
+      "equal": true
+    },
+    {
+      "path": "plugins/escrow-service.mjs",
+      "installedSha256": "9dfc6c5c393a1e121a0eecbd5ad9f8c5520a7abb99aa700be5c76e146235c50b",
+      "repositorySha256": "9dfc6c5c393a1e121a0eecbd5ad9f8c5520a7abb99aa700be5c76e146235c50b",
+      "equal": true
+    },
+    {
+      "path": "plugins/escrow.mjs",
+      "installedSha256": "272c39b495f4d9020a15d422f3f6a1d08ed2c229c9ebf3f3b6ee2737883e5138",
+      "repositorySha256": "272c39b495f4d9020a15d422f3f6a1d08ed2c229c9ebf3f3b6ee2737883e5138",
+      "equal": true
+    },
+    {
+      "path": "shared/aztec-node-client.mjs",
+      "installedSha256": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+      "repositorySha256": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+      "equal": true
+    },
+    {
+      "path": "apps/src/billboard/billboard_artifact.json",
+      "installedSha256": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+      "repositorySha256": "52caac13447e0c5bbb34b27249e10cbe6f7b37801d324a8d9991d777be569f5d",
+      "equal": true
+    },
+    {
+      "path": "plugins/adapter_artifact.json",
+      "installedSha256": "68fdedb703c2de405d9bfd612233c081f4f6310615ca27694f1eb2421aeaa3c8",
+      "repositorySha256": "68fdedb703c2de405d9bfd612233c081f4f6310615ca27694f1eb2421aeaa3c8",
+      "equal": true
+    },
+    {
+      "path": "node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js",
+      "installedSha256": "c0ec5bf3e9bac7f28c409bf44564f73a70e8e4e54d8bd33ed5fdc1528787a872",
+      "repositorySha256": "c0ec5bf3e9bac7f28c409bf44564f73a70e8e4e54d8bd33ed5fdc1528787a872",
+      "equal": true
+    }
+  ],
+  "installedVersion": "6.0.0-rc.1",
+  "versionConclusion": "No evidence of a V5 SDK pointed at V6: isolated installed packages, same repository node schema and stored network identity match recorded V6. Installed board/adapter artifacts byte-match repository artifacts; live deployed class IDs are not verified. Live upstream version cannot be read because its identity method is rejected.",
+  "transportEvidence": {
+    "priorPythonObjectRequests": "Two direct Python object requests returned HTTP403; preserved in previous evidence and not retried unchanged. No identity conclusion from those403s.",
+    "changedProbe": "One pinned Node24 global fetch with installed SDK-equivalent two-call JSON-RPC array and aztec namespace; content-type application/json, redirect:error, credentials:omit, timeout8s, cap65536bytes; no retry and no SDK default logger. Configured endpoint used in memory only.",
+    "httpStatus": 200,
+    "batchShapeMatched": true,
+    "results": [
+      {
+        "method": "aztec_getNodeInfo",
+        "idMatched": true,
+        "rpcCode": -32601,
+        "category": "METHOD_NOT_FOUND"
+      },
+      {
+        "method": "aztec_getCurrentMinFees",
+        "idMatched": true,
+        "rpcCode": -32601,
+        "category": "METHOD_NOT_FOUND"
+      }
+    ],
+    "noNewAuthenticationMaterial": true
+  },
+  "callSites": [
+    {
+      "path": "plugins/escrow-service.mjs",
+      "lines": [
+        7,
+        10,
+        27,
+        36,
+        38,
+        39
+      ],
+      "meaning": "Poll always reads request count; poll/job failures are separate; health exposes one failure and successful poll clears only poll failure."
+    },
+    {
+      "path": "plugins/escrow.mjs",
+      "lines": [
+        12,
+        29
+      ],
+      "meaning": "request_count uses registered Contract method simulate with NO_FROM."
+    },
+    {
+      "path": "node_modules/@aztec-labs/wallet-sdk/dest/base-wallet/base_wallet.js",
+      "lines": [
+        178,
+        180,
+        232,
+        236,
+        243
+      ],
+      "meaning": "completeFeeOptions requests min fees; getMinFees falls back from prediction only on missing-method/empty predictions to getCurrentMinFees. This source path is not a captured complete live stack."
+    },
+    {
+      "path": "node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js",
+      "lines": [
+        203,
+        207,
+        391,
+        392
+      ],
+      "meaning": "Both required methods declared; namespace aztec."
+    },
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js",
+      "lines": [
+        72,
+        151,
+        173
+      ],
+      "meaning": "SDK sends request arrays, prefixes aztec_, and wraps RPC error preserving cause code."
+    }
+  ],
+  "officialSources": [
+    {
+      "url": "https://docs.aztec.network/networks",
+      "checkedAt": "2026-10-12",
+      "finding": "Current network table identifies6.0.0-rc.1 testnet and matching node/SDK/Noir versions."
+    },
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/provider/start-node",
+      "checkedAt": "2026-10-12",
+      "finding": "Official documented identity RPC is aztec_getNodeInfo."
+    }
+  ],
+  "currentHealth": {
+    "at": "2026-10-12T11:27:08.717406+00:00",
+    "httpStatus": 200,
+    "status": "degraded",
+    "active": 0,
+    "lastFailurePresent": true,
+    "lastFailureAt": "2026-10-12T11:27:06.867Z",
+    "lastSuccessPresent": false
+  },
+  "diagnosis": "Configured remote route currently rejects required V6 Aztec API methods. The live read reproduces broader route/API incompatibility, not a getCurrentMinFees-only local caller typo. It does not establish backend version, provider routing cause, batch-only rejection or a provider-wide outage.",
+  "recommendedRepair": {
+    "immediate": "Keep existing service/configuration/journals intact and do not restart merely to clear health. No fee substitution, namespace guessing, paid call replay or silent fallback.",
+    "prerequisite": "A provider-supported configured route must expose the pinned V6 node API, or an independently verified compatible replacement must be approved. If route equals official current endpoint, provider RPC availability is an external prerequisite; no unverified URL migration.",
+    "verificationBeforeChange": [
+      "Using supported provider format, require identity/schema and expected Sepolia/rollup-version/rollup-address match; current/predicted fee RPCs must parse normally.",
+      "Check existing deployed board and escrow instances/class IDs against retained artifacts before any resume. Do not redeploy or move funds.",
+      "If a configuration change is required, checkpoint process identity, config hashes and journal references privately; preserve private permissions and every existing operator/model transaction record. Confirm jobs idle immediately before serialized service stop/change/start under separate mutation claim.",
+      "After recovery, observe ordinary poll clear pollFailure and health ready/active0 over multiple poll intervals. A persistent job failure requires receipt/journal reconciliation, never a new paid call to clear it.",
+      "Verify no new financial/provider/GitHub action or journal replay occurred during repair."
+    ]
+  },
+  "limits": [
+    "Latest log indicates current repeated getCurrentMinFees absence but health does not expose poll/job origin.",
+    "Current native HTTP batch rejected both required methods; no automatic alternative provider or namespace probes were attempted.",
+    "No startup qualification, model execution or production privacy acceptance inferred."
+  ],
+  "mutations": false,
+  "paidActions": false,
+  "restarts": false,
+  "rawEndpointOrConfigRetained": false,
+  "rawProviderErrorRetained": false,
+  "ledgerUnchangedUsd": 190.28
+}

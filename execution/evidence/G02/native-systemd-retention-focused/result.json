@@ -1,0 +1,77 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T02:47:54.383Z",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "scripts/test-prover-bootstrap.py",
+    "NativeVersionDiagnostic",
+    "-v"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-retention-focused/home",
+    "TMPDIR": "/private/tmp/r8c-u98r6d7x",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-retention-focused/build.log",
+  "diagnosticHold": "Labelled local tests only; no actual Linux/systemd/native qualification, provider or paid action. Full73 requires coherent lead helper composition; unchanged package8 omitted.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 270912,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 270912
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 1002,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 91538,
+        "ppid": 59636,
+        "rssKiB": 183984
+      },
+      {
+        "role": "cold-journey-components",
+        "pid": 91551,
+        "ppid": 91538,
+        "rssKiB": 16784
+      },
+      {
+        "role": "cold-journey-components",
+        "pid": 91552,
+        "ppid": 91551,
+        "rssKiB": 70144
+      }
+    ]
+  },
+  "builder": {
+    "code": 0,
+    "elapsedMs": 1049
+  },
+  "elapsedMs": 1140,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T02:47:55.523Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "testCount": 19,
+  "noSkipped": true,
+  "passed": true,
+  "logSha256": "49f67f7a52ee98cd2ce3e4036be2e91da40791adbadc14812deeb006c071e16a"
+}

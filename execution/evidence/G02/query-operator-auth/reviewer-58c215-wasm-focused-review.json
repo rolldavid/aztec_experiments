@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "58c215350a003ae680007b5df7f2e1575f69746c",
+  "sourcePacketSha256": "46ffe2b04303de3c6769f6510eb50dc1d6e3a7d36bba73ed972d17bbd95b16b7",
+  "preparationPacketSha256": "062440eacc751a313f6feed72a66bf7f4f0d90622a4ee2c03d5ae3ae5cc12266",
+  "verdict": "P2 repaired; one focused embedded-WASM initialization test eligible after separate parent grant",
+  "verified": [
+    "All preparation file hashes and5383current pins match",
+    "Repair restricts prototype and all own descriptors/keys; rejects unknown/symbol/accessor fields, inherited known native options and nonprimitive/nonGET method",
+    "Focused negatives include inherited/nonenumerable headers/credentials/body and zero accessor invocation",
+    "Both exact pinned asset URLs retain length/MIME/SHA and response gzip SHA; original native fetch receives unchanged arguments",
+    "Actual CLI-loaded sync backend initializer returns singleton; explicit Wasm requested without fallback; destroy resets singleton but does not claim awaited asynchronous disposal",
+    "Owner runner directory-only successor, unchanged child and60s2GiB/child20s1GiB, exact1label"
+  ],
+  "scope": "Zero external network, no PXE/CRS/proof operation; public WASM initialization only. New user proof-disabled development requirement is not bypassed.",
+  "conditions": [
+    "Retain original28950 failure and d2f source finding",
+    "Positive owned cleanup required; separate reviewed/granted PXE stage only after actual focused acceptance"
+  ],
+  "runtimePerformedByReviewer": false
+}

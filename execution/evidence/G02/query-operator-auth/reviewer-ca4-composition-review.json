@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "observedAt": "2026-10-14T12:39:59.271932+00:00",
+  "revision": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+  "baseRevision": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "verdict": "approved",
+  "requirements": [
+    "RC12",
+    "RC13",
+    "RC38",
+    "RC39"
+  ],
+  "sourceHashes": {
+    "censor-daemon/README.md": "b9d50b2517dfacbc23fac583cf7fded8f849ef5abd9e5e4913727308f6e6d1b0",
+    "censor-daemon/daemon.mjs": "fabc20095461b7c4fdf250d09829c13def52cde6d386a87ccd810907e14ef977",
+    "censor-daemon/flag-outcome.mjs": "776245f2cdf5e0dc5e106a490de487ff8d49aaa995c273f42646afe87500edb1",
+    "censor-daemon/job-store.mjs": "1f86f1ec596086c1162e5df1ca2cf3dec432465b4bd0275b5978e16ddc312b25",
+    "censor-daemon/prompt-template.json": "d7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862",
+    "censor-daemon/rolling-adapter.mjs": "c472652f9f72d6e1155b3bfff63aa283fee25bc38b320f864d1260d2f60bcddf",
+    "censor-daemon/test_flag_outcome.mjs": "6534a4eefbed20f52a2877c3906f511501cd07c01c5f619bc57726e360181650",
+    "censor-daemon/test_moderation.mjs": "ea911e6060080d3c39c8880f1d49728712b1e276575249a212cd7d5669eab73c",
+    "censor-daemon/test_worker.mjs": "bda71da6468d2a6abd0f81d28fd4376cecdf126420dafa06ec9a8342d8ee787f",
+    "censor-daemon/worker.mjs": "9231aa8ec76e91e9a559588fd7a1ac2689b49a602188ed674557dc35dffbafef",
+    "docs/rolling-deployment.md": "e7f721b13938d96693f62083cb380d07747b10a1905df4095cbc09c1c9336d3d",
+    "scripts/test-w02-cli-session.mjs": "129e8225dabeea97ef1f5fc847ea5abe55e7ef631052a06c45882d29fb608c88",
+    "scripts/test-w02-session.mjs": "47a51fca994e4f4509b1acb0a0e8a025605785615cc33444e8b45b57310d601a"
+  },
+  "findings": [],
+  "composition": [
+    "Exactly13paths: two fixture blobs identical to approved12c90c145b87d8f93d16349edb637629ef1b735d and eleven moderation blobs identical to approved2e481871278e040128bd19ad5e85d44442fecc7e.",
+    "No combined interface conflict: fixture changes extract existing CLI/engine dependencies; Rolling daemon uses separate profile and retains legacy code path, shared operations/index interfaces unchanged.",
+    "Both prior moderationP1 fixes and legacy assertion preservation carry unchanged."
+  ],
+  "checks": [
+    {
+      "path": ".build/rolling-devnet-diagnostics/w02-baseline-after.log",
+      "sha256": "12940cc2051cf0c6b989baea1f558246a8fc8f74beec6acead2a8ff166e0dc6d",
+      "passed": 599,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 50327.927542,
+      "sourceScope": "12c applicable fee/journal/session sources unchanged by moderation composition; exact CI command inspected."
+    },
+    {
+      "path": ".build/rolling-devnet-diagnostics/ca4-moderation.log",
+      "sha256": "600e881f8154e769e66a71fcf303413213c626b8045b32edd195aa077394d857",
+      "sourceScope": "Existing full censor-daemon/run_tests.sh on ca4; direct moderation77 and signer130 test footers all pass, direct daemon suite, final sequential suite190pass0fail0skip1283.882583ms.",
+      "passedFinalSuite": 190,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "limits": [
+    "Normal integration gate and remote CI remain lead-owned and separately observed.",
+    "No actual native-wallet/model moderated action inferred from component checks.",
+    "New prompt real model evaluation, testnet proof acceptance and release gates remain open.",
+    "Reviewer performed no additional broad test or shared service operation."
+  ]
+}

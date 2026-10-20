@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "scripts/measure-private-event-query.mjs",
+    "--platform",
+    "chromium",
+    "--events",
+    "50000",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/capacity-cb7-chromium-50000-result.json"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+  "sourceRevision": null,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "passed": true,
+  "peakTreeRSSKiB": 1646560,
+  "samples": 113,
+  "cleanupComplete": true,
+  "elapsedMs": 58044,
+  "exitCode": 0,
+  "signal": null,
+  "samplingFailure": false,
+  "logSha256": "cb7dc7ad4aeb3ae48442b3ce67f96f0d8707484c78c63f2d2df7dffb52300cb5"
+}

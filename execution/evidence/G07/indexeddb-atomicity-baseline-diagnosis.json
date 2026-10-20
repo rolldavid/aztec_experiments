@@ -1,0 +1,12 @@
+{
+  "candidate": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+  "at": "2026-10-12T15:44:53.243032+00:00",
+  "sourceSnapshot": {
+    "scripts/test-sdk-storage-browser.mjs": "b5870dc2aedff387b1dd38e3917031d0b069c255d083699a8a9f1c9e0ca110be",
+    "scripts/test-sdk-storage.mjs": "60e12da4bb7610039f622f3fd2e1db6f619fd659903c335bb4f0ed47b5c6d4a2"
+  },
+  "baseline": "indexeddb-atomicity-browser-baseline-local-copy.json",
+  "result": "Reproduced blocking rollback failure in real Chromium using actual unchanged built SDK; both immediate and delayed callback failures persisted both writes through reopen; immediate rejection also emitted pageerror. All disposable DBs removed, process tree absent.",
+  "setupFailure": "Initial symlink staging correctly rejected confinement; preserved first receipt. Replaced only owned symlinks with isolated APFS copies and preserved guards.",
+  "repairRequired": true
+}

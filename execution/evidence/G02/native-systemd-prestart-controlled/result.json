@@ -1,0 +1,47 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T03:57:13.305Z",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-prestart-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-prestart-controlled/home",
+    "TMPDIR": "/private/tmp/rpc-b74x5_do",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-prestart-controlled/build.log",
+  "diagnosticHold": "Eleven labelled controlled checks only; no Docker/network/systemd/native/guest execution.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "builder": {
+    "code": 0,
+    "elapsedMs": 79
+  },
+  "elapsedMs": 160,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T03:57:13.466Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "testCount": 11,
+  "noSkipped": true,
+  "passed": true,
+  "logSha256": "73b5bcb326e1fca0f6acf756922ed3b479555d044d417ac715f902d2eb05ff4c"
+}

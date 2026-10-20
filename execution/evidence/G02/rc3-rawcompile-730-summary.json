@@ -1,0 +1,737 @@
+{
+  "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+  "finishedAt": "2026-10-12T20:36:09.196863+00:00",
+  "compilerRuns": [
+    {
+      "sequence": 1,
+      "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+      "startedAt": "2026-10-12T20:33:51.027Z",
+      "command": {
+        "sequence": 1,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/billboard",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-1.log",
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 2412976,
+      "rssSamples": [
+        {
+          "elapsedMs": 1003,
+          "rssKiB": 94512
+        },
+        {
+          "elapsedMs": 2033,
+          "rssKiB": 88752
+        },
+        {
+          "elapsedMs": 3080,
+          "rssKiB": 87488
+        },
+        {
+          "elapsedMs": 4122,
+          "rssKiB": 99872
+        },
+        {
+          "elapsedMs": 5149,
+          "rssKiB": 92320
+        },
+        {
+          "elapsedMs": 6167,
+          "rssKiB": 631376
+        },
+        {
+          "elapsedMs": 7190,
+          "rssKiB": 611728
+        },
+        {
+          "elapsedMs": 8217,
+          "rssKiB": 384672
+        },
+        {
+          "elapsedMs": 9255,
+          "rssKiB": 693008
+        },
+        {
+          "elapsedMs": 10275,
+          "rssKiB": 702080
+        },
+        {
+          "elapsedMs": 11294,
+          "rssKiB": 625712
+        },
+        {
+          "elapsedMs": 12318,
+          "rssKiB": 884464
+        },
+        {
+          "elapsedMs": 13350,
+          "rssKiB": 944784
+        },
+        {
+          "elapsedMs": 14375,
+          "rssKiB": 768000
+        },
+        {
+          "elapsedMs": 15398,
+          "rssKiB": 755584
+        },
+        {
+          "elapsedMs": 16418,
+          "rssKiB": 635376
+        },
+        {
+          "elapsedMs": 17454,
+          "rssKiB": 649008
+        },
+        {
+          "elapsedMs": 18480,
+          "rssKiB": 819008
+        },
+        {
+          "elapsedMs": 19499,
+          "rssKiB": 682448
+        },
+        {
+          "elapsedMs": 20547,
+          "rssKiB": 570896
+        },
+        {
+          "elapsedMs": 21571,
+          "rssKiB": 538608
+        },
+        {
+          "elapsedMs": 22590,
+          "rssKiB": 697376
+        },
+        {
+          "elapsedMs": 23611,
+          "rssKiB": 593104
+        },
+        {
+          "elapsedMs": 24629,
+          "rssKiB": 891056
+        },
+        {
+          "elapsedMs": 25654,
+          "rssKiB": 1189104
+        },
+        {
+          "elapsedMs": 26674,
+          "rssKiB": 1178720
+        },
+        {
+          "elapsedMs": 27696,
+          "rssKiB": 1535728
+        },
+        {
+          "elapsedMs": 28719,
+          "rssKiB": 1492000
+        },
+        {
+          "elapsedMs": 29741,
+          "rssKiB": 1364208
+        },
+        {
+          "elapsedMs": 30762,
+          "rssKiB": 1154336
+        },
+        {
+          "elapsedMs": 31783,
+          "rssKiB": 1186496
+        },
+        {
+          "elapsedMs": 32802,
+          "rssKiB": 1007120
+        },
+        {
+          "elapsedMs": 33822,
+          "rssKiB": 1093680
+        },
+        {
+          "elapsedMs": 34841,
+          "rssKiB": 973920
+        },
+        {
+          "elapsedMs": 35862,
+          "rssKiB": 1082736
+        },
+        {
+          "elapsedMs": 36879,
+          "rssKiB": 913664
+        },
+        {
+          "elapsedMs": 37905,
+          "rssKiB": 479984
+        },
+        {
+          "elapsedMs": 38927,
+          "rssKiB": 354512
+        },
+        {
+          "elapsedMs": 39947,
+          "rssKiB": 683872
+        },
+        {
+          "elapsedMs": 40968,
+          "rssKiB": 726640
+        },
+        {
+          "elapsedMs": 42056,
+          "rssKiB": 659872
+        },
+        {
+          "elapsedMs": 43078,
+          "rssKiB": 1225760
+        },
+        {
+          "elapsedMs": 44097,
+          "rssKiB": 2412976
+        },
+        {
+          "elapsedMs": 45120,
+          "rssKiB": 2089680
+        },
+        {
+          "elapsedMs": 46149,
+          "rssKiB": 2146016
+        },
+        {
+          "elapsedMs": 47172,
+          "rssKiB": 2010016
+        },
+        {
+          "elapsedMs": 48192,
+          "rssKiB": 1876016
+        },
+        {
+          "elapsedMs": 49211,
+          "rssKiB": 2106224
+        },
+        {
+          "elapsedMs": 50228,
+          "rssKiB": 2060864
+        },
+        {
+          "elapsedMs": 51247,
+          "rssKiB": 1846928
+        },
+        {
+          "elapsedMs": 52269,
+          "rssKiB": 1598880
+        },
+        {
+          "elapsedMs": 53289,
+          "rssKiB": 1299152
+        },
+        {
+          "elapsedMs": 54307,
+          "rssKiB": 1638784
+        },
+        {
+          "elapsedMs": 55326,
+          "rssKiB": 1462480
+        },
+        {
+          "elapsedMs": 56344,
+          "rssKiB": 1276368
+        },
+        {
+          "elapsedMs": 57363,
+          "rssKiB": 510848
+        },
+        {
+          "elapsedMs": 58383,
+          "rssKiB": 529680
+        },
+        {
+          "elapsedMs": 59404,
+          "rssKiB": 129760
+        },
+        {
+          "elapsedMs": 60446,
+          "rssKiB": 189168
+        },
+        {
+          "elapsedMs": 61471,
+          "rssKiB": 503792
+        },
+        {
+          "elapsedMs": 62499,
+          "rssKiB": 895808
+        },
+        {
+          "elapsedMs": 63519,
+          "rssKiB": 1110032
+        },
+        {
+          "elapsedMs": 64538,
+          "rssKiB": 1424320
+        },
+        {
+          "elapsedMs": 65558,
+          "rssKiB": 1556848
+        },
+        {
+          "elapsedMs": 66577,
+          "rssKiB": 1616448
+        },
+        {
+          "elapsedMs": 67596,
+          "rssKiB": 1500816
+        },
+        {
+          "elapsedMs": 68614,
+          "rssKiB": 1540448
+        },
+        {
+          "elapsedMs": 69633,
+          "rssKiB": 1543824
+        },
+        {
+          "elapsedMs": 70651,
+          "rssKiB": 938448
+        },
+        {
+          "elapsedMs": 71669,
+          "rssKiB": 820928
+        },
+        {
+          "elapsedMs": 72687,
+          "rssKiB": 712400
+        },
+        {
+          "elapsedMs": 73705,
+          "rssKiB": 710768
+        },
+        {
+          "elapsedMs": 74722,
+          "rssKiB": 702992
+        },
+        {
+          "elapsedMs": 75740,
+          "rssKiB": 742224
+        },
+        {
+          "elapsedMs": 76757,
+          "rssKiB": 741696
+        },
+        {
+          "elapsedMs": 77776,
+          "rssKiB": 743136
+        },
+        {
+          "elapsedMs": 78794,
+          "rssKiB": 489840
+        },
+        {
+          "elapsedMs": 79815,
+          "rssKiB": 533904
+        },
+        {
+          "elapsedMs": 80833,
+          "rssKiB": 607568
+        },
+        {
+          "elapsedMs": 81852,
+          "rssKiB": 621600
+        },
+        {
+          "elapsedMs": 82872,
+          "rssKiB": 624752
+        },
+        {
+          "elapsedMs": 83891,
+          "rssKiB": 592032
+        },
+        {
+          "elapsedMs": 84909,
+          "rssKiB": 593536
+        },
+        {
+          "elapsedMs": 85928,
+          "rssKiB": 630864
+        },
+        {
+          "elapsedMs": 86946,
+          "rssKiB": 575952
+        },
+        {
+          "elapsedMs": 87967,
+          "rssKiB": 420784
+        },
+        {
+          "elapsedMs": 88987,
+          "rssKiB": 444384
+        },
+        {
+          "elapsedMs": 90007,
+          "rssKiB": 330992
+        },
+        {
+          "elapsedMs": 91026,
+          "rssKiB": 218848
+        },
+        {
+          "elapsedMs": 92050,
+          "rssKiB": 371712
+        },
+        {
+          "elapsedMs": 93070,
+          "rssKiB": 353248
+        },
+        {
+          "elapsedMs": 94091,
+          "rssKiB": 463664
+        },
+        {
+          "elapsedMs": 95113,
+          "rssKiB": 460416
+        },
+        {
+          "elapsedMs": 96134,
+          "rssKiB": 446304
+        },
+        {
+          "elapsedMs": 97164,
+          "rssKiB": 432816
+        },
+        {
+          "elapsedMs": 98209,
+          "rssKiB": 338368
+        },
+        {
+          "elapsedMs": 99237,
+          "rssKiB": 683840
+        }
+      ],
+      "failures": [],
+      "children": [
+        {
+          "role": "raw-1",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "peakMemory": {
+        "elapsedMs": 44097,
+        "processes": [
+          {
+            "role": "supervisor",
+            "pid": 20121,
+            "ppid": 59636,
+            "rssKiB": 54432
+          },
+          {
+            "role": "raw-1",
+            "pid": 20132,
+            "ppid": 20121,
+            "rssKiB": 4304
+          },
+          {
+            "role": "raw-1",
+            "pid": 20133,
+            "ppid": 20132,
+            "rssKiB": 2354240
+          }
+        ]
+      },
+      "compiler": {
+        "code": 0,
+        "elapsedMs": 100110
+      },
+      "elapsedMs": 100301,
+      "ownedTreeAbsent": true,
+      "finishedAt": "2026-10-12T20:35:31.329Z",
+      "passed": true,
+      "logSha256": "e6511d1da8697cc60ec3a387d45c87149546a2f1070b17f6c9cd78be8030ddf1"
+    },
+    {
+      "sequence": 2,
+      "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+      "startedAt": "2026-10-12T20:35:31.339Z",
+      "command": {
+        "sequence": 2,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/avatar",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-2.log",
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 326240,
+      "rssSamples": [
+        {
+          "elapsedMs": 1001,
+          "rssKiB": 322896
+        },
+        {
+          "elapsedMs": 2022,
+          "rssKiB": 162144
+        },
+        {
+          "elapsedMs": 3059,
+          "rssKiB": 326240
+        }
+      ],
+      "failures": [],
+      "children": [
+        {
+          "role": "raw-2",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "peakMemory": {
+        "elapsedMs": 3059,
+        "processes": [
+          {
+            "role": "supervisor",
+            "pid": 20121,
+            "ppid": 59636,
+            "rssKiB": 58048
+          },
+          {
+            "role": "raw-2",
+            "pid": 20716,
+            "ppid": 20121,
+            "rssKiB": 4720
+          },
+          {
+            "role": "raw-2",
+            "pid": 20717,
+            "ppid": 20716,
+            "rssKiB": 263472
+          }
+        ]
+      },
+      "compiler": {
+        "code": 0,
+        "elapsedMs": 3070
+      },
+      "elapsedMs": 3212,
+      "ownedTreeAbsent": true,
+      "finishedAt": "2026-10-12T20:35:34.551Z",
+      "passed": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "sequence": 3,
+      "source": "73089b20b9035a42cdef8b0b067b34ea177ec2a8",
+      "startedAt": "2026-10-12T20:35:34.561Z",
+      "command": {
+        "sequence": 3,
+        "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/experiments/private-bok",
+        "argv": [
+          "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+          "compile",
+          "--force"
+        ]
+      },
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-rawcompile-730-20261012/compile-3.log",
+      "deadlineMs": 540000,
+      "rssLimitKiB": 4194304,
+      "peakTreeRSSKiB": 452288,
+      "rssSamples": [
+        {
+          "elapsedMs": 1004,
+          "rssKiB": 350736
+        },
+        {
+          "elapsedMs": 2086,
+          "rssKiB": 288288
+        },
+        {
+          "elapsedMs": 3127,
+          "rssKiB": 220416
+        },
+        {
+          "elapsedMs": 4157,
+          "rssKiB": 416128
+        },
+        {
+          "elapsedMs": 5178,
+          "rssKiB": 374096
+        },
+        {
+          "elapsedMs": 6200,
+          "rssKiB": 292576
+        },
+        {
+          "elapsedMs": 7220,
+          "rssKiB": 377760
+        },
+        {
+          "elapsedMs": 8241,
+          "rssKiB": 384384
+        },
+        {
+          "elapsedMs": 9264,
+          "rssKiB": 393840
+        },
+        {
+          "elapsedMs": 10284,
+          "rssKiB": 422720
+        },
+        {
+          "elapsedMs": 11303,
+          "rssKiB": 430208
+        },
+        {
+          "elapsedMs": 12321,
+          "rssKiB": 422448
+        },
+        {
+          "elapsedMs": 13340,
+          "rssKiB": 318160
+        },
+        {
+          "elapsedMs": 14364,
+          "rssKiB": 452288
+        }
+      ],
+      "failures": [],
+      "children": [
+        {
+          "role": "raw-3",
+          "code": 0,
+          "signal": null,
+          "closed": true,
+          "cleanupComplete": true
+        }
+      ],
+      "peakMemory": {
+        "elapsedMs": 14364,
+        "processes": [
+          {
+            "role": "supervisor",
+            "pid": 20121,
+            "ppid": 59636,
+            "rssKiB": 54656
+          },
+          {
+            "role": "raw-3",
+            "pid": 20731,
+            "ppid": 20121,
+            "rssKiB": 4304
+          },
+          {
+            "role": "raw-3",
+            "pid": 20732,
+            "ppid": 20731,
+            "rssKiB": 393328
+          }
+        ]
+      },
+      "compiler": {
+        "code": 0,
+        "elapsedMs": 14434
+      },
+      "elapsedMs": 14547,
+      "ownedTreeAbsent": true,
+      "finishedAt": "2026-10-12T20:35:49.108Z",
+      "passed": true,
+      "logSha256": "0cc17a15e3d3c09f0b871127b133a80602a9117eaee020b6a98bdb9db674dd02"
+    }
+  ],
+  "rootAndLockedCacheHashChanges": [],
+  "sourceChanges": [],
+  "oldCacheEntryChanges": [
+    ".DS_Store",
+    "github.com/.DS_Store",
+    "github.com/AztecProtocol/.DS_Store",
+    "github.com/AztecProtocol/aztec-packages/.DS_Store"
+  ],
+  "cacheAncestorMetadataChanges": [
+    "github.com/AztecProtocol/aztec-packages",
+    "github.com/aztec-labs-eng/aztec-nr"
+  ],
+  "activeLockUnchanged": true,
+  "freshArtifacts": {
+    "Billboard": {
+      "path": "billboard/target/billboard_contract-Billboard.json",
+      "sha256": "dbed1efe76e33e90ecc95626bcc31577439677518814758eda6c6add48107e64",
+      "bytes": 7430779,
+      "functions": 49,
+      "fileMapEntries": 139
+    },
+    "PrivateFPC": {
+      "path": "billboard/target/private_fee_contract-PrivateFPC.json",
+      "sha256": "2a270bfe3b0f0357d82aaa7dea75a23cfa241655fcea06b013ec83c45a481e2c",
+      "bytes": 2347947,
+      "functions": 9,
+      "fileMapEntries": 114
+    },
+    "PluginAdapter": {
+      "path": "billboard/target/plugin_adapter-PluginAdapter.json",
+      "sha256": "c26ddb0e1f4c98b1fe6b0b14bea6fe62277d70db210dce919f180dba89bada5d",
+      "bytes": 1667585,
+      "functions": 24,
+      "fileMapEntries": 107
+    },
+    "RollingBoard": {
+      "path": "billboard/target/rolling_contract-RollingBoard.json",
+      "sha256": "9b3b76c75fb6709d98f738bbb2b166dbe14c69033f5aa5c2bb7724f1263d6cd7",
+      "bytes": 10662089,
+      "functions": 49,
+      "fileMapEntries": 148
+    },
+    "AvatarLogProbe": {
+      "path": "experiments/avatar/target/avatar_log_probe-AvatarLogProbe.json",
+      "sha256": "c2668e118901e22536a5e5ccd4220db67327f6d4b67179f196efb1273a390a1d",
+      "bytes": 1030241,
+      "functions": 6,
+      "fileMapEntries": 74
+    },
+    "PrivateBok": {
+      "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
+      "sha256": "1c9f0ebdf8c11dd9570cbf01b8002d3a7bac4a4f093d8e9d02c94c41d04866f4",
+      "bytes": 3323452,
+      "functions": 25,
+      "fileMapEntries": 141
+    },
+    "InvocationProbeBoard": {
+      "path": "experiments/private-bok/target/invocation_probe_board-InvocationProbeBoard.json",
+      "sha256": "f641e1e1a444b7d30d118d3be11cf3f7c4f9f47664a637fe6cab56870e8e5f2b",
+      "bytes": 977380,
+      "functions": 6,
+      "fileMapEntries": 69
+    }
+  },
+  "cacheOrigins": [
+    {
+      "repository": "aztec-labs-eng/aztec-nr",
+      "tag": "v6.0.0-rc.3",
+      "head": "694af4de4b196733819811c896867d5a9572a1b5",
+      "expectedCommit": "694af4de4b196733819811c896867d5a9572a1b5",
+      "headMatches": true,
+      "originMatches": true,
+      "clean": true,
+      "method": "Local compiler-fetched git metadata; independent archive origin check remains required"
+    },
+    {
+      "repository": "AztecProtocol/aztec-packages",
+      "tag": "v6.0.0-rc.6",
+      "head": "0df91ba1799012435c62c6108a0926b357fef88c",
+      "expectedCommit": "0df91ba1799012435c62c6108a0926b357fef88c",
+      "headMatches": true,
+      "originMatches": true,
+      "clean": true,
+      "method": "Local compiler-fetched git metadata; independent archive origin check remains required"
+    }
+  ],
+  "allSevenFresh": true,
+  "passedRawCompilation": true,
+  "lockPromoted": false
+}

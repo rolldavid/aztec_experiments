@@ -1,0 +1,40 @@
+{
+  "base": "582b2cdb95ddfa21cbd32c9c6ac965ea5782bdc1",
+  "candidate": "519b0b072a51b019f8d5cec26ec842c2e08118be",
+  "task_id": "G13-accepted-revision-recovery",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-20261018",
+  "allowed_paths": [
+    "plugins/escrow-service.mjs",
+    "plugins/main.mjs",
+    "plugins/static-publication.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/static-publication.test.mjs",
+    "plugins/test/thread-repositories.test.mjs",
+    "plugins/thread-repositories.mjs"
+  ],
+  "required_checks": [
+    "accepted-recovery-focused"
+  ],
+  "requirements": [
+    "RC29-exact-accepted-source",
+    "RC33-no-paid-replay",
+    "RC41-recovery-and-terminal-fences"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-20261018",
+      "task_id": "G13-accepted-revision-recovery",
+      "paths": [
+        "plugins/escrow-service.mjs",
+        "plugins/main.mjs",
+        "plugins/static-publication.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/static-publication.test.mjs",
+        "plugins/test/thread-repositories.test.mjs",
+        "plugins/thread-repositories.mjs"
+      ]
+    }
+  ]
+}

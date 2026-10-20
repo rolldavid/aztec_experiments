@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-15T05:35:47.943935+00:00",
+  "instance": "i-05977895ed0395a5a",
+  "state": "terminated",
+  "volumesAbsent": [
+    "vol-041254b797848a1b3",
+    "vol-0e2f76b80af154099"
+  ],
+  "fleet": "fleet-cc1fedd4-3fe5-4594-bf99-da231ba4089a",
+  "fleetState": "deleted_terminating",
+  "cleanup": "delete-fleets terminate-instances succeeded before unchanged05:32:35absoluteexpiry; native stoppedcleanly first",
+  "networkOutObservedBytes": 7139505324.0,
+  "cloudwatchPoints": 48,
+  "networkForecastBoundBytes": 20000000000,
+  "networkBoundReason": "Observed7.140GB plus whole-host50Mbps upper bound for up to10minutes partial/lagged samples <11GB; round20GB for extra billing margin. Cross-region source traffic separately reserved.",
+  "retainedObjectVersions": 124,
+  "retainedBytes": 19362869599,
+  "multipartUploads": 0,
+  "retentionDeleteBy": "2026-11-14",
+  "costUpperBoundUsd": {
+    "compute4.5h": 4.17312,
+    "encryptedGp3Storage1064GiB4.5h": 0.532,
+    "dataVolumeExtra375MiBps4.5h": 0.09375,
+    "publicIPv44.5h": 0.0225,
+    "egressBound20GB": 3.9000000000000004,
+    "crossRegionInputAndVerification": 1,
+    "retained20GB30Days": 1,
+    "requestsAndMonitoring": 0.5,
+    "taxAndUnpriced20Percent": 2.2442740000000003,
+    "delayedBillingBuffer": 10
+  },
+  "computedUpperBoundUsd": 23.465644,
+  "roundedCampaignBoundUsd": 24,
+  "priorCampaignBoundUsd": 235.29,
+  "cumulativeBoundUsd": 259.29,
+  "remainingBudgetUsd": 40.71,
+  "notActualInvoice": true,
+  "original50ReservationPreservedInHistory": true
+}

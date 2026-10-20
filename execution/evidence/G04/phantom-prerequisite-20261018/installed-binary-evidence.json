@@ -1,0 +1,31 @@
+{
+  "observedAt": "2026-10-18T16:14:29.286649+00:00",
+  "manifestVersion": "26.33.0",
+  "method": "Read installed packaged binaries only; no extension execution or private profile read",
+  "evidence": [
+    {
+      "file": "/Users/zac/Library/Application Support/Google/Chrome/Default/Extensions/bfnaelmomeimhlpmgjnjophhpkkoljpa/26.33.0_0/background/serviceWorker.js",
+      "sha256": "5ace7455688f4394d277ef0e12642bdfef0cf5dc059545e29770889b31d373eb",
+      "characterOffset": 96451,
+      "excerpt": "if(!new Set(r.eth.getSupportedNetworks()).has(h))return n.eth.unsupportedChain({origin:i,data:{method:t.method,hexChainId:h}}),await r.requestUserApproval({jsonrpc:\"2.0\",method:\"user_confirmUnsupportedNetwork\",id:0,params:[m,h]}),a.chainDisconnected(t.id);let k=new Set(await r.eth.getEnabledChains(!0)),w=new Set(await r.eth.getEnabledChains());if(!k.has(h))return await r.requestUserApproval({jsonrpc:\"2.0\",method:\"user_confirmDisabledNetwork\",id:0,params:[m,h]}),a.chainDisconnected(t.id);if(!w.has(h))return await r.requestUserApproval({jsonrpc:\""
+    },
+    {
+      "file": "/Users/zac/Library/Application Support/Google/Chrome/Default/Extensions/bfnaelmomeimhlpmgjnjophhpkkoljpa/26.33.0_0/background/serviceWorker.js",
+      "sha256": "5ace7455688f4394d277ef0e12642bdfef0cf5dc059545e29770889b31d373eb",
+      "characterOffset": 374364,
+      "excerpt": "var pa=o(async({request:e,source:t},{wallet:r,i18n:n,analytics:s})=>{let[i]=e.params;if(!await r.eth.addChain(i))return a.userRejectedRequest(e.id,n.t(\"Could not add the requested chain. It is not yet supported.\"));if(!t)return a.internalError(e.id,\"missing source\");let h=O(t);return h?await r.eth.switchChain(i.chainId,h)?a.result(e.id,null):(s.eth.unsupportedChain({origin:h,data:{method:e.method,hexChainId:i.chainId,chainName:i.chainName}}),a.internalError(e.id,n.t(\"Could not switch to the requested chain.\"))):a.internalError(e.id,\"missing source\")},\"handler\");p();d();var da=o(async({request:e,source:t},{wallet:r})=>{if(!t)return a.unauthorized(e.id);let n=O(t),s=pe(t),i=ye(t),c=Ce(t);if(!n||!s)return a.unauthorized(e.id);if(await r.isTrus"
+    },
+    {
+      "file": "/Users/zac/Library/Application Support/Google/Chrome/Default/Extensions/bfnaelmomeimhlpmgjnjophhpkkoljpa/26.33.0_0/evmPhantom.js",
+      "sha256": "c59a5e257cacbfb69eb99f4491bd3191375bae4bdb8177829ea722672ea411c5",
+      "characterOffset": 171237,
+      "excerpt": "nO=a.literal(\"1\"),oO=a.literal(\"11155111\"),_y=a.enum([nO.value,oO.value]),sO=a.literal(\"0x1\"),iO=a.literal(\"0xaa36a7\"),wy=a.enum([sO.value,iO.value]),aO=a.literal(\"137\"),cO=a.literal(\"80002\"),by=a.enum([aO.value,cO.value]),uO=a.literal(\"0x89\"),pO=a.literal(\"0x13882"
+    },
+    {
+      "file": "/Users/zac/Library/Application Support/Google/Chrome/Default/Extensions/bfnaelmomeimhlpmgjnjophhpkkoljpa/26.33.0_0/evmPhantom.js",
+      "sha256": "c59a5e257cacbfb69eb99f4491bd3191375bae4bdb8177829ea722672ea411c5",
+      "characterOffset": 173938,
+      "excerpt": "Jn=a.union([a.literal(\"bip122:000000000019d6689c085ae165831e93\"),a.literal(\"bip122:000000000933ea01ad0ee984209779ba\"),a.literal(\"solana:101\"),a.literal(\"solana:102\"),a.literal(\"solana:103\"),a.literal(\"solana:localnet\"),a.literal(\"eip155:1\"),a.literal(\"eip155:11155111\"),a.literal(\"eip155:137\"),a.literal(\"eip155:80002\"),a.literal(\"eip155:8453\"),a.literal(\"eip155:84532\"),a.literal(\"eip155:143\"),a.literal(\"eip155:10143\"),a.literal(\"eip155:42161\"),a.literal(\"eip155:421614\"),a.literal(\"eip155:999\"),a.literal(\"eip155:998\"),a.literal(\"eip155:56\"),a.literal(\"eip155:97\"),a.literal(\"eip155:5042\"),a.literal(\"eip155:5042002\"),a.literal(\"eip155:4663\"),a.literal(\"eip155:46630\"),a.literal(\"hypercore:mainnet\"),a.literal(\"hypercore:testnet\"),a.literal(\"sui:mainnet\"),a.literal(\"sui:testnet\")])});var _f={};fe(_f,{error:()=>Vy,method:()=>Hy,params:()=>jy,request:()=>HO,response:()=>jO,result:()=>Ky});var Hy,jy,Ky,Vy,HO,jO,Wy=L(()=>{\"use strict\";x();V();Y();$();Hy=a.literal(\"eth_accounts\"),jy=a.tuple([]),Ky=a.array(Ee),Vy=I,HO=T(Hy,jy),jO=k(Ky,Vy)});var wf={};fe(wf,{error:()=>Zy,method:()=>Gy,params:()=>$"
+    }
+  ]
+}

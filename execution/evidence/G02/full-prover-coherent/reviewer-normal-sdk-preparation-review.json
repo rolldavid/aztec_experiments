@@ -1,0 +1,28 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "eligible-one-normal-sdk-build-after-parent-grant",
+  "source": "ae1a220b2d5694ba84ff6875d36882e4d97eceaf",
+  "packetSha256": "635a75b08503ba62d558a51403b0e2cd2f86a9057a845d078944d7fa92bd0c41",
+  "runnerSha256": "340bddcfe1326cc7cfd82f2482db8ed6b1485a43170abd5966a5407441a8730f",
+  "auditorSha256": "21e06fad74cf8daf0964f99f7e971ec82c799cbbe24949e1d2a793c051a97866",
+  "verified": {
+    "protectedBindings": 4261,
+    "priorOutputsPreserved": 9,
+    "privateBokHandoffExact": true,
+    "normalCommand": "scripts/build-sdk.mjs",
+    "isolatedHOME": true,
+    "cleanSource": true
+  },
+  "bounds": {
+    "deadlineMs": 180000,
+    "rssLimitKiB": 4194304,
+    "HARDWARE_CONCURRENCY": 1
+  },
+  "conditions": [
+    "Mandatory normal manifest input/output/buildscript/lock/version audit plus protected input/source/cleanup checks after actual execution.",
+    "Only SDK outputs may change; fresh downstream manifests and affected usage checks still required."
+  ],
+  "limitations": [
+    "No browser/CLI/proof/deployment qualification from bundle construction; compiler260 hold unchanged."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-14T09:46:54.003261+00:00",
+  "scope": "Bounded read-only X03 refresh; no live RPC, code, graph, infrastructure or financial mutation.",
+  "verdict": "X03 remains open; refresh its historical V5 rationale for the actual v6 target. Testnet compatibility evidence is not production clearance.",
+  "installedPackages": {
+    "@aztec-labs/aztec.js": {
+      "version": "6.0.0-rc.3",
+      "sha256": "934f7bac6ef040d41a4d135b86b2b41bb7e9b33f6aa849a4ea7c336c985f5763"
+    },
+    "@aztec-labs/aztec-node": {
+      "version": "6.0.0-rc.3",
+      "sha256": "84ac3661b6725bd362718f88277eccea961f18bb77f4c861031d608ea9c5b542"
+    },
+    "@aztec-labs/stdlib": {
+      "version": "6.0.0-rc.3",
+      "sha256": "7a8adc8b0a7d718f432270af2d83383f20d64fbd7df1e4ec389671bc021a6f0a"
+    },
+    "@aztec-foundation/bb.js": {
+      "version": "6.0.0-rc.6",
+      "sha256": "1a8088fbf34fa1df8669d9a84fd2fa9c8a95ad661530adbba2d97d7032c617e5"
+    }
+  },
+  "localBindings": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/tasks/X03.md": "af4776737ffe2e928a828b4822845376abcf1929be23834813ed1e393222b777",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/X03/clearance-recheck-2026-09-12.md": "a5c01cc2ff7e0efdf0fc2eef93aad91f0e52cb288af728216e67b495b1ddbdde",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/launch-readiness-4b29.json": "6f554b13453dd885820771723f9cd4580f869688b16e38d8b1fc976be8ce87aa",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/testnet-acceptance-preflight/live-testnet-2.json": "99a4e54c9f49050e5e0578caf8da437e8f4dac96ecba9f43ab6638bd9240f662"
+  },
+  "officialSources": [
+    {
+      "url": "https://docs.aztec.network/networks",
+      "observation": "Documents Sepolia staging with proven transactions and requires node/Aztec.nr/client versions to match the network. Table still lists rc.1 and rollup version2914217885 at0x8c2fb2A68A3d362ab1DE99E06F83f8903160BbD9. This conflicts with the retained current canonical snapshot; do not replace current identity with this older table."
+    },
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/reference/changelog/v6",
+      "observation": "v6 starts a new genesis; V5 state does not carry over. rc.1 is explicitly Testnet-only, with stable6.0.0 planned for Mainnet. New image/package locations and NOIR_EXECUTE variables are mandatory; successful non-real startup does not qualify real proving."
+    },
+    {
+      "url": "https://github.com/aztec-labs-eng/aztec-node/releases/tag/v6.0.0-rc.3",
+      "observation": "Official rc.3 tag exists, commit b37a586, dated October8. The retrieved release page does not establish current network deployment, security closure or rc.1/rc.3 interoperability."
+    },
+    {
+      "url": "https://docs.aztec.network/participate/alpha",
+      "observation": "Current guidance describes an unhardened experimental production network, incomplete audits, under-constrained circuits and privacy limitations. This is not blanket clearance for the intended production exposure."
+    },
+    {
+      "url": "https://forum.aztec.network/t/proposal-v6-payload/8671",
+      "observation": "October10 V6 Mainnet proposal includes Labs bytecode/constant verification; proposal and technical attestation do not establish governance execution or application production suitability. Its rollup and VK tree differ from the retained Sepolia target."
+    }
+  ],
+  "retainedActualEvidence": {
+    "observedAt": "2026-10-14T06:25:04.162Z",
+    "chainId": 11155111,
+    "registry": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+    "rollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "rollupVersion": "3409706519",
+    "threeInstalledProtocolConstantsMatch": true,
+    "pendingAndProvenProgress": true,
+    "qualification": "Existing18-read snapshot, independently hash-checked here; not a fresh live observation. Node startup, image binding and proof qualification explicitly false in source evidence."
+  },
+  "requiredBeforeRelease": {
+    "X03-A01": "Obtain applicable current official security/release guidance that addresses the baseline concern for the intended v6 production exposure; neither V5 historical notice nor v6 package availability alone decides this. Current Alpha restrictions remain material.",
+    "X03-A02": "Bind actual target chain/registry/rollup/inbox/outbox/FeeJuice portal and candidate SDK/Noir/prover/image constants to one current manifest. Reconcile official rc.1 table with rc.3 canonical snapshot; complete genuine target node, bridge and real-proof qualification. Do not infer BB rc.6 is incompatible merely because client is rc.3; verify the actual release dependency and constants.",
+    "X03-A03": "Refresh target observations and guidance within seven days of final sign-off; preserve explicit user target decision if production retargeting is needed."
+  },
+  "remainingGate": "Official production-suitability/security evidence and exact target release binding, followed by existing real-proof and release acceptance. No new procedural gate is introduced.",
+  "notClaimed": [
+    "Production clearance",
+    "Fresh live network availability",
+    "All rc.3 endpoints supported",
+    "Testnet or real-proof application acceptance",
+    "Mainnet V6 governance executed"
+  ]
+}

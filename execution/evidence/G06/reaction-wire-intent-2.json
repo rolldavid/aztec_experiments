@@ -1,0 +1,12 @@
+{
+  "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "scenario": "rolling-reaction-wire",
+  "startedAt": "2026-10-12T02:02:12.586751+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G06/public-catchup-ef533-review.json",
+  "reviewSha256": "926c0a4e65139ff7f15d72e6f0e9487bb2173ce40c1d6acbfeb224ae8ea73b89",
+  "status": "launch once",
+  "hypothesis": "Failure5eb7 public index needed3ranges; approved sequential bounded catchup finishes allranges before server polling. Actualtransactions/fee/privacy assertions unchanged.",
+  "previousFailure": "execution/evidence/G06/application-5eb7d2ad-dae6-40b5-8aa6-fdb4466709a2.json"
+}

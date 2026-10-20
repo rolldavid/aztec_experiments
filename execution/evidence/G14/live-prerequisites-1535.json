@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-11T15:40:03.644818+00:00",
+  "identity": {
+    "UserId": "AROAQYQYWIYN7GZ4I27PD:zac-williamson",
+    "Account": "052665140763",
+    "Arn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson"
+  },
+  "instances": [],
+  "volumes": [],
+  "plugin": {
+    "status": "ready",
+    "active": 0
+  }
+}

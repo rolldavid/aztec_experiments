@@ -1,0 +1,71 @@
+{
+  "task": "read-only exact nonce15 resolution proposal",
+  "originalHash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+  "originalPlanSha256": "391165e4efe54834c89255b35baf52a0ecd6152798b0c0e18e140aea7f305437",
+  "conclusion": "A separately journaled same-nonce zero-value self cancellation is supported by Ethereum and is the smallest neutral resolution. Existing repository helpers support its durability/finality, but no exact cancellation command currently exists. This is a design recommendation, not an executed cancellation or a signing grant.",
+  "sourceReferences": [
+    "plugins/operations.mjs:158 onceAztecOperation writes signed bytes before one broadcast; retained records only reconcile.",
+    "plugins/operations.mjs:276 reconcileRollingEthereum verifies exact signed bytes, receipt, original canonical block, finalized head and effect.",
+    "plugins/operations.mjs:321 matchRollingEthereumSigned already verifies zero-value exact from/to/data/chain/nonce; cancellation additionally closes type2/gas/fee/access-list fields as matchSepoliaLiquiditySigned does.",
+    "plugins/operations.mjs:354 sepoliaLiquidityTransactions always adds inventory-usdc and approve-fee; a generic fresh seed plan repeats completed stages.",
+    "plugins/operations.mjs:386 runSepoliaLiquidityStage rejects unresolved predecessors and requires exact entered inventory; preserve these rules.",
+    "plugins/operator.mjs:366 seedTestnetLiquidity supplies private root/marker/lease/strict paced RPC/signer boundaries.",
+    "shared/ethereum-journal.mjs:269 existing browser journal recognizes replacements through receipt verification but does not expose a trusted nonce cancellation primitive."
+  ],
+  "minimalImplementation": [
+    "Add one narrow trusted operator cancellation path in existing operator.mjs/operations.mjs and tests. Use the existing global sender lease plus an independently marked0600 journal under the canonical0700 directory. Do not modify original seed state, plan, or permanent old-mint lease.",
+    "Bind closed cancellation plan to chain11155111, original plan hash, exact retained signed operation hash/nonce/from, cancellation account=original sender, fixed self recipient, value0,data0x,type2,empty accessList, gas21000 for freshly verified plain EOA, explicit maximum fee/priority and total gas cost, local signing deadline. Require original later seed stages absent and exact finalized completed-prefix proofs.",
+    "Before signing recheck original receipt, current canonical chain/account code, latest/pending nonce and balance. If original is already canonical, reconcile it instead. If nonce advanced without an identified finalized winner, refuse. A race after this check is handled by winner reconciliation, never a second broadcast.",
+    "Reuse onceAztecOperation in distinct liquidity-seed cancellation scope identity and signed raw/hash checkpoint. A missing record, uncertain response, or dropped transaction stays reconcile-only. Record only finite send-phase/HTTP/RPC error observations privately; never raw signed bytes in public logs.",
+    "Reconcile BOTH exact hashes. A cancellation winner requires exact signed transaction shape plus successful receipt and canonical finalized anchor, then verify account nonce consumed and current allowance. An original winner requires original canonical approval effect. Neither null receipts nor account nonce advancement alone establish cancellation.",
+    "Only after winner finality create a separate explicit remaining-plan continuation. Preserve completed inventory transfer and FEE approval via exact original receipt/effect references; revalidate current balances and allowance. If cancellation wins, remaining USDC approval starts at16, then mint/revokes; if original wins, skip its approval and mint starts at16. Recompute fixed deadlines, nonce layout and caps before signing anything else. No generic skip-list or old-journal edits.",
+    "If no new seed proceeds, use a separately bounded cleanup-only plan for existing allowance after nonce resolution; original runner correctly cannot skip its unresolved approval to revoke."
+  ],
+  "feePolicy": {
+    "defaultGeth": "Replacement requires both maxFee and priority strictly higher and meeting configured bump; documented default10percent. This is local mempool policy, not guaranteed provider acceptance.",
+    "originalWei": {
+      "maxFee": 1100000,
+      "priority": 1000000
+    },
+    "illustrative20PercentBumpWei": {
+      "maxFee": 1320000,
+      "priority": 1200000,
+      "gasLimit": 21000,
+      "maximumCost": 27720000000
+    },
+    "constraint": "Illustration only. Validate fresh base fee plus chosen priority against exact cap and operator reserve; if provider rejects, preserve the attempted cancellation journal, do not repeatedly escalate or resend."
+  },
+  "criticalLimits": [
+    "The original signed approve call has no on-chain deadline. Frozen plan expiry only stops local signing; it cannot make a dropped signed approval safe to ignore.",
+    "Finality is required before treating one nonce winner as excluding the other; reorg/nonfinal receipts do not close uncertainty.",
+    "A cancellation may itself remain unknown. No protocol can guarantee inclusion from a single attempt; this design creates a supported bounded resolution attempt without weakening no-replay rules."
+  ],
+  "focusedChecks": [
+    "Original wins before signing: zero cancellation signatures/sends.",
+    "Race original wins after cancellation send: one cancellation attempt, original proof admitted, no second send.",
+    "Cancellation success but nonfinal/reorged/wrong from/to/data/value/nonce/type/fees: no successor stage.",
+    "Broadcast failure/lost acknowledgment/restart/missing journal: zero replay.",
+    "Exact finalized-prefix carry omits inventory/FEE operations and binds current allowance; changed/missing prefix or later entered stage rejects.",
+    "Both fee fields and exact gas cap validated; cancelled original still retained immutable."
+  ],
+  "primarySources": [
+    {
+      "url": "https://ethereum.org/community/support/faq/",
+      "supports": "Cancellation is zero ETH to self with the same pending nonce."
+    },
+    {
+      "url": "https://geth.ethereum.org/docs/fundamentals/command-line-options",
+      "supports": "txpool.pricebump documented default10."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ethereum/go-ethereum/master/core/txpool/legacypool/list.go",
+      "supports": "Add checks both fee cap and tip cap strictly larger and percentage thresholds."
+    }
+  ],
+  "actions": {
+    "transactions": 0,
+    "signatures": 0,
+    "sourceEdits": 0,
+    "stateMutations": 0
+  }
+}

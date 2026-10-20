@@ -1,0 +1,32 @@
+✔ unknown send stays fenced across replacement instances; absent receipt never authorizes retry (10.92175ms)
+✔ durable fence failure prevents send; successfully saved pre-send fence cannot be retried (2.609917ms)
+✔ saved-byte recovery never sends an ordinary action without signed bytes (1.467959ms)
+✔ RC22 expiry unknown send stays recoverable without reprepare or retransmission (65.333334ms)
+✔ ordinary recovery fences pending without a new financial action (237.692042ms)
+✔ ordinary recovery fences unknown without a new financial action (200.2605ms)
+✔ ordinary recovery fences nullifier-invalid without a new financial action (217.071416ms)
+✔ ordinary recovery fences fee without a new financial action (737.9635ms)
+✔ ordinary recovery fences wrong-hash without a new financial action (115.616417ms)
+✔ ordinary recovery fences policy without a new financial action (197.670541ms)
+✔ ordinary recovery fences account without a new financial action (76.822792ms)
+✔ ordinary recovery fences ciphertext without a new financial action (73.937833ms)
+✔ ordinary post changed context at inspection vetoes saved-byte recovery (244.670375ms)
+✔ ordinary post changed context at final-send vetoes saved-byte recovery (438.801125ms)
+✔ ordinary claim-deposit changed context at inspection vetoes saved-byte recovery (245.05075ms)
+✔ ordinary claim-deposit changed context at final-send vetoes saved-byte recovery (419.790125ms)
+✔ ordinary withdraw changed context at inspection vetoes saved-byte recovery (248.554084ms)
+✔ ordinary withdraw changed context at final-send vetoes saved-byte recovery (412.731625ms)
+✔ ordinary moderate-post changed context at inspection vetoes saved-byte recovery (264.590916ms)
+✔ ordinary moderate-post changed context at final-send vetoes saved-byte recovery (404.461541ms)
+✔ ordinary bok changed context at inspection vetoes saved-byte recovery (263.357667ms)
+✔ ordinary bok changed context at final-send vetoes saved-byte recovery (442.033583ms)
+✔ ordinary bio changed context at inspection vetoes saved-byte recovery (232.761334ms)
+✔ ordinary bio changed context at final-send vetoes saved-byte recovery (402.202ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7980.024334

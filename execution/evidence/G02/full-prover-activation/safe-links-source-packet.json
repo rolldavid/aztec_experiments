@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T12:17:01.718836+00:00",
+  "revision": "3e31a8ab0505814b96fa51f6af399b28f9fe89af",
+  "predecessor": "1797fa43e87dda19d4fa5e8e5894145f42a682e1",
+  "reviewRepaired": "15e9d1adfeef21bea91ba20108dcc65e024ecd0f573060c60269f628dcdad5c5",
+  "files": {
+    "deploy/prover/bootstrap.py": "2e028006ef9d79844093762359b279243a871a730c575f3b822d5256e1a0f508",
+    "scripts/test-prover-bootstrap.py": "2a684ec3d9b3e693cc9874ecb1a665f5455609dd7c82bc47c4b95a2c022aef8d",
+    "deploy/prover/package.py": "de1e1e29aa478f18ffb0fc4046673c1e265064db9f231584f160b3d389445ebb",
+    "scripts/test-prover-package.py": "61c67c403053973e264ce11244e378aed064642f4ffed0d1a6535581e3c8c7bf",
+    "deploy/prover/BOOTSTRAP.md": "998b0dac87ed0b1ed76769e86105f1dca50b723df936d4963e894809e954e275",
+    "deploy/prover/README.md": "5b0c96599580c4c0330923099ec8339395005b759fae1fd2ebe7762fca232289"
+  },
+  "changedPaths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "deploy/prover/BOOTSTRAP.md"
+  ],
+  "behavior": "Complete release link/ownership/parent plan validated before identity or chmod/chown; relative internal regular-file links retained using no-follow ownership and no link chmod. Escapes/absolute/directory/dangling/loops/special files rejected. Existing durable intent and failure shutdown unchanged.",
+  "officialNodeArchive": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/infra/node-v24.21.0-linux-x64.tar.xz",
+    "sha256": "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6",
+    "observedLinkInventory": [
+      {
+        "name": "bin/npm",
+        "target": "../lib/node_modules/npm/bin/npm-cli.js"
+      },
+      {
+        "name": "bin/npx",
+        "target": "../lib/node_modules/npm/bin/npx-cli.js"
+      },
+      {
+        "name": "bin/corepack",
+        "target": "../lib/node_modules/corepack/dist/corepack.js"
+      }
+    ],
+    "observation": "Read-only tar metadata scan; no archive executable invoked or extracted."
+  },
+  "newTests": [
+    "ProverActivation.test_actual_paths_preserves_official_node_file_links_and_hardens_targets_without_following",
+    "ProverActivation.test_actual_paths_prevalidates_all_links_before_any_identity_or_permission_mutation",
+    "ProverActivation.test_actual_paths_rejects_late_special_file_or_parent_before_any_mutation",
+    "ProverActivation.test_actual_unsafe_link_after_durable_intent_shuts_down_and_refuses_replay"
+  ],
+  "authoredCounts": {
+    "focused": 16,
+    "fullBootstrap": 89,
+    "package": 9
+  },
+  "testsExecuted": false,
+  "checksPerformed": [
+    "Python AST parse only",
+    "git diff --check"
+  ],
+  "limitations": [
+    "Actual permission/identity commands use labelled doubles; actual path types/link resolution are exercised once tests are granted.",
+    "Full89/package9 still require exact coherent lead helper composition; no fabricated stubs.",
+    "Actual payload size, complete package/native activation and cloud proof remain unqualified."
+  ],
+  "sourceWriterReleased": true
+}

@@ -1,0 +1,38 @@
+{
+  "task": "original-approve-usdc-readonly-diagnosis",
+  "source": "069759295c10f161068db738521b9912b4c4f797",
+  "planSha256": "391165e4efe54834c89255b35baf52a0ecd6152798b0c0e18e140aea7f305437",
+  "transactionHash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+  "nonce": 15,
+  "logSha256": "b773ff634df05bb79bbbe90901aece2158ea374241562850a06c098e8bb40c02",
+  "findings": [
+    "Saved state contains entered approve-usdc and signed submission-unknown record under reconcile-only policy. No private signed bytes or keys were printed.",
+    "approve-usdc-first.log unresolved result lacks transactionHash. The execute catch in onceAztecOperation produces exactly that shape; reconcileRollingEthereum includes record.hash in every unresolved result. Thus this is an execution exception at or after signed-state persistence, not merely a successful broadcast followed by receipt-null reconciliation.",
+    "Durable-state presence alone does not prove the original network send occurred: persistence may have thrown after writing, the explicit broadcast guard may have thrown, or ethers broadcast may have rejected. Exact original exception was discarded.",
+    "Installed ethers broadcastTransaction concurrently awaits getBlockNumber, sendRawTransaction and getNetwork, then verifies the returned hash. A read-side error can therefore reject the combined call without establishing whether send was accepted.",
+    "Strict transport rejects non200 responses and oversized bodies; no original HTTP/RPC code is retained. Do not assert429, fee rejection or expiry as established cause."
+  ],
+  "readonlyRpc": {
+    "Tenderly": {
+      "endpoint": "https://sepolia.gateway.tenderly.co",
+      "observedUnix": 1791970066.389575,
+      "receipt": null,
+      "transaction": null,
+      "latestNonce": 15,
+      "pendingNonce": 15
+    },
+    "PublicNode": {
+      "endpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+      "result": "HTTP403 for receipt/transaction/nonce reads; no independent transaction visibility conclusion"
+    }
+  },
+  "recommendation": "Keep original hash/nonce and fixed plan reconcile-only; block successor nonce. The smallest useful local controlled check is failure-shape coverage for persistence and each ethers broadcast dependency, with future original-operation diagnostics restricted to finite phase/HTTP/RPC code. It cannot recover the historical error and must not resend this transaction. Further read-only hash receipt queries may establish later inclusion; absence is not resend authority.",
+  "actions": {
+    "financialSends": 0,
+    "signatures": 0,
+    "keysRead": 0,
+    "sourceEdits": 0,
+    "serviceMutations": 0,
+    "privateRawOutput": false
+  }
+}

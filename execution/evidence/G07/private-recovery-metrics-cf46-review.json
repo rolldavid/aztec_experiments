@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "cf46b92af58279b1e7111afc8be2f9adffc0279f",
+  "verdict": "approved-source-observer-support-only",
+  "scope": "G07-A02/A08 aggregate private recovery measurement helper, not recovery/work-bound acceptance",
+  "sourceSha256": {
+    "scripts/testing/rolling-private-recovery-metrics.mjs": "6d9bb3043243ede17c7a9bba966859a163f6547603e639e1811a16435bd1b058",
+    "scripts/testing/rolling-private-recovery-metrics.test.mjs": "30e68d4216b7933e37ccc23166f9fa098a0548fae1da0d9ad222737c62dcaac6"
+  },
+  "findings": [],
+  "checks": {
+    "independentTests": {
+      "pass": 22,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 348.230083,
+      "log": "execution/evidence/G07/private-recovery-metrics-cf46-independent-tests.log",
+      "labels": "Pure call/clock/transport fixtures and actual official pagination over synthetic log rows; no native DB/browser/proof/encrypted recovery."
+    },
+    "sourceInspection": [
+      "Fixed phase/method vocabulary, own-data descriptor array lengths and safe numeric aggregates; no owner/tag/log contents, error/cause/stack, SDK serialization or history retained.",
+      "Single Reflect.apply preserves receiver/argument identity, original primitive/object/Promise return, sync throw and rejected error identity; observer catches metadata/clock failure and reports gap without replacing original operation.",
+      "Native promise then observation bypasses overridden then; throwing constructor/species path marked unobserved, original Promise returned; opaque thenables never assimilated.",
+      "Counts/timings are bounded/saturating with unhealthy flag, snapshots detached, absent discovery/fold phases remain unobserved.",
+      "Installed actual getPrivateLogsByTags/getPublicLogsByTags API returns nested arrays; official tag-page helper tested21/41rows across multiple pages.",
+      "Caller alone supplies already-serialized byte counts and process memory; helper adds no response stream reads/retries/services/lifecycle/store mutation."
+    ]
+  },
+  "integrationRequirements": [
+    "Wrap only parent-owned facades with actual this binding; do not patch SDK prototypes/private stores/queues or create separate lifecycle owners.",
+    "Parent must identify actual supported hooks and retain unknown/unsupported status. Inclusive head utility/event duration does not separately measure encrypted discovery; do not fill discovery/fold counters from invented callbacks.",
+    "Validate observerHealthy and settled plus individual required phase/method observations; transportBytesObserved and wireCountsMatch alone are not coverage proof.",
+    "wireCountsMatch compares global aggregate call/record totals, not per-method agreement; parent must independently reconcile per-method wire/call inventories if claiming transport coverage (cache hits can legitimately differ).",
+    "Memory is sampled process RSS/heap, not descendant-tree bound; existing supervisor must enforce actual deadline/memory/cleanup.",
+    "No genuine encrypted-discovery capacity or end-to-end bounded work claim from synthetic pagination/tests."
+  ],
+  "qualificationFlags": {
+    "endToEndWorkBoundQualified": false,
+    "encryptedRecoveryQualified": false
+  },
+  "sharedMutation": false
+}

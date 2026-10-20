@@ -1,0 +1,25 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "eligible-one-native-disabled-relationships-development-after-parent-serialized-grant",
+  "candidate": "71943392fcd29ac0f41558eaed3c0da828dba671",
+  "preparationPacket": "e97c4d32257144136e092a2ce68040a4a04ab1106ac32062b706b8739cecacef",
+  "launcher": "e25b6a1fc8e5d7ee3a635d6d9b5db1fb76875456017e262aa832c96cf7c24001",
+  "componentReview": "2d545aa8dc0c463bbe5cc367e586e5bc4973c41c4e3c4ba13729524ee5723dd1",
+  "closure": "653dc10578b526345b042da71c743bc2e63ef382d00a90f08298c34ba2ee1c5e",
+  "checks": [
+    "All3310 pending approval bindings independently rehashed; exact current719 source and3157 normal closure already verified.",
+    "Launcher differs from accepted included-board default launcher only evidence/closure location, existing scenario and540000 metadata. No BOARD_TEST_PROOFS inherited or override; defaultdisabled remains actually exercised.",
+    "runApplication defaultdisabled forwarded to fixture-worker; native setup realProofs is applicationProofsEnabled false. Fixture captures realfalse; actor factory receives proofsEnabled:false and passes nativePXE proverEnabled:false. No application/SDK proof bypass introduced.",
+    "Existing relationships scenario540s outer/525s inner,4GiB whole tree,768MiB fixture,one application thread,browser:none; existing owner cleanup unchanged.",
+    "Ordinary mode uses zero-job accounting while exact wallet/send/read/privacy/fee and fresh-cache assertions remain. Genuine/reorg/browser branches unchanged."
+  ],
+  "launchConditions": [
+    "Parent sole-heavy grant only after Design focused terminal positivecleanup.",
+    "Create approved-launch.json binding this exact reviewer file/hash; source/preparation/bindings frozen; one execution, no retry."
+  ],
+  "limits": [
+    "Development native-disabled behavior only, not genuine proofs or TESTNET acceptance.",
+    "Browser remains held; no marker/reorg/full archive qualification."
+  ],
+  "runtimePerformedByReviewer": false
+}

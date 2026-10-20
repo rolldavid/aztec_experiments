@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-12T12:16:57.054354+00:00",
+  "sourceSha256": "e72d8cd3478155539c089cd52bbec22a3e2781be0bc878f875b7d1bbcdcb9510",
+  "scope": "Offline Python source-parsing and synthetic projection checks only; no AWS calls",
+  "checks": {
+    "syntax": true,
+    "knownFieldsSecretLikeValuesOmitted": true,
+    "validFiniteBootstrapFieldsRetained": true,
+    "boolNotNumericNegativeNotEgress": true,
+    "nonObjectMarkerPreludeNoException": 5
+  },
+  "providerCalls": 0
+}

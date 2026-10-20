@@ -1,0 +1,264 @@
+{
+  "source": "3c27c4e",
+  "purpose": "retained native settled campaign after focused actual ABI repair; existing journals no replay",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2411936,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 340736
+    },
+    {
+      "elapsedMs": 2049,
+      "rssKiB": 727536
+    },
+    {
+      "elapsedMs": 3078,
+      "rssKiB": 877392
+    },
+    {
+      "elapsedMs": 4111,
+      "rssKiB": 1025264
+    },
+    {
+      "elapsedMs": 5138,
+      "rssKiB": 1022864
+    },
+    {
+      "elapsedMs": 6170,
+      "rssKiB": 1142512
+    },
+    {
+      "elapsedMs": 7213,
+      "rssKiB": 1843552
+    },
+    {
+      "elapsedMs": 8240,
+      "rssKiB": 1538640
+    },
+    {
+      "elapsedMs": 9267,
+      "rssKiB": 1703024
+    },
+    {
+      "elapsedMs": 10295,
+      "rssKiB": 2411936
+    },
+    {
+      "elapsedMs": 11332,
+      "rssKiB": 2177888
+    },
+    {
+      "elapsedMs": 12360,
+      "rssKiB": 936352
+    },
+    {
+      "elapsedMs": 13390,
+      "rssKiB": 1056336
+    },
+    {
+      "elapsedMs": 14416,
+      "rssKiB": 1055024
+    },
+    {
+      "elapsedMs": 15442,
+      "rssKiB": 1018384
+    },
+    {
+      "elapsedMs": 16468,
+      "rssKiB": 989312
+    },
+    {
+      "elapsedMs": 17494,
+      "rssKiB": 986432
+    },
+    {
+      "elapsedMs": 18521,
+      "rssKiB": 987808
+    },
+    {
+      "elapsedMs": 19553,
+      "rssKiB": 989152
+    },
+    {
+      "elapsedMs": 20582,
+      "rssKiB": 989360
+    },
+    {
+      "elapsedMs": 21613,
+      "rssKiB": 1026160
+    },
+    {
+      "elapsedMs": 22641,
+      "rssKiB": 1043024
+    },
+    {
+      "elapsedMs": 23667,
+      "rssKiB": 954576
+    },
+    {
+      "elapsedMs": 24698,
+      "rssKiB": 952512
+    },
+    {
+      "elapsedMs": 25732,
+      "rssKiB": 953520
+    },
+    {
+      "elapsedMs": 26774,
+      "rssKiB": 937920
+    },
+    {
+      "elapsedMs": 27800,
+      "rssKiB": 927424
+    },
+    {
+      "elapsedMs": 28833,
+      "rssKiB": 902800
+    },
+    {
+      "elapsedMs": 29875,
+      "rssKiB": 762544
+    },
+    {
+      "elapsedMs": 30910,
+      "rssKiB": 749040
+    },
+    {
+      "elapsedMs": 31945,
+      "rssKiB": 751792
+    },
+    {
+      "elapsedMs": 32972,
+      "rssKiB": 754048
+    },
+    {
+      "elapsedMs": 34012,
+      "rssKiB": 754112
+    },
+    {
+      "elapsedMs": 35043,
+      "rssKiB": 754304
+    },
+    {
+      "elapsedMs": 36070,
+      "rssKiB": 750544
+    },
+    {
+      "elapsedMs": 37096,
+      "rssKiB": 757424
+    },
+    {
+      "elapsedMs": 38131,
+      "rssKiB": 757808
+    },
+    {
+      "elapsedMs": 39162,
+      "rssKiB": 758000
+    },
+    {
+      "elapsedMs": 40191,
+      "rssKiB": 753360
+    },
+    {
+      "elapsedMs": 41233,
+      "rssKiB": 753504
+    },
+    {
+      "elapsedMs": 42270,
+      "rssKiB": 755904
+    },
+    {
+      "elapsedMs": 43304,
+      "rssKiB": 756048
+    },
+    {
+      "elapsedMs": 44331,
+      "rssKiB": 756112
+    },
+    {
+      "elapsedMs": 45372,
+      "rssKiB": 756208
+    },
+    {
+      "elapsedMs": 46408,
+      "rssKiB": 834192
+    },
+    {
+      "elapsedMs": 47433,
+      "rssKiB": 937984
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "native-development",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 10295,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 72964,
+        "ppid": 59636,
+        "rssKiB": 55904
+      },
+      {
+        "role": "native-development",
+        "pid": 72974,
+        "ppid": 72964,
+        "rssKiB": 35632
+      },
+      {
+        "role": "native-development",
+        "pid": 72975,
+        "ppid": 72974,
+        "rssKiB": 614192
+      },
+      {
+        "role": "native-development",
+        "pid": 72978,
+        "ppid": 72975,
+        "rssKiB": 3472
+      },
+      {
+        "role": "native-development",
+        "pid": 72980,
+        "ppid": 72975,
+        "rssKiB": 3104
+      },
+      {
+        "role": "native-development",
+        "pid": 72981,
+        "ppid": 72975,
+        "rssKiB": 152192
+      },
+      {
+        "role": "native-development",
+        "pid": 72986,
+        "ppid": 72975,
+        "rssKiB": 5072
+      },
+      {
+        "role": "native-development",
+        "pid": 72987,
+        "ppid": 72975,
+        "rssKiB": 1632
+      },
+      {
+        "role": "native-development",
+        "pid": 72988,
+        "ppid": 72975,
+        "rssKiB": 1540736
+      }
+    ]
+  },
+  "elapsedMs": 47993,
+  "ownedTreeAbsent": true
+}

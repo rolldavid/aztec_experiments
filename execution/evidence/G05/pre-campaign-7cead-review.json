@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "7cead066cafda7baaabc37034ef795b91a38c439",
+  "baseRevision": "1b775c7d273560acb91b1d14478d9377ce9b374d",
+  "verdict": "approved-bounded-genuine-campaign-source",
+  "checks": [
+    "Inspected two-path fingerprint-only repair; inner and outer now bind shared/public-feed-storage.mjs. Outer also binds existing public server/SQLite/start/client inputs.",
+    "Independently executed actual fingerprints() and checked all five added public dependency hashes present. First reviewer eval had a syntax typo; corrected invocation passed without source edits.",
+    "No execution/acceptance changes; previous1b775 checkSdk2035inputs8outputs/source-equivalence disposition remains applicable."
+  ],
+  "findings": [],
+  "limits": [
+    "Approval permits actual540second/4GiB supervised campaign; no actual runtime pass or full product completion claimed.",
+    "Untracked wallet-session modules remain excluded/unused. Separate new deployment worker module is not part of campaign."
+  ]
+}

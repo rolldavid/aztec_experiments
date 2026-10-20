@@ -1,0 +1,41 @@
+{
+  "candidate": "8aba7b4dd29d449a0632d3499374d04aa159aa29",
+  "base": "f897bdd",
+  "verdict": "PASS_SCOPED_COMPONENT",
+  "sources": {
+    "plugins/agent.mjs": "4b680dd05b0a6af37f24ae1c52f591039bb6f29548ac41ac77f8f2a781b7328c",
+    "plugins/github-tools.mjs": "feddc2fd200cb3676353fe418dd26d6f924e36feedb71e01c66b996271014691",
+    "plugins/main.mjs": "96ecb2df6da8f395ce1d0936e730719bb0c4981fe37753657912474cd3b08c54",
+    "plugins/test/model.test.mjs": "bd331328737edfec8c5db26d1c6cd8320bfe11a2b02e1b43c34d2fccbe87190f",
+    "plugins/test/thread-repositories.test.mjs": "01eeffb65f4ae838e8072fe3297e612c91a746092c90c95ce977afa9ea099498",
+    "plugins/thread-repositories.mjs": "088b2782ac6a5ab8e302bf6cc51eb72ad57bbe5f9418fae66ec79937c8967e49"
+  },
+  "reviewedBehavior": [
+    "Validation cache binds exact staged tree and original parent; source changes invalidate it. Accept requires matching validated revision/sourceDigest and clean tracked tree.",
+    "Unchanged text-only reply avoids invented static application validation.",
+    "Host-owned durable prepared/CAS/accepted record retains publication pending before accepted ref update. Reopen only retries idempotent local publication; no paid-call replay is authorized.",
+    "Model-facing check result contains only bounded untrusted log and finite fields. Only STATIC_FAILED can become repair feedback; cleanup/record/unavailable halt later tools and paid calls.",
+    "Final reply includes only public artifact/source URLs and public accepted revision, truncates text by UTF8 bytes within992 total; private execution metadata stays host-side."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G10/paid-context/workspace-publication-hook.log",
+      "sha256": "9adedf2d75ce0674a9bb73f741fa0a7c07775fba74ca1cf927ecd977ac481cb8"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G10/paid-context/publication-reply.log",
+      "sha256": "d0e0c9b12e493cb1dc3ec962de4fef387eb350af25106db710ad66c72f9e1d00"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G10/paid-context/workspace-fatal-control.log",
+      "sha256": "33508bfdfd5c4fb7b7fc06d0559da1fcd98b75f81d766732a9308ad99f3fbdd9"
+    }
+  ],
+  "open": [
+    "Actual idempotent separate-origin publisher and main publication hook wiring.",
+    "Combined actual generated execution with repaired eee1 source; f37 original must not be activated.",
+    "Later f599 concurrency change remains under separate review: candidate selection starvation and wallet construction lane finding sent owner.",
+    "Live hosted paid provider and final G10/G11 acceptance."
+  ],
+  "evidenceScope": "34 workspace/model/github,16 publication reply,29 latest model/repository actual pass logs. Overlapping staged evidence, not additive distinct total or a new whole combined run."
+}

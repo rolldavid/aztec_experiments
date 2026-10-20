@@ -1,0 +1,38 @@
+{
+  "files": [
+    {
+      "action": "preference-name",
+      "bytes": 2431,
+      "sha256": "e72e752fca66a0254eb959a0ecb7243b06b91328016f57d962d01049b7e73c5c"
+    },
+    {
+      "action": "preference-root",
+      "bytes": 5607,
+      "sha256": "cf6ac1a1b80b9f9c98916f081afdd472c79cfba7ddecf8fcd86f2bd8d1825062"
+    },
+    {
+      "action": "preference-1",
+      "bytes": 2655,
+      "sha256": "a0804ae77626d0a1f60f1ab061ea5ad1a1915d81a36ab9858810ede8a4b32c83"
+    },
+    {
+      "action": "preference-2",
+      "bytes": 2655,
+      "sha256": "d22b4c9900cac69f78f6289f645cfdc1ffba97ae7319924725d8a008ef47b04c"
+    },
+    {
+      "action": "preference-3",
+      "bytes": 2655,
+      "sha256": "32ff6b94f6b9393df98e0c3a20cbc4ea9f18f41833063509944d8faf9c040986"
+    }
+  ],
+  "fiveActionFees": "57490423200000",
+  "claimFee": "8418947400000",
+  "standaloneFee": "9148068000000",
+  "humanFees": "65909370600000",
+  "canonicalTotalDebit": "75057438600000",
+  "privateAndPoolBalance": "999999924942561400000",
+  "methodCalls": 717,
+  "observedPhaseCalls": 7,
+  "metricCountersConsistent": true
+}

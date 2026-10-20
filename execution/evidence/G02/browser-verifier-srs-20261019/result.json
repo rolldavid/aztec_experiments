@@ -1,0 +1,36 @@
+{
+  "CommandId": "8b7a7ed8-f6f2-4d1a-9500-a7e2c6114927",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Publish reviewed browser verifier assets; retain original wallets and journals",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T04:11:47.799Z",
+  "ExecutionElapsedTime": "PT8.252S",
+  "ExecutionEndDateTime": "2026-10-19T04:11:55.799Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "{\"published\": \"/opt/rolling-app/releases/eec3b636\", \"unitSha256\": \"34dfb595827dcc79b5eb11dc73269b425a4ad651ec6c5d6637e28c07feb36baa\", \"files\": 10, \"walletAssetsVerified\": true, \"verifierBytes\": 128, \"originalFundingJournalPreserved\": true, \"otherServicePidsPreserved\": true, \"source\": \"eec3b6367b9a4cfb832ed706f1658a16504a7e27\"}\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "1d6ecad0-1e14-43b0-8633-d89574858557",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 04:11:59 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1012",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "1d6ecad0-1e14-43b0-8633-d89574858557",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

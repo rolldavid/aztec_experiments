@@ -1,0 +1,31 @@
+✖ wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD (13.685208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.109541
+
+✖ failing tests:
+
+test at apps/rolling/start.test.mjs:35:1
+✖ wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD (13.685208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'gzip'
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-controls/apps/rolling/start.test.mjs:39:38)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'gzip',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

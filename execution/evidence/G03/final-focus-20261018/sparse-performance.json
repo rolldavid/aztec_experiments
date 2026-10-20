@@ -1,0 +1,15 @@
+{
+  "source": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "dataset": "One actual public post, main board, native development chain; not10k qualification",
+  "desktop": {
+    "coldFeedMs": 82,
+    "warmFeedMs": 85,
+    "firstPageBackendRequests": 1,
+    "threadMs": 123
+  },
+  "proofs": false,
+  "mobile": {
+    "coldFeedMs": 85,
+    "warmFeedMs": 86
+  }
+}

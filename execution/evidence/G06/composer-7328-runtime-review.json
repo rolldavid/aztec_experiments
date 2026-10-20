@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "base": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "verdict": "approved bounded genuine composer development acceptance",
+  "requirements": [
+    "G05-A09 private readable owned names/recovery",
+    "G06-A06 production browser992-byte prepare/cancel,996-byte retention,literal preview,account switch"
+  ],
+  "evidence": {
+    "execution/evidence/G06/application-2c4f7f84-f379-40cd-a6c2-5345612c76bd.json": "fdd66523415c7eed0d65f062b715d86cac00a24a71bf226228d5e72e4dbc6b8c",
+    "execution/evidence/G06/application-port-645cae61-f1a0-4907-b8e1-48b08230e8ca/observation.json": "0e25d2cd28f756e13b5ce0d67fdf7d21c6f16dc487b4f0f2e8daa6ca14c089d3"
+  },
+  "runtime": {
+    "passed": true,
+    "elapsedMs": 424312,
+    "peakTreeRSSKiB": 2427744,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "failures": [],
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true
+  },
+  "sourceBinding": {
+    "outerCurrentFilesVerified": 344,
+    "innerFilesVerified": 56,
+    "artifactFilesVerified": 2,
+    "privateBokBuildInputsVerified": 14,
+    "nativeArtifactInputsVerified": 70,
+    "sourceRevision": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+    "outerBridgeEqualsDurableInner": true
+  },
+  "effects": [
+    {
+      "action": "owned-name-1",
+      "bytes": 2431,
+      "sha256": "8cae91dcb7886be1bbe9a886bdf40ce3688ff1001f0ec9d714366e98cb19574f",
+      "fee": "10177600800000",
+      "type": "NameRegistered",
+      "name": "River Stone"
+    },
+    {
+      "action": "owned-name-2",
+      "bytes": 2431,
+      "sha256": "b4c22f8ecaf42e2250a5bf42746c2f6cea0b0881e356ca4ae4e275cb6440fdbf",
+      "fee": "10165207800000",
+      "type": "NameRegistered",
+      "name": "Ellis Moss"
+    },
+    {
+      "action": "owned-name-3",
+      "bytes": 3527,
+      "sha256": "e7e35fc05790eb9984cd69a5aac381814ae611b628b5dc0cc8c89cdf876c44d9",
+      "fee": "10751758800000",
+      "type": "NameRegistered",
+      "name": "Juniper Vale"
+    },
+    {
+      "action": "owned-name-4",
+      "bytes": 2431,
+      "sha256": "f16581a1554c1461190bc34022df03a82b5c045656860fc4307ffa1c295c3800",
+      "fee": "10177600800000",
+      "type": "NameRegistered",
+      "name": "Morgan Reed"
+    }
+  ],
+  "effectVerification": "Independent installed TxEffect binary decode verified txhash/fee/SHA. Actual Rolling decoder verified Board emitter/tag/ABI/name digest and text. Canonical inclusion and5refetches are retained source-bound fixture evidence, not a new live-chain query. Independent decode used saved block/hash and binary log index; original canonical transaction index authentication remains fixture-owned.",
+  "fees": {
+    "fourNameFees": "41272168200000",
+    "claimFee": "9319842000000",
+    "humanActionsIncludingClaim": "50592010200000",
+    "aDebit": "29662650600000",
+    "bActionFees": "20929359600000",
+    "bStandaloneFee": "7907652000000",
+    "bDebit": "28837011600000",
+    "combinedDebit": "58499662200000",
+    "eachFunding": "1000000000000000000000",
+    "aFinal": "999999970337349400000",
+    "bFinal": "999999971162988400000",
+    "privateBalanceAndCrossPoolArithmeticVerified": true,
+    "bothPublicFeeJuiceZero": true
+  },
+  "proofs": {
+    "applicationProofs": true,
+    "proofMode": "real",
+    "proverJobs": {
+      "jobs": 2,
+      "bytes": 0,
+      "running": false,
+      "submitted": 4,
+      "completed": 4,
+      "failed": 0
+    },
+    "networkProofs": false,
+    "controlledPortalSettlement": true
+  },
+  "recovery": {
+    "sameHash": true,
+    "newProofJobs": 0,
+    "transactionBytesRetained": true,
+    "actors": [
+      {
+        "sameHash": true,
+        "newProofJobs": 0,
+        "transactionBytesRetained": true
+      },
+      {
+        "sameHash": true,
+        "newProofJobs": 0,
+        "transactionBytesRetained": true
+      }
+    ]
+  },
+  "canonicalRebuild": {
+    "passed": true,
+    "canonicalTransactionsRefetched": 5,
+    "normalizedCacheTreatedAsAuthority": false
+  },
+  "publicReader": {
+    "passed": true,
+    "sessions": [
+      {
+        "phase": "fresh",
+        "closed": true,
+        "checkpoint": {
+          "number": 19,
+          "hash": "0x1322a2295b69f871c9ee90d592975cbc21d8b3aa19bc3c60df490bfb473e1305"
+        },
+        "views": [
+          "profile",
+          "profile",
+          "profile",
+          "profile",
+          "feed",
+          "directory"
+        ],
+        "authenticatedRanges": 2
+      },
+      {
+        "phase": "reopened",
+        "closed": true,
+        "checkpoint": {
+          "number": 19,
+          "hash": "0x1322a2295b69f871c9ee90d592975cbc21d8b3aa19bc3c60df490bfb473e1305"
+        },
+        "views": [
+          "profile",
+          "profile",
+          "profile",
+          "profile",
+          "feed",
+          "directory"
+        ],
+        "authenticatedRanges": 2
+      }
+    ],
+    "persistedRangesBeforeReopen": 2,
+    "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+  },
+  "browser": {
+    "passed": true,
+    "scope": "Production browser encrypted import and composer; no browser posting/funding acceptance",
+    "cleanup": {
+      "reader": true,
+      "l1": true
+    },
+    "cliActorsClosed": true,
+    "browser": {
+      "schemaVersion": 1,
+      "passed": true,
+      "scope": "Production browser custody/PXE/composer boundary; no browser publication or extension-funding acceptance",
+      "checks": {
+        "publicBeforeUnlock": true,
+        "ownedChoicesA": true,
+        "ownedChoicesB": true,
+        "exact992Prepared": true,
+        "preparedCancelled": true,
+        "oversizeRetained": true,
+        "literalPreview": true,
+        "accountSwitch": true,
+        "collateralPendingB": true
+      },
+      "traffic": {
+        "walletAssets": 32,
+        "privateRequests": 256,
+        "proofSubmits": 0,
+        "nodeSubmissions": 0,
+        "l1Submissions": 0,
+        "blockedRequests": 0,
+        "inspectionErrors": 0
+      },
+      "cleanup": {
+        "contextClosed": true,
+        "browserClosed": true
+      },
+      "stage": "complete",
+      "elapsedMs": 17597,
+      "timedOut": false
+    },
+    "receiver": {
+      "newProofJobs": 0,
+      "newNodeSubmissions": 0,
+      "l1": {
+        "requests": 8,
+        "forwarded": 32,
+        "rejected": 0,
+        "errors": 0,
+        "pending": 0
+      }
+    },
+    "accounting": {
+      "a": true,
+      "b": true
+    },
+    "accountingVerified": true
+  },
+  "innerCleanup": {
+    "applicationActorA": true,
+    "applicationActorB": true,
+    "fundingWallet": true,
+    "fundingWalletB": true,
+    "proverAndQuery": true,
+    "nodeRPC": true,
+    "indexedDBGlobals": true,
+    "nativeArtifactLoader": true
+  },
+  "findings": [],
+  "limits": [
+    "Genuine localchain31337/application proofs; controlled portal/network settlement is not epoch or testnet qualification.",
+    "Browser encrypted real-account import used production SDK/custody/session. Preparation/cancellation only: no browser publication or extension-funding acceptance. Name transactions were completed through production CLI adapters before handoff.",
+    "Aggregate browser counters/exact public field absence do not prove complete request privacy or cryptographic unlinkability.",
+    "WholeG05/G06/G14 and specialist/release gates remain open.",
+    "Earlier missing-await/derived-CRS campaigns remain failed."
+  ]
+}

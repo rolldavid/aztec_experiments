@@ -1,0 +1,20 @@
+{
+  "revision": "40bae9f8c42d8cffed5a703b01617b4f260cfdd9",
+  "candidateTransfer": "e67c1eb",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source",
+  "checks": [
+    "181 independent tests pass none failed/skipped",
+    "Private user/fee/journal/recovery one branded inspected client",
+    "Cache identity endpoint/network/proofpolicy/account and reuse reinspection",
+    "Proofmode toggle preserves queryrouting",
+    "CLI scope preflight beforeinspectOnly; publicfeed unchanged"
+  ],
+  "findings": [],
+  "pending": [
+    "generatedbundles/config",
+    "realHTTPcomposition",
+    "actualfullnode/accounttraces",
+    "specialistaudit"
+  ]
+}

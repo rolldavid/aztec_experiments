@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-11T23:01:00.175843+00:00",
+  "Id": "sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "RepoDigests": [
+    "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32"
+  ],
+  "Architecture": "amd64",
+  "Os": "linux",
+  "Size": 539640328,
+  "ConfigUser": "",
+  "entrypoint": [
+    "node",
+    "--no-warnings",
+    "/usr/src/yarn-project/aztec/dest/bin/index.js"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "revision": "8ed66a9e8d4c1adbfed7121c581c26b5ac6d81fa",
+  "base": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "verdict": "changes-requested",
+  "reviewMode": "independent static source and changed-test inspection; no execution or installed dependency mutation",
+  "requirements": [
+    "RC25",
+    "RC26",
+    "RC27",
+    "G07-A08"
+  ],
+  "findings": [
+    {
+      "id": "G07-W256-1",
+      "priority": "P1",
+      "path": "prover/compact-block-native.mjs",
+      "summary": "Native prefix budget can exceed SDK aggregate input admission",
+      "detail": "Witnessed native estimate charges (body fields + 23 header fields + 30 proof fields)*69 + 640 per block; SDK snapshot charges the same field count*69 + 2048. A page near native 2MiB may be rejected before SDK authentication, and the same unchanged cursor/request repeats without progress. Illustrative 100-field bodies: native11197 bytes versus SDK12605 per block;187 blocks fit native budget but exceed SDK budget. Exact valid protocol-body regression should be retained by implementer.",
+      "requiredRepair": "Conservatively bound native selected prefix using the downstream SDK admission budget as well as wire budget; preserve2MiB and stop before flattening the next block."
+    }
+  ],
+  "observations": [
+    "All supplied archive proofs validated against exact current frame anchor, index, header hash/network and Poseidon root before staging; invalid supplied proofs do not fall back to RPC.",
+    "Fresh node/network/proof/anchor authority remains at initial frame and both original commit boundaries, including after contributors settle; account guards and reader post-CAS final checks remain.",
+    "Corrected reorg fixture keeps finalized3 while proposed/checkpointed/proven3->4->3 and asserts real prune then proposed events, two cache clears, actual ACIR note/event/index pruning.",
+    "Adaptive page-span hints are bounded public scheduling only; current comment implying every acknowledged prefix was consumed is too strong for mailbox replay, without an authentication bypass."
+  ],
+  "limits": [
+    "No final generated closure inspected yet.",
+    "No full120s live recovery qualification.",
+    "Worker full122PASS/1installed-predecessor closure failure is reported, not independently rerun."
+  ],
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "908d0c90dc726bebdc448cf650873bd2efff51e516b27b27fd4b8869fc1f3a56",
+    "prover/compact-block-native.test.mjs": "dc7d751fc1a9a42f48d675038b7ed7113182afc2a59e8935cfdde570d9739796",
+    "prover/compact-service.test.mjs": "8658dc15db53be579d4848809c7ff21f072fc095331172aeefc6fa976f56e46b",
+    "prover/server.mjs": "f6a6a607ca119e34bdb4f48e6792b4d0a22ae33571970cecf8a9095e556db4b6",
+    "scripts/patch-pxe-preference-page.mjs": "68afcd7d46aed53ef9121e8468c95d29a0ee345b013956a12f2a65b28b7583f6",
+    "scripts/test-pxe-preference-page.mjs": "8e19297791a1dab1667023d0dd14306c2aa8ffa42042db07bcc9b06e68a115a0",
+    "scripts/testing/rolling-preference-browser.test.mjs": "f0ee36df90a8ae8705671dad1e7fc9e338698aee1778a83c0d387411e4e0647a",
+    "shared/rolling/cold-preference-reader.mjs": "693a0c62b43e87c781fec1fe0f7a2ca350bff38cc221056116dbb41f88ed1655",
+    "shared/rolling/cold-preference-reader.test.mjs": "15e87d55f13e21e557b604c6c3e2cd7fdd117a0d20819a2c16df4e94c1455585",
+    "shared/rolling/compact-client.mjs": "3b95801ace5c24329f63a6f90415a58a9f9e4c8c5a35d1c532d37cc4e300c133",
+    "shared/rolling/compact-client.test.mjs": "6a88064fbdba74dabe5c482a0b520160f8121b960e2217c8bbc2f88adb0260b9"
+  }
+}

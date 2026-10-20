@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-10-12T00:29:20.773967+00:00",
+  "source": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "scenario": "rolling-owned-names-wire",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G05/wire-e3c9-review.json",
+  "reviewSha256": "e8e0f148e626f5864dca64228078cedd9ca3b0b8dc01e4da304a61b4fbd3c8e3",
+  "hypothesis": "Independentf54 installedviem simulateBlocks reproducer; supportfullboundedeth_simulateV1 traversal plus fixedreason/knownmethoddiagnostics so anyremainingunknown failure is actionable. Unknownstillfatal, noextraopacity/historyretro-pass.",
+  "previousFailure": "application-f54e540f-6dd4-4218-9162-b958ea1829bc.json",
+  "status": "launch once"
+}

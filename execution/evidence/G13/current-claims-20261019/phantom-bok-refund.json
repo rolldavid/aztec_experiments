@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-10-19T14:25:41.035Z",
+  "hash": "0xcd5e9eab41a07dc4ef5266e2c715f5a472cb6e3fee7a9f66687a375029a27cd7",
+  "nonce": 2,
+  "from": "0x294F40accC74b3437D6E9e661b6e9C8B4e02289d",
+  "to": "0x58075e0745668fFaeE2CfCDa5a219E70a71E0092",
+  "status": 1,
+  "blockNumber": 11948666,
+  "blockHash": "0x06153903ef13e721009228a030344b191890d3f6e41a90f2a717cd44187a44d4",
+  "gasUsed": "195615",
+  "gasPrice": "21",
+  "costWei": "4107915",
+  "transfers": [
+    {
+      "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "from": "0x58075e0745668fFaeE2CfCDa5a219E70a71E0092",
+      "to": "0x294F40accC74b3437D6E9e661b6e9C8B4e02289d",
+      "amount": "100000"
+    }
+  ],
+  "finalized": true,
+  "finalizedHeadAtPreviousSnapshot": 11948591,
+  "finalizedHead": 11948686,
+  "finalizedHash": "0x11ed73516fa75dff4d651c8d4bedc8c48d6d3b15f94f98281efe47f297a87dc8"
+}

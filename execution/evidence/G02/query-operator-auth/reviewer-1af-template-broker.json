@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "candidate": "1afdd0fd5baa83f6a7919d30843e1e546d771fcb",
+  "base": "158473578bd49d59e2200f25f07a27ec5be2ad69",
+  "verdict": "approved",
+  "findings": [],
+  "requirements": [
+    "RC32",
+    "RC34",
+    "RC41",
+    "G11 private per-thread source mirror"
+  ],
+  "scope": [
+    "plugins/github-app-broker.mjs",
+    "plugins/test/github-app-broker.test.mjs",
+    "plugins/DEPLOYMENT.md"
+  ],
+  "sourceSha256": {
+    "plugins/github-app-broker.mjs": "b0b761df8ad257891793fd5a8c793b1df35fd6c70a56f92a969a3df727540ecb",
+    "plugins/test/github-app-broker.test.mjs": "19520b4024363303c7d9b0a7520debf60ce3be5da5ef319ed719826dc962efa4",
+    "plugins/DEPLOYMENT.md": "537a0831ca1e2fae048f42cf5fd25cdbce751060bf733349c348b534994a71eb"
+  },
+  "checksPerformed": [
+    "Read source and changed protocol tests before handoff conclusions. Explicit journal-bound template route has no fallback or permission escalation.",
+    "Verified exact User owner and repository ID, private/nonfork/nonarchived/template, disabled Actions, pinned commit and one regular README leaf; Git tree hash checked. Generated source paths remain rejected for .github and credentials.",
+    "Verified template-only Administration-write/Contents-read token, separate exact new-repository Administration and Contents tokens; connected repository flow retains its previous permissions.",
+    "Verified durable uncertain creation only performs exact name/marker reconciliation, never a second generate. A rejected or missing readback stays unresolved. A new configuration cannot silently replace existing journal configuration.",
+    "Verified closed HTTP diagnostics use WeakMap and detached copies; error body is canceled, not retained. Diagnostics never infer billing or grant mutation retry.",
+    "Independent existing focused test command passed11,failed0,skipped0 in1140.554ms; includes lost-generation present/absent, altered owner/private/template/commit/Actions/workflow and secret-safe errors. No live API or credentials used.",
+    "Verified three exact candidate source hashes against handoff."
+  ],
+  "independentTest": {
+    "command": "pinned Node24.21 --test --test-name-pattern=template|HTTP rejection|unsafe rejection plugins/test/github-app-broker.test.mjs",
+    "pass": 11,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 1140.553708
+  },
+  "officialReference": "https://docs.github.com/en/rest/repos/repos#create-a-repository-using-a-template",
+  "referenceChecked": "Official current docs explicitly support installation access tokens and Administration write plus Contents read for template generation.",
+  "limitations": [
+    "Source approval does not establish actual live generation, selected-installation access to the generated repository, Actions disable readback, or successful source mirroring; actual acceptance remains required.",
+    "Template-scoped token GET404 cannot prove target absence. It cannot adopt/overwrite an existing name: generation conflicts fail, and exact numeric owner plus durable marker is required. Root has separate owner readback; retain that distinction.",
+    "Template is trusted operator-controlled input. Keep its pinned branch and permissions unchanged during creation; changing its default head causes subsequent broker checks to refuse.",
+    "Original denied legacy creation journal must remain preserved; transition requires explicit operator reconciliation, not modifying or retrying its mutation intent."
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "d7f186a2dca8d5c7fd7fc0ab39ace8b0483a56a1",
+  "disposition": "feasible-small-explicit-cold-replacement-path-subject-to-source-distribution-and-runtime-gates",
+  "sourceBindings": [
+    {
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "sha256": "e61c7943a4ca8cc1d62545bd930a4d6cdae1b263071cc3d16627683ffe1597de"
+    },
+    {
+      "path": "scripts/testing/rolling-application-actor.mjs",
+      "sha256": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638"
+    },
+    {
+      "path": "scripts/testing/rolling-preference-recovery.mjs",
+      "sha256": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e"
+    },
+    {
+      "path": "scripts/testing/assets.mjs",
+      "sha256": "44dabefb2b43fff7ce9de2c6fa6c167e4c54fc55fef88c4aa0b1ec4ecbbb5960"
+    },
+    {
+      "path": "prover/compact-block-native.mjs",
+      "sha256": "5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07"
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "e279a8718dade472ea617710c562906199554c9afb60fac7fd5ec7273a899ed8"
+    }
+  ],
+  "minimalScope": [
+    "Existing rolling-application-fixture.mjs and test: explicit cold replacement only in preference-relationships, preserve original five actions and initial/incremental ordinary reads; enable fixed compact native+gateway only for that explicit scenario.",
+    "Existing rolling-application-actor.mjs and test: explicit cold capability, defer capsule constructor and ordinary status for fresh replacement; lazy initialization for later ordinary operations, reset reader on rebuild, retain same exclusive lease/close semantics.",
+    "Existing rolling-preference-recovery.mjs and test: add separate compareRecoveredCold while retaining ordinary comparator and private WeakMap expected snapshot.",
+    "Existing testing/assets.mjs plus fixture sourceBinding inventory: include installer/generated-extension original+patched pins, cold reader/client, native adapter and affected helpers; separately normal distribution/build manifest closure. No new lifecycle framework."
+  ],
+  "requiredRouting": [
+    "Mount createCompactBlockNativeAdapter around actual ctx.node before current startNodeRpc POST / guard and before SafeJsonRpc body parser. Supply detached actual validated network/proofs/checkpointed config. Keep public RPC route unchanged.",
+    "Gateway must explicitly receive compactBlocks checkpointed and original origins; keep its real inspector/readiness before+after. No success callback or ordinary JSON getBlock substitute.",
+    "Track and drain every admitted compact handler Promise on startNodeRpc.close before closing actual node; close sockets does not settle a held native call. No Promise.race release, detached route task or automatic retry. Adapter singleflight/deadline alone does not give parent drainage.",
+    "Preserve origin rejection/size bounds and fixed public selectors. Never expose an account/scope/tag/private target in compact request."
+  ],
+  "requiredColdSemantics": [
+    "Fresh unique PXE namespace absent before construction and fresh empty AEAD/file journal; close old actor and invalidate it first. Reuse only same in-memory keys and verified public artifacts.",
+    "Do not run constructor simulation, readAccountStatus, ordinary head utility, getPrivateEvents or generic contract sync before cold cursor. Existing explicit tipsOnly PXE.sync is appropriate but is not a proven constant-cost cold/reorg claim.",
+    "Recompute local verified artifact hash; installed processRollingPreferenceRecovery and exact extension/store patch closure are mandatory. No fallback when absent.",
+    "Continue the actual reader through initial mailbox, physical compact pages and terminal key-authenticated head; exact final snapshot/digest comparison remains private in WeakMap and no expected state is supplied to reader.",
+    "Permit equal nextBlock/processedRevision between steps: foreign or same-transaction physical logs can advance private nextLog/sequence without visible revision. Check valid bounded nondecreasing public progress within fixed anchor; require deadline and actual complete terminal state, no fabricated empty result or premature successful cap.",
+    "At every read and after complete require unchanged submitted proofJobs/transportSends and zero replacement wallet submissions; preserve original 5 proof receipts/accounting and public preference-event absence. Include zero ordinary-discovery counters during cold interval where observable.",
+    "Persist numeric stage/progress/call-count failures and known canonical fees before throwing; avoid snapshot/key/tag/raw error leaks. Original operation must settle before actor/store/adapter teardown."
+  ],
+  "budgetEvidence": {
+    "receiptSha256": "1cc4c4668ddd9b21a725cde8ee62b2fb73e7d1f2722d661956c02fbedf8334ff",
+    "outerElapsedMs": 464664,
+    "coldStartMs": 448855,
+    "priorColdEndMs": 451859,
+    "priorOrdinaryColdMs": 3004,
+    "priorCompleteMs": 452659,
+    "observedAfterColdToOuterCleanupMs": 12805,
+    "nominalOverallHeadroomMs": 75336,
+    "remainingAtPriorColdStartMs": 91145,
+    "interpretation": "Replacing the 3004ms ordinary cold section provides a plausible but unproven first actual small-history experiment window. 75.336s final headroom is not guaranteed spare time; proving/inclusion vary and cleanup/tail must remain budgeted. Fixed10s transport caps do not multiply into a safe total budget automatically."
+  },
+  "beforeOneGenuine": [
+    "Complete source review and meaningful held-handler cleanup/progress/no-discovery/identity/abort fixtures; no real proof needed for these controls.",
+    "Review/install exact production SDK distribution into stopped isolated owned tree, rehash actual exported API/processedartifact and normal manifests/source inventories.",
+    "Use unchanged540s/4GiB parent supervisor and absolute deadline; explicitly budget cold work against remaining time and required canonical-rebuild/fee/cleanup tail without increasing deadline or weakening success.",
+    "Capture actual fixed anchor/history block count/physical page step counts and remaining time at entry. Small-history success does not qualify long-history CPU/RSS, initial synchronization, throughput or browser persistence."
+  ],
+  "scopeLimits": [
+    "Design full-cold/native source components are prerequisite, not already enabled by historical d7f.",
+    "Fresh browser keys-only recovery remains a separate later acceptance; CLI fake-indexeddb must stay labelled.",
+    "No source edits, tests, provider calls or native jobs performed."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f90fec9eb94bb479fbe688bbeb71c1e153034e91",
+  "base": "e7188da78b3677545c445e6e739d96ac07844d8a",
+  "donor": "ae6ae3a4fa768ad3d4a850f9f9f5eb304bb0bc86",
+  "verdict": "accepted-exact-composition; eligible-one-229-combined-component-run-after-parent-slot",
+  "packetSha256": "fcec574e7df75db9ab3a9af34aa134b96c9a41b5da8ce001654b8395c338ff5a",
+  "files": {
+    "before-source.json": "ea1001c1556dfffcb80c1e93cb5a374a6df6e960953c3e00f882e2bf7a2b25a2",
+    "preparation.json": "601558311a08fb5dc6138e0dc2ebf106a6cf682e608408b9b401c1c35186f116",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "run.mjs": "347431be9724e1cc8275ac0581e06f7778812311ad292d09287a7f5ebbd354c4",
+    "inventory.json": "889057c96ac77036260f300ea86673bdf9818b7af8e8e31c5c61da06968664c4"
+  },
+  "independentChecks": {
+    "cleanExactHead": true,
+    "onlyFourPathsChanged": true,
+    "allFourFinalBlobsEqualAe6": true,
+    "allOtherE718TrackedBytesUnchanged": true,
+    "sameReviewedE718RunnerExceptDirectory": true,
+    "protectedHashesRechecked": 3232,
+    "mismatches": 0,
+    "fixedTwoFilesNoFilter": true,
+    "expectedTests": 229,
+    "allSixTAPCountsRequired": true,
+    "limit": "60s/2GiB",
+    "ownedShortTmpInodeCleanupAndPositiveTreeAbsence": true
+  },
+  "carry": [
+    "Actor80 unchanged and covered by c4d/e718285 actual.",
+    "Worker ae6229 accepted b97b0428557ad9f1347e7a9a9f62422d189099f14310f8138a0325aec8bd4969; this run checks current normal lead dependency composition."
+  ],
+  "limits": [
+    "Actual full label multiset must be checked against inventory in runtime review.",
+    "No genuine browser/reorg,124s timing feasibility or integrated release qualification.",
+    "No tests executed by reviewer."
+  ]
+}

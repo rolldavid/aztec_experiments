@@ -1,0 +1,10 @@
+{
+  "label": "normal-fund",
+  "sourceRevision": "61c911a5c839983bdfd0e02ed15f8be8d0243b85",
+  "proofMode": "proofs-disabled",
+  "portal": "0x7cfdfc67c4be4e7d1a9347ab4b6911d7e06c45ff",
+  "escrow": "0x08cfad6106a8288ec61606938e0080acef25a862d5357b02cbf4d130eac690ec",
+  "amount": "1000",
+  "content": "0x007408477e3a0a771dbc0d4ffaa6afa41889637639cd65991cb02d0c98858568",
+  "fundingMode": "real-portal-deposit"
+}

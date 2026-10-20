@@ -1,0 +1,7 @@
+{
+  "label": "activate-portal",
+  "sourceRevision": "1b8f36c4e74ec2e46aa5ae7c3a9c8d0e45554383",
+  "proofMode": "proofs-disabled",
+  "txHash": "0x092fc2f5309e049cfdfcf3cbc2b9748690042f6097e53f3d3fec16bb29610236",
+  "expectedLeaf": "0x007f247d027eada0e44cab70c304cf824f72e1dd56aa7865cd8888526cc438b3"
+}

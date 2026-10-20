@@ -1,0 +1,16 @@
+{
+  "resourceSaverPersisted": false,
+  "resourceSaverEffective": false,
+  "effectiveReadbackTime": "[2026-10-18T10:36:00.436620000Z][com.doc",
+  "desktopRestartedBeforeCheck": true,
+  "originalContainerAbsent": true,
+  "failureArchivedTo": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/local-bok-service/state/static-artifacts/failures/bok-static-60c133fd-c423-48e8-9a78-649bcd722046",
+  "originalFilesSha256": {
+    "intent.json": "7d2535285445f50f29bc736cded53c5498b055465e66c323ad6b1c69de30eb86",
+    "cleanup.json": "23187e64212dad66722c0d87daf83add930864bcb6da557abe12454b04a2e8ca",
+    "failure.json": "2d24ab37a3bd7f477e28c99311c94690711e4d784d339c06202c0988223c2532"
+  },
+  "billingFilesUnchanged": true,
+  "acceptedReferencesToFailedDirectory": 0,
+  "sourceEdits": false
+}

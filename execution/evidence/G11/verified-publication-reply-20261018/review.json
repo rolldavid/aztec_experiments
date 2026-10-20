@@ -1,0 +1,44 @@
+{
+  "revision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "baseRevision": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approved",
+  "sourceVerdict": "approved",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": [
+    "RC29",
+    "RC31",
+    "G11-verified-publication-reply"
+  ],
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='verified publication|published app links|successful answer|plain replies|connected private source|bounded .* exit|app workspace step-limit|balance failure during acceptance' plugins/test/model.test.mjs plugins/test/github.test.mjs",
+      "outcome": {
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 149.855291
+      },
+      "evidence": ".build/reviewer-evidence/verified-publication-reply/focused.log"
+    }
+  ],
+  "review": [
+    "Read exact three-path diff and surrounding acceptance paths before implementer conclusions. Static-publication branch now produces a fixed host statement with only receipt.latestUrl and receipt.latestSourceUrl; arbitrary model deployment URLs and unsupported feature claims are discarded.",
+    "Host acceptance still precedes this branch. Publication URL type/scheme/length/control-character checks remain, and the complete fixed reply is checked against the 992-byte UTF-8 limit. Private validation metadata is omitted.",
+    "No-publication conversational replies and private connected-repository PR branches are unchanged. Existing terminal step-limit expectation changed only when a trusted publication receipt exists; no receipt still reports the actual step limit.",
+    "Independent selected checks cover the fabricated-location regression, invalid URL/whitespace/UTF-8 size rejection, successful acceptance ordering, ordinary conversation without GitHub calls, connected-source confidentiality/PR output, bounded terminal results and acceptance failure."
+  ],
+  "limitations": [
+    "Controlled model/toolbox fixtures; no live model, chain or remote publication activity. This is scoped reply-format approval, not a new end-to-end or production acceptance result."
+  ],
+  "sourceHashes": {
+    "plugins/agent.mjs": "76c83d3af3f89994845678265179d1351e360f109f5176f56d833b6c15aa35cc",
+    "plugins/test/model.test.mjs": "a325830df425c1f609ffc1cda900a0222b2fc319650634f893708dc226fc04fc",
+    "plugins/test/github.test.mjs": "db17c0c78c1263238fe918b48010c5879a3f7ae2c0ef00244fdf7aee72020235"
+  },
+  "evidenceHashes": {
+    "focused.log": "2ad477b51d464266038fd3d29986748428676f6be2fcd7fd105eaeee309541ab"
+  }
+}

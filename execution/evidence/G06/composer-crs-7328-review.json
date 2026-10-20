@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "baseRevision": "005e52d5c28929103963642eae02a81a4705842d",
+  "verdict": "approved for one bounded changed actual composer campaign; actual funded browser acceptance pending",
+  "sourceHashes": {
+    "scripts/rolling-wallet-assets.mjs": "a57fd1880f00af1718c2f632e01b299f1865ea6b3c775308f665b8af81fcc3de",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "c404b67a72f10f3e40f809e38a9905fa71fce1655a79f37352f36094e1bd2e26"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/wallet-runtime.browser.test.mjs scripts/rolling-wallet-assets.test.mjs",
+      "result": "4 passed, zero failed/skipped,3410.995166ms",
+      "log": "/tmp/reviewer-composer-crs-7328-tests.log"
+    },
+    {
+      "procedure": "Independently hash every current wallet manifest input/output and verify output length",
+      "result": {
+        "inputs": 75,
+        "outputs": 24
+      }
+    }
+  ],
+  "review": [
+    "DerivedG1 is mandatory fixed name,size,hash,format,point count and provenance under existing validateCrsManifest, preventing traversal, collision, malformed metadata or altered pins.",
+    "Inventory validates exact bytes/length before build/load; load validates complete manifest inventory and every output; per-read hash/length validation remains. No fallback or broad asset exposure.",
+    "Actual browser regression authenticates served derived bytes and initializes real WasmWorker,one thread,skipSrsInit true; requests exactly expected three local CRS resources once and no private POST before custody.",
+    "Existing unavailable-deployment/custody assertions retained. Tests use synthetic public index and unavailable endpoint, not real funding/private account discovery."
+  ],
+  "findings": [],
+  "historicalFailure": "G06/composer-3d1de-diagnosis-review.json; actual005e browser probe404 remains retained.",
+  "remaining": [
+    "Actual encrypted import of funded accounts,owned identity discovery,992-byte prepare/cancel,996-byte rejection,account switch and full cleanup remain required.",
+    "Existing driver terminal-UI diagnostic gap can consume full browser timeout; this repair does not claim it resolved."
+  ]
+}

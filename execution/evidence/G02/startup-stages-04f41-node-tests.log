@@ -1,0 +1,18 @@
+✔ all exact pinned SDK modules hash-bind, retain original bytes, and parse without execution (66.400083ms)
+✔ source hash, duplicate/missing anchors, reversed offsets and unknown phase reject (0.201292ms)
+✔ synthetic awaited operation preserves receiver, argument identity, pending state, result and exact rejection (0.976167ms)
+✔ real dedicated atomic record retains nested begin/complete and no caller data (43.555916ms)
+✔ malformed, forged-hash, nonnested, duplicate, overflow and extra-field records reject (0.151583ms)
+✔ symlinks, public permissions, wrong-size and malformed dedicated files reject (1.234041ms)
+✔ recording failure is sticky and cannot change application success or error (0.614125ms)
+✔ loader forwards unrelated return/error identity and validates exact target bytes before substitution (0.173375ms)
+✔ actual Node24 synchronous load hook substitutes only exact target and deregisters (1.132375ms)
+✔ dangling record and temporary symlinks are rejected before recording (0.632875ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.439084

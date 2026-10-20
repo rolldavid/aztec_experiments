@@ -1,0 +1,149 @@
+{
+  "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+  "task_id": "G04-G13-uniform-accounting-native-archive",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "uniform-accounting-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/uniform-bok-accounting/handoff.json",
+          "sha256": "78f115b229dad41cad9e01e9a81fe23bb4333374e8b2ea679552db945379d1db"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ],
+      "command": "Existing focused component commands recorded in linked logs/handoffs; normalassets exacthash carry independently verified",
+      "observed": "232 staged component checks; bounded uniform canonical snapshots, reorg/cache/opaque cursor. Live wallet/accounting completeness separate.",
+      "environment": "macOS Node24.21.0/Aztec6rc3 native development node+PXEproofsfalse; no paid external actions",
+      "exit_code": 0
+    },
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "operator-native-archive-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/composed-history-focused.log",
+          "sha256": "bafe53b64371f25c05143040f59cef42f7e96dcec697a78b0d7de0da084c57c6"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G13/native-idle-cadence/failfast-handoff.json",
+          "sha256": "db5b56503d5a46c30cd1028b4555baef9fb213c063e7178b0cceaba3a3c4caca"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-clock-health-result.json",
+          "sha256": "ca93b8254fedae24a074f9650fc8052ecbe81d52cf710a125385a932e91195f3"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-clock-health-owner.json",
+          "sha256": "b26d5be4abbda2958479b97e73c855161b041da40bd26d2d4508773ce11b551a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ],
+      "command": "Existing focused component commands recorded in linked logs/handoffs; normalassets exacthash carry independently verified",
+      "observed": "11 combined focused plus2 affected failfast source-bound checks; actual native restart oldest1/checkpoint422/cleanstop18972ms. Live65700 originalconstructor/portalregistration reached server; fullcoldindex/wallet acceptance pending, earlierfailed58487 preserved.",
+      "environment": "macOS Node24.21.0/Aztec6rc3 native development node+PXEproofsfalse; no paid external actions",
+      "exit_code": 0
+    },
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "normal-assets-unchanged",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ],
+      "command": "Existing focused component commands recorded in linked logs/handoffs; normalassets exacthash carry independently verified",
+      "observed": "Reviewer rehashed43 outputs across SDK/apps/wallet; manifests unchanged frome60 and no changed backendsource enters their input closure.",
+      "environment": "macOS Node24.21.0/Aztec6rc3 native development node+PXEproofsfalse; no paid external actions",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "uniform-accounting-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/uniform-bok-accounting/handoff.json",
+          "sha256": "78f115b229dad41cad9e01e9a81fe23bb4333374e8b2ea679552db945379d1db"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ]
+    },
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "operator-native-archive-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/composed-history-focused.log",
+          "sha256": "bafe53b64371f25c05143040f59cef42f7e96dcec697a78b0d7de0da084c57c6"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G13/native-idle-cadence/failfast-handoff.json",
+          "sha256": "db5b56503d5a46c30cd1028b4555baef9fb213c063e7178b0cceaba3a3c4caca"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-clock-health-result.json",
+          "sha256": "ca93b8254fedae24a074f9650fc8052ecbe81d52cf710a125385a932e91195f3"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-clock-health-owner.json",
+          "sha256": "b26d5be4abbda2958479b97e73c855161b041da40bd26d2d4508773ce11b551a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ]
+    },
+    {
+      "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+      "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+      "id": "normal-assets-unchanged",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+          "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+    "base": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9c502-backend-composition-review.json",
+        "sha256": "2a26e5db60dda42f5dc22da4f164e8af1902316d5cf702a358296ffa17841b2e"
+      }
+    ]
+  }
+}

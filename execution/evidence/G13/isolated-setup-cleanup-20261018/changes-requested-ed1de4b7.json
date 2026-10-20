@@ -1,0 +1,53 @@
+{
+  "revision": "ed1de4b7ffebb1c4358224a159c1e9063fcb46d2",
+  "baseRevision": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "changes_requested",
+  "scope": "G13-isolated-setup-cleanup RC29/RC30/RC41",
+  "findings": [
+    {
+      "id": "G13-ISC-01",
+      "severity": "blocking",
+      "file": "plugins/isolated-execution.mjs",
+      "line": 218,
+      "title": "Momentary absence after ambiguous create is not completed cleanup",
+      "scenario": "Create client times out and is killed while daemon may still be processing its request. New cleanup accepts a single exact-name absence response and writes ownedContainerAbsent:true, then assertAvailable succeeds. A delayed daemon create can leave a container after the host has admitted another run. The same ambiguity applies to output-limit/transport failure.",
+      "reproduction": "Reused existing labelled absent CLI fixture, changing create to remain alive until the real invocation timeout. No daemon or generated code ran. Observed timeout diagnostic, STATIC_FAILED, cleanup true and capability available; captured in timeout-observation.log.",
+      "repair": "Only classify absent as completed cleanup after a definite completed failed-create response. For timeout/transport/output-limit ambiguous outcomes, keep cleanup fail-closed unless the exact owned container is positively identified, removed and absence verified. Preserve original finite failure separately. Add focused ambiguous-outcome regression."
+    }
+  ],
+  "blockingSourceFindings": [
+    "G13-ISC-01"
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-name-pattern='failed create preserves|exact measured container absence' plugins/test/isolated-execution.test.mjs",
+      "outcome": "5passed0skipped,2688ms",
+      "evidence": "focused.log"
+    },
+    {
+      "procedure": "Existing absent CLI fixture with create process held until timeout; observe current incorrect cleanup success",
+      "outcome": "Defect reproduced in5649ms; no Docker call",
+      "evidence": "timeout-observation.log"
+    }
+  ],
+  "review": [
+    "Inspected exact source/test delta before implementer logs. Finite original/cleanup diagnoses avoid daemon output and paths; original cause retained. Positive owned-ID removal and foreign/unavailable refusal work in focused checks.",
+    "No additional real Docker or broad checks run while the timeout blocker remained. No source changes, service writes, model calls or financial actions."
+  ],
+  "accountingReview": {
+    "source": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+    "requestId": "0x1e11b8b6f6f36bc76f879056a020da679cfc730f1d4c76a2992012910e7c5baa",
+    "outcome": "Before/after public provider records equal,3calls. Independent node full-block/effect/receipt and public storage at54 confirm state4,charged5538,refunded244462,available/reserved0. FinishPROVEN successful, canonical. Terminal accounted-without-reply; not accepted app completion.",
+    "evidence": "windowgarden-accounting.json"
+  },
+  "sourceHashes": {
+    "plugins/isolated-execution.mjs": "fc22d3ff9313013779af62cd5b367915bd76954d772b2e887626323d815c03e2",
+    "plugins/test/isolated-execution.test.mjs": "5e389fbe4000c53947130ce88f6a2842d1ec576c0f59bf667cef8b64120841a0"
+  },
+  "evidence": {
+    "focused.log": "96c88a0364d6486cd22fcc657f4a2670ca4c9484d540cd60370e8a418d2cfdc9",
+    "timeout-observation.log": "d271eca368a5f3ab7f1d0967444c75423c5d5f834fcf9d75e0cdae7c9a630afb",
+    "windowgarden-accounting.json": "3aee2f35d3b53d54a13b24651b010c90db945f118363c7e886cf0923ed1fcf55"
+  }
+}

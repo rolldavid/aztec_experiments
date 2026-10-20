@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-10-12T08:53:50.562159+00:00",
+  "privateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-08",
+  "directoryMode": "0700",
+  "fileMode": "0600",
+  "files": [
+    "bootstrap-plan.json",
+    "fleet-plan.json",
+    "launch-template-reference.json",
+    "network-defaults.json",
+    "provider-references.json",
+    "qualification-service.json",
+    "upload-intent.json"
+  ],
+  "archiveSourceCommit": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "integratedEquivalentCommit": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "archiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+  "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+  "uploadIntentPrepared": true,
+  "uploadSent": false,
+  "networkRequests": 0,
+  "credentialsRequested": false,
+  "capabilitiesCreated": false,
+  "deadlinesUnsetUntilAfterUpload": true,
+  "launchTemplateSourceSha256": "9efb4e85cc2570e5ce7d00e11156dbef996cfea9b572dcbf109c132e6a0ed82b",
+  "historicalTemplateRequiresFreshReadback": true,
+  "budgetReservedUsd": 25,
+  "cumulativeReservedUsd": 200.28,
+  "noComputeOrServiceMutation": true,
+  "passed": true
+}

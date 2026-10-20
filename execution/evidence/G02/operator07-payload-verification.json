@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "passed": true,
+  "noComputeLaunch": true,
+  "bytes": 16356,
+  "sha256": "f1023f506cc78df0cc7a739fdd9561fac1efd3bf7e92cb72065aed506a08ce8f",
+  "bootstrapSourceSha256": "68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af",
+  "manifestSha256": "628a51cff3337a3588abb923d5902cc568f24b9da98067cc03390f6c22fbf5da",
+  "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+  "generatedAttestorSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+  "shellSyntax": true,
+  "lzmaRoundtrip": true,
+  "decodedPythonCompiled": true,
+  "privateConfigExact": true,
+  "capabilitiesAbsentFromAttestor": true,
+  "fileMode": "0600",
+  "directoryMode": "0700",
+  "oneHourControlsPrepared": true,
+  "actualCloudHostReadbackPending": true,
+  "deadlines": {
+    "createdAt": "2026-10-12T06:06:50Z",
+    "budgetStop": "2026-10-12T07:06:50Z",
+    "commissioningStop": "2026-10-12T06:36:50Z"
+  },
+  "observedAt": "2026-10-12T06:07:09.212311+00:00"
+}

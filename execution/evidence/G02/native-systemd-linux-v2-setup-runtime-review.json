@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "accepted-public-setup-and-authenticated-image-closure; offline-runner-review-required",
+  "packetSha256": "7fe7ac28c17f93dbee2cafed94145610c5a31c12d5f6299ec8a87f86124d9df0",
+  "resultSha256": "e5a520966eee28167f31cf6f176714f86490c6182ef6ce690a195240e5b11653",
+  "closureSha256": "41001f37ac6c7cd235bebe934c46e42c9060cc1f880104df60c3d4fffa791975",
+  "setupSha256": "1cabfb5f5efc3a621fcb16ff046e547b1256ba842eb9223396b88e4fec2d2359",
+  "actual": {
+    "elapsedMs": 10371,
+    "passed": true,
+    "containerAbsent": true,
+    "state": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": false,
+      "Status": "exited"
+    },
+    "derivedImageId": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+    "derivedBytes": 53964743,
+    "baseImageId": "sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7",
+    "baseBytes": 28942578,
+    "receivedBytes": 19043383,
+    "writableBytes": 86278144,
+    "nativeQualified": false
+  },
+  "closure": {
+    "archives": 24,
+    "archiveBytes": 13376956,
+    "systemdVersion": "255.4-1ubuntu8.17",
+    "signedIndexes": [
+      {
+        "bytes": 126127,
+        "name": "ports.ubuntu.com_ubuntu-ports_dists_noble-security_InRelease",
+        "sha256": "0762124ebfc6d9149d7838baabf15bb48461dce96d7d3aa462c0426e91a2767a"
+      },
+      {
+        "bytes": 126125,
+        "name": "ports.ubuntu.com_ubuntu-ports_dists_noble-updates_InRelease",
+        "sha256": "12fc051199bf5d99c23db594bcce70223046aba74735c0dc534663c1d71cc525"
+      },
+      {
+        "bytes": 255850,
+        "name": "ports.ubuntu.com_ubuntu-ports_dists_noble_InRelease",
+        "sha256": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0"
+      }
+    ],
+    "binaryHashes": {
+      "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+      "/usr/bin/systemctl": "1bf2f1e98c533b0313a78143ffcda2690116d90d76816dc7b74df79c4767aa95",
+      "/usr/lib/systemd/systemd": "afb2da22aa2419ba534b94be1c0b525440f1de6a47b6d84ed731ac6bf51f9bc9"
+    },
+    "derivedSourcesSha256": "ea5b04107ad8525f4b040afefac79240e7d076fc8734d405e047ebe1f4e0863c",
+    "originalSourceHashes": [
+      "9fcfc0471807af385108d77aa63d0bdc3cc4f8e276a89f2bd9681f4bf8467a3f  /etc/apt/sources.list.d/ubuntu.sources"
+    ]
+  },
+  "independentChecks": [
+    "All actual packet referenced hashes and source packet hashes rechecked; no mismatch.",
+    "Closure source checks every archive filename/set/size/SHA256 against APT authenticated URI inventory, enforces24 observed unique archives and selected installed version/architecture. No independent archive download performed by reviewer.",
+    "Source retains official Ubuntu keyring and three signed Noble InRelease index bindings; exact fixed main-only Deb822194bytes matches its SHA.",
+    "One create/start/commit, cached exact ARM64 image and derived immutable image readback. No pull/retry.",
+    "Actual exited0/OOMfalse; diagnostic stage complete. Cleanup kill returned1 for already-exited container, then wait/removal succeeded and final ps returned0/empty.",
+    "Setup log retains transient pre-user-creation tmpfiles warnings followed by actual user/group creation; these do not constitute systemd boot qualification."
+  ],
+  "limits": [
+    "No actual systemd lifecycle, retention regression, AMD64 native binary or paid qualification.",
+    "Offline host runner must bind this exact derived image and source hashes, verify confinement before any remount and use no network/host mounts; separately review and grant.",
+    "Container absence is source-bound actual Docker readback evidence; reviewer performed no additional Docker query.",
+    "Historical exit153 root cause remains unproved."
+  ]
+}

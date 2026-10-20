@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1b775c7d273560acb91b1d14478d9377ce9b374d",
+  "verdict": "source-approved-pending-fingerprint-coverage",
+  "checks": [
+    {
+      "command": "checkSdk(root,.build/sdk) and checkSdk(root,apps/dist)",
+      "result": "Both pass:2035inputs and8outputs; generated installed computeContractAddressFromInstance export present."
+    },
+    {
+      "command": "git diff2b416..ba7 on four reviewed clock paths; git diff1b216..7fc on two backup paths",
+      "result": "Empty; exact source equivalence."
+    },
+    {
+      "command": "Review3bbb helper wiring, generated1b775 diff, G05/workflow-generated-checks.log",
+      "result": "Actual node/artifact/network/class/deployment receipt anchored into approved helper before unchanged fee/prover/source assertions.48recorded tests pass,0failed/skipped/cancelled."
+    },
+    {
+      "command": "Pinned Node--check public acceptance helper; git diff--check1812cea..HEAD",
+      "result": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "summary": "Include shared/public-feed-storage.mjs in inner and outer campaign fingerprints. It supplies actual newly exercised SQLite snapshot reconstruction but is absent from both current source inventories."
+    }
+  ],
+  "limitations": [
+    "No actual full application campaign pass is claimed.",
+    "Untracked incomplete wallet-session source and execution-only lead changes are outside candidate/campaign execution.",
+    "Generated manifest is local input/output consistency, not signed release provenance. Full privacy/browser/network/release gates remain open."
+  ]
+}

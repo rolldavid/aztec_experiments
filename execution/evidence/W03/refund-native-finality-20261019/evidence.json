@@ -1,0 +1,65 @@
+{
+  "task_id": "W03-refund-native-finality",
+  "candidate": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+  "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "refund-finality",
+      "candidate": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+      "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 focused refund/finality selection in existing wallet-session.test.mjs; exact command in review",
+      "environment": "macOS native finalized-event helper with labelled provider fixtures, no proof/payment",
+      "observed": "Independent76cases passed4.83s; native finality and canonical/context rejection",
+      "artifacts": [
+        {
+          "path": "evidence/W03/refund-native-finality-20261019/review.json",
+          "sha256": "542fa0b425a69fa429d27736f7701b7c0d60288ed3378e648db038bbd102c8ab"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+    "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/refund-native-finality-20261019/review.json",
+        "sha256": "542fa0b425a69fa429d27736f7701b7c0d60288ed3378e648db038bbd102c8ab"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "RC19-native-finality",
+      "candidate": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+      "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/refund-native-finality-20261019/review.json",
+          "sha256": "542fa0b425a69fa429d27736f7701b7c0d60288ed3378e648db038bbd102c8ab"
+        }
+      ]
+    },
+    {
+      "id": "RC22-original-refund",
+      "candidate": "1f35c3c9341825cb4857d248f9f3aed80db0f007",
+      "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/refund-native-finality-20261019/review.json",
+          "sha256": "542fa0b425a69fa429d27736f7701b7c0d60288ed3378e648db038bbd102c8ab"
+        }
+      ]
+    }
+  ]
+}

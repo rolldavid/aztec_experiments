@@ -1,0 +1,46 @@
+{
+  "base": "1202a82298a0d046f2d228bcf4827afe21575eed",
+  "candidate": "01bdcbf08d83a6d4acfa759f71349c82a86d132f",
+  "task_id": "G10-bok-checkpoint-progression",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/aztec.mjs",
+    "plugins/conversation.mjs",
+    "plugins/main.mjs",
+    "plugins/private-bok-escrow.mjs",
+    "plugins/private-bok-metering.mjs",
+    "plugins/private-bok-metering.test.mjs",
+    "plugins/test/conversation.test.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/private-bok-escrow.test.mjs"
+  ],
+  "required_checks": [
+    "focused-checkpoint-progression"
+  ],
+  "requirements": [
+    "RC29-checkpoint-conversation",
+    "RC33-checkpoint-accounting-no-replay",
+    "RC33-bounded-completed-response-retention"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G10-bok-checkpoint-progression",
+      "paths": [
+        "plugins/DEPLOYMENT.md",
+        "plugins/aztec.mjs",
+        "plugins/conversation.mjs",
+        "plugins/main.mjs",
+        "plugins/private-bok-escrow.mjs",
+        "plugins/private-bok-metering.mjs",
+        "plugins/private-bok-metering.test.mjs",
+        "plugins/test/conversation.test.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/private-bok-escrow.test.mjs"
+      ]
+    }
+  ]
+}

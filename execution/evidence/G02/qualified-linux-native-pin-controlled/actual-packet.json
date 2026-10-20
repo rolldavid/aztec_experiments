@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "preparationSha256": "f024d2864f82c97c629faf44999aee4a11ca386f2f721d139717639b57d593a8",
+  "runnerReviewSha256": "9b7031c819d6682251f17676d7c76fc3443503151d07f14f68148ddb1e480e26",
+  "executionSession": 28685,
+  "passed": true,
+  "tests": 33,
+  "skipped": 0,
+  "exactLabels": true,
+  "elapsedMs": 263,
+  "rssMeasurement": "unmeasured; run finished before first sample",
+  "protectedCount": 1143,
+  "protectedUnchanged": true,
+  "ownedTreeAbsent": true,
+  "tempRemoved": true,
+  "nativeExecuted": false,
+  "providerCalls": false,
+  "sourceClean": true,
+  "files": {
+    "run.mjs": "0f1755d0d41dfa9108abf9bb51c95475009655a652385dbb8f29adacc64f7472",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "preparation.json": "f024d2864f82c97c629faf44999aee4a11ca386f2f721d139717639b57d593a8",
+    "execution-intent.json": "ad4aa274161253ce41e4b5ece563822b829e919961fd8ce424adcc55a4d939f4",
+    "build.log": "6dddecbdd66c1ef264ec50bbf6dadf7ddb2dceb2bda96f87fa4d59c83a9ff1d0",
+    "result.json": "15ee6725d774534da409258ebd2fb8534449356d1305cb8823ea448ae8792247",
+    "before-source.json": "3b9da83aa50f8089dda737dd643387028c9141f3f765daa1ded07e9c83a7b232"
+  }
+}

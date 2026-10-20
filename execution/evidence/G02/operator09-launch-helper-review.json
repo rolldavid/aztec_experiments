@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T12:12:41.427357+00:00",
+  "verdict": "approved-one-execution-under-exact-lead-grant-before-fixed-cutoff",
+  "helperSha256": "0a09eed9d36b9e117c73abce98f06777adc1398d78418895ac7b787c2780f220",
+  "grantSha256": "1f0fb51280c959a273bafdd3353c68eace3f91ea8baddab5ad24f1afb2a3e603",
+  "payloadReviewSha256": "bee4c00f73de9681eb77ebf09529ca782bfbc2ed253fdead07e658792fafc49e",
+  "findings": [],
+  "checks": [
+    "Read complete helper and08successor/finalbindingdiff before conclusion.",
+    "Exactpayload/manifest/archive/deadline/ledger gates, actual identity/no-overlap/AMI/template/SG checks retained.",
+    "Exclusive O_EXCL/O_NOFOLLOW0600 fsynced LT and Fleet intents precede each one financial operation; AWS_MAX_ATTEMPTS1, clientTokens and no retry; uncertainty reconciliation only.",
+    "Actual created template compared including UserData, no IAM/key expansion; Fleet fixed expiration/terminate readback required.",
+    "Cutoff12:13:58 enforced atpreflight and beforeFleet;60min host/Fleet controls unchanged.",
+    "Known degraded idle plugin accepted only under explicitdiagnostic grant; no plugin jobs/proofs/routing."
+  ],
+  "limits": [
+    "No reviewer cloud/provider execution.",
+    "Fixed cutoff remains authoritative; do not rerun after uncertain mutation or silently regenerate deadlines.",
+    "Host controls and actualLinux qualification remain pending readback."
+  ]
+}

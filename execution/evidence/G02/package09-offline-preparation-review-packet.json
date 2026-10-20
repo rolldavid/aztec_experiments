@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "task": "G14-package09-offline-preparation",
+  "createdAt": "2026-10-12T10:51:38.055555+00:00",
+  "trackedBase": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+  "files": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/run-package-startup09.py": "e17ddbebf59ada5d64b7877b4ff4927e6b219fc1e53fc378ba3b3306cada3a23",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/verify-package-startup09.py": "71068beda52e25fc01e1d6ea80fbd3ba5283a7fb2b66676295f5570970cda974"
+  },
+  "futureSourceUnbound": true,
+  "futureInputHashesUnbound": true,
+  "runnerVerifierHashUnbound": true,
+  "scope": "Source-only adaptation of existing startup07 workflow; no package, archive, native process or cloud operation executed",
+  "pureChecks": {
+    "passed": 12,
+    "failed": 0,
+    "elapsedSeconds": 0.015,
+    "execution": "Inline Python unittest with labelled synthetic manifests, patch records and disposable filesystem fixtures; subprocesses mocked for unbound guards",
+    "checks": [
+      "unbound verifier before subprocess",
+      "unbound runner before subprocess",
+      "source alone insufficient",
+      "zero digest rejected",
+      "missing bindings rejected",
+      "both exact patched pairs accepted",
+      "original unknown/mixed patches rejected",
+      "duplicate and extra patch rows rejected",
+      "revision/platform/profile/full-fileset mismatches rejected",
+      "internal npm link retained and extra nested file detected",
+      "external/dangling links rejected",
+      "duplicate or missing bootstrap pins rejected"
+    ]
+  },
+  "syntaxCheck": "Both final files compile successfully; no executable package main invoked",
+  "futureCommand": "/usr/bin/caffeinate -i python3 /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/run-package-startup09.py",
+  "requiredBeforeExecution": [
+    "Lead binds approved combined root SHA and exact INPUT_PATHS hashes in verifier after actual source composition",
+    "Reviewer approves verifier and lead binds EXPECTED_VERIFIER_SHA in runner to reviewed bytes",
+    "Independent review of final bound pair and separate sole-heavy local packaging grant",
+    "Fresh output, archive and evidence paths absent; no reuse of startup07/08 financial or upload operations"
+  ],
+  "packageChecks": [
+    "540-second/4GiB group bounds with bounded owned cleanup",
+    "Exact root source and tracked-clean state before and after archive",
+    "Both installed and packaged PXE patches CLI --verify AND fixed exact source/dest after hashes",
+    "Complete manifest file set plus all content hashes and internal-only symlinks",
+    "Bootstrap/helper/current catalog/Linux Node and BB pins",
+    "Actual copied Rolling catalog load using pinned Mac validation Node",
+    "Deterministic exclusive tar/gzip and complete independent streamed tar member/hash/type/mode verification"
+  ],
+  "limitations": [
+    "Pure tests are not actual runtime package qualification",
+    "No actual archive, manifest or payload hashes exist for09",
+    "Generated userdata byte verification and actual operator09 pin binding belong to subsequent separately granted preparation",
+    "Caffeinate prevents idle sleep only, not lid-close forced sleep"
+  ],
+  "noPaidAction": true
+}

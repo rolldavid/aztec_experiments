@@ -1,0 +1,105 @@
+{
+  "script": "scripts/test-u01-fee-deploy-ui.mjs",
+  "args": [],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "scope": "Built HTTPS UI controls with explicit fee/deployment engine fixtures; no real payment, deployment, custody or proof qualification",
+      "feeAmountErrorNoSuccess": true,
+      "feeBusyPreventsRepeat": true,
+      "recoveryDownload": true,
+      "unknownOutcomePreservesRecord": true,
+      "pendingDeploymentReport": true,
+      "explicitDeployedBoardLink": true,
+      "unavailableBoardNotReplaced": true,
+      "rpcRequests": 0,
+      "externalRequests": 0
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1253632,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 394592
+    },
+    {
+      "elapsedMs": 2027,
+      "rssKiB": 926288
+    },
+    {
+      "elapsedMs": 3049,
+      "rssKiB": 1253632
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-u01-fee-deploy-ui.mjs": "e8dafa4c83dafe4d59c4a0435dd1ef66947fbf3dd4e5ab5dfbdc09167c943b16",
+    "scripts/run-bounded-browser-check.mjs": "2b28c6da9bbbe857f49f4c2705fcfb64e48c7f1721c5c68da500ff9a0ff6b7dc",
+    "scripts/testing/supervisor.mjs": "518d827972d68cce7bab14f56df6483a260f5f5dc4082b50e2e4bbd80b0723f2",
+    "scripts/owned-test-process-tree.mjs": "ed8a490c451afa0ac2d4f0d6accbd51edfcf33088e59b058422921a070ac6a26",
+    "deploy/hosting-config.mjs": "52ade3bf75fd0ca6bd1fd82b2a67e9d5eff064af09a52751c76693b227b3987d",
+    ".build/apps-manifest.json": "d627e1aa558415bf88e0790fec1a770e33be0abdb56e94b3ac6dab27f9e1b9d9",
+    ".build/sdk/sdk-manifest.json": "98d24f590a07dcb798519e9b42cc9fde82529d190a2075f65d0875b279b33571"
+  },
+  "peakMemory": {
+    "elapsedMs": 3049,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 41221,
+        "ppid": 41181,
+        "rssKiB": 56160
+      },
+      {
+        "role": "ui",
+        "pid": 41222,
+        "ppid": 41221,
+        "rssKiB": 171584
+      },
+      {
+        "role": "ui",
+        "pid": 41225,
+        "ppid": 41222,
+        "rssKiB": 61920
+      },
+      {
+        "role": "ui",
+        "pid": 41227,
+        "ppid": 41222,
+        "rssKiB": 99104
+      },
+      {
+        "role": "ui",
+        "pid": 41228,
+        "ppid": 41227,
+        "rssKiB": 66016
+      },
+      {
+        "role": "ui",
+        "pid": 41229,
+        "ppid": 41227,
+        "rssKiB": 54304
+      },
+      {
+        "role": "ui",
+        "pid": 41232,
+        "ppid": 41227,
+        "rssKiB": 744544
+      }
+    ]
+  },
+  "elapsedMs": 3517,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-15T01:02:47.789785+00:00",
+  "credential": "existing trusted operator gh provider; never passed to application",
+  "installationId": 171412624,
+  "repositoryId": 1420006121,
+  "state": "returned",
+  "hypothesis": "Trusted repository owner credential may support operator selection independently of unavailable App-token self-selection and expired browser sudo session.",
+  "exitCode": 1,
+  "body": "{\"message\":\"You do not have permission to modify this app on zac-williamson.\",\"documentation_url\":\"https://docs.github.com/rest/apps/installations#add-a-repository-to-an-app-installation\",\"status\":\"403\"}",
+  "error": "gh: You do not have permission to modify this app on zac-williamson. (HTTP 403)\n"
+}

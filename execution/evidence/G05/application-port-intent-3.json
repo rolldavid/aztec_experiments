@@ -1,0 +1,16 @@
+{
+  "createdAt": "2026-10-11T20:18:50.416719+00:00",
+  "source": "582652fb9bb04e84e9e162026e0355bd20c9c829",
+  "scenario": "rolling-application-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "attempt": 3,
+  "hypothesis": "Real attempt2 trusted HTTP readiness passed; exact installed lazy JSON providers reproduce ERR_IMPORT_ATTRIBUTE_MISSING under nativeNode24. Reviewed exact-URL/type-only native import hook preserves60 official artifacts and all kernel maps through cleanup.17 independent +17 combined checks; production PXE/prover unchanged.",
+  "priorFailure": "application-c551ef29-7b92-40dd-8687-7bc5984c5e75.json",
+  "scope": "Local genuine application proofs, controlled settlement, no provider calls or paid actions",
+  "reviewedClockWorker": "2b416da60234b308615488d09ff1a8246487a577",
+  "publicAcceptanceSource": "86249752ec6bd8df5500ba921b242d85b8e93c5f",
+  "nativeArtifactWorker": "527abbea8923b0d81b78792960b815b3d3f1ffed",
+  "recordingNote": "Intent saved ~30 seconds after authorized local-only launch because git add returned1 for ignored tracked execution paths and skipped chained prelaunch record. No paid/provider action; single invocation, not replay. All source frozen at582652f."
+}

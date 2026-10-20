@@ -1,0 +1,13 @@
+✔ actual journey exit helper matches frozen Solidity commitment and independently serialized message leaf (3.791208ms)
+✔ exit helper binds receipt and domain inputs and rejects malformed/out-of-range shapes (5.161333ms)
+✔ exit commitment requires the complete network scope and canonical depositor casing (0.422417ms)
+✔ actual exit assertion rejects duplicate/missing leaves, wrong spent note and premature anchor (0.694125ms)
+✔ actual refund verifier decodes a real ABI event and rejects wrong receipt identity/accounting (8.993625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 898.232709

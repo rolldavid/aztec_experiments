@@ -1,0 +1,32 @@
+{
+  "task_id": "G02-native-crs-env",
+  "implementer": "funding_resume2",
+  "candidate": "ffa68cd615b98899cc172f0266e4df95bd932dfb",
+  "base": "8b44bef18f3e6ed216ebb0f2babcba0772af2792",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/main.mjs",
+    "prover/runtime.mjs",
+    "scripts/test-prover-runtime.mjs"
+  ],
+  "required_checks": [
+    "focused-native-crs"
+  ],
+  "requirements": [
+    "RC22-Bok-native-runtime"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "G02-native-crs-env",
+      "paths": [
+        "plugins/DEPLOYMENT.md",
+        "plugins/main.mjs",
+        "prover/runtime.mjs",
+        "scripts/test-prover-runtime.mjs"
+      ]
+    }
+  ]
+}

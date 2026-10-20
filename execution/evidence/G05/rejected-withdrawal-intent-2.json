@@ -1,0 +1,18 @@
+{
+  "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "scenario": "rolling-rejected-withdrawal",
+  "recordedAt": "2026-10-12T04:04:16.280209+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "status": "completed-pass",
+  "attempt": 2,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "review": "execution/evidence/G05/withdrawal-09a-review.json",
+  "reviewSha256": "9f4e9a7de24876b73fab42bae49bef2d3aeb710f04302c42efe3f297a31c2f02",
+  "diagnosis": "rejected-withdrawal-778e-diagnosis-review.json",
+  "changedHypothesis": "Retaining actual typed BlockHash at native admission boundary repairs reproduced string.equals TypeError; no protocol/timing/assertion changes.154 regression checks independently passed.",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-rejected-withdrawal",
+  "result": "application-65c1f05e-9108-482a-b081-69ea3b80289f.json",
+  "resultSha256": "8bbd64416e49fa464d27305d494d1eb6fd9ac199112bbcc51f3d0dcfcbe1714c",
+  "exitCode": 0
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "4f70cbeb06f8346855d938e408b8048785e1eb6d",
+  "base": "f898c7f3eab81443ac4251863ef703408dbd5ef2",
+  "reviewedSource": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+  "verdict": "APPROVED source composition for future full package; no package/cloud qualification or execution grant",
+  "findings": [],
+  "exactSevenFiles": {
+    "deploy/prover/BOOTSTRAP.md": "3d23ed6d5baa4e37333b7acb6b9ffa9ba0f4a37053cc2bb5e3e2434a7cc37236",
+    "deploy/prover/bootstrap.py": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "deploy/prover/l1-config-diagnostic.mjs": "0cc0812365f2d5803958b963d2ff4b625ecf4c8672bc3fc9267aba2e9fb88b1c",
+    "deploy/prover/l1-config-diagnostic.test.mjs": "5721f546d6ab2f70295aefc73a09a52cfeb9fb986ed2e7a5d473a13430a04ca4",
+    "deploy/prover/startup-stages.mjs": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "deploy/prover/startup-stages.test.mjs": "d30485ddd9fe26765af20937e44637effa54903919c4282af0c5084d026fff90",
+    "scripts/test-prover-bootstrap.py": "44db77906f20414df90efc09374b529138ecc975f855b7f752ce1682f3eafac4"
+  },
+  "sourcePlanInstalledPinsVerified": [
+    {
+      "path": "node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js",
+      "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/factory.js",
+      "sha256": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec/dest/cli/aztec_start_action.js",
+      "sha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/factory.js",
+      "sha256": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/archiver.js",
+      "sha256": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/modules/l1_synchronizer.js",
+      "sha256": "118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a"
+    }
+  ],
+  "catalogAndHelperPins": {
+    "CATALOG_SHA": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+    "STARTUP_HELPER_SHA": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c"
+  },
+  "recordedTests": {
+    "node": 39,
+    "python": 51,
+    "logsVerified": {
+      "archiver-4f70-node-tests.log": "9a79a9b023e7b2cb9c4cbe46d748dc1f7098602de30388a981bb145d41c61671",
+      "archiver-4f70-python-tests.log": "24ffdc2e79afe9e42e9dda182c03397395b1bb6d6f0d0c3cf562892b4feebaab"
+    },
+    "notRerun": "Exact reviewed source blobs; no new concern justified broad repeats while notification active"
+  },
+  "compatibility": [
+    "Exactly seven infrastructure paths differ; application, journal, preference, patchedSDK installers, artifacts and wallet sources unchanged fromf898.",
+    "Stage transforms touch six pinned CLI/node/archiver source modules; current installed bytes match allsix. Neither private-event query TS/JS nor PXE block synchronizer TS/JS is instrumented, so both current reviewed patches remain intact.",
+    "Explicit PublicNode complete-config semantic adapter preserved; ordinary/history Tenderly and debug PublicNode routing unchanged. Strict schema2 numeric diagnostics, original awaits/errors and shutdown/readiness/qualification gates preserved from107.",
+    "Normal package copies current installed dependencies, including both patches; offline09 verifier must verify both installed and copied exactpairs, source/catalog/helper and wholearchive closure.",
+    "Root remainsf898 during review; candidate must transfer only after active campaign exits and future package verifier binds actual finalroot revision/inputhashes."
+  ],
+  "requiredNext": [
+    "Exact root transfer/equivalence and final bound offline runner/verifier review",
+    "Fresh full package and independent archive/manifest content closure under sole local packaging budget",
+    "Actual immutable image equality for allsix stage modules, especially newly added l1_synchronizer; local equality alone insufficient",
+    "Operator09 exactschema2/source/package pins, fresh actual userdata<=16384 and absolute shutdown/control readbacks",
+    "Separate actualLinux/readiness/query/prover qualification; previous08failures retained"
+  ],
+  "noApplicationChange": true,
+  "noPackageOrNetworkExecution": true
+}

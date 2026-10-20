@@ -1,0 +1,144 @@
+{
+  "kind": "Read-only scoped cold-recovery source equivalence",
+  "hostBuildBase": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "localCandidate": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "hostEvaluatorOnlyChange": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "reviewer": "reviewer_resume",
+  "verdict": "eligible for narrowly scoped component evidence carry, not current UI or whole-app qualification",
+  "identicalFiles": [
+    {
+      "path": "apps/rolling/wallet-runtime.mjs",
+      "sha256": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+      "identical": true
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+      "identical": true
+    },
+    {
+      "path": "shared/account.js",
+      "sha256": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+      "identical": true
+    },
+    {
+      "path": "shared/journal-backup.mjs",
+      "sha256": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "sha256": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/compact-client.mjs",
+      "sha256": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/preference-reader.mjs",
+      "sha256": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/private-views.mjs",
+      "sha256": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/deployment.mjs",
+      "sha256": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+      "identical": true
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "sha256": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+      "identical": true
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+      "identical": true
+    },
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "sha256": "a4904190ad523aa38bc47bc5aa1e3ada490d41d293f8f3a7676972a84a25eda8",
+      "identical": true
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+      "identical": true
+    },
+    {
+      "path": "prover/compact-block-native.mjs",
+      "sha256": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+      "identical": true
+    },
+    {
+      "path": "plugins/devnet/network.mjs",
+      "sha256": "c876a3e90d9d31489a745c465303a3b6f5af5a12bbeec223a3780133a8f11539",
+      "identical": true
+    },
+    {
+      "path": "apps/dist/aztec_bundle.js",
+      "sha256": "f4b4794e27c257ec2a2a0a29a4e9768bb87bf53ebf091748d4e0e19013a29f92",
+      "identical": true
+    },
+    {
+      "path": "apps/dist/sdk-manifest.json",
+      "sha256": "a7043e0716466c519488da38db7b564aac964bb002d9f9e8823d184c7f0b38c0",
+      "identical": true
+    },
+    {
+      "path": "scripts/testing/rolling-preference-browser-fixture.mjs",
+      "sha256": "c0c4fb291e91218f6a28451261274b3c53335347632db679ca1e88b56d2ad610",
+      "identical": true
+    },
+    {
+      "path": "scripts/testing/rolling-preference-browser.mjs",
+      "sha256": "1655f37fa0dfe5000a13270ed46f92f5a972392a1a21939bbb628b04731df919",
+      "identical": true
+    }
+  ],
+  "identicalFunctionRegions": [
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "start": "async function recoverPreferences(){",
+      "endExclusive": "function choosePreference(",
+      "sha256": "eaacf711d73ff2de2eaaedb21f4d215f0a99a30b98cbb5bc72601bc8ee7b528a",
+      "identical": true
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "start": "readColdPreferences=async options=>{",
+      "endExclusive": "withdrawal=createCollateralWithdrawal",
+      "sha256": "ae862ae91448977d981260f7a1cc9b91260bda67239bcc7f915eb3dbca80a713",
+      "identical": true
+    }
+  ],
+  "callPath": [
+    "Fresh isolated browser imports keys-only encrypted backup through unchanged account/journal-backup machinery; no portable workflow/transaction journals may be introduced.",
+    "Wallet runtime -> createRollingWalletSession -> registered keys/PXE/contracts and fixed trusted routing -> application.readColdPreferences wrapper holds same account operation lease.",
+    "readColdPreferences bypasses synchronized ordinary application mutations: createRollingCompactClient(checkpointed) -> createRollingColdPreferenceReader -> same installed PXE preference helper/archive authentication/mailbox/AEAD-CAS -> returned complete preference snapshot.",
+    "Panel recoverPreferences/continuation consumes the returned snapshot; exact revision3 bookmark/follow/read-marker equality must be checked on that same completed read, not an extra anchor-advancing read."
+  ],
+  "changedButOutsideClaim": [
+    "G09 reader/navigation and panel focus/render lifecycle differ. They cannot be called byte-identical and old host UI cannot qualify new feed return/paging/focus behavior.",
+    "W03 application.mjs differs in saved-action inspect/resume/replacement/submission checks. Fresh keys-only cold reading does not invoke these paths; createRollingApplication construction remains present but changed methods are dormant. Any saved transaction recovery or send would invalidate this scoped carry.",
+    "W03 wallet-panel changes display and confirmation for retained transaction intents; these must remain unentered in this fresh no-workflow profile. Panel work/focus updates also differ, so exact current end-to-end UI wall time is not measured by old host UI.",
+    "Journal-backup test and evaluator/test changes do not change imported backup or cold recovery production behavior."
+  ],
+  "acceptanceUse": {
+    "allowed": "Actual b1 host outcome, if genuine clean-profile and full-chain evidence validates, supports RC26 unchanged authenticated cold recovery mechanism and exact recovered preferences on889 by explicit equivalence. Its measured duration belongs b1/Linux/browser/environment as run; may support component performance assessment with disclosed source differences.",
+    "notAllowed": "Do not label old b1 run as an exact889 current-UI run, entire current application pass, saved-action recovery acceptance, or proof that focus/render overhead has identical120s total timing. No performance result exists merely from this report.",
+    "conditions": [
+      "Record exact host source and evaluator overlay, normal build/installed helper and runtime configuration hashes; compare relevant output closure rather than assuming source equality proves remote materialization.",
+      "Demonstrate empty fresh browser/PXE/local cache and keys-only backup; original chain identity/canonical1..anchor/no skipped private-log work; no imported old cursor/workflow.",
+      "Bind actual observed same-read revision3 bookmark/follow/read-marker values to original canonical1517\u20131519, account scope and snapshot anchor.",
+      "Keep unchanged120s whole and10s page criteria, zero transaction/proof/model/tag shortcuts and strict reader failure handling; preserve failed runs."
+    ]
+  },
+  "activity": "Git/object/hash/source reads only; no remote/build/browser/service/source mutation. Report does not qualify the pending actual run."
+}

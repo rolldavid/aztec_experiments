@@ -1,0 +1,198 @@
+{
+  "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+  "task_id": "G05-subboard-withdrawal-components",
+  "holds": [],
+  "findings": [],
+  "scope_limits": "Bounded subboard/policy/Home/public-reader and rejected-board original-depositor withdrawal components. Real local application proofs with supported controlled epoch settlement; no production-network/finality/audit assurance, full G05 privacy/browser-publication or product closure.",
+  "checks": [
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "source-tests",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js pinned Node --test --test-concurrency=1; exact argv in combined-09a-check-command.json",
+      "environment": "macOS arm64 Node24.21.0 Aztec6.0.0-rc.1; actual local application proofs where specified,540s/4GiB",
+      "observed": "599 checks passed14655ms; independent review source/combined transfer approved",
+      "artifacts": [
+        {
+          "path": "evidence/G05/combined-09a-tests.log",
+          "sha256": "ddd3d8e13f423cd029fd049f50e861ac130a7429d6d8473785840baf6a201d1f"
+        },
+        {
+          "path": "evidence/G05/combined-09a-check-command.json",
+          "sha256": "3076351362c4d993e4fed331016edc2b5bd03941e5ebd31b9c26c530f2618829"
+        },
+        {
+          "path": "evidence/G05/withdrawal-09a-review.json",
+          "sha256": "9f4e9a7de24876b73fab42bae49bef2d3aeb710f04302c42efe3f297a31c2f02"
+        },
+        {
+          "path": "evidence/G05/subboard-8003-review.json",
+          "sha256": "086fcb6166577cc173a6f8ec1e7a1c073f2ba671405fae3a3311d301481ead96"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    },
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "browser-assets",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Actual Chromium renderer/session checks at8003; exact unchanged production/browser inputs carried to09a under independent integration review",
+      "environment": "macOS arm64 Node24.21.0 Aztec6.0.0-rc.1; actual local application proofs where specified,540s/4GiB",
+      "observed": "47 checks and visual inspection;75 wallet sourceinputs24outputs verified; synthetic public data, actualSDK unlock, zero browser financial send",
+      "artifacts": [
+        {
+          "path": "evidence/G05/subboard-8003-browser-tests.log",
+          "sha256": "9ab9273493b8db7af2bfeede26c08d79c27af92e31f4885739beb2917f409a5b"
+        },
+        {
+          "path": "evidence/G05/subboard-8003-composition.json",
+          "sha256": "7fbbba079a9b79f7ed4db57e9256df9ef6dbf02b2e65497a43629922f96a132d"
+        },
+        {
+          "path": "evidence/G05/reader-8003-mobile.png",
+          "sha256": "3df5d13a48367aa76afbaff4f6a0ffb83c3efd1bc851cafac3b28f3db3f517f9"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    },
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "genuine-subboard",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinned Node scripts/test-c01-application.mjs rolling-subboard-policy",
+      "environment": "macOS arm64 Node24.21.0 Aztec6.0.0-rc.1; actual local application proofs where specified,540s/4GiB",
+      "observed": "da251 passed393599ms; fee-only no-collateral creator, separatepublisher, canonical parentpolicy/authorizedrejection/private-state/public HTTP+reopen; unchanged branch transfer approved",
+      "artifacts": [
+        {
+          "path": "evidence/G05/application-da2510b2-87cc-417f-bb49-19d97c2371b4.json",
+          "sha256": "b35d4093d8bf0234f2ee61fc5ec86b5f4c69adafd020d7f1ccff5e6c24f1257e"
+        },
+        {
+          "path": "evidence/G05/subboard-da251-runtime-review.json",
+          "sha256": "10ecbd1ccb0d9c84b1cc965fcac57a89fdd7b82d997604527a5125da1751fe8a"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    },
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "genuine-withdrawal",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinned Node scripts/test-c01-application.mjs rolling-rejected-withdrawal",
+      "environment": "macOS arm64 Node24.21.0 Aztec6.0.0-rc.1; actual local application proofs where specified,540s/4GiB",
+      "observed": "65c1 passed388562ms peak2287600KiB; exact 1e15 originaldepositor refund/replayrejection after rejectedboard, four privatejobs +separatemoderator, canonicalcontinuity andallcleanup",
+      "artifacts": [
+        {
+          "path": "evidence/G05/application-65c1f05e-9108-482a-b081-69ea3b80289f.json",
+          "sha256": "8bbd64416e49fa464d27305d494d1eb6fd9ac199112bbcc51f3d0dcfcbe1714c"
+        },
+        {
+          "path": "evidence/G05/rejected-withdrawal-65c1-runtime-review.json",
+          "sha256": "fa3cac320e93179fa3a9efa64984d1250387e102d9fe1ef493200ad6ff449d5a"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+    "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+        "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "G05-subboard-policy-acceptance",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/application-da2510b2-87cc-417f-bb49-19d97c2371b4.json",
+          "sha256": "b35d4093d8bf0234f2ee61fc5ec86b5f4c69adafd020d7f1ccff5e6c24f1257e"
+        },
+        {
+          "path": "evidence/G05/subboard-da251-runtime-review.json",
+          "sha256": "10ecbd1ccb0d9c84b1cc965fcac57a89fdd7b82d997604527a5125da1751fe8a"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    },
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "G05-rejected-withdrawal-acceptance",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/application-65c1f05e-9108-482a-b081-69ea3b80289f.json",
+          "sha256": "8bbd64416e49fa464d27305d494d1eb6fd9ac199112bbcc51f3d0dcfcbe1714c"
+        },
+        {
+          "path": "evidence/G05/rejected-withdrawal-65c1-runtime-review.json",
+          "sha256": "fa3cac320e93179fa3a9efa64984d1250387e102d9fe1ef493200ad6ff449d5a"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    },
+    {
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "id": "G05-public-reader-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/subboard-8003-browser-tests.log",
+          "sha256": "9ab9273493b8db7af2bfeede26c08d79c27af92e31f4885739beb2917f409a5b"
+        },
+        {
+          "path": "evidence/G05/subboard-8003-composition.json",
+          "sha256": "7fbbba079a9b79f7ed4db57e9256df9ef6dbf02b2e65497a43629922f96a132d"
+        },
+        {
+          "path": "evidence/G05/reader-8003-mobile.png",
+          "sha256": "3df5d13a48367aa76afbaff4f6a0ffb83c3efd1bc851cafac3b28f3db3f517f9"
+        },
+        {
+          "path": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+          "sha256": "7611fd1472f4762604e6c12e1d6679437eceb72939be448704ce7f8d538279a1"
+        }
+      ]
+    }
+  ]
+}

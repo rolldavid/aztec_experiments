@@ -1,0 +1,136 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "55e07721498cd87c781c05ea9508794bdc8da79c",
+  "scope": "Read-only source-bound privacy gap assessment for G05-A11/G06-A07/G14-A03 and Draft3 page6 RC23/24; no cryptographic assurance verdict",
+  "file_sha256": {
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "prover/private-query.mjs": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+    "apps/rolling/wallet-session.mjs": "d3cbd87202efafc6b44a2512e3404feb8c92494f8c713d5e7efcca8f5e69eecd",
+    "apps/rolling/wallet-panel.mjs": "67e5dc261d5d1e56b8500ec7965c4fb7d5e2ffd01f0cd2b9ec8ecb474ec61cfc",
+    "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+    "shared/rolling/public-index.mjs": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+    "apps/rolling/reader-client.mjs": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+    "scripts/testing/rolling-application-fixture.mjs": "383ba95168c0988f6d01eb64dd43d20203ad6c583ad3766c0e6f9e713f7e13bf",
+    "scripts/testing/private-bok-node-observer.mjs": "412f54290494092027ce8045ae4a48dcff8f1d393c8c3eb6ba6de0990dac0cf4",
+    "scripts/t03-rpc-observer.mjs": "384ef12f6980f04932e3f0a37e60434cb649293f9621787ca9bc0f23c2adafd5",
+    "billboard/rolling_contract/src/main.nr": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+    "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda"
+  },
+  "mandatory_model": [
+    "Public name links its own posts; different owned names and anonymous activity must not reveal a common human owner to public/backend/ordinary-node observers.",
+    "Prover operator may receive private witnesses. Query fullnode, archive, logs and infrastructure serving private RPC must be explicitly inside that same trusted operator boundary.",
+    "Content reuse, IP and arbitrary timing observations remain described residuals; these do not excuse deterministic private-owner or private-name-list transmission."
+  ],
+  "source_findings": [
+    {
+      "id": "PRIVACY-TRACE-1",
+      "type": "acceptance_blocker",
+      "requirements": [
+        "G05-A11",
+        "G06-A07",
+        "G14-A03"
+      ],
+      "scenario": "One human/one name and equality checks against its raw address cannot detect a common derived tag, nullifier, account initializer, partial-note, storage-key or private-query grouping across names/reactions. Current profile fixture never records actual HTTP request destinations/bodies.",
+      "sources": [
+        "scripts/testing/rolling-application-fixture.mjs:143",
+        "scripts/testing/rolling-application-fixture.mjs:326",
+        "scripts/testing/private-bok-node-observer.mjs:63",
+        "scripts/t03-rpc-observer.mjs:17"
+      ],
+      "repair": "Add one bounded two-account/two-name endpoint-separated trace acceptance. Keep derived values only in protected memory, emit salted per-run relation classes/counts and known role labels. Fail on missing/unknown/truncated coverage. Positive controls must demonstrate trusted ingress receives personalized calls while ordinary node/cache receives none from private workflows."
+    },
+    {
+      "id": "PRIVACY-BOUNDARY-2",
+      "type": "deployment_acceptance_blocker",
+      "requirements": [
+        "G14-A03"
+      ],
+      "scenario": "A network-correct synced arbitrary RPC can pass client identity checks; if configured as trustedProverNode but operated by an ordinary node, getContract(account), note tags and nullifier queries reveal private grouping. Loopback server upstream prevents naive remote forwarding but alone does not prove fullnode/archive ownership or deployment topology.",
+      "sources": [
+        "shared/trusted-private-node.mjs:120",
+        "prover/private-query.mjs:15",
+        "prover/private-query.mjs:43",
+        "apps/rolling/wallet-session.mjs:34",
+        "node_modules/@aztec-labs/pxe/src/contract/contract_class_service.ts:39",
+        "node_modules/@aztec-labs/pxe/src/node/caching_aztec_node.ts:140"
+      ],
+      "repair": "Bind deployed query endpoint to approved prover operator plus actual locally synchronized fullnode/archive; verify one real client-to-service-to-local-node run and upstream request traces. Stop private work on failed/stale identity; prove no ordinary-node fallback. No new owner trust grant or local-user-fullnode requirement is needed."
+    },
+    {
+      "id": "PRIVACY-SOCIAL-3",
+      "type": "missing_acceptance",
+      "requirements": [
+        "G06-A07",
+        "G05-A11"
+      ],
+      "scenario": "Public LikeChanged exposes stable per-post tag. This intentionally links like/unlike/re-like on that post; cross-post/account/name independence is not established by one successful like. Profile version logs intentionally link one name and repeated identical raster hashes/content can voluntarily correlate names.",
+      "sources": [
+        "billboard/rolling_contract/src/main.nr:1096",
+        "billboard/rolling_contract/src/posting.nr:61",
+        "shared/rolling/PRIVACY_DESIGN.md"
+      ],
+      "repair": "Use two humans with two names each: same human toggles one post and likes a second; other human likes same post; inspect actual tags/events and ensure only same-account/same-post repeats. Include named then anonymous post and recovered names/profile read in trace phase. Treat identical user-selected text/images as content correlation, not proof of an owner-map defect."
+    }
+  ],
+  "verified_boundaries": [
+    {
+      "path": "Production wallet",
+      "finding": "No direct ordinary-cache owned-name-list route found. Session creates branded trusted node, derives all PXE/wallet routing from it and checks construction provenance. Owned names/readProfile are utility calls on that wallet; editor renders returned names locally.",
+      "sources": [
+        "apps/rolling/wallet-session.mjs:34",
+        "apps/rolling/wallet-session.mjs:44",
+        "apps/rolling/wallet-session.mjs:56",
+        "shared/rolling/application.mjs:131",
+        "shared/rolling/application.mjs:218",
+        "shared/rolling/application.mjs:227"
+      ]
+    },
+    {
+      "path": "Trusted transport",
+      "finding": "HTTPS/explicit local test restriction, no redirects/retries/fallback, omitted cookies/referrer, silent logging, bounded responses; gateway fixed loopback upstream strips client headers and checks identity/sync before personalized batch. Permitted trusted operator still sees identity and derived queries.",
+      "sources": [
+        "shared/trusted-private-node.mjs:103",
+        "prover/private-query.mjs:45",
+        "prover/private-query.mjs:103"
+      ]
+    },
+    {
+      "path": "Ordinary cache/public node",
+      "finding": "Reader GET routes expose selected profile/thread/post/board-interest, cursor and normal network context; no wallet/account/store import or private identity parameter. Public index scans complete canonical blocks independently of browser selected names. Explicit profile interest is not ownership proof.",
+      "sources": [
+        "apps/rolling/reader-client.mjs:3",
+        "apps/rolling/reader.mjs:77",
+        "shared/rolling/public-index.mjs:64",
+        "shared/rolling/public-index.mjs:74"
+      ]
+    },
+    {
+      "path": "Contract effects",
+      "finding": "Named profile ownership authenticated privately and only-self callbacks emit selected public identity/content; post callbacks omit human owner; like key has chain/version/board/post/NHK domain. Source construction is consistent with design but not independent cryptographic assurance.",
+      "sources": [
+        "billboard/rolling_contract/src/main.nr:875",
+        "billboard/rolling_contract/src/main.nr:918",
+        "billboard/rolling_contract/src/main.nr:1096",
+        "billboard/rolling_contract/src/posting.nr:61"
+      ]
+    }
+  ],
+  "smallest_next_task": {
+    "scope": "One bounded real endpoint-separated private recovery/social trace scenario reusing current trusted-query HTTP fixture and production wallet session/application factories, not a new orchestration system.",
+    "steps": [
+      "Create disposable two-account/two-name fixtures; retain setup and public moderator/Bok traffic as separate explicitly public roles.",
+      "Record actual serialized request classification at trusted HTTP ingress, ordinary public-cache HTTP ingress and ordinary-node boundary. Use private in-memory role/tag relation maps, no raw witness/prompt/identity logs.",
+      "Run cold owned-name/profile recovery, switch selected private names, named/anonymous action, like/unlike and cross-post reaction; reopen encrypted stores.",
+      "Kill/deny trusted endpoint during a private operation and assert failure before any ordinary-node/cache request or transaction retry.",
+      "Verify canonical events plus bounded traces. Public browsing may reveal explicit interests but automatic private-name/subscription enumeration must never appear at cache/ordinary node.",
+      "Record exact deployment trust topology and retained limitations; keep independent specialist review separate."
+    ]
+  },
+  "limits": [
+    "Source read only; no new tests, proofs, browser, cloud or services were run for this report.",
+    "No observed source regression invalidates prior exact public-effect or genuine-proof acceptance. These gaps block broad privacy component closure, not established narrower milestones.",
+    "Future bookmarks/follows/notifications must use private/local filtering or trusted query boundary; current reader does not implement their privacy acceptance.",
+    "Threat model must explicitly address trusted delivered frontend code versus actively malicious UI distribution; runtime route checks cannot defend against a replaced application bundle."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+  "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "policySha256": "93359a98473adcf083a583d7c30010e8b2b759812b081edaff26223dd4a682e6",
+  "positiveExit": 0,
+  "negativeExit": 1,
+  "negativeResult": {
+    "status": "blocked",
+    "reason": "review not approved"
+  },
+  "temporaryDefectRemoved": true
+}

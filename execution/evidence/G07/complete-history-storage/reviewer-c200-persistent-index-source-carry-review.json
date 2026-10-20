@@ -1,0 +1,23 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T16:55:06.583925+00:00",
+  "base": "72987b78d36accde73ccba9466c0f787f9bb6479",
+  "candidate": "c200873ddf7151f8052fffc56048662a52804ff3",
+  "workerSource": "81f7d6a2bb290e1ecc6bc260fe30dc2b469bf00b",
+  "sourceTransferSha256": "f94f7965702c2ed4d2d6806e86adcc6a573ba8bd19d2f69b1569447a6a9b2a70",
+  "verdict": "Exact eight-path source carry accepted for separately reviewed combined components; no integration/runtime qualification yet",
+  "verified": [
+    "All eight candidate blobs independently equal frozen81f7 source and declared SHA256; all six existing predecessor hashes match72987, two SQLite files are new.",
+    "Candidate diff contains exactly these eight files and tree is clean.",
+    "Prerequisite projection source/test are byte-identical to independently reviewed6763; including them is necessary for the shared touched-row reducer port.",
+    "Prior source reviews6763/storage,1bb/ingestion,4a45/query,33069/crashfixture and81f7/growingtests carry only for exact source boundaries."
+  ],
+  "requiredCombinedTests": "Source-expanded whole public-events/public-projection/public-index/public-sqlite inventories on current candidate; expect29+41+64+57=191 total,189 ordinary pass and two explicitly named opt-in volume skips. Exact packet inventory must independently bind each parameterized declaration before run.",
+  "retainedGates": [
+    "Full factory/UI route remains unchanged; this opt-in storage/index/query source does not remove existing production lifetime caps.",
+    "Growing native-observer volume successor is separately pending;31785 remains failed.",
+    "Dense authenticated wire/query, full canonical archive replay, production storage lifecycle/GC and resource qualification remain open.",
+    "Current normal manifest/SDK closure must be checked for affected inputs; no stale output carry by assertion."
+  ],
+  "runtimeByReviewer": false
+}

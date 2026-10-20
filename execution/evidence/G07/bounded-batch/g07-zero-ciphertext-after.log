@@ -1,0 +1,25 @@
+✔ labelled boundary double rejects zero count before queue or utility (2.901917ms)
+✔ labelled boundary double rejects nine logs before queue or utility (1.05525ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (0.729333ms)
+✔ labelled boundary double rejects unknown key before queue or utility (0.414833ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.416333ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.961ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.377834ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.3605ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.49625ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.550042ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (1.004292ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.590875ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.44475ms)
+▶ owned isolated SDK and ACIR suite
+  ✔ actual SDK zero-ciphertext transaction batch matches scalar authenticated recovery (4326.745209ms)
+  ✔ actual SDK empty batch authenticates every physical block and advances one durable sequence (5271.300084ms)
+✔ owned isolated SDK and ACIR suite (10780.16425ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11256.903625

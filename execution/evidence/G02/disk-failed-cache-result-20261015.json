@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-14T23:29:36.505524+00:00",
+  "manifest": "disk-failed-cache-20261015.json",
+  "manifestSha256": "03590db880622d2d4026bca834f2f2fd7e1a35def5d943d5e8d5abc75ab0de1b",
+  "allocatedBytesRemoved": 4037582848,
+  "allAbsent": true,
+  "currentSnapshotPredecessorCachePreserved": true,
+  "failedReceiptPreserved": true
+}

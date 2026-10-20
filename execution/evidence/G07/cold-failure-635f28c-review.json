@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:30:14.390643+00:00",
+  "source": "635f28c8854d1b2ce43791879a79e22ce16cbd1e",
+  "disposition": "accepted-source-and-labelled-component-repair",
+  "priorFindingClosed": "ffcac2c P2 falsy recovery error lost when final save fails",
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-failure-635f28c/result.json": "1df09489590d494a52f439c723ff9d47a711eb7f248871b6746906779b597739",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-failure-635f28c/build.log": "e1a165787ad40491fc498dfdea8c5fde46d0731d2ce4b6b70ea6eb7941b626f5",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-failure-635f28c/postcheck.json": "6a0481706ebe196c2bca0600431357da21004a30aef90d50ff52183d6c5eecf8",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-failure-635f28c/before-source.json": "c808ea3a394b935adc652efe77e84167b7e2f565c09883f5655d505e66707937"
+  },
+  "sourceReview": "Explicit recoveryFailed flag set before rethrow; actual-used persistRollingRecoveryObservation aggregates exact original and save error even when original falsy. Single persist attempt, no retry. Success retains original control flow.",
+  "actual": {
+    "tests": 92,
+    "pass": 92,
+    "skip": 0,
+    "cancel": 0,
+    "elapsedMs": 2995,
+    "peakTreeRSSKiB": 623664,
+    "ownedTreeAbsent": true,
+    "postcheckSourceBindings": 1160
+  },
+  "regressionAssessment": "Actual helper tests undefined/null/false/0/empty-string/Error with save error and exact ordered identity; sole write failure identity and successful persist path included.",
+  "carry": "Prior ffcac2c observer projection/one-read/compact failure snapshot source findings retained. No source fix for57c timeout, no performance/fullcold/genuine acceptance.",
+  "reviewerExecution": "Read-only source and receipt inspection; no tests rerun."
+}

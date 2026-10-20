@@ -1,0 +1,87 @@
+{
+  "kind": "retained-cold-warm-readiness-disposition",
+  "source": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "warm": {
+    "startedAt": "2026-10-19T14:50:20.578Z",
+    "source": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+    "network": "testnet",
+    "cache": "warm existing real Phantom profile",
+    "navigationStart": 3895870.407083,
+    "unlockStart": 3902616.421375,
+    "unlockAt": "2026-10-19T14:50:27.324Z",
+    "toolsReadyAt": "2026-10-19T14:50:35.887Z",
+    "toolsReadyMs": 8563.364500000142,
+    "restoreStart": 3925633.399667,
+    "restoreAt": "2026-10-19T14:50:50.341Z",
+    "accountReadyAt": "2026-10-19T14:51:43.320Z",
+    "restoreToReadyMs": 52979.23091599997,
+    "unlockToReadyMs": 75996.22579200007,
+    "sdk": [
+      {
+        "duration": 0,
+        "transferSize": 0,
+        "encodedBodySize": 28104934,
+        "decodedBodySize": 63239714
+      }
+    ],
+    "unlockToReadyIncludesRecoveryEntry": true,
+    "nativeWorkExcludingRecoveryEntryMs": 61542.59541600011,
+    "scope": "Warm real-profile SDK load plus import of latest encrypted original account to visible funding/account controls. No proof or transaction sent; no cold or peak-memory inference."
+  },
+  "warmInterpretation": "Single ordinary real Phantom warm-profile reload+latest encrypted recovery import reaches visible funding/account controls.61.542595416s combines tool load and import-native work;75.996225792s unlock\u2192ready includes human recovery entry. No proof/send, cold or peak-memory inference.",
+  "coldRetained": [
+    {
+      "evidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/current-app-assets/initial-cold-load.json",
+      "scope": "80.758s raw SDK download; old60s asset watchdog failure before custody/account creation. No complete cold account readiness."
+    },
+    {
+      "evidence": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/current-app-assets/compressed-cold-load.json",
+      "scope": "25.400s compressed SDK asset and custody-tool assets ready at03:54:41; no complete cold account-ready start/end interval retained."
+    }
+  ],
+  "authority": "120s is individual remote proof;540s/4GiB total browser qualification. No standalone SDK/full-wallet startup numeric target identified. Current warm operation is not whole qualification nor memory evidence.",
+  "remaining": "Cold and warm account-readiness observations now both recorded. No standalone startup threshold declared; no peak-memory/fulltransaction inference. Historical slow asset failures retained.",
+  "evidence": {
+    "warm": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/phantom-acceptance-20261019/current-warm-account-readiness.json",
+      "sha256": "be2185751963b6da44bba83a58baa7f2bbef010a4f18f4c0c58158fa39acfc96"
+    },
+    "coldInitial": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/current-app-assets/initial-cold-load.json",
+      "sha256": "4758b3b64c4a62c1c9c45d1df6a9f3f6fc442047bba386e8fae82c470ee07ab5"
+    },
+    "coldCompressed": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/current-app-assets/compressed-cold-load.json",
+      "sha256": "240f543be2a4612f5bc9c072ee1cbd563368358b593a7293b5f007bab689121c"
+    },
+    "coldCurrent": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/metamask-acceptance-20261019/current-cold-account-readiness.json",
+      "sha256": "a12e4d5bf47af745483734a4e8923420d5bb29cf4cfd13d6af2978b1131698a8"
+    }
+  },
+  "coldCurrent": {
+    "startedAt": "2026-10-19T14:55:24.744Z",
+    "source": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+    "network": "testnet",
+    "cache": "HTTP cache cleared; existing original MetaMask profile and custody retained",
+    "scope": "One missing full cold account-readiness observation; no funding or proof submission",
+    "unlockStart": 4202899.399625,
+    "unlockAt": "2026-10-19T14:55:27.608Z",
+    "toolsReadyAt": "2026-10-19T14:58:35.517Z",
+    "toolsReadyMs": 187907.6193750007,
+    "restoreStart": 4390833.093667,
+    "restoreAt": "2026-10-19T14:58:35.543Z",
+    "accountReadyAt": "2026-10-19T14:59:27.864Z",
+    "restoreToReadyMs": 52321.35050000064,
+    "unlockToReadyMs": 240255.06354200002,
+    "sdk": [
+      {
+        "duration": 112330.24499994516,
+        "transferSize": 28105234,
+        "encodedBodySize": 28104934,
+        "decodedBodySize": 63239714
+      }
+    ]
+  },
+  "coldInterpretation": "One HTTP-cache-cleared existing MetaMask profile with original custody retained: Unlock\u2192tools187.907619375s, import\u2192ready52.321350500s, total240.255063542s. SDK112.330244999945s,28,105,234transferred bytes. Full cold account-control readiness observed; not fresh profile/account creation, peak-memory measurement or full transaction qualification."
+}

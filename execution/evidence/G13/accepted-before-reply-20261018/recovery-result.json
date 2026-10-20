@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "phase": "finished",
+  "acceptedRevision": "592730be9c2b1ca876462dc65a0b56c59148e6cc",
+  "callCount": 5,
+  "callsUnchanged": true,
+  "billingUnchanged": true,
+  "callsDigest": "4c324e58233b08d94260758bbd45a996c0d04826424c18cc888201d298508b28",
+  "replyTransactionHash": "0x09f5417351b70fe2315f1c057da5205307275d20f4a7836c1cacb38aaca42359",
+  "finishTransactionHash": "0x271efb6e374ec47fd38cda2709810a5318c89a407b48517b3affbb6ac2d8b024",
+  "replyResult": {
+    "status": "succeeded",
+    "canonical": true,
+    "method": "publish_reply",
+    "argsDigest": "08654992ee88918e11869e5a44d1ed924e07ab5b4e735fa0ef7334a9199be608",
+    "txHash": "0x09f5417351b70fe2315f1c057da5205307275d20f4a7836c1cacb38aaca42359",
+    "transactionFee": "22783148400000",
+    "blockNumber": 23,
+    "blockHash": "0x26fa1b84718494dbac76bfb554214a324168bf99254ce09ec4a31618e3bffb54"
+  },
+  "finishResult": {
+    "status": "succeeded",
+    "canonical": true,
+    "method": "finish",
+    "argsDigest": "43ce14977b2bf77b3c081de86224702fc49a2755b2b9c4dad0fcacb1229542b1",
+    "txHash": "0x271efb6e374ec47fd38cda2709810a5318c89a407b48517b3affbb6ac2d8b024",
+    "transactionFee": "11461525800000",
+    "blockNumber": 24,
+    "blockHash": "0x1a841f0234540c30883f53db130fe34656cbea67da26d05e8ee722f15104e4a1"
+  },
+  "hostedBinding": {
+    "network": "eip155-31337:aztec-3195861271:0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "escrow": "0x1cdd5252d434a0dc3fce0c5aa913e0b3fbef4b52bc178dea92f2e19b8eb8249d",
+    "requestId": "0x22b27b6c95e492e05dfddb711ff45c51bab5502a708ce669e2791e817b3fcddd",
+    "target": "0x203b3daafbc4ec93304cf8bdd1721ab98efc9c04df3ccead86730ad55282d879",
+    "postId": "0x0eae105504aa14741fd10b5750fd179f4d892869ca597e983109f5b725102020",
+    "pluginId": "0x0000000000000000000000000000000000000000000000000000000000626f6b"
+  }
+}

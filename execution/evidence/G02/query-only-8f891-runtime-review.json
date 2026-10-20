@@ -1,0 +1,389 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "8f891977986304b13d68231a40ffe94cbfb185c6",
+  "disposition": "accepted-bounded-query-only-component-runtime-evidence",
+  "sourceReview": {
+    "path": "execution/evidence/G02/query-only-8f891-source-review.json",
+    "sha256": "e1cc206fdda69874a016c83c8efe68c2f6110a923a35e8b67c9b5e2878be0bc5"
+  },
+  "handoffSha256": "d48b003fd1fe7c646d2f694c7465ce18a0ca037f5e39de745e8be83f3f56b1d2",
+  "verifiedEvidence": [
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/preparation.json",
+      "sha256": "fbd64b4fcc7c5ed2aa7971adaf8581e2c2d686620b4e08d56c77f1a1252946ad"
+    },
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/run.mjs",
+      "sha256": "a228004eacdf6e69a1046ecee58cae95c2101fb499fb21a619250dc93eae3abd"
+    },
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/child.py",
+      "sha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+    },
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/intent.json",
+      "sha256": "894846f4d5bd16a8ae9dd72b56e47276e229c72b96c7382a6317edc05ec2fb69"
+    },
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/tests.log",
+      "sha256": "8734a6e7c9643fe2b5cc0e8fc2aef408b99087c6f6fae318a12a44339aa18c4b"
+    },
+    {
+      "path": "execution/evidence/G02/query-only-8f891-tests-1/result.json",
+      "sha256": "c4554637e0e484a313542c29f389ae9d219098800ae8d7ce777d847a46d8231b"
+    }
+  ],
+  "counts": {
+    "tests": 58,
+    "pass": 58,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "runtime": {
+    "elapsedMs": 6922,
+    "testProcessElapsedMs": 6756,
+    "peakTreeRSSKiB": 666560,
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "exitCode": 0,
+    "ownedTreeAbsent": true,
+    "childOutcome": [
+      {
+        "role": "query-only-tests",
+        "code": 0,
+        "signal": null,
+        "closed": true,
+        "cleanupComplete": true
+      }
+    ],
+    "failures": []
+  },
+  "sourceBinding": {
+    "checkedInputRows": 69,
+    "scopedPackageManifestRows": 55,
+    "trackedInputBlobsMatchedImmutableCandidate": [
+      "prover/private-query.integration.test.mjs",
+      "prover/qualify-runtime.mjs",
+      "prover/qualify-runtime.test.mjs",
+      "prover/server.mjs",
+      "prover/service.mjs",
+      "prover/start.mjs",
+      "scripts/test-prover-service.mjs",
+      "scripts/test-remote-prover.mjs",
+      "package.json",
+      "package-lock.json",
+      "toolchain.json",
+      "prover/compact-service.test.mjs",
+      "scripts/testing/supervisor.mjs",
+      "scripts/owned-test-process-tree.mjs"
+    ],
+    "allRecordedCurrentHashesMatch": true,
+    "files": [
+      {
+        "path": "prover/private-query.integration.test.mjs",
+        "sha256": "c94e9f5398957a7bee88359689e9bccb1abe145c016811a9d42ebe6e954f27db"
+      },
+      {
+        "path": "prover/qualify-runtime.mjs",
+        "sha256": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95"
+      },
+      {
+        "path": "prover/qualify-runtime.test.mjs",
+        "sha256": "6173ab5050247bf6eb739ccc3324dab45400528ca12df1c90b7fa8503c93e50e"
+      },
+      {
+        "path": "prover/server.mjs",
+        "sha256": "e6876f78cbdc31fc3abe7c64e62a70a47be95e4eec67366d3b528835baabb3c4"
+      },
+      {
+        "path": "prover/service.mjs",
+        "sha256": "92e55530ac4362a5b546c9458d44532011874b087057e8fbad1c46c98f1aa742"
+      },
+      {
+        "path": "prover/start.mjs",
+        "sha256": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5"
+      },
+      {
+        "path": "scripts/test-prover-service.mjs",
+        "sha256": "210e1515885b6b88949169a8f7cd33c80cafdc10b19490c203375a3904cd3308"
+      },
+      {
+        "path": "scripts/test-remote-prover.mjs",
+        "sha256": "57f78fc421238cd682cfbd59ab8ccbe5511c523a34272ee74816f62a2ac0d193"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/bb.js/package.json",
+        "sha256": "1a8088fbf34fa1df8669d9a84fd2fa9c8a95ad661530adbba2d97d7032c617e5"
+      },
+      {
+        "path": "node_modules/@aztec-labs/accounts/package.json",
+        "sha256": "aa3d7bc5b6f7e6d204bdf83c6556b36233ad4002eec60ccbe42a44b242bf973a"
+      },
+      {
+        "path": "node_modules/@aztec-labs/aztec/package.json",
+        "sha256": "0a0c793cec2c8f73aa312394611b564faa1c4e990f5868f71c09c21de27c4719"
+      },
+      {
+        "path": "node_modules/@aztec-labs/aztec.js/package.json",
+        "sha256": "934f7bac6ef040d41a4d135b86b2b41bb7e9b33f6aa849a4ea7c336c985f5763"
+      },
+      {
+        "path": "node_modules/@aztec-labs/cli/package.json",
+        "sha256": "e335777aeba5f04a3f5d29d86a16a909de3405817963f5d007b19a0d4909eb75"
+      },
+      {
+        "path": "node_modules/@aztec-labs/cli-wallet/package.json",
+        "sha256": "831874007f7405588cc4433fcda80018f05bab0addfba39115e2dcd08fc4ddbb"
+      },
+      {
+        "path": "node_modules/@aztec-labs/entrypoints/package.json",
+        "sha256": "cad7b24d227f1cb4d1cf1d513ae2356209e30ff707eaaeea1eaa103fd9543417"
+      },
+      {
+        "path": "node_modules/@aztec-labs/foundation/package.json",
+        "sha256": "24d9d8d807b8599178e97195eba1c14cf0f3affcc4b977b2ce6fb2bf61954f01"
+      },
+      {
+        "path": "node_modules/@aztec-labs/kv-store/package.json",
+        "sha256": "ebbcabdbe4b75d8ad1f45227205077704e4959868bea5f841b94f7029c68ec90"
+      },
+      {
+        "path": "node_modules/@aztec-labs/protocol-contracts/package.json",
+        "sha256": "8a67b28716de427a99663712abb4a59ac15f1d613a555aa53cd393b3b611afb1"
+      },
+      {
+        "path": "node_modules/@aztec-labs/pxe/package.json",
+        "sha256": "d9642d1a4c8e30565e313933e6d42e3faf821ede8dae3b8f9cffbc39b7c013e3"
+      },
+      {
+        "path": "node_modules/@aztec-labs/standard-contracts/package.json",
+        "sha256": "d09b8cfc966a7247fc0c7518936e5c909eadf6281b93f6afc177201942a96603"
+      },
+      {
+        "path": "node_modules/@aztec-labs/stdlib/package.json",
+        "sha256": "7a8adc8b0a7d718f432270af2d83383f20d64fbd7df1e4ec389671bc021a6f0a"
+      },
+      {
+        "path": "node_modules/@aztec-labs/txe/package.json",
+        "sha256": "b72db748f2045f4d78f2f87ed3f7a50cac197b8683f0075c222fdd220181c609"
+      },
+      {
+        "path": "node_modules/@aztec-labs/wallet-sdk/package.json",
+        "sha256": "4b815baaaf21c8c4e540d4cded0c08504b39d01eed814339a75c87f053a0d442"
+      },
+      {
+        "path": "package.json",
+        "sha256": "9bf59c3d81656e7cce4e012c63f4cae378c7dfa1a5f4547c7147868460e26168"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "825107bb65912344f28356160e513b30b553fe28e42c4c275ed66c70b1df0320"
+      },
+      {
+        "path": "toolchain.json",
+        "sha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d"
+      },
+      {
+        "path": "prover/compact-service.test.mjs",
+        "sha256": "8e1afd4eb17b8b1906eaeb9e229c6dd603bc9801db5b8bbac70ef18b239afa9b"
+      },
+      {
+        "path": "scripts/testing/supervisor.mjs",
+        "sha256": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318"
+      },
+      {
+        "path": "scripts/owned-test-process-tree.mjs",
+        "sha256": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83"
+      },
+      {
+        "path": "node_modules/@aztec-labs/node-keystore/package.json",
+        "sha256": "a6cdba2e4e898c81c7cfc4c72eee894fc0f45286731dc1fff28a232513a3c5a8"
+      },
+      {
+        "path": "node_modules/@aztec-labs/prover-node/package.json",
+        "sha256": "5717c177401c56da9491b65415fa8b13c75603113e311867a3e5451438ccaa8c"
+      },
+      {
+        "path": "node_modules/@aztec-labs/bb-prover/package.json",
+        "sha256": "270adf44b63f68cc4f2cb408f5222d4b37fad12c2ef782d224104a0ac1987e79"
+      },
+      {
+        "path": "node_modules/@aztec-labs/sequencer-client/package.json",
+        "sha256": "646c1e5d0a95c03cd710ee44e51e91ebd29899d09b22e5af6c699b16b345f5b2"
+      },
+      {
+        "path": "node_modules/@aztec-labs/validator-client/package.json",
+        "sha256": "3326530bf06a5cd05c5235c6a47c340d5e7d6703f2b3856ed5c5d64523e34426"
+      },
+      {
+        "path": "node_modules/@aztec-labs/native/package.json",
+        "sha256": "908446f63acf6fa198b1ad58c8150501defb2a61a658f6b3501949a739ea0a83"
+      },
+      {
+        "path": "node_modules/@aztec-labs/key-store/package.json",
+        "sha256": "bcd86fb879a1db8883f0c09056315de2f23989829c3b7e88185aa5a34e159c7f"
+      },
+      {
+        "path": "node_modules/@aztec-labs/prover-client/package.json",
+        "sha256": "f723209be88c5961ef45d6be4a9a7fc75440c4ab1c060f056e383d23a8143887"
+      },
+      {
+        "path": "node_modules/@aztec-labs/constants/package.json",
+        "sha256": "25f2100fedd956d9a905ee47dcd937d5d7c6d3ffcc1b4719506f5ad618515021"
+      },
+      {
+        "path": "node_modules/@aztec-labs/blob-client/package.json",
+        "sha256": "727dc28f6dda4603c588b6922f115aa49ec4845519bfa8a9ba0e83be75703f92"
+      },
+      {
+        "path": "node_modules/@aztec-labs/noir-contracts.js/package.json",
+        "sha256": "4921e2cd3b4edc548554bf2752fb4248a2c4ec199ec08643607d1cd2c5f4e205"
+      },
+      {
+        "path": "node_modules/@aztec-labs/archiver/package.json",
+        "sha256": "b900906c8d6881315adafecb08ecdcf7d1597bfb7fa11f15457d5aee3b1709ec"
+      },
+      {
+        "path": "node_modules/@aztec-labs/noir-protocol-circuits-types/package.json",
+        "sha256": "47681d8404e6c6358932300fae5336f7ae6d46e01fccf9682dee28268aa6854e"
+      },
+      {
+        "path": "node_modules/@aztec-labs/epoch-cache/package.json",
+        "sha256": "07ead554b391b3635336d9ee1e71e16d55151301d76e7f3856aa71823258499d"
+      },
+      {
+        "path": "node_modules/@aztec-labs/validator-ha-signer/package.json",
+        "sha256": "1bcb0eb2f58e6f253c44751e49b59403a7676254545e09778aa98f943557d318"
+      },
+      {
+        "path": "node_modules/@aztec-labs/simulator/package.json",
+        "sha256": "ee59f1394932174cba55311e0befaaf6827def2df02dc5e3511d26c1308365e5"
+      },
+      {
+        "path": "node_modules/@aztec-labs/node-lib/package.json",
+        "sha256": "85dada8bee542496f575b87b7cdb033fb2f2b90a50aa0ceaf67edc0ff7c18f2d"
+      },
+      {
+        "path": "node_modules/@aztec-labs/aztec-node/package.json",
+        "sha256": "84ac3661b6725bd362718f88277eccea961f18bb77f4c861031d608ea9c5b542"
+      },
+      {
+        "path": "node_modules/@aztec-labs/p2p/package.json",
+        "sha256": "36f88449e3e5bf1ece6cdb967675b1702b99f2ad8de34cde34e3d2794b022cb5"
+      },
+      {
+        "path": "node_modules/@aztec-labs/telemetry-client/package.json",
+        "sha256": "8ea80bf8235e82d95c2b2f58b18cac977205a04b13638d244b63787bd6acd78b"
+      },
+      {
+        "path": "node_modules/@aztec-labs/bot/package.json",
+        "sha256": "0f9866afb83a5d6ee1a009dc8a242105e8e2dd53917bb0b2b18b749acd945dc8"
+      },
+      {
+        "path": "node_modules/@aztec-labs/slasher/package.json",
+        "sha256": "be27bd156707a2598d72f2baf722a9e95a1a388c2c4c8f43f73088d15378e26e"
+      },
+      {
+        "path": "node_modules/@aztec-labs/blob-lib/package.json",
+        "sha256": "6eb82f69e1b30aec29573729602834a9c9bd23cc8c9dbaf54edca7c23f184d1d"
+      },
+      {
+        "path": "node_modules/@aztec-labs/wallets/package.json",
+        "sha256": "ca0292959d1ac06f8d55e54cebd9eb2e15f883e73a5e596a179a64357e777cba"
+      },
+      {
+        "path": "node_modules/@aztec-labs/builder/package.json",
+        "sha256": "7a78f8a79410f9b69f14ad43ced41cd839e55a1e3d10c020c856a16242a08802"
+      },
+      {
+        "path": "node_modules/@aztec-labs/noir-test-contracts.js/package.json",
+        "sha256": "207c3818afe7af2c37eda157516eeb9bb316093cfe0702276e6e93b8761cffe3"
+      },
+      {
+        "path": "node_modules/@aztec-labs/sqlite3mc-wasm/package.json",
+        "sha256": "f39c7f3f25cf24203748d27d1c7485c42d0c7f226996c41e1a41395c058ec212"
+      },
+      {
+        "path": "node_modules/@aztec-labs/ethereum/package.json",
+        "sha256": "170a6f9d9a207046b09f7567b936c8cc7d6dced3d4b74ad549ec605ff3b833d7"
+      },
+      {
+        "path": "node_modules/@aztec-labs/world-state/package.json",
+        "sha256": "075e5f2ef31252fb7b4c6e2eed131d7da257a5911a3870b5cf49768e66c8ebd3"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/cdb/package.json",
+        "sha256": "329ab03bbcb63f12f09974d2cc7db027151fd89b42f7c8c13a9fcb95638dd14e"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/l1-artifacts/package.json",
+        "sha256": "e61e5eea86765ca59be2493a1ec0f99056c7fe51e0a59594568da6b9800f9333"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/ipc-runtime/package.json",
+        "sha256": "4ed35fa513d8a2f2f8e5edbb90f9205e437b2c8794a9edcf2d57d2bca3af7972"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/noir-noirc_abi/package.json",
+        "sha256": "cae1b6c0a4c181a8d47caeac7ef88c31bc9175bfb83eb44ee3ff00b1a6f4fd21"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/noir-noir_codegen/package.json",
+        "sha256": "2d03c3573c6163b824c8575bb50d9bc00aaf70b686e829675d696699b1041e64"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/wsdb-darwin-arm64/package.json",
+        "sha256": "fcb2871657ee0bfc8d5b6aa7355e3679166880179e7abfeb0a0a6e0dea6edaa2"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/bb-avm-sim-darwin-arm64/package.json",
+        "sha256": "dd497b72545dbc06b72ae41e381c2c3c0739914d4e0e120d3402300f7cee8173"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/noir-acvm_js/package.json",
+        "sha256": "019354125a535a3f55c99ab64f8e882031a41b213cb43f1d9c79fc1dea6104db"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/wsdb/package.json",
+        "sha256": "2d060f7ee81372646c78121e241b802cef4e147964c5cbdc683870c1446441bf"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/noir-types/package.json",
+        "sha256": "30cd5c33275168f3963b0979a271e1986978ee564a534cfde64e0705b8dad841"
+      },
+      {
+        "path": "node_modules/@aztec-foundation/bb-avm-sim/package.json",
+        "sha256": "9573b0308356acc64de7090d02d2c105f8d217fdcf3a710e57ed8620f6593076"
+      }
+    ],
+    "workingTreeStatusAtReview": ""
+  },
+  "independentChecks": [
+    "Inspected exact eight-file source diff and test assertions before relying on handoff conclusion.",
+    "Recomputed every handoff receipt hash and all 69 preparation pins; nondependency recorded inputs also matched immutable candidate Git blobs.",
+    "Counted 58 successful log entries and independently parsed zero failure/skip/cancel/todo summaries; argv exactly five sequential test files.",
+    "Verified runner binds clean candidate and 69 hashes before and after, uses pinned Node24.21.0 with explicit NODE_BACKEND=js and 60s/2GiB Supervisor, no retry.",
+    "Inspected actual Supervisor/child ownership: detached registered tree, sampled deadline/RSS, child exit0, mandatory cleanup outcome and absence required before pass. Historical cleanup is supported by bound receipt, not a newly executed process audit."
+  ],
+  "acceptedCoverage": [
+    "Query-only starts through actual service composition without importing runtime/catalog/queue/process-worker or allocating proof filesystem resources; explicit own primitive scope and strict rejected proof-only settings.",
+    "Original ordinary disabled-proof service lifecycle, FIFO/wire/admission and compact rate/origin regressions still pass.",
+    "Actual local HTTP verifies absent proof routes, early rejection of unfinished proof body, distinct not-offered proof health and real upstream policy, no dummy queue.",
+    "Actual SDK client, official schemas and production shared inspector operate against labelled local upstream; identity, proof, sync and stale failures prevent personalized forwarding.",
+    "Changed/throwing coercion sentinels never execute; qualification scope is detached and frozen.",
+    "Repeated close and failed bind release listeners; actual held upstream SDK response and disconnected downstream tests prove close waits until admitted handler settlement.",
+    "Manifest/path/capability controls and labelled pause/stale/resume qualification cases retain their failure gates."
+  ],
+  "limitations": [
+    "Controlled local HTTP, labelled chain/SDK transport fixtures and pure validation tests only. No Linux qualifier execution, current public canonical-network check, fullnode, actual native prover, proof generation, production privacy or full cold recovery qualification.",
+    "Query-only removes proof-job lifecycle, not all RPC writes: existing SDK query schema still allows sendTx. Do not label the entire service read-only.",
+    "Top-level health ready means listener readiness; actual upstream admission is query.ready and original inspector checks.",
+    "69 recorded pins include 55 package manifests; this review does not claim a fresh full installed dependency-byte inventory.",
+    "Deployment/bootstrap config, receipt/schema, image-layout and package composition need separate exact-source review and genuine packaged qualification.",
+    "Compiler diagnostic and full-product integration holds remain; this is not an integration or deployment grant."
+  ],
+  "newExecutionPerformed": false
+}

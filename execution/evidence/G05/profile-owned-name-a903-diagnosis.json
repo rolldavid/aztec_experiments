@@ -1,0 +1,48 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "55e07721498cd87c781c05ea9508794bdc8da79c",
+  "classification": "confirmed_native_fixture_SDK_export_omission",
+  "scope": "Read-only diagnosis; no proof retry or source edit",
+  "evidence_sha256": {
+    "execution/evidence/G05/application-a9037a60-f873-4691-8dfd-99df1116b8ba.json": "ed20feaf8d1996d681c8ac035235050549372ec8320b22ed4a99843a071a8af4",
+    "execution/evidence/G06/application-port-08d175e2-c733-4eb7-9923-6fe0c5a985db/observation.json": "d6942cb15643faf53160b742675fe6a6ef9d2e85de1f5da722d0007446f7f68b"
+  },
+  "source_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "383ba95168c0988f6d01eb64dd43d20203ad6c583ad3766c0e6f9e713f7e13bf",
+    "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+    "shared/sdk-entry.mjs": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb"
+  },
+  "actual_observed": {
+    "passed": false,
+    "stage": "owned-name-recovery",
+    "nameTransaction": "0x1130fd1838a1955059e1441a93b903227dc0192b2b70d707463214c34b9f53d6",
+    "nameExecution": "success",
+    "nameBlock": 15,
+    "nameFee": "10177600800000",
+    "profileTransactions": 0,
+    "innerCleanupAllTrue": true
+  },
+  "diagnosis": [
+    "loadRollingFixtureSDK imports official narrow modules but omits foundation/crypto/poseidon. Its resolved object lacks poseidon2HashWithSeparator.",
+    "ownedIdentities validates every nonzero readable note against hash(nameRegistration.preimage,NAME_DOMAIN) through sdk.poseidon2HashWithSeparator at application.mjs239. Any otherwise valid nonempty page therefore throws TypeError, converted to ROLLING_INVALID_RESPONSE at241.",
+    "Production sdk-entry.mjs52 exports the function; unit application fixtures independently inject it, explaining why their tests pass. Existing native-facade test checks factory provenance but not required hashing capability."
+  ],
+  "independent_probe": {
+    "runtime": "Node24.21.0 NODE_BACKEND=js",
+    "method": "Import actual loadRollingFixtureSDK and installed poseidon module; use actual nameRegistration River Stone six-field preimage; invoke missing facade method and compare direct official call",
+    "facadeExportType": "undefined",
+    "installedExportType": "function",
+    "exactCallFailure": "TypeError",
+    "actualPinnedDigest": "0x2682de94a1e9e9ebdc321ce593be34853b1587f715bc9f147e8daae17c7cf76b",
+    "exit": 0
+  },
+  "minimal_repair": [
+    "Add official @aztec-labs/foundation/crypto/poseidon import to the native facade, preserving production function byte source.",
+    "Add real loaded-facade regression using actual ABI-decoded nonempty ownership record and known name digest; negative altered metadata must still fail.",
+    "Keep strict record validation, private route, synchronization, proofs and one-send behavior unchanged; source review before distinct fresh campaign."
+  ],
+  "limits": [
+    "Raw private utility result was not retained or inspected. Confirmed omission is independently sufficient to fail any valid nonempty record; this does not prove there are no additional downstream issues.",
+    "Existing included name fee/effect and cleanup evidence remain valid; no bio/avatar runtime acceptance resulted."
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_PARTIAL_SYNTHETIC_SQLITE_VOLUME_ACTUAL",
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "actualPacketSha256": "9311138221e45b6fce1296032120950dc63b64003fe16b9824a5e21318bcfa2e",
+  "session": 22496,
+  "counts": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "excluded": 29,
+  "elapsedMs": 13512,
+  "sampledAggregatePeakKiB": 374048,
+  "sampleCount": 13,
+  "setupKernelKiB": 63216,
+  "supervisorKernelKiB": 65776,
+  "controllerKernelKiB": 52272,
+  "workerKernelKiB": 262736,
+  "volumeSummary": {
+    "label": "synthetic-SQLite-storage-only",
+    "events": 105005,
+    "eventBytes": 81688932,
+    "startRss": 141901824,
+    "nearRss": 227655680,
+    "finalRss": 249249792,
+    "rollbackSegments": 20001
+  },
+  "growthBytes": 21594112,
+  "verifiedSourcePins": 547,
+  "verifiedDependencyPins": 2402,
+  "cleanupAndLinkVerified": true,
+  "limitations": [
+    "105005 events about2.1x former50000, not mandatory4x/later-post retrieval",
+    "Synthetic branded plugin storage only; no densewire, production factory/query or genuine archive qualification",
+    "Sampled aggregate plus per-process kernel peaks do not establish instantaneous aggregate peak",
+    "29excluded retain ordinary108 and separately accepted corrected3crash evidence",
+    "Historical15860 and43018 failures remain failed"
+  ],
+  "reviewerRuntimeExecuted": false
+}

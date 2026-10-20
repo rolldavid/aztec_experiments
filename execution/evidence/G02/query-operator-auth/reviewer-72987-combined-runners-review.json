@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_SEPARATE_SERIAL_GRANTS",
+  "candidate": "72987b78d36accde73ccba9466c0f787f9bb6479",
+  "packets": {
+    "whole34": "868062ed549cc2dfa8b3dbfa01b605f5ff76e238261dfd43a40479e43f3e9265",
+    "auth50": "581dd4ebe1d40f80dab76bd3c6002de6ec07910c6d1ec9bae6784518109b9485"
+  },
+  "closureSha256": "a349ae4350f280638c4199eebfe2b179d878fb4da9651a25d855e970c0e7d659",
+  "verification": [
+    "Each packet file and3306 current protected hashes independently match. Normal bundle, manifest and actual CLI source are bound to current lead paths.",
+    "Exact owner source differs from accepted drain owner only evidence directory; same child/60s2GiB/20sCLI bounds and cleanup.",
+    "34 and50 expected label multisets match reviewed source-expanded transfer inventories, whole suites/no name filter/no skips.",
+    "Current closure passes bound72987; foundationalf6 metadata does not replace explicit current candidate binding.",
+    "Historical worker-evidence-only omitted paths are disclosed; required execution source/normal artifact bindings remain covered."
+  ],
+  "conditions": [
+    "Parent grants each run separately, after positive predecessor cleanup; all exact labels/counts/source and cleanup gates apply.",
+    "No duplicate stale-worker whole suite; no proof, deployment, external provider or product qualification. Native disabled defaults remain inherited from3f576."
+  ]
+}

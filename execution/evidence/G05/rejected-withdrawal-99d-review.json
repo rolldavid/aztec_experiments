@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "99d99a9037986ae3abdb5151d88a3b5113406faf",
+  "baseRevision": "a2718c5018cf35576bdf53bee033ac306bf4950d",
+  "verdict": "approved bounded acceptance consumer source; parent composition and actual full journey pending",
+  "requirements": [
+    "G05-A07 posted collateral remains withdrawable after subboard rejection; real mature screening/L2 exit/original-depositor L1 refund"
+  ],
+  "sourceHashes": {
+    "scripts/testing/rolling-rejected-withdrawal.mjs": "f339822db52852163ad738137d5f069c91f7d2a1f2b26864395b28fe2532496f",
+    "scripts/testing/rolling-rejected-withdrawal.test.mjs": "aacc422fedc4d94cd28bc1e7c50272bc0b03df9cfe314333bec5f168158f4cd1"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 scripts/testing/rolling-rejected-withdrawal.test.mjs",
+      "cwd": "rolling-design",
+      "result": "69 passed,0failed/skipped,700.353417ms",
+      "log": "/tmp/reviewer-withdrawal-99d-tests.log"
+    }
+  ],
+  "review": [
+    "Exact canonical event metadata,post identity and rejection reason match real projection/Noir encoding. Rejection redacts content without changing post count,thread links or admission flag/debt.",
+    "Fresh deposit ten-field schema,amount,depositor,private nullifier creation provenance and successor transitions checked without returning raw ten-field state.",
+    "Independent cooldown/debt calculation matches Admission.compute_next_allowed for explicitly unflagged history. Screen sequence2/screened1/last-real1 matches actual dummy transition. Actual screen/withdraw anchors must satisfy maturity/lock.",
+    "Exact predecessor nullifier consumed once;screen changes physical receipt and adds no public Board event/exit;withdraw consumes current receipt once,requires absent active state and exact single V1 exit leaf.",
+    "Typed rejected prepare permits local auth work but no proof/wallet/transport submissions; unclassified outage and all callback failures propagate without retry.",
+    "Refund assertions preserve controlled-settlement labels,exact exit message hash/leaf,original depositor/portal/amount,escrow deltas,balance reconciliation and repeat rejection. Real nonenumerable replay handle retained.",
+    "Only original injected callbacks perform operations; consumer adds no services/miner/lifecycle. 69 tests use labelled synthetic callbacks and real hash/projection/exit-leaf logic."
+  ],
+  "findings": [],
+  "parentConditions": [
+    "Physically bind ten-field state to actual canonical note hash/nullifier/creation tx and trusted private owner; no invented utility certificate.",
+    "Capture real anchor timestamp from actual execution, canonical tx/effect/Board emitter and exact fee receipts before semantic assertions; independently recheck all five L2 transactions and finalL1 receipt.",
+    "Supply original existing controlled settlement and withdrawC01L1 objects with exitResult.exit.tx/claim/instance and exact preparation/ready/artifact bindings; retain nonenumerable refund.replay in memory.",
+    "Maintain proof/source labels, actual private fee accounting, no-human-public-effects checks, one miner/settlement owner and all cleanup.",
+    "Forecast measured setup+four human proofs+moderator+maturity/lock wait+settlement/refund within unchanged540s/4GiB before actual run."
+  ],
+  "limits": [
+    "No real posted screening,exit or L1refund run in this review.",
+    "No epoch/network proof or full privacy assurance; controlled local settlement remains explicit.",
+    "Later public HTTP rebuild is parent acceptance; consumer checks real in-memory projection only."
+  ]
+}

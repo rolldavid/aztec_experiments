@@ -1,0 +1,23 @@
+{"role":"fixture","stage":"start-disposable-l1","elapsedMs":1097}
+{"role":"fixture","stage":"prepare-genesis","elapsedMs":1214}
+{"role":"fixture","stage":"deploy-local-protocol-fixture","elapsedMs":3061}
+{"role":"fixture","stage":"wait-for-local-validator-activation","elapsedMs":4445}
+{"role":"fixture","stage":"start-application-node","elapsedMs":4484}
+{"role":"fixture","stage":"prove-board-deployment","elapsedMs":8545}
+{"role":"fixture","stage":"board-create-proving-wallet","elapsedMs":8590}
+{"role":"fixture","stage":"board-build-deployment-request","elapsedMs":8880}
+{"role":"fixture","stage":"board-genuine-client-proof","elapsedMs":9654}
+{"role":"fixture","stage":"board-serialize-proof","elapsedMs":23212}
+{"role":"fixture","stage":"board-real-node-validation","elapsedMs":23224}
+{"role":"fixture","stage":"board-close-wallet","elapsedMs":23510}
+{"role":"fixture","stage":"board-inclusion","elapsedMs":23523}
+{"role":"fixture","stage":"private-fee:fund-disposable-user","elapsedMs":58996}
+{"role":"fixture","stage":"private-fee:bridge-user-funds","elapsedMs":59028}
+{"role":"fixture","stage":"private-fee:wait-inbox","elapsedMs":59734}
+{"role":"fixture","stage":"private-fee:fund-disposable-user","elapsedMs":70405}
+{"role":"fixture","stage":"private-fee:bridge-user-funds","elapsedMs":70432}
+{"role":"fixture","stage":"private-fee:wait-inbox","elapsedMs":71148}
+{"role":"fixture","stage":"private-fee:prove-standalone-funding","elapsedMs":79923}
+{"role":"fixture","stage":"private-fee:include-standalone-funding","elapsedMs":93366}
+{"role":"fixture","stage":"private-bok:deploy-board","elapsedMs":104134}
+{"evidence":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/application-38f61b6a-f191-4336-9e8d-274e38a742b7.json","passed":false,"scenario":"private-bok-private-normal"}

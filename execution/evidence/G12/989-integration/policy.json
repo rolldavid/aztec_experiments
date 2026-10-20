@@ -1,0 +1,42 @@
+{
+  "candidate": "989d53ff8c5ccf1c83584be206c91583b0fbb83e",
+  "base": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G11-G12-personal-app-private-bok-lifecycle",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "docs/rolling-deployment.md",
+    "plugins/DEPLOYMENT.md",
+    "plugins/github-app-broker.mjs",
+    "plugins/operations.mjs",
+    "plugins/operator-config.example.json",
+    "plugins/operator.mjs",
+    "plugins/rolling-hosted-config.example.json",
+    "plugins/test/github-app-broker.test.mjs",
+    "plugins/test/operator-lifecycle.test.mjs"
+  ],
+  "required_checks": [
+    "scoped-personal-app-and-private-bok-lifecycle"
+  ],
+  "requirements": [
+    "scoped-personal-app-and-private-bok-lifecycle"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G11-G12-personal-app-private-bok-lifecycle",
+      "paths": [
+        "docs/rolling-deployment.md",
+        "plugins/DEPLOYMENT.md",
+        "plugins/github-app-broker.mjs",
+        "plugins/operations.mjs",
+        "plugins/operator-config.example.json",
+        "plugins/operator.mjs",
+        "plugins/rolling-hosted-config.example.json",
+        "plugins/test/github-app-broker.test.mjs",
+        "plugins/test/operator-lifecycle.test.mjs"
+      ]
+    }
+  ]
+}

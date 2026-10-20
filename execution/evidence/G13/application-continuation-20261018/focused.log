@@ -1,0 +1,24 @@
+✔ actual wallet preserves a fixed fee budget and account scope/tag (94.130333ms)
+✔ actual wallet passes attributed application spend to the durable journal before submission (240.728041ms)
+✔ accepted claim survives engine restart and changed UI intent through the real encrypted journal (438.618583ms)
+✔ accepted dummy survives engine restart and changed UI intent through the real encrypted journal (443.522709ms)
+✔ plugin metadata persists after the proof journal and context changes stop broadcast (1.758958ms)
+✔ password recovery file transfers actual SDK transaction browser to CLI and back without changing identity (732.384208ms)
+✔ invalid name drafts remain correctable before availability, fees or journal writes (67.347ms)
+✔ name availability uses normalized canonical ID and rejects a collision before fees or journal writes (1.423209ms)
+✔ name availability failures and changing canonical anchors never become available or taken (4.0195ms)
+✔ persistent ingestion owns one transaction or completion per step with original decoding (179.681958ms)
+✔ persistent original decoder/physical boundary rejects missing-body (163.012708ms)
+✔ persistent original decoder/physical boundary rejects duplicate-transaction (155.659ms)
+✔ persistent original decoder/physical boundary rejects missing-deployment-policy (152.121ms)
+✔ persistent original decoder/physical boundary rejects receipt-block-mismatch (154.319ms)
+✔ persistent original decoder/physical boundary rejects reorg-during-decode (150.541375ms)
+✔ persistent original decoder/physical boundary rejects bad-log-digest (152.881334ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7883.401208

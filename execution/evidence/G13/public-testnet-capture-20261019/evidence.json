@@ -1,0 +1,56 @@
+{
+  "base": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+  "candidate": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+  "task_id": "D4-current-public-capture",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+      "candidate": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+      "task_id": "D4-current-public-capture",
+      "id": "public-capture-boundaries",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing rolling-wire-trace tests; 109 worker and 5 relevant independent cases",
+      "environment": "Node24/current SDK serialized Tx; no live journey",
+      "observed": "Focused decoder/canonicality/method inventory and cleanup on capture failure passed. Actual D4 privacy acceptance remains separate.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/public-testnet-capture-20261019/review.json",
+          "sha256": "fade2d33c84cdc54feb71a90ea36d79f14ca7a4187b9a380faa8ee9d8f2da324"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+    "candidate": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+    "task_id": "D4-current-public-capture",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/public-testnet-capture-20261019/review.json",
+        "sha256": "fade2d33c84cdc54feb71a90ea36d79f14ca7a4187b9a380faa8ee9d8f2da324"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "ceac49b427dd05b13ee09a62f99e2ff111cf807e",
+      "candidate": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+      "task_id": "D4-current-public-capture",
+      "id": "RC25-public-capture-capability",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/public-testnet-capture-20261019/review.json",
+          "sha256": "fade2d33c84cdc54feb71a90ea36d79f14ca7a4187b9a380faa8ee9d8f2da324"
+        }
+      ]
+    }
+  ]
+}

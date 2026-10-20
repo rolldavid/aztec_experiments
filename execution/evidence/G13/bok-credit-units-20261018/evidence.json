@@ -1,0 +1,82 @@
+{
+  "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+  "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+  "task_id": "G13-bok-credit-units",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "task_id": "G13-bok-credit-units",
+      "id": "bok-credit-units",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 existing focused wallet-panel browser cases; exact invocation in review",
+      "environment": "macOS Chromium labelled component fixture, no chain/build/model",
+      "observed": "13 independent relevant browser cases pass8.65s, exact reviewed candidate",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/bok-credit-units-20261018/review.json",
+          "sha256": "0b6b3c1280a2c5ed13d10e365d5d413a090947fb64de08c4588600446544b81e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+    "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+    "task_id": "G13-bok-credit-units",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/bok-credit-units-20261018/review.json",
+        "sha256": "0b6b3c1280a2c5ed13d10e365d5d413a090947fb64de08c4588600446544b81e"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "task_id": "G13-bok-credit-units",
+      "id": "RC04-Bok-request-review",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/bok-credit-units-20261018/review.json",
+          "sha256": "0b6b3c1280a2c5ed13d10e365d5d413a090947fb64de08c4588600446544b81e"
+        }
+      ]
+    },
+    {
+      "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "task_id": "G13-bok-credit-units",
+      "id": "RC22-exact-human-credit-units",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/bok-credit-units-20261018/review.json",
+          "sha256": "0b6b3c1280a2c5ed13d10e365d5d413a090947fb64de08c4588600446544b81e"
+        }
+      ]
+    },
+    {
+      "base": "878a79455fae08184a4e61a4b7a745213bf71402",
+      "candidate": "4352578ab04e21e9e7f6242bd356744d34e7162b",
+      "task_id": "G13-bok-credit-units",
+      "id": "RC33-saved-ceilings-and-outcomes",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/bok-credit-units-20261018/review.json",
+          "sha256": "0b6b3c1280a2c5ed13d10e365d5d413a090947fb64de08c4588600446544b81e"
+        }
+      ]
+    }
+  ]
+}

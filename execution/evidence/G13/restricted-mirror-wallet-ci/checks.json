@@ -1,0 +1,25 @@
+{
+  "candidate": "449319e16dd14b2e96613c17c736ba6a39906207",
+  "base": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "sourceHashes": {
+    "plugins/github-app-broker.mjs": "0609f52b8ebdeaeb1ccbf15bafce493c11c3e48cbed782e165d94ac7f065fb57",
+    "plugins/test/github-app-broker.test.mjs": "356d47f485f396880e142267cde92f3af6a3756c1a59bd36265c5e799dc8c6a9",
+    "plugins/DEPLOYMENT.md": "e68090cff8f95e1948a6e7e513dcd945679c9b195b92c33b4842d292a979caf0",
+    "scripts/test-w02-browser.mjs": "bc68722cc59f6d03237e9911f1c308d03cb03002abaea9864e27c07a0c15862e"
+  },
+  "broker": {
+    "command": "node --test plugins/test/github-app-broker.test.mjs",
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 7841.39675,
+    "logSha256": "ee6aea1c61340a1fd283b5d3a3f59379c53375412ca6c4d6e3db4948e1454c8d"
+  },
+  "browser": {
+    "command": "node scripts/run-bounded-browser-check.mjs scripts/test-w02-browser.mjs execution/evidence/T04/wallet-browser-portable-gas-current.json",
+    "passed": true,
+    "elapsedMs": 11785,
+    "evidenceSha256": "f3b132166a1d8831b6096b612634607e1913bd4360144b648ff7dbf7ca4b8995"
+  },
+  "limits": "Controlled broker tests plus actual built browser wallet with synthetic transaction providers. Assisted originalB live mirror recorded separately. Automatic fresh creation, realproof and fullproduct acceptance remain open."
+}

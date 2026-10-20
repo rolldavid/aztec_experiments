@@ -1,0 +1,42 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-12T03:56:14.233763+00:00",
+  "verdict": "approved bounded source; actual authenticated integration pending",
+  "findings": [],
+  "independentTests": {
+    "command": "NODE_BACKEND=js pinned Node v24.21.0 --test --test-concurrency=1 immutable extracted preferences.test.mjs preference-events.test.mjs",
+    "log": "/tmp/reviewer-g07-d933-093-tests.log",
+    "logSha256": "24986edfba5aa1ad07f8c09fca38f88c925fb46143366684fa8910b993119fc4",
+    "passed": 147,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1119.674917,
+    "extraction": "/var/folders/ym/q1vh2x5n58xbsmpmvs5_6w3r0000gn/T/reviewer-g07-fold-events-q0p5rs72",
+    "artifactSha256": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431",
+    "rootArtifactChanged": false
+  },
+  "genuineAcceptanceClaimed": false,
+  "candidate": "093af599c1bd5f5bd5a3e05f1c3c73f69373f0d0",
+  "base": "fea5af6ba153ab0336efdd914970d989b9ec011e",
+  "requirements": [
+    "G07 encrypted eight-field PreferenceChanged schema",
+    "G07-A02",
+    "G07-A08"
+  ],
+  "sourceHashes": {
+    "shared/rolling/preference-events.mjs": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+    "shared/rolling/preference-events.test.mjs": "5d53d76d66a302fcf3bba527ff599af169e1ba07fe402fd21476e7cbc3f74f14"
+  },
+  "checks": [
+    "Read decoder and test assumptions before results; 15 independently passing actual SDK Fr/EventSelector/ABI tests with artificial event vectors. Copied only reviewed G07 processed artifact into temporary extraction; root old artifact not touched.",
+    "Unique RollingBoard::PreferenceChanged ABI requires exact eight ordered names and exact unsigned32/u64/u8/field/bool/u32/field/field types. Selector derived with installed SDK exact signature.",
+    "Decode validates eight canonical fields, literal boolean field0/1, schema1, positive u64 revision, kind1..6, typed target/read invariants, closed-open caller range, positive event block, nonzero bounded block hash and tx hash. Output normalized immutable field strings/booleans/numbers; arbitrary errors become fixed code without raw cause.",
+    "Main board target0 and global notifications target0 supported; read markers require true, nonzero target/hash, no future event-block boundary. Missing/extra fields, ABI variants, malformed metadata and selector mismatch reject."
+  ],
+  "limitations": [
+    "Schema validation does not prove encrypted-log authenticity, recipient/account/contract scope, canonical inclusion or event ordering. Only official scoped PXE output is acceptable; reader must verify canonical per-block hash plus fixed end anchor and head continuity.",
+    "Artifact name/ABI is not deployment or contract-class verification; authenticated artifact/deployment provenance remains construction boundary duty.",
+    "Browser SDK EventSelector/decodeFunctionSignature export and normal bundle integration pending, requiring exact source/build validation.",
+    "Artificial vectors with actual SDK types are not genuine encrypted PreferenceChanged delivery, live reorg/cold recovery, native browser or privacy qualification."
+  ]
+}

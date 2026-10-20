@@ -1,0 +1,12 @@
+✔ public HTTP reader sends no account credentials and encodes untrusted query values (12.477166ms)
+✔ reader rejects unready, oversized, nonJSON and malformed responses (0.711375ms)
+✔ streaming size gate cancels before reading an unbounded response (0.430292ms)
+✔ public reader: navigation, unsafe content, failure recovery and narrow keyboard menu (816.286917ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1003.023458

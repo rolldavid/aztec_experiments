@@ -1,0 +1,21 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_SELECTED_BUNDLED_NODE_AUTH_ACTUAL",
+  "actualPacketSha256": "b95477f90ce450cdc228fad21c52a1e3cc1905a6eb9cfc69edec8c9e174106c9",
+  "source": "8ac1e7c1b71f322b0d9ad89f81f6efb47649a9bb",
+  "session": 93117,
+  "elapsedMs": 11479,
+  "peakTreeRSSKiB": 1018560,
+  "counts": "1pass0fail0skip",
+  "boundPins": 5377,
+  "resultLogIntentBindingsVerified": true,
+  "cleanupVerified": true,
+  "scope": "Actual normal CLI prelude and built SDK node, controlled real parent service with authenticated public reads and wrong/missing/path/private-facade/stale negatives. All source-defined upstream and query-only no-worker assertions passed.",
+  "holds": [
+    "Bundled PXE and drain require separate exact preparations/grants",
+    "Whole30 integration and3 w02 not rerun",
+    "No production main/provider/signing/proof/deployment acceptance",
+    "Historical99958 remains failed"
+  ],
+  "reviewerRuntimeExecuted": false
+}

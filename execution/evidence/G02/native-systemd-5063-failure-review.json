@@ -1,0 +1,42 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "accept-failure-evidence-hold-remedy-and-repeat",
+  "actualPacketSha256": "cf2fd98afe506b2761f5c81db2097ed2ab45e96895efe08226f4a29d0111f9b9",
+  "independentPacketFilesRehashed": true,
+  "sourcePacketSha256": "aa751c307dfccb360ded0e30f290d980b924226b00a59175bff00269c53fbe67",
+  "observations": {
+    "elapsedMs": 3364,
+    "hostConfinement": true,
+    "guestPreflight": true,
+    "systemdBarrier": true,
+    "sourceUnchangedRecorded": true,
+    "containerAbsentRecorded": true,
+    "reloadFreeBytes": 32976896,
+    "reloadTotalBytes": 33554432,
+    "firstReloadAndTimerStartsCompleted": true,
+    "baselineReloadCompleted": true,
+    "failureCheckpoint": "baseline/result-read",
+    "workerResult": "missing",
+    "recordedCases": 0,
+    "nativeState": "inactive/dead/success, ExecMainCode0/start0",
+    "nativeQualified": false
+  },
+  "sourceDiagnosis": [
+    "Driver catches and discards original systemctl start --wait exception before after-state/result-read; missing result does not identify original start outcome.",
+    "Baseline does not invoke native_retain_execution, so a newly added retention edge cannot explain this baseline failure.",
+    "Boot explicitly chmods public /opt/rolling-native-version0755 and creates both InaccessiblePaths; unit/worker placeholders expand with actual newlines and exact one-path substitutions.",
+    "No evidence-supported unit/security weakening or automatic retry identified."
+  ],
+  "nextBoundary": [
+    "A separately reviewed direct local bounded reproduction may retain the original fixed public-unit start command error in a capped private evidence file for diagnosis, then emit only reviewed finite categories. Avoid another phase-only observer refinement.",
+    "Keep exact production unit/capture/classifier and all network, cgroup, privilege, memory, wall-clock and ownership limits; no paid or BB qualification action."
+  ],
+  "excludedHypothesis": {
+    "readOnlyVarTmp": "Not a justified fix: upstream v255 setup_one_tmp_dir explicitly handles EROFS with read-only empty-directory fallback.",
+    "source": "https://raw.githubusercontent.com/systemd/systemd/v255/src/core/namespace.c"
+  },
+  "limits": [
+    "The runspace incompatibility is corrected for observed reloads; this is not a harmless workload/retention pass.",
+    "Actual start refusal versus worker execution failure/unload remains unresolved."
+  ]
+}

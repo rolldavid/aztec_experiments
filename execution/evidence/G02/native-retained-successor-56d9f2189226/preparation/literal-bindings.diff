@@ -1,0 +1,38 @@
+--- before/core
++++ after/core
+@@ -19,7 +19,7 @@
+ AMI='ami-0fa5967347d08d2df'
+ # Populated only after exact source, complete cost reservation, private payload
+ # and each operation's independent review. An empty mapping cannot perform I/O.
+-BINDINGS={'budgetStop': None, 'campaign': 'native-version-20261013-56d9f2189226', 'commissioningStop': None, 'controlSourceSha256': '802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84', 'createdAt': None, 'cumulativeBoundUsd': 235.28, 'latestLaunch': None, 'launchGrantSha256': None, 'operatorReviewSha256': None, 'payloadBytes': None, 'payloadReviewSha256': None, 'payloadSha256': None, 'preparationGrantSha256': None, 'securityGroup': 'sg-076e39ea1d8dbf8d0', 'sourceSha256': '31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535', 'subnets': ['subnet-aa91f4ce', 'subnet-a705ce88'], 'workerSha256': '151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878'}
++BINDINGS={'budgetStop': '2026-10-13T07:44:32Z', 'campaign': 'native-version-20261013-56d9f2189226', 'commissioningStop': '2026-10-13T07:29:32Z', 'controlSourceSha256': '802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84', 'createdAt': '2026-10-13T06:59:32Z', 'cumulativeBoundUsd': 235.28, 'latestLaunch': '2026-10-13T07:09:32Z', 'launchGrantSha256': None, 'operatorReviewSha256': 'ad161e516c3657028b9435257814eeefedf77f0718c7957930e7fd39187a4a4b', 'payloadBytes': 12488, 'payloadReviewSha256': None, 'payloadSha256': '4aff376d4e6990d762d42faf504db09b104e0ab8b1df09de2c3d2c2325c54d5d', 'preparationGrantSha256': 'bd191c2e32594795e2805411429ea90c0752e7fde6cc031c4d03a0b46fd78794', 'securityGroup': 'sg-076e39ea1d8dbf8d0', 'sourceSha256': '31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535', 'subnets': ['subnet-aa91f4ce', 'subnet-a705ce88'], 'workerSha256': '151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878'}
+ BINDING_KEYS={'campaign','sourceSha256','operatorReviewSha256','preparationGrantSha256','launchGrantSha256','payloadReviewSha256','payloadSha256','payloadBytes','controlSourceSha256','workerSha256','createdAt','budgetStop','commissioningStop','latestLaunch','securityGroup','subnets','cumulativeBoundUsd'}
+ 
+ def digest(path):
+--- before/launch
++++ after/launch
+@@ -1,5 +1,5 @@
+ import hashlib,pathlib,runpy,sys
+ p=pathlib.Path(__file__).with_name('native-version-operator-56d9f2189226-core.py')
+-if hashlib.sha256(p.read_bytes()).hexdigest()!='75e020f72e9f37676de7ef8832bc7ed6c7428327fb6ec31eb6e7c571af05d57a':raise SystemExit('Operator source mismatch')
++if hashlib.sha256(p.read_bytes()).hexdigest()!='13b3a8709f4d0d71da37deb8b477f95f0f5ca6b7b33886c2f3d3eaeefd4ac8ed':raise SystemExit('Operator source mismatch')
+ ns=runpy.run_path(str(p))
+ sys.exit(ns['main']('launch'))
+--- before/observe
++++ after/observe
+@@ -1,5 +1,5 @@
+ import hashlib,pathlib,runpy,sys
+ p=pathlib.Path(__file__).with_name('native-version-operator-56d9f2189226-core.py')
+-if hashlib.sha256(p.read_bytes()).hexdigest()!='75e020f72e9f37676de7ef8832bc7ed6c7428327fb6ec31eb6e7c571af05d57a':raise SystemExit('Operator source mismatch')
++if hashlib.sha256(p.read_bytes()).hexdigest()!='13b3a8709f4d0d71da37deb8b477f95f0f5ca6b7b33886c2f3d3eaeefd4ac8ed':raise SystemExit('Operator source mismatch')
+ ns=runpy.run_path(str(p))
+ sys.exit(ns['main']('observe'))
+--- before/cleanup
++++ after/cleanup
+@@ -1,5 +1,5 @@
+ import hashlib,pathlib,runpy,sys
+ p=pathlib.Path(__file__).with_name('native-version-operator-56d9f2189226-core.py')
+-if hashlib.sha256(p.read_bytes()).hexdigest()!='75e020f72e9f37676de7ef8832bc7ed6c7428327fb6ec31eb6e7c571af05d57a':raise SystemExit('Operator source mismatch')
++if hashlib.sha256(p.read_bytes()).hexdigest()!='13b3a8709f4d0d71da37deb8b477f95f0f5ca6b7b33886c2f3d3eaeefd4ac8ed':raise SystemExit('Operator source mismatch')
+ ns=runpy.run_path(str(p))
+ sys.exit(ns['main']('cleanup'))

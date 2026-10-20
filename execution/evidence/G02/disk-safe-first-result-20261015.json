@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-14T23:22:56.659171+00:00",
+  "manifest": "disk-safe-first-20261015.json",
+  "manifestSha256": "afcaea9dab53ae3cc2b523732ccc49c1a66c35e8e2e90a584f7cdec86ffd45bb",
+  "removedEntries": 127,
+  "allocatedBytesRemoved": 3778920448,
+  "allAbsent": true,
+  "archivePreserved": true,
+  "walletStateJournalsEvidencePreserved": true,
+  "liveness": "Fresh global lsof no exact candidate handles; no tracked paths or descendant symlinks"
+}

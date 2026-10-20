@@ -1,0 +1,8 @@
+{
+  "revision": "0d1fcab94dc3f5fb780eed26c6f7610652958986",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded rerun",
+  "observedFailure": "private-normal-genuine-oom.json",
+  "change": "Only Normal/Uncertain fixtureheap384\u2192768MiB; unchanged540s/4GiB, proof/accounting/threads/actors",
+  "findings": []
+}

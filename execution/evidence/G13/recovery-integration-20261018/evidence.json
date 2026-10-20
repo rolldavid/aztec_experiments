@@ -1,0 +1,156 @@
+{
+  "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+  "task_id": "G13-recovery-combined-integration-20261018",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "combined-recovery-tests",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node --test --test-concurrency=1 selected saved/refund/policy/reorg cases",
+      "environment": "macOS pinned Node24.21.0/SDK6.0.0-rc.3, native proof-disabled development; isolated tests labelled",
+      "observed": "38 combined lead and37 independent checks pass; previous59passed andsleepcancel preserved",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/combined.log",
+          "sha256": "e30f05f64a80b94bebc8b96f9005b5907cc8988495c3866c02d25f5414fb3a94"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/policy-focused.log",
+          "sha256": "9993ce8e7e1a73a5792638ee022723216ec47be5e6133bae74d4bc725177446b"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        }
+      ]
+    },
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "saved-refund-ui",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing wallet-panel browser saved refund selector",
+      "environment": "macOS pinned Node24.21.0/SDK6.0.0-rc.3, native proof-disabled development; isolated tests labelled",
+      "observed": "4worker+4independent pass, no skips/cancellations",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/refund-ui.json",
+          "sha256": "43677a50edaaf0adb0dd36274dc764df15bb28d7946e704dec6d11d8fb804a34"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        }
+      ]
+    },
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "normal-generated-closure",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Normal build-sdk.mjs;apps/build.mjs;rolling-wallet-assets.mjs; independent manifest SHA256 verification",
+      "environment": "macOS pinned Node24.21.0/SDK6.0.0-rc.3, native proof-disabled development; isolated tests labelled",
+      "observed": "SDK2057/8 app97/10 wallet97/25 all exact; originalforgePATHfailedpreflight preserved and fixed by PATH only",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/sdk.log",
+          "sha256": "176aa744d3a186172b34f743ef1da8b1cc4ed879f13c525d8fc13794e3004e09"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/sdk-with-foundry.log",
+          "sha256": "2016209b30a78d7cdbe6d7fa25bcdf70be6e02467f613665c00fa96b66f2de3e"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/apps.log",
+          "sha256": "04256547b629146dfe8e1364b311eed6510f106ad4c5b4dfcf4cddfc01b70f2a"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/wallet.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+    "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+    "task_id": "G13-recovery-combined-integration-20261018",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+        "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "W03-RC22-saved-refund-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/combined.log",
+          "sha256": "e30f05f64a80b94bebc8b96f9005b5907cc8988495c3866c02d25f5414fb3a94"
+        }
+      ]
+    },
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "RC37-policy-restart-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/combined.log",
+          "sha256": "e30f05f64a80b94bebc8b96f9005b5907cc8988495c3866c02d25f5414fb3a94"
+        }
+      ]
+    },
+    {
+      "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+      "candidate": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "task_id": "G13-recovery-combined-integration-20261018",
+      "id": "G13-skill-reference",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/review.json",
+          "sha256": "18b6986da1dae3898041bfb2b98cf268cb685a84cd5d132a0b1ce2a6d5d1641d"
+        },
+        {
+          "path": "execution/evidence/G13/recovery-integration-20261018/combined.log",
+          "sha256": "e30f05f64a80b94bebc8b96f9005b5907cc8988495c3866c02d25f5414fb3a94"
+        }
+      ]
+    }
+  ]
+}

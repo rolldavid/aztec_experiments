@@ -1,0 +1,35 @@
+✔ labelled fake complete path persists running then exact stages, never startup qualification (1.284583ms)
+✔ wrong chain stops before personalized or further provider reads (0.126833ms)
+✔ wrong rollup version and missing code fail the actual identity boundary (0.212791ms)
+✔ historical logs require nonempty exact deployblock/hash/contract and not removed (0.726334ms)
+✔ strict 300-second SDK L1 drift boundary preserved (0.514125ms)
+✔ trace acceptance exactly requires at least one actual supported method (0.257291ms)
+✔ SDK blob source rejection is retained, no success fallback (0.238167ms)
+✔ finalized anchor mutation rejects the otherwise passing probe (0.66925ms)
+✔ provider thrown objects, messages, causes and changing getters never enter receipt (0.321334ms)
+✔ source projection rejects arbitrary digest values and extra private source fields (0.138708ms)
+✔ cleanup failure cannot turn checks into an overall pass (0.257583ms)
+✔ actual disposable child enforces deadline, kills ignored TERM and preserves partial receipt (824.649959ms)
+✔ existing or symlinked receipt refuses execution without modifying target (2.17725ms)
+✔ fixed locally-branded failure categories discriminate empty logs, clock, trace and reorg (1.835583ms)
+✔ actual installed source bytes match every declared SDK pin without RPC (4.9695ms)
+✔ single labelled HTTP response passes real SDK and strict ABI decoding offline, without another provider request (135.480083ms)
+✔ numeric RPC errors only, never provider messages, data or extra fields (0.956666ms)
+✔ HTTP failure and changing status getters are captured once and projected as bounded numeric status (0.110958ms)
+✔ thrown malicious objects and response property getters never leak or cause retries (0.225292ms)
+✔ response envelope, JSON, UTF8, count and exact canonical log bindings fail closed (1.571334ms)
+✔ bounded streamed response rejects oversize, cancels and releases stream with no raw output (0.327417ms)
+✔ timeout aborts the sole request or streaming read, preserving fixed status and cleanup (24.487542ms)
+✔ same-response strict ABI stage rejects noncanonical indexed address padding after SDK parser (0.515125ms)
+✔ named Tenderly mode selects exact keyless endpoint, preserves identical query and offline decoding (0.906416ms)
+✔ unsupported provider rejected before request or receipt creation, without coercing hostile selectors (0.672833ms)
+✔ Tenderly failure records selected provider and numeric status only; never falls back or retries (0.331916ms)
+✔ supervisor retains selected provider in partial receipt if worker fails before diagnostic and forbids changing full prerequisite provider (34.949083ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1079.399667

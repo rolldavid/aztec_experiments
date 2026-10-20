@@ -1,0 +1,22 @@
+{
+    "CommandId": "3c18ac3d-369b-432e-adab-c36c35f2c5f7",
+    "InstanceId": "i-0cb8555882d6cfecc",
+    "Comment": "",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-10T12:57:49.621Z",
+    "ExecutionElapsedTime": "PT0.032S",
+    "ExecutionEndDateTime": "2026-10-10T12:57:49.621Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "active\n{\"matches\": 1, \"records\": [{\"job\": {\"postId\": \"0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2\", \"state\": \"confirmed-flag\", \"policyVersion\": \"0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa\", \"modelVersion\": \"0x35f2b97233e240e96f8c9d1a55aa2d8f7c9461db6908cbf34e8ea52fc18ff3c8\", \"attempt\": \"1\", \"transactionHash\": \"0x0cf507e4a92f5fe6a7b2cfe9a7f3dabdaaeeac22788dc61aa7b2af89619bf8e8\"}, \"isViolation\": true, \"errorCode\": null, \"orphaned\": false, \"receipt\": {\"txHash\": \"0x0cf507e4a92f5fe6a7b2cfe9a7f3dabdaaeeac22788dc61aa7b2af89619bf8e8\", \"blockHash\": \"0x1aefe16ca256a6dfe8391c205a61178ee6788789c27b02e914519b361fb47550\", \"blockNumber\": \"15402\", \"status\": \"finalized\", \"executionResult\": \"success\"}, \"flagEvent\": {\"schemaVersion\": 1, \"scope\": {\"l1ChainId\": \"11155111\", \"rollupVersion\": \"2914217885\", \"rollupAddress\": \"0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9\", \"boardAddress\": \"0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752\", \"portalAddress\": \"0xe664b6b5fd7575616653f75374d5fc7e8544b982\"}, \"type\": \"PostFlagged\", \"position\": {\"blockNumber\": \"15402\", \"blockHash\": \"0x1aefe16ca256a6dfe8391c205a61178ee6788789c27b02e914519b361fb47550\", \"txHash\": \"0x0cf507e4a92f5fe6a7b2cfe9a7f3dabdaaeeac22788dc61aa7b2af89619bf8e8\", \"txIndexWithinBlock\": \"0\", \"logIndexWithinTx\": \"0\"}, \"payload\": {\"postId\": \"0x16a9777c0fedba326e12abd5d387e2116d68cd2f0427348efda3998b9ae138f2\", \"reason\": \"The post contains a credible threat of physical violence against a specific person.\", \"flaggedAt\": \"1791634188\", \"censorAddress\": \"0x21d6775865a9c5e62c28dc784edd367de074d4752f7319cf7f80f0ddbf6c102d\", \"policyVersion\": \"0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa\"}}}]}\n",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}

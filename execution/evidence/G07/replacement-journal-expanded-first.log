@@ -1,0 +1,62 @@
+✔ stale proof replacement retains exact post intent and original proof through portable recovery (538.255333ms)
+✔ uncertain or live original cannot authorize another proof: {"status":"pending"} (85.754833ms)
+✔ uncertain or live original cannot authorize another proof: {"status":"proposed"} (74.058375ms)
+✔ uncertain or live original cannot authorize another proof: {"status":"checkpointed"} (78.195666ms)
+✔ uncertain or live original cannot authorize another proof: {"validation":{"result":"valid"}} (66.140667ms)
+✔ uncertain or live original cannot authorize another proof: {"validation":{"result":"invalid","reason":["bad signature"]}} (68.7655ms)
+✔ uncertain or live original cannot authorize another proof: {"validation":{"result":"invalid","reason":["Existing nullifier","unrecognized"]}} (77.617666ms)
+✔ original becoming live during proving prevents saving replacement and preserves the original request (186.251292ms)
+✔ different logical operation cannot consume a stale-proof authorization (184.479791ms)
+✔ concurrent replacement authorizations still allow only one durable new proof (383.021333ms)
+✔ replacement chain is bounded and preserves its last record when the limit is reached (7095.904542ms)
+✔ stalled transaction reads and canonical receipt requests respect bounded deadlines (16.863417ms)
+✔ stalled replacement reconciliation remains unknown and leaves the original record intact (108.828666ms)
+✔ replacement RPC exceptions expose only the bounded recovery classification (78.769583ms)
+✔ replacement must retain the exact bound application spend even when fee nullifiers change (413.633917ms)
+✔ G07 strict read-only inspection does not authorize, write or send (169.7675ms)
+✔ G07 strict missing-anchor mode rejects generic nullifier conflict while legacy default remains available (233.897375ms)
+✔ G07 strict authorization survives reason mutation at assert (165.626292ms)
+✔ G07 strict authorization survives reason mutation at prepare (177.987708ms)
+✔ G07 strict policy persists across encrypted portable restore and cannot be downgraded (931.074542ms)
+✔ G07 before-submit guard inspects only prior hashes, never rejects the new valid pending candidate (447.0405ms)
+✔ G07 prior-only guard fences predecessor pending (387.703083ms)
+✔ G07 prior-only guard fences predecessor checkpointed (381.42675ms)
+✔ G07 prior-only guard fences predecessor unknown (390.129666ms)
+✔ G07 prior-only guard fences predecessor noncanonical (417.351334ms)
+✔ G07 receipt re-inclusion between validation and second receipt is not absence (138.507333ms)
+✔ G07 options captured before await; status rows are detached frozen primitive projections (100.301916ms)
+✔ G07 malformed replacement options are rejected before network (45.626666ms)
+✔ G07 malformed replacement options are rejected before network (48.26575ms)
+✔ G07 malformed replacement options are rejected before network (50.963375ms)
+✔ G07 malformed replacement options are rejected before network (59.27725ms)
+✔ G07 malformed replacement options are rejected before network (54.787791ms)
+✔ G07 accessors, malformed operations and foreign before-submit identity are rejected without authority (415.849375ms)
+✔ G07 inspection on empty journal or unsigned first attempt cannot grant before-submit permission (83.265917ms)
+✔ G07 failed renewed authorization clears an older in-memory permit (146.1355ms)
+✔ G07 caller mutation of previous decoded value cannot replace authenticated prior signed bytes (307.557917ms)
+✖ G07 inspection detects concurrent ciphertext CAS change and never returns stale authority (140.996083ms)
+✔ G07 unknown transport and hostile error fields stay sanitized without changing ciphertext (298.728375ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 37
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15344.164917
+
+✖ failing tests:
+
+test at scripts/test-w03-proof-replacement.mjs:188:1
+✖ G07 inspection detects concurrent ciphertext CAS change and never returns stale authority (140.996083ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-preference-actor/scripts/test-w03-proof-replacement.mjs:191:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'BB_RECOVERY_REQUIRED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

@@ -1,0 +1,11 @@
+{
+  "createdAt": "2026-10-11T22:23:33.887733+00:00",
+  "source": "3ce25611bdb130b14ce05b82c98ce59e88619019",
+  "scenario": "rolling-anonymous-thread",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "social-combined-3ce2561-review.json",
+  "hypothesis": "Reviewed lifecycle-free social consumer exercises actual anonymous root/reply/quote/removal and canonical HTTP reconstruction using existing normal artifacts.",
+  "status": "launching once"
+}

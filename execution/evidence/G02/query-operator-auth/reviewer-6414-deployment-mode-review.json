@@ -1,0 +1,40 @@
+{
+  "candidate": "6414158410976582f2acbee5951f4cc1cfbb16e5",
+  "base": "2419226e967bce7c8b6f1c6082e704d5aa40a5dc",
+  "verdict": "PASS_SCOPED_DEPLOYMENT_COMPONENT",
+  "sources": {
+    "apps/src/billboard/deploy/engine.js": "9ae0f23077ebc42bd12e63fa1c3d00e2652f813426f91b18b77e1a905d5ad301",
+    "shared/deployment-manifest.mjs": "44cccad9a4a6727e478304daba78e072b6a393db90972f1e1d86d3c5b1972936",
+    "scripts/test-w03-deploy-engine.mjs": "5372c04fbb9d26d77160c704116b2b5dfcc16d4270d1e7d7375224853cab734b",
+    "scripts/test-deployment-manifest.mjs": "e224e7393ba3d119fbb959d6f7b5a919636b94b614dffbc44947bc43807fd04d",
+    "shared/l2-journal.mjs": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+    "scripts/test-w03-journal.mjs": "37fe09613a4603a8c0a5a89133d773a61e034069232ecf5e4eca47aac8b5d3bb"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G11/rolling-deployment-reuse/native-reconciliation-handoff.json",
+    "sha256": "51aeedc182d0e5234842ad285757446ac9718cdaa83405d4162dada168c8687b"
+  },
+  "reviewed": [
+    "Actual deployment preflight reads native getConfig.realProofs as an own primitive boolean, not optional NodeInfo alias. Local-test31337 requiresfalse; operatorSepolia11155111 requirestrue; existing independent L1/node/rollup/bridge checks remain.",
+    "Engine captures verified mode once and uses exactly that value for CRS and native PXE. Missing new result from stale SDK fails before PXE/deployment instead of defaulting to real or false.",
+    "Only Rolling opts into reconcileOnly. Shared journal defaultfalse preserves existing caller behavior; strictboolean option validated. Actual dropped recovery branch rejects before validity/readmission/resend and retained bytes stay unchanged. Canonical receipt reconciliation remains available.",
+    "Rolling engine no longer authorizes stale saved-operation replacement after reconciliation failure. Existing legacy path unchanged. CLI and browser journal factories spread options into actual createL2Journal.",
+    "No app proof verification disabled and no native SDK patch changed. Final source adds guard only; previously passing engine cases all supply native flag, while selected current old-bundle negative covers missing flag."
+  ],
+  "evidence": {
+    "logs": {
+      "manifest-tests.log": "845f2296ebaef1cd0d96e2d33e7a553750f5672e3cce992378e5995a744c90ec",
+      "engine-tests.log": "583556f639255d8345d8ccc30287a991d70f6c45790dd6e2002f4b270cce9def",
+      "journal-focused.log": "d4159e0f31a21168aef478aa66dffe952e34e6653488c94f8652f211b6c77a2b",
+      "engine-old-bundle-focus.log": "68359686fc0be657f2bde3200d982ce5c851160429ce157ae46bc271a5c2f9b6"
+    },
+    "scope": "Manifest48 PASS323.243ms; engine50 PASS12691.097ms before final missing-mode guard; journal selected8 PASS4893.936ms covering file/IndexedDB new reconcile-only and retained default recovery; final old-bundle guard1 PASS3785.324ms. Staged coverage, not new full final51 engine pass."
+  },
+  "limitations": [
+    "Normal SDK and dependent assets must be rebuilt from current shared manifest/journal sources before CLI/browser actual use; no manual manifest rewriting.",
+    "No actual independent deployment, L1 portal settlement, funded account, network admission or real-proof testnet acceptance.",
+    "This is L2 recovery-send policy; it does not newly qualify Ethereum recovery or PrivateFPC/PrivateBok lifecycle.",
+    "Captured native mode is preflight state, not immunity to subsequent provider/node configuration drift; later mismatch may reject deployment.",
+    "Legacy local-real and non-Sepolia operator profiles are deliberately refused by native profile policy."
+  ]
+}

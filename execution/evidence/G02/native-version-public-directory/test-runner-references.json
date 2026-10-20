@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "scope": "Source-only successor runner delta references; no runner generated or executed",
+  "source": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "references": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-focused/run.mjs",
+      "sha256": "c738d8838e5b4aa48d0c891d8884bdfb701669eca9f92163c8418502855830bf"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-focused/child.py",
+      "sha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-focused/preparation.json",
+      "sha256": "e1269b4ffbb57a863fb8459517eb0ebf03ecf2130b9a950680b7d02a2e7ba938"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-full/run.mjs",
+      "sha256": "b6f3f26fd5b4b5854b75eab482817fa2171d7577baf1b0df53e0c54beef5c3cf"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-full/child.py",
+      "sha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-full/preparation.json",
+      "sha256": "0cf826953db4cfbe237f25facb0b23d2f4245df8335006e01c0a9510ddd8c6db"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-package/run.mjs",
+      "sha256": "102e79ebfe4e718f3bc3ce1e1f884fd634b20048fc0dfc4496c68238722324f8"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-package/child.py",
+      "sha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G02/native-14b-package/preparation.json",
+      "sha256": "991052e9ff9492f92c9a21fd6d3326985257b07263d4a8e3749030db55f2851d"
+    }
+  ],
+  "expectedFocused": 15,
+  "expectedFullBootstrap": 69,
+  "expectedPackage": 8,
+  "commands": [
+    [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "scripts/test-prover-bootstrap.py",
+      "NativeVersionDiagnostic",
+      "-v"
+    ],
+    [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "scripts/test-prover-bootstrap.py",
+      "-v"
+    ],
+    [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "scripts/test-prover-package.py",
+      "-v"
+    ]
+  ],
+  "requiredDeltas": [
+    "Use new unique evidence directories and exclusive intent/log/result paths; never rerun historical14b directories.",
+    "Bind exact lead composed revision after approved three-file transfer; regenerate full before-source inventory including three updated blobs.",
+    "Keep Supervisor60s/2GiB per stage, stop first failure, source postcheck and whole owned tree/temp absence.",
+    "Use supported Python3.14.8 command above; pinnedNode24.21 validation; verbose unittest labels immediately retained.",
+    "Fresh external resolved /private/tmp private0700 TMPDIR per stage; HOME evidence/home, no nested package copy or symlink /tmp fixture root.",
+    "Retain NODE_BACKEND=js,HARDWARE_CONCURRENCY=1,LOG_LEVEL=silent,PYTHONDONTWRITEBYTECODE=1; current reviewed Rolling artifact; unchanged proof/service/no-network scope.",
+    "Focused15 first, then full69 and package8 only after previous actual pass/cleanup and parent serialized grant."
+  ],
+  "executionAuthorized": false
+}

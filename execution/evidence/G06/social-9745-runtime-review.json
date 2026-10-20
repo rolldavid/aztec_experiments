@@ -1,0 +1,290 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "verdict": "approved actual bounded two-account social-wire development acceptance",
+  "scope": "G06 named/Anonymous social effects and explicit serialized HTTP observer reconciliation; not full G06 or privacy assurance",
+  "blocking_findings": [],
+  "evidence": {
+    "outer": "execution/evidence/G06/application-9745c179-f084-4377-a056-454244b85a04.json",
+    "sha256": "c76e6f3d4827163f6f939437c2debd512b0855ab3860ae653e198ae42bf37791",
+    "inner": "execution/evidence/G06/application-port-c35e5589-83ee-435c-a0da-6c735222c0a8/observation.json",
+    "inner_sha256": "f349a40483999f41954b814b161f36e562cad9d4e375340c8d512bc9fac674bb",
+    "inner_equals_outer_worker": true
+  },
+  "source_binding": {
+    "outer": {
+      "matched": {
+        "git": 213,
+        "filesystem": 11
+      },
+      "not_verified": [
+        "localAnvilBinary"
+      ]
+    },
+    "inner": {
+      "matched": {
+        "git": 57
+      },
+      "not_verified": []
+    },
+    "artifact": {
+      "matched": {
+        "filesystem": 2
+      },
+      "not_verified": []
+    },
+    "bok": {
+      "matched": {
+        "git": 14
+      },
+      "not_verified": []
+    },
+    "native": {
+      "matched": {
+        "filesystem": 70
+      },
+      "not_verified": []
+    }
+  },
+  "source_review": "execution/evidence/G06/social-combined-2397-review.json",
+  "independent_checks": [
+    "Read six-action consumer/parent assertions and actual event decoder before accepting result. Exact source hashes checked against2397 blobs; installed/native/artifact bytes checked on filesystem.",
+    "Decoded all6 persisted TxEffect binary files using installed SDK; recomputed SHA256, exact transaction hashes and Fr fees, authenticated Rolling class/event tag/ABI/digest, canonical text packing.",
+    "Verified2 NameRegistered names River Stone and Juniper Vale;4 PostPublished effects named,named,Anonymous,Anonymous. Two root parents zero; A anonymous reply references B root and B anonymous reply references A root. Exact992UTF8 first post retains literal img/javascript-markup content.",
+    "Recomputed fee sums, both private balances and shared pool cross-contributions; zero human public fee balances asserted in actual records.",
+    "Recomputed all wire row totals and actual five receiver counts; verified0 unknown/unsupported/truncation/pending/errors, both human trusted-query positive controls, no known human role in ordinary-node/public-reader/public-L1 rows.",
+    "Checked cleanup, proof service counters, limits, canonical fresh/reopened reader and encrypted journal outcomes. No new heavy test or service operation."
+  ],
+  "effects": [
+    {
+      "action": "social-wire-name-1",
+      "bytes": 2431,
+      "sha256": "35c6a77f5dba0ff9e4b5a859b2e02dfa4e43a55000186bbfc55eeaa3aa2f630c",
+      "event": "NameRegistered",
+      "fee": "10177600800000",
+      "logFields": 9,
+      "name": "River Stone"
+    },
+    {
+      "action": "social-wire-name-2",
+      "bytes": 2431,
+      "sha256": "3c08e8973aaf0027f7cc0f65e8e8a4e7e002ec08dee8bd83aa821ee3228b9e58",
+      "event": "NameRegistered",
+      "fee": "10189993800000",
+      "logFields": 9,
+      "name": "Juniper Vale"
+    },
+    {
+      "action": "social-wire-post-1",
+      "bytes": 5607,
+      "sha256": "95434539702c846b75cc8e42465857be92f583b29b56933d480a95de27dccadc",
+      "event": "PostPublished",
+      "fee": "27526128000000",
+      "logFields": 46,
+      "textBytes": 992,
+      "named": true
+    },
+    {
+      "action": "social-wire-post-2",
+      "bytes": 5607,
+      "sha256": "277f7742ceae57eec74a3bb1aff1c5d432a8ed34b56019d99c7bf1fb9b92faef",
+      "event": "PostPublished",
+      "fee": "21732997200000",
+      "logFields": 46,
+      "textBytes": 20,
+      "named": true
+    },
+    {
+      "action": "social-wire-post-3",
+      "bytes": 4995,
+      "sha256": "8870942bd93c515848ce80096e439c965858e401e62200d0c666ae0632d1e20b",
+      "event": "PostPublished",
+      "fee": "21082176000000",
+      "logFields": 46,
+      "textBytes": 40,
+      "named": false
+    },
+    {
+      "action": "social-wire-post-4",
+      "bytes": 4995,
+      "sha256": "856d580ce22480f36db7351d54f080ed8a36d9f4d0a2fd9436e60f59650f930d",
+      "event": "PostPublished",
+      "fee": "21079054800000",
+      "logFields": 46,
+      "textBytes": 39,
+      "named": false
+    }
+  ],
+  "runtime": {
+    "passed": true,
+    "elapsed_ms": 499708,
+    "deadline_ms": 540000,
+    "peak_rss_kib": 2293360,
+    "limit_kib": 4194304,
+    "failures": [],
+    "application_proofs": true,
+    "remote_native_http_jobs": {
+      "submitted": 6,
+      "completed": 6,
+      "failed": 0,
+      "running": false
+    },
+    "network_proofs": false,
+    "controlled_settlement": true,
+    "local_chain_id": "31337",
+    "owned_tree_absent": true,
+    "temporary_directory_removed": true,
+    "cleanup": {
+      "applicationActorA": true,
+      "applicationActorB": true,
+      "fundingWallet": true,
+      "fundingWalletB": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "ordinaryRPC": true,
+      "wireCapture": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    }
+  },
+  "funding": {
+    "two_distinct_actual_collateral_deposits_and_claims": true,
+    "amount_each": "1000000000000000",
+    "synthetic_messages": false,
+    "synthetic_proofs": false,
+    "delivered_physical_note_fields_each": 8,
+    "actual_note_and_claim_replay_checks": true,
+    "A_privateFeeDebit": "68105746800000",
+    "B_privateFeeDebit": "62321887800000",
+    "six_action_fees": "111787950600000",
+    "two_claim_fees": "18639684000000",
+    "total": "130427634600000",
+    "funded_each": "1000000000000000000000",
+    "A_remaining": "999999931894253200000",
+    "B_remaining": "999999937678112200000",
+    "both_publicFeeJuice_zero": true,
+    "comment": "Real disposable L1 depositorB funded once before collateral; setup funding occurs before wire installation and is not covered by social trace privacy conclusion."
+  },
+  "ownership_and_recovery": {
+    "actual_private_sets": "Both actors empty initially; A exactly River Stone after first registration; B exactly Juniper Vale after second; repeated cursor0/cursor8 checks after every social action preserve exact own records and no cross-owner records.",
+    "journal": {
+      "sameHash": true,
+      "newProofJobs": 0,
+      "transactionBytesRetained": true,
+      "actors": [
+        {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true
+        },
+        {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true
+        }
+      ]
+    },
+    "canonical_rebuild": {
+      "passed": true,
+      "canonicalTransactionsRefetched": 7,
+      "normalizedCacheTreatedAsAuthority": false
+    },
+    "public_reader": {
+      "passed": true,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true,
+          "checkpoint": {
+            "number": 19,
+            "hash": "0x2f92365ecadf02e26625db87a9f4cf73b41cdfc4707a6ed49b173f97f899ec46"
+          },
+          "views": [
+            "feed",
+            "thread",
+            "thread",
+            "post",
+            "post",
+            "post",
+            "post",
+            "profile",
+            "profile"
+          ],
+          "authenticatedRanges": 2
+        },
+        {
+          "phase": "reopened",
+          "closed": true,
+          "checkpoint": {
+            "number": 19,
+            "hash": "0x2f92365ecadf02e26625db87a9f4cf73b41cdfc4707a6ed49b173f97f899ec46"
+          },
+          "views": [
+            "feed",
+            "thread",
+            "thread",
+            "post",
+            "post",
+            "post",
+            "post",
+            "profile",
+            "profile"
+          ],
+          "authenticatedRanges": 2
+        }
+      ],
+      "persistedRangesBeforeReopen": 2,
+      "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+    }
+  },
+  "wire": {
+    "requests": 19586,
+    "completed": 19586,
+    "counts": {
+      "trusted-upstream": 10216,
+      "trusted-query": 1490,
+      "public-l1": 7475,
+      "trusted-proof": 198,
+      "ordinary-node": 189,
+      "public-reader": 18
+    },
+    "receiver": {
+      "channel": "http.server.request.start",
+      "errors": 0,
+      "requests": {
+        "trusted-query": 1490,
+        "trusted-proof": 198,
+        "trusted-upstream": 10216,
+        "ordinary-node": 189,
+        "public-reader": 18
+      },
+      "scope": "Same-process loopback HTTP adapters only; Anvil and native transports excluded"
+    },
+    "all_failure_counters_zero": true,
+    "known_human_roles_absent_from_ordinary_legs": true,
+    "both_humans_positive_in_trusted_query": true,
+    "opaque_transactions": 192,
+    "requestCoverageComplete": false,
+    "privacyAcceptance": "not-evaluated"
+  },
+  "nonblocking_observation": [
+    {
+      "severity": "P3",
+      "field": "secondDepositorFunding.submission",
+      "finding": "Remains literal outcome unknown despite recorded txHash/status success/gas and subsequent successful collateral claim. Do not use this stale intent label alone to characterize transaction outcome; retain current safe evidence and normalize the label in future source work if useful."
+    }
+  ],
+  "review_probe_corrections": [
+    "Initial reviewer decode probe used nonexistent @aztec-labs/bb.js import; corrected to installed @aztec-foundation/bb.js. Second probe compared fee Fr hex to decimal; corrected to actual toBigInt. Third assumed name log>10fields; inspected actual9field event and selected exact actual emitter. Final decoder/check passed without application or evidence changes."
+  ],
+  "limitations": [
+    "Actual source-bound canonical membership and final anchor checks ran during disposable fixture; reviewer independently decoded retained effects but did not recontact the deleted node. Probe log positions use reported block/hash and local log index; they do not independently reconstruct full deleted block membership.",
+    "Six genuine application proofs/local31337 controlled settlement do not establish epoch proof/public-testnet suitability.",
+    "Loopback routes share disposable node; this is request-boundary evidence, not independent deployed fullnode/archive topology qualification.",
+    "192 opaque requests, runtime-added headers, response bodies, native/undici/process traffic and pre-observer funding remain explicit gaps. Scalar equality absence is not cryptographic unlinkability or timing/content anonymity.",
+    "Reaction-wire, real denial/staleness recovery, source privacy argument and specialist audit remain separate required acceptance.",
+    "Literal markup byte preservation is not DOM execution safety acceptance; production browser safety evidence is separate.",
+    "No full G05/G06/G14 closure or production release from this report."
+  ]
+}

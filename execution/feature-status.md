@@ -1,3 +1,5 @@
+> **20 October restoration update:** App/query/prover and separate Bok are online with persistent hosting. Moderator is running/boot-enabled; current ingestion readiness remains unverified. Scheduled agent work is stopped. See [current handover](../START_HERE.md); older stopped-host/cutoff statements below are historical.
+
 # Rolling Chat — functional delivery
 
 Application source: `f3e23bf4a09ac6350ea2add12feb47b475a427a3` ([PR 8](https://github.com/zac-williamson/aztec_experiments/pull/8)). The public browser uses reviewed `34cc7252` assets. The moderator now runs the exact reviewed `f3e23bf4` daemon/adapter overlay over its `34cc7252` base.

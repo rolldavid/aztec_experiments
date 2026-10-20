@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent read-only shutdown ownership diagnosis",
+  "verdict": "Shutdown-order configuration mismatch is source-supported; actual failing stage remains unconfirmed. Probe process-tree ordering without native state, then reconcile latest retained state before restart.",
+  "leadReportedFacts": {
+    "firstInternalFailure": "Missing asset manifest; owner cleanup succeeded and committed1575.",
+    "secondRun": "Loaded1575 and listened; browser failed before private RPC; externally stopped with KillMode=control-group.",
+    "cleanup": "Native AggregateError; nested stages not recorded; MainPID0 and no rolling-development processes; lease retained.",
+    "memoryPeak": "Approximately17GB, below active limit; no memory-limit failure reported.",
+    "metadata": "phase running points to last good1575 snapshot f054ee41276c33248b857a79907ab1f876915bc0bda130aae018d84716d47a1b"
+  },
+  "sourceDiagnosis": [
+    {
+      "path": "plugins/devnet/network.mjs",
+      "lines": "300-317",
+      "finding": "close serially stops mining/RPC, settles checkpoints using live L1, stops native node, reads L1 head/pending/proven, then terminates Anvil and finally commits the dump. Sending SIGTERM to the parent and Anvil together violates this dependency ordering."
+    },
+    {
+      "path": "plugins/devnet/network.mjs",
+      "lines": "223-238",
+      "finding": "developmentShutdownSummary already recursively projects AggregateError/cause into bounded fixed cleanup stages and numeric protocol observations. Reuse it in the private serve helper; raw messages/stacks are unnecessary."
+    },
+    {
+      "path": "aztec_experiments/.build/g07-shared-host/serve-retained-1575.mjs",
+      "finding": "Signal handler resolves stop and owner enters awaited finally. Current cleanup catch stores only error class/code through describe, losing nested developmentStage. A parent-only initial signal is compatible with its design if this Node process is systemd MainPID."
+    }
+  ],
+  "officialReference": {
+    "url": "https://raw.githubusercontent.com/systemd/systemd/main/man/systemd.kill.xml",
+    "summary": "control-group initially signals all remaining unit processes; mixed initially targets the main process and retains final cgroup-wide killing. With mixed, main-process exit can trigger killing of remaining children before the stop timeout. Thus actual owner MainPID and awaited shutdown are essential; neither process nor none is an acceptable replacement."
+  },
+  "smallestFocusedProbe": {
+    "scope": "One tiny temporary parent plus child, no Anvil, private state, network or application runtime. Use the exact transient-unit launch/wrapper shape and security settings.",
+    "procedure": [
+      "Parent records startup PIDs, child readiness and receipt of SIGTERM. Child records whether a signal arrived before the parent explicitly asked it to stop.",
+      "On SIGTERM parent waits a short bounded interval while child must remain alive, then explicitly terminates/awaits child, records cleanup-complete and exits.",
+      "Run control-group to demonstrate early child signal, then mixed to demonstrate owner ordering. Use a few-second test stop timeout, keep SendSIGKILL=yes, verify cgroup empty and exact unit result.",
+      "Verify systemd MainPID equals the actual owning Node process. If a shell/python launcher is MainPID, use its existing exec form; do not rely on forwarding that exits before cleanup.",
+      "Optional same tiny probe with stalled cleanup verifies the configured final cgroup kill; no production timeout enlargement is needed."
+    ],
+    "productionChoice": "KillMode=mixed with existing TimeoutStopSec120s and final cgroup kill enabled, only after the focused ordering check. Keep parent alive until every owned close settles; capture existing fixed shutdown summary on any failure."
+  },
+  "preservedStateRecovery": [
+    "Archive current metadata, lease, service report and failed shutdown evidence. Confirm unit cgroup, exact owner processes and all ports absent using fresh observations; stale age alone never transfers ownership.",
+    "Preserve both last known good1575 snapshot and the second run\u2019s exact owned dump/cache plus node/derived data. Rehash original snapshot. Do not delete latest dump or native database merely because metadata still references1575.",
+    "The native DB may have advanced after listening even without wallet sends. A running-to-stopped phase flip on1575 does not establish L1/native DB consistency and is not an acceptable recovery by itself.",
+    "Use the existing bounded read-only snapshot qualification against the latest owned candidate: exact signer/network/contracts, canonical L1 ancestry and original accepted effects, current pending/proven and head. Preserve candidate/source hashes. No mining, funding replay or new transaction.",
+    "Cross-check native DB/world-state/block-source consistency with that chosen L1 state using existing supported validation. If pending/proven differ, a candidate is truncated, or native DB cannot reconcile, preserve and report the exact prerequisite; do not declare a settled checkpoint or roll back DB silently.",
+    "Only after consistent current-state qualification may lead write explicit recovered metadata and reconcile the confirmed dead lease. Retain former metadata and snapshots. Next normal owner must use corrected stop ordering and produce its own clean checkpoint/lease-release evidence."
+  ],
+  "limitations": [
+    "No remote/native/process probe or source edits were performed. Actual second-stop cause is not proven without the missing nested stage or focused signal-order result.",
+    "A successful first load or absent processes proves neither dump completeness nor settled native state.",
+    "Product120s/page10s acceptance and resource/release gates remain unchanged."
+  ],
+  "sourceSha256": {
+    "aztec_experiments/.build/g07-shared-host/serve-retained-1575.mjs": "b4beed8a1befb3040fdb8e103cad094238da9993fc845672508e2bf24c29c24d",
+    "rolling-design/plugins/devnet/network.mjs": "c876a3e90d9d31489a745c465303a3b6f5af5a12bbeec223a3780133a8f11539"
+  }
+}

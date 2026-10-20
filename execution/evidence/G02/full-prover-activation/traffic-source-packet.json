@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T12:25:26.213161+00:00",
+  "revision": "2812bbc4ce857886af68795ab7e450eae679484a",
+  "predecessor": "3e31a8ab0505814b96fa51f6af399b28f9fe89af",
+  "reviewRepaired": "5bb4ac7a8d57468430a6648e77ee5f9d9edb5a8d2125bcf411ef6cf2a2d7ffa1",
+  "failedActualPacketSha256": "10c67b2bac45d186b66d36502b8cf2f4402aff7bd7c01e77719fb834de0545f1",
+  "files": {
+    "deploy/prover/bootstrap.py": "1832af600c7dab47f3ba93dd4e85b9dbd81c5cdc8d4d10da1e509cf854220203",
+    "scripts/test-prover-bootstrap.py": "ca4c92bae490508351e66e3328229a4a4532b38ef08e2166b606114ceddb8e7a",
+    "deploy/prover/package.py": "de1e1e29aa478f18ffb0fc4046673c1e265064db9f231584f160b3d389445ebb",
+    "scripts/test-prover-package.py": "61c67c403053973e264ce11244e378aed064642f4ffed0d1a6535581e3c8c7bf",
+    "deploy/prover/BOOTSTRAP.md": "dff912c695e217556af03729172e257fbd347f7811cc553d66247463fd8786e3",
+    "deploy/prover/README.md": "5b0c96599580c4c0330923099ec8339395005b759fae1fd2ebe7762fca232289"
+  },
+  "changedPaths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "deploy/prover/BOOTSTRAP.md"
+  ],
+  "behavior": "Closed tc fw header/detail parsing: optional single header, exactly one all-protocol preference1 chain0 mark0x14 to class1:20 detail; separators inside optional fields, no required trailing whitespace. Unknown/wrong/duplicate/family-specific rows rejected before counter reads or UID exercise.",
+  "newTests": [
+    "ProverActivation.test_actual_traffic_parser_accepts_closed_header_detail_layouts",
+    "ProverActivation.test_actual_traffic_parser_rejects_wrong_duplicate_unknown_and_family_mappings"
+  ],
+  "authoredCounts": {
+    "focused": 18,
+    "fullBootstrap": 91,
+    "package": 9
+  },
+  "original16Preserved": true,
+  "testsExecuted": false,
+  "checksPerformed": [
+    "Python AST parse only",
+    "git diff --check"
+  ],
+  "limitations": [
+    "No actual Linux tc or full activation acceptance",
+    "Full91/package9 require coherent lead source composition and normal build closure"
+  ],
+  "sourceWriterReleased": true
+}

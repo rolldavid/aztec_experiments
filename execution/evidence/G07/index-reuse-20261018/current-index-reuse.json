@@ -1,0 +1,4412 @@
+{
+  "sourceCandidate": "883d98808b9e2220231423183a9f1f7447675ad2",
+  "network": "existing proof-disabled native devnet",
+  "node": "http://127.0.0.1:18080",
+  "limits": [
+    "Actual small13-block chain only, no1000-post or10k authenticated ingestion qualification.",
+    "Separate owned production SQLite/index; no live service instrumentation.",
+    "No chain/wallet/model operation; SDK typed reads and production index only."
+  ],
+  "tipsBefore": {
+    "proposed": {
+      "number": 13,
+      "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+    },
+    "checkpointed": {
+      "block": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x008b8794f7081a282983da3da43ea602ee926cc982ef9561a3bf9d9d43e6439b"
+      }
+    },
+    "proven": {
+      "block": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x008b8794f7081a282983da3da43ea602ee926cc982ef9561a3bf9d9d43e6439b"
+      }
+    },
+    "finalized": {
+      "block": {
+        "number": 12,
+        "hash": "0x13f01fb8e2a6376140fcfd9b3f60a435526bcd4f73c419f7dde1f26906127146"
+      },
+      "checkpoint": {
+        "number": 12,
+        "hash": "0x00bf1277b45e66bd324d40757ca7b5c727ca67093c5b38dd9adbc327833661c1"
+      }
+    }
+  },
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "1916296214",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+    "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+    "bok": {
+      "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+      "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+      "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+      "deployment": {
+        "blockNumber": 6,
+        "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+        "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+      }
+    }
+  },
+  "deployment": {
+    "txHash": "0x1dd7236c8059a8cc52137630b189e1a0243666a4eda9a09540e88c6bca1defe7",
+    "blockNumber": 2,
+    "blockHash": "0x1241ac550f0cda5c91f93bb9976bb25e80840ff52e599731c407f8c70217b353"
+  },
+  "cold": {
+    "steps": 13,
+    "ms": 1101.36175,
+    "publication": {
+      "schemaVersion": 3,
+      "state": "ready",
+      "scope": {
+        "chainId": "31337",
+        "rollupVersion": "1916296214",
+        "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+        "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+        "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+        "bok": {
+          "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+          "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+          "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+          "deployment": {
+            "blockNumber": 6,
+            "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+            "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+          }
+        }
+      },
+      "complete": true,
+      "authenticationEpoch": "125f7394-a96d-4717-8e45-e707b996a1e9",
+      "revision": "125f7394-a96d-4717-8e45-e707b996a1e9:1:23",
+      "checkpoint": {
+        "number": "13",
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "cursor": {
+        "blockNumber": "14",
+        "nextTxIndex": "0",
+        "block": null
+      },
+      "cacheComparison": "complete"
+    },
+    "feed": {
+      "schemaVersion": 1,
+      "scope": {
+        "chainId": "31337",
+        "rollupVersion": "1916296214",
+        "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+        "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+        "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+        "bok": {
+          "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+          "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+          "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+          "deployment": {
+            "blockNumber": 6,
+            "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+            "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+          }
+        }
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "complete": true,
+      "posts": [],
+      "names": {},
+      "boards": {},
+      "nextCursor": null,
+      "revision": "125f7394-a96d-4717-8e45-e707b996a1e9:1:23"
+    }
+  },
+  "warm": {
+    "ms": 35.181540999999925,
+    "publication": {
+      "schemaVersion": 3,
+      "state": "ready",
+      "scope": {
+        "chainId": "31337",
+        "rollupVersion": "1916296214",
+        "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+        "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+        "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+        "bok": {
+          "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+          "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+          "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+          "deployment": {
+            "blockNumber": 6,
+            "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+            "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+          }
+        }
+      },
+      "complete": true,
+      "authenticationEpoch": "125f7394-a96d-4717-8e45-e707b996a1e9",
+      "revision": "125f7394-a96d-4717-8e45-e707b996a1e9:1:23",
+      "checkpoint": {
+        "number": "13",
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "cursor": {
+        "blockNumber": "14",
+        "nextTxIndex": "0",
+        "block": null
+      },
+      "cacheComparison": "complete"
+    },
+    "feed": {
+      "schemaVersion": 1,
+      "scope": {
+        "chainId": "31337",
+        "rollupVersion": "1916296214",
+        "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+        "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+        "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+        "bok": {
+          "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+          "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+          "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+          "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+          "deployment": {
+            "blockNumber": 6,
+            "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+            "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+          }
+        }
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "complete": true,
+      "posts": [],
+      "names": {},
+      "boards": {},
+      "nextCursor": null,
+      "revision": "125f7394-a96d-4717-8e45-e707b996a1e9:1:23"
+    }
+  },
+  "tipsAfter": {
+    "proposed": {
+      "number": 13,
+      "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+    },
+    "checkpointed": {
+      "block": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x008b8794f7081a282983da3da43ea602ee926cc982ef9561a3bf9d9d43e6439b"
+      }
+    },
+    "proven": {
+      "block": {
+        "number": 13,
+        "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+      },
+      "checkpoint": {
+        "number": 13,
+        "hash": "0x008b8794f7081a282983da3da43ea602ee926cc982ef9561a3bf9d9d43e6439b"
+      }
+    },
+    "finalized": {
+      "block": {
+        "number": 12,
+        "hash": "0x13f01fb8e2a6376140fcfd9b3f60a435526bcd4f73c419f7dde1f26906127146"
+      },
+      "checkpoint": {
+        "number": 12,
+        "hash": "0x00bf1277b45e66bd324d40757ca7b5c727ca67093c5b38dd9adbc327833661c1"
+      }
+    }
+  },
+  "liveApp": {
+    "schemaVersion": 1,
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "1916296214",
+      "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+      "boardAddress": "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8",
+      "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+      "bok": {
+        "address": "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+        "operatorAddress": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+        "deployer": "0x03d5178b10004b1e819cd5d4294c2fb1889d6b245ab0eb079401881126a298c7",
+        "salt": "0x0e17aeae8eb2b98be6d6759472786a29c8e189b3b510812ba33b15d5b0f87284",
+        "deployment": {
+          "blockNumber": 6,
+          "blockHash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0",
+          "txHash": "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+        }
+      }
+    },
+    "checkpoint": {
+      "number": 13,
+      "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+    },
+    "complete": true,
+    "posts": [],
+    "names": {},
+    "boards": {},
+    "nextCursor": null,
+    "revision": "fe6e2568-3fa0-4b07-a37b-afc76aac2bde:1:23"
+  },
+  "calls": [
+    {
+      "phase": "context",
+      "method": "aztec_getChainTips",
+      "params": [],
+      "status": 200,
+      "ms": 21.566208000000017
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 1.790583999999967
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.6129170000000386
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        {
+          "number": 6,
+          "hash": "0x2e708a6d44568fc5e34b18c56da35264ae5e000e8894ee48754c0337dd0b72c0"
+        }
+      ],
+      "status": 200,
+      "ms": 1.207208000000037
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+      ],
+      "status": 200,
+      "ms": 1.7204169999999976
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x075d9db5566e1181e27d26f3922022842085ea7803a13b292dc64f8cf3632a9a"
+      ],
+      "status": 200,
+      "ms": 7.416375000000016
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 2.0032919999999876
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getPublicStorageAt",
+      "params": [
+        {
+          "number": 13,
+          "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+        },
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "0x0000000000000000000000000000000000000000000000000000000000000001"
+      ],
+      "status": 200,
+      "ms": 4.360416999999984
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getPublicStorageAt",
+      "params": [
+        {
+          "number": 13,
+          "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+        },
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "0x0000000000000000000000000000000000000000000000000000000000000003"
+      ],
+      "status": 200,
+      "ms": 3.7781250000000455
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getPublicStorageAt",
+      "params": [
+        {
+          "number": 13,
+          "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+        },
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "0x0000000000000000000000000000000000000000000000000000000000000005"
+      ],
+      "status": 200,
+      "ms": 3.299041999999986
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getPublicStorageAt",
+      "params": [
+        {
+          "number": 13,
+          "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+        },
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "0x0000000000000000000000000000000000000000000000000000000000000009"
+      ],
+      "status": 200,
+      "ms": 2.619666000000052
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getPublicStorageAt",
+      "params": [
+        {
+          "number": 13,
+          "hash": "0x28cbaef702478fb1f336ef8cae41a7264461b99a7c555d760550af7a2f4c3a57"
+        },
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864",
+        "0x000000000000000000000000000000000000000000000000000000000000000b"
+      ],
+      "status": 200,
+      "ms": 2.5823329999999487
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 2.141750000000002
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 2.40141600000004
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 1.986709000000019
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 2.223959000000036
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 2.0745829999999614
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 1.4567910000000666
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        2,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 2.3472080000000233
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 1.415707999999995
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 3.9160419999999476
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x1dd7236c8059a8cc52137630b189e1a0243666a4eda9a09540e88c6bca1defe7"
+      ],
+      "status": 200,
+      "ms": 1.173249999999939
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x1dd7236c8059a8cc52137630b189e1a0243666a4eda9a09540e88c6bca1defe7"
+      ],
+      "status": 200,
+      "ms": 1.0429169999999885
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 1.4286659999999074
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.0123340000000098
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8947089999999207
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.8273749999999609
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5564170000000104
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8402499999999691
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.9668330000000651
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.580916000000002
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5080410000000484
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.47175000000004275
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.42316699999992125
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.44033300000000963
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6627500000000737
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5706250000000637
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4896249999999327
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.42029200000001765
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.46041600000000926
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5002919999999449
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3562090000000353
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5308749999999236
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5274999999999181
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.39391599999999016
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.3817500000000109
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4720830000001115
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.45995799999991505
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.35866600000008475
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.4916659999998956
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5120830000000751
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.42287499999997635
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.48912499999983083
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.49175000000013824
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.40904199999999946
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        3
+      ],
+      "status": 200,
+      "ms": 0.5370840000000499
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        3,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.5679170000000795
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4012079999999969
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5724999999999909
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5256249999999909
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4210000000000491
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.39783399999987523
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.45679100000006656
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.49154199999998127
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        3
+      ],
+      "status": 200,
+      "ms": 0.40245900000013535
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.37133300000004965
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5375829999998132
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6508329999999205
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6543750000000728
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4335409999998774
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4244579999999587
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.43891599999983555
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        3
+      ],
+      "status": 200,
+      "ms": 0.508792000000085
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.48783400000002075
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6204999999999927
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5493329999999332
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.41741700000011406
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.42137499999989814
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4595409999999447
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4657910000000811
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        3
+      ],
+      "status": 200,
+      "ms": 0.40658299999995506
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.38933300000007875
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5324590000000171
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5187909999999647
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4765830000001188
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.5600830000000769
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4417919999998503
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.40579200000001947
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        3
+      ],
+      "status": 200,
+      "ms": 0.4179579999999987
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        4
+      ],
+      "status": 200,
+      "ms": 0.47262499999987995
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        4,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.5131249999999454
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.38829099999998107
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5919579999999769
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5372079999999642
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.45566699999994853
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4556249999998272
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.44174999999995634
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.437874999999849
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        4
+      ],
+      "status": 200,
+      "ms": 0.4659999999998945
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4182499999999436
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5352920000000267
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5306659999998828
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4585419999998521
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.7520409999999629
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 2.9110829999999623
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.7375420000000759
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        4
+      ],
+      "status": 200,
+      "ms": 0.5068750000000364
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.40399999999999636
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6009159999998701
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6066670000000158
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6549589999999625
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.6123750000001564
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4448330000000169
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.47737499999993815
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        4
+      ],
+      "status": 200,
+      "ms": 0.4672080000000278
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        5
+      ],
+      "status": 200,
+      "ms": 0.4727909999999156
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        5,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 3.7808329999998023
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5225000000000364
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7411670000001322
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6793750000001637
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.556957999999895
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5740829999999733
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5026659999998628
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.49216599999999744
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        5
+      ],
+      "status": 200,
+      "ms": 0.5336669999999231
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.46849999999994907
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6572919999998703
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6089170000000195
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4597920000001068
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4917910000001484
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.50324999999998
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4627909999999247
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        5
+      ],
+      "status": 200,
+      "ms": 0.4464590000000044
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.45412499999997635
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6316249999999854
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5834590000001754
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4597919999998794
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.48558299999990595
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.48279200000001765
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4402499999998781
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        5
+      ],
+      "status": 200,
+      "ms": 0.42237500000010186
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4333750000000691
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.649417000000085
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8312089999999444
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5010839999999916
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.6690830000000005
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.48204199999986486
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4509169999998903
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        5
+      ],
+      "status": 200,
+      "ms": 0.47612500000013824
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5249169999999594
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        6,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 5.7487089999999625
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.46899999999982356
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7120420000001104
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6540840000000117
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4551249999999527
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.474666999999954
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4358749999998963
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.44233299999996234
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4494170000000395
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3653750000000855
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5988749999999072
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6114999999999782
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6207910000000538
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.53774999999996
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5122499999999945
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4743750000000091
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5228749999998854
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4149999999999636
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5842499999998836
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5314999999998236
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6049579999998969
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5432499999999436
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4457079999999678
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5122080000001006
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4901670000001559
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.39983299999994415
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7006669999998394
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.675707999999986
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.48374999999987267
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.5884580000001733
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.46354199999996126
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4777080000001206
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5850000000000364
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        7
+      ],
+      "status": 200,
+      "ms": 0.5039999999999054
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        7,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.6926669999998012
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.42145800000002964
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6476659999998446
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6500829999999951
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6076249999998709
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.543583000000126
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5282079999999496
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.525124999999889
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        7
+      ],
+      "status": 200,
+      "ms": 0.43691599999988284
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.46550000000002
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6525420000000395
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5503749999998035
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6684159999999792
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.593791999999894
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5186250000001564
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5405829999999696
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        7
+      ],
+      "status": 200,
+      "ms": 0.4728330000000369
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3880420000000413
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.687541999999894
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8101249999999709
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5399170000000595
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5860420000001341
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5700410000001739
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.518500000000131
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        7
+      ],
+      "status": 200,
+      "ms": 0.6101250000001528
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4919999999999618
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.731666000000132
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7133330000001479
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5742090000001099
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.7059169999999995
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5101660000000265
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5356249999999818
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        7
+      ],
+      "status": 200,
+      "ms": 0.55337499999996
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.5785829999999805
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        8,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.766791000000012
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.43337499999984175
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6934579999999642
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x2323f289d7050c41bc6565974f335982a2e34702e54850966bb150b7a04f6802"
+      ],
+      "status": 200,
+      "ms": 0.5848750000000109
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x2323f289d7050c41bc6565974f335982a2e34702e54850966bb150b7a04f6802"
+      ],
+      "status": 200,
+      "ms": 0.5858749999999873
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.6434999999999036
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8257919999998649
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.764458999999988
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.653957999999875
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.49966700000004494
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.4084170000000995
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8821670000002086
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.825832999999875
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.631125000000111
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 1.003832999999986
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.65300000000002
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.6653330000001461
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 1.283625000000029
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.2331249999999727
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.057166000000052
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 1.2466669999998885
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.9731249999999818
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.81512500000008
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.8592499999999745
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.6517910000000029
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.610582999999906
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.0011250000000018
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.0773750000000746
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.8472919999999249
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 3.3050419999999576
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.8629170000001523
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.8332090000001244
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.5370000000000346
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5282919999999649
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7605829999999969
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.795165999999881
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6850419999998394
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.9182499999999436
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5384169999999813
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4952499999999418
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        8
+      ],
+      "status": 200,
+      "ms": 0.5429590000001099
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        9
+      ],
+      "status": 200,
+      "ms": 0.5332089999999425
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        9,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.5375839999999243
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.45304200000009587
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7817079999999805
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6338329999998678
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6840409999999792
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.6186669999999594
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.4963749999999436
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5147079999999278
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        9
+      ],
+      "status": 200,
+      "ms": 0.5541670000000067
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3831249999998363
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6738329999998314
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5372919999999795
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5724169999998594
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4333329999999478
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.48741599999993923
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5538750000000618
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        9
+      ],
+      "status": 200,
+      "ms": 0.4011249999998654
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3898750000000746
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7170419999999922
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5766660000001593
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4830420000000686
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 1.193292000000156
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5922499999999218
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.443791999999803
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        9
+      ],
+      "status": 200,
+      "ms": 0.5052910000001702
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        10
+      ],
+      "status": 200,
+      "ms": 0.440166999999974
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        10,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.6097090000000662
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4377079999999296
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6742919999999231
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5130409999999301
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6789159999998446
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.44908399999985704
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.48033299999997325
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4544580000001588
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        10
+      ],
+      "status": 200,
+      "ms": 0.4749170000000049
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.3904579999998532
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6584170000000995
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.649208999999928
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.45966599999997015
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.45858399999997346
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5078340000000026
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.520040999999992
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        10
+      ],
+      "status": 200,
+      "ms": 0.5350419999999758
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5310829999998532
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7569579999999405
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.5792920000001232
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.47337500000003274
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.49416599999995015
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5546659999999974
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5096249999999145
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        10
+      ],
+      "status": 200,
+      "ms": 0.44483299999978954
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 4.010874999999942
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.2210000000000036
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6676250000000437
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5272919999999885
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.5967920000000504
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.492334000000028
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5553749999999127
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        10
+      ],
+      "status": 200,
+      "ms": 0.4629170000000613
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.4943749999999909
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        11,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.6190420000000358
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.39975000000004
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.5483749999998508
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x1c38868bee5fea36c6e4241b484abb0461cc9fc931b15381218abd6dce33afaa"
+      ],
+      "status": 200,
+      "ms": 0.4950410000001284
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x1c38868bee5fea36c6e4241b484abb0461cc9fc931b15381218abd6dce33afaa"
+      ],
+      "status": 200,
+      "ms": 0.5007499999999254
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.5670830000001388
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7106249999999363
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6191659999999501
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5835409999999683
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.47070899999994253
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.68100000000004
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6116250000000036
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.4933329999998932
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5690830000000915
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5106660000001284
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.4938750000001164
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.53449999999998
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.45304200000009587
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6587500000000546
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6667500000000928
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5035410000000411
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.4671249999998963
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.55337499999996
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5918329999999514
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.5362909999998919
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4704999999999018
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.787375000000111
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6114590000001954
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5045000000000073
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5460000000000491
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.57487500000002
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5686670000000049
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.5729999999998654
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4390000000000782
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6538330000000769
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.6673339999999826
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5967920000000504
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.6828749999999673
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5077499999999873
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5730419999999867
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        11
+      ],
+      "status": 200,
+      "ms": 0.5131249999999454
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.5202919999999267
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        12,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 0.8564160000000811
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4637920000000122
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6762920000001031
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x06b67f39dc3cfa0847759d2e2c946179f3a49a5603d0a2a3cce7976af93248ed"
+      ],
+      "status": 200,
+      "ms": 0.5210420000000795
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x06b67f39dc3cfa0847759d2e2c946179f3a49a5603d0a2a3cce7976af93248ed"
+      ],
+      "status": 200,
+      "ms": 0.5440419999999904
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.5143330000000788
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.6248329999998532
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.4373749999999745
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6287920000002032
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.47691600000007384
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7074580000000878
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7368340000000444
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5966670000000249
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5999580000000151
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.5618750000001
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5636669999998958
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.5586660000001302
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5284590000001117
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8114580000001297
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7929159999998774
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6245830000000296
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5884169999999358
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.694332999999915
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.6342090000000553
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.6072090000000117
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 1.1100830000000315
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.671999999999798
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.3748749999999745
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 1.8377909999999247
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.873209000000088
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.7219589999999698
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.9124159999998938
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.6722500000000764
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.7253749999999854
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.1382079999998496
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8470830000001115
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.7807920000000195
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.8134169999998448
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.7004589999999098
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.7782919999999649
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        12
+      ],
+      "status": 200,
+      "ms": 0.6816660000001775
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlock",
+      "params": [
+        13,
+        {
+          "includeTransactions": true
+        }
+      ],
+      "status": 200,
+      "ms": 1.0057919999999285
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.7148329999999987
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 1.0187919999998485
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxReceipt",
+      "params": [
+        "0x0617c36426c8b7670683f20c58cc15542d1691f11cf70f0690e9cbb173fb399b"
+      ],
+      "status": 200,
+      "ms": 0.7867499999999836
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getTxEffect",
+      "params": [
+        "0x0617c36426c8b7670683f20c58cc15542d1691f11cf70f0690e9cbb173fb399b"
+      ],
+      "status": 200,
+      "ms": 0.6960000000001401
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.7119169999998576
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8918750000000273
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.2046250000000782
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.841666000000032
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5881249999999909
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.9064579999999296
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.842542000000094
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.6984170000000631
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.6632080000001679
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.662958000000117
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.59962500000006
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4959160000000793
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.9560409999999138
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.8212499999999636
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.7092910000001211
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.65362499999992
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.565958000000137
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.6709160000000338
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.49708300000020245
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.7778329999998732
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7074580000000878
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5852909999998701
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5835419999998521
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.6182079999998678
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5780419999998685
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.4847500000000764
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.716707999999926
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7171659999999065
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.549541999999974
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.79300000000012
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.6723749999998745
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.6752500000000055
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5294579999999769
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8817919999999049
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.9722090000000208
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.5573750000000928
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.6123750000001564
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.616249999999809
+    },
+    {
+      "phase": "cold-authenticated-index",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.7011669999999413
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.5596660000001066
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.8647080000000642
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 1.6855000000000473
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.7389169999999012
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        "checkpointed"
+      ],
+      "status": 200,
+      "ms": 0.7676249999999527
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.6591249999999036
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.6126660000002175
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getNodeInfo",
+      "params": [],
+      "status": 200,
+      "ms": 0.6852499999999964
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1252f336450988d8a3ecb6e8b87713f9783b5c8c1ffe2717202124e6050468f8"
+      ],
+      "status": 200,
+      "ms": 0.9356250000000728
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getContract",
+      "params": [
+        "0x1124c8abf764c28c60ecfb807b0b9530ad6bfadb4d9c31aa792fe5bc37d36864"
+      ],
+      "status": 200,
+      "ms": 0.7474580000000515
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        6
+      ],
+      "status": 200,
+      "ms": 0.7267500000000382
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        2
+      ],
+      "status": 200,
+      "ms": 0.5920410000001084
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        1
+      ],
+      "status": 200,
+      "ms": 0.7070830000000115
+    },
+    {
+      "phase": "warm-refresh",
+      "method": "aztec_getBlockData",
+      "params": [
+        13
+      ],
+      "status": 200,
+      "ms": 0.5894160000000284
+    },
+    {
+      "phase": "context",
+      "method": "aztec_getChainTips",
+      "params": [],
+      "status": 200,
+      "ms": 0.5611669999998412
+    }
+  ],
+  "rpcCounts": {
+    "context": {
+      "aztec_getChainTips": 2
+    },
+    "cold-authenticated-index": {
+      "aztec_getNodeInfo": 53,
+      "aztec_getContract": 112,
+      "aztec_getTxReceipt": 6,
+      "aztec_getTxEffect": 6,
+      "aztec_getBlockData": 252,
+      "aztec_getPublicStorageAt": 5,
+      "aztec_getBlock": 12
+    },
+    "warm-refresh": {
+      "aztec_getNodeInfo": 2,
+      "aztec_getContract": 4,
+      "aztec_getBlockData": 8
+    }
+  },
+  "passed": true
+}

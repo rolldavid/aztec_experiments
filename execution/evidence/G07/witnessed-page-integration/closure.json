@@ -1,0 +1,45 @@
+{
+  "base": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "candidate": "57c1582cd76770af0ffb6c11573d6bbc701c7da6",
+  "source_files": {
+    "apps/dist/aztec_bundle.js": "7717b6adee7e1846ffedcabc90264051d77151af10dcc6d7647cc5e694789bf4",
+    "apps/dist/sdk-manifest.json": "dfcdbefd53dcb9e48abb1632253af91d2a3ea114a18ca3191219ff42b6a130be",
+    "prover/compact-block-native.mjs": "353756a9ac2146418dad018966e472138c4afb4e5293b6a624b2b670c7417bc8",
+    "prover/compact-block-native.test.mjs": "d0fd7e2ec1b92da15e87fcf617da8967a45b08b253e06d7bb9c696356ee0b4af",
+    "prover/compact-service.test.mjs": "8658dc15db53be579d4848809c7ff21f072fc095331172aeefc6fa976f56e46b",
+    "prover/server.mjs": "f6a6a607ca119e34bdb4f48e6792b4d0a22ae33571970cecf8a9095e556db4b6",
+    "scripts/patch-pxe-preference-page.mjs": "68afcd7d46aed53ef9121e8468c95d29a0ee345b013956a12f2a65b28b7583f6",
+    "scripts/test-pxe-preference-page.mjs": "8e19297791a1dab1667023d0dd14306c2aa8ffa42042db07bcc9b06e68a115a0",
+    "scripts/testing/rolling-preference-browser.test.mjs": "f0ee36df90a8ae8705671dad1e7fc9e338698aee1778a83c0d387411e4e0647a",
+    "shared/rolling/cold-preference-reader.mjs": "693a0c62b43e87c781fec1fe0f7a2ca350bff38cc221056116dbb41f88ed1655",
+    "shared/rolling/cold-preference-reader.test.mjs": "15e87d55f13e21e557b604c6c3e2cd7fdd117a0d20819a2c16df4e94c1455585",
+    "shared/rolling/compact-client.mjs": "3b95801ace5c24329f63a6f90415a58a9f9e4c8c5a35d1c532d37cc4e300c133",
+    "shared/rolling/compact-client.test.mjs": "6a88064fbdba74dabe5c482a0b520160f8121b960e2217c8bbc2f88adb0260b9"
+  },
+  "procedure": [
+    "Verified predecessor installed8source+2generated exact hashes and physical single-link ownership before preserving tiny backup.",
+    "Restored exactly8 pinned pristine rc3 fixtures; removed exactly2 verified old helpers; pristine inspection passed.",
+    "Normal owning-tree --apply-installed, build-sdk, apps/build, rolling-wallet-assets, check-sdk all exited0.",
+    "Only2 generated tracked artifacts differ; root committed57c1582 after worker aec576a."
+  ],
+  "observed": {
+    "sdkInputs": 2057,
+    "sdkOutputs": 8,
+    "walletInputs": 97,
+    "walletOutputs": 25,
+    "combinedPass": 397,
+    "combinedFail": 0,
+    "combinedSkip": 0,
+    "installedCheckPass": 1,
+    "nativeOnlyPass": 64
+  },
+  "limitations": [
+    "Full original1601/120s cold recovery remains unqualified.",
+    "Focused actualSDK/ACIR and HTTP fixture is labelled synthetic finite chain/fakeIndexedDB, not realproof/testnet or actual full browser acceptance.",
+    "No production quota, proof requirement, publicfeed100block cap, release gates or spending ceiling changed."
+  ],
+  "setupCorrections": [
+    "Root first invocation selected native only:64pass preserved separately, no ACIR claim.",
+    "Both-flags invocation failed beforeACIR on missing historical artifact. Copied exact retained processed artifact SHA20c494 from Design and verified bytes before rerun; no recompile, source change or new framework."
+  ]
+}

@@ -1,0 +1,7 @@
+{"stage":"restore-existing-hosted-account"}
+{"stage":"deposit-one-test-usdc"}
+{"stage":"metamask-gas-fields","functionName":"approve","gasLimit":"140018","requestGas":"0x222f2"}
+{"stage":"metamask-gas-fields","functionName":"deposit","gasLimit":"969289","requestGas":"0xd9ac0"}
+{"stage":"phase-complete"}
+{"phase":"plugin-deposit","passed":true}
+{"passed":true,"phasePassed":true,"ownedTreeAbsent":true}

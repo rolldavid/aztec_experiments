@@ -1,0 +1,76 @@
+{
+  "source": "f502af801b993f8e8b7b63c0b797f06d776d07e2",
+  "purpose": "Normal SDK apps wallet build for balances and refresh diagnostics",
+  "passed": false,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 328992,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 284736
+    },
+    {
+      "elapsedMs": 2023,
+      "rssKiB": 306704
+    },
+    {
+      "elapsedMs": 3042,
+      "rssKiB": 328992
+    },
+    {
+      "elapsedMs": 4060,
+      "rssKiB": 141792
+    }
+  ],
+  "failures": [
+    {
+      "stage": "scripts/build-sdk.mjs-output",
+      "errorClass": "SyntaxError",
+      "code": null,
+      "frames": [
+        "supervisor.mjs:65:32"
+      ]
+    }
+  ],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": null,
+      "signal": "SIGKILL",
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 3042,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 82734,
+        "ppid": 59636,
+        "rssKiB": 54336
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 82744,
+        "ppid": 82734,
+        "rssKiB": 82448
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 82800,
+        "ppid": 82744,
+        "rssKiB": 39616
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 82838,
+        "ppid": 82800,
+        "rssKiB": 152592
+      }
+    ]
+  },
+  "elapsedMs": 4831,
+  "ownedTreeAbsent": true
+}

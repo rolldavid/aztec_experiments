@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "base": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+  "verdict": "approved source for one changed bounded genuine reaction campaign",
+  "blocking_findings": [],
+  "source_sha256": {
+    "scripts/testing/rolling-public-acceptance.mjs": "4f6162d779282e364e9375c1e241c5bdf786f3d3e7c6450e544046eb0b1489ba",
+    "scripts/testing/rolling-public-acceptance.test.mjs": "26c5d8785fe50242abdc7c9b263060026617370e29b116e878335967e50be487",
+    "shared/rolling/public-index.test.mjs": "d5269dd936beb173da9af62910bdcc0d5bb368c15dc597ff1624b35a92fed60d"
+  },
+  "diagnosis": "execution/evidence/G06/reaction-5eb7-diagnosis-review.json",
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-public-acceptance.test.mjs shared/rolling/public-index.test.mjs",
+      "result": "pass",
+      "tests": 20,
+      "skipped": 0,
+      "duration_ms": 4553.060666,
+      "log": "/tmp/reviewer-public-catchup-ef533-tests.log"
+    },
+    {
+      "command": "git diff --check2397d2e..ef533d9",
+      "result": "pass"
+    }
+  ],
+  "source_disposition": [
+    "Catch-up calls actual production index.sync sequentially before sole public server starts. No concurrent polling owner, new lifecycle or retry after failed pass.",
+    "Default rangeSize10/pagesPerSync2 unchanged. Actual returned authenticated pages establish cold progress; no height-only stall mistake. Nonready zero progress, invalid state/page count, first upstream error fail immediately.",
+    "Original total30s across fresh/reopened sessions retained. Each pass and first server sync require21.5s remaining for fixed maximum20s operation plus1.5s cleanup. Slow catch-up correctly fails rather than lengthens deadline.",
+    "Server normal first sync and poll30000 retained after ready; all before/after status, exact checkpoint/scope/revision and full content/enrichment assertions unchanged.",
+    "Regression uses actual processed ABI/decoder/SQLite/index/HTTP, labelled24-block upstream data with LikeChanged in block24. Both fresh and cold need2 passes/3 ranges, then exact final likes/content/names/boards and metadata match.",
+    "No contract, prover, SDK, production index/server implementation or proof/accounting/privacy gates changed."
+  ],
+  "historical_evidence_disposition": {
+    "social9745": "Remains valid at2397 for observed6 genuine actions/fees/source-bound traces/canonicalHTTP. This patch changes scheduling before HTTP, not application behavior or prior data assertions. New actual reaction required at ef533; do not relabel failed5eb7 as passing.",
+    "failed_reaction5eb7": "Preserved. Existing transaction subresults do not replace complete changed-run HTTP/observer/accounting acceptance."
+  },
+  "limitations": [
+    "20 cheap tests are labelled upstream-data/control tests, not a new genuine reaction result.",
+    "No full G06/privacy/remote deployment acceptance or final integration approval.",
+    "Extra21.5s reservation is intentionally conservative; total work exceeding available8.5s before the last server sync is a bounded failure, not permission to increase total deadline."
+  ]
+}

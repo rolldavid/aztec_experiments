@@ -1,0 +1,28 @@
+✔ labelled boundary double rejects zero count before queue or utility (2.131542ms)
+✔ labelled boundary double rejects nine logs before queue or utility (0.834916ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (0.418709ms)
+✔ labelled boundary double rejects unknown key before queue or utility (0.363125ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.440708ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.762417ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.372708ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.369541ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.400708ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.405792ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (0.624792ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.341542ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.356917ms)
+▶ owned isolated SDK and ACIR suite
+  ✔ actual SDK empty batch authenticates every physical block and advances one durable sequence (5369.730417ms)
+  ✔ labelled page double / original EventService: tx-complete mailbox orders by authenticated event index, not log page (2118.935209ms)
+  ✔ actual ACIR scans dense foreign ciphertext pages without publishing partial transaction records (3423.939125ms)
+  ✔ actual ACIR incomplete promotion preserves position, mailbox replay and current head revalidation (3712.240042ms)
+  ✔ monotonic suffix cannot hide two active heads after inconsistent former-nullifier observation (3790.862708ms)
+✔ owned isolated SDK and ACIR suite (19440.506334ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20263.147791

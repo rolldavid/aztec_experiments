@@ -1,0 +1,6 @@
+{
+  "at": "2026-10-11T22:46:30.077836+00:00",
+  "available": false,
+  "exit": 1,
+  "operations": "Supported open/start then one bounded30s Desktop restart; no reset, wipe, pull, container or cloud change"
+}

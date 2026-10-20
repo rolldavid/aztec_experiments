@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 1,
+  "passed": false,
+  "stage": "failed-trusted-node",
+  "scope": "Actual baseline reader, generated SDK method, ACIR, crypto, atomic Node fake-indexeddb and HTTP transports; synthetic finite chain, proofs disabled, labelled receiver identity and initial-sync seam",
+  "readPassed": false,
+  "steps": [],
+  "sdk": {
+    "calls": 3,
+    "status": 2,
+    "advance": 1,
+    "errors": 0,
+    "pending": 0,
+    "initialSyncChecks": 1
+  },
+  "native": {
+    "requests": 1,
+    "accepted": 1,
+    "errors": 0,
+    "pending": 0
+  },
+  "forwarded": {
+    "getNodeInfo": 145,
+    "getChainTips": 136,
+    "getWorldStateSyncStatus": 136,
+    "getSyncedL1Timestamp": 136,
+    "getBlockData": 899,
+    "getContract": 7,
+    "getTxReceipt": 10,
+    "getTxEffectMembershipWitness": 2,
+    "findLeavesIndexes": 6
+  },
+  "gateway": {
+    "requests": 66,
+    "errors": 0
+  },
+  "tags": {
+    "private": 0,
+    "public": 0
+  },
+  "cleanup": {
+    "listenersClosed": true,
+    "pendingSettled": true,
+    "databasesDeleted": true
+  },
+  "phaseMeasurements": [],
+  "densePrefix": [
+    {
+      "completed": true,
+      "elapsedMs": 5822.092915999994,
+      "nextBlock": 1,
+      "requests": 19,
+      "wires": [
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getNodeInfo"
+          ],
+          "elapsedMs": 202.9983329999959
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getChainTips",
+            "aztec_getWorldStateSyncStatus",
+            "aztec_getSyncedL1Timestamp"
+          ],
+          "elapsedMs": 194.65487500000017
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 223.4855000000025
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 229.8424589999995
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 221.54379200000403
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData",
+            "aztec_getContract"
+          ],
+          "elapsedMs": 245.51662499999657
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 207.01820800000132
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 199.65837500000634
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 215.80670900000405
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 197.92404199999874
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 198.36954100000003
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData",
+            "aztec_getContract"
+          ],
+          "elapsedMs": 211.343832999999
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 193.7802079999965
+        },
+        {
+          "phase": "sdk-status",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 200.30391700000473
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getNodeInfo"
+          ],
+          "elapsedMs": 184.6913329999952
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getChainTips",
+            "aztec_getWorldStateSyncStatus",
+            "aztec_getSyncedL1Timestamp"
+          ],
+          "elapsedMs": 188.57279199999903
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 204.11533299999428
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 203.6726669999989
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 201.60054200000013
+        }
+      ],
+      "phases": [
+        {
+          "phase": "readiness",
+          "elapsedMs": 859.8123750000013
+        },
+        {
+          "phase": "sdk-status",
+          "elapsedMs": 1775.3924170000028
+        },
+        {
+          "phase": "sdk-status",
+          "elapsedMs": 803.4201249999969
+        },
+        {
+          "phase": "readiness",
+          "elapsedMs": 788.307166999999
+        }
+      ]
+    },
+    {
+      "completed": false,
+      "elapsedMs": 10007.962083000006,
+      "nextBlock": 1,
+      "requests": 43,
+      "wires": [
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getNodeInfo"
+          ],
+          "elapsedMs": 188.767792000006
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getChainTips",
+            "aztec_getWorldStateSyncStatus",
+            "aztec_getSyncedL1Timestamp"
+          ],
+          "elapsedMs": 177.2769169999956
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 234.28641700000298
+        },
+        {
+          "phase": "readiness",
+          "methods": [
+            "aztec_getBlockData",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 222.90141700000095
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 227.57283299999835
+        },
+        {
+          "phase": "compact",
+          "methods": [
+            "compact"
+          ],
+          "elapsedMs": 468.1762499999968
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData",
+            "aztec_getContract"
+          ],
+          "elapsedMs": 209.22241699999722
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 186.9394170000014
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 192.14629100000457
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxEffectMembershipWitness"
+          ],
+          "elapsedMs": 195.2695840000015
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 197.73129199999676
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 210.51283300000068
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getContract"
+          ],
+          "elapsedMs": 190.89625000000524
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 233.88208300000406
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 187.67020899999625
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getContract"
+          ],
+          "elapsedMs": 184.92158400000335
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 214.17633300000307
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 193.29187499999534
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 194.96979100000317
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 190.26812500000233
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 194.6464580000029
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxEffectMembershipWitness"
+          ],
+          "elapsedMs": 185.82624999999825
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 186.60383300000103
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 187.45633299999463
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getContract"
+          ],
+          "elapsedMs": 193.45095800000126
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 192.49412499999744
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 185.26179100000445
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getContract"
+          ],
+          "elapsedMs": 186.19887500000186
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_findLeavesIndexes"
+          ],
+          "elapsedMs": 191.16079199999513
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 183.85974999999598
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 185.37770799999998
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 194.2885000000024
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 220.1073749999996
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 195.10191699999996
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 189.46262500000012
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 186.48020800000086
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 189.9855830000015
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 223.156167000001
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 183.6620830000029
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getTxReceipt"
+          ],
+          "elapsedMs": 183.29275000000052
+        },
+        {
+          "phase": "sdk-advance",
+          "methods": [
+            "aztec_getNodeInfo",
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 202.45145800000319
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 196.90154099999927
+        },
+        {
+          "phase": "reader",
+          "methods": [
+            "aztec_getBlockData"
+          ],
+          "elapsedMs": 203.8995419999992
+        }
+      ],
+      "phases": [
+        {
+          "phase": "readiness",
+          "elapsedMs": 831.7227910000001
+        },
+        {
+          "phase": "sdk-advance",
+          "elapsedMs": 8060.742375000002
+        }
+      ]
+    }
+  ],
+  "failure": {
+    "name": "Error",
+    "code": "ROLLING_COLD_PREFERENCES_UNAVAILABLE"
+  },
+  "elapsedMs": 51836
+}

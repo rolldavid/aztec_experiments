@@ -1,0 +1,35 @@
+{
+  "candidate": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+  "base": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+  "task_id": "G03",
+  "implementer": "lead-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "experiments/avatar",
+    "noir-dependencies.json",
+    "scripts/testing/scenarios.mjs",
+    "scripts/testing/scenario-flows.mjs"
+  ],
+  "required_checks": [
+    "combined-unit",
+    "avatar-build",
+    "avatar-chain"
+  ],
+  "requirements": [
+    "G03-A03",
+    "RC17-feasibility"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G03",
+      "paths": [
+        "experiments/avatar",
+        "noir-dependencies.json",
+        "scripts/testing/scenarios.mjs",
+        "scripts/testing/scenario-flows.mjs"
+      ]
+    }
+  ]
+}

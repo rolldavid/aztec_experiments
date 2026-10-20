@@ -1,0 +1,76 @@
+{
+  "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "base": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+  "sourceOwners": {
+    "scripts/testing/assets.mjs": "207bc89359da15885e79513f1f426070b95dc84f",
+    "scripts/testing/private-fee-verification.mjs": "207bc89359da15885e79513f1f426070b95dc84f",
+    "scripts/testing/private-fee-verification.test.mjs": "207bc89359da15885e79513f1f426070b95dc84f",
+    "scripts/testing/rolling-application-fixture.mjs": "207bc89359da15885e79513f1f426070b95dc84f",
+    "scripts/w01-private-fee-flow.mjs": "207bc89359da15885e79513f1f426070b95dc84f",
+    "BUILDING.md": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "package.json": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/build-sdk.mjs": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/check-sdk.mjs": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/patch-pxe-reorg-anchor.mjs": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/patch-pxe-reorg-anchor.test.mjs": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/test-sdk-manifest.mjs": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/testing/fixtures/pxe-reorg-anchor/README.md": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.js": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.ts": "7867f511a8a5c318da1c70d3b49c89df870ef63e"
+  },
+  "exactSourceComposition": true,
+  "sourceSha256": {
+    "BUILDING.md": "a4942340fcaa398b7a66b286a62b055cd7cae2a46f5dfa11c66a641d5a36e042",
+    "package.json": "1854b9e2a0cc0170d350c8d82c52da88a3cfb1abee1740795f3f5745fe1aa13d",
+    "scripts/build-sdk.mjs": "651c79888520522b0c07bd7300687df550804623dca3ce2f4819d3a4c7a8a25a",
+    "scripts/check-sdk.mjs": "e85877c5d4cb32087d1225db2f5c6a7b580f8f3546242e5a3e587ac9442c4176",
+    "scripts/patch-pxe-reorg-anchor.mjs": "b0dbc2608f641db11ec013e549a48362aeca75f21e383325b42111e1c312b7e6",
+    "scripts/patch-pxe-reorg-anchor.test.mjs": "84183ff6d650954938db595c919e565cfd91124ca1391d364c11fe61706434be",
+    "scripts/test-sdk-manifest.mjs": "51c7aae92da3aa515c1fbc1bce428ffc411ecaeb6525b197d2dcaa7a25b95c20",
+    "scripts/testing/assets.mjs": "799ecea3e40dd5d952e072f187933d7dad00a09e977a92da9a1cd743cdfc700a",
+    "scripts/testing/fixtures/pxe-reorg-anchor/README.md": "d991a07eb20bfabcbcff74dbd31dfdc0b23765461f9a85aa4940936dfc914c60",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.js": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.ts": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72",
+    "scripts/testing/private-fee-verification.mjs": "e34a698c4e4afe946c4ebf25be1ba936e563d57c9618b268ef54db4cde24db7e",
+    "scripts/testing/private-fee-verification.test.mjs": "2f95225ca5ceec907a90783d0988d4b92ac2d9ffb82633c5ba0f652adee0f56f",
+    "scripts/testing/rolling-application-fixture.mjs": "78e5dbc2edda73f2eea74dc6a2fde07ed0936556269ed7269ffb0a669a37fc48",
+    "scripts/w01-private-fee-flow.mjs": "95a340b81ecf0611a2b28cd6461841348b373192bb99a5467a5127367da7aa5b"
+  },
+  "checks": {
+    "combined": {
+      "passed": 157,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedMs": 6195.500292,
+      "exitCode": 0,
+      "execSession": 75235,
+      "command": "NODE_BACKEND=js pinned-node --test --test-concurrency=1 --test-timeout=20000 scripts/patch-pxe-reorg-anchor.test.mjs scripts/test-sdk-manifest.mjs scripts/testing/private-fee-verification.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-preference-reorg.test.mjs"
+    },
+    "sdkBuild": {
+      "execSession": 70008,
+      "exitCode": 0,
+      "inputs": 2040,
+      "outputs": 8
+    },
+    "walletBuild": {
+      "execSession": 75235,
+      "exitCode": 0,
+      "inputs": 81,
+      "files": 24
+    }
+  },
+  "logs": {
+    "pxe-3b259-bootstrap.json": "1c97106c225ea1672c62504ab172413688d5b07daac4b728699cdc412b95a4a6",
+    "pxe-3b259-sdk-build.log": "fda8e158a36994c2b0161b24f9b098fd64d675f9c45bd18bfd5e15be26117102",
+    "pxe-3b259-wallet-build.log": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890",
+    "pxe-3b259-combined-tests.log": "252e266da91f30c7516e8bef9dbee8900d470ec7de68ede6b506dd795cabc213"
+  },
+  "manifests": {
+    ".build/sdk/sdk-manifest.json": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+    ".build/rolling-wallet/manifest.json": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4"
+  },
+  "dependencyMutation": "Explicit pinned bootstrap applied only after all team SDK/native consumers stopped and owned92544 cleanup382f independently proved. Both original hashes verified before apply; two patched hashes recorded. No runtime mutation.",
+  "hypothesis": "Sparse configured checkpoint anchor repair permits authenticated FPC rediscovery after conservative rollback. Numeric/header accounting observations distinguish residual mismatch. Not a retrospective claim about unrecorded1b908 balance.",
+  "next": "One bounded real rolling-preference-reorg-initial attempt4, only after independent exactsource/assets eligibility.540s4GiB unchanged; marker remains held.",
+  "at": "2026-10-12T10:29:42.663553+00:00"
+}

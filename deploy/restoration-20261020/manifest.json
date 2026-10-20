@@ -1,0 +1,210 @@
+{
+  "files": [
+    {
+      "path": "core/stage-core-state.py",
+      "sha256": "f955124b8699995d23d77ac86ff5dc708372374e4347700bb1c8212c178e46b8",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/stage-core-state.py"
+    },
+    {
+      "path": "core/install-restored-application.py",
+      "sha256": "b942e93e9354137fd081f233d8f53755f26d0d47f9d11324129d7311178cafa3",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/install-restored-application.py"
+    },
+    {
+      "path": "core/install-app-source-repair.py",
+      "sha256": "0c4a89a50404ede6d1898d0c0c9c0b6d07fb4e5cd925e8f30b83770166608759",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/install-app-source-repair.py"
+    },
+    {
+      "path": "core/repair-app-artifact-paths.py",
+      "sha256": "40156fa671c52c8f93bc000778b25430c538ac0b6799d6217cfbc562635be03a",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/repair-app-artifact-paths.py"
+    },
+    {
+      "path": "core/reconcile-query-after-anchor.py",
+      "sha256": "8ff86d66d8f014b4dd8b33db9d42219665723164e20eb4c6bd16ae87c2e62c7c",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/reconcile-query-after-anchor.py"
+    },
+    {
+      "path": "core/reconcile-query-listener-ready.py",
+      "sha256": "a5b5361bd347db75a1511a2abd1dc0a95f2619fc380883b55b54d859f1c478e8",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/reconcile-query-listener-ready.py"
+    },
+    {
+      "path": "core/stage-host.py",
+      "sha256": "2af921915cf53889618cbe9f914cc21e194cacdf67fd4170888dd0e6629efae7",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/stage-host.py"
+    },
+    {
+      "path": "core/prepare-staged.py",
+      "sha256": "c1544ae99e2c12048bb2d9a023e422652242b2994f81b553afaf868a549cccdc",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/prepare-staged.py"
+    },
+    {
+      "path": "core/runtime-provenance.json",
+      "sha256": "36fa811d0f2d08d10aa63db641858826ce52f8e144cc37623bf0bebadf456541",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/runtime-provenance.json"
+    },
+    {
+      "path": "core/persistent/amend-host.py",
+      "sha256": "af0601bf6a4e98832c3009b132b39ad71a8a49f804229b77508f8222d2b9a57a",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/amend-host.py"
+    },
+    {
+      "path": "core/persistent/prepare.py",
+      "sha256": "3ede11e24b1b6b255de4209c242ac4d0be2573ff7f4779259fd45d2802958cfc",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/prepare.py"
+    },
+    {
+      "path": "core/persistent/bindings.json",
+      "sha256": "3ebfb5758084a1c3131007493dc8f66eaa6460bc8d00bea2067af23442398771",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/bindings.json"
+    },
+    {
+      "path": "core/persistent/packet-hashes.json",
+      "sha256": "07adec381ec7f43889dd11ecd44d3ec6fca0dcc2f679dbcca9214245b9a40521",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/packet-hashes.json"
+    },
+    {
+      "path": "core/persistent/independent-live-review.json",
+      "sha256": "7b3f3483700c438534d6bd2d4e518e0686cdd5895ed8c84dfd83b8bd0f3048cd",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/independent-live-review.json"
+    },
+    {
+      "path": "core/persistent/independent-cutover-review.json",
+      "sha256": "2ce4d2d96c87bd93ed2c8cd42a88929b6d5885a9c041c52a1f88bd3adcdddf6e",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/independent-cutover-review.json"
+    },
+    {
+      "path": "core/moderator/restore-moderator.py",
+      "sha256": "e4175e1a400785a388ce6181dd0f446e91aec8ca2973e39d5dff3a7824cd1183",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/moderator/restore-moderator.py"
+    },
+    {
+      "path": "core/moderator/complete-moderator-source.py",
+      "sha256": "016681e171e3529a3cabe7a79710069ba472633b0a1cccda86bd8620ad7fe552",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/moderator/complete-moderator-source.py"
+    },
+    {
+      "path": "core/moderator/start-moderator.py",
+      "sha256": "9735a7b3379e4c7e69cf18b6916e52c821e7a46c76961dc0ad48167d8c3a09bc",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/moderator/start-moderator.py"
+    },
+    {
+      "path": "core/operator-handover-current.json",
+      "sha256": "b56d1fd2ae7be60ea13d011ef6dde383d55a6940c8cb4af5de8861f5edc18022",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/operator-handover-current.json"
+    },
+    {
+      "path": "bok/select-state.py",
+      "sha256": "c665c816cedc357ee4ae738c192438f9e1730567d92362f69bb2536edb4b445d",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/select-state.py"
+    },
+    {
+      "path": "bok/restore-state.py",
+      "sha256": "26a850792c1482d236debbf3b82315b66846c35823795bab542eb5a50718e4e7",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/restore-state.py"
+    },
+    {
+      "path": "bok/prepare-host-resolver.py",
+      "sha256": "208cdd56745b498672c14e09151cc9ef8bf610593f6db0540c8a8874ace93f67",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/prepare-host-resolver.py"
+    },
+    {
+      "path": "bok/apply-host-resolver.py",
+      "sha256": "f9afed4800838e7fbc2bbde582f525be19576e2b21c84f0a542236c8f5fffd7d",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/apply-host-resolver.py"
+    },
+    {
+      "path": "bok/prepare-native-recovery.py",
+      "sha256": "841aa7688f857fd4c6c771baafb7a098e64a02be573b40550f690bd8c80ef2fa",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/prepare-native-recovery.py"
+    },
+    {
+      "path": "bok/apply-native-recovery.py",
+      "sha256": "0421998f512e6349ec7f235945b084256261659115fee29730c63760d3ed70ce",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/apply-native-recovery.py"
+    },
+    {
+      "path": "bok/start-resolved.py",
+      "sha256": "5244767b1b71091587707c54534a0ead5e01cf7e9370a643c0c93674d470b4f9",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/start-resolved.py"
+    },
+    {
+      "path": "bok/switch-origin.py",
+      "sha256": "3038625d4c58b6eb445b1742a96b3487d9174f9dd0a1eba69022b39f8a4d8e71",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/switch-origin.py"
+    },
+    {
+      "path": "bok/read-readiness.py",
+      "sha256": "d0bbca884117631c153c3bc4ad659f6bc7a7ef246d89b3c0655d6a40208c6dbc",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/read-readiness.py"
+    },
+    {
+      "path": "bok/read-persistent-readiness.py",
+      "sha256": "84f2765821fe38ebc2d6634ad45dfd8e7d5f0488a86535b2f2ee11dc24e40ec6",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/read-persistent-readiness.py"
+    },
+    {
+      "path": "bok/OPERATIONS.md",
+      "sha256": "3c0f9c0aaf6639ee99d477086d7813bb790177efb2a4355a6fddba53b9fad4cc",
+      "originalLocalPath": "../rolling-controls/.build/restore-service-20261020/bok/OPERATIONS.md"
+    },
+    {
+      "path": "lead/persistent/replace-cloud-expiry.py",
+      "sha256": "7e6aea4f77e6841829b1732949631f03cb614f3299af4679ccf2d91e7b46d9b2",
+      "originalLocalPath": ".build/restore-service-20261020/persistent/replace-cloud-expiry.py"
+    },
+    {
+      "path": "lead/persistent/monthly-forecast.json",
+      "sha256": "b3407f67da2969430a523fa11686f830de3c794e292f5f5125dc1dfe91e711d8",
+      "originalLocalPath": ".build/restore-service-20261020/persistent/monthly-forecast.json"
+    },
+    {
+      "path": "lead/persistent/budget-readback.json",
+      "sha256": "5636c869ccf55306314c6b495c8c13c84f4101b384dd717e9bd50b9cbc74be40",
+      "originalLocalPath": ".build/restore-service-20261020/persistent/budget-readback.json"
+    },
+    {
+      "path": "lead/persistent/cloud-persistent-readback.json",
+      "sha256": "f471d0e61f1bb5722503db4855325f6abb82b56a8f4cba8d569e77e7ba699607",
+      "originalLocalPath": ".build/restore-service-20261020/persistent/cloud-persistent-readback.json"
+    },
+    {
+      "path": "lead/prover/refresh-anchor.py",
+      "sha256": "ee03e8ccd733a80439d72c0decf94add08b7f237a666bdeee8d8c99b6c1ff894",
+      "originalLocalPath": ".build/restore-service-20261020/prover/refresh-anchor.py"
+    },
+    {
+      "path": "lead/prover/activate-current.py",
+      "sha256": "56f3c8f48bb5b7da7855b2f1a597b81c59af6e54a3f145171528065d0dbbdcaa",
+      "originalLocalPath": ".build/restore-service-20261020/prover/activate-current.py"
+    },
+    {
+      "path": "core/launch.py",
+      "sha256": "ffe658439556f4dcacbee8bf165922961e68be96a0ff93f620455fa72dd732a9",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/launch.py"
+    },
+    {
+      "path": "core/create-management-endpoints.py",
+      "sha256": "71f7a27c759c7d405d7173e9af70f7864ffbfa962cf05d581927ec326808a8af",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/create-management-endpoints.py"
+    },
+    {
+      "path": "core/stage-application.py",
+      "sha256": "e7a488acdd8db6d573fc3c5912145f56ac6ca776b65efdcac7d5241f54abfcc8",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/stage-application.py"
+    },
+    {
+      "path": "core/persistent/dispatch.py",
+      "sha256": "fd5c2eea9d1e39caff1d72ea1ac8b9d29b7e1ac324396230b2f9339a941d710f",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/persistent/dispatch.py"
+    },
+    {
+      "path": "core/moderator/dispatch-stage.py",
+      "sha256": "e4e5012b7756d110a6b758cab3a4c675e4f894c0832f3b189be006d76ab5a037",
+      "originalLocalPath": "../rolling-independent-deploy/.build/restore-service-20261020/moderator/dispatch-stage.py"
+    }
+  ],
+  "notCopied": []
+}

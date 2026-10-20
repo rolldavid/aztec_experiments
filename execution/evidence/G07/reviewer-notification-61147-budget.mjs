@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync('scripts/testing/rolling-notification-fixture.mjs','utf8');
+const budget=source.slice(source.indexOf('export function notificationBrowserBudget'),source.indexOf('// Used on success')) .replace('export ','');
+const loop=source.slice(source.indexOf('  const readyDeadline='),source.indexOf('  const handoff='));
+let now=343977;
+const context=vm.createContext({assert,Date:{now:()=>now},ctx:{applicationDeadlineAt:525000},started:{index:{status:()=>({state:'syncing'})}},sleep:async()=>{now+=25;}});
+vm.runInContext(budget,context);
+assert.equal(vm.runInContext('notificationBrowserBudget(ctx.applicationDeadlineAt)',context),150000);
+now=345100;
+await assert.rejects(vm.runInContext('(async()=>{'+loop+'})()',context),{name:'AssertionError'});
+context.started.index.status=()=>({state:'ready'});
+await vm.runInContext('(async()=>{'+loop+'})()',context);
+assert.throws(()=>vm.runInContext('notificationBrowserBudget(ctx.applicationDeadlineAt)',context),{name:'AssertionError'});
+console.log(JSON.stringify({sourceFragment:true,syntheticClockOnly:true,entryAt343977Passes:true,setup1123msThenSyncingFailsReadinessBudget:true,alreadyReadyAt345100StillFailsHandoffBudget:true,noSdkServicesOrProofs:true}));

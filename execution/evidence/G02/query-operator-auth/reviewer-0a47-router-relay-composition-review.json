@@ -1,0 +1,43 @@
+{
+  "candidate": "0a47cffebe1fd3accb3590d5aa1488bbd61a43a7",
+  "scope": "Root router provenance2807358 and trusted development relay startup0a47cff additions only; Controls liquidity final freeze remains separate",
+  "verdict": "approve source/component additions; final integrated normal generated closure and actual funding remain pending",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "scripts/build-contracts.mjs": "1bd2d6ed0d608989180e08070b1ef46f45429c1b5855328e87fc818eec456cb8",
+    "scripts/check-artifacts.mjs": "88fbe20e2e6858793735839450c9a3618ef6679e1468d4d2926a349db08c1657",
+    "scripts/test-artifacts.mjs": "1ee996774040b11dd170488fa5770b0471d997012a3def7464640240e4533c2a",
+    "plugins/devnet/start.mjs": "f2a7085dc3c7d3b531485f33bd4c2dd50c6e649889824a6258a96885cb49cf43",
+    "plugins/test/rolling-funding-relay.test.mjs": "cd6a18ce2753febb779c7eab73619e936ca927cbb40758367ddf65215981c0fb"
+  },
+  "review": [
+    "Normal contract builder records full funding router JSON hash. Checker requires full byte equality to manifest, current complete contractInputs, nonempty creation/runtime and matching embedded Solidity source. Existing tests reject runtime, manifest and source drift.",
+    "Development relay opens only with matched fixed public/private chain31337 scope, router/portal/FPC/quoter/Circle hashes and relayer identity; signer/state paths confined to private devnet directory and underlying real relay enforces private canonical owned state and signer-wide lease.",
+    "Startup does not call terms(); pending or exhausted new-payment admission does not prevent status recovery.",
+    "Reader HTTP owns pending requests before relay closure; memoized relay close ensures server plus startup cleanup call the underlying close once, including retained rejection. Startup failures clean reader/index/relay/fixture; failed cleanup retains parent lease.",
+    "Private signer configuration is passed in process to real relay factory, not placed in public wallet configuration. Existing remote/testnet profile remains unchanged."
+  ],
+  "evidence": {
+    "artifact40": {
+      "path": "execution/evidence/G04/funding-router-artifact-focused.log",
+      "sha256": "ad7f285e99a18302dd19603ed957becfd1b80c3d805113c0edf475318716c51e",
+      "result": "40pass862.647458ms, synthetic artifact fixtures"
+    },
+    "relay3": {
+      "path": "execution/evidence/G04/development-relay-canonical-focused.log",
+      "sha256": "a98b90acecb5112b3dda4498e2597a9e6f5650f731e1f9465aa8eb154c48e966",
+      "result": "3pass3020.358542ms; actual admission wrapper with controlled relay port, not live signing/service acceptance"
+    },
+    "normalContracts": {
+      "path": "execution/evidence/G04/liquidity-contracts-build-owner.json",
+      "sha256": "f16a6503b7457f6b5d7785f69f7bb711360e41ea65ac8c1ed694d51487219d8c"
+    }
+  },
+  "limits": [
+    "Earlier missingNODE_BACKEND and /var-to-/private/var fixture failures remain failed records; canonical fixture final result binds current source.",
+    "Full normal PrivateBok/SDK/apps/wallet build is parent-owned and was running at review; no final generated closure asserted here.",
+    "Actual Circle pools, live relay, named wallet signatures/payments, retained funding and testnet proof acceptance remain separate.",
+    "Existing Controls artifact authentication, missing-stage recovery and canonical receipt handoff repairs need final frozen-source review."
+  ],
+  "reviewExecution": "Read-only inspection; no heavy tests or build rerun."
+}

@@ -1,0 +1,228 @@
+{
+  "instances": [
+    {
+      "id": "i-09e2dbeea10854dc8",
+      "type": "m7a.4xlarge",
+      "state": "running",
+      "launchTime": "2026-10-18T23:46:12+00:00",
+      "volumes": [
+        {
+          "id": "vol-0f03dfb636c65ad05",
+          "deleteOnTermination": true
+        },
+        {
+          "id": "vol-0ba74b7fa17135f81",
+          "deleteOnTermination": true
+        }
+      ]
+    },
+    {
+      "id": "i-0a56b0bc2dd7727b2",
+      "type": "r7i.xlarge",
+      "state": "running",
+      "launchTime": "2026-10-19T15:22:58+00:00",
+      "volumes": [
+        {
+          "id": "vol-03207e708c4034c81",
+          "deleteOnTermination": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "id": "vol-0ba74b7fa17135f81",
+      "sizeGiB": 1024,
+      "type": "gp3",
+      "iops": 3000,
+      "throughputMiBps": 500,
+      "state": "in-use",
+      "createdAt": "2026-10-18T23:46:12.716000+00:00",
+      "instances": [
+        "i-09e2dbeea10854dc8"
+      ]
+    },
+    {
+      "id": "vol-03207e708c4034c81",
+      "sizeGiB": 128,
+      "type": "gp3",
+      "iops": 3000,
+      "throughputMiBps": 125,
+      "state": "in-use",
+      "createdAt": "2026-10-19T15:22:59.131000+00:00",
+      "instances": [
+        "i-0a56b0bc2dd7727b2"
+      ]
+    },
+    {
+      "id": "vol-0f03dfb636c65ad05",
+      "sizeGiB": 40,
+      "type": "gp3",
+      "iops": 3000,
+      "throughputMiBps": 125,
+      "state": "in-use",
+      "createdAt": "2026-10-18T23:46:13.864000+00:00",
+      "instances": [
+        "i-09e2dbeea10854dc8"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "id": "vpce-0ce422d6d08d15b9f",
+      "type": "Interface",
+      "service": "com.amazonaws.us-east-1.ssm",
+      "state": "available",
+      "azCount": 1
+    },
+    {
+      "id": "vpce-024f100ef8184a868",
+      "type": "Interface",
+      "service": "com.amazonaws.us-east-1.ssmmessages",
+      "state": "available",
+      "azCount": 1
+    }
+  ],
+  "billing": [
+    {
+      "period": {
+        "Start": "2026-10-18",
+        "End": "2026-10-19"
+      },
+      "estimated": true,
+      "services": [
+        {
+          "service": "AWS Cost Explorer",
+          "usd": "0.03"
+        },
+        {
+          "service": "AWS Glue",
+          "usd": "0"
+        },
+        {
+          "service": "AWS Key Management Service",
+          "usd": "0"
+        },
+        {
+          "service": "Amazon CloudFront",
+          "usd": "0.0000000074"
+        },
+        {
+          "service": "EC2 - Other",
+          "usd": "0.7443202054"
+        },
+        {
+          "service": "Amazon Elastic Compute Cloud - Compute",
+          "usd": "9.0456392768"
+        },
+        {
+          "service": "Amazon Lightsail",
+          "usd": "2.7096"
+        },
+        {
+          "service": "Amazon Simple Storage Service",
+          "usd": "0.0654334923"
+        },
+        {
+          "service": "Amazon Virtual Private Cloud",
+          "usd": "0.3562633351"
+        },
+        {
+          "service": "AmazonCloudWatch",
+          "usd": "0"
+        }
+      ]
+    },
+    {
+      "period": {
+        "Start": "2026-10-19",
+        "End": "2026-10-20"
+      },
+      "estimated": true,
+      "services": [
+        {
+          "service": "AWS Glue",
+          "usd": "0"
+        },
+        {
+          "service": "Amazon CloudFront",
+          "usd": "0.0002308361"
+        },
+        {
+          "service": "EC2 - Other",
+          "usd": "0.0281324792"
+        },
+        {
+          "service": "Amazon Elastic Compute Cloud - Compute",
+          "usd": "2.1937114014"
+        },
+        {
+          "service": "Amazon Lightsail",
+          "usd": "0.4516"
+        },
+        {
+          "service": "Amazon Simple Storage Service",
+          "usd": "0.0048220632"
+        },
+        {
+          "service": "Amazon Virtual Private Cloud",
+          "usd": "0.1400263284"
+        },
+        {
+          "service": "AmazonCloudWatch",
+          "usd": "0"
+        }
+      ]
+    }
+  ],
+  "computePrices": [
+    {
+      "type": "m7a.4xlarge",
+      "usage": "BoxUsage:m7a.4xlarge",
+      "volume": null,
+      "unit": "Hrs",
+      "usd": "0.9273600000",
+      "description": "$0.92736 per On Demand Linux m7a.4xlarge Instance Hour",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    },
+    {
+      "type": "r7i.xlarge",
+      "usage": "BoxUsage:r7i.xlarge",
+      "volume": null,
+      "unit": "Hrs",
+      "usd": "0.2646000000",
+      "description": "$0.2646 per On Demand Linux r7i.xlarge Instance Hour",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    }
+  ],
+  "gp3Prices": [
+    {
+      "type": null,
+      "usage": "EBS:VolumeP-IOPS.gp3",
+      "volume": "gp3",
+      "unit": "IOPS-Mo",
+      "usd": "0.0050000000",
+      "description": "$0.005 per provisioned IOPS-month of gp3 - US East (N. Virginia)",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    },
+    {
+      "type": null,
+      "usage": "EBS:VolumeUsage.gp3",
+      "volume": "gp3",
+      "unit": "GB-Mo",
+      "usd": "0.0800000000",
+      "description": "$0.08 per GB-month of General Purpose (gp3) provisioned storage - US East (N. Virginia)",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    },
+    {
+      "type": null,
+      "usage": "EBS:VolumeP-Throughput.gp3",
+      "volume": "gp3",
+      "unit": "GiBps-mo",
+      "usd": "40.9600000000",
+      "description": "$0.04 per provisioned MiBps-month of gp3 - US East (N. Virginia)",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    }
+  ],
+  "observedAt": "2026-10-19T18:40:40.042179+00:00"
+}

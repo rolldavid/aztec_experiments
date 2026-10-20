@@ -1,0 +1,39 @@
+✔ control fixture restores original interval null (1.582709ms)
+✔ control fixture restores original interval 60 (0.203625ms)
+✔ control fixture rejects malformed interval undefined (0.571541ms)
+✔ control fixture rejects malformed interval NaN (0.109708ms)
+✔ control fixture rejects malformed interval 60 (0.10625ms)
+✔ control fixture rejects malformed interval -1 (0.096416ms)
+✔ control fixture rejects malformed interval 0 (0.093208ms)
+✔ control fixture rejects malformed interval 1.5 (0.14925ms)
+✔ control fixture rejects malformed interval Infinity (0.169458ms)
+✔ control fixture rejects an interval still enabled while paused (0.44325ms)
+▶ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining
+  ✔ automine=true, interval=null (14.954417ms)
+  ✔ automine=false, interval=null (7.2535ms)
+  ✔ automine=false, interval=60 (8.749333ms)
+✔ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining (143.190917ms)
+✔ control fixture persists intent before one same-height replacement and verifies restoration (0.333917ms)
+✔ control fixture refuses invalid boundary: changed-l1 (0.5145ms)
+✔ control fixture refuses invalid boundary: changed-l2 (0.146042ms)
+✔ control fixture refuses invalid boundary: finalized (0.067583ms)
+✔ control fixture refuses invalid boundary: empty-suffix (0.058ms)
+✔ control fixture refuses invalid boundary: unpublished (0.050916ms)
+✔ control fixture refuses invalid boundary: pending-l1 (0.068958ms)
+✔ control fixture refuses active miner or exhausted admission before touching Anvil (0.130541ms)
+✔ failed durable intent prevents mutation; uncertain RPC is never replayed (0.243375ms)
+✔ SDK swallowed restore failure is independently rejected (0.250833ms)
+✔ control fixture requires actual replacement effect: height (0.157834ms)
+✔ control fixture requires actual replacement effect: hash (0.106917ms)
+✔ control fixture requires actual replacement effect: rollup (0.112958ms)
+✔ control fixture requires actual replacement effect: pending-l1 (0.116625ms)
+✔ original failure and final write failure retain successful restoration without another write (0.166583ms)
+✔ original, readback and final write failures are preserved together with no mutation retry (0.177958ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3745.070708

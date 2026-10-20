@@ -1,0 +1,1058 @@
+{
+  "passed": false,
+  "caseProfile": "both",
+  "applicationProofs": false,
+  "networkProofs": false,
+  "controlledSettlement": true,
+  "fundingMode": "real-portal-deposit",
+  "payerMode": "genesis",
+  "privacyAcceptance": "missing: public genesis fee payer",
+  "l1": [
+    {
+      "label": "deploy-token",
+      "txHash": "0x31c356d55b20b7811e76b1875c35c8de6f074be5141e9b8c4d99e23262fa307d",
+      "submission": "included",
+      "blockNumber": 59,
+      "blockHash": "0xbfa6469a712bf62c6a51869657b6c74256fda006535357b36b88d4ca65cf058e",
+      "gasUsed": "542500",
+      "fee": "651372434387500"
+    },
+    {
+      "label": "deploy-portal",
+      "txHash": "0xd924dd0998430b8367ceda2e5da8101d2f7b8f3e414f369a607d098df00a1592",
+      "submission": "included",
+      "blockNumber": 87,
+      "blockHash": "0x7edb3bff3af79a9705216743738310506645d5040e7fa206d75c4f53a427f6af",
+      "gasUsed": "996952",
+      "fee": "996968485598272"
+    },
+    {
+      "label": "activate-portal",
+      "txHash": "0x19a6473d99a29ff1da87cd2fae5371776f6a7ba20b406ecdc773a13b64cfaa10",
+      "submission": "included",
+      "blockNumber": 101,
+      "blockHash": "0x5334db6c3f5d6b3869de803f5f1c1018c61fa5156b9e440227ca76fefb7f2d90",
+      "gasUsed": "90423",
+      "fee": "90423234105147"
+    },
+    {
+      "label": "normal-fund-approve",
+      "txHash": "0xe35df1e2457015a4a67e5d36a04d48a3eb47830b3303cdd353885ca32b9b1469",
+      "submission": "included",
+      "blockNumber": 102,
+      "blockHash": "0x806d9c9bde4a94a1bdb73e58343d4af9224eadc9f67c6545531f4dd18e39a0a0",
+      "gasUsed": "46318",
+      "fee": "46318105049224"
+    },
+    {
+      "label": "normal-fund-deposit",
+      "txHash": "0x13441e586bacb55a29ba863528eccd726bbd4344bbcc7c74f3707ce5fed7149d",
+      "submission": "included",
+      "blockNumber": 103,
+      "blockHash": "0x1d428146f109e4c37a1cf7f9f1b39136ac5b28129aebbde99b5078c7aae154e3",
+      "gasUsed": "149661",
+      "fee": "149661297226746"
+    },
+    {
+      "label": "private-withdraw-redeem",
+      "txHash": "0x17fd7ad0f0dd360688d9d84e8f6b55f14a0cade6cec275bd74266e967c46384e",
+      "submission": "included",
+      "blockNumber": 222,
+      "blockHash": "0xb620e79cc0ed6d91adb2513a7b303946dd25af2b0ed33be1289a724e8c543ae9",
+      "gasUsed": "104173",
+      "fee": "104173000729211"
+    },
+    {
+      "label": "operator-withdraw-redeem",
+      "txHash": "0x0fc755abfac278b1cac1b126b980ce6fef7226a4d35b5016b4a84a81f819c4e4",
+      "submission": "included",
+      "blockNumber": 242,
+      "blockHash": "0xf8e11ade5ea3a102aea8197b359cebeab201be77bd26f80ae78c47be60decee0",
+      "gasUsed": "99372",
+      "fee": "99372000695604"
+    },
+    {
+      "label": "uncertain-fund-approve",
+      "txHash": "0xc409a9098f151fed5cb65bb2671b0bcab4d216f3d976f2cce03a5ee806343170",
+      "submission": "included",
+      "blockNumber": 244,
+      "blockHash": "0xe830c9c38d8c49e4c9584503226832cd1e08080e6d54517e22928a90914c1895",
+      "gasUsed": "46318",
+      "fee": "46318000324226"
+    },
+    {
+      "label": "uncertain-fund-deposit",
+      "txHash": "0x4145a0ec9b2bdb6a23ce74e18655a63129b5d7e348003e4deaffb450c0ed8227",
+      "submission": "included",
+      "blockNumber": 245,
+      "blockHash": "0x5178f7020e6f61a2a1645c725557b64a26565dcf0eb97ccf158fa9be7b3554e6",
+      "gasUsed": "132610",
+      "fee": "132610000928270"
+    }
+  ],
+  "artifactHashes": {
+    "billboard/portal/out/DevUSDC.sol/DevUSDC.json": "02b3f1631dee076615b6e413e9ad1d5d8915c36bebd3adecc8413e19f8baff8e",
+    "billboard/portal/out/PluginPortal.sol/PluginPortal.json": "f7034218d801721ce2b39917c11f86055380868f6adbc3da36e6e115fed10e39"
+  },
+  "clientMining": {
+    "passed": false,
+    "ordinaryBlocksMined": 243,
+    "stopped": true,
+    "maxObservedClockLeadSeconds": 0,
+    "clockSynchronization": "every mined block, including correction of wall-clock lead",
+    "lastBlock": "334",
+    "lastTimestamp": "1791809983"
+  },
+  "settlements": [
+    {
+      "passed": true,
+      "kind": "ready",
+      "deadlineMs": 60000,
+      "testControlled": true,
+      "syntheticSettlement": true,
+      "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+      "proofReceipts": [],
+      "finalized": false,
+      "epochs": [
+        {
+          "epoch": 4,
+          "firstCheckpoint": 1,
+          "lastCheckpoint": 1,
+          "testControlledCheckpoint": 1
+        },
+        {
+          "epoch": 5,
+          "firstCheckpoint": 2,
+          "lastCheckpoint": 3,
+          "testControlledCheckpoint": 3
+        },
+        {
+          "epoch": 6,
+          "firstCheckpoint": 4,
+          "lastCheckpoint": 4,
+          "testControlledCheckpoint": 4
+        }
+      ],
+      "sequencerPaused": true,
+      "sequencerResumed": true,
+      "applicationProofs": false,
+      "targetCheckpoint": 4,
+      "messageBlock": "4",
+      "messageBlockHash": "0x27045af37f04fff71447fffb003c5938cfcf162e72a99a96de3a35245d336482",
+      "messageTxHash": "0x13831b797ff08a716d0b37fbedf90a58df2a24a83d471d33f446f352b19e5b8d",
+      "expectedLeaf": "0x003570898d043db63e46b8c52445236366e56adb98dbec3f204a123f61d5f995",
+      "initialProvenCheckpoint": 0,
+      "forcedProvenCheckpoint": 4,
+      "localEpoch": 7,
+      "membership": {
+        "epochNumber": 6,
+        "checkpointCount": 1,
+        "leafIndex": "0",
+        "pathLength": 5,
+        "root": "0x00bd32c8fbc9eae66e0c39137745754ad56318122597e7c3d2666a5996e317e2"
+      },
+      "localSettlement": {
+        "l1Block": "100",
+        "l1Hash": "0x0516b5a9fe2c72b64bb1695e616cc77384fbc7d6c5ab4fb3489329ba808665a3",
+        "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+      },
+      "elapsedMs": 3544
+    },
+    {
+      "passed": true,
+      "kind": "exit",
+      "deadlineMs": 60000,
+      "testControlled": true,
+      "syntheticSettlement": true,
+      "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+      "proofReceipts": [],
+      "finalized": false,
+      "epochs": [
+        {
+          "epoch": 4,
+          "firstCheckpoint": 1,
+          "lastCheckpoint": 1,
+          "testControlledCheckpoint": 1
+        },
+        {
+          "epoch": 5,
+          "firstCheckpoint": 2,
+          "lastCheckpoint": 3,
+          "testControlledCheckpoint": 3
+        },
+        {
+          "epoch": 6,
+          "firstCheckpoint": 4,
+          "lastCheckpoint": 4,
+          "testControlledCheckpoint": 4
+        },
+        {
+          "epoch": 7,
+          "firstCheckpoint": 5,
+          "lastCheckpoint": 6,
+          "testControlledCheckpoint": 6
+        },
+        {
+          "epoch": 8,
+          "firstCheckpoint": 7,
+          "lastCheckpoint": 7,
+          "testControlledCheckpoint": 7
+        },
+        {
+          "epoch": 9,
+          "firstCheckpoint": 8,
+          "lastCheckpoint": 8,
+          "testControlledCheckpoint": 8
+        },
+        {
+          "epoch": 10,
+          "firstCheckpoint": 9,
+          "lastCheckpoint": 10,
+          "testControlledCheckpoint": 10
+        },
+        {
+          "epoch": 11,
+          "firstCheckpoint": 11,
+          "lastCheckpoint": 11,
+          "testControlledCheckpoint": 11
+        },
+        {
+          "epoch": 12,
+          "firstCheckpoint": 12,
+          "lastCheckpoint": 13,
+          "testControlledCheckpoint": 13
+        }
+      ],
+      "sequencerPaused": true,
+      "sequencerResumed": true,
+      "applicationProofs": false,
+      "targetCheckpoint": 13,
+      "messageBlock": "13",
+      "messageBlockHash": "0x2371fa4e843ef8dbe6ddde8baf13cf63bc80b4e98ce6730b1fb73117ceeb4436",
+      "messageTxHash": "0x2ab827e85450bca7cb80ed46dd7b6b39551041122e536c2d9e16d99f11710143",
+      "expectedLeaf": "0x0068eecac3b9824a821a41d52d13ad17aba07df4af57714d8077b958ae554707",
+      "initialProvenCheckpoint": 4,
+      "forcedProvenCheckpoint": 13,
+      "localEpoch": 13,
+      "membership": {
+        "epochNumber": 12,
+        "checkpointCount": 2,
+        "leafIndex": "1",
+        "pathLength": 5,
+        "root": "0x0022cd67a2847744b604b3f0938f43cbd8d49f02e048d5f1942addc6cba07c3b"
+      },
+      "localSettlement": {
+        "l1Block": "221",
+        "l1Hash": "0x44ab375a65ba5582678110ec094f834b077de282be2e44576a6ba47614cc0c39",
+        "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+      },
+      "elapsedMs": 3714
+    },
+    {
+      "passed": true,
+      "kind": "exit",
+      "deadlineMs": 60000,
+      "testControlled": true,
+      "syntheticSettlement": true,
+      "scope": "TEST CONTROLLED official local epoch/Outbox settlement; no server proof or L1 proof receipt",
+      "proofReceipts": [],
+      "finalized": false,
+      "epochs": [
+        {
+          "epoch": 4,
+          "firstCheckpoint": 1,
+          "lastCheckpoint": 1,
+          "testControlledCheckpoint": 1
+        },
+        {
+          "epoch": 5,
+          "firstCheckpoint": 2,
+          "lastCheckpoint": 3,
+          "testControlledCheckpoint": 3
+        },
+        {
+          "epoch": 6,
+          "firstCheckpoint": 4,
+          "lastCheckpoint": 4,
+          "testControlledCheckpoint": 4
+        },
+        {
+          "epoch": 7,
+          "firstCheckpoint": 5,
+          "lastCheckpoint": 6,
+          "testControlledCheckpoint": 6
+        },
+        {
+          "epoch": 8,
+          "firstCheckpoint": 7,
+          "lastCheckpoint": 7,
+          "testControlledCheckpoint": 7
+        },
+        {
+          "epoch": 9,
+          "firstCheckpoint": 8,
+          "lastCheckpoint": 8,
+          "testControlledCheckpoint": 8
+        },
+        {
+          "epoch": 10,
+          "firstCheckpoint": 9,
+          "lastCheckpoint": 10,
+          "testControlledCheckpoint": 10
+        },
+        {
+          "epoch": 11,
+          "firstCheckpoint": 11,
+          "lastCheckpoint": 11,
+          "testControlledCheckpoint": 11
+        },
+        {
+          "epoch": 12,
+          "firstCheckpoint": 12,
+          "lastCheckpoint": 13,
+          "testControlledCheckpoint": 13
+        },
+        {
+          "epoch": 13,
+          "firstCheckpoint": 14,
+          "lastCheckpoint": 14,
+          "testControlledCheckpoint": 14
+        }
+      ],
+      "sequencerPaused": true,
+      "sequencerResumed": true,
+      "applicationProofs": false,
+      "targetCheckpoint": 14,
+      "messageBlock": "14",
+      "messageBlockHash": "0x0db7d640830738d7eac99b4a5ed8fe35a769829335cedfe5a9998a7dbc8c9796",
+      "messageTxHash": "0x08da051797e19f80cf3f01fd59c5f2abb02692ac846aaf2c0bef4c3583dcbc55",
+      "expectedLeaf": "0x00e10eed010edbf6c0f836994a551158eb8a0426ae85a3ba74ef6e0294e1fcfa",
+      "initialProvenCheckpoint": 13,
+      "forcedProvenCheckpoint": 14,
+      "localEpoch": 14,
+      "membership": {
+        "epochNumber": 13,
+        "checkpointCount": 1,
+        "leafIndex": "0",
+        "pathLength": 5,
+        "root": "0x0087595e3e3aeb361591ca0ea98fe598b3ccd4011b29743fc8d7137230dc6d07"
+      },
+      "localSettlement": {
+        "l1Block": "241",
+        "l1Hash": "0xef465339902fff696562c8d636384a67a93b83037fcedf9a61d63855431e2c41",
+        "scope": "local storage forced by official test helpers; neither epoch proof nor economic finality"
+      },
+      "elapsedMs": 3804
+    }
+  ],
+  "deadlineAdvance": {
+    "target": "1791809965",
+    "reservationTxHash": "0x2e17c223a197254e9a581795e98329aade8188bc9e31d4e94b5544352f9771de",
+    "reservationBlock": 20,
+    "reservationBlockHash": "0x12760b721b64f9e7765cd3a3ec6bba783bcdb756718d7e20149986a1237a7944",
+    "testControlled": true,
+    "epochProof": false,
+    "passed": true,
+    "pendingBefore": 20,
+    "provenBefore": 14,
+    "testControlledProvenCheckpoint": 20,
+    "pendingAfter": 22,
+    "provenAfter": 20
+  },
+  "experiment": {
+    "passed": false,
+    "caseProfile": "both",
+    "completedCases": [
+      "normal"
+    ],
+    "proofMode": "proofs-disabled",
+    "realProofs": false,
+    "realProofAcceptance": "missing",
+    "fundingMode": "real-portal-deposit",
+    "payerMode": "genesis",
+    "measurements": [
+      {
+        "label": "deploy-board",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 1103,
+        "txHash": "0x10231419e4299b3ac0f18c613126415160ec680e5cb9027463ee5d136c6c4d28",
+        "serializedTxBytes": 218688,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 7840,
+            "l2Gas": 813662
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 8915,
+        "blockNumber": 2,
+        "blockHash": "0x032f1b709f73a3ad9976af14394d1bb0364476ad10737d6d6330ae1a58a74900",
+        "transactionFee": "961829850200000",
+        "effectBytes": 97587,
+        "effectSha256": "c6e7355dc3d4421c77c3c1add85d81b70b134f17b8f29131fd6761935dd912e9",
+        "blobFields": 247,
+        "publicWrites": 1,
+        "publicLogFields": 0,
+        "noteHashes": 0,
+        "nullifiers": 5
+      },
+      {
+        "label": "deploy-escrow",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 1356,
+        "txHash": "0x10be328c50474fc14f96aaaf5c22a726a390f5c872d2ef4a3ab3b319c86a0bde",
+        "serializedTxBytes": 218816,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 33472,
+            "l2Gas": 1307765
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 13028,
+        "blockNumber": 3,
+        "blockHash": "0x163a31facd086bb04b7eaf6b346bafe45973f3d0a75ae0875f6e0c9622c9e816",
+        "transactionFee": "1545909006500000",
+        "effectBytes": 98387,
+        "effectSha256": "791fd40fa937a2e4cb4fccc108a787b857b85d3814efa789d866f3ead1cda07f",
+        "blobFields": 1048,
+        "publicWrites": 11,
+        "publicLogFields": 0,
+        "noteHashes": 0,
+        "nullifiers": 10
+      },
+      {
+        "label": "set-portal",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 609,
+        "txHash": "0x13831b797ff08a716d0b37fbedf90a58df2a24a83d471d33f446f352b19e5b8d",
+        "serializedTxBytes": 121984,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 320,
+            "l2Gas": 977936
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 7157,
+        "blockNumber": 4,
+        "blockHash": "0x27045af37f04fff71447fffb003c5938cfcf162e72a99a96de3a35245d336482",
+        "transactionFee": "41464486400000",
+        "effectBytes": 363,
+        "effectSha256": "89e0260f151080531d897be250a390cbd093613b4e9337cba54736748a0f68b5",
+        "blobFields": 12,
+        "publicWrites": 3,
+        "publicLogFields": 0,
+        "noteHashes": 0,
+        "nullifiers": 2
+      },
+      {
+        "label": "normal-fund",
+        "fundingMode": "real-portal-deposit",
+        "txHash": "0x13441e586bacb55a29ba863528eccd726bbd4344bbcc7c74f3707ce5fed7149d",
+        "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-e1e0b19d-8f82-4178-8ea4-70bbdcc3058c/normal-fund-deposit.json",
+        "amount": "1000",
+        "leafIndex": "0",
+        "messageHash": "0x009b5d4d8cc86c1716a2fbff73ce00d7e1d8246619510e75fb5cb4ca04746ae5",
+        "anchorBlock": 6
+      },
+      {
+        "label": "normal-claim",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 1167,
+        "txHash": "0x2d488288a65d0df68ada7ab00aa16f72ece432bb679df6f86abc42f536a0e145",
+        "serializedTxBytes": 77719,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1984,
+            "l2Gas": 529900
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 12404,
+        "blockNumber": 7,
+        "blockHash": "0x0e58f0f41c994e264e79f8dbcf9e88396041accc7ae138e4e46c531be651f4b8",
+        "transactionFee": "5881890000000",
+        "effectBytes": 1879,
+        "effectSha256": "8964d159538d6dadd08038bc9c5f55ae6cf2c04f9d49b93835611fcae32e46fc",
+        "blobFields": 62,
+        "publicWrites": 1,
+        "publicLogFields": 0,
+        "noteHashes": 2,
+        "nullifiers": 4
+      },
+      {
+        "label": "normal-authorize",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 960,
+        "txHash": "0x270c3ea477ba5cf53a0f0d2fe91be2bf32642239f74a6ac663f07144a653bd0d",
+        "serializedTxBytes": 122112,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 3808,
+            "l2Gas": 1291165
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 12995,
+        "blockNumber": 8,
+        "blockHash": "0x113eb275e58566142b4aad4c264172e960f183491b69e3680654eeedeba9d57f",
+        "transactionFee": "14331931500000",
+        "effectBytes": 3711,
+        "effectSha256": "6a5392955123e1fa49c6705c858c2a5665b87d342d99fb1839df30d8a84dd426",
+        "blobFields": 121,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 2,
+        "nullifiers": 6
+      },
+      {
+        "label": "normal-activate",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 539,
+        "txHash": "0x15ab3253088f2d7bab58d750b4f249b2e304dbab15dcf53420bc3a32586e65e7",
+        "serializedTxBytes": 123296,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1408,
+            "l2Gas": 1722827
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 11967,
+        "blockNumber": 9,
+        "blockHash": "0x04de7b6bf0470c8cefb3256d0daa73c7ef7129a2dc2d28f0ec246cb003244dc8",
+        "transactionFee": "17572835400000",
+        "effectBytes": 1423,
+        "effectSha256": "c8439f62fb93f0adce0c9a92516ae169ed9b621c499d5c648e2d6f8eafec36a2",
+        "blobFields": 46,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 0,
+        "nullifiers": 1
+      },
+      {
+        "label": "normal-reserve",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 565,
+        "txHash": "0x1f39827cb304f8e786a3bfebe1fe87b73e08f58730bc06768748e6afdc66c0f4",
+        "serializedTxBytes": 122048,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1408,
+            "l2Gas": 1097030
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 8415,
+        "blockNumber": 10,
+        "blockHash": "0x1eef1faf9a8947e1a542632fd00fd3f8d61d967829c104f9787dae0165b332aa",
+        "transactionFee": "11189706000000",
+        "effectBytes": 1423,
+        "effectSha256": "831bcfeaee83b89ed94afba05f8db45a4905f643102739a371ce94e825aeecbd",
+        "blobFields": 46,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 0,
+        "nullifiers": 1
+      },
+      {
+        "label": "normal-settle",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 656,
+        "txHash": "0x2a340421d62febb15c72a3c1a2d1ef7fc877e1d4367cfc9d00fb58e05a2b9f26",
+        "serializedTxBytes": 122080,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1504,
+            "l2Gas": 1163742
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 12571,
+        "blockNumber": 11,
+        "blockHash": "0x039eba6ad94f59048f4f439856a7cac6f3c312512aa23ebc5e6bf1311e1a4eac",
+        "transactionFee": "11870168400000",
+        "effectBytes": 1519,
+        "effectSha256": "b550441b6a54bd9d24dfa8407ba260959f8fbfc7bd21631a9b6669abe9caa831",
+        "blobFields": 49,
+        "publicWrites": 16,
+        "publicLogFields": 12,
+        "noteHashes": 0,
+        "nullifiers": 2
+      },
+      {
+        "label": "normal-finish",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 583,
+        "txHash": "0x13a89b0fcd59f6bb912a1ad1ff80cd35794090cc5186c1c16ae25f7813834bf4",
+        "serializedTxBytes": 121984,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1600,
+            "l2Gas": 1123571
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 13016,
+        "blockNumber": 12,
+        "blockHash": "0x086ff043abd7fc101ba343df0dbf563e1453a1da369cf0d47283ed27e8d14245",
+        "transactionFee": "11460424200000",
+        "effectBytes": 1587,
+        "effectSha256": "c3009feac8f9ac73e296c913065ca23a0f694b752fe9d6a5ad9c1dbd9e229f21",
+        "blobFields": 52,
+        "publicWrites": 15,
+        "publicLogFields": 17,
+        "noteHashes": 1,
+        "nullifiers": 1
+      },
+      {
+        "label": "private-withdraw",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 727,
+        "txHash": "0x2ab827e85450bca7cb80ed46dd7b6b39551041122e536c2d9e16d99f11710143",
+        "serializedTxBytes": 77719,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 320,
+            "l2Gas": 509200
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 10506,
+        "blockNumber": 13,
+        "blockHash": "0x2371fa4e843ef8dbe6ddde8baf13cf63bc80b4e98ce6730b1fb73117ceeb4436",
+        "transactionFee": "5193840000000",
+        "effectBytes": 299,
+        "effectSha256": "42df4ebfe5d72f41bc9e20c91e12d58c5a3af26c39ebc41a8c9ac26ef8aa4368",
+        "blobFields": 10,
+        "publicWrites": 1,
+        "publicLogFields": 0,
+        "noteHashes": 0,
+        "nullifiers": 4
+      },
+      {
+        "label": "private-withdraw",
+        "txHash": "0x2ab827e85450bca7cb80ed46dd7b6b39551041122e536c2d9e16d99f11710143",
+        "expectedLeaf": "0x0068eecac3b9824a821a41d52d13ad17aba07df4af57714d8077b958ae554707",
+        "recipient": "0x0000000000000000000000000000000000000456",
+        "amount": "880",
+        "nonce": "0x18adc2f5ef0099e4488ea21c4b95e785aa49498126f49cb5e6c2fe5ea89f8c5c",
+        "passed": true,
+        "recipientBalanceBefore": "0",
+        "recipientBalanceAfter": "880",
+        "portalBalanceBefore": "1000",
+        "portalBalanceAfter": "120",
+        "controlledSettlement": true,
+        "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-e1e0b19d-8f82-4178-8ea4-70bbdcc3058c/private-withdraw-redemption.json"
+      },
+      {
+        "label": "operator-withdraw",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 596,
+        "txHash": "0x08da051797e19f80cf3f01fd59c5f2abb02692ac846aaf2c0bef4c3583dcbc55",
+        "serializedTxBytes": 122048,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 256,
+            "l2Gas": 1097667
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 12038,
+        "blockNumber": 14,
+        "blockHash": "0x0db7d640830738d7eac99b4a5ed8fe35a769829335cedfe5a9998a7dbc8c9796",
+        "transactionFee": "11196203400000",
+        "effectBytes": 299,
+        "effectSha256": "42a2dc0538fef3036f03811f8697b866c26951ccc3b2c67cd0139d722873654c",
+        "blobFields": 10,
+        "publicWrites": 2,
+        "publicLogFields": 0,
+        "noteHashes": 0,
+        "nullifiers": 2
+      },
+      {
+        "label": "operator-withdraw",
+        "txHash": "0x08da051797e19f80cf3f01fd59c5f2abb02692ac846aaf2c0bef4c3583dcbc55",
+        "expectedLeaf": "0x00e10eed010edbf6c0f836994a551158eb8a0426ae85a3ba74ef6e0294e1fcfa",
+        "recipient": "0x0000000000000000000000000000000000000457",
+        "amount": "120",
+        "nonce": "0x2eb7ba880fa0c6e4675d94641af9364c6e29c621b4259403e8efdc32ea9dd857",
+        "passed": true,
+        "recipientBalanceBefore": "0",
+        "recipientBalanceAfter": "120",
+        "portalBalanceBefore": "120",
+        "portalBalanceAfter": "0",
+        "controlledSettlement": true,
+        "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-e1e0b19d-8f82-4178-8ea4-70bbdcc3058c/operator-withdraw-redemption.json"
+      },
+      {
+        "label": "uncertain-fund",
+        "fundingMode": "real-portal-deposit",
+        "txHash": "0x4145a0ec9b2bdb6a23ce74e18655a63129b5d7e348003e4deaffb450c0ed8227",
+        "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-e1e0b19d-8f82-4178-8ea4-70bbdcc3058c/uncertain-fund-deposit.json",
+        "amount": "1000",
+        "leafIndex": "1",
+        "messageHash": "0x009e0f3c451a8f1309323cb789bedc93e7f3ac344a7c2c9c12b53763b8c2b390",
+        "anchorBlock": 16
+      },
+      {
+        "label": "uncertain-claim",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 2629,
+        "txHash": "0x288913185839e4fe6c89f5313a65764eee533f1e859cb86806f35263d6a884f2",
+        "serializedTxBytes": 77719,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 832,
+            "l2Gas": 499700
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 10860,
+        "blockNumber": 17,
+        "blockHash": "0x12fc68c2c6df235d82c449a042a1f4da84fe6fc3ae8c290682e284360f415df3",
+        "transactionFee": "5096940000000",
+        "effectBytes": 783,
+        "effectSha256": "f0e32279cee896036dffac00152e56bf14359d2c4dd1994025e1f740d2678d7c",
+        "blobFields": 26,
+        "publicWrites": 1,
+        "publicLogFields": 0,
+        "noteHashes": 1,
+        "nullifiers": 3
+      },
+      {
+        "label": "uncertain-authorize",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 2681,
+        "txHash": "0x26cbe054f248163a053635e5f602c6742312d24988f51951429e44ed05bd7b62",
+        "serializedTxBytes": 122112,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 3808,
+            "l2Gas": 1291165
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 11767,
+        "blockNumber": 18,
+        "blockHash": "0x28c66c90c01e2eb710b1d14c061d686b9e7900404c9e9be770946fde882985c5",
+        "transactionFee": "13169883000000",
+        "effectBytes": 3711,
+        "effectSha256": "494178cb65d89b4e130542944f667c8def8df22e3b0b29ef0b1cff1022ab381f",
+        "blobFields": 121,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 2,
+        "nullifiers": 6
+      },
+      {
+        "label": "uncertain-activate",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 674,
+        "txHash": "0x14fe097c589b31b76e3d26458c4d4d1662af6532bd41be708baf021edf3c322d",
+        "serializedTxBytes": 123296,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1408,
+            "l2Gas": 1722827
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 8297,
+        "blockNumber": 19,
+        "blockHash": "0x1bd85136fe47ae39c826e5196cc917bbe3133c4714c10f91d23ae54310912b7e",
+        "transactionFee": "17572835400000",
+        "effectBytes": 1423,
+        "effectSha256": "32aeddf14502e0ac140a1b76afbd3680ec0088e3a83a547e37f7a8be91b796e3",
+        "blobFields": 46,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 0,
+        "nullifiers": 1
+      },
+      {
+        "label": "uncertain-reserve",
+        "proofMode": "proofs-disabled",
+        "prepareMs": 534,
+        "txHash": "0x2e17c223a197254e9a581795e98329aade8188bc9e31d4e94b5544352f9771de",
+        "serializedTxBytes": 122048,
+        "submission": "included",
+        "gas": {
+          "totalGas": {
+            "daGas": 1408,
+            "l2Gas": 1097030
+          },
+          "teardownGas": {
+            "daGas": 0,
+            "l2Gas": 0
+          }
+        },
+        "inclusionMs": 8427,
+        "blockNumber": 20,
+        "blockHash": "0x12760b721b64f9e7765cd3a3ec6bba783bcdb756718d7e20149986a1237a7944",
+        "transactionFee": "11189706000000",
+        "effectBytes": 1423,
+        "effectSha256": "364e38bfcf12ef50d9ff36895ad949a18f77067043427a2bbbb468b8c37be3f9",
+        "blobFields": 46,
+        "publicWrites": 15,
+        "publicLogFields": 12,
+        "noteHashes": 0,
+        "nullifiers": 1
+      }
+    ],
+    "states": [
+      {
+        "label": "waiting",
+        "request": {
+          "state": "1",
+          "invocation_hash": "21609656804240019632123617939401060211366488692843835248768669610116898446815",
+          "sequence": "0",
+          "deadline": "1791809820",
+          "budget": "600",
+          "available": "600",
+          "reserved": "0",
+          "charged": "0",
+          "refunded": "0",
+          "primary_refund": "13762696107071980858591333973268893289892524674333195197993223783037014051028",
+          "secondary_refund": "3763232881786052360577309228408226112332897595184853676393558344840624359805",
+          "primary_done": false,
+          "secondary_done": false,
+          "receipt": "0"
+        },
+        "privateBalance": "400",
+        "earnings": "0"
+      },
+      {
+        "label": "reserved",
+        "request": {
+          "state": "2",
+          "invocation_hash": "21609656804240019632123617939401060211366488692843835248768669610116898446815",
+          "sequence": "0",
+          "deadline": "1791809820",
+          "budget": "600",
+          "available": "200",
+          "reserved": "400",
+          "charged": "0",
+          "refunded": "0",
+          "primary_refund": "13762696107071980858591333973268893289892524674333195197993223783037014051028",
+          "secondary_refund": "3763232881786052360577309228408226112332897595184853676393558344840624359805",
+          "primary_done": false,
+          "secondary_done": false,
+          "receipt": "0"
+        },
+        "privateBalance": "400",
+        "earnings": "0"
+      },
+      {
+        "label": "settled",
+        "request": {
+          "state": "2",
+          "invocation_hash": "21609656804240019632123617939401060211366488692843835248768669610116898446815",
+          "sequence": "1",
+          "deadline": "1791809820",
+          "budget": "600",
+          "available": "480",
+          "reserved": "0",
+          "charged": "120",
+          "refunded": "0",
+          "primary_refund": "13762696107071980858591333973268893289892524674333195197993223783037014051028",
+          "secondary_refund": "3763232881786052360577309228408226112332897595184853676393558344840624359805",
+          "primary_done": false,
+          "secondary_done": false,
+          "receipt": "17245443277339286715637460953699105233677866344294174075637691980755831770269"
+        },
+        "privateBalance": "400",
+        "earnings": "120"
+      },
+      {
+        "label": "normal-closed",
+        "request": {
+          "state": "4",
+          "invocation_hash": "21609656804240019632123617939401060211366488692843835248768669610116898446815",
+          "sequence": "1",
+          "deadline": "1791809820",
+          "budget": "600",
+          "available": "0",
+          "reserved": "0",
+          "charged": "120",
+          "refunded": "480",
+          "primary_refund": "13762696107071980858591333973268893289892524674333195197993223783037014051028",
+          "secondary_refund": "3763232881786052360577309228408226112332897595184853676393558344840624359805",
+          "primary_done": true,
+          "secondary_done": true,
+          "receipt": "17245443277339286715637460953699105233677866344294174075637691980755831770269"
+        },
+        "privateBalance": "880",
+        "earnings": "120"
+      },
+      {
+        "label": "uncertain-before-expiry",
+        "request": {
+          "state": "2",
+          "invocation_hash": "7212456642781821934590191962517232323243520527095270375674313286118441187997",
+          "sequence": "0",
+          "deadline": "1791809965",
+          "budget": "600",
+          "available": "200",
+          "reserved": "400",
+          "charged": "0",
+          "refunded": "0",
+          "primary_refund": "12203889879346245614870897447875738295435196872236155771960684222482003668601",
+          "secondary_refund": "17295226669315534391757245109064328367754540789595068155227782242184611983432",
+          "primary_done": false,
+          "secondary_done": false,
+          "receipt": "0"
+        },
+        "privateBalance": "400",
+        "earnings": "0"
+      }
+    ],
+    "negativeChecks": [
+      {
+        "label": "waiting-target-hijack",
+        "expected": "Invocation target mismatch",
+        "outcome": "rejected",
+        "errorClass": "Error"
+      },
+      {
+        "label": "normal-finish-replay",
+        "expected": "Request not active",
+        "outcome": "rejected",
+        "errorClass": "Error"
+      },
+      {
+        "label": "normal-secondary-replay",
+        "expected": "Request not fenced",
+        "outcome": "rejected",
+        "errorClass": "Error"
+      }
+    ],
+    "limitations": [
+      "Disposable local tokens and identities only",
+      "Synthetic provider receipt identifiers; no model call or provider billing acceptance",
+      "Probe board does not implement product admission, ownership, UTF-8 or full relationship policy",
+      "No node observer or independent privacy qualification",
+      "Compiler diagnostic disposition is a separate gate"
+    ],
+    "privacyAcceptance": "missing",
+    "publicHumanFeePayer": true,
+    "sourceRevision": "de7e1547083e353b2efd0fcacbbf903aa5eb4b80",
+    "environment": {
+      "node": "v24.21.0",
+      "nodeVersion": "6.0.0-rc.1",
+      "chainId": "31337",
+      "rollupVersion": "1534980065",
+      "platform": "darwin",
+      "arch": "arm64",
+      "startedAt": "2026-10-11T12:53:55.173Z"
+    },
+    "build": {
+      "inputs": {
+        "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
+        "experiments/private-bok/escrow/Nargo.toml": "8a83e1f7dc7e5043fa2332b698a1e6dde6ddd9c79e32b2c6bfc2ece05fac6e4c",
+        "experiments/private-bok/escrow/src/main.nr": "e4cc533c8c8f3e0ef69e488fa04bb5914629e9454c0b6327c2e82a2bddd006d0",
+        "experiments/private-bok/tests/Nargo.toml": "d2d23aa424ec7535e3ff2565e3bf06685f6ff695de4139c253d14009b6b8b33e",
+        "experiments/private-bok/tests/src/lib.nr": "fe9daef3efa2b80fa8868c1835a172f13ac703c70d991acf34d840b7cf0770a0",
+        "experiments/private-bok/probe-board/Nargo.toml": "8415a5b8d1b4c699802e33f6616034f1dba0e14dc95b85feefff6f4891339e6d",
+        "experiments/private-bok/probe-board/src/main.nr": "79e5744879232e6202da2240abb37cf64733dfa76ed34e61b07e5d72701df771",
+        "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
+        "noir-dependencies.json": "df1309ab6458d5f2193399d9a2fc482b7a696fa4e0a41e851c8a62c93551d98f",
+        "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+        "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+        "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+        "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+        "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d"
+      },
+      "artifactSha256": "f8bea66c1673579ad66943d899f15d391e3deb88ceeba82ed44ff7fb7eb907ee",
+      "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925"
+    },
+    "driverAndHarness": {
+      "experiments/private-bok/measure.mjs": "50262afcbcb2b3ab584312f13b900dc50f2906c03583a7467cb97e122099ce34",
+      "experiments/private-bok/wire.mjs": "eae59e39f69a8c18afab604f83df6744545f41b871b103e1d97145dabf38a2a0",
+      "shared/rolling/invocation.mjs": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+      "scripts/prove-application-action.mjs": "797137f8091b45dd70430c0676803d3fa8a24c9363e5bacf93295912ecfb4c5e",
+      "scripts/c01-settle-application-message.mjs": "13cb8cfe07b27382e1a160765f487fcecb8b3b306a8601623f864837578458ba",
+      "scripts/c01-client-mining.mjs": "a10abf9d1798fac6ddae89a0f62ce2b3e30b9ddd69a77512d5f83f8dc33ff332",
+      "scripts/testing/proof-policy.mjs": "301918287337a200fc6f08847484380259ee723b36e98b7b3018908382e5324b",
+      "scripts/u01-browser-flow.mjs": "01c6b294aab8261ed5caab1274761f8fbdef06aab67e5bca0ee4e1a783033c79",
+      "scripts/testing/private-bok-fixture.mjs": "086868f1afec1cb08488655e3694ea35c44783395f9d2d73299b689f046a90af",
+      "scripts/testing/scenarios.mjs": "db19896b295c97ae473dd6a1d57a0790d23c13a59a657c1fce33b9907a8ab3e1",
+      "scripts/testing/scenario-flows.mjs": "689d5b9ff7efb6c3ad7687d38e21b216e03ce3993b02d32b1109fd339ce3af92"
+    },
+    "contractAddress": "0x15db4d13cad9b367dfc9c224964b8572376da5e1614f766334d39ef0e5100644",
+    "boardAddress": "0x1d0b8de56d2388b794ca34ad1d7aa63e2c3603f21a017f73e2bee6c3cb27d8ae",
+    "portalAddress": "0x710cb4812d7cee954b6cd9947176b35f9d8589f0",
+    "portalActivation": {
+      "activated": true,
+      "evidenceRef": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G14/portal-e1e0b19d-8f82-4178-8ea4-70bbdcc3058c/fixture.json"
+    },
+    "failure": {
+      "stage": "uncertain-after-advance:balance",
+      "errorClass": "Error",
+      "category": "unclassified",
+      "frames": [],
+      "functions": []
+    }
+  },
+  "failure": {
+    "errorClass": "Error"
+  },
+  "walletStopped": true
+}

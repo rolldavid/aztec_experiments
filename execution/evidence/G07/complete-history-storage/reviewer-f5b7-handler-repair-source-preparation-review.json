@@ -1,0 +1,20 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "approve-source-repair-and-one-focused-seven-under-parent-serialized-grant",
+  "candidate": "f5b7e4b41d6c28a6770b42d6f9b86363c5a008dc",
+  "sourcePacket": "02cff34cd83e2653abbe5f50aa22d03ea2dbffdd28b341ab6119c064e4ed8ad5",
+  "preparationPacket": "82a01f6e9d302b66a8e792a47b4ca6c2f8afe9edbbb4df29fff5bbd606ac12b8",
+  "runner": "8b53c6b7ff2ef44e59694ad4865e13e829f4e3e88a1c276631ea35fa12431508",
+  "checks": [
+    "Exact two-path repair from10d7; six source bindings match, clean frozen HEAD.",
+    "Handler promise owned before callbacks; admission closes synchronously and pending allSettled snapshot is armed before first await. Socket disconnect does not release operation. Index disposal follows original handler, active sync and listener settlement.",
+    "Pending falsy failures preserved; sanitized HTTP emits no raw failure. Paired handler/disposal failure retained. Factory test closes store before deleting directory.",
+    "Seven selected actual-socket cases cover disconnected success/falsy failures, paired failure and late pipeline admission. No runtime performed by reviewer.",
+    "Runner delta limited to evidence directory, inventory suites key and role/comment; child unchanged. Exact551 source and2402 dependency hashes independently verified; original link and qualified owned copy retained.",
+    "30s2GiB, seven exact labels/no skip,25 excluded; existing lifecycle ownership/cleanup unchanged."
+  ],
+  "limits": [
+    "Focused lifecycle eligibility only; full factory/server/acceptance/browser runtime remains separately gated.",
+    "No actual configured RPC factory, dense transport, full archive or production qualification."
+  ]
+}

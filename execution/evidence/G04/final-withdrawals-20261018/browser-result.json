@@ -1,0 +1,39 @@
+{
+  "source": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "walletRuntime": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "chainId": 31337,
+  "metamask": "13.49.0.0",
+  "proofsEnabled": false,
+  "bok": {
+    "keys": [
+      "status",
+      "txHash",
+      "amount",
+      "gasCostWei"
+    ],
+    "status": "refunded",
+    "txHash": "0x378c55cafd9e79acc0876353a1bf33db920eb12b5bf9bc1eb139796cea132e46",
+    "amount": "500000",
+    "gasCostWei": "97895006852650",
+    "text": "Your private account\nClose account panel\n\nPublished names and posts are public. Your saved choices are encrypted for recovery, and private views are filtered on your device. The configured trusted prover and its query service can see private data used to recover or prove your activity.\n\nEthereum refund confirmed: 0.5 USDC. Actual Ethereum gas cost: 0.00009789500685265 ETH.\n\nA posting deposit was found. We’ll check whether it can be used when you review an action.\n\nFunds for transaction fees are available.\n\nFund your accountTop up fees or Bok\n\nPrivate network fee balance: 19.9999460323887 fee tokens.\n\nPrivate Bok balance: 1.5 USDC-backed credits.\n\nActionsYour namesBalances and withdrawalsPrivate views\nBalances and withdrawals\n\nPosting collateral is refundable ETH. Network fee tokens pay transaction fees and cannot be redeemed by the current protocol. Bok credits are USDC-backed and separate from both.\n\nCheck private balancesRefresh private account\nBackup and account security",
+    "privateFee": "9007225900000"
+  },
+  "collateral": {
+    "status": "refunded",
+    "txHash": "0x8f0ccdfdf5340b4369a16bf336b4d8e1315701d447a2e1f98149068f4969fc99",
+    "amount": "1000000000000000",
+    "gasCostWei": "70660003462340",
+    "text": "Your private account\nClose account panel\n\nPublished names and posts are public. Your saved choices are encrypted for recovery, and private views are filtered on your device. The configured trusted prover and its query service can see private data used to recover or prove your activity.\n\nEthereum refund confirmed: 0.001 ETH. Actual Ethereum gas cost: 0.00007066000346234 ETH.\n\nA posting deposit was found. We’ll check whether it can be used when you review an action.\n\nFunds for transaction fees are available.\n\nFund your accountTop up fees or Bok\n\nPrivate network fee balance: 19.9999384540335 fee tokens.\n\nPrivate Bok balance: 1.5 USDC-backed credits.\n\nActionsYour namesBalances and withdrawalsPrivate views\nBalances and withdrawals\n\nPosting collateral is refundable ETH. Network fee tokens pay transaction fees and cannot be redeemed by the current protocol. Bok credits are USDC-backed and separate from both.\n\nCheck private balancesRefresh private account\nBackup and account security",
+    "privateFee": "7578355200000"
+  },
+  "gasFixture": {
+    "hash": "0xb87728f38988c14fa865344814afdd8f343c399de32329cb9340ce2c5f82d511",
+    "wei": "10000000000000000",
+    "note": "After completed zero-ETH initial funding acceptance; native test funds only, withdrawals require recipient Ethereum gas"
+  },
+  "limits": [
+    "Native proof-disabled local chain; no testnet/realproof claim",
+    "Unused seconddeposit withdrawn; postedfirstdeposit remains screening-required",
+    "Actual MetaMask refund prompts confirmed once each; SDK/native settlement, no manual mining/time advancement"
+  ]
+}

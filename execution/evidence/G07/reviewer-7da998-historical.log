@@ -1,0 +1,40 @@
+✔ historical gateway: parsed numeric and anchored header selectors use checkpoint policy and final fences (65.793709ms)
+✔ historical gateway: public inspector metadata is explicitly checkpoint gated, health remains proposed (8.81475ms)
+✔ historical gateway: nonfixed selector "latest" stays strict (2.211459ms)
+✔ historical gateway: nonfixed selector "proposed" stays strict (1.39475ms)
+✔ historical gateway: nonfixed selector {"tag":"checkpointed"} stays strict (1.313583ms)
+✔ historical gateway: nonfixed selector {"archive":"0x0000000000000000000000000000000000000000000000000000000000000001"} stays strict (1.561125ms)
+✔ historical gateway: mixed latest batch gates strictly before any forwarding (2.149417ms)
+✔ historical gateway: rejects forked resolution (6.071541ms)
+✔ historical gateway: rejects final anchor reorg (10.786041ms)
+✔ historical gateway: unavailable/pruned selector 0 cannot bypass bounds (3.342833ms)
+✔ historical gateway: unavailable/pruned selector 8 cannot bypass bounds (3.887458ms)
+✔ historical gateway: typed mined receipt and effect witness resolve canonical history (21.3295ms)
+✔ historical gateway: pending receipt needs stronger proposed policy and is never fabricated missing (4.131208ms)
+✔ historical gateway: wrong witness root produces fixed RPC failure, never historical success (9.396333ms)
+✔ historical gateway: failing final fence drains held sibling before response/slot release (9.520417ms)
+✔ historical gateway: explicit archive membership selector is canonicalized while archive-root form stays strict (9.132958ms)
+✔ historical gateway: mismatched receipt identity fails closed rather than escalating it into success (3.893958ms)
+✔ historical gateway: pending and above-checkpoint receipts cannot bypass unavailable strict readiness (6.746375ms)
+✔ historical gateway: returned header must match the resolved canonical selector (10.4465ms)
+✔ explicit checkpoint readiness authenticates measured1471/1470 historical state and reports honest heads (1.799583ms)
+✔ explicit historical readiness rejects world below anchor (0.284167ms)
+✔ explicit historical readiness rejects world above proposed (0.180291ms)
+✔ explicit historical readiness rejects world fork at own height (0.143625ms)
+✔ explicit historical readiness rejects pruned anchor (0.1225ms)
+✔ explicit historical readiness rejects finality mismatch (0.122417ms)
+✔ explicit historical readiness rejects not synced (0.091875ms)
+✔ explicit historical readiness rejects stale (0.105459ms)
+✔ explicit historical readiness preserves selected canonical fence (0.148ms)
+✔ explicit historical readiness preserves world canonical fence (0.114958ms)
+✔ explicit historical readiness preserves final-selected canonical fence (0.128ms)
+✔ explicit historical readiness preserves final-world canonical fence (0.08975ms)
+✔ historical readiness accepts only explicit closed tiers (0.088625ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 604.73025

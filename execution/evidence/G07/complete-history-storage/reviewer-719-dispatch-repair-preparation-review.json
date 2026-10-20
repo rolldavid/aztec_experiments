@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "71943392fcd29ac0f41558eaed3c0da828dba671",
+  "verdict": "Eligible one existing focused dispatch test under separate lead grant",
+  "artifacts": {
+    "preparation.json": "7b21fc50be133344e306f6f10e7d2dfacb5ef57e07aed6a64fd28ed0c294de4c",
+    "before-source.json": "50582fd6d810ad187f15d6289d5de9159d3b6123722aa3df184208d7ed01d51e",
+    "run.mjs": "8ae232b796bc817ad11d8dd768aca7066661c282f89942daa5740b56e7a8a7a1",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436"
+  },
+  "sourceDelta": "Only existing fixture test; stable extraction start, explicit real argument. Original4 genuine scenarios and negative counts retained. Both ordinaryCLI modes exercise false zero and true original5 plus completed/submitted/failed/running negatives. No production/helper/fixture behavior changed.",
+  "inventory": "1executed183excluded; source label retained",
+  "verified": "3310pins,cleanHEAD,TMPidentity; original60s2GiB owner/child directory-only",
+  "carry": "359passed87744 unaffected, pending actual selected result; original failed suite stays failed",
+  "runtimePerformed": false
+}

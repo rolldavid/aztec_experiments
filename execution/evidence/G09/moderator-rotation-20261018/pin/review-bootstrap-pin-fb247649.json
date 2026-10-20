@@ -1,0 +1,14 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+  "baseRevision": "d976d254aa9dd09d0ff3016cf573de9215d8b15d",
+  "verdict": "approved-source",
+  "checks": [
+    "Exact diff only updates CATALOG_SHA from prior artifact catalog to independently reviewed d5666fcd current catalog.",
+    "Current catalog actual SHA matches literal. Existing focused catalog-pin regression passed; no test or verifier logic changed."
+  ],
+  "sourceSha256": "665bf5192841d318160fafdef1948cc59292748e71a91d5ee1ae34c9d7046c49",
+  "testEvidenceSHA256": "6a4205f135108a05cb01084d98db0bde4c26e033569d47cb4ef08f48156d6e1c",
+  "deploymentCondition": "Archive must include this same bootstrap.py and manifest hash. generate() hashes its current source into PINS.startup; attest(check=True) compares RELEASE/deploy/prover/bootstrap.py. Reusing unchanged old archive with new generator would fail startup integrity.",
+  "reviewedAt": "2026-10-18T19:49:59.406748+00:00"
+}

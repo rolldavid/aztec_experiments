@@ -1,0 +1,39 @@
+{
+  "revision": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "baseRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "verdict": "approve",
+  "findings": [],
+  "scope": "Rolling lifecycle safe broadcast diagnostics; no public payloads, retry policy, source SDK or build change.",
+  "sourceAssessment": [
+    "Three existing onceAztecOperation call sites opt into observeBroadcast: constructor; L1 deploy-portal/activate; L2 bind/register. No new helper, lifecycle, timer or replay branch.",
+    "Existing helper persists signed intent with prepared classification before dispatch; returned/rejected classification follows. Original signed bytes and operation binding remain authoritative.",
+    "seedBroadcastFailure reads own data descriptors, allows finite HTTP/RPC/code fields only, never raw exception text, request, URL or hostile getter values.",
+    "Diagnostic-write failure preserves already durable prepared intent and returns unresolved. Retained calls reconcile before execute; cannot send again. Both successful and failed metadata persistence remain no-replay.",
+    "Historical records without classification still reconcile unchanged. This does not backfill or infer the original registration failure."
+  ],
+  "independentVerification": {
+    "command": "NODE_BACKEND=js pinnedNode24 --test --test-name-pattern='Rolling operator enables|safe broadcast outcome|retained preparing|constructor campaign|Seed broadcast|Seed diagnostic' plugins/test/operator-lifecycle.test.mjs plugins/test/operations.test.mjs",
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 84.182875,
+    "toolChunk": "3f0859",
+    "cases": [
+      "actual call-site opt-in sentinel",
+      "returned/rejected/hostile outcomes across five operations",
+      "safe descriptor-only projection",
+      "diagnostic persistence failure preserves no-replay",
+      "historical preparing/signed lifecycle reconciliation"
+    ]
+  },
+  "limits": [
+    "Focused tests use labelled in-memory stores and injected broadcasts, not new live transactions.",
+    "Static wiring sentinel supplements behavioral persistence tests; no claim it validates network admission.",
+    "No service, signer, model, infrastructure or generated asset operation performed."
+  ],
+  "sourceHashes": {
+    "plugins/operator.mjs": "c752317ef80f9880e1ccfec587aa615d8dbee9a4aa1f26b0135981e8a2916ce4",
+    "plugins/test/operator-lifecycle.test.mjs": "7672e5dd4817e51b1f653726083f22b2d7c3b14abb7b2273b159764ec589af5e"
+  },
+  "workerPacketSha256": "ece031bdb3cf2f239db62963f70eed688da023523f681105113f90a8beda3053"
+}

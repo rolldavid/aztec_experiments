@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "ORDINARY_COMPONENT_RUNTIME_ACCEPTED",
+  "source": "1bb186074e0e079ebcb9909dfbf41a5131e1019f",
+  "session": 91586,
+  "actualPacketSha256": "892770d900a2953c354686a858cadd377cb4488bb7c0678ce3d5e508341b2572",
+  "sourceReview": "09c5ba1a4eba0594c19f8f833412b075f9e8ab89a88adf95d4ad534537c85ec4",
+  "runnerReview": "cb4755531af8c61318f29d6e7b2b9e31cf578bb08637090399f6dfb938328006",
+  "actual": {
+    "counts": {
+      "tests": 109,
+      "pass": 108,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    "exactNamedVolumeSkip": "opt-in real SQLite exceeds historical event/range/byte caps and rolls back deep suffix",
+    "elapsedMs": 21851,
+    "peakTreeRSSKiB": 683696,
+    "sourceBindingsRehashed": 544,
+    "dependencyBindingsRehashed": 2402,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryAbsent": true,
+    "originalLinkRestored": true
+  },
+  "verified": "Exact intent/result/log/preparation hashes; TAP full109 labels and counts independently matched; sampled peak and cleanup/current process absence verified. No source/dependency/link changes.",
+  "scope": "Real SQLite two-connection invalidation/atomic rollback/crash controls; original SDK ABI/hash decoder with finite synthetic canonical node data; existing loopback public HTTP controls. No genuine archive/chain, proof, browser, volume, dense-wire or production factory/query acceptance.",
+  "mandatoryOpen": [
+    "Volume beyond old limits with actual enforced peak memory",
+    "Complete dense public wire admission",
+    "Production query/factory/reader paging and publication",
+    "Bounded obsolete generation GC",
+    "Genuine canonical archive/reorg and operated-node capacity"
+  ],
+  "noFurtherExecutionAuthorized": true
+}

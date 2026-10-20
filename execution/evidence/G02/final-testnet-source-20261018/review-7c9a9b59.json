@@ -1,0 +1,34 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T17:33:56.737678+00:00",
+  "candidate": "7c9a9b5931813ef6c4d747d9c128e9cc77d3f387",
+  "base": "899bf12743854997b4c3e7d66ccbe31e2b28c867",
+  "workerEquivalent": "6a0de2a280306ce3c64569e794fca5c7ed9521e0",
+  "verdict": "approve_scoped_source",
+  "findings": [],
+  "carriedReview": "review-final.json",
+  "review": [
+    "One-line change loads installed snappy parent rather than nonexistent @napi-rs/snappy. Independently inspected installed package metadata and actual loader: Linux x64 glibc path requires @napi-rs/snappy-linux-x64-gnu; parent/native versions match exact lock.",
+    "Native package version inventory, glibc/platform/Node checks, exact package+lock binding, startup closures and all lifecycle controls unchanged. Source byte-identical to worker patch."
+  ],
+  "checks": [
+    {
+      "command": "git diff 899bf127..7c9a9b59; git diff --exit-code 7c9a9b59 6a0de2a2 -- deploy/prover/package.py; git diff --check 899bf127..7c9a9b59",
+      "result": "pass; exactly one intended line"
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp PROVER_VALIDATION_NODE='<pinned Node24.21.0>' python3 scripts/test-prover-package.py PackagePreflight.test_linux_dependencies_require_exact_lock_native_packages_and_platform -v",
+      "result": "1 passed,0.020s; labelled process doubles, not actual Linux import qualification"
+    }
+  ],
+  "sourceHashes": {
+    "deploy/prover/package.py": "8bb16afa026ced2c966a72ff267824394f4157cf9668064336a64afdf77fa636",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "scripts/test-prover-package.py": "2bba95d6a89eb004ed68b7b53e76f0d9226db969f456852a521eeed490e4ad90"
+  },
+  "launchVerdict": "hold_pending_actual_Linux_closure_and_composed_isolation_checks",
+  "limits": [
+    "899bf review and explicit launch preconditions remain. Actual Linux dependency import closure and shaper-loss/hung-monitor traffic-stop <=120s not claimed by this source check.",
+    "No cloud/network/proof/build/service operation performed. Lead normal integration gate required."
+  ]
+}

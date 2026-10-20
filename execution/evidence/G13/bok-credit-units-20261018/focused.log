@@ -1,0 +1,21 @@
+✔ Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes (1346.443375ms)
+✔ Bok composer hides unavailable capability and rejects unaffordable budgets before preparation (611.204667ms)
+✔ Bok budget converts exact six-decimal amounts to raw units without Number rounding (652.679375ms)
+✔ Bok continuation failure preserves authorized recovery without another credit authorization (453.953792ms)
+✔ Bok reverted post stays in explicit saved-request recovery after reopen without a new authorization (515.804292ms)
+✔ RC22 expiry panel requires a separate fee review and cancellation does not send (568.141ms)
+✔ RC22 expiry panel preserves unknown transaction on reopen and reports canonical partial refund without another send (819.051166ms)
+✔ Interrupted Bok cancel-bok-request explicitly reviews one saved request and cancellation restores draft (515.204292ms)
+✔ Interrupted Bok expire-bok-request explicitly reviews one saved request and cancellation restores draft (555.123583ms)
+✔ Interrupted Bok release failure and unknown send preserve recovery without another post or authorization (605.09225ms)
+✔ Bok reply selection retains reader thread context through both saved confirmations (776.80525ms)
+✔ Conversation context starts a new Bok thread only by explicit choice and preserves message and board (490.394125ms)
+✔ Conversation context rejects missing or incomplete reply selection without preparing a transaction (527.466042ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8650.563958

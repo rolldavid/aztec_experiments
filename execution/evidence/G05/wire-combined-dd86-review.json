@@ -1,0 +1,40 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "dd86b6dea4e5f7e54276e7eab8a15be600a9a54e",
+  "base": "17e1faa218614900d2024862e4129d805f41fc33",
+  "verdict": "approved_source_for_one_bounded_genuine_owned_names_wire_campaign",
+  "reviews": [
+    "G05/wire-combined-17e-review.json",
+    "G14/startup-combined-7db-review.json",
+    "G05/http-oracle-5fd-review.json",
+    "G05/wire-observer-646-review.json"
+  ],
+  "equivalence": [
+    "Only two observer files differ from exact5fd; both byte-identical to reviewed646 git blobs.",
+    "5fd HTTP content/metadata and30000 cap retained. Earlier17e clock/fresh-PXE/actor/proof/funding/lifecycle paths unchanged. Deployment7db changes do not alter this campaign behavior."
+  ],
+  "affected_checks": {
+    "lead_log": "execution/evidence/G05/wire-repaired-root-tests.log",
+    "log_sha256": "31af495e4927ad171e05fb221c1bfcf6eeae106381ad3ea287fe550a84655663",
+    "command": "NODE_BACKEND=js <pinnedNode24> --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs scripts/testing/rolling-wire-campaign.test.mjs shared/rolling/public-index.test.mjs scripts/testing/rolling-owned-names.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+    "passed": 152,
+    "failed": 0,
+    "skipped": 0,
+    "milliseconds": 6697.164166,
+    "verification": "Read actual complete test log; independently previously executed exact affected observer82 and public-index/campaign15 tests, not relying solely on implementer claim."
+  },
+  "findings": [],
+  "runtime_conditions": [
+    "One real campaign unchanged540s/4GiB; capture exactsource/fingerprints and preserve all failure/effect/canonicalfee evidence.",
+    "All four genuine registrations, both cold-PXE ownership reads/journal invariants, actual fresh/coldHTTP, trace exact receiver counts and final fee/proof assertions must pass.",
+    "Keep opaqueTransactions/requestCoverageCompletefalse and excluded native/runtime-header/setup-L1/deployment-topology limits explicit; this is no full unlinkability qualification.",
+    "No blind repeat if new failure; checkpoint and diagnose."
+  ],
+  "source_hashes": {
+    "scripts/testing/rolling-wire-trace.mjs": "250963990d158a09b2f4bfc90ffeeaa2a6e94b57fd5d2eef8aa49058265b24c6",
+    "scripts/testing/rolling-wire-trace.test.mjs": "cb4f2a03bbcf0e7c82aa0dccdad0ff597ae5a937a4035d0a234d60c312dd3fbb",
+    "scripts/testing/rolling-wire-campaign.mjs": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+    "scripts/testing/rolling-public-acceptance.mjs": "4e22f7bccb41252d4b65d2031ac468a7ee42186d62baf2a4b1a46573f9d889ad",
+    "scripts/testing/rolling-application-fixture.mjs": "b8455806a00220b663d28e6235b85b2c36d054a4c3cbbc89d3d1c19303fc5bfb"
+  }
+}

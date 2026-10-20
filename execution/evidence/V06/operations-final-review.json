@@ -1,0 +1,52 @@
+{
+  "reviewer": "/root/deployment_review",
+  "kind": "independent internal read-only operational review",
+  "prover": {
+    "instance": "i-0025eb05db3c2491c",
+    "runningProjectInstances": 1,
+    "type": "c7a.4xlarge",
+    "availabilityZone": "us-east-1b",
+    "market": "spot",
+    "fleet": "fleet-fb063004-d997-4b14-06b2-a4806ef2c2d6",
+    "fleetState": "active/instant/fulfilled",
+    "targetCapacity": 1,
+    "spotCapacity": 1,
+    "onDemandCapacity": 0,
+    "maxTotalPriceUSD": "0.40",
+    "spotRequest": "sir-d73qp8nk",
+    "interruptionBehavior": "terminate",
+    "shutdownBehavior": "terminate",
+    "deleteDiskOnTermination": true,
+    "ingress": "Only TCP8080 from CloudFront SG sg-076e39ea1d8dbf8d0; no IP/SSH ingress",
+    "health": {
+      "ready": true,
+      "proofs": "real",
+      "submitted": 4,
+      "completed": 4,
+      "failed": 0,
+      "queueEmpty": true
+    }
+  },
+  "deadline": {
+    "terminateAt": "2026-10-13T08:42:31Z",
+    "installedTimerEvidence": "replacement-budget-verify.log",
+    "freshInGuestTimerRead": false,
+    "note": "No SSH reopening or claim of a new in-guest timer read. Existing installed timer verification remains the supporting record."
+  },
+  "moderator": {
+    "instance": "i-0cb8555882d6cfecc",
+    "ssmCommandId": "5138044e-8715-48f1-b383-32426be3599a",
+    "status": "Success",
+    "healthy": true,
+    "backupTimerActive": true,
+    "feedLag": 0,
+    "evaluatedAllowed": 4,
+    "confirmedFlags": 1,
+    "pendingErrors": 0,
+    "newRequestAndReplyAllowed": true
+  },
+  "mutations": false,
+  "additionalProofJobs": false,
+  "checkedAtApproximately": "2026-10-10T15:29:00Z",
+  "recordedAt": "2026-10-10T15:37:57.991080+00:00"
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:45:53.202818+00:00",
+  "candidate": "a18973f53bffc4c2b7b54c8c227b759e17a87290",
+  "verdict": "eligible-for-one-parent-granted-bounded-fixture-run",
+  "artifacts": {
+    "preparation.json": "6b10c206a138434e8935745f43399dfffe7d9ed01aa616dfa775b1e7c1b878f2",
+    "run.mjs": "ec6382a06d7869c6b1f0f656c25f31687a19f6112dafac57939c851705d45ab9",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "before-source.json": "7c8080c8290d45946167414cf2e216195a219daac884883bfe7253350e3dd8f5"
+  },
+  "independentChecks": {
+    "runnerIdenticalToReviewedCombinedOrdering605ExceptEvidenceDirectory": true,
+    "childExactUnchanged": true,
+    "currentBindingsRehashed": 3157,
+    "bindingMismatches": 0,
+    "expectedTests": 101,
+    "countDerivation": "Prior exact100case fixture runtime plus one added profile test; prior registrations/bodies preserved except expected applicationThreads1to2.",
+    "testFiles": 1,
+    "noNameFilter": true,
+    "tapExplicit": true,
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "ownedTempMode": "0700",
+    "ownedTempEmpty": true,
+    "tempNotSymlink": true,
+    "conservativeSocketBytesIncludingNul": 81,
+    "nodeBackend": "js",
+    "installedDependencies": "own physical reviewed rc3 tree; no borrowing or mutation"
+  },
+  "conditions": [
+    "Parent serialized slot grant required.",
+    "Successful exit alone is not final acceptance: verify actual101 passes,zero fail/skip/cancel and unchanged source/dependency bindings.",
+    "Positive owned process absence before removing only prepared external temp; retain any cleanup failure.",
+    "No genuine proof/browser journey or new build is covered."
+  ],
+  "reviewExecution": "Read/hash/source only; runner not executed."
+}

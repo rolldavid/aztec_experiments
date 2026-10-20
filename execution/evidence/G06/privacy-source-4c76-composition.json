@@ -1,0 +1,114 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "at": "2026-10-12T02:39:24.332362+00:00",
+  "status": "composition aid; actualrecovery2 in progress, no task closure",
+  "preceding_argument": {
+    "path": "evidence/G06/privacy-source-ef533-composition.json",
+    "sha256": "3833571b40e9e4efbaeaba052244f24cd500cce9fc951c36cfbef59b5c3ce1fe"
+  },
+  "source_comparison": [
+    {
+      "path": "billboard/rolling_contract/src/main.nr",
+      "sha256": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+      "same_as_ef533": true
+    },
+    {
+      "path": "billboard/rolling_contract/src/profiles.nr",
+      "sha256": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+      "same_as_ef533": true
+    },
+    {
+      "path": "billboard/rolling_contract/src/admission.nr",
+      "sha256": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+      "same_as_ef533": true
+    },
+    {
+      "path": "billboard/rolling_contract/src/posting.nr",
+      "sha256": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+      "same_as_ef533": true
+    },
+    {
+      "path": "shared/rolling/PRIVACY_DESIGN.md",
+      "sha256": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+      "same_as_ef533": true
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+      "same_as_ef533": true
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "d3cbd87202efafc6b44a2512e3404feb8c92494f8c713d5e7efcca8f5e69eecd",
+      "same_as_ef533": true
+    },
+    {
+      "path": "apps/src/billboard/user/engine.js",
+      "sha256": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+      "same_as_ef533": true
+    },
+    {
+      "path": "shared/private-pxe.mjs",
+      "sha256": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+      "same_as_ef533": true
+    },
+    {
+      "path": "shared/trusted-private-node.mjs",
+      "sha256": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+      "same_as_ef533": true
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+      "same_as_ef533": true
+    },
+    {
+      "path": "shared/rolling/public-index.mjs",
+      "sha256": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+      "same_as_ef533": true
+    },
+    {
+      "path": "apps/rolling/reader-client.mjs",
+      "sha256": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+      "same_as_ef533": true
+    },
+    {
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "sha256": "c713243bda6c8822f118320ac0c8a9b109b3f96d40a6a860538a25b02dabff9c",
+      "same_as_ef533": false
+    },
+    {
+      "path": "scripts/testing/rolling-wire-trace.mjs",
+      "sha256": "95cf9a2ccfe9f2d3eb9d5547258f4143848d48c55b8b8c97f2131386de13b723",
+      "same_as_ef533": false
+    },
+    {
+      "path": "scripts/testing/rolling-wire-campaign.mjs",
+      "sha256": "e508c4b86fef720ed9615183a6aed8ab54c15ebe1bce8afa07c77f3b1f667971",
+      "same_as_ef533": true
+    },
+    {
+      "path": "scripts/t03-public-footprint.mjs",
+      "sha256": "5c284ad31f1db26e6c896c9fc0252b7b86c035cc012e502080c6c14c577a7f4e",
+      "same_as_ef533": true
+    },
+    {
+      "path": "noir-dependencies.json",
+      "sha256": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+      "same_as_ef533": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+      "same_as_ef533": true
+    }
+  ],
+  "disposition": "All17 production/pinned/unchangedobserver files remain identical; fixture recovery and fixed observerphase changes independently reviewed. Actual4c76 recovery currentlypending; failedf61 cannot qualify finalwiregate.",
+  "mandatory_open": [
+    "Actual4c76 recovery outcome and independent review",
+    "ExactfinalG06 component acceptance review including case-insensitive names criterion",
+    "G07/G10 private-state/workspace components andG09 integratedUI",
+    "Operatednode/archive topology and independent specialist privacy review",
+    "14daysoak and currentnetworkclearance"
+  ]
+}

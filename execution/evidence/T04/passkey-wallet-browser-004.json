@@ -1,0 +1,110 @@
+{
+  "script": "scripts/test-w02-browser.mjs",
+  "args": [],
+  "passed": false,
+  "observations": [
+    {
+      "passed": false,
+      "stage": "ethereum-intent-reload",
+      "errorClass": "Error",
+      "location": [
+        "    at transactionError (http://localhost:49538/aztec_bundle.js:320805:59)",
+        "    at unknown2 (http://localhost:49538/aztec_bundle.js:330772:24)"
+      ]
+    }
+  ],
+  "deadlineMs": 60000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1140336,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 700848
+    },
+    {
+      "elapsedMs": 2026,
+      "rssKiB": 851760
+    },
+    {
+      "elapsedMs": 3050,
+      "rssKiB": 1119696
+    },
+    {
+      "elapsedMs": 4091,
+      "rssKiB": 1135840
+    },
+    {
+      "elapsedMs": 5116,
+      "rssKiB": 1140336
+    }
+  ],
+  "failures": [
+    {
+      "stage": "ui-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "ui",
+      "code": 1,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-w02-browser.mjs": "5bbd5234f70c34c645138f470ae42611e03d382fc49fc3b2aab4ebec97d1cb6b",
+    "shared/passkey-wallet.js": "37634497cda0bd90a89c4bfa82bd759e4c8c0ce8f94811e378cb1f933ed8e6e8",
+    "shared/wallet-buttons.js": "0357ee2a158826108455c88c13613d8aa1a56967f477a3cebbb4fcdc31db6f21",
+    "shared/wallet-backup.js": "8df8f15fe92adb0d1628ac64cbd3bd61761594dbd7a83eeb04655640d3d64a8b",
+    "scripts/run-bounded-browser-check.mjs": "11e17d20ec81b6edf2ce828d83ee74115f7ee5540557bc5b5e792abcc8757f33",
+    "scripts/testing/supervisor.mjs": "518d827972d68cce7bab14f56df6483a260f5f5dc4082b50e2e4bbd80b0723f2",
+    "scripts/owned-test-process-tree.mjs": "ed8a490c451afa0ac2d4f0d6accbd51edfcf33088e59b058422921a070ac6a26",
+    "deploy/hosting-config.mjs": "52ade3bf75fd0ca6bd1fd82b2a67e9d5eff064af09a52751c76693b227b3987d",
+    ".build/apps-manifest.json": "4d691732aab28813599ab8e6b3ad951c1aa31f6f1ea65bd637cad26ba621f728",
+    ".build/sdk/sdk-manifest.json": "98d24f590a07dcb798519e9b42cc9fde82529d190a2075f65d0875b279b33571"
+  },
+  "peakMemory": {
+    "elapsedMs": 5116,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 33640,
+        "ppid": 33630,
+        "rssKiB": 56800
+      },
+      {
+        "role": "ui",
+        "pid": 33642,
+        "ppid": 33640,
+        "rssKiB": 182000
+      },
+      {
+        "role": "ui",
+        "pid": 33644,
+        "ppid": 33642,
+        "rssKiB": 98688
+      },
+      {
+        "role": "ui",
+        "pid": 33645,
+        "ppid": 33644,
+        "rssKiB": 64208
+      },
+      {
+        "role": "ui",
+        "pid": 33646,
+        "ppid": 33644,
+        "rssKiB": 53168
+      },
+      {
+        "role": "ui",
+        "pid": 33648,
+        "ppid": 33644,
+        "rssKiB": 685472
+      }
+    ]
+  },
+  "elapsedMs": 5780,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,44 @@
+{
+  "task": "G07",
+  "sourceRevision": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+  "baseRevision": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "sourceHashes": {
+    "plugins/devnet/network.mjs": "bcc2dcfcc3db76c553e8da7376c88cb551db60309294b78e315e83ee4cbacef0",
+    "plugins/devnet/operator-test.mjs": "85b7e339d4d0e1eff7380569da85ce3362253ce42d5172d5581ed3e9b6fea793"
+  },
+  "evidenceHashes": {
+    "execution/evidence/G07/keys-only-current/native-load-5b091-result.json": "a1948d98a97ceda4e4d64194c236476efc03f4ccdf3dc6c2f5022ce43ca2e166",
+    "execution/evidence/G07/keys-only-current/native-load-5b091-cache-cleanup.json": "38a732ee58496c7f38fd12c148bdcfaa16102bdb71d633f3751cb03c846e46c3",
+    "execution/evidence/G07/native-social-wire/g07-native-large-snapshot-startup.log": "3e11fb689d7611f8e8e65b842180683dc39611b505a9803f926d4d22d08c5104",
+    "execution/evidence/G07/native-social-wire/g07-native-large-snapshot-startup.json": "046182504c0db3a1802a143b1304208a887dd40e04635479c91b99737f31f6a0"
+  },
+  "actualCause": "Valid5,035,668,156byte native Anvil1.7 snapshot requires34.160s before first authenticated RPC. Existing30s retained startup deadline killed it before load completion.",
+  "actualObservation": {
+    "firstRpcReady": {
+      "ready": true,
+      "elapsedMs": 34160,
+      "attempts": 336
+    },
+    "head": {
+      "number": "0xa9f",
+      "hash": "0xa92ae138d3baded66e40f63634bcbf1da951b4f072ae5d1c589d9dd62098f4eb"
+    },
+    "headMatches": true,
+    "sourceUnchanged": true,
+    "ownedTreeAbsent": true,
+    "elapsedMs": 42752,
+    "peakTreeRSSKiB": 6151600
+  },
+  "repair": "Retained-native startup budget60s, existing single process/read-only bounded polls. Fresh6s unchanged. No retry, chain reset, metadata recovery or readiness-policy alteration.",
+  "tests": "3focused existing startup checks pass:35s readiness beyond former30s budget,60s wrong-identity/late-answer rejection, original spawn/exit errors; fresh6s rejection retained. Supervisor3.282s cleanupverified.",
+  "preserved": [
+    "Browser whole recovery120s/page10s unchanged",
+    "Original snapshot and predecessor untouched; exact source SHA6e760a431e5a4c661682f18a0043900a76b4f0b38f669e0afc025250bb7cc07b before/after",
+    "Standalone load used no-mining and no dump,0financial operations; only known-owned4.637GB diagnostic cache removed after clean exit and source verification",
+    "Root alone reconciles dead starting metadata/lease and normal retained restart"
+  ],
+  "limits": [
+    "Actual recovery503 diagnosis still pending observer-enabled runtime.",
+    "Standalone load qualification is not complete Aztec application restart acceptance."
+  ]
+}

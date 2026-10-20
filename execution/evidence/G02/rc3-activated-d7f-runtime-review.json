@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "d7f186a2dca8d5c7fd7fc0ab39ace8b0483a56a1",
+  "verdict": "PASS activated-board; eligible one existing rolling-preference-relationships540s/4GiB/default1 after serialized slot release",
+  "receiptSha256": "c3678929f80ac3aa45c90ca6798c53acb9a5fb239b854c8b005663fb7b2f74cd",
+  "actual": {
+    "elapsedMs": 65166,
+    "peakTreeRSSKiB": 1138960,
+    "exitCode": 0,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "boardTx": "0x2362431e6444860b5b158bc0e46a18eec15e7f7fc9dc9d343b9f98c45255b345",
+    "boardProofSha256": "539f225b785a960edcdfff5cec18159445ff9e2a353ca2daa11341801bd742db",
+    "readyTx": "0x29b8f9b2c68c687df009d9f367d3a86b2c618357392b094e053b9f656fb88ba6",
+    "readyProofSha256": "b9105345d8fb945cf72a403ecd03516ee3b329d628056665e8bfa62fbac608b7",
+    "boardFee": "324636476483900000",
+    "readyFee": "1784671386500000",
+    "readyBlock": "2",
+    "readyLeaf": "0x00851b297ede3b20577accbebba02a64fe16bda8192f7d017959925fb712e797",
+    "activation": {
+      "txHash": "0xcf6cb0794ac7f2b85219cb7c744037c615ba3656c830227d0e4006e01c286c46",
+      "blockNumber": "82",
+      "blockHash": "0x4f37c453b149d7b565c8396294ea8e263f51094e26105343574d3c6d254a9da8",
+      "depositsEnabled": true
+    }
+  },
+  "binding": {
+    "rehashedReceiptPaths": 281,
+    "artifactHashes": {
+      "apps/src/billboard/billboard_artifact.json": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+      ".build/contracts-manifest.json": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36",
+      "billboard/portal/out/BillboardPortal.sol/BillboardPortal.json": "f633b1e1720cc199fb2c5aa73d36133fc9834bf7377334f0a91c14e844e52155"
+    },
+    "boardProfile": "legacy",
+    "threads": 1,
+    "nodeRealProofs": true,
+    "nativeBBHash": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217"
+  },
+  "checked": [
+    "Board deployment and update_portal genuine client proofs each valid at real transaction verifier; both exact hashes have successful ordinary checkpointed inclusion.",
+    "Parent requires actual node effect contains expected Ready leaf before settlement. Message hash/block/leaf agree across binding/inclusion/settlement.",
+    "Portal disabled before binding and before activation; actual activate receipt success/canonical L1 block check and depositsEnabled true required by helper.",
+    "Official test-controlled Outbox/proven checkpoint storage used, clearly reported syntheticSettlement=true, finalized=false, no epoch proof receipts.",
+    "Mining stopped; wallets/node/singletons and owned process/temp resources cleaned."
+  ],
+  "next": "First complete rc3 Rolling journey must retain current normal Rolling20c494/catalog and runtime preflight, real application proofs, five writes/private fees and keys-only recovery/noextra send checks. Source remains current d7f; new Design cursor/transport is not enabled by this eligibility.",
+  "limitations": [
+    "Activation is controlled local test settlement, not L1 finality/network epoch proof.",
+    "Legacy fixture alone does not qualify Rolling deployment; next journey supplies that evidence.",
+    "Inbox backlog capacity, full cold cursor, compiler260/TXE/release and browserrc3 remain open."
+  ],
+  "execution": "Read-only source/receipt/hashes; no proof or chain invocation."
+}

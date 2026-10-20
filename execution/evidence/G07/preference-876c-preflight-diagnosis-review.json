@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "failedApplication": "execution/evidence/G07/application-876c30c3-6522-4d69-8791-d14711480a3d.json",
+  "failedApplicationSha256": "0d2dae933fd34b01a6c947aba85fd4a8db4a983c7e54bfa4bbcd3eaf6475b354",
+  "diagnosis": "stale-experiment-build-input-manifest",
+  "sourceFinding": {
+    "priority": "P2",
+    "location": "scripts/testing/rolling-application-fixture.mjs:272",
+    "cause": "Exact manifest.inputs versus buildInputs assertion fails before preference actions because normal G07 inventory changes noir-dependencies.json globally; old PrivateBok experiment manifest retains previous digest. PrivateBok contract source/artifact itself unchanged.",
+    "oldInventoryHash": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "currentInventoryHash": "6465dfa29036186ec7c032a112a24318d408f8fef14eb31384e7384bbdcb6043",
+    "oldManifestSha256": "d59555c08cc4ae827ef0ee4d6bad4bf63ba20701cc8ef2f564ccb1429ef6f66d",
+    "other13InputsMatch": true,
+    "artifactMatchedBeforeRebuild": true,
+    "probeArtifactMismatchAlsoObservedBeforeRebuild": true
+  },
+  "failedScope": {
+    "elapsedMs": 60918,
+    "peakTreeRSSKiB": 1501616,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "bridgeStage": "preflight",
+    "preferenceTransactions": 0,
+    "note": "Fixture startup/READY work occurred, but no preference HTTP proof/action began."
+  },
+  "reviewCoverageCorrection": "Earlier combined11d source eligibility independently checked prover catalog/general SDK/canonical/wallet manifests but omitted the separate experiments/private-bok/target/private-bok-build.json equality required by fixture272. That incomplete build eligibility has now been corrected; historical failed run remains failed.",
+  "normalRebuild": {
+    "command": "<pinned Node24.21.0> experiments/private-bok/build.mjs",
+    "supervisor": "execution/evidence/G07/combined-11d-private-bok-build.json",
+    "supervisorSha256": "0ff85c28eebbc7490f8c161b8bd9f4dd7c832f2d428532505700742e519ab7e8",
+    "logSha256": "c594e6354be58cd389a89c161b063ba2e876d940da8661ea3baad365982165ba",
+    "elapsedMs": 13977,
+    "peakTreeRSSKiB": 690432,
+    "cleanupComplete": true,
+    "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+    "privateBokArtifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "probeBoardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+    "independentChecks": [
+      "Actual import of buildInputs and strict deepEqual manifest comparison pass for all14currentinputs.",
+      "Both actual artifact digests match regenerated manifest; PrivateBok524078a8\u2026 unchanged and all six private VKs retained. ProbeBoard a0e21d4b\u2026 is transpiled and hash-bound.",
+      "Real loadRollingArtifacts passes current source/catalog pins, RollingBoard14VKs and PrivateBok6VKs. Root gitHEAD11d and source tree unchanged except lead ledger/registry."
+    ],
+    "disposition": "Build prerequisite repaired through normal compile/processing; no manual hash rewrite or assertion weakening observed."
+  },
+  "recommendation": [
+    "Before starting heavy activated-board setup, call a small read-only verifier for the exact experiment manifest inputs and both output hashes, alongside existing provenance checks; retain fixture272 and final recheck. Put this before runtime/service launch in run-application.",
+    "Document normal build ordering and the fact any global Noir inventory change invalidates both Rolling and PrivateBok experiment manifests. Do not hand-edit manifests or remove global inventory binding.",
+    "Add a cheap stale-input/changed-output negative test proving rejection before spawning services; avoid an expensive proof test for this deterministic preflight."
+  ],
+  "verdict": "same-source-11d-build-eligibility-restored-for-one-changed-attempt",
+  "limitations": [
+    "Genuine preference runtime still pending; failed876c not retroactively passed.",
+    "No reviewer compiler/proof/retry/source edit performed. Parent normal rebuild was reviewed read-only."
+  ]
+}

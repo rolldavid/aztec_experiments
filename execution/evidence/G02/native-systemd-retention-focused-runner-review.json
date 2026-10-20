@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:47:23.182447+00:00",
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "verdict": "eligible-for-one-parent-granted-focused-labelled-run",
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-retention-focused/review-packet.json",
+    "sha256": "99224147c65328823a75e21fe817abafa25cb354673a78e839c85ee47f8a82d5"
+  },
+  "checks": {
+    "sourceAndPacketPinsMatch": true,
+    "protectedAbsoluteBindingsRehashed": 769,
+    "expectedNativeClassCasesIndependentlyASTCounted": 19,
+    "totalSuiteASTCounted": 73,
+    "explicitSupportedPython": "3.14",
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "unchangedChildSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "externalTempInodeOwned": true,
+    "removalRequiresOwnedTreeAbsent": true,
+    "postHashesAnd19NoSkipExitGate": true
+  },
+  "scope": [
+    "Only NativeVersionDiagnostic class; full73 intentionally not run until coherent five-helper lead composition.",
+    "Labelled unit/CLI/localfilesystem tests, not actual Linux systemd or BB/provider/cloud.",
+    "Parent serialized slot grant required after active test cleanup."
+  ],
+  "requiredOutcome": "Exact19 actual passed labels, zero skip/failure, positive process/temp absence and unchanged769 bindings. Report any missing result as failed evidence, not implied pass.",
+  "reviewExecution": "Read/hash/AST only; no test or provider action."
+}

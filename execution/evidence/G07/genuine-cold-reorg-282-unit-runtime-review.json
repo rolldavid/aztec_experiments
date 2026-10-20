@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T01:58:15.547624+00:00",
+  "sourceCommit": "282a1e1df46c7aa20ff85f82dbb826545ac687c0",
+  "verdict": "accepted-exact148-bounded-fixture-and-recovery-unit-checks",
+  "blockingFindings": [],
+  "evidence": {
+    "runtime-packet-2.json": "6c8145f8433bb0eae8760bbac207dcbf8064c0b221be865e1f179e245bccc6a7",
+    "run-2.json": "fa8ccd88adf0f0100bf388133717495c426fbb88a873f45a3032cf271b4fa4c6",
+    "run-2.log": "ec544e61f4a551efe12c9e09571825a7f2133dbfedf57b4cc685afb340dd9bf4",
+    "run-2.py": "aace990dc6dea6419fbc744337b12a0209946ca0c303a97ab122c57f6a167c65",
+    "run-plan-2.json": "1c36bf04972d74ca4f1bd01cfdc37523796f5be131f1479a21ea80d9562e816f"
+  },
+  "actual": {
+    "elapsedMs": 2743,
+    "peakAggregateRssBytes": 506478592,
+    "exitCode": 0,
+    "tapCounts": {
+      "tests": 148,
+      "pass": 148,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "ownedGroupAbsent": true,
+    "originalLinkRestored": true,
+    "ownedTemporaryDirectoryRemoved": true
+  },
+  "independentVerification": {
+    "sourcePins": 548,
+    "dependencyPins": 132,
+    "generatedHelperAbsences": 2,
+    "exactLabelMultiset": 148,
+    "socketPathBytesIncludingNul": 84,
+    "tempPathCurrentlyAbsent": true
+  },
+  "scope": "Actual SDK serialization/hash and encrypted storage/owned HTTP unit operations with labelled chain/reader/proof callbacks. No ACIR page/cursor, funded proof, actual cold extension/reorg or browser campaign.",
+  "failureDisposition": "Run1 remains failed60s after55 labels. Short-path successor passes first previously unreported actual SDK Tx case and all later cases. Supports diagnosed environment interaction but no historical native stderr was recovered.",
+  "integration": "282 is excluded from frozen6d0; this acceptance alone neither composes its4 files nor grants genuine reorg.",
+  "reviewerExecutedTests": false
+}

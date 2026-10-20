@@ -1,0 +1,44 @@
+{
+  "source": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "samples": [
+    {
+      "viewport": 1280,
+      "temperature": "cold",
+      "submitToVisibleMs": 39.69999998807907,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 1280,
+      "temperature": "warm",
+      "submitToVisibleMs": 43.69999998807907,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 390,
+      "temperature": "cold",
+      "submitToVisibleMs": 36.40000003576279,
+      "targetMs": 500,
+      "passed": true
+    },
+    {
+      "viewport": 390,
+      "temperature": "warm",
+      "submitToVisibleMs": 42.80000001192093,
+      "targetMs": 500,
+      "passed": true
+    }
+  ],
+  "syntheticDataset": {
+    "posts": 10000,
+    "subboards": 100,
+    "identities": 100
+  },
+  "browser": "153.0.8010.12",
+  "scope": "actual submit event through route request visible matching DOM and two animationframes; synthetic public SQLite dataset, no authenticated chain claim",
+  "limits": [
+    "One cold/warm sample each viewport, not percentile.",
+    "Fresh context and HTTP cache clear/disable; OS/SQLite remain warm."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "base": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+  "candidate": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G02-native-capacity",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "capacity-boundaries"
+  ],
+  "requirements": [
+    "G02-retained-native-capacity"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G02-native-capacity",
+      "paths": [
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

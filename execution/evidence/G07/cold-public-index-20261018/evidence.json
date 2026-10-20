@@ -1,0 +1,69 @@
+{
+  "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+  "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "task_id": "G07-cold-public-index",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+      "task_id": "G07-cold-public-index",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Exact independent focused decoder/SQLite checks and actual readonly Bok attestation; commands in review.json",
+      "environment": "macOS Node24, existing native chain93 proofsdisabled",
+      "observed": "28 independent focused checks pass, zero skips; finalsource actual verifyBok succeeds after deployment6 snapshotpruned below29",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-public-index-20261018/review.json",
+          "sha256": "50f0c01ba6b4b3b528e369dd1859ad1288e058aa994e1f08f2f55b046c202b7e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+    "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+    "task_id": "G07-cold-public-index",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/cold-public-index-20261018/review.json",
+        "sha256": "50f0c01ba6b4b3b528e369dd1859ad1288e058aa994e1f08f2f55b046c202b7e"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+      "task_id": "G07-cold-public-index",
+      "id": "RC27-pruned-state-public-rebuild-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-public-index-20261018/review.json",
+          "sha256": "50f0c01ba6b4b3b528e369dd1859ad1288e058aa994e1f08f2f55b046c202b7e"
+        }
+      ]
+    },
+    {
+      "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+      "task_id": "G07-cold-public-index",
+      "id": "RC26-authenticated-immutable-Bok-state",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-public-index-20261018/review.json",
+          "sha256": "50f0c01ba6b4b3b528e369dd1859ad1288e058aa994e1f08f2f55b046c202b7e"
+        }
+      ]
+    }
+  ]
+}

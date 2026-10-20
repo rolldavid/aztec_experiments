@@ -1,0 +1,57 @@
+{
+  "base": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+  "candidate": "628a0d64b28221756c22765b1d9e269cad8695df",
+  "task_id": "G04-nonce-purpose-separation",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+      "candidate": "628a0d64b28221756c22765b1d9e269cad8695df",
+      "task_id": "G04-nonce-purpose-separation",
+      "id": "nonce-lineage",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent21 focused nonce/cause/continuation tests and exact-byte comparison; see review",
+      "environment": "Pinned Node24.21.0; disposable deterministic fixture keys, no live sends",
+      "observed": "Pure self-cancellation validates signed lineage/current nonce economics without unrelated inventory history; continuation remains strict. All21 focused cases pass.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/purpose-separation/review.json",
+          "sha256": "0961ca3b00194baee1da512d420bc1f84b6d1a453e1bfcb2dce29102fc7a814c"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+    "candidate": "628a0d64b28221756c22765b1d9e269cad8695df",
+    "task_id": "G04-nonce-purpose-separation",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/current-nonce-lineage-20261018/purpose-separation/review.json",
+        "sha256": "0961ca3b00194baee1da512d420bc1f84b6d1a453e1bfcb2dce29102fc7a814c"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+      "candidate": "628a0d64b28221756c22765b1d9e269cad8695df",
+      "task_id": "G04-nonce-purpose-separation",
+      "id": "RC19-RC22-explicit-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/current-nonce-lineage-20261018/purpose-separation/review.json",
+          "sha256": "0961ca3b00194baee1da512d420bc1f84b6d1a453e1bfcb2dce29102fc7a814c"
+        }
+      ]
+    }
+  ],
+  "limits": "No sign or broadcast in prior failed invocation; empty lineage journal preserved. Actual cancellation remains lead-owned."
+}

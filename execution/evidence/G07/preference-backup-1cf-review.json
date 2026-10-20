@@ -1,0 +1,30 @@
+{
+  "candidate": "1cf4f3f976606149c9d2c55b1b8f1f6633fa27d6",
+  "base": "d016f81597d40f9ac4a1c395b3ed506f9c85fd20",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source repair",
+  "findings": [],
+  "sourceSha256": {
+    "shared/journal-backup.mjs": "a890acadbbc2d4e5add41f5cd1410b49f0256fad627f50428610703ca3bebd09",
+    "shared/journal-backup.test.mjs": "53e2db2ba43e87d67e063d687eeeefe5a140bbd0b2e94a395f3d534e927c6cf3"
+  },
+  "findingDisposition": "Closes independently reproduced same-owner preference domain export failure; existing unknown-domain rejection preserved.",
+  "checks": {
+    "independentCommand": "Pinned Node24 NODE_BACKEND=js --test --test-concurrency=1 shared/journal-backup.test.mjs",
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 326.613292,
+    "log": "/tmp/reviewer-backup-1cf-tests.log"
+  },
+  "assessment": [
+    "Exact8-element domain/network/rollup/board/class/account/schema1 frame matches reader; canonical JSON and field/width/range rules reject aliases",
+    "Existing authenticated ownership descriptor, storage-key binding, ciphertext authentication, duplicate/conflict and idempotent restore logic unchanged",
+    "Actual AEAD test exports/restores preference+L2+workflow records in same store and preserves prepared intent with no sends",
+    "Decrypted derived cache is not treated as authority; reader must reauthenticate canonical checkpoint/head before publication"
+  ],
+  "limits": [
+    "No real browser backup transfer or genuine cold preference recovery qualified",
+    "Existing global16MiB backup budget retained; capacity qualification pending"
+  ]
+}

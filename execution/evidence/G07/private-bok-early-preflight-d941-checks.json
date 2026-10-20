@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "candidate": "d941042545eea332b31329e3cc50e387566624bf",
+  "base": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "at": "2026-10-12T05:33:21.967478+00:00",
+  "checks": {
+    "labelledSyntheticManifestNegatives": {
+      "log": "private-bok-early-preflight-tests-1.log",
+      "sha256": "f833032885a637e0e29687d017aace700d7e88f5835ff790b86c01ad98ac7636",
+      "passed": true,
+      "tests": 10
+    },
+    "actualRootPublicGeneratedOutputs": {
+      "passed": true,
+      "procedure": "Import isolated helper; use its current buildInputs() (identical to root14); readFile maps only absolute isolatedcheckout prefix to root. Readonly actual manifest and both artifacts; no service/build/mutation.",
+      "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+      "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+      "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+      "inputCount": 14
+    }
+  },
+  "limits": [
+    "No source transfer yet",
+    "No runtime acceptance from syntheticnegativecases",
+    "Fixture and final checks unchanged"
+  ]
+}

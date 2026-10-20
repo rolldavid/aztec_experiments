@@ -1,0 +1,77 @@
+{
+  "task_id": "W03-funded-small-claim",
+  "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+  "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+      "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+      "id": "focused-payment",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test scripts/test-private-fee-client.mjs scripts/test-private-fee-estimation.mjs",
+      "environment": "Pinned Node24; component fixtures, no proofs",
+      "observed": "58 passed9.887s. Nativefive-call aggregatecomposition independently reviewed; cold insufficient path unchanged.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funded-claim-20261019/focused.log",
+          "sha256": "d3e28a6603994437ccd64151ce78a1aea2d943c89fb0105be9490716d43e7ccb"
+        }
+      ]
+    },
+    {
+      "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+      "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+      "id": "sdk-assets",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node scripts/build-sdk.mjs followed by node scripts/rolling-wallet-assets.mjs",
+      "environment": "Pinned normalSDK/upstreamworkerbuild;26assets97inputs",
+      "observed": "Both exit0; no contract/network deployment",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funded-claim-20261019/sdk-build.log",
+          "sha256": "f60d890fac7deb1d0d8e2c24cb5554c2b2bf9ce7dd85c01e537ea785f6a4e61e"
+        },
+        {
+          "path": "evidence/W03/funded-claim-20261019/wallet-assets.log",
+          "sha256": "986cc14f88075ff25075174a1e1d37bee2cb18a490dbb79d75868bfcb3b0894f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+    "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/funded-claim-20261019/review.json",
+        "sha256": "8cbb48574fda66b3f5cb77034348dc2e993d027aed7f064a66638fd9f2672300"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+      "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+      "id": "RC19-funded-small-topup-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funded-claim-20261019/focused.log",
+          "sha256": "d3e28a6603994437ccd64151ce78a1aea2d943c89fb0105be9490716d43e7ccb"
+        },
+        {
+          "path": "evidence/W03/funded-claim-20261019/review.json",
+          "sha256": "8cbb48574fda66b3f5cb77034348dc2e993d027aed7f064a66638fd9f2672300"
+        }
+      ]
+    }
+  ]
+}

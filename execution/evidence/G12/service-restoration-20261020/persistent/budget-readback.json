@@ -1,0 +1,40 @@
+{
+  "Budget": {
+    "BudgetName": "Rolling Chat ongoing hosting",
+    "BudgetLimit": {
+      "Amount": "1500.0",
+      "Unit": "USD"
+    },
+    "TimeUnit": "MONTHLY",
+    "TimePeriod": {
+      "Start": "2026-10-01T05:30:00+05:30",
+      "End": "2087-06-15T05:30:00+05:30"
+    },
+    "CalculatedSpend": {
+      "ActualSpend": {
+        "Amount": "202.405",
+        "Unit": "USD"
+      },
+      "ForecastedSpend": {
+        "Amount": "320.265",
+        "Unit": "USD"
+      }
+    },
+    "BudgetType": "COST",
+    "LastUpdatedTime": "2026-10-20T12:31:13.423000+05:30",
+    "FilterExpression": {
+      "Not": {
+        "Dimensions": {
+          "Key": "SERVICE",
+          "Values": [
+            "Amazon Lightsail"
+          ]
+        }
+      }
+    },
+    "HealthStatus": {
+      "Status": "HEALTHY",
+      "LastUpdatedTime": "2026-10-20T12:31:12.897000+05:30"
+    }
+  }
+}

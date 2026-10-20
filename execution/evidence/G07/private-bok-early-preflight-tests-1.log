@@ -1,0 +1,18 @@
+✔ checks both outputs and source inventory without writing or rebuilding (0.886083ms)
+✔ rejects stale inventory before reading any generated artifact (0.576542ms)
+✔ rejects missing private-bok-build.json (0.10875ms)
+✔ rejects missing private_bok-PrivateBok.json (0.08675ms)
+✔ rejects missing invocation_probe_board-InvocationProbeBoard.json (0.084416ms)
+✔ rejects altered private_bok-PrivateBok.json (0.168625ms)
+✔ rejects altered invocation_probe_board-InvocationProbeBoard.json (0.109458ms)
+✔ rejects an unprocessed artifact even when its manifest hash agrees (0.108292ms)
+✔ rejects missing private VK even when its manifest hash agrees (0.112666ms)
+✔ rejects malformed manifest (0.121ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.673292

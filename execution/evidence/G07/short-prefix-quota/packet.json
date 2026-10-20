@@ -1,0 +1,83 @@
+{
+  "task": "G07-short-prefix-quota",
+  "sourceRevision": "e013c650d319ffd532cd224bd6f3bb710a3cb325",
+  "base": "57c1582",
+  "files": [
+    {
+      "path": "prover/server.mjs",
+      "sha256": "eb02d15f998d37ff6ab49170a5074fc1aa1ceecf0500907f26c9994ac4061929",
+      "bytes": 7584
+    },
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "c6a24a015052c32189a73faf42619460f00bed5b469ad84912d17d62e5152bf9",
+      "bytes": 23859
+    },
+    {
+      "path": "prover/compact-service.test.mjs",
+      "sha256": "f849bc29c64d358be3403b071f4d7a086076db4b233cdad1f1b1ff633750bd56",
+      "bytes": 15875
+    },
+    {
+      "path": "prover/private-query.test.mjs",
+      "sha256": "134e9d39cbe5c9e6473ec9fe3200d2ca8a1fedf40cc7beebc3ba8e076ed6184a",
+      "bytes": 43071
+    }
+  ],
+  "command": "node --test prover/compact-service.test.mjs prover/private-query.test.mjs",
+  "result": {
+    "passed": 93,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 940.01
+  },
+  "logs": [
+    {
+      "path": ".build/g07-short-prefix-quota/before.log",
+      "sha256": "123843863218baff07763a2f2516c68285d10fefb42655b08572e5be9e0d7317",
+      "bytes": 1040
+    },
+    {
+      "path": ".build/g07-short-prefix-quota/first.log",
+      "sha256": "d5836f9cb54ee6285f0d2454cd44677558d1d455098eea06a1df9a1f236cbe4c",
+      "bytes": 11026
+    },
+    {
+      "path": ".build/g07-short-prefix-quota/second.log",
+      "sha256": "76a2ce189285c08477d964c34c3677b70e4e6dad703d21072594cc5b135596a2",
+      "bytes": 8722
+    },
+    {
+      "path": ".build/g07-short-prefix-quota/final.log",
+      "sha256": "9c3777bc0a4c287a8bdc2d4c383d3d567712d08069a823c42a8eca309498197b",
+      "bytes": 9022
+    }
+  ],
+  "behavior": [
+    "Reserve full requested physical count before any upstream inspection or work.",
+    "Settle successful validated page to min(requested, returned+1) only after HTTP response finish; conservative extra unit covers native byte-cap lookahead.",
+    "Retain original 10s deadline and handler ownership through finish; failed/aborted/deadline/unfinished responses retain admitted units.",
+    "One-shot settlement mutates captured original bucket only; separate nonrefundable request counter retains existing configured limit."
+  ],
+  "limits": {
+    "productionPerMinute": 600,
+    "developmentPerMinute": 1800,
+    "requestBytes": 1024,
+    "responseBytes": 2097152,
+    "pageMs": 10000,
+    "coldAcceptanceMs": 120000
+  },
+  "preservedFailures": [
+    "Before regression: expected 200 after short prefix, actual429.",
+    "First check86/89: scalar follow-up fake incorrectly returned page; abort test released inspector before server observed socket close. Both test compositions corrected, original failure log retained."
+  ],
+  "limitations": [
+    "No browser/native/remote performance acceptance run.",
+    "Production600/min remains a capacity constraint for1601 physical blocks.",
+    "Projected actual charge is not guaranteed runtime admission: full upfront reservation, repeats, failures and unknown body density still apply."
+  ],
+  "cleanup": {
+    "temporaryDependencyLinkAbsent": true,
+    "noServicesOrHeavyJobsStarted": true
+  }
+}

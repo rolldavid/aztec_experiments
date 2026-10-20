@@ -1,0 +1,44 @@
+{
+  "candidate": "4b29ce7dc0c0c56864ce56f3abc9975f833dfe6a",
+  "base": "0cc564a478dfad9246e7e661f4a34be6a3e93516",
+  "verdict": "approved for source/component integration; no paid/cloud execution authorization or deployment qualification",
+  "source": {
+    "deploy/prover/bootstrap.py": "8c9f99b1790e7a9891ffc75153eea2ed8ede2b0877e6ca960580b6894bfccdf2",
+    "scripts/test-prover-bootstrap.py": "e8c452d463190c5b47c1922fbe909a75ea8ff4c6c0b1e0fead3fd5c01f988a5a",
+    "deploy/prover/BOOTSTRAP.md": "7fd9aed9621356cfd39826950e63f8205592ca99c764c58f98fbfd62e5260b06"
+  },
+  "handoffSha256": "8d116c517b154ab513629396f492cffa35f3cf980ff0be160d9a7fdc3c0a22d1",
+  "predecessorHandoffSha256": "5e2d23d88e1168642ea7f9e7ffc602d64fc33da69ada834236e7d60ad1484d13",
+  "findings": [],
+  "assessment": [
+    "Optional request is hash-bound in immutable bootstrap pins, exact fixed HTTPS S3 campaign object and SigV4 shape, valid through budget stop; input adds no commands/endpoints beyond the fixed capability. Existing trusted AWS publisher remains authority, not an invented independent signature.",
+    "Delivery starts only after validated final qualification; each visit uses original fixed window (max 1800 seconds), original budget minus 900 seconds, max60 attempts and at least30 seconds spacing. Fetch has 8-second alarm/socket bound,16KiB read cap,no proxy/redirect/retry and requires object version.",
+    "Durable fsynced window high-water is updated before exclusive attempt and GET. Revisit requires exactly two records per counted attempt, correct contiguous numbers/timestamps and completed pending outcomes. Lost complete pair, partial write, interrupted GET and missing required records refuse further read instead of reducing count.",
+    "Envelope has duplicate-key rejection and closed schema. All static activation scope fields must match prelaunch digest, dynamic evidence bytes match scope hash, release and existing evidence validators run before consumption.",
+    "Chosen version/object hash/scope hash are retained before exclusive scope/evidence staging and existing once-only activation. Interrupted consumption or activation cannot fetch or activate again; successful revisit observes original activation only.",
+    "Existing activation retains live scope/artifact/identity/query qualification/budget rechecks, intent-before-start and shutdown behavior. Original100s attestor owner remains shorter than standalone activation alarm; delivery never extends it.",
+    "Docs accurately distinguish controlled payload size and local tests from actual capability size, current package/readiness, upload conditional-once workflow, Linux delivery and real-proof/testnet qualification."
+  ],
+  "verification": {
+    "allThreeGitAndWorkingSourceHashesVerified": true,
+    "allPredecessorEvidenceHashesVerified": true,
+    "finalFocusedEvidenceHashVerified": true,
+    "independentCommand": "python3 scripts/test-prover-bootstrap.py ActivationDelivery",
+    "independentToolChunk": "de37f5",
+    "independentResult": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "seconds": 0.223,
+      "exitCode": 0
+    },
+    "scope": "Actual local temporary filesystem records; HTTP/systemd/root identity controlled, no network/service/cloud action.",
+    "stagedCoverage": "Predecessor whole115 plus later added budget case; final12 delivery cases rerun. Not a fresh whole116 run."
+  },
+  "limitations": [
+    "Current capability/payload and packaged source must be freshly measured before any actual launch.",
+    "Trusted single conditional-upload producer and ambiguous upload reconciliation remain separate outstanding work.",
+    "No Linux activation, genuine proofs, live delivery, or full product acceptance is inferred.",
+    "All local durable records are trusted root-owned state; this is not protection against malicious root rewriting or restoring the entire state set."
+  ]
+}

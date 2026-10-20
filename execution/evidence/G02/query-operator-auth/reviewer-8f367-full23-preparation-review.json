@@ -1,0 +1,12 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "8f3670e419f1f38852f6bf0dfc6eff3d16f78a84",
+  "packetSha256": "29882c7d4b6ac2b46855596d086aead70a1cb653016df314f95bed225df3ba40",
+  "runnerSha256": "17feace91a0d214b860cf2e5b3c3974026b3be1c78bd2fc0b70b2694114f34bd",
+  "verdict": "Eligible for ONE separately granted full23 execution after serialized slot release",
+  "basis": "Accepted focused actual36792; exact directory-only runner, identical child,3297 current pins, whole file23 distinct labels,no filter or allowed skip,60s2GiB unchanged. Existing original failure retained.",
+  "limits": [
+    "Actual readOnly PXE/store/SDK over synthetic public HTTP; no signing/proofs or provider.",
+    "Bundled CLI/full deployment/remote activation remain unqualified."
+  ]
+}

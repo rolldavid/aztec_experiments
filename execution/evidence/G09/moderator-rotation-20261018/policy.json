@@ -1,0 +1,44 @@
+{
+  "base": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "candidate": "d976d254aa9dd09d0ff3016cf573de9215d8b15d",
+  "task_id": "G09-moderator-rotation",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "billboard/rolling_contract/src/main.nr",
+    "billboard/rolling_contract/src/tests.nr",
+    "prover/rolling-artifacts.json",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/public-events.mjs",
+    "shared/rolling/public-index.test.mjs",
+    "shared/rolling/public-projection.mjs"
+  ],
+  "required_checks": [
+    "rotation-focused"
+  ],
+  "requirements": [
+    "RC37-rotation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G09-moderator-rotation",
+      "paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "billboard/rolling_contract/src/main.nr",
+        "billboard/rolling_contract/src/tests.nr",
+        "prover/rolling-artifacts.json",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/public-events.mjs",
+        "shared/rolling/public-index.test.mjs",
+        "shared/rolling/public-projection.mjs"
+      ]
+    }
+  ]
+}

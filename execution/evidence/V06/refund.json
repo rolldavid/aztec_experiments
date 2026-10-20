@@ -1,0 +1,95 @@
+{
+  "phase": "refund",
+  "passed": true,
+  "startedAt": "2026-10-10T15:35:16.960Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T15:35:21.756Z"
+    },
+    {
+      "stage": "verify-public-asset:user.html",
+      "at": "2026-10-10T15:35:21.756Z"
+    },
+    {
+      "stage": "verify-public-asset:aztec_bundle.js",
+      "at": "2026-10-10T15:35:26.014Z"
+    },
+    {
+      "stage": "verify-public-asset:plugins.js",
+      "at": "2026-10-10T15:36:02.636Z"
+    },
+    {
+      "stage": "load-live-application",
+      "at": "2026-10-10T15:36:04.857Z"
+    },
+    {
+      "stage": "restore-disposable-aztec-account",
+      "at": "2026-10-10T15:36:08.326Z"
+    },
+    {
+      "stage": "reconnect-disposable-ethereum-account",
+      "at": "2026-10-10T15:36:08.821Z"
+    },
+    {
+      "stage": "wait-restored-application",
+      "at": "2026-10-10T15:36:09.253Z"
+    },
+    {
+      "stage": "redeem-board-deposit",
+      "at": "2026-10-10T15:36:21.700Z"
+    },
+    {
+      "stage": "phase-complete",
+      "at": "2026-10-10T15:36:54.034Z"
+    }
+  ],
+  "ethereumNonceBefore": 8,
+  "expectedRefundAmount": "10000000000000",
+  "walletFees": [
+    {
+      "balanceBefore": "105895912814787",
+      "nonce": "8",
+      "gasLimit": "416957",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "baseFeePerGas": "17"
+    }
+  ],
+  "ethereumPayments": [
+    {
+      "hash": "0xf562b397d431b56e2ea45564ccdf8a114df69d7765c534ea463699d77d517df2",
+      "nonce": 8,
+      "requestedTo": "0xe664b6b5fd7575616653f75374d5fc7e8544b982",
+      "minedTo": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "wrapped": true,
+      "gasLimit": "416378",
+      "uiGasLimit": "416957",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "259648",
+      "blockNumber": 11885476,
+      "blockHash": "0x815706590ceee6c5ee88e5a772844aebd1caf9bcb9e4001c3f0457e2e89799d8",
+      "status": 1,
+      "exactContractEffect": true
+    }
+  ],
+  "walletRequest": {
+    "chainId": "0xaa36a7",
+    "gas": "0x22479",
+    "nonce": "0x8",
+    "value": "0x0",
+    "from": "0x374f2eeb49a9cc4a8bb732bb45b3c1fd751fdfc7",
+    "to": "0xe664b6b5fd7575616653f75374d5fc7e8544b982",
+    "data": "0xc0b03d1300000000000000000000000000000000000000000000000000000000000002150000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001b000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000000000007d90206f80cac48f3d327df8f94345ea47d1be8088aa9b37814d84a99c14950007638bb56b6dda2b64b8f76841114ac3a87a1820030e2e16772c4d294879c300efcbdb79553ae6863646bf36441755bc344a9a4af335fadc6659594faa431600089a9d421a82c4a25f7acbebe69e638d5b064fa8a60e018793dcb0be53752c"
+  },
+  "refund": {
+    "passed": true,
+    "txHash": "0xf562b397d431b56e2ea45564ccdf8a114df69d7765c534ea463699d77d517df2",
+    "amount": "10000000000000",
+    "gasWei": "2596484414016"
+  },
+  "replayRejected": true,
+  "ethereumNonceAfter": 9,
+  "finishedAt": "2026-10-10T15:36:54.151Z"
+}

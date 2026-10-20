@@ -1,0 +1,66 @@
+{
+  "source": "eec3b6367b9a4cfb832ed706f1658a16504a7e27",
+  "base": "5cdc69da61b162998c451672a63979f6fc15cc25",
+  "files": [
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "sha256": "c30228ce2016ceb3ff24bda563f15cb95f5623a2c8b6690feaf2a96c8b11396c",
+      "bytes": 15887,
+      "priorSha256": "e8eb2022d232127920840e75ed4c39f23ce99e70a7d1f32ffc625c523c99c172"
+    },
+    {
+      "path": ".build/sdk/aztec_bundle.js",
+      "sha256": "21ab8dda5c69ffd99b52af385f948ec8469048ba020b9dbae6d1b2c05054a6f8",
+      "bytes": 63237118,
+      "priorSha256": "76f112f79b3b263b74d94876ca382c1b5ac81318a9d9e5804ddff465323bfae0"
+    },
+    {
+      "path": ".build/sdk/sdk-manifest.json",
+      "sha256": "132095713b9ba7f9acf62b464a6026d419a7fea868a06742a6b2b9b406e6fda3",
+      "bytes": 288295,
+      "priorSha256": "98277dbae5c773135e7fb0186c7d42279398c003cc966b7599ed60cc3e19f009"
+    },
+    {
+      "path": "apps/dist/crs/g1_verifier.dat",
+      "sha256": "c31e48521dee7e67349c230e835a69dd4afd6d306a4a3a2d94b8ad4d8726e6c2",
+      "bytes": 128,
+      "priorSha256": null
+    },
+    {
+      "path": "crs-manifest.json",
+      "sha256": "e05ae5fa25848251d048d069d77e7551387349c6fd0a020313457b72be090dd8",
+      "bytes": 4169,
+      "priorSha256": "1a488ea4458c0269f7da2080e354ba1d1c413355fa982d62579e7862ba4f4abf"
+    },
+    {
+      "path": "scripts/build-crs.mjs",
+      "sha256": "3affb942e0d61becbf5a6679c02f6b717a900d366b96a07134dbcbcc1a53b2d4",
+      "bytes": 10886,
+      "priorSha256": "71174b19ce4bec570013eb605b8505bdb4861dcb90ff02d7a10dc6df00fe36ca"
+    },
+    {
+      "path": "scripts/rolling-wallet-assets.mjs",
+      "sha256": "6306981f56c11586fb9400fb235f12ae6ca351edb4bda9417c96c16994cda30a",
+      "bytes": 12585,
+      "priorSha256": "64229f15a4300ce5f35177b6b5c52f2cf35ef04d6be39284b1e3a11441c1281a"
+    },
+    {
+      "path": "shared/crs-client.js",
+      "sha256": "735ec09d15b530148a7787db88e30919aa2887ef23baff49e856eb8f3558b458",
+      "bytes": 8699,
+      "priorSha256": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3"
+    },
+    {
+      "path": "shared/private-pxe.mjs",
+      "sha256": "ae4b168ae40f1c8bafdc509c0b8a7ad226e996d952eb8bbec0347fdd4a78b64c",
+      "bytes": 8932,
+      "priorSha256": "786781a9afb7dc5b68a2529588f6a0ff32b0f43f154ce2d7a7e3eb35f6cc32dc"
+    },
+    {
+      "path": "apps/dist/crs/crs-manifest.json",
+      "sha256": "e05ae5fa25848251d048d069d77e7551387349c6fd0a020313457b72be090dd8",
+      "bytes": 4169,
+      "priorSha256": null
+    }
+  ]
+}

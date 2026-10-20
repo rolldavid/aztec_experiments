@@ -1,0 +1,52 @@
+{
+  "revision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "scoped component acceptance corroborated",
+  "scope": [
+    "RC08",
+    "G09-A08",
+    "Existing reply notification, canonical read marker and fresh private actor recovery"
+  ],
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node .build/reviewer-evidence/current-notification-completion/verify.mjs",
+      "outcome": "Four canonical receipt/full-block/effect/decoded-public-event checks passed at90\u201393",
+      "evidence": "observations.json"
+    },
+    {
+      "procedure": "Inspect actual worker continuation and production application/reader/selectors; compare saved result assertions",
+      "outcome": "Followed board/name recovered; subscription includes existing reply; canonical read marker suppresses it; new private actor equals previous state and retains bookmark. Fresh actor measured walletSubmissions=0."
+    }
+  ],
+  "review": [
+    "Preference replay requires complete dense revisions and exact terminal digest; reader binds private recipient, contract class/network and canonical anchor, validates marker block hashes, and publishes only complete preferences. Invalid/orphaned markers cannot suppress notifications.",
+    "Private views select only from already obtained ordinary public page. Following is board/name union; subscriptions select replies strictly after canonical recovered read height. The selector performs no network writes.",
+    "Continuation uses actual application prepare/submitPrepared, then authenticated readPreferences. It closes the first actor and opens a fresh private storage/PXE context, asserts exact recovered preferences/bookmarks and observed wallet send count zero. No new post/reply was created; incoming-notification delivery beyond this existing-reply scenario is not claimed.",
+    "Independent actual receipts90\u201393 succeeded and match full canonical effects. Decoder returns zero Rolling public preference events. Each transaction still has one public log, four private logs, three note hashes and seven nullifiers; absence of decoded preference events does not imply no public footprint.",
+    "The original follow-name ambiguous outcome is resolved by receipt91 and existing reconciliation. Its separate result.nodeSends=0 is a literal, not measured transport evidence; this review relies on canonical readback and the fresh recovery wallet counter, not that literal."
+  ],
+  "limitations": [
+    "Native proof-disabled local development; no real-proof/testnet acceptance.",
+    "Reviewer did not decrypt or repeat private recovery; private semantics are corroborated by source-bound executable assertions and sanitized worker evidence, while canonical public effects were checked independently.",
+    "No browser-wallet or new incoming two-account notification delivery claim. No traffic-analysis, observer-unlinkability, independent specialist privacy audit or cold recovery capacity qualification.",
+    "Existing externalActivity returns fixed zero transport/proof counts; only walletSubmissions is an actual instrumented counter in this recovery evidence."
+  ],
+  "sourceHashes": {
+    "shared/rolling/preferences.mjs": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+    "shared/rolling/preference-reader.mjs": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+    "shared/rolling/private-views.mjs": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+    "scripts/testing/rolling-application-actor.mjs": "010a5ff452a894b0a85845d107ea8ea83f9874fa0138dcf0b4003ec633589ee9"
+  },
+  "evidenceHashes": {
+    ".build/g09-social-notification-completion/run.mjs": "f40c5b201a6617dd1579f783d8830a219e66c9a088b2f5cacae9ed4f2bce7952",
+    ".build/g09-social-notification-completion/continue.mjs": "e02d79d5efc13ee7df29000a99864c715b0c69a95b7b2d5d0db3fdaf3ade1b5b",
+    ".build/g09-social-notification-completion/reconcile.mjs": "a2f4a692c2098009ea07a3b0567929b1286cbc1d0e1e0b1f0f17042187749b56",
+    ".build/g09-social-notification-completion/continuation-1/result.json": "e23021279c785a19c6fd4085fd1c13e47f0f51e62e545938a7f967ec5a7d0f6e",
+    ".build/g09-social-notification-completion/reconcile-1/result.json": "9cc1400637462606e78599fe2733f8b9f6e1d01a6486424d69a6fa2362e23485",
+    ".build/g09-social-notification-completion/attempt-1/follow-board-receipt.json": "af041d3824891f6e3816837b08ba02da66928a5668152ce3e31a201780816d03",
+    ".build/reviewer-evidence/current-notification-completion/verify.mjs": "d1042309fd5c416aae0c644bc3ebf333205c28bc93c96db6359e752921bf121b",
+    ".build/reviewer-evidence/current-notification-completion/observations.json": "710e656d52b4c51e3b074a18aba0a47c9240bc2a5eebba8e61bebf9b8ceae7b3",
+    ".build/reviewer-evidence/current-notification-completion/focused.log": "7a8ca091d535af85c9306029b1ce6780f45fed59f8606a8c32896779744852de"
+  }
+}

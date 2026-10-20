@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "taskId": "G12-clean-operator-rehearsal",
+  "agentSession": "controls-20261018",
+  "sourceRevision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "branch": "codex/rolling-independent-deploy",
+  "trackedSourceUnchanged": true,
+  "status": "fresh-development-deployment-and-operator-smoke-passed",
+  "environment": {
+    "node": "24.21.0",
+    "sdk": "6.0.0-rc.3",
+    "nativeFoundation": "6.0.0-rc.6",
+    "forge": "1.4.1",
+    "anvilRelease": "1.7.0",
+    "nativeL1Solc": "0.8.30",
+    "applicationPortalSolc": "0.8.27",
+    "proofsEnabled": false,
+    "hostedService": false,
+    "oldRuntimeOrCredentialsCopied": false,
+    "existingDownloadsReused": [
+      "checksum-pinned Noir archive",
+      "checksum-pinned Anvil archive",
+      "standard Solidity compiler cache"
+    ],
+    "publishedTrackedCrsAssetsVerified": true,
+    "verificationKeysForceRegenerated": 30
+  },
+  "checks": [
+    {
+      "command": "npm ci --ignore-scripts --no-audit --no-fund",
+      "exitCode": 0,
+      "log": "install-root.log",
+      "sha256": "2dbeb39e345102195804cf78e9fad36ae5f91b59239dc8388cc2bba003aa5273"
+    },
+    {
+      "command": "npm ci --prefix billboard/portal --ignore-scripts --no-audit --no-fund",
+      "exitCode": 0,
+      "log": "install-portal.log",
+      "sha256": "65c731cd02e19c79f6f5a3e84a4dd64a49acd6c47d2ee551d7cc9da191e8c96c"
+    },
+    {
+      "command": "npm run bootstrap:dependencies",
+      "exitCode": 0,
+      "log": "bootstrap-dependencies.log",
+      "sha256": "30207afb5102d04e1fe603d53fb631ef603d19acb9602ae4cffa061451d74f8d"
+    },
+    {
+      "command": "npm run bootstrap:noir (checksum-verified official compiler download cache extracted)",
+      "exitCode": 0,
+      "log": "bootstrap-noir-verified-cache.log",
+      "sha256": "7650fca42f8104208a78e3ac9cea73974369ed17cc20000feb53c4956de70a58"
+    },
+    {
+      "command": "node scripts/bootstrap-anvil.mjs (checksum-verified official download cache extracted)",
+      "exitCode": 0,
+      "log": "bootstrap-anvil.log",
+      "sha256": "1356dd83f19ec265d765b5b6841562bb3a70770a18f85fe5e36cf41b77564557"
+    },
+    {
+      "command": "npm run build:contracts",
+      "exitCode": 0,
+      "log": "build-contracts.log",
+      "sha256": "327a240f77da1d018e0e740d30965980ce40ec9ae572ad2dd3a2635076a47913"
+    },
+    {
+      "command": "npm run build:private-bok",
+      "exitCode": 0,
+      "log": "build-private-bok.log",
+      "sha256": "c663f56f02933f75802f14697964cfc94fee4ae69b5619df51562c4a73de1dec"
+    },
+    {
+      "command": "npm run build:sdk",
+      "exitCode": 0,
+      "log": "build-sdk.log",
+      "sha256": "c9eaa0f65f1159ed08da6cc066d4664afc91e82dce45dd241747c5d3615da5fa"
+    },
+    {
+      "command": "npm run build:crs",
+      "exitCode": 0,
+      "log": "build-crs.log",
+      "sha256": "f0a998a10194a7645c9b14503d8b498902f255fa2a9e6fe66fbceee6f48c4b8b"
+    },
+    {
+      "command": "npm run build:apps",
+      "exitCode": 0,
+      "log": "build-apps.log",
+      "sha256": "d0dff44a7fd9db56c06c1963933cf4323ac16c50294a203ab9296b14ae7c5fc7"
+    },
+    {
+      "command": "node scripts/rolling-wallet-assets.mjs",
+      "exitCode": 0,
+      "log": "build-wallet.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    },
+    {
+      "command": "npm run check:artifacts",
+      "exitCode": 0,
+      "log": "check-artifacts.log",
+      "sha256": "bfcc8eafe9bc4f6bf2fd53e82fe782c9c709943d941cc3e2f2b148b38591985e"
+    },
+    {
+      "command": "loadRollingArtifacts()",
+      "exitCode": 0,
+      "log": "rolling-artifact-validation.log",
+      "sha256": "10f12f6b55f7de906f7c3d864f968aceb9fbe7b33c9af21c39b0a52857f13632"
+    },
+    {
+      "command": "node plugins/devnet/liquidity.mjs --prepare-artifacts",
+      "exitCode": 0,
+      "log": "prepare-liquidity.log",
+      "sha256": "49873bbe32c9233ec89b2301976c6a563d9806fedf5c5f03faa4927fd176b08d"
+    },
+    {
+      "command": "node .build/g12-clean-operator/operator-smoke.mjs --imports-only",
+      "exitCode": 0,
+      "log": "operator-imports.log",
+      "sha256": "d754951aee356be2723148fb1c06d94d483f42f5e72a1d2d02669ff93c1cf883"
+    },
+    {
+      "command": "node .build/g12-clean-operator/operator-smoke.mjs --readback-only",
+      "exitCode": 0,
+      "log": "operator-readback.log",
+      "sha256": "b447c87ae45cf61d4556dd1e99cba309dc5a80398f2bb68a134416ace5a0d91e"
+    }
+  ],
+  "manifests": {
+    ".build/contracts-manifest.json": "e37de7fa0de5a8bb356bbe23f668e307df3a725e3884c62ab3f13f6e9de5a4f3",
+    ".build/sdk/sdk-manifest.json": "cd417303d03031bc1c9dae41641d74cff827b22c1ee87991e90e515bfaaf1cbc",
+    ".build/apps-manifest.json": "fc269d06a4de3e2080b11d536815cbbc884ace542256f96e59cf58e00ef6a4a0",
+    "experiments/private-bok/target/private-bok-build.json": "434536f0c69e39d17008a9ecfd6e26e6771fa4848b68a64079398fad0cd3c10b"
+  },
+  "runtime": {
+    "url": "http://127.0.0.1:4318",
+    "aztecNode": "http://127.0.0.1:8082",
+    "ethereum": "http://127.0.0.1:8546",
+    "stateDirectory": "/private/tmp/rc-g12-z_0lqwu2/state",
+    "tmpDirectory": "/private/tmp/rc-g12-z_0lqwu2",
+    "execSession": 80662,
+    "status": "gracefully-stopped-after-lead-ui-and-reviewer-live-checks",
+    "lifetime": "owned foreground execution; no unattended persistence claim",
+    "pid": 6159,
+    "command": [
+      "node",
+      "plugins/devnet/start.mjs",
+      "--profile",
+      "rolling",
+      "--directory",
+      "/private/tmp/rc-g12-z_0lqwu2/state",
+      "--app-port",
+      "4318",
+      "--node-port",
+      "8082",
+      "--ethereum-port",
+      "8546"
+    ],
+    "environment": {
+      "NODE_BACKEND": "js",
+      "TMPDIR": "/private/tmp/rc-g12-z_0lqwu2",
+      "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/g12-home",
+      "ANVIL_BIN": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/anvil-1.7.0/anvil",
+      "FOUNDRY_SOLC": "/Users/zac/Library/Application Support/svm/0.8.30/solc-0.8.30",
+      "NO_PROXY": "127.0.0.1,localhost",
+      "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/Users/zac/.foundry/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    },
+    "environmentClearedBeforeLaunch": true
+  },
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "2058581665",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "boardAddress": "0x0c3c3f5c343d30b98e00caf36b87ad758e7abc7ae518790862f2d2b7cf74297c",
+    "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+    "bok": {
+      "address": "0x2bad40fc40ed86bd59d6cf5cc6125875ef65258bde9083e29c7d96e38a9093ee",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+      "deployer": "0x1cbce968cab021ac2b48acdcf092420bc5ac237fa37e3654a3fba8f8a7b2fcfb",
+      "salt": "0x24d7d6bd7d3ceb1652ac352c82d56afb11795389e825cecddf2e83fbfbd534ef",
+      "deployment": {
+        "blockNumber": 6,
+        "blockHash": "0x2ee4f1e2ba4e8b21edc1eb76f7f18d86afe03efbafa20eee3c89c599630d322d",
+        "txHash": "0x228251c38fdf264282588d28579e826e671edda4946ac2b518207601ce5e6ee5"
+      }
+    }
+  },
+  "operatorSmoke": {
+    "evidence": "operator-smoke-public.json",
+    "receipt": {
+      "status": "succeeded",
+      "canonical": true,
+      "txHash": "0x16a0e88202cc0ba6c9f7deb3d067b8a462754d00caa535a15c9136392c9f451a",
+      "blockNumber": 9,
+      "blockHash": "0x23b4860401894deee598c358d739517f45292f885ecb8bffa7ae9336387fbf5d"
+    },
+    "nameId": "15975315181197277278076113612575618602826632606903064360054596679627570813892",
+    "independentPublicReadback": true,
+    "transactionsSubmitted": 1
+  },
+  "setupCorrections": [
+    {
+      "stage": "Noir compiler download",
+      "outcome": "own pending download interrupted; original archive checksum verified and version checked, no install repeated"
+    },
+    {
+      "stage": "native account derivation",
+      "outcome": "long macOS UNIX socket path truncated; cleanly stopped before chain; short owned TMPDIR focused check passed"
+    },
+    {
+      "stage": "first native L1 setup",
+      "outcome": "stopped original disposable attempt before application CLI; retained original state; short state path and existing compiler cache reference used for final fresh deployment"
+    },
+    {
+      "stage": "public reconstruction invocation",
+      "outcome": "one sync step was not ready; resumed only read-only bounded ingestion until ready; no transaction replay"
+    }
+  ],
+  "disk": {
+    "checkoutPlusRuntimeBytes": 3123359744,
+    "incrementalBytes": 2785796096,
+    "maximumIncrementalBytes": 8589934592,
+    "freeBytes": 45127282688,
+    "minimumFreeBytes": 21474836480
+  },
+  "limits": [
+    "operator smoke uses disposable genesis fee funds; not browser-user funding or wallet-matrix acceptance",
+    "native proofs disabled; not real-proof testnet acceptance",
+    "no hosted Bok/model operation in this independent rehearsal",
+    "not specialist audit,14-day soak,network clearance or production release",
+    "fresh chain has no verified restart persistence; keep all retained journals on stop"
+  ],
+  "cleanup": {
+    "command": "kill -TERM 6159",
+    "completionCheck": "Wait for exec80662 exit0; verify ports4318/8082/8546 closed and original process/owned children gone; keep native journals and generated application outputs for review.",
+    "deletionAuthorizedOrPerformed": false,
+    "retainedSource": "clean source worktree rolling-independent-deploy at0fd3683e3f036748e9f5b618a097c50f3c5443bc; no tracked edits",
+    "retainedGeneratedBuild": ".build SDK/manifests, apps outputs, contract outputs and owned node_modules",
+    "retainedPrivateState": "/private/tmp/rc-g12-z_0lqwu2/state plus owned compiler home and interrupted .build/g12-devnet",
+    "resumeBoundary": "Stopped disposable chain is not claimed restartable; do not replay old deployments. For a new rehearsal use a fresh short owned state directory; existing original4317 service remains unrelated.",
+    "receipt": "cleanup-public.json"
+  }
+}

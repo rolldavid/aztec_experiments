@@ -1,0 +1,45 @@
+{
+  "revision": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+  "baseRevision": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": "G13-fenced-request-dispatch RC28/RC29/RC41",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-concurrency=1 --test-name-pattern='durable dispatch|accepted recovery hint|shutdown during canonical admission|accepted.*recovery|recovered reply|terminal no-reply|bounded predecessor|same.thread|thread.*order' plugins/test/server.test.mjs plugins/test/hosted-private-bok.test.mjs plugins/test/thread-repositories.test.mjs",
+      "outcome": "27passed,0failed,0skipped;2874ms",
+      "evidence": "focused.log"
+    },
+    {
+      "command": "git diff --check 83110466..f891dbaf; git status --short",
+      "outcome": "pass;clean;6declaredpaths"
+    }
+  ],
+  "review": [
+    "Inspected source and changed tests first. Rolling dispatch checks durable eligibility before entering run, therefore before expensive createPrivateBokEscrow/PXE interface registration. Unchanged running journal with unknown billing or no retained acceptance is skipped; terminal phases are skipped; reply intents remain eligible for exact reconciliation.",
+    "Durable hints are read under lease using existing restricted file reader; binding identity must match. Local accepted/prepared metadata is re-read each visit and after restart without publication, generated execution, billing mutation or cached authorization.",
+    "False eligibility removes only current queued row, leaves same-process failure and lastSuccess untouched, and allows unrelated threads to progress. Current canonical predecessor check still gates each eligible dispatch; shutdown cannot launch a new job after admission.",
+    "Prepared metadata is intentionally optimistic eligibility only. Full normal recovery continues validating exact Git refs, canonical billing, retained artifacts, mirror publication, and uncertain reply transactions; no provider replay or weakened success checks.",
+    "Tests retain exact accepted/terminal/uncertain reply fences and cover source state changes, same-thread ordering, unrelated progress, shutdown, restart and no success on skip. No tracked edits or live services used."
+  ],
+  "limitations": [
+    "Fresh-process health state is still memory-only and may report ready while durable fenced requests exist; ready is not evidence all requests completed. Lead explicitly retained this existing limitation within current bounded scope, not a waiver of broader operator visibility requirements.",
+    "Prepared metadata can admit an ultimately invalid exact-ref candidate to full recovery; hint is not authorization or successful acceptance.",
+    "No Docker/chain/provider calls or full application journey. Normal integration gate remains lead responsibility."
+  ],
+  "sourceHashes": {
+    "plugins/escrow-service.mjs": "da885ef6d54c7a68dda501479be716cebe070f9e29d44e23c538af22e8efc3ff",
+    "plugins/main.mjs": "6328a2081c4f7f83b393703b2adf664a4ccb9052220a3c08c376468b7043f284",
+    "plugins/test/hosted-private-bok.test.mjs": "265215ad65328bdfb5e4b90a9cac81641f18290bb310940c90331e1cfa03b0de",
+    "plugins/test/server.test.mjs": "efb3d7999991f5ced2a9f4f34e232ba339d3bff00529d03e55f9f3ffe6cdfa7a",
+    "plugins/test/thread-repositories.test.mjs": "27a3e4a528678f0fc6d3a70aa74ff750775b75f5baea3f57aea347da9201633c",
+    "plugins/thread-repositories.mjs": "a8b3ae5643779457be1e5a1ba0215632498ff9d2cfd747c10a2211bb57e11830"
+  },
+  "evidence": {
+    "focused.log": "204855031cf46b9651a03a1a0ada05ed3ac17637064f0a209aab7055f51382fd"
+  }
+}

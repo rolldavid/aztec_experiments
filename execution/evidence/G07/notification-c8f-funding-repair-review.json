@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "base": "f898c7f3eab81443ac4251863ef703408dbd5ef2",
+  "verdict": "ELIGIBLE ONE changed genuine rolling-notification-browser attempt under unchanged540s/4GiB",
+  "findings": [],
+  "sourceSha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "b328eac71f79d5f0719aa4e5f309d77b49016bc74daa7fa4c26af2b6216140c2",
+    "scripts/testing/rolling-application-fixture.test.mjs": "d53f2da3accfba9b8c2119640690db3b6363beed6044a4cbc3162deeff36522f"
+  },
+  "diagnosis": "notification-5925-funding-diagnosis-review.json",
+  "independentChecks": {
+    "affectedFixtureAndNotificationSuites": 143,
+    "passed": 143,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 3035.747916,
+    "log": "execution/evidence/G07/notification-c8f-independent-tests.log",
+    "readinessBranches": 3,
+    "readinessProbe": "execution/evidence/G07/notification-5925-readiness-probe.json",
+    "arithmetic": "Both roles derive same pool2*funding-Afees-Bfees-Bstandalone; old omitted-standalone expression rejected in labelled numeric check",
+    "processExited": true
+  },
+  "analysis": [
+    "B standalone:!socialWire now true fornotification; actual existing helper consumes real bridgeclaim with only claim+mint_and_pay_fee, nativeproof/nodevalidation/canonicalreceipt/positivefee. No collateral is added.",
+    "Production status remains strict collateral-pending with positiveactualprivatecredit; boundedfixedstatus+canonicalnumericcredit persisted beforeassert. Unclaimed fee-needed and collateral-bearing fee-ready still rejected.",
+    "Notification settlement A pooloffset now subtracts B standalonefee; B verify internallysubtracts ownstandalone. Finalmulti verification already uses same formula. A has no standalone inthismulti scenario. Four HTTPapplicationjobs unchanged; setupstandalone is separatelyproven/accounted, not silently included as fifthapplicationjob.",
+    "No factory/SDK/payment/formula weakening, retry, privateclaim injection into browser or change to keys-only custody. All paidoutcome/failurecollection guards retained.",
+    "Onlytwo fixture/testfiles changed; current SDK/wallet manifests identicalf898. Previous19sourcecomposition applies except explicitlyreviewedtwofiledelta."
+  ],
+  "timing": {
+    "priorNaturalWallCatchupMs": 94279,
+    "interpretation": "Standaloneproof adds genuine setup work and warped L1 blocks; naturalcatchup may absorb some elapsed time but is not guaranteed. No deterministic success/ETA claim.",
+    "browserAdmissionRemainingMs": 180000,
+    "browserMaxMs": 150000,
+    "accountingReserveMs": 30000,
+    "outerMs": 540000,
+    "limitKiB": 4194304,
+    "condition": "Retain actual admission and harddeadline; no late browser launch or enlarged budget ifsetup consumes reserve."
+  },
+  "requiredActual": [
+    "B standalone actualsuccess/canonicalfee andpositiveprivatecredit/no collateral",
+    "Fourcanonical applicationtransactions and exactBsubscribe/reply/unread/marker/freshbrowserrestore",
+    "A+B fee accounting includes B setupdebit and allpaidfailures",
+    "All original source/proof/transport/privacy/readiness/deadline/cleanup gates"
+  ],
+  "limitations": [
+    "Readiness arithmetic/unitprobes labelled; noactualnotificationacceptanceyet",
+    "Prior5925 remainsfailed and no applicationactions ran",
+    "No fullG07/G14 or deployment qualification"
+  ]
+}

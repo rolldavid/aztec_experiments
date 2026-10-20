@@ -1,0 +1,131 @@
+{
+  "task": "G11-preprovisioned-thread-repositories",
+  "session": "design-resume-20261014",
+  "parentSession": "lead-20261011",
+  "revision": "9bf9cfc94b56530ccc3c884af1b946115e0c1ec7",
+  "base": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "branch": "codex/rolling-thread-repository-pool",
+  "requirements": [
+    "RC29",
+    "RC31",
+    "RC32"
+  ],
+  "scope": "Automatic trusted allocation of preprovisioned private repositories before summary/main paid provider calls; source publication retains exact Git identities and uncertain write reconciliation. Operator replenishment remains explicit.",
+  "sources": [
+    {
+      "path": "plugins/DEPLOYMENT.md",
+      "sha256": "d94163626b5ef9e0057ee449723a4a2332c7042e4c978ed2212da13526880d3e"
+    },
+    {
+      "path": "plugins/escrow-service.mjs",
+      "sha256": "db987e35069918a4d79789fdc35df76f108da7ef40f3894b7cf20750979ce7a3"
+    },
+    {
+      "path": "plugins/github-app-broker.mjs",
+      "sha256": "7343366a78c90968437123906ee0ab760d2a48475198204004b0bb898adc6719"
+    },
+    {
+      "path": "plugins/main.mjs",
+      "sha256": "46d44446181dc1aa7099d91fe0a68fc304f32aa25b0f027a964d3ceb9a53a8b0"
+    },
+    {
+      "path": "plugins/test/github-app-broker.test.mjs",
+      "sha256": "f26d38404f53a3f68e0359b93123dea6176252fbffb697af01b89c524284dade"
+    },
+    {
+      "path": "plugins/test/hosted-private-bok.test.mjs",
+      "sha256": "4d97972d16c0ce617ed7ddb08823d6767360a657ade8df8ca74a1b13ea162eeb"
+    },
+    {
+      "path": "plugins/test/thread-repositories.test.mjs",
+      "sha256": "5dd6abb3298eb01cce3c119dfeb3c6ca633c58788809d086348b958565323261"
+    },
+    {
+      "path": "plugins/thread-repositories.mjs",
+      "sha256": "8a2e10ea73b00e86f2904b9fa4e6f7759f227461659964d71c553efc1c1ad242"
+    }
+  ],
+  "verification": {
+    "command": "NODE_BACKEND=js /Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test plugins/test/github-app-broker.test.mjs plugins/test/thread-repositories.test.mjs plugins/test/hosted-private-bok.test.mjs",
+    "fullAffected": {
+      "tests": 197,
+      "passed": 195,
+      "failed": 0,
+      "skipped": 2,
+      "durationMs": 23062.616458
+    },
+    "lastAddedRefRegression": {
+      "passed": 1,
+      "failed": 0,
+      "command": "same node --test --test-name-pattern=\"pool lost ref acknowledgement\" plugins/test/github-app-broker.test.mjs"
+    },
+    "skippedMeaning": "Two existing opt-in real isolated executor/container tests; not claimed as passing. No generated-code executor changes.",
+    "earlierFailures": "First combined run131PASS3FAIL2SKIP: new test expectations incorrectly counted two distinct blobs as one and omitted @bok from exact request text. Focused existing tests corrected those fixtures, preserving actual allocation-before-provider and no duplicate blob assertions; final affected suite passes.",
+    "controlledPorts": "GitHub protocol and provider ports are labelled controlled fixtures. Local Git/filesystem/crash persistence is real. No GitHub mutation, model call, wallet/proof, or deployment performed by this worker."
+  },
+  "evidence": [
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-broker.log",
+      "sha256": "de874960e0f9fe05077e179a2c322ae0971271a75980f4d4dbde9283c384758f"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-component.log",
+      "sha256": "51e2a841f13307f5055108e2d4183c638e65bf5a61b05b4471807c0216c28a79"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-focused-repairs.log",
+      "sha256": "1cbb1e97e49d25ff84a9e12f218c7103f6fda066223267da3d0da82b000811e6"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-upgrade.log",
+      "sha256": "42b4897330c03aa987a0ac473935c2ec051e519a72d700b6c98dbca1a05fb8eb"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-final-suites.log",
+      "sha256": "4e9df7b20d7476aee24f8beb846a2545d9ce0f8a44b2ef0494ef1021e26d8dbe"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-ref-reconciliation.log",
+      "sha256": "713a171db23341a5b5358fb7c3f68394625da307d56b6d6c28149929fd3cbe41"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-admission-before-repair.log",
+      "sha256": "ac796c46fd1ffcbd256d92cb9bc9bf4713674caeab3639824fb4504b6b267d37"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-admission-repair-focused.log",
+      "sha256": "bc8acea1e58f9e22c73e22fb793a6a6285330fd8fa5953e989ce8b816f7e55b9"
+    },
+    {
+      "path": "execution/evidence/G11/preprovisioned-thread-repositories/pool-admission-repair-suites.log",
+      "sha256": "03e3eb024dd4624f92e814267666666b82c99ce9b7ccdefef2574928ab625f38"
+    }
+  ],
+  "capacity": "Pool-only1064 request ceiling =2*512+40; original120s session/8s request/bytes/files limits unchanged; real512-file test succeeds,513 rejected before API. Other modes540.",
+  "preservation": [
+    "Existing creationTemplate/config/legacy mirror steps and accepted revisions preserved; connected paths bypass pool.",
+    "Manifest admitted prefix append-only; unique allocation persists after acknowledgement loss; no create.done fabrication or slot reuse.",
+    "Actions read before each new mutation; no pool settings/creation API; unknown writes reconcile only.",
+    "Exhaustion before entry leaves no running intent or paid reservation; explicit replenishment admits same original request once. True entered-agent/saved-running journals remain authoritative and unreplayed."
+  ],
+  "remaining": [
+    "Independent final revision review and normal integration gate.",
+    "Real selected-App transport on new slots pending operator GitHub privileged-session reauthentication; root owns that work.",
+    "Automatic repository API creation is not claimed; finite pool requires trusted operator replenishment."
+  ],
+  "predecessor": "9d9abebb6bd678661c217fba799ab3730d972c94",
+  "independentFinding": "Reviewer P1: toolbox-only admission happened after durable running, fencing an unentered exhausted request. Repaired by canonical-history preflight before running, exact history reused, existing repository open/close, original entered-run no replay retained.",
+  "repairVerification": {
+    "beforeRepairRegressionExit": 1,
+    "focusedPassed": 5,
+    "affectedHostedAndThread": {
+      "tests": 83,
+      "passed": 81,
+      "failed": 0,
+      "skipped": 2,
+      "durationMs": 6985.611458
+    },
+    "brokerUnchanged": true,
+    "command": "NODE_BACKEND=js <pinned Node24> --test plugins/test/hosted-private-bok.test.mjs plugins/test/thread-repositories.test.mjs"
+  }
+}

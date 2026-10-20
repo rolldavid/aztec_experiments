@@ -1,0 +1,10 @@
+{
+  "label": "uncertain-fund",
+  "sourceRevision": "de7e1547083e353b2efd0fcacbbf903aa5eb4b80",
+  "proofMode": "proofs-disabled",
+  "portal": "0x710cb4812d7cee954b6cd9947176b35f9d8589f0",
+  "escrow": "0x15db4d13cad9b367dfc9c224964b8572376da5e1614f766334d39ef0e5100644",
+  "amount": "1000",
+  "content": "0x0062a0afc5d4c8aa2d6fb658c93ca4071eea0fb14ed0ccd1174be51014a7e3c8",
+  "fundingMode": "real-portal-deposit"
+}

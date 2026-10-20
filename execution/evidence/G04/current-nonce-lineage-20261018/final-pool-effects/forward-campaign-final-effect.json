@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-18T19:52:18.966Z",
+  "hash": "0x381c90c29c46d9688b8705f58448eccb0a34f9b106776f70ddbd8998c8073fb6",
+  "scope": "Read-only actual canonical pool receipt and production effect assertions; no sends",
+  "receiptBlock": 11943004,
+  "effectBlock": 11943195,
+  "receiptBlockHash": "0x740b4f3997f4fcdcc20fcb83cca226b3ac3f18960730f5f75e116972b5a5d084",
+  "finalizedBlock": 11943195,
+  "finalized": true,
+  "gasUsed": "36943276",
+  "fee": "36943793205864",
+  "cleanupReceipts": [
+    {
+      "hash": "0x6b98cf609b0515a4af6e3f96cc44ef34ff83d6872261ac79ed382dfc7afcc159",
+      "blockNumber": 11943081,
+      "blockHash": "0x1afc5fd9b48e2df3ef6c7946608d085e3ed2ad936fe29d2709d5b9511988b944",
+      "status": 1,
+      "finalized": true
+    },
+    {
+      "hash": "0x70f149f61d640d8a4a99d2dd0be0bff63a9d208afaa1390806589fe8047901f4",
+      "blockNumber": 11943172,
+      "blockHash": "0xba94ac938c5974b651992f476951bb3d6bd4762647d698c84487f1330f1b6fe5",
+      "status": 1,
+      "finalized": true
+    }
+  ],
+  "effectVerified": true,
+  "tokenId": "233650",
+  "poolAddress": "0xe7505A537CfF2742059c0e6C06cD3939D3E73c85",
+  "liquidity": "692820323027",
+  "token0": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+  "token1": "0x762c132040fda6183066fa3b14d985ee55aa3c18",
+  "amount0": "48000",
+  "amount1": "9999999999992048193",
+  "allowances": {
+    "fee": "0",
+    "usdc": "0"
+  },
+  "latestNonce": 20
+}

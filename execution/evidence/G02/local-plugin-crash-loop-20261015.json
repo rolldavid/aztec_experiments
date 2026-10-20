@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-15T10:40:12.676762+00:00",
+  "service": "local.aztec.bok",
+  "observed": "Health connection refused; launchd spawn scheduled,2575 runs,last exit1; repeated Service network identity mismatch.",
+  "action": "Stop confirmed crashing inactive LaunchAgent; preserve plist, configuration, secrets and journals.",
+  "bootoutExit": 0,
+  "absentAfter": true,
+  "plistSha256Before": "a03bc2397a84c1c57cb6476cf3833c9f13d7559c1c43ba542e8a869fe195430a",
+  "plistUnchanged": true,
+  "recovery": "Resolve documented current testnet identity/contract migration and verify service config against actual network; then launchctl bootstrap gui/UID /Users/zac/Library/LaunchAgents/local.aztec.bok.plist and verify health before work. Do not retry blindly or change network expectations to bypass mismatch."
+}

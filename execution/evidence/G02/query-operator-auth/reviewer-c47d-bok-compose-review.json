@@ -1,0 +1,54 @@
+{
+  "candidate": "c47d2b3ac1075153daf85c4e9f2f6814aef2b2f4",
+  "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+  "verdict": "PASS_SCOPED_COMPONENT",
+  "source": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "e517026a6f010ce92ede2bb8599597a5dd45cb3a2eee2438688d0173c58c8068",
+    "apps/rolling/wallet-panel.mjs": "95a78fe64799412efc3bc4d39b6f8d3f4c2bfb7ccd71b80d7d98e6cf49057be9",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "e17ae330c0712a2d8dc4412947a43a3f89f705fa703327233151901e6cedf146",
+    "apps/rolling/wallet-runtime.mjs": "58d5751064815b8b6aadece7204b8bb8dc1c0669309a8131e05f95b6e53eb662",
+    "apps/rolling/wallet-session.mjs": "7c3c6af2eac0970a3e36b2291804c1694fe163cce27ac4da961c8f23a71c794c",
+    "apps/rolling/wallet-session.test.mjs": "2b53da46edeaff195f1ebf0b37ee594c4074a2b258eab81b742073c2282fc30c",
+    "scripts/rolling-wallet-assets.mjs": "3743baf9a230760763c9bbeb890f24a0bd9e6ab278a3efb7f6784f9510c954c1",
+    "scripts/rolling-wallet-assets.test.mjs": "d88c7265204d88a2a0e84feefa0c9b05a542ba2bb59fed920a5856fc5ea189d9",
+    "shared/rolling/application.mjs": "68c988f7c446949a96725542313ab61fe659c9b30a5cde7819d5cce52b41efa7",
+    "shared/rolling/application.test.mjs": "29a2baa08fd2171cd091253bb7a44b59dcfb263ed804eac2d558c856f0fe3250",
+    "shared/rolling/synchronized-application.mjs": "416e8df4d9421c8844577b5da0082133e1511467baa683c26d79d6d92458207e",
+    "shared/rolling/synchronized-application.test.mjs": "d6a03b3aef9843e853157895e620ddcc9ef403f13d874a86e4a05b5a95387ec8"
+  },
+  "reviewBasis": "Exact committed source; later dirty moderator changes excluded. Independent source and failure-path review, receipt/log SHA verification; no reviewer runtime.",
+  "findingsResolved": [
+    {
+      "issue": "Canonical reverted post could abandon its funded WAITING request and could not explicitly resume.",
+      "resolution": "Reverted post maps to recovering bok-post-reverted; generic prepare/cancel remain blocked. Explicit continuation revalidates exact saved operation, canonical outcome and existing journal finality, current WAITING request/budget/account/scope. Same request, target, nonce and immutable content retained; no reauthorization; distinct new fee confirmation."
+    },
+    {
+      "issue": "Delayed continuation retained stale policy consent.",
+      "resolution": "Original argumentsFor regenerates current policy/hints; deposit/nonce and immutable draft fields checked equal before saving. UI displays reviewed policy versions and fee consequence."
+    }
+  ],
+  "preservedBoundaries": [
+    "Pinned Bok class/instance/public storage and canonical anchor capability validation.",
+    "Encrypted workflow and optional immutable Bok scope; no human account publication.",
+    "Existing fee and transaction journal once-only send and unknown-result fencing.",
+    "Native development proof configuration unchanged."
+  ],
+  "evidence": [
+    {
+      "path": "rolling-design/execution/evidence/G09/bok-compose/component-result.json",
+      "sha256": "0b25599c3d86b83081d09f2a6c32a5b31b1d74cf5d47e8af914802709a4c37a6",
+      "scope": "Original staged panel76/session57/assets4/application116 union/sync5/actual SDK browser1; grouped timeout retained, not a new single whole-suite pass."
+    },
+    {
+      "path": "rolling-design/execution/evidence/G09/bok-compose/reverted-repair.json",
+      "sha256": "b642b3f7a93c497ed41a59bf09254e8d931246735df3eb4fbaaa1c0783d5bb1d",
+      "scope": "Actual Bok10 pass1657ms; panel4 pass3662ms; normal wallet build1181ms. All linked receipt/log hashes verified. Prior UI3/4 failure retained; positive owned cleanup."
+    }
+  ],
+  "openAcceptance": [
+    "Actual chain application authorize/post/reverted continuation and hosted response.",
+    "Current combined generated SDK/wallet closure after composition.",
+    "Real testnet proof/payment and aggregate funding acceptance."
+  ],
+  "integrationEligibility": "Exact twelve source paths eligible for coherent component composition; no full G09 or live hosted qualification."
+}

@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "review": "G07 current private views actual acceptance",
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "packet": {
+    "path": ".build/g09-current-moderation-journey/policy-union/private-views-batch/packet.json",
+    "sha256": "012eec76a2aba31507c3829284d309889cfa271b7d2ac3a8128dfe5eb1dab5cf",
+    "verifiedFileReferences": 69,
+    "verifiedProcedureBindings": 3
+  },
+  "verdict": "accept_scoped_development_component_evidence",
+  "fullRequirementClosure": false,
+  "method": "Read-only source/procedure/artifact comparison, cryptographic file hashing, safe structured assertions and inspection of three captured UI screenshots. No browser, SDK parsing, network, service or transaction execution.",
+  "sourceHashes": {
+    "apps/rolling/reader.mjs": "fa10dcc9e94594c5a574735ad508ed14fd71368045101751679b2dd86ee5f737",
+    "apps/rolling/wallet-panel.mjs": "d0bc295a8e732f238ca402e2c7e5542571a76140e4f22d6a7c16bd386ffef3cc",
+    "shared/rolling/private-views.mjs": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+    "shared/rolling/cold-preference-reader.mjs": "9f25b857a60401c74a89ffc8e7b13d3f89727df052297e88e1c97240b69cbed3",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "scripts/testing/rolling-notification-fixture.mjs": "04cbd4126abca72049570af649287ff37c62dff2663617f23ae7f5167f650f97"
+  },
+  "actualActions": [
+    {
+      "phase": "08-bookmark",
+      "expectedRevision": 0,
+      "blockNumber": 732,
+      "transactionHash": "0x177ee65c49a64ce8f0ae65c6850e584403ad881db2bdf66fabe460c29ad11185",
+      "fee": "8715002400000",
+      "maximumFee": "16181560764537",
+      "signedBytesSha256": "8f57fc48257ddab3367b46e52f86385ef5930216e8de5092115be2c465da4a10",
+      "effectSha256": "d605edeb97082c7e2c64861859ad61abee98089180b0283c0f9e74c7e73375b0",
+      "applicationPageSends": 1,
+      "canonicalBoardEvents": [],
+      "supervisorElapsedMs": 52855
+    },
+    {
+      "phase": "09-follow",
+      "expectedRevision": 1,
+      "blockNumber": 735,
+      "transactionHash": "0x08a45d67cb0469374aace2fcacd60ccfe58add0fe9b4cbc616f41f085604d6d0",
+      "fee": "8715002400000",
+      "maximumFee": "16181560764537",
+      "signedBytesSha256": "5590b1efb37e7c33617615f6deed7dcfca422f13cd6ccdeec9b97ac4c0c3a6a6",
+      "effectSha256": "f1171b76c1c1ec41aafc829fc20b1aaec916872b123ce9f4fe98e961ba07e703",
+      "applicationPageSends": 1,
+      "canonicalBoardEvents": [],
+      "supervisorElapsedMs": 50836
+    },
+    {
+      "phase": "10-subscribe",
+      "expectedRevision": 2,
+      "blockNumber": 738,
+      "transactionHash": "0x1814ee3b467c503ca22990f6e46f335de56e5191769d967683f3e972c447da2c",
+      "fee": "8715002400000",
+      "maximumFee": "16181560764537",
+      "signedBytesSha256": "b2ef2054875a91f92b8c1e9bd04d35a8265e366b211350c7d77f9a92492a3b8a",
+      "effectSha256": "6ee094c58c29611817276f99a8afc2a23e096461a502668f9bc4de395373a9dd",
+      "applicationPageSends": 1,
+      "canonicalBoardEvents": [],
+      "supervisorElapsedMs": 51816
+    },
+    {
+      "phase": "11-mark-read",
+      "expectedRevision": 3,
+      "blockNumber": 742,
+      "transactionHash": "0x1f3de84c2c6bc3ddfca46ce241fa3f7a9334e4a6f56f8eb1d8eef001f13c47eb",
+      "fee": "8715002400000",
+      "maximumFee": "16181560764537",
+      "signedBytesSha256": "9884ebebfe28a4bac66b2c4a0bfc608eee0e2a7785b9f1b217817d05651a210b",
+      "effectSha256": "214b211a32c438fa2d6c62ad7fabcbcb818dae24dbff63f3a1ff62af4cb40c63",
+      "applicationPageSends": 1,
+      "canonicalBoardEvents": [],
+      "supervisorElapsedMs": 54828
+    }
+  ],
+  "functionalAssessment": {
+    "bookmark": "Canonical revision 0 action adds target post to Bookmarks.",
+    "follow": "Canonical revision 1 follows the subboard; Following includes both target post and existing anonymous reply. Named-identity following is not exercised.",
+    "subscribe": "Canonical revision 2 subscribes to thread and displays existing anonymous reply 688 in Notifications.",
+    "readMarker": "Canonical revision 3 marks through block 688 and removes the existing reply from Notifications while Following remains populated.",
+    "persistence": "Same authoritative profile reopened in a new browser context, authenticated application recovery completed, seven encrypted journal envelopes retained, exact last confirmed workflow and signed-byte digest unchanged; zero application-page sends. This is not fresh keys-only restoration.",
+    "reopenElapsedMs": 24792,
+    "encryptedEnvelopeCount": 7,
+    "encryptedRecordsSha256": "1a3be5adaca25178860dd40b6b53594198dcab4d74afbb3ec818f4d61ce294d5"
+  },
+  "evidenceChecks": [
+    "All 69 packet references and three phase-specific procedure bindings match exact size/SHA256.",
+    "Four exclusive durable intent files correlate exact runtime/source/action IDs to confirmed workflows; nonces/actions retained; revisions observed 0,1,2,3.",
+    "One aztec_sendTx request per mutation; exact prior confirmed signed journal chained across phases; fees below explicit prepared maximum and overall cap.",
+    "All canonical records agree with receipt/effect hashes; source-inspected observer checks typed Tx hash, fee, receipt, full binary effect, unique inclusion in block and fresh block hash before event decoding.",
+    "All six successful phase supervisors show closed owned trees; final counters zero blocked/inspection errors and retained original backup hash unchanged.",
+    "Encrypted envelope structure matches source AES-GCM/AAD journal implementation; local private-view selection consumes authenticated completed preferences and ordinary public feed pages.",
+    "Captured screenshots independently show subscribed reply, reopened bookmarked post with Unsubscribe control, and empty reopened Notifications."
+  ],
+  "privacyAssessment": {
+    "supported": "Source selects private views locally from ordinary public feed pages; encrypted cached preferences use authenticated journal storage. Four actual decoded board event arrays are empty. No public plaintext preference relationship event observed in this scoped decoder.",
+    "traceLimitation": "Final two phases summarize only allowlisted query-key names; unknown keys are silently filtered out, paths outside fixed list become other, and POST body/headers/remote ingress are not fully captured. Therefore these summaries cannot establish absence of public/backend relationship disclosure.",
+    "trustedBoundary": "UI explicitly discloses configured trusted prover/query service visibility. Full node/archive containment, timing/content linkage and specialist privacy gates remain unchanged.",
+    "wireReview": "Exact wire/effect file hashes verified and actual source observer binding inspected. Reviewer did not independently reparse signed wire or decrypt journals, nor perform full protocol/public-effect leakage analysis."
+  },
+  "preservedFailure": {
+    "phase": "07-private-before",
+    "passed": false,
+    "code": "HARNESS_SAMPLING_GAP",
+    "ownedTreeAbsent": true,
+    "dispatchAndWireAbsent": true,
+    "interpretation": "Failed read-only attempt retained; separate awake run succeeded. No claim independently diagnosing host sleep from this packet alone."
+  },
+  "limitations": [
+    "Native/PXE proofs disabled; receipt status proven is a development-chain status, not real-proof qualification.",
+    "No fresh full-history keys-only <=120s recovery or WAN performance acceptance; private procedure used 180s action / 210s supervisor budgets.",
+    "Does not exercise unbookmark, unfollow, unsubscribe, followed-name behavior, new later reply arrival after marker, reorg, cross-account privacy or multi-device restoration.",
+    "Page-route counters exclude direct node canonical observer reads and do not establish extension-wide traffic or full proof-submission absence.",
+    "The seven encrypted records are retained private evidence, not a newly verified portable backup.",
+    "No model, funding, testnet, production release or complete RC25/RC26 closure claim."
+  ],
+  "blockingFindings": [],
+  "followUp": "Retain the scoped functional pass and privacy evidence limitation; no repeat of these paid actions is needed."
+}

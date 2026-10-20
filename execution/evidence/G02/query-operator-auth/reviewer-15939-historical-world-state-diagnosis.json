@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "task": "Read-only diagnosis of retained constructor reconciliation15939",
+  "verdict": "source-backed-leading-hypothesis-awaiting-exact-read-probe",
+  "source": [
+    {
+      "path": "plugins/operations.mjs",
+      "sha256": "8386d4bad49063da96ce124868268d2b0fc6eb70ff3c5f59d7c0f4d9ce203e9c"
+    },
+    {
+      "path": "plugins/operator.mjs",
+      "sha256": "143d7ae05a93eb1649ff2497713271c4d4c09ec769ef3f63809deaac74259044"
+    },
+    {
+      "path": "plugins/devnet/bootstrap.mjs",
+      "sha256": "5b7201fdb155e2011b45661c769dece773a06dfcd8ba3296f87b04563547fff9"
+    },
+    {
+      "path": "plugins/devnet/network.mjs",
+      "sha256": "a44c96362bd98e978c67a5c0724f5d3c91993f1b6c1567e71351ac3322be61bb"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/aztec-node/server.js",
+      "sha256": "b85237ce09a418159b09d5ccfce9473d58c1ac443a82c1ef818ec7a6c70046c4"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/modules/node_world_state_queries.js",
+      "sha256": "142a0605984233dcc95f738135b41f1104b0b06dda3ca6eb46238f49e174524f"
+    },
+    {
+      "path": "node_modules/@aztec-labs/world-state/dest/synchronizer/config.js",
+      "sha256": "5275278e0b0967a9d80de8fc120f387de19e3ab4a668413dd066696aeb11c816"
+    },
+    {
+      "path": "node_modules/@aztec-labs/world-state/dest/synchronizer/server_world_state_synchronizer.js",
+      "sha256": "3345c6fea7cd9145a6a0343ceb42710e2164635cd30b435402ec396ae4105133"
+    },
+    {
+      "path": "node_modules/@aztec-labs/world-state/dest/synchronizer/factory.js",
+      "sha256": "3fcf47a2b1782d2d5c13295f792b57ebedf73225694e1818d6f29e112dcb3cac"
+    }
+  ],
+  "conclusion": "Historical public-storage snapshots may be pruned even while the original canonical transaction, block, class and instance remain available. A receipt at block7 below current oldest world-state cannot satisfy original-anchor immutable reads; reconciliation correctly returns unresolved. This is not by itself proof of changed contract or lost archival receipt.",
+  "distinction": {
+    "reconciliation": "signed record -> detached receipt -> original block/effect -> exact expected deployment/instance -> five public immutable storage reads at original receipt anchor -> canonical block recheck. Any failure becomes unresolved; repeat polling does not distinguish stages.",
+    "contract": "Installed getContract resolves archived reference block timestamp then contractDataSource.getContract, independent of historical public-data-tree snapshot.",
+    "storage": "getPublicStorageAt -> getWorldState -> syncImmediate(number,hash) -> getVerifiedSnapshot. Installed code treats history below oldestHistoricalBlock as terminal pruned-state failure.",
+    "default": "worldStateCheckpointHistory defaults64; values<1 mean retain all. Existing prior live log shows oldestHistoricBlock306 at block371, corroborating active pruning.",
+    "noHistoricalAttribution": "Exact15939 failing read is not retained by current reconcile catch; confirm with one bounded read-only staged probe."
+  },
+  "minimalProbe": [
+    "Read getWorldStateSyncStatus fixed public fields.",
+    "Compare original receipt/block/effect and instance to saved constructor, without raw journal output.",
+    "Read each original-anchor immutable slot and record fixed stage/availability, preserve private exception only locally.",
+    "For diagnosis only, compare those same immutable slots at a freshly canonical current anchor. Do not use current values as automatic substitute for original-anchor proof."
+  ],
+  "recoveryOption": "If confirmed, native worldStateCheckpointHistory:0 prevents future pruning but cannot restore past snapshots. Existing worldStateDataDirectory override permits a separate, preserved reconstruction from unchanged canonical archived blocks; actual bounded replay and exact original-anchor revalidation needed before accepting constructor. Do not reset chain, rewrite journals, replay constructor, or recast prior failed startup as passed.",
+  "reviewActions": "No runtime, chain/service operation, private journal/dump contents or source changes."
+}

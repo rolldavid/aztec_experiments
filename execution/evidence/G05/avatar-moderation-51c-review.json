@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "51c60fb9d15213c73c0289956754a2ff5050ca75",
+  "base": "f92e5a0aabc3cc692f47f43cf9ca0921259cd3d3",
+  "verdict": "approved_source_for_normal_build_and_runtime_qualification",
+  "scope": "Mandatory Draft3p4 avatar moderation protocol and public projection; not full moderation acceptance",
+  "findings": [],
+  "files": {
+    "billboard/rolling_contract/src/main.nr": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+    "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+    "billboard/rolling_contract/src/profiles_tests.nr": "1c232d3109754fc986796a8f7be01b0a32e05bb422cd092d2f8768595c2caee4",
+    "shared/rolling/public-events.mjs": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+    "shared/rolling/public-events.test.mjs": "b6b9c4fc0cd8295e153078922e81f42f0271471a8303be479f213773518b1414",
+    "shared/rolling/public-index.test.mjs": "f8c2845c30c420aeb5bde51f4527450f777f385482b195637644b574f8975723",
+    "shared/rolling/public-projection.mjs": "977e8ce9ecef21d0b5ce1e4b63492531f6425725c7459485a34470f0797086e7",
+    "shared/rolling/public-projection.test.mjs": "2c536039a654f25756a41dade8653ba389a44f7d091ed3331856590c2ea1551b"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24.21.0 --test shared/rolling/public-projection.test.mjs",
+      "result": "Independently23passed,0failed,0skipped,663.0365ms"
+    },
+    {
+      "command": "Exact eight-path diff review againstf92e5a0",
+      "result": "No out-of-scope changes; no build/TXE/HTTP ABI runtime tests performed"
+    }
+  ],
+  "observations": [
+    "Appended separate moderation storage root leaves pre-existing field order and set_bio/set_avatar/ProfileRecord interfaces unchanged; actual compiled slot assertions still needed",
+    "remove_avatar exact existing moderator auth; registered nonempty currentavatar, version and current main-policy guards, canonical nonempty reason and duplicate rejection; no owner address query or avatar financial penalty introduced",
+    "Four-field removal record binds selected version,digest,policy and reason digest; authenticated event carries public reason bytes",
+    "New owner upload advances existing version and makes earlier removal inapplicable; stale moderator cannot remove newer version; bio/unrelated identities unchanged",
+    "AvatarRemoved decoder checks exact schema/ranges/reason digest with existing canonical effect/class/emitter provenance, projection additionally requires current image digest/version/current policy",
+    "Public identity/profile accessors redact data to null while retaining tombstone reason/version; feed/thread/post resolve redacted names-map identity, no duplicated image field; immutable event bytes retained for canonical archival/rebuild",
+    "Projection stage/undo remains touched-delta atomic; removal/replacement and reverse reorg checks passed",
+    "Added Noir attack cases and actual-ABI HTTP tests inspected but pending normally generated artifact"
+  ],
+  "pending": [
+    "Normal compiler and VK processing, exact artifact/inventory/prover catalog updates, dependency diagnostic disposition",
+    "All prior and new Noir tests including moderator auth/version/policy replay scenarios",
+    "Actual processed AvatarRemoved ABI decoding and HTTP feed/thread/profile/post/cold-cache redaction tests",
+    "Mined owner upload/removal/replacement with actual effects,fees/private field inspection and retained immutable bytes",
+    "Real moderator image-processing/decision/submission/recovery path and rendered removed-avatar state; protocol capability alone does not meet end-to-end avatar moderation",
+    "Actual storage-slot continuity assertion and public write/log limits after compile"
+  ],
+  "limits": [
+    "Source approval authorizes continued development qualification only",
+    "No specialist privacy assurance or whole G05/product/release closure",
+    "Existing new profile application/action/uploader work remains separately reviewed and must compose against final artifacts"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "5d7e2d247d2886edc6617878ec7a9ef0be23c145",
+  "base": "e1a44f157efe2759d9bec18bba791782c42cd4bb",
+  "verdict": "approved_source_only",
+  "scope": "Explicit serialized fetch request observer support, not full privacy acceptance",
+  "fileSha256": {
+    "scripts/testing/rolling-wire-trace.mjs": "50a59cbd61896bbe11530eabddf6e4668c783884cb5cbefd8ebe37d3b6dbee1a",
+    "scripts/testing/rolling-wire-trace.test.mjs": "c19c0c8192083721a7f22ac7b88fd20826b1ccac0d56342355d4cb36dcbc6d3e"
+  },
+  "tests": {
+    "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs",
+    "passed": 48,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 321.465583,
+    "log": "/tmp/reviewer-wire-5d7-tests.log"
+  },
+  "findings": [],
+  "closedFindings": [
+    {
+      "prior": "wire-trace-e1a44f-review.json P2 serialized components",
+      "disposition": "RPC IDs and object keys observed; explicit bounded object/tuple/native Headers key/value components observed and non-harmless headers mark incomplete. Unsafe numeric leaves unsupported; L1 sends opaque. New known-role and unsafe/opaque mutation tests pass."
+    },
+    {
+      "prior": "wire-trace-e1a44f-review.json P2 Promise identity",
+      "disposition": "Promise detection and observer attachment guarded. Throwing own constructor getter retains exact original return; observerErrors/pending mark incomplete. Original synchronous/rejected errors and response streams still preserved."
+    }
+  ],
+  "limits": [
+    "Scope now explicitly excludes runtime-added headers; receiver reconciliation and deployed transport inventory remain necessary.",
+    "Proof witness payload intentionally opaque within trusted prover allowance; no secret/witness/body data persisted.",
+    "HMAC equality aggregates include constants/RPC IDs and action phase groups; no ownership or anonymity inference.",
+    "No actual wallet/proof/privacy campaign performed by reviewer; source combination must be checked before runtime."
+  ]
+}

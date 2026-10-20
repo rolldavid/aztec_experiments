@@ -1,0 +1,27 @@
+✔ plain replies need no repository checkout or API request (3.360959ms)
+✔ app workspace step-limit summary keeps publication outcome false (0.467417ms)
+✔ app workspace step-limit summary keeps publication outcome true (0.136ms)
+✔ successful answer waits for host acceptance before closing invocation workspace (2.255416ms)
+✔ published app links are host-produced, byte bounded, and omit private validation metadata (0.294084ms)
+✔ connected private source never reaches a public model reply, changed=true (0.1645ms)
+✔ connected private source never reaches a public model reply, changed=false (0.05075ms)
+✔ connected private source refuses a static-publication result or arbitrary link (0.2635ms)
+✔ bounded step-limit exit accepts through the host without another paid call (0.195875ms)
+✔ bounded output-limit exit accepts through the host without another paid call (0.093875ms)
+✔ bounded balance exit accepts through the host without another paid call (0.1145ms)
+✔ bounded step-limit exit cannot publish model or tool summaries from private connected source (0.157917ms)
+✔ bounded output-limit exit cannot publish model or tool summaries from private connected source (0.095417ms)
+✔ bounded balance exit cannot publish model or tool summaries from private connected source (0.081ms)
+✔ balance failure during acceptance is never a second acceptance attempt (0.14125ms)
+✔ verified publication replaces fabricated model locations and completion claims (0.406ms)
+✔ verified publication retains link and UTF-8 byte guards 19/32 (0.112875ms)
+✔ verified publication retains link and UTF-8 byte guards 25/28 (0.07ms)
+✔ verified publication retains link and UTF-8 byte guards 301/301 (0.085667ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 149.855291

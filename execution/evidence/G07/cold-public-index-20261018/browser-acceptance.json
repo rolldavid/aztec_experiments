@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-18T11:50:06.030206+00:00",
+  "source": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "procedure": "Restart only existing independentreader4319 against originalnative8080chain93 and previouslyemptySQLitecache; preservealreadyrestoredprivatebrowserstate. ObservepublicstatusreadythenTryagain, Bookmarks andNotifications.",
+  "outcome": {
+    "publicState": "ready",
+    "complete": true,
+    "checkpoint": 93,
+    "checkpointHash": "0x189d255a0ad6cdd334645092bdf235db9c22eeac12192f0595278816283b551f",
+    "followingPosts": 9,
+    "bookmarkPost": "9008266914914523338611243683523197246666355866198777485404400346165069884831",
+    "bookmarkAuthor": "Willow Green",
+    "unreadNotifications": 0,
+    "authenticBokVisible": true,
+    "screenshots": [
+      "following.png",
+      "bookmarks.png"
+    ]
+  },
+  "limits": [
+    "Developmentnative/PXEproofsdisabled",
+    "No timing/large-dataset or independentnodeprivacy claim",
+    "Separate4319reader has no USDCfundingrelay; original4317 retains fundedapplicationconfiguration. No funding attempted."
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+  "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+  "task_id": "G12-final-bok-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+      "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "task_id": "G12-final-bok-recovery",
+      "id": "restored-state-integrity",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Python bounded read-only SHA256/size/mode comparison of real source and /private/tmp/final-bok-restore-5v2ujh2d/state; verify five journal hashes from worker record; recheck after Git inspection.; Sanitized /usr/bin/git for-each-ref, fsck --connectivity-only --no-dangling, rev-parse invocation refs, and show accepted revision files; independent publication catalog/archive/manifest SHA256 verification.",
+      "environment": "Stopped retained real Bok state copied privately; no live changes or network calls",
+      "observed": "111 files, 14481976 bytes, all hashes equal before/after; 59 directories; restored modes 0700 directories/0600 files; all five journals match. Recorded stale PID remains absent. No private contents emitted. One accepted repository and four source files match exact accepted Git revision, invocation refs, source archive and artifacts; one additional repository correctly has no accepted revision/ref. Initial rev-parse probe encountered that empty repository; corrected check validates absence against its journal.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/review.json",
+          "sha256": "2ef7c3fcdd1ce8cd2d02fcd57c33ea66b1fb8be1a1d38100b6b54b3d9922f18f"
+        },
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/restore.json",
+          "sha256": "f7a9e7124acd4bf74ada7aca37b1584f4ea50508838e71ee023523131bef4e98"
+        }
+      ]
+    },
+    {
+      "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+      "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "task_id": "G12-final-bok-recovery",
+      "id": "allowance-handover",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Read changed handover instructions, current artifact-api ledger/marker/reservation and thread-repository retained recovery code before worker conclusions; compare executable source to 274aef85 worker evidence revision.; Read retained synthetic allowance hashes and counters; compare current source fail-closed/exhaustion behavior and prior independent capability review.",
+      "environment": "Stopped retained real Bok state copied privately; no live changes or network calls",
+      "observed": "Synthetic original ledger and both retained markers match recorded hashes; one entry used=limit=1. Negative restored copy has marker with missing ledger. Real Bok state predates API and has no allowance ledger. No fresh invocation or synthetic state writes performed.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/review.json",
+          "sha256": "2ef7c3fcdd1ce8cd2d02fcd57c33ea66b1fb8be1a1d38100b6b54b3d9922f18f"
+        },
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/restore.json",
+          "sha256": "f7a9e7124acd4bf74ada7aca37b1584f4ea50508838e71ee023523131bef4e98"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+    "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+    "task_id": "G12-final-bok-recovery",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G12/final-bok-recovery-20261018/review.json",
+        "sha256": "2ef7c3fcdd1ce8cd2d02fcd57c33ea66b1fb8be1a1d38100b6b54b3d9922f18f"
+      },
+      {
+        "path": "execution/evidence/G12/final-bok-recovery-20261018/restore.json",
+        "sha256": "f7a9e7124acd4bf74ada7aca37b1584f4ea50508838e71ee023523131bef4e98"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+      "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "task_id": "G12-final-bok-recovery",
+      "id": "RC38-completed-Bok-state-restoration",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/review.json",
+          "sha256": "2ef7c3fcdd1ce8cd2d02fcd57c33ea66b1fb8be1a1d38100b6b54b3d9922f18f"
+        },
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/restore.json",
+          "sha256": "f7a9e7124acd4bf74ada7aca37b1584f4ea50508838e71ee023523131bef4e98"
+        }
+      ]
+    },
+    {
+      "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+      "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "task_id": "G12-final-bok-recovery",
+      "id": "RC35-API-allowance-restoration-handover",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/review.json",
+          "sha256": "2ef7c3fcdd1ce8cd2d02fcd57c33ea66b1fb8be1a1d38100b6b54b3d9922f18f"
+        },
+        {
+          "path": "execution/evidence/G12/final-bok-recovery-20261018/restore.json",
+          "sha256": "f7a9e7124acd4bf74ada7aca37b1584f4ea50508838e71ee023523131bef4e98"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Completed real requests only. No new live restart, provider/GitHub/chain call, build, proof or full acceptance run.",
+    "New API restoration evidence is explicitly synthetic; current missing-ledger/exhaustion mechanisms do not attest latest-state freshness or detect rollback to an older valid ledger.",
+    "Prior outage evidence retains its original source and scope; unknown outcomes remain subject to original-identity reconciliation and never automatic replay. Normal integration and remaining final/release gates remain."
+  ]
+}

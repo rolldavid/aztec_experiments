@@ -1,0 +1,30 @@
+{
+  "base": "cda60ea800c2c97ff5c8f4e09c66b5a75a9f8aaf",
+  "candidate": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+  "task_id": "G12-final-bok-recovery",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "docs/rolling-deployment.md",
+    "plugins/DEPLOYMENT.md"
+  ],
+  "required_checks": [
+    "restored-state-integrity",
+    "allowance-handover"
+  ],
+  "requirements": [
+    "RC38-completed-Bok-state-restoration",
+    "RC35-API-allowance-restoration-handover"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G12-final-bok-recovery",
+      "paths": [
+        "docs/rolling-deployment.md",
+        "plugins/DEPLOYMENT.md"
+      ]
+    }
+  ]
+}

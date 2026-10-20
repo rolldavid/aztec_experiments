@@ -1,0 +1,87 @@
+{
+  "base": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "candidate": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+  "task_id": "G04-exact-cancel-dispatch-recovery",
+  "holds": [],
+  "findings": [
+    {
+      "id": "G04-EXACT-1",
+      "blocking": true,
+      "status": "resolved"
+    }
+  ],
+  "checks": [
+    {
+      "base": "12f2f285c11ca4059774197e38306914e2b7e038",
+      "candidate": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+      "id": "combined-operations-lifecycle",
+      "status": "pass",
+      "command": "Node24 --test plugins/test/operations.test.mjs plugins/test/operator-lifecycle.test.mjs",
+      "environment": "macOS arm64 Node24.21.0 pinnedrc3; synthetictransactions/chaindoubles, realexclusivefsyncstore",
+      "observed": "101combinedPASS0skip; independent8PASS+combinedsourceequivalence. Nolivefinancialacceptanceclaimed.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G04/exact-cancel-integration/worker-packet.json",
+          "sha256": "322fb25562b102f6a5b4ea0d7f3fc6a45c4f367f566fa7c8788fc60038c393b5"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/exact-cancel-integration/combined-current.log",
+          "sha256": "de96c59d9da66d1fe9566eb57a62e9e583e6f9fd58e1b5954c8364fdf9c769f7"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/reviewer-03da1df-exact-cancel.json",
+          "sha256": "2b3d36041afdd6f42af96e9adf472a23133297b4df1e91c62736041a018ab088"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/reviewer-478fd31-combined.json",
+          "sha256": "6e76f7f241542ebacffef29572fe7a1697ad92daeae475f484eaf6956a5687f3"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "12f2f285c11ca4059774197e38306914e2b7e038",
+      "candidate": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+      "id": "G04-retained-cancellation-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G04/exact-cancel-integration/worker-packet.json",
+          "sha256": "322fb25562b102f6a5b4ea0d7f3fc6a45c4f367f566fa7c8788fc60038c393b5"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/exact-cancel-integration/combined-current.log",
+          "sha256": "de96c59d9da66d1fe9566eb57a62e9e583e6f9fd58e1b5954c8364fdf9c769f7"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/reviewer-03da1df-exact-cancel.json",
+          "sha256": "2b3d36041afdd6f42af96e9adf472a23133297b4df1e91c62736041a018ab088"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G04/reviewer-478fd31-combined.json",
+          "sha256": "6e76f7f241542ebacffef29572fe7a1697ad92daeae475f484eaf6956a5687f3"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "12f2f285c11ca4059774197e38306914e2b7e038",
+    "candidate": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "design-resume-20261014",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G04/reviewer-03da1df-exact-cancel.json",
+        "sha256": "2b3d36041afdd6f42af96e9adf472a23133297b4df1e91c62736041a018ab088"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G04/reviewer-478fd31-combined.json",
+        "sha256": "6e76f7f241542ebacffef29572fe7a1697ad92daeae475f484eaf6956a5687f3"
+      }
+    ]
+  }
+}

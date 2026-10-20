@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "ce0fc59aa8243a877718cb72d4d70534eee7973f",
+  "verdict": "PASS scoped SDK/ACIR component experiment; no production integration or full cold-recovery acceptance",
+  "receiptSha256": "bc8958215700dd72f030677694de7e2608907e1b3489a24ea1a4239b73a36ea7",
+  "logSha256": "42b3f30cfb9742faae2cdc47a2a3b50543ed9cb1c09139cc1a0e897c4e571ef1",
+  "sourceReviewSha256": "1304d575770dc2a11659730fa2d4030b5ced800d515d026ea65ed81101f7098b",
+  "actual": {
+    "testRunnerCount": 69,
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "countIncludesNestedSuiteParents": true,
+    "elapsedMs": 37861,
+    "peakAggregateRssBytes": 996982784,
+    "exitCode": 0,
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "tempDirectoriesAfterTests": [],
+    "originalLinkRestored": true
+  },
+  "independentBinding": {
+    "sourceFixtureDependencyAndPackageRowsRehashed": 126,
+    "mismatches": [],
+    "fiveTrackedSourceBlobsMatchImmutableCe0": true,
+    "nodeHashMatches": true,
+    "runnerSha256": "7228d28a58704d80844cf1013cc29e2e5828d5d3508b74b9658fb014704877af",
+    "planSha256": "3cdcf68a4c06cf5374ef9b18d75f54eabaf77c3b58090d1e5e2f27701354bf1d",
+    "processedRollingArtifactSha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24"
+  },
+  "observedCriteria": [
+    "Original actual ACIR/encryption/NoteService/EventService and staging/coordinator execute on actual application openPXEStore with explicitly labelled Node fake-indexeddb.",
+    "Second actual private simulation retrieves retained encrypted handshake registry log through original automatic sync: no registry note before simulation, scoped first-transaction/block4 note and positive tag-result delta afterward. Its real simulated nullifiers consume the original preference head.",
+    "Multi-revision recovery observes old-head nullification at captured final block5 before new-head ingestion, returns ordered revisions1/2 and one active revision2 head; both genuine head envelopes active under inconsistent labelled nullifier reply reject and retain prior cursor/note/event/nullification state.",
+    "Empty history and dense genuine foreign ciphertext pages advance physical cursor without publishing partial transaction records; terminal head, missing expected head, owner keys and execution scope are checked.",
+    "Actual coordinator settlement/context/canonical veto and later store failure discard real decrypted rows; pristine-versus-patched settlement races are nonvacuous. Held contributor drains before next operation. Actual BlockSynchronizer removes committed note/event indexes in separate reorg case.",
+    "Fixture lifecycle repaired: delayed-copy owner and deliberately failing nested child cleanup assertions executed; no setup/copy teardown race observed."
+  ],
+  "limits": [
+    "Chain inclusion, receipts, nullifier lookup and canonical boundaries are labelled synthetic; no genuine chain proof, network service, browser or full cold wallet flow was executed.",
+    "Event-index ordering case explicitly uses page double with original EventService; dense case is small synthetic history, not capacity qualification.",
+    "Cursor rollback test invokes exact staged-store rollback contract in atomic transaction; distinct BlockSynchronizer case covers actual SDK pruning, not a real chain fork.",
+    "Construction still requires autoSync:false and approved initial tips-only seam; ordinary complete synchronization is not replaced or qualified.",
+    "Compiler260 diagnostics, real browser cursor, cold capacity, consumer composition and overall G07/release gates remain open. Legacy backend failures and run1/run2 failures remain historical failures."
+  ],
+  "execution": "Read-only receipt/source/hash review; no native or heavyweight execution by reviewer."
+}

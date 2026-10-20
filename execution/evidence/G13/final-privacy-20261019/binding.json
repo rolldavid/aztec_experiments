@@ -1,0 +1,102 @@
+{
+  "at": "2026-10-19T09:03:53.035999+00:00",
+  "worker": "/root/controls_resume2",
+  "source": "a63b024ad31d6c7775ae7facba43995a2f011788",
+  "scope": "Read-only synthesis; no new tests, network calls, proofs, captures or transactions; no ledger/source changes.",
+  "mapping": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/reviewer-evidence/final-d4/category-mapping.md",
+    "sha256": "403145544c89ab95e8fddf85841111ebaea332f15c1234d0ccd293d54ddd291b"
+  },
+  "sources": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/billboard/rolling_contract/src/main.nr",
+      "sha256": "7e3201dac1e7062ebb83c26ad05810cb4c1d86da84573a7975e6e6db2c505d14"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/billboard/rolling_contract/src/posting.nr",
+      "sha256": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/billboard/rolling_contract/src/admission.nr",
+      "sha256": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/billboard/rolling_contract/src/preference_recovery.nr",
+      "sha256": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/billboard/private_fee_contract/src/main.nr",
+      "sha256": "018cad875b1236e5d979eda27fa10bf0f457ee2183b975f214ab936b33871112"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/experiments/private-bok/escrow/src/main.nr",
+      "sha256": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/shared/rolling/private-views.mjs",
+      "sha256": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/shared/rolling/preference-reader.mjs",
+      "sha256": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/shared/rolling/application.mjs",
+      "sha256": "2e5be88587393abd75e99ae71cede8d72a6b5419c7cc206fdeee16b3ce8c0cfc"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/prover/private-query.mjs",
+      "sha256": "2e435cff5ead0d4f424bccd221e366554d8a69e3e8b1d7849e68eeb2691c3c13"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/apps/rolling/wallet-session.mjs",
+      "sha256": "8aaf551c17bf926c3fe604c033015ae5f380e188cf54b707a4894f43c8c8b24a"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/shared/deposit-custody.mjs",
+      "sha256": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/final-d4-minimum-proposal.json",
+      "sha256": "7fab23cdddd7a44499132e51f855ccb5a47b1893bb033b4490bf7f3d92b15516"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-d4-mandatory-observations.json",
+      "sha256": "4e964a205083b39e2962bd445e58e7479dc1634f36989de195500fe2d81e4607"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-host-query.json",
+      "sha256": "c8e094ff3490922660671c3095e7fcd1912601becedeb0ad29b47b892c06b744"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/ten-public-footprints.json",
+      "sha256": "095d266f3a959584c849aa9a7e1e0fd64a1a682fdcdfdf1f160a165f7b8dc7ee"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/four-exit-footprints.json",
+      "sha256": "f46156fe728a05ab22ba2c440fc12aa998fbcef1756a3443ebb233cacecb4760"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-four-original-exits.json",
+      "sha256": "dd7cc48c89679a9e3021fab87d91df7d141c2ad2939ee97a64033b0d3e33db9b"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/current-observer-20261018/reconciliation.json",
+      "sha256": "bc45da9f2712ec66f5e8fe81037ca3369e612c826680a4fb53081301a263f37c"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/current-observer-20261018/review.json",
+      "sha256": "662cfc18123fcbc0df190d0948bb33dd385c7719beba8f0ec3752857c670e373"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/two-account-reader-20261018/nonempty-public-reader.json",
+      "sha256": "4ace16a44442f29ac2aaf7686fc6f530bea3a64aede94872302364e588f7e145"
+    }
+  ],
+  "authority": {
+    "path": "/Users/zac/Rolling Chat Contractor Specification Draft 3.pdf",
+    "sha256": "af9c151b8605fdad7053b8eb25da1f9e96d8d36f33fc43f2cd0bf8b16e16b402"
+  }
+}

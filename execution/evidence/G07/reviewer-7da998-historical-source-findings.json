@@ -1,0 +1,47 @@
+{
+  "sourceRevision": "7da998ed73ede5e3ff108dc68a7d37f5d2cc109b",
+  "baseRevision": "20a2fc80de2c894f219afbf96f5e67a279fec5f8",
+  "requirements": [
+    "RC25",
+    "RC26"
+  ],
+  "status": "changes requested; final coherent review pending repair and generated closure",
+  "findings": [
+    {
+      "id": "HIST-1",
+      "severity": "P1",
+      "file": "prover/private-query.mjs",
+      "scenario": "Fresh installed PXE.create unconditionally queries getBlock(0) for dynamic genesis hash. Historical canonicalRecord rejects number below oldestHistoricBlockNumber. Actual retained node reports oldest=1, so genesis metadata read now fails HTTP503 despite archiver retaining genesis.",
+      "requiredRepair": "Separate immutable block/header metadata availability from historical world-state pruning, retaining exact canonical numeric/hash checks and bounds. Add real installed BlockResponse-schema genesis regression with oldest=1; stateful witness reads must retain pruning guard."
+    }
+  ],
+  "retractedPreliminaryFinding": {
+    "topic": "getBlock result.hash property versus method",
+    "reason": "The actual AztecNodeApiSchema return is BlockResponseSchema with BlockHash field, not L2Block. No source change required for this; worker and lead notified immediately."
+  },
+  "checks": [
+    {
+      "command": "node --test --test-name-pattern=historical|checkpoint readiness|mixed latest shared/trusted-private-node.test.mjs prover/private-query.test.mjs",
+      "environment": "Pinned Node24.21.0; TMPDIR=/private/tmp NODE_BACKEND=js LOG_LEVEL=silent HARDWARE_CONCURRENCY=1",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 604.73025,
+      "log": "execution/evidence/G07/reviewer-7da998-historical.log",
+      "sha256": "e3c74d0b1cf7647d7e6bb77fe7b61df9cdfd7427d3fa1061d7c41306bc29be04"
+    }
+  ],
+  "reviewedInvariants": [
+    "Official complete argument parsing before classification/forwarding",
+    "Closed historical selector/method policy; generic health and mixed mutable/send batch remain strict proposed",
+    "Selected checkpoint and own-world height/hash canonical fences before/after; unchanged identity/finality/freshness/proof configuration",
+    "Typed requested transaction receipt binding; canonical block/root witness association; pending/above-checkpoint requires proposed readiness",
+    "All started post-fence reads drain before releasing ownership",
+    "SDK cryptographic archive/transaction/CAS checks unchanged"
+  ],
+  "limits": [
+    "No actual recovery or120s qualification claimed",
+    "No source edits, services, browser, model calls or financial operations",
+    "Existing name-availability source component review carried separately; final composed closure pending"
+  ]
+}

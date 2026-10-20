@@ -1,0 +1,64 @@
+{
+  "revision": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "observedAt": "2026-10-18T08:34:45.706Z",
+  "chainId": 31337,
+  "realProofs": false,
+  "blocks": [
+    {
+      "blockNumber": 21,
+      "blockHash": "0x043857f88e60e40c18c6e3b75724344b228787a69fae35cb4b524016d5534380",
+      "transactions": [
+        {
+          "txHash": "0x0f22b27ec052e5d68559d2fdee825899eb426d4041814b21687bab3c85dcef6a",
+          "status": "finalized",
+          "executionResult": "success",
+          "fee": "8356666200000",
+          "eventTypes": [
+            "LikeChanged"
+          ]
+        }
+      ]
+    },
+    {
+      "blockNumber": 22,
+      "blockHash": "0x0aebf0c6eb2d06dc40719cc5449fc1bd35ca6863eae3e09c73be689cf43a9281",
+      "transactions": [
+        {
+          "txHash": "0x102021af6c57dae25307b6fe35142ee4baed7cb296fa0567ae6071cbaba682dc",
+          "status": "finalized",
+          "executionResult": "success",
+          "fee": "8715002400000",
+          "eventTypes": []
+        }
+      ]
+    },
+    {
+      "blockNumber": 23,
+      "blockHash": "0x030e0137a8e1acd1f737a5f2959fcb9b1a92fdb3475c473ed6e1a4a098f37cbe",
+      "transactions": [
+        {
+          "txHash": "0x082af357bc5b4b16debec31b08373446ed49e8a6a013c41ea3dcec4ec1dd0696",
+          "status": "proven",
+          "executionResult": "success",
+          "fee": "21336115200000",
+          "eventTypes": [
+            "PostPublished"
+          ]
+        }
+      ]
+    }
+  ],
+  "publicEffects": {
+    "rootLikeCount": "1",
+    "likeAuthenticated": true,
+    "replyId": "1230028029080900896066152948429024937614599215524130329454433594364304037098",
+    "replyAuthenticated": true,
+    "replyNameId": "0",
+    "replyParentAndRootMatched": true,
+    "exactReplyTextMatched": true
+  },
+  "limits": [
+    "Block22 successful canonical receipt corroborates lead-reported bookmark action; public decoder emits no bookmark semantics. Private bookmark/cold recovery requires GUI/private acceptance evidence.",
+    "Anonymous name0 verified; no unlinkability or human ownership grouping conclusion follows."
+  ]
+}

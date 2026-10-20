@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "basis": "split-prerequisites-72e-live-1.json",
+  "scope": "proposal only; no image operation performed",
+  "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "expectedArchitecture": "amd64",
+  "files": {
+    "archiver/dest/factory.js": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+    "archiver/dest/archiver.js": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+    "archiver/dest/l1/validate_trace.js": "6fca83f140c3da28950121661081f29360e690b26c18d53e3f63577fc84b0584",
+    "archiver/dest/l1/validate_historical_logs.js": "8125975052ab85070a193eecce0b72290b50a0aec8ae676624da585a7c825727",
+    "blob-client/dest/client/factory.js": "3ecb8952034a058ef69b35191933ca18c9dc351818997566b0ba8dfb60ed01c3",
+    "blob-client/dest/client/http.js": "311a662c12aa687d513dda693286fa95b0680d586afdbab32028e9fe164d2d6f"
+  },
+  "sourceRootInsideImage": "/usr/src/yarn-project/",
+  "procedure": [
+    "Await lead isolated Docker metadata/extraction slot; no operation during heavy job.",
+    "Read exact cached image metadata; require RepoDigest match and amd64. No pull/daemon restart.",
+    "Exclusive fsynced intent with unique owned name and six-file allowlist. docker create --pull=never --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint /bin/true IMAGE; NEVER start.",
+    "docker cp only six fixed public files to new ignored isolated directory; bound each operation30s and file size1MiB, verify no symlinks/regularfiles, compute SHA256 against exact installed pins.",
+    "Inspect owned container State.Status=created and Running=false; remove only own nonrunning container then inspect absence. Preserve extraction intent and public source bytes/evidence.",
+    "Require all6 exactmatches plus prior2 ethereum matches before attributing pinnedSDKprereq behavior to image source. Equality still not Linuxstartup readiness."
+  ],
+  "paidRecoveryPrerequisites": [
+    "Independent image-binding and split-provider startup-config source review",
+    "Complete fresh package/source/capability/payload review ifbootstrap changes",
+    "Lead reconciles actualledger/cumulativebudget and sets independent Fleet+hosttimers before any paidoperation",
+    "No unconditional replacement or launch permitted by passing Mac checks"
+  ],
+  "nodeStartupQualified": false
+}

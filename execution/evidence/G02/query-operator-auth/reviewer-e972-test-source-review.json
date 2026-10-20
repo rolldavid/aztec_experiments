@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "eligible-staged-existing-runner-preparation",
+  "source": "e97219255c0f745f957b1fb66ca161819e5148b5",
+  "base": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "sourcePacketSha256": "6b3e9fadf1d7c9317931a7e9b6763ce057ef2565b2c664daf3eaa79360b8095f",
+  "verifiedFiles": {
+    "scripts/test-w02-rpc.mjs": "b56ba96c37618530e048d61f9a35b62fecae70dce05706a927eb79187e864697",
+    "prover/private-query.integration.test.mjs": "bfea16a7fd6193390778c418f1e6905211990793c36444487359f8cabc548977"
+  },
+  "blockingFindings": [],
+  "reviewed": [
+    "Exact two test files changed; prior tests preserved. Production service/auth/method/privacy boundaries unchanged.",
+    "Actual extracted unchanged CLI wrapper and actual installed SDK JSON-RPC transport hit real loopback HTTP; seven parallel reads test <=3 batching and exact endpoint credentials; missing/wrong key and path isolation retained.",
+    "Actual production inspector/query-only service and schema used; every upstream method has fixed synthetic handler and rejects leaked key/cookie/authorization. Unknown SDK request causes assertion failure.",
+    "Real shared readOnly PXE and fresh IndexedDB store/cached route, protocol/preloaded registration retained; normal documented absent-genesis constant explicitly synthetic. No fake PXE/cache/provider.",
+    "Held upstream request verifies close waits; original SDK retries settle and are not represented as cancellation.",
+    "PXE stop/store close, service drain, synthetic database deletion and global restoration present; all inside bounded owner during execution."
+  ],
+  "stages": [
+    {
+      "file": "scripts/test-w02-rpc.mjs",
+      "expectedCount": 3,
+      "condition": "First exact runner review and parent grant; smallest actual SDK/HTTP regression."
+    },
+    {
+      "file": "prover/private-query.integration.test.mjs",
+      "expectedCount": 22,
+      "condition": "Separate grant only after stage-one actual pass and cleanup; substantive SDK/PXE initialization is real and must be bounded."
+    }
+  ],
+  "limitations": [
+    "All25 source-expanded labels are unrun. No actual runtime approval from source review.",
+    "ReadOnly PXE source-module transport only, not normal bundled CLI, full proof-enabled deployment, signed send, cloud routing or genuine chain/genesis qualification.",
+    "Neither SDK retries nor missing methods may be silently changed to obtain a pass."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "source": "58fb2d7",
+  "scope": "Read-only original encrypted backup private commitment checks; only booleans exported",
+  "passed": true,
+  "originalFundingJournalPresent": true,
+  "derivedCollateralMatches": true,
+  "loadedCollateralMatches": null,
+  "derivedFeeMatches": true,
+  "bokSecretMatches": true,
+  "bokCommitmentMatches": true
+}

@@ -1,0 +1,36 @@
+{
+  "candidate": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+  "base": "ccc292c739ac0f94330b666106f9a23e283124c1",
+  "task_id": "W03-generated-consumers",
+  "implementer": "lead-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json",
+    "apps/dist/censor.html",
+    "apps/dist/deploy.html",
+    "apps/dist/fee-juice.html",
+    "apps/dist/user.html"
+  ],
+  "required_checks": [
+    "generated-build"
+  ],
+  "requirements": [
+    "RC-build-reproducibility"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-generated-consumers",
+      "paths": [
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/sdk-manifest.json",
+        "apps/dist/censor.html",
+        "apps/dist/deploy.html",
+        "apps/dist/fee-juice.html",
+        "apps/dist/user.html"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "base": "dd57294c743729817bce60841ecf83015503471f",
+  "candidate": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+  "task_id": "G07-mixed-page-budget",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "dd57294c743729817bce60841ecf83015503471f",
+      "candidate": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "id": "focused-reader-client",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 --test existing cold-preference-reader and compact-client suites",
+      "observed": "84 worker +84 independent +84 combined passed; simulated latency regression originally failed; actual full120s remains open",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/packet.json",
+          "sha256": "997b7ef5a2ae216a89c04f1ee545f413089f6c3905e4d4a9b944e56d9ca59290"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/before.log",
+          "sha256": "1266ff67f60d874d8eb85e4ed588abe659fc7fcf5bb18568a8d03a8414656f2d"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/after.log",
+          "sha256": "9f327314f40c21d2186601e6295122fad1af06278fa46b22af8de55658bb629a"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/review.json",
+          "sha256": "829d8fd5cbacfb47bb6be694acc2eb44fade2de752440179c04167dcb5a42a53"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/combined.log",
+          "sha256": "0acac3cfd81cfd24e6366729408c8d61b293233d03f98a2c6715f9740c754a6b"
+        }
+      ],
+      "environment": "Mac Node24.21 pinned6.0.0rc3 dependencies; isolated candidate8a8274f; devconfigurationproofsfalse"
+    },
+    {
+      "base": "dd57294c743729817bce60841ecf83015503471f",
+      "candidate": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "id": "generated-wallet-closure",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Node24 scripts/rolling-wallet-assets.mjs and loadRollingWalletAssets",
+      "observed": "97inputs25files9scripts validated; noSDKsourcechanges; nativeproofconfigfalse",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/generated-closure.json",
+          "sha256": "a8bfc46a1205f4f3bc4480121883a5e709a97b15ce681f13aee60d33200725b8"
+        }
+      ],
+      "environment": "Mac Node24.21 pinned6.0.0rc3 dependencies; isolated candidate8a8274f; devconfigurationproofsfalse"
+    }
+  ],
+  "review": {
+    "base": "dd57294c743729817bce60841ecf83015503471f",
+    "candidate": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-resume-20261014",
+    "implementer": "controls-resume-20261014",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/mixed-page-integration/review.json",
+        "sha256": "829d8fd5cbacfb47bb6be694acc2eb44fade2de752440179c04167dcb5a42a53"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "dd57294c743729817bce60841ecf83015503471f",
+      "candidate": "8a8274f8984c586c3ef4c58ddad20db2fb2a49c9",
+      "id": "G07-mixed-page-progress-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/packet.json",
+          "sha256": "997b7ef5a2ae216a89c04f1ee545f413089f6c3905e4d4a9b944e56d9ca59290"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/before.log",
+          "sha256": "1266ff67f60d874d8eb85e4ed588abe659fc7fcf5bb18568a8d03a8414656f2d"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/after.log",
+          "sha256": "9f327314f40c21d2186601e6295122fad1af06278fa46b22af8de55658bb629a"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/review.json",
+          "sha256": "829d8fd5cbacfb47bb6be694acc2eb44fade2de752440179c04167dcb5a42a53"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/generated-closure.json",
+          "sha256": "a8bfc46a1205f4f3bc4480121883a5e709a97b15ce681f13aee60d33200725b8"
+        },
+        {
+          "path": "execution/evidence/G07/mixed-page-integration/combined.log",
+          "sha256": "0acac3cfd81cfd24e6366729408c8d61b293233d03f98a2c6715f9740c754a6b"
+        }
+      ]
+    }
+  ]
+}

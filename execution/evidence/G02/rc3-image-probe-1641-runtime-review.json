@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1641b313791b557cb140acc0bfc77cf24e58f7f7",
+  "verdict": "partial static image equivalence accepted; native version qualification FAILED",
+  "handoffSha256": "5db557faddf492d0de5131d56c569dd640567d1a0e661d4b88e14021abd98a93",
+  "receipts": {
+    "execution-intent.json": "e5cc383995967f703baf8ea1a4d547bd55bd699e6950bff4d00a217218451ae0",
+    "create-intent.json": "f03e73c71e08eab415ac219a8ada28ef2989f927e66fb83b1cdd8e404f92af79",
+    "created.json": "2f67d9b5330879068c5b3e06b3b5972c135f38fbb0c90213fad47d6fafdc7299",
+    "modules.json": "af2f2f4200b39c1aa0f6c3de9853c021f041d18eb37c2525147a0e5bcbdca949",
+    "native-start-intent.json": "e5fd5b6ded255e73780111ffe46d12e14d960ee61f715fda5fd51c9990b0590c",
+    "probe-result.json": "e69e8c5e0860ee9b3ffaf0618bada780bdc671754cee342c119fe9df80c982e5",
+    "result.json": "98eb6dbdabc2ccc03088ea4f4392fab15cf5700b98c8d16eea3becbbf7c2729f"
+  },
+  "image": {
+    "Id": "sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651",
+    "RepoDigests": [
+      "azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651"
+    ],
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Descriptor": {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651",
+      "size": 2776
+    }
+  },
+  "independentlyRehashedModules": [
+    {
+      "imagePath": "/usr/src/yarn-project/aztec/dest/cli/cmds/start_node.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js",
+      "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+      "bytes": 7742
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/aztec-node/dest/factory.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec-node/dest/factory.js",
+      "sha256": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5",
+      "bytes": 29695
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/aztec/dest/cli/aztec_start_action.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec/dest/cli/aztec_start_action.js",
+      "sha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+      "bytes": 7640
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/archiver/dest/factory.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/archiver/dest/factory.js",
+      "sha256": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+      "bytes": 10639
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/archiver/dest/archiver.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/archiver/dest/archiver.js",
+      "sha256": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+      "bytes": 48692
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/archiver/dest/modules/l1_synchronizer.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/archiver/dest/modules/l1_synchronizer.js",
+      "sha256": "595956f62d7476709058cf327dc0b43d4e1b31eb2e18803cd8eaf9cf0a7da924",
+      "bytes": 83824
+    },
+    {
+      "imagePath": "/usr/src/yarn-project/aztec/dest/cli/cmds/standby.js",
+      "localPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/aztec/dest/cli/cmds/standby.js",
+      "sha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+      "bytes": 7410
+    }
+  ],
+  "actual": {
+    "elapsedMs": 28130,
+    "peakHostRSSKiB": 146240,
+    "ownedTreeAbsent": true,
+    "ownedContainerAbsent": true,
+    "publicBinaryRemoved": true,
+    "exitCode": 1
+  },
+  "nativeDisposition": "One intended BB --version invocation timed out at15seconds. Runtime raised before retained State/version projection; no native exit code/OOM/started-process status is available. Do not infer SIGILL, binary incompatibility or emulation slowness as established cause. No native Linux pin promotion.",
+  "sourceBinding": "Static modules were copied and hashed before native launch; their exact equality to pinned installed source is independently supportable despite later version timeout.",
+  "nextRequirements": [
+    "No unchanged retry.",
+    "Any new diagnostic must retain fixed numeric native State before cleanup on failure and remain separately granted/bounded.",
+    "Actual native AMD64 proving/normal Linux node qualification remains separate; no deployment approval."
+  ],
+  "limitations": [
+    "Host process RSS excludes Docker guest process accounting; container512MiB is a configured limit, not measured peak.",
+    "Seven module equality is limited to those modules and immutable image; no full image dependency equivalence.",
+    "No native version or proof pass; overall failed receipt retained."
+  ],
+  "execution": "Read-only receipt and seven extracted/local module hashes; no Docker execution."
+}

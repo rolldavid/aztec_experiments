@@ -1,0 +1,52 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "7e452036ecf8afb4d9ac8c3b185a92dc18d3d2ed",
+  "base": "04bf2fadb7be201ddf24fb25b9f29775310beba7",
+  "verdict": "eligible for one isolated genuine rolling-notification-browser acceptance under unchanged 540s/4GiB and existing admission/accounting limits",
+  "sourceChanges": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json",
+    "scripts/testing/assets.mjs"
+  ],
+  "fingerprintRevision": "97655b7873a007a56e293ceb0273469c16ff7d4d",
+  "sourceDisposition": "Only mandatory installer and installed TS/dest hash inventory added; exact 04bf reviewed implementation/test files unchanged. Two generated tracked outputs equal the independently tested normal SDK bytes.",
+  "hashes": {
+    "apps/dist/aztec_bundle.js": "9ebdf62290a071c8e7b38ee73682e515977fda1abc0012d56fb443591016fb36",
+    "apps/dist/sdk-manifest.json": "a2f229f04ad0228f19ccd8e59cbd17e46f1b581dae7cfb867b144d56005cd07a",
+    "scripts/testing/assets.mjs": "44dabefb2b43fff7ce9de2c6fa6c167e4c54fc55fef88c4aa0b1ec4ecbbb5960"
+  },
+  "sdkClosure": [
+    2042,
+    8
+  ],
+  "walletClosure": [
+    81,
+    24
+  ],
+  "frontendClosure": [
+    97,
+    10
+  ],
+  "actualIndependentChecks": [
+    "fingerprints() 273 hashes and browserFingerprints({rolling:true}) 143 hashes match frozen lead packet",
+    "checkSdk() verifies all 2042 inputs and 8 outputs and patch pins",
+    "PrivateBok real readonly preflight verifies 14 inputs and both exact processed outputs",
+    "Frontend all input/output hashes independently rehashed; browser fingerprint routine verified every wallet input/output",
+    "Clean exact committed tree verified after checks"
+  ],
+  "closureRecord": "storage-7e452-independent-closure.json",
+  "closureRecordSha256": "44cbfcabd247dcd3cde55ada00a2d6a7df751a1c65130964fdc4b33939ec73d1",
+  "privateBok": {
+    "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+    "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+    "inputCount": 14
+  },
+  "priorTests": "Independent04bf 80 components plus real Chromium rollback/success/coordinator tests carry by exact source, installed dependency and SDK bundle equality. No rebuild performed by reviewer.",
+  "wrongCwdDisposition": "Lead recorded initial root frontend invocation and restoration. This approval uses only final isolated worktree hashes and clean tree; root ignored frontend manifest is not carried.",
+  "remaining": [
+    "Actual browser wallet subscription and marker writes plus fresh keys-only recovery, exact four jobs, both account fees and zero unintended sends must pass on this candidate.",
+    "Preserve all runtime failures and exact source/dependency/assets through cleanup.",
+    "No overall integration, fullG07, fullPXE failure rollback or production qualification implied."
+  ]
+}

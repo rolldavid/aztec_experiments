@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+  "verdict": "changes-requested-before-reorg-retry",
+  "sourceFiles": {
+    "shared/rolling/application.mjs": "7042c547adc1be50b63cae144bd512defca21c4e5bc0c6dfdc700728f37747a1",
+    "shared/l2-journal.mjs": "d509137a7047561ba9d9442b49a120558fd404d0a9e424cf2bd201796905be67",
+    "scripts/testing/rolling-application-fixture.mjs": "d8358829e4470ba782a2eca9f81bb9fc58ba47f1d90095ac3c3ab93fb411690d"
+  },
+  "finding": {
+    "priority": 2,
+    "id": "P2-replacement-final-context-order",
+    "file": "shared/rolling/application.mjs",
+    "line": 388,
+    "description": "Current replacement beforeSubmit checks synchronized original head/marker, then awaits strict predecessor validation, then checks only account/node guard. A head or marker change during predecessor reads is not revalidated before wallet broadcast.",
+    "reproduction": "Probe imports actual root a699 application and journal. Actual SDK Tx/AEAD labelled-chain replacement fixture changes same-revision digest or marker hash during predecessor isValidTx after the first synchronization. Both cases returned success and sendDelta1; mandatory expectation rejected=true/sendDelta0.",
+    "repair": "Run strict predecessor verification before fresh synchronized replacement context validation, retaining exact operation/hash binding and final account/context guards. Add both late predecessor mutations. Do not weaken strict predecessor policy or infer atomic chain state across RPC awaits."
+  },
+  "tests": {
+    "passed": 0,
+    "failed": 2,
+    "expectedReviewFailures": true,
+    "durationMs": 3994.767958,
+    "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 --test-name-pattern=reviewer current a699 .build/reviewer-a699-replacement-probe.mjs"
+  },
+  "evidence": [
+    {
+      "path": "execution/evidence/G07/replacement-a699-late-context-negative.log",
+      "sha256": "bcaf690337eedc8949fce76b23848d08ec182788b4c02527365ae82b1d2bcf93"
+    },
+    {
+      "path": "execution/evidence/G07/replacement-a699-late-context-probe.mjs",
+      "sha256": "571719155a650a3d2e3b3cacdf5a4d78e3c1dd5e26417ab816d138af775a3624"
+    }
+  ],
+  "disposition": [
+    "Supersedes no-blocker campaign eligibility only for this newly demonstrated ordering concern; previous UI/build/source checks remain evidence of their stated scopes.",
+    "This finding applies independently of new936 resumeSaved API, which is absent from a699. Existing actual fixture invokes prepareReplacement then submitPrepared at lines608/612.",
+    "Host clamshell/sampling-gap diagnosis remains separate; this probe does not attribute prior actual failure to the ordering defect.",
+    "Root source was not modified. No browser, network, provider, proof, heavy job or real broadcast occurred.",
+    "Genuine retry held pending exact repair and affected checks."
+  ]
+}

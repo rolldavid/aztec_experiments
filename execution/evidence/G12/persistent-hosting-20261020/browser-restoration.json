@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-20T07:41:40.638982+00:00",
+  "method": "Existing in-app browser via cua_repl; page reload and native visible-state waiter",
+  "url": "https://d30njln0kead8n.cloudfront.net/#/thread/15660648287099192392566570599913171983157817601529053133981747474837257128506",
+  "observed": [
+    "Home rendered and completed initial index catch-up at checkpoint9511.",
+    "Original conversation rendered three human messages and authenticated Bok reply.",
+    "Original accepted revision4055ef22dbf2e9971676d2c22706885d6884d3e4 app and source links displayed.",
+    "No new wallet action, payment, model call or proof job."
+  ],
+  "initialFailure": "Initial Home request completed before restored index caught up and displayed a retryable load failure. Native index continued from9314 to9511; subsequent read completed. No application edit or chain replay was needed."
+}

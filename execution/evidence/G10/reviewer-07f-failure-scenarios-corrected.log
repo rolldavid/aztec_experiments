@@ -1,0 +1,2 @@
+{"scenario":"saved replied recovery after plugin disable/removal","label":"controlled ports","reads":8,"runs":0,"defect":true}
+{"scenario":"admission timeout then service close","label":"controlled ports","pendingAtClose":true,"readsAfterClose":1,"pendingAfterRelease":false,"defect":true}

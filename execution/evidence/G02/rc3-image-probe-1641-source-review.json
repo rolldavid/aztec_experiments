@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1641b313791b557cb140acc0bfc77cf24e58f7f7",
+  "verdict": "changes requested before version-only execution",
+  "packetSha256": "9ee95e021fe5c8b7e88f519acdfe3a767c89fda7b99044a0162e5917c7bef9c4",
+  "fileHashes": {
+    "preparation.json": "06cf9312bae61f7e8cc2f3ebc11b3d85b687586e86ab4acc0a5c937394f9cdb2",
+    "probe.py": "5f59a4616e35e63a399436958d12521bb81ea071089d20d6ce4f03b8099303c8",
+    "run.mjs": "cc1567a12c0c9b20f03bed3551c706dbc4ee63267915305e4f5c5fef55b4c8fb"
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-image-probe-1641/probe.py",
+      "trigger": "Pre-existing public-bb makes exclusive xb creation throw.",
+      "effect": "Finally unconditionally unlinks the pre-existing file even though this invocation never acquired ownership.",
+      "repair": "Track successful exclusive creation, remove only invocation-owned binary; preserve collision file and add offline collision regression."
+    },
+    {
+      "priority": "P2",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rc3-image-probe-1641/probe.py",
+      "trigger": "Preflight detects pre-existing same-name container before create_attempted.",
+      "effect": "Finally records containerAbsent=true from not create_attempted despite a known existing object. Overall passed remains false, but cleanup fact is false.",
+      "repair": "Separate known absence/unknown from creation attempt; report true only for verified absence, never remove a foreign pre-existing container."
+    }
+  ],
+  "positiveChecks": [
+    "Exact preparation and helper hashes matched; native public binary and immutable pull receipt hashes match.",
+    "Fixed image/name, no implicit pull/network, readonly root, limited container resources, only one create intent with fsync and no retry.",
+    "Seven bounded docker cp tar reads, single regular file and expected hashes before native start.",
+    "Mounted exact public binary --version only, expected rc6 string, no node or credential/config mounts.",
+    "Timed command output limits, actual exit/OOM/state checks and owned-ID cleanup/readback; engine errors are not treated as absence."
+  ],
+  "limitations": [
+    "Runtime remains unexecuted.",
+    "This does not qualify Linux proving, node services, deployed adapter or general rc3 readiness.",
+    "Outer kill may prevent Docker cleanup; packet correctly retains parent reconciliation requirement and cannot claim success."
+  ],
+  "execution": "Read-only source and hashes only; no Docker/native calls."
+}

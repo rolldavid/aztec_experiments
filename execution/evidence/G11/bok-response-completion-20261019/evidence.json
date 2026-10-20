@@ -1,0 +1,81 @@
+{
+  "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+  "task_id": "G11-bok-response-completion",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+      "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+      "task_id": "G11-bok-response-completion",
+      "id": "focused-bok-components",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js pinned-node --test plugins/private-bok-metering.test.mjs plugins/test/private-bok-escrow.test.mjs plugins/test/hosted-private-bok.test.mjs",
+      "environment": "macOS Node24; focused component tests with explicit chain/provider doubles",
+      "observed": "174 passed, zero failed/skipped; 3.61 seconds. Native SDK implementation independently checked. No live reply success inferred.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/review.json",
+          "sha256": "96d24280facaebbdda85fe6ef278e75902b5a8ca5ed54a993dac45744c6430cf"
+        },
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/focused.log",
+          "sha256": "079b23c4e5fa6c7cd2fb8c4a4378576450272f3e3fb9fe1ed371cd05aaed0be5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+    "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+    "task_id": "G11-bok-response-completion",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G11/bok-response-completion-20261019/review.json",
+        "sha256": "96d24280facaebbdda85fe6ef278e75902b5a8ca5ed54a993dac45744c6430cf"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+      "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+      "task_id": "G11-bok-response-completion",
+      "id": "RC29-durable-paid-response",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/review.json",
+          "sha256": "96d24280facaebbdda85fe6ef278e75902b5a8ca5ed54a993dac45744c6430cf"
+        },
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/focused.log",
+          "sha256": "079b23c4e5fa6c7cd2fb8c4a4378576450272f3e3fb9fe1ed371cd05aaed0be5"
+        }
+      ]
+    },
+    {
+      "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+      "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+      "task_id": "G11-bok-response-completion",
+      "id": "RC31-funded-operator-reply-continuation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/review.json",
+          "sha256": "96d24280facaebbdda85fe6ef278e75902b5a8ca5ed54a993dac45744c6430cf"
+        },
+        {
+          "path": "execution/evidence/G11/bok-response-completion-20261019/focused.log",
+          "sha256": "079b23c4e5fa6c7cd2fb8c4a4378576450272f3e3fb9fe1ed371cd05aaed0be5"
+        }
+      ]
+    }
+  ]
+}

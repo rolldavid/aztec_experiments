@@ -1,0 +1,33 @@
+{
+  "sourceRevision": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "payloadBytes": 16367,
+  "payloadSha256": "5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9",
+  "headroomBytes": 17,
+  "exactRegeneration": true,
+  "decodedConfigMatch": true,
+  "runtimeBodyReceiptPin": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+  "completeAttestationProgramSha256": "770ca648149ce3d4c916faa513eba7f3fbe5ad31157f0063fe28d97bbb3d2831",
+  "pinMeaning": "Receipt bootstrapSourceSha256 authenticates tokenized HOST body, not full ATTESTATION including source pins and dispatch. Initial reviewer comparison to full program failed; corrected against actual receipt source semantics. No payload change.",
+  "permissionsChecked": true,
+  "capabilities": {
+    "runtimeUrl": {
+      "hostPathScopeVerified": true,
+      "versionBound": true,
+      "signedAt": "2026-10-12T12:03:58+00:00",
+      "expiresAt": "2026-10-12T14:03:58+00:00"
+    },
+    "receiptPutUrl": {
+      "hostPathScopeVerified": true,
+      "versionBound": false,
+      "signedAt": "2026-10-12T12:03:58+00:00",
+      "expiresAt": "2026-10-12T14:03:58+00:00"
+    }
+  },
+  "uploadOnceIntentAndChecksumVerified": true,
+  "fleetAndHostDeadline": "2026-10-12T13:03:58Z",
+  "commissioningStop": "2026-10-12T12:33:58Z",
+  "latestLaunchBefore": "2026-10-12T12:13:58+00:00",
+  "noIamNoSshEncryptedDot": true,
+  "checkedAt": "2026-10-12T12:09:03.967724+00:00",
+  "noProviderOrHostExecution": true
+}

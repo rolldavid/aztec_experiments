@@ -1,0 +1,34 @@
+{
+  "base": "8cc56ff93741ef3236545d14279834348cb22471",
+  "candidate": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+  "task_id": "G02-native-routing",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-and-controls",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "deploy/prover/BOOTSTRAP.md",
+    "prover/qualify-runtime.mjs",
+    "prover/qualify-runtime.test.mjs"
+  ],
+  "required_checks": [
+    "native-routing-focused"
+  ],
+  "requirements": [
+    "RC36-origin-and-freshness-boundary"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-and-controls",
+      "task_id": "G02-native-routing",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md",
+        "prover/qualify-runtime.mjs",
+        "prover/qualify-runtime.test.mjs"
+      ]
+    }
+  ]
+}

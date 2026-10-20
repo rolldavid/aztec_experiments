@@ -1,0 +1,57 @@
+{
+  "sourceRevision": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+  "base": "9def66e9",
+  "requirements": [
+    "RC18",
+    "RC19",
+    "RC20",
+    "RC21",
+    "RC22",
+    "RC36",
+    "RC39",
+    "D2",
+    "D3"
+  ],
+  "environment": {
+    "node": "24.21.0",
+    "NODE_BACKEND": "js",
+    "HARDWARE_CONCURRENCY": "2",
+    "liveTransactions": 0,
+    "proofs": 0
+  },
+  "checks": [
+    {
+      "command": "node --test --test-name-pattern=\"retained withdrawal connection|paid recovery forwards|router|MetaMask aggregate\" plugins/test/operations.test.mjs scripts/test-t04-browser-journey.mjs",
+      "passed": 9,
+      "failed": 0,
+      "durationMs": 480
+    },
+    {
+      "command": "node --test scripts/test-t04-browser-journey.mjs",
+      "passed": 135,
+      "failed": 0,
+      "skipped": 1,
+      "note": "Existing opt-in persistent Chromium download test skipped. This suite preceded the final same-payment bridge stop and retained withdrawal repair; affected checks rerun above."
+    },
+    {
+      "command": "node --test --test-name-pattern=\"actual SDK PrivateBok\" plugins/test/operations.test.mjs",
+      "passed": 1,
+      "failed": 0,
+      "note": "Current reviewed generated artifacts reused; no rebuild."
+    },
+    {
+      "command": "node --check plugins/operator.mjs; node --check scripts/test-wallet-extension-browser.mjs; git diff --check",
+      "passed": true
+    }
+  ],
+  "notQualified": [
+    "Actual current-network router deployment",
+    "Real-proof wallet funding and interrupted recovery",
+    "Phantom aggregate funding"
+  ],
+  "limitations": [
+    "No finance, proofs or cloud action was executed by this worker.",
+    "Longer testnet watchdog is a failure bound; progress uses native receipt/UI state observation.",
+    "Default aggregate-devnet still requires proofs disabled and chain31337."
+  ]
+}

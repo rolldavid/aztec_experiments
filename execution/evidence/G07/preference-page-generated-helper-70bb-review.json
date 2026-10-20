@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-12T21:06:39.301455+00:00",
+  "reviewer": "reviewer-20261011",
+  "scope": "Evidence-only generated-three diagnostic helper; no native execution",
+  "packetSha256": "70bb1a04afb2ce0efc342db466833dbe0de216ed908cc475d5a8db609f105cc1",
+  "runnerSha256": "7071fd73b5bc1de46db5a8620b0e86909c72685ec68b7905ac8bece9e8753d9a",
+  "lldbHelperSha256": "b94847d1a299a3f0c7c0879727807caa61b6d64ef366793d085afd37861cd93d",
+  "verdict": "CHANGES REQUESTED before execution",
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "run-generated-three-errno.py",
+      "location": "Popen followed by owned=Owned(p,work); Owned.__init__ invokes refresh",
+      "problem": "Process ownership assignment is not armed until fallible ps discovery succeeds. A ps timeout/error or parse failure after Popen leaves owned=None; exception handler reaches finally without cleaning the launched debugger/session. Existing cleanup also relies on successful ps throughout.",
+      "required": "Arm a nonthrowing ownership record immediately after launch; guarantee bounded fallback cleanup of the owned process/session if discovery fails, fail closed on unavailable absence readback, and retain failure evidence. Add a lightweight fault-injection regression for initial and cleanup-time discovery failure without SDK/LLDB."
+    },
+    {
+      "priority": "P2",
+      "path": "run-generated-three-errno.py",
+      "location": "Explicit minimal inferior environment",
+      "problem": "NODE_BACKEND=js is absent and environment inheritance is disabled. Installed bcrypto has no native .node build; bcrypto/lib/sha256.js chooses native unless the variable is js. This can stop the experiment at imports rather than the intended three original tests.",
+      "required": "Pin the same supported explicit JS backend as prior SDK commands in the inferior environment; do not install/rebuild native dependencies."
+    }
+  ],
+  "checks": [
+    "Independently hashed every packet binding against actual files.",
+    "Imported source-only generator, regenerated in RAM, reversed every declared replacement and recovered original test30171 byte-for-byte.",
+    "Parsed three Python helper files without executing runner/debugger.",
+    "Reviewed exact module/hash/return-instruction gate, signed32 native return capture, test selection/count and zero utility count, output bounds, stop-first-failure logic and temporary directory ownership."
+  ],
+  "limits": [
+    "LLDB permission/callback behavior remains unexecuted.",
+    "Offset capture is diagnostic only; negative LMDB codes are not automatically POSIX errno.",
+    "Even two passing arms do not qualify native v2 rollback or explain historical crash."
+  ],
+  "sourceReadIssue": "One read-only rg lookup used nonexistent @aztec-foundation/foundation path and exited2; direct bcrypto source and missing native artifact check succeeded; no execution implication."
+}

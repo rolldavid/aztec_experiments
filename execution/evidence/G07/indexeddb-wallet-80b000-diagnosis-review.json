@@ -1,0 +1,42 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "7e452036ecf8afb4d9ac8c3b185a92dc18d3d2ed",
+  "receipt": "application-80b000fd-7c53-4d40-b651-cafadadf09c3.json",
+  "receiptSha256": "4b160f575338b161e1626bf87d763c43243443e1206e562045c87861d154e163",
+  "sourcePath": "scripts/testing/rolling-application-fixture.mjs",
+  "sourceSha256": "6e2f0b1d3bb65ab56dd96674b355dc59aadc8f70d094e0c9059e4100b6a1be7f",
+  "verdict": "confirmed fresh-isolated-checkout harness directory defect; genuine wallet/storage acceptance did not run",
+  "failure": {
+    "stage": "ready-settlement",
+    "errorClass": "Error",
+    "code": "ENOENT",
+    "frames": [
+      "rolling-application-fixture.mjs:283:3",
+      "c01-real-node.mjs:74:18",
+      "fixture-worker.mjs:106:19",
+      "test-c01-application.mjs:14:5"
+    ]
+  },
+  "cause": "At line282 directory is ROOT/execution/evidence/G06/application-port-UUID; line283 calls mkdir(directory,{mode:0700}) without recursive creation of its parent. The exact isolated checkout has no G06 directory. fs.mkdir cannot create the final child when the parent is absent, matching ENOENT and first frame. This happens before report creation, sourceBinding, actors, funding and notification browser execution.",
+  "observed": {
+    "elapsedMs": 61216,
+    "peakTreeRSSKiB": 1298032,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "fixtureExitCode": 1,
+    "lastOuterStage": "ready-settlement",
+    "g06ParentAbsentAtReview": true
+  },
+  "repairRecommendation": [
+    "Create only the shared ROOT/execution/evidence/G06 parent with recursive:true before constructing/creating the unique child.",
+    "Keep unique child mkdir non-recursive with mode0700, so a collision, existing path or inappropriate parent still fails rather than reusing prior private evidence.",
+    "Regression must use a fresh temporary parent and actual fs.mkdir path: parent created, unique child mode0700, a second identical child attempt rejects EEXIST, file-as-parent failure propagates. Invoke the same helper/path used by the fixture, not a copied mock.",
+    "Do not create new report paths manually as a workaround; commit and review narrow source, fingerprint changed helper then refresh source closure before one changed attempt."
+  ],
+  "acceptanceLimits": [
+    "Earlier setup board/update-portal proof and settlement evidence is retained; no notification root/subscription/reply/marker or actual browser acceptance reached.",
+    "Independent04bf component/Chromium checks remain valid, but this runtime supplies no genuine wallet qualification.",
+    "No unchanged rerun or limits weakening justified."
+  ],
+  "cleanup": "Original failure evidence remains immutable; no source changes or native/browser jobs performed by reviewer."
+}

@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-12T11:53:41.339959+00:00",
+  "status": "PROPOSED_ONLY_NOT_ALLOCATED",
+  "priorCumulativeBoundUsd": "190.28",
+  "proposedReservationUsd": "25.00",
+  "cumulativeIfLeadReservesUsd": "215.28",
+  "authorizedTotalCeilingUsd": "300.00",
+  "remainingIfReservedUsd": "84.72",
+  "remainingBeforeReservationUsd": "109.72",
+  "purpose": "One changed instrumented nativeAMD64 archiver-startup/query-only qualification campaign09 using reviewed schema2 progress and preserved config-provider adapter; measure08unknown wait, not blind capacity retry. No proofjobs/publicrouting/release.",
+  "resourceProposal": {
+    "instances": 1,
+    "instanceType": "m7a.4xlarge",
+    "region": "us-east-1",
+    "vCpu": 16,
+    "memoryGiB": 64,
+    "rootGp3GiB": 40,
+    "dataGp3GiB": 1024,
+    "ioBaselineOnly": true,
+    "encrypted": true,
+    "deleteOnTermination": true,
+    "egressMbps": 50,
+    "overlapInstances": 0,
+    "newSnapshots": 0,
+    "newBackupServices": 0,
+    "walletOrAwsCredentialsOnHost": false,
+    "sshOrNewIngress": false
+  },
+  "freshReadOnlyEvidence": {
+    "path": "execution/evidence/G02/operator09-forecast-readonly.json",
+    "sha256": "84595197f391b7de5567eeab0320473baf5dd190e41c7096b018820850479879"
+  },
+  "pricing": {
+    "compute": {
+      "sku": "TTPYSE2GSHDGSMTX",
+      "unit": "Hrs",
+      "usd": "0.9273600000",
+      "effectiveDate": "2026-10-01T00:00:00Z"
+    },
+    "observedAt": "2026-10-12T11:53:41.339959+00:00",
+    "source": "AWS Price List Query API GetProducts exact filters",
+    "ebsUsdPerGiBMonth": ".08",
+    "monthHours": 720,
+    "ipv4UsdPerHour": ".005",
+    "egressPlanningCeilingUsdPerGB": ".195",
+    "ancillaryRateStatus": "Retained conservative same-day planning rates/ceilings; not a new account invoice query",
+    "references": [
+      "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "https://aws.amazon.com/ebs/pricing/",
+      "https://aws.amazon.com/vpc/pricing/"
+    ]
+  },
+  "costItems": [
+    {
+      "item": "compute_75min",
+      "usd": "1.15920000",
+      "basis": "One m7a.4xlarge Linux On-Demand us-east-1; 60min budget plus15min shutdown/billing margin. No Spot savings assumed."
+    },
+    {
+      "item": "gp3_1064GiB_75min",
+      "usd": "0.14777778",
+      "basis": "40GiB root+1024GiB data; baseline3000IOPS/125MiBps, encrypted DOT, no paid performance addons."
+    },
+    {
+      "item": "public_ipv4_75min",
+      "usd": "0.00625000",
+      "basis": "One public IPv4, no elastic-IP retention planned."
+    },
+    {
+      "item": "network_35GB",
+      "usd": "6.82500000",
+      "basis": "Conservative per-GB ceiling, not invoice rate;50Mbps*75min=28.125decimalGB, rounded up35GB; no free allowance assumed."
+    },
+    {
+      "item": "orphan_disk_24h",
+      "usd": "2.83733334",
+      "basis": "Separate24h full-disk retention cleanup allowance beyond compute; not authority to leave disks indefinitely."
+    },
+    {
+      "item": "new_archive_receipt_storage_30days",
+      "usd": "0.50000000",
+      "basis": "One fresh immutable runtime archive+receipts retained30days; prior retained archives already included in190.28."
+    },
+    {
+      "item": "archive_cross_region_transfer",
+      "usd": "0.50000000",
+      "basis": "Existing private eu-west-2 artifact bucket to us-east-1 host; conservative allowance."
+    },
+    {
+      "item": "requests_and_monitoring",
+      "usd": "0.25000000",
+      "basis": "S3 requests/control/readbacks/log metadata; no extra log ingestion service."
+    },
+    {
+      "item": "tax_and_unpriced_related_charges",
+      "usd": "3.00000000",
+      "basis": "Conservative planning provision, not an assertion about account tax treatment."
+    },
+    {
+      "item": "additional_delayed_billing_and_cleanup_buffer",
+      "usd": "9.77443888",
+      "basis": "Residual reserve; includes rate rounding, delayed usage and extra cleanup reads. Stop/replan before full forecast exceeds reserved25."
+    }
+  ],
+  "costItemsTotalUsd": "25.00000000",
+  "controls": {
+    "createdAt": "Fresh timestamp after authorized archive upload and immediately before actualpayload generation; not assigned now",
+    "latestLaunch": "createdAt+10min; reject stale payload, no silent redate",
+    "commissioning": "createdAt+30min, persistent commissioning timer; verified install controls required",
+    "readiness": "createdAt+44min",
+    "qualification": "createdAt+59min",
+    "absoluteBudgetStop": "createdAt+60min",
+    "independentCloudControl": "Request Fleet ValidUntil=absoluteBudgetStop and TerminateInstancesWithExpiration=true; actual AWS readback required",
+    "independentHostControl": "Persistent absolute systemd budget poweroff/terminate timer plus commissioning and qualification deadline controls; actual attestation required",
+    "financialReplay": "Exclusive fsynced intent/token before each single mutation. Unknown receipt reconciles only; no upload/fleet/replacement replay.",
+    "terminalCleanup": "Once-only owned cleanup on terminal failure/control failure/deadline; verify instance termination, bothvolumes absent and Fleetdeleted. Preserve receipt/source/intent evidence.",
+    "retention": "No new snapshot; DeleteOnTermination required. Archive/receipt30day allowance; retained storage remains charged after compute stops."
+  },
+  "packageEvidence": {
+    "path": "execution/evidence/G02/runtime-package-startup09-20261012.json",
+    "sha256": "15fc6511efd0c5cb5027b17b2a69ede513880a756951c275d6f2aa973092d920",
+    "source": "1ec67f406645442965ced41e56b4e93c7097a050",
+    "archivePassed": true
+  },
+  "limits": [
+    "Five localL1 preflight reads passed; they do not prove EC2 sustained upstream capacity/blob/trace/backlog or node readiness.",
+    "Plugin remains separately degraded with zeroactive jobs; publicL2 API compatibility prerequisite unresolved, no readiness inference from HTTP200.",
+    "Paid launch requires independent archive approval, explicit preparation grant, actualpayload<=16384/pins/capabilityexpiry review and separate launch grant; this forecast grants none.",
+    "Lead alone updates shared ledger; no reservation made by this worker."
+  ],
+  "allocationPerformed": false,
+  "uploadPerformed": false,
+  "launchPerformed": false,
+  "ledgerChanged": false
+}

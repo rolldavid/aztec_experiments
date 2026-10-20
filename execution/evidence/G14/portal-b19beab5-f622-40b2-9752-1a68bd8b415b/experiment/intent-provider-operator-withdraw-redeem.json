@@ -1,0 +1,10 @@
+{
+  "label": "provider-operator-withdraw",
+  "sourceRevision": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "proofMode": "proofs-disabled",
+  "txHash": "0x2e364a679220ea1acddef7941d538cdc1eaae156ad9f9e0c27f5cacd7bcb02d6",
+  "expectedLeaf": "0x004334c7c579e501712a25ae83ee60ae88ec55e7fbf41939e879047d424449e6",
+  "recipient": "0x0000000000000000000000000000000000000457",
+  "amount": "151",
+  "nonce": "0x187435daab6b70b3d2165503db34147eb820702ae6fffd4a7f5f42639ea66062"
+}

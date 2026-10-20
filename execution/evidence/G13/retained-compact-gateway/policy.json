@@ -1,0 +1,32 @@
+{
+  "candidate": "049c1926891bf2c4b275fb5d303ece280ef9d140",
+  "base": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-retained-compact-gateway",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "docs/rolling-deployment.md",
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs"
+  ],
+  "required_checks": [
+    "gateway-components"
+  ],
+  "requirements": [
+    "RC25-RC26-recovery-gateway-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "G07-retained-compact-gateway",
+      "paths": [
+        "docs/rolling-deployment.md",
+        "plugins/devnet/bootstrap.mjs",
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs"
+      ]
+    }
+  ]
+}

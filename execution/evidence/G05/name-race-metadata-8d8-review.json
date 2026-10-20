@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+  "base": "c044ec609d9cdb7a5dca98795f3f31a8f70408ea",
+  "verdict": "approved for one bounded genuine race campaign; actual acceptance pending",
+  "findings": [],
+  "scope": "Test-only same-simulator metadata collection and exact canonical collision reason attribution; classifier and protocol unchanged",
+  "sourceSha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "3fa081c53a469a1e0950d0d6dc8f2d87dd6f3826aeac07240d411bdbacf1a8f5",
+    "scripts/testing/rolling-application-fixture.test.mjs": "ee9d14b29cabe6db271640d745764d1e4fd135366ea1a1bae6268be97d14c68c",
+    "scripts/testing/rolling-collision-observer.mjs": "02035ac84616f1cd4f67ac8773f2da7eabece1094d876ad2950c3fcb7d042744",
+    "scripts/testing/rolling-collision-observer.test.mjs": "17b240b0398db74b85701b6191e157827498783ab09052d16b115a1c9bd7dfbe",
+    "scripts/testing/rolling-name-collision.test.mjs": "3e81b905f22be4066f27f266b2e8ba6bfb0dd561653c0dd2bfceab62214a431e"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-collision-observer.test.mjs scripts/testing/rolling-name-collision.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "passed": 170,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2384.184667,
+      "log": "/tmp/reviewer-race-8d8-tests.log",
+      "sha256": "da496875c3ac794c7bfdedc99060c1a35036d595a444366f1a93ce453c3f1bda"
+    }
+  ],
+  "sourceDisposition": [
+    "Pinned block factory initializes collectCallMetadata false; actual simulator doSimulate serializes this.config into original fast-simulation inputs. Scoped change therefore reaches that exact one execution. No duplicate execution/new simulator/dependency disk edit.",
+    "Only collectCallMetadata changes; descriptor and all other ordinary config descriptors/values checked before restoration, including fee enforcement false bypass flag required false. Concurrent/shared config lease or ownership conflict fails evidence closed.",
+    "Original receiver/args/returned Promise/error remain unchanged; same-simulator descriptors restore after actual resolution/rejection/throw. Original simulator ownership mismatch is never overwritten.",
+    "Fixed numeric reason-absence/type/classifier counters; no private error/body/stack persisted. Exact deepest board/_register_name/static assertion classifier unchanged.",
+    "Actual installed factory regression plus actual SDK CallStackMetadata/PublicTxResult to SimulationError conversion tests exercise missing-metadata defect and wrong contract/selector/guard rejection; still no real AVM execution in these tests.",
+    "Parent still requires real two-pending barrier, both canonical paid effects before semantics, exact loser tx/effect/block match and terminal clean restored observer with metadata restorations==calls."
+  ],
+  "historicalFailure": "execution/evidence/G05/name-race-3dfa-diagnosis-review.json",
+  "limitations": [
+    "Failed3dfa remains failed; exact reason not retrospectively attributed",
+    "Genuine AVM metadata, canonical classified loser and full final winner/private ownership assertions need new actual run",
+    "No full privacy or compiler soundness qualification"
+  ],
+  "productionChanged": false
+}

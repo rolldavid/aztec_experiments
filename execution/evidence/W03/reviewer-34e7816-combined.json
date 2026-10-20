@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "candidate": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "base": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "verdict": "approve-exact-composition",
+  "changedPathsAgainstIntegratedBase": [
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "findings": [],
+  "sourceEquivalence": {
+    "apps/rolling/wallet-session.test.mjs": {
+      "originalRevision": "07293b594fc8d1723a0703c92287e3efdca8c7cd",
+      "gitBlob": "7a5c3b56303b7b4709698adf02bcf8e9e44943da"
+    },
+    "shared/rolling/cold-preference-reader.mjs": {
+      "originalRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "gitBlob": "c9fdec9ea37abc26be49816425d1b2af7e83501d"
+    },
+    "shared/rolling/cold-preference-reader.test.mjs": {
+      "originalRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "gitBlob": "58ac1b8b79bf3968f75fd05c686f9eb21085110c"
+    },
+    "shared/rolling/compact-client.mjs": {
+      "originalRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "gitBlob": "b6994cdec7ed4b5a8f541b4fe9d56252f767d6f4"
+    },
+    "shared/rolling/compact-client.test.mjs": {
+      "originalRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+      "gitBlob": "75d01786f39dd60da02132afa0949ce9044454dc"
+    }
+  },
+  "carriedIndependentReviews": {
+    "execution/evidence/W03/reviewer-07293b5-withdrawal.json": "7723f3207860b48b89bf066da1209ed487fc308447e375d99c12f87c5a7071dc",
+    "execution/evidence/G07/reviewer-eabddc3-readiness.json": "195c5afca7d03b4daedfd204e5fdd3e7e8dd2dc2340902e61a309b55580b9246"
+  },
+  "combinedEvidence": {
+    "packetSha256": "c6a4d32c83e69266018698dfe5f9f456e8dab1a538ce04591e35539004affd7d",
+    "checks": [
+      {
+        "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/combined-withdrawal.log",
+        "sha256": "1151596f168516aa7c40ef8c75c703bc220e034bc8bd117a719ed296a44addf3",
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/w03-current-withdrawal-recovery/combined-reader.log",
+        "sha256": "2c6f649e9f2db25f3bb7625a8fa6f6f2114e5543aa2cba4888819c7aae1b80ea",
+        "passed": 83,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "totalPass": 89,
+    "fail": 0,
+    "skip": 0,
+    "logHashesAndActualSummaryCountsVerified": true,
+    "rerunByReviewer": false
+  },
+  "scope": "Exact integration of independently reviewed withdrawal regression coverage with unchanged approved reader/compact source. Only a test file changes versus integrated eabddc3; no new generated artifact inputs.",
+  "limits": [
+    "No real-chain withdrawal/reorg or fresh 120-second recovery acceptance inferred.",
+    "Prior component review qualifications and generated/live release gates remain."
+  ],
+  "reviewerActions": "Read-only Git blob/diff equivalence and packet/log hash/count verification; no builds, browsers, services or transactions."
+}

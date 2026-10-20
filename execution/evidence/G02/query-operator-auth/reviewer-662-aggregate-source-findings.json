@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "candidate": "662de1fad8c6b7f62f6add0cc996bcc8dbc6bbd8",
+  "base": "026b04e",
+  "verdict": "changes-requested",
+  "scope": "Independent source review of aggregate ETH/USDC routing, recovery/custody, ETH wallet workflow, standalone claims, trusted relay and public HTTP composition. No full G04 acceptance.",
+  "sourceSha256": {
+    "apps/rolling/start.mjs": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+    "apps/rolling/wallet-panel.browser.test.mjs": "d99150338a88242471cc5257dd20d7c5777ead7c3312886d775f7e0dd956c987",
+    "apps/rolling/wallet-panel.mjs": "db4379207b783abd2eb4a5de6a38ee960eea99f645613f7f054849c0594f8a48",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "955355d56b93b08598255fcd0927ad35016bc85706a3db2ba02f968c37b80c9f",
+    "apps/rolling/wallet-runtime.mjs": "a95313172b2f0e1324f10cc5a57045acd84bceaf2ac3761b529f2c508b6906ef",
+    "apps/rolling/wallet-session.mjs": "b8fafb233f907cf28bf364e19ed0210bf2236583c2aab90a2c443de194f060ef",
+    "apps/rolling/wallet-session.test.mjs": "6c7a7762604a8ed7cb308833ff17b71bf2a5b92ec344b973eb227bf1cd312199",
+    "billboard/portal/src/BillboardPortal.sol": "83db7b29b2bdf17f103a18e2c576fa414e789fe6bd5540eb66a995131f2b7e5c",
+    "billboard/portal/src/RollingFundingRouter.sol": "d1d9d38593de9fc2833d4406baba51527a4cc18afb45f5948022ff6c11a07fc7",
+    "billboard/portal/test/PortalV1.t.sol": "d53db34e49f113f42d014dc79ae30c9e74067a67b533a4da56eb3def095a1d7a",
+    "billboard/portal/test/RollingFundingRouter.t.sol": "4c401a78fdf8810bc88b53a747010fd8073ae324730df68683c41f8f19116393",
+    "docs/rolling-deployment.md": "7d8b5b034837d9aea5d4fef0d19374992144cf41b57f12071c548980f8362766",
+    "plugins/operations.mjs": "8386d4bad49063da96ce124868268d2b0fc6eb70ff3c5f59d7c0f4d9ce203e9c",
+    "plugins/rolling-funding-relay.mjs": "45dbb8de0759cfc74956c89d758cf06e5f909f601e8ec7726ae7d9708ac4014b",
+    "plugins/test/rolling-funding-relay.test.mjs": "1475bdeb512fcaf46f2418d42040e4b9773e01ec5c07eebec01458cae10c469f",
+    "scripts/rolling-public-server.mjs": "6e65f2458f83a7fcbbcb392a36263860bc2da7693ac3925adf8ef714f1fdaa1a",
+    "scripts/rolling-public-server.test.mjs": "d709d3dd4f5cfa1ffb40d8d1aba27f7b6c7d5a97c1256f072efe7ec6bda11c5c",
+    "scripts/rolling-wallet-assets.mjs": "df1e3188901e26620b44323a8c57bc3df0c6e9e405ab01f546087fc6f1c25847",
+    "scripts/rolling-wallet-assets.test.mjs": "a9c7e3289d5464b1c0e80e38454c660a9e38b133d6d5987d1b8f7355e862ab20",
+    "scripts/test-private-fee-funding.mjs": "6195fe0e658cbab1aaf50a8479b6fb1edc71503a6f317db68577afbf01330eda",
+    "shared/ethereum-journal.mjs": "4d3ebcd58ba275e7eddede184bd7674e0f9e12e42c0daa89a18191868d41bab6",
+    "shared/journal-backup.mjs": "1dc7b59d0874141deb0610b6f0a9d7f57bc6981775cd5527f519d5ad62663f65",
+    "shared/journal-backup.test.mjs": "8cf6ebd6af51f72665fef54f267970ae6cce47c47ce8ce0634dad496dc3e78c9",
+    "shared/portal-runtime.json": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+    "shared/private-fee-funding.mjs": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+    "shared/rolling/aggregate-funding.mjs": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+    "shared/rolling/aggregate-funding.test.mjs": "55c2ea4928405ac6428b0e0b2d1d970389d82c3ea1258254129d0eed4b49ec90",
+    "shared/rolling/aggregate-recovery.mjs": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+    "shared/rolling/aggregate-recovery.test.mjs": "a11b5d15c3de5970842e8a109dcf26c1430c50873288d850bf8ed2011aa1d4f8",
+    "shared/rolling/aggregate-wallet.mjs": "c7f5799734b2d2b46457c68fe524f77b4422a09b16881c4afc516a33e91099e3",
+    "shared/rolling/aggregate-wallet.test.mjs": "417f4447ddaf73b0a1909e1d2bcf2c2589653711abbca696b7b531f39e3b7b25",
+    "shared/rolling/application.mjs": "0a962bd9f7ba19364c8d70e959f03c2fb0c4c8af67599e689858794c415f45e7",
+    "shared/rolling/application.test.mjs": "3abb332792bc3eda86bc2bfd98b7cc6948cce66cf12ae0be396d64718b28b2fb",
+    "shared/rolling/funding-receipts.mjs": "570fb4dcdc5135eaaf4943c7d85dc70ab916eaed189e972ba5f2dec5bd028e95",
+    "shared/rolling/funding-receipts.test.mjs": "663f50373bf3641b43b35bb5c51d67e3fdbf451e322f53cb4d376b29dda6eaa5",
+    "shared/sdk-entry.mjs": "a2a7fe4d00ae5381686289bb8f08e3bb5412fafbfe4e092273246e450b600b90"
+  },
+  "findings": [
+    {
+      "id": "relay-private-directory",
+      "priority": 1,
+      "path": "plugins/rolling-funding-relay.mjs",
+      "lines": [
+        104,
+        106
+      ],
+      "finding": "mkdir(mode0700) does not validate an existing state directory. The relay omits existing hosted main realpath/lstat/exact0700 checks before taking its file lease and reading/writing budget and signed plan journals. A writable or redirected state directory defeats persistence ownership and permits deletion/substitution of cumulative budget and operation records.",
+      "requestedChange": "Apply existing private-directory checks before lease/signer creation; reject unsafe existing modes and redirected paths. Cover actual open boundary."
+    },
+    {
+      "id": "reserved-plan-absent-status",
+      "priority": 2,
+      "path": "plugins/rolling-funding-relay.mjs",
+      "lines": [
+        78,
+        89
+      ],
+      "finding": "A crash after durable budget activePlan reservation but before the first per-plan journal write leaves a reserved plan whose status returns absent. Submitting any plan remains blocked. Absence is not a truthful recoverability result for a retained reservation.",
+      "requestedChange": "Return unresolved for a matching active reservation with absent plan file; never clear budget or retry solely from missing file. Persist additional intent if automatic proven-unsent recovery is intended."
+    }
+  ],
+  "sourceAssessment": [
+    "Portal depositFor binds beneficiary/executor/value/secret/consent nonce/deadline with standard computed EIP712 and SignatureChecker, retaining original deposit limits/ownership and withdrawal semantics.",
+    "Router binds EIP3009 authorization nonce to exact whole plan, chain and router; fixed relayer receives exact success-only fee and user receives exact refund. All conversion/deposit/approval effects revert atomically; pre-existing balances remain outside allocation.",
+    "Saved aggregate intent authenticates exact calldata/runtime/all three effects; USDC custody keeps beneficiary/random FPC salt separate from actual relayer transaction sender/nonce. L1 finality, private-node identity and L1-to-L2 witness checks remain.",
+    "Application revalidates claims on submission, uses existing encrypted once-only workflow, and composes collateral/Bok with fee mint-and-pay in the same L2 transaction. Standalone top-up actions reuse that boundary.",
+    "ETH wallet uses existing encrypted journal and backup domain, saves custody before send, archives original context before permitted successors, relinks the durable claim after a cut and requires explicit review after an attempted-before-submit cut.",
+    "Relay persists signed bytes before one broadcast, reconciles retained operations without retransmission, conservatively consumes cumulative gas reservation and refuses new plans during unresolved predecessor. HTTP has bounded body/time/rate and closed routes; raw errors are not returned."
+  ],
+  "evidenceRead": {
+    "relayAndOperations": "aggregate-usdc-relay-focused.log: 44 passed, 0 skipped, 1729.25ms; controlled RPC, real ethers signing and durable filesystem.",
+    "http": "Original aggregate-usdc-relay-http.log retains two falsy cleanup failures; aggregate-usdc-relay-http-repair.log has 5 affected checks passing. Original run must not be relabelled pass."
+  },
+  "remainingGates": [
+    "USDC browser signing/continuation is not in this candidate.",
+    "Full normal build and generated source consistency still pending final coherent source.",
+    "No actual ETH/USDC funding transaction, live liquidity, named zero-ETH wallet, real aggregate async claims, or testnet qualification is accepted here.",
+    "Direct L1 top-up UX and private direct Bok custody provisioning are distinct from standalone L2 claim component coverage.",
+    "Failed transaction gas is a bounded relayer risk; successful signed reimbursement is not proof of live liquidity or full no-subsidy operational economics."
+  ],
+  "executionByReviewer": "Read-only source/evidence inspection; no heavy or financial actions."
+}

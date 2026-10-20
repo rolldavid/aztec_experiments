@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared-not-started",
+  "executionAuthorized": false,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourcePacketSha256": "1d51da386ad4ad96921cc50d216e121f67ec4297cd6c21fb87b35bd7e2ec7c35",
+  "sourceReviewSha256": "c4305692615994bbb1af5beae9613507c77db479dfa1425e34ba4ee45119776d",
+  "controlledActualPacketSha256": "5dc45354a6538cb8a3627e443c0bac4540643b7313ddd6650a7e2f89ebad9c0e",
+  "controlledRuntimeReview": "pending",
+  "sourcePins": {
+    "setup.py": "3a9b34b0922e3f895a6fafe3518fa6328e31487d5a610d05b7185356063ce1c1",
+    "setup.sh": "5879c43a83ce38422a85c901df00162735fdde3083256e1b619f8aa1d5eabcd8",
+    "closure.py": "178dd968a782fa19a7c6596c532d762d376b8d97b86935da653b6f74fbe499b9"
+  },
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers-v2/system-bus/setup.py",
+    "--execute-reviewed-once"
+  ],
+  "bounds": {
+    "operationSeconds": 150,
+    "cleanupSeconds": 30,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "pids": 128,
+    "receivedBytesWatchdogMax": 157286400,
+    "archiveBytesMax": 104857600,
+    "writableBytesWatchdogMax": 1073741824
+  },
+  "onceOnly": {
+    "fixedActualDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-linux-helpers-v2/system-bus/setup-actual",
+    "currentlyAbsent": true,
+    "exclusiveFsyncedIntentBefore": "create/start/commit",
+    "unknownOutcome": "reconcile owned immutable ID; never replay"
+  },
+  "baseImage": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+  "parentClosureSha256": "41001f37ac6c7cd235bebe934c46e42c9060cc1f880104df60c3d4fffa791975",
+  "beforeExecution": [
+    "explicit parent heavy slot and one-setup grant",
+    "independent actual25+setup eligibility",
+    "fresh responsive exact-image readback and no active conflicting container",
+    "source hashes, tracked8c clean, owned actual directory absent",
+    "retain initial exclusive execution intent before first create"
+  ],
+  "network": "official signed Noble main-only APT; setup only",
+  "noPull": true,
+  "noHostMounts": true,
+  "noNativeOrOfflineRun": true,
+  "noPaidAction": true,
+  "closureAcceptance": "signed acquisition; exact D-Bus family and original116 packages; old closure/image retained; exact vendor unit, machine-id and messagebus UID/GID prerequisites; new actual immutable image requires independent review before offline binding",
+  "runnerChanges": "No new supervisor: exact setup.py bounded helper, existing150+30s ownership/cleanup/command bounds."
+}

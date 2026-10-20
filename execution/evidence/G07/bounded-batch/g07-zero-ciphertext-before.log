@@ -1,0 +1,37 @@
+✔ labelled boundary double rejects zero count before queue or utility (1.966ms)
+✔ labelled boundary double rejects nine logs before queue or utility (0.797ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (0.447959ms)
+✔ labelled boundary double rejects unknown key before queue or utility (0.471959ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.622625ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.917916ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.42075ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.694375ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.540542ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.511125ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (0.767209ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.3755ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.346333ms)
+▶ owned isolated SDK and ACIR suite
+  ✖ actual SDK zero-ciphertext transaction batch matches scalar authenticated recovery (3028.549666ms)
+✖ owned isolated SDK and ACIR suite (4127.049292ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 13
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4239.529542
+
+✖ failing tests:
+
+test at scripts/test-pxe-preference-page.mjs:296:31
+✖ actual SDK zero-ciphertext transaction batch matches scalar authenticated recovery (3028.549666ms)
+  Error: PXE_PREFERENCE_RECOVERY_FAILED
+      at runRollingPreferenceRecovery (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/preference-recovery-sdk-mRVH4M/rolling-preference-recovery.mjs:266:15)
+      at Object.processRollingPreferenceRecovery (eval at receiver (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:743:21), <anonymous>:16:12)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1073:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1063:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

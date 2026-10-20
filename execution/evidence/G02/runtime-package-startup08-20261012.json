@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "source": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "startedAt": "2026-10-12T08:46:31.997490+00:00",
+  "output": "/private/tmp/rolling-prover-release-startup08-20261012",
+  "archive": "/private/tmp/rolling-prover-release-startup08-20261012.tar.gz",
+  "applicationProfile": "rolling",
+  "qualificationScope": "Mixed legacy/Rolling prover-query runtime; node remains pinned separate fullnode image on nativeAMD64; not standalone nativefullnode qualification",
+  "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e",
+  "bootstrapSha256": "006470c66eb718a3e626f24b23b9b264b144fcc8993f6116cdacae925c10296c",
+  "startupStageHelperSha256": "5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9",
+  "notRootIntegration": true,
+  "pins": {
+    "NODE_SHA": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+    "BB_SHA": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+    "CATALOG_SHA": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+  },
+  "verifiedFiles": 72537,
+  "internalSymlinks": [
+    "node/bin/corepack",
+    "node/bin/npx",
+    "node/bin/npm"
+  ],
+  "completeFileSetVerified": true,
+  "rollingCatalogLoadPassed": true,
+  "archivePassed": true,
+  "noUpload": true,
+  "noPaidAction": true,
+  "archiveBytes": 383881211,
+  "archiveSha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+  "archiveRegularFiles": 72535,
+  "archiveSymlinks": 3,
+  "finishedAt": "2026-10-12T08:47:23.286622+00:00"
+}

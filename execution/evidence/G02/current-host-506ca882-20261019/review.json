@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "506ca88234424152d7438dcee016ae57d7fa06cc",
+  "verdict": "approved-scoped-D1-query-readiness",
+  "blockingFindings": [],
+  "instance": "i-09e2dbeea10854dc8",
+  "observedAt": "2026-10-19T00:03:02.579650+00:00",
+  "manifestSha256": "986706a5102c52babc7a5657b377e7ac2127fa2c705eedc5350fa3fa9a0f366e",
+  "reportSha256": "5df49cb57aa0ff78539d8fe3c92f6c6ff3b51ce1f09ab0748da728fe90e5cc44",
+  "evidenceDigests": {
+    "qualification.json": "4b9c35db3e2b72e30f15a777b90e5f5aea8e5f5aacff7a8a6a3fa7947f2e1036",
+    "public-node-info.json": "20ff966f56cea20ff08703727f4c5f6b01174ddef72c406590013d61096dd30c",
+    "binding.json": "328c271266a7d1514e4c0bccdb8b30f6b437e44c0f7d74b72f40c235227d45ef",
+    "qualification-read.result.json": "8006f693276ae0cb2a365d2bc91849f577e1d3c8990932ebca638e35971b2a9f",
+    "prover-release.json": "986706a5102c52babc7a5657b377e7ac2127fa2c705eedc5350fa3fa9a0f366e"
+  },
+  "checks": [
+    "Qualification projection exactly matches successful SSM raw stdout; command instance matches packet.",
+    "Every projected required check is actual boolean true, including process exit, wrong identity, proof configuration floor, native/catalog, missing helper, unchanged manifest, strict-policy freshness and cleanup.",
+    "Local manifest exact digest986706a5 matches runtime receipt, sourceCommit506ca882 and git hashes for bootstrap, qualifier, trusted-node inspector and private-query.",
+    "Node metadata matches Sepolia11155111/rollup3409706519/0xed1eb2eb670b42e2fb5a478c076a264b9604089d; rc.3 and realProofs true.",
+    "Canonical healthy anchors advance7920 to7921; readiness latest/checkpoint7920 finalized7887, actual lag4s.",
+    "CloudFront recorded Deployed VPC origin points to this exact instance port8083; independent host budget timer readback remains02:30UTC alongside separate controls/application monitors."
+  ],
+  "scope": "Actual current-network query composition/readiness. Does not close whole D1 application-scoped prover/deployment or D2 wallet/proof acceptance.",
+  "limits": [
+    "Reviewer made no live calls, tests, transactions or cloud mutations; reviewed retained observations.",
+    "Stricter one-second policy coverage is not a120-second outage/recovery claim.",
+    "Raw qualifier report digest is declared by bound result; parent is collecting raw report for supplementary verification, not another test.",
+    "Public RPC response body is retained; successful authenticated invocation is lead-recorded, with credential intentionally not retained.",
+    "Deployer proof/submission-unknown reported separately: no replay or application success implied."
+  ],
+  "rawReportAddendum": {
+    "path": "execution/evidence/G02/current-host-506ca882-20261019/qualifier-report.json",
+    "sha256": "5df49cb57aa0ff78539d8fe3c92f6c6ff3b51ce1f09ab0748da728fe90e5cc44",
+    "verdict": "consistent with existing scoped approval",
+    "observations": [
+      "Source506ca882 and manifest986706a5 exact binding; query-only composition, proofJobs0, no queue or worker.",
+      "Actual strict1s policy rejects STALE at2s while ordinary120s policy remains healthy before/after; cleanup all true. This is stricter-policy real-state coverage, not an actual120s node outage.",
+      "Actual normal canonical anchors7920 and7921; remaining application/proof/privacy gates explicit."
+    ]
+  }
+}

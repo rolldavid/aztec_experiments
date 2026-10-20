@@ -1,0 +1,17 @@
+✔ development query gateway pins existing disabled service and canonical compact tier (7.109709ms)
+✔ development native RPC mounts original compact route and retains ordinary node RPC (23.471083ms)
+✔ development compact shutdown waits for its original pending native request (24.240458ms)
+✔ service derives compact origins from existing server policy and requires explicit query node (0.953208ms)
+✔ same existing server serves fixed compact route with original origins and readiness checks (35.513667ms)
+✔ disabled compact endpoint remains absent (3.772333ms)
+✔ compact has separate bounded read admission and cannot bypass it with forwarded headers (4.596709ms)
+✔ configured trusted proxy requires valid client identity and keeps clients separate (4.212667ms)
+✔ default compact allowance permits more than six reads without spending proof quota (7.257542ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2936.269083

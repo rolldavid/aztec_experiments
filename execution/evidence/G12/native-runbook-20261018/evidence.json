@@ -1,0 +1,69 @@
+{
+  "base": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "candidate": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+  "task_id": "G12-native-runbook",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "candidate": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "task_id": "G12-native-runbook",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='current development defaults|development flags reject|selected state and separate|default development directories' plugins/devnet/operator-test.mjs",
+      "environment": "macOS pinnedNode24; doc-only configuration/source checks",
+      "observed": "Four focused configuration checks pass; source/lifecycle comparison approved; no service or build",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/native-runbook-20261018/review.json",
+          "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+    "candidate": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+    "task_id": "G12-native-runbook",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G12/native-runbook-20261018/review.json",
+        "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "candidate": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "task_id": "G12-native-runbook",
+      "id": "RC36-native-development-instructions",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/native-runbook-20261018/review.json",
+          "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5"
+        }
+      ]
+    },
+    {
+      "base": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+      "candidate": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "task_id": "G12-native-runbook",
+      "id": "RC38-accurate-recovery-limits",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/native-runbook-20261018/review.json",
+          "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5"
+        }
+      ]
+    }
+  ]
+}

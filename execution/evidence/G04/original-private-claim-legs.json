@@ -1,0 +1,23 @@
+{
+  "source": "58fb2d7",
+  "scope": "Read-only original encrypted backup private commitment checks; only booleans exported",
+  "passed": true,
+  "originalFundingJournalPresent": true,
+  "derivedCollateralMatches": true,
+  "loadedCollateralMatches": null,
+  "derivedFeeMatches": true,
+  "bokSecretMatches": true,
+  "bokCommitmentMatches": true,
+  "claims": {
+    "collateral": {
+      "status": "claim-ready"
+    },
+    "bok": {
+      "status": "claim-ready"
+    },
+    "private-fee": {
+      "errorClass": "Error",
+      "code": "ROLLING_FUNDING_MISMATCH"
+    }
+  }
+}

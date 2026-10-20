@@ -1,0 +1,11 @@
+✔ disarming corruption leaves SDK cache polluted; restoration refetches authentic membership (1.7545ms)
+✔ restoration rejects a reset that fails to reach the source (0.803542ms)
+✔ restoration rejects a source response inconsistent with canonical membership (0.441792ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 503.859042

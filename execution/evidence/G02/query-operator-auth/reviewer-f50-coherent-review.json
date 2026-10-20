@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T20:07:45.150515+00:00",
+  "reviewer": "independent-reviewer",
+  "candidate": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+  "base": "4d9198d1ad3e874b23feb90c7e2a8d42e3c7a644",
+  "verdict": "PASS_SCOPED_COHERENT_COMPONENT_INTEGRATION",
+  "blockingFindings": [],
+  "source": {
+    "apps/rolling/reader.browser.test.mjs": {
+      "blob": "bb3894bb4a4d854c433c3d1971ceb9e243591e8d",
+      "reviewedByteMatches": [
+        "3b7941d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "apps/rolling/wallet-panel.browser.test.mjs": {
+      "blob": "86d475bb3c66ac71390d8d875c8f294aa75d53d4",
+      "reviewedByteMatches": [],
+      "mergedOnlyPreviouslyReviewedTestCase": true
+    },
+    "apps/rolling/wallet-panel.mjs": {
+      "blob": "237f606484537b9727c1b5bd45ee1f217c0a6ae2",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "apps/rolling/wallet-runtime.mjs": {
+      "blob": "0a5662695a5fe15fe6e69c4656abdd05e2967f3b",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "apps/rolling/wallet-session.mjs": {
+      "blob": "f3a59100bd7867b40cc734a04937f92d888022ec",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "apps/rolling/wallet-session.test.mjs": {
+      "blob": "6927b170e4a79e5aecc907b56c34b872b2abcfb5",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/test-c01-native-profile.mjs": {
+      "blob": "fe94d7bdfc8462553e58acb2a810e990918fbdcd",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/test-w03-ethereum-journal.mjs": {
+      "blob": "6ab0788d539060421a8e702fb48c144ac32a3347",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/private-bok-fixture.mjs": {
+      "blob": "01e5f5cc29e28f8e014e22acab5a7c05cc23b7b9",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/private-bok-fixture.test.mjs": {
+      "blob": "6a6fca4ce4990b13cf1dbfe8236995d6ceed9ba0",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-application-fixture.mjs": {
+      "blob": "f45cad604ca90aafd960dcb9d20cc35010a2cf44",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-application-fixture.test.mjs": {
+      "blob": "16a46b4c0c8093cdf484ee966b031ab058c0e8bb",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-acceptance.mjs": {
+      "blob": "818c205753694536d4550e268f659aa63f0ad884",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-acceptance.test.mjs": {
+      "blob": "0b31c7c1b7e89956c334fd2b57b4659800711d8b",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-browser.mjs": {
+      "blob": "038aa722c4faa04cfc5c324ffcae5cbf84542592",
+      "reviewedByteMatches": [
+        "3b7941d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-browser.test.mjs": {
+      "blob": "7c9ba4655f2959afea5aa07fe5b8025d416c8df9",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-fixture.mjs": {
+      "blob": "0d689f11ed4ba15631e2da5a65c2a079ede37037",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-notification-fixture.test.mjs": {
+      "blob": "ac8adfbbfc3c68104d85aad589e0f36465cc75b2",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-wire-campaign.mjs": {
+      "blob": "bae96c9b7da04f121e22dde2f5a1ad72bb0e9385",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/rolling-wire-campaign.test.mjs": {
+      "blob": "df4b630b93a08ac0a9d2f6670cc24a4953e19a9e",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/run-application.mjs": {
+      "blob": "f12acf5cc7fa89c2521bacd13243af2a09cc5982",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/scenario-flows.mjs": {
+      "blob": "cc6dea590a29671d7a09e87e1e03a005ceef4b4b",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "scripts/testing/scenarios.mjs": {
+      "blob": "c555befe4691c58376447cfc04f5fe0c4c3d0293",
+      "reviewedByteMatches": [
+        "17f8a03",
+        "3b7941d",
+        "0b6d66d"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "shared/ethereum-journal.mjs": {
+      "blob": "9770676c7228a6cf6b9c15ea82ad96ae5c7e0662",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "shared/rolling/application.mjs": {
+      "blob": "8e02e62bf0d03b8f2aafaef494dc73415aef8a1d",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "shared/rolling/application.test.mjs": {
+      "blob": "adaf039687543c8af06efd660b72fa13015d210a",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    },
+    "shared/sdk-entry.mjs": {
+      "blob": "7fd06410946a408c86364fd104d66b6253802060",
+      "reviewedByteMatches": [
+        "17f8a03"
+      ],
+      "mergedOnlyPreviouslyReviewedTestCase": false
+    }
+  },
+  "priorReviews": {
+    "reviewer-17f8-funded-recovery-review.json": "4247423c55d58827c34d2a246ef4e81121d1665c6d824b84f65eca683496943a",
+    "reviewer-0b6d-completed-components-review.json": "c1767eeaac0b0381a940fa3e1c534f04a5403facb9ef84585a43abe92441eebe",
+    "reviewer-3b794-notification-partial-review.json": "7f9abc70b7bb27d912b8aeb86e804e34712b971651ffdf7e1ba6e5f4a5032a08"
+  },
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/G04/bok-funding-journal/component-results.json": "0a39e07fdd1e6565b6d4af9389e2d3c783856be8d8040d7e15b4e9dabd703071",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/native-browser-development/interim-results.json": "974747c2ceb2494b901b21e051d99ab841bbbd93deaacc83601da8e0702b5ccd",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G14/operator-devnet/working-journey-summary.json": "d384f6fc89b78425d17ad3da334daeb50d81010e23c62874c321b0a7407f69f1"
+  },
+  "verification": {
+    "fundingLogHashesAllMatch": true,
+    "sourceChangesSinceFunding17f": [
+      "apps/rolling/reader.browser.test.mjs",
+      "apps/rolling/wallet-panel.browser.test.mjs",
+      "scripts/testing/rolling-notification-browser.mjs"
+    ],
+    "sdk8OutputHashesMatch": true,
+    "wallet24OutputHashesMatch": true,
+    "changesSince17fIntersectSdkOrWalletInputs": false,
+    "panelMergedCaseByteEqualReviewed3b": true,
+    "replacingMergedCaseWith17fCaseRestoresEntire17fFile": true,
+    "newTestsRunByReviewer": false
+  },
+  "focusedPanelDisposition": "No additional focused replay required: sole hybrid file combines funding additions unchanged from the 73-pass panel suite with the exact already-tested 3b notification case. No other merge difference exists in that file.",
+  "acceptedScope": [
+    "G04 existing encrypted Ethereum journal authenticates direct Bok deposit calldata including secretHash; unknown outcomes do not authorize replay. Receipt recovery uses canonical verifier, private claim store, revalidation and explicit journalled single L2 send; optional first private fee claim stays in the same transaction.",
+    "Native development configuration, zero-proof accounting and production true/local-development guard carry unchanged reviewed sources.",
+    "Social61457 actual six-write native-disabled journey, persistent canonical SQLite/HTTP fresh and reopened sessions, zero proof jobs, canonical refetch and bounded wire checks pass. Request coverage is explicitly incomplete for opaque transactions; no wider anonymity claim.",
+    "Operator wallet30035 and constructor67940 establish scoped native-disabled wallet restoration, one canonical constructor send and same-journal read-only reconciliation; no public-wall freshness or hosted lifecycle claim.",
+    "Funding normal SDK/wallet build and actual SDK browser unlock evidence bind unchanged build inputs; actual new funding claim remains unqualified."
+  ],
+  "remaining": [
+    "Actual notification4443 FAILED final fresh keys-only recovery timeout; full notification restoration is not accepted. Earlier four canonical paid transactions, unread/marker/suppression/lock observations do not establish the missing final reopen.",
+    "Actual combined collateral/private-fee claim, aggregate ETH/USDC funding, wallet gas/liquidity and paid posting acceptance remain open.",
+    "Real-proof testnet, full privacy/resource/archive acceptance, hosted provider lifecycle and release gates remain separate."
+  ],
+  "integrationNote": "Independent source/component approval only; parent owns existing integration gate. Historical failures and partial evidence remain unchanged.",
+  "notificationUpdate": {
+    "status": "FAILED",
+    "sourceUnchanged": true,
+    "receipt": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/native-browser-recovery-fixed/actual.json",
+    "sha256": "5705f46a89ea9ccaf22c724b62e77ca2b73a6da2b1fb24b1a0e4e7af14ec8dba",
+    "disposition": "Does not invalidate scoped component integration; actual full notification acceptance stays open."
+  }
+}

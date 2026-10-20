@@ -1,0 +1,57 @@
+{
+  "candidate": "f27b9591b76a835c8238d81c44c58984af946552",
+  "base": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
+  "task_id": "G01",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "f27b9591b76a835c8238d81c44c58984af946552",
+      "base": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
+      "id": "integration-gate-negative-and-positive",
+      "status": "pass",
+      "command": "python3 -m unittest discover -s execution/tests -p test_integration_gate.py -v",
+      "environment": "macOS local, Python3.14.3, Git2.50.1, candidate worker checkout",
+      "observed": "19 tests passed; failed assertion and missing review block disposable integration; checked-out/racing/stale refs rejected",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "evidence/G01/gate-tests.log",
+          "sha256": "7ab981beb635d5942b116a8af06c96f3f4515aeff01b7943799566052073994a"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "f27b9591b76a835c8238d81c44c58984af946552",
+    "base": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "implementer": "/root/controls",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G01/controls-review.json",
+        "sha256": "eaf7505ea5ee470f3af387064880098019fc685044d3bce03fd3f170b2d07074"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "f27b9591b76a835c8238d81c44c58984af946552",
+      "base": "458724c59ce4656f4c311a07d6651d9f8c33ec1b",
+      "id": "G01-A01",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G01/gate-tests.log",
+          "sha256": "7ab981beb635d5942b116a8af06c96f3f4515aeff01b7943799566052073994a"
+        },
+        {
+          "path": "evidence/G01/controls-review.json",
+          "sha256": "eaf7505ea5ee470f3af387064880098019fc685044d3bce03fd3f170b2d07074"
+        }
+      ]
+    }
+  ]
+}

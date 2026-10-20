@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-12T07:09:51.562278+00:00",
+  "readOnly": true,
+  "noServiceMutation": true,
+  "message-board-deploy": {
+    "authenticated": true,
+    "account": "052665140763",
+    "roleArn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson"
+  },
+  "message-board-sso": {
+    "authenticated": true,
+    "account": "052665140763",
+    "roleArn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute_f90529f105b748df/zac-williamson"
+  },
+  "plugin": {
+    "httpStatus": 200,
+    "status": "ready"
+  }
+}

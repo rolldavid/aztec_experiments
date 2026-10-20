@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:24:58.360595+00:00",
+  "reviewer": "reviewer-20261011",
+  "candidate": "dd3e2bc4e4cf9fe37bf5269deae108d0c4d89d7a",
+  "verdict": "approved-source-for-one-bounded-read-only-diagnostic-after-lead-grant",
+  "findings": [],
+  "changedSourceSha256": {
+    "deploy/prover/rollup-compatibility-diagnostic.mjs": "ffbf49fa4fa8329f74c69376d16d058ac5d4b92013085be7ffa9ef82cba3fbd7",
+    "deploy/prover/rollup-compatibility-diagnostic.test.mjs": "1c12b8e2bd9ba59f8f44719785b87df57feffe3a8fa2d6a33c7b1591147f2655"
+  },
+  "independentTests": {
+    "command": "NODE_BACKEND=js pinned Node24.21.0 --test --test-concurrency=1 deploy/prover/rollup-compatibility-diagnostic.test.mjs",
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1977.694917,
+    "exitCode": 0,
+    "providerCalls": 0,
+    "disposableTimeoutChildReaped": true
+  },
+  "sourceAssessment": {
+    "expectedGenesis": "Pinned standby.computeExpectedGenesisRoot with effective false/false/[] calls getGenesisValues([]); defaults yield canonical protocol nullifiers, no public prefunds, timestamp0. Pinned DEFAULT_GENESIS_DATA documents GENESIS_ARCHIVE_ROOT derived from this same genesis. This review uses source equivalence, not a new native root computation.",
+    "sourceBinding": "Rehashed both changed files and all13 retained image modules against installed and expected bytes. Independently decoded actual09 gzip/LZMA using AST only, checked payload digest and exact tokenized HOST suffix, and absence of genesis/rollup override environment channels. Image ENV absence relies on reviewed static extractor/binding evidence; no new Docker execution.",
+    "registry": "Actual RegistryAbi distinguishes getCanonicalRollup from getRollup(candidateVersion); no wrapper fallback or automatic target substitution. Both rollups independently read when addresses differ; scope drift prevents passed=true.",
+    "constants": "Actual ABI archiveAt(0), getVkTreeRoot, getProtocolContractsHash, and getVersion at one captured block number. Values closed to field/uint32; bytecode present, bounded and hashed. All comparisons retained before continuity decision.",
+    "continuity": "Same numbered block hash and timestamp plus canonical and registered addresses rechecked. A new snapshot only; historical09 mismatch field not inferred.",
+    "privacy": "Fixed network/provider, source pins, finite phase/category/mismatch fields, canonical public numbers/hashes only. Foreign error strings and getters excluded through reviewed numericError. stdout/stderr child ignored.",
+    "lifecycle": "Fresh exclusive0600 receipt before child, bounded<=16KiB fsynced phase records, no operator retry/fallback.59s deadline plus250ms kill escalation, wait for close and final cleanup. Installed SDK transport retries remain explicit. No wallets, sends, native genesis or paid services."
+  },
+  "evidence": {
+    "rollup-compatibility-dd3-review-packet.json": "c48d0d709d157ae7b20cdcbf27fa3a28ddaf37f2bcc7a271cf572e425a5e846f",
+    "operator09-compatibility-image-equivalence.json": "93f51059aeccc9f54846f740a3fb09bd8a1652f6808f053fc4d6e1e039163a9e",
+    "operator09-compatibility-image-binding.json": "a4221b6341ad60fb5d91bbf3fb75126730c9dce2c01207bc5478a01758f9dc42",
+    "operator09-compatibility-config-binding-evidence.json": "07e1c89fe5deba905e28b2e0a66744fcf081c5fb15f5ccb0d9886ed4cc1808e5",
+    "operator09-compatibility-diagnosis-review.json": "87bf9fa5b6eda81aa36cf9c9a328f080407ce078b7361efe6e3bdd9fb4d185cf",
+    "rollup-compatibility-dd3-independent-tests.log": "058256bba8e25cbf3b0881df255a5e58bc57059269042e948d17726d99075f68"
+  },
+  "livePrerequisites": [
+    "Run exact dd3 source and reviewed image-binding file only after lead grant",
+    "One invocation with new absolute receipt; preserve failure/partial data, no automatic repeat",
+    "Keep all source pins and fixed target/provider unchanged; live result cannot authorize startup bypass"
+  ],
+  "limitations": [
+    "No Linux execution or full-node readiness qualification",
+    "No cryptographic remote-runtime attestation from static image equality",
+    "No reconstruction of which constant mismatched at historical09",
+    "Current compatibility or incompatibility is evidence for next engineering decision, not deployment permission"
+  ]
+}

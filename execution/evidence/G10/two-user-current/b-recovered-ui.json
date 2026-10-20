@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-14T12:19:37.929623+00:00",
+  "applicationRevision": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "generatedRevision": "d83516a91a55d15a2c6a3948486e9831fe422411",
+  "appUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/latest/",
+  "sourceUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/source.json",
+  "sourceArchiveSha256": "da4bd9b234c0a0715a0c21efc649c603ceb17042aaca385be0725c0b5a7ab8c5",
+  "browser": "Codex in-app browser, actual CUA accessibility and screenshot",
+  "observations": [
+    "Default bill80/tip12.5 displays10.00 tip and90.00 total",
+    "Set bill100 via labelled input displays12.50 tip and112.50 total",
+    "Restore80 then Tab focuses tip percentage; visible focus ring",
+    "Readable single-column layout, labelled controls and result regions"
+  ],
+  "limits": [
+    "Original automated request ended without publication; this is operator recovery acceptance only",
+    "Cross-user next-turn history/revision reuse remains pending"
+  ]
+}

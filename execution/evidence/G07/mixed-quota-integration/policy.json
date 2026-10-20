@@ -1,0 +1,61 @@
+{
+  "base": "57c1582cd76770af0ffb6c11573d6bbc701c7da6",
+  "candidate": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-G02-mixed-quota-controls-integration",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json",
+    "deploy/prover/bootstrap.py",
+    "prover/compact-block-native.mjs",
+    "prover/compact-block-native.test.mjs",
+    "prover/compact-service.test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs",
+    "prover/server.mjs",
+    "scripts/patch-pxe-preference-page.mjs",
+    "scripts/test-prover-bootstrap.py",
+    "scripts/test-pxe-preference-page.mjs",
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs",
+    "shared/rolling/compact-client.mjs",
+    "shared/rolling/compact-client.test.mjs"
+  ],
+  "required_checks": [
+    "focused-combined",
+    "bootstrap",
+    "native-installer",
+    "actual-sdk-acir",
+    "generated-closure"
+  ],
+  "requirements": [
+    "G07-authenticated-mixed-recovery-component",
+    "G02-bounded-host-resource-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-G02-mixed-quota-controls-integration",
+      "paths": [
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/sdk-manifest.json",
+        "deploy/prover/bootstrap.py",
+        "prover/compact-block-native.mjs",
+        "prover/compact-block-native.test.mjs",
+        "prover/compact-service.test.mjs",
+        "prover/private-query.mjs",
+        "prover/private-query.test.mjs",
+        "prover/server.mjs",
+        "scripts/patch-pxe-preference-page.mjs",
+        "scripts/test-prover-bootstrap.py",
+        "scripts/test-pxe-preference-page.mjs",
+        "shared/rolling/cold-preference-reader.mjs",
+        "shared/rolling/cold-preference-reader.test.mjs",
+        "shared/rolling/compact-client.mjs",
+        "shared/rolling/compact-client.test.mjs"
+      ]
+    }
+  ]
+}

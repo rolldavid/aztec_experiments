@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "candidate": "d32a0d0bcb88bbf1dcc0b06a5b92b2f3045ed143",
+  "verdict": "approved",
+  "findings": [],
+  "sourceScope": [
+    "scripts/t04-metamask.mjs",
+    "scripts/test-t04-browser-journey.mjs"
+  ],
+  "sourceSha256": {
+    "scripts/t04-metamask.mjs": "6084ea7d5d0a337e4bfe6d3daf95676067f730c19bc442fa3d1e68b5f6ad3403",
+    "scripts/test-t04-browser-journey.mjs": "c55b5861c8389a239c2545541cb9523c0d3b5084575880fc2eefbf8dd2e85e2e"
+  },
+  "additionalCommitPaths": [
+    "execution/evidence/G14/continued-campaign/c-prepared-failure.json",
+    "execution/evidence/G14/continued-campaign/confirmation-focused.log"
+  ],
+  "checksPerformed": [
+    "Read code delta and two new failure tests. Existing alert race is reused for confirmation outcomes, each followed by unchanged exact prepared/confirmed inspection. No extra click, retry, relaxed deadline or changed application/crypto code.",
+    "Independent4existing preparation/confirmation failure checks PASS0skip346.269ms. Failed authorization permits only its first click; failed publication permits only original authorization and publication clicks, never confirmed inspection for failed phase.",
+    "Read original failed C evidence and fresh no-send current evidence: exact same content/budget400000, authorization/prepared, absent C hashes; inspected journal belongs to original B predecessor and not current intent. Fresh runtime no alert/Confirm visible;0node/proof/L1 submissions. Fresh artifact t04 source hash equals reviewed revision.",
+    "Read actual application reconcile and submission contract: prepared reconcile only echoes saved state, so it cannot independently prove no-send. Distinct predecessor journal identity plus existing durable submit fence are required."
+  ],
+  "continuationDisposition": "Safe bounded operator continuation may use the exact existing saved draft Confirm action, after fresh scope/content/budget/fee/canonical predecessor and current-intent-no-journal checks. Record a separate exclusive durable continuation intent; preserve original entered sentinel. Never repeat prepare, replace nonce/request, or treat missing receipt as absence. If current intent has submitting fence/unknown result, stop to read-only recovery. Root owns release and fresh service qualification.",
+  "criticalInvocationNote": "driveRetainedBokConfirmations starts by filling composer and preparing anew; it is not itself a saved-draft continuation entrypoint. Use existing saved-action session/UI continuation and its reviewed failure wait logic, not function restart.",
+  "evidenceSha256": "c7876742c4a0153ed8e9c4a455c18811aefa3be32b475c19d3260721bab55609",
+  "limitations": [
+    "Original run remains failed; interruption/sampling gap is not continuous latency or success evidence.",
+    "No actual continuation, model, wallet or service operation performed by reviewer."
+  ]
+}

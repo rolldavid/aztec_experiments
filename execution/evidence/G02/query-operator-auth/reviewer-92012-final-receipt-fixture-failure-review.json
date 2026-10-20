@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "2192a2bb813e6d9751f7195acd34323c4a507b2a",
+  "actualPacketSha256": "0bedeb06169fadf8810bb535109ace637093e337e7b98a33d81c76f13a797ce7",
+  "verdict": "CONFIRMED_FIXTURE_CONTEXT_LEAK_NO_PRODUCTION_FAILURE_INFERENCE",
+  "session": 92012,
+  "tests": 104,
+  "unaffectedPassed": 103,
+  "elapsedMs": 5780,
+  "peakRSSKiB": 441440,
+  "cleanup": true,
+  "diagnosis": [
+    "New RELEASE=ROOT and startup digest remain set after constructing qualification fixture.",
+    "final_receipt startup_observation now invokes --startup-observation through existing broad run double, which records every command as shutdown.",
+    "Success gets extra shutdown label; disk failure gets string instead of expected first diagnostic bytes, causing TypeError."
+  ],
+  "repair": "Scope RELEASE and copied PINS in patch.dict only while actual packaged projection/anchor helpers build q; restore original final_receipt fixture boundary. Keep all assertions and real pinned-support separate case.",
+  "next": "Exact test-only diff review, smallest existing case once, then103 unchanged case carry if source remains identical. Historical full104 stays failed."
+}

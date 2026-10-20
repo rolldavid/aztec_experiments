@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:01:04.598053+00:00",
+  "candidate": "a18973f53bffc4c2b7b54c8c227b759e17a87290",
+  "verdict": "REPORTING_MISMATCH_CONFIRMED; preserve active trial and original aggregate resource limits",
+  "scope": "Read-only source trace and existing selected-integer owned-process observations; no process mutation or native execution.",
+  "sourceSha256": {
+    "scripts/testing/assets.mjs": "dc3657900eae39c00e59202f1a9920881a0bd103b4e9dc15de3f77b66c039d40",
+    "scripts/c01-real-node.mjs": "c1e7dbc527f47d7822a0a073cb632c07135dafb69997e47f3057905285b4a2f1",
+    "node_modules/@aztec-labs/aztec-node/src/factory.ts": "635aa31957f4b5378af8f6bb9260815a548142e469ac96fa8eeac6d68a80214d",
+    "node_modules/@aztec-labs/aztec-node/dest/factory.js": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5",
+    "node_modules/@aztec-labs/world-state/src/synchronizer/factory.ts": "6d09ea1adac1cf44a79a23c0977dce3d843ff4df5619534413a46937504f0471",
+    "node_modules/@aztec-labs/world-state/dest/synchronizer/factory.js": "3fcf47a2b1782d2d5c13295f792b57ebedf73225694e1818d6f29e112dcb3cac",
+    "node_modules/@aztec-labs/world-state/src/synchronizer/config.ts": "539ab156534cc73ff20a18655c6ea4f720577598543b3c0e0550bebab97fbc3c",
+    "node_modules/@aztec-labs/world-state/src/native/native_world_state.ts": "ef91a2717dfd141f6e7e15764c5d59a2546dae0179db65772d357a162c94db54",
+    "node_modules/@aztec-labs/world-state/dest/native/native_world_state.js": "873b731ac10851e77a0ce73f4fac558161ca3a6c3e7487591a12b414dda96202",
+    "node_modules/@aztec-labs/world-state/src/native/ipc_world_state_instance.ts": "a1c009f03717f11af91c86c66b7220af824611db1e5dc3b8ad85b580fcf06b5f",
+    "node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js": "942559f9fb54597b03966c75c2509d50dd2fd3aeab67e76b9b569c81ad5ec988"
+  },
+  "observations": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/genuine-browser-a189/environment-samples.jsonl",
+    "snapshotSha256": "a438bb8f4e10b8b1bfbf7cd72f394b8ea0a42eae4a9e28f16040ff013fa0a5bb",
+    "snapshotBytes": 2480,
+    "records": 2,
+    "timestamps": [
+      "2026-10-13T02:53:53.608655+00:00",
+      "2026-10-13T02:57:10.429012+00:00"
+    ],
+    "worldState": [
+      {
+        "at": "2026-10-13T02:53:53.608655+00:00",
+        "pid": 92219,
+        "ppid": 92188,
+        "executable": "aztec-wsdb",
+        "HARDWARE_CONCURRENCY": 12,
+        "C01_APPLICATION_BB_THREADS": 2
+      },
+      {
+        "at": "2026-10-13T02:57:10.429012+00:00",
+        "pid": 92219,
+        "ppid": 92188,
+        "executable": "aztec-wsdb",
+        "HARDWARE_CONCURRENCY": 12,
+        "C01_APPLICATION_BB_THREADS": 2
+      }
+    ],
+    "limitation": "File may append later. Selected initial environment values and source-selected thread counts are not measured CPU parallelism or total OS thread counts."
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "scripts/testing/assets.mjs",
+      "line": 93,
+      "finding": "worldStateHardwareConcurrency=1 is a hardcoded report value, contradicted by current aztec-wsdb HWC12 samples."
+    },
+    {
+      "path": "scripts/c01-real-node.mjs",
+      "line": 20,
+      "finding": "Configured persistent node dataDirectory leads through aztec-node factory createWorldState to NativeWorldStateService.new."
+    },
+    {
+      "path": "node_modules/@aztec-labs/world-state/src/native/native_world_state.ts",
+      "line": 91,
+      "finding": "Persistent first spawn and recreate omit threads. No thread field is accepted by the inspected WorldStateConfig/createWorldState config path."
+    },
+    {
+      "path": "node_modules/@aztec-labs/world-state/src/native/ipc_world_state_instance.ts",
+      "line": 164,
+      "finding": "Default is min(16, cpus().length); spawn passes this value as --threads and HARDWARE_CONCURRENCY, overriding parent environment."
+    }
+  ],
+  "supportedConfiguration": {
+    "persistentFactory": "No supported thread override exposed by this installed factory/config path. Existing parent HWC and BB wrapper options do not set WSDB threads.",
+    "lowerLevel": "IpcWorldState.spawn accepts explicit threads; NativeWorldStateService.tmp accepts threads and ephemeral selects 1. Those are different construction/storage APIs, not an interchangeable persistent node config fix. Even ephemeral comment notes IPC dispatcher pool floor2; requested1 is not all OS threads1."
+  },
+  "requiredCorrection": [
+    "After active run settles, replace hardcoded WSDB report with explicitly labelled SDK-default configured value and provenance, optionally pair with separately recorded actual child observation. Keep application BB, node BB and WSDB profile fields distinct.",
+    "Append this correction to prior eligibility/runtime resource descriptions rather than rewriting historical receipts. Prior runs on identical rc3 path used the same selection rule by source inference; no historical observed12 claim without their own sample.",
+    "If a requirement specifically mandates WSDB1, require a separately scoped supported construction/configuration change and affected lifecycle/recreate tests before a changed run; do not silently wrap binaries or switch persistent storage."
+  ],
+  "claimsRetained": [
+    "Current whole-owned-tree 4GiB and 540s bounds remain independently enforced; the observation alone is not grounds to kill or rerun the trial.",
+    "Current observed application BB HWC2 and node BB HWC1 remain distinct claims; trusted worker and browser native settings require their own observations/source binding.",
+    "Functional/privacy/accounting acceptance remains outcome-dependent; this report supplies no genuine browser pass."
+  ],
+  "claimsExcluded": [
+    "All-process1 or all-process2 configuration",
+    "Measured CPU parallelism",
+    "Historical per-process numeric observations not recorded at the time"
+  ],
+  "previousReviewCorrection": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/genuine-browser-a189-eligibility-review.json",
+    "reason": "Any world-state1 description based on assets.mjs is corrected by this additive report; application/node BB settings are separate."
+  }
+}

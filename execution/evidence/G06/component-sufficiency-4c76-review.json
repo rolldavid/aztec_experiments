@@ -1,0 +1,74 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "verdict": "component sufficiency preparation; no task closure while actual repaired recovery and final evidence binding pending",
+  "findings": [],
+  "requirements_source": "execution/tasks/G06.md G06-A01..A08; Draft3 pp3-4 and6; RC component scope retained",
+  "criteria": [
+    {
+      "id": "G06-A01",
+      "disposition": "Existing genuine anonymous687/reposte030/account-reactions-b0b37/reply-e58 plus social9745/reaction97d support owned canonical protocol behavior. No new all-in-one campaign is required.",
+      "remaining": "Bind historical behavior/source transitions and latest artifacts/tests to final candidate. Real provider-to-authenticated reply integration remains its owning Bok/workspace criteria, not inferred from synthetic charge reply."
+    },
+    {
+      "id": "G06-A02",
+      "disposition": "Actual992 social content and production composer992 preparation/996 rejection without truncation; actual removed-parent canonical tombstones and absence of reusable public author field.",
+      "remaining": "Use existing actual + DOM composition reviews; broader derived-linkage assurance remains explicit release condition."
+    },
+    {
+      "id": "G06-A03",
+      "disposition": "Actual parent/root/reference and authenticated moderator tombstone behavior supported by anonymous687/reply-e58. Existing reader safely omits removed text and preserves links.",
+      "remaining": "Final source composition; full moderation-model and complete UI criteria retained in G09, not marked done."
+    },
+    {
+      "id": "G06-A04",
+      "disposition": "No additional funded/proof campaign needed for rendering safety. Current model safeURL permits only absolute HTTP/HTTPS. Reader emits text nodes for markup and unsupported links; labelled HTTP links receive noopener/noreferrer. Composer grapheme count is explicitly paired with UTF8 bytes, validates992 without truncation. Existing actual composer and labelled DOM tests complement pure validators.",
+      "remaining": "Attach exact current reader/model/wallet-panel source hashes and existing browser review/log binding to final checklist; if later queued UI transfers change these files, obtain affected DOM review/tests."
+    },
+    {
+      "id": "G06-A05",
+      "disposition": "Actual canonical events for quotes/reposts/likes and same-account duplicate/unlike/removal cases support protocol component.",
+      "remaining": "Do not import unfinished encrypted bookmarks/follows/notifications or complete UI into this closure; retain mandatory G07-A03/G09-A08."
+    },
+    {
+      "id": "G06-A06",
+      "disposition": "Genuine owned-wire-e3 two accounts/two names each plus production composer7328 encrypted imports/private choices/Anonymous/account switch support composer identity component.",
+      "remaining": "No browser publication claim; full wallet funding/device-loss components stay G05/G04."
+    },
+    {
+      "id": "G06-A07",
+      "disposition": "Actual social9745/reaction97d requests + decoded canonical effects, owned-wire-e3, source privacy argument and construction routing form bounded engineering evidence. Live unavailable/stale/personalized-denial recovery is the outstanding actual scenario.",
+      "remaining": "Current4c76 recovery must pass complete wire/semantic conjunction and independent runtime review. f61 remains failed. Opaque/native/runtime-added headers, same underlying loopback node, timing/content and deployed operator topology are not certified; G13 independent specialist review and G14/deployment gates retained."
+    },
+    {
+      "id": "G06-A08",
+      "disposition": "Actual duplicate paid no-op/unlike and two-account tags plus source like_tag(account NHK,chain,version,board,post) independent of name establish alias-independent counting component. Name normalization and Unicode bounds are circuit-enforced delegated charset decisions: ASCII letters/spaces/apostrophe/hyphen,1-32 each, Bok reserved, unsupported Unicode explicitly rejected. Case/whitespace framing/hidden padding/malformed UTF8 tested.",
+      "remaining": "Reference current151-test profile protocol evidence and unchanged encoding/name-policy rather than only historical40-test foundation. Genuine concurrent two-pending normalized registration remains G05-A01/A08; it is not silently completed by G06 or a necessary extra G06 social run."
+    }
+  ],
+  "independent_checks": {
+    "map_artifact_hashes": "Every referenced preparation-map artifact SHA256 verified before reading its scope/limitations.",
+    "privacy_composition": "All19 candidate source hashes and same-as-ef533 flags independently verified;17 unchanged.",
+    "historical_bytes": "posting.nr,admission.nr,encoding.nr,name-policy.mjs,model.mjs are byte-identical at5e68,d1,249,e3,7328,2397,ef533 and4c76. Main contract/profile additions still rely on separately reviewed integration/source/build evidence; no blanket main.nr equivalence claim.",
+    "cheap_tests": {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 apps/rolling/model.test.mjs shared/rolling/name-policy.test.mjs shared/rolling/application.test.mjs",
+      "log": "/tmp/reviewer-g06-components-4c76-tests.log",
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 1218.973333
+    }
+  },
+  "final_composition_requirements": [
+    "Save current successful recovery report, inspect retained canonical effects/fees/proof job count/zero extra work during failures, both private recovery state and all cleanup; exact source and changed input hashes.",
+    "Link each criterion to its actual runtime review and current-source disposition; include current processed artifact/VK/catalog/Noir source checks and151TXE coverage. Missing, failed, stale or skipped evidence cannot pass.",
+    "Bind safe rendering/Unicode tests and existing browser evidence to exact deployed source/bundle assets; future queued UI or protocol merges invalidate affected evidence until reviewed.",
+    "Retain explicit bounded engineering privacy statement plus separate deployment topology, specialist audit, network clearance and soak gates. Do not claim full cryptographic unlinkability from address equality or scoped wire counters.",
+    "Only lead advances task state after exact independent final evidence review and enforceable gate. Current graph unchanged."
+  ],
+  "scheduling": "After the repaired actual recovery passes and the above final-source evidence conjunction is independently accepted, no additional G06-owned genuine scenario was identified from A01..A08. G07 may then begin under its existing dependency without waiting for unrelated remote Linux startup; G05 race, G09 full UI and G13 release obligations remain mandatory and open.",
+  "limitations": [
+    "No source/graph changes, heavy/browser/proof or services run by reviewer.",
+    "Not full-product privacy, remote node qualification, lost receipt after accepted send, G05 completion or production release approval."
+  ]
+}

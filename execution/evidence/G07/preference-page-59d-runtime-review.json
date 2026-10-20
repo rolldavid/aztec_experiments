@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T21:31:27.141758+00:00",
+  "source": "59d0c6cd9a9091966ab90ee5a3d73b8936ea2a19",
+  "verdict": "accepted_component_and_actual_ACIR_experiment_only",
+  "requirements": [
+    "G07-A01/A02 authenticated bounded preference-page admission",
+    "G07-A06/A07 scoped ownership, settle-time veto, atomic discard and reorg invalidation"
+  ],
+  "findings": [],
+  "runtime": {
+    "elapsedMs": 20886,
+    "peakRssBytes": 916373504,
+    "exitCode": 0,
+    "limitFailure": null,
+    "ownedGroupAbsentBeforeCleanup": true,
+    "ownedGroupAbsent": true
+  },
+  "tests": {
+    "tests": 52,
+    "pass": 52,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "independentAudit": {
+    "path": "execution/evidence/G07/preference-page-59d-runtime-audit.json",
+    "sha256": "da73cbecb34279fd0698531442ed293934714dd07d31791ac2bf65b704eb26b6",
+    "scriptSha256": "887009cb17a0d6b58aed37959a39531d289bf20baadcb3553eb2e295c171c151"
+  },
+  "sourceReview": {
+    "path": "execution/evidence/G07/preference-page-59d0-source-review.json",
+    "sha256": "d0a7a92034466bc351e6fe3ccf06e0807fd8c46339b1dee9c26ea914e2895733"
+  },
+  "evidenceHashes": {
+    "application-store-candidate-59d0c6c.json": "ad665de93874f2d0962bf66837392f89c1b36031720e2a98c0203e86e406d597",
+    "application-store-run-packet.json": "632dc65d94f945ddf5c8c4025b78f3af5e61c8fb2bcc537cba2c8419bf6939c9",
+    "application-store-run-1-intent.json": "9e575f611e736fef4a9f2f002d98470bc9391ffb0bad917492eff43a7cde940a",
+    "application-store-run-1.json": "2416ee97c6c0f17d7944285b5c6071b5a0fb1364ea18f774ad50dcf1a13f540e",
+    "application-store-run-1-summary.json": "8f159f8f5cb4d375683d47ea8c8352c4c7713ad28180dd270dd2252b45521108",
+    "application-store-run-1.log": "28eff3b24ece4196fd6d2a6b81d451e09b99f611674dbcbba096a2c8f7f40888",
+    "run-application-store-1.py": "c1d3e0f15ba7d3717208efe8f768da8a2dd3dc146599fc67a3aac807b5686053"
+  },
+  "checkedBehavior": [
+    "Processed artifact 799b44cd and its 14 private VKs are unchanged; actual ContractFunctionSimulator/WASMSimulator, encrypted emitted private logs, scoped key registration and original utility validators execute. Synthetic chain registration, receipts, initialization nullifiers and inclusion are explicitly labelled.",
+    "General multi-transaction ordinal, fee, execution-result and slot negatives reach actual SDK authentication before utility. The exact generated page method is exercised; unrelated PXE discovery and normal queue paths remain unchanged.",
+    "Positive ACIR page commits one authenticated event and one owner head note, exact event fields and head revision are asserted, admitted=2, no tag-discovery calls and no syncedContracts completion flag. Admitted count alone is not treated as durable success.",
+    "Both pristine-versus-patched settlement races are non-vacuous: pristine queue commits actual ACIR rows after canonical/account change, patched queue rejects and both event/note reads remain empty.",
+    "Receipt change during settlement, contributor failure, held contributor, final context veto and a later staged-store failure reject and drain; actual repaired application store rolls back both note and event writes.",
+    "Actual BlockSynchronizer prunes previously committed ACIR note/event rows, both stores indexes and contract-sync cache under a synthetic canonical prune to block3.",
+    "Queue captures the own-data guard before awaiting, invokes it after all contributors settle and before existing atomic coordinator; no-hook defaults and next-operation serialization are tested.",
+    "Both store fixtures use actual openPXEStore with full account/network/schema namespace and explicitly labelled Node fake-indexeddb. Owned databases are deleted, queue stopped, globals restored; all six observed process IDs and fixture directories remain absent at independent readback."
+  ],
+  "evidenceReconciliation": "Receipt sourcePacketSha256 632dc65d refers to execution run-packet, while summary sourcePacketSha256 ad665de9 refers to the reviewed candidate packet; both links were independently rehashed. No mismatch in executable source.",
+  "retainedFailures": [
+    "Historical legacy LMDBv1 partial-commit and native allocator/LLDB failures remain unresolved and are not reclassified as fixed. This experiment deliberately selects the actual application store.",
+    "Earlier native-v2 fixture setup failures and missing-directory failure remain historical; this pass is bound to different, reviewed store fixtures."
+  ],
+  "limits": [
+    "No new Chromium qualification: fake-indexeddb is a labelled Node platform double, although the adapter and repaired SDK store are actual b440 bytes.",
+    "No generated proof, real deployed-chain inclusion, fee conservation, cold synchronization/backlog capacity or full recovered preference history is established here.",
+    "The page tests reconstruct the exact generated method and call the original simulator utility bridge. This is not a production PXE service endpoint or complete application invocation.",
+    "The final chain/account check precedes the atomic local commit; it cannot make external chain state atomic with IndexedDB. Subsequent canonical/context revalidation before publishing recovered preferences remains mandatory.",
+    "Normal processing and successful ACIR execution do not clear unresolved compiler constraint diagnostics or specialist soundness gates.",
+    "No shared installed prototype mutation or integration advance is authorized by this runtime verdict."
+  ],
+  "nextDisposition": "Eligible for exact-byte component composition and its serial regression suite; any production consumer, current-rc3 port, SDK distribution, browser execution and full cold recovery require separate source/provenance/acceptance gates."
+}

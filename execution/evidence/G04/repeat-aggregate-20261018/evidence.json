@@ -1,0 +1,68 @@
+{
+  "base": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+  "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "task_id": "G04-repeat-aggregate-funding",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+      "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+      "task_id": "G04-repeat-aggregate-funding",
+      "id": "retained-aggregate-claim",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent aggregate-wallet and wallet-session suites; SDK/apps/wallet build and generated closure verification",
+      "environment": "Pinned Node24, finite SDK boundary doubles labelled",
+      "observed": "236 affected checks pass; generated SDK and wallet closure matches; retained claim allows successor after mutable workflow replacement, canonical rechecks remain. Legacy without completion not migrated.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/repeat-aggregate-20261018/review.json",
+          "sha256": "26ee7edcaa5f045d994feb26304d64b84f18219db5f04529ea01c367e5add8b6"
+        },
+        {
+          "path": "execution/evidence/G04/repeat-aggregate-20261018/component-result.json",
+          "sha256": "a2110ba88fb25e05fb30dc342e24c3e52e420ad0bb458c8d208f987c90ca2e13"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+    "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+    "task_id": "G04-repeat-aggregate-funding",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/repeat-aggregate-20261018/review.json",
+        "sha256": "26ee7edcaa5f045d994feb26304d64b84f18219db5f04529ea01c367e5add8b6"
+      },
+      {
+        "path": "execution/evidence/G04/repeat-aggregate-20261018/component-result.json",
+        "sha256": "a2110ba88fb25e05fb30dc342e24c3e52e420ad0bb458c8d208f987c90ca2e13"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+      "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+      "task_id": "G04-repeat-aggregate-funding",
+      "id": "RC18-RC22-successor-funding",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/repeat-aggregate-20261018/review.json",
+          "sha256": "26ee7edcaa5f045d994feb26304d64b84f18219db5f04529ea01c367e5add8b6"
+        },
+        {
+          "path": "execution/evidence/G04/repeat-aggregate-20261018/component-result.json",
+          "sha256": "a2110ba88fb25e05fb30dc342e24c3e52e420ad0bb458c8d208f987c90ca2e13"
+        }
+      ]
+    }
+  ]
+}

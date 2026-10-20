@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-resume2-20261018",
+  "at": "2026-10-18T19:29:42.634518+00:00",
+  "sourceRevision": "b27bec993257c24c38eaa6f72d63914f5e6370a9",
+  "verdict": "approve_premeasurement_interaction_clarification",
+  "requirement": "RC40 (predeclared search latency); RC04/RC10 directory/search behavior; not RC46",
+  "originalTarget": "directory/search results <=500ms after input debounce150ms",
+  "disposition": "For implemented explicit-submit search, retain <=500ms from user submission/Enter to visibly usable matching results. Include event handler, route/hash handling, request and rendering. No artificial debounce required.",
+  "reason": "Actual PDF requires subboard search/directory and measured predeclared search targets, not typeahead. reader.mjs150-151 uses accessible search form/button/Enter. Keeping500ms processing/render threshold while selecting its actual activation event is reversible interaction clarification before measurement, not retrospective threshold weakening.",
+  "constraints": [
+    "Record this decision before D5 measurements; keep cold/warm datasets/hardware/browser/network requirements.",
+    "Do not substitute HTTP-response-only timing or exclude route/render costs.",
+    "Do not infer a pass until actual result measured.",
+    "No requirement for retrospective typeahead implementation inferred from provisional target wording."
+  ],
+  "supersession": "targets.md14-day sentence superseded by18October owner amendment in execution/specification-clarifications.md;72hour deadline and bounded final reliability exercises apply.",
+  "findings": [],
+  "actions": "Read-only inspection of source/targets and PDF. No target/source edits or broad performance tests."
+}

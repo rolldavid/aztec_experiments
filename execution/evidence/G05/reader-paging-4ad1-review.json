@@ -1,0 +1,38 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "4ad1d5506aa136823c268183784af3291b3d1906",
+  "base": "d936cf855581ca9235cf97d531a72b3a2678e265",
+  "verdict": "approved bounded source and labelled browser paging checks",
+  "blocking_findings": [],
+  "source_sha256": {
+    "apps/rolling/reader.mjs": "8e0a900f66b3ebdbd3867245d81ae14c2fd2363aecfb79e3f87e7c85a3e3d685",
+    "apps/rolling/reader.browser.test.mjs": "e5b10a1b1405e2b0d482fdb769ccf0509015952aa0a7fa6469e8e4172445f0de"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/reader.browser.test.mjs",
+      "cwd": "rolling-design",
+      "result": "pass",
+      "tests": 13,
+      "skipped": 0,
+      "duration_ms": 4358.363208,
+      "log": "/tmp/reviewer-reader-paging-4ad1-tests.log"
+    },
+    {
+      "command": "git diff --checkd936cf8..4ad1d55",
+      "result": "pass"
+    }
+  ],
+  "assessment": [
+    "AutomaticIntersectionObserver and accessibleLoadmore share one inFlight cursor owner. Repeatedintersection callbacks orkeyboard do not createparallelrequests; successreobservesnextsentinel forshortviewport withoutarbitrarypagecap. Nativebrowserintersection regression actuallyrequestsnextpage.",
+    "Allpageitems andnextcursor validated beforeDOM append/stateadvance. Revision/board/checkpoint stable, IDsunique acrosspages, cursorcycles/emptycontinuation rejected. Failedread ormalformedpage disconnectsautomaticowner and requires explicitRefresh; priorcontent retained withoutsilentretry.",
+    "Navigation abort/sequence invalidates delayedresponses; pagehide disconnects and pageshow persisted reloads. Back restoration reloadssamepagecount underexistingrestorationdeadline then restoresfocus/scroll. NoIntersectionObserver fallback remainskeyboardoperable.",
+    "No SDK/privatequery/custody request introduced byscrolling. Existingremovedpost navigation/unlike/literalreason tests retained and independentlypass.",
+    "13tests distinguish controlledobserver/syntheticAPI fromrealrenderer/fetch andoneactualnativeIntersectionObserver; failurecases include409reorg,changedrevision,duplicateIDs,repeatedcursor,emptycontinuation, delayednavigation/pagehide,keyboard/backrestore."
+  ],
+  "limits": [
+    "No canonicalchain/realbackend paging campaign performed at thisrevision; labelledpublicAPI responses are testdata.",
+    "ContinuousDOM content grows with intentionallyloadedhistory; no virtualizationorlargehistoryperformance qualificationclaimed.",
+    "No fullG05/G06/product/privacyrelease acceptance."
+  ]
+}

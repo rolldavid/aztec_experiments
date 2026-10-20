@@ -1,0 +1,68 @@
+{
+  "base": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+  "candidate": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "task_id": "G03-final-focus-contrast",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+      "candidate": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+      "task_id": "G03-final-focus-contrast",
+      "id": "focus-contrast-keyboard",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent exact-CSS14surfacechecks and existing3keyboard/navigation cases; details inreview",
+      "environment": "PinnedNode24/Playwright, no chain mutation",
+      "observed": "14contrastchecks>=3:1 minimum4.7038;3keyboardpass; outline3px offset3px retained",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G03/final-focus-20261018/review.json",
+          "sha256": "6687f93f6e05011e4418c2ea778366f51872c0932e8175cdbf6b46cfd4df3af9"
+        },
+        {
+          "path": "execution/evidence/G03/final-focus-20261018/contrast.json",
+          "sha256": "b01e08d19ae46c0f2bd341d011378691ab6e7721d5c0ea592e118e074c91aeec"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+    "candidate": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+    "task_id": "G03-final-focus-contrast",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G03/final-focus-20261018/review.json",
+        "sha256": "6687f93f6e05011e4418c2ea778366f51872c0932e8175cdbf6b46cfd4df3af9"
+      },
+      {
+        "path": "execution/evidence/G03/final-focus-20261018/contrast.json",
+        "sha256": "b01e08d19ae46c0f2bd341d011378691ab6e7721d5c0ea592e118e074c91aeec"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "c07e0fa732a63e60e0e87c2a814b6c4607604f6e",
+      "candidate": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+      "task_id": "G03-final-focus-contrast",
+      "id": "RC40-focus-contrast",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G03/final-focus-20261018/review.json",
+          "sha256": "6687f93f6e05011e4418c2ea778366f51872c0932e8175cdbf6b46cfd4df3af9"
+        },
+        {
+          "path": "execution/evidence/G03/final-focus-20261018/contrast.json",
+          "sha256": "b01e08d19ae46c0f2bd341d011378691ab6e7721d5c0ea592e118e074c91aeec"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "candidate": "ffa68cd615b98899cc172f0266e4df95bd932dfb",
+  "base": "8b44bef18f3e6ed216ebb0f2babcba0772af2792",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/DEPLOYMENT.md": "5db8fd0269f10f0fa41a60196be07972f88ca5517368589e4518c4fe49a8f0f1",
+    "plugins/main.mjs": "913f255db2d4de9d9ae2aa0802c765a8b4c741da7f2b828c7be315cdcbf50ef4",
+    "prover/runtime.mjs": "607f730ec8ecfbf5e39a1e1d4fa938aa1dd820eb6a81e377be5cd901421319ab",
+    "scripts/test-prover-runtime.mjs": "e90d0188a95a84d318a0ba97ae41d3c6436c684293d354ae262ca81ae48b75f9"
+  },
+  "checks": [
+    "Installed native_socket.js explicitly copies process.env into spawned bb child; JS options.crsPath is not consumed there.",
+    "prepareInProcessNativeRuntime preserves pinned binary/package/three CRS hash and length checks; environment is assigned only after all checks succeed. Explicit config path wins, otherwise existing CRS_PATH/default.",
+    "Three hosted wallet compositions bind environment before wallet creation; development proof-disabled branches do not initialize this path. Isolated workers remain unchanged.",
+    "Read-only verified cache reuse allowed; invalid installed data rejects without changing environment. No ProtectHome weakening, unverified download, key exposure or generated-code credential change."
+  ],
+  "independentChecks": {
+    "command": "Pinned Node24.21.0 --test scripts/test-prover-runtime.mjs; NODE_BACKEND=js TMPDIR=/private/tmp",
+    "passed": 2,
+    "failed": 0,
+    "durationMs": 526.251667,
+    "output": "9311ac"
+  },
+  "limits": [
+    "No actual proof/job recovery or host mutation.",
+    "Live configuration Environment=CRS_PATH must point to independently verified service-readable cache; original request/lease reconciliation remains required before restart.",
+    "Process-global environment binding assumes trusted startup compositions; all accepted paths contain identical pinned CRS bytes."
+  ]
+}

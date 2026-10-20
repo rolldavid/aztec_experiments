@@ -1,0 +1,113 @@
+{
+  "base": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+  "candidate": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+  "task_id": "G07-recovery-races",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "candidate": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+      "id": "recovery-build-closure",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/sdk-build.log",
+          "sha256": "f62441e1b87162f50f59cd5a9df3715a21371959dcad2a5f1dcefb8cd894c6cb"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/combined-checks.log",
+          "sha256": "6985325cd66ff180dc04ca7a57f3041d97c05467368782abd4a09c8bdd1ff2f8"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-266cafc-recovery-races.json",
+          "sha256": "a75c0bb4e09f6975db2f2dd3572bb7001938840ac2fc0883ec9940cd9a8eae31"
+        }
+      ],
+      "command": "node scripts/build-sdk.mjs && node apps/build.mjs && node scripts/rolling-wallet-assets.mjs && node --test --test-concurrency=1 scripts/test-sdk-manifest.mjs shared/rolling/cold-preference-reader.test.mjs shared/trusted-private-node.test.mjs",
+      "environment": "Node24.21.0 macOS, TMPDIR=/private/tmp, native consumers stopped, unchanged pinned SDK",
+      "observed": "Normal builds PASS;174checksPASS0skip2.066s. Independent108checks and complete SDK/wallet closure verified. Actual RC40 remains unqualified.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "candidate": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+      "id": "RC26-canonical-recovery-continuation-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/sdk-build.log",
+          "sha256": "f62441e1b87162f50f59cd5a9df3715a21371959dcad2a5f1dcefb8cd894c6cb"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/combined-checks.log",
+          "sha256": "6985325cd66ff180dc04ca7a57f3041d97c05467368782abd4a09c8bdd1ff2f8"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-266cafc-recovery-races.json",
+          "sha256": "a75c0bb4e09f6975db2f2dd3572bb7001938840ac2fc0883ec9940cd9a8eae31"
+        }
+      ]
+    },
+    {
+      "base": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+      "candidate": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+      "id": "RC25-trusted-readiness-integrity-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/sdk-build.log",
+          "sha256": "f62441e1b87162f50f59cd5a9df3715a21371959dcad2a5f1dcefb8cd894c6cb"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/apps-build.log",
+          "sha256": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/g07-recovery-races/combined-checks.log",
+          "sha256": "6985325cd66ff180dc04ca7a57f3041d97c05467368782abd4a09c8bdd1ff2f8"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-266cafc-recovery-races.json",
+          "sha256": "a75c0bb4e09f6975db2f2dd3572bb7001938840ac2fc0883ec9940cd9a8eae31"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "624aa0089192b11c3c707c544d0ac92ee68b91d6",
+    "candidate": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-266cafc-recovery-races.json",
+        "sha256": "a75c0bb4e09f6975db2f2dd3572bb7001938840ac2fc0883ec9940cd9a8eae31"
+      }
+    ]
+  }
+}

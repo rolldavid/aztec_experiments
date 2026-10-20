@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "0d05cc2910780a26f561d208d24bf012a2d40933",
+  "base": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "repairBase": "ed1b406b827d8cfcfbad772c688a5e78b7b8f878",
+  "verdict": "approved-bounded-source-pending-provenance-composition",
+  "findings": [],
+  "dispositions": {
+    "G05-APP-P2-RESTART-ACK": "closed: canonical operation/hash-bound inspectOutcome receipt acknowledged; predecessor saved for prepared intent across another restart; real createL2Journal/encrypted storage composition covers both restarts.",
+    "G05-APP-P2-PRE-SIMULATION-GATE": "closed: assertCanStart precedes submit-time estimation; pending/new non-final reverted predecessor cases block with unchanged estimator/send counts.",
+    "WORKFLOW_SLOT_COLLISION": "worker-discovered defect closed: workflow scopeText explicitly domain-framed, preventing storage key collision with L2 journal; test demonstrates2distinct ciphertext slots."
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test shared/rolling/application.test.mjs",
+      "result": "20passed0failed exit0"
+    },
+    {
+      "procedure": "Read repair and actual L2 journal implementation; check canonical receipt/hash/operation before acknowledgment, retained reorg/finality gates, CAS concurrent submit/cancel and encrypted record boundaries",
+      "result": "pass"
+    }
+  ],
+  "requiredComposition": [
+    "sdk.isPrivatePXEForNode and sdk.isPrivateWalletForNode are new required trusted-factory interfaces; production implementation/export and joint real-factory negative tests are not in this worker candidate. Combined source review required before actual application acceptance.",
+    "Parent-owned artifact publication/class and deployment/context binding remains required.",
+    "Tests use actual ABI and encrypted L2 journal with fake network/transaction provider; no real proving/funding/privacy/product acceptance.",
+    "Bridging, claims, L1 exits, composite Bok and full G05/G06 criteria remain open."
+  ],
+  "sourceHashes": {
+    "shared/rolling/application.mjs": "b217538ffc0ef600efc044016e1877a75a6a6c265e7e6fcd6a9afe6958be8c0d",
+    "shared/rolling/application.test.mjs": "e7e9c014dae85473121d9e34e0ca89609d7f5b26ca2bbf7c5cd4d54cab5ca292"
+  }
+}

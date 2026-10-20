@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-12T13:59:17.686565+00:00",
+  "rootDependencyAndSourceSnapshotUnchanged": true,
+  "snapshot": {
+    "rootTreeMetadataSha256": "b1bc55236e9a991667a633e159e02faf0620721e619a6242f05789f85ecd217d",
+    "files": 163535,
+    "selectedSha256": {
+      "package.json": "1854b9e2a0cc0170d350c8d82c52da88a3cfb1abee1740795f3f5745fe1aa13d",
+      "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+      "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+      "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20",
+      "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78",
+      "node_modules/@aztec-labs/pxe/src/storage/private_event_store/private_event_store.ts": "03e6c42214af82b82c6e2b46c44efc2f0a9f5c77fcb3f60b007d26b6e54c9376",
+      "node_modules/@aztec-labs/pxe/dest/storage/private_event_store/private_event_store.js": "918ea32152a22abcb7d63b43fc7a04b653dba8369e322b242c9efbdf4ea589ff"
+    }
+  },
+  "isolatedNodeModules": true,
+  "npmProcess61735Absent": true,
+  "processEvidence": "npm exec completed exit0; independent ps -p61735 returned absent"
+}

@@ -1,0 +1,23 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "proposalSha256": "01bd2874ad3eefd99593d9de9ee2e3558c60f13a1e2c24d5647047613d08987b",
+  "verdict": "approved-with-launch-reconciliation-conditions",
+  "forecastUsd": "121.0214253724093333333333333",
+  "reservationUsd": 125,
+  "cumulativeReservationUsd": 265,
+  "checks": [
+    "Recomputed all component sum121.0214253724093333333333333; matches proposal.",
+    "Ledger source hash matches current file. Both retained CloudWatch response hashes and datapoint sums match declared48008714bytes.",
+    "Preserves200GB failure allowance,15GB old metric lag,3.5h future50Mbps egress,20percent unpriced/tax margin,20USD cleanup,72h all-three-host orphan storage.",
+    "Replacement template reference matches m7a.4xlarge and same AMI.",
+    "Core installed control functions exactly unchanged by817; previous actual negative drill evidence remains applicable to implementation."
+  ],
+  "conditions": [
+    "Lead verifies old hosts/disks/Fleets absent and no overlap before launch.",
+    "New launch no earlier22:00Z, original00:51:57Z absolute deadline; no extension or extra reservation assumed.",
+    "Verify new host control readback/native imports before work; unchanged negative drill need not repeat.",
+    "Bind reviewed repaired source and exact staged package/manifest; receiptPutUrl must actually be included and kept private.",
+    "If any real resource/rate/deadline/retained-storage assumption changes, reconcile forecast before mutation."
+  ],
+  "performed": "Read-only arithmetic, hashes and source comparison; no live AWS or paid action."
+}

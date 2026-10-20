@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent retained actual model evidence, read-only",
+  "verdict": "isolated_corpus_quality_and_latency_pass; end_to_end_qualification_open",
+  "sourceRevision": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "currentIntegration": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "evaluatorBlobEquivalent": true,
+  "input": {
+    "file": "model332-full.json",
+    "sha256": "a439b9c26498cd8405d1bf4a81614e994d933d90842d950228c3406a855fe193",
+    "bytes": 117585,
+    "aggregateEvidence": "execution/evidence/M03/model-repaired-final.json",
+    "aggregateSha256": "b33d97eb3b85cff5192c5b49ed90ef456eb533a9cc75d8c696f9f22ec08280fe",
+    "backupEvidence": "execution/evidence/M03/model332-backup.json",
+    "backupMetadataMatches": true,
+    "backupRemoteRecheckedByReviewer": false
+  },
+  "independentVerification": {
+    "method": "Pure existing buildEvaluationReport and identifyModel functions; no runtime/model calls. Full report exactly reproduced, including pass=false.",
+    "uniqueOrderedCases": 332,
+    "corpusDigest": "0x84fbfdd59fb7ebccf1c598a368b4310d49bc1d3e2a4e926d2353ba85a38034c9",
+    "evaluatorDigest": "0x3abfd61aee9a073cb806b6d3ac72414cb86c5d90e40d579cbdeaf7dd3b910c59",
+    "allPerCaseInputDigestsValidated": true,
+    "modelTranscriptRecomputed": true,
+    "allFiveAdditionalSourceAssetsMatch": true,
+    "sessions": 6,
+    "everySessionRuntimeVerified": true,
+    "everySessionCleanStop": true,
+    "interruptedSessions": 0,
+    "sessionErrors": 0,
+    "totalRecordedSessionMs": 1882545.011643,
+    "noRerunsScope": "332 unique ordered records with immutable input digests; runner skips completed IDs and exact binding prevents merging a different campaign. This supports no repeat within the retained resumed campaign, not proof of absence of unrecorded external calls. Earlier109-result failed campaign is separate, not erased or merged."
+  },
+  "runtime": {
+    "modelIdentity": {
+      "imageDigest": "0x15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+      "weightsDigest": "0x03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+      "configurationDigest": "0xb7ea178b178f78afb01a70eb409efa6360d6d61d6fd2e317427fa81f266fe534",
+      "promptDigest": "0xd7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862",
+      "modelVersion": "0xcc373fe217f094208d2558ff8be336da10b9f2b0b863dc002a9085f97173f861"
+    },
+    "platformIdentity": {
+      "manifestDigest": "sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+      "configDigest": "sha256:7b8b1522a82c10984926a17cb96c9138cbeefcfdd70c6e570a5af66aeaafe0c5",
+      "localImageId": "sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+      "os": "linux",
+      "architecture": "amd64",
+      "variant": null
+    },
+    "threads": 16,
+    "contextSize": 4096,
+    "memoryMiB": 8192,
+    "outputTokens": 512,
+    "note": "Recorded runtime verification checked exact weights and platform after every session. Reviewer recomputed transcript/config/prompt/source bindings, did not rehash5.68GB weights or inspect live host."
+  },
+  "metrics": {
+    "coverage": {
+      "labeled": 319,
+      "multilingual": 60,
+      "injection": 59,
+      "ambiguous": 12,
+      "boundary": 1
+    },
+    "falsePositives": {
+      "count": 1,
+      "denominator": 159,
+      "rate": 0.006289308176100629,
+      "attemptedDenominator": 159,
+      "evaluatedDenominator": 159,
+      "evaluatedRate": 0.006289308176100629,
+      "provisional": false
+    },
+    "falseNegatives": {
+      "count": 1,
+      "denominator": 160,
+      "rate": 0.00625,
+      "attemptedDenominator": 160,
+      "evaluatedDenominator": 160,
+      "evaluatedRate": 0.00625,
+      "provisional": false
+    },
+    "latency": {
+      "p50Ms": 5252.384914000024,
+      "p95Ms": 8334.334113999997,
+      "maxMs": 13201.00330099999
+    },
+    "unexpectedErrors": 0,
+    "expectedBoundaryErrors": 1,
+    "boundary": {
+      "total": 1,
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "complete": true
+    },
+    "ambiguous": {
+      "attempted": 12,
+      "violation": 2,
+      "allowed": 10
+    },
+    "slices": {
+      "multilingual": {
+        "total": 60,
+        "attempted": 60,
+        "complete": true,
+        "falsePositives": {
+          "count": 1,
+          "denominator": 30,
+          "rate": 0.03333333333333333,
+          "attemptedDenominator": 30,
+          "evaluatedDenominator": 30,
+          "evaluatedRate": 0.03333333333333333,
+          "provisional": false
+        },
+        "falseNegatives": {
+          "count": 0,
+          "denominator": 30,
+          "rate": 0,
+          "attemptedDenominator": 30,
+          "evaluatedDenominator": 30,
+          "evaluatedRate": 0,
+          "provisional": false
+        },
+        "errors": 0,
+        "latency": {
+          "p50Ms": 6319.6176080000005,
+          "p95Ms": 12137.300163000007,
+          "maxMs": 13201.00330099999
+        }
+      },
+      "injection": {
+        "total": 59,
+        "attempted": 59,
+        "complete": true,
+        "falsePositives": {
+          "count": 0,
+          "denominator": 29,
+          "rate": 0,
+          "attemptedDenominator": 29,
+          "evaluatedDenominator": 29,
+          "evaluatedRate": 0,
+          "provisional": false
+        },
+        "falseNegatives": {
+          "count": 1,
+          "denominator": 30,
+          "rate": 0.03333333333333333,
+          "attemptedDenominator": 30,
+          "evaluatedDenominator": 30,
+          "evaluatedRate": 0.03333333333333333,
+          "provisional": false
+        },
+        "errors": 0,
+        "latency": {
+          "p50Ms": 4628.1036719999975,
+          "p95Ms": 6025.987039000029,
+          "maxMs": 6120.909786999982
+        }
+      }
+    },
+    "thresholds": {
+      "minLabeled": 300,
+      "minMultilingual": 50,
+      "minInjection": 50,
+      "maxFalsePositiveRate": 0.02,
+      "maxFalseNegativeRate": 0.05,
+      "maxP95Ms": 10000
+    }
+  },
+  "criteria": {
+    "M03-A01": "PASS scoped actual pinned isolated model on retained provisional corpus:319binary labels,60multilingual,59semantic injection; aggregate FPR/FNR/p95 meet declared thresholds. Not representative-production or human gold-standard qualification.",
+    "M03-A02": "FP/FN and injection results separately reported. Model evaluator has no signer/wallet API; this run alone does not establish daemon signer-authority isolation. Carry separate exact-source authority evidence.",
+    "M03-A03": "Not established by this model run; existing policy/appeal/succession documentation and contract consistency require their own retained evidence.",
+    "M03-A04": "Documented unresolved capacity branch accurately retained: model-only analytical capacity passes, actual flag-submission latency absent, endToEndCapacity null and overall pass=false. No elapsed two-hour workload qualification."
+  },
+  "remainingGaps": [
+    "Actual source-bound flag submission latency and complete model+chain capacity on matching network; no substitution of old-network receipts.",
+    "Elapsed workload/two-hour operational evidence; analytical service estimate is not elapsed capacity or14-day soak.",
+    "Independent fluent-speaker/human review of provisional synthetic labels and broader production distributions.",
+    "Full Rolling parent/local union uses separate deterministic evaluations; this332-case plain-policy moderatePost run does not by itself qualify two-stage union latency/quality under arbitrary policies.",
+    "Multilingual subset has1/30FP=3.33% andp95=12.137s; report transparently. Predeclared thresholds are aggregate, so do not retroactively apply new slice gates or claim uniformly passing languages.",
+    "Signer authority, real-proof/network privacy/audit/release gates remain separate."
+  ],
+  "corpusHistory": {
+    "boundaryCase": "bb-eval-0284",
+    "originalTextPreserved": true,
+    "onlyChangedCase": [
+      "bb-eval-0284"
+    ],
+    "reason": "Pre-existing reviewed U+202E input rejected by application before model; expected INVALID_INPUT boundary separately counted. Other331 cases and semantic labels unchanged.",
+    "evidence": "execution/evidence/M03/boundary-review-017.md"
+  },
+  "reportedFlagsPreserved": {
+    "qualityPass": true,
+    "latencyPass": true,
+    "modelCapacityPass": true,
+    "endToEndCapacity": null,
+    "flagSubmissionEvidence": null,
+    "capacityStatus": "unresolved-missing-flag-latency",
+    "overallPass": false
+  },
+  "reviewerActions": "No model/service/remote/build invocation or source change; wrote only this report."
+}

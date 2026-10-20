@@ -1,0 +1,23 @@
+{
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "verdict": "ACCEPT_FOCUSED_EXISTING_BEFORE_BEGIN",
+  "actualPacketSha256": "437e5f5bdad53b4b155cc4542d8788c333063916f3f13f8abad5add484fdb266",
+  "elapsedMs": 2626,
+  "sampledPeakTreeRSSKiB": 466864,
+  "tests": 1,
+  "pass": 1,
+  "skipped": 0,
+  "excluded": 29,
+  "findings": [
+    "All actual packet files/receipts hashes verified; raw TAP1 pass and exact existing case.",
+    "Actual original child.error===undefined/status71/rollback assertions pass with file entry; no uncaught observer events.",
+    "Controller0/testworker0/crash71 main-thread kernel receipts have exact parent chain and positive maxima; no EEXIST collision.",
+    "Result has no supervisor failures, owned tree/TMP absence, link restoration and556source/2402dependency closure."
+  ],
+  "scope": "Focused setup and intentional crash regression only; sampled aggregate and individual kernel maxima are separate measurements.",
+  "holds": [
+    "All three real crash cases and separately reviewed volume successor remain mandatory.",
+    "Original15860/58207 failures remain preserved; no4x/later-post or complete capacity claim."
+  ],
+  "reviewer": "reviewer-20261011"
+}

@@ -1,0 +1,22 @@
+{
+  "candidate": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+  "scenario": "rolling-name-race",
+  "recordedAt": "2026-10-12T03:26:58.488092+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G05/name-race-metadata-8d8-review.json",
+  "reviewSha256": "fc566ea92787581238500438a9bac4f8c9ab8d3a2ca78be5598386785ff45bc2",
+  "status": "passed",
+  "hypothesis": "3dfa observer could not classify because actual blockbuilder normally disables callmetadata. Same processor now enables onlymetadata bit andrestoresdescriptor; exactguard/deepestcallee/canonicaltuple andownershipassertions unchanged. New actual AVMmetadata required.",
+  "priorFailure": "application-3dfac39d-c3a3-4c06-bf7f-4668237c2d2a.json",
+  "diagnosis": "name-race-3dfa-diagnosis-review.json",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-name-race",
+  "exitCode": 0,
+  "result": "application-d6dbc54a-9e7f-462a-8687-e6449f4c93f7.json",
+  "resultSha256": "f1737062586b1d46476e70703546ae9e79a277a450d16ffbb53c67f31f2498f8",
+  "elapsedMs": 343392,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:46:10.990098+00:00",
+  "sourceRevision": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+  "verdict": "accepted-bounded-component-runtime",
+  "sourceReviewSha256": "6669f6b98c16be2a365b7bf04523f012802022536fe15bf9aa209028cc8481e3",
+  "evidence": {
+    "rolling-design/execution/evidence/G07/readiness-batching/component/run-1.json": "bf72930957e9c647dd81f3201a6540dc0e6732ef165b5d352611dec6fc88cacc",
+    "rolling-design/execution/evidence/G07/readiness-batching/component/run-1.log": "cb8e03bba21dca3343edb867659a977512ec50436ed609c77fea346a8e3e5d5c",
+    "rolling-design/execution/evidence/G07/readiness-batching/component/run-plan-1.json": "16baffa7212f8b88c903a192f901d9dbed9b66d9e7a849249a2326c0e3f516f2",
+    "rolling-design/execution/evidence/G07/readiness-batching/component/run-1.py": "68a3f489a11a702d81aea9f00a5dd118d92ca1f1239347e66542fbc85e4dad33",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-plan-1.json": "1c1fb49559a271ad41a50bb8e29edac2f9e2edb93cf7717cacd4925d4232be82",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-1.py": "b699f07abc5cdca139dc6dcd8c175a906990c29d683984bc7e4f7d7a5430577e"
+  },
+  "independentChecks": {
+    "exactCleanDesignHead": true,
+    "dependencyPinsRehashed": 67,
+    "sourceAndFixturePinsRehashed": 23,
+    "mismatches": [],
+    "originalSymlinkReadback": "../aztec_experiments/node_modules",
+    "tapCountsReconciled": {
+      "tests": 135,
+      "pass": 135,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "noFilter": true,
+    "bothNativeAndAcirOptIns": true,
+    "requiredAdversarialCasesObserved": [
+      "falsy rejection and all-peer drain",
+      "wrong identity before grouped calls",
+      "detached fulfilled headers",
+      "account lock and held peer queue ownership",
+      "original ACIR historical/current heads and two-active rejection",
+      "post-settlement atomic discard and both-store canonical prune",
+      "actual safeRPC fixed-pair coalescing and separate final fence"
+    ]
+  },
+  "actual": {
+    "exitCode": 0,
+    "elapsedMs": 54976,
+    "peakAggregateRssBytes": 1083490304,
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "originalLinkRestored": true,
+    "tempDirectoriesAfterCleanup": [],
+    "sourceUnchanged": true,
+    "dependencyPinsUnchanged": true,
+    "supervisorFailure": null
+  },
+  "scope": [
+    "Actual installed SDK and processed ACIR, original validators/coordinator, Node fake-indexeddb and labelled synthetic canonical chain.",
+    "135 passed, zero failed/skipped/cancelled. Component has no HTTP diagnostic report; its diagnosticReportPresent=false is expected.",
+    "No browser, genuine full-chain recovery, 17-block feasibility, capacity or optimization-measurement acceptance."
+  ],
+  "next": {
+    "httpEligible": true,
+    "requiresSeparateParentExclusiveGrant": true,
+    "oneRunOnly": true,
+    "limits": {
+      "seconds": 60,
+      "aggregateBytes": 2147483648
+    },
+    "runnerSha256": "b699f07abc5cdca139dc6dcd8c175a906990c29d683984bc7e4f7d7a5430577e",
+    "planSha256": "1c1fb49559a271ad41a50bb8e29edac2f9e2edb93cf7717cacd4925d4232be82",
+    "requiredMeasurements": {
+      "readerSteps": 6,
+      "sdkCalls": 17,
+      "nativeCompact": 4,
+      "privateAndPublicTags": 0,
+      "maximumGatewayRequests": 400,
+      "maximumReaderMs": 8500
+    },
+    "failurePolicy": "Preserve actual miss/failure; no threshold relaxation or unchanged retry. Report explicit diagnostic selection/skips and full owned cleanup."
+  },
+  "holds": [
+    "Normal SDK/frontend/wallet build manifests must be rebuilt and verified after installed batching change before genuine run.",
+    "Existing 57c genuine cold failure and full-cold/capacity acceptance remain open.",
+    "No integration, cloud or paid-action authorization."
+  ]
+}

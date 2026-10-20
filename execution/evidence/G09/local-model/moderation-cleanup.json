@@ -1,0 +1,16 @@
+{
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "observedAt": 1792076160.366388,
+  "daemonExit": 0,
+  "locks": 0,
+  "containers": [],
+  "originalQueueSha256": "5db28d8cfb60db479af641be37853dd859ee615e5357a268cb1216596eef08ee",
+  "modelsStopped": true,
+  "nativePreviewRetained": true,
+  "replyOutcome": {
+    "text": "Thanks for sharing this apricot thought.",
+    "parentVersion": "2",
+    "isViolation": false,
+    "scope": "Actual outcome, no additional quality-label assertion"
+  }
+}

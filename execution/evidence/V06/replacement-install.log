@@ -1,0 +1,9 @@
+prover-runtime-current.tar.gz: OK
+{"verifiedFiles": 226123, "aztec": "6.0.0-rc.1", "nativeVersion": "6.0.0-rc.1", "node": "24.21.0", "caddyArchiveVerified": true}
+v2.11.4 h1:XKxkMTgNSizEvKG6QHue6cAsFOteU2qA61w2tKkCWi0=
+Created symlink /etc/systemd/system/multi-user.target.wants/board-prover.service → /etc/systemd/system/board-prover.service.
+Created symlink /etc/systemd/system/multi-user.target.wants/board-prover-proxy.service → /etc/systemd/system/board-prover-proxy.service.
+active
+active
+active
+NextElapseUSecRealtime=Tue 2026-10-13 08:42:31 UTC

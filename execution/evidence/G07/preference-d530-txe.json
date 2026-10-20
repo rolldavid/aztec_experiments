@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/tmp/rolling-g07-txe.mjs"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+  "exitCode": 0,
+  "durationSeconds": 21.917,
+  "peakAggregateRssBytes": 1545469952,
+  "limitFailure": null,
+  "cleanupComplete": true,
+  "remainingPids": [],
+  "logSha256": "ce37a22c56116687d245dac81460cef85e2e1e7f591fb4d56911df541ea169d4"
+}

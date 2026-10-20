@@ -1,0 +1,8 @@
+{
+  "candidate": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "base": "39dbff586a5092349c32d93b721d5417733e3532",
+  "inputs": 97,
+  "outputs": 25,
+  "result": "pass",
+  "reason": "Only directly served panel and test changed; all existing manifest input/output hashes verified unchanged."
+}

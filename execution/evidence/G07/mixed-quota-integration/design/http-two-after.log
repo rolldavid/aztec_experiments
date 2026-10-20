@@ -1,0 +1,34 @@
+▶ owned isolated SDK and ACIR suite
+  ﹣ application store fixture owns full isolated namespaces and deletes them after settled hooks (0.9025ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index (0.131541ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation (0.08625ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong ordinal before utility (0.149208ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong fee before utility (0.20325ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong execution before utility (0.179083ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong slot before utility (0.156792ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated multi-tx page uses authenticated ordinal and detaches original mutable receipt (0.172208ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page final original-node receipt change discards validated staged event (0.514458ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing (0.746666ms) # HTTP diagnostic only; original case unrun
+  ✖ cold HTTP progress with actual encrypted ACIR and original bounded cursor (57054.523583ms)
+✖ owned isolated SDK and ACIR suite (62894.217417ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 10
+ℹ todo 0
+ℹ duration_ms 64037.849458
+
+✖ failing tests:
+
+test at scripts/test-pxe-preference-page.mjs:302:31
+✖ cold HTTP progress with actual encrypted ACIR and original bounded cursor (57054.523583ms)
+  Error: Cold HTTP progress diagnostic failed; inspect sanitized phase receipt
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1045:58)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:920:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:299:2

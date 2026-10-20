@@ -1,0 +1,81 @@
+{
+  "before": {
+    "state": "patched",
+    "files": [
+      {
+        "path": "src/pxe.ts",
+        "sha256": "cf61d2140a6505cf0ad24f8160aedc875c1ac7204663b25a018bd03da30c71bc"
+      },
+      {
+        "path": "dest/pxe.js",
+        "sha256": "0798708eb9f6f215ae1348697140fbebc65872ea5d6396dc1ea1f5636ca5603e"
+      },
+      {
+        "path": "src/operation_queue.ts",
+        "sha256": "d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db"
+      },
+      {
+        "path": "dest/operation_queue.js",
+        "sha256": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360"
+      },
+      {
+        "path": "src/operation_lifecycle.ts",
+        "sha256": "52211b30b977c07b7ed4ea8fe074aa8a35c879ea195a29182e9746305f98eb99"
+      },
+      {
+        "path": "dest/operation_lifecycle.js",
+        "sha256": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7"
+      },
+      {
+        "path": "src/storage/note_store/note_store.ts",
+        "sha256": "1840f842b22b3adff161bc402a2b4bdf32d0d02fde93495d3d1a976e71ec74af"
+      },
+      {
+        "path": "dest/storage/note_store/note_store.js",
+        "sha256": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478"
+      }
+    ],
+    "compact": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "recovery": "0e9354f6b97e00bf2668ec874206abccc6a5596d2ad9c57d4f7e8de390b8f2df"
+  },
+  "after": {
+    "state": "original",
+    "files": [
+      {
+        "path": "src/pxe.ts",
+        "sha256": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd"
+      },
+      {
+        "path": "dest/pxe.js",
+        "sha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360"
+      },
+      {
+        "path": "src/operation_queue.ts",
+        "sha256": "a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246"
+      },
+      {
+        "path": "dest/operation_queue.js",
+        "sha256": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6"
+      },
+      {
+        "path": "src/operation_lifecycle.ts",
+        "sha256": "c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d"
+      },
+      {
+        "path": "dest/operation_lifecycle.js",
+        "sha256": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114"
+      },
+      {
+        "path": "src/storage/note_store/note_store.ts",
+        "sha256": "35faa7333be56582580115602ef63fee798f80d18f65637b9fbf5a5d39a089ea"
+      },
+      {
+        "path": "dest/storage/note_store/note_store.js",
+        "sha256": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6"
+      }
+    ],
+    "compact": null,
+    "recovery": null
+  },
+  "scope": "All consumersreleased; exactly8pinnedoriginals restored and2knownhelpers removed; no other dependencychanges"
+}

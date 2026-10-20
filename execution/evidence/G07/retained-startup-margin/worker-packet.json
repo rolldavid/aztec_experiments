@@ -1,0 +1,49 @@
+{
+  "task": "G07",
+  "revision": "6d49dc265b526c5e3a08a10cc9a343341f55554e",
+  "base": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "session": "design-resume-20261014",
+  "parent": "lead-20261011",
+  "source": {
+    "plugins/devnet/network.mjs": "c876a3e90d9d31489a745c465303a3b6f5af5a12bbeec223a3780133a8f11539",
+    "plugins/devnet/operator-test.mjs": "7b2be6fe0b3a1e980ee9a072fb4f5d70a676aa2f0c75792f74f18a963b36d71e"
+  },
+  "evidence": {
+    "native-load-08c88-result.json": "585ba7c1072c1028128b021ce582d3228aedd52e8358f3ccc077fe02c15403ed",
+    "native-load-08c88-assessment.json": "52555a23f8e89f62170894eb8115f7c456d760dc3157eccefd52febc46a15183",
+    "native-load-08c88-normal-result.json": "fec26017b53ea69b40927f223e39b4b76e51e33f4af97ce81074878d57bdc023",
+    "native-load-08c88-normal-assessment.json": "6bfaa32fe28a350e3e425e4f58403c85350e8ed874b10ec825219a4a8b738881",
+    "native-load-08c88-normal-cleanup.json": "8d593482f90e5d78db9bb16694fae8f3015a10d72d13187ecfba09ffa204f8fc"
+  },
+  "rationale": "Two normal retained startup attempts reached60s without readiness; independent exact08c6.340GB load authenticated at55.571s. Host timing varied substantially. Reserve finite120s for retained startup, with no automatic restart or read bypass. This is setup margin, not application performance qualification.",
+  "measurementCorrection": "The90s production-config probe allotted48.721s to Anvil polling. Remaining42.509s includes prehash/setup AND final cleanup; it is not measured pure hashing. That probe is inconclusive about80s/60s native startup and is preserved as failure.",
+  "changes": {
+    "retainedStartupMs": [
+      60000,
+      120000
+    ],
+    "freshStartupMs": 6000,
+    "requestTimeoutMaxMs": 500,
+    "pollPauseMaxMs": 100,
+    "processes": 1,
+    "productWholeRecoveryMs": 120000,
+    "productPageMs": 10000
+  },
+  "tests": {
+    "before": "Final newcases on original95331 fail retained75s readiness and exact120s identity deadline; originalspawn/exit casepasses. Initial fixture threshold mismatch retained separately.",
+    "after": "3 focused existing operator tests PASS0skip11.496s wall;75s retained readiness, fresh6s refusal,1200wrong-identity polls, successat120s rejected, originalspawn/exit errors preserved. No real nativeprocess spawned.",
+    "logs": {
+      "retained-startup-margin-before.log": "f215d2bb94c865ce36fd0119b2b18ef1faaeeabd38953f1eb51251a0fee1972b",
+      "retained-startup-margin-before-captured.log": "66c887ca8a7efa96b6479c12821f9d2e233b27ef5b2c47df5260b6b3aa1a0d9c",
+      "retained-startup-margin-after.log": "42177fa45247c6ad3e4c83402bfa67217e32f92c75021ac72af0ba82e9847960",
+      "retained-startup-margin-after.json": "9e6548ba6dc64c334e04801f4d2a0b792ef2299bbe510a10c647ec733de13cc2"
+    }
+  },
+  "cleanup": "Only exact ownempty normalprobe cache and0bytecandidate removed after processabsence checks. Original08c,d16,9fbc and sharedmetadata preserved. All testprocessesclosed/dependencylink restored.",
+  "limits": [
+    "No additionalnative load/fullrestart after this edit.",
+    "Normal retainedrestart still requires root integration/review and actualreadiness.",
+    "SDK/helper/generatedassets unchanged; no normalSDK build required for two-pathsetupchange.",
+    "Fresh120 recovery remainsopen; exactruntime-bound suffixcomposition awaits READY."
+  ]
+}

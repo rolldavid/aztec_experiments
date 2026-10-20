@@ -1,0 +1,52 @@
+{"role":"service","pid":6319,"port":64530,"realProofs":false}
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":64530}
+{"role":"tests","pid":6335,"port":64530,"realProofs":false}
+[12:41:44.423] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[rolling_contract] Running 1 test function
+[12:41:52.912] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:41:52.913] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:41:52.936] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:41:52.967] INFO: txe_node Aztec Node version: txe
+[12:41:52.967] INFO: txe_node Aztec Node started on chain 0x1
+[12:41:52.982] INFO: txe:top_level_context Created block 1 with timestamp 1791718912
+[12:41:53.069] INFO: txe:top_level_context Created block 2 with timestamp 1791718912
+[12:41:53.148] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.031910083000000665s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.031910083000000665,"rate":31946454.040874127,"totalPublicGas":{"daGas":1600,"l2Gas":1019414},"totalBlockGas":{"daGas":1600,"l2Gas":1019414},"totalSizeInBytes":1728,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:53.455] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.017868375000000016s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.017868375000000016,"rate":13051886.36347736,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":2304,"l2Gas":931666},"totalSizeInBytes":2304,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:53.695] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.015369708000000173s {"blockNumber":5,"successfulCount":1,"failedCount":0,"duration":0.015369708000000173,"rate":15173743.053543853,"totalPublicGas":{"daGas":416,"l2Gas":233216},"totalBlockGas":{"daGas":1152,"l2Gas":876591},"totalSizeInBytes":1152,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:53.727] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008537916999999652s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008537916999999652,"rate":974359.4368509719,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:53.751] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008491374999999607s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008491374999999607,"rate":979699.9896954716,"totalPublicGas":{"daGas":0,"l2Gas":8319},"totalBlockGas":{"daGas":0,"l2Gas":8319},"totalSizeInBytes":128,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:54.242] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.008404082999999446s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.008404082999999446,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:54.716] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.006927416999998968s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.006927416999998968,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::names_register_and_ownership_survives_reauthentication ... [0m[31mFAIL
+Failed to solve program: 'Failed to solve brillig function'
+[0m
+error: Failed to solve program: 'Failed to solve brillig function'
+    ┌─ rolling_contract/src/tests.nr:127:5
+    │
+127 │     assert((owned[0] == jane) | (owned[1] == jane));
+    │     -----------------------------------------------
+    │
+    = Call stack:
+      1: names_register_and_ownership_survives_reauthentication
+              at rolling_contract/src/tests.nr:127:5
+
+--- tests::names_register_and_ownership_survives_reauthentication stdout ---
+[0x2de10f9b09528a2f870e47cbbc74aa51162d65bee93d5788699297a6e40507c0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+[0x0f82450e60aec178134a09644921284c0046f38d2a5f5a99730a38d4e66b8d66, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+[0x0f82450e60aec178134a09644921284c0046f38d2a5f5a99730a38d4e66b8d66, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+[0x0f82450e60aec178134a09644921284c0046f38d2a5f5a99730a38d4e66b8d66, 0x2de10f9b09528a2f870e47cbbc74aa51162d65bee93d5788699297a6e40507c0]
+Jane authenticated
+----------------------------------------------------------------------------
+
+[rolling_contract] Failures:
+     tests::names_register_and_ownership_survives_reauthentication
+
+[rolling_contract] [0m[31m1 test failed
+
+[0m[12:41:55.192] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 silently skipped, 0ms wasted) in 0.006786333999998533s {"blockNumber":8,"successfulCount":1,"failedCount":0,"duration":0.006786333999998533,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":832,"l2Gas":499700},"totalSizeInBytes":832,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[12:41:55.203] INFO: simulator:avm-pool AVM simulator pool destroyed
+Error: Test command exited unexpectedly: 1
+    at exitError (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:58:26)
+    at runWithService (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:103:67)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/billboard/rolling_contract/test.mjs:17:3

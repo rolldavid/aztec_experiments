@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "candidate": "9929b0a63e6f1be4384f32a876946f2a8220bf31",
+  "parent": "8820010e6e91b438b7fe9bb756b72ae0ec6e5cfa",
+  "verdict": "approved-scoped-component",
+  "blockingFindings": [],
+  "source": {
+    "plugins/devnet/bootstrap.mjs": "5b7201fdb155e2011b45661c769dece773a06dfcd8ba3296f87b04563547fff9",
+    "plugins/devnet/operator-test.mjs": "1907fb7bff371b63847be036d8f3e4b1016f04f9e35229ce404ced856bf3bbf5"
+  },
+  "evidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G13/bok-accounting-config/deployer-sync-handoff.json",
+    "sha256": "85031b828fc347769ce454621aa0d0de98b01a7fbba9bfb4c2f1947210418599",
+    "focused": {
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 5051.920959,
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G13/bok-accounting-config/deployer-sync-focused.log",
+      "sha256": "09313a5173efe09be959319a9898ca8de7b2962f99c4baa55dd27568a11a4528"
+    },
+    "actualInput": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/execution/evidence/G13/current-native/retained-fee-sync-result-2.json",
+      "sha256": "90933b21f07e7ddf6ea7686a2ceddf9a4e59fe4696495a11a38d0f79e050c93a",
+      "observed": "Canonical finalized original FPC receipt, then fresh autoSync:false PXE header unavailable before explicit synchronization. Parent probe did not reach account construction; no claim this component independently reproduced retained startup."
+    }
+  },
+  "assessment": "Both fresh native-disabled autoSync:false wallet branches retain wallet ownership before awaiting explicit PXE sync and then initializerless account construction. Sync failure propagates without constructor admission; constructor failure propagates to existing caller cleanup. No native flags, SDK behavior, saved operation reconciliation or transaction retry changes. Legacy branch unchanged. Source and receipt/log hashes independently verified.",
+  "limitations": [
+    "Two delayed/failing helper cases and three actual SDK configuration cases qualify component only.",
+    "Read-only prior probe established missing pre-sync header, not a successful post-sync constructor or full retained service restart."
+  ]
+}

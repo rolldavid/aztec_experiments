@@ -1,0 +1,11 @@
+{
+  "name": "bok-static-probe-27815d3b-1408-4752-bd16-2d1d48a1b09e",
+  "kind": "focused create-only, never starts guest",
+  "options": "same existing production isolation options",
+  "timeoutSeconds": 10,
+  "code": 0,
+  "elapsedSeconds": 0.24616879099994549,
+  "stdout": "2648adde805702d4c44c9c5b7e8d7c83f6d40c5b29496645c0bf79ca32ac77a1",
+  "stderr": "",
+  "cleanupCode": 0
+}

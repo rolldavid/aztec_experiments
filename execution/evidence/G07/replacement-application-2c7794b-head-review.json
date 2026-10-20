@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "revision": "2c7794b524168557b3371e3c2fb146adf4741895",
+  "verdict": "changes-requested",
+  "supplements": "replacement-application-2c7794b-review.json",
+  "finding": {
+    "priority": "P2",
+    "path": "shared/rolling/application.mjs",
+    "lines": "prepare original record; recoverySnapshot; checkReplacementReview",
+    "issue": "Original authenticated preference head is not saved. Recovery eligibility checks only original expectedRevision; a same-revision different digest from another canonical branch is accepted when caller supplies that new head. This exceeds the agreed missing-anchor-only strict original-context recovery scope.",
+    "repair": "Capture guarded exact original head for both preference types at initial prepare, require its revision matches the immutable action, and require full head equality during recovery availability and all replacement review checks. Do not synthesize missing original context for old records."
+  },
+  "probe": {
+    "source": "Exact git blobs extracted to temporary directory, with imports rebased; no production or installed-module edits. Actual SDK Tx serialization and encrypted CAS fixture, labelled chain/head doubles.",
+    "originalHead": {
+      "revision": "1",
+      "digest": "11"
+    },
+    "currentHead": {
+      "revision": "1",
+      "digest": "12"
+    },
+    "observedStatus": "replacement-prepared",
+    "originalSends": 1,
+    "newSends": 0,
+    "durationMs": 1471.516625,
+    "log": "/tmp/reviewer-2c779-head-probe.log",
+    "sha256": "0e15949e8d7d01ebb71befbf916091b2d4f4b787ca0ee1b71c2587cc5909f4bd"
+  },
+  "limits": [
+    "No demonstrated duplicate chain execution or overspend. The contract still enforces expected revision; finding concerns narrower agreed immutable review context.",
+    "No actual reorg acceptance."
+  ]
+}

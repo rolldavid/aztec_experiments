@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-14T11:57:42.563Z",
+  "intent": {
+    "transactionHash": "0x221fc9825feb2cdf83be123ee13b151efca1faf3e32de0d376ec90b6dabd1814",
+    "authorizationTxHash": "0x2fbfa0db32672f291dc087663fe7a5c81ffff3fe16b60f06ca9637e886d71766",
+    "requestId": "14889051554823108538754818592772540630923174644675666873353415735327251783624",
+    "target": "6083968262331229287563899027780046404742545345755184161033087197389727229969"
+  },
+  "financialOperations": 0,
+  "receipts": [
+    {
+      "hash": "0x2fbfa0db32672f291dc087663fe7a5c81ffff3fe16b60f06ca9637e886d71766",
+      "status": "finalized",
+      "blockNumber": 597,
+      "canonical": true
+    },
+    {
+      "hash": "0x221fc9825feb2cdf83be123ee13b151efca1faf3e32de0d376ec90b6dabd1814",
+      "status": "finalized",
+      "blockNumber": 599,
+      "canonical": true
+    }
+  ],
+  "passed": true
+}

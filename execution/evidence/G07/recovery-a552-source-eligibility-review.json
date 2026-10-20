@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+  "base": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+  "verdict": "approved-one-bounded-genuine-initial-reorg-attempt",
+  "blockingFindings": [],
+  "sourceDisposition": "Exact six-file root transfer equals independently reviewed c6fc184 combined863+936+ordering repair. All other committed application, harness, UI, startup and asset-builder source remains a699-equivalent. Dirty ledger/registry are lead-owned metadata only.",
+  "changedFiles": [
+    {
+      "path": "scripts/test-w03-proof-replacement.mjs",
+      "sha256": "acee6c2d618acd4021bb740b812bdd16c1ca2900116d2e179a9d306144753830"
+    },
+    {
+      "path": "shared/l2-journal.mjs",
+      "sha256": "97a5c8dce2ba34f72ef26e2564cb8ef63daa396f1971df6e91bc6ae8987347b4"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "ca86f51a313c8c65c574034242bf9752635e57687e7766cc94a3b3bd4cbf8612"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "62dd44bf37db5aacbccd49e81b10bfc37873d1345aac9d3017a7be0f4be917cd"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "fa2023757d297e063953d558401338a090a6d5be084cc215bffd548911612178"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.test.mjs",
+      "sha256": "9c6d3c2f476b55376599db768aba64b3bf43ae0fbbf36c4116300e62f67728b0"
+    }
+  ],
+  "evidence": {
+    "recovery-a552-composition.json": "197462b0376dae564a76d272fb541e7c48b70105693f813452101e4829474269",
+    "recovery-a552-independent-assets.json": "202a0f60482402283fa385d780126821e70cc46b2918df48d22be032cba06eb2",
+    "recovery-a552-sdk-build.json": "50e705ba2c1f6fa01764a5a93c006b0bf4525d753dd9db7101f8d79acb3ace2a",
+    "recovery-a552-wallet-build-correct-command.json": "71fd3a0c45f510f2ed89f34ee606f8ea850e02c58c12b9359369a591f33aae17",
+    "recovery-a552-combined-source-tests.json": "be93ee7c5d54faa307e96426b1e8de994da8db70c5baf8d3e304ee659574757b",
+    "replacement-order-c6fc184-review.json": "a7ce7fb0a14a8ed51b42f73eac49a6574978a08d5106accc2d7ca001ef0bcb70",
+    "reorg-a699-source-eligibility-review.json": "bb4a8fe6f3281b3515c07b2921dc4235d59f557aec2fe62a14bd100ec9da49a4",
+    "reorg-355-host-sleep-diagnosis.json": "51c9de91c175e0cf567bac46210ec8a393ae2104ed5a560f08e33c4990b4687b"
+  },
+  "independentChecks": [
+    "Verified exact six-path git delta and all six byte identities to c6fc184 plus current checked-out bytes.",
+    "Actual checkSdk passes2038inputs8outputs including pinned installed query-patch provenance; all81wallet input hashes and24served-file lengths/hashes match current bytes, including new journal/application/wrapper sources.",
+    "Actual canonical contractInputs equals52-input normal manifest; loadRollingArtifacts passes; actual PrivateBok early preflight passes14inputs/both normal outputs/private VK presence. All contract/catalog/PrivateBok hashes unchanged from a699.",
+    "Verified all three normal SDK/wallet/combined result JSON and corresponding log hashes against composition. SDK5732ms1016368KiB; wallet1117ms383472KiB;304tests118888ms1010592KiB, zero fails/skips and allcleanup. SourceRevision null in wrapper records is supplemented by exact root/source/manifests here.",
+    "Historical355failed report and projected host power evidence hashes verified. Clamshell378sec overlaps377768ms sample gap; failure remains failed, not application acceptance."
+  ],
+  "assets": {
+    "candidate": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+    "sdkInputs": 2038,
+    "sdkOutputs": 8,
+    "walletInputs": 81,
+    "walletFiles": 24,
+    "bok": {
+      "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+      "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+      "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+      "inputCount": 14
+    },
+    "hashes": {
+      ".build/sdk/sdk-manifest.json": "87563cf9a86e9267a9e04c460b38722ea66f8d2d7fd85090706fd9a92b59c628",
+      ".build/rolling-wallet/manifest.json": "fe30ce4a46c215a1f32df795c035ec0e647ae6815454ac143fd8e71b709d7a42",
+      ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+      "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85",
+      "billboard/target/rolling_contract-RollingBoard.json": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431"
+    }
+  },
+  "requiredRuntimeConditions": [
+    "Before launch retain fresh lid-open/power/assertion readback and foreground existing caffeinate/supervisor; keep lid open. No subtraction of sleep or relaxation of sampling/deadline/resource guards.",
+    "One changed-source genuine rolling-preference-reorg-initial attempt only under unchanged540s/4GiB gates, sole proof owner, source/assets/dependencies frozen through completion.",
+    "Required actual canonical two-attempt history, exact fee accounting, controlled fork restoration, private retained state, no automatic replay, public reconstruction and all cleanup must pass before bounded runtime acceptance.",
+    "Marker campaign source is eligible conditionally; do not launch until initial result receives independent acceptance review.",
+    "Generated browser/build and cheap source evidence does not qualify genuine saved-byte resume; that action requires its separate runtime acceptance."
+  ],
+  "limits": [
+    "FullG07/G14, specialist audit and release criteria remain open. Remote07 failure is unchanged; package08 is separate deployment work.",
+    "C6ordering closes independently reproduced late predecessor windows. Exclusive wallet lease remains mandatory; sequential checks do not promise atomic chain state through network inclusion.",
+    "No broad tests, build, browser, native proof or service job run by reviewer; only read-only actual manifest/hash/catalog/preflight checks."
+  ],
+  "preservedFailure": {
+    "walletBuildInvocation": "recovery-a552-wallet-build.json retained: nonexistent filename,77ms; corrected normal invocation passes without source change.",
+    "priorGenuine": "application-355ffc49-1074-4105-bed2-0ec5304fe19e.json remains failed sampling-gap evidence."
+  }
+}

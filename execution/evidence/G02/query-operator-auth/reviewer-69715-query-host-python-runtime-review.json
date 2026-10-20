@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "2643b4782e8c895a59923e9ea285894b662cbc92",
+  "actualPacketSha256": "572579af7d9750d131f3d022954d295bb791edda833de48eed9e8a0e3d50fe2e",
+  "verdict": "PASS controlled Python12; exact prepared routes3 eligible after separate lead grant and slot release",
+  "verified": {
+    "all9PacketArtifacts": true,
+    "exact12IndependentLogLabels": true,
+    "exit0NoSkipped": true,
+    "protected1124Rehash": true,
+    "sourceClean": true,
+    "ownedTreeAndTmpAbsent": true
+  },
+  "elapsedMs": 353,
+  "peakRSSKiB": null,
+  "memoryScope": "No sample in short run, unmeasured",
+  "payload": "Actual labelled queryHost serializer fixture passed unchanged compressed<=16384 assertion. Exact size not emitted; future concrete campaign still requires independent actual size check.",
+  "scope": "Owned filesystem plus actual commissioning/readback/attest code under explicit account/systemd/proc/listener/upstream simulations. No Linux/cloud/proof qualification.",
+  "nextPacket": "83488ae3bc366fff5d8f112f5f7ab3295c29596bf694e703d6a1fc417ea9b451",
+  "nextRunner": "3df2677e1b020c07887c972eb1a52a56e5c0d4a4d3f0effd2d612a34dcc55ef6",
+  "reviewerRuntimePerformed": false
+}

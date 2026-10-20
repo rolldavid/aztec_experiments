@@ -1,0 +1,31 @@
+{
+  "base": "bc6bfb6754882259ef24927316cbc97ced31442d",
+  "candidate": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "task_id": "G07-cold-public-index",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "shared/rolling/public-events.mjs",
+    "shared/rolling/public-events.test.mjs",
+    "shared/rolling/public-index.test.mjs"
+  ],
+  "required_checks": [
+    "focused"
+  ],
+  "requirements": [
+    "RC27-pruned-state-public-rebuild-component",
+    "RC26-authenticated-immutable-Bok-state"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G07-cold-public-index",
+      "paths": [
+        "shared/rolling/public-events.mjs",
+        "shared/rolling/public-events.test.mjs",
+        "shared/rolling/public-index.test.mjs"
+      ]
+    }
+  ]
+}

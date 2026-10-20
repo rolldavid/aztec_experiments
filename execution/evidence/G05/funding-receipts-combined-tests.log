@@ -1,0 +1,38 @@
+✔ labelled RPC collateral: real ABI/hash/witness produces private immutable claim and public evidence (222.477084ms)
+✔ labelled RPC private-fee: real ABI/hash/witness produces private immutable claim and public evidence (42.929291ms)
+✔ labelled RPC bok: real ABI/hash/witness produces private immutable claim and public evidence (20.661375ms)
+✔ custody-store record is verified against public secret commitment (21.848584ms)
+✔ absence and not-yet-finalized never prepare or retry claims (24.301875ms)
+✔ L2 delivery pending differs from reverted L1 (31.059291ms)
+✔ reject L1 reorg without raw diagnostic or claim (12.585583ms)
+✔ reject L2 orphan still addressable by hash without raw diagnostic or claim (16.15475ms)
+✔ reject wrong portal without raw diagnostic or claim (13.741541ms)
+✔ reject wrong sender without raw diagnostic or claim (12.539583ms)
+✔ reject wrong nonce without raw diagnostic or claim (12.619209ms)
+✔ reject wrong leaf without raw diagnostic or claim (15.991125ms)
+✔ reject wrong path without raw diagnostic or claim (18.32775ms)
+✔ reject wrong secret account without raw diagnostic or claim (13.767875ms)
+✔ reject duplicate receipt event without raw diagnostic or claim (12.603334ms)
+✔ reject RPC private error without raw diagnostic or claim (13.288167ms)
+✔ reject context changed without raw diagnostic or claim (10.95ms)
+✔ Bok binds recipient commitment, token and exact hidden-secret calldata (45.858ms)
+✔ FPC recovery rejects foreign owner, token and altered public amount (89.530583ms)
+✔ reorg after witness invalidates ready result (17.178667ms)
+✔ input descriptors reject accessors and snapshots resist changes during awaits (28.571ms)
+✔ canonical finalized block changing during verification is not accepted (18.12425ms)
+✔ unknown provider error with hostile getters is safely projected (11.584959ms)
+✔ missing token and changed network are rejected (22.144583ms)
+✔ malformed event, amount, content/key or leaf never reaches claim preparation (50.277417ms)
+✔ 20-second whole-operation deadline prevents a delayed guard starting an RPC afterwards (10.897125ms)
+✔ FPC helper RPC uncertainty is not relabelled a receipt mismatch (39.116459ms)
+✔ unbranded node is rejected before guard or membership, even if it copies trusted methods (10.427583ms)
+✔ mutation during guard await cannot replace captured trusted route, L1 reads, guard or artifact (36.58125ms)
+✔ mutation during guard await cannot replace captured custody-store capability (18.992833ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1820.240458

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "passed": true,
+  "stage": "complete",
+  "checks": {
+    "nativeAndRollingCatalog": {
+      "passed": true,
+      "circuitCount": 67
+    },
+    "noProofLifecycle": {
+      "passed": true,
+      "proofEndpointsDisabled": true,
+      "queueAllocated": false,
+      "workerAllocated": false
+    },
+    "healthy": {
+      "ready": true,
+      "blockNumber": 7920,
+      "blockHash": "0x221cc67ad2c22d19eb86ba999fe43a58ddff3840dab9bff1d3c974b51f556b21"
+    },
+    "wrong-chain": {
+      "rejected": true
+    },
+    "wrong-version": {
+      "rejected": true
+    },
+    "wrong-rollup": {
+      "rejected": true
+    },
+    "proof-config-floor": {
+      "rejected": true
+    },
+    "freshness": {
+      "coverage": "stricter-policy-real-state",
+      "normalMaxLagSeconds": 120,
+      "strictMaxLagSeconds": 1,
+      "normalHealthyBefore": true,
+      "stale": true,
+      "queriesRejected": true,
+      "strictServiceClosed": true,
+      "normalHealthyAfter": true,
+      "observedL1Timestamp": "1792367844",
+      "observedLagSeconds": 2,
+      "rejectionCode": "BB_TRUSTED_NODE_STALE"
+    },
+    "normalHealthyAfter": {
+      "ready": true,
+      "blockNumber": 7921,
+      "blockHash": "0x1368db9f1202252896bb3c95a41190ee60a318da852f118be35e369c4fd35c6a"
+    },
+    "missingHelper": {
+      "missingHelperRejected": true
+    },
+    "manifestUnchanged": true
+  },
+  "cleanup": {
+    "serviceClosed": true,
+    "temporaryFilesRemoved": true,
+    "childProcessesExited": true
+  },
+  "qualification": "Linux runtime and real-network query composition only",
+  "proofJobs": 0,
+  "remainingGates": [
+    "actual-proof-disabled-node-mismatch",
+    "genuine-Rolling-proofs",
+    "archive-storage-recovery",
+    "human-account-privacy-traces",
+    "independent-privacy-review"
+  ],
+  "release": {
+    "manifestSha256": "986706a5102c52babc7a5657b377e7ac2127fa2c705eedc5350fa3fa9a0f366e",
+    "sourceCommit": "506ca88234424152d7438dcee016ae57d7fa06cc",
+    "fileCount": 72756
+  },
+  "runtime": {
+    "platform": "linux",
+    "architecture": "x64",
+    "node": "24.21.0",
+    "bbVersion": "6.0.0-rc.6"
+  },
+  "publicScope": {
+    "chainId": "11155111",
+    "version": "3409706519",
+    "rollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "serviceMode": "query-only",
+    "nodeProofs": "real",
+    "maxLagSeconds": 120
+  }
+}

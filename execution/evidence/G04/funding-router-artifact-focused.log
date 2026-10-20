@@ -1,0 +1,48 @@
+✔ matching synthetic artifacts and recorded sources pass (15.218375ms)
+✔ stale deploy Noir copy is rejected (10.435083ms)
+✔ stale censor Noir copy is rejected (8.494292ms)
+✔ missing verification key is rejected even when all consumer copies agree (8.687125ms)
+✔ empty private function set is rejected even when all consumer copies agree (10.397417ms)
+✔ only public functions is rejected even when all consumer copies agree (10.002792ms)
+✔ untranspiled artifact is rejected even when all consumer copies agree (9.38ms)
+✔ truthy non-boolean transpilation marker is rejected even when all consumer copies agree (9.962083ms)
+✔ stale portal bytecode is rejected: apps/src/billboard/portal_bytecode.txt (9.622541ms)
+✔ stale portal bytecode is rejected: apps/src/billboard/deploy/portal_bytecode.txt (9.877834ms)
+✔ portal source drift is rejected by embedded compiler provenance (9.091542ms)
+✔ missing Solidity source provenance is rejected (8.978042ms)
+✔ string-encoded Solidity metadata remains supported (11.041875ms)
+✔ Noir source drift requires a rebuild (9.9645ms)
+✔ Noir dependency declaration drift requires a rebuild (9.649708ms)
+✔ root dependency lock drift requires a rebuild (10.83075ms)
+✔ portal dependency lock drift requires a rebuild (10.367667ms)
+✔ compiler configuration drift requires a rebuild (9.807333ms)
+✔ toolchain pins drift requires a rebuild (8.819125ms)
+✔ contract builder drift requires a rebuild (9.287208ms)
+✔ Noir debug-path normalizer drift requires a rebuild (8.929875ms)
+✔ Noir dependency verifier drift requires a rebuild (8.664583ms)
+✔ Noir dependency pins drift requires a rebuild (8.675917ms)
+✔ new Noir source omitted from the old manifest requires a rebuild (8.834292ms)
+✔ contract manifest input hash tampering is rejected (9.0135ms)
+✔ contract manifest noir hash tampering is rejected (8.681041ms)
+✔ contract manifest portal hash tampering is rejected (9.358667ms)
+✔ contract manifest pluginAdapter hash tampering is rejected (8.417958ms)
+✔ contract manifest pluginPortal hash tampering is rejected (8.567459ms)
+✔ contract manifest fundingRouter hash tampering is rejected (9.142584ms)
+✔ synchronized altered Noir artifacts still fail the recorded build hash (8.8995ms)
+✔ synchronized altered portal bytecode still fails the recorded build hash (8.666958ms)
+✔ privateFee key, extra route and stale content fail closed (8.778333ms)
+✔ refund completion must remain restricted to the fee contract (7.73375ms)
+✔ plugin artifact drift is rejected: plugins/adapter_artifact.json (9.30375ms)
+✔ plugin artifact drift is rejected: billboard/portal/out/PluginPortal.sol/PluginPortal.json (8.385292ms)
+✔ plugin artifact drift is rejected: billboard/portal/out/RollingFundingRouter.sol/RollingFundingRouter.json (8.533958ms)
+✔ plugin claim cannot lose its verification key even with a refreshed manifest (8.077791ms)
+✔ plugin portal source must match compiler provenance (7.934875ms)
+✔ funding router source must match compiler provenance (8.288041ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 862.647458

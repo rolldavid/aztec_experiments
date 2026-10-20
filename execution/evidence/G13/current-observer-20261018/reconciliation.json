@@ -1,0 +1,301 @@
+{
+  "source": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "at": "2026-10-18T11:50:32.456474+00:00",
+  "requirements": [
+    "RC23",
+    "RC24",
+    "RC25",
+    "RC26",
+    "RC39"
+  ],
+  "verdict": "scoped actual read-only wire and public-effect evidence; full observer privacy NOT qualified",
+  "environment": {
+    "chain": 31337,
+    "checkpoint": {
+      "number": 93,
+      "hash": "0x189d255a0ad6cdd334645092bdf235db9c22eeac12192f0595278816283b551f"
+    },
+    "nodeProofs": false,
+    "pxeProverEnabled": false,
+    "query": "http://127.0.0.1:8093",
+    "publicReader": "http://127.0.0.1:4319",
+    "node": "http://127.0.0.1:8080",
+    "storage": "Fresh process-local IndexedDB shim and private journal; no browser original state modified",
+    "roles": {
+      "a": "retained disposable human account, private address never serialized",
+      "b": "public Bok operator; NOT a second human test participant"
+    }
+  },
+  "procedure": {
+    "command": "TMPDIR=/private/tmp NODE_BACKEND=js HARDWARE_CONCURRENCY=2 ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node .build/g13-current-observer/read.mjs",
+    "effectsCommand": "same environment and pinned Node, .build/g13-current-observer/public-effects.mjs",
+    "reads": [
+      "ordinary production ownedIdentities",
+      "ordinary readPreferences to actual completion",
+      "production readBokStatus",
+      "uniform public feed, then selectPrivateViews locally"
+    ],
+    "mutations": {
+      "walletSubmissions": 0,
+      "modelCalls": 0,
+      "proofJobs": 0,
+      "servicesStartedOrChanged": 0,
+      "chainControls": 0
+    },
+    "noSendEvidence": "Actor walletSubmissions0 plus zero observed sendTx/eth_send* or proof-job requests. externalActivity counters are fixture-supplied and not independent transport evidence."
+  },
+  "actualResult": {
+    "passed": true,
+    "steps": 3,
+    "names": 2,
+    "preferenceRevision": "5",
+    "bokAvailable": true,
+    "selected": {
+      "following": 9,
+      "bookmarks": 1,
+      "notifications": 0
+    },
+    "activity": {
+      "authWitnesses": 0,
+      "proofJobs": 0,
+      "walletSubmissions": 0,
+      "transportSends": 0
+    },
+    "checkpoint": {
+      "number": 93,
+      "hash": "0x189d255a0ad6cdd334645092bdf235db9c22eeac12192f0595278816283b551f"
+    }
+  },
+  "wire": {
+    "requests": 288,
+    "completed": 288,
+    "pending": 0,
+    "unknown": 0,
+    "unsupported": 0,
+    "truncated": 0,
+    "observerErrors": 0,
+    "opaqueTransactions": 1,
+    "requestCoverageComplete": false,
+    "byDestination": {
+      "ordinary-node": 2,
+      "public-reader": 1,
+      "trusted-query": 285
+    },
+    "methods": [
+      {
+        "destination": "ordinary-node",
+        "method": "aztec_getContract",
+        "logicalItems": 1
+      },
+      {
+        "destination": "ordinary-node",
+        "method": "aztec_getNodeInfo",
+        "logicalItems": 1
+      },
+      {
+        "destination": "public-reader",
+        "method": "reader_feed",
+        "logicalItems": 1
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_findLeavesIndexes",
+        "logicalItems": 6
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getBlock",
+        "logicalItems": 22
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getBlockData",
+        "logicalItems": 111
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getChainTips",
+        "logicalItems": 66
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getContract",
+        "logicalItems": 14
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getNodeInfo",
+        "logicalItems": 48
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getPredictedMinFees",
+        "logicalItems": 1
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getPrivateLogsByTags",
+        "logicalItems": 14
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getPublicLogsByTags",
+        "logicalItems": 1
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getPublicStorageAt",
+        "logicalItems": 4
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getSyncedL1Timestamp",
+        "logicalItems": 44
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_getWorldStateSyncStatus",
+        "logicalItems": 44
+      },
+      {
+        "destination": "trusted-query",
+        "method": "aztec_simulatePublicCalls",
+        "logicalItems": 1
+      }
+    ],
+    "humanAddressObservation": "One serialized trusted-query aztec_getContract setup request exactly matched role a; this is direct observation of disclosure to configured trusted query.",
+    "ordinaryNodeObservation": "Two setup reads: getNodeInfo and public board getContract; no role-a match. These are actor preflight, not evidence of browser transport.",
+    "publicBackendObservation": "One /api/feed?limit=100 request, no account role, owned-name list, follow/bookmark/subscription filter supplied. Selection produced9following/1bookmark/0notifications locally.",
+    "opaqueObservation": "One aztec_simulatePublicCalls serialized transaction body is deliberately opaque to existing observer. No universal address-absence or complete coverage claim."
+  },
+  "publicEffects": {
+    "transactions": 6,
+    "events": 3,
+    "preferenceActions": 4,
+    "preferencePublicEvents": 0,
+    "gardenReplyAndFinishEvents": 3,
+    "humanAccountScalarMatches": 0,
+    "sourceDisposition": "Current decoder reauthenticated original receipts and exact whole-block effects. Only public-events.mjs changed since0fd among protocol/application/preference/invocation files listed; change authenticates immutable deployment state at retained checkpoint, not event semantics."
+  },
+  "observers": [
+    {
+      "observer": "public chain/archive",
+      "observed": "Four preference txs decode no public Rolling/Bok events; Garden reply/finish decode3authenticated public events with no exact human-account scalar in payload.",
+      "limit": "Does not inspect every ciphertext, nullifier relation or opaque serialized proof; public content/timing/budget/accounting remain visible."
+    },
+    {
+      "observer": "public application backend",
+      "observed": "Actual uniform public feed request; recovered views filtered locally, no explicit relationship lists in this request.",
+      "limit": "This was Node actor, not browser cookies/extension/host ingress capture. Public profile/thread interest and IP/timing remain observable."
+    },
+    {
+      "observer": "trusted query/prover boundary",
+      "observed": "285requests including one actual human account-contract lookup and private-log-tag/nullifier discovery methods; secret keys remain local in this read procedure.",
+      "limit": "Trusted query and its upstream node see these request arguments. No proof jobs were run; this is not proof-witness retention qualification."
+    },
+    {
+      "observer": "independently operated node",
+      "observed": "No independent receiver was instrumented. Current source forwards admitted query args to fixed loopback upstream with fresh headers; it does not hide account/tag lookups from that upstream.",
+      "limit": "Current topology uses same trusted local operator. This cannot establish unlinkability against an independently operated downstream node or prove no external personalized cache-miss forwarding."
+    },
+    {
+      "observer": "Bok/model/generated code",
+      "observed": "No model call performed; retained currentGarden evidence records public-thread input, accepted isolated output and exact billing.",
+      "limit": "No new end-to-end model-input/privacy/egress observation; previous controlled isolation evidence remains separately scoped."
+    }
+  ],
+  "remainingBlocker": {
+    "type": "unqualified independent-node/receiver privacy boundary",
+    "condition": "Existing in-process fetch observer excludes service-side upstream requests, actual listener-added headers, native/undici/direct transports and other processes. The active gateway/fullnode were not launched with receiver observation; injecting it would be service work outside this claim. One human/two names plus opaque simulation also cannot close the required two-human unlinkability scenarios.",
+    "recovery": "At an authorized service boundary use existing receiver preload/wire observer and frozen transport inventory, verify actual trusted operator/fullnode/archive topology and no user-specific external misses, reconcile ingress with exact requests and full effects. An independently operated fullnode that receives these account/tag lookups is a concrete requirement blocker, not cured by this gateway. Specialist review and targeted real proofs remain separate.",
+    "noNewFrameworkNeeded": true
+  },
+  "limitations": [
+    "Development native proof flags false; no browser wallet or public-testnet assurance.",
+    "Ordinary preference reader was exercised, not cold browser compact scan; lead owns actual cold UI evidence.",
+    "288completed fetch observations do not establish complete network egress; counts cover this instrumented process only.",
+    "Name ownership and preference contents are private output; packet includes only counts, no secret/raw trace or account address.",
+    "No new transaction or paid action; no original data reset."
+  ],
+  "sourceInventory": {
+    "scripts/testing/rolling-wire-trace.mjs": {
+      "sha256": "9afb34e91dc8f2d3c9d521f5606b13f6c56adef4d57c6e87eca909de0f28528f",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "scripts/testing/rolling-application-actor.mjs": {
+      "sha256": "010a5ff452a894b0a85845d107ea8ea83f9874fa0138dcf0b4003ec633589ee9",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "shared/trusted-private-node.mjs": {
+      "sha256": "00c5fab973f203e1b0b9721b691f74b405fb3d8c73bfc3e016be4c5eb1ad7ed3",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "prover/private-query.mjs": {
+      "sha256": "0869227d9c64ed5790c45eee118959918762aa5f09fee6ffb1bbc5f78123f58f",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": false
+    },
+    "shared/rolling/application.mjs": {
+      "sha256": "222d5c8ce28e45cc52a37376310ed8d36f9c4b13fe0d0b4e7e2e6d7b8fc9874a",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "shared/rolling/preference-reader.mjs": {
+      "sha256": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "shared/rolling/private-views.mjs": {
+      "sha256": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "shared/rolling/public-events.mjs": {
+      "sha256": "1ae2d034f9ac585f3f6266ae17ab2b6a820935aa447e2f49945e7e88e9538064",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": false
+    },
+    "shared/rolling/invocation.mjs": {
+      "sha256": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "billboard/rolling_contract/src/main.nr": {
+      "sha256": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    },
+    "experiments/private-bok/escrow/src/main.nr": {
+      "sha256": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260",
+      "unchangedSinceCurrentProfileSocialEvidence0fd": true
+    }
+  },
+  "artifacts": {
+    "read.mjs": {
+      "sha256": "f06037c3eb1c2342d51e008dab2e7d00e776b307e051784bc733035ff6259ede",
+      "bytes": 6620
+    },
+    "attempt-1.log": {
+      "sha256": "65036adc82f4253c696a5a5cdaf3d2d4dc431f7a241a8baedb0ecbd9ac69858b",
+      "bytes": 93
+    },
+    "attempt-1/result.json": {
+      "sha256": "610332ccc70f1a124a2946039009f83088b189de23f97ffdd01ebaafc842cae8",
+      "bytes": 652
+    },
+    "attempt-1/wire-trace.json": {
+      "sha256": "346aa41b183baa53923c0d0f47bf83d1d77e8bc2e937cd9dc65c533db6785bee",
+      "bytes": 9604
+    },
+    "public-effects.mjs": {
+      "sha256": "a829c78282244eb01cc7535c2560abc3876c58b44152e6b71e9e832898fd6dea",
+      "bytes": 2483
+    },
+    "public-effects.json": {
+      "sha256": "e9be2caf2cf2f725547b02a2dce8bf397e00f5e7bb772a4dd59c28afe9dd6190",
+      "bytes": 2471
+    },
+    "public-effects.log": {
+      "sha256": "cb438e44c642ccb3c4dbf8799ce059dd36f1199fd772e76d23a25fe19c4f51ee",
+      "bytes": 73
+    }
+  },
+  "retainedEvidence": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-notifications-20261018/acceptance.json",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/current-garden-20261018/acceptance.json",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/reviewer-e9a0df2-privacy-boundary.json"
+  ]
+}

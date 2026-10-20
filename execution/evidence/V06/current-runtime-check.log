@@ -1,0 +1,21 @@
+active
+NEXT                                 LEFT LAST                              PASSED UNIT                           ACTIVATES
+Sat 2026-10-10 11:00:00 UTC          5min Sat 2026-10-10 10:50:00 UTC 4min 37s ago sysstat-collect.timer          sysstat-collect.service
+Sat 2026-10-10 11:08:32 UTC         13min Sat 2026-10-10 10:49:28 UTC     5min ago fwupd-refresh.timer            fwupd-refresh.service
+Sat 2026-10-10 19:13:35 UTC            8h Sat 2026-10-10 09:06:22 UTC 1h 48min ago motd-news.timer                motd-news.service
+Sun 2026-10-11 00:00:00 UTC           13h -                                      - dpkg-db-backup.timer           dpkg-db-backup.service
+Sun 2026-10-11 00:00:00 UTC           13h -                                      - logrotate.timer                logrotate.service
+Sun 2026-10-11 00:07:00 UTC           13h -                                      - sysstat-summary.timer          sysstat-summary.service
+Sun 2026-10-11 03:10:55 UTC           16h -                                      - e2scrub_all.timer              e2scrub_all.service
+Sun 2026-10-11 03:11:02 UTC           16h -                                      - apt-daily.timer                apt-daily.service
+Sun 2026-10-11 06:33:38 UTC           19h -                                      - apt-daily-upgrade.timer        apt-daily-upgrade.service
+Sun 2026-10-11 08:47:56 UTC           21h Sat 2026-10-10 08:47:56 UTC  2h 6min ago update-notifier-download.timer update-notifier-download.service
+Sun 2026-10-11 08:57:48 UTC           22h Sat 2026-10-10 08:57:48 UTC 1h 56min ago systemd-tmpfiles-clean.timer   systemd-tmpfiles-clean.service
+Sun 2026-10-11 11:39:38 UTC           24h -                                      - man-db.timer                   man-db.service
+Mon 2026-10-12 00:24:38 UTC     1 day 13h -                                      - fstrim.timer                   fstrim.service
+Tue 2026-10-13 08:42:31 UTC        2 days -                                      - board-budget-stop.timer        board-budget-stop.service
+Sat 2026-10-17 21:31:06 UTC 1 week 0 days -                                      - update-notifier-motd.timer     update-notifier-motd.service
+-                                       - -                                      - apport-autoreport.timer        apport-autoreport.service
+-                                       - -                                      - snapd.snap-repair.timer        snapd.snap-repair.service
+-                                       - -                                      - ua-timer.timer                 ua-timer.service
+

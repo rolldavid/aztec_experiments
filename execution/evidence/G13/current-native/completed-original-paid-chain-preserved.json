@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-14T06:19:14.701909+00:00",
+  "source": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "session": 14944,
+  "pid": 6885,
+  "exit_code": 0,
+  "reason": "Preserve completed original paid chain before native retained snapshot 2GiB cap; new RC22 class requires separate campaign",
+  "phase": "stopped",
+  "snapshot_file": "anvil-recovery-527ac5f2-2aa8-4819-9c73-cf15a9d1319c.json",
+  "snapshot_sha256": "3e78ef6816d99d5142aa4f4d5f32efdb4f327bd5483e05ad49605ff59592f03e",
+  "snapshot_bytes": 2141856976,
+  "snapshot_head": {
+    "number": "0x57b",
+    "hash": "0x29670af19c90a23700541d99505257dab6f48295bad9dc18768ed34fa4a288c2",
+    "pending": "658",
+    "proven": "658"
+  },
+  "financial_replays": 0,
+  "hosted_stopped": true,
+  "evidence": [
+    "execution/evidence/G14/retained-bok-original-canonical-events.json",
+    "execution/evidence/G14/retained-bok-hosted-settled.json",
+    "execution/evidence/G14/retained-bok-live-feed.json"
+  ],
+  "observer_result": "Existing read-only observer failed3.634s before emitting child record; original payment/auth/post/reply/finish remain independently observed, failure preserved"
+}

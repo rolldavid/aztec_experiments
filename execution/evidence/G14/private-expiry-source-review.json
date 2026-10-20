@@ -1,0 +1,37 @@
+{
+  "revision": "7a976068b90f8cb8496b36f24559466447109a9c",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved source only",
+  "sourceHashes": {
+    "billboard/rolling_contract/journey.mjs": "85c1d0791b196b30527dbe2e39e2f5a753f431b1444679c890da8eeb425bdd40",
+    "experiments/private-bok/escrow/src/main.nr": "fdd45a3ebf90d28df3aa59894d523a034835249c3781e370cb5dd1d1c710a46b",
+    "experiments/private-bok/measure.mjs": "db080cd5bcd8bda4be68c8a9d4525b7f8d31255f25d26d4df5f76df327bc3945",
+    "experiments/private-bok/tests/src/lib.nr": "232df54e37b7dc1963569cd5e320bd971394dd534d873bd2aa53af556141f0f7",
+    "plugins/operations.mjs": "eb773cf2e9a77bc372950e13ad46c158a0fab7464634600f58760764b8725119",
+    "plugins/private-bok-metering.mjs": "6b39eed0d2c6750efcc7fac9385782bb08f84c19e92239252109d75e47a01320",
+    "plugins/private-bok-metering.test.mjs": "047ef58ecfca87ad7b3b5e60b5a7e34060f0d87596a1e71465665b6f0afd2351",
+    "plugins/venice-metered.mjs": "f50c16cbd327d578bc061f642fc245912706dd527200139c66abdb00f112e632",
+    "prover/application-policy.mjs": "ca7b85ab3690180cdeb248e4196b14191dcd4635f240844237548f2423aac88a",
+    "prover/application-policy.test.mjs": "87aa1f479d14ad5201ed59da3576b4d8fdbc684015b6ef13e62adee042295e37",
+    "prover/rolling-artifacts.json": "e7eb93bf9aeed96ec5acd7c8fad09f385177a87b05f96b9a5aa5321bfe70edf3",
+    "scripts/testing/assets.mjs": "b8d639e12190dd02e149ae9b31775b5aef6364243867e14d1bebf31f4a087357",
+    "scripts/testing/rolling-bok-fixture.mjs": "45e16497cba4d1ffbc3e782d6151b64fa69b56815ed13353ca219f082eb26d7b",
+    "scripts/testing/scenarios.mjs": "4453ba6672fa60f19ae6336097ba0dcfdd1a519f0e6064d57e5e482f0c9d0d26"
+  },
+  "checks": [
+    "78 independent provider/operations/metering/policy/evidence tests pass none skipped",
+    "all three send paths persist canonical inclusion/executionResult/fees before mandatory success and privacy assertions",
+    "Private expiry and onlyself callback preserve exact deadline/state/accounting body;6additionaltests",
+    "providerfourfiles byteidentical approved7bd495d; durability+postfence deadline findingsclosed",
+    "18pinned inputs and2artifact digests match, Rolling10+PrivateBok6 normalprivateVKs"
+  ],
+  "findings": [],
+  "pending": [
+    "62TXE",
+    "actualprivateuncertain privacy andpoolaccounting",
+    "RollingBoard journey",
+    "genuineproofs",
+    "actualmodelbilling andchainport",
+    "serviceexclusivewriter and realcrash qualification"
+  ]
+}

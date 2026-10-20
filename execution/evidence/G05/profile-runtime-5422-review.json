@@ -1,0 +1,179 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+  "verdict": "approved_bounded_genuine_profile_development_acceptance",
+  "scope": "G05 owned readable name recovery,992byte bio,8192byte avatar, authenticated moderator removal, clear/replacement, private fees and canonical public reconstruction; not fullG05/G06/G14",
+  "findings": [],
+  "evidence_sha256": {
+    "execution/evidence/G05/application-5422b57a-0567-45ef-af4c-2a0715e05105.json": "5ad596416a921fd71b8269cb1b26e71b0358059486b67f609f79037e156e34ad",
+    "execution/evidence/G06/application-port-1d3cdaa4-23fb-43e0-b211-532f2b46a54a/observation.json": "7b54a8e04bca3293621db0b30cc3d2b08b4d5c1840909e5a35c1cdd7ced794ee",
+    "execution/evidence/G05/profile-5422-independent-effects.json": "f2343086afc8d0535fd2762e934d44ce0118c017c803dd39e81aaec55a23154d",
+    "execution/evidence/G05/profile-build-txe-90a1-review.json": "47710ca31ab102784b4626e6a9262483ba515b6d9498e892e7afac639d76cb14",
+    "execution/evidence/G05/native-name-f30a8e3-review.json": "10850fd2a363c9315ede4f766b6d5cd8727538e75bf30158a87cd19155b2351b"
+  },
+  "independent_checks": {
+    "outerSourceFiles": 203,
+    "localAnvilBinary": true,
+    "innerSourceFiles": 48,
+    "artifactHashes": 2,
+    "bokBuildInputs": 14,
+    "nativeSDKInputs": 70,
+    "allMatchedCurrentFiles": true,
+    "trackedInnerSourceMatchesExactGitRevision": true,
+    "storedEffectsDecoded": 6,
+    "effectBinaryHashRoundtripTxHashFeeSuccessMatched": true,
+    "normalProcessedPrivateVKs": 12
+  },
+  "actual_runtime": {
+    "elapsedMs": 409207,
+    "limitMs": 540000,
+    "peakTreeRSSKiB": 2302912,
+    "limitKiB": 4194304,
+    "fixtureHeapMiB": 768,
+    "proofMode": "real",
+    "actualNodeRealProofs": true,
+    "HTTPNativeJobs": {
+      "submitted": 5,
+      "completed": 5,
+      "failed": 0
+    },
+    "moderator": "Distinct public operator through separately genuine proveApplicationAction; canonical included effect decoded. Moderator proof bytes not separately retained for independent offline proof verification.",
+    "ownedNameRecovery": {
+      "beforeBlock": 14,
+      "requiredBlock": 15,
+      "afterBlock": 15,
+      "count": 1,
+      "registeredNamePresent": true,
+      "nextCursor": null,
+      "readableMetadataRecovered": true
+    },
+    "journalReopen": {
+      "sameHash": true,
+      "newProofJobs": 0,
+      "transactionBytesRetained": true
+    },
+    "rebuild": {
+      "passed": true,
+      "canonicalTransactionsRefetched": 7,
+      "normalizedCacheTreatedAsAuthority": false
+    },
+    "publicReader": {
+      "passed": true,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true,
+          "checkpoint": {
+            "number": 20,
+            "hash": "0x1bed39fc87746a66703a48eb1c7a3383f3456a35a155feeba8fbc48e54c891be"
+          },
+          "views": [
+            "profile",
+            "feed",
+            "directory"
+          ],
+          "authenticatedRanges": 2
+        },
+        {
+          "phase": "reopened",
+          "closed": true,
+          "checkpoint": {
+            "number": 20,
+            "hash": "0x1bed39fc87746a66703a48eb1c7a3383f3456a35a155feeba8fbc48e54c891be"
+          },
+          "views": [
+            "profile",
+            "feed",
+            "directory"
+          ],
+          "authenticatedRanges": 2
+        }
+      ],
+      "persistedRangesBeforeReopen": 2,
+      "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+    },
+    "innerCleanup": {
+      "applicationPXE": true,
+      "fundingWallet": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "outerFailures": []
+  },
+  "profile_results": {
+    "bioBytes": 992,
+    "bioVersion": "1",
+    "maximum": {
+      "bytes": 8192,
+      "pngSha256": "e4cffd6efa8a50239a2a3b37147c40f0f9684ee47edd769e0cae357ad71a9bc7",
+      "digest": "17812554590588671420829891120370446609990978623976434000229815536070436777992",
+      "version": "1"
+    },
+    "removedVersion": "1",
+    "removalRetainsImmutableHistoricalBytes": true,
+    "clearVersion": "2",
+    "clearBytes": 0,
+    "replacement": {
+      "bytes": 416,
+      "pngSha256": "c0dea019174c70e091bb00ada10e36139ef10130f1fed73e0d5f10baf116b800",
+      "digest": "1570242111116395545186414227235101078208938049363781793986721439439410268985",
+      "version": "3"
+    },
+    "currentProfileReconstructedAfterColdSQLiteReopen": true,
+    "hashAndRasterMethod": "Installed SDK TxEffect binary decoding and actual event ABI/domain validation; compare8192/416PNG bytes to deterministic pinned generator, strict CRC/dimensions/inflate/pixel equality; log data zero padding checked."
+  },
+  "maximum_avatar_cost": {
+    "action": "avatar-maximum",
+    "hash": "0x2be3d9f62e0f13e267c70aacc1c3788c8411ad27e07cc9e8514dcf717c3904c8",
+    "effectBytes": 11391,
+    "publicLogFields": [
+      274,
+      3
+    ],
+    "flatPublicLogFields": 281,
+    "blobFields": 361,
+    "blobBytes": 11552,
+    "publicDataWrites": 9,
+    "fee": "45064365000000",
+    "event": "AvatarPublished",
+    "image": {
+      "bytes": 8192,
+      "version": "1",
+      "digest": "17812554590588671420829891120370446609990978623976434000229815536070436777992",
+      "sha256": "e4cffd6efa8a50239a2a3b37147c40f0f9684ee47edd769e0cae357ad71a9bc7"
+    }
+  },
+  "v6_limits": {
+    "flatPublicLogFields": 4096,
+    "maxLogFields": 4094,
+    "publicWrites": 63,
+    "blobFields": 8475
+  },
+  "accounting": {
+    "fiveHumanActions": "197659843200000",
+    "collateralClaim": "8501486100000",
+    "actualHumanFees": "206161329300000",
+    "standaloneFundingTransaction": "12869316000000",
+    "totalPrivateDebit": "219030645300000",
+    "privateBalance": "999999780969354700000",
+    "funded": "1000000000000000000000",
+    "moderatorFee": "9317547000000",
+    "moderatorBalanceDeltaEqualsFee": true,
+    "allExactIntegersRecomputed": true
+  },
+  "privacy_disposition": "All eight named public-effect equality categories retain false human-address presence; sharedFPC pays humans, human publicFeeJuicezero. This is exact-field checking, not derived-identifier/request-trace or cryptographic unlinkability acceptance.",
+  "limits": [
+    "Local31337 controlled settlement; real application proofs, no genuine epoch/network settlement proof.",
+    "Fixed test moderator decision, no image-policy model qualification.",
+    "CLI application port and actual public HTTP/SQLite acceptance, not funded browserDOM persistence or deployed testnet frontend acceptance.",
+    "Cold public index validates actual canonical ranges; cleaned disposable chain cannot now be independently re-queried. Offline review verifies preserved six transaction effects; initial policy transaction canonicality relies on observed original real decoder run and receipt record.",
+    "Profile reads show current replacement; immutable historical max-avatar log remains stored, removal hides display bytes rather than erasing chain data.",
+    "Maximum, clear and small replacement all use fixed265-field arrays and361 blob fields; smaller images currently do not reduce blob field count.",
+    "Normal151TXE/12VK build evidence remains same artifact;99 compiler diagnostic obligations and independent specialist privacy/soundness review remain open.",
+    "Previously approved conversation behavior is not re-executed by this profile-only run; other mandatory product requirements remain open."
+  ]
+}

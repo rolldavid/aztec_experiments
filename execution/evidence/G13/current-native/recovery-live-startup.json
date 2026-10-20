@@ -1,0 +1,60 @@
+{
+  "source": "1068070d92ef6865af726bda74764da8fd72cccf",
+  "at": "2026-10-14T01:43:09.010582+00:00",
+  "passed": true,
+  "phase": "live-startup",
+  "pid": 76826,
+  "session": 49760,
+  "readiness": {
+    "url": "http://127.0.0.1:8080",
+    "profile": "rolling",
+    "readiness": {
+      "core": "configured",
+      "publicIndex": "live-status-required",
+      "nativeProofs": false,
+      "privateBok": "portal-active-registered",
+      "bokAddress": "0x2f18be97736914b34f04beb040b19289b465dc3cceaf152ecf391f8873c35ac8",
+      "bokPortal": "0xfbba87dac7ae9be0d61253f18080c1a51aad9e56",
+      "developmentToken": "0x207dd1c2e57bf1b86a3ae1feace3efff6d09de22",
+      "developmentInventory": {
+        "kind": "official-circle-development-issuance",
+        "amount": "1000000000000",
+        "decimals": 6,
+        "recipient": "0x3745b973aa4cd8a0349299fd5a7b0e911130b18f"
+      },
+      "userBokCredit": "unfunded",
+      "hostedService": false,
+      "fundingRelay": "configured-not-started",
+      "aggregateFunding": "eth-usdc-configured",
+      "localSettlement": "explicitly test-controlled, not a network proof",
+      "usdcRelay": "configured"
+    },
+    "proofsEnabled": false
+  },
+  "status": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "3004872005",
+      "rollupAddress": "0x84e2217f12878dcb7614fdf9e09baf8cbc1050c2",
+      "boardAddress": "0x02f534c19f18be1f1d6c7331f64292646426dceba3482baf2c29b9851ddf69ca",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8"
+    },
+    "complete": true,
+    "authenticationEpoch": "b09e1b4f-7685-435e-ae75-b3542c0fdcef",
+    "revision": "b09e1b4f-7685-435e-ae75-b3542c0fdcef:1:28",
+    "checkpoint": {
+      "number": 22,
+      "hash": "0x302500f70f6566112cd8a7e42aa32603b4680b5b972abd35da52d12c15b8dc5b"
+    },
+    "cursor": {
+      "blockNumber": "23",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "complete"
+  },
+  "command": "NODE_BACKEND=js HARDWARE_CONCURRENCY=1 pinned-node plugins/devnet/start.mjs --profile rolling --directory .build/rolling-devnet-recovery-20261014 --ethereum-port 18545 --node-port 18080 --app-port 8080",
+  "limits": "Native development only; not payment/model/testnet acceptance. Service remains live; no clean-shutdown claim. Failed oldcampaign preserved."
+}

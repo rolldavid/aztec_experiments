@@ -1,0 +1,49 @@
+{
+  "candidate": "4dfafaaa4ec16c5bafc7206719cfdc459a4ea5e4",
+  "base": "cddb3f0c4994640745d17c73df900bc1fb793957",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source and unavailable-endpoint browser acceptance",
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js Node24.21.0 --test --test-concurrency=1 scripts/rolling-wallet-assets.test.mjs apps/rolling/start.test.mjs apps/rolling/wallet-runtime.browser.test.mjs",
+      "result": "5 passed,0 failed/skipped/cancelled,3.48 seconds"
+    },
+    {
+      "command": "NODE_BACKEND=js Node24.21.0 scripts/check-sdk.mjs",
+      "result": "2035 inputs,8 outputs,Aztec6.0.0-rc.1 pass"
+    },
+    {
+      "command": "git diff --check cddb3f0..4dfafaa",
+      "result": "passed"
+    }
+  ],
+  "source_sha256": {
+    "apps/rolling/README.md": "3e9b9e1033c617d1031e89e7bcaec3f9aeffda2ed90ee526dc1d3ee67e207240",
+    "apps/rolling/reader.mjs": "fd01ceda95b801ab3137ed083e1414949287042fdcbe88d094d53f7b5b2af01a",
+    "apps/rolling/start.mjs": "01d90ac6e17e04e3110f6db1d5ce390ad29ae010dcdd840db1fe3f93c7b71e2a",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "f9cb73e2ec4dd3b69df6eaec26d5406ea77d15918d1d43c33d2168ba18c36e8f",
+    "apps/rolling/wallet-runtime.mjs": "67b3868c5732c133cb39a90b93dc55750bcf419eecad6768f08c98f39dea7325",
+    "scripts/rolling-wallet-assets.mjs": "b81155c47be67825ebdadfc19749a60637da358ebc450d8203cc0f3d0aec3039",
+    "scripts/rolling-wallet-assets.test.mjs": "83fdbf6c4b09926963b9af1df9f2d6a01dc72bb3860f48d0d835afa891e5c7cc"
+  },
+  "generated_manifest": {
+    "path": ".build/rolling-wallet/manifest.json",
+    "sha256": "c8e62c10a1e22d5b544c699c1b2d06d9b66900e098d16746fcba580da40e9485",
+    "inputs": 72,
+    "files": 23
+  },
+  "observations": [
+    "Strict exact public configuration rejects secret/extra properties, URL credentials/query/fragments and scope mismatch. CSP derives only validated origins; data: permits embedded SDK data, not alternate network origins.",
+    "Public reader and account panel opening do not load SDK. Explicit Unlock imports bundled production wallet runtime and loads exact ordered SRI-pinned custody/SDK scripts once. Failed partial load remains failed until reload.",
+    "CRS/artifacts streamed with bounded size and hash equality; exact asset allowlist and per-read byte/hash checks; current runtime bundle has no output imports or node_modules inclusion. Required source/contract/SDK inputs present.",
+    "Actual session uses verified deployment, real trusted node/PXE/wallet construction provenance and context guard; no factory substitution in browser composition. Account change invalidates selected session.",
+    "Independent Chromium used actual SDK, custody, account derivation and ciphertext export against labelled synthetic index/unavailable private endpoint; passwords cleared, no submission, no duplicate SDK on reopen, mobile dialog fits."
+  ],
+  "limitations": [
+    "No actual funded browser chain action, real private endpoint or full product acceptance.",
+    "Funding, composite Bok, profiles and remaining product criteria remain open.",
+    "Build hashes bind reviewed local inputs; they are not a signed release attestation against coordinated host/source compromise.",
+    "Tests wrote the designated ignored screenshot; no application source edits performed."
+  ]
+}

@@ -1,0 +1,31 @@
+{"reviewerRssObservation":true,"pid":14268,"rss":141737984}
+{"reviewerRssObservation":true,"pid":14268,"rss":578551808}
+{"reviewerRssObservation":true,"pid":14268,"rss":579059712}
+✖ tiny growing SQLite fixture retrieves late posts across reopen and exact rollback (497.869667ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 919.411458
+
+✖ failing tests:
+
+test at shared/rolling/public-sqlite.test.mjs:258:1
+✖ tiny growing SQLite fixture retrieves late posts across reopen and exact rollback (497.869667ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(finalRss<=512*1024*1024)
+  
+      at growingHistoryFixture (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/rolling/public-sqlite.test.mjs:216:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

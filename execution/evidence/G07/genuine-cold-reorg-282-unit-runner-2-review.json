@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T01:54:12.966751+00:00",
+  "sourceCommit": "282a1e1df46c7aa20ff85f82dbb826545ac687c0",
+  "verdict": "eligible-for-one-parent-granted-changed-bounded-unit-run",
+  "blockingFindings": [],
+  "files": {
+    "run-2.py": "aace990dc6dea6419fbc744337b12a0209946ca0c303a97ab122c57f6a167c65",
+    "run-plan-2.json": "1c36bf04972d74ca4f1bd01cfdc37523796f5be131f1479a21ea80d9562e816f",
+    "preparation-2.json": "6a0577a583c3a0c84020ab7b3df68624cf1447bd9d8d30388cddb569ae777e4c"
+  },
+  "assessment": [
+    "Only output generation/path/preflight/retained predecessor metadata differ. All148 labels, source548/dependency132/twoabsences, explicit TAP, no filters/skips and60s2GiB remain unchanged.",
+    "Fresh exact /private/tmp/rg07-12hex requires canonical parent, absent path, exclusive mkdir0700, owner/mode/no-symlink validation. Maximum encoded socket path including terminator84 bytes is below Darwin104.",
+    "Existing registered group TERM/KILL/reap and positive absence prerequisite for directory deletion/link restore unchanged. Failed run1 and evidence remain byte-preserved."
+  ],
+  "limits": "One changed environment hypothesis, not proof of historical cause or test acceptance; actual results must still satisfy complete148 label/count closure. No genuine cold/reorg grant.",
+  "reviewerExecutedTests": false
+}

@@ -1,0 +1,28 @@
+{
+  "task_id": "G09-sdk-edge-cache",
+  "implementer": "lead-20261011",
+  "candidate": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "base": "bbcf43dc9fb3603343e2e3a717d8184d027cef61",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/start.mjs",
+    "apps/rolling/start.test.mjs"
+  ],
+  "required_checks": [
+    "focused-assets"
+  ],
+  "requirements": [
+    "RC40-static-asset-delivery"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G09-sdk-edge-cache",
+      "paths": [
+        "apps/rolling/start.mjs",
+        "apps/rolling/start.test.mjs"
+      ]
+    }
+  ]
+}

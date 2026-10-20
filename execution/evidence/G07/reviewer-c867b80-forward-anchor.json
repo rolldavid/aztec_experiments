@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "candidate": "c867b8040bddd3dfdd0d6815416cfebba03776f7",
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "verdict": "changes-requested",
+  "requirements": [
+    "RC25",
+    "RC26",
+    "G07-A08"
+  ],
+  "sourceHashes": {
+    "scripts/patch-pxe-reorg-anchor.mjs": "2dfccd628eaecff2e11357a565b2b08f7c7dd726af5cd1208ef876cfdc69aaf2",
+    "scripts/patch-pxe-reorg-anchor.test.mjs": "814c6ce4014ad21e0d328f459e9495a63fee7427358feef6be0cb9fbc67ac253",
+    "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.js": "9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78",
+    "scripts/testing/fixtures/pxe-reorg-anchor/previous-block_synchronizer.ts": "5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20"
+  },
+  "findings": [
+    {
+      "id": "G07-FWD-1",
+      "priority": "P1",
+      "path": "scripts/patch-pxe-reorg-anchor.mjs",
+      "function": "checkedSelectedAnchor",
+      "line": 91,
+      "problem": "A final advancing live header can be checked after the last captured-anchor check. A same-height fork of captured12 during final tips read, accompanied by live14, is accepted even though the returned/stored anchor12 is now orphaned.",
+      "reproduction": "Existing actual SDK/LMDB fixture: stream acknowledges12; final first tips13, final second tips mutates chain12 to fork and advances14. Sync incorrectly resolves.",
+      "fix": "Retain live-tier floor/hash checks and perform captured header canonical validation after all final live-header work before returning its authority."
+    },
+    {
+      "id": "G07-FWD-2",
+      "priority": "P1",
+      "path": "scripts/patch-pxe-reorg-anchor.mjs",
+      "function": "snapshotBlockStreamSource / doSync",
+      "line": 27,
+      "problem": "The underlying stream starts a tips-only proposed-header prefetch. A post-prune source reread can replace that hash and abandon the earlier pending read. Sync resolves and clears shared snapshot state without draining it; its late rejection then mutates anchorEventFailed outside the owning pass, potentially during another pass.",
+      "reproduction": "Seed15, source12; hold hash12 prefetch, post-walk reread selects13. Sync resolves before held prefetch rejection.",
+      "fix": "Track source reads per pass and drain them before successful return and lifecycle cleanup; bind failures to the owning pass and preserve original rejection semantics. Do not add retry or detach pending reads."
+    }
+  ],
+  "independentChecks": {
+    "existingSuite": {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp HARDWARE_CONCURRENCY=1 LOG_LEVEL=silent Node24 --test scripts/patch-pxe-reorg-anchor.test.mjs",
+      "pass": 40,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 769.843292
+    },
+    "adversarial": {
+      "method": "Existing exact test module piped to Node24 --input-type=module --test-name-pattern=reviewer from scripts, appended cases only; no repository source/test edits.",
+      "pass": 0,
+      "fail": 2,
+      "skip": 0,
+      "durationMs": 125.289542,
+      "failures": [
+        "Missing expected rejection",
+        "sync must drain all source reads before releasing ownership: true !== false"
+      ],
+      "appendedSource": "test('reviewer final advancing header cannot hide captured anchor reorg',async t=>{\n const f=await fixture(t);await f.advance(10);f.state.tip=12;\n const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);\n f.sync.blockStream.sync=async()=>{await sync();f.state.tip=13;const get=f.node.getChainTips;let calls=0;\n f.node.getChainTips=async()=>{if(++calls===2){f.chain[12]=await block(12,99);f.state.tip=14;}return get();};};\n await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);\n});\ntest('reviewer discarded source prefetch remains owned until rejection drains',async t=>{\n const f=await fixture(t);await f.seed();f.state.tip=12;\n let release;const blocked=new Promise(r=>release=r);let held=false;\n const get=f.node.getChainTips;let tipReads=0;\n f.node.getChainTips=async()=>{if(++tipReads===2)f.state.tip=13;return get();};\n f.state.onRead=async q=>{if(!held&&q?.hash?.toString()===f.chain[12].hash.toString()){held=true;await blocked;throw Error('late discarded prefetch failure');}};\n let settled=false;const run=f.sync.sync().then(()=>{settled=true;},()=>{settled=true;});\n await new Promise(r=>setTimeout(r,30));const beforeRelease=settled;release();await run;await new Promise(r=>setTimeout(r,1));\n assert.equal(held,true);assert.equal(beforeRelease,false,'sync must drain all source reads before releasing ownership');\n});"
+    }
+  },
+  "positiveAssessment": [
+    "Exact pristine/prior TS+JS pins and mixed/unknown refusal remain strict.",
+    "Existing tests cover normal forward movement, rollback/ack failure and selected tiers, but omit the two reproduced interleavings.",
+    "No installed dependency changes; temporary dependency link removed; actual fixture installed-byte assertion passed and LMDB/temp cleanup completed."
+  ],
+  "limits": [
+    "No attribution of actual remote initial-sync failure.",
+    "No generated build, live recovery timing, real-proof/testnet or full 120-second qualification."
+  ],
+  "packetSha256": "3481a5162cad6520c83ced1369081b2c9f304080dcc3f6eff8aac1cd4c4d58b6"
+}

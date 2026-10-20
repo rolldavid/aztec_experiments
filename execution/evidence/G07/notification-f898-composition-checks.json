@@ -1,0 +1,63 @@
+{
+  "candidate": "f898c7f3eab81443ac4251863ef703408dbd5ef2",
+  "codeSource": "482e88778042f819f3c008ba5b5449b4f9805533",
+  "integrationBase": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+  "exactCodeHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "908a3329eb3414a282b80fe08d2ab8e55ef423637a51459f1d26df8c5ffeff00",
+    "scripts/testing/assets.mjs": "7d75ec9e7e75c02a99eb2981c2146c29533e7478eb55f27e3b78be75405ca139",
+    "scripts/testing/browser-worker.mjs": "b4c442cf153eda18188ae4370a73391851594c0b186b2a576507b3e0dfe1d9e0",
+    "scripts/testing/rolling-application-actor.mjs": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638",
+    "scripts/testing/rolling-application-actor.test.mjs": "648c97e54319c3005e1a2acb3d83379acefd20f4e7c8245db26ec4bea444d93c",
+    "scripts/testing/rolling-application-fixture.mjs": "c0988f9a6e1ef234071a2b9998b0de55684bee393568aed14118c388b275f2f2",
+    "scripts/testing/rolling-application-fixture.test.mjs": "e4e2e420d6b98bc0d2378c17e18266758b6332599144078302a3af25a19619e7",
+    "scripts/testing/rolling-notification-acceptance.mjs": "ccc1ad658bed9ce37b17ebaae8f9b28ce742f83ad6b63b1818034fb392f595cb",
+    "scripts/testing/rolling-notification-acceptance.test.mjs": "8d6b3bba68afa959f94ed2f9a5cfaa470db10d2e9d2ee6ebe811cb843fc1de5e",
+    "scripts/testing/rolling-notification-browser.mjs": "de021616ef517962a688bc403c10975b9e23cfda30ade661dde952bfca147822",
+    "scripts/testing/rolling-notification-browser.test.mjs": "d9754c3af716d9947a1b199a068f7e0936017c460f9e1e3ffe77330771f04e06",
+    "scripts/testing/rolling-notification-fixture.mjs": "af6aa46236a94add9c02da44a10b415e70303391ab63a38061aae5b41bffd9b6",
+    "scripts/testing/rolling-notification-fixture.test.mjs": "352cc640bc8abe768113af697bbddf9e311faed8fc79f9f854cb1bb296c936da",
+    "scripts/testing/rolling-private-recovery-metrics.mjs": "6d9bb3043243ede17c7a9bba966859a163f6547603e639e1811a16435bd1b058",
+    "scripts/testing/rolling-private-recovery-metrics.test.mjs": "30e68d4216b7933e37ccc23166f9fa098a0548fae1da0d9ad222737c62dcaac6",
+    "scripts/testing/rolling-public-acceptance.mjs": "955dbc9a2d95a47e840909b34daf22fab3ae8040cdc312b7767f26136591cc6e",
+    "scripts/testing/run-application.mjs": "7ac076e770ad59153914a19753fd0edb1186e1ecabd0d5af332b089f1686a16d",
+    "scripts/testing/scenario-flows.mjs": "e24300a0a66bdc288bf02958fda4e95ef2a889e08323c4af92594ca8629509f9",
+    "scripts/testing/scenarios.mjs": "1495e4cccff12757b23325db1b236b2f472f1cb600a4267b838340ef675d5e1d"
+  },
+  "metadataOnly": [
+    "execution/sessions/registry.json",
+    "execution/infrastructure-ledger.json"
+  ],
+  "checks": {
+    "combined": {
+      "passed": 297,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 7167.055916,
+      "exitCode": 0,
+      "execSession": 3751
+    },
+    "sdk": {
+      "inputs": 2040,
+      "outputs": 8,
+      "exitCode": 0
+    },
+    "wallet": {
+      "inputs": 81,
+      "files": 24,
+      "exitCode": 0
+    }
+  },
+  "logs": {
+    "notification-cold-repaired-combined-tests.log": "e56b365d4eddd02a2646594bf9a813e646138de2d397cb50ccc1ef7ba934a5d7",
+    "notification-current-sdk-check.log": "a87afa0547a245c4667cefbe4a759559d69f82db09ba96ba1601a28864730ea3",
+    "notification-current-wallet-build.log": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890",
+    "notification-current-panel-dom.log": "a7ed7e66e8f1edd4f86e23ece2f7db3a876dcf2111de7eae4829127cc39bde24"
+  },
+  "manifests": {
+    ".build/sdk/sdk-manifest.json": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+    ".build/rolling-wallet/manifest.json": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4"
+  },
+  "hypothesis": "First real nativebrowser subscription/reply/readmarker/freshkeys-onlyrestore with four actual application proofs under unchanged540s/4GiB; reviewed parent admits150s browser+30s accounting only ifremainingbudget sufficient. Coldmetrics inactivefornotification scenario; later existingrelationships recovery measurement remains independent.",
+  "next": "Exact source/assets eligibility before one actual rolling-notification-browser campaign; no paidactions.",
+  "at": "2026-10-12T11:03:49.870617+00:00"
+}

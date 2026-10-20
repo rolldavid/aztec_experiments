@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+  "disposition": "accepted-bounded-diagnostic-only",
+  "reviewedAt": "2026-10-13T00:26:01.378719+00:00",
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-http-progress/run-1.json": "f35f84a36f452e76ee66134c46f4addd32bcef69363fbbc4ddb3eda51fdfd200",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-http-progress/actual-report-1.json": "f1d15c724d1721b1be125c59c747018581cd9239b65f1ec4c24c184a5a82ae86",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-http-progress/run-1.log": "5111465e6d32a8d90acf39c06ef49a7735fcd89f2e4a33cdb85d3edad5c7966b",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-http-progress/run-plan-1.json": "70fffe2a9974d3fef858301e4bca847b6354341626b1a6be36fafab7ed2c9d1e",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-http-progress/run-1.py": "51893cb238f904cf35c6954666a076966322c5619883e77812d283e1d3d630be"
+  },
+  "independentChecks": {
+    "sourceFixturePinsRehashed": 22,
+    "dependencyPinsRehashed": 67,
+    "mismatches": [],
+    "exactReportAndLogBindings": true,
+    "sourceAssertionsInspected": "scripts/test-pxe-preference-page.mjs:839-938",
+    "newExecutionByReviewer": false
+  },
+  "actual": {
+    "elapsedMs": 14554,
+    "peakAggregateRssBytes": 789757952,
+    "exitCode": 0,
+    "diagnosticTests": 1,
+    "ownerTests": 1,
+    "skippedOriginalCases": 9,
+    "fullOriginalSuiteQualified": false,
+    "readStepElapsedMs": 9798,
+    "sequences": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "nextBlocks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      5
+    ],
+    "native": {
+      "requests": 4,
+      "accepted": 4,
+      "errors": 0,
+      "pending": 0
+    },
+    "sdk": {
+      "calls": 17,
+      "status": 12,
+      "advance": 5,
+      "errors": 0,
+      "pending": 0,
+      "initialSyncChecks": 1
+    },
+    "tags": {
+      "private": 0,
+      "public": 0
+    },
+    "gateway": {
+      "requests": 475,
+      "errors": 0
+    },
+    "forwarded": {
+      "getNodeInfo": 583,
+      "getChainTips": 510,
+      "getWorldStateSyncStatus": 510,
+      "getBlockData": 1146,
+      "getSyncedL1Timestamp": 510,
+      "getContract": 76,
+      "getTxReceipt": 4,
+      "getTxEffectMembershipWitness": 1,
+      "findLeavesIndexes": 5
+    },
+    "cleanup": {
+      "listenersClosed": true,
+      "pendingSettled": true,
+      "databasesDeleted": true
+    },
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "originalLinkRestored": true,
+    "temporaryDirectoriesAfterCleanup": []
+  },
+  "assertions": "Complete bookmark77/revision1 snapshot with empty other collections/default notifications; one actual original-validator admitted event and head; independently recomputed Poseidon event digest equals both returned head and stored note. Four compact accepted, no errors/pending or private/public tags.",
+  "interpretation": [
+    "Finite baseline progresses sequences0 through5; high readiness counts occur despite steady progress. This supports the source-backed gateway/readiness amplification hypothesis.",
+    "Counts do not prove a nonprogress loop in historical57c. Its exact cursor/compact failure snapshots remain missing.",
+    "600/min default compact admission is not reached here; this result does not establish capacity or timing for longer histories."
+  ],
+  "limitations": [
+    "Synthetic finite4-block canonical node, proofs disabled, extracted generated SDK receiver and labelled identity/initial-sync seam.",
+    "Actual original ACIR/crypto/NoteService/EventService/coordinator and HTTP transports; Node fake-indexeddb, not Chromium or full createPXE.",
+    "No real chain, paid proof, full initial synchronization, 17-block performance, reorg, incremental extension or full81-case acceptance.",
+    "No unchanged genuine retry or deadline extension authorized. Next work should retain finite per-step/failure observations and measure any targeted optimization before another genuine campaign."
+  ]
+}

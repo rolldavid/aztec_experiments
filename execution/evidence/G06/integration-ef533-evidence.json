@@ -1,0 +1,146 @@
+{
+  "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "task_id": "G06-social-reaction-wire-development",
+  "holds": [],
+  "findings": [
+    {
+      "id": "second-depositor-submission-diagnostic",
+      "blocking": false,
+      "status": "open",
+      "severity": "P3",
+      "description": "Social funding receipt has stale outcome-unknown label while canonical hash/status/gas establish success. Preserve historical record; improve future diagnostics."
+    }
+  ],
+  "scope_limits": "Bounded actual two-account social/reaction routing and canonical public reconstruction. Outage/staleness, deployed trust boundary, full product, specialist review and release gates remain mandatory and open.",
+  "checks": [
+    {
+      "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "id": "source-and-regressions",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent exact8path comparison;83social plus20catchup targetedchecks",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1, native real application proofs, disposable local chain31337",
+      "observed": "Sourceapproved, all production/composer/observer inputs preserved; allrequiredassertions retained",
+      "artifacts": [
+        {
+          "path": "evidence/G06/social-reaction-ef533-integration-review.json",
+          "sha256": "4b210c759328aef2d5a5a459f3988b49bf5c2f8d14f4f2acc534ce2bad96e6bb"
+        },
+        {
+          "path": "evidence/G06/reaction-97d-runtime-review.json",
+          "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+        },
+        {
+          "path": "evidence/G06/social-combined-2397-review.json",
+          "sha256": "4ffef2a1c761820c1f28dd49109bc8aab059e994aed98741276f6f6dffe33afa"
+        },
+        {
+          "path": "evidence/G06/public-catchup-ef533-review.json",
+          "sha256": "926c0a4e65139ff7f15d72e6f0e9487bb2173ce40c1d6acbfeb224ae8ea73b89"
+        }
+      ]
+    },
+    {
+      "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "id": "real-social-reaction-wire",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-social-wire; rolling-reaction-wire",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1, native real application proofs, disposable local chain31337",
+      "observed": "Social2397 historical499708ms composed viaexact unchangedscenario/production+reviewed schedulingrepair; reactionef533473778ms2463632KiB. Six real actions percampaign, exactbothaccountfees, canonicalrebuild/journalreopen,18+10publicHTTPreads; complete supported request/receiver capture, opaque exclusions retained; allcleanup.",
+      "artifacts": [
+        {
+          "path": "evidence/G06/social-reaction-ef533-integration-review.json",
+          "sha256": "4b210c759328aef2d5a5a459f3988b49bf5c2f8d14f4f2acc534ce2bad96e6bb"
+        },
+        {
+          "path": "evidence/G06/reaction-97d-runtime-review.json",
+          "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+        },
+        {
+          "path": "evidence/G06/application-97d1293b-66f2-4fcf-bbc2-fb241a5a7856.json",
+          "sha256": "231d015b7fd9161fcb7cf70e7d64996d42b3322cfa5ab5c60e3f9d388103956a"
+        },
+        {
+          "path": "evidence/G06/application-9745c179-f084-4377-a056-454244b85a04.json",
+          "sha256": "c76e6f3d4827163f6f939437c2debd512b0855ab3860ae653e198ae42bf37791"
+        },
+        {
+          "path": "evidence/G06/social-9745-runtime-review.json",
+          "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+        }
+      ]
+    },
+    {
+      "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "id": "coordination-and-gate",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 execution/graph.py validate; python3 -m unittest discover -s execution/tests -p test_integration_gate.py -v",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1, native real application proofs, disposable local chain31337",
+      "observed": "53packages269criteria valid;19tests pass, bad checks/missingreview block integration",
+      "artifacts": [
+        {
+          "path": "evidence/G06/integration-ef533-coordination.log",
+          "sha256": "e7c52bedf6e8e1a89a43c80ae2076558d59740587b112294d47cd7d2eb1b58be"
+        },
+        {
+          "path": "evidence/G06/integration-ef533-gate-tests.log",
+          "sha256": "f82dba26a16570e064ca918c9af7a8c4c0b817e685b701410f120b5213f73529"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+    "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G06/social-reaction-ef533-integration-review.json",
+        "sha256": "4b210c759328aef2d5a5a459f3988b49bf5c2f8d14f4f2acc534ce2bad96e6bb"
+      },
+      {
+        "path": "evidence/G06/reaction-97d-runtime-review.json",
+        "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "id": "G06-social-reaction-wire-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G06/social-reaction-ef533-integration-review.json",
+          "sha256": "4b210c759328aef2d5a5a459f3988b49bf5c2f8d14f4f2acc534ce2bad96e6bb"
+        },
+        {
+          "path": "evidence/G06/reaction-97d-runtime-review.json",
+          "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+        },
+        {
+          "path": "evidence/G06/application-97d1293b-66f2-4fcf-bbc2-fb241a5a7856.json",
+          "sha256": "231d015b7fd9161fcb7cf70e7d64996d42b3322cfa5ab5c60e3f9d388103956a"
+        },
+        {
+          "path": "evidence/G06/application-9745c179-f084-4377-a056-454244b85a04.json",
+          "sha256": "c76e6f3d4827163f6f939437c2debd512b0855ab3860ae653e198ae42bf37791"
+        },
+        {
+          "path": "evidence/G06/social-9745-runtime-review.json",
+          "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+        }
+      ]
+    }
+  ]
+}

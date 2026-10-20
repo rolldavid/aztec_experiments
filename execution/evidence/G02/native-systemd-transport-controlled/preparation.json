@@ -1,0 +1,28 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "argv": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-transport-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-transport-controlled/home",
+    "TMPDIR": "/private/tmp/rtc-lp5_e4x5",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "python": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+  "node": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+  "sourceReviewSha256": "2945d1f0c4007dfce7554c1070afa6931cb9bd55220309f49801e286fd421105",
+  "expectedTests": 25,
+  "temporaryDirectory": "/private/tmp/rtc-lp5_e4x5",
+  "temporaryIdentity": {
+    "dev": 16777233,
+    "ino": 230703764
+  },
+  "protectedCount": 836,
+  "diagnosticHold": "Twenty-five controlled filesystem and in-memory transport checks only; no Docker/network/systemd/native actions.",
+  "repairPacketSha256": "b7c00b9cb649cfcf97dd525fd2adff5bd88989775b0f76380ad29bb71a375c87"
+}

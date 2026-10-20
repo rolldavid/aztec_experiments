@@ -1,0 +1,114 @@
+{
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "resultPacketSha256": "6a5a295871fe6274a8827459cdf40312441d19bc26f4c6bf8dbfde076951dcf1",
+  "emptyPages": [
+    {
+      "ordinal": 6,
+      "durationMs": 4641,
+      "http": {
+        "getNodeInfo:200": 8,
+        "getChainTips:200": 2,
+        "getWorldStateSyncStatus:200": 2,
+        "getSyncedL1Timestamp:200": 2,
+        "getBlockData:200": 18,
+        "compact:200": 1,
+        "getBlockHashMembershipWitness:200": 32
+      },
+      "completed": 34,
+      "wireElapsedMs": 4469,
+      "maxWireElapsedMs": 150,
+      "failures": {
+        "compact": 1
+      }
+    },
+    {
+      "ordinal": 7,
+      "durationMs": 4809,
+      "http": {
+        "getNodeInfo:200": 8,
+        "getChainTips:200": 2,
+        "getWorldStateSyncStatus:200": 2,
+        "getSyncedL1Timestamp:200": 2,
+        "getBlockData:200": 18,
+        "compact:200": 1,
+        "getBlockHashMembershipWitness:200": 32
+      },
+      "completed": 33,
+      "wireElapsedMs": 4507,
+      "maxWireElapsedMs": 267,
+      "failures": {
+        "compact": 1,
+        "getBlockHashMembershipWitness": 3
+      }
+    },
+    {
+      "ordinal": 8,
+      "durationMs": 4899,
+      "http": {
+        "getNodeInfo:200": 8,
+        "getChainTips:200": 2,
+        "getWorldStateSyncStatus:200": 2,
+        "getSyncedL1Timestamp:200": 2,
+        "getBlockData:200": 18,
+        "compact:200": 1,
+        "getBlockHashMembershipWitness:200": 32
+      },
+      "completed": 31,
+      "wireElapsedMs": 4357,
+      "maxWireElapsedMs": 262,
+      "failures": {
+        "getNodeInfo": 1,
+        "compact": 1,
+        "getBlockHashMembershipWitness": 2
+      }
+    },
+    {
+      "ordinal": 9,
+      "durationMs": 5257,
+      "http": {
+        "getNodeInfo:200": 8,
+        "getChainTips:200": 2,
+        "getWorldStateSyncStatus:200": 2,
+        "getSyncedL1Timestamp:200": 2,
+        "getBlockData:200": 18,
+        "compact:200": 1,
+        "getBlockHashMembershipWitness:200": 32
+      },
+      "completed": 32,
+      "wireElapsedMs": 4313,
+      "maxWireElapsedMs": 223,
+      "failures": {
+        "getNodeInfo": 1,
+        "compact": 1,
+        "getBlockHashMembershipWitness": 1
+      }
+    }
+  ],
+  "sourceFacts": [
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "line": 328,
+      "fact": "Authenticates at most four blocks concurrently, so32 blocks require8 witness waves."
+    },
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "line": 73,
+      "fact": "One canonical-anchor archive witness RPC per historical block;30 sequential Merkle hashes verify index/path/root; frame cache prevents repeated witness RPC at commit."
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "line": 105,
+      "fact": "Anchored page removes per-historical-block selector discovery; repeated observed getBlockData values are pinned/current anchor heights."
+    }
+  ],
+  "attributionLimit": "Aggregate wireElapsedMs is summed overlapping request duration, not critical path. RPC method counts may share HTTP envelopes. Crypto versus network contribution is not measured. Canceled requests alongside200 responses have no established causal meaning.",
+  "approximatePreRecoveryAndOtherMs": 65655,
+  "nextSmallestExistingCheck": {
+    "path": "scripts/test-pxe-preference-page.mjs",
+    "test": "actual SDK empty batch authenticates every physical block and advances one durable sequence",
+    "line": 1131,
+    "proposal": "Reuse existing acirFixture/receiver/public compact bodies and existing node method wrappers for numeric witness entry/exit, getBlockData/getNodeInfo counts, and processRollingPreferenceRecovery elapsed. Compare immediate versus controlled130ms witness latency on identical authenticated32-block empty frames, keeping every assertion and all guards. Record real SDK hashing/backend and avoid treating Node timing as browser acceptance. First inspect or minimally extend fixture history length; no new runner.",
+    "requires": "Lead claim/test slot; current fixture is inside native+ACIR opt-in. No run performed."
+  },
+  "candidateBoundary": "Witness bundling could remove8 cross-host waves/page but cannot alone be claimed to meet120; initialization and fixed canonical/readiness/commit fences remain material. Do not relax or cache live authority without independently reviewed design."
+}

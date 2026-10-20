@@ -1,0 +1,68 @@
+{
+  "base": "8cc56ff93741ef3236545d14279834348cb22471",
+  "candidate": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+  "task_id": "G02-native-routing",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "8cc56ff93741ef3236545d14279834348cb22471",
+      "candidate": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+      "task_id": "G02-native-routing",
+      "id": "native-routing-focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing3Python query/projection/unit checks and6JS freshness/missing-helper checks",
+      "environment": "Labelled focused local boundaries; finalnative/CloudFrontobservations pending rollout",
+      "observed": "Independent9focusedchecks passed; exactf54source reviewed; default behavior and strict safety controls retained.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/native-routing-20261019/review.json",
+          "sha256": "3daa64be3551445e7c7c0101b4e94fb2be2af58a6309ea64b617d24a9d7a8fba"
+        },
+        {
+          "path": "execution/evidence/G02/native-routing-20261019/review-base.json",
+          "sha256": "f9d38751c3626117a03da0a8af2154b7b0e2dd5ae9bdcbbec07b0b728e1c77fc"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "8cc56ff93741ef3236545d14279834348cb22471",
+    "candidate": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+    "task_id": "G02-native-routing",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-and-controls",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G02/native-routing-20261019/review.json",
+        "sha256": "3daa64be3551445e7c7c0101b4e94fb2be2af58a6309ea64b617d24a9d7a8fba"
+      },
+      {
+        "path": "execution/evidence/G02/native-routing-20261019/review-base.json",
+        "sha256": "f9d38751c3626117a03da0a8af2154b7b0e2dd5ae9bdcbbec07b0b728e1c77fc"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "8cc56ff93741ef3236545d14279834348cb22471",
+      "candidate": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+      "task_id": "G02-native-routing",
+      "id": "RC36-origin-and-freshness-boundary",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G02/native-routing-20261019/review.json",
+          "sha256": "3daa64be3551445e7c7c0101b4e94fb2be2af58a6309ea64b617d24a9d7a8fba"
+        },
+        {
+          "path": "execution/evidence/G02/native-routing-20261019/review-base.json",
+          "sha256": "f9d38751c3626117a03da0a8af2154b7b0e2dd5ae9bdcbbec07b0b728e1c77fc"
+        }
+      ]
+    }
+  ]
+}

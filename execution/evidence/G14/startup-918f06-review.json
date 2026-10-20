@@ -1,0 +1,49 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "918f06ad9479386b7227565e0c2a64bb58696c42",
+  "base": "a4944bf1997d25a76d50dd13e0bd74deeef86750",
+  "repairBase": "47539b0134d92285b679d9068d6a6259533b13de",
+  "verdict": "approved_source_only",
+  "scope": "Bounded sanitized startup diagnostics, package source binding and exceptional child cleanup. No Linux/cloud/runtime qualification.",
+  "fileSha256": {
+    "deploy/prover/bootstrap.py": "bc43198d43b36d0cd980475eb7c02d20cbda0b7c6028aedf8925371677b34c60",
+    "deploy/prover/package.py": "2de694fe076e8cf24d79b495363f5a27c041e0d067d4cb1d00879aceff0933ff",
+    "deploy/prover/BOOTSTRAP.md": "83479feba45c2c8ac7c3b7a468b2b0d653881338a03b019aa8d1281bf00fcc71",
+    "scripts/test-prover-bootstrap.py": "aa46bb0b9d4c8e068ceb0884c7d9152ffe8f79089e630a7b1cc9119d6f35d306",
+    "scripts/test-prover-package.py": "b676bef419d5f0722e9c15508573dacfa3e39b66069de6a5c7091edc310bc089"
+  },
+  "checks": [
+    {
+      "command": "python3 scripts/test-prover-bootstrap.py",
+      "passed": 46,
+      "failed": 0,
+      "seconds": 3.667
+    },
+    {
+      "command": "PROVER_VALIDATION_NODE=<root>/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node python3 scripts/test-prover-package.py",
+      "passed": 6,
+      "failed": 0,
+      "seconds": 0.224,
+      "note": "Expected pending-artifact negative prints rejection."
+    }
+  ],
+  "findings": [],
+  "closedFinding": {
+    "report": "G14/startup-47539b-review.json",
+    "severity": "P2",
+    "disposition": "Exception after spawn now runs one TERM/2second wait then one KILL/2second wait if required. Original BaseException is re-raised; bounded cleanup facts attached separately and persisted best-effort, never raw failure. stdout-close failure cannot replace original.",
+    "independentRegression": "Actual disposable children under injected third-fsync ENOSPC, including SIGTERM-ignoring child, reaped with original exception identity and no sentinel disclosure. Synthetic unreapable child retains failed flag and two bounded waits."
+  },
+  "observations": [
+    "Normal forwarded-signal and child-exit tests preserved; no retries or additional node service.",
+    "Existing systemd whole-service stop/45second limit and independent shutdown controls retained as outer bound for hung/unreapable processes.",
+    "Exact packaged startup source hash checked before node execution and safe receipt helper; changed helper rejected, old missing-helper packages fail closed.",
+    "Finite fixed startup/error enums, bounded byte parsing and owner-only records; no raw logs, arguments, URLs, capabilities or stack traces serialized.",
+    "User-data16KiB cap and realistic-capability-size tests remain passing; deployment must freshly generate exact payload and package hashes."
+  ],
+  "limitations": [
+    "No Docker, Linux systemd, real archive build, cloud launch, signing, secret reads or actual node qualification performed.",
+    "Previous remote node startup failure remains unexplained. Observed categories are diagnostic signatures, not readiness or proven causes.",
+    "Root must rebuild package and verify exact payload/manifest plus live budget and shutdown controls before any paid use."
+  ]
+}

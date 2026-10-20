@@ -1,0 +1,37 @@
+{
+  "base": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "candidate": "9cb508d9dd2f3badc22e161e62eaa0d3dd881021",
+  "task_id": "G11-bok-response-completion",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/escrow-service.mjs",
+    "plugins/private-bok-escrow.mjs",
+    "plugins/private-bok-metering.mjs",
+    "plugins/private-bok-metering.test.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/private-bok-escrow.test.mjs"
+  ],
+  "required_checks": [
+    "focused-bok-components"
+  ],
+  "requirements": [
+    "RC29-durable-paid-response",
+    "RC31-funded-operator-reply-continuation"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G11-bok-response-completion",
+      "paths": [
+        "plugins/escrow-service.mjs",
+        "plugins/private-bok-escrow.mjs",
+        "plugins/private-bok-metering.mjs",
+        "plugins/private-bok-metering.test.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/private-bok-escrow.test.mjs"
+      ]
+    }
+  ]
+}

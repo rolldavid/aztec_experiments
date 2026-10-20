@@ -1,0 +1,37 @@
+{
+  "candidate": "883e918099b45c7cfa7850fff58a14ef920046b5",
+  "base": "1068070d92ef6865af726bda74764da8fd72cccf",
+  "verdict": "approved-scoped-source-component",
+  "source": {
+    "scripts/t04-metamask.mjs": "b35c698e90db87af368324810172af39e1a1fc6c3117890f26663c2f11169c4e",
+    "scripts/test-t04-browser-journey.mjs": "fa34c94a8e8391d25c0442860426d9f7478bae71b27e9e07b7c5050d21905f99",
+    "scripts/test-wallet-extension-browser.mjs": "1f7e70b0cd2cf3a28f031506f5d10f1b0a4284af1f22f250796a47c762ad8cda"
+  },
+  "closes": "reviewer-693-paid-recovery-findings.json",
+  "review": [
+    "Exact iframe GET directory guard retains origin/version/no query/fragment/credentials and exact loaded extension parent, literal startup src and sandbox. Actual app/warning-route guards remain unchanged.",
+    "Before actual UI resume, in-page encrypted aggregate record is compared to canonical transaction from/to/chain/data/value/nonce and all required expected fields including plan hash. Scopes match aggregateWalletScope and l2JournalScopeText with actual devnet string configuration. USDC retained relay request may lack nonce before canonical reconciliation, consistent with existing writer.",
+    "After Ready, same binding is rechecked; exact saved claim ID, claim-deposit action, three receipt transaction hashes, confirmed status and public L2 transaction hash are required. No private key/custody/grouping exported. Existing application canonical verifier is unchanged.",
+    "Denied wallet operations increment Node-owned counter through awaited exposed function; counter is retained in failure evidence and returned finalizer checks it after context closes. Existing traffic finalizer independently catches Ethereum write/relay/proof attempts.",
+    "Initial key-only backup import preserves current retained journals; prepared backup presence is admission only and is not used to overwrite newer state."
+  ],
+  "tests": {
+    "prior": "693 staged31+1 admission evidence retained; not a new whole32 run",
+    "current": {
+      "labels": 3,
+      "pass": 3,
+      "skip": 0,
+      "elapsedMs": 200.665083,
+      "log": "execution/evidence/G04/metamask-paid-recovery-binding-focused.log",
+      "sha256": "0e644d2edd98ebdb0d99eff134170b6ba049de670615cb6e6e6a94ddccbd1e54",
+      "scope": "Launch/iframe admission and exact serialized in-page function with labelled storage doubles; not actual encrypted browser claim acceptance."
+    }
+  },
+  "blockingFindings": [],
+  "limits": [
+    "Actual50657 whole browser test remains failed despite canonical payment evidence.",
+    "No actual paid recovery run claimed by this review; Ready/private balances/native wallet acceptance require separate observed run.",
+    "No application/generated assets or network/security guard changes outside test-driver scope.",
+    "No heavy runtime executed by reviewer."
+  ]
+}

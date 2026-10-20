@@ -1,0 +1,39 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "72a7019a002657e089d29d13f6c81ded58113152",
+  "baseRevision": "837375d0ea32897e5aa2cff3ab7a8d4ab17197f1",
+  "verdict": "approved",
+  "scope": "Canonical block reuse and same-step last-transaction completion with original durable segments and failure gates",
+  "files": {
+    "shared/rolling/public-index.mjs": "95d6e4ba80f9baac79f8973f0c12e3539fb879f5603fe79dfa703306746f735c",
+    "shared/rolling/public-index.test.mjs": "7cf42e1a59b5fbf13843a89c87993190a3026e69b4ef5955fb677f7129538acd"
+  },
+  "resolvedFindings": [
+    {
+      "source": "66ab1b90b516bd6bacf2310228cdd42d2bcce040",
+      "severity": "blocking",
+      "finding": "Inline completion skipped deployment-transaction/initial-policy requirement.",
+      "resolution": "72a7019a applies one shared checkCompletion before both completion paths and an early required deployment-tx membership check; focused missing-tx/missing-policy cases reject and publication remains unavailable."
+    }
+  ],
+  "blockingFindings": [],
+  "checks": [
+    "Complete source/test delta inspected, including SQLite completeBlock CAS semantics and actual measurement procedure. Only two declared paths changed. Rebased66ab source blobs matched measured883d; repair is synchronous guards only, no RPC/scheduling change.",
+    "Anchor cache is step-local and cleared at each recheck; current chain/contract/Bok checks are not cached. Block body reuse requires freshly observed canonical hash, verifies body hash, and clears on fork/error/completion.",
+    "Each transaction and block completion retains its own original CAS/durable segment. Last-transaction post-check admits completion; new fourth post-completion check withholds publication on failure. A separate final publication step remains.",
+    "Changed interruption test uses two actual fixture transactions so a partial cursor still exists. Final-reorg test changes canonical hash after checkpoint admission, rather than relying on a removed duplicate read count. All four Bok original-anchor/current-instance fault boundaries remain adversarial, with expected0/1/2durable segments and no publication.",
+    "Independent existing focused checks on exact72a7019a:19passed in4346ms plus corrected exact-name final-reorg1passed in811ms;0fail/skip/cancel. No native/proof rerun."
+  ],
+  "measurement": {
+    "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-testnet-plan/index-reuse-comparison.json",
+    "measuredSource": "883d98808b9e2220231423183a9f1f7447675ad2",
+    "baseMeasured": "996dba928ac024e4e2585befdec8c3520b07bc01",
+    "checked": "Raw baseline/current observations corroborate638to446cold RPC,16to14warm,22to12full block reads,23to13steps; same canonical tips, semantic feed/publication and cursor, segmentrevision23. Epoch prefixes appropriately differ.",
+    "scope": "Existing native blocks2\u201313,zero posts,one paired local observation. Final72a source adds synchronous deployment guards; do not relabel measured source as72a or claim new latency percentile/large-history throughput."
+  },
+  "limitations": [
+    "Source approval and focused behavior evidence; fulllarge-history/D5qualification remains separately scoped.",
+    "Normal integration gate required; no reviewer source/service/cloud/chain mutation."
+  ],
+  "at": "2026-10-18T20:39:16.479231+00:00"
+}

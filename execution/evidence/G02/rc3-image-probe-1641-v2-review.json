@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "1641b313791b557cb140acc0bfc77cf24e58f7f7",
+  "verdict": "approved for one separately granted bounded offline image/static/version probe",
+  "packetSha256": "a3a5c8b467a808df985feddf671aa1c5c1cfd1929fde004e379e3f1d4375a541",
+  "files": {
+    "preparation.json": "06cf9312bae61f7e8cc2f3ebc11b3d85b687586e86ab4acc0a5c937394f9cdb2",
+    "probe.py": "8c08b0f23809372af477e2982fcfb8a348db0246effbf6a7a6a92a1cc1b9dfdf",
+    "run.mjs": "cc1567a12c0c9b20f03bed3551c706dbc4ee63267915305e4f5c5fef55b4c8fb",
+    "ownership-test.py": "18119a42a681941ee47db9928b52125d11d4258397db9f6acdac696933460523"
+  },
+  "priorFindings": "Both ownership findings in d15a455 source review closed.",
+  "checks": [
+    "Binary ownership flag becomes true only after exclusive open succeeds; pre-existing bytes preserved.",
+    "Absence fact starts false, becomes true only after successful exact-name absence inspection, resets before create; engine error/known collision cannot imply absence.",
+    "Four controlled tests execute actual probe controlbody with only external process transport replaced; exact collision bytes/no deletion/no create and owned-copy removal asserted; all4 passed.",
+    "Only ownership state/cleanup changed; one fixed image create, seven bounded static byte checks before mountedpublicBBversion, all runtime/cleanup limits unchanged."
+  ],
+  "requiredExecution": [
+    "Separate parent grant and serialized slot;120s1GiBhost/512MiBcontainer/2CPU,15sversion.",
+    "Retain exact create/native intents, all module hashes, version+exit/OOM status and container/owned-process absence.",
+    "On outer kill or unknown Docker state, no success; reconcile exact owned name/ID before later jobs."
+  ],
+  "limitations": [
+    "No image probe executed by reviewer.",
+    "Static image byte equality plus version does not qualify native proving/node/bootstrap/production."
+  ],
+  "execution": "Read-only exact diff/test evidence/hashes; no Docker/native call."
+}

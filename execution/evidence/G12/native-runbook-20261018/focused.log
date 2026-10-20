@@ -1,0 +1,12 @@
+✔ current development defaults are Rolling, loopback ports and no provider prerequisite (0.914167ms)
+✔ development flags reject real proofs, duplicate ports and unknown arguments before startup (2.010375ms)
+✔ selected state and separate loopback ports are explicit (0.140834ms)
+✔ default development directories are fresh while explicit directories remain exact (0.220042ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2841.41525

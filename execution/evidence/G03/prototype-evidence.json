@@ -1,0 +1,145 @@
+{
+  "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+  "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+  "task_id": "G03",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "prototype-model",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test apps/rolling/model.test.mjs apps/rolling/navigation.test.mjs",
+      "environment": "macOS local Node24.21.0/Codex IAB",
+      "observed": "10passed",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        }
+      ]
+    },
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "prototype-browser",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "CUA manual flow described in prototype-browser.json",
+      "environment": "macOS local Node24.21.0/Codex IAB",
+      "observed": "required prototype interactions observed; fixtureonly",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+    "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "implementer": "design-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G03/prototype-review.json",
+        "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "G03-A01",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        },
+        {
+          "path": "evidence/G03/prototype-review.json",
+          "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+        }
+      ]
+    },
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "RC03-design",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        },
+        {
+          "path": "evidence/G03/prototype-review.json",
+          "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+        }
+      ]
+    },
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "RC04-design",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        },
+        {
+          "path": "evidence/G03/prototype-review.json",
+          "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+        }
+      ]
+    },
+    {
+      "candidate": "a23b106ac2291acce9ebea650d4fe9ec28987136",
+      "base": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+      "id": "RC40-design",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G03/prototype-tests.log",
+          "sha256": "4890e33699a293e7f60c0eeee6cbd95f69e11edb029768639ce45ab9da750a23"
+        },
+        {
+          "path": "evidence/G03/prototype-browser.json",
+          "sha256": "363c429fd4818c5187645f11c81203eb9e47d159885f70e4862bb9ec7883a4b2"
+        },
+        {
+          "path": "evidence/G03/prototype-review.json",
+          "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "CommandId": "6f19f318-516d-4a62-a370-fcfec7d68e68",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-15T02:40:59.663Z",
+  "ExecutionEndDateTime": "2026-10-15T02:40:59.663Z",
+  "StandardOutputContent": "[{\"case\": \"original\", \"returncode\": 1, \"stdout\": \"\", \"stderr\": \"node:os:218\\n  const data = getInterfaceAddresses();\\n               ^\\n\\nSystemError [ERR_SYSTEM_ERROR]: A system error occurred: uv_interface_addresses returned Unknown system error 97 (Unknown system error 97)\\n    at Object.networkInterfaces (node:os:218:16)\\n    at file:////[eval1]:1:85\\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\\n    at async node:internal/modules/esm/loader:223:26\\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:220:20)\\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\\n  code: 'ERR_SYSTEM_ERROR',\\n  info: {\\n    errno: 97,\\n    code: 'Unknown system error 97',\\n    message: 'Unknown system error 97',\\n    syscall: 'uv_interface_addresses'\\n  },\\n  errno: [Getter/Setter],\\n  syscall: [Getter/Setter]\\n}\\n\\nNode.js v24.21.0\\n\"}, {\"case\": \"netlink\", \"returncode\": 0, \"stdout\": \"{\\\"interfaceCount\\\":2}\\n\", \"stderr\": \"\"}]\n",
+  "StandardErrorContent": ""
+}

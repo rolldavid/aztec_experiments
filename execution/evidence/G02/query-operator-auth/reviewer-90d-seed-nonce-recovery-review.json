@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-14T09:55:00.362937+00:00",
+  "workerRevision": "e3d2cbfeca526692f6007f59099673c14736d5a7",
+  "candidate": "90d735130fe6d03ed3275776ee0b87d392697b0a",
+  "base": "069759295c10f161068db738521b9912b4c4f797",
+  "verdict": "approved-scoped-source-component-and-exact-composition",
+  "sourceSha256": {
+    "plugins/operations.mjs": "32e9029b410e1e19850a6a0b5204ea6500ae60f1995496248d3dbf30eda5a5ea",
+    "plugins/operator.mjs": "19c1c12c80f17c3713a5132030e33a69e44ba4efe5557787c8842dc5d38a7e28",
+    "plugins/test/operations.test.mjs": "0f38911b80d148b368d7676304266cb615168ce359c859a6c6f82a53ed15c905",
+    "plugins/test/operator-lifecycle.test.mjs": "2752dbdce7aacca7e70ed7c0279727103fdd0d99d14b665ce7570fb9374d04b2"
+  },
+  "allFourWorkerBlobsEqualCandidate": true,
+  "onlyFourPathsChanged": true,
+  "findings": [],
+  "reviewedBoundaries": [
+    "Original state opened read-only under its existing exclusive lock and permanent initialization marker. Original plan, signed unknown approval and completed prefix remain unchanged.",
+    "Only original approve-usdc nonce may be cancelled: type2, same sender/self recipient, zero value/empty data/empty access list, 21000gas, exact ceil20percent fee/tip bump and bounded explicit expiry. CLI verifies EOA code, chain, fixed contracts/USDC implementation, latest and pending nonce, simulation, gas and balance before loading key.",
+    "Original and cancellation exact signed bytes/hash are independently reconciled to successful finalized canonical receipt and effect, with block hash checked twice. Unknown, nonfinal, changed/reorged effects or conflicting winners cannot admit continuation. Canonically failed winner also remains blocked.",
+    "Cancellation preparing/signed states never sign or broadcast again. State is persisted before sole send; provider/signing failure remains unresolved without retry. A pending cancellation cannot replay the original approval.",
+    "Remaining plan is fresh and bounded but preserves all token/recipient/pool/amount/route/reserve economics. It starts at original owner nonce+2 and skips completed inventory and FEE approval; original winner additionally skips USDC approval. Current allowance/balance checks precede its first sign; owner-only ETH covers all remaining fees/value/reserve.",
+    "Continuation revalidates finalized original prefix and winner on each stage, retains sequential inventory, and uses existing once journal/reconciliation. Canonically reverted mint allows only original bounded zero-approval cleanup; uncertain predecessor cannot be skipped.",
+    "Separate cancellation and remaining markers refuse missing retained state, changed binding, wrong first remaining stage and expired initial authority. Same original lock spans these derived journals. CLI errors are fixed/sanitized and signed bytes never enter public output."
+  ],
+  "tests": {
+    "workerHandoffSha256": "19e87d392d248c8ef4e70a33b34980e6ae8a1ea1996d287e1e60edd1efc03f0c",
+    "allWorkerSourceAndReceiptLogBindingsVerified": true,
+    "workerStagedPassed": 75,
+    "currentInventory": 76,
+    "rootConstructor": {
+      "receiptSha256": "cf29f3cd7712d6b45970f98460e7924ac75fcdbecb63b1f9a9c0ad9852683dce",
+      "logSha256": "3681dcd90c21f808d4d6b416e78d668a4f2b2bf1ac6128f67ce4dbdaa6bd982d",
+      "passed": 1,
+      "elapsedMs": 3441.894
+    },
+    "combinedDistinctPassed": 76,
+    "wholeCurrentSuiteRerunClaim": false,
+    "reviewerFocused": {
+      "source": "e3d2cbf",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2116.668916,
+      "toolOutputChunk": "e8348e",
+      "scope": "Existing controlled real-signature and filesystem tests only, no network or funded key; NODE_BACKEND=js TMPDIR=/private/tmp. Actual tool output recorded, not a fabricated shell log."
+    }
+  },
+  "limits": [
+    "Source approval does not guarantee mempool replacement inclusion or authorize a changed financial plan.",
+    "Exact private resolution/caps, original hash, original sender leases and fresh chain state must be checked by executing owner. No key/sign/send/network action by reviewer.",
+    "Retain original failed/broadcast-unknown evidence; winner must be finalized before a fresh remaining plan can execute.",
+    "No general reset, raw retransmission, marker deletion, arbitrary skip list or release/testnet acceptance is approved."
+  ]
+}

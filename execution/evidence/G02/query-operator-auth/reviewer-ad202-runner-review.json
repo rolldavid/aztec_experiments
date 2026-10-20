@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_FOR_ONE_SEPARATELY_GRANTED_50_CASE_COMPONENT_RUN",
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "preparationPacketSha256": "9388fb6ed2f3b0d062f97dd4c2f3bd569e872d934dbf928541333e1b8ccda496",
+  "runtimePreparationSha256": "cb5afa1e54ffbf7ce550ad2bc427924b49189cec54fa391de2710d8a24acd0f9",
+  "runnerSha256": "7d78a66b24378323884eb720c32d4226e0d4290bd5e8b9fa6f6f9388323ad576",
+  "sourceReviewSha256": "df8332936169d963a6321edf534da9b5f79070b850d0133ffd590f8f404fc6fd",
+  "detachedBinding": "Frozen null sourceReviewSha256 and sourceReviewPending fields are superseded for eligibility by this exact detached review; original preparation bytes preserved.",
+  "verified": [
+    "3165 source/dependency/tool/control bindings independently rehashed; clean exact ad202 and physical own dependencies",
+    "Runner differs from qualified33 only directory and Supervisor import depth; unchanged child, descendant ownership,60s2GiB and guarded cleanup",
+    "Exact50 labels from three full suites with mandatory six TAP counts/zero skips/cancellations/todos",
+    "Fresh owned0700 short TMP/inode and isolated evidence HOME; no source/dependency links or install mutation"
+  ],
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "scope": "Controlled local HTTP, SDK schemas/catalog imports and harmless worker tests. No public provider, signing, transaction, native proof or service mutation.",
+  "conditions": [
+    "Parent serializes sole heavy slot and supplies separate one-shot grant",
+    "Preserve failure/cleanup evidence; no automatic repeat or full deployment inference",
+    "Actual CLI/PXE credential-free compatibility remains a separate cloud-use gate"
+  ],
+  "executionPerformed": false,
+  "blockingFindings": []
+}

@@ -1,0 +1,19 @@
+{
+  "sourceRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "checks": {
+    "walletBuild": "25files97inputs",
+    "sdk": "2057inputs8outputs6.0.0-rc.3",
+    "staticLoader": "pass",
+    "combined": "83pass0skip"
+  },
+  "commands": [
+    "node scripts/rolling-wallet-assets.mjs",
+    "node scripts/check-sdk.mjs",
+    "node --test shared/rolling/cold-preference-reader.test.mjs shared/rolling/compact-client.test.mjs",
+    "loadRollingWalletAssets with retained public configs"
+  ],
+  "runtimeSha256": "a74b6d1ce58c03a33c5ba46400ae9dd2203152e0095d602e7fb130dca8026a4e",
+  "scope": "Local generated wallet closure; no live timing claim; SDK source and contract inputs unchanged, verified by normal checker",
+  "walletRuntimeModuleSha256": "cefc26578d73a5d7c0198af58521aff11b224d38c0f52db161f97637ea848bdc",
+  "walletManifestSha256": "04b7050ef5153cb430b83d58c529f8a91d43f718f7e468bfb78b1a49474bbe88"
+}

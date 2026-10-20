@@ -1,0 +1,372 @@
+{
+  "task": "G09-current-human-policy-union",
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "at": "2026-10-15T14:56:57.435365+00:00",
+  "passed": true,
+  "scope": "Actual normal human UI publications, pinned local-model local-rule removal, one trusted moderator parent update, actual reevaluation and tombstone UI; native/PXE proofs disabled",
+  "stages": [
+    {
+      "subboard": 663,
+      "result": "usable immediately with parent1/local1; creation recorded separately"
+    },
+    {
+      "apricotPublication": 682,
+      "result": "actual named post accepted under1/1; original observer comparison failure preserved and zero-send UI verification retained"
+    },
+    {
+      "modelParent1Result": "evaluated-ok",
+      "receipt": {
+        "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/apricot-evaluated-ok.json",
+        "bytes": 476,
+        "sha256": "e2ace67bcee563676f9c09d38938f7ce16122bb790d59eb5a1619a015657a5a4"
+      }
+    },
+    {
+      "advertPublication": 788,
+      "localRemoval": 790,
+      "policy": "4294967297",
+      "penalized": true
+    },
+    {
+      "parentPolicyUpdate": 794,
+      "version": "2",
+      "rules": "No threats. Do not publish the passphrase apricot."
+    },
+    {
+      "apricotReevaluationRemoval": 801,
+      "policy": "4294967298",
+      "penalized": false,
+      "originalPublicationBlockUnchanged": 682
+    }
+  ],
+  "postOutcomes": [
+    {
+      "id": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+      "publication": {
+        "blockNumber": "682",
+        "blockHash": "0x1ac762d7d9743a5bd0541508c32ec6324def832c4d9f66dd3b01ec05a998680f",
+        "txHash": "0x265493e51055a57c9e49c795528259e438bb4c42ae69192b7e6e457f518df48c",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "publishedParent": "1",
+      "publishedLocal": "1",
+      "removal": {
+        "reason": "The post violates the rule prohibiting the publication of the passphrase apricot.",
+        "policy": "4294967298",
+        "penalized": false,
+        "position": {
+          "blockNumber": "801",
+          "blockHash": "0x1335c0208326481b5c39c7c4d37c142ec37450011f5a19e2d226e21de22651e0",
+          "txHash": "0x12b03591d47ebd7e063c1303c8f002d5e64cca2b37a8d25818ab8aeddf1ece75",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        }
+      },
+      "body": null,
+      "bot": null,
+      "threadURL": "http://127.0.0.1:8181/#/thread/17151702297251269509666759368903013107200002789920986473610794860918684764333",
+      "actualTombstoneNavigation": true
+    },
+    {
+      "id": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+      "publication": {
+        "blockNumber": "788",
+        "blockHash": "0x139c60b6f635e29c8a5b7145a8bd26fe0e985c1c9cf68604921872ac88316d4d",
+        "txHash": "0x0a63e860e5d8fa386fbaa8e1f0a6e03d9ffd3e21df479c4c9c674105147d1cdc",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "publishedParent": "1",
+      "publishedLocal": "1",
+      "removal": {
+        "reason": "The post violates the rule against advertising products for sale by offering a handmade chair for purchase.",
+        "policy": "4294967297",
+        "penalized": true,
+        "position": {
+          "blockNumber": "790",
+          "blockHash": "0x237def27b72fcc47420b4b37e8dd4dba82ae02c17788ddc000122db7366e2021",
+          "txHash": "0x0e5987d99d1394098b516ca2714d78ae727a35cefae0af0c993e58f0cfe1df9e",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        }
+      },
+      "body": null,
+      "bot": null,
+      "threadURL": "http://127.0.0.1:8181/#/thread/11194267968395591307383821681978617117091537513036281279791078195811862744988",
+      "actualTombstoneNavigation": true
+    }
+  ],
+  "currentPolicy": {
+    "version": "2",
+    "digest": "17934041308341023579534065082155729560331177523142589434554220520523070625899",
+    "text": "No threats. Do not publish the passphrase apricot."
+  },
+  "policyHistory": [
+    {
+      "version": "1",
+      "digest": "19222328848760308624277369113847665349661069980220624057416038094065873769087",
+      "text": "No threats."
+    },
+    {
+      "version": "2",
+      "digest": "17934041308341023579534065082155729560331177523142589434554220520523070625899",
+      "text": "No threats. Do not publish the passphrase apricot."
+    }
+  ],
+  "immutableLocalRules": "No advertising products for sale.",
+  "uiObservation": {
+    "elapsedMs": 3944,
+    "sends": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0,
+    "contextClosed": true,
+    "ownedTreeAbsent": true,
+    "screenshotsVisuallyInspected": true
+  },
+  "latestHumanWorkflow": {
+    "type": "post",
+    "status": "confirmed",
+    "block": 788,
+    "txHash": "0x0a63e860e5d8fa386fbaa8e1f0a6e03d9ffd3e21df479c4c9c674105147d1cdc",
+    "profile": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/attempt3/wallet/profile",
+    "doNotReplay": true
+  },
+  "limitations": [
+    "Actual Anonymous reply was reevaluated under parent2/local1 and returned isViolation=false/evaluated-ok; this records the decision, not a corpus-quality verdict.",
+    "Already-removed advert parent2 job remains manual-review FLAG_ALREADY_PRESENT; no duplicate removal or send was attempted.",
+    "Only human policy-union path covered; authentic Bok moderation and hostile-local override remain separate.",
+    "Operator policy change used supported trusted public/genesis helper; no claim of moderator UI.",
+    "Model10s performance qualification is not passed by these functionality outcomes.",
+    "Native/PXE proofs disabled; production proof/privacy/testnet/release gates remain separate.",
+    "Latest wallet remains advert788; operator/removal actions do not replace its journal. Current collateral balance not inferred after advert penalty.",
+    "No fresh funding or replay. Original failed observer and host-sleep evidence remain retained."
+  ],
+  "files": [
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/advert-tombstone.png",
+      "bytes": 91799,
+      "sha256": "865f3b54c7601b4b69cdf943c68f504327e2c9abc3fefb5c6346797e4b0d23a0"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/apricot-tombstone.png",
+      "bytes": 117051,
+      "sha256": "e152506a475b1d608668dbc18d3072bec285c93c1c878248514063827fe76cad"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/inputs/action-plan.json",
+      "bytes": 4114,
+      "sha256": "e55d17946e09d1c4459c30f537f4e14f7c9a30d214cdad098b66cd3b8e53567d"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/inputs/normal-post-supervise.current742.mjs",
+      "bytes": 2243,
+      "sha256": "78e39a87d7e18617fb4a98d27561163c1a19075ea4b50d2dc7ad8fb7510aee7e"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/inputs/normal-post.current742.mjs",
+      "bytes": 26948,
+      "sha256": "f5bb1e0880019973e2490f3503968d54624706ca419e83cfe379e92b93958373"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/inputs/parent2-model-ready.json",
+      "bytes": 1849,
+      "sha256": "217c34097f2392c59c2908d31fc19235ad039878f502f27023e0e40c27da197c"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/inputs/runtime-binding.json",
+      "bytes": 844,
+      "sha256": "a3ace0f7ccb155b0425dfeacc3d000c0b9bdff3f605b38479a8ce1d2e07ba6bb"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/result.json",
+      "bytes": 15500,
+      "sha256": "a842627a3562ea94b75e60e47d3db28a369d9a295e6d0196c62e2f1a503b39ec"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/04-observe-union/supervisor.json",
+      "bytes": 2233,
+      "sha256": "81a1f2fea5fbfe6676e826693c7ef8eb9a0accc649134f0b3e73a649cdc042cf"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/step04-run.log",
+      "bytes": 304,
+      "sha256": "1dec341c9e22b469bbaa4f8f10eb9bcd9ff42de1754b148abf7fed2fcfdfd81d"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/packet.json",
+      "bytes": 6550,
+      "sha256": "1449a63c06cc41915090842519e375997fbddd122940a94282104a0a0dd5a322"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/binding.json",
+      "bytes": 1317,
+      "sha256": "b734a7cbf6e9cb44df851eaef3d152420f40a2800bb81f8157dbc60d690b4a24"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/accepted-result.json",
+      "bytes": 17955,
+      "sha256": "43abf76c3b9fb5381f28687bab9d50a62a89dbd4cd0cc7e7a05cebaf54ee985b"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/social-batch/packet.json",
+      "bytes": 20950,
+      "sha256": "91c027544771c02ac41ef0b604d316cc1258843d2d7a77d5311e0f228dbcdd52"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/social-batch/runtime-binding.json",
+      "bytes": 673,
+      "sha256": "6dd9439e1dc391b7bf6e352b73e90710a18be67adc4e5751a41a3fbca61df015"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/03-advert/packet.json",
+      "bytes": 6128,
+      "sha256": "a3e2609f1ce097d17a661daf4ec6c3bd0ceba656b7846992fbd3165aa1e785c1"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/packet.json",
+      "bytes": 4273,
+      "sha256": "2401a0c82d47d19bffead7b971c78d3c4eeb8ac2bcb25e82b36ed64ba3a16423"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/operator-current742/apricot-evaluated-ok.json",
+      "bytes": 476,
+      "sha256": "e2ace67bcee563676f9c09d38938f7ce16122bb790d59eb5a1619a015657a5a4"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/local-model/post-parent-public-jobs.json",
+      "bytes": 19026,
+      "sha256": "09e22b5f4b7a749756574fd077c45c18d4dad9663b94b8f05ccc331d9dcaeb61"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/local-model/moderation-cleanup.json",
+      "bytes": 508,
+      "sha256": "63b1397e3729c8c3d7b47c02acb0a9419a1b3cb1fe2bf087ab868eed2c758ad1"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/policy-union/human-union-batch/packet-before-model-final.json",
+      "bytes": 10119,
+      "sha256": "27ea111446fc8dfe0c53588525ae9b25cb2cb8f3b536a74a913b3669be4aa0d6"
+    }
+  ],
+  "modelOutcomes": [
+    {
+      "postId": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "evaluated-ok",
+      "attempt": "1",
+      "txHash": null,
+      "mainVersion": "1",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000001",
+      "decision": {
+        "isViolation": false
+      },
+      "receipt": null,
+      "errorCode": null
+    },
+    {
+      "postId": "3109230518034972853640518605994987186759313585510910494881784899134497775442",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "evaluated-ok",
+      "attempt": "1",
+      "txHash": null,
+      "mainVersion": "1",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000001",
+      "decision": {
+        "isViolation": false
+      },
+      "receipt": null,
+      "errorCode": null
+    },
+    {
+      "postId": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "confirmed-flag",
+      "attempt": "1",
+      "txHash": "0x0e5987d99d1394098b516ca2714d78ae727a35cefae0af0c993e58f0cfe1df9e",
+      "mainVersion": "1",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000001",
+      "decision": {
+        "isViolation": true,
+        "reason": "The post violates the rule against advertising products for sale by offering a handmade chair for purchase."
+      },
+      "receipt": {
+        "txHash": "0x0e5987d99d1394098b516ca2714d78ae727a35cefae0af0c993e58f0cfe1df9e",
+        "blockHash": "0x237def27b72fcc47420b4b37e8dd4dba82ae02c17788ddc000122db7366e2021",
+        "blockNumber": "790",
+        "status": "finalized",
+        "executionResult": "success"
+      },
+      "errorCode": null
+    },
+    {
+      "postId": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "confirmed-flag",
+      "attempt": "1",
+      "txHash": "0x12b03591d47ebd7e063c1303c8f002d5e64cca2b37a8d25818ab8aeddf1ece75",
+      "mainVersion": "2",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000002",
+      "decision": {
+        "isViolation": true,
+        "reason": "The post violates the rule prohibiting the publication of the passphrase apricot."
+      },
+      "receipt": {
+        "txHash": "0x12b03591d47ebd7e063c1303c8f002d5e64cca2b37a8d25818ab8aeddf1ece75",
+        "blockHash": "0x1335c0208326481b5c39c7c4d37c142ec37450011f5a19e2d226e21de22651e0",
+        "blockNumber": "801",
+        "status": "proven",
+        "executionResult": "success"
+      },
+      "errorCode": null
+    },
+    {
+      "postId": "3109230518034972853640518605994987186759313585510910494881784899134497775442",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "evaluated-ok",
+      "attempt": "1",
+      "txHash": null,
+      "mainVersion": "2",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000002",
+      "decision": {
+        "isViolation": false
+      },
+      "receipt": null,
+      "errorCode": null
+    },
+    {
+      "postId": "11194267968395591307383821681978617117091537513036281279791078195811862744988",
+      "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0",
+      "state": "manual-review",
+      "attempt": "0",
+      "txHash": null,
+      "mainVersion": "2",
+      "localVersion": "1",
+      "policyIdentity": "0x0000000000000000000000000000000000000000000000000000000100000002",
+      "decision": null,
+      "receipt": null,
+      "errorCode": "FLAG_ALREADY_PRESENT"
+    }
+  ],
+  "modelCleanup": {
+    "observedAt": 1792076160.366388,
+    "daemonExit": 0,
+    "locks": 0,
+    "containers": [],
+    "originalQueueSha256": "5db28d8cfb60db479af641be37853dd859ee615e5357a268cb1216596eef08ee",
+    "modelsStopped": true,
+    "nativePreviewRetained": true,
+    "replyOutcome": {
+      "text": "Thanks for sharing this apricot thought.",
+      "parentVersion": "2",
+      "isViolation": false,
+      "scope": "Actual outcome, no additional quality-label assertion"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T02:41:27.295672+00:00",
+  "purpose": "Harmless real systemd execution-retention regression; no Aztec/native binary or financial action",
+  "status": "Plan only, requires reviewed runner and separate serialized setup/execution grants",
+  "candidate": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "inventory": {
+    "docker": "Responsive desktop-linux, cgroupv2/cgroupfs/aarch64, zero running containers",
+    "images": "Two existing pinned Aztec images retained; no cached official Ubuntu base. No verified systemd255 test image. Other image preserved.",
+    "alternativeVmTools": "No colima/limactl/tart/multipass/qemu/systemctl found"
+  },
+  "fixedInputs": {
+    "baseImage": "docker.io/library/ubuntu@sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7",
+    "platform": "linux/arm64",
+    "baseCompressedBytes": 28940087,
+    "systemdVersion": "255.4-1ubuntu8.17",
+    "systemdSource": "https://packages.ubuntu.com/noble-updates/arm64/systemd",
+    "guestCommands": [
+      "/usr/bin/true",
+      "/usr/bin/false",
+      "/usr/bin/sleep 10"
+    ],
+    "testCode": "Fresh public-only helper and unit bytes to be source-reviewed/hash-pinned before execution; never entire repository context"
+  },
+  "setup": {
+    "separateGrantRequired": true,
+    "method": "One owned setup container from digest; 180s/512MiB/2CPU/pids128. Default unprivileged Docker capabilities, no SYS_ADMIN for apt. Install only exact systemd/libsystemd-shared/libsystemd0/systemd-dev version from signed official Noble repositories with --no-install-recommends; policy-rc.d denies postinstall service activation. Package signature/index/hash verification stays enabled. Record resolved dependency versions and archive SHA256, systemctl/systemd binary hashes and final image ID. Fail if exact255 package unavailable; no arbitrary mirror/fallback.",
+    "network": "Only setup has network for official registry/Ubuntu packages. No developer environment, auth files, mounts, sockets, ports or private inputs passed.",
+    "retention": "Retain resulting public test image under exact digest for reviewed offline run, max1GiB incremental disk and100MiB package download budget. No prune/removal of existing images. Base download28,940,087B. Record actual bytes/disk; estimates are not measurements."
+  },
+  "offlineTest": {
+    "outerSeconds": 60,
+    "memoryMiB": 512,
+    "cpus": 2,
+    "pids": 128,
+    "network": "none",
+    "rootFilesystem": "read-only; small tmpfs /run,/run/lock,/tmp,/var/log; prebuilt public units/helpers in image",
+    "namespaces": "private cgroup,PID,IPC,mount; no host namespaces or host bind mounts",
+    "capabilities": {
+      "proposal": "Docker default capability set plus only SYS_ADMIN; explicitly drop NET_RAW and NET_BIND_SERVICE. No --privileged and no seccomp/AppArmor-unconfined override.",
+      "justification": "systemd PID1 needs to manage its container cgroup subtree; SYS_ADMIN permits remounting the existing private namespaced cgroup mount writable. Retain default credential/process/file capabilities used by manager. No cgroup host bind mount; no / or Mac directory access. SYS_ADMIN is broad in DockerVM and remains a material review item, not assumed harmless.",
+      "preflight": "Before systemd, verify cgroup namespace/root0::/, mount topology and512MiB/2CPU limits. Remount only already-present /sys/fs/cgroup in private namespace. If unavailable/denied or hierarchy not confined, fixed blocked receipt and stop; no privilege escalation/retry."
+    },
+    "launchShape": [
+      "docker create --pull=never --platform=linux/arm64 --network=none --cgroupns=private --read-only --memory=512m --memory-swap=512m --cpus=2 --pids-limit=128 --cap-add=SYS_ADMIN --cap-drop=NET_RAW --cap-drop=NET_BIND_SERVICE --security-opt=no-new-privileges --log-driver=none --stop-signal=SIGRTMIN+3 --stop-timeout=2 [bounded tmpfs] [exact derived image ID]",
+      "start only uniquely owned container after exclusive intent; host deadline starts before start; no --rm so State is captured before removal"
+    ],
+    "assertions": [
+      "Record actual systemd255 exact package/binary identity, fixed units and ordering dependency readbacks.",
+      "Baseline unreferenced true unit: start --wait then query; retain actual state, do not assume collection deterministically occurred. Baseline is diagnostic not a forced-failure gate.",
+      "Corrected fixedtimer Before=unit reference: timer remains active, worker is not automatically started, invoke once; --wait returns, actual state inactive/success/ExecMainCode1/ExecMainStatus0/startTimestamp>0. Query again after3s and require same execution identity.",
+      "Failed true/false and timeout/sleep fixtures must not become passing; exact existing classifier invoked from reviewed public subset where practical, no generated fake state.",
+      "No reverse cycle; timer deadline remains unchanged, only explicit once start, no Wants/Requires/restart. Stop harmless timer at cleanup, preserve unit exit records before removal."
+    ],
+    "cleanup": "Host watchdog captures fixed container State exit/OOM/status and bounded public test receipt on all exits, stops/kills/removes only owned immutable container ID, confirms absence. Never deletes preexisting name/image; unknown create reconciles ID/name and never retries. No container processes remain. Preserve final image for provenance."
+  },
+  "notYetBound": [
+    "Reviewed executable helper/fixture hashes",
+    "Signed package dependency closure/digests and derived image ID (setup output)",
+    "Whether DockerDesktop cgroupfs permits confined writable delegation with this minimal capability set; must fail closed if not."
+  ],
+  "claimsExcluded": [
+    "No native AMD64 qualification",
+    "No AWS/paid server/action",
+    "No changes to existing Docker daemon settings/containers/images",
+    "No gate relaxation or promotion of Linux toolchain pin"
+  ],
+  "primaryReferences": [
+    "https://systemd.io/CONTAINER_INTERFACE/",
+    "https://docs.docker.com/reference/cli/docker/container/run/",
+    "https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd.unit.xml",
+    "https://raw.githubusercontent.com/systemd/systemd/v255/man/systemctl.xml"
+  ]
+}

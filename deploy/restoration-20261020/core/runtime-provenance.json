@@ -1,0 +1,18 @@
+{
+  "baseArchive": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "rolling-final-20261019/runtime-5ebeff1c/runtime.tar.gz",
+    "version": "SxAl8OEXa19gSiiyKhtIAOMh2WnmLIoT",
+    "sha256": "277e94caca0667270aee1ac48e782e9d994a17194533553c0e4024f32e1bc808",
+    "localDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/final-linux-dependencies/package-runtime-5ebeff1c"
+  },
+  "currentProverPolicyDelta": {
+    "directory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/prover-funded-claim-publication",
+    "sha256": "2c5367be4643a4f4f155717e9dbfe230ad0ab88b913cdb74ace5eca734546aec",
+    "resultManifest": "71d5e83614a05c429ebf419c7d8f98a1b19dc10ef7aba8cace7d2e1141bf55f9",
+    "changed": [
+      "prover/application-policy.mjs"
+    ]
+  },
+  "requiredRepack": "Copy full retained Linux runtime into isolated staging (APFS clone or regular copy; do not mutate shared hardlinks), atomically replace exact policy delta and prover-release.json, verify EVERY manifest hash, then tar as existing full runtime archive and record genuine archive hash. This is packaging only, no SDK/contract/native build. Upload under allowed /releases prefix before issuing fresh capability. Do not call old stage/promote scripts against nonexistent old host."
+}

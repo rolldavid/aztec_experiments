@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-18T15:48:23.958630+00:00",
+  "scope": "Bounded current read-only testnet dependency/resource feasibility; no remote commands, transactions, jobs, downloads, service or resource changes.",
+  "ledger": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/infrastructure-ledger.json",
+    "sha256": "f45912664ca21bc4a15f6e70a0c51c407804c517866ea58138a6d224ab8461fd",
+    "committedReservedUsd": 296.3,
+    "remainingUsd": 3.7,
+    "changed": false,
+    "invoiceReconciled": false,
+    "costExplorerCalls": 0
+  },
+  "authentication": {
+    "message-board-deploy": "STS authenticated expected account052665140763",
+    "message-board-sso": "STS authenticated same account"
+  },
+  "currentResources": {
+    "us-east-1": {
+      "instances": [],
+      "volumes": [],
+      "fleets": [],
+      "elasticAddresses": [],
+      "ownedSnapshots": [],
+      "shutdownConclusion": "All recorded campaign compute/disks are currently absent; no active campaign shutdown timer to extend or inspect."
+    },
+    "eu-west-2": {
+      "projectModerator": {
+        "instance": "i-0cb8555882d6cfecc",
+        "state": "running",
+        "type": "m6a.xlarge",
+        "encryptedDiskGiB": 64,
+        "documentedPurpose": "existing legacy moderator; its operating budget is separate",
+        "reuseConclusion": "Not an established synchronized trusted node/prover. Do not repurpose its wallet, services, or storage. No guest inspection performed."
+      },
+      "otherInstances": {
+        "runningUnrelated": 1,
+        "stoppedUnrelated": 2,
+        "reuseAuthorized": false
+      }
+    }
+  },
+  "endpoint": {
+    "healthUrl": "https://d30njln0kead8n.cloudfront.net/prover/healthz",
+    "http": 504,
+    "distribution": "E3BMCK3MOVYK1K",
+    "distributionStatus": "Deployed",
+    "route": "/prover/* -> board-prover",
+    "vpcOrigin": "vo_1ni7Gt8asXQDAMJVsKkcPg",
+    "originStatus": "Deployed",
+    "targetInstance": "i-0025eb05db3c2491c",
+    "targetRegion": "us-east-1",
+    "targetCurrentlyAbsent": true
+  },
+  "publicNode": {
+    "url": "https://aztec-testnet.drpc.org",
+    "getNodeInfoHttp": 200,
+    "nodeVersion": "6.0.0-rc.3",
+    "realProofs": true,
+    "l1ChainId": 11155111,
+    "rollupVersion": 3409706519,
+    "rollupAddress": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "getBlockNumber": 7506,
+    "getBlockDataHttp": 403,
+    "getL2TipsHttp": 403,
+    "readinessQualified": false,
+    "operatorTrustEstablished": false,
+    "limitation": "Metadata/tip response is not synchronized trusted-query or canonical/freshness acceptance."
+  },
+  "publishedWebsite": {
+    "configHttp": 200,
+    "rollupVersion": "2914217885",
+    "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "trustedProverNode": null,
+    "scopeMismatchCurrentPublicNode": true,
+    "legacyDeploymentNotCurrentRollingAcceptance": true
+  },
+  "retention": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "region": "eu-west-2",
+    "currentObjectsExpireDays": 30,
+    "noncurrentVersionsExpireDays": 7,
+    "abortIncompleteMultipartDays": 1,
+    "lifecycleEnabled": true,
+    "multipartUploads": 0,
+    "finalCampaignVersions": 4,
+    "finalCampaignBytes": 2294366998,
+    "finalCampaignObjectsEncrypted": "AES256",
+    "metadataEvidence": "retention-and-node.json",
+    "objectExpirationHeader": null,
+    "scopeLimit": "Metadata only for last campaign; historical contents/fullbucket billing not revalidated. Retained development Anvil and financial state is not a testnet sync snapshot and cannot be transplanted into a new chain."
+  },
+  "blockers": [
+    "Current real-proof prover endpoint has no backend instance.",
+    "No currently available project-owned synchronized trusted testnet node/archive identified in the recorded regions. Public node rejects required block/tip readiness methods and is not a substitute for the disclosed trusted boundary.",
+    "Published legacy deployment/network configuration is incompatible with current public network identity and omits trustedProverNode; current Rolling deployment must be separately established.",
+    "USD3.70 remaining cannot fund the previously bounded campaign, including its USD10 additional delayed-billing buffer. Existing reserve is not newly available money."
+  ],
+  "cheapestWithinAuthorityPath": {
+    "immediate": "Preserve existing resources and finish local acceptance; no paid changes or restoration undertaken.",
+    "reusableInputs": "Existing Mac development workspace, verified current source/toolchain and retained package metadata; existing moderator stays dedicated to its authorized service.",
+    "remotePathEstablished": false,
+    "nextExternalPrerequisite": "A currently synchronized compatible node/prover within the explicit trusted boundary, supplied using already authorized existing capacity, or a separately reconciled funded operating proposal. No such ready capacity was identified.",
+    "budgetLimit": "No defensible exact extra allowance or runtime estimate from these read-only checks; price/sync-duration proposal would be required. Do not claim a new run fits3.70 or release existing reserves."
+  },
+  "limitations": [
+    "Not a complete all-region or all-account inventory; checked recorded prover us-east-1 and existing project eu-west-2.",
+    "No local8080/devnet health or state touched.",
+    "No guest service/shutdown commands executed.",
+    "No fresh bill reconciliation, archive download, proof work or testnet transaction.",
+    "One guessed source object key returned404; subsequent actual listed source-cf001334.tar.gz HEAD succeeded."
+  ]
+}

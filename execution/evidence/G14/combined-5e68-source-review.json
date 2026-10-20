@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewed_at": "2026-10-11T18:53:32.353813+00:00",
+  "candidate": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "base": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+  "verdict": "combined source approved; runtime and integration verdict pending",
+  "blocking_code_findings": [],
+  "exact_transfers": [
+    {
+      "source": "6fff8a3cc6f1cf6fc13a23642c6c91ccf9f1a57c",
+      "paths": 5,
+      "scope": "protocol and tests"
+    },
+    {
+      "source": "5792dc62281e18ecf39aeff719cf64666f273ef8",
+      "paths": 2,
+      "scope": "provider emptytools"
+    },
+    {
+      "source": "023bfce527864dff97387852fa6a089c43816281",
+      "paths": 4,
+      "scope": "prover policy and artifact catalog"
+    },
+    {
+      "source": "e2d4c3c0b5418edeb6770626fc11766c02263443",
+      "paths": 3,
+      "scope": "bootstrap diagnostics/region"
+    },
+    {
+      "source": "ade89fd1462ea4ace3a75edaf09f56d8cbbd4368",
+      "paths": 3,
+      "scope": "canonical reply journey and acceptance"
+    }
+  ],
+  "checks": [
+    {
+      "check": "All17 listed source paths exact Git byte equality",
+      "result": "pass"
+    },
+    {
+      "check": "canonical contract manifest48inputs equals current contractInputs(ROOT)",
+      "result": "pass"
+    },
+    {
+      "check": "actual loadRollingArtifacts validates rebuilt hashes, inputs and private VKs",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check bfbbf4c..5e68c22",
+      "result": "pass"
+    }
+  ],
+  "build_log_sha256": {
+    "execution/evidence/G14/reply-canonical-build.log": "3da30b2a2bcd828d50359bca73c340efcdeece7e068782168b0dba6a3d0cc971",
+    "execution/evidence/G06/reply-reprocess-build.log": "be20eaeb3688253712d259efb9287db3560eca59333c45a755751e554088f200"
+  },
+  "prior_checks_disposition": "106Rolling/69Bok normal TXE source/test/build-input bytes unchanged;7policy/24reply/15provider/26bootstrap independent pure tests remain exact-source applicable. No expensive reruns performed.",
+  "administrative_reconciliation_before_gate": [
+    "Lead-owned committed proposal text compute-not-yet-launched conflicts with active resource03; reconcile latest observed resource state and historical counters.",
+    "Committed registry worker claims predate frozen reviewed transfers; reconcile live writer ownership before gate. These two dirty lead documents were not overwritten by reviewer."
+  ],
+  "required_runtime": [
+    "Actual fixed-tools distinct provider response/accounting/recovery evidence; earlier failures remain fenced and never replayed.",
+    "Actual updated canonical reply journey including rollback/event/accounting/private fee/public write limits; genuinely proved acceptance separately."
+  ],
+  "limits": [
+    "Not an integration verdict until required runtime checks pass and administrative state reconciled.",
+    "75Rolling/44Bok compiler manual-constraint diagnostics remain updated assurance gate.",
+    "New contract artifacts invalidate old runtime artifact equivalence; preserve earlier proof campaigns only at original revisions.",
+    "Active remote commissioning uses historical5235 package, not current reply catalog; Linux/query outcomes cannot qualify new reply contracts.",
+    "Privacy specialist, browser/fullproduct, network proof and production release gates unchanged."
+  ]
+}

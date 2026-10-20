@@ -1,0 +1,72 @@
+{
+  "candidate": "436f253809a0b83d815b2c9ca90238aaa0a4381c",
+  "base": "a3f7e200b4b4806842d52863c2807e84646a8610",
+  "leadParent": "8d79f0d3bae6398aad0970826a825aa1a8e2ff9e",
+  "at": "2026-10-12T06:02:55.400452+00:00",
+  "task": "G07-preferences-browser-parent",
+  "transfers": [
+    {
+      "reviewedSource": "58280d05ef7dfcaa7450812cc0575f069ec82a53",
+      "candidateCommit": "2f5dda366cb6c2f278f96b9eceddd2ae451ac49e",
+      "stablePatchId": "bdd4b6045891369b3fc8bc439c122caa0668532b"
+    },
+    {
+      "reviewedSource": "0088e1440299a12fbcc92ce8a953985515b24dbc",
+      "candidateCommit": "09fa92344271ae45b7e8ac7de2a5023c92b54e65",
+      "stablePatchId": "62265a0594e2e38b58be45d4184f425a5ad5d2f3"
+    },
+    {
+      "reviewedSource": "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
+      "candidateCommit": "b5c4f95db3b7f92c603836e819d91583888a3ab2",
+      "stablePatchId": "cfc65adb93890dfed4fecdb2ed11be3bc041a769"
+    },
+    {
+      "reviewedSource": "b5e6899ec9b93b449ce2bd8a946705886da1eb18",
+      "candidateCommit": "436f253809a0b83d815b2c9ca90238aaa0a4381c",
+      "stablePatchId": "e90d9475471a588512d0fe7e343be96e96281887"
+    }
+  ],
+  "sourceHashes": {
+    "apps/rolling/reader.browser.test.mjs": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947",
+    "apps/rolling/reader.mjs": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874",
+    "apps/rolling/wallet-panel.browser.test.mjs": "6c62c6c9dcdb270bff3d1452eaaafa62b7bc689ffdd22d93bdc908031d934c00",
+    "apps/rolling/wallet-panel.mjs": "83bd3fda88e4900c51096d266640843aab4ef07b7b849b0eb6c1183d43f781e5",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "6291ac0b49a1dc226a66d25c59d9ccbf6aed1fc85d334d25bb5b2ef6bc466320",
+    "apps/rolling/wallet-runtime.mjs": "338d3ac8a6e15d54195c486e917b94379fb4e48221d5647232af66199424a47b",
+    "scripts/testing/browser-worker.mjs": "83855bb0b339f6732e939b0f5f8d80f8db8e431d35d4057976b937214c730888",
+    "scripts/testing/rolling-application-fixture.mjs": "ccac4849b21be3cff68c2e9a898c643d65c91c34a79dd446924e5916e4dc7728",
+    "scripts/testing/rolling-application-fixture.test.mjs": "3ff345b2ed230076859a57c339d33ebefaa8520a6fc3c535d6798974675f0df6",
+    "scripts/testing/rolling-composer-browser.mjs": "e66d3e4a9544cff46ca9ee58561e81f12e5ab80f10297842ba763db8da9fa091",
+    "scripts/testing/rolling-preference-browser-fixture.mjs": "70319dbcdaf4271781eea03069e9de4b47e54d9f27f09e5696b4a82e65e6116a",
+    "scripts/testing/rolling-preference-browser-fixture.test.mjs": "1741ce065cd7d8483834b994b4939926709a49b9d543e247f274ab0c8a02caf0",
+    "scripts/testing/rolling-preference-browser.mjs": "d787e6f9607037b5885e0468394753a2affbfedc6d468a3e7cbf7952814d4491",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7cb46a1c1a83beec5d31d56bb8084ca9dccf8fd9b07a2e8efa5f788ee9a17ae2",
+    "scripts/testing/rolling-preference-recovery.mjs": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e",
+    "scripts/testing/rolling-preference-recovery.test.mjs": "d8aaa0dc8c9d54dedc3d5ed60fd676797a243e22dd2c734014147495d32f9365",
+    "scripts/testing/rolling-public-acceptance.mjs": "6df2b6fcd3b7188ec68bb5bafeae3d894ef382fac77f3cefb64546fe50ac4e48",
+    "scripts/testing/run-application.mjs": "8a03ecb26aec4e23c484c5cbcd164ad40c6e58ab6327350158555ff5a2cbeb0d",
+    "scripts/testing/scenario-flows.mjs": "7abdc6cbc51f2148ee7bd5cee035ee78b501c2930614849233ac3ebba406f85b",
+    "scripts/testing/scenarios.mjs": "941e3b99f39791ae8c57a7a13c3d706d378188123f9996cb7378318feef18eec"
+  },
+  "checks": {
+    "parent138": "passed",
+    "combined194": "passed",
+    "browserGenuine": "not-run"
+  },
+  "evidenceHashes": {
+    "preference-browser-parent-tests-1.log": "5d632395ae178d36e97c330f3af465d894ae465812be1320fab1f44db86730c0",
+    "preference-browser-parent-tests-2.log": "764a030a9a955003a2077d3019b0c583508725de75bf0f6bba6f61df58e30d33",
+    "preference-browser-436f-combined-tests.log": "1919a07d58c14873e94ebfda159d891467692b2c427295e4a19810b3d2d5e785"
+  },
+  "failureDisposition": "Initial key-backup oracle expected decimal0 salt; actual production parser returns canonical32-bytehex. Test repaired expectation only; exactschema/emptyclaims/no privatecache retained. Failedlog1 preserved.",
+  "limits": [
+    "No actualbrowser acceptance from these unit/control fixtures",
+    "UI58/runtime1 priorworker evidence separate; normal combined assets required",
+    "FullG07/release gates retained"
+  ],
+  "review": {
+    "path": "execution/evidence/G07/preference-browser-436f-source-review.json",
+    "sha256": "2c5518eb726df77d6c5441bd11270e94e01749ab11f36d23eb029df6f4a78f24",
+    "verdict": "source approved; actualrootassets/genuine browser pending"
+  }
+}

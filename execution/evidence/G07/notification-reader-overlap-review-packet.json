@@ -1,0 +1,38 @@
+{
+  "source": "e7214b9710724546dc1758d7ff271b3d3a21cf9b",
+  "base": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "sourceHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "6294fbb607a0d96b97d78e803be90dd27cfc9e40f244a7ce8d7771690c0ad1a0",
+    "scripts/testing/rolling-notification-fixture.mjs": "bc695e291890e3ba6eff74a9ea9aee446c302e5b682014a0f03f330561d00475",
+    "scripts/testing/rolling-notification-fixture.test.mjs": "d1d641c05fb2ca22de9e145d323a0fb510433605e801dd53c4ca478eeee508b8",
+    "shared/rolling/public-index.test.mjs": "624bb2c5bb2727b198ad62a4afe84d411bfceb3b6fb2e5ae941e005da2909ef1"
+  },
+  "requirements": [
+    "G07-A03",
+    "G07-A10"
+  ],
+  "hypothesis": "Independent61147 diagnosis: <=1s left for public reader start before original180s admission; exacthistoricalnestedfailure unavailable. Start actualindex before awaited genuine root so its initial sync overlapsrootwork; exactrootvisibility required beforeactualhandoff. No changingclock/proof/accounting/budget.",
+  "checks": {
+    "initial106": {
+      "passed": 105,
+      "failed": 1,
+      "reason": "Newtest requestedpoll25 belowactualallowed100; no product/harnessfailure inferred",
+      "log": "execution/evidence/G07/notification-reader-overlap-tests.log"
+    },
+    "affectedFinal": {
+      "passed": true,
+      "log": "execution/evidence/G07/notification-reader-overlap-affected-tests.log"
+    }
+  },
+  "genuineRuntime": "notyetexecuted",
+  "bounds": "540s4GiB/150sbrowser+30saccounting unchanged",
+  "cleanup": "same awaitedfixtureowner closes reader/L1 afterrootfailure orbrowserfailure; no additional sync/miningloop or financialretry",
+  "changedPaths": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-notification-fixture.mjs",
+    "scripts/testing/rolling-notification-fixture.test.mjs",
+    "shared/rolling/public-index.test.mjs"
+  ],
+  "review": "pending",
+  "diagnosticEnumCorrection": "e721 captures authenticating, actualpublic-index.status40, replacingunusedcold; root/controlbehavior unchanged"
+}

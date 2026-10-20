@@ -1,0 +1,49 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_FAILURE_AND_CLEANUP_ONLY_NO_REPEAT_ELIGIBILITY",
+  "source": "5e9171680687b867b159096527794b771f9d6f7c",
+  "actualPacketSha256": "0e59e46db252e91bb0594c15cc221241a6125d77252df922a0f3ae1615fd7072",
+  "reportSha256": "7e791d6bc9efbc429b168f49236b39fff6fe7eb3f93845a9e9c2710ef0814261",
+  "session": 84404,
+  "elapsedMs": 73849,
+  "peakTreeRSSKiB": 1125792,
+  "observed": {
+    "durableClockRows": 4,
+    "genesisLeadSeconds": -120,
+    "firstProtocolLeadSeconds": -121,
+    "postActivationAndHandoffLeadSeconds": -24,
+    "actualProofAndValidNodeAdmission": true,
+    "status": "proposed",
+    "executionResult": "success",
+    "checkpointedBlock": 0,
+    "publishFailedEvents": 4,
+    "inclusionPassed": false,
+    "ownedCleanup": true,
+    "protectedBindings": 4274
+  },
+  "diagnosis": [
+    "45-second inclusion ended normally before120-second owner deadline; prior outer/helper timeout nesting no longer masks this failure",
+    "Publish-failed can arise from unsuccessful/undefined L1 response, caught pipeline error, and preflight failure/timeout; preflight may also lead to later unsuccessful event. Four events do not establish four unique attempted publications",
+    "Existing event projection drops action arrays; all catch/preflight events expose slot only. Job loggers are separate from current sequencer logger observer",
+    "Pinned publisher/epoch cache/L1TxUtils accept injected dateProvider; no proved wall-clock defect or unique historical inner cause",
+    "No retained original inner error or action metadata can now recover historical classification"
+  ],
+  "nextSmallestScope": {
+    "paths": [
+      "scripts/testing/sequencer-observation.mjs",
+      "scripts/testing/sequencer-observation.test.mjs"
+    ],
+    "approach": "Owned instance createCheckpointProposalJob wrapper calls original once and returns identical job; attach contained job log/checkpointEventLog/publisher log observation before execution; retain finite fixed reason/action/count categories only; never raw errors, calldata, addresses or whole objects. Restore only owned wrappers after original job drain/observer detach. No global logger hook or SDK source edits.",
+    "preflight": "Exercise actual pinned job publication/preflight methods with controlled dependencies plus observer, covering successful and unsuccessful/undefined responses, no attestations, thrown/falsy errors, preflight timeout/failure and hostile getters; verify original return/error identity/call count/restoration. Then review whether decisive coverage is adequate before any new real proof.",
+    "holds": "No offset/deadline/reserve changes, unchanged retry, full marker or inclusion qualification."
+  },
+  "sourceBindings": {
+    "scripts/testing/sequencer-observation.mjs": "3525c4a3a63e89cc6fdfdb064a841ee445ce6395f640fc50268a56febee8e6de",
+    "scripts/testing/sequencer-observation.test.mjs": "f606ed32c7fee2ebefe5b08f38811741083404f684f5b21957ddac5cab63a166",
+    "node_modules/@aztec-labs/sequencer-client/src/sequencer/checkpoint_proposal_job.ts": "f48df4d0e0ef44ae6c2952bf265e518295b8cf80ce14999f0f7c0ac923d67196",
+    "node_modules/@aztec-labs/sequencer-client/src/sequencer/sequencer.ts": "2ca47c5ccc2c8752d95f36619c59905d19a9b17f12400033bf4f5070ae128fff",
+    "node_modules/@aztec-labs/sequencer-client/src/publisher/sequencer-publisher.ts": "e6027899000b4e215f87839fe737fcc5f8b774ec02bdb97a04536d0e407d0ffe",
+    "node_modules/@aztec-labs/foundation/src/log/pino-logger.ts": "b09cf8b73dc601e8f78217662c7529ecd5da339802e895f30f829cceb7bb805a"
+  },
+  "reviewerRuntimeExecuted": false
+}

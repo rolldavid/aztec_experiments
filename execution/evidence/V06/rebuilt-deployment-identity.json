@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T12:11:37.690Z",
+  "actual": {
+    "boardJsonSha256": "0x8a8749bf41ec373ea092549f71831941aeb2382f832f1c4be590c907d1a15b21",
+    "portalCreationSha256": "0xf9d746a3fbabc4af69b0289eb5ffe7c03315992198af060ea458a6c8994199d5",
+    "portalRuntimeMetadataSha256": "0x9ffe920e2bd2e82d560a0090c395e29a2eb1cc22b0c51b0dd1e499562b407ae0"
+  },
+  "note": "Deployment hashes use compact parsed JSON and decoded bytecode, not pretty JSON/text bytes."
+}

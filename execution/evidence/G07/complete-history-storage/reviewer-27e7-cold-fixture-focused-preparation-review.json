@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:44:09.619076+00:00",
+  "source": "27e7eadb6d849ecd7dcae4ce248447655dace433",
+  "packetSha256": "07555807ef4071c7a5aef99ca02362970e6a40e0087f7b89b3746afdd5ad2c55",
+  "verdict": "PASS one focused first-failed browser case eligibility under parent grant",
+  "verified": [
+    "Only labelled privateViewFixture API and one positive invocation assertion changed; production bytes and original checks unchanged.",
+    "readColdPreferences accepts active AbortSignal, increments exact read counter, preserves complete/partial data; ordinary readPreferences explicitly forbidden.",
+    "Exact existing first failed test selected,31excluded;30s/2GiB same owner/child with directory-only runner change.",
+    "All585source and2578dependency pins rehashed; source clean."
+  ],
+  "carryAssessment": "Prior19 passed tests precede and do not call changed fixture; exact code unchanged, eligible carry after remaining12 actual checks. No original32 full-pass claim.",
+  "held": "Remaining12 require focused actual review and separate parent grant; no realwalletPXE or proof scope.",
+  "noRuntimeByReviewer": true
+}

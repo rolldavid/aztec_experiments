@@ -1,0 +1,139 @@
+{
+  "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+  "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+  "task_id": "G04-chain-state-funding-quote",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "funding-component",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test shared/rolling/aggregate-funding.test.mjs shared/rolling/aggregate-wallet.test.mjs",
+      "observed": "95 passed, 0 failed/skipped; 1460.845167 ms",
+      "environment": "Pinned Node24; real installed SDK, synthetic RPC component fixtures and actual browser DOM; no proof/payment",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    },
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "funding-browser",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='funding quote refusal gives|aggregate gas refusal' apps/rolling/wallet-panel.browser.test.mjs",
+      "observed": "4 passed, 0 failed/skipped; 1661.477875 ms",
+      "environment": "Pinned Node24; real installed SDK, synthetic RPC component fixtures and actual browser DOM; no proof/payment",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    },
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "generated-consumers",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independently recompute SDK/wallet manifest inputs and output hashes; inspect generated exports and build log completion.",
+      "observed": "2059 SDK input hashes, 8 SDK outputs, 97 wallet input hashes and 25 wallet files match. Tracked SDK manifest equals .build/sdk/sdk-manifest.json; tracked bundle matches output hash. Both transaction encoders are async and exported; waitForTx and waitForL1ToL2MessageReady remain exported. SDK/apps/wallet build logs show completion.",
+      "environment": "Pinned Node24; real installed SDK, synthetic RPC component fixtures and actual browser DOM; no proof/payment",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    },
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "native-reload",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='development wallet|current development defaults|development flags|selected state|development lease|native network adapter|shutdown during SDK startup' plugins/devnet/operator-test.mjs",
+      "observed": "10 passed, 0 failed/skipped; 2903.075084 ms",
+      "environment": "Pinned Node24; real installed SDK, synthetic RPC component fixtures and actual browser DOM; no proof/payment",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+    "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+    "task_id": "G04-chain-state-funding-quote",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+        "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "RC19-chain-state-funding",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    },
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "RC20-prepayment-refusal-feedback",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    },
+    {
+      "base": "64a657b7b8d105e3137708f825fb9749c6e1767e",
+      "candidate": "86adc375456235c1c9df20639cc012e70bb3468c",
+      "task_id": "G04-chain-state-funding-quote",
+      "id": "Owner-preserve-development-chain-on-wallet-build",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/chain-state-funding-quote-20261018/review.json",
+          "sha256": "b61c2b0044c355941317e76f9dc0a5e9e915d5489d4cdfc2f1ed80b5f628716a"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Focused source/component/browser and generated-asset verification only; no real wallet funding/payment, real-proof or fulljourney qualification.",
+    "Pending execution is provider proposed state, not an inclusion guarantee. Intervening state changes or delayed inclusion may still revert under the unchanged onchain deadline/slippage/nonce protections.",
+    "Native reload is source/component qualified with controlled inventory and the actual existing asset handler; no live runtime reload was performed. Normal combined integration gate remains."
+  ],
+  "ownership_handoff": "Both component writers completed and released candidates f34fbc6/4ac08321; lead owns exact combined86adc375 and generated consumers. Review independent of all contributors."
+}

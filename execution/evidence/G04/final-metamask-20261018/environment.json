@@ -1,0 +1,26 @@
+{
+  "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "extensionDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/metamask-13.49.0/extension",
+  "extensionId": "hhbdmejhakdlgpaagpalkgabgimapiof",
+  "manifestSha256": "5bb9f975a320799a507db0757128c946f7432e18dea9c603781e6523a02fac08",
+  "manifestVersion": "13.49.0.0",
+  "name": "__MSG_appName__",
+  "browserVersion": "153.0.8010.12",
+  "launch": {
+    "channel": "chromium",
+    "headless": true,
+    "persistentProfile": "/private/tmp/rolling-final-metamask-YRfUQD",
+    "flags": [
+      "--disable-extensions-except=/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/metamask-13.49.0/extension",
+      "--load-extension=/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/metamask-13.49.0/extension"
+    ]
+  },
+  "identity": "Public Anvil mnemonic imported into isolated developer profile; never opened user Chrome wallet profile",
+  "finalBackup": {
+    "path": "/private/tmp/rolling-dev.ohvnkp4p/metamask-final-account-backup.json",
+    "bytes": 1058625,
+    "mode": "600",
+    "method": "Production runtime.account.exportRecovery after Chromium download crash, encrypted envelope only persisted, no plaintext/signingkey retained in evidence"
+  },
+  "sourceManifest": "e5699a95ffb0aa7da8ee83971ab606b94ac8994709bce50a7550eed46d44c895"
+}

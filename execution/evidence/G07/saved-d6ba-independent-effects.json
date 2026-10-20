@@ -1,0 +1,24 @@
+[
+  {
+    "file": "preference-root-effect.bin",
+    "roundtrip": true,
+    "txHash": "0x1e5a0b2f8789d124b9ea8ca8c6cd6ef1659f6b7f59945bfe89b01ddb7c1b857c",
+    "transactionFee": "0x000000000000000000000000000000000000000000000000000013035a838b80",
+    "revertCode": 0,
+    "publicLogs": 2,
+    "publicDataWrites": 14,
+    "noteHashes": 4,
+    "nullifiers": 6
+  },
+  {
+    "file": "saved-preference-effect.bin",
+    "roundtrip": true,
+    "txHash": "0x08dcf3997b2e8c122ede34dd8fdbe55a30efad51699e97fd0843c8ef1d24663f",
+    "transactionFee": "0x000000000000000000000000000000000000000000000000000007bd9f465500",
+    "revertCode": 0,
+    "publicLogs": 1,
+    "publicDataWrites": 1,
+    "noteHashes": 3,
+    "nullifiers": 7
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "base": "e4f201a099f219d9c0d40763a3ab3f85787100c5",
+  "candidate": "f1c209f06d69e11ba915bafaa140db863578ba27",
+  "task_id": "G07-private-query-rpc-reuse",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-feature-20261018",
+  "allowed_paths": [
+    "shared/trusted-private-node.mjs",
+    "shared/trusted-private-node.test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs",
+    "prover/private-query.integration.test.mjs"
+  ],
+  "required_checks": [
+    "focused-independent",
+    "generated-runtime"
+  ],
+  "requirements": [
+    "RC27-request-local-query-reuse",
+    "RC25-fresh-canonical-fences"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-feature-20261018",
+      "task_id": "G07-private-query-rpc-reuse",
+      "paths": [
+        "shared/trusted-private-node.mjs",
+        "shared/trusted-private-node.test.mjs",
+        "prover/private-query.mjs",
+        "prover/private-query.test.mjs",
+        "prover/private-query.integration.test.mjs"
+      ]
+    }
+  ]
+}

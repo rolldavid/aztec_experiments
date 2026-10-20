@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-11T13:47:46.903981+00:00",
+  "execution_environment": "trusted local lead macOS host",
+  "aws_identity": {
+    "profile": "message-board-deploy",
+    "account": "052665140763",
+    "authenticated": true
+  },
+  "ec2_us_east_1_instances": [],
+  "local_plugin": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  },
+  "prover_http_status": 504,
+  "new_paid_resources": 0,
+  "new_spend_usd": 0,
+  "next_action": "Localproofcandidate preparation; pinnedprocessedRolling andPrivateBok sourceprofile reviewed. Publicremoteprover stillunavailable; no paidresource launched. Full budget+independentshutdown reconciliation before any launch."
+}

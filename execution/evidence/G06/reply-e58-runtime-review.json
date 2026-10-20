@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-11T19:08:51.137025+00:00",
+  "candidate": "3c802500ba787c49baa79f205e1aee6f34e2175d",
+  "runtimeSource": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "base": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+  "verdict": "approved-bounded-genuine-reply-runtime",
+  "scope": "G06/G14 actual local-chain post callback rollback/finality, matching post, authenticated public Bok reply and private fee/accounting foundation; full tasks remain open",
+  "findings": [],
+  "checks": [
+    {
+      "procedure": "Exact Git source hash checks against outer/parent/journey/rollback records",
+      "result": "pass",
+      "gitHashComparisons": 199,
+      "installedHashComparisons": 12,
+      "artifactHashComparisons": 3
+    },
+    {
+      "procedure": "Pinned SDK TxEffect.fromBuffer, SHA256/tx hash/actual fee/success/public-write-limit checks on eight successful effects; canonical reverted effect hash/hash/fee/no-exit checks",
+      "result": "pass"
+    },
+    {
+      "procedure": "Independently derive processed-ABI event selectors/tags; filter exact board emitter; require exactly one PostPublished and PluginReplyPublished in actual reply effect; decode and compare reported/expected records",
+      "result": "pass"
+    },
+    {
+      "procedure": "Recompute actual reply UTF8 bytes, canonical zero padding and Poseidon content digest",
+      "result": "pass"
+    },
+    {
+      "procedure": "Inspect all eight rollback assertions and actual request/deposit/name/credit preservation; exact reverted tx/effect remained unchanged through FINALIZED before unchanged positive post",
+      "result": "pass",
+      "finalityMs": 67826,
+      "ordinaryL1MineIterations": 65,
+      "officialLocalMarkAsProvenCalls": 1
+    },
+    {
+      "procedure": "Inspect real proof path: nonempty chonk proofs, actual node isValidTx and canonical inclusion; actual funding/claim message and exact ten-field note evidence",
+      "result": "pass",
+      "note": "Per-action proof bytes not independently retained/reverified offline; source-bound successful runtime enforces nonempty proofs and actual node admission. Deployment evidence retains 111556 proof bytes length/hash and NativeUnixSocket backend."
+    },
+    {
+      "procedure": "Recompute total owner fee 95174251800000 from real collateral claim, Bok credit claim, rollback and journey owner tx fees; both private balances and pool sum",
+      "result": "pass"
+    },
+    {
+      "procedure": "Inspect strict deepest-callee replay and wrong-operator simulation negatives; no extra submissions; exact reserve200/charge120/refund280 final private880/operator120",
+      "result": "pass"
+    },
+    {
+      "procedure": "Compare 5e68 to 3c802 Git diff; only infrastructure ledger/session registry",
+      "result": "pass"
+    }
+  ],
+  "observations": {
+    "applicationProofs": true,
+    "networkProofs": false,
+    "controlledSettlement": true,
+    "actualProviderCall": false,
+    "providerBilling": "synthetic-provider-fixture",
+    "publicBotIdentityAllowed": true,
+    "elapsedMs": 524494,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 1657408,
+    "rssLimitKiB": 4194304,
+    "cleanup": {
+      "ownedTreeAbsent": true,
+      "temporaryDirectoryRemoved": true
+    },
+    "rollbackChecks": [
+      "post-count-unchanged",
+      "no-post-record",
+      "private-deposit-unchanged",
+      "owned-names-unchanged",
+      "request-unchanged",
+      "private-credit-unchanged",
+      "canonical-revert",
+      "no-exit-message"
+    ],
+    "replyEventCounts": {
+      "PostPublished": 1,
+      "PluginReplyPublished": 1
+    },
+    "replyAccounting": {
+      "state": "4",
+      "invocation_hash": "6366088548174955902063777429740726780637324088814918669826611995524404668733",
+      "sequence": "1",
+      "budget": "400",
+      "available": "0",
+      "reserved": "0",
+      "charged": "120",
+      "refunded": "280",
+      "receipt": "1501821394100334773667826528379571738581044608178086722996282287632766287549",
+      "primary_done": true,
+      "secondary_done": true,
+      "ownerBalance": "880",
+      "operatorEarnings": "120"
+    }
+  },
+  "limitations": [
+    "524494ms passed unchanged540000ms bound with only15506ms headroom; one successful run is not reliability/latency qualification.",
+    "Local31337 controlled settlement and test funding; no network epoch proof/testnet or production release acceptance.",
+    "Synthetic provider charge in this run. Distinct real provider campaign28b68 is separately reviewed, not a single real-provider-to-authenticated-reply end-to-end claim.",
+    "Public exact-field smoke does not prove anonymity; trusted-node/browser/privacy specialist and side-channel acceptance remain open.",
+    "New normal-build manual-constraint diagnostics75Rolling/44PrivateBok remain external assurance obligations.",
+    "All mandatory G05/G06/G14 requirements, browser product, profile/preferences and other release gates remain retained."
+  ],
+  "evidence": {
+    "execution/evidence/G06/application-e58a6efc-ddbb-4327-9cc2-cb6d06fda1c2.json": "15360464657ca379cd742465331b036e84cfa42ddd2c2f7398000dfedb362443",
+    "execution/evidence/G06/portal-771d76b2-56d8-4b1a-a966-479f4b222728/experiment/journey/journey.json": "2488b921f030df571acb005ae26a74fbf6e4584f5868134fb21790e054111817",
+    "execution/evidence/G06/bok-reply-build-txe.json": "fcc8998eec74cee8bb8a2d8f28d570da495095b7b40351ad48b900fb991ef3e4"
+  }
+}

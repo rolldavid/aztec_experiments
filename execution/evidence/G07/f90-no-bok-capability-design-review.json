@@ -1,0 +1,43 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:17:55.527571+00:00",
+  "scope": "Read-only implementation-feasibility review, no source changes or runtime tests",
+  "sourceRevision": "f90fec9eb94bb479fbe688bbeb71c1e153034e91",
+  "proposalSha256": "03f81fa14989a783af824435cebd3ffa49681fc3ceaf4856f79c3806f65f7eee",
+  "sourceBindingsVerified": 17,
+  "runtimeBindingsVerified": 2,
+  "observations": [
+    "All 17 proposal source hashes and two actual report hashes independently match.",
+    "The current fixture really proves, submits, checkpoints and class-checks PrivateBok before using its address for service scope. Removing those lines alone leaves unsupported configuration.",
+    "Service/catalog/policy/worker startup does not independently check Bok deployment; catalog availability is not authorization.",
+    "The explicit process-worker environment binds PROVER_PRIVATE_BOK to the captured address; worker reads it directly without fallback. Node v24.21.0 normalizer omits undefined-valued environment entries.",
+    "Absent Bok already rejects PrivateBok address binding, but does not reject RollingBoard:post_with_bok or its board-target signed selector. Both must explicitly be denied in disabled mode."
+  ],
+  "primarySource": {
+    "url": "https://raw.githubusercontent.com/nodejs/node/v24.21.0/lib/child_process.js",
+    "lines": "655-656,699-705",
+    "claim": "Explicit options.env is used; undefined environment values are omitted from envPairs."
+  },
+  "implementationDisposition": "Eligible for the proposed six-path explicit capability implementation only; default full service behavior preserved. No future source, runtime or genuine launch approval.",
+  "requirements": [
+    "Accept only explicit primitive false as disabled capability; reject accessor/malformed/contradictory configurations before resource allocation. Default full mode still requires distinct nonzero board/Bok/private-FPC addresses.",
+    "Capture capability and absence/address before awaits, use the captured value at worker construction, and reject Bok address in disabled mode. No predicted address or inherited environment substitute.",
+    "Deny every PrivateBok direct/continuation circuit and private/public signed payload. Deny board post_with_bok by both circuit name and derived exact selector. Deny plugin configuration for the proposed no-plugin capability, while default full selector inventory remains unchanged.",
+    "Preserve verified catalogs/artifacts, ABI decoding, full signed account payload, network, private fee and hidden/static flag checks. Catalog entries must not become fallback authorization.",
+    "Keep normal worker transport source unchanged if undefined omission suffices; any explicit forwarding changes require the separately claimed worker paths.",
+    "Use meaningful disabled/default policy tests, captured-config mutation/accessor negatives, and an actual harmless child-process regression showing an inherited parent PROVER_PRIVATE_BOK is absent in the child when the explicit field is undefined.",
+    "Fixture selection must be explicit preference-browser and initial/marker reorg only; record Bok capability disabled and deployment omitted, with no fabricated deployment receipt. Preserve all existing application jobs, fees, privacy, fork, fullscan/suffix, readiness and cleanup assertions.",
+    "Full Bok deployment and action acceptance remains mandatory separately. No full-product waiver follows from a narrower fixture."
+  ],
+  "timingDisposition": [
+    "Observed unused deployment stage was approximately19 seconds; this is not a measured minimum saving. Removing it changes mined block/checkpoint/cooldown phase and could move work elsewhere.",
+    "Keep 124-second pre-first-proof allowance,150-second browser/fork reserve,45/15 read bounds and540-second/4GiB run limits.",
+    "Capture real-wall and canonical timestamp/block at existing setup boundaries before any new measured attempt; do not attribute all98-second debt or13-second excess to one stage without evidence."
+  ],
+  "remainingGates": [
+    "Exact changed source review",
+    "Affected controlled and actual child-boundary checks",
+    "Current source/assets closure",
+    "Separate one-shot changed genuine eligibility and parent serialized grant"
+  ]
+}

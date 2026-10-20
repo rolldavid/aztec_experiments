@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "observedAt": "2026-10-14T12:35:44.660119+00:00",
+  "revision": "2e481871278e040128bd19ad5e85d44442fecc7e",
+  "baseRevision": "f01ff34e8d05c7f39efae5e0867eacaa9c73dff2",
+  "priorRejectedRevision": "f41054b1790e2e76364c993cd4524a203b3ac771",
+  "verdict": "approved",
+  "requirements": [
+    "RC12",
+    "RC13",
+    "RC39"
+  ],
+  "sourceHashes": {
+    "censor-daemon/README.md": "b9d50b2517dfacbc23fac583cf7fded8f849ef5abd9e5e4913727308f6e6d1b0",
+    "censor-daemon/daemon.mjs": "fabc20095461b7c4fdf250d09829c13def52cde6d386a87ccd810907e14ef977",
+    "censor-daemon/flag-outcome.mjs": "776245f2cdf5e0dc5e106a490de487ff8d49aaa995c273f42646afe87500edb1",
+    "censor-daemon/job-store.mjs": "1f86f1ec596086c1162e5df1ca2cf3dec432465b4bd0275b5978e16ddc312b25",
+    "censor-daemon/prompt-template.json": "d7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862",
+    "censor-daemon/rolling-adapter.mjs": "c472652f9f72d6e1155b3bfff63aa283fee25bc38b320f864d1260d2f60bcddf",
+    "censor-daemon/test_flag_outcome.mjs": "6534a4eefbed20f52a2877c3906f511501cd07c01c5f619bc57726e360181650",
+    "censor-daemon/test_moderation.mjs": "ea911e6060080d3c39c8880f1d49728712b1e276575249a212cd7d5669eab73c",
+    "censor-daemon/test_worker.mjs": "bda71da6468d2a6abd0f81d28fd4376cecdf126420dafa06ec9a8342d8ee787f",
+    "censor-daemon/worker.mjs": "9231aa8ec76e91e9a559588fd7a1ac2689b49a602188ed674557dc35dffbafef",
+    "docs/rolling-deployment.md": "e7f721b13938d96693f62083cb380d07747b10a1905df4095cbc09c1c9336d3d"
+  },
+  "findings": [],
+  "closedFindings": [
+    {
+      "id": "G08-R1",
+      "disposition": "Authentic Rolling empty text is accepted only for kind3/positive reference; model gets explicit quoted repost context, original text remains empty in durable queue, original post is independently queued. Empty normal/quote/bad-reference stays rejected. Legacy text validator default remains strict."
+    },
+    {
+      "id": "G08-R2",
+      "disposition": "Existing bounded drain performs at most512 index steps within20second admission and requires complete; ownership checked per step, failures propagate, no partial publication inferred. Multi-step fixture now exercises production semantics."
+    }
+  ],
+  "reviewChecks": [
+    "Read requirement references, source diff and changed tests before implementation conclusion. Exact11paths and all source hashes verified against Git and current files.",
+    "Reviewed current main/local union identity, model/policy reevaluation, post/authority checks before and after proof, bounded native target/selector/arguments/fee binding, public service-only identity.",
+    "Preparing and submission-unknown journals persist before wallet/broadcast; current path never retries an uncertain original intent. Receipt plus exact canonical PostRemoved reason/policy/block required.",
+    "Removed/rejected/orphaned targets invalidate submission, removal/event reorg reopens fence, current policy race cannot submit stale verdict.",
+    "Independently ran the six existing focused repair tests on actual SQLite/worker with labelled ports:6pass0fail0skip149.991458ms; no chain/model/service operations.",
+    "Inspected and hash-verified frozen full focused231-pass log and report;0fail0skip4283ms289920KiB, owned cleanup positive."
+  ],
+  "reviewerCommand": "<pinned Node24.21.0> --test --test-name-pattern='Rolling (valid empty|empty message|persistent index|index catchup)' censor-daemon/test_worker.mjs",
+  "packetSha256": "f50a6bbb88c523405bcabc51bc7f728cf6d7a05bc95146b0f7fa3a2080c54fbe",
+  "focusedLogSha256": "0b2709649977eaffae4809fbcc44e26ae8655c3c473885b3633df1d799cb3a70",
+  "limits": [
+    "Source/component approval only; actual current native wallet and isolated model human+Bok moderation acceptance remains required.",
+    "Tests inject canonical-index/native-wallet/model ports; actual SQLite and durable queue do not substitute for actual chain/moderation model.",
+    "Changed prompt identity requires new real model quality evaluation. Targeted real-proof testnet, audit,14day soak and current network gates retained.",
+    "Root must bind combined integration source/checks; reviewer performed no integration or shared service changes."
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "kind": "Independent read-only criterion gap assessment, not acceptance or graph mutation",
+  "reviewer": "reviewer_resume",
+  "date": "2026-10-15",
+  "coordinationRevision": "da7a3551ddfe77ea434b1146aa40c81e6e7b4a61",
+  "method": "Read current graph/owner clarifications and source-bound actual reviews/packets; no new test, service, transaction, network or source change. Historical packets retain their original revisions and limitations, not silently rebound to current source.",
+  "evidence": [
+    {
+      "path": "aztec_experiments/execution/graph.json",
+      "sha256": "b15c54ec7a58c5dc9b927fbafeb4aa7f953b39474518d6db16736d9489c8b598"
+    },
+    {
+      "path": "aztec_experiments/execution/specification-clarifications.md",
+      "sha256": "53c8db349479609915218ddce39873aaa801063f8ef790814a7987d904dbcf5d"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G04/current-testnet-reconciliation-20261015.json",
+      "sha256": "04b96083f296ad4ef5a2eb2f7886cfbd5b50620c9ffb381092133172a4dcc197"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G14/reviewer-6c01-counter-reset-acceptance.json",
+      "sha256": "8c7fa22f135f1e9a4dda447ecc4a768693b43a82e94526de9e8529f448cc8e4e"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G14/private-uncertain-review.json",
+      "sha256": "f4e93b8e90e20954d752f35b87ec665d4deb73ed3daf86a3c8f14eee899a323a"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G06/anonymous-687-runtime-review.json",
+      "sha256": "1930ba249aaba3af6a28d9b65cfdfbd99b9c28566812a8dcd9bc989fb59906e9"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G06/repost-e030-runtime-review.json",
+      "sha256": "4b7efc2591dde8be76a3a026c4437b4fd485bd7794a6f04d40d68282effff6ab"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G06/account-reactions-b0b37-runtime-review.json",
+      "sha256": "bc843e12dcf345805558145739df4b5f532b2ae1a11996e07b10cb298f429839"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G06/social-9745-runtime-review.json",
+      "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+    },
+    {
+      "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/usdc-original-payment-recovery-actual.json",
+      "sha256": "071cd0778cd6ca96d95522ff5c528c16a61ed2d7f0da0f7db0ea57e662b22f96"
+    },
+    {
+      "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/phantom-availability-actual.json",
+      "sha256": "9dfb2ca91f37616b5e2dd05784db56011ae63bea909418448eb0cf6ca498cf75"
+    },
+    {
+      "path": "rolling-design/execution/evidence/G04/named-wallet-acceptance/phantom-current-release-check.json",
+      "sha256": "c60ec70753fef2095b9f77705f484e254cae746b20e21536175bdc6435048b2b"
+    },
+    {
+      "path": "rolling-lead-bok/execution/evidence/T04/recovery-metamask-aggregate-eth-paid-8.json",
+      "sha256": "37a0a448e0274a8410a2c6084fcffc74635e9009a807bf058a2ff84b950fc82b"
+    },
+    {
+      "path": "rolling-controls/execution/evidence/G08/operator-fixture/actual-acceptance-handoff.json",
+      "sha256": "c5ae4dd0e4ee8940ab11b8d9c28b104634102add96dbd84ee93e5f1afa88fbb0"
+    },
+    {
+      "path": "rolling-controls/execution/evidence/G14/live-authorization-release-withdrawal/actual-release-handoff.json",
+      "sha256": "2f41a4b8224534be371732175a9e4c3c554b6ab71fa775baff655067a79a7e75"
+    },
+    {
+      "path": "rolling-controls/execution/evidence/G14/live-authorization-release-withdrawal/completed-refund-handoff.json",
+      "sha256": "611262b2bd96d880b01980654d15e442e3e38d1d238ada37ee078465e0e67238"
+    },
+    {
+      "path": "aztec_experiments/execution/evidence/G11/reviewer-9bf9cfc-pool.json",
+      "sha256": "427e4e11e675b6ec6974732dec602a8438121d9aef2eb818d5b5cade774fc6a9"
+    }
+  ],
+  "criteria": [
+    {
+      "ids": [
+        "G14-A01",
+        "G14-A04"
+      ],
+      "developmentEvidence": "Private authorization/request flow and original paid claims feed genuine current Rolling C/D jobs. Bok identity may be public; human identity disclosure replacement is implemented. Actual public-field absence alone does not establish derived unlinkability.",
+      "remaining": "Current complete caller/backend/node trace coverage and cryptographic/privacy qualification. Do not describe public Bok identity as an open defect."
+    },
+    {
+      "ids": [
+        "G14-A02",
+        "G14-A05"
+      ],
+      "developmentEvidence": "Reviewed 6c01 C/D: 16 actual provider receipts joined to settled calls, four cross-thread model overlaps, canonical finished state4, available/reserved0, C charge16055/refund283945 and D charge16163/refund283837. Separate authentic release, L2 withdrawal and L1 refund completed. Historical a701 private uncertain/expiry exercised canonical reservation, permissionless private expiry and refund with synthetic provider/ProbeBoard limits.",
+      "remaining": "Current Rolling positive long-expiry/uncertain-call reconciliation is not established by the older ProbeBoard expiry case. Original genuinely uncertain provider fences require authoritative billing evidence; never repeat paid calls for receipt recovery. Real testnet proofs and full trace qualification remain open; workspace limits belong complementary G10/G11."
+    },
+    {
+      "ids": [
+        "G14-A03"
+      ],
+      "developmentEvidence": "Known-role ordinary-wire and allowed trusted-query positive controls exist in 2397 social runtime; current trusted-query topology/privacy-copy review identifies explicit trusted prover/query/fullnode operator boundary.",
+      "remaining": "Whole human caller/account/name derived-linkage classification, all encoded response coverage and remote operator containment are not proved. Specialist audit remains separate. No concrete new leak is established by this assessment."
+    },
+    {
+      "ids": [
+        "G04-A01",
+        "G04-A03",
+        "G04-A05"
+      ],
+      "developmentEvidence": "MetaMask ETH original canonical aggregate payment and private claim/Ready recovered successfully (paid-8); actual USDC two typed signatures/one relay POST followed by same-payment triple private claim/Ready passed at39ad, zero repeat Ethereum/relay/signature calls. Interrupted original runs remain failures.",
+      "remaining": "Complete named-wallet matrix and uninterrupted automatic Ready route not established by these recovery conjunctions. Phantom26.33 signed package/driver exists; actual official onboarding username availability returned403 before app connection/signature. This is an external prerequisite, not proof its payment route is unsupported. No actual Phantom ETH/USDC acceptance."
+    },
+    {
+      "ids": [
+        "G04-A02",
+        "G04-A04",
+        "G08-A04"
+      ],
+      "developmentEvidence": "Existing actual ETH/USDC recovery validates exact canonical saved payment effects, saved fee caps and single private claim; later retained users genuinely post/invoke Bok. Persistent funding/claim and no-repeat paths are implemented and exercised.",
+      "remaining": "Do not conflate a sequence of repaired continuations with uninterrupted fresh automatic flow. Current candidate-bound full named-wallet asynchronous route must still be qualified; no new funding merely to update a stale graph checkpoint."
+    },
+    {
+      "ids": [
+        "G04-A06"
+      ],
+      "developmentEvidence": "No owner alternative is currently justified solely by Phantom403 or testnet identity mismatch.",
+      "remaining": "RC21 decision is required only after a measured unsupported one-transaction route and concrete alternative; do not ask owner to waive before determining capability."
+    },
+    {
+      "ids": [
+        "G04-A07",
+        "G08-A05"
+      ],
+      "developmentEvidence": "Real per-plugin accounting, interrupted authorization release, private exit/L1 refund, fee top-up and encrypted restore have reviewed actual evidence. W02 now independently closed.",
+      "remaining": "Combined current wallet/asset screen matrix and actual collateral top-up cases must be mapped individually; fee-only fresh-avatar funding is not full aggregate collateral/Bok onboarding."
+    },
+    {
+      "ids": [
+        "G08-A01"
+      ],
+      "developmentEvidence": "Actual named/Anonymous roots/replies/quote/repost, two-account reactions, canonical SQLite/HTTP cold reconstruction have reviewed historical genuine local application-proof evidence at d1/2493/2397. Current core name/bio/avatar/subboard and authentic Bok/browser paths have newer separate evidence. Real moderation allowed neutral, removed human and Bok violations, timely penalty, k2 private screening, withdrawal and L1 refund passed at4f6.",
+      "remaining": "Full current UI composition and scenario conjunction, no-collateral subboard/policy propagation where not yet measured, are remaining acceptance rather than proof that core features are unimplemented. Historical source/protocol changes require scoped impact mapping before current acceptance carry."
+    },
+    {
+      "ids": [
+        "G08-A02",
+        "G08-A03",
+        "G08-A06"
+      ],
+      "developmentEvidence": "Development runs use native devnet/PXE proof flags as owner instructed. Historical genuine local transaction proofs are retained evidence.",
+      "remaining": "Local controlled settlement is not testnet/network proof acceptance. Current matching V6 deployment, real named wallet/funding, proof/privacy/reorg/outage/recovery conjunction remains open; later full product gate G13 is not replaced."
+    }
+  ],
+  "externalPrerequisites": [
+    "Latest readonly Sepolia reconciliation: nonce15 approval, cancellation and fresh successor all absent; latest/pending15, original funding plan expired. No financial replay authorized by absence alone.",
+    "Configured portal rollup/version differs from current rc3 testnet node rollup/version. Need a verified matching deployment and prover/node identity before testnet signing; matching software version is insufficient.",
+    "Phantom official onboarding403 requires normal authorized availability or supported remedy, not bypass or repeated unchanged setup.",
+    "Original uncertain provider calls need original authoritative billing evidence; missing receipt is not zero charge.",
+    "Independent privacy/security audit, 14-day soak and network release gates remain mandatory."
+  ],
+  "graphAssessment": {
+    "observed": "G14 blocked on real-proof/privacy, G04 planned depends G14 with stale435 startup checkpoint, G08 planned depends G04/G07 with generic awaiting dependencies despite the actual evidence above. G14 next action still says automatic personal GitHub provisioning is an absolute blocker.",
+    "judgment": "Preserve final criterion dependencies, but those package-level states must not stop independent application development or erase accepted component evidence. Record component readiness/remaining external gates in existing checkpoints rather than waiting for whole G14 to begin G04/G08. No graph edit made.",
+    "githubCorrection": "Reviewed9bf pool provides a compliant finite selected-private-repository path with pre-paid durable allocation; original API automatic grant bug remains but is no longer the only possible product implementation. Actual pool transport/replenishment acceptance still pending; source approval is not actual delivery."
+  },
+  "nextActionsRanked": [
+    {
+      "rank": 1,
+      "type": "finish existing application component",
+      "action": "Integrate and qualify the already-reviewed9bf dedicated-repository pool once GitHub access is available: allocate two threads uniquely, exact selected/private/genesis/Actions checks, restart same allocation, capacity exhaustion before paid entry and replenish same unpaid request. Existing broker APIs/tests; no new framework and no additional model call needed for allocation/mirror qualification."
+    },
+    {
+      "rank": 2,
+      "type": "existing component acceptance, repair only observed defect",
+      "action": "After retained Linux state is qualified, close current fresh keys-only nonempty recovery within unchanged120s using existing reader/profile, then reuse actual funded identities for the shortest unmeasured integrated G08 flow. Do not repeat accepted C/D paid calls or funding just because G04/G08 graph statuses are planned."
+    },
+    {
+      "rank": 3,
+      "type": "bounded qualification/external unblock",
+      "action": "Resolve matched testnet deployment and nonce fence before targeted proof acceptance; resume Phantom capability only after actual onboarding prerequisite changes. In parallel qualify unchanged remote moderator on frozen full corpus; existing1.7B quality failure and9B targeted latency failure are genuine unqualified behavior, not solved by actual15s moderation sample."
+    }
+  ],
+  "implementationConclusion": "No new missing core G14/G04/G08 source feature is demonstrated by this read-only evidence inventory. The smallest known application implementation to finish is existing G11 pool delivery; within G04/G08, use specific missing acceptance to expose a genuine defect before assigning speculative source changes. Production moderator model quality/latency and fresh recovery performance remain product-quality gaps, not external-audit substitutes.",
+  "limits": [
+    "Not an exhaustive fresh source audit or a new full-suite pass.",
+    "No criterion or package marked done by this report.",
+    "All original failed observations and exact historical scope retained."
+  ]
+}

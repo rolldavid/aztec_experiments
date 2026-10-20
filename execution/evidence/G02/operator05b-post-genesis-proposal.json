@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T02:11:07.988483+00:00",
+  "scope": "read-only source-backed recommendation; no startup execution or paid action",
+  "nodeStartupQualified": false,
+  "evidence": {
+    "operator05b-genesis-source-binding.json": "3aad003e38dc3c3a9859b0aaaae4dbfb91a566ba86b323a44b83b1902a229e3a",
+    "node-l1-prerequisites-334-actual.json": "6530bd5578b44adc540f22abd1bfbd506f2475a5b5d21553c1b2f227f0991c5a",
+    "operator05b-image-module-equivalence.json": "0b36f52a9053493fcc1d3a5a425f13a07d43783a9e35525d7d9287ca82acac97",
+    "operator05b-cleanup-confirmation.json": "3e09efc09a1440d5b0b64af686016d63ce3789d4805d1d4d54fcf8cb0529a4fa",
+    "operator05b-cost-recommendation.json": "873c66c8fa7da2550448f1a67c9793cc9a76aad64fb775bcfc977cfdbe67df4d"
+  },
+  "sourceModules": {
+    "aztec/dest/cli/cmds/start_node.js": {
+      "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+      "offsets": {
+        "await computeExpectedGenesisRoot": [
+          54
+        ],
+        "if (!nodeConfig.registryAddress": [
+          56
+        ],
+        "await waitForCompatibleRollup": [
+          61
+        ],
+        "await getL1Config": [
+          66
+        ],
+        "if (!Fr.fromHexString": [
+          68
+        ],
+        "await initTelemetryClient": [
+          100
+        ],
+        "await createAztecNode": [
+          102
+        ],
+        "registerAztecNodeRpcHandlers": [
+          1,
+          108
+        ]
+      }
+    },
+    "aztec/dest/cli/cmds/standby.js": {
+      "sha256": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+      "offsets": {
+        "userLog(`Genesis archive root": [
+          26
+        ],
+        "export async function checkRollupCompatibility": [
+          36
+        ],
+        "export async function waitForCompatibleRollup": [
+          59
+        ],
+        "await registry.getRollupAddress": [
+          63,
+          84,
+          119
+        ],
+        "await checkRollupCompatibility": [
+          67,
+          88,
+          121
+        ],
+        "if (mismatches.length === 0)": [
+          71
+        ]
+      }
+    },
+    "aztec-node/dest/factory.js": {
+      "sha256": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259",
+      "offsets": {
+        "await BarretenbergSync.initSingleton": [
+          47
+        ],
+        "getKzg(log)": [
+          55
+        ],
+        "await keyStoreManager?.validateSigners": [
+          83
+        ],
+        "await RegistryContract.collectAddresses": [
+          105
+        ],
+        "const [l1GenesisTime": [
+          111
+        ],
+        "await createBlobClientWithFileStores": [
+          122
+        ],
+        "await trySnapshotSync": [
+          124
+        ],
+        "await EpochCache.create": [
+          125
+        ],
+        "checkConfigMatchesRollup": [
+          132,
+          551
+        ],
+        "await createWorldState(": [
+          137
+        ],
+        "await AvmSimulatorPool.spawn": [
+          144
+        ],
+        "await createArchiver": [
+          151
+        ],
+        "await createWorldStateSynchronizer": [
+          161
+        ],
+        "await BatchChonkVerifier.new": [
+          167
+        ],
+        "await BBCircuitVerifier.new": [
+          168
+        ],
+        "await feeProvider.start": [
+          192
+        ],
+        "await createP2PClient": [
+          223
+        ],
+        "await worldStateSynchronizer.start": [
+          299
+        ],
+        "await p2pClient.start": [
+          301
+        ],
+        "const node = new AztecNodeService": [
+          505
+        ],
+        "Failed during node creation": [
+          539
+        ]
+      }
+    },
+    "aztec/dest/cli/aztec_start_action.js": {
+      "sha256": "33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4",
+      "offsets": {
+        "await startNode": [
+          42
+        ],
+        "await startHttpRpcServer": [
+          92,
+          127
+        ],
+        "await resolveAdminApiKey": [
+          102
+        ]
+      }
+    },
+    "aztec/dest/local-network/local-network.js": {
+      "sha256": "8de8dbbad418fb9e84b892164b01790c7b9586b758eab6a36227241482df3439",
+      "offsets": {
+        "export async function createAztecNode": [
+          191
+        ]
+      }
+    },
+    "cli/dest/config/generated/networks.js": {
+      "sha256": "734f27302fe306f7125eb73cdc6b982be85bcc038d7a1ce8a1b61a3922aa5399",
+      "offsets": {
+        "export const testnetConfig": [
+          85
+        ]
+      }
+    },
+    "cli/dest/config/network_config.js": {
+      "sha256": "303158b2170388fb198068ac84ac1afc5dbefb8c50cdb8a0032fdbcd5cbc08c9",
+      "offsets": {
+        "export async function enrichEnvironmentWithNetworkConfig": [
+          91
+        ]
+      }
+    },
+    "cli/dest/config/chain_l2_config.js": {
+      "sha256": "8b488ab8cf50599a9c92695da43d01a809548689d7b742774551eabb68898fe8",
+      "offsets": {
+        "export function enrichEnvironmentWithChainName": [
+          38
+        ]
+      }
+    }
+  },
+  "conclusions": [
+    "05b genesis marker is emitted after native getGenesisValues succeeds; it does not locate a native genesis failure.",
+    "New independent generated GENESIS_ARCHIVE_ROOT from exact image constants matches 334 finalized-anchor on-chain root. Image constants/testing/genesis_data/ethereum-config bytes match installed SDK. Original 334 report remains unchanged.",
+    "Exact 05b payload and image ENV do not set TEST_ACCOUNTS, SPONSORED_FPC or PREFUND_ADDRESSES. Installed generated testnet config explicitly sets first two false and does not set prefund; ethereum mapping defaults false/false/empty. Generated testnet/enrichment module bytes have NOT yet been copied from image, so remote-default binding is source-supported but that final module closure comparison is outstanding.",
+    "334 Mac public-read success narrows current L1 prerequisites, not historical AWS endpoint success. Five later code phases remain possible before existing node-construction marker: telemetry; factory crypto/config; registry/blob/snapshot; world-state/AVM/archiver; verifiers/fee/P2P/start. No one cause established.",
+    "Current six error tokens and seven stages deliberately discard all other text. unknown means unmatched output, not a specific failure. Existing logs alone cannot guarantee a marker before every remaining awaited operation."
+  ],
+  "recommendedImplementation": {
+    "form": "One diagnostic-only, exact-source-hash-gated CLI preload/loader that inserts fixed synchronous stage markers at static statement boundaries in the three pinned compiled modules; existing bootstrap receipt projector reads a dedicated bounded stage record, separate from arbitrary native stdout/stderr. Preserve actual CLI, arguments, awaited values, error identity, cleanup and SDK disk bytes. Do not build an alternate node factory.",
+    "whyNotOnlyMoreRegex": "Additional existing WSDB-ready/snapshot/node-creation-failure phrases are useful but leave pre-factory and pre-snapshot operations unobservable; another failure could remain identical.",
+    "prototypePrerequisites": [
+      "Read-only image Node-version/loader capability metadata verification before selecting supported import hook API; do not assume image Node matches separately packaged Node24.",
+      "Copy/compare exact factory.js and aztec_start_action.js plus generated network defaults/enrichment modules from nonrunning pinned image; only start_node.js currently image-hash-bound among the proposed three transform targets.",
+      "Freeze original and transformed SHA256 plus exact unique anchor count for each insertion; reject any source/anchor mismatch before CLI import."
+    ],
+    "initialPhases": [
+      "registry-guard",
+      "rollup-compatibility",
+      "l1-config",
+      "genesis-compare",
+      "telemetry",
+      "factory-enter",
+      "factory-bb",
+      "factory-kzg",
+      "factory-keystore",
+      "factory-addresses",
+      "factory-l1-constants",
+      "factory-blob",
+      "factory-snapshot",
+      "factory-epoch-cache",
+      "factory-config",
+      "factory-world-state",
+      "factory-avm",
+      "factory-archiver",
+      "factory-world-state-sync",
+      "factory-verifiers",
+      "factory-fee-provider",
+      "factory-p2p",
+      "factory-start",
+      "factory-return",
+      "public-rpc-bind",
+      "admin-auth",
+      "admin-rpc-bind"
+    ],
+    "markerProtocol": "Dedicated fixed-path atomic bounded stage JSON in the existing disposable node data mount, separate from arbitrary stdout/stderr; fixed phase ID and begin/complete only, latest value plus bounded history. Root finalizer validates no symlink, regular file, maximum size, strict keys and enum values. Begin immediately before operation, complete immediately after. No params, address, URL, return value, raw error, stack, cause or interpolated match. Existing exit/signal/OOM retain outcome. A begin without complete locates interval, not root cause. Plain marker-looking exception text cannot be evidence.",
+    "errorPolicy": "Optional fixed exact source-message-to-enum mapping for registry missing/genesis mismatch/config mismatch, without persisting any substring. Everything else remains unknown at latest phase. Never mark success because a token exists.",
+    "safety": "Diagnostics explicitly alter only module source by inserted side effects; record that fact and do not call this an unmodified-image run. No retries, replacement process, extra service, logging level increase, native stderr storage or secret-bearing output. Monotonic bounded output cannot qualify readiness; actual trusted-node inspector remains mandatory.",
+    "proposedRepositoryPaths": [
+      "deploy/prover/startup-stages.mjs",
+      "deploy/prover/startup-stages.test.mjs",
+      "deploy/prover/bootstrap.py",
+      "scripts/test-prover-bootstrap.py",
+      "deploy/prover/package.py",
+      "scripts/test-prover-package.py",
+      "deploy/prover/BOOTSTRAP.md"
+    ],
+    "acceptanceTests": [
+      "Hash mismatch, duplicated/missing anchor and wrong target URL fail before target module executes; unrelated imports byte-identical/default-loader behavior.",
+      "Synthetic async success/rejection/synchronous throw preserves value, thrown object, this and argument order; begin/complete reflect the real operation exactly; promise rejection not converted into success.",
+      "Dedicated stage record rejects wrong schema/unknown enum/symlink/nonregular/oversized input; arbitrary stdout/stderr including marker-looking exceptions, secret-like URLs/API keys and no-newline chunks cannot create a completed stage. Existing output sanitizer and bounded receipt remain intact.",
+      "Exact pinned compiled modules parse after insertion; reviewed diff consists only of marker statements/import, no altered conditions/arguments/awaits/cleanup.",
+      "Package complete-file closure contains helper; bootstrap uses immutable hash-bound read-only mount/preload and preserves existing unit, scope, admin capability, IP restrictions, timers, no restart and 16384-byte actual userdata bound.",
+      "Existing exceptional-child termination/reap tests and final receipt publication tests still pass; diagnostics do not change unknown-action retry rules.",
+      "No Linux readiness claim until one separately authorized genuine native AMD64 diagnostic and actual inspector/qualification succeed."
+    ]
+  },
+  "cleanupAndCost": {
+    "finalObservedAt": "2026-10-12T01:53:35.044547+00:00",
+    "instance": "i-02281bf3f22119f45",
+    "instanceState": "terminated",
+    "fleet": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+    "fleetState": "deleted",
+    "volumesAbsent": true,
+    "noFurtherDeletionRequired": true,
+    "finalReceiptSha256": "ed97166c35e4e5ee7d1bc01085b67bfe9635460f3d2e151406f9573e0e9e06b6",
+    "costRecommendationUsd": 15,
+    "recommendationNotLedgerMutation": true,
+    "historicalRecommendationFleetPendingSupersededByFinalCleanup": true,
+    "retainedCharges": "Both immutable runtime archives and receipt objects retained under 30-day bound; launch template retained; no compute or EBS volume remains. Lead owns budget reconciliation."
+  }
+}

@@ -1,0 +1,62 @@
+✔ control fixture restores original interval null (1.501458ms)
+✔ control fixture restores original interval 60 (0.196417ms)
+✔ control fixture rejects malformed interval undefined (0.568958ms)
+✔ control fixture rejects malformed interval NaN (0.106042ms)
+✔ control fixture rejects malformed interval 60 (0.10175ms)
+✔ control fixture rejects malformed interval -1 (0.093625ms)
+✔ control fixture rejects malformed interval 0 (0.100458ms)
+✔ control fixture rejects malformed interval 1.5 (0.084041ms)
+✔ control fixture rejects malformed interval Infinity (0.088334ms)
+✔ control fixture rejects an interval still enabled while paused (0.396709ms)
+▶ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining
+  ✔ automine=true, interval=null (15.28975ms)
+  ✖ automine=true, interval=60 (2.225209ms)
+  ✔ automine=false, interval=null (8.097834ms)
+  ✔ automine=false, interval=60 (8.7685ms)
+✖ actual pinned Anvil SDK pauses and restores disabled/enabled interval mining (133.359667ms)
+✔ control fixture persists intent before one same-height replacement and verifies restoration (0.440833ms)
+✔ control fixture refuses invalid boundary: changed-l1 (0.497208ms)
+✔ control fixture refuses invalid boundary: changed-l2 (0.128791ms)
+✔ control fixture refuses invalid boundary: finalized (0.068208ms)
+✔ control fixture refuses invalid boundary: empty-suffix (0.054959ms)
+✔ control fixture refuses invalid boundary: unpublished (0.0525ms)
+✔ control fixture refuses invalid boundary: pending-l1 (0.070334ms)
+✔ control fixture refuses active miner or exhausted admission before touching Anvil (0.135875ms)
+✔ failed durable intent prevents mutation; uncertain RPC is never replayed (0.252625ms)
+✔ SDK swallowed restore failure is independently rejected (0.262416ms)
+✔ control fixture requires actual replacement effect: height (0.180833ms)
+✔ control fixture requires actual replacement effect: hash (0.113667ms)
+✔ control fixture requires actual replacement effect: rollup (0.10225ms)
+✔ control fixture requires actual replacement effect: pending-l1 (0.118625ms)
+✔ original failure and final write failure retain successful restoration without another write (0.167667ms)
+✔ original, readback and final write failures are preserved together with no mutation retry (0.181709ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 29
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3500.129791
+
+✖ failing tests:
+
+test at scripts/testing/rolling-preference-reorg.test.mjs:51:78
+✖ automine=true, interval=60 (2.225209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 60
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:53:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/scripts/testing/rolling-preference-reorg.test.mjs:51:70)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 60,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

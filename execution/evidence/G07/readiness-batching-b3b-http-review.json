@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:50:49.129294+00:00",
+  "sourceRevision": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+  "verdict": "accepted-finite-fixture-http-measurement",
+  "evidence": {
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-1.json": "0d41016033a92bd7096ef8ff4d7c945954d64b4053dcf0155e81699dc2edcb06",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/actual-report-1.json": "1b9d0abeaa8096d2e69d36e3f85700dd8bb0c46e44851fbe9945aa1b04e47702",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-1.log": "0f64f5e0bb03210597127d8e73603dd6d9aa5ec2ab309e6e1062fda48edecf7e",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-plan-1.json": "1c1fb49559a271ad41a50bb8e29edac2f9e2edb93cf7717cacd4925d4232be82",
+    "rolling-design/execution/evidence/G07/readiness-batching/http/run-1.py": "b699f07abc5cdca139dc6dcd8c175a906990c29d683984bc7e4f7d7a5430577e"
+  },
+  "independentChecks": {
+    "dependencyPinsRehashed": 67,
+    "sourceAndFixturePinsRehashed": 23,
+    "originalAndCopiedDiagnosticEqual": true,
+    "sourceAssertionsInspected": "test-pxe-preference-page.mjs:942-960 asserts exact recovered revision/bookmark/remaining choices, one actual stored note/event, independently calculated domain-separated event digest equal recovered and note digests before readPassed; final DB cleanup before passed. Values not separately serialized in numeric receipt.",
+    "originalLinkReadback": "../aztec_experiments/node_modules",
+    "tapCounts": {
+      "tests": 11,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 9
+    },
+    "stepSequences": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "readerMsRecalculated": 7928
+  },
+  "measurement": {
+    "gatewayRequests": 365,
+    "baselineGatewayRequests": 475,
+    "maximumGatewayRequests": 400,
+    "readerMs": 7928,
+    "baselineReaderMs": 9798,
+    "maximumReaderMs": 8500,
+    "steps": 6,
+    "sdkCalls": 17,
+    "nativeRequestsAndAccepted": 4,
+    "bothTaggedDiscoveryCalls": 0,
+    "sdkNativeGatewayErrors": 0,
+    "sdkNativePending": 0
+  },
+  "actual": {
+    "exitCode": 0,
+    "elapsedMs": 12606,
+    "peakAggregateRssBytes": 933855232,
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "originalLinkRestored": true,
+    "tempDirectoriesAfterCleanup": [],
+    "sourceUnchanged": true,
+    "dependencyPinsUnchanged": true
+  },
+  "scope": [
+    "One diagnostic plus owning suite passed; nine intentional diagnostic-only skips. Full135 component acceptance is separate.",
+    "Production reader, HTTP gateway/native adapter and actual ACIR/crypto/coordinator on finite synthetic chain with extracted receiver, labelled identity/initial-sync seam and Node fake-indexeddb.",
+    "Both predeclared targets met in this single measurement; not latency percentile, full initial PXE synchronization, genuine17-block completion, large-history capacity or browser acceptance."
+  ],
+  "holds": [
+    "Normal build/provenance refresh before genuine candidate eligibility.",
+    "57c historical genuine failure remains failed; this does not retroactively establish its exact cause.",
+    "No paid execution or integration approval."
+  ]
+}

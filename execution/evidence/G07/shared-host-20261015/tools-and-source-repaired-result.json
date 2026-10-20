@@ -1,0 +1,8 @@
+{
+  "CommandId": "fa143cf9-f325-4bf0-8a92-34a0880d143c",
+  "InstanceId": "i-05977895ed0395a5a",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"controlsPassed\": true, \"deadline\": {\"createdAt\": \"2026-10-15T01:32:35Z\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"runtimeArchiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"manifestSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\"}, \"setupReceipt\": {\"sourceRevision\": \"b1fc992b6abdb94d030851376e51fefdd2f55957\", \"archiveSha256\": \"dd31fdd3fdff8e562268f638026f174926ae50335d8e14799f311f690077311d\", \"controlSha256\": \"acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090\", \"budgetStop\": \"2026-10-15T05:32:35Z\", \"commissioningStop\": \"2026-10-15T05:32:35Z\", \"jobsStarted\": 0}}\naws-cli/2.27.41 Python/3.13.4 Linux/7.0.0-1014-aws exe/x86_64.ubuntu.24\nnode.tar.xz: OK\nfoundry.tar.gz: OK\nv24.21.0\nforge Version: 1.4.1-v1.4.1\nCommit SHA: cf7746048646f2ecff48246dd61e265e49ab16f0\nBuild Timestamp: 2025-10-14T13:49:09.432023782Z (1760449749)\nBuild Profile: maxperf\nsource.tar.gz: OK\nTOOLS_AND_SOURCE_READY\n",
+  "StandardErrorContent": ""
+}

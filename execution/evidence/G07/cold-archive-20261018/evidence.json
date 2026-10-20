@@ -1,0 +1,69 @@
+{
+  "base": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+  "candidate": "bc6bfb6754882259ef24927316cbc97ced31442d",
+  "task_id": "G07-live-preference-refresh",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "candidate": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "task_id": "G07-live-preference-refresh",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent focused existing private-query historical tests and wallet-panel recovery failure browser case; exact commands in review.json",
+      "environment": "macOS pinned Node24; native SDK archive boundary and browser fixture",
+      "observed": "29 gateway and1 browser check pass, zero skipped; independent source review approves all four files",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-archive-20261018/review.json",
+          "sha256": "165288bbf90d115d572706648c39930dbfe74fd39fb765df891d11bd60a228aa"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+    "candidate": "bc6bfb6754882259ef24927316cbc97ced31442d",
+    "task_id": "G07-live-preference-refresh",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G07/cold-archive-20261018/review.json",
+        "sha256": "165288bbf90d115d572706648c39930dbfe74fd39fb765df891d11bd60a228aa"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "candidate": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "task_id": "G07-live-preference-refresh",
+      "id": "RC26-archived-private-recovery-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-archive-20261018/review.json",
+          "sha256": "165288bbf90d115d572706648c39930dbfe74fd39fb765df891d11bd60a228aa"
+        }
+      ]
+    },
+    {
+      "base": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e",
+      "candidate": "bc6bfb6754882259ef24927316cbc97ced31442d",
+      "task_id": "G07-live-preference-refresh",
+      "id": "RC08-safe-recovery-failure",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G07/cold-archive-20261018/review.json",
+          "sha256": "165288bbf90d115d572706648c39930dbfe74fd39fb765df891d11bd60a228aa"
+        }
+      ]
+    }
+  ]
+}

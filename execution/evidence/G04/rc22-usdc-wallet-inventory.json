@@ -1,0 +1,13 @@
+{
+  "source": "88bd745",
+  "scope": "Local genuine Circle inventory transfer, separate fresh RC22 user; no real funds",
+  "address": "0x9d93d213938bb564068532645b7ea2afdd60e22f",
+  "token": "0x2518ef138c6aef8a47225af32f3a9f9e0f26daa7",
+  "amount": "500000000",
+  "zeroEth": true,
+  "nonce": 0,
+  "transactionHash": "0xf05a6838146e3f1d4fe4b14a8128ff324c7b4c3da1f61e64cd36f43ebf3268af",
+  "blockNumber": 107,
+  "blockHash": "0x25fd85c2f4bffbade34d8e0234f5ad4bd2c14b669da32ce8511e7ce83f973695",
+  "runtimeSha256": "95a4b51a2a16040638c082aef2066587018b07f243f2f3935df28d05dae279ca"
+}

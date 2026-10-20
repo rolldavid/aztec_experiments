@@ -1,0 +1,29 @@
+✔ G07 inspection on empty journal or unsigned first attempt cannot grant before-submit permission (155.919167ms)
+✔ G07 strict recover reconciles canonical current candidate without requiring invalid predecessors (475.163042ms)
+✔ G07 strict recover detects predecessor reinclusion during validation (511.669625ms)
+✔ G07 strict recover rejects ciphertext changed during final context check (567.216792ms)
+✔ G07 strict reconcilePrevious reconciles canonical current candidate without requiring invalid predecessors (538.443542ms)
+✔ G07 strict reconcilePrevious detects predecessor reinclusion during validation (501.461334ms)
+✔ G07 strict reconcilePrevious rejects ciphertext changed during final context check (555.847958ms)
+✔ G07 strict recover detects account lock during last authenticated storage read (628.858584ms)
+✔ G07 strict reconcilePrevious detects account lock during last authenticated storage read (629.027125ms)
+✔ G07 first attempt recover refuses storage change during its context guard (114.667375ms)
+✔ G07 first attempt reconcilePrevious refuses storage change during its context guard (105.727708ms)
+✔ G07 first attempt recover validates account after the last authenticated read (198.154209ms)
+✔ G07 first attempt reconcilePrevious validates account after the last authenticated read (195.889542ms)
+✔ G07 explicitly bound recover resumes exact original bytes once (337.412833ms)
+✔ G07 explicitly bound reconcilePrevious resumes exact original bytes once (415.034625ms)
+✔ G07 bound resume snapshots mutable options before storage await and preserves callback failure (106.185208ms)
+✔ G07 exact saved replacement inspection and send enforce retained strict predecessor policy (643.054375ms)
+✔ G07 recover fresh app callback follows predecessor reads and precedes single send (700.66175ms)
+✔ G07 recover fresh app callback cannot bypass later ciphertext authentication (478.098584ms)
+✔ G07 reconcilePrevious fresh app callback follows predecessor reads and precedes single send (708.080208ms)
+✔ G07 reconcilePrevious fresh app callback cannot bypass later ciphertext authentication (469.557458ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9430.008416

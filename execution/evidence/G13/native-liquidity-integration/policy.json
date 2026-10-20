@@ -1,0 +1,74 @@
+{
+  "candidate": "3c27c4e577b23deec4461e50517b21b10aff45b7",
+  "base": "f4dfebe066dc64ebbae2700253232ec02f3f684b",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G04-G13-native-liquidity-wallet-component",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "apps/dist/sdk-manifest.json",
+    "apps/rolling/README.md",
+    "deploy/prover/bootstrap.py",
+    "docs/rolling-deployment.md",
+    "package-lock.json",
+    "package.json",
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/liquidity.mjs",
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "plugins/devnet/start.mjs",
+    "plugins/rolling-funding-relay.mjs",
+    "plugins/test/rolling-funding-relay.test.mjs",
+    "prover/rolling-artifacts.json",
+    "scripts/build-contracts.mjs",
+    "scripts/check-artifacts.mjs",
+    "scripts/run-bounded-browser-check.mjs",
+    "scripts/t04-metamask.mjs",
+    "scripts/t04-phantom.mjs",
+    "scripts/test-artifacts.mjs",
+    "scripts/test-t04-browser-journey.mjs",
+    "scripts/test-wallet-extension-browser.mjs"
+  ],
+  "required_checks": [
+    "normal-build-provenance",
+    "native-relay-controls",
+    "named-wallet-driver",
+    "native-startup-readiness"
+  ],
+  "requirements": [
+    "normal-build-provenance",
+    "native-relay-controls",
+    "named-wallet-driver",
+    "native-startup-readiness"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G04-G13-native-liquidity-wallet-component",
+      "paths": [
+        "apps/dist/sdk-manifest.json",
+        "apps/rolling/README.md",
+        "deploy/prover/bootstrap.py",
+        "docs/rolling-deployment.md",
+        "package-lock.json",
+        "package.json",
+        "plugins/devnet/bootstrap.mjs",
+        "plugins/devnet/liquidity.mjs",
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "plugins/devnet/start.mjs",
+        "plugins/rolling-funding-relay.mjs",
+        "plugins/test/rolling-funding-relay.test.mjs",
+        "prover/rolling-artifacts.json",
+        "scripts/build-contracts.mjs",
+        "scripts/check-artifacts.mjs",
+        "scripts/run-bounded-browser-check.mjs",
+        "scripts/t04-metamask.mjs",
+        "scripts/t04-phantom.mjs",
+        "scripts/test-artifacts.mjs",
+        "scripts/test-t04-browser-journey.mjs",
+        "scripts/test-wallet-extension-browser.mjs"
+      ]
+    }
+  ]
+}

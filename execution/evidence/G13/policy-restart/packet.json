@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-15T19:12:40.585306+00:00",
+  "source": "684e1c66ddfa485ccb50e0383da92c5f3f443289",
+  "base": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "status": "review-tests-incomplete",
+  "runtimeFailure": "Normal retained startup after authorized parent policy2 failed Rolling deployment state differs from manifest; shutdown clean with pending/proven962.",
+  "before": "Focused4 checks:3pass/1fail, reproducing bound deployment restart after valid policy update.",
+  "after": "Full60checks:59pass/1cancelled at original creationreorg test following repeated laptop clamshell/maintenance sleep; no complete-suite pass.",
+  "fix": "Preserve predicted constructor address and immutable config/class/moderator; require initialpolicy prebinding; permit canonical u32mainpolicy revisions on bound deployment. Version1 digest still exact.",
+  "next": "Independent source review, rerun only interrupted existing reorg check plus required affected UI/closure once host stays awake. Then gated integration; normal same-state startup without replay.",
+  "evidence": [
+    {
+      "path": "execution/evidence/G13/policy-restart/before.log",
+      "sha256": "ee2ed18829a08af0cb5442a5b9011ab87f2d75a152ef2e9cffe6362ab0a52518"
+    },
+    {
+      "path": "execution/evidence/G13/policy-restart/after.log",
+      "sha256": "959e024c1432d149d9a0c24bc45f43c30da4ba5afa17a996517d8c94d9f0cb7f"
+    }
+  ],
+  "notQualified": [
+    "Actual resumed native runtime",
+    "Live receiver privacy",
+    "Whole application acceptance"
+  ]
+}

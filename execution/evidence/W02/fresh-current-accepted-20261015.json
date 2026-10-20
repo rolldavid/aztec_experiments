@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-15T00:57:38.653370+00:00",
+  "sourceRevision": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "runtimeSha256": "ebcb57c33d618df6eea921f994872de44837c440e0bb2a2d374549933720c94b",
+  "environment": {
+    "application": "http://127.0.0.1:8181",
+    "nodePort": 18181,
+    "ethereumPort": 18547,
+    "nativeProofsEnabled": false,
+    "pxeProofsEnabled": false,
+    "browser": "Chrome for Testing155.0.8059.79",
+    "extension": "MetaMask13.49.0",
+    "identity": "Fresh unfunded development account; original U1/U2 and chain unchanged"
+  },
+  "status": "development-observable-behaviour-passed",
+  "checks": {
+    "realNaturalLockContention": {
+      "realLockObserved": true,
+      "secondRefused": true,
+      "afterRealReleaseSucceeded": true
+    },
+    "realMetaMaskBindings": {
+      "bothRealWalletsConnected": true,
+      "sameOriginalAccount": true,
+      "chain31337": true
+    },
+    "actualAccountChange": {
+      "bothInvalidated": true,
+      "oldContextReadRefused": true
+    },
+    "actualChainChange": {
+      "bothInvalidated": true,
+      "oldContextReadRefused": true
+    },
+    "restoration": {
+      "originalSelectionRestored": true,
+      "oldSessionsRemainInvalidated": true,
+      "journalUnchanged": true
+    },
+    "labelBoundPermissionSelection": [
+      {
+        "target": "Account 2",
+        "selected": true,
+        "other": false,
+        "summaryMatches": true
+      },
+      {
+        "target": "Account 1",
+        "selected": true,
+        "other": false,
+        "summaryMatches": true
+      }
+    ],
+    "actualProviderOnlySelection": {
+      "labelBoundSelection": true,
+      "bothActualAccountEvents": true,
+      "noPrivateInitialization": true
+    },
+    "accountEventsCapturedBothTabs": true,
+    "chainReadbackBothTabs": "0x1",
+    "chainCallbackCaptured": false,
+    "chainCallbackLimitation": "providerAfterChain contains events[]. Real MetaMask switch/readback0x1 and subsequent application invalidation/refused export were observed in both tabs. Callback delivery and timing were not captured.",
+    "oldApplicationReadRefused": "exportRecovery on invalidated context refused in both tabs after account and chain changes",
+    "encryptedWorkflowUnchanged": true,
+    "workflowDigest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "workflowTxHash": null,
+    "allOwnedProcessesAbsent": true
+  },
+  "timing": {
+    "invalidationCampaignMs": 59909,
+    "peakTreeRSSKiB": 3934976,
+    "deadlineMs": 120000,
+    "rssLimitKiB": 4194304
+  },
+  "traffic": {
+    "walletAssets": 64,
+    "privateRequests": 513,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 0,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 20,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "privacyScope": "Browser first-hop observations only. Gateway operator can inspect received HTTP method/body/headers; underlying-node forwarding is not observed by this browser check. No blanket privacy conclusion.",
+  "notQualified": [
+    "Real-proof testnet wallet behaviour",
+    "External privacy audit,14-day soak,network clearance",
+    "Underlying gateway-to-node request traces",
+    "Timing or capture of actual chainChanged callback"
+  ],
+  "preservedNonpasses": "See fresh-current-partial-20261015.json; ordinal permission-selection failures and provider-only discriminator additionally retained. No assertions or product gates weakened. No completed lock campaign or financial operation replayed.",
+  "repair": "Existing T04 Unlock ordering, pinned browser environment, existing permission helper, and installed labelled account checkbox selection; no production source change. Actual permission receipt and accountsChanged prove the selected origin account.",
+  "backup": {
+    "path": ".build/w02-fresh/wallet/initial-recovery.json",
+    "sha256": "9f54ec32f4031213bf5968b5209546ca99a8d899ead207cab5471ce53d521355",
+    "mode": "0600",
+    "encrypted": true
+  },
+  "privateControlReference": ".build/w02-fresh/control.json",
+  "evidence": [
+    {
+      "path": ".build/w02-fresh/accepted-run.mjs",
+      "sha256": "f25079f3d62eec191184d4a075e6a3c83232d69a7659e07902a2f9744d5abcff",
+      "bytes": 31227
+    },
+    {
+      "path": ".build/w02-fresh/accepted-supervise.mjs",
+      "sha256": "38d4152727bf43dcaec851af3c6c29b2e2b1e1904c8f4ec5b19f3a4802d3b20d",
+      "bytes": 1550
+    },
+    {
+      "path": ".build/w02-fresh/invalidation-result.json",
+      "sha256": "dc99a7e54ae0635865d1b69be0bc3972c96de28ce94da3e1fa4afcbf0b4f19b8",
+      "bytes": 90629
+    },
+    {
+      "path": ".build/w02-fresh/invalidation-supervisor.json",
+      "sha256": "8801a03df2e9f4fda02e4be0ede57d76e4affd782738f70631cbc611d699e90b",
+      "bytes": 116668
+    },
+    {
+      "path": ".build/w02-fresh/invalidation-run.log",
+      "sha256": "a23f373747fae941bc7780bb0259ad98e34115a815740f08ccdb03be96f343ed",
+      "bytes": 54460
+    },
+    {
+      "path": ".build/w02-fresh/permission-result.json",
+      "sha256": "683c132200814d884fdb5c179aba69d033498ce1d063794ac42a9b22e0ea763c",
+      "bytes": 13764
+    },
+    {
+      "path": ".build/w02-fresh/permission-supervisor.json",
+      "sha256": "b7b93240829c62a5969e2e8c977051ae03748785c3c10d6a50d7d96932092b37",
+      "bytes": 19664
+    },
+    {
+      "path": ".build/w02-fresh/result.json",
+      "sha256": "a964e9dc4d67112b67efcfacb7ed40270cfe242314fc4fe0361b344e2c7760cf",
+      "bytes": 56869
+    },
+    {
+      "path": ".build/w02-fresh/supervisor.json",
+      "sha256": "e2bd6d34a03d7351948fcdbbdb5dda8bc210da5defec3b6e4adee76d6854f2b2",
+      "bytes": 78036
+    },
+    {
+      "path": ".build/w02-fresh/account-result.json",
+      "sha256": "1d0b9f1a4e48bc6dbd5576092cb857027a2a3770f62f0a1685b7e582647b1a75",
+      "bytes": 47087
+    },
+    {
+      "path": ".build/w02-fresh/account-second-result.json",
+      "sha256": "0d1ab7fcd07a7d65fd812c739b882c644d1ffe324cba3541f819fc787f4fdecd",
+      "bytes": 57365
+    },
+    {
+      "path": ".build/w02-fresh/account-third-result.json",
+      "sha256": "87c817ca0cfa5528cb133f31f58e4cfa908adf7dadca4291ac75df17e0b1097f",
+      "bytes": 57170
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-result.json",
+      "sha256": "48a3ccb98c8fc18a85742cb3988b8d508ce00626951f65b69a835d8cfb2a95df",
+      "bytes": 6173
+    },
+    {
+      "path": ".build/w02-fresh/setup-network-supervisor.json",
+      "sha256": "854002d0f642824e01a8f5ecddbfd6390011956f22882c037dc500744530437d",
+      "bytes": 10724
+    },
+    {
+      "path": ".build/w02-fresh/setup-supervisor.json",
+      "sha256": "f763898217a24b74249b2a487c6498cd537ac9b6f06f36acfdeeac56de742031",
+      "bytes": 4043
+    },
+    {
+      "path": ".build/w02-fresh/setup-run.log",
+      "sha256": "e3677d33284e1f77510bb64c764fd85dbdb65280d14a6a63dfb66244bbc29996",
+      "bytes": 353
+    }
+  ],
+  "nextAction": "Lead integration/evidence review; fresh account remains unfunded, no collateral/name/avatar or transaction. Further avatar local funding requires exact bounded procedure and existing once-only journals."
+}

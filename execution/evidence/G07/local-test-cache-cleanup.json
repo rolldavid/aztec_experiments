@@ -1,0 +1,15 @@
+{
+  "originalUnchanged": true,
+  "ownedRegenerableTestCachesRemoved": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/g07-shared-host/local-public-index-baseline-1572",
+      "files": 1,
+      "logicalBytes": 135168
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/g07-shared-host/local-public-index-reused-baseline-1572",
+      "files": 1,
+      "logicalBytes": 154861568
+    }
+  ]
+}

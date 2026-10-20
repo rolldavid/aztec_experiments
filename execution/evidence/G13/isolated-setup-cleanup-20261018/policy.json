@@ -1,0 +1,31 @@
+{
+  "base": "8c70150df47758a79a2091fb3de6a3bbc88938e1",
+  "candidate": "8311046667fedbd3a6d28500c63ede3a31a76d5e",
+  "task_id": "G13-isolated-setup-cleanup",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-20261018",
+  "allowed_paths": [
+    "plugins/isolated-execution.mjs",
+    "plugins/test/isolated-execution.test.mjs"
+  ],
+  "required_checks": [
+    "focused",
+    "actual-isolated"
+  ],
+  "requirements": [
+    "RC29-execution-availability",
+    "RC30-owned-cleanup",
+    "RC41-failure-recovery"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-20261018",
+      "task_id": "G13-isolated-setup-cleanup",
+      "paths": [
+        "plugins/isolated-execution.mjs",
+        "plugins/test/isolated-execution.test.mjs"
+      ]
+    }
+  ]
+}

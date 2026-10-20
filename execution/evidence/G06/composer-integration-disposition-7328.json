@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-10-12T01:36:12.278078+00:00",
+  "candidate": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "integration": "codex/rolling-chat-draft3",
+  "outcome": "bounded development integrated",
+  "review": "evidence/G06/composer-7328-integration-review.json",
+  "gate": "evidence/G06/integration-7328-result.json",
+  "coverage": [
+    "Production browser encrypted import/recovery using genuine funded accounts and realprivatechainnames",
+    "Only own names plus Anonymous",
+    "992byte actualapplicationprepare then cancellation",
+    "996byte pre-spendrejection",
+    "Literalmarkup preview and account-switch state isolation"
+  ],
+  "remaining": [
+    "Browser transaction publication and extensionfunding",
+    "Seed/device reconstruction beyond controlledencryptedbackup",
+    "Social/reaction fullwire campaigns",
+    "Deployedprivacy topology and independent specialist release review"
+  ],
+  "priorEvidenceDisposition": {
+    "evidence/G06/privacy-observer-59c75-addendum.md": "Opening pendingreview predates completed G05/owned-wire-e3-runtime-review.json and combined-e3-integration-review.json; preserved historicalfile ratherthan rewriting hash-bound evidence."
+  }
+}

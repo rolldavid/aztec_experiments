@@ -1,0 +1,18 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_ONE_SEPARATELY_GRANTED_FOCUSED_EXISTING_CRASH_TEST",
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "packetSha256": "354257eb57f8a1c146da9db08141f52fcd50bda85257b687da661d017d37db9a",
+  "runnerSha256": "0d8d48ac420e14715821dad1911542ddae9ab264a936fa86fdb0432442888b67",
+  "planSha256": "d36d59618b5e8db79ce58551e2c7680f0cca05801f76dba4f92e34481a2169f9",
+  "findings": [
+    "Only test file changes: byte-identical crash template written exclusive0600 in existing owned temporary fixture; module file entry replaces eval-only flags. Child timeout/status/rollback preserved and child.error===undefined added.",
+    "No logger, SDK, worker, production store or measurement override. Corrected main-thread-only CJS preload and safe observer bytes unchanged.",
+    "Existing supervisor15s/512MiB, original child10s, qualified owned dependency copy, exact one selected test with29excluded, strict3 kernel receipts and positive cleanup/link restoration retained.",
+    "All556 source/helper and2402 dependency pins independently rehashed."
+  ],
+  "holds": [
+    "All three actual crash cases must pass before separately reviewed full volume.",
+    "Historical58207 failure preserved; no timing or capacity acceptance from source eligibility."
+  ]
+}

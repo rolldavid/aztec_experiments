@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "writtenAt": "2026-10-13T05:18:02.188885+00:00",
+  "candidate": "03c4db3015d67381474b928edd8eed8370491e83",
+  "actualPacketSha256": "1b66554ae87ddbaedc7e960b14a75992c50858789209d835b97578c0902ed5ee",
+  "verdict": "FAILED_RETAINED_NO_RETRY_OR_REORG_ACCEPTANCE",
+  "actual": {
+    "session": 21663,
+    "elapsedMs": 343609,
+    "peakTreeRSSKiB": 1984160,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "exitCode": 1,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "launcherAbsent": true,
+    "bindingCount": 3164,
+    "currentBindingsMatched": 3156,
+    "historicalGitBindingsMatched": 8,
+    "subsequentApprovedDiagnosticPaths": [
+      "apps/rolling/wallet-panel.browser.test.mjs",
+      "apps/rolling/wallet-panel.mjs",
+      "apps/rolling/wallet-session.mjs",
+      "apps/rolling/wallet-session.test.mjs",
+      "scripts/testing/rolling-preference-browser.mjs",
+      "scripts/testing/rolling-preference-browser.test.mjs",
+      "shared/rolling/deployment.mjs",
+      "shared/rolling/deployment.test.mjs"
+    ]
+  },
+  "evidence": {
+    "execution/evidence/G07/application-9b537e5b-bb4d-4d77-94ea-311e76815739.json": "09ac021a436cf9177fb7cf8519f9237b6916b92b13e51d2649a16687ea0d1b87",
+    "execution/evidence/G06/application-port-dbe533d6-ee04-4a0f-b11c-174f98dd3574/observation.json": "8a87943b2928bde76b4a33c39c8e4c634125c92f95f0f16f3108c32067d34ed9",
+    "execution/evidence/G07/genuine-reorg-03c/run.log": "d0320a45742ef87de6d459f99a29e407151dc9530d5f83ee2d834aed7e5fc4bb",
+    "execution/evidence/G07/genuine-reorg-03c/execution-intent.json": "74f2a15724b14aede9616776f516e3203e14e0cf42180049ead64d889aaab17c",
+    "execution/evidence/G07/genuine-reorg-03c/approved-launch.json": "3242f2cfd9244b279854eadff44a26c7a729b6c08614533d505b8a0c23f45bac",
+    "execution/evidence/G07/genuine-reorg-03c/before-bindings.json": "17f0f77cee3d25506f19c677e18024a72f85b93b7f53447719db572bf4bde9b2"
+  },
+  "observations": [
+    "Nineteen bootstrap read returns counted; saved prior progress nextBlock18 at anchor17 and17 accepted compact fetches, zero compact failure/pending. The bootstrap phase itself is failed.",
+    "Saved row.compact tags are0; failure snapshot global transport privateTags9/publicTags1. No caller identity or exact failed assertion is retained.",
+    "Overlap admitted one root proof, entered its pre-submit hook, then poisoned and drained. forwarded0, rejected0, scanPending/writePendingfalse, native.pending0. Root transaction remains outcome unknown in the journal report, not a confirmed transaction or successful fee acceptance.",
+    "No actual fork or suffix/replacement phase reached; no final service counters or fee conservation acceptance. Standalone funding and claim setup are separately retained actuals.",
+    "Real-wall readiness consumed104204ms; root action began290804ms. Failure occurred before540s deadline; timing is not the immediate reason."
+  ],
+  "sourceDiagnosis": {
+    "measurementBoundary": "fixture354 coldSnapshot reads shared native RPC forwarded tag counters; actorA and coldActor use the same branded client/node and service endpoint at603\u2013618 and837\u2013843.",
+    "assertions": "cold helper checks zero per-step tag deltas at174 and final total at205. Both are global transport checks during deliberately concurrent work.",
+    "sourceBackedDefect": "Global counters cannot establish which actor caused a tagged request. Existing overlap acceptance was authored without a discriminating transport boundary; passing component doubles did not exercise concurrent real tag calls.",
+    "uncertainty": "No proof all9+1 came from writer, nor proof cold reader leaked. Final step uses original fixed utility; utility can expose source-specific behavior absent labelled fixtures. Exact thrown helper check is sanitized and not retained. Do not relabel historical failure as false positive.",
+    "wrapperFailure": "fixture109 throws retained AggregateError; fixture870 is owner wrapper, not originating SDK or network cause."
+  },
+  "minimumNextWork": [
+    "Keep global request/tag totals unchanged and reported; do not subtract guessed writer counts, ignore tagged methods, or remove privacy checks.",
+    "Choose source-reviewed actor-attributed cold transport observation that captures every outbound cold node request and compact call without adding account selectors to requests; preserve original branded client/SDK routing, original remote proof service, same global proof/send constraints and lease ownership. A dedicated fixture-owned cold query/native channel using existing factories is one possible seam; verify lifecycle and service readiness traffic before claiming isolation.",
+    "Before another full journey, add bounded concurrent controls showing writer tag calls are retained globally but correctly attributed, any cold private/public tag call fails, duplicates/batches cannot bypass counting, and pending/cancel/error requests remain owned. If selecting serialization instead, measure budget feasibility without raising deadlines.",
+    "Retain exact-byte single-use send fence, poison before drain, original error aggregation, no late forward and no retries.",
+    "Require independent source/runner review and separately authorized changed investigation; initial and initialized-marker genuine criteria remain mandatory."
+  ],
+  "qualificationLimits": [
+    "No cold bootstrap/head result accepted: phasefailed before fixed expected empty-head assertions completed.",
+    "No real reorg, full G07, browser, release or compiler-diagnostic clearance.",
+    "No execution performed by reviewer."
+  ]
+}

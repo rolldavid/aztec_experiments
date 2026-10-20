@@ -1,0 +1,31 @@
+{
+  "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+  "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "task_id": "G12-persistent-hosting",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "deploy/prover/BOOTSTRAP.md",
+    "scripts/test-prover-bootstrap.py"
+  ],
+  "required_checks": [
+    "persistent-controls-focused"
+  ],
+  "requirements": [
+    "owner-20261020-persistent-hosting",
+    "RC-operational-containment"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G12-persistent-hosting",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md",
+        "scripts/test-prover-bootstrap.py"
+      ]
+    }
+  ]
+}

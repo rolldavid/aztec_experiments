@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "readOnly": true,
+  "signatures": 0,
+  "sends": 0,
+  "strictTransport": true,
+  "trace": [
+    {
+      "stage": "head",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 44
+    },
+    {
+      "stage": "head",
+      "method": "eth_getBlockByNumber",
+      "status": 200,
+      "bodyBytes": 11900
+    },
+    {
+      "stage": "chain",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 44
+    },
+    {
+      "stage": "code-factory",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 44
+    },
+    {
+      "stage": "code-factory",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 49108
+    },
+    {
+      "stage": "code-positions",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 44
+    },
+    {
+      "stage": "code-positions",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 48806
+    },
+    {
+      "stage": "code-fee",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 44
+    },
+    {
+      "stage": "code-fee",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 5544
+    },
+    {
+      "stage": "code-usdc",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "code-usdc",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 3635
+    },
+    {
+      "stage": "code-weth",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "code-weth",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 6287
+    },
+    {
+      "stage": "circle-implementation",
+      "method": "eth_call",
+      "status": 200,
+      "bodyBytes": 103
+    },
+    {
+      "stage": "circle-implementation",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "circle-implementation-code",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "circle-implementation-code",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 46967
+    },
+    {
+      "stage": "circle-decimals",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "circle-decimals",
+      "method": "eth_call",
+      "status": 200,
+      "bodyBytes": 103
+    },
+    {
+      "stage": "owner-code",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "owner-code",
+      "method": "eth_getCode",
+      "status": 200,
+      "bodyBytes": 39
+    },
+    {
+      "stage": "tick-spacing",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "tick-spacing",
+      "method": "eth_call",
+      "status": 200,
+      "bodyBytes": 103
+    },
+    {
+      "stage": "deadline-fees-nonce",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "deadline-fees-nonce",
+      "method": "eth_getTransactionCount",
+      "status": 200,
+      "bodyBytes": 40
+    },
+    {
+      "stage": "owner-balance",
+      "method": "eth_getBalance",
+      "status": 200,
+      "bodyBytes": 51
+    },
+    {
+      "stage": "owner-balance",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "inventory-balance",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "inventory-balance",
+      "method": "eth_getBalance",
+      "status": 200,
+      "bodyBytes": 51
+    },
+    {
+      "stage": "inventory-usdc",
+      "method": "eth_call",
+      "status": 200,
+      "bodyBytes": 103
+    },
+    {
+      "stage": "inventory-usdc",
+      "method": "eth_chainId",
+      "status": 200,
+      "bodyBytes": 45
+    },
+    {
+      "stage": "exact-call",
+      "method": "eth_call",
+      "status": 200,
+      "bodyBytes": 103
+    },
+    {
+      "stage": "exact-call",
+      "method": "eth_chainId",
+      "status": 429,
+      "bodyBytes": 81,
+      "rpcCode": -32005
+    }
+  ],
+  "anchor": {
+    "number": 11912086,
+    "hash": "0x9f665d4c1a6d8d58f89461241bb8ddb489da2a2166b54cee1a7a5c1c30c12e11"
+  },
+  "passed": false,
+  "failure": {
+    "stage": "exact-call",
+    "errorCode": "unknown",
+    "fixedStrictTransportError": true
+  },
+  "elapsedMs": 653
+}

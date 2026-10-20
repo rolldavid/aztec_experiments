@@ -1,0 +1,20 @@
+✔ portal V1 preserves domain padding, word order and commitment position (0.677417ms)
+✔ exit destination, amount, nonce and domain each change the bound bytes (0.932584ms)
+✔ reject ambiguous portal domains, arity and out-of-field values (0.765916ms)
+✔ fenced liabilities remain conserved and exact flags are required (0.26875ms)
+✔ diagnostics retain only fixed categories and source coordinates (0.47875ms)
+✔ unknown diagnostic messages and unresolved locations never become evidence text (0.09925ms)
+✔ authorization binds every network, authority, relationship and content input (133.255166ms)
+✔ 992-byte UTF-8 boundary is preserved exactly without truncation or surrogate replacement (0.700292ms)
+✔ reject ambiguous fields, missing target domains and inconsistent relationships before spending (0.181625ms)
+✔ case and ASCII whitespace collisions have identical framed preimages (1.120333ms)
+✔ unsupported characters, reserved bot handles and malformed boundaries are rejected before spending (0.333084ms)
+✔ 32-byte boundary has unambiguous fixed width encoding without truncation (0.528791ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.841416

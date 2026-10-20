@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scope": "Byte-only installed integrity-locked source comparison; no imported SDK, proof, or network qualification",
+  "npmCiExitCode": 0,
+  "rows": {
+    "constants": {
+      "installedSha256": "957e8534dc1f4aa04949274bb936fa6a7d357d00479c3e229c01fc20f2a52919",
+      "priorReadOnlySourceSha256": "957e8534dc1f4aa04949274bb936fa6a7d357d00479c3e229c01fc20f2a52919",
+      "identical": true
+    },
+    "protocol": {
+      "installedSha256": "9214e2fbc3dc27f331a6c63d70bec1dd0b74546de15e146a59bf7b82b62236df",
+      "priorReadOnlySourceSha256": "9214e2fbc3dc27f331a6c63d70bec1dd0b74546de15e146a59bf7b82b62236df",
+      "identical": true
+    },
+    "vk": {
+      "installedSha256": "c0a0ccb6ff8a59181e64d774abf37cd647ae367ab8b1ea63baa2f5907e2cd3a6",
+      "priorReadOnlySourceSha256": "c0a0ccb6ff8a59181e64d774abf37cd647ae367ab8b1ea63baa2f5907e2cd3a6",
+      "identical": true
+    }
+  }
+}

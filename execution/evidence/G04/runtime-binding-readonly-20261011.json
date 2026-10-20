@@ -1,0 +1,938 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-11T21:36:26.137Z",
+  "scope": "Read-only eth_getCode/eth_getBlockByNumber; no mint eth_call or transaction",
+  "block": {
+    "number": "11894374",
+    "hash": "0xf172243c72ec69fba56c5f35d0739b47abbea8ee27af76ba750ccaf74267dbac",
+    "timestamp": "1791753684"
+  },
+  "contracts": [
+    {
+      "name": "FeeAssetHandler",
+      "address": "0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9",
+      "code": "0x608060405234801561000f575f5ffd5b506004361061007a575f3560e01c80638da5cb5b116100585780638da5cb5b146100b7578063b7e9fb2b146100db578063c7cd997f14610102578063f2fde38b14610115575f5ffd5b80635a2bcc181461007e5780636a6278421461009a578063715018a6146100af575b5f5ffd5b61008760015481565b6040519081526020015b60405180910390f35b6100ad6100a83660046102c1565b610128565b005b6100ad6101ae565b5f546001600160a01b03165b6040516001600160a01b039091168152602001610091565b6100c37f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c1881565b6100ad6101103660046102ee565b6101c1565b6100ad6101233660046102c1565b610204565b6001546040516340c10f1960e01b81526001600160a01b03838116600483015260248201929092527f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18909116906340c10f19906044015f604051808303815f87803b158015610195575f5ffd5b505af11580156101a7573d5f5f3e3d5ffd5b5050505050565b6101b6610246565b6101bf5f610272565b565b6101c9610246565b60018190556040518181527fd16cfa409e224ac1de77fe821c9359c8e16c1e008b50fb692809b3a154182e7f9060200160405180910390a150565b61020c610246565b6001600160a01b03811661023a57604051631e4fbdf760e01b81525f60048201526024015b60405180910390fd5b61024381610272565b50565b5f546001600160a01b031633146101bf5760405163118cdaa760e01b8152336004820152602401610231565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f602082840312156102d1575f5ffd5b81356001600160a01b03811681146102e7575f5ffd5b9392505050565b5f602082840312156102fe575f5ffd5b503591905056fea264697066735822122063a9fcfda1e725b6248db7cd467bf7e1030a777f561744172d82c31cfa1b648964736f6c634300081b0033",
+      "runtimeBytes": 827,
+      "runtimeKeccak256": "0xcace448da3c5061f03c1e6cdf8b49ecb6aa8b00046870f03d1289308dcd076bb",
+      "unchangedSincePriorAnchor": true,
+      "cbor": "a264697066735822122063a9fcfda1e725b6248db7cd467bf7e1030a777f561744172d82c31cfa1b648964736f6c634300081b",
+      "compilerVersion": "0.8.27",
+      "installedCompiler": "0.8.30+commit.73712a01",
+      "installedSettings": {
+        "remappings": [
+          "@aztec-blob-lib/=src/mock/libraries/",
+          "@aztec/=src/",
+          "@generated/=generated/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "@oz/=lib/openzeppelin-contracts/contracts/",
+          "@test/=test/",
+          "@zkpassport-test/=lib/circuits/src/solidity/test/",
+          "@zkpassport/=lib/circuits/src/solidity/src/",
+          "circuits/=lib/circuits/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+        ],
+        "optimizer": {
+          "enabled": true,
+          "runs": 100
+        },
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "compilationTarget": {
+          "src/mock/FeeAssetHandler.sol": "FeeAssetHandler"
+        },
+        "evmVersion": "prague",
+        "libraries": {}
+      },
+      "metadataCid": "QmV3hQjmYrwQwFWFscLTzUHGxpEdQVm6D3S5JGcUGG1dkk",
+      "publisherVerifiedRecord": {
+        "url": "https://sepolia.etherscan.io/address/0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9#code",
+        "exactMatchLabelPresent": true,
+        "htmlSha256": "e6fec7c2f560d4474d1abeac50fcf8ca0f1ea26c98666785fc3f3a0eb5aca794",
+        "sourceInputSha256": "e788167be83c1d6d5185f4e5b33747fb7481dddd37e63981c4c116f5374bee7f",
+        "publishedRuntimeExactlyEqualsAnchoredChain": true,
+        "compiler": "0.8.27+commit.40a35a09",
+        "settings": {
+          "remappings": [
+            "@oz/=lib/openzeppelin-contracts/contracts/",
+            "@aztec/=src/",
+            "@test/=test/",
+            "@zkpassport/=lib/circuits/src/solidity/src/",
+            "@zkpassport-test/=lib/circuits/src/solidity/test/",
+            "@aztec-blob-lib/=src/mock/libraries/",
+            "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+            "circuits/=lib/circuits/src/",
+            "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+            "forge-std/=lib/forge-std/src/",
+            "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+            "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+          ],
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "useLiteralContent": false,
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "devdoc",
+                "userdoc",
+                "metadata",
+                "abi"
+              ]
+            }
+          },
+          "evmVersion": "prague",
+          "viaIR": false
+        },
+        "sourceHashes": {
+          "src/mock/FeeAssetHandler.sol": "64b7a246aca9a4806f409f5c29503f34d3b2ee6619b395800e8a846c420e66c0",
+          "src/shared/interfaces/IMintableERC20.sol": "31a33ccb5b9638262ec8a8ab2c63b0cda88a65a49bf9f7493c41341daa823ee3",
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+          "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a",
+          "lib/openzeppelin-contracts/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6"
+        },
+        "verificationKind": "exact-match"
+      },
+      "structure": {
+        "liveBodyBytes": 774,
+        "installedBodyBytes": 772,
+        "liveInstructions": 448,
+        "installedInstructions": 446,
+        "opcodeOnlySequenceEqual": false,
+        "liveDelegateCallCount": 0,
+        "liveCallCount": 1,
+        "livePush4SelectorsOrConstants": [
+          {
+            "pc": 31,
+            "hex": "8da5cb5b"
+          },
+          {
+            "pc": 42,
+            "hex": "8da5cb5b"
+          },
+          {
+            "pc": 53,
+            "hex": "b7e9fb2b"
+          },
+          {
+            "pc": 64,
+            "hex": "c7cd997f"
+          },
+          {
+            "pc": 75,
+            "hex": "f2fde38b"
+          },
+          {
+            "pc": 90,
+            "hex": "5a2bcc18"
+          },
+          {
+            "pc": 101,
+            "hex": "6a627842"
+          },
+          {
+            "pc": 112,
+            "hex": "715018a6"
+          },
+          {
+            "pc": 303,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 374,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 542,
+            "hex": "1e4fbdf7"
+          },
+          {
+            "pc": 603,
+            "hex": "118cdaa7"
+          }
+        ],
+        "livePush32Words": [
+          {
+            "pc": 223,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          },
+          {
+            "pc": 337,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          },
+          {
+            "pc": 469,
+            "hex": "d16cfa409e224ac1de77fe821c9359c8e16c1e008b50fb692809b3a154182e7f"
+          },
+          {
+            "pc": 666,
+            "hex": "8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+          }
+        ],
+        "warning": "Push32 words are disassembly observations, not compiler-provided immutable references. No old immutable offsets applied."
+      },
+      "installedArtifactSha256": "1b3932f2e3ae777ea63213f0291112a18967fbc343257fbc69b75ccc74c66e8d"
+    },
+    {
+      "name": "CoinIssuer",
+      "address": "0xe05d0a62045b4237556c1ec423e59eea9a24eaee",
+      "code": "0x608060405234801561000f575f5ffd5b50600436106100a6575f3560e01c806372c908bc1161006e57806372c908bc1461012a57806378acc00a146101515780638da5cb5b1461015a57806399f19cea1461016a578063e84721cb14610172578063f2fde38b14610199575f5ffd5b806319308f68146100aa57806338a5e016146100c657806340c10f19146100d05780634800d97f146100e3578063715018a614610122575b5f5ffd5b6100b360015481565b6040519081526020015b60405180910390f35b6100ce6101ac565b005b6100ce6100de36600461055e565b610224565b61010a7f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c1881565b6040516001600160a01b0390911681526020016100bd565b6100ce6102fa565b6100b37f00000000000000000000000000000000000000000000000002c68af0bb14000081565b6100b360025481565b5f546001600160a01b031661010a565b6100b361030d565b6100b37f00000000000000000000000000000000000000000000000000000000693f66c081565b6100ce6101a7366004610586565b610338565b6101b4610375565b7f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c186001600160a01b03166379ba50976040518163ffffffff1660e01b81526004015f604051808303815f87803b15801561020c575f5ffd5b505af115801561021e573d5f5f3e3d5ffd5b50505050565b61022c610375565b6102346103a1565b6002548082818111156102685760405163a1cc879960e01b8152600481019290925260248201526044015b60405180910390fd5b50610275905082826105ba565b6002556040516340c10f1960e01b81526001600160a01b038481166004830152602482018490527f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c1816906340c10f19906044015f604051808303815f87803b1580156102df575f5ffd5b505af11580156102f1573d5f5f3e3d5ffd5b50505050505050565b610302610375565b61030b5f610400565b565b5f5f61031761044f565b9050806001541061032a57505060025490565b61033261048e565b91505090565b610340610375565b6001600160a01b03811661036957604051631e4fbdf760e01b81525f600482015260240161025f565b61037281610400565b50565b5f546001600160a01b0316331461030b5760405163118cdaa760e01b815233600482015260240161025f565b5f6103aa61044f565b90508060015410156103725760018190556103c361048e565b600281905560405190815281907ffb91318ed7011180131879440182ebbbabf3d0ccf88ccaab0a75cc28aa00c2179060200160405180910390a250565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f6301e1338061047f7f00000000000000000000000000000000000000000000000000000000693f66c0426105ba565b61048991906105d3565b905090565b5f670de0b6b3a76400007f00000000000000000000000000000000000000000000000002c68af0bb1400007f000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c186001600160a01b03166318160ddd6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610515573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061053991906105f2565b61047f9190610609565b80356001600160a01b0381168114610559575f5ffd5b919050565b5f5f6040838503121561056f575f5ffd5b61057883610543565b946020939093013593505050565b5f60208284031215610596575f5ffd5b61059f82610543565b9392505050565b634e487b7160e01b5f52601160045260245ffd5b818103818111156105cd576105cd6105a6565b92915050565b5f826105ed57634e487b7160e01b5f52601260045260245ffd5b500490565b5f60208284031215610602575f5ffd5b5051919050565b80820281158282048414176105cd576105cd6105a656fea26469706673582212205581e94e045218ff577b07901ca3039e83126cce2f1345101d499e928244992f64736f6c634300081b0033",
+      "runtimeBytes": 1622,
+      "runtimeKeccak256": "0xb05eee1fe7e0a9e396bcc321dee2f79d1a25078cced29bce50dde2e1c2a6b675",
+      "unchangedSincePriorAnchor": true,
+      "cbor": "a26469706673582212205581e94e045218ff577b07901ca3039e83126cce2f1345101d499e928244992f64736f6c634300081b",
+      "compilerVersion": "0.8.27",
+      "installedCompiler": "0.8.30+commit.73712a01",
+      "installedSettings": {
+        "remappings": [
+          "@aztec-blob-lib/=src/mock/libraries/",
+          "@aztec/=src/",
+          "@generated/=generated/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "@oz/=lib/openzeppelin-contracts/contracts/",
+          "@test/=test/",
+          "@zkpassport-test/=lib/circuits/src/solidity/test/",
+          "@zkpassport/=lib/circuits/src/solidity/src/",
+          "circuits/=lib/circuits/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+        ],
+        "optimizer": {
+          "enabled": true,
+          "runs": 100
+        },
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "compilationTarget": {
+          "src/governance/CoinIssuer.sol": "CoinIssuer"
+        },
+        "evmVersion": "prague",
+        "libraries": {}
+      },
+      "metadataCid": "QmU6SFvWGonEjnoid8K3xz57L9wzZRSsV1Cu1cME81KvKx",
+      "publisherVerifiedRecord": {
+        "url": "https://sepolia.etherscan.io/address/0xe05d0a62045b4237556c1ec423e59eea9a24eaee#code",
+        "exactMatchLabelPresent": true,
+        "htmlSha256": "ab34549575c88fd736e156ba4a5a997c9df09e72b50ffdce343511918d1c3f0e",
+        "sourceInputSha256": "583a0b37540cbea8e8bdd989be2ac19296a1f2682739fcd48948dc29da65cd95",
+        "publishedRuntimeExactlyEqualsAnchoredChain": true,
+        "compiler": "0.8.27+commit.40a35a09",
+        "settings": {
+          "remappings": [
+            "@oz/=lib/openzeppelin-contracts/contracts/",
+            "@aztec/=src/",
+            "@test/=test/",
+            "@zkpassport/=lib/circuits/src/solidity/src/",
+            "@zkpassport-test/=lib/circuits/src/solidity/test/",
+            "@aztec-blob-lib/=src/mock/libraries/",
+            "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+            "circuits/=lib/circuits/src/",
+            "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+            "forge-std/=lib/forge-std/src/",
+            "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+            "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+          ],
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "useLiteralContent": false,
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "devdoc",
+                "userdoc",
+                "metadata",
+                "abi"
+              ]
+            }
+          },
+          "evmVersion": "prague",
+          "viaIR": false
+        },
+        "sourceHashes": {
+          "src/governance/CoinIssuer.sol": "8a63560cdeebdadcc399f56147add1d02b92514bf497c0504ca85c7a569cea6d",
+          "src/governance/interfaces/ICoinIssuer.sol": "cc2c0e8ad73403816486aa63fc3c0b0a5e343498eb8e1cb864217bb1ff7e8480",
+          "src/governance/libraries/Errors.sol": "55054e73a6049d354d3fe76380d823ddea28c5d6f598d30daedf6f4352fa4b15",
+          "src/shared/interfaces/IMintableERC20.sol": "31a33ccb5b9638262ec8a8ab2c63b0cda88a65a49bf9f7493c41341daa823ee3",
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+          "lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol": "c75345d7b9feef17ae29f2a800ca2f65f8021cf80436a41d6ec00f57f5180f36",
+          "src/governance/interfaces/IPayload.sol": "5b27814e079d6c18c1d3f37eece5b729b5ec27b384aba4c908c019a1083fc698",
+          "src/shared/libraries/TimeMath.sol": "eefd1773f655d8bfae082e7bb2fae011a647437d78643e002f8a541c06bdbb02",
+          "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a",
+          "lib/openzeppelin-contracts/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6"
+        },
+        "verificationKind": "exact-match"
+      },
+      "structure": {
+        "liveBodyBytes": 1569,
+        "installedBodyBytes": 1578,
+        "liveInstructions": 858,
+        "installedInstructions": 863,
+        "opcodeOnlySequenceEqual": false,
+        "liveDelegateCallCount": 0,
+        "liveCallCount": 2,
+        "livePush4SelectorsOrConstants": [
+          {
+            "pc": 31,
+            "hex": "72c908bc"
+          },
+          {
+            "pc": 42,
+            "hex": "72c908bc"
+          },
+          {
+            "pc": 53,
+            "hex": "78acc00a"
+          },
+          {
+            "pc": 64,
+            "hex": "8da5cb5b"
+          },
+          {
+            "pc": 75,
+            "hex": "99f19cea"
+          },
+          {
+            "pc": 86,
+            "hex": "e84721cb"
+          },
+          {
+            "pc": 97,
+            "hex": "f2fde38b"
+          },
+          {
+            "pc": 112,
+            "hex": "19308f68"
+          },
+          {
+            "pc": 123,
+            "hex": "38a5e016"
+          },
+          {
+            "pc": 134,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 145,
+            "hex": "4800d97f"
+          },
+          {
+            "pc": 156,
+            "hex": "715018a6"
+          },
+          {
+            "pc": 479,
+            "hex": "79ba5097"
+          },
+          {
+            "pc": 488,
+            "hex": "ffffffff"
+          },
+          {
+            "pc": 581,
+            "hex": "a1cc8799"
+          },
+          {
+            "pc": 636,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 704,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 850,
+            "hex": "1e4fbdf7"
+          },
+          {
+            "pc": 906,
+            "hex": "118cdaa7"
+          },
+          {
+            "pc": 1105,
+            "hex": "01e13380"
+          },
+          {
+            "pc": 1252,
+            "hex": "18160ddd"
+          },
+          {
+            "pc": 1261,
+            "hex": "ffffffff"
+          },
+          {
+            "pc": 1447,
+            "hex": "4e487b71"
+          },
+          {
+            "pc": 1498,
+            "hex": "4e487b71"
+          }
+        ],
+        "livePush32Words": [
+          {
+            "pc": 231,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          },
+          {
+            "pc": 302,
+            "hex": "00000000000000000000000000000000000000000000000002c68af0bb140000"
+          },
+          {
+            "pc": 374,
+            "hex": "00000000000000000000000000000000000000000000000000000000693f66c0"
+          },
+          {
+            "pc": 437,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          },
+          {
+            "pc": 669,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          },
+          {
+            "pc": 977,
+            "hex": "fb91318ed7011180131879440182ebbbabf3d0ccf88ccaab0a75cc28aa00c217"
+          },
+          {
+            "pc": 1064,
+            "hex": "8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+          },
+          {
+            "pc": 1113,
+            "hex": "00000000000000000000000000000000000000000000000000000000693f66c0"
+          },
+          {
+            "pc": 1177,
+            "hex": "00000000000000000000000000000000000000000000000002c68af0bb140000"
+          },
+          {
+            "pc": 1210,
+            "hex": "000000000000000000000000762c132040fda6183066fa3b14d985ee55aa3c18"
+          }
+        ],
+        "warning": "Push32 words are disassembly observations, not compiler-provided immutable references. No old immutable offsets applied."
+      },
+      "installedArtifactSha256": "50beaadfccda3360f03c1da856085c17d18d5a840dcdb760e3841a9b42d6dc56"
+    },
+    {
+      "name": "TestERC20",
+      "address": "0x762C132040fdA6183066Fa3B14d985ee55aA3C18",
+      "code": "0x608060405234801561000f575f5ffd5b5060043610610111575f3560e01c806379ba50971161009e578063a9059cbb1161006e578063a9059cbb1461022a578063dd62ed3e1461023d578063e30c397814610275578063f2fde38b14610286578063f46eccc414610299575f5ffd5b806379ba5097146101e25780638da5cb5b146101ea57806395d89b411461020f578063983b2d5614610217575f5ffd5b80633092afd5116100e45780633092afd51461017b578063313ce5671461019057806340c10f191461019f57806370a08231146101b2578063715018a6146101da575f5ffd5b806306fdde0314610115578063095ea7b31461013357806318160ddd1461015657806323b872dd14610168575b5f5ffd5b61011d6102bb565b60405161012a9190610931565b60405180910390f35b610146610141366004610981565b61034b565b604051901515815260200161012a565b6002545b60405190815260200161012a565b6101466101763660046109a9565b610364565b61018e6101893660046109e3565b610387565b005b6040516012815260200161012a565b61018e6101ad366004610981565b6103d7565b61015a6101c03660046109e3565b6001600160a01b03165f9081526020819052604090205490565b61018e610426565b61018e610439565b6005546001600160a01b03165b6040516001600160a01b03909116815260200161012a565b61011d610462565b61018e6102253660046109e3565b610471565b610146610238366004610981565b6104c4565b61015a61024b366004610a03565b6001600160a01b039182165f90815260016020908152604080832093909416825291909152205490565b6006546001600160a01b03166101f7565b61018e6102943660046109e3565b6104d1565b6101466102a73660046109e3565b60076020525f908152604090205460ff1681565b6060600380546102ca90610a34565b80601f01602080910402602001604051908101604052809291908181526020018280546102f690610a34565b80156103415780601f1061031857610100808354040283529160200191610341565b820191905f5260205f20905b81548152906001019060200180831161032457829003601f168201915b5050505050905090565b5f33610358818585610542565b60019150505b92915050565b5f33610371858285610554565b61037c8585856105d0565b506001949350505050565b61038f61062d565b6001600160a01b0381165f81815260076020526040808220805460ff19169055517fe94479a9f7e1952cc78f2d6baab678adc1b772d936c6583def489e524cb666929190a250565b335f8181526007602052604090205460ff1661041757604051631b0e18f960e11b81526001600160a01b0390911660048201526024015b60405180910390fd5b50610422828261065a565b5050565b61042e61062d565b6104375f61068e565b565b5f61044c6006546001600160a01b031690565b90506104566106a7565b61045f81610471565b50565b6060600480546102ca90610a34565b61047961062d565b6001600160a01b0381165f81815260076020526040808220805460ff19166001179055517f6ae172837ea30b801fbfcdd4108aa1d5bf8ff775444fd70256b44e6bf3dfc3f69190a250565b5f336103588185856105d0565b6104d961062d565b600680546001600160a01b0383166001600160a01b0319909116811790915561050a6005546001600160a01b031690565b6001600160a01b03167f38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e2270060405160405180910390a350565b61054f83838360016106e8565b505050565b6001600160a01b038381165f908152600160209081526040808320938616835292905220545f198110156105ca57818110156105bc57604051637dc7a0d960e11b81526001600160a01b0384166004820152602481018290526044810183905260640161040e565b6105ca84848484035f6106e8565b50505050565b6001600160a01b0383166105f957604051634b637e8f60e11b81525f600482015260240161040e565b6001600160a01b0382166106225760405163ec442f0560e01b81525f600482015260240161040e565b61054f8383836107ba565b6005546001600160a01b031633146104375760405163118cdaa760e01b815233600482015260240161040e565b6001600160a01b0382166106835760405163ec442f0560e01b81525f600482015260240161040e565b6104225f83836107ba565b600680546001600160a01b031916905561045f816108e0565b60065433906001600160a01b031681146106df5760405163118cdaa760e01b81526001600160a01b038216600482015260240161040e565b61045f8161068e565b6001600160a01b0384166107115760405163e602df0560e01b81525f600482015260240161040e565b6001600160a01b03831661073a57604051634a1406b160e11b81525f600482015260240161040e565b6001600160a01b038085165f90815260016020908152604080832093871683529290522082905580156105ca57826001600160a01b0316846001600160a01b03167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925846040516107ac91815260200190565b60405180910390a350505050565b6001600160a01b0383166107e4578060025f8282546107d99190610a6c565b909155506108549050565b6001600160a01b0383165f90815260208190526040902054818110156108365760405163391434e360e21b81526001600160a01b0385166004820152602481018290526044810183905260640161040e565b6001600160a01b0384165f9081526020819052604090209082900390555b6001600160a01b0382166108705760028054829003905561088e565b6001600160a01b0382165f9081526020819052604090208054820190555b816001600160a01b0316836001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516108d391815260200190565b60405180910390a3505050565b600580546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0905f90a35050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b80356001600160a01b038116811461097c575f5ffd5b919050565b5f5f60408385031215610992575f5ffd5b61099b83610966565b946020939093013593505050565b5f5f5f606084860312156109bb575f5ffd5b6109c484610966565b92506109d260208501610966565b929592945050506040919091013590565b5f602082840312156109f3575f5ffd5b6109fc82610966565b9392505050565b5f5f60408385031215610a14575f5ffd5b610a1d83610966565b9150610a2b60208401610966565b90509250929050565b600181811c90821680610a4857607f821691505b602082108103610a6657634e487b7160e01b5f52602260045260245ffd5b50919050565b8082018082111561035e57634e487b7160e01b5f52601160045260245ffdfea264697066735822122046c577ea766236358ff9af7d694a3029e4a77015c881147ee1677254da6c7bbe64736f6c634300081b0033",
+      "runtimeBytes": 2753,
+      "runtimeKeccak256": "0x0c5e7ba8cc1b85665b72c1843e9546936973f870a7951c29722018f3f9dcee88",
+      "unchangedSincePriorAnchor": true,
+      "cbor": "a264697066735822122046c577ea766236358ff9af7d694a3029e4a77015c881147ee1677254da6c7bbe64736f6c634300081b",
+      "compilerVersion": "0.8.27",
+      "installedCompiler": "0.8.30+commit.73712a01",
+      "installedSettings": {
+        "remappings": [
+          "@aztec-blob-lib/=src/mock/libraries/",
+          "@aztec/=src/",
+          "@generated/=generated/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "@oz/=lib/openzeppelin-contracts/contracts/",
+          "@test/=test/",
+          "@zkpassport-test/=lib/circuits/src/solidity/test/",
+          "@zkpassport/=lib/circuits/src/solidity/src/",
+          "circuits/=lib/circuits/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+        ],
+        "optimizer": {
+          "enabled": true,
+          "runs": 100
+        },
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "compilationTarget": {
+          "src/mock/TestERC20.sol": "TestERC20"
+        },
+        "evmVersion": "prague",
+        "libraries": {}
+      },
+      "metadataCid": "QmT6utbjun1gyRdLm3ZyDH5DDYcUXqsrTGhPf33cNn83Cq",
+      "publisherVerifiedRecord": {
+        "url": "https://sepolia.etherscan.io/address/0x762C132040fdA6183066Fa3B14d985ee55aA3C18#code",
+        "exactMatchLabelPresent": false,
+        "htmlSha256": "ce8e3e7bbf918c093613c01442fe793c2c6f9999814ad749a9def4480c5b8ee9",
+        "sourceInputSha256": "14b67548f1b0773379aacc6fbab17c7bdcd62ce6fe98213cb355327ef6a9d487",
+        "publishedRuntimeExactlyEqualsAnchoredChain": true,
+        "compiler": "0.8.27+commit.40a35a09",
+        "settings": {
+          "remappings": [
+            "@oz/=lib/openzeppelin-contracts/contracts/",
+            "@aztec/=src/",
+            "@test/=test/",
+            "@zkpassport/=lib/circuits/src/solidity/src/",
+            "@zkpassport-test/=lib/circuits/src/solidity/test/",
+            "@aztec-blob-lib/=src/mock/libraries/",
+            "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+            "circuits/=lib/circuits/src/",
+            "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+            "forge-std/=lib/forge-std/src/",
+            "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+            "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+          ],
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "useLiteralContent": false,
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "devdoc",
+                "userdoc",
+                "metadata",
+                "abi"
+              ]
+            }
+          },
+          "evmVersion": "prague",
+          "viaIR": false
+        },
+        "sourceHashes": {
+          "src/mock/TestERC20.sol": "ac0163483f63bcae0992e0a872f65d0a67188c85d5d0d1dcc653136cceef4b08",
+          "src/shared/interfaces/IMintableERC20.sol": "31a33ccb5b9638262ec8a8ab2c63b0cda88a65a49bf9f7493c41341daa823ee3",
+          "lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol": "c75345d7b9feef17ae29f2a800ca2f65f8021cf80436a41d6ec00f57f5180f36",
+          "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol": "092c05cd91b6eea22e54e2782f0d1bc9ce3d8438baab3b9e972f72c35aeb232f",
+          "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a",
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+          "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "9e7c70ec72d2f7d592e23ea84f3852b04f91f6f644ce57e0263493046b36afb9",
+          "lib/openzeppelin-contracts/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6",
+          "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": "56380323009ef4a119d44550b910fde1bff9cedde8f7f4c690152c7629bc3338"
+        },
+        "verificationKind": "similar-match",
+        "similarReference": {
+          "url": "https://sepolia.etherscan.io/address/0x16f5d32dE8DA66BB24Db65d5476c2E3CC74f3d73#code",
+          "htmlSha256": "342dd6aecb4a03645d40975856293c285b3cb63300df69b34d26725b15fd4214",
+          "exactVerifiedLabel": true,
+          "runtimeByteLengths": [
+            3919,
+            2753
+          ],
+          "fullRuntimeEqual": true,
+          "runtimeBodyIgnoringCborEqual": true,
+          "sourceInputEqual": true
+        }
+      },
+      "structure": {
+        "liveBodyBytes": 2700,
+        "installedBodyBytes": 2639,
+        "liveInstructions": 1745,
+        "installedInstructions": 1692,
+        "opcodeOnlySequenceEqual": false,
+        "liveDelegateCallCount": 0,
+        "liveCallCount": 0,
+        "livePush4SelectorsOrConstants": [
+          {
+            "pc": 31,
+            "hex": "79ba5097"
+          },
+          {
+            "pc": 42,
+            "hex": "a9059cbb"
+          },
+          {
+            "pc": 53,
+            "hex": "a9059cbb"
+          },
+          {
+            "pc": 64,
+            "hex": "dd62ed3e"
+          },
+          {
+            "pc": 75,
+            "hex": "e30c3978"
+          },
+          {
+            "pc": 86,
+            "hex": "f2fde38b"
+          },
+          {
+            "pc": 97,
+            "hex": "f46eccc4"
+          },
+          {
+            "pc": 112,
+            "hex": "79ba5097"
+          },
+          {
+            "pc": 123,
+            "hex": "8da5cb5b"
+          },
+          {
+            "pc": 134,
+            "hex": "95d89b41"
+          },
+          {
+            "pc": 145,
+            "hex": "983b2d56"
+          },
+          {
+            "pc": 160,
+            "hex": "3092afd5"
+          },
+          {
+            "pc": 171,
+            "hex": "3092afd5"
+          },
+          {
+            "pc": 182,
+            "hex": "313ce567"
+          },
+          {
+            "pc": 193,
+            "hex": "40c10f19"
+          },
+          {
+            "pc": 204,
+            "hex": "70a08231"
+          },
+          {
+            "pc": 215,
+            "hex": "715018a6"
+          },
+          {
+            "pc": 230,
+            "hex": "06fdde03"
+          },
+          {
+            "pc": 241,
+            "hex": "095ea7b3"
+          },
+          {
+            "pc": 252,
+            "hex": "18160ddd"
+          },
+          {
+            "pc": 263,
+            "hex": "23b872dd"
+          },
+          {
+            "pc": 1009,
+            "hex": "1b0e18f9"
+          },
+          {
+            "pc": 1422,
+            "hex": "7dc7a0d9"
+          },
+          {
+            "pc": 1506,
+            "hex": "4b637e8f"
+          },
+          {
+            "pc": 1547,
+            "hex": "ec442f05"
+          },
+          {
+            "pc": 1603,
+            "hex": "118cdaa7"
+          },
+          {
+            "pc": 1644,
+            "hex": "ec442f05"
+          },
+          {
+            "pc": 1727,
+            "hex": "118cdaa7"
+          },
+          {
+            "pc": 1786,
+            "hex": "e602df05"
+          },
+          {
+            "pc": 1827,
+            "hex": "4a1406b1"
+          },
+          {
+            "pc": 2056,
+            "hex": "391434e3"
+          },
+          {
+            "pc": 2643,
+            "hex": "4e487b71"
+          },
+          {
+            "pc": 2680,
+            "hex": "4e487b71"
+          }
+        ],
+        "livePush32Words": [
+          {
+            "pc": 945,
+            "hex": "e94479a9f7e1952cc78f2d6baab678adc1b772d936c6583def489e524cb66692"
+          },
+          {
+            "pc": 1182,
+            "hex": "6ae172837ea30b801fbfcdd4108aa1d5bf8ff775444fd70256b44e6bf3dfc3f6"
+          },
+          {
+            "pc": 1300,
+            "hex": "38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e22700"
+          },
+          {
+            "pc": 1916,
+            "hex": "8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"
+          },
+          {
+            "pc": 2211,
+            "hex": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+          },
+          {
+            "pc": 2313,
+            "hex": "8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+          }
+        ],
+        "warning": "Push32 words are disassembly observations, not compiler-provided immutable references. No old immutable offsets applied."
+      },
+      "installedArtifactSha256": "4a57cebcc205e144c39eac3245c8308b4abb4e9382ca736de875ff30add60b81"
+    }
+  ],
+  "anchorUnchanged": true,
+  "metadataFetch": [
+    {
+      "name": "FeeAssetHandler",
+      "url": "https://ipfs.io/ipfs/QmV3hQjmYrwQwFWFscLTzUHGxpEdQVm6D3S5JGcUGG1dkk",
+      "available": false,
+      "category": "HTTPError"
+    },
+    {
+      "name": "CoinIssuer",
+      "url": "https://ipfs.io/ipfs/QmU6SFvWGonEjnoid8K3xz57L9wzZRSsV1Cu1cME81KvKx",
+      "available": false,
+      "category": "HTTPError"
+    },
+    {
+      "name": "TestERC20",
+      "url": "https://ipfs.io/ipfs/QmT6utbjun1gyRdLm3ZyDH5DDYcUXqsrTGhPf33cNn83Cq",
+      "available": false,
+      "category": "HTTPError"
+    }
+  ],
+  "officialNetworkRecord": "https://docs.aztec.network/networks",
+  "installedRelease": {
+    "tag": "v6.0.0-rc.1",
+    "commit": "d521f0d940d096fbea5b62010d9c9c70f1dc0fd2"
+  },
+  "matchingHistoricalSnapshot": {
+    "commit": "77140b15a7412546347a7c112f4112b1dc495bc2",
+    "date": "2025-12-12T22:53:20Z",
+    "openzeppelinCommit": "448efeea6640bbbc09373f03fbc9c88e280147ba",
+    "exactDeploymentCommitEstablished": false
+  },
+  "primarySourceBindings": [
+    {
+      "path": "src/mock/FeeAssetHandler.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/mock/FeeAssetHandler.sol",
+      "bytes": 936,
+      "sha256": "64b7a246aca9a4806f409f5c29503f34d3b2ee6619b395800e8a846c420e66c0",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/shared/interfaces/IMintableERC20.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/shared/interfaces/IMintableERC20.sol",
+      "bytes": 471,
+      "sha256": "31a33ccb5b9638262ec8a8ab2c63b0cda88a65a49bf9f7493c41341daa823ee3",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/access/Ownable.sol",
+      "bytes": 3102,
+      "sha256": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/token/ERC20/IERC20.sol",
+      "bytes": 2780,
+      "sha256": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/utils/Context.sol",
+      "bytes": 963,
+      "sha256": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/governance/CoinIssuer.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/governance/CoinIssuer.sol",
+      "bytes": 5922,
+      "sha256": "8a63560cdeebdadcc399f56147add1d02b92514bf497c0504ca85c7a569cea6d",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/governance/interfaces/ICoinIssuer.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/governance/interfaces/ICoinIssuer.sol",
+      "bytes": 348,
+      "sha256": "cc2c0e8ad73403816486aa63fc3c0b0a5e343498eb8e1cb864217bb1ff7e8480",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/governance/libraries/Errors.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/governance/libraries/Errors.sol",
+      "bytes": 4312,
+      "sha256": "55054e73a6049d354d3fe76380d823ddea28c5d6f598d30daedf6f4352fa4b15",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/access/Ownable2Step.sol",
+      "bytes": 2476,
+      "sha256": "c75345d7b9feef17ae29f2a800ca2f65f8021cf80436a41d6ec00f57f5180f36",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/governance/interfaces/IPayload.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/governance/interfaces/IPayload.sol",
+      "bytes": 597,
+      "sha256": "5b27814e079d6c18c1d3f37eece5b729b5ec27b384aba4c908c019a1083fc698",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/shared/libraries/TimeMath.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/shared/libraries/TimeMath.sol",
+      "bytes": 3540,
+      "sha256": "eefd1773f655d8bfae082e7bb2fae011a647437d78643e002f8a541c06bdbb02",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "src/mock/TestERC20.sol",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/mock/TestERC20.sol",
+      "bytes": 1242,
+      "sha256": "ac0163483f63bcae0992e0a872f65d0a67188c85d5d0d1dcc653136cceef4b08",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/token/ERC20/ERC20.sol",
+      "bytes": 10894,
+      "sha256": "092c05cd91b6eea22e54e2782f0d1bc9ce3d8438baab3b9e972f72c35aeb232f",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+      "bytes": 684,
+      "sha256": "9e7c70ec72d2f7d592e23ea84f3852b04f91f6f644ce57e0263493046b36afb9",
+      "matchesVerifiedExplorerSource": true
+    },
+    {
+      "path": "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol",
+      "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/contracts/interfaces/draft-IERC6093.sol",
+      "bytes": 6538,
+      "sha256": "56380323009ef4a119d44550b910fde1bff9cedde8f7f4c690152c7629bc3338",
+      "matchesVerifiedExplorerSource": true
+    }
+  ],
+  "officialBuildRecords": [
+    {
+      "name": "old-foundry",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/foundry.toml",
+      "sha256": "169247560061d75eed82e59bc743aa01ffe092933907a1f35c9d52f3b44e9ce9",
+      "settings": [
+        "# NOTE!: This line defines the solc version used.",
+        "solc = \"./solc-0.8.27\"",
+        "evm_version = 'prague'",
+        "optimizer = true"
+      ]
+    },
+    {
+      "name": "old-errors",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/77140b15a7412546347a7c112f4112b1dc495bc2/l1-contracts/src/governance/libraries/Errors.sol",
+      "sha256": "55054e73a6049d354d3fe76380d823ddea28c5d6f598d30daedf6f4352fa4b15",
+      "matchesExplorerSource": true
+    },
+    {
+      "name": "oz-ref",
+      "url": "https://api.github.com/repos/AztecProtocol/aztec-packages/contents/l1-contracts/lib/openzeppelin-contracts?ref=77140b15a7412546347a7c112f4112b1dc495bc2",
+      "sha256": "32081581563887e90a73a437878be31fad927ff5705fa925e60f6c54fcb27eee",
+      "record": {
+        "name": "openzeppelin-contracts",
+        "path": "l1-contracts/lib/openzeppelin-contracts",
+        "sha": "448efeea6640bbbc09373f03fbc9c88e280147ba",
+        "size": 0,
+        "url": "https://api.github.com/repos/AztecProtocol/aztec-packages/contents/l1-contracts/lib/openzeppelin-contracts?ref=77140b15a7412546347a7c112f4112b1dc495bc2",
+        "html_url": "https://github.com/openzeppelin/openzeppelin-contracts/tree/448efeea6640bbbc09373f03fbc9c88e280147ba",
+        "git_url": "https://api.github.com/repos/openzeppelin/openzeppelin-contracts/git/trees/448efeea6640bbbc09373f03fbc9c88e280147ba",
+        "download_url": null,
+        "type": "submodule",
+        "submodule_git_url": "https://github.com/openzeppelin/openzeppelin-contracts",
+        "_links": {
+          "self": "https://api.github.com/repos/AztecProtocol/aztec-packages/contents/l1-contracts/lib/openzeppelin-contracts?ref=77140b15a7412546347a7c112f4112b1dc495bc2",
+          "git": "https://api.github.com/repos/openzeppelin/openzeppelin-contracts/git/trees/448efeea6640bbbc09373f03fbc9c88e280147ba",
+          "html": "https://github.com/openzeppelin/openzeppelin-contracts/tree/448efeea6640bbbc09373f03fbc9c88e280147ba"
+        }
+      }
+    },
+    {
+      "name": "v6-foundry",
+      "url": "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/d521f0d940d096fbea5b62010d9c9c70f1dc0fd2/l1-contracts/foundry.toml",
+      "sha256": "ff0188af95614d1b7ee3cf30bf54e9bf569781170a891a22bff4d47d1a586f88",
+      "settings": [
+        "# NOTE!: This line defines the solc version used.",
+        "solc = \"./solc-0.8.30\"",
+        "evm_version = 'prague'",
+        "optimizer = true",
+        "optimizer_runs = 100"
+      ]
+    }
+  ],
+  "openzeppelinVersion": {
+    "url": "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/448efeea6640bbbc09373f03fbc9c88e280147ba/package.json",
+    "version": "5.1.0",
+    "sha256": "2e9584c34461a3d6ea1b84d2d81497a58c6036ec1675ccb083be77ef2f71a2d1"
+  },
+  "limitations": [
+    "No recompilation or transaction/mint eth_call performed.",
+    "IPFS metadata and Sourcify full-match lookups unavailable; exact build is publisher-verified source/settings plus matching anchored runtime, not an independently reproduced compiler output.",
+    "All15 sources match historical commit77140b15; unique deployment commit/release tag is not established.",
+    "Runtime and public constants may change operational permission; recheck minter/amount before any authorized experiment.",
+    "Token explorer source is Similar Match to0x16f5d32dE8DA66BB24Db65d5476c2E3CC74f3d73, not Exact Match at token address; independent source/compiler reproduction still outstanding."
+  ],
+  "finishedAt": "2026-10-11T21:40:43.827312+00:00",
+  "boundedConclusions": {
+    "confirmedBuildDifferences": [
+      "live solc0.8.27 vs installed0.8.30",
+      "published optimizer200 vs installed100",
+      "issuer published Errors.sol lacks three unused RewardDistributor error declarations added in installedV6"
+    ],
+    "sourceBinding": "Handler and issuer publisher Exact Match; token identical full runtime and exact same published sources/settings as an Exact Match reference, including metadata. All15 published source files byte-equal official historical Aztec/OZ snapshot. Not independently recompiled.",
+    "codeNotProxy": "Linear disassembly of metadata-stripped runtimes finds no DELEGATECALL; no claim of exhaustive semantic verification.",
+    "noMintOrStateChangingEthCall": true,
+    "uniqueDeploymentReleaseTagKnown": false
+  }
+}

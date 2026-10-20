@@ -1,0 +1,23 @@
+{
+  "base": "78ad4718583ca14a4bdc005f949e5db2db277744",
+  "candidate": "8f54c7d78c6456139b4df212328c4b998a87ddeb",
+  "worker": "dba0f4281c320a113bf70016144fba0d82a36cf6",
+  "files": [
+    {
+      "path": "scripts/patch-pxe-preference-page.mjs",
+      "sha256": "a4904190ad523aa38bc47bc5aa1e3ada490d41d293f8f3a7676972a84a25eda8"
+    },
+    {
+      "path": "scripts/test-pxe-preference-page.mjs",
+      "sha256": "93d2d771b1b21aa948bcb2986553da60e795f544f6fdd4a79182ccea3da8c4c4"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.mjs",
+      "sha256": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91"
+    },
+    {
+      "path": "shared/rolling/cold-preference-reader.test.mjs",
+      "sha256": "0700538deea46351ce6b3e7c055aa2423c20fc0ea6df8ee8248a2729465af087"
+    }
+  ]
+}

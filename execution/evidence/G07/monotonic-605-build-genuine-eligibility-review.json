@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "6054711b7fe958e0a02f9e0126429a68640bb377",
+  "verdict": "APPROVE_EXACT_TWO_GENERATED_OUTPUT_COMMIT_THEN_ONE_CHANGED_GENUINE_RELATIONSHIPS_AFTER_FINAL_REVISION_BINDING",
+  "findings": [],
+  "walletActual": {
+    "resultSha256": "0ec54ab340cb00f7a73b3930034664b9412260ffd79994fd739b6d5c137520ba",
+    "logSha256": "842e5326aa0e240b3d67349e6694adb798cc397b90459105303dd13f198ec3be",
+    "postcheckSha256": "8713ef4188768668aa9700d3a95ad3acb962f3dedf65f12b76e66a951a362cef",
+    "elapsedMs": 1269,
+    "peakRSSKiB": 555200,
+    "allOwnedCleanup": true,
+    "protectedRehashed": 1160
+  },
+  "closureSha256": "c3f48679d170afa78f18dc5778a8355b814315ed85450e5fb1a6902c676bf0fc",
+  "independentManifestRehash": {
+    "sdk": {
+      "sha256": "6d163b9c1b3aa12c209c63a39ec16d1d5deec87d5764198e98cf127b79acbcc1",
+      "inputs": 2052,
+      "outputs": 8
+    },
+    "app": {
+      "sha256": "690bcf0936358d6723aa54c48940a7d9d8c41172fefd33b2dfd111683e6a5aed",
+      "inputs": 97,
+      "outputs": 10
+    },
+    "wallet": {
+      "sha256": "c1b1fb57e5ffcd8ca1c72d7571db3c56fcbc44ce299b8907207c759564a0ac50",
+      "inputs": 84,
+      "servedFiles": 24
+    }
+  },
+  "nativeFingerprints": 294,
+  "browserFingerprints": 146,
+  "privateBok": {
+    "manifestSha256": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6",
+    "artifactSha256": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+    "boardArtifactSha256": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb",
+    "inputCount": 14
+  },
+  "generatedOnly": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json"
+  ],
+  "generatedHashes": {
+    "apps/dist/aztec_bundle.js": "63be88510d8a751f355cd09411d2d544e3bed06e375401a5abb6a265c2845f9e",
+    "apps/dist/sdk-manifest.json": "6d163b9c1b3aa12c209c63a39ec16d1d5deec87d5764198e98cf127b79acbcc1"
+  },
+  "launch": {
+    "preparationSha256": "2c83a84b02f7edaa36293b8b3d3c1072c8409d1f25456bcb934034f86be1de66",
+    "launcherSha256": "d60c00f361e8afc6e90c68bf923c0e7cff360e6a60ca924ee755c21f54166f11",
+    "scenario": "rolling-preference-relationships",
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "applicationThreads": 1,
+    "mechanism": "Existing application supervisor only; exact final clean revision and all approved bindings checked before exclusive intent/log and exec. No nested supervisor, no retry.",
+    "finalApprovedLaunchAbsent": true
+  },
+  "acceptance": {
+    "genuineProofJobs": 5,
+    "retainedPrivateSnapshotExact": true,
+    "recoveryProofs": 0,
+    "recoverySends": 0,
+    "recoveryL1Sends": 0,
+    "recoveryAuthWitnesses": 0,
+    "nativeCompactAcceptedMinimum": 1,
+    "nativeCompactFailures": 0,
+    "nativeCompactPending": 0,
+    "allOwnedProcessesAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "coldPrivateTagDiscoveryCalls": 0,
+    "coldPublicTagDiscoveryCalls": 0,
+    "coldMetricsObserverErrors": 0,
+    "coldMetricsPending": 0
+  },
+  "reason": "Source-reviewed e71 public-first order addresses actual06e9 late public admission without changing work, assertions or deadlines. D22 exact installed extension helper now has169 accepted component cases, matched finite HTTP result,100 affected fixture cases and normal builds. Full combined genuine conjunction still must be observed.",
+  "requiredBeforeLaunch": [
+    "Commit exactly declared two generated files and bind resulting clean revision, independent review hash and all source/assets/installed inputs in approved-launch.",
+    "Parent grants sole heavy slot after other owned processes stopped."
+  ],
+  "limits": [
+    "One changed full genuine attempt eligible; no claim it will meet timing.",
+    "Full five proofs/effects, all public fresh/reopen and final private/public/pool fee conservation remain mandatory.",
+    "Initial cold successful run does not qualify monotonic extension/reorg over real chain or full-history capacity.",
+    "No compiler260 hold clearance, production release, native Linux qualification or paid launch authority."
+  ]
+}

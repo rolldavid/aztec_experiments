@@ -1,0 +1,20 @@
+{
+  "base": "b140728d9c933eab5502d14d467900d020e10626",
+  "candidate": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "reviewedWorkerRevision": "0c4fec48722bb14729660bd723a01e521d8bc480",
+  "sourceFiles": [
+    {
+      "path": "apps/rolling/start.mjs",
+      "sha256": "e6874b76cac669bf2c3dd5c12dade720d5d3f8b2e8f97f8bb5ea93688f7e14fa"
+    },
+    {
+      "path": "apps/rolling/start.test.mjs",
+      "sha256": "16a1f14bcd88d4e1358c744bbaa044914da185362ddd110a608180f79cfe3c5d"
+    }
+  ],
+  "changedPaths": [
+    "apps/rolling/start.mjs",
+    "apps/rolling/start.test.mjs"
+  ],
+  "allSourceHashesEqual": true
+}

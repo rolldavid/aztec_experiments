@@ -1,0 +1,177 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "base": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+  "verdict": "approved_bounded_development_integration",
+  "scope": "G06 two-account reactions through real production private application actors, six genuine transaction proofs, canonical public reconstruction/recovery; not full G06 or privacy qualification",
+  "evidence": {
+    "execution/evidence/G06/application-b0b37ea2-6c69-41f0-a845-2994590607c5.json": "900fa2a8aa92c90925e9409138ac43d6d2df4bc31327e5d7ca1507e0375d8a21",
+    "execution/evidence/G06/application-port-c913b798-91d8-40c3-b9e4-3902558e74ad/observation.json": "447291e01f3fc33733b9711225c8d31f349e757f2f2dd5b61c415ba8b648aa97",
+    "execution/evidence/G06/multi-b0b37-independent-effects.json": "bea7830f761602225153f7db2edc946a02f203ff22154a2b6233403d1279fbf0",
+    "execution/evidence/G06/multi-combined-2493478-review.json": "82b0f8aa800ca362e6b7d9ee5dd020ea3ee44d8fa61a3f13664e9efe8f67e0c3"
+  },
+  "sourceVerification": {
+    "outerFiles": 212,
+    "outerGitBlobs": 201,
+    "anvilBinary": "verified separately via actual toolchain path",
+    "nativeBBBinary": "verified actual toolchain path against report",
+    "innerFilesAndGitBlobs": 53,
+    "artifactFiles": 2,
+    "bokBuildInputsAndGitBlobs": 14,
+    "nativeArtifactInputs": 70,
+    "innerEqualsOuterBridge": true,
+    "changedPaths": [
+      "scripts/testing/rolling-account-reactions.mjs",
+      "scripts/testing/rolling-account-reactions.test.mjs",
+      "scripts/testing/rolling-application-actor.mjs",
+      "scripts/testing/rolling-application-actor.test.mjs",
+      "scripts/testing/rolling-application-fixture.mjs",
+      "scripts/testing/rolling-application-fixture.test.mjs",
+      "scripts/testing/rolling-public-acceptance.mjs",
+      "scripts/testing/rolling-removed-like.mjs",
+      "scripts/testing/rolling-removed-like.test.mjs",
+      "scripts/testing/rolling-social-acceptance.mjs",
+      "scripts/testing/scenario-flows.mjs",
+      "scripts/testing/scenarios.mjs"
+    ],
+    "productionContractsAndArtifactsUnchangedFromBase": true,
+    "priorIndependentCheapTests": 134,
+    "cheapTestSourceReport": "G06/multi-combined-2493478-review.json"
+  },
+  "runtime": {
+    "passed": true,
+    "elapsedMs": 459390,
+    "innerCompleteMs": 449008,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 1950512,
+    "rssLimitKiB": 4194304,
+    "fixtureHeapMiB": 768,
+    "failures": [],
+    "cleanup": {
+      "applicationActorA": true,
+      "applicationActorB": true,
+      "fundingWallet": true,
+      "fundingWalletB": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "chain": {
+      "chainId": "31337",
+      "version": "1990552751",
+      "rollup": "0x31f615c4406074aa3fef03c480205f6d7bf62c5d"
+    },
+    "applicationProofs": true,
+    "realNodeProofValidation": true,
+    "httpNativeProofJobs": {
+      "submitted": 6,
+      "completed": 6,
+      "failed": 0,
+      "running": false
+    },
+    "moderator": "Separate source-bound genuine proveApplicationAction path and canonical inclusion; no separate raw proof persisted",
+    "boardDeploymentProofBytes": 111556,
+    "networkProofs": false,
+    "controlledSettlement": true
+  },
+  "independentEffectChecks": {
+    "savedBinaryEffects": 7,
+    "allSha256TxHashFeeAndSDKRoundtripMatch": true,
+    "authenticatedABIEvents": "Anonymous root PostPublished; A LikeChanged1; duplicate paid tx no board event; B LikeChanged2; B unlike1; PostRemoved; A unlike0 after removal",
+    "perPostTags": "A and B distinct nonzero; each unlike uses its matching earlier account tag",
+    "writes": [
+      14,
+      3,
+      1,
+      3,
+      3,
+      3,
+      3
+    ],
+    "maxWritesLimit": 63,
+    "contentDigestAndEventSchemasValidated": true
+  },
+  "accountProvisioning": {
+    "source": "Exact249 fixture asserts actual W01 B account address unequal A before actor construction and same FPC; actor factory derives and verifies each actual account, uses distinct PXE/encrypted storage paths.",
+    "runtime": "Distinct L1 senders/deposit receipts and leaf indices0/1; source-bound distinct L2 account assertion reached; different reaction tags corroborate distinct per-post identities. Private identity material intentionally not reread or published.",
+    "fundingPerActor": "1000000000000000000000",
+    "a": "cold private credit combined with collateral claim",
+    "b": "standalone private credit claim, no collateral; fee-ready private actor"
+  },
+  "accounting": {
+    "aActionsPlusCollateralClaim": "53864710800000",
+    "bReactionActions": "16280515800000",
+    "bStandaloneFundingFee": "7985178000000",
+    "combinedPrivateProtocolFees": "78130404600000",
+    "combinedRemainingFPCPool": "1999999921869595400000",
+    "bothPoolBaselines": "0",
+    "bothPrivateDebitsAndBalancesExact": true,
+    "bothHumanPublicFeeJuiceZero": true,
+    "moderatorFeeAndExactBalanceDelta": "8685769200000"
+  },
+  "recoveryAndRejection": {
+    "bothEncryptedJournalsReopened": true,
+    "sameCanonicalHashAndTransactionRetained": true,
+    "newProofJobs": 0,
+    "allActivityUnchangedOnReopen": true,
+    "removedLikeDeepestContractGuard": "Actual installed SimulationError deepest RollingBoard _set_like, prevalidated static Post removed selector; no message-only acceptance",
+    "removedPreparationActivity": {
+      "authWitnesses": 3,
+      "proofJobs": 0,
+      "walletSubmissions": 0,
+      "transportSends": 0
+    },
+    "duplicateLike": "Fee charged, no additional LikeChanged, count stayed1"
+  },
+  "reconstruction": {
+    "canonicalRefetches": 8,
+    "freshAndColdSQLiteHTTP": {
+      "passed": true,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true,
+          "checkpoint": {
+            "number": 21,
+            "hash": "0x2b4267e90a5e2084d4fd5ca3b556548cef8cefc75e6f6bb9b19e4c740f70894e"
+          },
+          "views": [
+            "feed",
+            "thread",
+            "post"
+          ],
+          "authenticatedRanges": 3
+        },
+        {
+          "phase": "reopened",
+          "closed": true,
+          "checkpoint": {
+            "number": 21,
+            "hash": "0x2b4267e90a5e2084d4fd5ca3b556548cef8cefc75e6f6bb9b19e4c740f70894e"
+          },
+          "views": [
+            "feed",
+            "thread",
+            "post"
+          ],
+          "authenticatedRanges": 3
+        }
+      ],
+      "persistedRangesBeforeReopen": 3,
+      "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+    },
+    "views": "Exact feed/thread/post redacted tombstone, immutable root metadata and count0; full enrichment checked",
+    "cacheNotAuthority": true
+  },
+  "findings": [],
+  "limitations": [
+    "Controlled local31337 settlement, no epoch/network proofs or testnet deployment qualification.",
+    "Six HTTP native proofs evidenced by unchanged actual service path, strict runtime counters and real node validation; reviewer did not rerun proofs or access witness/private journals.",
+    "Exact known-role public-field absence/shared FPC and distinct tags are bounded checks, not general timing/request/account unlinkability. Ordinary-node/backend trace and independent privacy review remain open.",
+    "No browser UI, concurrent uniqueness, device-loss/cold-PXE recovery or full G05/G06/G14 completion claimed.",
+    "Lead integration gate must validate policy/check records, ownership and expected-old branch atomically; missing or stale checks cannot pass."
+  ]
+}

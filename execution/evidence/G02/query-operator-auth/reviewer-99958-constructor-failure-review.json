@@ -1,0 +1,18 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_FAILURE_NO_AUTH_QUALIFICATION",
+  "source": "d4831ed7c6f69bc6920946d654eec95f6b27c5fe",
+  "actualPacketSha256": "52512bf2492bb91c32a35ba319706db42020a5a7501015fdb88cd36edf067f4e",
+  "session": 99958,
+  "elapsedMs": 1490,
+  "peakTreeRSSKiB": 562448,
+  "counts": "0pass1fail0skip",
+  "protectedPins": 5373,
+  "cleanupVerifiedByBoundResult": true,
+  "diagnosis": "Test-only bundled child calls nonexistent sdk.AztecAddress.fromString before first node RPC. Pinned actual class and normal bundle expose fromStringUnsafe; existing synthetic integration fixture already uses that method. No production compatibility conclusion from this failure.",
+  "sourceBindings": {
+    "prover/private-query.integration.test.mjs": "7d2aadf1d67acd244e553c35409c9f6d6df805e461608c9b70a38e2044ed4bac",
+    "node_modules/@aztec-labs/stdlib/dest/aztec-address/index.js": "c6bf7ab854b9b4a221ac2ee4907f4c4ecc74f3e6addf1ce783422bbeacab15c6"
+  },
+  "smallestNext": "Exact test-only constructor change preserving synthetic public hex; focused actual normal CLI-loaded bundle old-method absent / new constructor exact string roundtrip with zero network before a separately reviewed auth rerun. No SDK fallback/monkeypatch or curve-validity assertion; no full PXE/drain rerun."
+}

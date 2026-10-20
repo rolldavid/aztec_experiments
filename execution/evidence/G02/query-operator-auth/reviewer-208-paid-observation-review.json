@@ -1,0 +1,46 @@
+{
+  "candidate": "208ffd5a778e787130ca426616c03b327f11ea60",
+  "rootComposition": "9d4306d",
+  "verdict": "approve scoped two-path diagnostic component",
+  "blockingFindings": [],
+  "source": [
+    {
+      "path": "scripts/t04-metamask.mjs",
+      "sha256": "12c117d2a030b0af8bdf698d4adba70a735f95c533d9b7e7683020621f537260"
+    },
+    {
+      "path": "scripts/test-t04-browser-journey.mjs",
+      "sha256": "2475b44389311790a967e02ad55528bcc2e7caaf133f4b9084d6eb2f36b1adf3"
+    }
+  ],
+  "packetSha256": "b0e4139004866054ebb73921eb05ad02b65080b550bb6db7dfe362fc4c87d826",
+  "evidence": {
+    "counts": {
+      "tests": 52,
+      "pass": 52,
+      "fail": 0,
+      "skip": 0,
+      "prior": 42,
+      "new": 10
+    },
+    "runtime": {
+      "elapsedMs": 1119,
+      "peakTreeRSSKiB": 504576,
+      "ownedTreeAbsent": true,
+      "linkRestored": true,
+      "tempRemoved": true
+    },
+    "hashesVerified": true
+  },
+  "review": [
+    "Exact fixed notice/button vocabulary, visible-only projection and aria-busy=false separate a settled outcome from an in-flight action; unknown text and alert contents are never emitted. Error takes precedence over success.",
+    "One existing Resume saved funding action; waiting/pending may click only existing Pause bridge checks. No Confirm, changed fee cap/quote, transaction resend or permission inference. Success still requires original exact payment/three-leg workflow/confirmed claim/Bok balance and no forbidden wallet calls/nonce change.",
+    "Encrypted state reads return booleans, bounded status enum and nullable fee comparison. Original confirmed public claim hash remains existing output; private cap/amount/salt/owner IDs are not added. Unlinked or malformed cap/fee cannot produce an affirmative feeWithinSavedCap.",
+    "Observer finally records fallback surface and saved-state projection without replacing original wait failures, including falsy0. Handle cleanup errors record fixed flag only.",
+    "Tests exercise actual serialized inspectors in isolated JS contexts and controlled locator/owner flows; they are structural driver tests, not real app/MetaMask recovery acceptance. Root exact two blobs match."
+  ],
+  "remaining": [
+    "Actual paid4 outcome is separate. Paid3 remains failed with application cause unproven until observed.",
+    "No reviewer heavy runtime, profile or private journal access; product application source unchanged."
+  ]
+}

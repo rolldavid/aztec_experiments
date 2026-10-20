@@ -1,0 +1,113 @@
+{
+  "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+  "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+  "task_id": "G10-hosted-context-and-repository-components",
+  "holds": [],
+  "findings": [],
+  "review": {
+    "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+    "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-387-persistent-thread-review.json",
+        "sha256": "7effd922f86ec5feabbfa2011df5aaf91f68fd62ff68038ea3c01ac91ba1a316"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+      "id": "hosted-context-component",
+      "status": "pass",
+      "command": "Existing component commands and observer focused checks in hosted G10 handoff/review",
+      "environment": "macOSarm64 pinnedNode24.21,actualGit2.50.1; labelled node/providerports, actuallocalGit; no paidcalls/proofs",
+      "observed": "161component passes +current observer2 scopedcarry. No currentwhole162run. Actual49470FAILEDobserver; terminalbilling narrowly verified only. G10originalcontext/finality/metering component source reviewed.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-7f90-hosted-g10-review.json",
+          "sha256": "b897df6e0ed1622ca6f0376713227998cb426a84fe8f02fa5db1f580a5a5cd74"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G14/hosted-private-bok/g10-handoff.json",
+          "sha256": "6879202fbe108c98f5d93fcc82acc8ae4d34c69328e5935033cfaa66294aa105"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-387-persistent-thread-review.json",
+          "sha256": "7effd922f86ec5feabbfa2011df5aaf91f68fd62ff68038ea3c01ac91ba1a316"
+        }
+      ]
+    },
+    {
+      "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+      "id": "persistent-source-component",
+      "status": "pass",
+      "command": "node --test plugins/test/thread-repositories.test.mjs; existing model/github suites",
+      "environment": "macOSarm64 pinnedNode24.21,actualGit2.50.1; labelled node/providerports, actuallocalGit; no paidcalls/proofs",
+      "observed": "7current actualGit lifecycle/shallow/recovery/bounds tests;25 unchanged existingtests carry. No newwhole32claim. Isolatedgeneratedexecution and hostedmanagerwiring unimplemented in this candidate.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/persistent-shallow-tests.log",
+          "sha256": "e824958d0620f55f663439a297eebc55fe6de424658a208ee70e94653008d1e1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/persistent-toolbox-bounded.log",
+          "sha256": "87aa281a1290cb4bfb4f24bc265322f0f8374f6284d19e3cce76ac516307d11e"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-387-persistent-thread-review.json",
+          "sha256": "7effd922f86ec5feabbfa2011df5aaf91f68fd62ff68038ea3c01ac91ba1a316"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+      "id": "hosted-context-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-7f90-hosted-g10-review.json",
+          "sha256": "b897df6e0ed1622ca6f0376713227998cb426a84fe8f02fa5db1f580a5a5cd74"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G14/hosted-private-bok/g10-handoff.json",
+          "sha256": "6879202fbe108c98f5d93fcc82acc8ae4d34c69328e5935033cfaa66294aa105"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-387-persistent-thread-review.json",
+          "sha256": "7effd922f86ec5feabbfa2011df5aaf91f68fd62ff68038ea3c01ac91ba1a316"
+        }
+      ]
+    },
+    {
+      "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+      "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+      "id": "persistent-source-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/persistent-shallow-tests.log",
+          "sha256": "e824958d0620f55f663439a297eebc55fe6de424658a208ee70e94653008d1e1"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G10/paid-context/persistent-toolbox-bounded.log",
+          "sha256": "87aa281a1290cb4bfb4f24bc265322f0f8374f6284d19e3cce76ac516307d11e"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-387-persistent-thread-review.json",
+          "sha256": "7effd922f86ec5feabbfa2011df5aaf91f68fd62ff68038ea3c01ac91ba1a316"
+        }
+      ]
+    }
+  ]
+}

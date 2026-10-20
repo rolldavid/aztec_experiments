@@ -1,0 +1,19 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "e20182334e76b0a3e9f7197f77fadc52abf129d0",
+  "verdict": "eligible-one-selected-disconnected-success-after-parent-slot-release",
+  "packet": "7a7b61467dd5b118ee34a649e2a2c0c1378f0842005b7186827469c01fbf6f73",
+  "runner": "c72086f76e201f258f980138244fcfd9e288bde96a0767991b0ea25f2bfef72c",
+  "preparation": "511b912f634712b9dc778d77c24a38d1ed449a53c46be6dd6b957f0b4eff3458",
+  "checks": [
+    "Exact one-line builtin node:http test import; all product/assertion bytes unchanged.",
+    "Exact owner directory-only change, unchanged child/Supervisor30s2GiB/ownedTMP/qualifiedcopy/link cleanup.",
+    "All554 source and2402 dependency pins independently verified.",
+    "One anchored existing disconnected-success label;31 excluded,zero skips."
+  ],
+  "conditions": [
+    "Current lead relationships journey owns sole heavy slot; no execution before parent terminal cleanup/release.",
+    "Other five failed disconnected/falsy cases and full factory suites remain held pending this actual result."
+  ],
+  "runtimePerformedByReviewer": false
+}

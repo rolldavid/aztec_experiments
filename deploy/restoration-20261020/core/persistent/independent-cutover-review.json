@@ -1,0 +1,18 @@
+{
+  "reviewer": "/root/restore_review",
+  "verdict": "approved-observed",
+  "operation": "Persistent hosting cutover",
+  "reviewedAt": "2026-10-20T07:53:11.810848+00:00",
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/restore-service-20261020/persistent/core-result.json": "d4a00b7cdcab5f9be775bc7b1a50ea97a30f53e2177dc331583113506717115a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/restore-service-20261020/persistent/bok-result.json": "36c89783531a6a960cb77f1d13b9f739e287389c7949bbd2df6d9c3ef361ca5a",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/restore-service-20261020/persistent/cloud-persistent-readback.json": "f471d0e61f1bb5722503db4855325f6abb82b56a8f4cba8d569e77e7ba699607"
+  },
+  "observations": [
+    "Both native amendments returned Success/0 with unchanged process IDs and admitted runtime manifests",
+    "Native elapsed timers masked; USD1500 policy and native egress/fault containment retained",
+    "Both exact EC2 hosts remain running; request Fleet deleted_running without terminating instances",
+    "Three obsolete expiry/endpoint schedules removed; guest shutdown stops and API termination protection enabled"
+  ],
+  "scopeLimit": "Does not claim a reboot exercise, unbounded uptime, or specialist production qualification; moderator restoration is separate."
+}

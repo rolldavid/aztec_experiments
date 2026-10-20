@@ -1,0 +1,29 @@
+{
+  "candidate": "a9ea6c1d738d3bfd944eadbc006443d998201b25",
+  "base": "f9911f0fe3021275242211d4ddfcc64f40bf990b",
+  "reviewer": "/root/reviewer",
+  "verdict": "approve",
+  "scope": [
+    "G14-development-protocol-foundation",
+    "G14-closed-prover-profile-source"
+  ],
+  "findings": [],
+  "checks": [
+    "Source hashes and both full local cases inspected independently",
+    "Reservation finalized block20 beforewarp and canonical identity retained",
+    "19 effect binary hashes matched and four redemption actual token deltas verified",
+    "Normal/uncertain private880 andoperator120; uncertainprimary200secondary280",
+    "Allownedservices/wallet/node/miner/singletons cleaned",
+    "Contract/build/test inputs equivalent to56TXE revision",
+    "19 independent lightweight checks passed"
+  ],
+  "remaining": [
+    "genuine proofs",
+    "private fees",
+    "actual product callback",
+    "model billing",
+    "privacy",
+    "compiler assurance"
+  ],
+  "history_locator": "collaboration /root/reviewer parent01a12a75-1b50-7871-a73b-4253a1010194"
+}

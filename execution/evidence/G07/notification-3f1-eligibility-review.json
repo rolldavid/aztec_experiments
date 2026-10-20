@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T12:49:17.455343+00:00",
+  "candidate": "3f1ad4f848767beb3c952383eff522e11fe8a40b",
+  "reviewedSource": "6acf92d7d0acb9460392a01a81bb9819589b848b",
+  "base": "aa45065bd8c2b3b8f24e1955ac52fd1d2707dbaa",
+  "verdict": "eligible for ONE changed bounded genuine rolling-notification-browser attempt",
+  "workingTreeClean": true,
+  "wholeTreeDifferencesFromReviewedSource": [
+    "execution/infrastructure-ledger.json",
+    "execution/sessions/registry.json"
+  ],
+  "sourceHashes": {
+    "scripts/testing/rolling-notification-browser.mjs": "40a59f50c14adca40cf2c944cca2042a3d945ed55a179db25e8ce26ea894f3d9",
+    "scripts/testing/rolling-notification-browser.test.mjs": "5747a73840a8efc1a3b0382b4e931e5a6f335dd8eea06c994db45e7a42d4fe32",
+    "apps/rolling/reader.browser.test.mjs": "983a63601081e446ea3a2d9f95812b6a8143fb7c81abe5dc26b616082daba9b2"
+  },
+  "findingClosure": "Fixed category now initialized null and set to constant browser-check-failed in main catch without accessing exception properties; finite root-view/root-message substages retained. Exact selector repair and production policy content remain intact.",
+  "independentChecks": [
+    {
+      "path": "execution/evidence/G07/notification-ebf7-independent-tests.log",
+      "sha256": "e8c925bc69d2b67f4a260e68e00676c2af3a7d06f35ee8eb4154b7db48302777",
+      "passed": 80,
+      "failed": 0,
+      "skipped": 0,
+      "carry": "Exact DOM helper and reader test unchanged by final constant-only diagnostic repair."
+    },
+    {
+      "path": "execution/evidence/G07/notification-3f1-fixed-category-independent.log",
+      "sha256": "2e6cba01de707860be089075c34c51db474721605218fcff1bc2f7307530d1b2",
+      "targeted": "invalid input cannot launch or expose control in fixed report",
+      "exitCode": 0
+    }
+  ],
+  "leadChecks": {
+    "path": "execution/evidence/G07/notification-fixed-category-tests.log",
+    "sha256": "09622ad412c21e3e9b77e7b4994c4e95f93fc16f5801a6ef01ac0853d26e7680",
+    "passed": 53,
+    "failed": 0
+  },
+  "normalBuildClosure": [
+    {
+      "path": ".build/sdk/sdk-manifest.json",
+      "sha256": "8fa64d6057ec3f388b714b943b6d9e3b6134da8f143bd2a68ab5a07c52cc87ee",
+      "inputs": 2040,
+      "outputs": 8,
+      "allCurrentBytesMatch": true
+    },
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "sha256": "c9db7f0d4c9ac26e8abb56fb0d6de5ca4587a558f9703403982859c108d177a4",
+      "inputs": 81,
+      "outputs": 24,
+      "allCurrentBytesMatch": true
+    }
+  ],
+  "conditions": [
+    "540s/4GiB,180s admission,150s browser,30s accounting unchanged.",
+    "Four actual application jobs, genuine B standalone fee and exact two-account accounting mandatory.",
+    "Root source/assets/dependencies frozen for actual run.",
+    "All earlier failed attempts including5815 remain failures; repaired selector is reproduced possible provenance, not retroactive proof of historical cause."
+  ],
+  "limits": [
+    "Source eligibility only; native notification behavior and cold browser recovery still require genuine pass.",
+    "No production source, built asset, SDK dependency or contract delta; no rebuild required.",
+    "No full G07/G14 or remote qualification claim."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "base": "eea60ddad4ed44ea9c61275b95c42ce768be8ad6",
+  "candidate": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-readiness-observer",
+  "implementer": "design-resume-20261014",
+  "allowed_paths": [
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs",
+    "prover/service.mjs"
+  ],
+  "required_checks": [
+    "private-query",
+    "compact-service",
+    "development-composition"
+  ],
+  "requirements": [
+    "RC26-readiness-attribution-component",
+    "RC40-private-operational-diagnostics-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-resume-20261014",
+      "task_id": "G07-readiness-observer",
+      "paths": [
+        "plugins/devnet/bootstrap.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "prover/private-query.mjs",
+        "prover/private-query.test.mjs",
+        "prover/service.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "74f5ca21217162bd8951d413a8184133f4956fb7",
+  "base": "57c0a642acac1c8b79835c6540bf9c82bcbf569e",
+  "disposition": "Source composition and bounded component runtime accepted; no genuine cold or browser runtime acceptance",
+  "bindings": {
+    "scripts/testing/rolling-preference-browser.mjs": "15a69eceb9b7654488a96a5b702eb1fdff6201c0d1a1e99f86273744bf69d87d",
+    "scripts/testing/rolling-preference-browser.test.mjs": "c7834713a626808762e293f3f5edc424e2426414c9ca3be73920869fd6e92646",
+    "scripts/testing/rolling-notification-browser.mjs": "48e16989649a1c04eb8477bef2f8cc99f78c47cdeeb2071dc84cd86f765a3866",
+    "scripts/testing/rolling-notification-browser.test.mjs": "e14dcbc31bce4e5c7071a22c18c7932c8495207ef9c880f487321af4e7c48f35",
+    "scripts/testing/rolling-application-fixture.mjs": "95e4f77576c9b300710e1b4ff3745fe3795a349950a53aa82315ddd235d39a60",
+    "scripts/testing/rolling-application-fixture.test.mjs": "d87fd41a824dc096fd01ab4c274c07242bf9c2865be07737bc825a767d73ba8e"
+  },
+  "checked": {
+    "driverExactEecBytes": true,
+    "sourceBeforeRowsRehashed": 1160,
+    "changed": [],
+    "tests": 254,
+    "passed": 254,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "elapsedMs": 4367,
+    "peakTreeRSSKiB": 637456,
+    "ownedTreeAbsent": true,
+    "childExit": 0
+  },
+  "sourceAssessment": [
+    "Actual native adapter and checkpointed gateway enabled only explicit relationships/preference-browser/notification-browser scenarios.",
+    "Actual-used counter join requires exact1/4 completed cold windows, no tagged calls, minimum compact fresh imports, native accepted==observed requests, failures/pending0. It does not elevate transport to authentication.",
+    "Independent native counters persisted before join assertion; previous financial collection remains first. This does not fix failure-before-return native snapshot omission identified separately in2165.",
+    "eec public/private tag batch counting and post-teardown finalizer fixes are exact carried bytes; both repaired negative families ran.",
+    "13 parent seam cases exercise actual-used helper for mismatch/pending/errors/missing import/invalid counters; labelled fixtures do not prove real browser delivery."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-browser-74f-components/result.json",
+      "sha256": "8c9b54609639d01dad01eb67416ebc6029d8abe0e96c2376249d97c22a54f5a5"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-browser-74f-components/build.log",
+      "sha256": "0ef1cb5440a928e8e27747c622ec175afd99321f30a3c55c98e8209fec1aa873"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-browser-74f-components/postcheck.json",
+      "sha256": "7bae9672d4f1448e5a63c35a4e108b430246afbacffb241592a9755c93dd1374"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/cold-browser-74f-components/before-source.json",
+      "sha256": "10fa38fc83b374f0778541d9d8f271129b0c48547369c0486becfb5878d9be12"
+    }
+  ],
+  "holds": [
+    "No genuine run eligibility conferred:57c actual cold recovery failed; diagnostic/measurement remains prerequisite.",
+    "No source edits, dependency changes or reviewer tests executed.",
+    "Full cold capacity/reorg/retention and compiler260 hold remain."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "2b416da60234b308615488d09ff1a8246487a577",
+  "baseRevision": "fb80d47a6054df1a3dbefdb9dc707e375e6f7565",
+  "verdict": "approved-bounded-experiment-source",
+  "files": {
+    "scripts/c01-client-mining.mjs": "a71e800a541776464f7479ea9fa4ea5e0edc6d44f3745f2fcb5c1639d9b07197",
+    "scripts/c01-client-mining.test.mjs": "4e3afdc15dead701a90d1ae5fb8b52b303a00fc1abdee4e2d782cdaeaf437bd8",
+    "scripts/testing/rolling-application-fixture.mjs": "4a9b9535c6b16e23efc41501ba90cc0d6934b3b864e670550c0c87c519eae6d6",
+    "scripts/testing/rolling-application-fixture.test.mjs": "beac9f6a6fe502a3182c8906c4c41f80c2e53e784c7e44b7fdc8fb15f9ddb31b"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js C01_TEST_ANVIL=root/.build/anvil-1.7.0/anvil pinned Node24.21.0 --test scripts/c01-client-mining.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "16 passed;0 failed. Four actual disposable pinned-Anvil cases, clock primitive,11 fixture/diagnostic tests; no Aztec node/proofs/model/cloud actions."
+    },
+    {
+      "command": "git diff --check fb80d47..2b416da",
+      "result": "passed"
+    }
+  ],
+  "findings": [],
+  "review": [
+    "Read changed source/tests before execution. Explicit real-wall mode asserts loopback chain31337, positive parent deadline, and reads/restores prior automining mode. Default warped setup behavior preserved.",
+    "Real-wall mode disables automatic mining to retain one mining owner. It waits until actual wall time exceeds latest L1 timestamp and mines with that actual timestamp; it asserts resulting timestamp equality and no future lead. Standing interval is preserved.",
+    "Cleanup joins current loop, restores automining even after ambiguous disable, preserves original work failure and aggregates restoration failure. Tests confirm future chain fails at deadline without backwards mining/entering work, and prior disabled automining stays disabled.",
+    "Application fixture uses mode only after existing setup/catchup. Trusted inspector/node configuration and120second freshness policy unchanged; no forced timestamps or readiness fallback. Diagnostics project fixed codes, actual public timestamps and bounded16KiB health flags only, preserving original application failure."
+  ],
+  "limitations": [
+    "This source approval permits one bounded actual application campaign; it does not establish full SDK/prover/application acceptance.",
+    "Anvil RPC has5second timeout and parent supervisor remains hard process deadline/lifecycle owner. Mining deadline is not cancellation of an already running work/proof promise.",
+    "Diagnostic unit nodes/health responses are explicitly labelled doubles. Actual human privacy and target-network qualification remain open."
+  ]
+}

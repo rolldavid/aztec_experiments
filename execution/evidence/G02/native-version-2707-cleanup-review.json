@@ -1,0 +1,34 @@
+{
+  "reviewer": "reviewer-20261011",
+  "recordedAt": "2026-10-13T02:39:40.593457+00:00",
+  "verdict": "final-owned-resource-cleanup-accepted",
+  "evidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/native-version-2707-actual/resource-readback-023550.json",
+    "sha256": "4d6e79b7d3bb7180d2dc944fd8f511e2216396281d222c33f5cfdd4be34a8e80"
+  },
+  "observed": {
+    "recordedAt": "2026-10-13T02:35:50.520541+00:00",
+    "fleetId": "fleet-0f0ed1d1-d909-4944-99af-64226f195617",
+    "fleetState": "deleted",
+    "resources": {
+      "instances": [
+        {
+          "id": "i-0c26c78b455914092",
+          "state": "terminated",
+          "controlsVerified": false,
+          "rootMappingVerified": false,
+          "shutdownReadback": "not-applicable-terminated",
+          "volumes": [],
+          "rootVolumeObserved": false
+        }
+      ],
+      "volumes": [],
+      "instancesTerminated": true,
+      "volumesAbsent": true
+    },
+    "repeatedDelete": false,
+    "qualification": "unqualified"
+  },
+  "qualification": "Prior strict UNQUALIFIED remains unchanged; no pin promotion, no inference that bill is final, no reserve release by reviewer.",
+  "actions": "Read-only evidence review; no provider call or deletion replay."
+}

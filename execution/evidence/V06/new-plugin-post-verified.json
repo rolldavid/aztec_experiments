@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T13:49:54.216Z",
+  "post": {
+    "schemaVersion": 1,
+    "scope": {
+      "l1ChainId": "11155111",
+      "rollupVersion": "2914217885",
+      "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+      "boardAddress": "0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752",
+      "portalAddress": "0xe664b6b5fd7575616653f75374d5fc7e8544b982"
+    },
+    "type": "PostPublished",
+    "position": {
+      "blockNumber": "15484",
+      "blockHash": "0x09c8f2cf789a99e6ce6245b4f1a5fb9eccfe737e599af94b46614936836c86b9",
+      "txHash": "0x227f0ec9c66a908f5c0337c6b0d1f58456a9968fdae468589dcac8ee79caffdb",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "payload": {
+      "postId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+      "orderIndex": "3",
+      "text": "@bok Reply with exactly: V6 testnet plugin works. Do not use tools, add formatting, or create a pull request.",
+      "publishedAt": "1791640092",
+      "flagDeadline": "1791643692",
+      "policyVersion": "0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa"
+    }
+  },
+  "receipt": {
+    "hash": "0x227f0ec9c66a908f5c0337c6b0d1f58456a9968fdae468589dcac8ee79caffdb",
+    "status": "checkpointed",
+    "blockNumber": 15484,
+    "blockHash": "0x09c8f2cf789a99e6ce6245b4f1a5fb9eccfe737e599af94b46614936836c86b9",
+    "transactionFee": "4264123182259600000"
+  },
+  "withdrawalEarliestUtc": "2026-10-10T14:48:12.000Z",
+  "chainTips": {
+    "proposed": {
+      "number": 15485,
+      "hash": "0x165ee7e1a5639d17fea94ffa23ae49cb1e13b7c321fa5d06d7aae93e629a15db"
+    },
+    "checkpointed": {
+      "block": {
+        "number": 15485,
+        "hash": "0x165ee7e1a5639d17fea94ffa23ae49cb1e13b7c321fa5d06d7aae93e629a15db"
+      },
+      "checkpoint": {
+        "number": 14460,
+        "hash": "0x00b1c222adbf79ba75e42fa7959abf94e3c87e88c8d25cce83c2b868c1db81ab"
+      }
+    },
+    "proven": {
+      "block": {
+        "number": 15456,
+        "hash": "0x050b7dcfa980869e50e10b52a742327012153be13e8666d798539f74ed3b4bdb"
+      },
+      "checkpoint": {
+        "number": 14431,
+        "hash": "0x008f9905819929d89873b6be4776180957ba0be259187eb7215ac93f30cdf222"
+      }
+    },
+    "finalized": {
+      "block": {
+        "number": 15456,
+        "hash": "0x050b7dcfa980869e50e10b52a742327012153be13e8666d798539f74ed3b4bdb"
+      },
+      "checkpoint": {
+        "number": 14431,
+        "hash": "0x008f9905819929d89873b6be4776180957ba0be259187eb7215ac93f30cdf222"
+      }
+    }
+  }
+}

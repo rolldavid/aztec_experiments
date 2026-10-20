@@ -1,0 +1,34 @@
+{
+  "base": "14e960d21a9a6c48bb929ddb28af35212ccced54",
+  "candidate": "b0d90b8b2d356a3a8fb3e8badf09ad5b1671e0c6",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-archive-authenticated-recovery",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "scripts/patch-pxe-preference-page.mjs",
+    "scripts/test-pxe-preference-page.mjs",
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/sdk-manifest.json"
+  ],
+  "required_checks": [
+    "archive-sdk",
+    "generated-closure"
+  ],
+  "requirements": [
+    "RC25-archive-authentication-component",
+    "RC26-bounded-history-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-archive-authenticated-recovery",
+      "paths": [
+        "scripts/patch-pxe-preference-page.mjs",
+        "scripts/test-pxe-preference-page.mjs",
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/sdk-manifest.json"
+      ]
+    }
+  ]
+}

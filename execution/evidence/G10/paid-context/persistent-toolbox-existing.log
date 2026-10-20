@@ -1,0 +1,32 @@
+✔ real filtered checkout excludes unreadable blobs and preserves edits and PR base tree (439.94275ms)
+✔ plain replies need no repository checkout or API request (2.979083ms)
+✔ filesystem tools share one checkout and a failed clone is never retried (7.358333ms)
+✔ PR publication preserves commit, files and complete invocation identity: 0x123 (6.343583ms)
+✔ PR publication preserves commit, files and complete invocation identity: 291 (5.422125ms)
+✔ PR publication preserves commit, files and complete invocation identity: 1291 (3.662458ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (2.454125ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (1.231125ms)
+✔ failed checkout initialization is cleaned by the session owner (1.048458ms)
+✔ PR reads retain changed files inside the agent budget despite large GitHub metadata (0.63775ms)
+✔ fresh agent uses tool output and always closes the checkout (0.734375ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (0.725417ms)
+✔ first message has no unnecessary paid summary (0.141791ms)
+✔ conversation incomplete blocks any paid model call (0.143542ms)
+✔ conversation noncanonical blocks any paid model call (0.272709ms)
+✔ conversation wrong latest blocks any paid model call (0.156ms)
+✔ conversation changed latest blocks any paid model call (0.156ms)
+✔ conversation duplicate blocks any paid model call (0.11025ms)
+✔ conversation invented system role blocks any paid model call (0.118708ms)
+✔ conversation oversized message blocks any paid model call (0.20475ms)
+✔ conversation empty blocks any paid model call (0.139333ms)
+✔ unknown summary outcome does not retry or start main model (0.334542ms)
+✔ summary cannot invoke tools or become system authority (0.199959ms)
+✔ summary counts against the request model-call ceiling (0.320791ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 498.752833

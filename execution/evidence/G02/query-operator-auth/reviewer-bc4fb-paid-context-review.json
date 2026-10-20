@@ -1,0 +1,46 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "bc4fbca48099bd7245677b6ff6f2d442cade042b",
+  "base": "17f8a03b0b37d7a146837a7d45cdc115e19bbc64",
+  "disposition": "PASS scoped paid-context helper source and labelled component results; not wired hosted acceptance",
+  "sourceSha256": {
+    "plugins/agent.mjs": "cd6692c37ba0f7b3c67df6950beb4b77807c6916f4a6fc78c37af8b5f95d23bb",
+    "plugins/conversation.mjs": "fa68641f87c78eff6e41ae571357d7bb312d7a1f05ae390dd14904498cda90df",
+    "plugins/test/conversation.test.mjs": "6f6889458b349c4c4801a13c45bb0f2bfe4146e565a9f3f3f35277cc06c6d4b4",
+    "plugins/test/model.test.mjs": "db4bd0ddd1549389d665c050160e9644e42ffbda81d469c7cbba8c6e83d09189",
+    "plugins/test/provider-metering.test.mjs": "9555cb939cefc4ac154990f82f387f4345d6bcb793a864cc79217def0bbfadcc",
+    "plugins/venice-metered.mjs": "571b4bf7fd5d0cfdc1507dbc8438a598996f9c19a89190c3627388b97408403c"
+  },
+  "resolvedFinding": {
+    "originalCandidate": "8dc26d8",
+    "issue": "Checking post creation heights alone accepted history from a checkpointed projection containing metadata newer than the required finalized head.",
+    "repair": "Requires the complete publication checkpoint itself not to exceed the required confirmation head, plus original anchor/revision rechecks; explicit projection-ahead despite old posts negative passes."
+  },
+  "assessment": [
+    "Loader uses trusted authenticated index capability, root-first strictly ordered pagination, unique IDs/cursors, stable scope/revision/checkpoint, and fails rather than truncates before reaching the exact selected request.",
+    "Earlier authenticated bot rows are retained; removed prior rows become tombstones without text. Latest request is validated and excluded from the summary.",
+    "Summary and main use the same injected complete port and call cap; summary is untrusted user context, cannot request tools, and an unknown summary outcome is not retried locally.",
+    "Live same-catalog integer rates require component-wise nonincrease and at least one strictly lower input/output/effective-cache rate; absent cache price conservatively uses input price. Equal or worse rates fail before credit/inference calls."
+  ],
+  "actual": {
+    "log": "execution/evidence/G10/paid-context/tests-repaired.log",
+    "sha256": "83344fd1b2a1bb992620eec835121edf91ee374958eba636bf5cefff6e0bfc3d",
+    "tests": 53,
+    "pass": 53,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 351.52875,
+    "scope": "Labelled node/index/model/catalog ports; no reviewer rerun or heavy work"
+  },
+  "mandatoryWiringRequirements": [
+    "Hosted production index must provide a genuinely finalized complete projection; ordinary checkpointed index may deliberately reject when ahead of finality.",
+    "Revalidate the SAME original history anchor at each actual paid execute boundary after reservation awaits; do not silently regenerate different history after a paid summary.",
+    "Retain existing durable metering/fence/journal across summary and main calls."
+  ],
+  "unqualified": [
+    "Actual authenticated persistent index plus loader integration",
+    "Hosted summary/main billing and restart chain journey",
+    "Real model summarization/inference quality",
+    "Persistent repository/thread workspace and complete G10 acceptance"
+  ]
+}

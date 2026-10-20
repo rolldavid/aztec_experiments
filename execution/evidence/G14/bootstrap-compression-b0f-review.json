@@ -1,0 +1,45 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "b0f8f432bbab554caf0122ad8ff43038cf6d8df1",
+  "base": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+  "verdict": "approved_source_only",
+  "scope": "Encoding-only repair to fit immutable controls in AWS16384byte user-data limit; not launch or runtime acceptance",
+  "fileSha256": {
+    "deploy/prover/BOOTSTRAP.md": "05e83a31141906d51be6add5b4b20455dbdadba28bfebbe9a027f4dbbfb03480",
+    "deploy/prover/bootstrap.py": "cb07715697fdb02e3147a041c366603032e9f7162a59ee4f49086c8569c58f0d",
+    "scripts/test-prover-bootstrap.py": "545280aa8cbd1a3c41e83973a287401cc1c770f1f8120ab012978a8a03ff0f36"
+  },
+  "checks": [
+    {
+      "command": "PROVER_VALIDATION_NODE=<pinnedNode24> python3 scripts/test-prover-bootstrap.py",
+      "passed": 48,
+      "failed": 0,
+      "seconds": 3.325,
+      "log": "/tmp/reviewer-bootstrap-b0f-tests.log"
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "Only inner compression format/filter, short quoted heredoc and direct exec(bytes) replace prior compile/exec wrapper. No runtime HOST controls/auth/admin configuration/deadline/shaper/classifier/failure/lifecycle logic changed.",
+    "Independent regression captures exact precompression program bytes under both encodings and confirms identical decompression; actual shell/Python wrapper executes definitions with only final privileged entry replaced by explicitly labelled harmless test marker.",
+    "Shell set-eu and umask077 retained. Outer gzip generation withmtime0 and checksum retained; compressed16384 cap remains a hard failure. Runtime/archive/manifest/source hashes remain required.",
+    "Safe worker measurement has actual retained private05 config at16334bytes50headroom; reviewer did not read capabilities, regenerate them or independently rerun old private configuration. Synthetic sameprogram/wrapper checks are independently verified."
+  ],
+  "safeMeasurement": {
+    "file": "execution/evidence/G02/operator05-compression-candidate.json",
+    "sha256": "99872d97c1b970307ab7555481b35e68f3ce644bd60ca120bb5284db83bf53af",
+    "gzipBytes": 16334,
+    "headroom": 50,
+    "scope": "Worker measurement only; not a reusable payload/launch authorization"
+  },
+  "prelaunch_conditions": [
+    "Freshly generate actual capabilities/deadlines and remeasure exact final gzip bytes <=16384;50byte prior headroom gives no future fit guarantee.",
+    "Changed bootstrap source hash requires new hash-bound runtime package, manifest/archive and generated payload; update proposal/ledger exact source references.",
+    "Revalidate Python3 LZMA support for selected image; new decoder is standardlib FORMAT_ALONE but no liveLinux execution performed here.",
+    "Preserve existing single2h diagnostic-only exception,35USD reservation/live no-overlap checks, durableoneintent and both absolute shutdown controls. No repeated paid action for missing outcome."
+  ],
+  "limitations": [
+    "No archive build/upload, private capability reads, AWS action, Docker/native startup or Linux qualification performed.",
+    "Previous remote startup cause remains unresolved. Encoding repair resolves only local prelaunch payload-size blocker."
+  ]
+}

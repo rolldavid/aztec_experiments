@@ -1,0 +1,91 @@
+{
+  "preparedAt": "2026-10-19T00:32:07.666647+00:00",
+  "scope": "Read-only extension forecast for existing host; no mutation or new capacity",
+  "instanceId": "i-09e2dbeea10854dc8",
+  "fleetId": "fleet-0755e814-93bb-41e5-b1e7-29ee03c4d9ec",
+  "currentDeadline": "2026-10-19T02:30:00Z",
+  "recommendedDeadline": "2026-10-19T06:30:00Z",
+  "priorBoundUsdPreserved": 140,
+  "existingCampaignReservationUsd": 125,
+  "recommendedCampaignReservationUsd": 150,
+  "recommendedCumulativeReservationUsd": 290,
+  "remainingAfterReservationUsd": 10,
+  "campaignUpperForecastUsd": "142.3734997313360",
+  "cumulativeUpperForecastUsd": "282.3734997313360",
+  "forecastHeadroomTo300Usd": "17.6265002686640",
+  "fitsWithin300": true,
+  "additionalForecastOverPriorUsd": "26.2527946666666666666666667",
+  "componentsUsd": {
+    "compute12h": "11.12832",
+    "gp3_1064GiB_36h": "4.256",
+    "extra375MiBps_36h": "1.125",
+    "ipv4_12h": "0.060",
+    "crossRegionAndArtifactReads": "5",
+    "backup20GB30days": "1",
+    "requestsMonitoring": "2",
+    "egressIncluding200GBFailureAllowance": "76.308596442780",
+    "caddyRetention": "0.1",
+    "privateManagementEndpoints": "1",
+    "taxUnpriced20percent": "20.3955832885560",
+    "delayedBillingCleanupBuffer": "20"
+  },
+  "resourceHoursBasis": {
+    "previousTerminatedHostsUpperHours": 4.5,
+    "currentHostWindowUpperHours": 7,
+    "currentWindowBasis": "23:30 prior earliest-start bound retained although actual launch23:46:12; through06:30 fixed",
+    "cleanupHours": 0.5,
+    "combinedHours": 12,
+    "retainedVolumeOrphanHours": 24,
+    "storageHours": 36,
+    "overlapObserved": 0
+  },
+  "network": {
+    "upperBytes": "391326135604.0",
+    "currentHostMaximum7_5hAt50MbpsBytes": 168750000000,
+    "previousMeasuredBytesPreserved": 76135604,
+    "previousThreeHostsLagAllowanceBytesPreserved": 22500000000,
+    "failureAllowanceBytesPreserved": 200000000000,
+    "currentHostObservedBytes": 19975947.0,
+    "currentHostMetricPoints": 9,
+    "currentHostMetricLatest": "2026-10-19T05:55:00+05:30",
+    "rateUsdGB": ".195",
+    "method": "Retain prior conservative bound plus full50Mbps current operating window, not observed-byte substitution; no free-tier credits"
+  },
+  "retention": {
+    "currentArchiveBytes": 2534165577,
+    "versions": 8,
+    "multipartUploads": 0,
+    "retainedAllowance": "Preserve20GB30days1USD current allowance; older retained archives remain in140 prior bound",
+    "endpoints": "Two one-AZ interfaces,18:58:52 through06:30 plus24h orphan/rounded partialhour =36hours each; .02/hour*36 +5GB*.01=.77USD, retain1USD allowance",
+    "postStopEbsAllowance": "24hours1064GiB and375extraMiBps; encrypted DeleteOnTermination both verified; snapshots none"
+  },
+  "conditions": [
+    "Lead must update shared reservation to150current+140prior=290 before extension.",
+    "Set/read back host absolute budget timer, Fleet expiry with terminate-on-expiry and both endpoint cleanup controls to06:30; do not disable controls or reset journals.",
+    "Reconcile all deadline-bound configuration and attestation inputs; immutable_deadline intentionally rejects inconsistent in-place config.",
+    "Keep50Mbps aggregate shaper and existing source-bound application admission; no new host or resize.",
+    "Terminate by fixed06:30; retain30min cleanup allowance and24h storage/orphan buffers.",
+    "Cost Explorer billing is delayed; no new CE calls made, prior independent-reviewed140 bound and20USD current delayed-billing buffer preserved."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/current-testnet-bootstrap/replacement-budget-20261019/budget.json",
+      "sha256": "d6569f684747c7db111a5c8fa35b689f8b3e560b62cc266265364c4b77bab041"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/infrastructure-ledger.json",
+      "sha256": "dfe39aa67b14d11866ae0090a797ad919b8546f096f609000c8153a03a0b4b4a"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-testnet-plan/extension-budget-20261019/live-readonly.json",
+      "sha256": "96e5c306a4aed1b6a010471abb1b5e4a5b30f307725d816edaf5167ebed316a5"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-testnet-plan/extension-budget-20261019/retention-readonly.json",
+      "sha256": "10c6f4d303657036a980e828af16283fbe6483134ffba7a515e4df83b31ea725"
+    }
+  ],
+  "paidActionsByWorker": 0,
+  "ledgerEdits": 0,
+  "deadlineMutations": 0
+}

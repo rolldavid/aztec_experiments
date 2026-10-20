@@ -1,0 +1,49 @@
+✔ fresh agent uses tool output and always closes the checkout (0.837125ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (0.921083ms)
+✔ first message has no unnecessary paid summary (0.20425ms)
+✔ conversation incomplete blocks any paid model call (0.177167ms)
+✔ conversation noncanonical blocks any paid model call (0.088708ms)
+✔ conversation wrong latest blocks any paid model call (0.083375ms)
+✔ conversation changed latest blocks any paid model call (0.087042ms)
+✔ conversation duplicate blocks any paid model call (0.071458ms)
+✔ conversation invented system role blocks any paid model call (0.133208ms)
+✔ conversation oversized message blocks any paid model call (0.150167ms)
+✔ conversation empty blocks any paid model call (0.08ms)
+✔ unknown summary outcome does not retry or start main model (0.288833ms)
+✔ summary cannot invoke tools or become system authority (0.101167ms)
+✔ summary counts against the request model-call ceiling (0.17025ms)
+✔ successful answer waits for host acceptance before closing invocation workspace (3.728458ms)
+✔ published app links are host-produced, byte bounded, and omit private validation metadata (0.458125ms)
+✔ isolated STATIC_CLEANUP_REQUIRED stops the agent before another paid call or tool (0.353833ms)
+✔ isolated STATIC_RECORD_FAILED stops the agent before another paid call or tool (0.084417ms)
+✔ isolated STATIC_UNAVAILABLE stops the agent before another paid call or tool (0.058333ms)
+✔ actual local HTTP serves latest static bytes and matching exact source download (120.595ms)
+✔ atomic latest transition hides old artifact AND source routes while retaining private history (95.630584ms)
+✔ host-only moderation persists through revision change and service reopen (108.105625ms)
+✔ publication rejects source digest before changing latest (12.675917ms)
+✔ publication rejects artifact digest before changing latest (15.199541ms)
+✔ publication rejects revision before changing latest (17.724541ms)
+✔ publication rejects unpassed before changing latest (9.7615ms)
+✔ publication rejects private source before changing latest (12.008125ms)
+✔ publication rejects source link before changing latest (12.308541ms)
+✔ publication rejects outside root before changing latest (15.057958ms)
+✔ publication rejects missing cleanup before changing latest (9.416458ms)
+✔ publication rejects missing index before changing latest (15.009791ms)
+✔ HTTP rejects credential headers, unknown paths and encoded traversal without serving metadata (44.721834ms)
+✔ post-publication file mutation or symlink is never served (47.247667ms)
+✔ failed catalog update preserves immutable revision and safely resumes exact pending publication (48.8585ms)
+✔ reopened orphan blocks unrelated publication before quota can be bypassed (61.960583ms)
+✔ bounded retention refuses capacity overflow and preserves latest (49.016708ms)
+✔ separate HTTP origin is mandatory even for local development (10.714ms)
+✔ moderation change during an in-flight disk read prevents stale response (49.503416ms)
+﹣ actual browser runs generated static JS with isolated storage and labelled public API (0.224541ms) # SKIP
+✔ reopen rejects unfinished directory until operator reconciliation (46.36525ms)
+✔ reopen rejects corrupt pointer until operator reconciliation (42.102958ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 960.767041

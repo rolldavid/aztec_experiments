@@ -1,0 +1,44 @@
+{
+  "reviewer": "reviewer-20261011",
+  "actualPacketSha256": "23731bffb02098950673ca7a6a7331fe8a4965248b1b30c553f9d66d315f93c0",
+  "verdict": "accept-authenticated-derived-image-closure-for-offline-runner-binding",
+  "image": "sha256:b1e7de12ba7c3261f8b8283f807ed56153f31e46fce16a8decfb31b84f0d456a",
+  "imageBytes": 60022710,
+  "closureSha256": "23251cfcfe792455235cfeffd5e13c699fd1fb098e4f06568ccbeed4d1210e31",
+  "parentImage": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+  "checks": {
+    "allActualFilesRehashed": true,
+    "protectedRehashed": 902,
+    "mismatches": [],
+    "elapsedMs": 6929,
+    "stateExitCode": 0,
+    "oomKilled": false,
+    "singleCreateStartCommitRecorded": true,
+    "ownedContainerPositiveAbsenceRecorded": true,
+    "oldImageRetainedRecorded": true,
+    "parentPackagesExact": 116,
+    "installedCount": 123,
+    "newArchives": 7,
+    "newArchiveBytes": 650730,
+    "receivedBytes": 6236396,
+    "writableBytes": 20488192,
+    "vendorUnitsExact": true,
+    "machineIdAvailable": true,
+    "messagebusUid": 100,
+    "messagebusGid": 101
+  },
+  "additions": [
+    "Six pinned D-Bus1.14.10-4ubuntu4.1 packages",
+    "Authenticated resolver dependency adduser3.137ubuntu1"
+  ],
+  "acceptanceBasis": [
+    "Reviewed setup requires signed main-only APT indexes and exact archive size/SHA closure before image commit.",
+    "Actual source-bound log/closure records successful acquisition/install and no changes to116 previous package name/version/architecture rows.",
+    "Unchanged bounded cleanup attempted kill on exited container then wait/remove and positiveabsence; nonzero kill is not falsely claimed successful."
+  ],
+  "limits": [
+    "Image acquisition only; no guest systemd workload, retention test or native BB qualification.",
+    "Exact new-image/closure offline runner must be separately reviewed and parent granted after other work cleanup.",
+    "No Docker/provider operation executed by reviewer."
+  ]
+}

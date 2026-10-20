@@ -1,0 +1,47 @@
+{
+  "createdAt": "2026-10-10T13:12:36.259130+00:00",
+  "method": "gzip level6 mtime0; decoded files exactly match website-current.tar.gz and build hashes; upload encoded bytes under original keys with listed HTTP metadata",
+  "awsGuidance": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html",
+  "files": [
+    {
+      "path": "aztec_bundle.js",
+      "contentType": "text/javascript",
+      "contentEncoding": "gzip",
+      "cacheControl": "no-cache",
+      "decodedBytes": 62581050,
+      "encodedBytes": 28021589,
+      "decodedSha256": "648ccd7dab264e89c6e0dbe6b1084cf6a6aa73eddaa03ef103547c73ebecba82",
+      "encodedSha256": "81621d83d45dab84309c8c352fc5e1412ec22c6023377b5af5a7a8c3ba8872cb"
+    },
+    {
+      "path": "censor.html",
+      "contentType": "text/html",
+      "contentEncoding": "gzip",
+      "cacheControl": "no-cache",
+      "decodedBytes": 11664051,
+      "encodedBytes": 5332843,
+      "decodedSha256": "df3e8d1e335739910ffb8bf95e4f90f6b239f2fe843188518a71336aae800de4",
+      "encodedSha256": "58222197b1ef2385eca9a6451501706a940f666be9427220688b57f5d15457da"
+    },
+    {
+      "path": "deploy.html",
+      "contentType": "text/html",
+      "contentEncoding": "gzip",
+      "cacheControl": "no-cache",
+      "decodedBytes": 11516708,
+      "encodedBytes": 5297015,
+      "decodedSha256": "76b9f7973ec7b444eff40156ce570f7bba1ed69cf72d5664827b05f5364c229b",
+      "encodedSha256": "beb6aaffe469535d51f664e639d42e99ea6bf0ce6c51713931736c671d0a16a4"
+    },
+    {
+      "path": "user.html",
+      "contentType": "text/html",
+      "contentEncoding": "gzip",
+      "cacheControl": "no-cache",
+      "decodedBytes": 11670972,
+      "encodedBytes": 5334798,
+      "decodedSha256": "3e7d5197a6d1b602878cd990209323b282ca4c47d259457ffa3f54de1f3759e3",
+      "encodedSha256": "1522a14b368793ea30a328bf224472184029f4544f6cbcfead00c2af9bad5362"
+    }
+  ]
+}

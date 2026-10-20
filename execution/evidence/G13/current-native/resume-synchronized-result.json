@@ -1,0 +1,21 @@
+{
+  "source": "8d93452",
+  "at": "2026-10-14T02:50:50.412474+00:00",
+  "passed": false,
+  "session": 15939,
+  "stage": "original-bok-constructor-reconciliation",
+  "observed": "FPC publication and fresh synchronized wallet initialization completed; original Bok constructor remains unresolved through120s poll. No new transaction submission.",
+  "nativeProofs": false,
+  "pxeProverEnabled": false,
+  "cleanStopped": true,
+  "leaseAbsent": true,
+  "snapshotHead": {
+    "number": "0x39f",
+    "hash": "0x231632d3fca958d56885421c004b31fbb5b52dcf9266b4733320ea27ebfdfb83",
+    "pending": "420",
+    "proven": "420"
+  },
+  "privateLogSha256": "e98fd4391038d5d5c28e83b5a978156d15fc94ce4c7bf9974716a74838f1f0dc",
+  "next": "Finite read-only archived receipt/instance versus historical public storage discriminator; no whole bootstrap replay.",
+  "cleanupObservation": "Read at process15939 completion, before separate subsequent readonly probes"
+}

@@ -1,0 +1,26 @@
+✔ public opening is SDK-free; dialog survives reader changes, traps focus and restores it (608.461833ms)
+✔ name availability feedback ROLLING_NAME_INVALID preserves an editable draft without a transaction (362.336166ms)
+✔ name availability feedback ROLLING_NAME_TAKEN preserves an editable draft without a transaction (338.001625ms)
+✔ name availability feedback ROLLING_NAME_AVAILABILITY_UNAVAILABLE preserves an editable draft without a transaction (334.610792ms)
+✔ name availability does not clear recovery for unknown failures or claim a check for legacy saved actions (324.032ms)
+✔ account invalidation clears names/drafts immediately and discards delayed owned results (404.35225ms)
+✔ account invalidation clears names/drafts immediately and discards delayed profile results (395.426459ms)
+✔ recovery full values wrap inside the dialog at 390px: history (341.007875ms)
+ℹ {"width":390,"phase":"history","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 390px: prepared-marker (278.591958ms)
+ℹ {"width":390,"phase":"prepared-marker","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 1280px: history (341.843375ms)
+ℹ {"width":1280,"phase":"history","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ recovery full values wrap inside the dialog at 1280px: prepared-marker (287.663959ms)
+ℹ {"width":1280,"phase":"prepared-marker","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ dialog selections and view changes retain a meaningful keyboard position (294.749666ms)
+✔ saved refund review failure reveals no private detail or send control (483.857459ms)
+✔ saved refund review account-change reveals no private detail or send control (405.443291ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5380.315875

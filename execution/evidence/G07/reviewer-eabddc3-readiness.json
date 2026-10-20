@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "eabddc3a5691ce5f10aabe324bb8f61c576f7e06",
+  "baseRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "verdict": "approve-source-component",
+  "requirements": [
+    "RC25",
+    "RC26"
+  ],
+  "performanceRequirement": "RC40 remains unqualified; unchanged 120-second whole recovery and 10-second read budgets.",
+  "changedFiles": {
+    "shared/rolling/cold-preference-reader.mjs": "91012b4bdcbe1ad56a126381746b7323e0f6bae99426e7758247049827ffde23",
+    "shared/rolling/cold-preference-reader.test.mjs": "dc62e8017ca980041614364cdc2648d9f96f8465d98730d20e689f068354a7ce"
+  },
+  "findings": [],
+  "assessment": {
+    "readinessBoundary": "Full fresh inspection at entry before cache/SDK work, and after encrypted CAS plus final SDK mailbox/advance handling; final uncached observed-anchor recheck precedes both recovering and complete returns.",
+    "intermediateAuthentication": "Every existing recheck call remains and still validates numbered header hash against exact captured anchor with pre/post context checks. Speculative old-anchor, promotion old/new anchors, pre/post-CAS and final advance fences are retained.",
+    "independentSdkAuthority": "Unchanged runRollingPreferenceRecovery canonicalSnapshot and page canonical code verify expected node network/proof identity, exact numbered anchor/header, contract class/address, archive/receipt/body validators and original commit boundaries. Reader readiness is not the sole authentication authority.",
+    "durableFailureSemantics": "Final readiness veto returns no progress/preferences; an already committed authenticated SDK/cache page is retained for the ordinary explicit next-read mailbox/replay path. No automatic retry or fallback was introduced.",
+    "lifecycleAndPrivacy": "No contextGuard, abort/drain ownership, active-reader lifetime, selector shape, range, log/byte bounds, encryption domain, mailbox/CAS sequence or transport policy changed. No readiness result is cached across reads.",
+    "simplicity": "Two reader helpers plus one final call relocation; no new lifecycle, scheduler, network primitive or timeout."
+  },
+  "independentChecks": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp [pinned Node 24.21.0] --test shared/rolling/cold-preference-reader.test.mjs shared/rolling/compact-client.test.mjs",
+    "tests": 83,
+    "pass": 83,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 258.219208,
+    "exitCode": 0,
+    "coverage": [
+      "entry readiness refusal without SDK page/cache write",
+      "eight final identity/proof/stale/unsynced veto cases across recovering/complete after durable CAS and mailbox",
+      "honest replay after late failure",
+      "post-CAS reorg, marker/anchor advancement and lost delivery/CAS paths",
+      "account invalidation and pending operation ownership after abort",
+      "bounded public transport, malformed/oversize input, no retry",
+      "labelled call-cost clock regression under unchanged 10-second deadline"
+    ],
+    "testLimits": "Reader tests execute real AEAD/CAS/fold with labelled SDK/node/provenance doubles; latency test uses controlled time/call costs, not measured network performance."
+  },
+  "workerEvidence": {
+    "packetSha256": "4477c2b15f8e5d29ee3a6d171702d8ae6101e6d045e26999e19d1e837f507874",
+    "allFiveLinkedFileHashesVerified": true,
+    "beforeFailure": "Retained original c803 plus new latency regression fails; worker log hash checked, not rerun independently.",
+    "exactHistoricalCause": "The observed 10.490-second failure and repeated snapshot cost support the repair, but generic historical failure does not establish the cause of every earlier failure."
+  },
+  "limits": [
+    "No live repaired recovery, full 120-second success, generated closure, real-proof/testnet or specialist privacy acceptance claimed.",
+    "Owning normal generated asset closure and exact integration mapping remain lead work before deployment."
+  ],
+  "reviewerActions": "Read-only source and evidence inspection plus existing reader/transport tests. No browser/native/model/build/financial actions."
+}

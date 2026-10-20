@@ -1,0 +1,65 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "reviewedAt": "2026-10-14T20:20:28.236363+00:00",
+  "sourceRevision": "05cdbcef22fdc282dd4208ddf0aeeceb3c06e5eb",
+  "baseRevision": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+  "verdict": "approve",
+  "requirements": [
+    "W02-A02",
+    "W02-A04",
+    "RC22",
+    "RC25",
+    "RC26"
+  ],
+  "findings": [],
+  "sourceHashes": {
+    "apps/dist/aztec_bundle.js": "3fdcfba79f1b67ce7fb8c515dee447905476e8036e052764cdee2d21b447707b",
+    "apps/dist/sdk-manifest.json": "eed7151b7249bb107f08b1f44cfa214e87b57e11ea143561592e60c11236f106",
+    "apps/rolling/wallet-panel.browser.test.mjs": "de965575e290df4f9a46d403d506e83246b5b7790b4bbe507086e8f92fb1355a",
+    "apps/rolling/wallet-panel.mjs": "5ac6c1e6c3f212f3f652dbf8cee4ef7aeb7bc0693d4ee34f5d59a6da31c61fca",
+    "plugins/devnet/bootstrap.mjs": "e68e2d2d7c1b11ce5459c49ceabf141ea3b8fdfc2ecebf10ad21d25ad30a6939",
+    "plugins/devnet/operator-test.mjs": "949e52c8b47a9023066dc9da4bdb4d5305678dbe766a92a9af7261e3d212d778",
+    "prover/private-query.mjs": "30985f04e93a4878b4df628c55facf479b5d8df309bbe14cd59b6ec62ceefe7a",
+    "prover/private-query.test.mjs": "081bc81e0e8d8c76bafe1af6c2776fc3a2348270683bf78df369a1132eb45a2b",
+    "shared/trusted-private-node.mjs": "d449a9ecaa085edd2d0e948aa9aa45b0a6d8aa73fa9b644eabeb5c2691c2ed12",
+    "shared/trusted-private-node.test.mjs": "1998be98ce3955359e3cdd89edebadcbb4d626904889a228aa12a7e58c47e578"
+  },
+  "reviewedBehavior": [
+    "Only exact existing custody plaintext-import warning is projected. Arbitrary account/SDK messages remain suppressed. Warning persists across connection failure and reopen; importer/encrypted export behavior unchanged.",
+    "Backup guidance explains non-resettable password, loss of account keys and conditional independent claim-secret recovery. Posting collateral amount is labelled wei, preserving original browser assertion and leaving other credit units unchanged.",
+    "Readiness error diagnostics are available only through internal WeakMap provenance, with fixed reason/stage and at most two detached frozen public snapshots; malformed/raw upstream errors and forged properties acquire no diagnostic authority.",
+    "Canonical/identity/freshness guards, two-snapshot bound, grouped reads/draining and original error categories preserved. Public HTTP503 response remains generic; diagnostic never authorizes a request.",
+    "Existing observer per-code/minute throttle, one pending observer per code and thrown/rejected/hung observer handling unchanged. Native bootstrap emits only genuine bounded diagnostic via trusted existing sink; no request/account correlation added."
+  ],
+  "checks": [
+    {
+      "kind": "independent focused existing diagnostic/observer tests",
+      "result": "16PASS0FAIL/SKIP368.026ms",
+      "log": "execution/evidence/G07/reviewer-c2dfb1d-diagnostics.log",
+      "sha256": "afda66d40621ade69ca7c8392a5af2f86728e0226fda7fa098937373a81ae853"
+    },
+    {
+      "kind": "final source equivalence",
+      "result": "All eight source/test blobs equal independently inspected c2dfb1d."
+    },
+    {
+      "kind": "independent generated closure",
+      "result": "Existing check-sdk passes2057inputs/8outputs rc3. Committed bundle/manifest equal normalbuild. All97walletinputs/25servedfiles hashes and byte sizes match."
+    },
+    {
+      "kind": "parent full affected suite",
+      "result": "286PASS0FAIL/SKIP44000.766ms, including full114DOM plus manifest/trusted-node/private-query. Original collateral assertion unchanged and passing."
+    }
+  ],
+  "evidenceHashes": {
+    ".build/w02-g07-final/apps-build.log": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac",
+    ".build/w02-g07-final/combined-checks.log": "07f05f8f6a35944ab4cee2f9a84162f5f36ae0eca8b74f8803e26ef5f2532f77",
+    ".build/w02-g07-final/sdk-build.log": "53913b31727986e08f93d340adbed23c986114b7e52e889e433b0773ae7b7ae5",
+    ".build/w02-g07-final/wallet-build.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+  },
+  "limits": [
+    "Component/generated closure approval only. Genuine keys-only full recovery, actual RC40 performance, testnet proofs and release gates remain open.",
+    "UI tests use real browser DOM with labelled custody/network doubles, not genuine wallet restore acceptance.",
+    "No product source/package mutation, browser/service/model/wallet/financial action by reviewer."
+  ]
+}

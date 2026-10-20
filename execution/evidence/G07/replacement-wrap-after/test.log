@@ -1,0 +1,60 @@
+✔ public opening is SDK-free; dialog survives reader changes, traps focus and restores it (248.116958ms)
+✔ private choices, multibyte limit, literal preview and explicit maximum-fee confirmation (367.635083ms)
+✔ uncertain submission cannot resend; reopening and replacement reconcile the retained intent (439.958833ms)
+✔ lost prepare acknowledgement blocks new work until recovery; prepared cancellation never sends (313.307083ms)
+✔ explicit create, encrypted backup download, no automatic account creation and failed cleanup preserves account (366.585125ms)
+✔ funding remains honest and unavailable connection has no action buttons or automatic retry (280.997ms)
+✔ recovery import is explicit; quote, repost, like and unlike retain exact selected targets (767.848541ms)
+✔ failed export without a private connection is not misreported as a connection failure (267.245959ms)
+✔ owned names are readable and profile version is fetched only by explicit selection/check (244.709625ms)
+✔ stale bio version fails without rereading or overwriting; empty bio clear requires explicit review (340.087666ms)
+✔ avatar exact immutable preview bytes survive confirmation and recovered prepared intent (544.687125ms)
+✔ avatar clear, rejected uploads and failed profile connection never auto-send (739.806792ms)
+✔ invalid recovered avatar disables send and lock invalidates/revokes existing previews (286.244458ms)
+✔ random names remain editable local proposals until an explicit action check (283.345208ms)
+✔ profile confirmed clears only captured version and requires an explicit new check (316.500834ms)
+✔ profile reverted clears only captured version and requires an explicit new check (310.443166ms)
+✔ lost profile preparation acknowledgement retains saved intent and exact avatar while invalidating draft version (431.171542ms)
+✔ private names view pages only on request and opens one public profile deliberately (297.426708ms)
+✔ names paging failure keeps existing names and retries only on explicit user action (344.953125ms)
+✔ names management reuses registration and version-checked profile fee confirmation (602.635667ms)
+✔ account invalidation clears names/drafts immediately and discards delayed owned results (333.232375ms)
+✔ account invalidation clears names/drafts immediately and discards delayed profile results (328.287125ms)
+✔ locking from names management removes names and drafts without deleting retained recovery (297.364042ms)
+✔ empty private names view offers registration without inventing identities or public lookups (260.626625ms)
+✔ invalid private names duplicate page preserves current list and stops without retry (262.568542ms)
+✔ invalid private names cursor page preserves current list and stops without retry (264.765709ms)
+✔ private recovery is explicit, one bounded step, and never exposes partial preferences (291.667208ms)
+✔ every preference and read marker captures a fresh head and requires maximum-fee confirmation (982.365166ms)
+✔ account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result (242.015666ms)
+✔ preference head failure does not prepare and recovery failure never implies an empty successful view (324.974875ms)
+✔ locking clears recovered private capability before asynchronous session cleanup settles (297.9035ms)
+✔ explicit recovery abort waits for the original private call and does not publish its late complete result (266.052292ms)
+✔ preference lock driver waits for delayed reopen refresh before expanding security (597.838541ms)
+✔ replacement inspection and review never send; confirmation shows distinct ceiling and historical fees (337.545083ms)
+✔ changed same-height marker needs explicit consent again after closing before review (432.465958ms)
+✔ reopened replacement restores renewed ceiling without inspecting, preparing or sending automatically (277.421042ms)
+✔ replacement pending is honestly fenced without preparation or sending (224.559583ms)
+✔ replacement unknown is honestly fenced without preparation or sending (224.745958ms)
+✔ replacement context-changed is honestly fenced without preparation or sending (224.80225ms)
+✔ replacement history-unavailable is honestly fenced without preparation or sending (225.276583ms)
+✔ replacement canonical is honestly fenced without preparation or sending (223.75075ms)
+✔ replacement limit-reached is honestly fenced without preparation or sending (224.856958ms)
+✔ failed replacement preparation discards eligibility but preserves saved action and requires explicit recheck (293.049ms)
+✔ account invalidation during recovery inspection clears private history and never restores late eligibility (230.055959ms)
+✔ recovery full values wrap inside the dialog at 390px: history (321.100333ms)
+ℹ {"width":390,"phase":"history","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 390px: prepared-marker (251.962ms)
+ℹ {"width":390,"phase":"prepared-marker","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 1280px: history (326.741542ms)
+ℹ {"width":1280,"phase":"history","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+✔ recovery full values wrap inside the dialog at 1280px: prepared-marker (240.785458ms)
+ℹ {"width":1280,"phase":"prepared-marker","clientWidth":588,"scrollWidth":588,"documentWidth":1280,"viewport":1280}
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16761.698458

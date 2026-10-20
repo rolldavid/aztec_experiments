@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "8f891977986304b13d68231a40ffe94cbfb185c6",
+  "baseRevision": "0cbcc1b8b7b3158ebf7ec83c9293b6ff7310635c",
+  "verdict": "PASS source eligibility for one bounded affected five-file query service suite; P2 source closure, runtime pending",
+  "priorFindingReportSha256": "222ff1eb14434b9024de4c2775b7c633dee8bb5a7d5086dc2d92c069715c54e0",
+  "sourceHashes": {
+    "prover/qualify-runtime.mjs": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+    "prover/qualify-runtime.test.mjs": "6173ab5050247bf6eb739ccc3324dab45400528ca12df1c90b7fa8503c93e50e",
+    "prover/service.mjs": "92e55530ac4362a5b546c9458d44532011874b087057e8fbad1c46c98f1aa742",
+    "scripts/test-prover-service.mjs": "210e1515885b6b88949169a8f7cd33c80cafdc10b19490c203375a3904cd3308"
+  },
+  "checked": [
+    "Primitive URL and rollup strings required before legacy URL/regex/BigInt coercion in service and qualifier. Exported loopback helper independently rejects object inputs.",
+    "Qualification scope independently revalidates strict shape and snapshots scalar fields into frozen detached object.",
+    "Changing toString/valueOf and throwing Symbol.toPrimitive negatives cover both fields and validators, direct loopback, service start rejection and zero coercion calls; positive scope resists later caller mutation.",
+    "Only four existing claimed files differ from0cbc; proof-only absence, actual inspector, default ordinary service, early jobs rejection and handler draining unchanged."
+  ],
+  "pending": [
+    "No repaired tests yet; one <=60s/2GiB five-file suite with actual local HTTP/SDK fixtures is eligible after parent serialized grant.",
+    "No provider, paid launch, native proof, bootstrap or deployed Linux qualification authorized.",
+    "No full cold/integration/release implication; unchanged sendTx RPC remains, so query-only is not general read-only."
+  ]
+}

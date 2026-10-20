@@ -1,0 +1,93 @@
+{
+  "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+  "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "task_id": "G12-persistent-hosting",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+      "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "task_id": "G12-persistent-hosting",
+      "id": "persistent-controls-focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 scripts/test-prover-bootstrap.py \u2014 existing named focused cases listed in attached logs; independent review confirms revision-scoped carry-forward",
+      "environment": "Local Python unit/boundary checks; no paid service/proof/model or transaction",
+      "observed": "16 persistent-mode cases pass on d32ae803; 8 selector and affected control-path cases pass on exact final0205; reviewer confirms unchanged earlier coverage and no blocking findings.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-focused-tests.log",
+          "sha256": "91b4bb1c9ce1859d5650ac7dbffff8aefb8ed22909ef06565103dd258fc0d598"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-overlay-focused-tests.log",
+          "sha256": "fec17317c5b4a791d4774effd05215a8f8809bcff3bdd9c227c70f664b1d0a56"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/review-persistent-0205d08b.json",
+          "sha256": "0c8f0d47259cd766f4c525e0339b0169118d27b996284f3474e635f283babee9"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+    "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+    "task_id": "G12-persistent-hosting",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "restore_review",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G12/persistent-hosting-20261020/review-persistent-0205d08b.json",
+        "sha256": "0c8f0d47259cd766f4c525e0339b0169118d27b996284f3474e635f283babee9"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+      "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "task_id": "G12-persistent-hosting",
+      "id": "owner-20261020-persistent-hosting",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/review-persistent-0205d08b.json",
+          "sha256": "0c8f0d47259cd766f4c525e0339b0169118d27b996284f3474e635f283babee9"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-focused-tests.log",
+          "sha256": "91b4bb1c9ce1859d5650ac7dbffff8aefb8ed22909ef06565103dd258fc0d598"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-overlay-focused-tests.log",
+          "sha256": "fec17317c5b4a791d4774effd05215a8f8809bcff3bdd9c227c70f664b1d0a56"
+        }
+      ]
+    },
+    {
+      "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+      "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "task_id": "G12-persistent-hosting",
+      "id": "RC-operational-containment",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/review-persistent-0205d08b.json",
+          "sha256": "0c8f0d47259cd766f4c525e0339b0169118d27b996284f3474e635f283babee9"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-focused-tests.log",
+          "sha256": "91b4bb1c9ce1859d5650ac7dbffff8aefb8ed22909ef06565103dd258fc0d598"
+        },
+        {
+          "path": "execution/evidence/G12/persistent-hosting-20261020/persistent-overlay-focused-tests.log",
+          "sha256": "fec17317c5b4a791d4774effd05215a8f8809bcff3bdd9c227c70f664b1d0a56"
+        }
+      ]
+    }
+  ]
+}

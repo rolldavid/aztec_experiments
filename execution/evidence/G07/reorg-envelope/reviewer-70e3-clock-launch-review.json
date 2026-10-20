@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "70e3a2a7b7af6900a8c215a71c835ff5f3a02125",
+  "base": "3bfc7f60b6bb214860dade02b05a1236c457c871",
+  "verdict": "ELIGIBLE for one separately granted real included-board-clock diagnostic only",
+  "reviewPacketSha256": "859d3c92cef130793381edae1d874eff8872a407dcb957da86e8371efbea0d75",
+  "preparationSha256": "527096e97edfe0d9c0ecec04b8d026da661f3dca69052ce7f8756e7cb76fc433",
+  "launcherSha256": "b9828a6614c6f89460605a00af5c70384970cd676d44235665a2da19d4522488",
+  "closureSha256": "782fea5ccfd8dbde07cb383414ed261c6588a2ff0a9b54709726ea59d40a0c93",
+  "componentReviewSha256": "29e32d13dede450c7d747dbd0918353b9e18bb299d6791c71a26fa49b37ca39c",
+  "briefSha256": "a013f6e9241d192dc2f3facfe4b5c77989e0dd74296de78839b2a625d2cbeb1f",
+  "checks": [
+    "Exact three27dd Git blobs and only three changed paths over3bfc; current clean70e3 source",
+    "All3157 launch/closure hashes independently rehashed; normal SDK2052/8 frontend97/10 wallet84/24 contracts53inputs and12 consumeroutputs verified",
+    "Prior6b0 launcher diff limited to evidence directory,closure path,explicit included-board-clock scenario and120000 intent metadata",
+    "Scenario actually supplies120000ms to unchanged Supervisor and105000 application deadline; default whole-tree4GiB, same source/preflight/sandbox/ownedcleanup",
+    "Real proofs enabled,remote disabled; one application proof thread configuration; no browser/provider; fixed disposable120s genesis offset only",
+    "Acceptance requires actual genesis/first-included-tx offset bounds,validator eligibility,numeric postactivation/nodehandoff clock observations and real RollingBoard inclusion; no timing saving inferred"
+  ],
+  "limits": {
+    "deadlineMs": 120000,
+    "applicationDeadlineMs": 105000,
+    "rssLimitKiB": 4194304
+  },
+  "conditions": [
+    "Lead exactonce approval binds candidate,source/closure/preparation/launcher and this review before launch",
+    "Exclusive heavy slot; preserve failure and no unchanged replay",
+    "Verify terminal source/ownedtree/TMP/launcher cleanup and actual acceptance before proposing marker"
+  ],
+  "notQualified": [
+    "Full initialized marker/reorg acceptance",
+    "Full funding/wall catchup timing feasibility",
+    "Deployment or remote prover release"
+  ]
+}

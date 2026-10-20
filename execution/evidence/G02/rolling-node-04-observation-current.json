@@ -1,0 +1,359 @@
+{
+  "observedAt": "2026-10-11T21:08:46.973586+00:00",
+  "identity": {
+    "Account": "052665140763",
+    "Arn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson"
+  },
+  "instances": [
+    {
+      "id": "i-0dc273607f11cedb7",
+      "state": "running"
+    }
+  ],
+  "markers": [
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "observed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3177336,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "started"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "passed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP_DIAGNOSTIC",
+      "schemaVersion": 1,
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "status": "passed"
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3316002,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3317908,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3319408,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3321200,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3331199,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3520077,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3521151,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3522385,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3523549,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3524665,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3525829,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3526993,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3528157,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3529093,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3529759,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3530965,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3531791,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    },
+    {
+      "marker": "ROLLING_BOOTSTRAP",
+      "schemaVersion": 1,
+      "stage": "installed",
+      "controlsVerified": true,
+      "budgetStop": "2026-10-12T04:42:35Z",
+      "egressBytes": 3532997,
+      "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+      "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+      "proverPolicy": "masked-pending-qualification",
+      "linuxQueryQualified": false
+    }
+  ],
+  "receipt": {
+    "present": false,
+    "category": "not-found"
+  },
+  "plugin": {
+    "status": "ready",
+    "lastFailure": null
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "candidate": "5792dc62281e18ecf39aeff719cf64666f273ef8",
+  "base": "aeaf7e5fd4b5ff43407b3f110166f4e056c4a44c",
+  "verdict": "source approved for a distinct bounded provider campaign",
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test plugins/test/provider-metering.test.mjs",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "command": "git diff --check aeaf7e5..5792dc6",
+      "result": "pass"
+    }
+  ],
+  "observations": [
+    "Only absent or empty-array tools omitted. Nonempty tools preserved; model/quote output cap, flags, usage billing and one-send fence unchanged.",
+    "Outgoing JSON regression rejects prior tools-empty-array body; nonempty tools roundtrip checked.",
+    "Distinct private677-byte diagnostic independently classified tools-empty-array-rejected; no raw body printed or copied. Body SHA2566fe42da4aa6f14ee2607368e7f0f67c6d6e6be26d19f90ca4abf9ee3c7c604a4."
+  ],
+  "limits": [
+    "Previous7369/e814 calls remain separately fenced; their discarded response causes cannot be retroactively confirmed.",
+    "HTTP400 does not establish no charge. No paid retry authorized by this report.",
+    "Actual new provider response/accounting/recovery qualification remains required."
+  ],
+  "schema_version": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewed_at": "2026-10-11T18:49:22.979484+00:00",
+  "source_sha256": {
+    "plugins/test/provider-metering.test.mjs": "a107ce3b02357cfb0fd379cf846d1d1bab3e0d408d2913c40e6b01c7477d0038",
+    "plugins/venice-metered.mjs": "0f49d26b5cbcf202f4bcae9337ec4780097d8bd0d5baee1e85a2702ead1403ed"
+  }
+}

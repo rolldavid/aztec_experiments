@@ -1,0 +1,21 @@
+{
+  "sourceRevision": "a7809ad963de416d7ff37056260a3afe35dab072",
+  "sourceDigest": "b829669a7aff4ccbf9a8e0e666419e56f42bcfcc3ebe3696999de004908bf919",
+  "testCount": 1,
+  "testsPassed": true,
+  "buildPassed": true,
+  "artifactSha256": "6e96fcb0ca03310e02ef4b7971d83e865091a871e721247f410dfbd2e8dcd2d1",
+  "outputDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-bok-recovery/.build/isolated-setup-cleanup/accepted-garden/output/bok-static-55802780-be0d-4e99-bbb5-3f0e20728189",
+  "elapsedMs": 6856.218292,
+  "started": [
+    {
+      "id": "5ad9fbc5809a45230f1901aa02f8ceb93e1fb2ab8433ad8920882bee280628ea",
+      "event": "start",
+      "name": "bok-static-55802780-be0d-4e99-bbb5-3f0e20728189",
+      "time": 1792319761239288000
+    }
+  ],
+  "cleanup": {
+    "ownedContainerAbsent": true
+  }
+}

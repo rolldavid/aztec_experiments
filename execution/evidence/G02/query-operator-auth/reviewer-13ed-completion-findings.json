@@ -1,0 +1,61 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T13:52:09.320613+00:00",
+  "source": "13ed7d1fcbaee4e4217f2aa27689f2ea8ed3e642",
+  "base": "ef5b3d39b9a9841ea7342ad37c5e281bf7bee360",
+  "requirements": [
+    "RC29",
+    "RC30",
+    "RC33",
+    "RC41"
+  ],
+  "verdict": "changes requested",
+  "packetSha256": "2b5ec3b54722e793752e41e29be189fcd13b11b1ce0d35ddd55314301806c6a6",
+  "sourceHashes": {
+    "plugins/agent.mjs": "229bd123682308931cb131738b12039a31be0214a5a0abbbea9f0db3615c26d3",
+    "plugins/bok.mjs": "182069fc444deeedc65f6a9b8b2e9a9fa29bf553d581c538aa2225bd7237d8fa",
+    "plugins/private-bok-metering.mjs": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864",
+    "plugins/private-bok-metering.test.mjs": "4ff41b2c786f925e66e7fc4d213889770e70a0a6bf1e8aa8a99265938f54e834",
+    "plugins/test/bok.test.mjs": "6856fff5f697a5cc4401be283615196c126946250d1da81477a11033fa84b81f",
+    "plugins/test/hosted-private-bok.test.mjs": "22be37b338eec70c562cb6f1c4af2b1513ea6777b95b0760bb85a6b627bcc449",
+    "plugins/test/model.test.mjs": "769626820ed51af124713ee46386bbc66446943c179e748998711c214371969d",
+    "plugins/test/provider-metering.test.mjs": "5170cb96dd0a0df06a6973cf5dd1f842461d73dec09bb7b7ea163a760c58c3b0",
+    "plugins/test/venice.test.mjs": "56ff77208c3a1ddf4b91de5215972a8085a0f2b6b57d853a77fa6fbdcf935298",
+    "plugins/venice-diagnostics.mjs": "89f9906a6f468a7858f3f4cb027baca27e5e674f7b43fff9f1cdc3f5040ecbf8",
+    "plugins/venice-metered.mjs": "b550063b4afcb37967a3e08379238b04a7325e15fc7e773adae1d0502ec936d0",
+    "plugins/venice.mjs": "a49ab070e2a1c04f13ed0bdf92723e8b6a012217043d8820c2b5afc0da964fbf"
+  },
+  "findings": [
+    {
+      "id": "13ed-F1",
+      "severity": "P1",
+      "path": "plugins/venice-diagnostics.mjs:16",
+      "related": [
+        "plugins/venice.mjs",
+        "plugins/venice-metered.mjs",
+        "plugins/private-bok-metering.mjs",
+        "plugins/agent.mjs:4"
+      ],
+      "failure": "Unknown-present or malformed finish_reason is dropped to absent metadata. Agent treats absent or unknown reason as valid and accepts complete-looking text, even when provider ended incomplete. Closed projection must not erase the distinction between successful finish and unrecognized termination.",
+      "reproduction": "Existing createAgent with finishReason cancelled and assistant Partial result: models1/tools0/accepted1/noerror. Adapter tests explicitly show PRIVATE_SENTINEL becomes undefined; same acceptance follows after settlement.",
+      "repair": "Use fixed closed invalid/unknown completion sentinel for unknown-present metadata, propagate through genuine settlement, and reject before tools/acceptance/next paid call. Never retain raw provider label; preserve permitted compatibility for deliberately absent metadata only if justified."
+    },
+    {
+      "id": "13ed-F2",
+      "severity": "P1",
+      "path": "plugins/agent.mjs:15",
+      "failure": "Whole-batch validation checks JSON syntax only. null, array or scalar function arguments parse, though function parameters are object-shaped. A first write is executed before malformed second call reaches toolbox, contrary to no partial malformed batch requirement.",
+      "reproduction": "Existing createAgent with two tool calls, first args{} and second argsnull, maxCalls1: models1/tools2/accepted1/noerror using labelled tool ports.",
+      "repair": "Before any tool, validate every parsed argument value as non-null object and not array; retain existing per-tool semantic validation/error handling. Add malformed second argument regression and retain valid multi-tool path."
+    }
+  ],
+  "checksPerformed": [
+    "Read all changed production paths and changed tests before packet conclusions; verified source hashes.",
+    "Inspected settlement-before-agent rejection and fixed failure reply handling; valid length/content_filter path otherwise keeps genuine billing and existing finish/refund.",
+    "Two bounded independent local createAgent probes with labelled model/tool ports, no external calls or source edits."
+  ],
+  "limits": [
+    "Historical HTTP400 cause remains hypothesis; original fences and journals untouched.",
+    "Existing233PASS2SKIP tests do not cover these two failure paths."
+  ]
+}

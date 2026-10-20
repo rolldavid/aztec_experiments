@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "scripts/test-sdk-storage-browser.mjs"
+  ],
+  "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social",
+  "sourceRevision": null,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "passed": false,
+  "peakTreeRSSKiB": 950096,
+  "samples": 5,
+  "cleanupComplete": true,
+  "elapsedMs": 2656,
+  "exitCode": 1,
+  "signal": null,
+  "samplingFailure": false,
+  "logSha256": "9d41c2a487847e15b91736290c66185713f8258bbec281b361e03dddc288ada7"
+}

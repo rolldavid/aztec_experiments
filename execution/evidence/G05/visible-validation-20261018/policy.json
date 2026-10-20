@@ -1,0 +1,29 @@
+{
+  "base": "c8a287c4311a8fd66d4ace122fca4e7b4b09520f",
+  "candidate": "289fd11d65156469ea8748e439c00047f378eac2",
+  "task_id": "G05-visible-validation-feedback",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "visible-feedback"
+  ],
+  "requirements": [
+    "RC04-visible-validation",
+    "RC40-accessible-feedback"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G05-visible-validation-feedback",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

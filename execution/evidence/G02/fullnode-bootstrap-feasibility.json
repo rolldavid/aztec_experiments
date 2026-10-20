@@ -1,0 +1,37 @@
+{
+  "checked_by": "design-20261011",
+  "history_locator": "collaboration /root/design parent01a12a75-1b50-7871-a73b-4253a1010194",
+  "checked_at": "2026-10-11T17:06:00Z",
+  "purpose": "Read-only feasibility; not Linux container or synchronization acceptance",
+  "image_index": "sha256:97e2db7dde9f5730bbd3734a094500be9b4f9945325fa862aa7d15a5d18ccfb1",
+  "linux_amd64_image": "sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+  "beacon_url": "https://ethereum-sepolia-beacon-api.publicnode.com",
+  "execution_url": "https://ethereum-sepolia-rpc.publicnode.com",
+  "blob_api": "/eth/v1/beacon/blobs/{slot}",
+  "actual_proposal_tx": "0x26ff88820afb06865e760a34f3f54feacb7eaec3972516342e0c98d95fe985e7",
+  "slot": 11333720,
+  "blob_bytes": 131072,
+  "recomputed_versioned_hash": "0x01eddde8e538bbc85ab0c0d0228834112a95c7983734b1b7701314da75d1fa30",
+  "trace_transaction_count": 6,
+  "old_trace_blocks": 3600,
+  "snapshot": {
+    "http": 200,
+    "l2": 16592,
+    "l1": 11891575,
+    "archiver_schema": 12,
+    "worldstate_schema": 2
+  },
+  "official_tag": "d521f0d940d096fbea5b62010d9c9c70f1dc0fd2",
+  "node_submodule": "54e3383c4baa491a83ce129709023d0b6dcf8bc3",
+  "limitations": [
+    "Historical individual filestore blobs not tested",
+    "No fullnode startup/sync/load measured",
+    "Official image beacon-genesis optimization differs; source-backed parent-slot fallback checked only",
+    "Current32GiB prover24G+node8/16G leaves insufficient OSheadroom; forecast64GiB beforelaunch"
+  ],
+  "network": {
+    "chainId": 11155111,
+    "version": 2914217885,
+    "rollup": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9"
+  }
+}

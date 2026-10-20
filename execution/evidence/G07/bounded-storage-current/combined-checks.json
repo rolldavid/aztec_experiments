@@ -1,0 +1,44 @@
+{
+  "candidate": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "base": "158473578bd49d59e2200f25f07a27ec5be2ad69",
+  "at": "2026-10-14T15:36:21.876749+00:00",
+  "source": {
+    "plugins/devnet/network.mjs": "7113744c1417f75d940ebf63af6a1872f369ebe9bab507f21fdf29f26d317fd0",
+    "plugins/devnet/operator-test.mjs": "f641d1437dd207e787153efba89bf87928be8d47da769fcfabe8b602bd5fef55",
+    "docs/rolling-deployment.md": "0255aa2a954970c88680d8f85f1974acad6b052b1f2d18af9eb73e8ca91fe3a0",
+    "scripts/test-w03-ethereum-anvil.mjs": "3b7f0aaa0cd04a12b2849e951d30659d1dcf351dcc314b4a02147ff833cf03c4"
+  },
+  "operatorChecks": {
+    "command": "pinned Node24.21 --test plugins/devnet/operator-test.mjs",
+    "log": ".build/rolling-devnet-diagnostics/storage-repaired-tests.log",
+    "passed": 68,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "durationMs": 6584.403292,
+    "logSha256": "036fc65bd7163553ba638f9f27cce5cee0e58d01d1bfc558825d34ba4f077dbc"
+  },
+  "ethereumAcceptance": {
+    "command": "pinned Node24.21 scripts/test-w03-ethereum-anvil.mjs",
+    "log": ".build/rolling-devnet-diagnostics/current-inbox-fixture.log",
+    "observed": {
+      "passed": true,
+      "realEthereumReceipts": true,
+      "portalCreationAndActivationLostResponses": true,
+      "portalDepositAndRefund": true,
+      "realFeeTokenApprovalAndBridgeDeposit": true,
+      "feeResponsesLostAfterMining": true,
+      "lostHashRecovered": true,
+      "repeatedRecoveryDidNotResend": true,
+      "controlledBridgeRoots": true,
+      "networkProofs": false,
+      "ownedProcessExited": true,
+      "temporaryDirectoryRemoved": true,
+      "secretsLogged": false
+    },
+    "logSha256": "641dd9eb3d765fd62ddc0ad62b88d634591152ead534d4ec44a3499015aca0ea",
+    "exitCode": 0
+  },
+  "fixtureRationale": "Installed Inbox constructor4arguments; old fifth value treated as invalid Ethers overrides. Productionbucket ring4096 from controlledRootPublisher replacesobsolete10below current512minimum. No assertion removed. Readonlyencode reproduction before existingboundedactualEthereumrun. Missing localRootPublisher build completed via existing FOUNDRY_PROFILE=regression forge test --offline -q.",
+  "nativeAcceptance": "notyetresumed; latest hash-bound stopped924 snapshot survives ownertemporarydeletion. No replay of old funding/modelactions."
+}

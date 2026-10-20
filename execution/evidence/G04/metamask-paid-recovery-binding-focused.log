@@ -1,0 +1,11 @@
+✔ MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership (81.088875ms)
+✔ MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe (0.617667ms)
+✔ paid MetaMask recovery binds encrypted scope, exact payment and all claim legs (3.587667ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 200.665083

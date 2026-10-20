@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "e7188da78b3677545c445e6e739d96ac07844d8a",
+  "verdict": "accepted-combined-285-component-runtime-only",
+  "packetSha256": "434d2877a176dfde59c6e7860077df1711f9d1f1ed9218e6181918c4cc878bda",
+  "files": {
+    "result.json": "4c5274fa0e655e6363bf461ffc11d3862ce0911f4ff4f146db5d5de91f1035b3",
+    "build.log": "3123e409ef066b23e48d0369b8972e2ca78d400dfe2794db8c4e27eff302e855",
+    "execution-intent.json": "20ecf9838d30c5adad2c4555b9b73042f16522a32743b290b0aca87937b3c54c",
+    "review-packet.json": "149ac01c9d1c84f3bf8e3c6c930c3e3b928406bca2af632ec9e698815129deac",
+    "inventory.json": "fece00cac713885e372c1741e27d93d41294661f92f5ae68861cbdbbafe77b20"
+  },
+  "actual": {
+    "passed": true,
+    "elapsedMs": 5186,
+    "peakTreeRSSKiB": 828400,
+    "ownedTreeAbsent": true,
+    "protectedUnchanged": true,
+    "tempRemoved": true,
+    "testCounts": {
+      "tests": 285,
+      "pass": 285,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "independentVerification": {
+    "exact285InventoryLabels": true,
+    "allSixTAPCounts": true,
+    "sourceAndDependencyPinsRehashed": 3232,
+    "mismatches": 0,
+    "temporaryDirectoryCurrentlyAbsent": true,
+    "reviewedSupervisorPositiveOwnedTreeAbsence": true
+  },
+  "limits": [
+    "Labelled factories with actual engine/AEAD/SDKTx components; no full cold SDK, real proof, browser, fork, capacity or overlap timing qualification.",
+    "Exact source carry depends on unchanged subject bytes; later following-first change requires affected checks."
+  ],
+  "reviewerExecutedTests": false
+}

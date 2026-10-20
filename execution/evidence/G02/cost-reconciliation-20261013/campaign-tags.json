@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-13T02:52:14.062451+00:00",
+  "profile": "message-board-deploy",
+  "scope": "Read-only account-wide delayed billing; not automatically attributed to this campaign",
+  "result": {
+    "Tags": [
+      ""
+    ],
+    "ReturnSize": 1,
+    "TotalSize": 1
+  }
+}

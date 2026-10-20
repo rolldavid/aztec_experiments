@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "manifestSha256": "f46287926415f2fe5eaab4dc207573fe8c21828971c42708f20e42aacad1072c",
+  "source": "current staged runtime and installed runtime manifests match",
+  "metadataExclusion": "68 mutable Finder .DS_Store files excluded; full archive verification binds all166649 runtime files"
+}

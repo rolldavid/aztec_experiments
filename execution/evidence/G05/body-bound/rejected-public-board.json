@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "585761223",
+    "rollupAddress": "0x46be0a05d238f1b233124befd2a66fb7187d1867",
+    "boardAddress": "0x09b68a7ce3afa2a181a2d1068488cd49f66496172f6f2216d859e8be9eae7c65",
+    "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+    "bok": {
+      "address": "0x1684f93d75ff6948ea186abdf253b1df1ab65a136b2e30f86d8bd5f1a5727830",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x0597e9b526f8c5c4f2746ad06c0b04c6626e9b56a6128ac461964432718b272e",
+      "deployer": "0x0597e9b526f8c5c4f2746ad06c0b04c6626e9b56a6128ac461964432718b272e",
+      "salt": "0x1291ba4290b3953957af2a5d562b2d6c3dc5741e76cac7182733fce373ece2d6",
+      "deployment": {
+        "blockNumber": 6,
+        "blockHash": "0x16a7198b322657915726beda1843e2bdb8a7fcd6b12fec875bb0b4318c6912d7",
+        "txHash": "0x2eca18367fb66ba7bd2be7a8eb8a0d217773b3278cb45ab849c14216da3b3e0b"
+      }
+    }
+  },
+  "checkpoint": {
+    "number": 1570,
+    "hash": "0x0cb693213b357c0a8ab1def74bdfabaeda2feb12380f2f88608541f40e6c1207"
+  },
+  "complete": true,
+  "boardId": "5056390446742022332437722903817936377422201950701776791945541353378485128186",
+  "board": {
+    "id": "5056390446742022332437722903817936377422201950701776791945541353378485128186",
+    "slug": "field-notes-1531",
+    "name": "Field Notes",
+    "description": "Development acceptance of authentic subboard creation.",
+    "rules": "Posts here may ignore the parent rules.",
+    "creationVersion": "1",
+    "rejected": true,
+    "rejection": {
+      "reason": "Local rules contradict the parent policy; parent rules always apply.",
+      "mainVersion": "1",
+      "position": {
+        "blockNumber": "1565",
+        "blockHash": "0x15350de683f4550c68baa844142aab4ec766b9c33ddf94be832f2b7b063d9f78",
+        "txHash": "0x1e7f903f20cfc6e859f6231391c47134ce7428359768e58e0e330c26a1b131de",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      }
+    },
+    "mainVersion": "1",
+    "mainRules": "No threats."
+  },
+  "posts": [],
+  "policies": [
+    {
+      "version": "1",
+      "digest": "19222328848760308624277369113847665349661069980220624057416038094065873769087",
+      "text": "No threats."
+    }
+  ],
+  "mainPolicy": {
+    "version": "1",
+    "digest": "19222328848760308624277369113847665349661069980220624057416038094065873769087",
+    "text": "No threats."
+  },
+  "names": {},
+  "boards": {},
+  "nextCursor": null,
+  "revision": "d97347b9-9bc7-4faf-938d-62307b1dfb0a:26:28134"
+}

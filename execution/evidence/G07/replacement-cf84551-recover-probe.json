@@ -1,0 +1,10 @@
+{
+  "revision": "cf84551e0a424494b7b7c1d4f4ecff355864e117",
+  "label": "actual SDK synthetic Tx + AEAD and labelled node replies",
+  "strictPolicyPersisted": true,
+  "inspectionReportsPending": true,
+  "explicitPredecessorGuardRejects": true,
+  "recoverBroadcastsDespitePendingPredecessor": true,
+  "sends": 1,
+  "ciphertextUnchanged": true
+}

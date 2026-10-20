@@ -1,0 +1,10 @@
+{
+  "owner": "lead-20261011",
+  "task": "G14",
+  "paths": [
+    "plugins/venice-metered.mjs",
+    "plugins/test/provider-metering.test.mjs"
+  ],
+  "base": "aeaf7e5",
+  "acceptance": "Omit absent/empty tools from actual outboundJSON; preserve nonempty tools,64tokenmodelbound/allbillablefeatureflags andsingleattempt behavior. Old uncertainjournals unchanged. Independent specificHTTP400 response classification only, notretroactive oldfailure attribution."
+}

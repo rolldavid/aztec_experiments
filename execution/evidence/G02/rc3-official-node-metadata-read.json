@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:36:20.981594+00:00",
+  "sourceURL": "https://docs.aztec.network/networks",
+  "endpoint": "https://aztec-testnet.drpc.org",
+  "method": "aztec_getNodeInfo",
+  "attempts": 1,
+  "readOnly": true,
+  "nodeStartupQualified": false,
+  "httpStatus": 403
+}

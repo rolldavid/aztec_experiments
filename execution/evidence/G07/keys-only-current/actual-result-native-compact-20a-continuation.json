@@ -1,0 +1,233 @@
+{
+  "passed": true,
+  "scope": "Bounded retained05c profile continuation from next137/anchor1451, at most16 existing page steps within30s to observe native compact failures; diagnostic/resumption only, not fresh120s acceptance.",
+  "sourceRevision": "20a2fc80de2c894f219afbf96f5e67a279fec5f8",
+  "predecessorRevision": "05cdbcef22fdc282dd4208ddf0aeeceb3c06e5eb",
+  "diagnosticRevision": "79ddcc27bd327b2aef0312c62ff8cdb7bd90d76e",
+  "backupSHA256": "43c3eda3d5871c725a139db0f0ca00621dfec5c2c11aee2904d4951b3a565fd4",
+  "checks": {
+    "isolatedProfilePreserved": true,
+    "retainedNativeDatabase": true,
+    "publicBeforeUnlock": true,
+    "measuredNonzeroCursorObserved": true,
+    "cursorAdvanced": true
+  },
+  "views": {},
+  "deniedRequestShapes": [],
+  "recoverySteps": 5,
+  "cleanup": {
+    "contextClosed": true,
+    "isolatedCursorPreserved": true
+  },
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuModel": "Apple M4 Pro",
+    "logicalCPUs": 12,
+    "totalMemoryBytes": 25769803776,
+    "node": "v24.21.0",
+    "chromium": "155.0.8059.79"
+  },
+  "environment": {
+    "network": "retained native local devnet",
+    "nodeProofs": false,
+    "pxeProofs": false,
+    "cold": "Not cold: reopen retained failed isolated05c profile; identical keys-only backup unlock",
+    "warm": "Retained encrypted prefix; no fresh acceptance measurement",
+    "wholeAcceptanceMs": 120000,
+    "pageDeadlineMs": 10000
+  },
+  "steps": [
+    {
+      "ordinal": 1,
+      "continuation": false,
+      "before": {},
+      "http": {
+        "aztec_getNodeInfo:200": 16,
+        "aztec_getChainTips:200": 10,
+        "aztec_getWorldStateSyncStatus:200": 7,
+        "aztec_getSyncedL1Timestamp:200": 7,
+        "aztec_getBlockData:200": 35,
+        "aztec_getBlock:200": 1,
+        "aztec_getContract:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 2,
+      "state": "ready",
+      "elapsedMs": 1465,
+      "after": {
+        "nextBlock": 137,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 2,
+      "continuation": false,
+      "before": {
+        "nextBlock": 137,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 55,
+        "compact:200": 32,
+        "aztec_getBlockHashMembershipWitness:200": 32
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 13,
+      "state": "ready",
+      "elapsedMs": 2144,
+      "after": {
+        "nextBlock": 169,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 3,
+      "continuation": false,
+      "before": {
+        "nextBlock": 169,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 55,
+        "compact:200": 32,
+        "aztec_getBlockHashMembershipWitness:200": 32
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 20,
+      "state": "ready",
+      "elapsedMs": 2207,
+      "after": {
+        "nextBlock": 201,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 4,
+      "continuation": false,
+      "before": {
+        "nextBlock": 201,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 55,
+        "compact:200": 32,
+        "aztec_getBlockHashMembershipWitness:200": 32
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 10,
+      "state": "ready",
+      "elapsedMs": 2062,
+      "after": {
+        "nextBlock": 233,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 5,
+      "continuation": false,
+      "before": {
+        "nextBlock": 233,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 55,
+        "compact:200": 32,
+        "aztec_getBlockHashMembershipWitness:200": 32
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 25,
+      "state": "ready",
+      "elapsedMs": 2057,
+      "after": {
+        "nextBlock": 265,
+        "anchorBlock": 1464,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    }
+  ],
+  "profile": {
+    "retained": true,
+    "device": 16777232,
+    "inode": 233425597
+  },
+  "initializationTraffic": {
+    "http": {
+      "aztec_getNodeInfo:200": 7,
+      "aztec_getChainTips:200": 10,
+      "aztec_getWorldStateSyncStatus:200": 4,
+      "aztec_getSyncedL1Timestamp:200": 4,
+      "aztec_getBlockData:200": 12,
+      "aztec_getContract:200": 3,
+      "aztec_getPublicStorageAt:200": 15,
+      "aztec_getL1ContractAddresses:200": 1,
+      "aztec_getBlock:200": 8
+    },
+    "rpcErrors": {},
+    "responseInspectionFailures": 9
+  },
+  "lastSettledState": "ready",
+  "initialization": {
+    "status": "captured",
+    "value": {
+      "stage": "session-initialization",
+      "step": "application-bind",
+      "deploymentStep": null,
+      "state": "complete",
+      "code": null
+    }
+  },
+  "fixedFailures": [],
+  "diagnosticComplete": true,
+  "stoppedBeforePageDeadline": true,
+  "traffic": {
+    "walletAssets": 14,
+    "privateRequests": 539,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 128,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "stage": "bounded-continuation-complete",
+  "elapsedMs": 20428,
+  "originalBackupUnchanged": true
+}

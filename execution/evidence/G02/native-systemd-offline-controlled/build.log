@@ -1,0 +1,12 @@
+test_absence_transport_failure_not_positive_absence (local_fixture.Boundary.test_absence_transport_failure_not_positive_absence) ... ok
+test_persistence_failure_cannot_skip_cleanup (local_fixture.Boundary.test_persistence_failure_cannot_skip_cleanup) ... ok
+test_positive_confinement_and_each_unsafe_variant (local_fixture.Boundary.test_positive_confinement_and_each_unsafe_variant) ... ok
+test_removal_failure_does_not_suppress_absence (local_fixture.Boundary.test_removal_failure_does_not_suppress_absence) ... ok
+test_state_failure_cannot_skip_cleanup (local_fixture.Boundary.test_state_failure_cannot_skip_cleanup) ... ok
+test_state_rejects_unbounded_or_wrong_types (local_fixture.Boundary.test_state_rejects_unbounded_or_wrong_types) ... ok
+test_unknown_identity_never_mutates (local_fixture.Boundary.test_unknown_identity_never_mutates) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK

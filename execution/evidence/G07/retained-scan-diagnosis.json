@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "scope": "One anchor promotion plus one actual scan, diagnostic only",
+  "sourceRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "runtimeSHA256": "a74b6d1ce58c03a33c5ba46400ae9dd2203152e0095d602e7fb130dca8026a4e",
+  "priorCursor": {
+    "scopeBound": true,
+    "nextBlock": 2,
+    "nextLog": 0,
+    "anchor": {
+      "blockNumber": 1596,
+      "blockHash": "0x27e4fe58cadb33666f187adc4e0af8ea4bf9d713b83d1af77699d1433813061c"
+    },
+    "sequence": 0,
+    "complete": false
+  },
+  "promotionDurationMs": 8087,
+  "scanDurationMs": 10490,
+  "scanFailure": {
+    "failed": true,
+    "code": "ROLLING_COLD_PREFERENCES_UNAVAILABLE"
+  },
+  "compactPublicHeights": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "observedStatuses": {
+    "getNodeInfo:200": 19,
+    "getChainTips:200": 4,
+    "getWorldStateSyncStatus:200": 4,
+    "getSyncedL1Timestamp:200": 4,
+    "getBlockData:200": 41,
+    "compact:200": 5,
+    "getBlockHashMembershipWitness:200": 4,
+    "getTxReceipt:200": 8,
+    "getTxEffectMembershipWitness:200": 2,
+    "findLeavesIndexes:200": 2
+  },
+  "elapsedMs": 31348,
+  "cleanup": {
+    "contextClosed": true,
+    "ownedTreeAbsent": true,
+    "tempRemoved": true
+  },
+  "traffic": {
+    "walletAssets": 18,
+    "privateRequests": 174,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 5,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "inference": "10.490s scan failure is consistent with the existing 10s whole-reader deadline; generic catch prevents proof of the inner failure code. No non-200 HTTP response was observed. Requestfailed events remain recorded and are not relabelled successes.",
+  "next": "Small controlled existing-reader deadline reproduction before any source correction or live repeat. Never extend cold120 acceptance deadline or waive canonical authentication.",
+  "priorProcedureAliases": {
+    "run-observed.mjs@f56a4da6": "run-retained-one-f56a.mjs",
+    "supervise-observed.mjs@0c57d82e": "supervise-retained-one-0c57.mjs"
+  },
+  "files": [
+    {
+      "privateEvidenceLocator": "linux1588-retained-scan-01-result.json",
+      "sha256": "b6a56673d9a882d4714baf775d0c9e4afa4fe305555b2d62fe26a1423103dbf6"
+    },
+    {
+      "privateEvidenceLocator": "linux1588-retained-scan-01-supervisor.json",
+      "sha256": "13f9d4b9af7ecffbe37facfe93065f7e2205068f6b8504e3f3bc84f8bef98777"
+    },
+    {
+      "privateEvidenceLocator": "linux1588-retained-scan-01.log",
+      "sha256": "0f5473d08de63ea2f5411dca1e95a28bc22e1ee1cc2409e0d7b307bd12aaabd5"
+    },
+    {
+      "privateEvidenceLocator": "run-retained-scan-frozen.mjs",
+      "sha256": "975c223471b6f87ee79359a3fa8436538ee2672fb6094f6f92f2c7914b3f899a"
+    },
+    {
+      "privateEvidenceLocator": "supervise-retained-scan-frozen.mjs",
+      "sha256": "af9780793c2614f42c65f6308a4ad8c2aed41544b4d5890219fe7e529ddf0056"
+    },
+    {
+      "privateEvidenceLocator": "run-retained-one-f56a.mjs",
+      "sha256": "f56a4da65265afede405ea6e38e38d74e9d0c384030fd16ada7e58dbd7938708"
+    },
+    {
+      "privateEvidenceLocator": "supervise-retained-one-0c57.mjs",
+      "sha256": "0c57d82e1ea8fee0d64a638e2388db5ce20bfc213bd8850832a2f171ab334053"
+    }
+  ],
+  "privatePacketSha256": "9fb3a4c922008c511ecede014835666d43c7b52157ce57efbba800e32cefb6b5"
+}

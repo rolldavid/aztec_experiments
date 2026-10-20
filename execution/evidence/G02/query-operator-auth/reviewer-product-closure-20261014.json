@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "reviewedRoot": "48c0209fff13d62e8aee9be0ff6ea08608504b5f",
+  "requirements": "execution/draft3-requirements.md and graph.json; latest appended handoff-20261013-1242.md",
+  "scope": "Read-only product implementation gap pass; no source edits, services or tests",
+  "priorities": [
+    {
+      "priority": 1,
+      "requirements": [
+        "RC19",
+        "RC22",
+        "RC26"
+      ],
+      "type": "Reviewed implementation not yet composed/deployed",
+      "gap": "Root wallet still reports Bok request completeness unavailable and exposes collateral exit only. Reviewed14363 wallet accounting/private Bok exit plus087 ownership utility are not yet on root/runtime. Uniform server alone cannot provide the complete user balance/withdrawal flow.",
+      "paths": [
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "shared/rolling/application.mjs",
+        "experiments/private-bok/escrow/src/main.nr"
+      ],
+      "next": "Finish original paid claim recovery first, then compose reviewed components/build matching assets. New ownership utility changes contract class: preserve old paid deployment/liabilities and use explicit compatible/new-class deployment handling; a website update cannot add a utility to the existing contract. Do not replay funding."
+    },
+    {
+      "priority": 2,
+      "requirements": [
+        "RC22",
+        "RC33",
+        "G14-A02"
+      ],
+      "type": "Missing application recovery action",
+      "gap": "An expired request with reserved liability cannot be cancelled through wallet cancel-bok-request because that requires reserved=0. Contract expire(request_id) can fence the uncertain reservation while returning unreserved available credit, but no current application/UI or hosted chain port invokes expire. Current UI only tells the user reserved/fenced work must resolve.",
+      "paths": [
+        "experiments/private-bok/escrow/src/main.nr:225",
+        "shared/rolling/application.mjs:383",
+        "apps/rolling/wallet-panel.mjs",
+        "plugins/private-bok-escrow.mjs"
+      ],
+      "next": "Expose a narrow explicit private expiry review through the existing encrypted application transaction/fee workflow, with contract simulation enforcing actual deadline and exact request. Preserve unknown reserved liability; do not label expiry as full refund or infer a deadline from AccountingChanged. Keep owner-ID selection local/private."
+    },
+    {
+      "priority": 3,
+      "requirements": [
+        "RC19",
+        "RC33",
+        "RC37",
+        "RC41"
+      ],
+      "type": "Missing trusted operator recovery entry point",
+      "gap": "Hosted saved phase running stops on restart and demands reconciliation; privateBokMetering.reconcile(id,billing) exists but is not called by hosted main/service or rolling operator CLI. The CLI accepts only deployment/fee/status commands. There is no usable trusted path to submit original provider billing evidence, settle a fenced reservation, and durably resolve the stopped hosted request without paying again.",
+      "paths": [
+        "plugins/escrow-service.mjs:90",
+        "plugins/private-bok-metering.mjs:194",
+        "plugins/private-bok-escrow.mjs:216",
+        "plugins/operations.mjs:221",
+        "plugins/main.mjs"
+      ],
+      "next": "Reuse original per-request store/lease, existing canonical operation inspection and metering.reconcile. Add an explicit operator-only recovery command/capability accepting verifiable evidence for the original call, never re-execute model or silently declare unknown cost zero. Resolve/release the hosted phase consistently after accounting; where reply content was not saved, report that limitation rather than rerun the call."
+    }
+  ],
+  "implementedButAcceptanceOpen": [
+    "ETH/zero-ETH USDC aggregate routing, signed-once relay, custody/claims/topups and UI exist; named-wallet successful initial allocation alone is not complete privateReady/claim/recovery acceptance. Phantom onboarding availability is an external compatibility blocker, not evidence the funding route needs a replacement implementation.",
+    "Normal posting/names/subboards/social/moderation/avatar screens and canonical protocols exist. Complete actual end-to-end funding\u2192post\u2192Bok\u2192recover, mobile/accessibility and removed-content/reorg/outage results remain acceptance work, not a reason to create another UI framework.",
+    "Persistent thread repositories, cheaper summary/full-history context, isolated tests/builds, stable artifact/current source publication and private selected-App broker are wired. Real model quality/billing, same-thread/cross-thread execution and actual GitHub App permissions remain unqualified; broker sign-in/configuration is external.",
+    "Uniform canonical index and archive reconstruction exist; full cold/warm performance/capacity, full history restore and private cold recovery remain measured acceptance. Scheduler improvement alone does not close those gates.",
+    "Real proof prover availability, required specialist audit, target-network clearance,14-day soak and fresh independent operator restore remain separate external/release gates. No component approval closes them."
+  ],
+  "notNewApplicationWork": [
+    "FeeJuice redemption is unsupported by protocol, not a missing withdrawal button; preserve spend-only disclosure.",
+    "Graph G11-A01 retains historical organization wording whileRC32/source/runbook use owner-selected personal App; correct metadata rather than introduce an organization deployment."
+  ],
+  "caveats": [
+    "Read-only bounded pass, not exhaustive security audit. Expiry and trusted reconciliation gaps are source-backed; live integration status taken from appended handoff and parent updates.",
+    "No permission to replay any unknown payment/provider operation or to change existing private contract liabilities."
+  ]
+}

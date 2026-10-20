@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "scope": "Read-only source design; no implementation, tests, service calls, proof or financial action",
+  "sourceRevision": "96825e16271baf7d81442415565fe51b1533737e",
+  "sourceBindings": {
+    "shared/l2-journal.mjs": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+    "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+    "shared/rolling/application.mjs": "a9643703e253dca62c56e85c19e7eedd90d5231f7d26420ce04b8de3c42bed55",
+    "shared/rolling/synchronized-application.mjs": "8113444dac5e2e0a6182ace99f6c1881f9e9172c246c860f42163d680e5f1f06",
+    "apps/src/billboard/user/engine.js": "75545948bc065a123bcbc745d516b2eaf2310f61246418a019ba361fd93d00f2",
+    "shared/application-nullifier.mjs": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+    "billboard/rolling_contract/src/main.nr": "0f690fef381b8342cf0030132ccefa1b724ee308fdf5939ce482eb7bf448bfd0",
+    "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+    "node_modules/@aztec-labs/aztec-node/dest/modules/node_tx_receipt.js": "7929f384a5236ffe305319fd8cc74b391f4f7873f8408738019b67480dba2b22",
+    "node_modules/@aztec-labs/aztec-node/dest/aztec-node/server.js": "2aa367ae38c5a689094eb625c45eead8291c844ed9c01826a752b946eaa18e88",
+    "node_modules/@aztec-labs/p2p/dest/msg_validators/tx_validator/block_header_validator.js": "8188cadcc00108caebc906752cdbdc3b19bc4fa17a839e60613c81e44f690000",
+    "node_modules/@aztec-labs/p2p/dest/msg_validators/tx_validator/double_spend_validator.js": "24c42d6ed711fec7a44d226f6a0fca80ef801068b56b214cb51e5979a9b49151",
+    "node_modules/@aztec-labs/stdlib/dest/tx/validator/error_texts.js": "d1891f16109cf2ef72a7ef634717ae963347c16fb8b5555a01ae8f8e409ebf6e",
+    "scripts/test-w03-proof-replacement.mjs": "6ebf0edb4529de9b5cfcce36d0c86941e0c19a8a588288aaa379e659f657e992"
+  },
+  "requirements": [
+    "G07-A02",
+    "G07-A07",
+    "explicit recoverable reorg replacement without journal erasure"
+  ],
+  "findings": [
+    {
+      "source": "shared/l2-journal.mjs:48-119",
+      "finding": "Existing allowReplacement authorizes only the exact encrypted saved operation after every retained attempt is dropped, native node.isValidTx says invalid for recognized state reasons, and a second receipt remains dropped. Authorization is RAM-only, tied to exact prior ciphertext, rechecked by assertCanStart and prepare. Eight prior attempts maximum means at most nine total stored transactions, not eight total."
+    },
+    {
+      "source": "shared/transaction-outcomes.mjs:22-54",
+      "finding": "Pending/proposed and dropped canonical-read outcomes collapse to null; loss is not proof of absence. classifyDroppedTransaction accepts only structured validation.result invalid with a nonempty reason array wholly within Existing nullifier / Block header not found. A refreshed pending or included receipt wins over stale invalidity and cannot authorize replacement. Transport/schema/identity failure remains unknown."
+    },
+    {
+      "source": "node_modules/@aztec-labs/aztec-node/dest/modules/node_tx_receipt.js:17-41; aztec-node/server.js:931-958",
+      "finding": "Dropped means neither known pool transaction nor archiver effect, not proof of permanent invalidity. isValidTx uses committed worldstate and the normal RPC validator, including native proof verification unless explicitly simulation; use default options, never simulation or fee skips."
+    },
+    {
+      "source": "node_modules/@aztec-labs/p2p/dest/msg_validators/tx_validator/{block_header_validator.js:11-26,double_spend_validator.js:12-41}; stdlib/dest/tx/validator/error_texts.js:14,36",
+      "finding": "Block header not found is an actual missing archive anchor. Existing nullifier is any already-existing nonempty transaction nullifier; it is NOT by itself attribution that the preference action already happened. Unknown, expiry, fee and other invalid reasons must remain fenced."
+    },
+    {
+      "source": "shared/rolling/application.mjs:174-188,284-317",
+      "finding": "Current outcome/reconcile persists confirmed/reverted workflow state by CAS; it is not a strictly no-write inspection. A lost confirmed intent remains unknown and prevents fresh prepare. Missing signed journal after submitting is also unknown; cannot reproof because a receipt is absent. Existing cancelPrepared disallows an operation already present in the signed journal."
+    },
+    {
+      "source": "apps/src/billboard/user/engine.js:171-177,248-257; shared/application-nullifier.mjs:8-16,34-48",
+      "finding": "Rolling journalOperation bypasses the legacy applicationNullifier extractor. Existing extractor explicitly documents V5.2 and rejects more than one matching contract execution frame. Do not assume it attributes the v6 external preference call plus internal _write_preference. Current saved Rolling transactions do not carry a proven preference-head applicationNullifier binding."
+    },
+    {
+      "source": "billboard/rolling_contract/src/main.nr:86-139; embedded private_mutable.nr:85-105,137-145,232-244",
+      "finding": "Preferences consume the original private head or initialization nullifier and enforce exact expectedRevision. The standard initialization nullifier derives storage slot/owner/app NHK. Replacements must preserve the logical action, original revision and consumed preference state; a new fee-note choice or transaction anchor is not a new preference intent. Marker hash is derived inside the contract from throughBlock; changing branches at the same height changes semantics and requires explicit renewed review."
+    },
+    {
+      "source": "shared/l2-journal.mjs:75-93; shared/rolling/application.mjs:186-188",
+      "finding": "L2 journal stores exact current/prior Tx bytes but no historical included receipt/fee records; workflow stores txHash/status only. Add bounded authenticated historical inclusion records during explicit confirmation/replacement transitions; do not invent historical fees after a receipt vanished. Historical and currently canonical charges are distinct."
+    },
+    {
+      "source": "scripts/test-w03-proof-replacement.mjs:26-65",
+      "finding": "Existing meaningful encrypted-journal/actual SDK serialization tests already exercise portable prior retention, reinclusion/live predecessor fences, changed logical operation, concurrent CAS and exactly8 replacements. Extend these narrow tests; no new generic transaction test module is required. Synthetic Tx.random proofs are explicitly not genuine cryptographic qualification."
+    }
+  ],
+  "proposedInterface": {
+    "journal.inspectReplacement(expectedOperation)": "New read-only capability: capture exact encrypted record, scan every saved attempt, canonical receipts and default isValidTx classification, re-read unchanged ciphertext. Return fixed current state/reason codes/attempt hashes/count, never set replacement authorization, acknowledge, write, broadcast or call recoverSaved. A branded RAM snapshot is helpful but authority must always be rechecked; serialized digest alone is not authority. For the new narrow mode requireMissingAnchor:true, accept ONLY Block header not found; never infer outcome from generic Existing nullifier.",
+    "application.inspectRecovery(intentId)": "New strictly read-only guarded/synchronized method. Bind workflow intent + ROLLING_WORKFLOW_V1:intentId to signed journal and return pending/unknown/canonical/replacement-available/context-changed/limit-reached, plus bounded public review facts. No financial retries and no preference replay mutation caused by this method.",
+    "application.prepareReplacement(intentId, review)": "Explicit user action only, initially allowlist preference/read-marker. Recheck all old attempts and original immutable action/id/operation/nonce/ABI encoding; confirm original expectedRevision matches current authenticated preference head. Capture new exact head/digest and canonical marker context for renewed review, simulate/quote using normal private-fee path, CAS a replacement draft while retaining prior action/attempts/inclusion evidence. No automatic expectedRevision increment or target/throughBlock substitution. Original expectedRevision is unchanged; an advanced head stays context-changed, no rebase.",
+    "application.submitPrepared(intentId)": "Existing explicit fee confirmation path recognizes the replacement draft. Re-arm exact journal.allowReplacement after restart and recheck before any private simulation, then normal single wallet prove/journal/send. Re-estimated maximum cannot exceed the newly confirmed ceiling. Retain old maximum/fee separately. Use beforeSubmit to recheck old attempts and reviewed marker/head context after proof; no alternate sender. Journal allowReplacement strict missing-anchor policy must remain bound through assertCanStart/prepare, not merely checked by the UI once.",
+    "application.cancelReplacement(intentId)": "Optional explicit draft cancellation restores the retained recovery state, not cancelled/empty business intent. All signed attempts stay encrypted and fenced. Cannot reuse generic cancelPrepared to forget an orphaned signed operation.",
+    "wrapper": "Add the exact new methods to synchronized-application and ordinary session/account locks. Existing session/actor map wrappers propagate methods without a new lifecycle."
+  },
+  "mandatoryInvariants": [
+    "Same account, board/class/network, immutable business action, workflow ID and operation across attempts. Preserve original nonce even though G07 preference ABI currently does not consume this nonce.",
+    "ExpectedRevision remains original. If canonical head has independently advanced or differs from captured original state, report context-changed; never silently rebase preferences or mark a different read position. User must resolve separately, not erase the original journal.",
+    "Original marker throughBlock remains fixed. Display newly verified canonical block/hash context before replacement and recheck before proof/send. Missing marker block or unavailable original context is a review/blocker state, never a silently changed read marker.",
+    "Every old exact hash is reconsidered before preparing, proving and sending. Pending, unknown, reincluded, unsupported reason, changed ciphertext or ninth replacement remains fenced.",
+    "BeforeSubmit needs a read-only predecessor check of prior attempts only: existing rejectedAttempts includes current new Tx and cannot simply be reused after journal.prepare. If an older attempt becomes canonical, report it; never broadcast the new candidate or pretend it was absent.",
+    "Retain exact old Tx bytes and historical canonical receipt/effect/fee facts. Current fee accounting counts only canonical attempts; orphaned fee is not counted twice. New maximum-fee approval is explicit, not implicit permission to raise the old limit.",
+    "All journal mutations only in explicit state transitions, using existing AEAD CAS scope. Inspection/read APIs do not write, acknowledge, recoverSaved, reproof or clear records. Read-only RPC timeout races are not permission to detach a write.",
+    "No marker/head nullifier is public evidence or a cross-account grouping artifact. Any attribution stays inside encrypted recovery data and trusted runtime.",
+    "No legacy application-nullifier extraction or new public logical nullifier. Prove initialization and existing-head mutual exclusion using actual v6 PrivateMutable plus unchanged expectedRevision, including concurrent attempts."
+  ],
+  "nullifierPrerequisite": {
+    "supersedesRevision1": true,
+    "decision": "No new application-nullifier extraction or assumed shared logical nullifier. Narrow preference-only replacement is justified by actual v6 PrivateMutable and unchanged expectedRevision. Do not port legacy V5.2 extractor.",
+    "sourceArgument": "Same board and owner at revision0: deterministic slot/owner/app-NHK initialization nullifier prevents two canonical initializations. At revision>0: replace consumes the unique head note and next_revision enforces the original revision. Competing attempts for that original revision cannot both succeed in one canonical history. This is contract-level safety reasoning; actual initialization and already-initialized replacement tests are required.",
+    "requiredContext": "Fresh authenticated full preference recovery/head must agree with original expectedRevision; preserve original immutable action and workflow operation. If head advanced, report context-changed rather than silently rebase. This narrow path permits the planned confirmed-orphan reorg where original head is restored. Generic conflicting-device head advancement remains a separate unresolved product case.",
+    "strictDropPolicy": "For this initial preference replacement, require all exact saved attempts dropped before/after normal native validation, with nonempty invalid reasons containing ONLY Block header not found. Existing nullifier, even alone, is not evidence of business absence and remains fenced. Existing lower-level legacy callers retain their broader reviewed semantics.",
+    "qualification": "Not proof of deployed replacement behavior. Real reorg, genuine new proof, canonical winner and fee conservation still required."
+  },
+  "crashAndRaceDesign": [
+    "AllowReplacement only lives in RAM: prepare/submit must reacquire after restart and never infer authorization from a stale UI token.",
+    "Workflow replacement-draft CAS before proof, then workflow submitting fence, then ordinary encrypted L2 journal.prepare append, then beforeSubmit; failures retain both records and exact operation. Crash before journal append cannot authorize replay; resume requires explicit inspection/review.",
+    "Reincluded old attempt before new send is a fence. If canonical winner differs from journal current candidate, return canonical-other-attempt and block new work until explicit reconciliation validates the winner and all competing attempts. Do not just acknowledge the latest hash or rewrite old evidence. A small journal canonical-attempt pointer/state transition may be needed for this case; preserve all prior Tx bytes.",
+    "If changed chain causes read-marker context to change while proving, beforeSubmit fails without sending. The just-proved candidate remains saved; later read-only inspection determines its actual invalid/pending status before any further replacement."
+  ],
+  "proposedClaimChunks": [
+    {
+      "paths": [
+        "shared/l2-journal.mjs",
+        "scripts/test-w03-proof-replacement.mjs",
+        "scripts/test-w03-journal.mjs"
+      ],
+      "task": "Read-only exact-attempt classification; optional strict requireMissingAnchor mode bound through existing authorization; bounded prior history and prior-only before-submit guard. Preserve legacy callers/default classification."
+    },
+    {
+      "paths": [
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/synchronized-application.mjs",
+        "shared/rolling/synchronized-application.test.mjs"
+      ],
+      "task": "Explicit preference-only inspection/renewed review/replacement workflow, exact immutable action + head/marker context and fee ceiling."
+    },
+    {
+      "paths": [
+        "apps/src/billboard/user/engine.js",
+        "scripts/test-engine-private-fee.mjs"
+      ],
+      "task": "Only if necessary to preserve existing hook composition: beforeSubmit already exists and current application can pass it without engine edits. Do not claim an engine change is mandatory; no legacy attribution port."
+    },
+    {
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ],
+      "task": "Explicit recovery/review/confirm labels; unknown/pending fence and restart/cancellation behavior. No auto-retry on read."
+    }
+  ],
+  "acceptanceTests": [
+    "Actual encrypted file/IndexedDB journals: inspection causes byte-for-byte unchanged ciphertext, zero proof/send/acknowledgement; reopen retains all attempted hashes and immutable action.",
+    "All states: dropped+valid, dropped+unknown invalid reason, foreign hash, transport timeout, reincluded between receipt and validation, any old pending, canonical-other-attempt, all invalid, cap8 prior and overflow. No broad reason/message matching.",
+    "Changed expectedRevision/head/digest/board/account/class/throughBlock/context causes rejection before fee estimation or send; marker same height different hash requires explicit renewed confirmation.",
+    "Restart at each CAS boundary, compare-and-swap conflict, failure before/after journal append, max fee increase without fresh approval, cancel cannot clear signed history; no duplicate financial action.",
+    "Actual initialization and already-initialized preference replacement proofs retain same expectedRevision/action; exactly one attempt canonical. Competing old reinclusion or changed head never permits duplicate canonical updates. No claimed same generic transaction/nullifier across retries.",
+    "Genuine local reorg campaign still parent-owned: archived original inclusion, actual rollback, no read-time proof/send, explicit replacement action/fee approval, one canonical preference update and reorg-aware fee conservation. Prior canonical attempts must be proven invalid or fenced, not manually removed."
+  ],
+  "limits": [
+    "No implementation/tests/services/browser/proofs executed for this packet.",
+    "No owner-reserved product decision found; these are engineering choices requiring independent source review.",
+    "Recommended initial scope is preference/read-marker only, not generic recovery of posting/Bok/bridging actions.",
+    "General head-advanced/conflicting-device recovery remains unresolved and must not be described as completed. The planned same-revision confirmed-orphan reorg replacement can progress without journal erasure or legacy-nullifier assumptions."
+  ],
+  "revision": 2,
+  "reviewerAgreement": {
+    "reviewer": "/root/reviewer",
+    "sourceVerdict": "Read-only minimal design agreement; implementation and genuine qualification not reviewed",
+    "constraints": [
+      "Do not relax expectedRevision.",
+      "Strict missing-anchor-only initial path; generic Existing nullifier unsupported.",
+      "Explicit same-height/new-hash marker review.",
+      "Pre-send prior-attempt canonical/drop check, exact saved bytes and bounded8 predecessors.",
+      "Official execWithPausedAnvil warns/swallow-restoration failure: parent must independently read back automine and interval after scoped mutation."
+    ]
+  }
+}

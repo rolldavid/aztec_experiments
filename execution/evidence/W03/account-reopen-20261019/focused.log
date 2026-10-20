@@ -1,0 +1,15 @@
+✔ uncertain submission cannot resend; reopening and replacement reconcile the retained intent (916.2875ms)
+✔ preference lock driver waits for explicit delayed refresh before expanding security (550.7855ms)
+✔ account overview enables funding before any names or publishing reads (452.379708ms)
+✔ explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads (351.292916ms)
+✔ reopening an unlocked composer loads only missing view data and preserves explicit refresh (400.032041ms)
+✔ reopening a blocked account reconciles retained intent before a new draft (442.220583ms)
+✔ reopening after an unnoticed account replacement clears cached private views (538.381ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3868.028584

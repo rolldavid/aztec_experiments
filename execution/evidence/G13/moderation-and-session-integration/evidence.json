@@ -1,0 +1,101 @@
+{
+  "candidate": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+  "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "task_id": "G08-G13-moderation-and-session",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+      "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+      "id": "combined-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-ca4-composition-review.json",
+          "sha256": "d562672a5be51a9bc666c034cd3f3950565bb72304e5d2e46e90b44dbcd3c2ce"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-12c-w02-fixture-review.json",
+          "sha256": "f4c41755b7885f9b05e5fee7438fdca4f1213ae7f369bbc8c8de356d5524d471"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2e48-moderation-repair-review.json",
+          "sha256": "2e023ff8e91f9cc4701f4f3a32453faf8ad0196386f450744858cefec64651ac"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/moderation-and-session-integration/checks.json",
+          "sha256": "d01d4f82bd13efc42d5c98af289b9b2d4117943d23a627dade830809b3061a27"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/w02-baseline-after.log",
+          "sha256": "12940cc2051cf0c6b989baea1f558246a8fc8f74beec6acead2a8ff166e0dc6d"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/ca4-moderation.log",
+          "sha256": "600e881f8154e769e66a71fcf303413213c626b8045b32edd195aa077394d857"
+        }
+      ],
+      "command": "Existing599CI baseline plus censor-daemon/run_tests.sh",
+      "environment": "PinnedNode24.21/macOS; unit/network doubles labelled; actualSQLite and subprocess lifecycle",
+      "observed": "599baseline+421moderation ordinary checks PASS, no skips. Independent exactcomposition approval; actualmodel/nativechain moderation remains open.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+      "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+      "id": "RC12-RC13-RC38-RC39-source-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-ca4-composition-review.json",
+          "sha256": "d562672a5be51a9bc666c034cd3f3950565bb72304e5d2e46e90b44dbcd3c2ce"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-12c-w02-fixture-review.json",
+          "sha256": "f4c41755b7885f9b05e5fee7438fdca4f1213ae7f369bbc8c8de356d5524d471"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2e48-moderation-repair-review.json",
+          "sha256": "2e023ff8e91f9cc4701f4f3a32453faf8ad0196386f450744858cefec64651ac"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/moderation-and-session-integration/checks.json",
+          "sha256": "d01d4f82bd13efc42d5c98af289b9b2d4117943d23a627dade830809b3061a27"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/w02-baseline-after.log",
+          "sha256": "12940cc2051cf0c6b989baea1f558246a8fc8f74beec6acead2a8ff166e0dc6d"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/ca4-moderation.log",
+          "sha256": "600e881f8154e769e66a71fcf303413213c626b8045b32edd195aa077394d857"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "ca4fce7946976b4a21168bc5db2333165c39c74a",
+    "base": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-resume-20261014",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-ca4-composition-review.json",
+        "sha256": "d562672a5be51a9bc666c034cd3f3950565bb72304e5d2e46e90b44dbcd3c2ce"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-12c-w02-fixture-review.json",
+        "sha256": "f4c41755b7885f9b05e5fee7438fdca4f1213ae7f369bbc8c8de356d5524d471"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2e48-moderation-repair-review.json",
+        "sha256": "2e023ff8e91f9cc4701f4f3a32453faf8ad0196386f450744858cefec64651ac"
+      }
+    ]
+  }
+}

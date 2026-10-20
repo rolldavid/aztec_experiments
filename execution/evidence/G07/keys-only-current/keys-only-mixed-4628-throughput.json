@@ -1,0 +1,161 @@
+{
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    ".build/g07-keys-only-current/run-mixed-4628-throughput.mjs"
+  ],
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/keys-only-current/keys-only-mixed-4628-throughput.log",
+  "deadlineMs": 150000,
+  "rssLimitKiB": 3145728,
+  "peakTreeRSSKiB": 2080384,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 329936
+    },
+    {
+      "elapsedMs": 2017,
+      "rssKiB": 1314128
+    },
+    {
+      "elapsedMs": 3045,
+      "rssKiB": 1829488
+    },
+    {
+      "elapsedMs": 4060,
+      "rssKiB": 1922800
+    },
+    {
+      "elapsedMs": 5076,
+      "rssKiB": 2080384
+    },
+    {
+      "elapsedMs": 6089,
+      "rssKiB": 1952320
+    },
+    {
+      "elapsedMs": 7104,
+      "rssKiB": 1953280
+    },
+    {
+      "elapsedMs": 8120,
+      "rssKiB": 1912848
+    },
+    {
+      "elapsedMs": 9137,
+      "rssKiB": 1932640
+    },
+    {
+      "elapsedMs": 10151,
+      "rssKiB": 1947456
+    },
+    {
+      "elapsedMs": 11166,
+      "rssKiB": 1958736
+    },
+    {
+      "elapsedMs": 12182,
+      "rssKiB": 1977792
+    },
+    {
+      "elapsedMs": 13198,
+      "rssKiB": 1977680
+    },
+    {
+      "elapsedMs": 14214,
+      "rssKiB": 1977552
+    },
+    {
+      "elapsedMs": 15229,
+      "rssKiB": 1952224
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "focused-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 5076,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 34579,
+        "ppid": 1682,
+        "rssKiB": 54976
+      },
+      {
+        "role": "focused-components",
+        "pid": 34580,
+        "ppid": 34579,
+        "rssKiB": 16896
+      },
+      {
+        "role": "focused-components",
+        "pid": 34581,
+        "ppid": 34580,
+        "rssKiB": 193360
+      },
+      {
+        "role": "focused-components",
+        "pid": 34585,
+        "ppid": 34581,
+        "rssKiB": 239264
+      },
+      {
+        "role": "focused-components",
+        "pid": 34596,
+        "ppid": 34585,
+        "rssKiB": 147184
+      },
+      {
+        "role": "focused-components",
+        "pid": 34597,
+        "ppid": 34585,
+        "rssKiB": 103584
+      },
+      {
+        "role": "focused-components",
+        "pid": 34598,
+        "ppid": 34585,
+        "rssKiB": 77840
+      },
+      {
+        "role": "focused-components",
+        "pid": 34600,
+        "ppid": 34585,
+        "rssKiB": 186320
+      },
+      {
+        "role": "focused-components",
+        "pid": 34603,
+        "ppid": 34585,
+        "rssKiB": 122432
+      },
+      {
+        "role": "focused-components",
+        "pid": 34605,
+        "ppid": 34585,
+        "rssKiB": 839920
+      },
+      {
+        "role": "focused-components",
+        "pid": 34607,
+        "ppid": 34585,
+        "rssKiB": 98608
+      }
+    ]
+  },
+  "result": {
+    "code": 0,
+    "elapsedMs": 15862
+  },
+  "elapsedMs": 15918,
+  "ownedTreeAbsent": true,
+  "linkRestored": true,
+  "tempRemoved": true
+}

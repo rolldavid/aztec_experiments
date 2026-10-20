@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "936b55400f6d1edaf0ab47781c35d90721d41316",
+  "baseRevision": "863beaa18cf1ef0fcaf6e8b7bb9b18a36622fcdc",
+  "verdict": "changes-requested",
+  "changedFiles": {
+    "shared/rolling/application.mjs": "558414e0a5d7d5b805347ba545e8c52e2bb190b09615f99f2f6fd37fdbc37e04",
+    "shared/rolling/application.test.mjs": "98e44059c8521b102efacfd5e43da59eedea265c53da561e5dfdc8bafe00a9d7",
+    "shared/rolling/synchronized-application.mjs": "fa2023757d297e063953d558401338a090a6d5be084cc215bffd548911612178",
+    "shared/rolling/synchronized-application.test.mjs": "9c6d3c2f476b55376599db768aba64b3bf43ae0fbbf36c4116300e62f67728b0"
+  },
+  "dependency": {
+    "revision": "863beaa18cf1ef0fcaf6e8b7bb9b18a36622fcdc",
+    "shared/l2-journal.mjs": "b8e4510e7a711f16a7fca030e5618d0cf5cee3947faef6e01e10d3928c87b905"
+  },
+  "acceptance": "G07 encrypted preference crash recovery: explicit same signed bytes/hash, no regenerated proof/fee/intent, strict predecessor and final contextual validation, account/ciphertext safety and canonical read-only reconciliation.",
+  "blockingFindings": [
+    {
+      "id": "P2-late-predecessor-context",
+      "priority": 2,
+      "source": [
+        "shared/rolling/application.mjs:394",
+        "shared/l2-journal.mjs:194",
+        "shared/l2-journal.mjs:198"
+      ],
+      "description": "resumeSaved supplies fresh original-head and signed-marker checks through journal beforeSubmit, but recoverSaved invokes that callback before awaiting strict predecessor receipt/validation checks. Those later reads can observe a changed head/marker without invoking application validation again before send.",
+      "reproduction": "Actual SDK Tx serialization and AEAD saved replacement fixture; after the second sync, wrap original predecessor isValidTx to change same-revision head digest or marker block hash. Both independently executed cases returned normally and observed sendDelta 1 instead of rejection/sendDelta 0. All node/proof/chain responses remain labelled doubles; no real transport or charge.",
+      "recommendation": "Move application beforeSubmit callback after strict predecessor validation while preserving subsequent authenticated ciphertext checks and final account guard. Add both late predecessor mutations and retain existing first-attempt/CAS/last-read lock regressions. Caller exclusive lease remains required; no claim of atomic chain snapshot through network broadcast."
+    }
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 --test-name-pattern=saved|replacement|preference head|failed synchronization|capabilities shared/rolling/application.test.mjs shared/rolling/synchronized-application.test.mjs",
+      "passed": 54,
+      "failed": 0,
+      "durationMs": 45399.72025
+    },
+    {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 --test-name-pattern=reviewer late .build/reviewer-saved-app-936-probe.mjs",
+      "passed": 0,
+      "failed": 2,
+      "durationMs": 4957.991458,
+      "failureExpectedByReview": true
+    }
+  ],
+  "evidence": [
+    {
+      "path": "execution/evidence/G07/saved-application-936-independent-tests.log",
+      "sha256": "c19cb46a8dd84eb285f46985c889052a22c409075f44b974b12e6ea491a3be22"
+    },
+    {
+      "path": "execution/evidence/G07/saved-application-936-late-context-negative.log",
+      "sha256": "38ca7f72ea6126ef1e70762509e514f2f11a2cd833f6c451849690c329010f7a"
+    },
+    {
+      "path": "execution/evidence/G07/saved-application-936-late-context-probe.mjs",
+      "sha256": "7b6ed0733b95d77f9e6d9f346694311ed016c45dbaac862fd7863ed16d644586"
+    }
+  ],
+  "nonblockingVerified": [
+    "Raw application and synchronization wrapper capture exact own-data expectedTxHash before awaits; accessor rejection does not invoke getters.",
+    "Application busy interval and caller lease cover recovery. Original/replacement preference and read-marker happy paths use exact stored bytes, no payment/estimate/proof call or new intent.",
+    "Canonical current path reconciles without requiring pre-effect original head, preventing false conflict from its own canonical advancement. Pending/unknown/invalid/hash mismatch and strict predecessor states fence.",
+    "Renewed quote is not misattributed to unchanged old source hash after interrupted replacement proof. Original quote and inclusion history remain detached/preserved.",
+    "Unknown send retains ciphertext/intent and does not automatically replay; saved journal independently reauthenticates exact ciphertext and final account context."
+  ],
+  "limitations": [
+    "This source revision is not approved for integration or genuine saved-byte recovery until the P2 repair is independently verified.",
+    "Tests use real pinned ABI/Tx/AEAD but labelled chain/proof responses; no genuine recovery, browser, provider, build or heavy job performed.",
+    "No production/source files edited. Only ignored probe and unique evidence reports/logs written. Existing root a699 is unchanged; this new API is not represented as current-root behavior."
+  ]
+}

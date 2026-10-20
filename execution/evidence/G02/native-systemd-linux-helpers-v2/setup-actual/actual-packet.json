@@ -1,0 +1,48 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "session": 95585,
+  "review": "36dcf45025881ed5599526b9af71da88d36c484b4851cb8291ead3714e9c1de1",
+  "executionIntentSha256": "04e437f483c0d65c2ef56b02c6e8f00856f5e5fcabdf7782d0c7ca5332bf295f",
+  "outcome": {
+    "passed": true,
+    "elapsedMs": 10371,
+    "sourceUnchanged": true,
+    "containerAbsent": true,
+    "state": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": false,
+      "Status": "exited"
+    },
+    "derivedImageId": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+    "derivedBytes": 53964743,
+    "baseImageId": "sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7",
+    "baseBytes": 28942578,
+    "receivedBytes": 19043383,
+    "writableBytes": 86278144,
+    "authenticatedApt": true,
+    "archiveCount": 24,
+    "archiveBytes": 13376956,
+    "systemdVersion": "255.4-1ubuntu8.17",
+    "nativeQualified": false
+  },
+  "files": {
+    "intent.json": "ddeba5413f22466e5ba33fe58550ddc0be2a10890a2e591092ca6363486e1f64",
+    "public-setup.log": "aaf2fcb07bf3c4b9443eea11833ab073b30dab90913fd713ff6afbaf5f57e65b",
+    "commit-intent.json": "7c30026370cc5176d14b4651b052b83af7a1129e7b8666914e257931237e2ba1",
+    "result.json": "e5a520966eee28167f31cf6f176714f86490c6182ef6ce690a195240e5b11653",
+    "public-setup-stage": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1",
+    "create-intent.json": "afedcda8348ac9953b42da2f4049b0891aaebb57307fcffe9ba657d78a7495e2",
+    "start-intent.json": "3e2b44c54f0624dd7507881afed8cdad1f3d4162b9574fb96a9173fd58cfdc8d",
+    "closure.json": "41001f37ac6c7cd235bebe934c46e42c9060cc1f880104df60c3d4fffa791975",
+    "before-cleanup.json": "8ab35a75c067d6ac34e33b57b61e88607ebd9ff38270315bde02f9d5819f69e1"
+  },
+  "limits": [
+    "Public package setup only; not actual systemd lifecycle regression or native qualification.",
+    "No image repull; derived image retained for separately reviewed offline test.",
+    "Cleanup kill returned1 for already-exited container; wait/removal/positiveabsence all succeeded.",
+    "Log transient maximum192KiB; finalretainedmaximum128KiB."
+  ],
+  "nextGate": "Independent actual image/package-closure review, then exact image-bound offline runner source review and separate execution grant."
+}

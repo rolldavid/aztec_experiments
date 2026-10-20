@@ -1,0 +1,14 @@
+test_absence_transport_failure_is_not_absence (__main__.OwnedCleanup.test_absence_transport_failure_is_not_absence) ... ok
+test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup (__main__.OwnedCleanup.test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup) ... ok
+test_malformed_or_missing_state_cannot_skip_owned_cleanup (__main__.OwnedCleanup.test_malformed_or_missing_state_cannot_skip_owned_cleanup) ... ok
+test_multiple_failure_still_attempts_removal_and_absence (__main__.OwnedCleanup.test_multiple_failure_still_attempts_removal_and_absence) ... ok
+test_normal_owned_cleanup_requires_positive_absence (__main__.OwnedCleanup.test_normal_owned_cleanup_requires_positive_absence) ... ok
+test_removal_failure_still_checks_actual_absence (__main__.OwnedCleanup.test_removal_failure_still_checks_actual_absence) ... ok
+test_state_timeout_cannot_skip_owned_cleanup (__main__.OwnedCleanup.test_state_timeout_cannot_skip_owned_cleanup) ... ok
+test_unknown_or_foreign_identity_never_mutates (__main__.OwnedCleanup.test_unknown_or_foreign_identity_never_mutates) ... ok
+test_valid_shaped_unknown_id_never_mutates (__main__.OwnedCleanup.test_valid_shaped_unknown_id_never_mutates) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.002s
+
+OK

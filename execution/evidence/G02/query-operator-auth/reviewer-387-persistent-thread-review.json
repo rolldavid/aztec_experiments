@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T20:18:24.329457+00:00",
+  "reviewer": "independent-reviewer",
+  "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+  "verdict": "PASS_SCOPED_PERSISTENT_THREAD_COMPONENT",
+  "blockingFindings": [],
+  "ownedSourceBlobs": {
+    "plugins/thread-repositories.mjs": "cd468b991e15e033f56bb9da9e879712a0275c64",
+    "plugins/github-tools.mjs": "b8968b0d624d2faa74a977f908fb000b253c21d2",
+    "plugins/agent.mjs": "ac4576f88db936ce11dcf36e9bf79513c3f873d4",
+    "plugins/test/thread-repositories.test.mjs": "f8a196e9e1c499663cb719c7971689f7e2305f1e",
+    "plugins/test/model.test.mjs": "acd5f7319f1b039dde34d06a0e605193b33434c4"
+  },
+  "inheritance": {
+    "f50FundingNativeOperatorSocialPaths": 27,
+    "allF50ReviewedBlobsUnchanged": true,
+    "hosted7f90UnaffectedPaths": 14,
+    "allHostedUnaffectedBlobsUnchanged": true,
+    "hostedOverlapsReviewed": [
+      "plugins/agent.mjs",
+      "plugins/test/model.test.mjs"
+    ],
+    "priorReviews": {
+      "reviewer-f50-coherent-review.json": "ce8686a22fe94fd97d8631524d21af8fb96daa25c1fbc7dfcdbab3156a249701",
+      "reviewer-7f90-hosted-g10-review.json": "b897df6e0ed1622ca6f0376713227998cb426a84fe8f02fa5db1f580a5a5cd74"
+    }
+  },
+  "resolvedFinding": {
+    "issue": "Initial depth-one clone imported into bare repo without shallow handling: actual local reproduction returned fetch exit0 but rejected invocation ref; update-ref then accepted an incomplete commit graph.",
+    "reproduction": "Two-commit local file:// depth-one clone; missing invocation ref and git fsck connectivity exit2; disposable repository removed. No external network.",
+    "repair": "Fetch --update-shallow, exact imported-ref equality and connectivity check before durable prepared intent and accepted-ref CAS. Actual file:// regression verifies shallow boundary survives acceptance and subsequent invocation."
+  },
+  "conclusions": [
+    "Canonical thread id is supplied from trusted conversation to the optional repository capability. Namespace/thread key separates repositories; repository identity is retained and mismatch rejected. Production namespace construction remains a wiring responsibility.",
+    "Same-thread queue spans open through close, while different thread keys open independently. One manager under the existing host lease is the intended ownership boundary.",
+    "Accepted revision advances through durable prepared intent then exact old-ref CAS then durable acknowledgement. Restart only recognizes the exact already-advanced produced ref; unapplied/ambiguous prepared state refuses replay. Paid-call journal remains separate authority.",
+    "acceptStarted fences any repeated same-session attempt after validation or write uncertainty. Failed drafts leave the prior accepted source intact; successful answer awaits acceptance before workspace close.",
+    "Fixed trusted Git command environment removes developer HOME/global/system Git configuration and credentials; hooks disabled. No generated program executes on host through this module. Persistent mode withholds remote create_pr capability.",
+    "Configured storage/revision limits fail closed. These are acceptance limits, not hard process/disk sandbox claims; initial clone resources and retained interrupted drafts remain operational considerations.",
+    "Validation capability is optional at this source-layer API; production must wire the isolated revision validator before enabling generated-code acceptance."
+  ],
+  "tests": {
+    "latestActualRepositoryCases": 7,
+    "latestDurationMs": 3298.481,
+    "unchangedOtherCasesCarried": 25,
+    "coverage": "32 distinct cases by carry; not a new whole32 execution at final source.",
+    "logs": {
+      "persistent-toolbox-final.log": "c1881994fb37798f8170cf534e10d9dcc9b750a45e1fb8642bd9d0b725a3f8cc",
+      "persistent-toolbox-bounded.log": "87aa281a1290cb4bfb4f24bc265322f0f8374f6284d19e3cce76ac516307d11e",
+      "persistent-shallow-tests.log": "e824958d0620f55f663439a297eebc55fe6de424658a208ee70e94653008d1e1"
+    }
+  },
+  "remaining": [
+    "Production main does not activate persistent manager yet; no full G10 completion.",
+    "Actual generated-code isolation/build validation and G11 deployment/immutable publication remain separate.",
+    "Canonical network/board/plugin namespace and one manager under existing lease must be wired explicitly.",
+    "No backup/restore, large-scale capacity, real provider/model quality, real-proof testnet or release qualification inferred.",
+    "Prior notification final fresh recovery and actual funding aggregate acceptance remain open unchanged."
+  ],
+  "reviewerExecution": "Two tiny local Git reproductions only; no chain/provider/build/sandbox execution and no application edits."
+}

@@ -1,0 +1,6 @@
+{"stage":"restore-existing-hosted-account"}
+{"stage":"claim-plugin-credit"}
+{"stage":"post-plugin-request"}
+{"stage":"phase-complete"}
+{"phase":"plugin-claim-post","passed":true}
+{"passed":true,"phasePassed":true,"ownedTreeAbsent":true}

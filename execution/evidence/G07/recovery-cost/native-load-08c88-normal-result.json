@@ -1,0 +1,409 @@
+{
+  "kind": "isolated-native-readonly-load",
+  "sourceRevision": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "passed": false,
+  "financialOperations": 0,
+  "mining": "default automine; no transactions or mining RPC",
+  "dump": true,
+  "resourceEnvironment": {
+    "HARDWARE_CONCURRENCY": "1",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "TMPDIR": "/private/tmp",
+    "RAYON_NUM_THREADS": null,
+    "TOKIO_WORKER_THREADS": null,
+    "NODE_OPTIONS": null
+  },
+  "deadlineMs": 90000,
+  "rssLimitKiB": 12582912,
+  "peakTreeRSSKiB": 4754000,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 2005,
+      "rssKiB": 735952
+    },
+    {
+      "elapsedMs": 3015,
+      "rssKiB": 735968
+    },
+    {
+      "elapsedMs": 4018,
+      "rssKiB": 736016
+    },
+    {
+      "elapsedMs": 5018,
+      "rssKiB": 735888
+    },
+    {
+      "elapsedMs": 6018,
+      "rssKiB": 735888
+    },
+    {
+      "elapsedMs": 7020,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 8020,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 9020,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 10020,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 11020,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 12022,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 13025,
+      "rssKiB": 735648
+    },
+    {
+      "elapsedMs": 14032,
+      "rssKiB": 735648
+    },
+    {
+      "elapsedMs": 15038,
+      "rssKiB": 735648
+    },
+    {
+      "elapsedMs": 16038,
+      "rssKiB": 735648
+    },
+    {
+      "elapsedMs": 17041,
+      "rssKiB": 735648
+    },
+    {
+      "elapsedMs": 18041,
+      "rssKiB": 735664
+    },
+    {
+      "elapsedMs": 19044,
+      "rssKiB": 735664
+    },
+    {
+      "elapsedMs": 20044,
+      "rssKiB": 735664
+    },
+    {
+      "elapsedMs": 21044,
+      "rssKiB": 735664
+    },
+    {
+      "elapsedMs": 22044,
+      "rssKiB": 735840
+    },
+    {
+      "elapsedMs": 23044,
+      "rssKiB": 735840
+    },
+    {
+      "elapsedMs": 24045,
+      "rssKiB": 735840
+    },
+    {
+      "elapsedMs": 25046,
+      "rssKiB": 735840
+    },
+    {
+      "elapsedMs": 26046,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 27065,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 28076,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 29123,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 30129,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 31129,
+      "rssKiB": 735856
+    },
+    {
+      "elapsedMs": 32129,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 33130,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 34132,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 35132,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 36138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 37138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 38138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 39138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 40138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 41138,
+      "rssKiB": 735920
+    },
+    {
+      "elapsedMs": 42151,
+      "rssKiB": 1239056
+    },
+    {
+      "elapsedMs": 43772,
+      "rssKiB": 979264
+    },
+    {
+      "elapsedMs": 45211,
+      "rssKiB": 988832
+    },
+    {
+      "elapsedMs": 46897,
+      "rssKiB": 794560
+    },
+    {
+      "elapsedMs": 48091,
+      "rssKiB": 1202016
+    },
+    {
+      "elapsedMs": 49292,
+      "rssKiB": 1100560
+    },
+    {
+      "elapsedMs": 50421,
+      "rssKiB": 2266256
+    },
+    {
+      "elapsedMs": 51542,
+      "rssKiB": 3256000
+    },
+    {
+      "elapsedMs": 52616,
+      "rssKiB": 4754000
+    },
+    {
+      "elapsedMs": 53696,
+      "rssKiB": 1918416
+    },
+    {
+      "elapsedMs": 54807,
+      "rssKiB": 602752
+    },
+    {
+      "elapsedMs": 55927,
+      "rssKiB": 534000
+    },
+    {
+      "elapsedMs": 57500,
+      "rssKiB": 405248
+    },
+    {
+      "elapsedMs": 58748,
+      "rssKiB": 249280
+    },
+    {
+      "elapsedMs": 59927,
+      "rssKiB": 185024
+    },
+    {
+      "elapsedMs": 61147,
+      "rssKiB": 180640
+    },
+    {
+      "elapsedMs": 62659,
+      "rssKiB": 286864
+    },
+    {
+      "elapsedMs": 63772,
+      "rssKiB": 494992
+    },
+    {
+      "elapsedMs": 64904,
+      "rssKiB": 716704
+    },
+    {
+      "elapsedMs": 65972,
+      "rssKiB": 897216
+    },
+    {
+      "elapsedMs": 67070,
+      "rssKiB": 949104
+    },
+    {
+      "elapsedMs": 68213,
+      "rssKiB": 920656
+    },
+    {
+      "elapsedMs": 69345,
+      "rssKiB": 882176
+    },
+    {
+      "elapsedMs": 70785,
+      "rssKiB": 365184
+    },
+    {
+      "elapsedMs": 71885,
+      "rssKiB": 532560
+    },
+    {
+      "elapsedMs": 73009,
+      "rssKiB": 652576
+    },
+    {
+      "elapsedMs": 74145,
+      "rssKiB": 675872
+    },
+    {
+      "elapsedMs": 75304,
+      "rssKiB": 756944
+    },
+    {
+      "elapsedMs": 76468,
+      "rssKiB": 682432
+    },
+    {
+      "elapsedMs": 77549,
+      "rssKiB": 434544
+    },
+    {
+      "elapsedMs": 78857,
+      "rssKiB": 392064
+    },
+    {
+      "elapsedMs": 79935,
+      "rssKiB": 603888
+    },
+    {
+      "elapsedMs": 81017,
+      "rssKiB": 812800
+    },
+    {
+      "elapsedMs": 82156,
+      "rssKiB": 1012992
+    },
+    {
+      "elapsedMs": 83264,
+      "rssKiB": 1083040
+    },
+    {
+      "elapsedMs": 84429,
+      "rssKiB": 602224
+    },
+    {
+      "elapsedMs": 85533,
+      "rssKiB": 699504
+    },
+    {
+      "elapsedMs": 86651,
+      "rssKiB": 536448
+    },
+    {
+      "elapsedMs": 87722,
+      "rssKiB": 700624
+    },
+    {
+      "elapsedMs": 88835,
+      "rssKiB": 898176
+    },
+    {
+      "elapsedMs": 89917,
+      "rssKiB": 456912
+    }
+  ],
+  "failures": [
+    {
+      "stage": "deadline"
+    }
+  ],
+  "children": [
+    {
+      "role": "anvil",
+      "code": null,
+      "signal": "SIGKILL",
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 52616,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 58592,
+        "ppid": 1682,
+        "rssKiB": 79312
+      },
+      {
+        "role": "anvil",
+        "pid": 58806,
+        "ppid": 58592,
+        "rssKiB": 4674688
+      }
+    ]
+  },
+  "snapshot": {
+    "sha256": "34d2a80baddcc3347f5838c1e8d3ac378a893067bfc5df7b9939fb689aef71a8",
+    "bytes": 6340229738
+  },
+  "ownedDump": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/anvil-recovery-0cd9e1e3-27ee-46a1-b9ac-acd579bf1750.json",
+    "dev": 16777232,
+    "ino": 233553391
+  },
+  "ownedCache": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/anvil-cache-ddc8b148-6724-4113-86cc-16a1c0423236",
+    "dev": 16777232,
+    "ino": 233553392
+  },
+  "firstRpcReady": {
+    "ready": false,
+    "elapsedMs": 48721,
+    "attempts": 418
+  },
+  "failure": {
+    "errorClass": "AssertionError",
+    "code": null,
+    "frames": [
+      "qualify-load-08c88-normal.mjs:17:88"
+    ]
+  },
+  "elapsedMs": 91230,
+  "ownedTreeAbsent": true
+}

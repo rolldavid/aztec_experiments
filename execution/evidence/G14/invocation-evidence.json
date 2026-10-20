@@ -1,0 +1,61 @@
+{
+  "candidate": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+  "base": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
+  "task_id": "G14",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+      "base": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
+      "id": "invocation-encoding",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test shared/rolling/invocation.test.mjs shared/rolling/name-policy.test.mjs",
+      "environment": "macOSarm64 Node24.21.0 Aztec6.0rc1",
+      "observed": "6passed",
+      "artifacts": [
+        {
+          "path": "evidence/G14/invocation-tests.log",
+          "sha256": "067a66024e7775a150b0cf6154ef1be5a4da437b40a722f6ad541166d5a26ef6"
+        },
+        {
+          "path": "evidence/G14/invocation-review.json",
+          "sha256": "9ab9c8b12f401d4d180d0eb024b2d695ecc7b29dcdde92bfd0650dea5f1c0ae3"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+    "base": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "implementer": "lead-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G14/invocation-review.json",
+        "sha256": "9ab9c8b12f401d4d180d0eb024b2d695ecc7b29dcdde92bfd0650dea5f1c0ae3"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "0370cbbdcf468f8e578d38ed0adeea8082511595",
+      "base": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
+      "id": "G14-invocation-interface",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G14/invocation-tests.log",
+          "sha256": "067a66024e7775a150b0cf6154ef1be5a4da437b40a722f6ad541166d5a26ef6"
+        },
+        {
+          "path": "evidence/G14/invocation-review.json",
+          "sha256": "9ab9c8b12f401d4d180d0eb024b2d695ecc7b29dcdde92bfd0650dea5f1c0ae3"
+        }
+      ]
+    }
+  ]
+}

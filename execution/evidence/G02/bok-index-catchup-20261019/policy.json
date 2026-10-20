@@ -1,0 +1,28 @@
+{
+  "task_id": "G02-bok-index-catchup",
+  "implementer": "funding_resume2",
+  "candidate": "c36f494e309888650d2e94c4d0777aed0c2df9af",
+  "base": "ea63448dee2f11c04aad51b0e1b4749b6a0489b1",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "plugins/aztec.mjs",
+    "plugins/test/hosted-private-bok.test.mjs"
+  ],
+  "required_checks": [
+    "focused-bok"
+  ],
+  "requirements": [
+    "G02-retained-canonical-Bok-catchup"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "G02-bok-index-catchup",
+      "paths": [
+        "plugins/aztec.mjs",
+        "plugins/test/hosted-private-bok.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "candidate": "9b78e31a116f776f3802bd4739f614e173f2c7cd",
+  "deltaBase": "d654dc460c5ad69c377e8e0c4365a5f92184d6f1",
+  "fullReviewBase": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+  "verdict": "approved; required exact-candidate CI remains mandatory before integration",
+  "blockers": [],
+  "priorReviews": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-e9223332.json",
+      "sha256": "5c3663b3078743fce8057b69e005fd40d2cf9e4cbe96c17bdbac7daa58ae9317"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-d654dc46.json",
+      "sha256": "cdf3788d6efbf3765577b7847b4d9133fd2b5a2b8ac732b4b456a102fc13e4b4"
+    }
+  ],
+  "deltaFiles": [
+    "censor-daemon/README.md",
+    "execution/release/final-requirement-disposition.json",
+    "plugins/DEPLOYMENT.md",
+    "plugins/ESCROW_SPEC.md"
+  ],
+  "checks": [
+    "Exact final delta is four documentation files only; no runtime, tests, generated consumer or evidence bytes changed.",
+    "Canonical checkpointed-or-later L2 and canonical mined L1 wording matches reviewed runtime; successful receipt/effect/identity, actual Outbox witness/consumability and contract preflight remain mandatory.",
+    "Circle standard-transfer attestation and finalityThresholdExecuted >=2000 explicitly retained; only redundant destination finalized-head wait wording removed.",
+    "Legacy ESCROW_SPEC clearly marked historical, with narrow owner-approved finality override; unrelated legacy public-account/atomic-completion design is not represented as current PrivateBok.",
+    "Elapsed workload wording replaced by owner-authorized bounded final reliability exercises; genuine proof/model/removal/prompt/independent review scope remains.",
+    "All46 requirement IDs/text, evidence assignments and assurance dispositions remain unchanged. Only13 row remaining fields corrected using previously reviewed actual outcomes; external gates and98-entry evidence registry byte-equivalent as parsed objects.",
+    "Completed moderator publication/ingestion actions removed based on exact same-process9011 receipt, not inference from active service. Current wallet34cc, moderator34cc+f3, Bok791+84a5 and stopped interactive/static-public distinction preserved.",
+    "Previous e922 build/closure/hash verification and d654 independent48/48 tests carried forward on identical files; no redundant tests/builds run."
+  ],
+  "scopeLimits": [
+    "Required new candidate CI is pending. Cancelled earlier d654 CI is not a passing result.",
+    "No production clearance or whole-requirement cryptographic assurance claim; X1/X2 remain external.",
+    "Prior current six moderation outcomes are allowances, not six removals; historical authentic removal/policy evidence remains separately scoped.",
+    "Prior failure records, operator-attributed generated-test repair, unavailable historical Tx bodies and checkpoint versus finalized evidence limits remain."
+  ],
+  "noLiveOperations": true,
+  "reviewType": "final source-bound documentation/evidence conjunction; f3 through exact9b78"
+}

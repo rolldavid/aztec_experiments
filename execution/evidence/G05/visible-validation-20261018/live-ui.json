@@ -1,0 +1,17 @@
+{
+  "candidate": "289fd11d65156469ea8748e439c00047f378eac2",
+  "environment": "Live native devnet4317, CUA in-app browser, imported disposable encrypted recovery",
+  "procedure": "Reload UI only; import saved encrypted account; Register a name Bok Example; Check action",
+  "observed": {
+    "alertVisibleWithinDialog": true,
+    "alertHasKeyboardFocus": true,
+    "firstNameRetained": "Bok",
+    "lastNameRetained": "Example",
+    "draftEditable": true,
+    "privateAccountImported": true
+  },
+  "limits": [
+    "No fee funding or transaction submitted",
+    "In-app browser has no Ethereum provider; realwallet acceptance remains open"
+  ]
+}

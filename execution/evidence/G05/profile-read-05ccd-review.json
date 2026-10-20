@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "05ccd65803ef9860c54ad075e36416faf5bf3ce9",
+  "base": "f2b398335956a2fcaa14f12f0a95fcba017c4c51",
+  "verdict": "approved_source",
+  "findings": [],
+  "files": {
+    "shared/rolling/application.mjs": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+    "shared/rolling/application.test.mjs": "3a1e5fa00d34a190a3d5b52dfec180c3f269345d33b967887a02164c7259836a"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinnedNode24.21.0 --test shared/rolling/application.test.mjs",
+      "result": "Independently33passed0failed0skipped1481.358334ms"
+    }
+  ],
+  "disposition": "f2bP2 resolved: both versions require canonical normalized32bytehex strings beforeBigInt and boundeduint32; boolean/blank/noncanonical/number/negative/overflow cases reject. Actual decoded ABI profile/name/action cases pass.",
+  "limits": [
+    "No full product/runtime approval; final generated artifacts and genuine new-profile journey required"
+  ]
+}

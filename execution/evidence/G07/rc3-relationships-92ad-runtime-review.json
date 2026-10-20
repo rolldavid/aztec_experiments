@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "d7f186a2dca8d5c7fd7fc0ab39ace8b0483a56a1",
+  "verdict": "PASS first bounded rc3 Rolling relationships application journey; not full G07, cursor or release acceptance",
+  "receiptSha256": "1cc4c4668ddd9b21a725cde8ee62b2fb73e7d1f2722d661956c02fbedf8334ff",
+  "actual": {
+    "elapsedMs": 464664,
+    "peakTreeRSSKiB": 1772720,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "proverJobs": {
+      "jobs": 2,
+      "bytes": 0,
+      "running": false,
+      "submitted": 5,
+      "completed": 5,
+      "failed": 0
+    },
+    "applicationThreads": 1,
+    "nodeThreads": 1,
+    "worldStateThreads": 1
+  },
+  "binding": {
+    "rehashRows": 448,
+    "mismatches": [],
+    "sourceRowsOuter": 282,
+    "localAnvilAlias": "Previously qualified exact 22d5eeb9 binary alias; remaining 281 outer paths rehashed",
+    "innerObservationEqualsOuterBridge": true,
+    "innerObservationSha256": "5a201529f027030d36996df5def18f14a17d3f0dff9c5431c751d7030091d6d6",
+    "rollingArtifact": {
+      "billboard/target/rolling_contract-RollingBoard.json": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+      ".build/contracts-manifest.json": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36"
+    },
+    "privateBok": {
+      "manifestSha256": "8c3d41faee4694616f2e018947d6ea3fa386150f41211533ee03c8de6bdf86e6",
+      "artifactSha256": "0eb62b0f816ef6c2315f2fe499b88b34a09ba5a9013822d9fa4c47c1749bde5c",
+      "boardArtifactSha256": "0b497f4dd1c2555b6c0f662063b4495f270503229069c81c8bf41e282e903efb",
+      "inputCount": 14
+    },
+    "nativeBB": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217",
+    "fiveSavedEffectsHashMatch": true
+  },
+  "transactions": [
+    {
+      "action": "preference-name",
+      "txHash": "0x1733116b3df95552c6b5d34337946e5946ea407d412a23b4cdc4cda1cd644ae5",
+      "blockNumber": 14,
+      "blockHash": "0x1157246f4e7f1b371a7159ca69b11d3617224c90b2b8c0dbac45b622f6430b24",
+      "transactionFee": "10381600800000",
+      "effectSha256": "56e7e37dabe50fa1a40f50c45e4251e7f95035e72baab57c6cabf6ccb4d7bb4d",
+      "events": [
+        "NameRegistered"
+      ]
+    },
+    {
+      "action": "preference-root",
+      "txHash": "0x1a9a87697a00184bb1f1b320344cd52bd505902b898461befe98cfb5395fe33c",
+      "blockNumber": 15,
+      "blockHash": "0x1f1b2644abf455221523f09ac1991a516499f94b4dd0056782eb20d7474c8fc6",
+      "transactionFee": "21983815200000",
+      "effectSha256": "9e4c285c479e5d05f045866e26a18319b44e3941b3d202f93aa4f99e04e70459",
+      "events": [
+        "PostPublished"
+      ]
+    },
+    {
+      "action": "preference-1",
+      "txHash": "0x234edc36407e14d527d3180864d342a762d724b7b37b9d5487acc503a80ae78d",
+      "blockNumber": 16,
+      "blockHash": "0x0fc055853ea330f77f9747950d837143eb4e4ea590b543c2bef28e3fec37b809",
+      "transactionFee": "8715002400000",
+      "effectSha256": "2c0161895b06445e020d34e152cf327381294a657fb7990ff3562fb687b31ff0",
+      "events": []
+    },
+    {
+      "action": "preference-2",
+      "txHash": "0x217d843fcea106ac4c258a815d06748563984645007a313697634f0be748fc06",
+      "blockNumber": 17,
+      "blockHash": "0x0a7539cf0a1a7a15a778263dabec6d57197b21f7b5b98e7c2f232f1a149e43a0",
+      "transactionFee": "8715002400000",
+      "effectSha256": "581f37223f7f8bf1f9657ac112e750bfd47d4478a2e3096b162b7b5f0a6f0e25",
+      "events": []
+    },
+    {
+      "action": "preference-3",
+      "txHash": "0x2d70ddd9ce95774a6616b8fb3730e98c3f79d04f293637446f18e16bd1da25e6",
+      "blockNumber": 18,
+      "blockHash": "0x04cc634bcee3dc0ca9fdc47eda2ebd62d5f84c3198a33dc741bb2bae4d7f3be5",
+      "transactionFee": "8715002400000",
+      "effectSha256": "54958223961ad2762c93c76a14c46738153c4eb5ff2bdd61e35ddf87ff9846a6",
+      "events": []
+    }
+  ],
+  "accounting": {
+    "fiveApplicationFees": "58510423200000",
+    "collateralClaimFee": "8622947400000",
+    "standaloneFundingFee": "9065964000000",
+    "humanFees": "67133370600000",
+    "totalProtocolDebit": "76199334600000",
+    "privateBalance": "999999923800665400000",
+    "authorPublicBalance": "0",
+    "poolBalance": "999999923800665400000",
+    "canonicalTargetBeforeAfter": {
+      "number": 18,
+      "hash": "0x04cc634bcee3dc0ca9fdc47eda2ebd62d5f84c3198a33dc741bb2bae4d7f3be5"
+    },
+    "allThreeOriginalBalanceEqualities": true,
+    "feesBelowReviewedMaxima": true
+  },
+  "checked": [
+    "Exactly five trusted submitted/completed jobs, zero failed/running; name, root post and three private preferences have successful ordinary checkpointed receipts at blocks14-18 and retained exact effect hashes. Runtime action assertions bind effect block metadata and production canonical public decoder; five saved effect files rehashed without SDK decode rerun.",
+    "Private preferences bookmark root, follow registered name and follow Main board; original consumer verifies full expected fields, revision3 head and exact recovered complete snapshot, with zero public preference events.",
+    "Initial/incremental authenticated reads preserve proof/send/wallet counters. Journal reopen retains exact transaction bytes/hash and no new proof. Old actor is closed before fresh unique PXE namespace and empty private journal directory are created from same keys/public deployment; exact private snapshot recovered with zero added jobs/sends/submissions.",
+    "Actual production private-fee utility and public pool balances equal expected debit at canonical block18 before/after; fee arithmetic independently recomputed including separate funding and collateral claims.",
+    "Default1 is bound by source-selected profile, actual runtime singleton backend/path/thread assertions before proving and reported profile; no separate child-environment sampling was provided for this run.",
+    "Canonical public projection rebuilt from six refetched transactions; SQLite reopen and HTTP feed/thread views pass without cached normalized data as authority."
+  ],
+  "coldMetrics": {
+    "elapsedMs": 2999,
+    "returnedEvents": 3,
+    "privateTagCalls": 6,
+    "requestedTags": 267,
+    "returnedLogs": 13,
+    "freshReadMs": 1864,
+    "boundedWorkQualified": false,
+    "wireBytesObserved": false,
+    "discoveryAndFoldSeparatelyObserved": false
+  },
+  "limitations": [
+    "Official controlled local settlement and faucet funding; real application proofs, not network epoch proof or economic finality.",
+    "Inbox effective1/minimum4 local explicit exception remains backlogCapacityQualified=false.",
+    "CLI fake-indexeddb with real application SDK store and real encrypted file journal; no native-browser persistence/notification acceptance.",
+    "New Design cold cursor/page/transport is not composed in this journey. Small genuine history does not qualify full bounded cold recovery or capacity.",
+    "260 raw compiler diagnostics, TXE/adversarial soundness, full rc3 browser/reorg/release gates remain open. No integration advance authorized by this report."
+  ],
+  "reviewExecution": "Read-only source, evidence, binary hash and integer accounting checks; no proof/native/network rerun."
+}

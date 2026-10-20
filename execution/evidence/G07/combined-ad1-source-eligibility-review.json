@@ -1,0 +1,100 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "base": "96825e16271baf7d81442415565fe51b1533737e",
+  "verdict": "approved source eligibility for one bounded genuine rolling-preference-browser campaign; runtime pending",
+  "findings": [],
+  "sourceReviewCandidate": "436f253809a0b83d815b2c9ca90238aaa0a4381c",
+  "checks": [
+    "Independently recomputed all six stable patch IDs and every source/target changed blob; exact equivalence, no conflict changes",
+    "Exact candidate delta is21 paths, equals packet source inventory; all21 current and immutable candidate SHA256s verified",
+    "Re-inspected parent single-actor closure, two-key claims-empty backup, awaited real public-index factory,150s admission/120s browser limit and receiver/fee/persist-before-ACK handling",
+    "Independently verified all81 wallet input hashes and24 served output byte sizes/hashes, including derived CRS; no rebuild or source mutation",
+    "Actual checkSdk verifies2038 pinned inputs/8 outputs, including patched private-event-query sources;52 canonical contract inputs equal normal manifest",
+    "Actual read-only PrivateBok preflight passes14 inputs/a74b manifest/524078 Bok/a0e21d Probe",
+    "Independent focused194 tests pass2375.052209ms,0fail/skip; no browser/proof job launched",
+    "Inspected and hash-verified parent owned-run logs:664 source checks and59 affected browser checks pass; normal wallet build succeeds. Browser cases include actual SDK unlock but use labelled synthetic chain/UI cases"
+  ],
+  "transfers": [
+    {
+      "source": "a3f7e200b4b4806842d52863c2807e84646a8610",
+      "candidate": "49b0f9f3d3648913d1e712b2db194d97c72433b0",
+      "patchId": "6b263a1e8facdaad20fdf409a35f1ac81ea3f468"
+    },
+    {
+      "source": "8d79f0d3bae6398aad0970826a825aa1a8e2ff9e",
+      "candidate": "a62e84d2b94e17da0f7da7b4f6e60ed6265ae4a1",
+      "patchId": "3eddff132411cb418ec03fbc6f76fb7424bb8284"
+    },
+    {
+      "source": "58280d05ef7dfcaa7450812cc0575f069ec82a53",
+      "candidate": "5fd253e8487feaa04e97985b6fbd6149e5742218",
+      "patchId": "bdd4b6045891369b3fc8bc439c122caa0668532b"
+    },
+    {
+      "source": "0088e1440299a12fbcc92ce8a953985515b24dbc",
+      "candidate": "58885ace910ef1ae3b6f2163a5524fd9e89db358",
+      "patchId": "62265a0594e2e38b58be45d4184f425a5ad5d2f3"
+    },
+    {
+      "source": "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
+      "candidate": "9430b56fe64903515f727fc48a04d8dd6e84ba4f",
+      "patchId": "cfc65adb93890dfed4fecdb2ed11be3bc041a769"
+    },
+    {
+      "source": "b5e6899ec9b93b449ce2bd8a946705886da1eb18",
+      "candidate": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+      "patchId": "e90d9475471a588512d0fe7e343be96e96281887"
+    }
+  ],
+  "sourceHashes": {
+    "apps/rolling/reader.browser.test.mjs": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947",
+    "apps/rolling/reader.mjs": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874",
+    "apps/rolling/wallet-panel.browser.test.mjs": "6c62c6c9dcdb270bff3d1452eaaafa62b7bc689ffdd22d93bdc908031d934c00",
+    "apps/rolling/wallet-panel.mjs": "83bd3fda88e4900c51096d266640843aab4ef07b7b849b0eb6c1183d43f781e5",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "6291ac0b49a1dc226a66d25c59d9ccbf6aed1fc85d334d25bb5b2ef6bc466320",
+    "apps/rolling/wallet-runtime.mjs": "338d3ac8a6e15d54195c486e917b94379fb4e48221d5647232af66199424a47b",
+    "scripts/testing/browser-worker.mjs": "83855bb0b339f6732e939b0f5f8d80f8db8e431d35d4057976b937214c730888",
+    "scripts/testing/rolling-application-fixture.mjs": "ccac4849b21be3cff68c2e9a898c643d65c91c34a79dd446924e5916e4dc7728",
+    "scripts/testing/rolling-application-fixture.test.mjs": "3ff345b2ed230076859a57c339d33ebefaa8520a6fc3c535d6798974675f0df6",
+    "scripts/testing/rolling-composer-browser.mjs": "e66d3e4a9544cff46ca9ee58561e81f12e5ab80f10297842ba763db8da9fa091",
+    "scripts/testing/rolling-composer-browser.test.mjs": "1b42a3198da3afda12a0d13a8372d555afa37b5bc4780d55a6f03ee63942c52a",
+    "scripts/testing/rolling-preference-browser-fixture.mjs": "70319dbcdaf4271781eea03069e9de4b47e54d9f27f09e5696b4a82e65e6116a",
+    "scripts/testing/rolling-preference-browser-fixture.test.mjs": "1741ce065cd7d8483834b994b4939926709a49b9d543e247f274ab0c8a02caf0",
+    "scripts/testing/rolling-preference-browser.mjs": "d787e6f9607037b5885e0468394753a2affbfedc6d468a3e7cbf7952814d4491",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7cb46a1c1a83beec5d31d56bb8084ca9dccf8fd9b07a2e8efa5f788ee9a17ae2",
+    "scripts/testing/rolling-preference-recovery.mjs": "c2c9f98ee9d37dd9f67e96c47f4d2cfb7d51ed09a0c27f4b6e17a8ff581dc28e",
+    "scripts/testing/rolling-preference-recovery.test.mjs": "d8aaa0dc8c9d54dedc3d5ed60fd676797a243e22dd2c734014147495d32f9365",
+    "scripts/testing/rolling-public-acceptance.mjs": "6df2b6fcd3b7188ec68bb5bafeae3d894ef382fac77f3cefb64546fe50ac4e48",
+    "scripts/testing/run-application.mjs": "8a03ecb26aec4e23c484c5cbcd164ad40c6e58ab6327350158555ff5a2cbeb0d",
+    "scripts/testing/scenario-flows.mjs": "7abdc6cbc51f2148ee7bd5cee035ee78b501c2930614849233ac3ebba406f85b",
+    "scripts/testing/scenarios.mjs": "941e3b99f39791ae8c57a7a13c3d706d378188123f9996cb7378318feef18eec"
+  },
+  "artifacts": {
+    "billboard/target/rolling_contract-RollingBoard.json": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431",
+    ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4",
+    ".build/sdk/sdk-manifest.json": "e52d16464ac1b8051baf91291222acc2dda0b345f1551464af96e33c55df3493",
+    ".build/rolling-wallet/manifest.json": "d11839541e9e8f1aeb814a0b71724aeccf889360898182a7155950ee463fdd10",
+    "experiments/private-bok/target/private-bok-build.json": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f"
+  },
+  "evidence": {
+    "execution/evidence/G07/combined-ad1-composition.json": "dafbb36986511185c6edd5f563c80bbca5d64e07f0ef89010676fa1cf64e87dc",
+    "execution/evidence/G07/preference-browser-436f-source-review.json": "2c5518eb726df77d6c5441bd11270e94e01749ab11f36d23eb029df6f4a78f24",
+    "execution/evidence/G07/combined-ad1-source-tests.log": "e049284b5155ff05bf75ab50a40af735a2d969844d29862732c8a7080f838e40",
+    "execution/evidence/G07/combined-ad1-browser-tests.log": "fa9108151d4974e958648cc3adc1239b6a8313d32825317fd69afd355bdb2165",
+    "/tmp/reviewer-ad1-combined-tests.log": "3aeb67c1a286e2874557cf89d7c0b338e91093376b57b3cb3dc25e20305c2e8e"
+  },
+  "independentTestCommand": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-preference-browser-fixture.test.mjs scripts/testing/rolling-preference-browser.test.mjs scripts/testing/rolling-preference-recovery.test.mjs scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+  "requiredRuntime": [
+    "Exactly3 genuine root/bookmark/follow-main actions with canonical effects, unchanged fees and encrypted journal reconciliation",
+    "Fresh native Chromium actual production session/SDK, keys-only backup, explicit completed recovery, local Following/bookmark filters, lock/reload, no expected private state injection",
+    "Zero browser proof/node/L1 sends with actual parent receiver counters and fee revalidation after browser closes; durable failure/accounting before ACK",
+    "540s/4GiB unchanged and >=150s remaining before browser begins; cleanup required on every failure"
+  ],
+  "limits": [
+    "Source and test-double/browser-component eligibility is not actual native chain preference recovery.",
+    "Existing968 relationships/notifications runtime remains immutable; this transfer adds UI/browser acceptance rather than requalifying all cases.",
+    "No reorg/replacement, general privacy/unlinkability, remote Linux, package deployment or full G07/release closure.",
+    "Parent test supervisor sourceRevision is null; composition packet plus independently verified exact blobs/log hashes supplies source binding."
+  ]
+}

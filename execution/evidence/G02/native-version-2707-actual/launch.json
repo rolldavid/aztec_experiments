@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-10-13T02:23:55.732612+00:00",
+  "campaign": "native-version-20261013-2707fd93cc0e",
+  "launchExitCode": 0,
+  "launchSession": 93107,
+  "launchTemplateId": "lt-01ba33852148c8ad2",
+  "cloudControls": {
+    "fleetId": "fleet-0f0ed1d1-d909-4944-99af-64226f195617",
+    "budgetStop": "2026-10-13T02:59:59Z",
+    "terminateWithExpiration": true,
+    "hostControls": "pending actual receipt"
+  },
+  "privateEvidenceHashes": {
+    "binary-reuse-readback.json": "07d70bbfcc5bab00bf680926e8ac5342e957f8cb3856d9d676259f0fb68d297a",
+    "hardware-readback.json": "3c8560c558bc5aab34502a5b244a1e350278c74944cd26668586ba2cd58cf93e",
+    "lt-intent.json": "adb1bc13b55390f3b697c3962f493058f6df8a3b363be8e467edd3e9bd382e62",
+    "cloud-controls.json": "9845602c00b0cd28cdaab5d94f639e13cbc7042ff6742ff4693ee3cafc7557f5",
+    "fleet-intent.json": "9daf1c1e0b5a640a7d1a5f8a4dbe4f1ed2c6e260fa0fa553413301f08a4479c9",
+    "user-data.gz": "953029179b0de2645d55e061ccc213fa3b4e1f0ca4c5a1c9e5b533dc914c52fd",
+    "fleet-request.json": "0f61a9cd1ef4afc6c8722428a39bf076dc643b37fbd5ac404ac1761f8d1aa41c",
+    "lt-response.json": "06865aeb5c41e9887b62aba5fe2a49161e5a47876cabd0b9a337138c4b11323a",
+    "fleet-response.json": "ed33a43b877680341b1151c5d001aae7df35a07d30dc9534a2daf0f089223985"
+  },
+  "nativeQualification": false
+}

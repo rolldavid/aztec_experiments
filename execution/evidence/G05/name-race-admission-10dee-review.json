@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "10dee78724cb700fcbad319199d1202fb1ad62eb",
+  "base": "604f9783142d9ce0db4d809cda4b93e41068a90a",
+  "verdict": "approved-source-only",
+  "scope": "Race admission feasibility adjustment; actualgenuine race pending",
+  "findings": [],
+  "files": {
+    "scripts/testing/rolling-application-fixture.mjs": "cfd6ec79c4ac15cd15a5a1e3e60ddf0af64818de36b887d8e382f8be7c9320f3",
+    "scripts/testing/rolling-application-fixture.test.mjs": "40b3ef1993cc1265525a64a5d51a00aa60e578d70baef5eb99cb153b1fa6d49d"
+  },
+  "checks": [
+    {
+      "command": "PinnedNode NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json --test --test-concurrency=1 scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-application-actor.test.mjs",
+      "result": "56 passed,0failed/skipped,2531.844417ms",
+      "log": "/tmp/reviewer-race-10dee-tests.log"
+    }
+  ],
+  "reasoning": [
+    "Only admission allowance120s\u219290s changed, explicitly distinguished from proof deadline/cancellation. Separate90s settlement/cleanup reserve unchanged.",
+    "Measured113659ms second-start allowance now admitted;89999ms rejected. Existing real120s remote timeout and beforeSubmit expiry preserved.",
+    "Actual engine composition regression still proves late proof retains encrypted proved journal and causeszero node sends. All original writers awaited, bounded both-actor collection and terminalobserver checks unchanged from604 approval.",
+    "No change genuine proof policy, two-pending barrier, canonical winner/loser requirements,540s/4GiB or global supervisor."
+  ],
+  "limits": [
+    "Measured timing is feasibility evidence, not guarantee of success under later conditions. Longer setup/proof can failclosed before sending.",
+    "Final combined transfer/source approval and actual race evidence required; this review runs no realproof/browser/cloud work."
+  ]
+}

@@ -1,0 +1,4 @@
+[
+  { name: 'RollingBoard', privateFunctions: 10 },
+  { name: 'PrivateBok', privateFunctions: 5 }
+]

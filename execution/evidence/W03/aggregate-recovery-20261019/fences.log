@@ -1,0 +1,10 @@
+✔ RC22 exit preserves original depositor through encrypted reopen and blocks overwriting until verified refund (77.424542ms)
+✔ RC22 Bok exit uses actual ABI and encrypted original scope, independent of rejected board/plugin (10.183041ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1130.601792

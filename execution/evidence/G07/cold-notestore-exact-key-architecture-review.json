@@ -1,0 +1,23 @@
+{
+  "reviewer": "reviewer-20261011",
+  "status": "architecture-guidance-only-uncommitted-draft",
+  "sourceBindings": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/patch-pxe-preference-page.mjs": "15e7582dc9de2cf21a5b92867b25bfc45e61173ca593824eb077242c60b37caa",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/node_modules/@aztec-labs/pxe/dest/storage/note_store/note_store.js": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/node_modules/@aztec-labs/pxe/dest/notes/note_service.js": "82cdd6d7b5cba8041c181b9bec312ec13b77997ce494d2058f30f7ba25b83b29"
+  },
+  "conclusions": [
+    "Original NoteStore.getNotes enumerates every contract note and all staged notes even when siloedNullifier is supplied. An exact-key branch is a narrow feasible bound without a new store API.",
+    "Current draft starts original #readNote and #readNullifierEmission for the exact key, retaining staged precedence and the original filter/sort tail. Explicit contract equality is necessary and present because contract index selection is bypassed.",
+    "A general exact-key miss can return []; a missing cursor-authenticated expected head must still make terminal recovery fail rather than invent an uninitialized account. Existing broad index path must continue to reject corrupt missing rows.",
+    "One candidate does not independently establish uniqueness. Original NoteService.validateAndStoreNotes validates creation and nullifier inclusion against the operation anchor; only active candidates may be retained across a gap-free complete scan. Two active candidates must fail closed.",
+    "No generic ensureContractSynced bypass or syncedContracts complete flag may be inferred from this path. Authenticated compact completeness, cursor atomicity, canonical guard and final head/digest agreement remain separate mandatory conditions."
+  ],
+  "requiredTests": [
+    "Exact-key query does not enumerate contract/staged history; staged note/emission precedence, scopes/status/owner/slot and explicit cross-contract mismatch behave like original filters.",
+    "Multiple actual revisions: old head found first but nullified at selected final anchor, latest head retained, terminal authenticated head and event digest exact.",
+    "Two active candidates reject; expected chosen head disappearing rejects; complete empty scan with actual key-gated uninitialized state remains the sole empty success.",
+    "Reorg restores/prunes both note and emission records and cursor consistently; failed coordinator commit does not advance cursor/mailbox or notes/events."
+  ],
+  "qualification": "No source candidate approval or runtime test performed. Final committed diff and meaningful actual component/ACIR tests remain required."
+}

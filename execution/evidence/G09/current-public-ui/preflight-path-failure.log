@@ -1,0 +1,15 @@
+node:internal/fs/promises:1345
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '/Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/g09-current-ui/post.json'
+    at async open (node:internal/fs/promises:1345:25)
+    at async Object.readFile (node:internal/fs/promises:1996:14)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/g09-current-ui/read-only.mjs:11:25 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/.build/g09-current-ui/post.json'
+}
+
+Node.js v24.21.0

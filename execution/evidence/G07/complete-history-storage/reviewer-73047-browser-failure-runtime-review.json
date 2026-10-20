@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T18:43:31.295206+00:00",
+  "source": "da7bd5aea1498d389d70af4430d7b197e78edfd8",
+  "actualPacketSha256": "d62e8c66b08dabbbf1f7f43589790282af91353e127a563d69199bc8ee50e91c",
+  "verdict": "FAILED browser32 retained; cleanup and partial evidence verified",
+  "observed": {
+    "passed": 19,
+    "failed": 4,
+    "withoutTerminalOutcome": 9,
+    "completeTAPSummary": false,
+    "elapsedMs": 156981,
+    "sampledPeakKiB": 612432
+  },
+  "verified": [
+    "All artifact/screenshot hashes matched;581 current source and2578 dependency pins matched.",
+    "The single subsequently repaired reader.browser.test.mjs pin matches historical da7 Git bytes; owner postcheck reports all582 unchanged at terminal. Current27e7 repair is not historical run source.",
+    "Exact19 passing and4 failing labels match retained log;9 remaining have no terminal result, not passes/skips.",
+    "Existing supervisor cancellation recordedSIGTERM, childSIGKILL, positive owned-tree cleanup; ownedTMP absent and original link restored."
+  ],
+  "diagnosisReview": "a976881deccc4f50c968f4a1d9dd3566021695607cf75de6db36df4b69685cec",
+  "next": "Smallest test-fixture readColdPreferences correction with focused first failed case, separate source/prep review and parent grant. No full replay or application change authorized.",
+  "noRuntimeByReviewer": true
+}

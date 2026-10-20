@@ -1,0 +1,31 @@
+{
+  "candidate": "c07e0fa7",
+  "checkout": "f34fbc6bd693b5799975beda07351a337883cfb0",
+  "files": [
+    {
+      "file": "apps/rolling/reader.browser.test.mjs",
+      "sha256": "13b5fa85947436eaedf52b863b872d1836f09c633fdb95289fda6cb3828d0099",
+      "matchesCandidate": true
+    },
+    {
+      "file": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "33e1ecc1f0503d80b71cf602461a0a68981486d7a348c2c0625826b0b7f79e76",
+      "matchesCandidate": true
+    },
+    {
+      "file": "apps/rolling/wallet-panel.mjs",
+      "sha256": "e50d4abea10404ddac184e9fdea25c5252d420257f621f9f104ff66c7299eef0",
+      "matchesCandidate": true
+    },
+    {
+      "file": "apps/rolling/reader.mjs",
+      "sha256": "ca6034f8d13425e5d9b7d2ff4702f75af51fe98276760c7bf1cd8923596fbaf0",
+      "matchesCandidate": true
+    },
+    {
+      "file": "apps/rolling/navigation.mjs",
+      "sha256": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649",
+      "matchesCandidate": true
+    }
+  ]
+}

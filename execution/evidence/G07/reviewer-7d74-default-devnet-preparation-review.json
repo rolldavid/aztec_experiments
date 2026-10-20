@@ -1,0 +1,19 @@
+{
+  "verdict": "ELIGIBLE_ONCE_AFTER_PARENT_SERIAL_GRANT",
+  "source": "7d74e7c2cddaac6e1cc3bd3774efe98d059e36ad",
+  "packetSha256": "c3c0f214ec416f427f743f2ca44324f682ceebc6be171f14a4f8e0e5906a7943",
+  "checks": [
+    "All packet files and 3157 launch bindings independently match; closure55c01 is passed and source-bound.",
+    "Existing launch lifecycle retained; fixed included-board scenario120s4GiB, clean HEAD and exclusive intent, original cleanup.",
+    "Exec environment allowlists HOME/USER/LANG and fixed runtime fields; BOARD_TEST_PROOFS is absent, including inherited overrides. Default disabled is exercised.",
+    "Actual c01 node realProofs and PXE mode use native applicationProofsEnabled configuration; no application/SDK/verifier edit. Original inclusion/assertions remain."
+  ],
+  "conditions": [
+    "Final approval must bind this exact review and current preparation; parent grants one serialized run.",
+    "Require report and actual node/board applicationProofs false, development-client-execution classification and positive cleanup.",
+    "Failure is retained without automatic retry; original120s bounds remain, no real-proof/testnet or browser acceptance."
+  ],
+  "componentBasis": "75798 original runner failure preserved, exact89 retained results independently accepted with e848 correction.60041 executed3 remains valid; its omitted inventory count corrects45 to86.",
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011"
+}

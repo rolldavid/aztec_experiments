@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "c200873ddf7151f8052fffc56048662a52804ff3",
+  "packetSha256": "cf9406072dd6b05eb4580331edf3f00a1bb1c302c491a85e7d0f4fe61fc05bf2",
+  "sourceCarryReviewSha256": "4cf2e2c65692d659567c24ee36613cf459dc4986aaacc08b1fe49a213cf0e775",
+  "verdict": "Eligible for one parent-granted combined component run",
+  "verified": {
+    "packetArtifactHashes": true,
+    "protectedPinsRehashed": 3310,
+    "allPinsMatch": true,
+    "allFourTestSourceHashesMatch": true,
+    "sourceExpandedLabels": 191,
+    "expectedOrdinaryPass": 189,
+    "expectedNamedOptInSkips": 2,
+    "expectedFailCancelTodo": 0,
+    "inventoryPreparationLabelMultisetEqual": true,
+    "sourceHeadMatches": true
+  },
+  "repair": "Both omitted public-events loops restored to inventory. Original184 preparation retained, not executed. No application/test or runner mutation.",
+  "runner": "Existing60s2GiB Supervisor/child and positive cleanup/hash checks; deliberate two named volume skip parser additionally matches exact footer and full label multiset. No name filtering or volume environment enabled.",
+  "limits": [
+    "Not a volume run or production factory/complete archive acceptance.",
+    "Growing volume-native52797 is a separately reviewed outcome; historical31785 remains failed."
+  ],
+  "runtimeByReviewer": false
+}

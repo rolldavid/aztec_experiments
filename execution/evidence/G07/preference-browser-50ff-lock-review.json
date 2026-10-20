@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "revision": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "base": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+  "verdict": "source-approved-for-one-changed-genuine-browser-attempt",
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "8964aef1ef3fa55aa4b255cdf5bad40f92097fb2be2082382f9ff1668251d689",
+    "scripts/testing/rolling-preference-browser.mjs": "521b5c935b48f5bd6558a922db759df9b475b19b59f663b4dfafbc933a56db9a"
+  },
+  "findings": [],
+  "failure": {
+    "report": "execution/evidence/G07/application-3aea2b2f-beea-428d-b975-eb43e753c53b.json",
+    "sha256": "de707eac7fdfa6ceeedf21f2e736b27fdb2a91823c6db7b95214b521aa3f12c6",
+    "passed": false,
+    "elapsedMs": 481272,
+    "peakTreeRSSKiB": 2184832,
+    "stage": "lock",
+    "browserElapsedMs": 120075,
+    "historicalTimedOutFlag": false,
+    "sixPreLockChecks": true,
+    "proofNodeL1Sends": 0,
+    "blockedOrInspectionErrors": 0,
+    "allCleanup": true
+  },
+  "diagnosis": "Production panel open starts async refresh; its final render replaces the details subtree. Summary can be clicked while busy because controlsBusy disables buttons/inputs but not summary. The changed actual DOM regression holds refresh, proves security stays closed until settlement, then exercises lock. This reproduces the specific source race without claiming a retained historical DOM trace.",
+  "checks": {
+    "command": "<pinned Node24.21> --test --test-concurrency=1 --test-name-pattern=\"preference lock driver waits\" apps/rolling/wallet-panel.browser.test.mjs",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 976.519791,
+    "log": "/tmp/reviewer-lock-50ff-browser.log",
+    "sha256": "c5f931f88a99b333e3a56b2903ac046c04e775ddd01e1e6d8b5870f8c9df342e"
+  },
+  "repair": [
+    "Existing busy=false/fixed-error settled observer before summary expansion and after lock.",
+    "Original lock-clearing and reload-locked checks retained.",
+    "One existing absolute deadline; no retry or additional send/route allowance.",
+    "Primitive expiresAt also classifies deadline failure if context teardown beats timeout callback."
+  ],
+  "limits": [
+    "Actual production DOM with labelled account/RPC doubles; no real chain acceptance from this regression.",
+    "All pre-existing 120-second browser and 540-second/4GiB campaign gates retained.",
+    "Historical failed run remains failed; changed genuine retry required.",
+    "Only driver and browser test change; production and generated assets unchanged."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "5bbcb4621832a1e7427315d4d0d87f19fdd1f70d",
+  "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "verdict": "reorg source/build subset eligible; combined candidate held for UI P2 repair",
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "apps/rolling/wallet-panel.mjs",
+      "line": 180,
+      "title": "Wrap recovery transaction hashes and fingerprints inside the dialog",
+      "scenario": "Open Original setting and transaction history for a replacement-available record at390px or1280px. The ordinary paragraph renders the complete32-byte hex transaction hash without wrapping.",
+      "observed": {
+        "mobile": {
+          "clientWidth": 350,
+          "scrollWidth": 638
+        },
+        "desktop": {
+          "clientWidth": 588,
+          "scrollWidth": 638
+        }
+      },
+      "impact": "Required recovery history is clipped horizontally; full-size original head digest and prepared-marker fingerprint need the same treatment. Current fixture short digest11 does not establish realistic field wrapping.",
+      "requestedRepair": "Apply safe wrapping to recovery hash/digest/marker display, retaining exact text. Test expanded history and prepared marker using full canonical values at390px anddesktop; assert dialog scrollWidth<=clientWidth, unchanged fee/consent/no-send checks."
+    }
+  ],
+  "sourceComposition": {
+    "path": "execution/evidence/G07/reorg-5bb-independent-source.json",
+    "sha256": "786b0d5a8d6a047f7f09fffbfd43a45839166ad89171ceade41e4f7ea54d8aeb"
+  },
+  "assets": {
+    "path": "execution/evidence/G07/reorg-5bb-independent-assets.json",
+    "sha256": "2750015bc8c4ad670a3fac99ef9b8b9417019b4c5c63348a9c6a28a3e09319f8"
+  },
+  "independentChecks": [
+    "Nine source transfers match original stable patch IDs;14 exact final journal/application/helper/parent source blobs match approved composition. Two UI blobs exact56e. Only two remaining tracked changes are lead execution metadata.",
+    "Real checkSdk passes2038inputs/8outputs; wallet81inputs/24files verified bytehash/size. Actual canonical52inputs match manifest; real loadRollingArtifacts and PrivateBok14input early preflight pass. Rolling c8c256 artifact/catalog1c01 unchanged.",
+    "Normal SDK3775ms andwallet770ms build supervisors and log hashes verified, clean exit/cleanup. Build records have null sourceRevision; actual current full input/output hash validation provides candidate binding rather than relying on that absent field.",
+    "Current combined826tests pass0fail0skip65473.261ms; outer65525ms1258304KiBcleanup true and log hash verified. No broad repeated suite required.",
+    "Read actual parent/API composition: retained boundary follows sequencer pause/proposed-checkpointed/L1-storage convergence; empty anchor precedes signed orphan attempt; sole miner joins/restores before one official L1suffix replacement; observed pendingL1 zero before/after; no pool deletion or forced finalized rollback.",
+    "Normal archiver/world-state unwind and missing-anchor-only dropped oldTx required; hotinitial/coldmarker SAMEstore private recovery must exactlymatch retained snapshot with no proof/send. Original head/revision/action/nonce retained; changed same-height marker explicitly reviewed against real current hash.",
+    "Explicit renewed fee review and one replacement uses strict journal prior guard plus final context checks; actual paid receipt/fee and effect persist before semantics. Original signed bytes/history preserved; orphan fee excluded only after canonical receipt/effect absence plus actual balance reconciliation; final jobs3initial/4marker, journal history and cleanup mandatory.",
+    "Original public HTTP/index acceptance occurs before fork; this campaign does not qualify postfork public-index reconstruction.540s/4GiB and one-owner lifecycle remain unchanged."
+  ],
+  "sourceReviewReferences": [
+    {
+      "path": "execution/evidence/G07/replacement-journal-3fffb2e-review.json",
+      "sha256": "8a9a2a68a22228bc2ff0bf1e6a309086b657648f5f82f49f34d71cc4c059b3e5"
+    },
+    {
+      "path": "execution/evidence/G07/replacement-application-37c204c-review.json",
+      "sha256": "7a373c7bf5ae6bf12bf15dad96bd37a2fec8e2ae2a6b4929b173cd4d27b911ad"
+    },
+    {
+      "path": "execution/evidence/G07/preference-reorg-parent-e115-review.json",
+      "sha256": "9916c6c89fb6fd1ea2dde33df14a75a23d6a0715d40230075066424d514ef2b5"
+    },
+    {
+      "path": "execution/evidence/G07/replacement-ui-56e1410-review.json",
+      "sha256": "714a502f4b49b87643fa6c554f96614228d7c3fad7ff0e7fa9d600f4d0608fe1"
+    }
+  ],
+  "visualReview": {
+    "path": "execution/evidence/G07/replacement-ui-56e-visual-review.json",
+    "sha256": "a26463f703e9562334f95c31219ef2167ddcf7302458ae37267511952690cbad"
+  },
+  "eligibilityConditions": [
+    "Repair UI wrapping, independently verify narrow diff/visual regression, normal wallet rebuild and exact new-candidate provenance before lead launch.",
+    "First actual rolling-preference-reorg-initial only; inspect actual success/failure before deciding marker campaign. No unchanged retry after failure.",
+    "Future saved-journal first-attempt CAS repair is outside5bb; this source disposition does not qualify exact-byte first-attempt resend."
+  ],
+  "limits": [
+    "No actual reorg performed; labelled SDK/chain tests cannot substitute for native fork/runtime.",
+    "Full G07/G14, coldscale/event-delivery/private unlinkability/release assurance remain open.",
+    "Readiness/pool/archiver propagation and timing feasibility must be evidenced by actual bounded run; no claim they already pass."
+  ]
+}

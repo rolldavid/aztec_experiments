@@ -1,0 +1,93 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "revision": "391dee212be5aa07d442ada070f3dda0b53aad4c",
+  "base": "85ba37b4058586076936856fff1d7052845c4db4",
+  "verdict": "approved",
+  "scope": "Independent component source and generated closure review; final real acceptance remains open",
+  "requirements": [
+    "RC25",
+    "RC29",
+    "RC31",
+    "RC39"
+  ],
+  "sourceHashes": {
+    "apps/dist/aztec_bundle.js": "bb9586d8ce4f0db9b585a81ecf6b11870efde54bb292c9e3f62f3ba2c69205b0",
+    "apps/dist/sdk-manifest.json": "ef22560450b8ca0e192dc5124f0c629a817716c114761fd8ff881d7cdce28486",
+    "plugins/DEPLOYMENT.md": "e587adc13a12d7a4ba9acdcb68c3b8172b00ed6be7bd4978876623b579fa9c57",
+    "plugins/agent.mjs": "28fec68ee8c60782834d01186a1105827d0f5558fc9c7d4074861d87fb1aad02",
+    "plugins/devnet/network.mjs": "f38518880b36713e8fb249b65fe118c620f7bac3ca67a6d6832e1ae45bb9419c",
+    "plugins/devnet/operator-test.mjs": "ea2bfa3a10a36dbcc1b359919811e3028f0f57bc753e545b134aefaf30dd34ce",
+    "plugins/test/model.test.mjs": "8d39b8d872f4b0eda341e9eba4031ffb361d177f012c0fc74a85017be9382198",
+    "plugins/test/provider-metering.test.mjs": "7f5a85e72dbded68ec1ebfaa7d0800f2d085246138839ba7da99ba57b287e441",
+    "plugins/venice-metered.mjs": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28",
+    "shared/trusted-private-node.mjs": "734acd3b67bd2ed08f6417b68efb5ec2a8703f5bb248f2c55281d1bfbd3c8a2f",
+    "shared/trusted-private-node.test.mjs": "a64ff253b93d05e5c26f1c3c84eee60861d48deca9da1f532df342922969d5c5",
+    "docs/rolling-deployment.md": "0d4dfae7718a56609b7be20a1f3f557edfeacddd65187400f26c68a9d238b2d5"
+  },
+  "findings": [],
+  "checksPerformed": [
+    {
+      "check": "Read all12 changed paths, surrounding readiness/provider/private metering/native shutdown code and changed tests before implementation conclusions; final doc-only delta inspected",
+      "outcome": "pass"
+    },
+    {
+      "check": "Exact component blob equivalence with Design0f47be9/readiness, Controls a6448be/summary and Design57aeb1f/native capacity",
+      "outcome": "pass"
+    },
+    {
+      "check": "Independent existing selected30 summary/provider/readiness tests on dd70276; all applicable files byte-identical in final97c",
+      "outcome": "pass",
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 334.876417,
+      "command": "NODE_BACKEND=js node --test --test-name-pattern=\"summary|timestamp failure|synchronization failure|canonical reads wait|exact lag boundary|independent public metadata|reorg during inspection\" plugins/test/model.test.mjs plugins/test/provider-metering.test.mjs shared/trusted-private-node.test.mjs",
+      "node": "24.21.0"
+    },
+    {
+      "check": "Independent checkSdk(process.cwd(),process.cwd()+\"/apps/dist\") on final97c",
+      "outcome": "pass",
+      "aztecVersion": "6.0.0-rc.3",
+      "inputs": 2057,
+      "outputs": 8
+    },
+    {
+      "check": "Final391 is exact97 candidate plus one-line runbook correction; previous source/generated checks unaffected",
+      "outcome": "pass"
+    }
+  ],
+  "analysis": {
+    "readiness": "Identity first; tips/world-state/timestamp snapshots run in an allSettled group. Every started promise drains even for synchronous/falsy rejection. Canonical checkpoint/proposed checks still follow the entire group and final proposed recheck remains. Lag is evaluated using later current time; earlier timestamp sampling is conservative. No policy, deadline, proof, account or private query changes.",
+    "summary": "Only paid history summary receives reasoningEffort none. It becomes documented Venice reasoning.enabled false; primary reasoning and token caps unchanged. Catalog must declare explicit nonreasoning or supported none; unknown/mandatory models fail before ensureCredits and private escrow reservation. Price comparison remains. Existing private metering hashes detached whole input, rejects changed old input and fences uncertain calls; this patch does not replay or rewrite historical calls. Real usage validation, settlement and incomplete finish-reason refusal unchanged.",
+    "nativeCapacity": "Only native file ceiling4GiB\u21926GiB and corresponding sparse oversize boundary test change. Hash stream remains64KiB; private mode/uid/no-follow/stable named inode/stat, fsync, deferred predecessor retention and exact next-load qualification remain.8GiB free admission and128MiB legacy RPC ceiling unchanged. Current checkpoint4,254,127,107 bytes and lead-reported67GiB free justify retained-history headroom for this campaign. This is not a memory bound, ongoing disk quota, or justification for unlimited future growth.",
+    "generatedClosure": "Normal SDK bundle and manifest contain current trusted-private-node hash734acd3b67bd2ed08f6417b68efb5ec2a8703f5bb248f2c55281d1bfbd3c8a2f; checkSdk independently verified complete input/output closure. Native runner and summary source are outside SDK closure."
+  },
+  "evidenceReviewed": {
+    "workerSummary": "../rolling-controls/execution/evidence/G14/summary-completion/candidate-a6448be.json",
+    "actualCatalog": "../rolling-controls/execution/evidence/G14/summary-completion/diagnosis-catalog.json",
+    "leadReportedCombinedChecks": {
+      "passed": 310,
+      "durationMs": 1945,
+      "manifestPassed": 66,
+      "manifestDurationMs": 1169
+    },
+    "nativeCombinedChecks": "Lead first command failed before tests due missing NODE_BACKEND=js; original failure retained, smallest bcrypto require with configured flag passed, corrected existing68 suite20887 pending at report finalization. Normal gate must require its actual pass."
+  },
+  "primaryReferences": [
+    "https://docs.venice.ai/guides/features/reasoning-models"
+  ],
+  "limits": [
+    "Generic Venice documentation supports enabled:false, but its current model-specific table does not name GLM4.7Flash. Retained actual catalog declares supported none; actual paid output behavior remains to be verified.",
+    "Real cold recovery within120s and persistent multi-turn model/accounting acceptance remain open. This review does not qualify timing, historical failure cause, live native restart, automatic GitHub provisioning, testnet real proofs or production release.",
+    "No service, wallet, model, GitHub mutation or expensive build performed by reviewer."
+  ],
+  "preDocumentationCandidate": "97c72c21e20852a59064e8a1e1fe79825b32e31e",
+  "resolvedFindings": [
+    {
+      "id": "R97-DOC-1",
+      "severity": "P3",
+      "resolution": "Exact final one-line deployment runbook correction4\u21926GiB independently inspected; no other delta from97c."
+    }
+  ]
+}

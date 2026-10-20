@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer",
+  "candidate": "be1124fa00c076e43810710047a71b7decfac8da",
+  "base": "88bd7450773fd14f851291e3b19254ecc3e721e2",
+  "verdict": "approved for source/component integration only; actual zero-ETH USDC automatic Ready acceptance remains unqualified",
+  "blockingFindings": [],
+  "changedPaths": [
+    "scripts/run-bounded-browser-check.mjs",
+    "scripts/t04-metamask.mjs",
+    "scripts/test-t04-browser-journey.mjs",
+    "scripts/test-wallet-extension-browser.mjs"
+  ],
+  "source": [
+    {
+      "path": "apps/dist/aztec_bundle.js",
+      "sha256": "f689bcbf85ea65f22f21b20a698785eaef081dbfffd90dd89615a3ef7dc9ae1f"
+    },
+    {
+      "path": "apps/dist/sdk-manifest.json",
+      "sha256": "50bb51a759e1154122475d58cbf63c60bc1bc1c21f9e331d672826d69e24c24a"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "a24eb4beece90820d5e4792a852077c81c091e01ca2c9d9fc8dda230c8103e5a"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "sha256": "bc5ca9ff3f93f12c1a9761b3cca3d3474955ed6903057884f1fc5fdb33d8827d"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "441316f30fa9a905b2a375bccdcc055bc518aa2aefadd82ef3f4dc6b546c7e3a"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "b074aa41d66670aae4c706e62e07b0e9589f797d1e98aa99e324fe15a648b646"
+    },
+    {
+      "path": "deploy/prover/BOOTSTRAP.md",
+      "sha256": "7fd9aed9621356cfd39826950e63f8205592ca99c764c58f98fbfd62e5260b06"
+    },
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sha256": "eb5f0653bd639c55868d9e9812d507023abffce5377c3a2d2974bd22061e378a"
+    },
+    {
+      "path": "experiments/private-bok/escrow/src/main.nr",
+      "sha256": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260"
+    },
+    {
+      "path": "experiments/private-bok/tests/src/lib.nr",
+      "sha256": "2638510d73efd9dedb49b570270216215133119e559769002bbfeb553b79d615"
+    },
+    {
+      "path": "plugins/main.mjs",
+      "sha256": "cfd0086a6d1210877cb00ab1dddb896278e7849dd89e5f1ee5b4b7f271337555"
+    },
+    {
+      "path": "plugins/test/hosted-private-bok.test.mjs",
+      "sha256": "72a5515a424b30cb8f992c735ac6d2305be5b3d886f5fad6af4ae4ee0b9ee8e7"
+    },
+    {
+      "path": "prover/rolling-artifacts.json",
+      "sha256": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93"
+    },
+    {
+      "path": "scripts/run-bounded-browser-check.mjs",
+      "sha256": "14bec343e73f55b5ec80f0141c23d8e4bd5a19b4c301532cc075ca64e30fa2ea"
+    },
+    {
+      "path": "scripts/t04-metamask.mjs",
+      "sha256": "5d86eeb4d2bcef785d2574c2bf5777342a7af47693aec1b552f9c1c9eeafcff6"
+    },
+    {
+      "path": "scripts/test-prover-bootstrap.py",
+      "sha256": "e8c452d463190c5b47c1922fbe909a75ea8ff4c6c0b1e0fead3fd5c01f988a5a"
+    },
+    {
+      "path": "scripts/test-t04-browser-journey.mjs",
+      "sha256": "7f803b1a2f57e2e6efe26f48c149ef0f7bc3746691a28fd4d44963e6839a4551"
+    },
+    {
+      "path": "scripts/test-txe-message-witness.mjs",
+      "sha256": "f4651417986ba3f05c9c69399cfbe76366c53876bae83067e9853144a5112355"
+    },
+    {
+      "path": "scripts/test-w03-ethereum-journal.mjs",
+      "sha256": "30f88376dc5a54df1691c46f71f3a3b97525fc5186ae987987515d2886a644a3"
+    },
+    {
+      "path": "scripts/test-wallet-extension-browser.mjs",
+      "sha256": "a91ff2db9207d204aff85866b07d8ba01ae2bb7abb337eef17ae145ae3a20e37"
+    },
+    {
+      "path": "scripts/txe-message-witness.mjs",
+      "sha256": "d02b36a258388dd97b93bcb0d8c92e7a608abe293cfee513f8228d5abda16d9a"
+    },
+    {
+      "path": "shared/ethereum-journal.mjs",
+      "sha256": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "e690b7d9f9338e33201b029d3e713dc2db2857246281c54b1f9c9f62188a4638"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "b91c3b6fc236116e9127681f7112de31cb28b9d545919970e4f951315146a1d5"
+    },
+    {
+      "path": "shared/rolling/public-events.mjs",
+      "sha256": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605"
+    },
+    {
+      "path": "shared/rolling/public-events.test.mjs",
+      "sha256": "587ad8b61ba322a4726753ff0ae6e636a88e9e4eea1cfe62b1776c685f492b6b"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "a46284a83b48e0f46f8c81b835dc67ea05f47579b596deda926d7088cd06bc50"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.test.mjs",
+      "sha256": "f1913045a295e6cd78b8b7687b0a1d88d763b98d6cdcc00a6683bf0a96aaddf5"
+    }
+  ],
+  "sourceCarry": {
+    "priorReview": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-88bd-coherent-rc22-driver-integration-review.json",
+    "sha256": "f4633a4639dd3bcb183080ee19c35e18356e4f8349b92b1e018a3554fa05f185",
+    "allOtherPriorReviewedBlobsIdentical": true,
+    "fourChangedBlobsExactlyEqualDesign7159": true,
+    "idleTabHypothesisAbsentFromFinalNetDiff": true
+  },
+  "assessment": [
+    "Fresh canonical payment verification precedes automatic-claim observation. The observer issues no confirmation, new payment, claim preparation or retry; explicit review/error/revert is a failed run, not consent.",
+    "Success requires the exact UI Ready notice plus encrypted original aggregate intent and plan, all three claim receipt hashes, original workflow identity, confirmed L2 hash and fee within saved cap. Existing application receipt/finality/journal checks remain unchanged.",
+    "USDC retains exact two typed signatures, one relay POST, zero user Ethereum sends and zero user ETH/pending nonce. Finalizer additionally requires exactly one L2 submission and runs after browser context closure with original blocked-request/proof counters.",
+    "Original fresh owner 120 seconds, child deadline 105 seconds, 4 GiB resource cap and cleanup remain unchanged. The automatic wait is min(80 seconds, remaining original child deadline); it adds no owner extension.",
+    "New stage values originate only from fixed driver literals. Metadata consists of page-class and worker counts, not URLs, IDs, private DOM or account values. Observer errors are contained; at most 64 stage records are retained separately from mandatory terminal pass observations.",
+    "Structurally the change reuses the original saved-binding inspector, UI surface projector, supervisor and traffic guards. No new journal, runner, application lifecycle behavior or idle-tab closing policy remains."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G04/named-wallet-acceptance/usdc-automatic-ready-review.json",
+      "sha256": "77eb2cd397bfeec7c3823f6e3130c124f2f55a82ab6eb68667d131877154cd6d"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G04/named-wallet-acceptance/usdc-memory-observation.json",
+      "sha256": "29fd0f8e49d3e6cb2a0c06cbcc253a063b2e36d9ec1e0b2e653c635087812852"
+    }
+  ],
+  "validation": {
+    "independentActions": "Read immutable source and changed tests; verified source, handoff and referenced log/result hashes. No browser, chain, service or heavy tests run.",
+    "automaticClaimFocused": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "childElapsedMs": 518,
+      "ownerCleanup": true
+    },
+    "boundedStageFocused": {
+      "pass": 4,
+      "fail": 0,
+      "skip": 0,
+      "childElapsedMs": 374,
+      "ownerElapsedMs": 424,
+      "ownerCleanup": true
+    },
+    "coverageAccounting": "Automatic extension reports 74 staged distinct cases, not a whole74 run. Later four selected checks include overlaps and the new bounded-stage case; no fresh whole-suite claim. The final exact-one-L2 finalizer assertion was added after the initial automatic focused run and is source/syntax reviewed, not represented as live acceptance.",
+    "rss": "Focused checks were shorter than the sampling interval; zero samples mean unmeasured, not zero usage.",
+    "normalAssets": "Only four driver/test files differ from approved88. None appears in current contracts/SDK/apps/wallet/PrivateBok manifest input sets; generated outputs and all other reviewed blobs are unchanged, so prior normal build qualification carries."
+  },
+  "actualLimitations": [
+    "Actual52510 failed the unchanged4GiB limit before prepared-payment evidence and emitted no terminal result; cleanup was positive. It remains failed.",
+    "Parent reports subsequent actual connection/readiness failures; none is accepted as a successful USDC automatic claim. Reverted idle-tab speculation supplies no product qualification.",
+    "FullG04, named-wallet zero-ETH automatic triple-claim Ready, RC22 live new-class withdrawals/expiry, genuine proof/testnet and full-product gates remain open. This verdict does not authorize replaying an uncertain payment."
+  ]
+}

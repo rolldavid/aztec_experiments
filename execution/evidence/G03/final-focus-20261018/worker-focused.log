@@ -1,0 +1,17 @@
+✔ public reader: navigation, unsafe content, failure recovery and narrow keyboard menu (855.77975ms)
+✔ continuous paging serializes repeated intersection and keyboard requests, then retains back position/pages (349.230292ms)
+✔ no IntersectionObserver retains keyboard-only Load more fallback (182.246042ms)
+✔ keyboard paging hands focus to new content without stealing later user focus (214.632792ms)
+✔ keyboard paging keeps a meaningful focus when its final button disappears (310.769541ms)
+✔ automatic paging preserves existing keyboard focus and paging errors have a focus target (205.29575ms)
+✔ keyboard sparse directory paging retains its button then focuses the exhausted status (204.772042ms)
+✔ public opening is SDK-free; dialog survives reader changes, traps focus and restores it (352.122458ms)
+✔ dialog selections and view changes retain a meaningful keyboard position (270.136375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2493.832708

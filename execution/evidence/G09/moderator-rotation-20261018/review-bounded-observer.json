@@ -1,0 +1,23 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "verdict": "approved-for-scoped-observation",
+  "entrypoint": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/connected-repository-resume2/start-native-with-bounded-observation.mjs",
+  "entrypointSHA256": "0636cb35801f2841ab6a7c12ea98f90d0b704997563277f5227193b82fbf02d4",
+  "helperSHA256": "537e90a4004e65ed992e3c74bf79780f7093c6bc60616a9f8dd976909d969c4c",
+  "reviewedAt": "2026-10-18T19:41:07.861635+00:00",
+  "checks": [
+    "Inspected complete ignored ESM entrypoint and existing wire-campaign helper without executing or signalling service.",
+    "Explicit one-shot SIGUSR2 only after real startup returns; attempted flag prevents automatic repetition.",
+    "Owned regular mode0600 config, two distinct field-shaped roles, exclusive mode0600 output creation, loopback HTTP only, native metadata proof-disabled and local chain check.",
+    "Two read-only getContract requests, each abort timeout detects failure; no retry, wallet transaction, mining, model call or chain mutation.",
+    "diagnostics_channel receive and per-request emit observer catch failures; original emit is always invoked with original arguments. Request buffers capped at64KiB.",
+    "finally closes existing fetch campaign, unsubscribes diagnostic hook and restores tracked emit overrides; all outer failures caught and do not close the native runtime.",
+    "Evidence emits hashes and header presence/names rather than role address values, cookies or authorization contents."
+  ],
+  "limits": [
+    "Require passed===true AND hooksRestored===true in resulting receipt.",
+    "This qualifies only two controlled read requests and header/body behavior on loopback query/upstream legs. Null getContract results are allowed and do not establish actual account existence.",
+    "No full privacy qualification or canonical account-state claim.",
+    "Entrypoint startup error handler can close a partially started runtime, but observation errors do not invoke it."
+  ]
+}

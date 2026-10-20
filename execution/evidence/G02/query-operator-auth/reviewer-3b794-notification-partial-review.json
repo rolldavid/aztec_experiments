@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "3b7941d2b73f99967caabb6e49a360efb65562eb",
+  "base": "0b6d66dc36d7e2b0feb30b00ac5257f0834f62a6",
+  "disposition": "PASS narrow notification harness source and completed DOM regressions; actual notification journey remains pending",
+  "sourceBlobs": {
+    "apps/rolling/reader.browser.test.mjs": "bb3894bb4a4d854c433c3d1971ceb9e243591e8d",
+    "apps/rolling/wallet-panel.browser.test.mjs": "4aabcb4817d0e100825d18eec103f31cb2a3612a",
+    "scripts/testing/rolling-notification-browser.mjs": "038aa722c4faa04cfc5c324ffcae5cbf84542592"
+  },
+  "assessment": [
+    "The post-subscription recovery phase remains on the public Main board; public posts must remain visible while private preferences are incomplete.",
+    "The helper binds expected route to the fixed campaign phase. Notifications still requires zero rows; public-route substitution cannot bypass that assertion.",
+    "Actual reader/panel regression preserves public root, rejects wrong route and injected private row, completes cold recovery without preparing a write.",
+    "Observer additions retain finite action/error categories and omit raw errors; deadlines, proof accounting, canonical sends and privacy controls unchanged."
+  ],
+  "actuals": {
+    "existingPanelMs": 1622,
+    "diagnosticPanelMs": 1613,
+    "newPartialRecoveryMs": 2184,
+    "newPartialRecoveryPeakKiB": 619600,
+    "allOwnedCleanupPositive": true
+  },
+  "evidence": {
+    "rolling-design/execution/evidence/G07/native-social-wire/partial-recovery-focus.json": "daa1bbd820e9d135efb45033331ca181077acb81f6f0e05f48f955ea3ecd691e",
+    "rolling-design/execution/evidence/G07/native-social-wire/partial-recovery-focus.log": "38e6b9f0e3a921afa46e639dbebf926b8b082a1838eb4de5f82e555956a2ef69",
+    "rolling-lead-runtime/execution/evidence/G07/native-browser-development/existing-panel-review.json": "5fe1c50f1af58b71f5db949f1fbff6ee5f8d32f78ddca145fbbd4f85bc2d9360",
+    "rolling-lead-runtime/execution/evidence/G07/native-browser-development/existing-panel-review.log": "ba009e15b8f1eeb562e200b4460669923dcbaa4633bd7d6efb620b0a61fa0460",
+    "rolling-lead-runtime/execution/evidence/G07/native-browser-development/diagnostic-panel.json": "4a012234d511fc3852048f3fe81f3ff769966fd28462fd692be70a97d1420845",
+    "rolling-lead-runtime/execution/evidence/G07/native-browser-development/diagnostic-panel.log": "13c704fdd9008e43f4f9947d45c955e34acbb632a562d45e9c6da887cfe82c60"
+  },
+  "limitations": [
+    "Original notification32495 remains failed",
+    "No passing actual notification campaign inferred from DOM tests",
+    "Social-wire61457 actual reported separately and not audited in this narrow record"
+  ]
+}

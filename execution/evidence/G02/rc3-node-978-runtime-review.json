@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "978431c3e1b424c094198706ff01a5fe60f03a5f",
+  "verdict": "PASS: bounded ordinary local verifier-node startup only",
+  "evidence": {
+    "receipt": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/execution/evidence/C01/application-6f30e814-ec2e-403a-96ea-bedd706f238b.json",
+    "receiptSha256": "10eee55bb758fc0f91f2cc8d24f1afd34353121977cbb4616ec615e557b34967",
+    "intentSha256": "2199aa56673e2d6b6c8b7861ccc058ae4873352897f2285e75ff9e878de2ca94",
+    "focusedResultSha256": "f091a31cf8156a76ec5b1ce7f47d375c3bef1db7ec5f8b1686cb668347729cdf",
+    "focusedLogSha256": "7a27e27477b5aa29aad121fb0a81eabc1b2f6e57bd154be9035f6ba5147bb302"
+  },
+  "focusedChecks": {
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 3038,
+    "peakTreeRSSKiB": 690512,
+    "ownedTreeAbsent": true,
+    "basis": "Actual installed timetable and capacity guard plus labelled logger/singleton checks; no proof claimed by unit cases."
+  },
+  "actualNode": {
+    "elapsedMs": 8042,
+    "peakTreeRSSKiB": 912768,
+    "limits": {
+      "deadlineMs": 60000,
+      "rssLimitKiB": 4194304
+    },
+    "childExitCode": 0,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "inboxCapacity": {
+      "profile": "disposable local application fixture",
+      "allowUnsafeInboxCatchupCapacity": true,
+      "minimumRequired": 4,
+      "timetableOpportunities": 1,
+      "effective": 1,
+      "backlogCapacityQualified": false
+    },
+    "realProofs": true,
+    "sequencerConstructed": true,
+    "sequencerStarted": false,
+    "networkProverCreated": false,
+    "nodeStopped": true,
+    "singletonsStopped": true,
+    "nonlocalNetworkDenied": true
+  },
+  "sourceBinding": {
+    "independentlyRehashedCurrentReceiptPaths": 281,
+    "mismatches": [],
+    "localAnvilBinaryAlias": "22d5eeb9e70e198d0feb76a15bb97d2061b653798080dad0cc328ab20495b0bd",
+    "aliasDisposition": "Matches previously reviewed materialization native preflight; not re-executed.",
+    "nativeBBHash": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217"
+  },
+  "carry": "Previous fc397 failed attempt remains failed. New explicit local profile is supported by executed negative guard and actual startup with recorded one/four capacity distinction.",
+  "limitations": [
+    "No sequencer production, application transaction proof/mined receipt, network proof, epoch scheduling, or backlog capacity qualified.",
+    "Local protocol fixture uses realVerifier=false; node transaction verification realProofs=true is a separate recorded setting.",
+    "Full rc3, TXE, genuine Rolling, compiler260 diagnostics and deployment/image qualification remain open."
+  ],
+  "reviewExecution": "Read-only receipt/source inspection and281 file hashes; no native job."
+}

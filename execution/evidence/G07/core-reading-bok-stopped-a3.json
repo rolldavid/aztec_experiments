@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-14T16:44:30.590116+00:00",
+  "sourceRevision": "a3afd8ffd27b886b9dbe3424d4c85da274fed79e",
+  "environment": "Native42746 retained devnet, native/PXEproofsfalse; hostedBok14959 cleanstopped and not restarted; no wallet/signing operations",
+  "procedure": "Actual in-app browser tab2 reload8081 Home; first startup unavailable state, Try again returned authenticated public posts atblock1017; navigate Bookmarks and Notifications locked states; returnHomeblock1018.",
+  "observed": {
+    "publicReadingWithoutBok": true,
+    "anonymousHumanPostsVisible": true,
+    "authenticatedBokIdentityVisible": true,
+    "historicalFailedBokReplyPreserved": true,
+    "lockedBookmarksRequireRecovery": true,
+    "lockedNotificationsRequireRecovery": true,
+    "newTransactions": 0
+  },
+  "limits": "Partial actual outage evidence only. Posting during outage, nonempty private preference recovery, observer privacy traces and full120s cold recovery remain open."
+}

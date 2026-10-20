@@ -1,0 +1,141 @@
+{
+  "base": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+  "candidate": "d026cee0054c89f4d4796b203322fb05c6492aac",
+  "task_id": "G09-navigation-focus",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+      "candidate": "d026cee0054c89f4d4796b203322fb05c6492aac",
+      "id": "navigation-and-wallet-focus",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/checks.json",
+          "sha256": "8ba290e90af2745dc38bddc69e139db3db28bb2694392a96005d78ddc09ca8ee"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-before.log",
+          "sha256": "83763a8c050480329873a553b1d0eddf8dd0f2c734a689cd9791db5c15c1228c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-focused.log",
+          "sha256": "7b158189f8154aa6c60ce32efa90acf11d21688d76dc90ab201d2c7e2fc87b0a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-affected.log",
+          "sha256": "c5cd8c36b4eb108deab0d8f8246bdf6964537ee9a3a62b0be484c602d4bb5347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-wallet-final.log",
+          "sha256": "1b75ce38fdccca7ce74f6d3795a41b4479f264cb184389a04cc99869fef0c645"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026cee-navigation-focus.json",
+          "sha256": "22ef43244a5f21d3fb43c53457127d02806b06cdf251890269f24e3cdd986e9c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026-focused.log",
+          "sha256": "4ac22a59f93ee0b872273e027f9b7d77d874df381fb48aa4b7d8a49363b04636"
+        }
+      ],
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp T04_CHROMIUM_EXECUTABLE=<existing Chrome155 executable> <pinned Node24> --test --test-concurrency=1 --test-timeout=15000 --test-name-pattern=<selection in logs/brief> apps/rolling/navigation.test.mjs apps/rolling/reader.browser.test.mjs apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "Node24.21.0 Chrome155, existing isolated browser fixtures",
+      "observed": "Four original regressions fail; repaired checks pass. Final independent22PASS0FAIL0SKIP includes monetary/no-replay boundaries. Direct served UI only, SDK/runtime inputs unchanged.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+      "candidate": "d026cee0054c89f4d4796b203322fb05c6492aac",
+      "id": "G09-A01-keyboard-focus-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/checks.json",
+          "sha256": "8ba290e90af2745dc38bddc69e139db3db28bb2694392a96005d78ddc09ca8ee"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-before.log",
+          "sha256": "83763a8c050480329873a553b1d0eddf8dd0f2c734a689cd9791db5c15c1228c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-focused.log",
+          "sha256": "7b158189f8154aa6c60ce32efa90acf11d21688d76dc90ab201d2c7e2fc87b0a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-affected.log",
+          "sha256": "c5cd8c36b4eb108deab0d8f8246bdf6964537ee9a3a62b0be484c602d4bb5347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-wallet-final.log",
+          "sha256": "1b75ce38fdccca7ce74f6d3795a41b4479f264cb184389a04cc99869fef0c645"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026cee-navigation-focus.json",
+          "sha256": "22ef43244a5f21d3fb43c53457127d02806b06cdf251890269f24e3cdd986e9c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026-focused.log",
+          "sha256": "4ac22a59f93ee0b872273e027f9b7d77d874df381fb48aa4b7d8a49363b04636"
+        }
+      ]
+    },
+    {
+      "base": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+      "candidate": "d026cee0054c89f4d4796b203322fb05c6492aac",
+      "id": "G09-A05-stable-return-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/checks.json",
+          "sha256": "8ba290e90af2745dc38bddc69e139db3db28bb2694392a96005d78ddc09ca8ee"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-before.log",
+          "sha256": "83763a8c050480329873a553b1d0eddf8dd0f2c734a689cd9791db5c15c1228c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-focused.log",
+          "sha256": "7b158189f8154aa6c60ce32efa90acf11d21688d76dc90ab201d2c7e2fc87b0a"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-affected.log",
+          "sha256": "c5cd8c36b4eb108deab0d8f8246bdf6964537ee9a3a62b0be484c602d4bb5347"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/navigation-focus/g09-navigation-wallet-final.log",
+          "sha256": "1b75ce38fdccca7ce74f6d3795a41b4479f264cb184389a04cc99869fef0c645"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026cee-navigation-focus.json",
+          "sha256": "22ef43244a5f21d3fb43c53457127d02806b06cdf251890269f24e3cdd986e9c"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G09/reviewer-d026-focused.log",
+          "sha256": "4ac22a59f93ee0b872273e027f9b7d77d874df381fb48aa4b7d8a49363b04636"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+    "candidate": "d026cee0054c89f4d4796b203322fb05c6492aac",
+    "implementer": "design-resume-20261014",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G09/reviewer-d026cee-navigation-focus.json",
+        "sha256": "22ef43244a5f21d3fb43c53457127d02806b06cdf251890269f24e3cdd986e9c"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G09/reviewer-d026-focused.log",
+        "sha256": "4ac22a59f93ee0b872273e027f9b7d77d874df381fb48aa4b7d8a49363b04636"
+      }
+    ]
+  }
+}

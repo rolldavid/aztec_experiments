@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "cd42ae26511531201119def695ff85338fec7240",
+  "verdict": "failed fixture lifecycle; no native/ACIR cursor acceptance",
+  "receipt": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-recovery-sdk-1.json",
+    "sha256": "5a63b1c076e71df932cf9bbdd86af6588bd450df6bb4d39dca56fbd5194ecf41",
+    "logSha256": "2804946f441784ce1ef2e2ae0c18c0ceb78632bb97a1339281d9254e1e1f01d5",
+    "elapsedMs": 2585,
+    "peakAggregateRssBytes": 303120384,
+    "exitCode": 1,
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "originalLinkRestored": true,
+    "tempDirectoriesAfterCleanup": []
+  },
+  "sourceHashes": {
+    "scripts/test-pxe-preference-page.mjs": "058f4e261959ede6cfc239909a00c72a391262204184243478f24058c98907d7",
+    "scripts/patch-pxe-preference-page.mjs": "79e6b2cbc63a81c01ce42523ed176fbb24c662d0ae2ffc1214830d1a807a870b"
+  },
+  "observed": "26 early source/boundary checks passed; file-level ENOTEMPTY in global cleanup, followed by asynchronous ENOENT lstat in isolated recovery copy. No native SDK/ACIR cases reached. Supervisor removed the one remaining owned directory.",
+  "cause": "Native block registers global after hooks and yields at top-level cp after early root tests are already registered. The test runner can finish those tests and run global cleanup before module asynchronous native initialization finishes. Exact source lines212-223 and observed rm/cp error pairing support this lifecycle race.",
+  "repair": "One explicitly awaited native-suite owner with setup and owned cleanup, all native subtests awaited serially; alternatively synchronously register suite and perform slow setup in before hook. Do not simply move one rm hook later. Preserve cleanup on partial setup failure and all original semantic assertions.",
+  "regression": "Delay isolated copy past completion of early pure checks and assert teardown occurs only after setup and all owned subtests settle; verify setup failure drains copy and removes only owned directories.",
+  "holds": [
+    "No unchanged rerun",
+    "No skipped/relaxed cursor/head/event/nullifier/rollback assertions",
+    "Node fake-indexeddb remains labelled; no native browser or genuine chain claim"
+  ],
+  "execution": "Read-only source/log inspection; no test execution."
+}

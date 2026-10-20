@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "c200873ddf7151f8052fffc56048662a52804ff3",
+  "proposalSha256": "2de72959ef317640910c11b70dbbd5794cdea209a0eac35abc69708c7f14650b",
+  "verdict": "Eligible six-path implementation proposal; source and runtime acceptance remain separate",
+  "all14SourceBindingsMatch": true,
+  "conditions": [
+    "Factory-owned store cleanup must include invalid server configuration before listener creation, bind failure and construction failure; preserve original including falsy and cleanup failures",
+    "Stop admission and serial polling, join active sync and handlers, then exactly-once close; no timeout race relinquishing ownership",
+    "Only schema1 facade adapts status checkpoint to validated safe numeric representation; null before authenticated publication remains null; persistent revision identity retained without invented legacy pages/ranges",
+    "Existing114-character cursor fits unchanged public route grammar and120limit",
+    "Directory-only empty continuation requires explicit one-click one-page; no automatic viewport or saved-page draining; non-directory validation and privacy grammar remain",
+    "Wire helper must exercise actual persistent cursor/reopen/reauthentication, no fabricated legacy metadata",
+    "Small real factory/HTTP/ownership and helper checks before whole affected suites; actual browser directory after source review",
+    "Current normal closure and deployed source inventory require verification; no contract/SDK/CRS change assumed"
+  ],
+  "openGates": [
+    "Dense wire unresolved: production RPC fetch buffers and parses up to32MiB full block; persistent step calls getBlock(includeTransactions:true) then inspects whole txEffects. Protocol checks occur after SDK allocation; no claim of complete legitimate dense-block capacity or bounded preallocation. Separate source/API admission work required.",
+    "A one-second poll per transaction/block step can be slower than chain growth. Measure actual bootstrap/catchup throughput and convergence with real history before deployment; do not substitute an unbounded drain loop. Full canonical replay after each process restart remains history-sensitive.",
+    "Retired generations are retained on disk after restart/replay; bounded garbage collection and long-run disk growth remain separate requirements, not fixed by factory wiring.",
+    "200006 synthetic plugin-dominated sparse-post storage volume qualifies that measured gate only. Full canonical200k rebuild, dense Home/feed/directory, operated archive cost/retention and actual production browser/factory journey remain open."
+  ],
+  "runtimePerformed": false
+}

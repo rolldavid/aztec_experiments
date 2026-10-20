@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T12:53:15.050556+00:00",
+  "scope": "Read-only diagnosis of paid operator09 terminal readiness failure; no provider calls or mutation",
+  "packageSource": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "observation": {
+    "path": "execution/evidence/G02/operator09-readonly-124921.json",
+    "sha256": "c6b247d43b3751321ad0eb095ad5d515fb8db4f8158471d1f703e207eebbaf4d",
+    "downloadedReceiptSha256": "3dc3d44f4ad4ce7ae2533659a8832c10bec9e10eb4715d753ad1d232c183fcc1",
+    "manifest": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+    "bootstrap": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+    "bindingMatches": {
+      "manifest": true,
+      "bootstrap": true,
+      "qualificationManifest": true
+    }
+  },
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "deploy/prover/startup-stages.mjs": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+    "node_modules/@aztec-labs/aztec/dest/cli/cmds/standby.js": "328042b8b5292f97a3862be9df80cf674ac89d9b9d8485b231183e11803966d0",
+    "node_modules/@aztec-labs/ethereum/dest/config.js": "37d567225cee4c70b1d4942c7cb60af25fc9c86584e4148dcd13c118d34959fc",
+    "node_modules/@aztec-labs/ethereum/dest/contracts/registry.js": "093ad3ca90969b860284375410af6fa90b75452348e6690ced494b57e8d13914",
+    "deploy/prover/l1-config-diagnostic.mjs": "0cc0812365f2d5803958b963d2ff4b625ecf4c8672bc3fc9267aba2e9fb88b1c"
+  },
+  "verdict": "real compatibility standby; exact mismatching protocol constant unobserved; no unchanged paid relaunch or compatibility bypass",
+  "facts": {
+    "readiness": {
+      "attempts": 122,
+      "ready": false,
+      "category": "UNAVAILABLE"
+    },
+    "qualification": {
+      "schemaVersion": 1,
+      "passed": false,
+      "stage": "readiness-failed",
+      "scope": "legacy-query-only",
+      "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41"
+    },
+    "history": [
+      [
+        "registry-guard",
+        "begin"
+      ],
+      [
+        "registry-guard",
+        "complete"
+      ],
+      [
+        "rollup-compatibility",
+        "begin"
+      ]
+    ],
+    "startupStages": [
+      "process-spawned",
+      "crs",
+      "genesis",
+      "rollup-standby"
+    ],
+    "archiver": {
+      "passesStarted": 0,
+      "passesCompleted": 0,
+      "passesFailed": 0,
+      "inFlight": false,
+      "lastObservationMs": 0,
+      "lastProgressMs": 0,
+      "localL1Block": null,
+      "observedHeadL1Block": null,
+      "lastCheckpoint": null,
+      "droppedObservations": 0,
+      "error": null
+    },
+    "nodeRestarts": 0,
+    "instanceTerminated": true,
+    "proverUnqualified": true
+  },
+  "diagnosis": [
+    "The fixed rollup-standby classifier maps only the SDK Entering standby mode phrase (bootstrap.py:844). The pinned installed and retained static image standby.js are byte-identical (SHA328042b8...). That phrase occurs at standby.js:74 only after successful retrieval of all three compatibility constants and nonempty mismatches.",
+    "waitForCompatibleRollup compares genesis archive root, VK tree root and protocol contracts hash at lines36\u201352. An initial retrieval exception throws; it does not emit standby. The retained marker therefore demonstrates at least one mismatch on entry, not merely a stalled request. Later polling can still suffer transient reads; no field-specific history was retained.",
+    "Compatibility uses getPublicClient(nodeConfig), registry selectedVersion default canonical and ordinary Tenderly config. The PublicNode runtime adapter substitutes only later getL1Config(start_node.js:66), which was not reached. This failure provides no evidence that the config-provider repair or archiver ran and failed.",
+    "Zero archiver counters agree with source ordering: compatibility precedes l1-config, factory and archiver. Node/container active status was a standby liveness server, not successful query service readiness.",
+    "Historical334 prerequisite checked VK/protocol and reported genesisComparison unavailable;499 complete config/history read did not compare all three local expected values. Neither qualified this gate, and neither can establish which field differed on operator09.",
+    "Bootstrap supplies no TEST_ACCOUNTS/SPONSORED_FPC/PREFUND_ADDRESSES overrides. Installed defaults false/false/empty and computeExpectedGenesisRoot uses these inputs, but actual image inherited environment and transitive constant package bytes must be bound before concluding a genesis-only cause."
+  ],
+  "remainingPrerequisite": [
+    "Before further paid run, perform one bounded source-pinned compatibility diagnostic using exact image-local getVKTreeRoot, protocolContractsHash and computed genesis from actual effective genesis settings; retain only closed public hashes/booleans/version/address and fixed numeric error categories.",
+    "Compare with same canonical registry-selected rollup three L1 constants, bind chain/registry/rollup/version and canonical anchor before/after. Report each comparison separately; SDK latest reads plus anchor continuity are not an atomic state snapshot.",
+    "Bind transitive genesis/VK/protocol dependencies to immutable image and normal package; test retrieval failure versus mismatch versus complete match. Do not infer a Mac module version label is full image equivalence.",
+    "If incompatible, correct actual supported network/genesis/image configuration only after identifying the mismatch. Do not skip compatibility, swap its expected constants to remote values, mark standby healthy, add blind fallback, or extend waiting without evidence of a compatible deployment."
+  ],
+  "cleanup": {
+    "path": "execution/evidence/G02/operator09-cleanup-readback.json",
+    "sha256": "638ab5b0f0393ab48893da8772a0bcfb36cb0378c40898651eb580c21eafa34c",
+    "observed": "At12:50:32 instance terminated and volumes absent; Fleet deleted_terminating, finaldeleted readback stillpending. No second delete authorized by this report."
+  },
+  "limits": [
+    "No raw console/error/capability content inspected or persisted by reviewer. Downloaded receipt SHA is bound via reviewed strict monitor output; no independent AWS download performed.",
+    "No exact mismatch amount/field or current chain condition inferred.",
+    "No Linux query, archiver, prover or G14 qualification; budget controls and cleanup remain separate."
+  ]
+}

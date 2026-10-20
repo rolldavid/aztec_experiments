@@ -1,0 +1,69 @@
+{
+  "revision": "3d03e026492d3d9489ed5612509174fedfc44d93",
+  "base": "56e141030ee4aefc72ad04d5f759162019faf298",
+  "task": "G07 recovery dialog overflow repair",
+  "source": {
+    "apps/rolling/wallet-panel.mjs": "887b314c118ecfc4c09ed05c0e806f02abe308338fa2f2c0534b784250bed33f",
+    "apps/rolling/wallet-panel.browser.test.mjs": "0d60ecce6c606d7b0b34717ed6be32ae0a38a3e1737c884b1f935a6d0ee6ef03",
+    "apps/rolling/style.css": "35bcbb74d554e24256193a4510f39ba784d5e12cd1d3df99e7785b7c93b77f15"
+  },
+  "change": "Scoped overflow-wrap:anywhere on complete recovery history and prepared marker fingerprint; text nodes retain all values. No financial, guard or CSP changes.",
+  "before": {
+    "log": "replacement-wrap-before/test.log",
+    "binding": "replacement-wrap-before/binding.json",
+    "failed": 4,
+    "dialogScrollWidths": {
+      "history": 731,
+      "preparedMarker": 622
+    }
+  },
+  "fullSuite": {
+    "log": "replacement-wrap-after/test.log",
+    "binding": "replacement-wrap-after/binding.json",
+    "passed": 48,
+    "failed": 0,
+    "elapsedMs": 16761.698458,
+    "note": "Before test-only refinement to Fr-compatible full hex and explicit idle wait; all original 44 cases unchanged."
+  },
+  "finalAffected": {
+    "log": "replacement-wrap-final/test.log",
+    "binding": "replacement-wrap-final/binding.json",
+    "passed": 4,
+    "failed": 0,
+    "elapsedMs": 1676.389333,
+    "dialogDimensions": {
+      "390": {
+        "scrollWidth": 350,
+        "clientWidth": 350
+      },
+      "1280": {
+        "scrollWidth": 588,
+        "clientWidth": 588
+      }
+    }
+  },
+  "screenshots": [
+    {
+      "path": "replacement-wrap-final/replacement-wrap-1280-history.png",
+      "sha256": "ce4850ab104e158ad796a2e9cd791f8faa48eb1a5b970be7694453d193d9fe9f"
+    },
+    {
+      "path": "replacement-wrap-final/replacement-wrap-1280-prepared-marker.png",
+      "sha256": "22cb2bc43b29ffe96e8ff1b5f7dbe684e61df9ee1cb69aaebf25a26fe5e200de"
+    },
+    {
+      "path": "replacement-wrap-final/replacement-wrap-390-history.png",
+      "sha256": "1a3f4852f6e3fdb2ea68350c0201898c170d4c088a13fca13c93fa0a107ddf9c"
+    },
+    {
+      "path": "replacement-wrap-final/replacement-wrap-390-prepared-marker.png",
+      "sha256": "0b839d3ff573bfdce452607a678109922f6acc7928c827601082cc7a2a8796a3"
+    }
+  ],
+  "visualInspection": "Full digits wrap inside mobile and desktop dialog without horizontal clipping. Normal vertical dialog scrolling remains. Pre-existing idle Loading private account tools status observed and reported separately, unchanged.",
+  "limitations": [
+    "Labelled UI adapters; not genuine chain, wallet or reorg acceptance.",
+    "Independent review pending."
+  ],
+  "cleanup": "All test browsers/listeners closed via fixture hooks; subprocesses exited zero; heavy slot released."
+}

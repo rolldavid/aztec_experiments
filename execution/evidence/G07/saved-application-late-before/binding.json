@@ -1,0 +1,14 @@
+{
+  "exitCode": 1,
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "--test-name-pattern=saved-byte late predecessor",
+    "shared/rolling/application.test.mjs"
+  ],
+  "elapsedMs": 6697,
+  "source": {
+    "shared/l2-journal.mjs": "b8e4510e7a711f16a7fca030e5618d0cf5cee3947faef6e01e10d3928c87b905",
+    "shared/rolling/application.test.mjs": "0d4f09cc01279c7c7f6567cbc0ce860d93d9219aed59fd02907e50237a3b27d6"
+  }
+}

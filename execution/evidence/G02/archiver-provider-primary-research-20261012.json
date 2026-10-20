@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T04:49:43.829457+00:00",
+  "scope": "primary documentation and public repository references only; zero RPC requests",
+  "sources": [
+    {
+      "url": "https://ethereum.github.io/execution-apis/api/methods/eth_getLogs/",
+      "finding": "Official error4444 is Pruned history unavailable. Numeric match supports pruned-history interpretation of a65 current rejection, not historical AWS proof."
+    },
+    {
+      "url": "https://ethereum.publicnode.com/",
+      "finding": "Advertises Sepolia and separate archive access. No retrieved provider-specific4444 explanation or guaranteed public Sepolia retention scope."
+    },
+    {
+      "url": "https://docs.tenderly.co/node-rpc/overview",
+      "finding": "Keyless public endpoints documented; eth_getLogs capped3000results and1GB response/IP/day for general networks. Dedicated Node RPC paid; do not enable paid plan."
+    },
+    {
+      "url": "https://docs.tenderly.co/node-rpc/rpc-reference",
+      "finding": "Explicit Sepolia11155111 endpoint https://sepolia.gateway.tenderly.co and eth_getLogs/debug_traceTransaction/trace_transaction documented. Historical retention at target block remains unmeasured."
+    },
+    {
+      "url": "https://www.alchemy.com/rpc/ethereum-sepolia",
+      "finding": "Documents archive data with free account; requires private key. No existing project Alchemy configuration reference found in scoped documentation search, so not presently verified available."
+    }
+  ],
+  "retained06Comparison": {
+    "bootstrapCommit": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+    "bootstrapSha256": "a6c5e725d9294872ff88cd8d179be432737826fb43357d7d044ccbe632cafadd",
+    "ordinaryAndDebugHostsMatchA65": true,
+    "publicEndpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+    "proof": "Exact bytebound retained06bootstrap constant; payload verification binds that source. No private URL/config read needed."
+  },
+  "projectConfigurationReferences": [
+    "INFRASTRUCTURE_ACCESS.md local plugin private/service.json and private/operator.json (references only; no contents accessed)",
+    "deploy/prover/live-deployment.json configuration.ethRpcUrl public PublicNode endpoint",
+    "execution/evidence/G02/operator06-local-preparation.json references private06/network-defaults.json and qualification-service.json (contents not read)",
+    "deploy/V6-TESTNET.md private runtime references; historical service availability claims not reused"
+  ],
+  "recommendation": {
+    "candidate": "https://sepolia.gateway.tenderly.co",
+    "qualification": "documented keyless alternative, not yet proven archive-capable for this deployment",
+    "nextAfterSourceReview": "Explicit named alternative in two-file diagnostic allowlist, no arbitrary URL or fallback; one same fixed eth_getLogs request10s/16KiB/128logs with same SDK/strict decode. Preserve PublicNode result. If pass, separately authorize full network/identity/constants/deployhash/historical/clock/trace/blob/continuity prerequisite run with this selected ordinary RPC; no runtime switch or paid launch implied.",
+    "otherPrerequisites": [
+      "Six image modules byte equivalence pending",
+      "Per-method free endpoint limits may prevent node-scale operation; a one-read pass is not capacity qualification",
+      "Do not skip historical logs, fake absence, or replace real proof policy"
+    ],
+    "accountsOrPurchases": false
+  },
+  "networkDateLimits": {
+    "fixedScope": "Sepolia11155111/Aztec version2914217885/rollup0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+    "deployBlock": 11785332,
+    "deployTimestampUTC": "2026-09-26T09:25:24+00:00",
+    "f32FinalizedAnchor": 11896379,
+    "f32FinalizedTimestampUTC": "2026-10-12T04:04:36+00:00",
+    "providerPolicies": "Current docs researched2026-10-12; behavior can change and does not retroactively prove06 failure"
+  },
+  "nodeStartupQualified": false
+}

@@ -1,0 +1,11 @@
+✔ positive pre-proof review is explicit, preserves draft, and requires renewed fee confirmation (806.367ms)
+✔ restored aggregate claim review explains original payment and requires separate confirmation (448.662208ms)
+✔ positive pre-proof failed renewed review never exposes a send or resets unknown recovery (510.757875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1951.727292

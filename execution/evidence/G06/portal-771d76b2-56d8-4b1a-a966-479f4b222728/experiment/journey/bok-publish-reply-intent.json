@@ -1,0 +1,9 @@
+{
+  "txHash": "0x0699f9c55ee493d93eb6754d6e00c7f5e25a9134b712f4411dee4b4286823609",
+  "sourceRevision": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "artifactHashes": {
+    "billboard/target/rolling_contract-RollingBoard.json": "8c431f1458a2ae47e0773db820e551a4df4a7a10a82938cbb4b82cb84d56967e",
+    "experiments/private-bok/target/private_bok-PrivateBok.json": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497"
+  }
+}

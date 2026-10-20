@@ -1,0 +1,60 @@
+{
+  "revision": "0c4fec48722bb14729660bd723a01e521d8bc480",
+  "base": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "supersedes": "05b4f4fa8b3974cf76c61b3bead95e980b62bac5",
+  "verdict": "approved_component",
+  "requirements": [
+    "RC26",
+    "RC40 performance limits unchanged; actual completion unqualified"
+  ],
+  "sourceFiles": {
+    "apps/rolling/start.mjs": "e6874b76cac669bf2c3dd5c12dade720d5d3f8b2e8f97f8bb5ea93688f7e14fa",
+    "apps/rolling/start.test.mjs": "16a1f14bcd88d4e1358c744bbaa044914da185362ddd110a608180f79cfe3c5d"
+  },
+  "findings": [],
+  "priorFindingDisposition": [
+    {
+      "id": "TRANSFER-1",
+      "status": "resolved",
+      "evidence": "Read/compression slot is released only after work finishes, before awaiting delivery. Encoded outgoing bytes remain separately reserved until finish/close/error. Absolute30s timer destroys a stalled response and drains ownership. Actual paused16MiB socket test permits unrelated worker delivery; mocked timer exercises128MiB cap and release."
+    },
+    {
+      "id": "TRANSFER-2",
+      "status": "resolved_for_supported_burst",
+      "evidence": "32 bounded waiters accommodate31 installed BB worker requests; actual HTTP31-worker burst all returns correct gzip-decoded bytes while large identity response remains unread. Initial loader scripts/CRS remain sequential. This is HTTP fixture evidence, not a real prover/browser performance run."
+    }
+  ],
+  "independentChecks": {
+    "suite": "apps/rolling/start.test.mjs",
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "log": "execution/evidence/G07/reviewer-0c4fec4-focused.log",
+    "sha256": "7fc85d542b8a2aa32214266b4fb4513a1b937aa6fb23eb8879846635f5118a77",
+    "diffCheck": "passed",
+    "cleanup": "Temporary exact lead node_modules symlink removed; no build/install/services/browser/native"
+  },
+  "failurePathAssessment": [
+    "Explicit gzip/identity negotiation and406 preserved; HEAD has matching encoded length and no transmitted body",
+    "Current source validation precedes content-addressed compressed cache; failure cannot return stale bytes",
+    "One read/compressor and32 waiting requests; queued disconnect removes ownership without detached read/compression",
+    "Encoded outgoing cap128MiB, compressed cache32MiB/4entries, decoded asset cap128MiB remain finite",
+    "Slot release is once-only and response byte release occurs in finally; timeout destroys response rather than inventing successful delivery",
+    "503 overload remains explicit; no client retry or loader/application deadline increase"
+  ],
+  "generatedClosure": {
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "98c8ed86e64dbe6fd4575d3aca8af95e67209632b1483638534a60ac5d63db1b",
+      "changedPathsAreBuildInputs": false
+    },
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "350af65c09ccc6da2fdfd303c309937a9678726674f83c0fcfb3eee6e656fbb5",
+      "changedPathsAreBuildInputs": false
+    }
+  },
+  "limitations": [
+    "No actual SSM/browser transfer or fresh120s recovery completion measured",
+    "HTTP tests use synthetic assets; real-proof worker execution and production concurrency remain separate acceptance",
+    "Existing30s loader and120s recovery thresholds unchanged; compression may still be insufficient at observed bandwidth"
+  ]
+}

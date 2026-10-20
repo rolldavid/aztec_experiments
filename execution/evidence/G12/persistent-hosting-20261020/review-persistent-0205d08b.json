@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/restore_review",
+  "parentSession": "lead-20261011",
+  "reviewedAt": "2026-10-20T07:33:19.162623+00:00",
+  "base": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+  "candidate": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+  "verdict": "approved",
+  "allowedPaths": [
+    "deploy/prover/BOOTSTRAP.md",
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py"
+  ],
+  "findings": [],
+  "checks": [
+    {
+      "revision": "d32ae80352a736d166d755266c8149e76b4d22a8",
+      "kind": "independent existing focused unit tests",
+      "observed": "16/16 passed in0.418s",
+      "command": "python3 scripts/test-prover-bootstrap.py <16 existing cases listed in persistent-focused-tests.log>",
+      "log": "rolling-independent-deploy/.build/restore-service-20261020/persistent-focused-tests.log",
+      "scope": "closed monthly policy; immutable budgeted path; native timer/mask and egress; query/prover admission after historical deadline; finite delivery and no replay"
+    },
+    {
+      "revision": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
+      "kind": "independent existing focused unit tests",
+      "observed": "8/8 passed in0.143s",
+      "command": "python3 scripts/test-prover-bootstrap.py <8 existing cases listed in persistent-overlay-focused-tests.log>",
+      "log": "rolling-independent-deploy/.build/restore-service-20261020/persistent-overlay-focused-tests.log",
+      "scope": "fixed control-source selector/hash/ownership/symlink rejection; original runtime pin preservation; persistent policy/monitor/query/prover/delivery regressions"
+    }
+  ],
+  "sourceAssessment": [
+    "Reviewed full f4eb\u2192d32 and d32\u21920205 diffs; only three declared files changed.",
+    "Explicit closed owner-authorized USD1500 policy is bound to source pins and protected root-owned0600 record.",
+    "Persistent mode removes elapsed shutdown timer only; emergency control-loss shutdown, actual egress accounting, native process containment and finite operation bounds remain.",
+    "Fixed root-owned nonwritable control module is verified by full hash before activation support import; original admitted runtime/qualification provenance remains separate.",
+    "Changed tests exercise after-historical-date behavior and fail-closed drift/ownership rather than weakening canonical identity or transaction replay fences."
+  ],
+  "limitations": [
+    "Source review does not assert live amendment or boot readback success; deployment packet and actual readback are separate.",
+    "AWS Budget provides monitoring, not a hard spend cap.",
+    "No broad wallet/proof/model/recovery campaign run or required for this control-only change."
+  ],
+  "carryForward": "The final selector change leaves earlier persistent logic unchanged; eight final-source focused cases cover selector and affected persistent paths. The earlier16-case run remains scoped to its exact revision."
+}

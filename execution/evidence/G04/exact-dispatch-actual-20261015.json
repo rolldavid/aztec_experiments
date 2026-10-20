@@ -1,0 +1,103 @@
+{
+  "at": "2026-10-15T06:06:44.347538+00:00",
+  "sourceRevision": "478fd31c86bd8a2a1554c7f26f43790db7bad202",
+  "command": "reviewed operator recover-exact-seed-cancellation with original plan/state and explicit hash-bound intent",
+  "chainId": 11155111,
+  "transactionHash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+  "intentSha256": "1337a66ee3797969126efb7234a794f1a1c7c96d888b126b4100c7d7c3642929",
+  "enteredSha256": "98b5dd3881608c3fa77ee680b0457fb199895693a6cb5308974994c92aeb38dd",
+  "observationSha256": "2c2707dbb821db8c484aa1ce1e41d9112d0708a4cf6a9f624d5345bcd2f564c1",
+  "logSha256": "39136a15c34c25511b6e56b554ddb66393f8b9f8790e5b5cd5820dfd34cd900b",
+  "dispatchObservation": {
+    "state": "rejected",
+    "httpStatus": 429,
+    "rpcCode": null,
+    "ethersCode": "unknown"
+  },
+  "status": "unresolved",
+  "canonical": false,
+  "originalSixHashes": {
+    "plan.json": "391165e4efe54834c89255b35baf52a0ecd6152798b0c0e18e140aea7f305437",
+    "state.json": "7018443d3e1ca35baa8817dbc07d17ccc590d63a8d191dd028122feedf423229",
+    "nonce15-resolution.json": "7985a4903d421157220b02353314f36b5b5b7d8110fdba2cfafb21239ff96fec",
+    "state.json.cancel-approve-usdc.json": "1fe7f30769019127174410ef89cdf33e9ff9a4c077b1164e14931a8238565d54",
+    "nonce15-successor.json": "ddd147001d1654fa940753c0ebd4dfe7ad52e1cd73481e6fd270273fcd566f70",
+    "state.json.successor-cancel-approve-usdc.json": "b7cb05dce15ebe7ed825e5f7a691d089117fc7d61a7e8e76f1a2f0260cf70be1"
+  },
+  "originalSixUnchanged": true,
+  "stateLockReleased": true,
+  "permanentSlotConsumed": true,
+  "noNewSignatures": true,
+  "noFeeChange": true,
+  "remaining": "Read-only reconciliation only. Require unique successful finalized canonical original/first-cancel/c0b5 winner and exact effects/accounting before continuation. No replay on missing receipts, expiry, provider change or quota reset.",
+  "post-exact-primary": {
+    "at": "2026-10-15T06:02:05.578Z",
+    "providerHost": "sepolia.gateway.tenderly.co",
+    "chainId": "11155111",
+    "nonce": {
+      "latest": 15,
+      "pending": 15
+    },
+    "balanceWei": "58876674761116580",
+    "transactions": {
+      "original": {
+        "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      },
+      "first": {
+        "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      },
+      "next": {
+        "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      }
+    },
+    "anchorStable": true,
+    "originalFilesUnchanged": true
+  },
+  "post-exact-independent": {
+    "at": "2026-10-15T06:02:05.578Z",
+    "providerHost": "ethereum-sepolia-rpc.publicnode.com",
+    "chainId": "11155111",
+    "nonce": {
+      "latest": 15,
+      "pending": 15
+    },
+    "balanceWei": "58876674761116580",
+    "transactions": {
+      "original": {
+        "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      },
+      "first": {
+        "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      },
+      "next": {
+        "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+        "signedIdentityValid": true,
+        "transaction": "absent",
+        "receipt": "absent",
+        "broadcast": null
+      }
+    },
+    "anchorStable": true,
+    "originalFilesUnchanged": true
+  }
+}

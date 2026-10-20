@@ -1,0 +1,18 @@
+..........F........
+======================================================================
+FAIL: test_import_safe_and_direct_execution_refuses_unbound_package (__main__.OfflineProjector.test_import_safe_and_direct_execution_refuses_unbound_package)
+----------------------------------------------------------------------
+ValueError: Wrong package binding
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rolling-node-09-operator-test.py", line 85, in test_import_safe_and_direct_execution_refuses_unbound_package
+    with self.assertRaisesRegex(ValueError,'Unbound package'):op.receipt(fixture())
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "Unbound package" does not match "Wrong package binding"
+
+----------------------------------------------------------------------
+Ran 19 tests in 1.573s
+
+FAILED (failures=1)

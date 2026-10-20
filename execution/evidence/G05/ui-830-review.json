@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "830a748d43acd88df4d16ca9cf533c6cb4dc59e6",
+  "base": "505961f2d84a4934dc0bffc214b10c7a3a363e6b",
+  "verdict": "approved source composition for bounded development; genuine board/UI acceptance pending",
+  "findings": [],
+  "sourceSha256": {
+    "apps/rolling/reader-client.mjs": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+    "apps/rolling/reader-client.test.mjs": "43f51b01781026b7da28b091d35d81efbec822327ee8b9039c8a141da01c3e15",
+    "apps/rolling/reader.browser.test.mjs": "2d809b7ae664689f035054fb9343f203787d8fc1f47fe7082df3fc9e5387cfcd",
+    "apps/rolling/reader.mjs": "11f35d5e47e82cf2b6fb813e5a5c7564cfafeeddd6755d68f7d2262907580331",
+    "apps/rolling/wallet-panel.browser.test.mjs": "c6e421e9563c9e0db27428421e816a557e8a3131dc5d8035158009dccd41e6db",
+    "apps/rolling/wallet-panel.mjs": "0d9bfb6fdabfe2cd7ae3734d24b955a7198ab3b0376b99bcfd57b504ada1358c",
+    "scripts/rolling-public-server.mjs": "d36cf775df3e308c9d25ce98d4eabf8ee5177ac24999d39b83ff5a83effb5542",
+    "scripts/rolling-public-server.test.mjs": "bd841e4d9d49af0209d8d67260f4ce60ae25f090eb6bbad83216b70196a15cc2",
+    "scripts/testing/rolling-composer-browser.mjs": "75d0eea7ccf802726d3e4601a2899cbbf8ec1e5d75fbf813b2ba7ff8fcb80f60",
+    "scripts/testing/rolling-composer-browser.test.mjs": "1a086047f0d3136ddce33258afbc32cb7ee086ae3ef8ce8cef5bd06366fdd40f",
+    "scripts/testing/rolling-wire-campaign.mjs": "0246901af38f6510af0e276b26bba324f68f6ae422305146b0605670374b364e",
+    "scripts/testing/rolling-wire-campaign.test.mjs": "7db43420387b1bc8bb06879bed8114e0f5c9169363dda2b1e06604e996ebb720",
+    "scripts/testing/rolling-wire-trace.mjs": "9afb34e91dc8f2d3c9d521f5606b13f6c56adef4d57c6e87eca909de0f28528f",
+    "scripts/testing/rolling-wire-trace.test.mjs": "b82bfed2d3d4107c201c3b1ed03d71456a9629ceb832f554072dfa4249ae73b6",
+    "shared/rolling/public-index.mjs": "446346166d3a677e88efa54bcee6eb79bc0ccb62402de10ace64aafc46ad9458",
+    "shared/rolling/public-index.test.mjs": "bdea16ba1d1d520bd0bc323184ad593bf2cb0b3a89deb03b07b46548508b9fc0",
+    "shared/rolling/public-projection.mjs": "feb2c27f6e090496b969340a3ad37e54abdb502836604f4b68bdebf5daf2731d",
+    "shared/rolling/public-projection.test.mjs": "ba43b842bed64139f52a440e8505d92fe9303c04a43b4da1161a9e6bb8bf803a"
+  },
+  "transferVerification": "All6 original/transfer stable patch IDs independently equal; all3 referenced test logs independently hash match composition record",
+  "checks": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root normal artifact> pinnedNode --test --test-concurrency=1 scripts/testing/rolling-wire-trace.test.mjs scripts/testing/rolling-wire-campaign.test.mjs apps/rolling/reader-client.test.mjs shared/rolling/public-projection.test.mjs shared/rolling/public-index.test.mjs scripts/rolling-public-server.test.mjs scripts/testing/rolling-composer-browser.test.mjs",
+    "passed": 226,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 9981.643459,
+    "log": "/tmp/reviewer-ui-830-cheap.log",
+    "logSha256": "86285d0e8039e2f6be7b34b4d4e9e02194ecaecb6598b17ede1c78fb729224ab"
+  },
+  "disposition": [
+    "Canonical board filtering precedes pagination; board-scoped cursor includes board ID/revision under index epoch. Cross-board/reorg cursor mismatch fails closed.",
+    "HTTP route exact GET parameters/id validation and1MiB byte-aware envelope retained. Rejected board remains readable with redacted post content and authored/current/rejection policy provenance.",
+    "UI verifies returned boardId/board and every post board, snapshot revision/checkpoint consistency, duplicate items/cursors and one serial paging owner. Malformed/unknown board has no generic feed fallback; contextual composer remains disabled until validated.",
+    "Private Your names remains behind explicit wallet connection and private utility; stale account results rejected and cleared. Individual explicit profile clicks do not enumerate names publicly.",
+    "Observer adds only board route/id/limit/cursor; retained query bounds and duplicate/unknown parameter failures, exact known-human detection in ID/cursor, actual HTTP sender/receiver reconciliation regression.",
+    "Composer diagnostics retain fixed status selectors only; no arbitrary page text or private payload capture."
+  ],
+  "limitations": [
+    "No new Chromium run while parent genuine campaign occupies heavy slot; prior exact UI/browser source reports and retained labelled logs inspected",
+    "Actual wallet/board page2/3 chain journey not claimed",
+    "Wire observer does not establish opaque transaction privacy or universal anonymity",
+    "Root integrated production and generated assets need exact transfer/build disposition before deployment"
+  ]
+}

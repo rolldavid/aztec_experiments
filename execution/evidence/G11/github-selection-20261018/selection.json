@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-18T09:22:21.638815+00:00",
+  "installationId": 171412624,
+  "appId": 5317701,
+  "owner": "zac-williamson",
+  "method": "Owner verified existing GitHub privileged session; lead used visible selected-repository controls and saved; GitHub success banner confirmed.",
+  "selection": "selected",
+  "repositoryIds": [
+    1419258557,
+    1419307628,
+    1419512819,
+    1419524327,
+    1424177099,
+    1420006121,
+    1420006205,
+    1420006279,
+    1420006365
+  ],
+  "addedIds": [
+    1424177099,
+    1420006121,
+    1420006205,
+    1420006279,
+    1420006365
+  ],
+  "permissionProfile": "Existing owner-approved broad profile unchanged",
+  "limitations": "Remote exact-source mirror checks separate; no model or chain submission by this change.",
+  "screenshot": "selected.png"
+}

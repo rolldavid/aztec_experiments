@@ -1,0 +1,22 @@
+{
+    "CommandId": "5138044e-8715-48f1-b383-32426be3599a",
+    "InstanceId": "i-0cb8555882d6cfecc",
+    "Comment": "Final read-only V6 service and public moderation status verification",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-10T15:28:46.888Z",
+    "ExecutionElapsedTime": "PT0.051S",
+    "ExecutionEndDateTime": "2026-10-10T15:28:46.888Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "{\"checkedAt\": \"2026-10-10T15:28:46.914097+00:00\"}\n{\"unit\": \"board-moderator.service\", \"status\": {\"MainPID\": \"2465746\", \"Result\": \"success\", \"ActiveState\": \"active\", \"SubState\": \"running\"}}\n{\"unit\": \"board-moderator-backup.timer\", \"status\": {\"NextElapseUSecRealtime\": \"\", \"Result\": \"success\", \"ActiveState\": \"active\", \"SubState\": \"waiting\"}}\n{\"latestPublicHealth\": {\"billboard-moderation-health-v1\": {\"type\": \"billboard-moderation-health-v1\", \"stateCounts\": {\"queued\": 0, \"leased\": 0, \"evaluated-ok\": 4, \"submit-intent\": 0, \"submitted\": 0, \"reconciling\": 0, \"retryable-error\": 0, \"confirmed-flag\": 1, \"expired\": 0, \"manual-review\": 0}, \"severity\": \"ok\", \"checkpointHeight\": 15567, \"lastSuccessfulIngestAgeMs\": 6, \"counts\": {\"retryableErrors\": 0, \"unresolvedSigning\": 0, \"manualSigningFences\": 0, \"awaitingFinality\": 0, \"expiredObligations\": 0, \"manualAttention\": 0, \"unsignedPending\": 0}, \"alerts\": []}, \"billboard-feed-lag-v1\": {\"type\": \"billboard-feed-lag-v1\", \"severity\": \"ok\", \"code\": \"FEED_AT_CHECKPOINTED_TIP\", \"feedBlockHeight\": 15567, \"nodeCheckpointedBlockHeight\": 15567, \"lagL2Blocks\": 0, \"scope\": \"L2 blocks behind the configured node checkpointed tip; not elapsed time or independently verified global freshness\", \"action\": \"No measured checkpointed feed lag at this observation.\"}}}\n{\"postId\": \"0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c\", \"matches\": 1, \"records\": [{\"job\": {\"postId\": \"0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c\", \"state\": \"evaluated-ok\", \"policyVersion\": \"0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa\", \"modelVersion\": \"0x35f2b97233e240e96f8c9d1a55aa2d8f7c9461db6908cbf34e8ea52fc18ff3c8\", \"attempt\": \"1\", \"transactionHash\": null}, \"isViolation\": false, \"errorCode\": null, \"orphaned\": false}]}\n{\"postId\": \"0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203\", \"matches\": 1, \"records\": [{\"job\": {\"postId\": \"0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203\", \"state\": \"evaluated-ok\", \"policyVersion\": \"0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa\", \"modelVersion\": \"0x35f2b97233e240e96f8c9d1a55aa2d8f7c9461db6908cbf34e8ea52fc18ff3c8\", \"attempt\": \"1\", \"transactionHash\": null}, \"isViolation\": false, \"errorCode\": null, \"orphaned\": false}]}\n",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}

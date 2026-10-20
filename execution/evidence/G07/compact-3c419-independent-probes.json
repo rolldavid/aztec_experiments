@@ -1,0 +1,20 @@
+{
+  "label": "Pure source-fragment and web-stream probes; no HTTP listener, SDK or chain",
+  "coercion": {
+    "invocations": 1,
+    "rejectedAfterCoercion": true
+  },
+  "duplicateKeys": {
+    "requestAccepted": true,
+    "responseAccepted": true
+  },
+  "oversizedBody": {
+    "reads": 1,
+    "iteratorReturns": 1,
+    "destroys": 0,
+    "requestEnded": false,
+    "active": 0,
+    "status": 413,
+    "connectionClose": false
+  }
+}

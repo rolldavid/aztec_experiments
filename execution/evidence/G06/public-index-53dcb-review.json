@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "53dcb61699bf319d532b27a1d1c256a9e523a6b9",
+  "verdict": "changes-requested",
+  "files": {
+    "shared/rolling/public-index.mjs": "f654cdefa51555f79530c1fdac212b593c42d7939097335baf76a038b563bfa7",
+    "shared/rolling/public-index.test.mjs": "f330b341d3147245ff9b2c2a7e265811d7f0d98e46ddd7b2c9bd0a3b7b8e0846",
+    "scripts/rolling-public-server.mjs": "be3ac624e3d3e98d74177b4e8b8d24bba75f615d119d919858c883f449243093",
+    "scripts/rolling-public-server.test.mjs": "479ba3f980c36729ba91322aed206ccdf602314c0314a8b845476789966e7a07"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=root/billboard/target/rolling_contract-RollingBoard.json pinned Node24.21.0 --test shared/rolling/public-index.test.mjs scripts/rolling-public-server.test.mjs",
+      "result": "12 passed; 0 failed"
+    },
+    {
+      "command": "git diff --check on four assigned files",
+      "result": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PUBLIC-INDEX-01",
+      "severity": "P2",
+      "path": "scripts/rolling-public-server.mjs",
+      "line": 35,
+      "scenario": "After the cache reaches ready, each scheduled sync immediately clears ready and holds busy until node checks finish. A data GET during every otherwise healthy periodic refresh returns 503, exposing ordinary RPC latency as browsing failures. Existing HTTP test double keeps readiness true during sync and misses this interaction.",
+      "repair": "Have validated data GETs await the already active sync promise before checking readiness/querying. Keep status immediate. Do not start an extra sync, retry, or serve an unauthenticated/stale projection; failed or incomplete sync must still return 503. Test a ready index entering delayed routine sync, concurrent GETs sharing that one sync and its successful/failing outcomes."
+    }
+  ],
+  "review": [
+    "Read all four source/test files before verdict. Actual SDK block bodies explicitly include transactions; decoder binds transaction effects to canonical blocks and exact reviewed class/emitter/schema.",
+    "Cold cache ranges are completely re-fetched and re-decoded before ready. Equality rejects omitted/injected cached events even with retained block hashes. Matching cache JSON/checkpoints are not themselves authority.",
+    "Range/event/record/snapshot bounds, CAS-before-publish, bounded rollback, detached metadata and strict GET-only public routes are retained. No private/wallet routes or raw upstream errors are exposed.",
+    "Scope is immutable; deployment anchor is copied; source tests use labelled SDK-data doubles and real processed ABI/SQLite."
+  ],
+  "limitations": [
+    "No live-chain index qualification or browser-to-canonical-index journey was run by this reviewer.",
+    "The timeout races bound caller waiting, not cancellation of arbitrary injected node/storage implementations. CLI transport independently aborts at 20 seconds; do not describe generic injected adapters as hard-cancelled.",
+    "Capacity bounds are explicit implementation limits; full product scale/privacy/release acceptance remains open."
+  ]
+}

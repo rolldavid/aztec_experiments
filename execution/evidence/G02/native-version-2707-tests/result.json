@@ -1,0 +1,43 @@
+{
+  "source": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "startedAt": "2026-10-13T02:04:20.896Z",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-2707-test.py",
+    "-v"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-version-2707-tests/home",
+    "TMPDIR": "/private/tmp/rolling-2707-tests-aiz3nz4o",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-version-2707-tests/build.log",
+  "diagnosticHold": "Native binary remains unqualified; no paid authority.",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [],
+  "children": [
+    {
+      "role": "cold-journey-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "builder": {
+    "code": 0,
+    "elapsedMs": 323
+  },
+  "elapsedMs": 745,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T02:04:21.643Z",
+  "passed": true,
+  "logSha256": "ca79a08a8711ea51e7329b9ea10c0b1d4188883728e78593827848676800a340"
+}

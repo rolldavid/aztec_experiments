@@ -1,0 +1,52 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "at": "2026-10-19T08:55:14.875992+00:00",
+  "candidate": "d1cc97a1587b61b4be1004d01469864363c31424",
+  "base": "a63b024ad31d6c7775ae7facba43995a2f011788",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/escrow-service.mjs": "0b093387c29939bd915ca2530a61fa1cce304cab7616bff5b400b2a9bb8663e3",
+    "plugins/main.mjs": "fc8edbb9753e2f17897fa914462b8935e4164df853bf9349dc85bed19b3770af",
+    "plugins/private-bok-escrow.mjs": "d0d146b5e1aa07581382cc16e7ec79d8a1f246e7370eaba47314bc78db4394b1",
+    "plugins/private-bok-metering.mjs": "209d3aaec43a3b9b739915e623c93d3eee17a3ceebcf49ab2a32710651fce676",
+    "plugins/private-bok-metering.test.mjs": "ca124da6691eecbd89f9ec4d21aea2757e571c11a219a357d1a8ae9b655370a8",
+    "plugins/test/hosted-private-bok.test.mjs": "bd936dc5c4554f2de939f7ff50639f6c69ee0a661cfcaef0ca2d9b7834e5bc9b",
+    "plugins/test/private-bok-escrow.test.mjs": "9b7b4382759f42fdfb6f8cfb702571fd6986ad425cca18fcf6180e21c4488e88"
+  },
+  "requirements": [
+    "RC19",
+    "RC20",
+    "RC32",
+    "RC41"
+  ],
+  "checks": [
+    "Hosted admission requires exactly first quoted call0, exact identity/quote/reserve args/digests/operationID, no billing and no recovery/signed/submission fields. Saved running binding is checked against current canonical request before recovery.",
+    "Hosted recovery marker is durable before entering agent; escrow recovery marker is durable before proof. A failed recovery cannot rearm on next restart.",
+    "Original quote/input is reused; existing metering inputDigest comparison rejects changed agent input before reserve/provider. Admission allocation is not repeated.",
+    "Native escrow proves and authenticates exact method/args/fee payer/network; transaction hash/digest and submission-unknown are durably persisted before send. Therefore phasepreparing without submission fields is a source-proven never-broadcast boundary, not inference from a dropped/missing receipt.",
+    "Provider-entered marker persists before provider execution; possibly-sent/received/fenced and any signed/unknown transaction states remain existing reconcile-only flows.",
+    "Existing lease/write poison/current anchor/reservation/accounting/expiry guards retained; one-use recovery exception applies only original first reserve, not settlement/reply/finish or later calls."
+  ],
+  "independentChecks": {
+    "command": "Pinned Node24.21.0 --test --test-name-pattern=\"first quoted call|hosted first quote|never-submitted|lost|unknown|possibly|durable|poison\" plugins/private-bok-metering.test.mjs plugins/test/private-bok-escrow.test.mjs plugins/test/hosted-private-bok.test.mjs",
+    "environment": {
+      "NODE_BACKEND": "js",
+      "TMPDIR": "/private/tmp"
+    },
+    "passed": 27,
+    "failed": 0,
+    "durationMs": 1210.415375,
+    "output": "dc89bc"
+  },
+  "limits": [
+    "No actual host journal/proof/provider/send execution by reviewer. Parent must bind the retained original journal and verify dead process/lease before service recovery.",
+    "Agent reconstruction must reproduce same input digest; changed thread input deliberately fails and consumes this one-use continuation rather than re-quote.",
+    "Existing comments in metering chain-port documentation describing unconditional no second mutator call predate this explicit source-authenticated not-submitted exception; explanatory cleanup advisable, no behavioral blocker."
+  ],
+  "exactTransfer": {
+    "originalReviewed": "d73a09f877f1772f06aec64bdd22ded85c726e33",
+    "allSevenCandidateAndBaseBlobsIdentical": true,
+    "noRepeatedChecksNecessary": true
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "revision": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "requirements": [
+    "RC23",
+    "RC25"
+  ],
+  "priorReport": "execution/evidence/G07/reviewer-e9a0df2-privacy-boundary.json",
+  "priorReportSha256": "8255e1af27d25dce69064be2fccac9b21ed3999a20ce5275b8d9fef9ebcc6a3e",
+  "finding": {
+    "id": "PRIV-E9A-1",
+    "severity": "P2",
+    "kind": "public-copy-overstatement",
+    "location": "apps/rolling/reader.mjs:149",
+    "observedCopy": "Only you can see this view. Your saved choices stay on your device while you browse.",
+    "failureScenario": "Supported remote proving sends private witnesses to the configured trusted prover; query traffic is visible inside the same explicitly permitted operator boundary. The absolute Only you wording omits this exception. Source does not demonstrate disclosure of a complete view to a separate backend; this is a misleading assurance claim, not evidence of that separate leak.",
+    "relatedLocation": "apps/rolling/wallet-panel.mjs:70",
+    "minimalRepair": "Keep local feed-filtering explanation; disclose the configured private proving/query operator trust in existing private-view or wallet copy. Existing runbooks already disclose this. No protocol/transport/scanner change requested.",
+    "verification": "Review rendered existing UI text and its current DOM assertions in the next coherent UI change; no expensive/privacy acceptance repeat merely for wording."
+  },
+  "boundaryClarification": "The private-query route does not promise unlinkability from an independently operated node. Fullnode, archive and personalized query handling must be operated inside the explicitly permitted prover trust, not merely at a matching hostname/URL. Local routing reviewed; remote containment and specialist audit remain gates.",
+  "sourceChanged": false
+}

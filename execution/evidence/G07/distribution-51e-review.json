@@ -1,0 +1,52 @@
+{
+  "candidate": "51e65efd234c5c77e011f6542d8a0a3872a9d6c9",
+  "base": "355ad39b559374402e74cd281a43b776449ba67d",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved-bounded-source-repair",
+  "sourceSha256": {
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/README.md": "c3c5c079c31dad6cf3e46b02abe2f9db72c397a5eebe9299b26865e81fe10399",
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.js": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35",
+    "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.ts": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+    "scripts/test-private-event-query.mjs": "74bce1b6c0447afa139a2abb488c023e2acaca7131decfd1bc436375df485d3e"
+  },
+  "findingDisposition": "Repairs prior P2 installed-state-dependent differential tests. Prior distribution-355 changes-requested report remains historical.",
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24 --test --test-concurrency=1 scripts/test-sdk-manifest.mjs scripts/test-private-event-query.mjs",
+      "result": "57/57 parent tests passed; two child processes each run all 19 query regressions against disposable original and patched installed states; no skipped tests",
+      "durationMs": 1075.612834,
+      "log": "/tmp/reviewer-distribution-51e-tests.log"
+    },
+    {
+      "check": "Relevant test/installer/manifest source blobs compared to exact51e",
+      "result": "identical in current checkout; wallet edits outside review excluded"
+    },
+    {
+      "check": "Pristine fixture source compared independently with currently installed locked originals",
+      "results": [
+        {
+          "fixture": "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.ts",
+          "sha256": "62b5b7b7baee04df34dc5d97f8ffcc09c94abf0a2cb77b5b8b94190760cbf8de",
+          "matchesInstalledOriginal": true
+        },
+        {
+          "fixture": "scripts/fixtures/private-event-query-6.0.0-rc.1/private_event_store.js",
+          "sha256": "2811609acbb653f7584bbc3e8df597999abad7c43ae613df53b1126ba3481b35",
+          "matchesInstalledOriginal": true
+        }
+      ]
+    }
+  ],
+  "sourceAssessment": [
+    "Original differential reference always copied from exact before-hash fixtures; patched reference is exact transform of those bytes",
+    "Actual installed package is verify-only and may be original or patched; mixed/unknown still rejected",
+    "Child suite uses disposable package root; subprocess bounded 20 seconds/1MiB; guard prevents recursive children",
+    "Existing production bootstrap, patch pins and build rejection semantics unchanged by repair"
+  ],
+  "limitations": [
+    "No shared installed dependency mutation",
+    "No full SDK/browser build or actual private-event integration qualified here",
+    "LMDB exercised; IndexedDB uses labelled fake-indexeddb platform",
+    "Cold PXE discovery/capacity/genuine recovery and privacy acceptance remain open"
+  ]
+}

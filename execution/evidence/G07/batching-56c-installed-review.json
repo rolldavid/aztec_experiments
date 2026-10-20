@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "56c22089d0aef06048d34b0f07be0fb4185d2ab9",
+  "reviewedAt": "2026-10-13T00:38:53.230511+00:00",
+  "disposition": "installed-candidate-closure-accepted-for-bounded-tests-only",
+  "evidence": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/baseline.json": "92e7d68fab801db62b6b2823361d6cce1bac10c8024c5a1c432db1612094cbdb",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/restore-intent.json": "58f69d9c2ab4d36860ab6cbb51d10d27d3d4833219f656e34a8a9ee96ef54a20",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/restore-result.json": "0bc426f3dbb848d8ccf58f2797a95d359311d0f1b211a3bbc63f071fb67fca1b",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/apply-result.json": "0d815ae54d39de873391c0b33e341e149c9a4dd8ddda8cbe269913cce2d8b945",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/protected-before.json": "c50c06d9a30de466388a6c394cae27967471936a1acc7532dfa064f689095d94",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/postcheck.json": "8064c623cd540058de052b1f78cb51f0eeb6e23a4b61a487701d462a96be3c05"
+  },
+  "independentVerification": {
+    "candidateSourceFourBlobsEqualB3b": {
+      "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+      "shared/trusted-private-node.test.mjs": "5da07d1f3fafe13c19033bbcabb576e7edb702c74c9bc0c22b55ab9512092909",
+      "scripts/patch-pxe-preference-page.mjs": "3ca3d02bfd7290e4a83205217e677a6b756968686f4dbf7c9f82a152feddeca6",
+      "scripts/test-pxe-preference-page.mjs": "b8fa58341911e4737312fe0d965fb3933f43834e176a03e29b474e141701baf6"
+    },
+    "candidateInstalled8Plus2HashPhysicalNlink1": true,
+    "all10PredecessorsPreservedExact": true,
+    "all8OriginalBackupsExact": true,
+    "protectedBindingsRehashed": 1151,
+    "mismatches": [],
+    "expectedChangedInstalledPaths": [
+      "src/pxe.ts",
+      "dest/pxe.js",
+      "rolling-preference-recovery.mjs"
+    ]
+  },
+  "ownership": "Restore intent records all consumers stopped and only physical lead dependency tree; this matches prior parent/worker scheduling evidence. No reviewer mutation.",
+  "limits": [
+    "Normal generated SDK/frontend/wallet closure invalid until fresh normal builds; old served bundle must not qualify candidate.",
+    "Bootstrap five-helper closure shared source pin also requires separately reviewed update.",
+    "No actual component/ACIR/HTTP optimization success or genuine run/integration granted. Exact final runners must bind installed candidate before execution."
+  ]
+}

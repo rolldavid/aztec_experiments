@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "campaign": "native-version-20261013-2707fd93cc0e",
+  "source": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "verdict": "approved-exact-prepared-payload-and-data-only-bindings; no-launch-authority",
+  "packetSha256": "d40ae49590f95c9250b85d2c19f7067dea7069557cbd2c93f2fb1c0789136773",
+  "payload": {
+    "bytes": 12046,
+    "sha256": "953029179b0de2645d55e061ccc213fa3b4e1f0ca4c5a1c9e5b533dc914c52fd",
+    "sourceSha256": "28646b535b163540934302816effa920ed4e92a8f2126f40c93770dc80f15c83",
+    "controlSourceSha256": "8dd78da93de6051d5bf542345e48b6de71ebb5dd8a085df1e1e2d469d5367908",
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878"
+  },
+  "operatorHashes": {
+    "core": "cd3571a5e6db228b2dd055477320d60fc7734a82c8329bfa57da767fc3a60a5f",
+    "launch": "9ca447bdf0f534031739ed36aaeb6dbe48d19694ddf6df23bb06d4948506251d",
+    "observe": "5fda13786af16df355987a8d4f54930512a3285497611ee870a96e6076a2cf6e",
+    "cleanup": "117aab6b36d6f2ecf9b771d1229ca498ef7769433fbd5a8a0f71c3b23a1927bd",
+    "test": "d249179ffb9e9e1595a0199bd642b996ce4b049cddf3177ed35568faf6aa041b"
+  },
+  "independentChecks": [
+    "All packet/actual operator hashes match; only BINDINGS differs from reviewed core and three exact wrapper hash literals differ. Test bytes unchanged.",
+    "Decoded payload via AST/lzma without execution; independently reconstructed exact fixed AST-selected controls, native host, worker, config, shell and deterministic gzip bytes.",
+    "Private directory0700 and all contained files0600; no symlink. Exact nine config fields, fixedS3host/key/receiptpath/closedSigV4query/hostonlysignedheader and expiry after shutdown verified without printing capabilities.",
+    "Exact public-directory0755 repair and unchanged private0700/native15s512MiB2CPU/20sunit/no-network/dualshutdown/finally controls are embedded. No ordinaryLinuxpin promotion.",
+    "Prepared Fleet request1ondemand0spot and expiration/termination matches host02:59:59; commissioning02:44:59; immutable latestlaunch02:24:59.",
+    "Private preparation grant+operator review hashes and actual ledger225.28 match fresh10reservation. No LT/Fleet/upload financial intent exists."
+  ],
+  "deadlines": {
+    "createdAt": "2026-10-13T02:14:59Z",
+    "latestLaunch": "2026-10-13T02:24:59Z",
+    "commissioningStop": "2026-10-13T02:44:59Z",
+    "budgetStop": "2026-10-13T02:59:59Z"
+  },
+  "recordedCapabilityEvidence": {
+    "versionedHEAD": "ba670c80090c71fb87fab60c9170c0daaf499d8758bee82b4355b519b61cd1ce",
+    "range206": "9db944126bd959b09f33ccf37c04c867c3239cd08fced5306281ded12c967972",
+    "limitation": "Recorded once read-only evidence; reviewer did not replay network. GET lacks versionId, so unchanged guest full size/SHA-before-exec remains mandatory."
+  },
+  "limits": [
+    "Final launchGrantSha256 and payloadReviewSha256 remain unset; separate parent launch grant, final two-literal recheck and serialized slot required.",
+    "Cutoff must not be redated; if missed, no launch under this payload.",
+    "No version/native/provider runtime or Linux qualification claimed. No reviewer cloud orpayload execution."
+  ]
+}

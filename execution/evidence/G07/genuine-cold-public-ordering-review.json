@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T01:13:57.597265+00:00",
+  "source": "4dd95ef27e66369b8c95c8cc5a488d487743548f",
+  "verdict": "prefer-narrow-fixture-ordering-repair; proposal-only-not-source-or-runtime-approval",
+  "requirementBasis": [
+    "G07-A01/A02/A06/A07 require authenticated chain/private-key reconstruction and no privacy disclosure; no requirement places public HTTP verification after keys-only recovery.",
+    "Public verifier uses ctx.node, checked public artifact, captured expected public views and separate public cache; it never receives the actor/PXE/private recovery store.",
+    "Cold comparator retains private checkpoint in WeakMap, checks exact recovered state and global proof/send plus fresh-wallet counters against original post-write checkpoint. All financial writes already completed."
+  ],
+  "recommendedScope": [
+    "Move only explicit boundedCold relationships recovery after complete canonical projection rebuild and fresh/reopened publicHTTP checks, before final accounting. Keep ordinary nonbounded preference and browser/reorg/saved paths unchanged.",
+    "Keep old actor close before fresh actor, key-only construction/no copied store, original absolute deadline, exact comparator/auth/no-effects and failure observations.",
+    "Set recovery-a wire phase explicitly at moved cold entry; retain cold metrics boundaries only around fresh actor/recovery. Do not count preceding public reads as cold work.",
+    "Preserve all public original30s cap/21.5s pass reserve/canonical assertions, all final fees/job assertions, same525s inner540s outer and4GiB/default1.",
+    "Check exact source diff and meaningful phase-order/lifetime/zero-effect/accounting tests before any changed genuine run."
+  ],
+  "timingAssessment": "06e9 cold began472790ms and consumed31314ms before public stage505453ms. Public checks before cold gain roughly that admission headroom; total work is unchanged and no guarantee of completion is inferred. New actual result must still satisfy original deadlines and every assertion.",
+  "supersedesProposal": "Broader public-index/transport remaining-time/drain expansion is unnecessary for this observed fixture reserve-order failure; retain initial diagnosis, do not treat it as an implementation requirement.",
+  "executionGrant": false
+}

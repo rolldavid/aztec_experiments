@@ -1,0 +1,28 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "1797fa43e87dda19d4fa5e8e5894145f42a682e1",
+  "packetSha256": "d0880b1b83488c7e2f4b4fe785d969952c5576af0839ed47cdd4f265691d7771",
+  "verdict": "CHANGES REQUIRED; hold focused runtime until repaired source is reviewed",
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "deploy/prover/bootstrap.py",
+      "line": 1204,
+      "title": "Accept the verified internal Node links before committing activation mutations",
+      "description": "activation_paths rejects every symlink after the durable one-shot intent and useradd. package.py:67 extracts the normal Node archive preserving its internal regular-file symlinks. Independently inspected local Linux v24.21.0 archive fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6: bin/npm, bin/npx, bin/corepack point to packaged regular JS files. Existing verify_release and documented Linux qualification allow internal regular-file links. Consequently a valid package is guaranteed to fail this new activation path and force terminal shutdown before service start. Current orchestration tests replace activation_paths and miss it.",
+      "repair": "Reconcile ownership hardening with the verified release representation. Validate the complete allowed link/file layout before mutation; retain rejection of external, dangling, directory, cyclic and special links and preserve private-path permissions. Add a meaningful test exercising the actual path-hardening helper on a Node-like verified release including the three links, plus unsafe-link negatives."
+    }
+  ],
+  "reviewed": [
+    "Six source files and fifteen unchanged dependency files independently rehashed",
+    "Explicit root later activation, query qualification and exact scope receipt/live SDK+portal/network checks, immutable intent, UID rules/class/counter exercise, loopback unit/config, proxy mask and fail-stop reviewed",
+    "No additional blocking source finding in this bounded review; original native controls/capture and existing service unit remain unchanged"
+  ],
+  "runtimeLimits": [
+    "Twelve focused tests and full85/package9 unrun; focused preparation must be rebound to repaired source and new inventory",
+    "Live actual SDK/HTTP activation, real root permission/service controls, generated userdata cap and full coherent release build remain required before paid activation",
+    "Historical checkpoint receipt is not independent current network readiness; existing fresh inspector and canonical live checks must remain mandatory",
+    "No actual deployment, full Bok credit flow, application proof or paid execution qualification inferred"
+  ],
+  "scope": "Read-only source/archive inspection; no test, provider, service or native execution"
+}

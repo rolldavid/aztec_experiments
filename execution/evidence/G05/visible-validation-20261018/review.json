@@ -1,0 +1,38 @@
+{
+  "revision": "289fd11d65156469ea8748e439c00047f378eac2",
+  "baseRevision": "c8a287c4311a8fd66d4ace122fca4e7b4b09520f",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": "G05-visible-validation-feedback, RC04/RC40; existing wallet-panel failure presentation and accessibility.",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": {
+    "independentBrowser": {
+      "command": "TMPDIR=/private/tmp NODE_BACKEND=js <pinned Node24> --test --test-concurrency=1 --test-name-pattern='name availability|account invalidation clears names|keyboard focus|saved refund review (failure|account-change)|dialog|focus' apps/rolling/wallet-panel.browser.test.mjs",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 5380.315875
+    },
+    "sourceBinding": "Exact candidate checkout clean; source diff --check passed."
+  },
+  "review": [
+    "Error feedback remains fixed safe text produced by existing failure mapping; raw failures are never inserted. Focusable role=alert exposes text to keyboard/screenreader, and nearest scrolling reveals it inside the dialog after failed work.",
+    "New focus occurs only when an error exists and dialog.open. render always inserts the alert first when error exists, including invalidated/reload-required session branches; therefore the queried alert exists. Closed dialogs do not receive focus or scrolling. Existing close() prevents close during owned work and restores opener focus on normal close.",
+    "Successful work does not enter the error-focus branch; previous control focus restoration remains unchanged. Existing browser checks verify selection/view focus, dialog trapping/restoration and known invalid-name editing with no journal/send.",
+    "Unknown preparation failures still enter recovery fencing. Name error feedback tests preserve the typed draft, show alert inside viewport and dialog, put keyboard focus on the alert and allow explicit correction. Account invalidation and saved-refund failure checks preserve private-data clearing and no-send controls."
+  ],
+  "limitations": [
+    "Labelled UI/component browser evidence only; no live chain or model/wallet acceptance claimed. No services restarted and no build required for these source presentation changes.",
+    "Whole application and final qualification gates remain open."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/visible-validation/focused.log",
+      "sha256": "ded9675a6ebf56e571a1fc7d355ffb2b279708e337dcd4ed0d16d4bf0397dc78",
+      "bytes": 1996
+    }
+  ]
+}

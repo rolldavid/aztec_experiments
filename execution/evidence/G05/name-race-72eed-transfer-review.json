@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "72eed3d80f80d7f00f1f92787880f05ab6c6830b",
+  "base": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "verdict": "approved bounded race transfer source; actual two-pending genuine race still required",
+  "findings": [],
+  "source_sha256": {
+    "scripts/testing/rolling-application-actor.mjs": "075cf15c2e42e2e6e324e9bf11fe98fd981ab75132be30a60d17d7abb0504f02",
+    "scripts/testing/rolling-application-actor.test.mjs": "3bb394775f55ca1770c4e64e4696c1008280105b19398ee77e95f4ce483e3f8a",
+    "scripts/testing/rolling-application-fixture.mjs": "a132aa1097b12a4351b69a7cb41793a0eae7c06491e1d9e655527ec377c33132",
+    "scripts/testing/rolling-application-fixture.test.mjs": "da31183e579ef7b7494eff51c195f0b9da02d7158358dde398f186a8d5a34b6a",
+    "scripts/testing/rolling-collision-observer.mjs": "920ca0144fd2c7485afcd3e79d5e7fde11b3f49d5fce81eadf49f43565726b83",
+    "scripts/testing/rolling-collision-observer.test.mjs": "adfae7243b990633eb54e779e77d02e6281a075667c2586c4b3280b0bf2e736a",
+    "scripts/testing/rolling-name-collision.mjs": "2e81ed3b805738a47f6aca63c2ad6057b055452698582cb54f35ce425545ecae",
+    "scripts/testing/rolling-name-collision.test.mjs": "6687fdf1f47ecc1316115ad57154240c7971b1ab96e38ac7c9d6b2d6e836180d",
+    "scripts/testing/scenario-flows.mjs": "95fbc4883ce94f6ee92b0a6b74282d2f22c172ae73a80c956337358282059312",
+    "scripts/testing/scenarios.mjs": "67d9b5e36d53638a8cc7141e8fc2a4d9f534ed441308545f2edd083f74c436d2"
+  },
+  "equivalence": [
+    "Exactly10 race paths relative4c76. Every added/deleted line equals approved c7 relative68e.",
+    "Conversely every added/deleted line 72eed relativec7 equals approved4c76 relative68e. Patch-id differs solely existing surrounding race test context after appended batch test; inspected normalized diff.",
+    "Thus approved canonical race helpers, writer deadlines, paid-outcome collection, terminal observer checks and preserved recovery scenario compose with semantic batch rejection repair without functional conflict. No production/artifact paths changed."
+  ],
+  "prior_reviews": [
+    "evidence/G05/name-race-combined-c7df-review.json",
+    "evidence/G06/trusted-recovery-4c76-review.json"
+  ],
+  "checks": {
+    "equivalence": "Independent exact git-object comparison of both composition directions",
+    "prior_independent_tests": "242 race/recovery checks atc7 and198 affected recovery/trace checks at4c76; no repeated tests needed for identical additions and preserved function bodies.",
+    "lead_combined_tests": "316 claimed by lead; not represented as independently executed."
+  },
+  "limitations": [
+    "Source eligibility only. Genuine concurrent two-pending collision and runtime accounting/cleanup not yet qualified.",
+    "Pending recovery campaign and full task/release requirements not closed."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "ce0fc59aa8243a877718cb72d4d70534eee7973f",
+  "baseRevision": "19d2c05fec55683c0677b2e8a056d63b153bc52f",
+  "verdict": "source approved for one changed180s/4GiB SDK+ACIR attempt; runtime pending",
+  "sourceSha256": "57b8d26d397832429aa8ff32caf0170bb6aa12c4ba958f6aa493aca3056c6e4a",
+  "packetSha256": "d923c9f82dfb12f63b6e86dfd0597a4f9a090d85f31826c802601e7d8aa62dff",
+  "findings": [],
+  "checks": [
+    "Only test file changed. Child env removes only NODE_TEST_CONTEXT and keeps expected exit1/error/cleanup assertions.",
+    "Labelled tag transport parses actual wire query schemas and reads only retained actual simulated effect logs, with detached effect/log values and header/tx metadata.",
+    "Exact tags/input-order, public contract filter, anchor height/hash, exclusive toBlock/reference cap, tx filter, limits and strict afterLog ordering checked. afterLog overrides fromBlock and private/public indices start separately at0, matching installed archiver source.",
+    "Second revision retains original automatic ContractSyncService/private simulator path. It asserts no registry note before, actual block4 scoped registry note and positive matched-tag delta after original simulation; no note seeding or nullifier suppression.",
+    "Original old-head-consumption and two-active-head failure assertions retained. New actual-ACIR query negatives cover malformed/unknown anchor, contradictory range+tx, excessive limit and invalidated canonical anchor."
+  ],
+  "requiredRuntime": [
+    "Both native and ACIR opt-ins, exact reviewed processed20c494artifact/dependency pins, zero skips/cancellations/failures.",
+    "Confirm actual second revision now reaches old-head consumption and both-active cursor tests; query regression must execute.",
+    "Own supervisor/dependencies/temp cleanup, no shared mutation or retry."
+  ],
+  "limitations": [
+    "Synthetic chain/tag transport is labelled and only serves generated fixture history; not real node inclusion or full cold discovery qualification.",
+    "Original64/4failed run2 retained; no pass inferred from repair source.",
+    "Compiler260 and genuine/browser/capacity/release gates remain open."
+  ],
+  "execution": "Read-only diff and installed schema/archiver source inspection; no native execution."
+}

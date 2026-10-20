@@ -1,0 +1,24 @@
+{
+  "candidate": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "verdict": "approved-for-lead-quiet-boundary-publication",
+  "findings": [],
+  "packet": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/final-testnet-plan/current-app-publication/reopen-account",
+  "sha256": {
+    "publish.py": "292cc9e532665b025d07cd1f9089a845fc70c0776c9373e3a70fee5c3382fcbf",
+    "lead-publish.py": "fd1025534607a8158d33c8fc9e89f9096cd61c4a125cc0f472b61231c5767e85",
+    "delta.json": "8ee55d5ce5ba286aa7fa733352db00b4b31e421e372dbbd720a14d167e956aa0",
+    "browser-assets.tar.gz": "a26b4306875ca595b3245c29b4e56f9a72e948b657626e6f3b49f282d83d8248"
+  },
+  "closure": "Exactly one wallet-panel.mjs archive member matches reviewed Git candidate; runtime/SDK/manifests remain unchanged.",
+  "preservation": [
+    "Current ccc292 unit, SDK/wallet manifests and prior panel SHA are pinned.",
+    "Immutable hardlink clone uses atomic replacement of changed panel, preserving old release bytes. Existing full wallet asset loader validates unchanged closure before service switch.",
+    "Requires idle relay activePlan and exact cumulative reservation; preserves every relay JSON and public/wallet/relay configuration.",
+    "Captures positive native/query/prover/Bok PIDs and requires unchanged values. Starts app and its dependent proxy; rollback restores only unit, never journals.",
+    "Wrapper pins archive/script/manifest, records one-use dispatch intent and disables SSM send retries; unknown dispatch is not replayed."
+  ],
+  "conditions": [
+    "Lead serializes at a quiet application boundary; do not reload or retry any active financial workflow.",
+    "Reported start/publication is not a new functional acceptance claim."
+  ]
+}

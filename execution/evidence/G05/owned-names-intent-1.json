@@ -1,0 +1,12 @@
+{
+  "createdAt": "2026-10-11T23:20:31.677094+00:00",
+  "source": "54e95810713d62caae0a4fbf2045292c43aa1853",
+  "scenario": "rolling-owned-names",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "owned-names-combined-54e-review.json",
+  "checks": "owned-names-54e-root-tests.log",
+  "hypothesis": "First genuine four name registrations across two isolated human accounts, exact private ownership and encrypted journal recovery, four canonical public profiles",
+  "status": "launching once"
+}

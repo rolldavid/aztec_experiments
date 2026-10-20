@@ -1,0 +1,30 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "f6b995b576e1dd5d86285400a47cf218d0fbc455",
+  "actualPacketSha256": "dff7b400d7b5bcd2b049f502fa4ce7b7e2c4ce1b5cb3cc67453ddbad21d52466",
+  "verdict": "Focused two PASS; eligible for separately serialized full91/package9/toolchain33",
+  "actual": "Exact original two cases pass287ms; runtime byte/hash/CONFIG/dispatch checks and unchanged16384 strict size assertion passed, packet reports16363 bytes. RSS unmeasured.4274pins current/ownedcleanup positive.",
+  "preparations": [
+    {
+      "name": "bootstrap91",
+      "packet": "6b9ebd303fdc5a1775fabb39204aae0537f00c75c5ce7737919db1cba315d41c",
+      "count": 91
+    },
+    {
+      "name": "package9",
+      "packet": "3be2e2a7b5eb5c23d251997fd262cdc13cfa964f292d89a377b4f8197896db46",
+      "count": 9
+    },
+    {
+      "name": "toolchain33",
+      "packet": "9e2302b22026772caca47d60b03d4cc74811cf8e3210f90d74c2fc18badf03c8",
+      "count": 33
+    }
+  ],
+  "runner": "All three runners exact prior directory-only rebind; expected whole-suite labels unchanged,60s2GiB and no-skip/cleanup gates retained.",
+  "holds": [
+    "Stop first failure; no remote activation/deployment claim.",
+    "Tiny current payload margin does not authorize arbitrary future config; actual CLI cap remains mandatory.",
+    "Original45746 failed evidence retained."
+  ]
+}

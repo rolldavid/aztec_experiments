@@ -1,0 +1,101 @@
+{
+  "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+  "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+  "task_id": "W03-aggregate-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+      "id": "focused-recovery",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 existing focused application/browser/wallet-session tests (exact commands retained in independent review)",
+      "environment": "Local source-bound focused checks; provider/simulation doubles explicitly labelled; no live proof/payment",
+      "observed": "43 application and3 browser checks; unchanged82f blobs verified by combined review",
+      "artifacts": [
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/application.log",
+          "sha256": "60892072370705bf8e78ea2356a156871796499829882d6c1513d1e6e8684643"
+        },
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/browser.log",
+          "sha256": "93f3a701aff3e46585b47235b80a979eb52efd093823860fdafc5bb037a660c2"
+        }
+      ]
+    },
+    {
+      "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+      "id": "focused-refund",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 existing focused application/browser/wallet-session tests (exact commands retained in independent review)",
+      "environment": "Local source-bound focused checks; provider/simulation doubles explicitly labelled; no live proof/payment",
+      "observed": "7 passive refund and2 workflow fence checks passed",
+      "artifacts": [
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/refund.log",
+          "sha256": "1ea182506713582ae8fad1fb8f20cdf2afefd0ee3f8b07f9221bb95b1958af41"
+        },
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/fences.log",
+          "sha256": "7571854a709201c94076f5a88b55b70adae2622dee2ee0c39fa6fe3a82ad522f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+    "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/aggregate-recovery-20261019/review.json",
+        "sha256": "32ea3755dd9245a12b9469c2d4cf66803142c415276ac595152ab7e014ab8212"
+      },
+      {
+        "path": "evidence/W03/aggregate-recovery-20261019/prior-review.json",
+        "sha256": "5b490156459bce1cd73cd793db724b466844a49b58c3e25bc685974d9869d629"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+      "id": "RC19-original-paid-claim-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/review.json",
+          "sha256": "32ea3755dd9245a12b9469c2d4cf66803142c415276ac595152ab7e014ab8212"
+        },
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/application.log",
+          "sha256": "60892072370705bf8e78ea2356a156871796499829882d6c1513d1e6e8684643"
+        }
+      ]
+    },
+    {
+      "candidate": "ccc292c739ac0f94330b666106f9a23e283124c1",
+      "base": "a7dd1719c1bf0d85a59bd336716097e39bf41376",
+      "id": "RC21-pending-refund-observation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/review.json",
+          "sha256": "32ea3755dd9245a12b9469c2d4cf66803142c415276ac595152ab7e014ab8212"
+        },
+        {
+          "path": "evidence/W03/aggregate-recovery-20261019/refund.log",
+          "sha256": "1ea182506713582ae8fad1fb8f20cdf2afefd0ee3f8b07f9221bb95b1958af41"
+        }
+      ]
+    }
+  ]
+}

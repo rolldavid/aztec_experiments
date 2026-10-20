@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "candidate": "07293b594fc8d1723a0703c92287e3efdca8c7cd",
+  "base": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "verdict": "approve-test-component",
+  "requirements": [
+    "W03-A02",
+    "W03-A03",
+    "W03-A04"
+  ],
+  "changedPaths": [
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-session.test.mjs": "fc1d625b47965e0ac6bf480fd40fa7594c47c98896eddc3d3b7a015e98a008e2",
+    "apps/rolling/wallet-session.mjs": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617",
+    "shared/ethereum-journal.mjs": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+    "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08"
+  },
+  "findings": [],
+  "review": {
+    "productionPath": "Tests call current createCollateralWithdrawal, createEthereumJournal and createEncryptedJournalSlot. Real AEAD/serialized journal CAS and ABI/message hashing execute; Aztec/Ethereum provider replies and signing are explicitly doubles.",
+    "lostResponse": "Original request saved at block 10 with nextBlock 11 and null txHash. Exactly one explicit confirm sends; its response throws. The exact transaction exists only in canonical block 711, with head 1110. Recovery discovers its hash from contiguous history, not supplied by the caller.",
+    "interruptedScan": "Provider throws at full-block read 541; authenticated journal is independently opened and required to contain nextBlock 541, cursorHash 540 and null txHash. A reconstructed capability resumes at 541, preserving one send.",
+    "reorg": "Changing canonical hashes from height 501 invalidates checkpoint 540. The retained exact transaction moves to block 520 on the replacement fork. Production locate resets to genesis, reads a contiguous prefix through 520 and verifies the receipt rather than skipping it.",
+    "bindingAndNoReplay": "Production verified() matches original withdrawal depositor, portal, amount, calldata and canonical L2 message/membership. Test requires exact returned refund hash/amount/gas, unchanged original workflow, successful verify, then refusal of another prepare. Send count stays one.",
+    "testScope": "Six new cases cover collateral/Bok crossed with lost response/interruption/reorg. No prior assertions removed; production source unchanged. No application defect reproduced or claimed."
+  },
+  "independentChecks": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp HARDWARE_CONCURRENCY=1 [Node 24.21.0] --test --test-name-pattern='W03 .* refund recovers' apps/rolling/wallet-session.test.mjs",
+    "pass": 6,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 858.270875,
+    "exitCode": 0
+  },
+  "workerChecks": {
+    "baselineRelatedPass": 14,
+    "focusedPass": 6,
+    "wholeWalletSessionPass": 129,
+    "allLogHashesVerified": true,
+    "wholeSuiteIndependentlyRepeated": false
+  },
+  "packetSha256": "0e7f5a0f27cba11b6061072f4cae090902e4d46d7f184b98268a9e22f94cea97",
+  "limits": [
+    "Controlled provider history establishes regression behavior, not a real 500-block chain, actual reorg or current live withdrawal acceptance.",
+    "One-send assertion observes the fixture signer; no transaction was sent by the reviewer.",
+    "No new real-proof/testnet/privacy/release qualification.",
+    "Combined revision mapping remains lead-owned; this report binds the exact standalone test candidate."
+  ],
+  "reviewerActions": "Source/diff review, packet and linked hashes verified, six existing focused tests run; no service/browser/build/model/financial action."
+}

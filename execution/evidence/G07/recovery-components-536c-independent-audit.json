@@ -1,0 +1,77 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-12T21:32:24.914796+00:00",
+  "source": "536c068c1764192edf8380da0f953eaa8e62c633",
+  "base": "125a69175b8a9df388f6f2938339090fa1bfb6cc",
+  "passed": true,
+  "changed8Files": {
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+    "prover/compact-block-native.mjs": "ad40275ba28bf28b136b9e8b1ef6a3fd56893638fc85dd6835606d94f49625ca",
+    "prover/compact-block-native.test.mjs": "b12881d8551a521ab3e188e0a9413d1820cf8fdb75815d79e82951c427143489",
+    "scripts/patch-pxe-preference-page.mjs": "f27c2b0677bed2059c0e7ec5f2dbed738906b83ce4196c788651318022d9c860",
+    "scripts/test-pxe-preference-page.mjs": "72a8042199feff02b81a041b354e2072dcd604404c7e0b5937ec1996113ef283",
+    "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "shared/rolling/compact-block.test.mjs": "ee8ccaabf52d711945a114a302a0dd1689b6fd048366262d2f57d4feb9ed39f9"
+  },
+  "all8ByteIdenticalToDesign59d": true,
+  "fullRollingNoirTreeMatchesDesign59d": true,
+  "directBindings": {
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+    "prover/compact-block-native.mjs": "ad40275ba28bf28b136b9e8b1ef6a3fd56893638fc85dd6835606d94f49625ca",
+    "prover/compact-block-native.test.mjs": "b12881d8551a521ab3e188e0a9413d1820cf8fdb75815d79e82951c427143489",
+    "scripts/patch-pxe-preference-page.mjs": "f27c2b0677bed2059c0e7ec5f2dbed738906b83ce4196c788651318022d9c860",
+    "scripts/test-pxe-preference-page.mjs": "72a8042199feff02b81a041b354e2072dcd604404c7e0b5937ec1996113ef283",
+    "shared/rolling/compact-block.mjs": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+    "shared/rolling/compact-block.test.mjs": "ee8ccaabf52d711945a114a302a0dd1689b6fd048366262d2f57d4feb9ed39f9",
+    ".build/preference-page-processed-321/RollingBoard.json": "799b44cd8901140dfda8c3fbd80fa11ebe708417afbd000d44eb92d39eafa781",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "shared/trusted-private-node.mjs": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+    "node_modules/@aztec-labs/kv-store/src/deprecated/indexeddb/store.ts": "e71b52af584c9e2285c80f635503c1f4d1989948a3b8b21db860d8178f7ae0f6",
+    "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js": "e6efed86ab1f05b268cf11bfe02ecd0e9fe6462e6747585285090d00232c3100"
+  },
+  "processedArtifactLocalSourceMatches": {
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+    "billboard/rolling_contract/src/main.nr": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+    "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+    "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+    "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+    "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd"
+  },
+  "prototypeSdkNotApplied": true,
+  "runtime": {
+    "elapsedMs": 26394,
+    "peakTreeRSSKiB": 982736,
+    "ownedTreeAbsent": true,
+    "deadlineMs": 180000,
+    "rssLimitKiB": 4194304
+  },
+  "counts": {
+    "tests": 127,
+    "pass": 127,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "runnerMatchesPriorWithOnlyDirectoryDeadlineChanges": true,
+  "evidence": {
+    "preparation.json": "cc3ea2074432930d8d309323cd9bba123c6d088a7fc99283a98595ec3ade4096",
+    "before-source.json": "9682b2be9a66e57d60667b8e6c69c97731da03a02ab6bf92e319bd769335b884",
+    "run.mjs": "a3d988cd74e85965aef9bbb153ac1d07278eef59b4c3e752ef323c7dc22dbab1",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "execution-intent.json": "7f8b4d3ffc34a9d5a4571f43ac37d1f207b5d47339de7e84d6995c07686ef7e4",
+    "result.json": "c0918e80da168205b5a033e5bde89a85cac840dccbae7b6dd731f1510f31ec7c",
+    "build.log": "931e7cdc58ea42aa7bea669e7a60ee4e8869bb786a79c4b2dd439b1cbe867575"
+  },
+  "priorReviews": {
+    "compact-d9e-final-review.json": "615ac511dc6bbb6debbf9ce935c09c5f0aa61b4e901ab29fad89b887fbddefd9",
+    "compact-native-ef368-final-review.json": "d0b1680401dbc01f84528d95d0cfdf22682c8ac30c4024db93a229c85036b2dc",
+    "preference-page-091-source-review.json": "bb008a81f6eafd0f1f401657d1a7faf216e915dc0834574286d51887922852ef",
+    "preference-page-c6bbe-actual-acir-runtime-review.json": "2afb94e52cda5a36954fc801c205d48ecdea0fcfa507a125037c27c20930c08b",
+    "preference-page-59d0-source-review.json": "d0a7a92034466bc351e6fe3ccf06e0807fd8c46339b1dee9c26ea914e2895733",
+    "preference-page-59d-runtime-review.json": "98d74d270e0bf68fbaba79cd5b20bd7fae5334fffc4dbe63e2c9c3c998b973a0"
+  }
+}

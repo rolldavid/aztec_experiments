@@ -1,0 +1,9 @@
+{
+  "reason": "Confirmed upstreamChrome153 retaineddownload crash; exact155pureblobreopen regression passes",
+  "originalProfilePreserved": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-rc22-20261014/wallet-acceptance/usdc-recovery/profile-before-cft155-20261014",
+  "activeProfileClone": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-rc22-20261014/wallet-acceptance/usdc-recovery/profile",
+  "extensionPathUnchanged": true,
+  "controlUnchanged": true,
+  "state": "Only export-only may run before newly bound review. Never restore oldprofile after any laterfinancial action.",
+  "soleWriter": "design-20261011 pending lead native startup"
+}

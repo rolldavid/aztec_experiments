@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "task": "G07",
+  "observedAt": "2026-10-15T05:10:16.561003+00:00",
+  "purpose": "Remove verified derived cache contents after independent snapshot restore; retain root inode and untouched metadata/snapshots/journals",
+  "removedFiles": 3239,
+  "allocatedBytesReclaimed": 5865037824,
+  "retainedRootInode": 233489414,
+  "networkSha256Unchanged": "756fbc4d9fcf552496eb46eb8982f21b3e623d987a888bd4427c0a7796b92e16",
+  "openFilesBefore": 0,
+  "originalSnapshotsAndJournalsTouched": false,
+  "priorMeasuredNetReductionBytes": 40172986368,
+  "netReductionAfterThisDeletionBeforeOtherGrowthBytes": 46038024192
+}

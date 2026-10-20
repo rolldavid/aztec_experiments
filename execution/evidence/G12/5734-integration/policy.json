@@ -1,0 +1,44 @@
+{
+  "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+  "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G12-native-deployment-build",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/deploy.html",
+    "apps/dist/plugins.js",
+    "apps/dist/sdk-manifest.json",
+    "apps/src/billboard/deploy/engine.js",
+    "scripts/test-deployment-manifest.mjs",
+    "scripts/test-w03-deploy-engine.mjs",
+    "scripts/test-w03-journal.mjs",
+    "shared/deployment-manifest.mjs",
+    "shared/l2-journal.mjs"
+  ],
+  "required_checks": [
+    "native-mode-reconciliation-and-normal-assets"
+  ],
+  "requirements": [
+    "native-mode-reconciliation-and-normal-assets"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G12-native-deployment-build",
+      "paths": [
+        "apps/dist/aztec_bundle.js",
+        "apps/dist/deploy.html",
+        "apps/dist/plugins.js",
+        "apps/dist/sdk-manifest.json",
+        "apps/src/billboard/deploy/engine.js",
+        "scripts/test-deployment-manifest.mjs",
+        "scripts/test-w03-deploy-engine.mjs",
+        "scripts/test-w03-journal.mjs",
+        "shared/deployment-manifest.mjs",
+        "shared/l2-journal.mjs"
+      ]
+    }
+  ]
+}

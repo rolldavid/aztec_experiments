@@ -1,0 +1,11 @@
+✔ labelled recovery observation accepts only explicit outage503 with complete receiver accounting (1.9555ms)
+✔ recovery observation forwards exact receiver args and Promise without extra calls (1.180459ms)
+✔ recovery observation keeps rejected and synchronous errors and unobserved methods unchanged (0.565416ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 370.557875

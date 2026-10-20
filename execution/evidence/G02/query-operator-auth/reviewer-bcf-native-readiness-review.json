@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "candidate": "bcf01a3b78e6741de096fb2ca4877be93aa617d7",
+  "base": "435750278e742deace48f20d641b3154f664be58",
+  "verdict": "approve-source-component",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "plugins/devnet/network.mjs": "7c4e5cb561f7a3d594d9e753e8fdc239b6743dc4c11586ba2b527a6179f71179",
+    "plugins/devnet/operator-test.mjs": "a92fff06c31920c0baf3cc46b9aec5e3c9e3bcbd2ae25f9e4f1d111731db79b3"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G13/native-startup-readiness/review.json",
+    "sha256": "0b56fc0c767ec5a268a350f5a195ce3da6158c2846b86328d93eeef89666a968"
+  },
+  "assessment": [
+    "Only retained native loadPath selects the monotonic30s deadline; fresh startup selects6s. One original spawned child, exact account identity, <=500ms read timeout and <=100ms pause; spawn errors and exit/signal checked before/after reads. Late matching response is rejected.",
+    "Native file hash/head/settled-tip identity checks after readiness remain unchanged. No unclean snapshot admission, alternate identity, retry spawn, journal reset or application freshness guard change.",
+    "Measured actual retained1.76GB load reached matching RPC8495ms and stopped cleanly. Three controlled production-helper tests check deadlines, wrong identity, late responses and child failures."
+  ],
+  "precisionNote": "Predecessor had60 attempts with100ms waits plus up-to500ms per RPC, not a strict6s elapsed upper bound. New fresh6s deadline makes that bound explicit; retained30s is justified margin over measured8495ms, not a guaranteed future duration.",
+  "evidence": {
+    "elapsedMs": 18958,
+    "sampledPeakKiB": 3430288,
+    "limitSeconds": 60,
+    "limitKiB": 4194304,
+    "cleanup": true
+  },
+  "focused": {
+    "pass": 3,
+    "fail": 0,
+    "elapsedMs": 2599,
+    "sampledPeakKiB": 754880,
+    "cleanup": true,
+    "coverage": [
+      "Actual exported production helper admits8495ms load underretained deadline but failsfresh6000ms",
+      "Wrongidentity neveradmitted; exact30000ms deadline andlate response rejected",
+      "Spawnerroridentity preserved; code/signalexit before/duringRPC rejected"
+    ]
+  },
+  "limitations": [
+    "Original failure87997 retained; new unique private dump is evidence only, not an admitted network checkpoint.",
+    "No source network.json changes, original snapshot bytes unchanged, no L1transaction/node/bootstrap/fullapp run.",
+    "30s is boundedengineering margin overmeasurement, not guaranteed future duration; outerapplication budget unchanged."
+  ]
+}

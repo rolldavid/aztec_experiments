@@ -1,0 +1,52 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "1c320becffff3241d95c03c42f44bf5cbee5375c",
+  "base": "b5a71cd0e3ae46c893e056df5da91965152cc53a",
+  "verdict": "changes_requested",
+  "scope": "Bounded genuine profile campaign source; no actual campaign acceptance",
+  "file_sha256": {
+    "prover/application-policy.mjs": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+    "prover/application-policy.test.mjs": "f18dd45c54003ea34d4944129c586138a7588281da0f1e2b91ecb8117a3558b0",
+    "prover/rolling-artifacts.json": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64",
+    "scripts/testing/rolling-application-fixture.mjs": "d66e5c68e8d7d9c54a9d9e12d90a3ab3d234ebd25b312be47335e4a466d9649b",
+    "scripts/testing/rolling-profile-acceptance.mjs": "419b0d78c7d81b9b9c1ae4d723d57d3af07e1fcca6b5e735afd97b640b46343c",
+    "scripts/testing/rolling-profile-acceptance.test.mjs": "49341304cb2332aeede5a96282afbe1291686dbedcc9c334b8afb300274fd4fe",
+    "scripts/testing/rolling-public-acceptance.mjs": "dc25f9b132cb9b1e6cf0e32e3b22088a2d4bff7d1b21747334480b7187668e36",
+    "scripts/testing/scenario-flows.mjs": "3457fd7c42875c7a4c8b665d771caeb3f8640efc881c1942fdb684b2adaf2cf1",
+    "scripts/testing/scenarios.mjs": "4aa27ebf46bd291d1967e5a73c25fbf18e2d8361e30a74f8952cda988db4eeca"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/testing/rolling-profile-acceptance.test.mjs prover/application-policy.test.mjs",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 546.386084
+    }
+  ],
+  "findings": [
+    {
+      "id": "PROFILE-CAMPAIGN-P2-1",
+      "severity": "P2",
+      "path": "scripts/testing/rolling-application-fixture.mjs",
+      "line": 362,
+      "scenario": "A mined moderator transaction reverts. Success assertion executes before canonical effect retrieval/persistence; report retains receipt/fee but effect bytes are absent and submission remains outcome unknown despite known inclusion.",
+      "repair": "Persist validated included receipt, block/effect identity, effect bytes/hash and included status before mandatory success/privacy/semantic assertions; preserve strict failure."
+    }
+  ],
+  "verified": [
+    "Installed @aztec-labs/aztec.js Contract.at is synchronous, despite stale promise wording; call shape is valid.",
+    "Existing fixture owns wallets, node, miner, HTTP prover and cleanup; new helper adds no owner/retry.",
+    "Maximum avatar is valid exact8192 PNG; bio exact992 UTF8; version progression1/removal/clear2/replacement3 and private metadata assertions are strict.",
+    "Real source-bound decoder refetch and SQLite cold reopen retain ordinary authority checks.",
+    "Prover policy uses normally processed actual artifact selectors and private VKs; human calls require configured private fee and callbacks remain forbidden.",
+    "Scenario keeps540s,768MiB fixture,4GiB parent bounds."
+  ],
+  "limitations": [
+    "Synthetic oracle tests are not real proof/model/moderation acceptance.",
+    "Fixed moderator decision does not qualify image policy moderation.",
+    "Full privacy/specialist audit and genuine network epoch qualification remain open.",
+    "Inner fixture fingerprints include raster-fixture.mjs; outer generic fingerprint does not include it, so acceptance must preserve/check inner record.",
+    "New profile contract requires fresh actual campaign; earlier conversation evidence does not qualify these changes."
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T06:14:45.815858+00:00",
+  "readOnly": true,
+  "mutationCount": 0,
+  "costExplorerCalls": 0,
+  "records": {
+    "message-board-deploy": {
+      "startedAt": "2026-10-13T06:14:38.799011+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": {
+        "account": "052665140763"
+      },
+      "finishedAt": "2026-10-13T06:14:40.119302+00:00"
+    },
+    "message-board-sso": {
+      "startedAt": "2026-10-13T06:14:40.119345+00:00",
+      "profile": "message-board-sso",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": {
+        "account": "052665140763"
+      },
+      "finishedAt": "2026-10-13T06:14:40.842624+00:00"
+    },
+    "instances": {
+      "startedAt": "2026-10-13T06:14:40.842662+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": [],
+      "finishedAt": "2026-10-13T06:14:41.742738+00:00"
+    },
+    "volumes": {
+      "startedAt": "2026-10-13T06:14:41.742791+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": [],
+      "finishedAt": "2026-10-13T06:14:42.623399+00:00"
+    },
+    "fleets": {
+      "startedAt": "2026-10-13T06:14:42.623446+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": [
+        {
+          "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-0f0ed1d1-d909-4944-99af-64226f195617",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-87719d54-e165-4f5b-86e1-ffd26f39228b",
+          "state": "deleted",
+          "terminate": true
+        },
+        {
+          "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+          "state": "deleted",
+          "terminate": true
+        }
+      ],
+      "finishedAt": "2026-10-13T06:14:43.449200+00:00"
+    },
+    "zero-ingress-group": {
+      "startedAt": "2026-10-13T06:14:43.449254+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": [
+        {
+          "id": "sg-076e39ea1d8dbf8d0",
+          "vpc": "vpc-4585113d",
+          "ingress": 0,
+          "egress": 1
+        }
+      ],
+      "finishedAt": "2026-10-13T06:14:44.430977+00:00"
+    },
+    "ami": {
+      "startedAt": "2026-10-13T06:14:44.431045+00:00",
+      "profile": "message-board-deploy",
+      "region": "us-east-1",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": [
+        {
+          "id": "ami-0fa5967347d08d2df",
+          "owner": "099720109477",
+          "architecture": "x86_64",
+          "state": "available",
+          "rootDevice": "/dev/sda1"
+        }
+      ],
+      "finishedAt": "2026-10-13T06:14:45.246070+00:00"
+    },
+    "binary": {
+      "startedAt": "2026-10-13T06:14:45.246132+00:00",
+      "profile": "message-board-deploy",
+      "region": "eu-west-2",
+      "attempts": 1,
+      "available": true,
+      "exitCode": 0,
+      "observation": {
+        "version": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+        "bytes": 44698432,
+        "checksum": "+ksSra79VoS1O4AjRrn+g5qz1qSoKaXqTv1r0gDggp8=",
+        "encryption": "AES256"
+      },
+      "finishedAt": "2026-10-13T06:14:45.782898+00:00"
+    },
+    "plugin": {
+      "available": true,
+      "status": "degraded",
+      "active": 0,
+      "lastFailurePresent": true,
+      "readinessClaim": false
+    }
+  }
+}

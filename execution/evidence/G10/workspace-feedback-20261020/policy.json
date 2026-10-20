@@ -1,0 +1,35 @@
+{
+  "base": "01bdcbf08d83a6d4acfa759f71349c82a86d132f",
+  "candidate": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+  "task_id": "G10-bok-workspace-feedback",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "plugins/github-tools.mjs",
+    "plugins/isolated-execution.mjs",
+    "plugins/main.mjs",
+    "plugins/test/isolated-execution.test.mjs",
+    "plugins/test/thread-repositories.test.mjs"
+  ],
+  "required_checks": [
+    "focused-workspace-feedback"
+  ],
+  "requirements": [
+    "RC29-current-workspace-visibility",
+    "RC29-actionable-workspace-validation"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G10-bok-workspace-feedback",
+      "paths": [
+        "plugins/github-tools.mjs",
+        "plugins/isolated-execution.mjs",
+        "plugins/main.mjs",
+        "plugins/test/isolated-execution.test.mjs",
+        "plugins/test/thread-repositories.test.mjs"
+      ]
+    }
+  ]
+}

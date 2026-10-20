@@ -1,0 +1,31 @@
+{
+  "revision": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+  "source": "git archive of integration revision; fresh node_modules",
+  "steps": [
+    {
+      "command": [
+        "npm",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "exit_code": 0,
+      "seconds": 22.44
+    },
+    {
+      "command": [
+        "npm",
+        "ci",
+        "--prefix",
+        "billboard/portal",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "exit_code": 0,
+      "seconds": 0.72
+    }
+  ],
+  "cleaned": true
+}

@@ -1,0 +1,11 @@
+{
+  "owner": "lead-20261011",
+  "task": "G14",
+  "paths": [
+    "prover/application-policy.mjs",
+    "prover/application-policy.test.mjs",
+    "prover/rolling-artifacts.json",
+    "prover/ROLLING.md"
+  ],
+  "acceptance": "Pin normalnewreplyartifacts; allowonly configuredPrivateBok publicpublish_reply plusprivatefee. Rejectdirectboardcallback/foreignadapter/missingfee. Contractauthremainsmandatory."
+}

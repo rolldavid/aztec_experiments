@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "90a1b3e9783c9984fcd6810969fa213225b64c6c",
+  "scope": "Four lead profile integration paths only; prior worker reviews remain separately source-bound",
+  "verdict": "approved_source_before_normal_build_acceptance",
+  "files": {
+    "billboard/rolling_contract/test.mjs": "b9004545a02ec8aa7a6c56f61d162d83282f6a6d5ac0e2c3b35f2c5df04aa251",
+    "scripts/c01-board-flow.mjs": "ed5d3eabb1476d52d6eb505ec8feef7fc015d8daa8ad5e0f37ec6c0940c78c5b",
+    "scripts/rolling-wallet-assets.mjs": "ce04ddfeb8c778679c6828b3ae21626fb5e7acf7079b3f5ffcbd8f418627be0c",
+    "scripts/testing/rolling-application-fixture.mjs": "b6fef242a14c3697acf7d5e061d55bcafb8dd864c752f60057e012faba7d8a54"
+  },
+  "findings": [],
+  "observations": [
+    "Three entrypoints add profiles.nr to required embedded-source equality; stale/missing profile source rejects before test/run/browser asset qualification",
+    "Actual application fixture retains prior IDs/thread/bio-default assertions and adds full default profile equality plus readable own-name metadata assertion after canonical PXE sync",
+    "No new lifecycle owner, retries, missing-check fallback, deadline change or weakened behavior",
+    "Read35pass0failed0skipped combined cheap-check log; did not duplicate during serialized build"
+  ],
+  "evidence": {
+    "execution/evidence/G05/profile-composition-cheap-tests.log": "7b89f496f578529c0a0d2686784500dbb042b1034c811c2924e2e6a55a9d2da4"
+  },
+  "limits": [
+    "Normal new artifact build, VK processing, dependency/selector pin updates and all affected tests/runtime remain pending",
+    "Current approval is not a complete combined artifact or product verdict"
+  ]
+}

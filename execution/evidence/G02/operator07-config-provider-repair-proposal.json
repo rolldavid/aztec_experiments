@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-12T07:19:33.676483+00:00",
+  "scope": "read-only source/official-documentation proposal; no provider call or source edits",
+  "sourceCandidate": "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+  "facts": {
+    "measuredFailure": "actual Mac Tenderly full contracts-config HTTP429, collect-addresses passed; live-1 receipt retained",
+    "remote07": "l1-config began but did not complete; numeric remote error unavailable",
+    "noStockConfigurationOption": "Pinned start_node.js unconditionally passes nodeConfig.l1RpcUrls to getL1Config. No separate configuration-only RPC env mapping found."
+  },
+  "recommendedMinimalChange": {
+    "description": "Explicit fixed PublicNode only for the CLI full getL1Config call; retain Tenderly nodeConfig.l1RpcUrls and PublicNode l1DebugRpcUrls for the existing archive/runtime clients. No provider fallback list, failure-driven switching, request rotation, or SDK disk changes.",
+    "implementationBoundary": "Hash-gated single-call source transformation within existing reviewed loader is the smallest deployment edit. This is a semantic runtime adapter using the official function parameter, NOT a stockSDK environment option and no longer merely stage instrumentation. Documentation/attestation must say so.",
+    "originalExactCall": "getL1Config(nodeConfig.registryAddress, nodeConfig.l1RpcUrls, nodeConfig.l1ChainId, nodeConfig.rollupVersion)",
+    "replacementExactCall": "getL1Config(nodeConfig.registryAddress, ['https://ethereum-sepolia-rpc.publicnode.com'], nodeConfig.l1ChainId, nodeConfig.rollupVersion)",
+    "sourceHash": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+    "guard": "Expected wholemodule SHA + exactlyone original call before any mutation; mismatch fails beforeexecution. Preserve arguments otherthanexplicitprovider, returnedconfig, await/error/retry/cleanup semantics and all genesis comparisons. No fallback.",
+    "deploymentPaths": [
+      "deploy/prover/startup-stages.mjs",
+      "deploy/prover/startup-stages.test.mjs",
+      "deploy/prover/bootstrap.py",
+      "scripts/test-prover-bootstrap.py",
+      "deploy/prover/BOOTSTRAP.md"
+    ],
+    "pins": "Update STARTUP_HELPER_SHA to reviewed bytes; existing package closure already includes helper and bootstrap. Fresh package/manifest/archive/payload mandatory; userdata16384 and shutdown gates unchanged."
+  },
+  "whyNotGlobalSwap": [
+    {
+      "path": "node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js",
+      "line": 66,
+      "binding": "full configuration selection; returnedaddresses/config merge but no l1RpcUrls replacement"
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/factory.js",
+      "line": 98,
+      "binding": "new runtime client from config.l1RpcUrls; subsequent5parallelconstants"
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/factory.js",
+      "line": 55,
+      "binding": "ordinary/history uses l1RpcUrls, trace uses l1DebugRpcUrls; globalPublicNode restores measuredhistorical4444 prerequisitefailure"
+    },
+    {
+      "path": "node_modules/@aztec-labs/epoch-cache/dest/epoch_cache.js",
+      "line": 56,
+      "binding": "fresh ordinaryclient and9parallelconstants; readiness/steadycapacity stillunproven"
+    }
+  ],
+  "pacingAlternative": {
+    "supportedSeam": "getL1ContractsConfig accepts a callerprovidedclient and makeL1HttpTransport returns an officialtransport. No built-in pinnedSDK per-provider concurrency configuration found.",
+    "cost": "A reviewed global request scheduler shared across all clientinstances is needed to bound actualwireconcurrency; serializing a few handpicked fields would not preserve complete requirements. This is broader than onecallrouting and may miss readiness whilebackfilling.",
+    "recommendation": "Do not implement pacing or infer rate thresholds from one429. Prefer fixed role selection experiment first; no quota bypass/fallback."
+  },
+  "nextPreflight": {
+    "paths": [
+      "deploy/prover/l1-config-diagnostic.mjs",
+      "deploy/prover/l1-config-diagnostic.test.mjs"
+    ],
+    "explicitNewMode": "publicnode-config-tenderly-history",
+    "singleBoundedProcedure": [
+      "sourcepins and bothchainidentities11155111",
+      "PublicNode finalizedanchor + sameblock/hash onTenderly",
+      "Actual official collectAddresses and getL1ContractsConfig onPublicNode; retainallfields/operations/defaultretry semantics",
+      "Bind expectedregistry/rollup/version/genesisroot, deploymentstartblock fromactualconfig",
+      "Tenderly exactdeploymentblock getOwnershipTransferredEventsAtDeploy with requirednonempty canonicaladdress/topic/hash",
+      "Recheck commonfinalizedanchor via bothproviders; source/phase/numericerrorreceipt; no automaticretry"
+    ],
+    "gates": "Use actual SDK calls, not substitutes. Full configuration mustcomplete with history in SAME preflight; defaults/retries disclosed,59s child/60souter retained. PublicNode earlier334 success and Tenderly historical success are supportingbackground only.",
+    "tests": [
+      "strictnamedmode/noarbitraryURL/nofallback",
+      "actualfullconfiguration receivesPublicNodeclient whilehistoryreceivesTenderlyclient",
+      "providerchain/hashmismatch fails",
+      "empty/wronglog/failedfullconfig fail",
+      "numeric429 and4444 remain failures",
+      "exactSDKsemantic/rawerror/cleanup tests retained"
+    ]
+  },
+  "requiredLaterQualification": [
+    "Reviewed fresh exactLinux runtime/payload and corrected immutable sourcepins",
+    "Measured native fullnode startup through allstages, not onlyconfiguration",
+    "Strict archive history/debug trace/blob/realproofpolicy and actual node readiness",
+    "Sustained ordinary RPC throughput remains a separate risk: factory/epochcache/archiver stillburst Tenderly and live429 may recur later",
+    "No cloudlaunch or providerpurchase authorized by thisproposal"
+  ],
+  "officialSources": [
+    {
+      "url": "https://tenderly.co/blog/changelog/insights-into-tenderly-unit-usage/",
+      "finding": "Official account-plan documentation describes hardlimits forFree/Starter; it doesnotestablish an anonymousSepolia numerical allowance."
+    },
+    {
+      "url": "https://tenderly.co/pricing",
+      "finding": "Current official Node product mentionsauth/rate-limiting/requestanalytics; no supported numeric anonymousSepolia burstlimit found."
+    },
+    {
+      "url": "https://www.publicnode.com/",
+      "finding": "Official service lists Sepolia RPC and separatearchiveaccess. This alone doesnotprove the exactdeploymenthistoricalrange; measured4444 remains authoritative forpriorendpoint/query."
+    }
+  ],
+  "noNewPaidActions": true,
+  "nodeStartupQualified": false
+}

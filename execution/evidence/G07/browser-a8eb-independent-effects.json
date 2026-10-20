@@ -1,0 +1,49 @@
+{
+  "revision": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "rows": [
+    {
+      "action": "preference-root",
+      "sha256": "26b103fb9b2c2d0c1c76e4224daf371ecd307576eeb792ede871512a8e3a1c85",
+      "bytes": 4995,
+      "fee": "20905124400000",
+      "block": 15,
+      "events": [
+        "PostPublished"
+      ],
+      "publicWrites": 14,
+      "publicLogs": 2,
+      "privateLogs": 4
+    },
+    {
+      "action": "preference-1",
+      "sha256": "3bcaac6cdc6b3b6217500f4e56299885aa4da33d1b7efc6695066e63d95539af",
+      "bytes": 2655,
+      "fee": "8511002400000",
+      "block": 16,
+      "events": [],
+      "publicWrites": 1,
+      "publicLogs": 1,
+      "privateLogs": 4
+    },
+    {
+      "action": "preference-2",
+      "sha256": "4310813d6221f7041d3dd4637f33d0ab2f5241dc87177101cbd584242ad634dc",
+      "bytes": 2655,
+      "fee": "8511002400000",
+      "block": 17,
+      "events": [],
+      "publicWrites": 1,
+      "publicLogs": 1,
+      "privateLogs": 4
+    }
+  ],
+  "totals": {
+    "threeActions": "37927129200000",
+    "claim": "8418947400000",
+    "human": "46346076600000",
+    "standalone": "11706426000000",
+    "protocol": "58052502600000",
+    "funded": "1000000000000000000000",
+    "privateBalance": "999999941947497400000"
+  }
+}

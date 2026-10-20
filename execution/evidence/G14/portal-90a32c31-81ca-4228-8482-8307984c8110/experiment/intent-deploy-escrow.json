@@ -1,0 +1,7 @@
+{
+  "label": "deploy-escrow",
+  "sourceRevision": "4806509ec42d5350c18d6fe59cce9a64e8418ebb",
+  "proofMode": "proofs-disabled",
+  "txHash": "0x22ff7f2f14ee8d0edaf57bb02b59a7cd75633fe5a5c4cb6b98e45325a07a3d80",
+  "artifactSha256": "f8bea66c1673579ad66943d899f15d391e3deb88ceeba82ed44ff7fb7eb907ee"
+}

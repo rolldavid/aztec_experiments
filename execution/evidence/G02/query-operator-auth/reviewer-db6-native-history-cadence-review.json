@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "candidate": "db6cc35aed6931b4a6d432c0ea2a28e647c24cc3",
+  "base": "8d93452",
+  "workerCommits": [
+    "5132bf15e6c456dba0252ef680be18d3f19a5601",
+    "fd1e8ce4bc2004b4cf53fd65758048c8910f01ad"
+  ],
+  "verdict": "approve scoped source/component integration; actual historical reconstruction remains unqualified",
+  "blockingFindings": [],
+  "reviewMethod": "Read exact two-file root diff and installed SDK factory, synchronizer finalization/snapshot and configuration; verified worker/root changed-line sequences identical and installed SDK hashes identical. No runtime or service mutation.",
+  "sourceHashes": {
+    "plugins/devnet/network.mjs": "98be8aa14fe1b3d0ed51d9dd387b701eb491b51be68193570c3c73d8c0643def",
+    "plugins/devnet/operator-test.mjs": "4744042d05b3fc2214904108b4157e893dd2cd8c9880d3c8a23b8ceff952ce86"
+  },
+  "findings": [
+    "Persistent mode sets worldStateCheckpointHistory=0 and a distinct campaign/world-state-archive. Installed factory selects that directory, and installed finalization returns before pruning for history<1. Original node data directory, L1 snapshot, and signed journals are untouched. This reconstructs a separate canonical state store; it does not restore pruned snapshots in the original store.",
+    "One-second latest-L1 reads trigger the same native queued warp only at measured lag>=30s or explicit useWallClock refresh. Existing conservative nonfuture target, pending-build queue, and less-than-five-second readiness guard remain.",
+    "clockTick now owns both the sample and warp. Settlement sets settling before awaiting clockTick, and the sample rechecks settling/stop before warp. Shutdown stops and drains the mining task before settlement and native snapshot qualification. Existing e60 file/head/hash/clean-stop boundaries remain unchanged.",
+    "Tests use actual installed queue/rounding/finalization with controlled L1/database ports, not actual historical reconstruction. The original operator receipt/effect/instance/storage and block recheck remain exact; no current-anchor fallback or financial replay was introduced."
+  ],
+  "evidence": {
+    "cadencePacketSha256": "4900b4a13ba212405a269ace5cf10bada1bf4fc1ee7b7e38b9c89fa3ed7d4819",
+    "historyPacketSha256": "569b442d4709a6658e3094e5c9240da0d6478727f277576d87136abb888501a1",
+    "cadenceTests": {
+      "pass": 3,
+      "fail": 0,
+      "durationMs": 3510.171459,
+      "logSha256": "0cebd0ccaca3338c09bb6cbe7cc9266b0c18f59d0ba4ab73032102ff9a426212"
+    },
+    "combinedTests": {
+      "pass": 5,
+      "fail": 0,
+      "durationMs": 2394.477667,
+      "logSha256": "62b3963b39158fe7716fa1dd56f0417b2ddc34b26c4863fb1cc8bbae6d4f02f6"
+    },
+    "hashesIndependentlyVerified": true
+  },
+  "constraints": [
+    "Actual same-campaign reconstruction must verify original constructor storage at block 7 and the original canonical hash through existing reconciliation; receipt/effect/instance success alone is insufficient.",
+    "History=0 retains all native state and therefore needs measured disk/process/startup qualification. No bounded storage or full archive capacity claim follows from the cadence simulation.",
+    "Real idle freshness, explicit readiness refresh and clean snapshot lifecycle remain actual runtime qualification, not inferred from simulated 180-second clock.",
+    "47341 and 99939 remain failed diagnostic probes. Their fixture errors and failed cleanup do not authorize admission of an unqualified dump. Qualify the latest preserved dump independently before normal recovery.",
+    "No reset, deletion of original state, new campaign, replay, latest-block substitution, production proof change, or full-product acceptance is approved by this review."
+  ]
+}

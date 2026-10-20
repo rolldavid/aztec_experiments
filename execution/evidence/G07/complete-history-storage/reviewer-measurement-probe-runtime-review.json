@@ -1,0 +1,12 @@
+{
+  "reviewer": "reviewer-20261011",
+  "packetSha256": "094699bf2487b72594469b418d89bfc070b2afbc99d1efc39cfd3708b6b9fafe",
+  "verdict": "PASS narrowly scoped built-in diagnostic; volume remains failed",
+  "observations": [
+    "Missing controller ESM preload receipt reproduced; controller56878 versus worker56879.",
+    "Plain exit71/72/73 receipts match actual statuses.",
+    "Worker termination returned1 but main exit71 receipt remained71: proposed generic collision mechanism not reproduced."
+  ],
+  "nextBoundary": "Source-bound single original before-begin crash child with same SQLite/event imports and exact historical preload, retaining its bounded stderr; a separate observation-only preloader may record main-thread/thread ID and uncaughtExceptionMonitor without intercepting error, process.exit or return values. No full volume retry or assumption that CJS/main-thread gate alone fixes historiccode1.",
+  "cleanup": "Actual340ms; no aggregate samples, no zero-memory claim. All bound actual files rehashed; reported positive cleanup/pins/link verified from result."
+}

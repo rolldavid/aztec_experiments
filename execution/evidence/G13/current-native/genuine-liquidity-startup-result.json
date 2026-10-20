@@ -1,0 +1,12 @@
+{
+  "source": "2d4844d",
+  "phase": "resume",
+  "passed": false,
+  "failure": {
+    "stage": "resume",
+    "name": "Error",
+    "code": null
+  },
+  "cleanStop": true,
+  "originalNetworkIdentityPreserved": true
+}

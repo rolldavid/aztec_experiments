@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-ddf00d729a91",
+  "purpose": "Preparation only; payload and data-only operator binding review. No launch authority.",
+  "sourceCommit": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "deadlines": {
+    "createdAt": "2026-10-13T06:41:46Z",
+    "latestLaunch": "2026-10-13T06:51:46Z",
+    "commissioningStop": "2026-10-13T07:11:46Z",
+    "budgetStop": "2026-10-13T07:26:46Z"
+  },
+  "evidence": {
+    "pristine-cleanup.py": "03971928c2a2b2ae212db3420ebbc07e84b81ea79a357ea6c2b5d77c0d4a67a1",
+    "grant-literal.diff": "bf708f2f4b2477a25f20544ea68a9d73d9edefef2e6b509a442b17b53f6b8c5b",
+    "bind-preparation.py.diff": "6d34c57b64fa663d55967dc6e9f1d58add543ea15396b11282e1071487a18435",
+    "revalidation-intent.json": "612ef985ec38fc6fa7cf161c6a576869982ec137081395163709e1747746714a",
+    "capabilities-result.json": "0499c8f5c9dca45db26a733a416e8f28f37f4d52efde2de3e670123fa3b4c48b",
+    "pristine-observe.py": "c5463821eddc84eade784b75722dd8098ad3a28cafddf63fe288ddbdbbb4826c",
+    "pristine-core.py": "fb9bdfd0edd7636f0632fa6e0a88cdb2d3f167e6293e2225c1ecce62e8b296a0",
+    "revalidation.json": "8dae3f8d12206a4346a819eeafcc8f78d398c2aff21d3d20e606d860ac875a39",
+    "literal-bindings.diff": "0755b7e96029174a3b77e7f551bdc99c8724f84119cd5a951d3a6d80011bf22d",
+    "pristine-test.py": "6895a059c0e122f49992e65caeab16fae3797361975b0b38105cd746578fdb33",
+    "actual-payload.json": "c56e57841b731472c788a9c5b1401818800a448686ceee4a1b3bd93fae2c79d0",
+    "pristine-launch.py": "9d93d2c99c446cdba5cbe46ac54f0d32456e9f1d7b4286d1d0aa800c67bdbb9a",
+    "capabilities.mjs.diff": "fc16417a6e206c0456bca11007327f40762881c3bbc7a2d0d403e28f3f3e094f"
+  },
+  "operators": {
+    "core": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-core.py",
+      "sha256": "26be0976bf91c091fae21537e6f121d3cac9cf2f8138653efed3dd753a6d997e"
+    },
+    "launch": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-launch.py",
+      "sha256": "e7b713e3f0003f9fcf7313a860a1b6c3f98417cde8d2b503adf686f84fab1468"
+    },
+    "observe": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-observe.py",
+      "sha256": "007a93d73ed2581dc141889bb8af09d0afa0eab8acc13b4813fabe86ba8c0650"
+    },
+    "cleanup": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-cleanup.py",
+      "sha256": "e465066e3e0dd1a9445101ec6069ff51ecd7b9c6b9800f21616eea89994bedde"
+    },
+    "test": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-ddf00d729a91-test.py",
+      "sha256": "6895a059c0e122f49992e65caeab16fae3797361975b0b38105cd746578fdb33"
+    }
+  },
+  "privateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-ddf00d729a91",
+  "authorityUnset": [
+    "launchGrantSha256",
+    "payloadReviewSha256"
+  ]
+}

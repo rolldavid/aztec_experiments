@@ -1,0 +1,38 @@
+[19:15:31.687] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {}
+[19:15:31.697] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:63986/v1/node: Error: Error 503 from server http://127.0.0.1:63986/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:65:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[19:15:32.709] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:63986/v1/node: Error: Error 503 from server http://127.0.0.1:63986/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:65:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[19:15:34.721] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:63986/v1/node: Error: Error 503 from server http://127.0.0.1:63986/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:65:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+✔ development operator SDK: CLI auth reaches real inspector and stale state blocks reads (6158.026625ms)
+✔ normal deployment CLI test seam rejects changed source and missing or duplicate terminal entry (1.812667ms)
+[19:15:37.731] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {}
+✔ normal deployment CLI loads its built SDK and opens and closes its actual store (980.942792ms)
+✔ normal deployment CLI bundle exposes its actual synthetic address constructor (714.893583ms)
+✔ normal deployment CLI initializes and destroys exact embedded sync WASM without network (1027.184166ms)
+✔ normal bundled CLI node authenticates and rejects credential and readiness failures (10551.720834ms)
+✔ normal bundled CLI read-only PXE uses its actual authenticated cached node and store (1589.234542ms)
+✔ normal bundled CLI admitted request drains before service and child closure (6782.273708ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29813.93275

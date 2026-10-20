@@ -1,0 +1,174 @@
+✖ positive pre-proof preserves marker context at renewal (70.898584ms)
+✖ positive pre-proof preserves marker context at fee-estimate (5.069458ms)
+✖ positive pre-proof preserves marker context at submission (10.118375ms)
+✖ positive pre-proof preserves marker context at journal (9.677958ms)
+✖ positive pre-proof preserves marker context at broadcast (9.355584ms)
+✖ positive pre-proof preserves head context at renewal (4.171792ms)
+✖ positive pre-proof preserves head context at fee-estimate (6.818958ms)
+✖ positive pre-proof preserves head context at submission (8.665125ms)
+✖ positive pre-proof preserves head context at journal (8.675167ms)
+✖ positive pre-proof preserves head context at broadcast (8.769792ms)
+✖ positive pre-proof renewed Bok authorization advances to a distinct post attempt (36.942041ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 0
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1154.634334
+
+✖ failing tests:
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves marker context at renewal (70.898584ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1644:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves marker context at fee-estimate (5.069458ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1644:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves marker context at submission (10.118375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves marker context at journal (9.677958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves marker context at broadcast (9.355584ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves head context at renewal (4.171792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1644:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves head context at fee-estimate (6.818958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1644:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves head context at submission (8.665125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves head context at journal (8.675167ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1637:124
+✖ positive pre-proof preserves head context at broadcast (8.769792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1648:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ROLLING_RECOVERY_CONTEXT_CHANGED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at shared/rolling/application.test.mjs:1654:1
+✖ positive pre-proof renewed Bok authorization advances to a distinct post attempt (36.942041ms)
+  Error: ROLLING_RECOVERY_REQUIRED
+      at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.mjs:6:32)
+      at check (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.mjs:7:63)
+      at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.mjs:890:9
+      at async exclusive (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.mjs:194:81)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/shared/rolling/application.test.mjs:1665:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ROLLING_RECOVERY_REQUIRED'
+  }

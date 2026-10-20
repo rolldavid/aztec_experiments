@@ -1,0 +1,38 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "session": 42978,
+  "eligibilityReviewSha256": "e950cc75f1f80f5088cac2a71de70c479eead439f610d37ac7c465a3af6e4b17",
+  "outcome": {
+    "passed": false,
+    "elapsedMs": 43263,
+    "exitCode": 1,
+    "hostConfinementPassed": true,
+    "containerStarted": true,
+    "preflightReceiptObtained": false,
+    "beforeCleanupState": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": true,
+      "Status": "running"
+    },
+    "containerAbsent": true,
+    "sourceUnchanged": true,
+    "nativeQualified": false
+  },
+  "files": {
+    "intent.json": "b6e3f3c929507c8a287b47f769ee8a60d1dbc25b23025f945c57f2512c130d04",
+    "result.json": "8d38c19d3e33bd1d468e57de62fe3df09e15194760c96471ff7d908d4bcfea24",
+    "host-inspect-projection.json": "1d9c4b069b03c0d1d38acfee08606d2a4f93ae7301b81fa33704e11550144618",
+    "create-intent.json": "61d53921d7ae685763bb5b5a189a5faeaef30535e2a6e7817cf6989c528c153a",
+    "start-intent.json": "d6e87da109d423444c43b947b79946855f146dc25bbbedd2c8f74d2447f1b021",
+    "before-cleanup.json": "6f3ed3929fd475a4c0504d5c146d1742b3b853fafbfb47deaa06f0e7ee0b2e7b"
+  },
+  "interpretation": "Host representation fix passed. Fixed Docker cp from /run/preflight.json returned1 repeatedly; guest remained running/OOMfalse until ownedcleanup. No preflight or regression record was recovered, so guest confinement/systemd outcome remains unknown.",
+  "sourceBackedTransportDefect": {
+    "primarySource": "https://docs.docker.com/reference/cli/docker/container/cp/#corner-cases",
+    "finding": "Official Docker documentation lists tmpfs files among paths docker cp cannot copy and documents reading through docker exec instead. Current receipts live in /run tmpfs.",
+    "limit": "Actual error text was intentionally not retained; cannot determine whether the historical file existed or infer guest preflight success."
+  },
+  "nextProposal": "Repair only receipt transport with fixed bounded read of allowlisted public paths. Account for race: an exec reader launched before PID1 verifies cgroup.procs==[1] could invalidate confinement; require a source-bound readiness mechanism before any extra guest process. Keep capture/classifier/bounds and failclosed cleanup unchanged; no blind retry."
+}

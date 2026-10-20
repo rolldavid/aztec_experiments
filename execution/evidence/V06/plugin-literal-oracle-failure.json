@@ -1,0 +1,10 @@
+{
+  "passed": false,
+  "command": "node .build/v6/verify-plugin-reply.mjs",
+  "expected": "V6 testnet plugin works.",
+  "actual": " V6 testnet plugin works",
+  "error": "ERR_ASSERTION strictEqual reply text",
+  "paidCallRepeated": false,
+  "diagnosis": "Independent contract getter and event decoder agree. Raw provider response not retained; provider wording variation is inferred from unchanged installed source path.",
+  "observedAtApproximately": "2026-10-10T14:54:00Z"
+}

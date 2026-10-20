@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-11T19:08:51.137025+00:00",
+  "candidate": "3c802500ba787c49baa79f205e1aee6f34e2175d",
+  "runtimeSource": "5e68c221625afa494134bbea11ad28fe2243e25e",
+  "base": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+  "verdict": "approved-bounded-development-integration",
+  "blockingFindings": [],
+  "scope": "Previously reviewed17path protocol/provider/policy/bootstrap/reply foundation plus2administrative records. Not full task or product/release acceptance.",
+  "sourceReview": "execution/evidence/G14/combined-5e68-source-review.json",
+  "sourceEquivalentDelta": [
+    "execution/infrastructure-ledger.json",
+    "execution/sessions/registry.json"
+  ],
+  "runtimeReviews": {
+    "execution/evidence/G06/reply-e58-runtime-review.json": "deb333d192d9a23340dbf27263a4f6dc9c4f60674a48503bac201ca5b772923b",
+    "execution/evidence/G14/provider-28b68-runtime-review.json": "80058133ba0b3aa941c087afd56cbf80a90d06ae272b08287643742fb8cd363c"
+  },
+  "checks": {
+    "exactSourceTransfers": "17paths independently compared and reviewed at5e68; unchanged at3c802",
+    "normalBuilds": "canonical full rebuild and Rolling reprocess source/artifact hashes unchanged",
+    "TXEUniquePassedCases": {
+      "execution/evidence/G06/bok-reply-txe-1.log": 106,
+      "execution/evidence/G14/bok-reply-txe-1.log": 69
+    },
+    "pureChecks": "Prior source-bound7policy,24reply,15provider and26bootstrap checks remain applicable; no source changes requiring repetition",
+    "genuineReply": "e58 passed524494ms, cleanup true",
+    "actualProvider": "28b68 passed222215ms, cleanup true, one initial call and zero replacement calls",
+    "administrativeChange": "ledger and registry only; repairs earlier stale resource/ownership claims"
+  },
+  "notIncluded": [
+    "Worker public projection8edab and applicationed1b remain unintegrated and changes-requested; their findings do not apply to this candidate."
+  ],
+  "requiredGateScope": "Gate must name bounded runtime/source requirements only and retain full G05/G06/G14 and release holds. Approval is invalid if used as full product/privacy/compiler qualification.",
+  "remainingGates": [
+    "524494ms passed unchanged540000ms bound with only15506ms headroom; one successful run is not reliability/latency qualification.",
+    "Local31337 controlled settlement and test funding; no network epoch proof/testnet or production release acceptance.",
+    "Synthetic provider charge in this run. Distinct real provider campaign28b68 is separately reviewed, not a single real-provider-to-authenticated-reply end-to-end claim.",
+    "Public exact-field smoke does not prove anonymity; trusted-node/browser/privacy specialist and side-channel acceptance remain open.",
+    "New normal-build manual-constraint diagnostics75Rolling/44PrivateBok remain external assurance obligations.",
+    "All mandatory G05/G06/G14 requirements, browser product, profile/preferences and other release gates remain retained."
+  ]
+}

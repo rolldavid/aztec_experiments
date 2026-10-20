@@ -1,0 +1,27 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "executionAuthorized": false,
+  "helperRepairPacketSha256": "5cd1f5cbdaaf37d84eb3293c78062574e77820c7da93c0d2f31318fa6cb9291a",
+  "testCount": 17,
+  "protectedCount": 793,
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 524288
+  },
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-v2-tests/run.mjs"
+  ],
+  "pins": {
+    "run.mjs": "71ae0b76f1976812edf2fca307e0a7cc80629b5389c82515ed400a7a068d98d8",
+    "suite.py": "cb3b324499b18f69ab58a9637c0556b1af2e16be2399918e300742b5e4b71ce4",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "preparation.json": "b227a89e8b3de623ab416493c314f0b04d710b20cf73ed7809102d60a59291fe",
+    "before-source.json": "4aa99afb576f78fc861d9f8e1f4a2a76d063f9e60cb312f1baa552fd4ab6d06b",
+    "test-inventory.json": "a231b485f138f6f0536cb6b6ce844dcc63f6908403b97f875ad63381581d504d"
+  },
+  "delta": "Same approved cleanup-tests supervisor,9\u219217 fixed collector, freshownedTMPDIR/sourcepins; no resource/lifecycle widening.",
+  "pending": "Exact helper source review and explicit lead slot grant; Design285 currently owns slot."
+}

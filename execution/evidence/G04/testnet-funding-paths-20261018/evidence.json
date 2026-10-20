@@ -1,0 +1,69 @@
+{
+  "base": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+  "candidate": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+  "task_id": "G04-testnet-funding-paths",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+      "candidate": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "task_id": "G04-testnet-funding-paths",
+      "id": "focused-funding-boundaries",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp node-v24.21.0 --test --test-name-pattern='testnet router|router reconciliation|MetaMask aggregate|MetaMask retained readiness|existing browser owner|paid recovery forwards|retained withdrawal connection' plugins/test/operations.test.mjs scripts/test-t04-browser-journey.mjs",
+      "environment": "Node24.21.0 currentcandidate; no transactions/proofs",
+      "observed": "Independent12passed in508ms; coherent repair checked; live testnet acceptance remains",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/testnet-funding-paths-20261018/review.json",
+          "sha256": "5c120c275db7d96cc302d7c7b06584a61800e282a4a2440973ab76ab6625c409"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+    "candidate": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+    "task_id": "G04-testnet-funding-paths",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/testnet-funding-paths-20261018/review.json",
+        "sha256": "5c120c275db7d96cc302d7c7b06584a61800e282a4a2440973ab76ab6625c409"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+      "candidate": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "task_id": "G04-testnet-funding-paths",
+      "id": "RC18-RC22-testnet-operator-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/testnet-funding-paths-20261018/review.json",
+          "sha256": "5c120c275db7d96cc302d7c7b06584a61800e282a4a2440973ab76ab6625c409"
+        }
+      ]
+    },
+    {
+      "base": "9def66e9f720d167062f560fd0e8fbe288f85da7",
+      "candidate": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "task_id": "G04-testnet-funding-paths",
+      "id": "D3-interruption-driver-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/testnet-funding-paths-20261018/review.json",
+          "sha256": "5c120c275db7d96cc302d7c7b06584a61800e282a4a2440973ab76ab6625c409"
+        }
+      ]
+    }
+  ]
+}

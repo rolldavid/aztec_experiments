@@ -1,0 +1,18 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "SOURCE_DELTA_AND_TARGETED_REGRESSION_ACCEPTED",
+  "candidate": "df3f442d1912e238e5b8d963890ff3a8acd83b6a",
+  "packetSha256": "a6644f8f6a26621081d45e4185e0a43c8bdde7700cf6a5c7057f2ca1021f2d88",
+  "sourceDelta": "One test extractor line only versus approved f2d. Extracts actual old/new diagnostic expression and evaluates identical named scenarios; no production behavior changes.",
+  "actual": "Known-bad70e3 actual selector returned false where true required, one selected test failed. Repaired selector passed the same test. Exact logs and all four source inputs independently hashed; known-bad temporary directory absent.",
+  "timing": {
+    "knownBadTapMs": 60.197709,
+    "repairTapMs": 42.762416,
+    "ownerElapsedMs": [
+      240,
+      73
+    ]
+  },
+  "scope": "One explicitly selected test; 27 excluded by name filtering. This is not full28 acceptance, SDK/native execution, inclusion or marker qualification.",
+  "remaining": "Exact coherent composition, all28 suite, normal closure and separate bounded runtime review still required before clock rerun."
+}

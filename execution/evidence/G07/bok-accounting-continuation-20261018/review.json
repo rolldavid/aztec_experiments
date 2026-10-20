@@ -1,0 +1,44 @@
+{
+  "revision": "582b2cdb95ddfa21cbd32c9c6ac965ea5782bdc1",
+  "baseRevision": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": "G07-bok-accounting-continuation RC04/RC22/RC33",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node24 --test --test-concurrency=1 --test-name-pattern='RC22 (one explicit Bok accounting|Bok accounting)' apps/rolling/wallet-panel.browser.test.mjs",
+      "outcome": "5 passed, 0 failed, 0 skipped; 3947ms",
+      "evidence": "focused.log"
+    },
+    {
+      "command": "git diff --check d91ff119..582b2cdb",
+      "outcome": "pass"
+    },
+    {
+      "command": "git diff --name-only d91ff119..582b2cdb",
+      "outcome": "only two declared files changed"
+    }
+  ],
+  "review": [
+    "Read source and changed assertions before tests. Explicit check owns one sequential read loop; no concurrent pages, sleeps, fees or transaction submissions. Cursor is opaque; internal authenticated application generates single-use UUID continuation tokens, anchors all pages and validates monotonically ordered public rows.",
+    "Partial results only expose phase/progress. Balance and request totals publish only after complete:true from the existing authenticated application API. Failed reads clear partial state and never automatically restart.",
+    "Stop fences the pending result and all later reads, while busy stays held until the original read settles. Escape remains fenced. Account epoch and identity checked immediately after each await before any result publication or next read.",
+    "Progress rerender preserves Stop focus and availability; other controls remain disabled. Existing explicit release-review flow remains separate and sends nothing during scanning or preparation.",
+    "Focused cases independently covered three-page completion, Stop with late completion then fresh explicit scan, account invalidation, read rejection, and malformed null continuation. No assertions suppressed."
+  ],
+  "limitations": [
+    "UI tests use labelled accounting doubles; canonical public accounting and ownership validation remain supplied by unchanged shared/rolling/application.mjs, inspected in this review.",
+    "Not real-chain or proof acceptance. Normal integration gate remains required."
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.mjs": "c34932357d9400a75a8dc05f0d490f5837a71b90fc46e8521f6c2f8da5d3ca89",
+    "apps/rolling/wallet-panel.browser.test.mjs": "b5a5e9693acb4d02b1841fd69afe80f694b6c5daf9b18a99411d9875ec6a2818"
+  },
+  "evidence": {
+    "focused.log": "1b7471e95ef45e6d47b7e6854359fb9989510bdd9dcca9e89a455c49142f131e"
+  }
+}

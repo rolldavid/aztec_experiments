@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "source": "2643b4782e8c895a59923e9ea285894b662cbc92",
+  "sourcePacketSha256": "ba31825babb55c5518190e997f40ca75d182be0015d709813e80ba1c27a22fe2",
+  "verdict": "Eligible focused Python12; routes3 only after actual Python pass/positive cleanup and separate lead grant",
+  "repairsAccepted": [
+    "Strict unique positive bounded process Groups; mandatory public group, allowed only query primary/public IDs",
+    "Immutable generated queryHost digest drives installed monitoring even when mutable records disappear; retained records also trigger monitor",
+    "Request binding checked before pending qualification; final receipt hash in one-shot intent; missing state fails closed without restarting",
+    "Actual query_host/query_host_readback filesystem fixtures exercise successful once-only commissioning and identity/group/config/unit/lost-record negative paths",
+    "Actual attestor dispatch fixture checks shutdown on lost state",
+    "Single successor test deadline formatting correction uses original strict UTC timestamp format"
+  ],
+  "evidenceChecks": {
+    "all6SourceHashes": true,
+    "cleanExactHead": true,
+    "preparationArtifactsPinsAndTempIdentity": {
+      "focused-python-v3": {
+        "packetSha256": "1ae52a967bae8e9b0622ad1dad1d8ad63aa5d4ea541819a8396615b3762bf3bf",
+        "runnerSha256": "17941bf7cf842e054559f7d21a622fb298af9f7d0738367c017cceec4c1c800d",
+        "protectedCount": 1124,
+        "expected": 12
+      },
+      "focused-routes-v3": {
+        "packetSha256": "83488ae3bc366fff5d8f112f5f7ab3295c29596bf694e703d6a1fc417ea9b451",
+        "runnerSha256": "3df2677e1b020c07887c972eb1a52a56e5c0d4a4d3f0effd2d612a34dcc55ef6",
+        "protectedCount": 1124,
+        "expected": 3
+      }
+    },
+    "staticInventory": "12 actual QueryHost methods and3 route labels",
+    "runner": "Existing Supervisor/child unchanged; directory-only v2\u2192v3 wrapper changes;60s2GiB; isolatedHOME and ownedTMP"
+  },
+  "scope": [
+    "Account/systemd/proc/readiness/listener operations explicitly simulated; no Linux/service/network qualification",
+    "Existing generated payload compressed<=16384 test mandatory, no fit assumption or threshold relaxation",
+    "Full103/package/current deployment closure and actual generated runtime remain separate",
+    "Private VPC origin/SG8083/CloudFront readbacks and finite activation delivery remain separate; no paid preparation grant"
+  ],
+  "runtimePerformed": false
+}

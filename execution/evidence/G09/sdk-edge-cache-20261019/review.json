@@ -1,0 +1,30 @@
+{
+  "candidate": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "base": "bbcf43dc9fb3603343e2e3a717d8184d027cef61",
+  "verdict": "approved",
+  "findings": [],
+  "scope": "Only authenticated immutable SDK response may use public edge cache",
+  "basis": [
+    "Only decoded-hash-matching exact /wallet/aztec_bundle.js receives public immutable. Unpinned, invalid, metadata and failures remain no-store; other pinned assets stay private.",
+    "Full decoded digest verification, gzip identity/SRI, concurrency/byte limits and isolation headers unchanged. No protocol or SDK content change."
+  ],
+  "validation": {
+    "independentFocusedTests": 2,
+    "pass": 2,
+    "fail": 0,
+    "durationMs": 1803.594,
+    "cases": [
+      "wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD",
+      "immutable wallet URLs bind exact decoded bytes and keep metadata and invalid queries fresh"
+    ]
+  },
+  "limits": [
+    "No claimed cause or measured cure for prior128.57s initial transfer.",
+    "No cloud/service/proof operation."
+  ],
+  "transfer": {
+    "reviewedSource": "018d918eb9ed4e605db6a7143d85fb28c04bf280",
+    "identicalProductionAndTestBlobs": true,
+    "testsNotRepeated": true
+  }
+}

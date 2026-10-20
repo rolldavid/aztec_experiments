@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-05",
+  "startedAt": "2026-10-12T00:09:36.425Z",
+  "passed": true,
+  "noComputeLaunch": true,
+  "receiptProbe": {
+    "putStatus": 200,
+    "getStatus": 200,
+    "versionId": "Hd8ytI2JZtgZZraWb6XMVweu_B_8w.d_",
+    "bytes": 56,
+    "sha256": "462d38f9e75723c38a12fd9d4dc20e7fb9440d93855884688d9a3fc9d66af172",
+    "oneSend": true
+  },
+  "noRepeatedProbe": true,
+  "range": {
+    "status": 206,
+    "bytes": 1024,
+    "exactVersion": true,
+    "prefixSha256": "d07ee367cf2022879be6380f9e591ae94bdb48e774f30f5d583e61935653b88f",
+    "region": "eu-west-2",
+    "redirects": false
+  },
+  "deadlines": {
+    "createdAt": "2026-10-12T00:09:37Z",
+    "budgetStop": "2026-10-12T02:09:37Z",
+    "commissioningStop": "2026-10-12T00:39:37Z",
+    "credentialExpiration": "2026-10-12T08:09:36.000Z"
+  },
+  "payload": {
+    "bytes": 16332,
+    "sha256": "ae1fa87d4282c0933cd063486369969decb8acfb3198b1311c89681fcc277e77"
+  },
+  "finishedAt": "2026-10-12T00:09:37.417Z"
+}

@@ -1,0 +1,53 @@
+{
+  "task_id": "W03-funding-fast-path",
+  "implementer": "lead-20261011",
+  "candidate": "bbcf43dc9fb3603343e2e3a717d8184d027cef61",
+  "base": "e99789f7294e28e1e1af1e0fc9fe4cf013dff7aa",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "README.md",
+    "apps/rolling/README.md",
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "scripts/test-private-fee-estimation.mjs",
+    "shared/private-fee-estimation.mjs",
+    "shared/rolling/aggregate-funding.mjs",
+    "shared/rolling/aggregate-funding.test.mjs",
+    "shared/rolling/aggregate-wallet.mjs",
+    "shared/rolling/aggregate-wallet.test.mjs",
+    "shared/sdk-entry.mjs"
+  ],
+  "required_checks": [
+    "combined-focused",
+    "owner-focused",
+    "sdk-wallet-build"
+  ],
+  "requirements": [
+    "RC19-coherent-funding-component",
+    "RC40-single-strict-fee-simulation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-funding-fast-path",
+      "paths": [
+        "README.md",
+        "apps/rolling/README.md",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs",
+        "scripts/test-private-fee-estimation.mjs",
+        "shared/private-fee-estimation.mjs",
+        "shared/rolling/aggregate-funding.mjs",
+        "shared/rolling/aggregate-funding.test.mjs",
+        "shared/rolling/aggregate-wallet.mjs",
+        "shared/rolling/aggregate-wallet.test.mjs",
+        "shared/sdk-entry.mjs"
+      ]
+    }
+  ]
+}

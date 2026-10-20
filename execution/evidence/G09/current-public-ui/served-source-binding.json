@@ -1,0 +1,32 @@
+[
+  {
+    "path": "/reader.mjs",
+    "sha256": "34b4ff50b910aeb2c803415998b1e1c78e71a9ceb9fb6a48d27821019f12ac08",
+    "bytes": 25003,
+    "matchesRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822"
+  },
+  {
+    "path": "/navigation.mjs",
+    "sha256": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649",
+    "bytes": 2360,
+    "matchesRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822"
+  },
+  {
+    "path": "/profile-view.mjs",
+    "sha256": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+    "bytes": 9971,
+    "matchesRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822"
+  },
+  {
+    "path": "/reader-client.mjs",
+    "sha256": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+    "bytes": 2632,
+    "matchesRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822"
+  },
+  {
+    "path": "/style.css",
+    "sha256": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+    "bytes": 12357,
+    "matchesRevision": "cf001334dd3548a4e74ba61fb6a57a6b92629822"
+  }
+]

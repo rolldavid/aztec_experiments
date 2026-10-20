@@ -1,0 +1,22 @@
+✔ portal V1 preserves domain padding, word order and commitment position (0.50325ms)
+✔ exit destination, amount, nonce and domain each change the bound bytes (0.398042ms)
+✔ reject ambiguous portal domains, arity and out-of-field values (0.546458ms)
+✔ fenced liabilities remain conserved and exact flags are required (0.302958ms)
+✔ diagnostics retain only fixed categories and source coordinates (0.397291ms)
+✔ unknown diagnostic messages and unresolved locations never become evidence text (0.082833ms)
+✔ diagnostics reject arbitrary source names, excessive lengths and invalid coordinates (0.098459ms)
+✔ throwing diagnostic getters and methods cannot replace the original failure (0.1125ms)
+✔ changing getters cannot exchange validated diagnostic values for private data (0.148209ms)
+✔ ordinary PXE note failures expose only fixed categories and installed source locations (0.208917ms)
+✔ ordinary diagnostic accessors are captured once and source coordinates are bounded (0.107208ms)
+✔ tagging age/finality classification omits private tagging indices (0.154666ms)
+✔ fixture evidence crosses strict worker JSON boundary without losing token precision or cleanup (0.487375ms)
+✔ evidence encoding preserves failure and rejects unserializable observations (0.308666ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1340.498333

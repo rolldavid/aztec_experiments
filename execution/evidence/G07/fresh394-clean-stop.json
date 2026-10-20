@@ -1,0 +1,19 @@
+{
+  "phase": "stopped",
+  "snapshotFile": "anvil-recovery-07e8791c-464b-4308-a325-300113b6bcd6.json",
+  "snapshotHash": "8b8c25ce5cbd7d19a78259fcb661f01226390e28f1082e65da9df76df0274920",
+  "snapshotBytes": 1430353769,
+  "snapshotHead": {
+    "number": "0x3de",
+    "hash": "0xc6ec1c3220cc57b26d2ee4649f9a9d8f26bb8db6f8549ef83c03c2dce141c65b",
+    "pending": "451",
+    "proven": "451"
+  },
+  "locksAbsent": true,
+  "source": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "lastAcceptedActions": [
+    "name393",
+    "bio394"
+  ],
+  "failedFunding": "consent only; zero L1/L2 payment requests; journal retained"
+}

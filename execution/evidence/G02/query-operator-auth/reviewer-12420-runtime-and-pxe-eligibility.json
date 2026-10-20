@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "accepted-SDK-three; eligible-one-PXE22-after-parent-grant-and-slot",
+  "source": "e97219255c0f745f957b1fb66ca161819e5148b5",
+  "actualPacketSha256": "9979d2d82c2410fd5abb483d0381b52dd02542a9fb75dd82b0dbcabe57e6407f",
+  "actual": {
+    "tests": 3,
+    "pass": 3,
+    "allNonpassZero": true,
+    "exactLabelMultiset": true,
+    "elapsedMs": 808,
+    "peakRSS": null,
+    "rssNote": "No sample in short run, not zero memory.",
+    "protectedRehashed": 3290,
+    "ownedCleanupAndTempAbsent": true
+  },
+  "nextPacketSha256": "51fb18575de3aff86649aa4e659d32f523d65e0c39abaa88d563186372b523a2",
+  "nextRunnerSha256": "6f77d64e71afacc17f3eab7b6a79c464a0319e339a81925f2b77f4f2a7834a02",
+  "nextStage": "Whole22 integration cases, same60s2GiB Supervisor; exact current pins/control files rechecked, no intent exists. No auto retry or bound increase.",
+  "limitations": [
+    "Only actual installed SDK/local HTTP compatibility accepted.",
+    "Actual readOnly PXE remains unrun, normal bundled CLI/full proof-enabled deployment and real chain remain open."
+  ]
+}

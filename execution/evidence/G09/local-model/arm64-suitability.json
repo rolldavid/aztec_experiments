@@ -1,0 +1,50 @@
+{
+  "observedAt": "2026-10-15T13:46:54.159567+00:00",
+  "scope": "Registry metadata only; no image layers, model weights, installation, configuration change, inference or service action.",
+  "officialPackage": "https://github.com/ggml-org/llama.cpp/pkgs/container/llama.cpp/1270428848?tag=server-b11058",
+  "registryCommand": "docker buildx imagetools inspect --raw ghcr.io/ggml-org/llama.cpp:server-b11058",
+  "indexDigest": "sha256:7149802e349d69ac0bc6bf05ff210a13f6ba83cc15af6f4be5d38ce7ef825abb",
+  "platforms": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+      "size": 1746,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+      "size": 1746,
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:fae0ef695073e224102829ae117f9d4cf8c54f11e8fe893b0a04ff3c6affc30d",
+      "size": 1938,
+      "platform": {
+        "architecture": "s390x",
+        "os": "linux"
+      }
+    }
+  ],
+  "sameEngineVersion": "b11058",
+  "sameEngineRevision": "f072b103714dfa1eee531f80b24512faf38e3dd2",
+  "arm64Candidate": "ghcr.io/ggml-org/llama.cpp@sha256:3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+  "arm64Manifest": "b11058-arm64-manifest.json",
+  "arm64ConfigDigest": "sha256:45951ce06ab9833edbcd31b0621449cc2fe4fcf0cbf871d9da55d4943d896248",
+  "compressedLayerBytes": 295146741,
+  "weightsUnchanged": {
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "bytes": 5680522464
+  },
+  "existingRuntimeSupport": "censor-daemon/runtime-identity.mjs explicitly admits linux/arm64 and binds offline manifest, Docker local image and running container. model-runtime.mjs uses existing /app/llama-server path. Actual platform image/run remains unverified until authorized acquisition and focused normal runtime check.",
+  "conclusion": "Same engine revision ARM64 package exists; routine AMD64 emulation is unnecessary. This is native ARM64 execution inside Docker Linux VM, not a new native macOS backend.",
+  "capacity": "8192MiB model limit is configurable, not a product minimum or measured requirement. Lower bounds may be qualified using actual pinned model with existing runtime; memory fit/performance remain unmeasured. Existing VM/host pressure observations do not establish impossibility.",
+  "nextOrdinaryActionDeferred": "If authorized, acquire exact ARM64 digest and same pinned GGUF, bind this byte-exact offline platform manifest in existing runtime config, select explicit measured resource limits and run existing normal isolated runtime qualification. No new tooling/backend required."
+}

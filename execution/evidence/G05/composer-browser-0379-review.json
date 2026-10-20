@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "0379af1e0775140a4cdb18e26e52bf7fdca0f5b3",
+  "base": "dd86b6dea4e5f7e54276e7eab8a15be600a9a54e",
+  "verdict": "approved-source-only",
+  "scope": "G05-A09/G06-A06 genuine production composer browser driver; runtime acceptance pending",
+  "files": {
+    "scripts/testing/rolling-composer-browser.mjs": "f1995642a0b99849cf1ed95a53d081e38b98425ed3236813b0361971f0e6c746",
+    "scripts/testing/rolling-composer-browser.test.mjs": "16a3c94e7cc52e92789470f88229a97218ea00d1672e6463552aaa7bdce08596"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node v24.21.0 --test --test-concurrency=1 scripts/testing/rolling-composer-browser.test.mjs (exact git blobs in isolated temporary directory)",
+      "result": "39 passed, 0 failed/skipped, 108.798625 ms",
+      "log": "/tmp/reviewer-composer-0379-tests.log"
+    },
+    {
+      "procedure": "Compared accessible selectors, custody import, account lock/reload, review/cancel, byte counter and preview assertions against actual apps/rolling/wallet-panel.mjs; compared proof POST detection to shared/remote-prover-client.mjs",
+      "result": "Selectors and installed production request shape agree; actual Chromium journey not run"
+    }
+  ],
+  "reasoning": [
+    "Expected names remain private Node-side assertions; page.evaluate only inspects environment and DOM. No runtime, wallet or owned-name replacement.",
+    "Captured/frozen control primitives precede filesystem awaits. Directory 0700 and encrypted backup files 0600 are owner-bound, canonical, nonsymlink and size bounded. Parent must retain their immutability through Playwright file upload.",
+    "Three exact loopback origins only, service workers blocked. Submission counters inspect request bodies in memory and persist only fixed aggregates; unknown/non-JSON private POST or external request fails. No request bodies, error text, identities or screenshots retained.",
+    "Pre-unlock absence of wallet assets/private requests, exact private A/B name choices, local selection without extra queries, 992-byte prepared named action with positive maximum fee, cancel without sending, 996-byte disabled action with retained text, literal preview and account lock/reload are enforced.",
+    "Explicit 120-second maximum driver budget, launch timeout and expiry closure; finally closes both owners and any cleanup failure prevents pass. Parent retains process-tree hard deadline and must verify cleanup."
+  ],
+  "limitations": [
+    "39 tests validate handoff/failure paths only; no Chromium or real wallet/session/selector performance acceptance claimed.",
+    "Parent must authenticate actual deployment/config/assets, genuine prior name/funding state, and independent receiver-side proof/send deltas. Browser route counters are not canonical transaction evidence.",
+    "B verifies empty draft/collateral and exactly B names; no extension funding or actual browser publication accepted.",
+    "This driver does not establish comprehensive wire privacy, opaque payload analysis, external observer independence or specialist audit."
+  ]
+}

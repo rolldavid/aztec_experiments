@@ -1,0 +1,29 @@
+{
+  "sourceRevision": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "scope": "Read-only normal UI accounting and hosted-runtime prerequisites; no live readiness claim",
+  "accounting": {
+    "action": "Unlocked original profile: Balances and withdrawals, Check private balances, Check all Bok requests; Continue checking Bok requests until complete-at-block message.",
+    "existingHelper": "scripts/t04-metamask.mjs:1084 readRetainedBokBalances",
+    "source": "shared/rolling/application.mjs:647-684; apps/rolling/wallet-panel.mjs:299-314",
+    "bounds": "Owned requests8 per private page; uniform public page50,20s/1MiB; token/anchor/revision consistency, all-page conservation, exact deployment/class/scope binding and final private balance/anchor.",
+    "noOwnedRequests": "Normally ownership page then one complete public page. Ready alone never implies zero reservations.",
+    "dependencies": "Current complete matching /api/bok-accounting index, private account session; no hosted/model/GitHub/funding action required.",
+    "helperCaveat": "Existing helper follows UI with second application accounting scan. UI alone is shortest; do not confuse second scan with same completed UI snapshot."
+  },
+  "hosted": {
+    "source": "plugins/main.mjs:220-315; plugins/thread-repositories.mjs:20-58",
+    "supportedDevelopmentOnly": "development=true permits GitHubApp disabled; fresh local bare repository per canonical scope/plugin/thread and validated static publication. Remote per-thread mirror requirement remains unmet.",
+    "immutableBinding": "Repository namespace and billing identities bind exact current scope/plugin/thread/request. Old C/D state cannot be transplanted into current chain.",
+    "prerequisites": [
+      "Current canonical descriptor/deployment and portal/plugin registration",
+      "Exact current operator account and nonzero FeeJuice; matching native/PXE proof flags",
+      "New correctly scoped hosted state directory/lease and canonical public index, old journals preserved",
+      "Funded provider credential, primary and explicit cheaper summary model; auto-topup false; bounded request/call/token limits",
+      "Available isolated execution/container controls and separate artifact origin",
+      "Accessible authorized reference repository and existing trusted credential provider",
+      "Current user credit and explicit ordinary Bok fee/budget review before any new paid request"
+    ],
+    "pool": "Reviewed9bf pool implementation is not part of current4cc main/broker; new selected pool remains separate blocked integration/actual acceptance."
+  },
+  "performed": "Source reads only. No API, service, model, browser, transaction or dependency mutation."
+}

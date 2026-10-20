@@ -1,0 +1,20 @@
+▶ owned isolated SDK and ACIR suite
+  ✖ mixed commit validators drain held receipt peer after another receipt fails (8212.93125ms)
+✖ owned isolated SDK and ACIR suite (9706.9965ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10601.385
+
+✖ failing tests:
+
+test at scripts/test-pxe-preference-page.mjs:302:31
+✖ mixed commit validators drain held receipt peer after another receipt fails (8212.93125ms)
+  Error: Independent commit validators did not start
+      at Timeout.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:1192:127)
+      at listOnTimeout (node:internal/timers:685:17)
+      at process.processTimers (node:internal/timers:618:7)

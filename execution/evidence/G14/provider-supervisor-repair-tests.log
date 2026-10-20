@@ -1,0 +1,20 @@
+✔ one owner preserves child outcome and verifies cleanup (131.261375ms)
+✔ failed child is reported and does not lose its result during cleanup (113.322125ms)
+✔ deadline terminates and reaps a real hanging process (323.782667ms)
+✔ malformed worker output is a harness failure, not discarded (100.977959ms)
+✔ cleanup failure preserves the completed command and fails overall (45.735ms)
+✔ scenario selection is explicit and has no legacy/default route (1.698542ms)
+✔ first malformed record prevents subsequent stage callbacks (115.617542ms)
+✔ peak memory retains only process identity and measured RSS (0.755791ms)
+✔ malformed process snapshot retains bounded field-only diagnostics (0.694416ms)
+✔ replacement handoff requires exited role and verifies its real descendant tree (483.648125ms)
+✔ failed handoff cleanup prevents any replacement and preserves failure (38.651542ms)
+✔ close cannot retry or overwrite a failed handoff cleanup (43.469292ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1476.8295

@@ -1,0 +1,378 @@
+{
+  "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+  "task_id": "G07-preference-and-G14-bootstrap-components",
+  "holds": [],
+  "findings": [],
+  "scope_limits": "Component integration only. FullG07 coldsync/reorg/replydelivery/operatedarchive pending; fullG14 remote service unavailable after07failure. Specialist audit,14daysoak,currentnetworkclearance andallotherproduct requirements retained.",
+  "checks": [
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "source-tests",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Exact ad1 serial source suite plus affected842/50ff checks, see recordedargv",
+      "observed": "Exact reviewed blob composition, prior425/122 and664 source checks; independent current117 serial tests pass with zero skips/failures. Independent disposition: pass",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/combined-ad1-source-tests.json",
+          "sha256": "6505367d410dedd988b01e8588fcea9c1c8c344936ab77688aba69967dce310c"
+        },
+        {
+          "path": "evidence/G07/combined-ad1-test-command.json",
+          "sha256": "0e29579b0be976e3b5c6f87f4ad7587df846bbfd05a64fa479f7ce3eb291241b"
+        },
+        {
+          "path": "evidence/G07/preference-browser-842-repair-review.json",
+          "sha256": "a5240ee823ecfc9130bb2c113130575c89de44aca3d060c571c5b29c8d1c6981"
+        },
+        {
+          "path": "evidence/G07/preference-browser-50ff-lock-review.json",
+          "sha256": "78c213e3eaae68cf9b0fbfbbb9307b632494cc61fecadab26954300dde4f4ee9"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "normal-build-and-txe",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Normal canonicalcontract andSDKbuild; fullTXE suite; exact artifact manifest verifiers",
+      "observed": "Normal Rolling14 and PrivateBok6 private VKs;175 unique TXE cases from hash-bound log. Current actual loadRollingArtifacts, canonical52-input contract manifest, SDK and PrivateBok14-input preflight pass. No protocol inputs changed since the reviewed build/TXE.119 compiler/manual diagnostics remain assurance limitations. Independent disposition: pass-carried-with-current-provenance",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/combined-834-noir-tests.json",
+          "sha256": "4b6cfc2493445f7e02c04a3372eb3ece4725ff349bd7d77962b426f2ae3ba30c"
+        },
+        {
+          "path": "evidence/G07/combined-834-build-binding.json",
+          "sha256": "b4b69f37a5e89bff1c737c3ad5fe589daff0547e8797f0c4ac1c0b2a8bff878c"
+        },
+        {
+          "path": "evidence/G07/combined-11d-source-review.json",
+          "sha256": "6538bb83aa0c0c4dc26f239c053d5259c7fbc702275559f5f0f920e447633ac6"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "browser-assets-and-ui",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Normal walletbuild plus serial productionDOM andactualSDKunlock Chromiumtests",
+      "observed": "Actual current checkSdk2038inputs/8outputs; wallet81inputs/24outputs independently hash/size verified. Prior exact applicable ad1 59 browser checks plus independent50ff delayed-refresh DOM test and actual a8eb native-browser execution. Independent disposition: pass",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/combined-ad1-browser-tests.json",
+          "sha256": "2053ee4ba3e4e7656c671be4442fa71a7180a7dd8ee5f6e58c5038c84d93bff1"
+        },
+        {
+          "path": "evidence/G07/combined-ad1-wallet-build.log",
+          "sha256": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890"
+        },
+        {
+          "path": "evidence/G07/combined-ad1-source-eligibility-review.json",
+          "sha256": "9d47cae15c08c3f38697d82f75d08faa1091ad0349bdffe8ce4b56d2bfd47024"
+        },
+        {
+          "path": "evidence/G07/preference-browser-50ff-lock-review.json",
+          "sha256": "78c213e3eaae68cf9b0fbfbbb9307b632494cc61fecadab26954300dde4f4ee9"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "warm-query-capacity",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned nativeLMDB andChromium eventquery1k10k50k; warm queries onlabelled syntheticpersistedevents",
+      "observed": "Six completed nativeLMDB/nativeChromium1k/10k/50k reports; exact8reads,0history-index scans,peak1,equality; five-warm maximum meets250ms and per-process1GiB. Capacity does not qualify end-to-end encrypted cold sync or statistical tail latency. Independent disposition: pass-bounded-synthetic-store",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/capacity-cb7-runtime-review.json",
+          "sha256": "c9a86c244f4dfb3eb6368e5764bd261ed281a1c871d814bc354033b1eed76bd1"
+        },
+        {
+          "path": "evidence/G07/capacity-915-run-bindings.json",
+          "sha256": "c9ac2c320581e7f8644ee7081016e8fbd90398d0ac826d2dbce8451c22563b49"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "genuine-relationships",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-preference-relationships",
+      "observed": "2aafe passes408585ms,5privatejobs andkeys-only recovery; fake-indexeddbCLI labelled Independent disposition: pass-historical-identical-core",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/application-2aafe413-9e27-41d9-815f-768475cb8e27.json",
+          "sha256": "a6d21a59a719e54db5c549fbdbf8e3b77c4b3b61fbd592f4aa57eac34eb35bff"
+        },
+        {
+          "path": "evidence/G07/preference-relationships-2aafe-runtime-review.json",
+          "sha256": "ada9489c189eee396e93b26786919f62772cb9053ed677b902089db6f58306a4"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "genuine-notification-settings",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-preference-notifications",
+      "observed": "38ce passes408807ms,5privatejobs private subscription/global/readmarker recovered; actualreplydelivery excluded Independent disposition: pass-historical-identical-core",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/application-38ce6c90-f80c-4557-af81-0cca0b4a72d8.json",
+          "sha256": "6dbfd8e467522b9e8b40aa6c2d4a0b6189e4ba127dcc49ee55a50c57cbbf30f0"
+        },
+        {
+          "path": "evidence/G07/preference-notifications-38ce-runtime-review.json",
+          "sha256": "6d42f1784cd7596340a35d6981dd4a72f046dd78bd7aad04cd12ec290eef586a"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "genuine-browser-recovery",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i pinnedNode scripts/test-c01-application.mjs rolling-preference-browser",
+      "observed": "a8eb passes380396ms2190304KiB,3realproofs andfreshChromium/nativeIDB keys-onlyprivateviewrecover,lockedpublicread/lockreload,no browserfinancialsends Independent disposition: pass-exact-candidate",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G07/application-a8eb985d-4ac6-4cce-83be-a135d246d8a6.json",
+          "sha256": "20c4b7934d716dc242d59c821c347292b1d6b94887368b5bad746553a29cfa25"
+        },
+        {
+          "path": "evidence/G07/preference-browser-intent-3.json",
+          "sha256": "7613fbc409d7e2c7c68577e5c7f3bdb92bdee2c62a2985248f8aaa1cc7652c98"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        },
+        {
+          "path": "evidence/G07/preference-browser-a8eb-runtime-review.json",
+          "sha256": "44bdea0f761b7498056fa56afbf9ece23f73eb2338eeede68b18d4d026066506"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "bootstrap-development",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "PinnedNode archiver diagnostic tests and python3 scripts/test-prover-bootstrap.py; packageclosure verifier",
+      "observed": "Reviewed exact968 diagnostics/bootstrap/catalog package closure and51Python/45Node checks carried unchanged; no operated Linux success or paid launch approval implied. Independent disposition: pass-source-package-only",
+      "environment": "macOS arm64 pinnedNode24.21.0/Aztec6.0.0-rc.1, real localapplicationproofs withcontrolledsettlement where specified; not networkproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bootstrap-catalog-ac4-composition-review.json",
+          "sha256": "f12d0d562b1cee5dbd75979285b5809e2e1028edb9171ba74965741afca2e086"
+        },
+        {
+          "path": "evidence/G02/startup07-968-package-review.json",
+          "sha256": "1b8da40a52ada2077d39372a1f71be6a01c2784be28ee3794fbcfa7475cb3f6a"
+        },
+        {
+          "path": "evidence/G02/operator07-l1-config-diagnosis.json",
+          "sha256": "2bde533c91c5dd5bbfe2862949fcf46f95cf9a5399864fcc505d2cd146bcf98e"
+        },
+        {
+          "path": "evidence/G02/operator07-cleanup-reconciliation.json",
+          "sha256": "b603cd9f495d1a3edcb3717d78cb9e46852810822edf85611b6b7974c5731fe6"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+    "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G07/combined-50ff-integration-review.json",
+        "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "G07-private-preference-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G07/combined-834-noir-tests.json",
+          "sha256": "4b6cfc2493445f7e02c04a3372eb3ece4725ff349bd7d77962b426f2ae3ba30c"
+        },
+        {
+          "path": "evidence/G07/combined-834-build-binding.json",
+          "sha256": "b4b69f37a5e89bff1c737c3ad5fe589daff0547e8797f0c4ac1c0b2a8bff878c"
+        },
+        {
+          "path": "evidence/G07/combined-11d-source-review.json",
+          "sha256": "6538bb83aa0c0c4dc26f239c053d5259c7fbc702275559f5f0f920e447633ac6"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        },
+        {
+          "path": "evidence/G07/application-2aafe413-9e27-41d9-815f-768475cb8e27.json",
+          "sha256": "a6d21a59a719e54db5c549fbdbf8e3b77c4b3b61fbd592f4aa57eac34eb35bff"
+        },
+        {
+          "path": "evidence/G07/preference-relationships-2aafe-runtime-review.json",
+          "sha256": "ada9489c189eee396e93b26786919f62772cb9053ed677b902089db6f58306a4"
+        },
+        {
+          "path": "evidence/G07/application-38ce6c90-f80c-4557-af81-0cca0b4a72d8.json",
+          "sha256": "6dbfd8e467522b9e8b40aa6c2d4a0b6189e4ba127dcc49ee55a50c57cbbf30f0"
+        },
+        {
+          "path": "evidence/G07/preference-notifications-38ce-runtime-review.json",
+          "sha256": "6d42f1784cd7596340a35d6981dd4a72f046dd78bd7aad04cd12ec290eef586a"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "G07-browser-private-recovery-components",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G07/combined-ad1-browser-tests.json",
+          "sha256": "2053ee4ba3e4e7656c671be4442fa71a7180a7dd8ee5f6e58c5038c84d93bff1"
+        },
+        {
+          "path": "evidence/G07/combined-ad1-wallet-build.log",
+          "sha256": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890"
+        },
+        {
+          "path": "evidence/G07/combined-ad1-source-eligibility-review.json",
+          "sha256": "9d47cae15c08c3f38697d82f75d08faa1091ad0349bdffe8ce4b56d2bfd47024"
+        },
+        {
+          "path": "evidence/G07/preference-browser-50ff-lock-review.json",
+          "sha256": "78c213e3eaae68cf9b0fbfbbb9307b632494cc61fecadab26954300dde4f4ee9"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        },
+        {
+          "path": "evidence/G07/application-a8eb985d-4ac6-4cce-83be-a135d246d8a6.json",
+          "sha256": "20c4b7934d716dc242d59c821c347292b1d6b94887368b5bad746553a29cfa25"
+        },
+        {
+          "path": "evidence/G07/preference-browser-intent-3.json",
+          "sha256": "7613fbc409d7e2c7c68577e5c7f3bdb92bdee2c62a2985248f8aaa1cc7652c98"
+        },
+        {
+          "path": "evidence/G07/preference-browser-a8eb-runtime-review.json",
+          "sha256": "44bdea0f761b7498056fa56afbf9ece23f73eb2338eeede68b18d4d026066506"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "G07-warm-index-capacity-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G07/capacity-cb7-runtime-review.json",
+          "sha256": "c9a86c244f4dfb3eb6368e5764bd261ed281a1c871d814bc354033b1eed76bd1"
+        },
+        {
+          "path": "evidence/G07/capacity-915-run-bindings.json",
+          "sha256": "c9ac2c320581e7f8644ee7081016e8fbd90398d0ac826d2dbce8451c22563b49"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    },
+    {
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "id": "G14-bootstrap-diagnostics-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/bootstrap-catalog-ac4-composition-review.json",
+          "sha256": "f12d0d562b1cee5dbd75979285b5809e2e1028edb9171ba74965741afca2e086"
+        },
+        {
+          "path": "evidence/G02/startup07-968-package-review.json",
+          "sha256": "1b8da40a52ada2077d39372a1f71be6a01c2784be28ee3794fbcfa7475cb3f6a"
+        },
+        {
+          "path": "evidence/G02/operator07-l1-config-diagnosis.json",
+          "sha256": "2bde533c91c5dd5bbfe2862949fcf46f95cf9a5399864fcc505d2cd146bcf98e"
+        },
+        {
+          "path": "evidence/G02/operator07-cleanup-reconciliation.json",
+          "sha256": "b603cd9f495d1a3edcb3717d78cb9e46852810822edf85611b6b7974c5731fe6"
+        },
+        {
+          "path": "evidence/G07/combined-50ff-integration-review.json",
+          "sha256": "87f91f5aaed7ea1c4c4c05aaa71eee441e9121582e493cf24e8013919404d491"
+        }
+      ]
+    }
+  ]
+}

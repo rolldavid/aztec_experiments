@@ -1,0 +1,36 @@
+{
+  "supervisorPid": 23497,
+  "candidate": "7e452036ecf8afb4d9ac8c3b185a92dc18d3d2ed",
+  "kind": "Read-only numeric native child configuration, not measured CPU parallelism",
+  "observerSha256": "7b5b07ead0266f6b30e6922906fb6880c9239d2829c7e209f678106ebe2ff095",
+  "observations": [
+    {
+      "at": "2026-10-12T20:50:16.384775+00:00",
+      "pid": 23584,
+      "ppid": 23515,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T20:50:16.387913+00:00",
+      "pid": 23528,
+      "ppid": 23515,
+      "HARDWARE_CONCURRENCY": 2
+    },
+    {
+      "at": "2026-10-12T20:50:16.390915+00:00",
+      "pid": 23608,
+      "ppid": 23515,
+      "HARDWARE_CONCURRENCY": 1
+    },
+    {
+      "at": "2026-10-12T20:50:16.394532+00:00",
+      "pid": 23546,
+      "ppid": 23515,
+      "HARDWARE_CONCURRENCY": 1
+    }
+  ],
+  "errors": [],
+  "supervisorAbsentAtEnd": true,
+  "elapsedSeconds": 37.027,
+  "finished": true
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "source": "b3f5f6b8d979cb983118d574ba91a186a424019e",
+  "base": "6851dd5da205227813aec7ed4aaffff4a7970b37",
+  "changedPaths": [
+    "toolchain.json",
+    "scripts/test-toolchain-packages.mjs"
+  ],
+  "actualNativeRuns": "ONLY Darwin arm64 bb --version and pinned nargo --version; both0exit within0.832s total; allprocessgroupsabsent",
+  "ownedProcessGroupsAbsent": {
+    "66213": true,
+    "66218": true
+  },
+  "tests": {
+    "passed": 30,
+    "failed": 0,
+    "nativeExecutedByTests": false,
+    "fixtureIdentityOverridesRestored": true
+  },
+  "nativeQualification": "Darwin-arm64 rc6 exactbinaryidentity only; allunexecutedplatforms absent active map and failclosed;4rc1historicalpins preserved separately",
+  "limitations": [
+    "No proof, compile, SDK import, service, lifecycle script or dependency patch run.",
+    "Linux and Darwinx64 runtime version/compatibility remain unqualified.",
+    "No root source/dependency/artifact modification."
+  ],
+  "evidence": {
+    "rc3-native-version-measurement.json": "5a1f8cc5207e652c5131cf02eada9f2eb2014a998f09bd30ad7b1dbe307c6895",
+    "rc3-native-binding-tests.log": "e5b69f9ca2bdbe02a16ab00a8d581318211fed74f2873c57fada6c85b4fb9d64"
+  }
+}

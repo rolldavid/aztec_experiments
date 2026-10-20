@@ -1,0 +1,56 @@
+{
+  "reviewer": "reviewer-features-20261018",
+  "at": "2026-10-18T17:31:29.393357+00:00",
+  "candidate": "3e061fba0fbce9b9d739b795554b71499b49a01a",
+  "base": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "verdict": "approve_scoped_source",
+  "scope": "G04 explicit nonce lineage; no actual network, funded-key access, signing or dispatch; focused tests use deterministic disposable fixture keys only.",
+  "sourceHashes": {
+    "plugins/operations.mjs": "fdd5ca18dc2967169d93cef5373ae76de22ede247530ec063fa04dc56bd6a2ef",
+    "plugins/operator.mjs": "e25d833c06306c6d522e304bcb298dbbeaeaf3c3b2c836fc02e7065ac3b2b5bf",
+    "plugins/test/operations.test.mjs": "da3660fa5d1292ad0eb6feee569210f741fe023b20fff86e0f34f09b9055cd1a"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '<pinned Node24.21.0>' --test --test-name-pattern='Nonce lineage|Sepolia contract scope|Seed successor|Seed resolved continuation|Seed continuation|Exact cancellation|Seed Ethereum transport' plugins/test/operations.test.mjs",
+      "workingDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+      "result": "27 passed,0 failed/skipped,12597.228083ms; exact candidate unchanged."
+    },
+    {
+      "command": "git diff --check b4871a15..72374857; git status --short",
+      "result": "clean; only three allowed paths differ."
+    },
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '<pinned Node24.21.0>' --test --test-name-pattern='Nonce lineage' plugins/test/operations.test.mjs",
+      "workingDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design",
+      "result": "8 passed,0 failed/skipped;6985.66425ms at3e061fba. Earlier27focused results retained for unchanged code."
+    },
+    {
+      "command": "git diff 72374857..3e061fba; git diff --check b4871a15..3e061fba",
+      "result": "Only fee-bump validation and one existing-suite boundary case changed; diffcheck clean."
+    }
+  ],
+  "review": [
+    "Inspected production diff, existing signature/reconciliation/once-only/private file code and changed tests before worker summary.",
+    "Closed immutable intent binds original plan,six files,dispatch marker,full ordered candidate hashes+identities,endpoint,fees and expiry; same original lock serializes commands. Original stores open read-only.",
+    "Canonical signed self-cancel inherits chain11155111,owner nonce,from=to,value0,data0x,gas21000; typed exact signature comparison retains every field and empty access list.",
+    "Durable preparing precedes key loading; signed bytes precede one raw transport with redirects/throttle replay denied. Retained matching intents reconcile even after expiry; preparing-without-hash cannot be skipped.",
+    "Full original and new lineage is inspected before new signature and before sole send; conflicting winners,missing/changed raw,nonfinal/reorg/failed/wrong effects prevent continuation. Successful original winner skips already completed approval; any successful cancel starts remaining approval at following nonce.",
+    "One command detects fixed endpoint chain; code/scope results shared by number+hash only,failed scope evicted. Numbered canonical block rechecks and fresh nonce/balance/base-fee reads remain.",
+    "Raw provider messages/credentials are not returned; stable numeric diagnostics remain. Changes from provider.broadcastTransaction to single raw RPC avoid auxiliary send-time reads."
+  ],
+  "limits": [
+    "No real provider/mempool,nonce resolution or transaction success qualified.",
+    "Finalized failed candidate remains failed and blocks financial continuation; no automatic recovery from ambiguous or failed effects.",
+    "Exact lead transfer/source binding and normal integration gate still required. Approval is source behavior only; no real nonce resolution or provider acceptance claim."
+  ],
+  "workerPacketReadAfterSource": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/current-nonce-lineage/summary.json",
+  "resolvedFindings": [
+    {
+      "severity": "P2",
+      "priorCandidate": "72374857b2b0cf54ea3e47f0f5363d12d74ea29a",
+      "resolution": "Both fee fields now require >=ceil(previous*120/100); ordered validation ensures each fresh candidate exceeds every predecessor. Existing strict <5gwei ceiling remains. Exact-boundary success and1wei-below rejection before signing verified for both fields, including fractional later-candidate ceiling."
+    }
+  ]
+}

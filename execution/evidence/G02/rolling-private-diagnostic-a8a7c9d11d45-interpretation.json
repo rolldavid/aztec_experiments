@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "sourceEvidence": "rolling-private-diagnostic-a8a7c9d11d45.json",
+  "privateExceptionSha256": "a21783e75a6e2477cd83afad81460bf4ca0b058a4cb1af60eb5e0b9ab9c0a08e",
+  "finding": {
+    "nativeProcess": "aztec-wsdb",
+    "event": "exited-before-ipc-ready",
+    "exitCode": null,
+    "signal": "SIGILL"
+  },
+  "causeEstablished": "Native WSDB child exits before IPC readiness; missing export and missing/non-executable binary excluded by actual metadata. Native process exit reason beyond status remains unknown.",
+  "awsAttribution": false,
+  "cleanupConfirmed": true,
+  "noRetry": true
+}

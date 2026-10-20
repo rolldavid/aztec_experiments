@@ -1,0 +1,23 @@
+✖ real browser SDK unlock and encrypted recovery survive unavailable private deployment without submission (7827.701209ms)
+ℹ {"hasAccount":false,"busy":false,"errorClass":"TypeError","code":null,"frames":["aztec_bundle.js:316983:23","aztec_bundle.js:317006:18","aztec_bundle.js:317026:35","aztec_bundle.js:317106:16"]}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8045.567917
+
+✖ failing tests:
+
+test at apps/rolling/wallet-runtime.browser.test.mjs:11:1
+✖ real browser SDK unlock and encrypted recovery survive unavailable private deployment without submission (7827.701209ms)
+  page.waitForEvent: Timeout 5000ms exceeded while waiting for event "download"
+  =========================== logs ===========================
+  waiting for event "download"
+  ============================================================
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/apps/rolling/wallet-runtime.browser.test.mjs:31:29) {
+    name: 'TimeoutError',
+    log: []
+  }

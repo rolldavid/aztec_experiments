@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "revision": "792501a5d89043fd8deee17cc9b8fd4e5e5fe106",
+  "base": "518e59962c19f7b78dd651ad3e5b5deb59d6da88",
+  "verdict": "custody-export source boundary acceptable; current canonical Ready qualification held",
+  "sourceSha256": {
+    "scripts/t04-metamask.mjs": "40ecdafdf2a93d14cd352e23ed9785d8d7d288d9bd54be2c5c86af6bf93b4fe0",
+    "scripts/test-t04-browser-journey.mjs": "d469ada8c6c2b1d8d415ee396ed5b3c4d0cb18e1a818fee7ca9d28bce7156cd3",
+    "scripts/test-wallet-extension-browser.mjs": "6ed40004266142473830e73a8dcda5f74ae53fc164ba71345781e318e2c35f86"
+  },
+  "positiveFindings": [
+    "READY_EXPORT requires exportOnly which requires readinessOnly and excludes payment, continuation and retained Bok modes. Outer HTTP guard rejects financial Ethereum RPC and funding/proof requests; L2 count must stay zero after close.",
+    "Keys-only input requires zero claims and journals before Import recovery. Existing shared/account.js only restores nonempty collections, preserving advanced profile records.",
+    "Extracted canonical L1 payment verifier is reused unchanged. Encrypted original payment, three receipt hashes, saved claim ID and cap remain bound.",
+    "Existing unique output download path and decrypted equality to current complete custody prevent substituting stale prepared backup."
+  ],
+  "finding": {
+    "id": "ready-export-canonical-claim",
+    "file": "scripts/t04-metamask.mjs",
+    "symbol": "exportMetaMaskReadyRecovery",
+    "reason": "inspectMetaMaskPaidBinding.claimConfirmed checks local encrypted workflow status and hash syntax only. The new export has no fresh L2 receipt/canonical block read or comparison to the supplied original confirmed claim hash, so currentConfirmedClaim cannot qualify current chain status.",
+    "repair": "Bind original claim hash and verify existing receipt success, actual fee cap and canonical block before claiming current Ready. Keep export-only/no send behavior; no new transaction required."
+  },
+  "tests": {
+    "logSha256": "67395fa4ecfc73dd37c6e0b67586052686a27cdaf3c60a1d6c471abece561c46",
+    "passed": 9,
+    "failed": 0,
+    "durationMs": 706.397333,
+    "reviewerRuntime": false
+  },
+  "actual": "No browser or financial action performed by reviewer; pending actual export cannot fill an absent canonical recheck."
+}

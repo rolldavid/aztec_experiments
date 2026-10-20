@@ -1,0 +1,69 @@
+{
+  "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+  "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+  "task_id": "G13-fenced-request-dispatch",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+      "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+      "task_id": "G13-fenced-request-dispatch",
+      "id": "focused",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='actual SDK board projection|terminal no-reply admission|terminal node pins|terminal accounting from a different checkpoint' plugins/test/hosted-private-bok.test.mjs",
+      "environment": "macOS Node24, existing local service and repository boundary fixtures; no chain/model/build",
+      "observed": "17 passed, 0 failed, 0 skipped; 2139ms",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/terminal-anchor-20261018/review.json",
+          "sha256": "195bf0dbeb9f1567aa1713cc5308474f4ee58561090abe3c758ec3465d0961ce"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+    "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+    "task_id": "G13-fenced-request-dispatch",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/terminal-anchor-20261018/review.json",
+        "sha256": "195bf0dbeb9f1567aa1713cc5308474f4ee58561090abe3c758ec3465d0961ce"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+      "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+      "task_id": "G13-fenced-request-dispatch",
+      "id": "RC29-canonical-predecessor-anchor",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/terminal-anchor-20261018/review.json",
+          "sha256": "195bf0dbeb9f1567aa1713cc5308474f4ee58561090abe3c758ec3465d0961ce"
+        }
+      ]
+    },
+    {
+      "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+      "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+      "task_id": "G13-fenced-request-dispatch",
+      "id": "RC41-terminal-recovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/terminal-anchor-20261018/review.json",
+          "sha256": "195bf0dbeb9f1567aa1713cc5308474f4ee58561090abe3c758ec3465d0961ce"
+        }
+      ]
+    }
+  ]
+}

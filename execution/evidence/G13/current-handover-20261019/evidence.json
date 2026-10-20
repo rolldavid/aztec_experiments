@@ -1,0 +1,56 @@
+{
+  "base": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+  "candidate": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+  "task_id": "D8-current-handover",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+      "candidate": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+      "task_id": "D8-current-handover",
+      "id": "document-source-coherence",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent complete diff and actual runner/default/reload API inspection; git diff --check",
+      "environment": "Current application source; documentation-only",
+      "observed": "Current ports, no snapshot promise, owned asset reload and testnet prerequisites match actual source. No application rerun needed.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/current-handover-20261019/review.json",
+          "sha256": "028b6990745a513ed73a72861d1fbe636ed024060ad070d294379333d698a964"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+    "candidate": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+    "task_id": "D8-current-handover",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "controls_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G13/current-handover-20261019/review.json",
+        "sha256": "028b6990745a513ed73a72861d1fbe636ed024060ad070d294379333d698a964"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "c5c6f1b90b4192573c6f5e946ae5ed7de44d787c",
+      "candidate": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+      "task_id": "D8-current-handover",
+      "id": "RC36-current-run-instructions",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G13/current-handover-20261019/review.json",
+          "sha256": "028b6990745a513ed73a72861d1fbe636ed024060ad070d294379333d698a964"
+        }
+      ]
+    }
+  ]
+}

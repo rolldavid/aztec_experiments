@@ -1,0 +1,24 @@
+{
+  "sourceRevision": "266cafc496ed8125ab1a593ed9ce036bdc167058",
+  "passed": false,
+  "scope": "Focused retained cursor continuation; fresh120s conditional not admitted after focus failure.",
+  "evidence": {
+    "actual-result-recovery-races-266-continuation.json": "ce7fb6e2baf7d5980e2951b595b09772a563d36392433d1ab95a46f6356f7256",
+    "keys-only-recovery-races-266-continuation.json": "af71e83785e9dddf3bf23bfe0dd4ff24004a52b67f7e6cad4cf28ea0c51a7e88",
+    "keys-only-recovery-races-266-continuation.log": "26e99d4cea89cb8412e0a1fe68a0ea116bb92ab27cd97c8c750d9926c82748b0"
+  },
+  "outcome": "Wallet initialization failed before any recovery step: deployment BB_TRUSTED_NODE_UNAVAILABLE;3readinessRPC503; nativeexistingobserverUNSYNCED1792008736508.0compact/tag/sends/proofs.",
+  "profile": {
+    "path": ".build/g07-keys-only-current/isolated-resumption-624-fresh-profile",
+    "inode": 233386915,
+    "lastAcknowledgedCursor": 292,
+    "lastAcknowledgedAnchor": 1409,
+    "preserved": true
+  },
+  "cleanup": {
+    "browserMs": 33246,
+    "supervisorMs": 33631,
+    "allOwnedProcessesAbsent": true
+  },
+  "next": "Lead-directed same-call readonly capture of BOTH inspector snapshots; do not blindly repeat full120 or extend retries. Source266/native77250 unchanged."
+}

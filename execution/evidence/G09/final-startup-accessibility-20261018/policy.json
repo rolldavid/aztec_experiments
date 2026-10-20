@@ -1,0 +1,33 @@
+{
+  "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+  "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+  "task_id": "G09-G03-final-startup-accessibility",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "apps/rolling/reader.mjs",
+    "apps/rolling/reader.browser.test.mjs"
+  ],
+  "required_checks": [
+    "focused-module-closure-and-navigation"
+  ],
+  "requirements": [
+    "RC36-native-module-closure",
+    "RC44-private-route-accessibility"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G09-G03-final-startup-accessibility",
+      "paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "apps/rolling/reader.mjs",
+        "apps/rolling/reader.browser.test.mjs"
+      ]
+    }
+  ]
+}

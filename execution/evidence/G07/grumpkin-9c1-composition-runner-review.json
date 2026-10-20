@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "9c1fc5f2c9137e613ea4cc5a2a5b3f15bd20080e",
+  "workerSource": "f67132d48d45aa591c6b777190d7b3f4c353e505",
+  "packetSha256": "71123ef4ceedd076d77549b7ef39d6a27b5d77f2caf23b00f9af8daa0b60d75a",
+  "sourceReview": "fefd860ae1dcb095bfb614f79e20f6858ccd15658d8a8795b9eb803c245cfbbd",
+  "verdict": "eligible for one separately granted 119-component run",
+  "checks": {
+    "exactSixGitBlobs": true,
+    "all3236CurrentPinsRehashed": true,
+    "runnerOnlyDirectoryChangedFrom9d4": true,
+    "childIdentical": true,
+    "wholeBuildAndConsumerSuites": true,
+    "expectedTests": 119,
+    "noFiltersOrSkipsAllowed": true,
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152,
+    "ownedShortTempIdentityAndPositiveTreeAbsenceCleanup": true
+  },
+  "limitations": [
+    "No execution by reviewer.",
+    "Generated assets remain historical intentionally; no browser initializer or installed CRS qualification.",
+    "Both real browser cases require separately reviewed staged assets, normal builds and current closure."
+  ],
+  "findings": []
+}

@@ -1,0 +1,122 @@
+{
+  "revision": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+  "baseRevision": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "reviewer": "/root/reviewer_20261018",
+  "requirements": [
+    "RC22",
+    "RC37",
+    "RC39",
+    "W03"
+  ],
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "blockingSourceFindings": [],
+  "scope": "Combined explicit saved Ethereum refund recovery, restart after authorized main policy changes, generated consumers and persistent skill reference. No live acceptance or release qualification claim.",
+  "checks": {
+    "independentNode": {
+      "pass": 37,
+      "fail": 0,
+      "cancelled": 0,
+      "skip": 0,
+      "durationMs": 2252.289417
+    },
+    "independentUI": {
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skip": 0,
+      "durationMs": 3350.6185
+    },
+    "leadCombined": {
+      "pass": 38,
+      "fail": 0,
+      "cancelled": 0,
+      "skip": 0
+    },
+    "workerUI": {
+      "pass": 4,
+      "durationMs": 8681.03575
+    },
+    "generatedClosure": {
+      "revision": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+      "manifests": {
+        ".build/sdk/sdk-manifest.json": {
+          "sha256": "d02e8651cfe533df11e1e61de2a44a741694ec5a812e9cd22a8ab2bd11afa67e",
+          "inputsVerified": 2057,
+          "outputsVerified": 8
+        },
+        ".build/apps-manifest.json": {
+          "sha256": "ca63f5fab9f5ed64b724efc4426364fc299ee076f6de9a589b51580f98e0c147",
+          "inputsVerified": 97,
+          "outputsVerified": 10
+        },
+        ".build/rolling-wallet/manifest.json": {
+          "sha256": "bb3aa9dcd8b6199440d30d337c47e686f737964f40aadf8547d2057e47a34563",
+          "inputsVerified": 97,
+          "outputsVerified": 25
+        }
+      },
+      "carriedSource": "8 files exact",
+      "operatorResource": "deploy engine exact in deploy.html",
+      "sdkConsumers": "built SDK copied exact; inspectRequest present; prepareSaved in runtime"
+    }
+  },
+  "findings": [],
+  "review": [
+    "Native devnet/PXE proof configuration and real-proof release boundaries unchanged. No sleeps, timeout-success inference, background replay or lifecycle framework added.",
+    "Saved refund inspection decrypts and validates existing scoped journal, returns detached data. Separate review and explicit confirmation bind original sender, recipient, nonce, calldata, value, chain, expected effect and starting anchor. Search cursor/hash discovery alone may change.",
+    "Canonical winner at review/confirmation completes without another send. Null hash remains uncertain. Wallet/account/chain/membership/gas/settlement/context changes and authenticated journal replacement reject; both collateral and Bok paths covered.",
+    "Canonical exact L2 exit and original recipient remain checked. Finalize verifies canonical Ethereum receipt/event. Existing work/account locking and pending-read drainage retained.",
+    "Policy restart distinguishes immutable constructor identity from authorized mutable policy; exact address/class/deployer/config/moderator checks remain. Unbound/version1 requires original policy; bound u32 advanced versions accept canonical Field digest. Same checkpoint reads rechecked for reorg.",
+    "Tests add failure cases without deleting or weakening existing assertions. UI clearly identifies possibly pending request and separate same-nonce confirmation, cancellation, account invalidation and no private error leakage.",
+    "All eight carried source/test files exactly match reviewed component revisions. 2057 SDK inputs/8 outputs, 97 app inputs/10 outputs and 97 wallet inputs/25 files independently byte-hashed. Deployment engine exactly embedded in deploy.html. New journal API present in SDK and saved capability in wallet runtime.",
+    "AGENTS reference points to requested skill and explicitly preserves independent review and real-proof/final acceptance boundaries."
+  ],
+  "remaining": [
+    "Actual retained saved-refund continuation and normal policy-updated deployment restart remain live acceptance work; this review does not claim they passed.",
+    "Full application acceptance, network clearance, specialist audit and elapsed soak remain open."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/resume-20261018/independent.log",
+      "sha256": "c4e0105bed2aa45f9019cacd2b455eacc1ceb2c05797843ab32fd77be35195bb",
+      "bytes": 3036
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/resume-20261018/independent-ui.log",
+      "sha256": "6d270cd24b667d07589a1df046e4f52680516a21a3f159c19c69e940796c047f",
+      "bytes": 478
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/resume-20261018/closure.json",
+      "sha256": "dceefa516987fe0dba54e5fe4fa7304271bbfb92f20e023254431e06f31c7fb1",
+      "bytes": 831
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-ui-20261018.json",
+      "sha256": "43677a50edaaf0adb0dd36274dc764df15bb28d7946e704dec6d11d8fb804a34",
+      "bytes": 1249
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/recovery-combined-20261018/combined.log",
+      "sha256": "e30f05f64a80b94bebc8b96f9005b5907cc8988495c3866c02d25f5414fb3a94",
+      "bytes": 3146
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/recovery-combined-20261018/sdk-with-foundry.log",
+      "sha256": "2016209b30a78d7cdbe6d7fa25bcdf70be6e02467f613665c00fa96b66f2de3e",
+      "bytes": 274
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/recovery-combined-20261018/apps.log",
+      "sha256": "04256547b629146dfe8e1364b311eed6510f106ad4c5b4dfcf4cddfc01b70f2a",
+      "bytes": 307
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/recovery-combined-20261018/wallet.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd",
+      "bytes": 25
+    }
+  ]
+}

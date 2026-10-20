@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-14T21:10:05.081441+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "identityValid": true,
+  "instances": {
+    "ok": true,
+    "data": []
+  },
+  "volumes": {
+    "ok": true,
+    "data": []
+  },
+  "proverHealth": {
+    "errorClass": "TimeoutError"
+  },
+  "paidMutations": false,
+  "forecastBoundUsd": 235.28,
+  "remainingUsd": 64.72
+}

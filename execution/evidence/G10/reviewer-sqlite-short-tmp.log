@@ -1,0 +1,10 @@
+{"label":"synthetic-growing-SQLite-tiny-setup","events":26,"distinctPluginRows":20,"eventBytes":21815,"nearEvents":11,"startRss":141639680,"nearRss":143998976,"finalRss":144719872,"rssGrowth":720896,"insertMs":70.91262499999999,"queryMs":2.210624999999993,"reopenQueryMs":1.5890410000000088,"rollbackMs":2.8029999999999973,"query":{"pages":3,"candidates":7,"materializedBytes":10013},"rollbackSegments":5,"retainedEvents":11,"cacheTrusted":false,"canonicalArchiveReplayed":false,"denseQueryCapacity":false}
+✔ tiny growing SQLite fixture retrieves late posts across reopen and exact rollback (86.708875ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 546.048625

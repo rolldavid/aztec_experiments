@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-12T08:54:24.787338+00:00",
+  "noComputeLaunch": true,
+  "passed": true,
+  "preflight": {
+    "at": "2026-10-12T08:54:28.435289+00:00",
+    "identityVerified": true,
+    "activeInstances": 0,
+    "terminatedInstances": 0,
+    "volumes": 0,
+    "activeFleets": 0,
+    "deletedFleets": 7,
+    "pluginReady": true,
+    "pluginActive": 0,
+    "budgetReservedUsd": 25,
+    "cumulativeReservedUsd": 200.28
+  },
+  "sendIntentPersisted": true,
+  "uploadReceipt": {
+    "VersionId": "p6gnZX0YLvtOviWqUi_WyYL2QfNFe5IY",
+    "ETag": "\"e1fd0b2c93cc7c8e7050c4c768037253\"",
+    "ChecksumSHA256": "mAg8HQFWYNZHytyI/lalVfl5zeqdr6ICUo+LaCMLBKo=",
+    "ChecksumType": "FULL_OBJECT",
+    "ServerSideEncryption": "AES256"
+  },
+  "archive": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/rolling-5ce91b-20261012-08/runtime.tar.gz",
+    "versionId": "p6gnZX0YLvtOviWqUi_WyYL2QfNFe5IY",
+    "bytes": 383881211,
+    "sha256": "98083c1d015660d647cadc88fe56a555f979cdea9dafa202528f8b68230b04aa",
+    "checksumSHA256": "mAg8HQFWYNZHytyI/lalVfl5zeqdr6ICUo+LaCMLBKo=",
+    "headVerified": true
+  },
+  "finishedAt": "2026-10-12T08:54:39.628598+00:00"
+}

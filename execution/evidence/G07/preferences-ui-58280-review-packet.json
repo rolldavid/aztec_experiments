@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "task": "G07",
+  "candidate": "58280d05ef7dfcaa7450812cc0575f069ec82a53",
+  "base": "9a6a91cba9b1073bb8c2a518eaee1b8f803a44b9",
+  "branch": "codex/rolling-preferences-ui",
+  "files": {
+    "apps/rolling/reader.browser.test.mjs": "b65b188042141652ca6f365ce265ca5f785ed6fdb82151f47adc898a33da6d28",
+    "apps/rolling/reader.mjs": "ffb1baa3c34dc73ae0a287a97b0befe481e9a10541952d3068f7ce1f0b080a4d",
+    "apps/rolling/wallet-panel.browser.test.mjs": "6fba81ee37d1d1d4d36abc9f26c0762cd407c5b55f18f5d75130eaca583a2911",
+    "apps/rolling/wallet-panel.mjs": "c66ef599209064b773a5daeb60a85088fa2b881a2dd9a945df9269cbdda0908d",
+    "apps/rolling/wallet-runtime.browser.test.mjs": "6291ac0b49a1dc226a66d25c59d9ccbf6aed1fc85d334d25bb5b2ef6bc466320",
+    "apps/rolling/wallet-runtime.mjs": "338d3ac8a6e15d54195c486e917b94379fb4e48221d5647232af66199424a47b"
+  },
+  "interfaces": {
+    "runtime": "Existing facade adds pure selectPrivateViews. Normal bundle embeds it without new server routes.",
+    "panel": "privateStatus(), preferenceEnabled(kind,target), filterPrivatePage(view,page); private arrays remain inside closure. onPrivateChange synchronously clears private reader DOM.",
+    "recovery": "One explicit application.readPreferences({signal}) step. Original promise retains busy/SDK lock until settle, including cancellation. Only complete authenticated preferences enable filtering.",
+    "actions": "preference(kind1..5,target,enabled) or read-marker(thread,throughBlock). Fresh authenticated readPreferenceHead revision then existing prepare/max-fee/confirm/journal/reconcile; no automatic sends.",
+    "publicTransport": "Following/Bookmarks/Notifications use only GET /api/feed?limit&cursor. Entire page and cross-page IDs/order/block hash/revision/checkpoint validated before local filtering; empty selected page retains cursor."
+  },
+  "verification": {
+    "firstRun": {
+      "passed": 56,
+      "failed": 2,
+      "cancelled": 1,
+      "durationMs": 89058.437708,
+      "prechangeDiffSha256": "1c41292569a8a74593bfca1cb5219c7dbb297bf1d56764e855ce3662ba98b359",
+      "failures": [
+        "New fixture read privateTest before async Unlock completed; repaired explicit readiness wait.",
+        "Existing malformed-owned-cursor test timed out without a confirmed product cause. Exact guard/assertions retained; bounded focused test passed. Runner remained alive after timeout, explicitly terminated only owned Node15933/15793; descendants/caffeinate absent."
+      ]
+    },
+    "focused": {
+      "passed": 2,
+      "durationMs": 1227.799917
+    },
+    "affectedSuites": {
+      "passed": 58,
+      "failed": 0,
+      "durationMs": 20784.050209,
+      "sourceBoundary": "Before final status-line clear and its one additional assertion/screenshot scroll hook; other source unchanged."
+    },
+    "normalBundle": {
+      "files": 24,
+      "inputs": 81,
+      "contractInputsExactMatch": true,
+      "sourceConfinementPreserved": true,
+      "setupFailures": [
+        "Missing local portal dependencies",
+        "External dependency symlink rejected by SDK provenance"
+      ],
+      "setupResolution": "Verified original symlink targets, removed only worker symlinks, physically APFS-CoW copied both complete root dependency trees (cp -cR), never hardlinked, installed or patched. Copied public generated SDK/manifest/Rolling artifact/CRS outputs with SHA256 comparison. All SDK/contract provenance guards passed."
+    },
+    "runtime": {
+      "passed": 1,
+      "durationMs": 3390.173791,
+      "scope": "Actual browser SDK unlock, local CRS and encrypted backup against explicitly unavailable private endpoint; no funding/chain action."
+    },
+    "screenshots": {
+      "passed": 2,
+      "durationMs": 1135.766875
+    },
+    "pending": [
+      "ONE private recovery screenshot test at exact candidate after final live-status correction. Parent owns next heavy slot."
+    ]
+  },
+  "visual": {
+    "completeMobile": "execution/evidence/G07/preferences-ui-complete-mobile.png",
+    "lockedDesktop": "execution/evidence/G07/preferences-ui-locked.png",
+    "observed": "Locked desktop is readable with distinct private navigation. Mobile dialog fits390px with internal vertical scrolling; no horizontal overflow. Stale loading status observed after complete recovery and corrected in candidate; recapture after affected check pending."
+  },
+  "limits": [
+    "Presentation tests use labelled private-session/public-HTTP doubles; not genuine preference/wallet/chain acceptance.",
+    "No new proof, funding, provider, service or cloud action.",
+    "No complete G07 closure: real key-only recovery, notification semantics beyond explicit subscriptions, latency and deployment qualification remain lead acceptance responsibilities.",
+    "Private preferences are retained RAM only while current account remains valid; user explicitly refreshes recovery."
+  ],
+  "logs": [
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-prebrowser.diff",
+      "sha256": "1c41292569a8a74593bfca1cb5219c7dbb297bf1d56764e855ce3662ba98b359"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-browser-1.log",
+      "sha256": "2d367618849b07b2edf0e89cd6a29e73c46620c80e909d12395dde29d6c47466"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-focused-2.log",
+      "sha256": "658a08d0d8b24849418c16dc67ec5ed98aaef0d1562beeb0b75644af1e837fed"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-browser-3.log",
+      "sha256": "419dc051ed58260e4e8d185f083f2665b85ca561c049435561b10c27fb3e9de2"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-wallet-build.log",
+      "sha256": "42e587fee88409aa6cd7f519f979a5f1222e4b13093032e8769457c68a452d03"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-wallet-build-2.log",
+      "sha256": "2ce72cfe37da63811a1aad2ede756c0aee4b9396b1a0794f1629b3ef4141a2e8"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-wallet-build-3.log",
+      "sha256": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-runtime-browser.log",
+      "sha256": "ec912952d241d8f6886e130b60eda89707fef1828dfc8138da7544935aaaef6e"
+    },
+    {
+      "path": "execution/evidence/G07/rolling-g07-ui-screenshots.log",
+      "sha256": "29bea9679380143f2e1b964c77de3b69af909af9b3b24392f2508cd0292001be"
+    }
+  ]
+}

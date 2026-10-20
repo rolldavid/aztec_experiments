@@ -1,0 +1,37 @@
+✔ real filtered checkout excludes unreadable blobs and preserves edits and PR base tree (335.982834ms)
+✔ plain replies need no repository checkout or API request (2.956083ms)
+✔ filesystem tools share one checkout and a failed clone is never retried (5.446917ms)
+✔ PR publication preserves commit, files and complete invocation identity: 0x123 (2.751416ms)
+✔ PR publication preserves commit, files and complete invocation identity: 291 (4.064209ms)
+✔ PR publication preserves commit, files and complete invocation identity: 1291 (5.691667ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (1.350084ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (0.903541ms)
+✔ failed checkout initialization is cleaned by the session owner (0.722083ms)
+✔ PR reads retain changed files inside the agent budget despite large GitHub metadata (0.643375ms)
+✔ fresh agent uses tool output and always closes the checkout (0.711292ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (0.976333ms)
+✔ first message has no unnecessary paid summary (0.202333ms)
+✔ conversation incomplete blocks any paid model call (0.248ms)
+✔ conversation noncanonical blocks any paid model call (0.129ms)
+✔ conversation wrong latest blocks any paid model call (0.101791ms)
+✔ conversation changed latest blocks any paid model call (0.113417ms)
+✔ conversation duplicate blocks any paid model call (0.095ms)
+✔ conversation invented system role blocks any paid model call (0.079541ms)
+✔ conversation oversized message blocks any paid model call (0.283042ms)
+✔ conversation empty blocks any paid model call (0.108917ms)
+✔ unknown summary outcome does not retry or start main model (0.470666ms)
+✔ summary cannot invoke tools or become system authority (0.311542ms)
+✔ summary counts against the request model-call ceiling (0.170542ms)
+✔ actual accepted commit survives restart; failed invocation leaves previous source intact (393.281542ms)
+✔ same-thread operations wait; a different thread opens independently (99.095667ms)
+✔ restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation (318.462416ms)
+✔ lease loss prevents acceptance; user paths and changed repository identity fail closed (111.855833ms)
+✔ existing toolbox edits and accepts actual thread source across independent invocations (620.864875ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1627.269292

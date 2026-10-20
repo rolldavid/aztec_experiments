@@ -1,0 +1,64 @@
+{
+  "candidate": "387bc0bdda0d7f67b046204d0d71865e9e8e41cc",
+  "base": "f50ed6c739055cdae9e1948c199d23ab02a323fb",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G10-hosted-context-and-repository-components",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "billboard/rolling_contract/journey.mjs",
+    "billboard/rolling_contract/reply-acceptance.test.mjs",
+    "plugins/agent.mjs",
+    "plugins/aztec.mjs",
+    "plugins/conversation.mjs",
+    "plugins/escrow-service.mjs",
+    "plugins/github-tools.mjs",
+    "plugins/main.mjs",
+    "plugins/private-bok-escrow.mjs",
+    "plugins/protocol.mjs",
+    "plugins/test/conversation.test.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/model.test.mjs",
+    "plugins/test/private-bok-escrow.test.mjs",
+    "plugins/test/provider-metering.test.mjs",
+    "plugins/test/thread-repositories.test.mjs",
+    "plugins/thread-repositories.mjs",
+    "plugins/venice-metered.mjs",
+    "scripts/testing/rolling-bok-fixture.mjs"
+  ],
+  "required_checks": [
+    "hosted-context-component",
+    "persistent-source-component"
+  ],
+  "requirements": [
+    "hosted-context-component",
+    "persistent-source-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G10-hosted-context-and-repository-components",
+      "paths": [
+        "billboard/rolling_contract/journey.mjs",
+        "billboard/rolling_contract/reply-acceptance.test.mjs",
+        "plugins/agent.mjs",
+        "plugins/aztec.mjs",
+        "plugins/conversation.mjs",
+        "plugins/escrow-service.mjs",
+        "plugins/github-tools.mjs",
+        "plugins/main.mjs",
+        "plugins/private-bok-escrow.mjs",
+        "plugins/protocol.mjs",
+        "plugins/test/conversation.test.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/model.test.mjs",
+        "plugins/test/private-bok-escrow.test.mjs",
+        "plugins/test/provider-metering.test.mjs",
+        "plugins/test/thread-repositories.test.mjs",
+        "plugins/thread-repositories.mjs",
+        "plugins/venice-metered.mjs",
+        "scripts/testing/rolling-bok-fixture.mjs"
+      ]
+    }
+  ]
+}

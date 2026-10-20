@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "createdAt": "2026-10-12T14:26:10.241187+00:00",
+  "subject": "Commit-guard experiment late staged-store failure and production backend applicability",
+  "verdict": "Native fixture correction justified; rollback acceptance remains failed until new exact-source execution. Application IndexedDB qualification remains open.",
+  "sourceBase": "c6bbe0d5db2a734758c790c6a6aa880ef3b04a73",
+  "snapshot": {
+    "scripts/patch-pxe-preference-page.mjs": "f27c2b0677bed2059c0e7ec5f2dbed738906b83ce4196c788651318022d9c860",
+    "scripts/test-pxe-preference-page.mjs": "acdac8d33d53583b4b2ea35dade960bb879464a39d68b821f3f8393806abdb86"
+  },
+  "evidence": {
+    "commit-guard-run-1.json": "5d7660edcbf22caab62ea275535a32ee3c889e99fceccac07aac4b61a5834164",
+    "commit-guard-run-1.log": "01f4aa702b6dbece0b75351429dc26e918958a7a373288656b0b144fb9e47982"
+  },
+  "observations": {
+    "tests": 49,
+    "passed": 47,
+    "failed": 2,
+    "distinctFailedSubtests": 1,
+    "failure": "Late staged-store exception: events.length expected 0, actual 1. Parent suite also failed.",
+    "notesAfterFailure": "Not independently observed; note-count assertion follows failed event-count assertion.",
+    "noReviewerExecution": true
+  },
+  "sourceFindings": [
+    {
+      "finding": "Actual experiment opens legacy AztecLmdbStore from kv-store/lmdb. Its transactionAsync forwards to rootDb.transaction(callback), which selects transactionAsync without asChild. The non-child callback catch records CALLBACK_THREW without env.abortTxn. This explains why callback rejection need not roll back earlier writes.",
+      "references": [
+        "kv-store/dest/lmdb/store.js:115",
+        "lmdb/write.js:655",
+        "lmdb/write.js:897",
+        "lmdb/write.js:941"
+      ]
+    },
+    {
+      "finding": "Official native PXE server selects persistent openStoreAt or ephemeral openTmpStore from lmdb-v2 only when options.store is absent. v2 transactionAsync awaits callback before WriteTransaction.commit; writes remain in data/index batches until the successful BATCH operation. A thrown later staged-store callback skips commit.",
+      "references": [
+        "pxe/dest/entrypoints/server/store.js:2",
+        "pxe/dest/entrypoints/server/utils.js:37",
+        "kv-store/dest/lmdb-v2/store.js:97",
+        "kv-store/dest/lmdb-v2/write_transaction.js:250"
+      ]
+    },
+    {
+      "finding": "Rolling browser wallet-session and CLI application actor explicitly provide sdk.openPXEStore; shared/sdk-store.mjs selects deprecated IndexedDB. They bypass the official native default. IndexedDB transactionAsync awaits tx.done before awaiting callback result and has no explicit callback-failure abort. Therefore v2 experiment cannot establish atomic failure rollback for actual Rolling storage.",
+      "references": [
+        "shared/sdk-store.mjs:1",
+        "shared/sdk-store.mjs:38",
+        "apps/rolling/wallet-session.mjs:43",
+        "scripts/testing/rolling-application-actor.mjs:102",
+        "kv-store/dest/deprecated/indexeddb/store.js:124"
+      ]
+    }
+  ],
+  "requiredNext": [
+    "Keep original failed run unchanged; change only experiment backend setup to official native v2 and bind exact new source.",
+    "Retain both event and note zero-write assertions after late staged-store failure, all settlement/context/canonical guards, positive utility and reorg pruning checks.",
+    "Run only after a separate bounded native slot grant; close/delete owned stores and preserve original errors.",
+    "Before application integration, independently reproduce and establish rollback on the actual deprecated IndexedDB path; native v2 success does not close this requirement."
+  ],
+  "limits": [
+    "Read-only source diagnosis; no native or browser execution by reviewer.",
+    "Does not claim all legacy transaction forms fail rollback; diagnosis applies to the inspected non-child path.",
+    "Does not qualify full preference recovery, cold completeness, actual chain membership or release."
+  ],
+  "sourceHashes": {
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/server/store.js": "bb873e9ce2cc63978490edf899c3aee4a106b419a2ecb3eae50809ab2ba18593",
+    "node_modules/@aztec-labs/pxe/dest/entrypoints/server/utils.js": "39b26a2a5b179b882d8a9300732b87b5658cfe1d7bb4abeeb3890fadf0d5e896",
+    "node_modules/@aztec-labs/kv-store/dest/lmdb/store.js": "9952aeb5cd725f2ef12405122916eef44dfea85126366492ef7e5c40730e2328",
+    "node_modules/lmdb/write.js": "15efc3d8bb50a81199b2b53b1f8f8175a8f06e2a0d04d2b2e69cec454f048b75",
+    "node_modules/@aztec-labs/kv-store/dest/lmdb-v2/store.js": "a5c77fc8a89ecb14d635fb7b144c0dfebaeb0bf66bfcdcfe4e43d357f35ee53f",
+    "node_modules/@aztec-labs/kv-store/dest/lmdb-v2/write_transaction.js": "8e05e0bb93b8a3d2a64b6e575deb1221c25c94bfb98c827b184fc7c1c5b65b1c",
+    "node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js": "2f1a33c8bbcdd16af817eb7c0d5dc0e1c944f5f5055f99d280da4f8d0e321cdf",
+    "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "apps/rolling/wallet-session.mjs": "4ec5ffcdc5de053a64a1550686cfeb48b135fa5494794b499a75d16b089054de",
+    "scripts/testing/rolling-application-actor.mjs": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638"
+  }
+}

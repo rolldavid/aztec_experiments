@@ -1,0 +1,32 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "stage-one-eligible-after-parent-grant; stage-two-held-for-stage-one-actual-review-and-separate-grant",
+  "source": "e97219255c0f745f957b1fb66ca161819e5148b5",
+  "stagedPacketSha256": "487227610df5a00cf0ec897441a54327b67915c8e32b371ba9ec8d75f3bc58f2",
+  "stages": [
+    {
+      "stage": "sdk-controlled",
+      "packetSha256": "8ec01fb31e1b29cd0e149965ef5c0d237e86008166c1d04bd53c7f21ff751e17",
+      "runnerSha256": "e1c5cfb30e48f7dc8ce032a28e877e18c7202479742a8a247b5f400e62c09dc6",
+      "expectedTests": 3,
+      "protectedRehashed": 3290
+    },
+    {
+      "stage": "pxe-controlled",
+      "packetSha256": "51fb18575de3aff86649aa4e659d32f523d65e0c39abaa88d563186372b523a2",
+      "runnerSha256": "6f77d64e71afacc17f3eab7b6a79c464a0319e339a81925f2b77f4f2a7834a02",
+      "expectedTests": 22,
+      "protectedRehashed": 3290
+    }
+  ],
+  "verified": [
+    "Runners byte-identical to accepted50 runner after exact evidence-directory substitution only.",
+    "Same child30e27 and descendant-aware Supervisor60s2GiB, isolatedHOME/ownedshortTMP inode gates, positive process absence before removal.",
+    "All3290 exact current protected bindings and all packet files rehashed, exact current source clean.",
+    "Whole files/exact label counts3 and22; six TAP count and no-skip/cancel/todo/multiset gates preserved."
+  ],
+  "limits": [
+    "One SDK-first actual only initially; no automatic progression to PXE.",
+    "Installed source transport only, no bundled CLI/full proof-enabled deployment claim."
+  ]
+}

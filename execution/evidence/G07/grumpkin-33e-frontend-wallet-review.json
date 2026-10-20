@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "33e5e40c13f5f6e903c05a3732b51fbad2366757",
+  "packetSha256": "90c5fac852242148c919c280fe4d4818a18a8099153a861cdb9674721f3974e0",
+  "verdict": "accept actual frontend and exact four-output commit; one separately granted normal wallet build eligible",
+  "checks": {
+    "allPacketHashesAndResultLogVerified": true,
+    "all97Inputs10OutputsRehashed": true,
+    "exactFourTrackedHTMLDiff": true,
+    "headClean": true,
+    "all3209WalletProtectedPinsRehashed": true,
+    "walletRunnerUnchangedPreparationSourceOnlyRebound": true,
+    "elapsedMs": 2966,
+    "peakTreeRSSKiB": 1021968,
+    "ownedTreeAbsent": true
+  },
+  "bounds": {
+    "deadlineMs": 180000,
+    "rssLimitKiB": 4194304
+  },
+  "holds": [
+    "Actual wallet result and full current closure before browser initializer/custody execution.",
+    "No browser/native qualification from build outputs."
+  ],
+  "findings": []
+}

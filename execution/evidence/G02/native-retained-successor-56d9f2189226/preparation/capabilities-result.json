@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-56d9f2189226",
+  "startedAt": "2026-10-13T06:59:31.582Z",
+  "passed": true,
+  "noComputeLaunch": true,
+  "range": {
+    "status": 206,
+    "bytes": 1024,
+    "returnedVersionMatches": true,
+    "prefixSha256": "945159073f1943ca037af9a556bb369602c1c70bded86394d0c6282a8e085d45",
+    "region": "eu-west-2",
+    "redirects": false,
+    "capabilityVersionParameter": false,
+    "runtimeExactHashBeforeExec": true
+  },
+  "deadlines": {
+    "createdAt": "2026-10-13T06:59:32Z",
+    "budgetStop": "2026-10-13T07:44:32Z",
+    "commissioningStop": "2026-10-13T07:29:32Z",
+    "latestLaunch": "2026-10-13T07:09:32Z",
+    "credentialExpiration": "2026-10-13T14:59:31.000Z",
+    "capabilityLifetimeSeconds": 3600
+  },
+  "payload": {
+    "bytes": 12488,
+    "sha256": "4aff376d4e6990d762d42faf504db09b104e0ab8b1df09de2c3d2c2325c54d5d",
+    "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535"
+  },
+  "finishedAt": "2026-10-13T06:59:32.620Z"
+}

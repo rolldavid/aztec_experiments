@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "caecccf2c33fb881c967478a22d64175788b258f",
+  "base": "8283c054d645f045d3c09f4b4313de2929fdc210",
+  "verdict": "approved-source-for-bounded-component-tests",
+  "runtime": "41native+24gateway cases UNRUN at this review",
+  "sourceHashes": {
+    "prover/compact-block-native.mjs": "5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07",
+    "prover/compact-block-native.test.mjs": "c1ffc7481128b48adb4e947b73a40194c791f01aaa72ad233ec73469021b0a20",
+    "prover/private-query.mjs": "e279a8718dade472ea617710c562906199554c9afb60fac7fd5ec7273a899ed8",
+    "prover/private-query.test.mjs": "65538283d37d9936d1d4a2f81bf4126a9251b7280e05cf825ee0c45a9aec45eb"
+  },
+  "retainedFailure": {
+    "candidate": "d14f47f1b24b2be24bc6635dae834733f9597ed6",
+    "issue": "req.destroy-only deadline fails to destroy actual completed IncomingMessage socket; old socket double hid this.",
+    "probePath": "execution/evidence/G07/compact-d14-incoming-message-probe.json",
+    "probeSha256": "77ef3acb94ed819e563d1470bd575183d9c6f497c390898a13df713776593d60",
+    "probeScriptSha256": "9a572f090d23a55f9df4f900f676338f57a335a70f9c709509f7baa988966b97",
+    "probe": {
+      "label": "Actual pinned Node IncomingMessage with labelled socket; no listener, SDK or native cryptography",
+      "complete": true,
+      "readableEnded": true,
+      "requestDestroyed": true,
+      "requestAborted": false,
+      "socketDestroyCalls": 0,
+      "socketDestroyed": false
+    }
+  },
+  "findings": [],
+  "sourceAssessment": [
+    "Native admitted10s owner includes declared length before body loop; both413 paths close socket and await actual close. Existing finally releases only after original work settles; no Promise.race/retries/unbounded drain.",
+    "Both native and gateway timer explicitly destroy request AND socket. This closes fully consumed HTTP request connections even while native call or inspector remains pending.",
+    "Native aborted flag and gateway AbortController/alive checks prevent subsequent processing/late result; underlying native/inspector await remains owned, so second request429 until actual settlement.",
+    "Native source guard correctly retains no-root-duplication/no-Promise.race/no-fetch assertions while replacing blanket setTimeout ban with behavioural cancellation tests.",
+    "Actual http.IncomingMessage EOF setup in both new deadline regressions reproduces pinned request semantics; labelled socket/response and controlled native/readiness promises isolate timer/ownership without pretending chain authenticity.",
+    "Four held-close/deadline controls and real unfinished chunkedHTTP regression retained; actual native categories/header/root-consumer tests retained.",
+    "No CLI route registration or new server/node lifecycle in this candidate."
+  ],
+  "requiredRuntime": [
+    "Run exact41native+24gateway suites under lead serialized supervisor, retain source hashes/results/cleanup.",
+    "Review actual native deadline socket destruction and429 until original settlement; both declared/chunked lifetime tests and existing header/body bounds.",
+    "Client12-test carry remains justified by unchanged compact-client implementation/test; transport data still requires independent canonical authentication."
+  ],
+  "historicalDisposition": "Prior56040823HTTP+12client results remain true for executed cases. This newly identified consumed-request timeout path is an additional affected source check, not retroactive pass. Gateway source now repaired but new24th case pending.",
+  "limits": [
+    "Timer cannot forcibly finish uncancellable native work; stalled promise keeps adapter busy until settlement, external existing supervisor owns process recovery.",
+    "No external route enablement until separately reviewed exact rc3 main middleware hook/admin exclusion/config/receiver/pre-parser test.",
+    "No browser, full cold recovery, genuine chain or overall integration qualification.",
+    "Reviewer executed only pinned Node IncomingMessage pure probe; no HTTP/SDK/native work."
+  ]
+}

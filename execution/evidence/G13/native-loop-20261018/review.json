@@ -1,0 +1,91 @@
+{
+  "revision": "bc833ec5ae83019e29d4a841fde2863a6ef96938",
+  "baseRevision": "09accd79d2c8df19fbdbf159caf18e8f846ed773",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve",
+  "sourceVerdict": "approve",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "findings": [],
+  "blockingSourceFindings": [],
+  "scope": "Native disabled proof flags, native local development state controls, SDK receipt waiter, affected browser bundling and development guidance. Focused change review only; no full product acceptance claim.",
+  "checks": {
+    "independentFocused": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "details": "18 native PXE/receipt/freshness tests passed in first invocation; 5 native lifecycle/state/finality tests passed in corrected NODE_BACKEND=js invocation."
+    },
+    "originalCheckFailure": "First operator-test module import failed before tests because reviewer omitted NODE_BACKEND=js and local bcrypto.node is absent. Original log preserved; only that focused module rerun with documented JS backend, 5 passed in2998.616ms. No expensive run or source repair.",
+    "closure": {
+      "revision": "bc833ec5ae83019e29d4a841fde2863a6ef96938",
+      "manifests": {
+        ".build/sdk/sdk-manifest.json": {
+          "sha256": "cd417303d03031bc1c9dae41641d74cff827b22c1ee87991e90e515bfaaf1cbc",
+          "inputsVerified": 2057,
+          "outputsVerified": 8
+        },
+        ".build/apps-manifest.json": {
+          "sha256": "fc269d06a4de3e2080b11d536815cbbc884ace542256f96e59cf58e00ef6a4a0",
+          "inputsVerified": 97,
+          "outputsVerified": 10
+        },
+        ".build/rolling-wallet/manifest.json": {
+          "sha256": "b9f5f7176b9432dc4e77ac8d4db68d18a05f3021850eff615efce1965481c7da",
+          "inputsVerified": 97,
+          "outputsVerified": 25
+        }
+      },
+      "operatorAndUserResources": "exact engine source embedded",
+      "publicFeed": "no external imports or node_modules",
+      "sdkConsumers": "SDK bundle and manifest copied exactly"
+    }
+  },
+  "review": [
+    "Read requested Aztec skill and native-controls reference; inspected actual installed PXE flag and witness/proof skip implementation, native factory defaults, node mineBlock/prove and SDK waitForTx. Native disabled behavior belongs to SDK; no application random-proof replacement remains.",
+    "createPXE forces proverEnabled:false only when actual local node realProofs:false and chain31337. Removes custom/remote proving route there; real-proof routes remain. Public network identity/readiness constraints retained.",
+    "Native factory owns automine and synthetic settlement. Custom clock synchronization, manual protocol mining, persistent snapshot/recovery implementation and their obsolete tests removed. Existing historical data is rejected unchanged rather than migrated or deleted.",
+    "State availability uses actual SDK Inbox membership and native mineBlock only while missing. Finality uses actual SDK receipt variants and canonical hash; receipt waiter retains identity, canonical block, execution status and dropped-state conflict checks with no send or automatic replacement.",
+    "Shutdown adopts in-flight startup result before stopping owned RPC/network/Ethereum once; targeted late-start, setup failure and exact stop-order checks pass.",
+    "Local readiness no longer demands wall-clock freshness but still requires exact network/proof mode, canonical tips and synchronized world state. Public-network freshness policy unchanged.",
+    "Interruption fixture uses SDK native timestamp transition to produce the contract expiry state under test, then observes resulting chain state; no manual L1 clock/protocol owner remains. Existing browser readiness uses SDK settlement and message-state controls.",
+    "Bundle repair places SDK import inside private receipt waiter; lightweight bundles must tree-shake it, with zero surviving import checks. Public-only feed excludes dependencies; normal SDK/app/wallet builds produced exact verified manifests.",
+    "Test repairs use SDK receipt variants and correct fixtures. Deleted tests exercised removed persistence/clock machinery, not product acceptance. Docs explicitly preserve wallet recovery, privacy, testnet proof and final qualification gates."
+  ],
+  "limitations": [
+    "No new full E2E, old-chain migration, original refund recovery or live privacy campaign required or claimed by this focused review.",
+    "Real-proof testnet acceptance, independent specialist audit, soak and release clearance remain separate requirements."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/native-loop/combined-focused.log",
+      "sha256": "aaed29aa1660bb90efdf278d0a49bd539e7fd94de586ea33c5f35b2ac79600e6",
+      "bytes": 3125
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/native-loop/native-focused.log",
+      "sha256": "711ede3bd649827180876ca9bee4902327bac30c81dbcab5c3134a29fd419d08",
+      "bytes": 614
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/reviewer-evidence/G13/native-loop/closure.json",
+      "sha256": "aff8aa610bae1af9537e9c62e317e11c4dd34e0556820c8ab64e5a9fd76b4595",
+      "bytes": 819
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/native-loop/build-sdk-final.log",
+      "sha256": "b2c34477649e8507c29b8fd5f58922b17fc50991bc068e6438e30da9657e9da9",
+      "bytes": 274
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/native-loop/build-apps-final.log",
+      "sha256": "04256547b629146dfe8e1364b311eed6510f106ad4c5b4dfcf4cddfc01b70f2a",
+      "bytes": 307
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/native-loop/build-wallet-final.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd",
+      "bytes": 25
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "createdAt": "2026-10-12T16:18:11.504452+00:00",
+  "candidate": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+  "verdict": "PASS bounded actual default1 relationships and successful finite keys-only recovery; G07-application-store-atomicity integration hold remains.",
+  "evidence": {
+    "execution/evidence/G07/application-b6124020-4dc7-4825-a32b-74f27684e402.json": "251875807d343399fd37a5390f00d61ddac2d354b751509e4e15117a4fe68a38",
+    "execution/evidence/G06/application-port-6d3718d7-b760-47cd-ba58-918138111981/observation.json": "050b24b8d665c0202b1d1dfbfec7291af879ba26d119800b014022df59955e20",
+    "execution/evidence/G07/relationships-default1-native-thread-observations.json": "ab2e4412f0f39647223edc2bc00a070150a45cdda3376e786c720ffd0d13fb03",
+    "execution/evidence/G07/observe-native-threads.py": "7b5b07ead0266f6b30e6922906fb6880c9239d2829c7e209f678106ebe2ff095"
+  },
+  "findings": [],
+  "independentChecks": {
+    "sourceHashCounts": {
+      "outer": 270,
+      "inner": 81,
+      "artifacts": 2,
+      "nativeInputs": 70,
+      "bokInputs": 14
+    },
+    "innerExactlyMatchesOuterBridge": true,
+    "fiveEffects": [
+      {
+        "action": "preference-name",
+        "txHash": "0x1c318f2ff3231f318cc07121b0d826817f4e0df59ae4fea58ed8331a7445de30",
+        "blockNumber": 12,
+        "blockHash": "0x1f418a895ce3ebc72adc894ceec77a79e10d84b5fe1173d9c729f95e834d7e62",
+        "transactionFee": "10177600800000",
+        "effectSha256": "80cea4e45dd9d785a82767c03b2ae38e28607713d521226119e9161a232fe797"
+      },
+      {
+        "action": "preference-root",
+        "txHash": "0x1f4649022d22fe856046eddacbf336600e1b437dbfa773f03e16d962aca9f5cb",
+        "blockNumber": 13,
+        "blockHash": "0x15431bc0e4cd1528b333a394a7af703c5376be735ee2f98e2b9a844e7c0e6110",
+        "transactionFee": "21779815200000",
+        "effectSha256": "0b2fd7a43e2f6c250e0c1237bd4a229e29faf7cb0730d24565f0f0ecb3da783d"
+      },
+      {
+        "action": "preference-1",
+        "txHash": "0x0b6e484499fbbc5157999f23f98ead9ab626ff10673535a1d4ca54b737b39e59",
+        "blockNumber": 14,
+        "blockHash": "0x211f4e640c99748295c71ff9d5f9d22eabff6ab5077dc210128c6b426069d452",
+        "transactionFee": "8511002400000",
+        "effectSha256": "4eee89b0d952ae9445649852c077bdf06c4911f51bb7cf6167dc2925b53129a9"
+      },
+      {
+        "action": "preference-2",
+        "txHash": "0x270b70085c34ebb418f1f0fc4059806b8b84cd634942828818aaf2b71555413c",
+        "blockNumber": 15,
+        "blockHash": "0x13ffed1f6ad3d8ee3988e1bdb2435bc0ce2a97be8b058a9e027d278d5bcfa4c5",
+        "transactionFee": "8511002400000",
+        "effectSha256": "aafc8d87afd5b076c423c0bfe157e4b1bd3d44b9bd649ce7e7570b12d754bc15"
+      },
+      {
+        "action": "preference-3",
+        "txHash": "0x25cfaa7447f69621f215d7a2327d395fa9b0d1ebe15f65b7f2bf274a471e919a",
+        "blockNumber": 16,
+        "blockHash": "0x23a3db1be17122153c473b3e66a5b6c5fb0060959edda3570604c9eb98ea710e",
+        "transactionFee": "8511002400000",
+        "effectSha256": "37b654495382cf327b60927dd59ddd4e674fb6d3caa400f5f1b6375c9721971d"
+      }
+    ],
+    "effectChecks": "All complete file SHA256, fixed SDK success/hash/fee prefix and fee ceiling checked. No repeated full SDK vector decode/native execution. Runtime canonical decoder/refetch assertions source-inspected.",
+    "applicationFees": "57490423200000",
+    "collateralClaimFee": "8418947400000",
+    "standaloneFee": "8217756000000",
+    "totalProtocolDebit": "74127126600000",
+    "privateAndPoolBalance": "999999925872873400000",
+    "publicBalance": "0",
+    "canonicalReadAnchorBeforeAfter": {
+      "number": 16,
+      "hash": "0x23a3db1be17122153c473b3e66a5b6c5fb0060959edda3570604c9eb98ea710e"
+    },
+    "fiveNativeChildren": [
+      {
+        "at": "2026-10-12T14:28:27.401960+00:00",
+        "pid": 76818,
+        "ppid": 76815,
+        "HARDWARE_CONCURRENCY": 1,
+        "PROVER_THREADS": 1
+      },
+      {
+        "at": "2026-10-12T14:29:08.401383+00:00",
+        "pid": 77023,
+        "ppid": 77021,
+        "HARDWARE_CONCURRENCY": 1,
+        "PROVER_THREADS": 1
+      },
+      {
+        "at": "2026-10-12T14:29:42.005066+00:00",
+        "pid": 77140,
+        "ppid": 77137,
+        "HARDWARE_CONCURRENCY": 1,
+        "PROVER_THREADS": 1
+      },
+      {
+        "at": "2026-10-12T14:30:12.430606+00:00",
+        "pid": 77276,
+        "ppid": 77269,
+        "HARDWARE_CONCURRENCY": 1,
+        "PROVER_THREADS": 1
+      },
+      {
+        "at": "2026-10-12T14:30:48.199286+00:00",
+        "pid": 77416,
+        "ppid": 77400,
+        "HARDWARE_CONCURRENCY": 1,
+        "PROVER_THREADS": 1
+      }
+    ],
+    "observerSourceHashMatched": true,
+    "observerErrors": 0
+  },
+  "requirementEvidence": {
+    "writes": "Name, root post, bookmark root, follow name, follow main board. Five sequential HTTP proofs completed; no failed/running job; three preference actions have zero public Board events.",
+    "recovery": "Production scoped PXE event reader, installed class and typed canonical anchor validation, dense revision/digest fold, authenticated utility head and final rechecks. Full private snapshot compared in memory; no private values persisted in review. Old actor closed; new empty encrypted journal directory and absent PXE database namespace verified; same keys/public artifacts only, no old cache copied. No new proof, transport send or wallet submission.",
+    "journalAndPublic": "Exact signed transaction bytes/hash retained across encrypted journal reopen with no proof. Six canonical transactions refetched; fresh/reopened SQLite each authenticate two ranges and feed/thread HTTP at block16.",
+    "privacy": "Known author exact field equality absent; not proof of anonymity, linkability resistance or full RPC privacy."
+  },
+  "coldMetrics": {
+    "windowMs": 2932,
+    "readerRecoveryMs": 1660,
+    "constructorCalls": 1,
+    "syncCalls": 2,
+    "headUtilityCalls": 3,
+    "eventCalls": 1,
+    "eventRows": 3,
+    "privateLogCalls": 6,
+    "requestedTags": 267,
+    "returnedLogs": 13,
+    "memorySamples": 2,
+    "sampledProcessRssHighWaterBytes": 782417920,
+    "pendingErrorsOverflow": 0,
+    "scope": "Actual SDK CLI fake-indexeddb. Node methods are server-window observations potentially including readiness, not unique actor attribution. Boundary memory samples are not full peak.",
+    "unqualified": [
+      "Native-browser persistence",
+      "Separated discovery/fold work",
+      "Transport bytes (zero counters are unobserved)",
+      "Large retained history capacity",
+      "End-to-end bounded work",
+      "Failure rollback/atomicity"
+    ]
+  },
+  "boundsAndCleanup": {
+    "elapsedMs": 481046,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 1799824,
+    "rssLimitKiB": 4194304,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "allInnerCleanup": true
+  },
+  "disposition": "Closes current-source actualdefault1 gap alongside f799 actual2. Observed numeric child configuration is not measured CPU parallelism. Keep application IndexedDB atomicity integration blocker and failed commit-guard evidence. No full G07, rc3, remote or production qualification.",
+  "activity": "Read-only source/Python checks; no SDK/native/browser/proof run. Initial reviewer verification command used nonexistent Anvil path and aborted before writing report; corrected pinned existing path verified."
+}

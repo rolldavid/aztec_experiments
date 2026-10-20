@@ -1,0 +1,35 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "executionAuthorized": false,
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-retention-focused/run.mjs"
+  ],
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "tests": 19,
+  "fullSuiteTests": 73,
+  "fullSuiteHeld": "Own startup helper closure differs/missing; lead composition required.",
+  "changes": [
+    "fresh source/paths/class selector and captured19labels",
+    "pinned Python3.14 also runs lightweight child wrapper",
+    "protected posthashes and exact19/no-skips gate",
+    "owned short TMPDIR inode guarded removal only after tree absent"
+  ],
+  "pins": {
+    "run.mjs": "9e7a7555a30797407a3b36d68e2d263f7bb036285f8b3e59dbf1162e87e88612",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "preparation.json": "5d8500e48d8db66d194d4fcf32469834760bdb30dfdea974428310d771f6bf78",
+    "before-source.json": "5b5138ce809163737cab17c10712b6a9a46b5286a504cbc1d55cc011ebe6de08",
+    "test-inventory.json": "d1b2d109161314990a4a56335b9d5c4e6973641ffbed2bff685d5bd9e66e5ed9",
+    "runner.diff": "30472fb2771ea8bd05c664df491a1b6c0d284dcb2c18f8b6e34d50cda0db5164"
+  },
+  "protectedCount": 769,
+  "sourceReview": "d2c166f22fdce99ea304ab288130c0a7d6d8ca7dbf3b0ba916e1d699d115173d",
+  "packageSuite": "unchanged8 omitted",
+  "scope": "No test/runtime executed during preparation."
+}

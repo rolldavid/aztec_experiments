@@ -1,0 +1,17 @@
+✔ new own plugin request controls the deadline while unrelated posts do not (1.319458ms)
+✔ withdrawal preflight rejects unfinished author phase (0.667083ms)
+✔ withdrawal preflight rejects missing own post (0.245291ms)
+✔ withdrawal preflight rejects wrong receipt (0.2545ms)
+✔ withdrawal preflight rejects changed canonical block (0.123ms)
+✔ withdrawal preflight rejects wrong height (0.118583ms)
+✔ withdrawal preflight rejects invalid deadline (4.402917ms)
+✔ withdrawal preflight rejects changed fixture deadline (0.189084ms)
+✔ withdrawal preflight rejects duplicate post (0.154709ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.847209

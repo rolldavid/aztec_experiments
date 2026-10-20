@@ -1,0 +1,9 @@
+{
+  "candidate": "92c688f8be8593f8f6bc5ef24f05395de58d5f61",
+  "base": "0e9bdb38e558574627bb4375c7bcb7c3eb86074f",
+  "reviewer": "/root/reviewer",
+  "verdict": "approve",
+  "findings": [],
+  "checks": "Verified actualportalpublicaccountpayload andlegacyclaim, savedreviews and52task/267criteriagraph+specificationcheck",
+  "scope": "Documentation assumptions only; at mostoneunsettledreservation perrequest required. No implementationassurance."
+}

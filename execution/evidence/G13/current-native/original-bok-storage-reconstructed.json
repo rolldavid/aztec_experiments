@@ -1,0 +1,23 @@
+{
+  "source": "9c5020d4980c474b7f0fec687f44f022b8a4e036",
+  "passed": true,
+  "command": "Actual installed Aztec client original receipt anchor and processed ABI five immutable storage reads",
+  "originalBlock": 7,
+  "originalBlockHash": "0x08562b98b91db0ca3bd7dad71f7fbb053fa0025481214d590220cfb850399328",
+  "worldState": {
+    "finalizedBlockNumber": 438,
+    "latestBlockNumber": 439,
+    "latestBlockHash": "0x204a02606da4e1e47e994daedec3134038e3a839d84b6ac66c9783913417f98b",
+    "oldestHistoricBlockNumber": 1,
+    "treesAreSynched": true
+  },
+  "checks": {
+    "board": true,
+    "operator": true,
+    "owner": true,
+    "l1_chain": true,
+    "version": true
+  },
+  "financialOperations": 0,
+  "scope": "Canonical reconstruction from unchanged archived chain into separate world-state directory; original block7 storage retained. Not testnet proof acceptance."
+}

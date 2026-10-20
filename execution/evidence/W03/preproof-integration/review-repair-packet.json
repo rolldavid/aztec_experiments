@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "task": "W03",
+  "requirements": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "sourceRevision": "e339f197272e61aac5dd6cee2eb7ea6fd092bd8c",
+  "predecessor": "e7cff92479a4f5de96512b20b1aa7c297ef699ea",
+  "baseRevision": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "owner": "design-resume-20261014",
+  "parent": "lead-20261011",
+  "previousPacket": {
+    "path": ".build/w03-preproof-recovery/review-packet.json",
+    "sha256": "e88a530acca419da075466931c6cd9310c0a99c76f0b9c6b788deb5b2229c08e"
+  },
+  "sourceFiles": [
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "116e1672caf798e6f561c1d3b16c1c212b2ba0667c9922b96fa710b4c673c421"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "sha256": "6bc3b9c1492a82b9eecf218fc316591d7bbe4b35e630b2b5928a66e3c07d7f94"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "72e6b998d7417886eecd5055235743f3805c3bd15e5520b65028dbc2ad4f6617"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "ffef314dde43bfb30b489a508080fddaa8944dc13b11b3bd203412bfddeff5b9"
+    },
+    {
+      "path": "apps/src/billboard/user/engine.js",
+      "sha256": "518147420ab6fc3caf7df5a90a311358dd8ffe73e4c371741fdb0a767b7d4b39"
+    },
+    {
+      "path": "scripts/test-receipt-baseline.mjs",
+      "sha256": "d73b50c623657fa05cf75aa6b27f5bfe3bcae39ad8ca7293bcc6b4499255a735"
+    },
+    {
+      "path": "shared/journal-backup.mjs",
+      "sha256": "13dd4698a506f6816d5141e2c07e3e2f6ada2aef1baced6bcbd260ddaa6673ba"
+    },
+    {
+      "path": "shared/journal-backup.test.mjs",
+      "sha256": "fd925ef44eec84ce202c3902592457d6d09af40c533c94a9387bc78d291f8a93"
+    },
+    {
+      "path": "shared/journal-indexeddb.mjs",
+      "sha256": "15af7055dc0f24f2c78785da86acc78525e5e10b5293092f84e3277bf88688c3"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "sha256": "daa4fac422d8d1ad682d8791db11f4fe1b7d143c13a1fe4cfe5002c18a10b586"
+    },
+    {
+      "path": "shared/rolling/application.test.mjs",
+      "sha256": "529f51e7f543337ce0aa6ef9456bb605b8c80fc41e5f565ddf69b52986f14dce"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.mjs",
+      "sha256": "a5c86495c2b872275f9983b77df4a3eb6c0789911f8206637bcd5cecdee79aaa"
+    },
+    {
+      "path": "shared/rolling/synchronized-application.test.mjs",
+      "sha256": "9e7f124a55ff87ccc83688f1d8e008b4e468d8ecf408705402cc64292f226b67"
+    }
+  ],
+  "repairedFindings": [
+    {
+      "finding": "Original preference head/read-marker canonical meaning omitted from positive pre-proof recovery",
+      "repair": "Reuse savedContextMatches against original head/revision/marker at renewal and after estimation, renewed submission, and fresh synchronized lifecycle guards before signed persistence and broadcast. First failure stays failed; signed bytes remain authoritative."
+    },
+    {
+      "finding": "New Bok post inherited authorization attempt preproofReview",
+      "repair": "Clear both preproof and preproofReview when explicitly constructing new post ID; retain confirmed authorization, funded request, original draft and nonce."
+    }
+  ],
+  "checks": [
+    {
+      "path": ".build/w03-preproof-recovery/reviewer-regressions-before.log",
+      "sha256": "f2622fb5105d1ddf22b2d25dbe42f3d2146c1eed9868e0167a96168a267f8c0c",
+      "passed": 0,
+      "failed": 11,
+      "scope": "All 11 new regressions reproduced against e7 source before repair; no live effects."
+    },
+    {
+      "path": ".build/w03-preproof-recovery/reviewer-regressions-after.log",
+      "sha256": "5c0541e18ee22470b4df507c75ca8e853ae795e8c82f0d51a07dab8c577defaf",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1135.777417
+    },
+    {
+      "path": ".build/w03-preproof-recovery/application-review-repair-full.log",
+      "sha256": "ad5fbd2c56523d9645976d2b8bbc8d21df06631a09f860ef52742b4f3345f96f",
+      "passed": 254,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 73827.215708,
+      "scope": "Full final application suite including 13 new regressions/positive controls, original unknown fences and signed replacement paths."
+    }
+  ],
+  "unchangedEvidence": "Other eleven source/test blobs match e7 exactly; persistence/engine/session/synchronized/DOM evidence is preserved in previous packet. Only application source/test changed.",
+  "commandEnvironment": {
+    "node": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "NODE_BACKEND": "js",
+    "TMPDIR": "/private/tmp",
+    "T04_CHROMIUM_EXECUTABLE": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/cft-155.0.8059.79-mac-arm64/unpacked/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+  },
+  "verificationCommands": [
+    "node --test shared/rolling/application.test.mjs",
+    "node --test --test-name-pattern='positive pre-proof preserves|positive pre-proof renewed Bok|positive pre-proof unchanged' shared/rolling/application.test.mjs"
+  ],
+  "buildHandoff": "Root owns normal generated closure. shared/sdk-entry.mjs exports journal-indexeddb and journal-backup; normal SDK/apps/wallet builds required. No installed SDK patches changed, no installer materialization needed.",
+  "limitations": [
+    "No live crash/reload, broadcast, proof, remote/model or financial acceptance performed.",
+    "Proof/RPC application fixtures are labelled doubles with real encrypted records; engine lifecycle tests execute actual user engine source with controlled SDK.",
+    "Local provenance distinguishes normal same-store crash and application imports, not rollback of entire OS/browser database plus metadata.",
+    "Existing account Web Lock serializes normal restore and complete proof/send. Direct caller bypass of this application boundary is not a supported recovery path.",
+    "Historical unknown states are intentionally not repaired. Production/testnet and other W03 acceptance requirements remain open."
+  ],
+  "reviewStatus": "Awaiting independent exact repaired revision review; earlier e7 review invalidated for affected source."
+}

@@ -1,0 +1,1 @@
+{"archive": ".build/v6/plugin-runtime-mac-filtered.tar.gz", "bytes": 532188418, "sha256": "1e67166dff825bf68e520c9a7d4608539eaa332d597c758982e4ec5584f5c569", "manifest": ".build/v6/plugin-runtime-mac/plugin-release.json", "manifestSha256": "ef35253a76950828f451f404f2a5f95c79b8c601af6023295c78c25fa29167b2", "verifiedFiles": 166649, "verifiedAt": "2026-10-10T14:19:20.581330+00:00"}

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-10-11T23:31:25.839872+00:00",
+  "status": "PROPOSAL_ONLY_NO_LAUNCH_UPLOAD_BUILD",
+  "liveEvidence": {
+    "file": "infrastructure-reconciliation-20261012.json",
+    "sha256": "74c82263378a4545179858e2c98e5133984a4bf1d2d0eca671eaddd28b5cae2b"
+  },
+  "ledgerInput": {
+    "sha256": "d082c6074dd0e8f429ac97e8ab16f52e43b73ed9c2c450b4178b674b35204ed1",
+    "boundUsd": 130.28,
+    "remainingUsd": 169.72,
+    "notChanged": true
+  },
+  "liveSummary": {
+    "region": "us-east-1",
+    "instances": 0,
+    "volumes": 0,
+    "snapshots": 0,
+    "elasticAddresses": 0,
+    "activeFleets": 0,
+    "deletedFleets": 4,
+    "eventBridgeSchedules": 0,
+    "eventBridgeRules": 0,
+    "localPluginReady": true,
+    "activePluginJobs": 0,
+    "identityVerified": true,
+    "costExplorerQueries": 0
+  },
+  "reconciliation": "Retain130.28 unchanged: prior01/02 each1, prior03/04 each10; global20 delayedbilling+5 archives remain. No new compute/storage accrual observed. Read/S3 requests stay inexisting buffer; this is not a billing statement.",
+  "archives": {
+    "runtimeKey": "releases/rolling-5235-20261011/runtime.tar.gz",
+    "version": "5sJL2qArC3lcnmSCR8OPK5O.u09Nao95",
+    "bytes": 383514675,
+    "sha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+    "verification": "Current HEAD exactversion/size/checksum agrees with successful upload; no fullcontent GET/rehash today.",
+    "lifecycle": "30day current/7day noncurrent enabled. Exact04receipt version unchanged; expiry11Nov00UTC.",
+    "freshRuntimeRequired": true,
+    "reason": "5235 archive predates adminauth/startupdiagnostics/helperinclusion. Build current reviewed runtime with exact bootstrap.py helper hash inmanifest; separate externalarchive+manifest hashes beforeexecution. Do not overwrite oldkey.",
+    "qualificationScope": "Historicallegacy query-only; not Rollingaddresses or appproofs."
+  },
+  "diagnosis": {
+    "local": "Pinnedimage cachedCRS passed; callablegenesisexport+present/executableELF WSDB; nativeWSDB SIGILL beforeIPC onAMD64Macemulation. Not AWSattribution.",
+    "remote": "04exit1/OOMfalse/authenticatedreadinessfailure; rootcauseunknown.",
+    "changedPath": "Reviewed a494 adminauth and918 streamingfixedstage/error classifier plus exceptionalchildreap. No claim causefixed.",
+    "remainingDiagnosticLimit": "918 may returnunknown onunrecognized nestednativefailure; capturesouterprocessstatus, not nativechildstderr."
+  },
+  "proposal": {
+    "scope": "One diagnostic on nativeLinuxAMD64 hardware using exactexistingimage; not containerlesspackageconversion. No publicprover/routing/proofjobs.",
+    "instance": "m7a.4xlarge",
+    "vCPU": 16,
+    "ramGiB": 64,
+    "region": "us-east-1",
+    "rateUsdHour": 0.92736,
+    "pricing": "CurrentAWSGetProducts SKU TTPYSE2GSHDGSMTX effective2026-10-01, liveevidenceattached",
+    "image": "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32",
+    "rootGiB": 40,
+    "dataGiB": 1024,
+    "storage": "encryptedgp3 baseline3000IOPS125MiBs, DeleteOnTermination",
+    "durationHours": 2,
+    "forecastOverrunHours": 0.5,
+    "egressMbps": 50,
+    "forecastEgressGB": 75,
+    "egressRationale": "50Mbps*2.5h=56.25GBdecimal;75GBallowsbursts/controlfailurewindow.0.195USD/GB retains conservative prior multiplepath allowance above current0.09internet price. No freetier assumption.",
+    "remoteProver": "masked",
+    "network": "ExistingSGunchanged;P2P40400TCP/UDP,node8082/admin8882loopbackonly,noSSH/noDockerAPI/nohostAWSrole/developercredentials.",
+    "deadlinesMinutesFromFreshCreatedAt": {
+      "commissioning": 30,
+      "readiness": 90,
+      "qualification": 105,
+      "hostBudget": 120,
+      "requestFleetExpiry": 120
+    },
+    "timeRule": "FreshcreatedAt within5min generation andlaunchpromptly; abort insufficientremainingcommissioningtime. Do not reuseolddeadline.",
+    "shutdown": "One requestFleet withValidUntil=createdAt+2h andTerminateInstancesWithExpirationtrue. IndependentpersistenthostUTCbudgettimer installedbeforedownloads;30mincommissioning gate; actualreadback host/cloud deadlines/terminatebehavior/DeleteOnTermination/shaper required. Fixeddeadline neverdisabled.",
+    "receipt": "Fresh scopedprivateS3PUTcapability, durableonceintent, safeconsole+finalreceipt boundcurrentmanifest/bootstrap. Missingreceipt never permitsreplay."
+  },
+  "incrementalForecastUsd": {
+    "compute_2h_plus30min_overrun": 2.3184,
+    "gp3_1064GiB_2_5h_plus24h_orphan": 3.13289,
+    "ipv4_2_5h": 0.0125,
+    "egress75GB_conservative_multiple_path0_195": 14.625,
+    "new_archive_receipt30day_retention_cap": 0.5,
+    "cross_region_package_and_operator_download_cap": 0.5,
+    "requests_receipt_health_cap": 0.25,
+    "new_snapshots": 0
+  },
+  "subtotalUsd": 21.33879,
+  "tax20percentUsd": 4.26776,
+  "extraBillingCleanupBufferUsd": 9.39345,
+  "reservationUsd": 35,
+  "projectedTotalUsd": 165.28,
+  "projectedRemainingUsd": 134.72,
+  "retainedCosts": "Bothdisksdelete,24horphancontingencyincludedpendingconfirmation. Newarchive+receipts30days0.50cap; historicarchivesprevious5reserve. No snapshots/newbackupcapacity. No extensionautomatic.",
+  "proposedLaunchHoldReplacement": "Hold operational recovery/publicrouting/proofjobs: AWS04causeunresolved. Permit atmostONE instrumented nativeLinuxdiagnostic onlyafter independentlyrevieweda494/918 integrated, freshverifiedruntime/archive/manifest, <=16KiBuserdata, current35USDreservation insharedledger, exactpreflight/capabilitychecks and bothabsoluteshutdowncontrols prepared/readback. LocalMacSIGILL isdistinctevidence, not AWSrepair. Another failure/unknown requiresnew evidence/review beforepaidretry.",
+  "prelaunchGates": [
+    "Leadintegratesreviewedsource andbuilds freshLinuxqueryruntime withNode/BB/catalog/helper/manifestclosure; worker didnotbuild.",
+    "Reviewprivategenerateduserdata <=16384bytes +LZMAroundtrip;correcteu-west-2 exactversionGETRange206/hash andscopedreceiptcapability.",
+    "Leadrecords35reservation,live nooverlap recheck,exclusive durableidempotentlaunchintent beforeonepaidaction.",
+    "Cloudandhostreadback: identicalexpiration,persistenttimer,terminatebehavior,DeleteOnTermination,shaper/counters; permissionsunchanged.",
+    "Actualcanonicalidentity/proofs/sync/freshness and allLinuxquerypositive/negative/recovery/missinghelper checks required; installed isnothealthy.",
+    "Atdeadline terminate/reconcile resources andretainedcosts; unknownreceipt mustnotreplay."
+  ],
+  "sources": [
+    "https://aws.amazon.com/ec2/pricing/on-demand/",
+    "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-storage-compare-volume-types.html",
+    "https://aws.amazon.com/vpc/pricing/",
+    "https://aws.amazon.com/s3/pricing/"
+  ],
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "bc43198d43b36d0cd980475eb7c02d20cbda0b7c6028aedf8925371677b34c60",
+    "deploy/prover/package.py": "2de694fe076e8cf24d79b495363f5a27c041e0d067d4cb1d00879aceff0933ff",
+    "prover/qualify-runtime.mjs": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+    "bootstrap": "37fd5627c3c63ac319fc4a132dcbdbbbd4394f58fa790a68527ff7f4161f98d8"
+  },
+  "reviewedCandidate": "7db71d1e8ca662b3faebaf2ea26a4cccf9228a27",
+  "leadDisposition": "One instrumented diagnostic allowed after exact freshpackage/payload and shutdown preflight; no operational recovery or public prover qualification claimed"
+}

@@ -1,0 +1,12 @@
+{
+  "generatedBytes": 16496,
+  "limit": 16384,
+  "overBytes": 112,
+  "generatedShellBytes": 21697,
+  "runtimeUrlBytes": 1551,
+  "receiptUrlBytes": 1505,
+  "payloadFileExists": false,
+  "createdAt": "2026-10-11T23:49:03Z",
+  "budgetStop": "2026-10-12T01:49:03Z",
+  "sha256": "08386e1282a01c9facbe61db19f39837f2bcc021da8ec31e191cd2f03e90ee76"
+}

@@ -1,0 +1,41 @@
+✔ actual Rolling prepare exports authenticated ciphertext and restores same intent in a replacement application (81.366125ms)
+✔ restored uncertain workflow retains its no-replay fence after actual application submit boundary (10.849542ms)
+✔ older workflow cannot replace newer local state; foreign owner export omits and restore rejects (12.733583ms)
+✔ authenticated but incorrectly framed Rolling descriptors are rejected before restore writes (10.177625ms)
+✔ real AEAD preferences export and fresh restore alongside L2 and workflow records, with only encrypted scope storage (16.7285ms)
+✔ authenticated preference descriptors reject wrong domain, noncanonical fields, addresses and schema before any restore write (73.348ms)
+✔ preference recovery rejects ciphertext/descriptor tamper and cross-account storage-key transplant (3.808542ms)
+✔ preference restore preserves newer cache, rejects duplicate records and permits identical idempotent restore (4.163167ms)
+✔ real AEAD cold cache exports and restores without omitting old domains or promoting incomplete state (31.168709ms)
+✔ cold cache accepts every fixed tier and boolean policy with exact numeric boundaries (16.008209ms)
+✔ authenticated cold descriptors reject malformed complete scope before any export or restore writes (82.034541ms)
+✔ cold ciphertext and descriptor corruption or storage-key transplantation cannot restore (3.239458ms)
+✔ cold cache restore preserves newer records and rejects duplicate input and lost CAS (4.412584ms)
+✔ cold export fails if authenticated ciphertext changes during the final snapshot readback (1.767458ms)
+✔ aggregate funding ciphertext preserves original intent and Bok secrets through backup without plaintext export (2.204208ms)
+✔ aggregate recovery descriptor rejects extra (0.913625ms)
+✔ aggregate recovery descriptor rejects number (0.887333ms)
+✔ aggregate recovery descriptor rejects zero (0.959208ms)
+✔ aggregate recovery descriptor rejects field (0.927834ms)
+✔ aggregate recovery descriptor rejects version (1.018667ms)
+✔ aggregate recovery descriptor rejects canonical (1.054958ms)
+✔ archived aggregate txHash framing restores only within the original owner and exact scope (2.510666ms)
+✔ standalone private-fee top-up custody and archived requests round-trip through real AEAD backup (4.198625ms)
+✔ standalone bok top-up custody and archived requests round-trip through real AEAD backup (3.928ms)
+✔ standalone top-up backup rejects kind (1.064125ms)
+✔ standalone top-up backup rejects number (0.86875ms)
+✔ standalone top-up backup rejects zero (0.878416ms)
+✔ standalone top-up backup rejects recipient (1.06325ms)
+✔ standalone top-up backup rejects archive (1.023667ms)
+✔ standalone top-up backup rejects extra (1.133542ms)
+✔ standalone top-up backup rejects canonical (0.991875ms)
+✔ authenticated identical financial payload with fresh ciphertext keeps local bytes (3.946209ms)
+✔ retaining a local derived cache still authenticates it and rejects mutation during restore (3.149958ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 738.715083

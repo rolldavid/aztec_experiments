@@ -1,0 +1,28 @@
+{
+  "base": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+  "candidate": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+  "task_id": "G09-effective-rules-before-posting",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls-feature-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "effective-rules-browser"
+  ],
+  "requirements": [
+    "RC12-posting-rules-display"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-feature-20261018",
+      "task_id": "G09-effective-rules-before-posting",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

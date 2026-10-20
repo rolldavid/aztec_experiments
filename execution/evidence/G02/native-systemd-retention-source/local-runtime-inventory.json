@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-10-13T02:36:01.815865+00:00",
+  "scope": "Read-only local runtime discovery; no create/start/setup",
+  "tools": {
+    "docker": "/usr/local/bin/docker",
+    "colima": null,
+    "limactl": null,
+    "tart": null,
+    "multipass": null,
+    "qemu-system-x86_64": null,
+    "systemctl": null
+  },
+  "context": {
+    "exitCode": 0,
+    "stdoutBytes": 14,
+    "stderrBytes": 0,
+    "knownDesktopContext": true
+  },
+  "containers": {
+    "exitCode": 0,
+    "stdoutBytes": 0,
+    "stderrBytes": 0,
+    "runningContainerCount": 0
+  }
+}

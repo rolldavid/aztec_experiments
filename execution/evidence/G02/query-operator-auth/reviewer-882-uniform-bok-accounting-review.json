@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer",
+  "candidate": "8820010e6e91b438b7fe9bb756b72ae0ec6e5cfa",
+  "accountingRevision": "391ef1394adc8d6bcc43278aef02dfb19bc4b601",
+  "base": "08793a575c91ad45caee2de88920e04a466f613c",
+  "verdict": "approved-scoped-component-integration",
+  "blockingFindings": [],
+  "source": [
+    {
+      "path": "plugins/devnet/bootstrap.mjs",
+      "sha256": "f37cb9373ccc835be69b8b2b4088d08e10342c8d3779f5f2cc4d110ad202d4f2"
+    },
+    {
+      "path": "plugins/devnet/operator-test.mjs",
+      "sha256": "16e47cd96433808806ee7ea7f302b3a8bf4d680faab6641abd5c323c2f1256dc"
+    },
+    {
+      "path": "scripts/rolling-public-server.mjs",
+      "sha256": "a0868d25f3c5d7902a0a4fbe01ff011b8d3008a70c4bfcd75cd23e0963f6a1a9"
+    },
+    {
+      "path": "scripts/rolling-public-server.test.mjs",
+      "sha256": "33dbc518072b2baee16ddc04ace2e8d62c3fc34110fc6d3fceb1954917229e9c"
+    },
+    {
+      "path": "shared/rolling/public-events.mjs",
+      "sha256": "53fc8710805a3000415b3a8ae306a0a184d5fb9f1d2857f8a20a5cb8b62fb8a6"
+    },
+    {
+      "path": "shared/rolling/public-events.test.mjs",
+      "sha256": "f10bbc28f32f633461227d53c6b77a704fc16ecf0efda23c0305e3ac1246e9b8"
+    },
+    {
+      "path": "shared/rolling/public-index.mjs",
+      "sha256": "e71af5872431932da1f5e2edb45cfcb205cd580e06e775a6fd7cd3eb98b8a4c3"
+    },
+    {
+      "path": "shared/rolling/public-index.test.mjs",
+      "sha256": "5a51b7e8a3af75a7beba0466f2bcb4aaec52866d5af77a9b7457245e38ef7962"
+    },
+    {
+      "path": "shared/rolling/public-projection.mjs",
+      "sha256": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5"
+    },
+    {
+      "path": "shared/rolling/public-projection.test.mjs",
+      "sha256": "bdf352eb4761c5c132bd7d3a0c97cbdd9a57cbbb35daad456890ddd566ad0346"
+    },
+    {
+      "path": "shared/rolling/public-sqlite.mjs",
+      "sha256": "ae982c8eb0c4946fa6a2b6c84d0480f7d19563ec9424b6eaea63e1079225004e"
+    },
+    {
+      "path": "shared/rolling/public-sqlite.test.mjs",
+      "sha256": "a16454fb1e9862a7566dcaba6bbe6f185db0ac541c6843287bc10077cfc63a38"
+    }
+  ],
+  "assessment": [
+    "Optional exact Bok descriptor captures address/class/operator/deployer/salt/original constructor anchor. Actual SDK reconstruction binds init(board,operator,chain,version), complete original/current instance identity, original successful canonical receipt/effect/block, and anchored immutable board/operator/owner/chain/version storage.",
+    "Only exact configured Bok address and actual processed AccountingChanged ABI are decoded. Numeric bounds, state/trailer and conservation validated; reducer requires initial full WAITING allocation then retains absolute snapshots and closed/refunded history. Sequence is not incorrectly treated as a unique event counter. Existing chronological undo handles repeated changes in the same transaction.",
+    "Persistent acquisition extends the existing complete canonical block/effect scan, including empty and unrelated blocks; constructor transaction membership checked. Missing canonical data fails unavailable, never an empty complete balance. Original/current class and deployment anchors are rechecked. Reorg removes affected rows before readiness; cold reopen rebuilds and compares canonical history.",
+    "Uniform /api/bok-accounting accepts only limit/cursor, rejects owner, selected request IDs and duplicate parameters. No owner-dependent RPC acquisition or HTTP filter is introduced. Public request IDs are matched locally by the later wallet component.",
+    "Indexed numeric ascending keyset query examines at most limit+1 metadata rows, retains existing byte and row caps, and returns an opaque cursor authenticated to descriptor, exact revision/checkpoint, normalized parameters and session epoch. Consumers must collect all pages at the same revision before calling their local owned subset complete.",
+    "Bok descriptor participates in storage scope and cursor binding. Bootstrap chooses a distinct public-index-bok directory; old board-only cache is preserved and mismatched scope refuses reuse.",
+    "Bootstrap derives public descriptor only from the original deploy-escrow journal operation and reconciled constructor result. It recomputes the operator binding and complete deployment instance, rejects latest bind/register transaction substitution, and emits no private signed journal/actor fields. Existing normal loadRollingArtifacts runs before service construction.",
+    "Existing public-only checkpointed semantics remain. This component does not establish live wallet owned_requests coverage or finalized private withdrawal authority; those consumers must apply their original canonical/finality guards."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/uniform-bok-accounting/handoff.json",
+      "sha256": "78f115b229dad41cad9e01e9a81fe23bb4333374e8b2ea679552db945379d1db"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/uniform-bok-accounting/actual.json",
+      "sha256": "31496cccbaf52523ace0ada5ced8e574abb35882284e9a557600e9447468a799"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/uniform-bok-accounting/actual.log",
+      "sha256": "56903e3c780f0f8d3441f671d2615f7b08fd5925468256c403ec882f47842e56"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/uniform-bok-accounting/byte-budget-focus.log",
+      "sha256": "4b9d1c7aee4f643b3ca3ce1e00d75a59bb3fd11033f80d0f9ba7a513af0566b2"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G13/bok-accounting-config/handoff.json",
+      "sha256": "8183f0688c8f4d0a69bac29093381560af98f5d2d1d62a5242bbc792a8dce7bc"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G13/bok-accounting-config/focused.log",
+      "sha256": "b82ea3c4990b3c2aa0bd3a0f516b0f917702319a2dad139c7c256b0457bed429"
+    }
+  ],
+  "validation": {
+    "sourceBindings": "All12 source hashes and cited evidence hashes match frozen candidate; clean checkout.",
+    "accounting": "Original owner FAILED with231 passes,1 malformed-JSON fixture setup failure,2 explicit historical volume skips. Current single repaired byte-budget case passed341.624ms. All nine other source/test hashes equal original owner pins; reconstructing old test by reverting only the valid oversized JSON injection exactly matches original full-file SHA. Thus232 runnable cases passed staged, not a new whole-suite pass.",
+    "startupConfig": "Three focused cases passed5000.789ms using actual installed SDK and processed ABI with controlled original constructor/journal inputs; no services or chain launched.",
+    "reviewActions": "Read-only source, evidence and hash comparison; no reviewer runtime or expensive tests."
+  },
+  "limitations": [
+    "No actual deployed updated Bok class or live uniform-index qualification. Normal artifact/class composition must match the actual retained constructor; never silently replace its class with the new087 artifact.",
+    "No complete wallet accounting or Bok withdrawal integration accepted by this artifact; Design9f891 remains a separate review.",
+    "Two historical large-volume opt-ins were excluded; their earlier scoped qualification is not a new accounting-volume result.",
+    "No claim of hiding generic timing/transport metadata; only selected-owner/request grouping is absent from this API."
+  ]
+}

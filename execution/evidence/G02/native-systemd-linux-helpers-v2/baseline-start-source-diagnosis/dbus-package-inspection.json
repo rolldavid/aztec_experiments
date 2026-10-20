@@ -1,0 +1,76 @@
+[
+  {
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus_1.14.10-4ubuntu4.1_arm64.deb",
+    "bytes": 23890,
+    "sha256": "f9b947c4fddeba344187ecfa13e582095a927e9e483f97f466bda4f1914f28a0",
+    "files": [
+      {
+        "path": "./control",
+        "sha256": "cf1f38c51e75973a571c02bfdebea4de2fb611e764820e26e4342c0c1eab036a",
+        "file": "dbus_1.14.10-4ubuntu4.1_arm64.deb--._control"
+      },
+      {
+        "path": "./postinst",
+        "sha256": "5a29f2fc34c19db36779da4c4cf9186b92722b7c1db23451f63bc4ea071f1708",
+        "file": "dbus_1.14.10-4ubuntu4.1_arm64.deb--._postinst"
+      },
+      {
+        "path": "./usr/lib/systemd/system/dbus.service",
+        "sha256": "bf7ec47644997441174ef6aac992d34cc46b9d2d7b8dc2feba7074d719fdbef1",
+        "file": "dbus_1.14.10-4ubuntu4.1_arm64.deb--._usr_lib_systemd_system_dbus.service"
+      },
+      {
+        "path": "./usr/share/bug/dbus/control",
+        "sha256": "6331122eb1d70a38c06e98b3151114111fd0a8820776656265570a12c693dec3",
+        "file": "dbus_1.14.10-4ubuntu4.1_arm64.deb--._usr_share_bug_dbus_control"
+      }
+    ],
+    "aptAuthenticated": false
+  },
+  {
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus-daemon_1.14.10-4ubuntu4.1_arm64.deb",
+    "bytes": 115006,
+    "sha256": "619c216342a7487091e8fcd2f81859eb8ca23121fdeed53ac8c67a9459b17dc3",
+    "files": [
+      {
+        "path": "./control",
+        "sha256": "e49ab4ac674465d8dd717ca889167c3973136804b56a458ec7bd5df12f05697a",
+        "file": "dbus-daemon_1.14.10-4ubuntu4.1_arm64.deb--._control"
+      },
+      {
+        "path": "./postinst",
+        "sha256": "377ccb9ba781d22e25615069726cd2925ace69c3a64fc43e8b264af320a3cd8b",
+        "file": "dbus-daemon_1.14.10-4ubuntu4.1_arm64.deb--._postinst"
+      }
+    ],
+    "aptAuthenticated": false
+  },
+  {
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb",
+    "bytes": 81648,
+    "sha256": "4db2e3e18c6abee1a1d1e2f91289e229dd862e6e1ef00463c5533c612c4f1809",
+    "files": [
+      {
+        "path": "./control",
+        "sha256": "423f2ba0a70073be39675fec8c386b8d8006720c351ba2fb52e0f7ac9ba601a2",
+        "file": "dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb--._control"
+      },
+      {
+        "path": "./postinst",
+        "sha256": "7e29a7a9d8f0e0847bd7269a5cc51d14f41a5b250531f7e334754cbab74124b7",
+        "file": "dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb--._postinst"
+      },
+      {
+        "path": "./usr/lib/systemd/system/dbus.socket",
+        "sha256": "12b7aaec8d1e007047ec12fc85b1cc6db78565dfb896850cd9148dee0455fe7e",
+        "file": "dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb--._usr_lib_systemd_system_dbus.socket"
+      },
+      {
+        "path": "./usr/share/dbus-1/system.conf",
+        "sha256": "c0a02340950ce376ccee26d58df2c77466c534dcd368b3486b4b6a60d3741f6b",
+        "file": "dbus-system-bus-common_1.14.10-4ubuntu4.1_all.deb--._usr_share_dbus-1_system.conf"
+      }
+    ],
+    "aptAuthenticated": false
+  }
+]

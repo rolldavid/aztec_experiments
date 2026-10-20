@@ -1,0 +1,118 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "task_id": "G06-trusted-recovery-development",
+  "holds": [],
+  "findings": [],
+  "scope_limits": "Bounded actual live denial/staleness/state-preserving recovery; no automatic resend/public fallback. G06 component evidence separate from G05/G07/G09/G10/fullproduct, deployedtopology, specialist review,14daysoak/networkclearance.",
+  "checks": [
+    {
+      "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "id": "source-and-regressions",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "PinnedNode --test --test-concurrency=1 rolling-application-fixture.test.mjs rolling-wire-trace.test.mjs rolling-trusted-recovery.test.mjs; exactsource/artifact composition",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 native genuine application proofs; isolated localchain31337; controlled settlement; network epoch proofs not claimed",
+      "observed": "198 checks pass; 75walletinputs24outputs,39Noirfiles exact151TXE/build inputs;10declaredpaths independently reviewed",
+      "artifacts": [
+        {
+          "path": "evidence/G06/recovery-batch-4c76-tests.log",
+          "sha256": "90d6ae2e96e22a0b24b2c635e460813b7a3bca8786e6a773d344559ec6aab497"
+        },
+        {
+          "path": "evidence/G06/trusted-recovery-4c76-review.json",
+          "sha256": "b8958d084bebecd64533c8217b3b86264f00f0bc0965af06078ae0f6ff79af33"
+        },
+        {
+          "path": "evidence/G06/final-source-4c76-composition.json",
+          "sha256": "7437ae13a23baf272aa2fff3f250c778de2984fa69461abebabc9f1cbe3cba5a"
+        },
+        {
+          "path": "evidence/G06/trusted-recovery-4c76-integration-review.json",
+          "sha256": "01d9ddc7c24352a67e090696eacd027797c5500b6c7a9af034ec855dae89ee44"
+        }
+      ]
+    },
+    {
+      "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "id": "real-trusted-recovery",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-trusted-recovery",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 native genuine application proofs; isolated localchain31337; controlled settlement; network epoch proofs not claimed",
+      "observed": "450528ms1842368KiB; onegenuine name proof; actualunavailable/personalizeddenial/default121sstale;12publicHTTP;3healthyrecoveries retainencryptedintent/ownednames/canonicalpredecessor withzero newproof/send/fallback. 7224requests reconciled;allcleanup. Failedf61 retained.",
+      "artifacts": [
+        {
+          "path": "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+          "sha256": "c1d2cbe2ef43d7f62f4abcec75ec2ec72278b10d3b2763edfcafeb1cbd02acc1"
+        },
+        {
+          "path": "evidence/G06/application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json",
+          "sha256": "5b52a2dae88cb58a6506fabb63136d7e5bcce88421ce368d2e348cfac35fe391"
+        }
+      ]
+    },
+    {
+      "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "id": "coordination-and-gate",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 execution/graph.py validate; python3 -m unittest discover -s execution/tests -p test_integration_gate.py -v",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 native genuine application proofs; isolated localchain31337; controlled settlement; network epoch proofs not claimed",
+      "observed": "53packages269criteria valid;19tests pass inclmissingreview/failingcheck/ref-policy guards",
+      "artifacts": [
+        {
+          "path": "evidence/G06/integration-4c76-coordination.log",
+          "sha256": "e7c52bedf6e8e1a89a43c80ae2076558d59740587b112294d47cd7d2eb1b58be"
+        },
+        {
+          "path": "evidence/G06/integration-4c76-gate-tests.log",
+          "sha256": "dc602cc574258057f302cec1ed2967edbff9b3a94f75ef506aeff20fd8ec671d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+    "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G06/trusted-recovery-4c76-integration-review.json",
+        "sha256": "01d9ddc7c24352a67e090696eacd027797c5500b6c7a9af034ec855dae89ee44"
+      },
+      {
+        "path": "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+        "sha256": "c1d2cbe2ef43d7f62f4abcec75ec2ec72278b10d3b2763edfcafeb1cbd02acc1"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "id": "G06-trusted-recovery-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G06/trusted-recovery-4c76-integration-review.json",
+          "sha256": "01d9ddc7c24352a67e090696eacd027797c5500b6c7a9af034ec855dae89ee44"
+        },
+        {
+          "path": "evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+          "sha256": "c1d2cbe2ef43d7f62f4abcec75ec2ec72278b10d3b2763edfcafeb1cbd02acc1"
+        },
+        {
+          "path": "evidence/G06/application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json",
+          "sha256": "5b52a2dae88cb58a6506fabb63136d7e5bcce88421ce368d2e348cfac35fe391"
+        }
+      ]
+    }
+  ]
+}

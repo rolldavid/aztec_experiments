@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:36:28.508292+00:00",
+  "source": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+  "base": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+  "disposition": "source-approved-for-stopped-owned-install-and-bounded-component-measurement",
+  "sourceHashes": {
+    "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+    "shared/trusted-private-node.test.mjs": "5da07d1f3fafe13c19033bbcabb576e7edb702c74c9bc0c22b55ab9512092909",
+    "scripts/patch-pxe-preference-page.mjs": "3ca3d02bfd7290e4a83205217e677a6b756968686f4dbf7c9f82a152feddeca6",
+    "scripts/test-pxe-preference-page.mjs": "b8fa58341911e4737312fe0d965fb3933f43834e176a03e29b474e141701baf6"
+  },
+  "packetSha256": "9bfe494910f669f32be7250ba11e49203356da090dc19a5869e9b0b919ef755d",
+  "sourceAssessment": [
+    "Identity checks remain strictly before any grouped query. Fixed groups contain only existing public readiness/header/instance reads. Typed anchor computed before group invocation.",
+    "Both grouping helpers use Promise.resolve().then to absorb synchronous throws, await allSettled, select by rejected status in declaration order and preserve falsy reason until original sanitizer. No early return while peer work remains.",
+    "Each fulfilled tips/state response becomes primitive fields; each generated header and instance becomes independent SDK serialization copy synchronously before sibling wait/async hash. Original coordinate/hash/network/class/address comparisons remain.",
+    "Initial readiness canonical pair remains before timestamp; final proposed reread remains after timestamp. Generated page keeps two observations even when heights equal. All reader/AEAD/CAS/late-contributor/publication source unchanged.",
+    "No runtime/native/transport test pass inferred from source checks. Prepared tests exercise actual helper/error-drain ordering, underlying queue exclusion, wrong identity zero reads, fulfilled header mutation and lock, plus actual safeRPC with labelled Fetch coalescing. Original ACIR assertions retained."
+  ],
+  "installProcedure": {
+    "baselineSha256": "92e7d68fab801db62b6b2823361d6cce1bac10c8024c5a1c432db1612094cbdb",
+    "independentlyMatchedOriginalBackups": 8,
+    "independentlyMatchedInstalledPhysicalSingleLinkFiles": [
+      "src/pxe.ts",
+      "dest/pxe.js",
+      "src/operation_queue.ts",
+      "dest/operation_queue.js",
+      "src/operation_lifecycle.ts",
+      "dest/operation_lifecycle.js",
+      "src/storage/note_store/note_store.ts",
+      "dest/storage/note_store/note_store.js",
+      "rolling-preference-compact.mjs",
+      "rolling-preference-recovery.mjs"
+    ],
+    "eligibleOnlyIf": [
+      "Lead confirms every consumer/borrower stopped and exact four source bytes composed in owning checkout.",
+      "Before first mutation, preserve all10 predecessor bytes in exclusive owned backup and rehash original8/current10 again. Capture fixed paths/hash intent; no force or unknown-state acceptance.",
+      "Restore exactly8 known original bytes and unlink only2 hash-verified generated helpers, then use unchanged explicit installed-mode physical-owning-tree installer.",
+      "On any failure keep consumers off; retain partial-state/backup evidence and do not retry automatically. Successful apply must rehash full8+2candidate closure and other protected dependency pins.",
+      "This is a non-atomic maintenance transition, not an online upgrade. No root/shared dependency mutation; future bootstrap shared-helper repin must be separately source-reviewed."
+    ]
+  },
+  "requiredRuntime": [
+    "Focused trusted-node component suite with matching candidate SDK closure.",
+    "Full original+new SDK/ACIR component suite under separately assigned<=180s4GiB owner; no diagnostic-only substitution.",
+    "One matched60s2GiB HTTP diagnostic: exact6steps/17SDKcalls/4compact/both-tags0/errorpending0 and original head/event assertions; retain\u2264400requests/8500ms predeclared targets and honest miss.",
+    "NormalSDK/frontend/wallet manifests and deployment helper closure must be regenerated/reviewed before any genuine run."
+  ],
+  "limits": [
+    "Source approval does not grant genuine proof/cloud run or integration.",
+    "Batch not atomic snapshot; original final checks are still required and do not eliminate races after final check.",
+    "No large-history capacity,17-block deadline guarantee, fullinitialsync or monotonic-a9ef qualification."
+  ],
+  "reviewerExecution": "Only Git/source/evidence/hash/filesystem inspection; no dependency modification or tests."
+}

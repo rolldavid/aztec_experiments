@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "d9e533d3d065141ee37aebcd162f689689955263",
+  "baseRevision": "1427ff118a947f8e73262b1e9e4c6b68a2af5039",
+  "scope": "G07-A02/A08 bounded compact-block authentication prototype; source-only while genuine notification campaign owns native slot",
+  "verdict": "SOURCE_APPROVED_PROTOTYPE_INDEPENDENT_NATIVE_CHECK_PENDING",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "shared/rolling/compact-block.mjs": {
+      "sha256": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+      "matches": true,
+      "checkoutMatches": true
+    },
+    "shared/rolling/compact-block.test.mjs": {
+      "sha256": "ee8ccaabf52d711945a114a302a0dd1689b6fd048366262d2f57d4feb9ed39f9",
+      "matches": true,
+      "checkoutMatches": true
+    }
+  },
+  "sourceCheckReport": "execution/evidence/G07/compact-d9e-source-checks.json",
+  "sourceCheckSha256": "816e776d22c7142a0e8849a34e6793ca36011a93d06f921ef0bf31b67d950417",
+  "assessment": [
+    {
+      "topic": "Bounds and parsing",
+      "source": "shared/rolling/compact-block.mjs:30",
+      "finding": "Own data descriptors snapshot bounded dense canonical Fr arrays and mandatory callback before first await. Protocol-derived 24575-field/6142-transaction bounds, minimum progress, all category maxima, declared total and private/public/class lengths are checked before TxEffect expansion. Footer must be exactly the last seven fields; each must equal reconstructed header end data. No full Body expansion or cross-transaction Promise.all."
+    },
+    {
+      "topic": "Canonical commitment",
+      "source": "shared/rolling/compact-block.mjs:146",
+      "finding": "Round-trip header fields reject narrowing; supplied expected hash equals actual SDK header hash. Complete ordered effects are decoded and re-encoded exactly, hashed through official category/leaf functions and official ordered unbalanced-tree algorithm, then compared to authenticated header.txEffectsTreeRoot. Empty and single-leaf semantics agree with Body.computeTxEffectsTree. This is full-root reconstruction, not acceptance of an attacker-provided leaf or inclusion path."
+    },
+    {
+      "topic": "No partial results and lifetime",
+      "source": "shared/rolling/compact-block.mjs:152",
+      "finding": "Descriptors stay local until every effect/root and the final captured canonical callback succeed. Frozen detached strings/arrays/result and WeakSet brand prevent mutation or copied-brand claims. Errors are collapsed to fixed code/message without foreign cause. Function owns no retry, transport, persistence, queue, node or lifecycle. One expanded effect at a time is a control-flow property; actual garbage-collection/RSS bound remains unmeasured."
+    },
+    {
+      "topic": "Scope of authority",
+      "source": "shared/rolling/compact-block.mjs:123",
+      "finding": "Canonical authority is expressly delegated to a trusted caller capability, not inferred from the brand. The callback must independently bind network/version, selected tier, block number/hash and account/lease context. A callback returning true without authenticated chain checks only validates internal consistency. A result can become stale after return; future storage/use needs its own canonical/lease checks."
+    },
+    {
+      "topic": "Private semantics",
+      "source": "shared/rolling/compact-block.mjs:130",
+      "finding": "Returned fields are authenticated public ciphertext descriptors only. No decrypted-note/event authenticity, recipient scope, nullifier processing, encrypted preference head completeness or cold PXE recovery is established. Existing official private-processing semantics must remain authoritative in later integration."
+    }
+  ],
+  "checks": {
+    "independentExecuted": [
+      "Read exact two git blobs before implementer packet; checkout bytes equal frozen commit.",
+      "Recomputed both source SHA256 values and all eleven installed source pins; all match.",
+      "Read actual installed JS implementations of blob marker/category decoders, TxEffect constructors/category+leaf hashes, Body root, block footer/header and unbalanced tree.",
+      "Verified worker SDK differential log bytes/hash and inspected its forty cases; did not count them as independently executed."
+    ],
+    "workerEvidence": {
+      "tests": 40,
+      "passed": 40,
+      "skipped": 0,
+      "nodeDurationMs": 1180.51425,
+      "logSha256": "4b2f284100990ac1c66329d22949155d22e051c535edf4d3b566535c0a739eec",
+      "classification": "Actual pinned SDK hashing/serialization; synthetic block contents and canonical-lease doubles."
+    },
+    "notExecuted": "No SDK/native/browser/chain/proof/service run by reviewer during active notification campaign."
+  },
+  "requiredIndependentFollowup": [
+    "Run frozen forty-test SDK differential suite under parent-granted bounded native slot; retain cleanup and source hashes.",
+    "Add independent probes in ignored evidence for header round-trip narrowing, exact-cap versus over-cap input handling, final callback rejection after complete hashing, and valid transaction/hash/fee mutation with unchanged canonical header. Existing suite already covers malformed category sizes, accessor/sparse input, footer changes, reordered/omitted/substituted effects, changed ciphertext, wrong expected hash, failed hash and captured-input mutation."
+  ],
+  "integrationRequirements": [
+    "Streaming byte cap BEFORE JSON/schema allocation; reject unsupported or incomplete response, not truncate.",
+    "Trusted canonical callback bound to actual network/tier/height/hash/account; retain exclusive lease until underlying work settles. No timeout race that releases ownership while hashing continues.",
+    "Worst-case protocol-bounded CPU/RSS and response allocation measurement before capacity claims; existing nine-effect tests do not establish 6142-effect cost.",
+    "Actual endpoint/caller source review, SDK/browser dependency/build provenance and genuine finite encrypted recovery comparison before replacing official ingestion.",
+    "Maintain scope/reorg/nullifier/event authentication and complete-or-fail recovery; this prototype alone is not an incremental private synchronization adapter."
+  ],
+  "limitations": [
+    "No production endpoint or consumer is changed by these two new files.",
+    "No genuine chain inclusion, ciphertext decryption, native browser recovery, full-history cold capacity, audit or production qualification claimed.",
+    "Native independent tests are pending solely due active serialized campaign; source approval is not runtime acceptance."
+  ]
+}

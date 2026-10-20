@@ -1,0 +1,34 @@
+{
+  "candidate": "1202a82298a0d046f2d228bcf4827afe21575eed",
+  "base": "9860a1cb35b13bc20a18c46b3b488677509d10c4",
+  "verdict": "approved",
+  "changedFiles": {
+    "deploy/aws/BOK_STATIC.md": "8e12310c498fe7b2ad566cb21e1627e5e41e5c0581daf60cb7b68521e229fd53",
+    "deploy/aws/retain-bok-static.py": "bbf1b3a0112c16cf0af1e9eab9e1053c7baea480932b8f97d7df0935a2c54a6b",
+    "deploy/aws/test_retain_bok_static.py": "6f38ddd5e070822cb52e1132708b542f9092f82df2f19cdbc7e6d24bbc6ee105"
+  },
+  "requirements": [
+    "RC34",
+    "RC35"
+  ],
+  "findings": [],
+  "resolvedFinding": "Reused prefixes could expose obsolete or disabled objects. Paginated exact-key admission now rejects unexpected/duplicate keys before HTTP or S3 writes, then requires the complete exact set after staging; no deletion or overwrite.",
+  "reasoning": [
+    "Only trusted accepted enabled latest catalog routes are selected; binding identity, revision, byte bounds and hashes are checked. Literal slash-ending index alias preserves latest page URL.",
+    "Every source body is authenticated before writes. Conditional S3 creation and exact body/metadata/header/encryption readback prevent overwriting a conflicting snapshot.",
+    "Source download stays attachment; private state, disabled threads and older revisions are not selected. Helper never changes CloudFront.",
+    "Quiescent catalog equality before origin switch is an explicit operational gate; source alone does not establish deployment or indefinite hosting."
+  ],
+  "validation": {
+    "command": "python3 -m unittest discover -s deploy/aws -p test_retain_bok_static.py",
+    "independentPassed": 5,
+    "failed": 0,
+    "durationSeconds": 0.001,
+    "toolChunk": "526350",
+    "coverage": "Current routes/slash alias; disabled selection; binding/traversal/duplicate rejection; unexpected object on paginator page2 before fetch/write; incomplete final destination."
+  },
+  "limits": [
+    "HTTP/S3 interactions are not live-tested by these focused tests. Actual authenticated staging/readback, quiescent catalog comparison, distribution deployment and public URL/header checks remain required.",
+    "Exclusive operator ownership of immutable publication prefix must continue through handover; no concurrent publication writer authorized."
+  ]
+}

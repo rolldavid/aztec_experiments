@@ -1,0 +1,96 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+  "verdict": "approved-bounded-development-runtime",
+  "scope": "Genuine private Anonymous root/reply/quote, public moderator removal, recovery and canonical public HTTP reconstruction; not whole G06",
+  "evidence": {
+    "execution/evidence/G06/application-687f2f13-22bc-4bc7-84b2-eae2945d26a9.json": "16829b327978633493f0794c3d7b3afc8af05dba438c4b77e7e4db44879734b3",
+    "execution/evidence/G06/application-port-3c9f992f-4a8e-437b-b717-8708a193d1a9/observation.json": "4c10a58d33e538252ac114536761feeed532c56c835d0a8b4291fb63628b31f6",
+    "execution/evidence/G06/anonymous-687-independent-effects.json": "2ef66c47d7103b651cd65c0453bc378c7ae9e8d6541373e1f6e815a1a5cc5514"
+  },
+  "sourceVerification": {
+    "outerFiles": 206,
+    "innerFiles": 49,
+    "artifacts": 2,
+    "bokInputs": 14,
+    "nativeInputs": 70,
+    "innerTrackedRevisionHashEquality": true,
+    "normalRollingArtifactSha256": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace"
+  },
+  "runtime": {
+    "passed": true,
+    "elapsedMs": 453273,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 2236208,
+    "limitKiB": 4194304,
+    "allCleanup": true,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "failures": [],
+    "applicationProofs": true,
+    "httpNativeProofJobs": {
+      "submitted": 3,
+      "completed": 3,
+      "failed": 0
+    },
+    "moderator": "Separately genuine proveApplicationAction path; proof bytes not separately retained",
+    "chainId": "31337",
+    "networkProofs": false,
+    "controlledSettlement": true
+  },
+  "independentEffects": {
+    "count": 4,
+    "binaryHashTxHashRoundtripAndFeeVerified": true,
+    "authenticatedEvents": [
+      "PostPublished",
+      "PostPublished",
+      "PostPublished",
+      "PostRemoved"
+    ],
+    "postMetadataAndCursorComparisons": 6,
+    "publicWrites": [
+      14,
+      14,
+      14,
+      3
+    ],
+    "limit": 63,
+    "note": "Offline projection initialization uses labelled synthetic empty version1 policy because original setup effect not persisted. Actual runtime refetched5transactions including real setup."
+  },
+  "recovery": {
+    "canonicalTransactionsRefetched": 5,
+    "encryptedJournalSameHash": true,
+    "newProofJobs": 0,
+    "publicHTTP": [
+      "feed",
+      "thread",
+      "thread",
+      "post",
+      "post",
+      "post"
+    ],
+    "freshAndSQLiteReopened": true,
+    "authenticatedRangesEach": 3,
+    "sameCheckpoint": 28,
+    "listenersClosed": true
+  },
+  "accounting": {
+    "threeHumanActions": "62903624400000",
+    "claim": "8418947400000",
+    "humanTotal": "71322571800000",
+    "standalone": "12869316000000",
+    "totalPrivateDebit": "84191887800000",
+    "remainingPrivateBalance": "999999915808112200000",
+    "funded": "1000000000000000000000",
+    "humanPublicFeeJuiceZero": true,
+    "moderatorFeeAndBalanceDelta": "8685769200000"
+  },
+  "limits": [
+    "Observed absence of exact known human fields, not cryptographic unlinkability or two-account/wire trace acceptance",
+    "Fixed moderator decision, no model moderation qualification",
+    "HTTP browser transport exercised, no DOM/wallet browser qualification",
+    "Disposable local chain controlled settlement, not Aztec testnet/epoch proof or external audit",
+    "Earlier bbf539 failure preserved; no evidence changed to pass",
+    "Initial reviewer offline fee probe compared hex Fr.toString against decimal receipt; corrected to exact bigint equality and reran successfully without product changes"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "base": "d976d254aa9dd09d0ff3016cf573de9215d8b15d",
+  "candidate": "fb24764901b14b4a53c2c3aef0dd35ab711a5d6c",
+  "task_id": "G13-current-catalog-pin",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "deploy/prover/bootstrap.py"
+  ],
+  "required_checks": [
+    "catalog-pin"
+  ],
+  "requirements": [
+    "RC36-catalog-pin-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G13-current-catalog-pin",
+      "paths": [
+        "deploy/prover/bootstrap.py"
+      ]
+    }
+  ]
+}

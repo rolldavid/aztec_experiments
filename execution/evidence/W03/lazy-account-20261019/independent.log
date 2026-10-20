@@ -1,0 +1,11 @@
+✔ account overview enables funding before any names or publishing reads (5979.484ms)
+✔ explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads (3549.939584ms)
+✔ failed lazy name read retains funding access and retries only the selected view (7503.773375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19225.150375

@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "verdict": "approved_bounded_actual_development_acceptance",
+  "scope": "G05 two-account readable owned-name discovery and fresh-PXE/journal recovery with real private funding, four genuine proof jobs, canonical public HTTP rebuild; G06 bounded request-route observation support only",
+  "findings": [],
+  "evidence": {
+    "execution/evidence/G05/application-59c75f38-f340-418c-a31a-f30529fb7af1.json": "a804614003784c736f5246b93ee4b5779c383d8a8774c6b4b85d94c1764943ab",
+    "execution/evidence/G06/application-port-cbf9ff16-f1fa-4645-ae94-af94dc556edc/observation.json": "7bdcde7790e5718c278ec73de88664130c677e7d34ccf4eb4ac8de525eeff118",
+    "execution/evidence/G05/owned-names-wire-real-4.log": "fdf9e892a1affcfd3471ead83fc1508010eafb86fd41df70816a9ff06fbc9703",
+    "execution/evidence/G06/application-port-cbf9ff16-f1fa-4645-ae94-af94dc556edc/owned-name-1-effect.bin": "57a862069dd8a0c905302602da22456b364ab3fc11736ce89d7fa901d922eb96",
+    "execution/evidence/G06/application-port-cbf9ff16-f1fa-4645-ae94-af94dc556edc/owned-name-2-effect.bin": "37a169e35c0dd4867d6a0e448a286a3208157175595a8f9f2d2614c2f3e05fad",
+    "execution/evidence/G06/application-port-cbf9ff16-f1fa-4645-ae94-af94dc556edc/owned-name-3-effect.bin": "93602b4c70f5ec535ebeac44be4d403a9b69e1a640d777ca02d92cd62720b076",
+    "execution/evidence/G06/application-port-cbf9ff16-f1fa-4645-ae94-af94dc556edc/owned-name-4-effect.bin": "3a3df792a739cf9aee672d9e63a82d180febc2f720e3c9e2c83241fc64f6632b"
+  },
+  "sourceVerification": {
+    "outerFiles": 219,
+    "outerGitBlobs": 207,
+    "innerFilesAndGitBlobs": 56,
+    "artifactFiles": 2,
+    "bokBuildInputsAndGitBlobs": 14,
+    "nativeArtifactInputs": 70,
+    "allCurrentFileHashesMatch": true,
+    "innerEqualsOuterBridge": true,
+    "nativeBinaryAndAnvilHashesVerified": true,
+    "artifactSha256": {
+      "billboard/target/rolling_contract-RollingBoard.json": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+      ".build/contracts-manifest.json": "cb7fae328372072ce171c4f681e7325555b99a059e8ca611709090b44b729aa3"
+    },
+    "sourceRevisionExact": true
+  },
+  "runtime": {
+    "passed": true,
+    "elapsedMs": 409255,
+    "deadlineMs": 540000,
+    "peakTreeRSSKiB": 2158864,
+    "rssLimitKiB": 4194304,
+    "fixtureHeapMiB": 768,
+    "failures": [],
+    "cleanup": {
+      "applicationActorA": true,
+      "applicationActorB": true,
+      "fundingWallet": true,
+      "fundingWalletB": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "ordinaryRPC": true,
+      "wireCapture": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "proofs": {
+      "applicationProofs": true,
+      "nativeBinarySha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953",
+      "HTTPJobs": {
+        "jobs": 2,
+        "bytes": 0,
+        "running": false,
+        "submitted": 4,
+        "completed": 4,
+        "failed": 0
+      },
+      "networkProofs": false,
+      "controlledSettlement": true
+    },
+    "ownedNames": {
+      "scenario": "private-owned-names",
+      "privateTransactions": 4,
+      "registeredNames": 4,
+      "privateOwnershipExact": true,
+      "readableMetadataExact": true,
+      "collateralFreeRegistration": true,
+      "journalReopenPreserved": true,
+      "scope": "Exact private owned-name sets and labels after sequential registration and application/journal reopen. Concurrent uniqueness, cold PXE recovery and broader observer privacy remain separate."
+    },
+    "coldPXE": {
+      "passed": true,
+      "actors": [
+        {
+          "freshStoreVerified": true,
+          "oldActorClosed": true,
+          "sameOwner": true,
+          "exactNamesRecovered": true,
+          "journalCiphertextUnchanged": true,
+          "newProofJobs": 0,
+          "newWalletSubmissions": 0,
+          "newTransportSends": 0,
+          "constructorAuthWitnesses": 0
+        },
+        {
+          "freshStoreVerified": true,
+          "oldActorClosed": true,
+          "sameOwner": true,
+          "exactNamesRecovered": true,
+          "journalCiphertextUnchanged": true,
+          "newProofJobs": 0,
+          "newWalletSubmissions": 0,
+          "newTransportSends": 0,
+          "constructorAuthWitnesses": 0
+        }
+      ],
+      "scope": "Fresh IndexedDB PXE namespaces with retained disposable secrets and unchanged encrypted journals; no seed/device/process-cold claim",
+      "elapsedMs": 4239
+    },
+    "journalReopen": {
+      "sameHash": true,
+      "newProofJobs": 0,
+      "transactionBytesRetained": true,
+      "actors": [
+        {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true
+        },
+        {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true
+        }
+      ]
+    },
+    "canonicalRebuild": {
+      "passed": true,
+      "canonicalTransactionsRefetched": 5,
+      "normalizedCacheTreatedAsAuthority": false
+    },
+    "publicReader": {
+      "passed": true,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true,
+          "checkpoint": {
+            "number": 19,
+            "hash": "0x0fa0570f5a0074bc80729959ccf4675fcda7fb376784b9bfd5705eac0c0718ec"
+          },
+          "views": [
+            "profile",
+            "profile",
+            "profile",
+            "profile",
+            "feed",
+            "directory"
+          ],
+          "authenticatedRanges": 2
+        },
+        {
+          "phase": "reopened",
+          "closed": true,
+          "checkpoint": {
+            "number": 19,
+            "hash": "0x0fa0570f5a0074bc80729959ccf4675fcda7fb376784b9bfd5705eac0c0718ec"
+          },
+          "views": [
+            "profile",
+            "profile",
+            "profile",
+            "profile",
+            "feed",
+            "directory"
+          ],
+          "authenticatedRanges": 2
+        }
+      ],
+      "persistedRangesBeforeReopen": 2,
+      "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+    }
+  },
+  "independentEffects": {
+    "procedure": "Pinned installed TxEffect.fromBuffer, byte SHA256, exact transaction hash and Fr.toBigInt fee equality; processed Rolling ABI/tag/hash decoder found exactly one NameRegistered per binary and its ID in the four public profiles.",
+    "binaryBytes": [
+      2431,
+      2431,
+      3527,
+      2431
+    ],
+    "events": [
+      "NameRegistered",
+      "NameRegistered",
+      "NameRegistered",
+      "NameRegistered"
+    ],
+    "publicLogs": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "noteCommitments": [
+      3,
+      3,
+      4,
+      3
+    ],
+    "nullifiers": [
+      4,
+      4,
+      5,
+      4
+    ],
+    "sumNameFees": "41272168200000",
+    "inspectionCorrections": "Initial reviewer probe used nonexistent bb package spelling, then compared field hex representation to decimal; corrected to installed @aztec-foundation/bb.js and exact Fr.toBigInt. No application/evidence source changed."
+  },
+  "accounting": {
+    "nameFees": "41272168200000",
+    "collateralClaimFee": "9319842000000",
+    "A": "29662650600000",
+    "B": "20929359600000",
+    "totalHumanFees": "50592010200000",
+    "BStandaloneFee": "7985178000000",
+    "privateDebitA": "29662650600000",
+    "privateDebitBIncludingStandalone": "28914537600000",
+    "fundedEach": "1000000000000000000000",
+    "balanceA": "999999970337349400000",
+    "balanceB": "999999971085462400000",
+    "equationsVerified": true,
+    "bothZeroPublicFeeJuice": true,
+    "sameSharedPayer": true,
+    "distinctPublicL1FundingSenders": true,
+    "fundingCaveat": "Actual local L1 deposits from separate test-faucet-funded identities, not production acquisition/funding-unlinkability qualification."
+  },
+  "wire": {
+    "requests": 14661,
+    "completed": 14661,
+    "pending": 0,
+    "unknown": 0,
+    "unsupported": 0,
+    "truncated": 0,
+    "observerErrors": 0,
+    "receiverErrors": 0,
+    "receiverCounts": {
+      "trusted-query": 1279,
+      "trusted-proof": 104,
+      "trusted-upstream": 8903,
+      "ordinary-node": 161,
+      "public-reader": 12
+    },
+    "publicL1ObservedRequests": 4202,
+    "sentEqualsReceiverForAllFive": true,
+    "allRowsResolved2xx": true,
+    "trustedQueryBothActorPositiveControls": true,
+    "ordinaryNodeAndPublicReaderKnownHumanRolesAbsent": true,
+    "opaqueTransactions": 112,
+    "requestCoverageComplete": false,
+    "privacyAcceptance": "not-evaluated",
+    "fixedUnknownReasons": {
+      "endpoint": 0,
+      "reader-parameter": 0,
+      "invalid-envelope": 0,
+      "unsupported-method": 0,
+      "params-shape": 0
+    },
+    "unknownMethods": {},
+    "captureCleanupRestored": true
+  },
+  "limitations": [
+    "Local chain31337 with genuine application proofs and controlled settlement; no network epoch-proof/testnet or remote Linux qualification.",
+    "Exact private ownership/readable labels for two accounts with two names each. Sequential registration does not prove concurrent collision behavior.",
+    "Fresh PXE namespaces within same process retain disposable account secrets and encrypted journals. No device-loss, seed recovery or browser-persistence qualification.",
+    "Five ingress counts cover same-process loopback adapters. Public L1 fetch calls observed but native transports/Anvil ingress/runtime-added headers are not comprehensively captured.",
+    "112 opaque serialized transaction/proof/blob observations remain explicitly excluded; requestCoverageComplete=false and privacyAcceptance=not-evaluated. HMAC scalar correlations are not anonymity evidence.",
+    "Ordinary node and trusted upstream use separate HTTP roles over the same local underlying node; deployed trust separation, traffic/timing correlation, derived identifiers and independent specialist review remain open.",
+    "Canonical runtime assertions used actual SDK receipts/full blocks/refetches; reviewer redecoded retained effect binaries offline, without requerying the terminated chain.",
+    "No full G05/G06/G14 completion, full browser composer acceptance, production release, image moderation qualification or remote service claim."
+  ]
+}

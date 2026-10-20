@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "d976d254",
+  "derivation": "Existing contractInputs function after package-only Rolling compile and normal processArtifact. All other input hashes and prior output hashes unchanged; no legacy Noir package depends on Rolling.",
+  "changedInputs": [
+    {
+      "path": "billboard/rolling_contract/src/main.nr",
+      "before": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+      "after": "7e3201dac1e7062ebb83c26ad05810cb4c1d86da84573a7975e6e6db2c505d14"
+    },
+    {
+      "path": "billboard/rolling_contract/src/tests.nr",
+      "before": "66a5c4c5dc00aee6c89700acfbf58b113609a9b9c598abc8f43a36a41590b488",
+      "after": "5e72e8b901b76965c7a41c9d4bbc84553d231f08e19761abfa6d92e397bd81f0"
+    }
+  ],
+  "beforeManifest": "e37de7fa0de5a8bb356bbe23f668e307df3a725e3884c62ab3f13f6e9de5a4f3",
+  "afterManifest": "950c79589c6bcf44d37792ce307a3f749a460ad9919eefa710493245f6a70a11",
+  "rollingArtifact": "52e8d3f0e43fb8c1fe3db59f2160453b60579277ce64a86495ab81ebff2c42f1",
+  "proverPin": "d5666fcdab5a99c23155f12e6de8cf8e58f95e869f418c39ddefd512f2901fb5",
+  "unchangedOutputHashes": {
+    "noir": "0954a076e512e0e6992bfc3e1138b30c2007163ffd069dd4e87154e0f40ad116",
+    "privateFee": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
+    "pluginAdapter": "4219c618ddf9fc03ebb1f82770a108dd3ba07847ee2793aff5c3e3f7f6c8e7ce",
+    "pluginPortal": "f55d033bcedd29e234eda574e79de5753e6601dca8c91114f21e6ea2cb38d580",
+    "fundingRouter": "12746327a30d9e8fa0b69d44cb6a81dfb472da49490e151bfb04f7d104717446"
+  },
+  "checkArtifacts": "pass"
+}

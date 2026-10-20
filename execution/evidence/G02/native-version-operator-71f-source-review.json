@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T00:52:12.289232+00:00",
+  "sourceRevision": "d449fafafeaf7436456d9a6273732d3872a76719",
+  "packetSha256": "71f392570b77b9782f44259049229effc7ab3c5450148b355092ea517a0d3acf",
+  "files": {
+    ".build/native-version-operator-cleanup.py": "dd9a70b40cdf6b2369aaceea39408d1dcf62618ba5a7e7d242fc2a3461e536bf",
+    ".build/native-version-operator-core.py": "ebf0c77d78eac20a030c752288830235f840a6f6c6ef90b0a2ada23dbba35f71",
+    ".build/native-version-operator-launch.py": "cb4851ffba6474fccf531de3c58d72602ce5374e21adb87580f1a94a97461c34",
+    ".build/native-version-operator-observe.py": "4b882034b5d579f3c38e35453fad16349db936b942104bd0a3b4a3897e3acd08",
+    ".build/native-version-operator-test.py": "3782333e7c897bdff5d31ea5a5a9d3aaed885dd7b6d12606ec3f3f494781b0b2",
+    ".build/native-version-operator-upload.py": "76c16ef5dc7cf99841739a131f2b85874eb1849ef8ca186b70239e22b1229d7a"
+  },
+  "verdict": "changes-requested",
+  "inspection": {
+    "allSixExactHashesVerified": true,
+    "pythonAstParsed": 6,
+    "runtimeTestsRun": false,
+    "providerCalls": 0,
+    "sourceEdits": false
+  },
+  "findings": [
+    {
+      "priority": 2,
+      "file": ".build/native-version-operator-core.py",
+      "line": 222,
+      "title": "Do not verify a missing root disk",
+      "evidence": "resource_snapshot initializes volumes=[] and accepts absent BlockDeviceMappings. all(v[deleteOnTermination] for v in volumes) is then true. An otherwise matching running instance with shutdown=terminate is reported controlsVerified=true without a single observed root mapping.",
+      "requiredRepair": "Require exactly one expected root device mapping and observed bound volume identity before positive instance controls; incomplete readback remains unverified. Preserve finite output and no additional mutation. Add missing/empty/wrong-root and valid mapping controlled cases."
+    },
+    {
+      "priority": 2,
+      "file": ".build/native-version-operator-core.py",
+      "line": 264,
+      "title": "Require the exact owned deletion acknowledgement",
+      "evidence": "Only a truthy UnsuccessfulFleetDeletions rejects. Empty dict, empty success list, or success for another Fleet returns deleteAcknowledged=true.",
+      "requiredRepair": "Validate a bounded successful deletion record for the exact owned Fleet and reject missing/malformed/wrong-ID/unsuccessful results. Keep the fsynced delete intent, response and reconcile-only state; do not retry. Add negative controls and exact-positive case."
+    }
+  ],
+  "soundBoundaries": [
+    "All default entry bindings unset and rejected before provider/private-directory access. Entry scripts pin exact core source.",
+    "Exclusive fsynced file and parent-directory intents precede upload, launch-template, Fleet and deletion sends. Existing intent rejects reentry; unknown outcomes do not trigger financial retry.",
+    "Identity/overlap, zero inbound SG, exact AMI/hardware/template constraints; one request Fleet with fixed expiry/terminate and no IAM/key; budget/source/payload/grant hashes gate mutations.",
+    "Bounded closed receipt schema with fixed binary/control/worker/deadline identity, finite enums and numeric fields, duplicate-key rejection, strict successful-state invariant. No raw output in public projection.",
+    "Cleanup still says resourceAbsencePending rather than falsely claiming resources removed."
+  ],
+  "qualificationHolds": [
+    "No controlled tests executed for this operator snapshot.",
+    "Bindings, exact fresh reservation/ledger, SG/subnet offering and host libc/CPU prerequisites, immutable upload/payload/capability review and final launch review remain missing.",
+    "Host and Fleet shutdown must each receive actual evidence. Source cannot qualify Linux binary/version or host isolation.",
+    "No paid action, provider call, provisioning or release authorized by this review."
+  ]
+}

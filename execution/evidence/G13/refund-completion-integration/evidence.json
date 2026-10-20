@@ -1,0 +1,81 @@
+{
+  "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+  "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+  "task_id": "G14-live-authorization-release-withdrawal",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+      "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+      "id": "refund-driver-composition-and-actual",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2f252-refund-composition-review.json",
+          "sha256": "433ea7c4dc3fc81f8ed68032ce33d14d27a598720ecdbb4dfa92ed840eab63e1"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-f7e-refund-completion-review.json",
+          "sha256": "0b2931fd2000d0345b21ac572624d81e6d29a95599e1b6668c7bd56d6388def3"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/refund-driver-combined.log",
+          "sha256": "7318fbd7f6ad360034909ec386ac8e24d5cce23a54ed2969d351da4f184656c6"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/refund-driver-combined-canonical-tmp.log",
+          "sha256": "52def26eb364c5397b5cce9c085e397a1ba1523ff7b176ad15a07c5c0dfae5f1"
+        }
+      ],
+      "command": "node --test scripts/test-t04-browser-journey.mjs; existing bounded actual originalrefund-only42019",
+      "environment": "PinnedNode24.21 canonicalTMPDIR/private/tmp; actualMetaMask155/native/PXEfalse; currentdriver equalsapprovedf7e; actualfinancialrun239 plus observation-onlyrepair5focusedpass",
+      "observed": "117PASS0FAIL1explicitSKIP2.186s. Nativeactualrefund10000micro once1914 gas97894000685258,0newL2/proof; latestfullbackup reopened. No financialrerun. Two-user/testnet separatepending.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+      "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+      "id": "RC22-RC37-native-original-refund",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2f252-refund-composition-review.json",
+          "sha256": "433ea7c4dc3fc81f8ed68032ce33d14d27a598720ecdbb4dfa92ed840eab63e1"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-f7e-refund-completion-review.json",
+          "sha256": "0b2931fd2000d0345b21ac572624d81e6d29a95599e1b6668c7bd56d6388def3"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/refund-driver-combined.log",
+          "sha256": "7318fbd7f6ad360034909ec386ac8e24d5cce23a54ed2969d351da4f184656c6"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/refund-driver-combined-canonical-tmp.log",
+          "sha256": "52def26eb364c5397b5cce9c085e397a1ba1523ff7b176ad15a07c5c0dfae5f1"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+    "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+    "implementer": "controls-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-2f252-refund-composition-review.json",
+        "sha256": "433ea7c4dc3fc81f8ed68032ce33d14d27a598720ecdbb4dfa92ed840eab63e1"
+      },
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-f7e-refund-completion-review.json",
+        "sha256": "0b2931fd2000d0345b21ac572624d81e6d29a95599e1b6668c7bd56d6388def3"
+      }
+    ]
+  }
+}

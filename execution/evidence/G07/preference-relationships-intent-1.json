@@ -1,0 +1,17 @@
+{
+  "candidate": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "scenario": "rolling-preference-relationships",
+  "recordedAt": "2026-10-12T05:21:11.649065+00:00",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "status": "completed-failure",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "review": "execution/evidence/G07/combined-11d-source-review.json",
+  "reviewSha256": "6538bb83aa0c0c4dc26f239c053d5259c7fbc702275559f5f0f920e447633ac6",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-relationships",
+  "scope": "Disposable local genuine HTTP private-proof application campaign with normal node verification and controlled portal settlement. Not testnet/epoch qualification; no paid resource or existing account sends.",
+  "hypothesis": "Reviewed normal private preference protocol/query/reader/actor restores exact head and bookmarks/follows from keys into a new PXE plus empty AEAD cache without new proof/send.",
+  "result": "application-876c30c3-6522-4d69-8791-d14711480a3d.json",
+  "resultSha256": "0d2dae933fd34b01a6c947aba85fd4a8db4a983c7e54bfa4bbcd3eaf6475b354"
+}

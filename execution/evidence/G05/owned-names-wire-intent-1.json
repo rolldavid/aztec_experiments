@@ -1,0 +1,14 @@
+{
+  "createdAt": "2026-10-11T23:29:12.919990+00:00",
+  "source": "17e1faa218614900d2024862e4129d805f41fc33",
+  "scenario": "rolling-owned-names-wire",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "wire-combined-17e-review.json",
+  "reviewSha256": "6f7d6c96fd57f1bd153e95c3f13929766cb48d03af166d45e50df1514a8f129c",
+  "checks": "wire-combined-17e-root-tests.log",
+  "hypothesis": "Measured naturalclock deadline repairs c18 prerequisite failure. Genuine fournames plusfreshPXE retained-secret recovery and realHTTP public/trusted receiver-reconciled capture; fullprivacy remainsseparate",
+  "previousFailure": "application-c18f30ef-1450-4b26-913b-3a36bfdca6f8.json",
+  "status": "launching once"
+}

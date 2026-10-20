@@ -1,0 +1,31 @@
+{
+  "task_id": "W03-funded-small-claim",
+  "implementer": "lead-20261011",
+  "candidate": "d188738461dc6358b3c679703c24353b997dba90",
+  "base": "6382a97017b2cf4a33ae1c133194c7ca4515f085",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "shared/private-fee-client.mjs",
+    "shared/private-fee-payment.mjs",
+    "scripts/test-private-fee-client.mjs"
+  ],
+  "required_checks": [
+    "focused-payment",
+    "sdk-assets"
+  ],
+  "requirements": [
+    "RC19-funded-small-topup-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-funded-small-claim",
+      "paths": [
+        "shared/private-fee-client.mjs",
+        "shared/private-fee-payment.mjs",
+        "scripts/test-private-fee-client.mjs"
+      ]
+    }
+  ]
+}

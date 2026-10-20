@@ -1,0 +1,9 @@
+{
+  "source": "96825e16271baf7d81442415565fe51b1533737e",
+  "output": "/private/tmp/rolling-prover-release-startup07-20261012",
+  "linuxNodeArchive": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/v6/infra/node-v24.21.0-linux-x64.tar.xz",
+  "linuxNodeArchiveSha256": "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6",
+  "verifierSha256": "7ef48b6421c8c7941eff5c92b356edccaffeb5382428063fedead44a42331a57",
+  "monitorSha256": "7fe53549e141814fd0369ad9e307e2e7470280aa46ba446ff5068b146c39c971",
+  "noCloudMutation": true
+}

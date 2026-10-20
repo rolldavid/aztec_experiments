@@ -1,0 +1,12 @@
+[
+  {
+    "path": "prover/compact-block-native.mjs",
+    "before": "5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07",
+    "after": "6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888"
+  },
+  {
+    "path": "shared/trusted-private-node.mjs",
+    "before": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+    "after": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a"
+  }
+]

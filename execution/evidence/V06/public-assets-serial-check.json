@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-10T13:11:00.028Z",
+  "rows": [
+    {
+      "name": "user.html",
+      "status": 200,
+      "bytes": 11670972,
+      "ms": 8189,
+      "sha256": "3e7d5197a6d1b602878cd990209323b282ca4c47d259457ffa3f54de1f3759e3",
+      "matched": true
+    },
+    {
+      "name": "aztec_bundle.js",
+      "ms": 30005,
+      "error": "TimeoutError"
+    }
+  ]
+}

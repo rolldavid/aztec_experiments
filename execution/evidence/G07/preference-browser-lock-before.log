@@ -1,0 +1,24 @@
+✖ preference lock driver waits for delayed reopen refresh before expanding security (788.278084ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 951.89025
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:323:1
+✖ preference lock driver waits for delayed reopen refresh before expanding security (788.278084ms)
+  locator.evaluate: Error: strict mode violation: getByRole('dialog').locator('details') resolved to 2 elements:
+      1) <details>…</details> aka getByRole('group').filter({ hasText: 'Preview message' })
+      2) <details open="">…</details> aka getByText('Backup and account securityThe encrypted download includes your private account')
+  
+  Call log:
+  [2m  - waiting for getByRole('dialog').locator('details')[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/apps/rolling/wallet-panel.browser.test.mjs:336:48) {
+    log: [ "  - waiting for getByRole('dialog').locator('details')" ]
+  }

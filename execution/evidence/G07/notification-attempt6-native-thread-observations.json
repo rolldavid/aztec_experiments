@@ -1,0 +1,16 @@
+{
+  "candidate": "c917c40e0fded9e5fdc278a5c97b07045fd78394",
+  "scope": "Actual owned native child configuration only; not CPU parallelism or proof acceptance",
+  "samples": [
+    {
+      "at": "2026-10-12T13:26:00.462646+00:00",
+      "supervisorPid": 52987,
+      "children": []
+    },
+    {
+      "at": "2026-10-12T13:26:21.379695+00:00",
+      "supervisorPid": 52987,
+      "children": []
+    }
+  ]
+}

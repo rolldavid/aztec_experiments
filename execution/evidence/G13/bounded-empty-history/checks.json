@@ -1,0 +1,42 @@
+{
+  "base": "449319e16dd14b2e96613c17c736ba6a39906207",
+  "candidate": "16dea3808c5366e456ec50c001c2502436191230",
+  "paths": {
+    "apps/dist/aztec_bundle.js": "f90f20d5d0026f1b2410b2c7d81387fbe6c41d0102d808b300b595c372ebd03c",
+    "apps/dist/sdk-manifest.json": "b31b705ef9497074a71e85e467c77b5e2f370eab6e25d8d8476c152a7aa6eac4",
+    "scripts/patch-pxe-preference-page.mjs": "ccdfc95bc98d7bd34626d74671ab3e070c6610de88453ccc3873326b3fbeb3f1",
+    "scripts/test-pxe-preference-page.mjs": "7e33813bcbfd60801f93226f81423c65308722a8142aaae9f0e834b7db6e9a1d",
+    "shared/rolling/cold-preference-reader.mjs": "ae9e38eef5004ccf0d7d1d8c1187a530923cae84447db5e0b432433521ebda1c",
+    "shared/rolling/cold-preference-reader.test.mjs": "f2616520a0a44531e15345a07771a2793007611292adf24878b49ca0b2e542b2",
+    "shared/rolling/compact-client.mjs": "8c6e70fbb5ecc761506bf9d06075cad7a5cd9a70c4cd8479af138d0bbefa973f",
+    "shared/rolling/compact-client.test.mjs": "e6daa70b322f168b20246f8bb9bc4cc6c0e8dd1457e944d6c5eb0f802a00d740"
+  },
+  "readerTransport": {
+    "passed": 42,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 212.341166,
+    "logSha256": "df5104b47bda54cf8fd4e01ddad2be20c4086a35fca7a95f5ac80eabed14bed2"
+  },
+  "actualSdkBatch": {
+    "workerEvidence": "rolling-design/execution/evidence/G07/keys-only-current/bounded-batch-review-packet.json",
+    "sha256": "ed5e6e1a02558843c5dc23c5b7e7c7b1b9dc21aa12953fb7ce527a89c713b3ad",
+    "passed": 15,
+    "description": "Existing actualSDK/ACIR selected batch+boundary tests; lostreply/gapped/malformed/middle-reorg/accountinvalidate andauthenticnonempty continuation"
+  },
+  "normalBuild": {
+    "sdk": "passed",
+    "apps": "passed",
+    "walletOutputs": 25,
+    "walletInputs": 97,
+    "sdkInputs": 2057,
+    "sdkOutputs": 8,
+    "manifestSha256": "b31b705ef9497074a71e85e467c77b5e2f370eab6e25d8d8476c152a7aa6eac4",
+    "logs": {
+      "empty-batch-build-sdk-foundry.log": "0d26f300463f386623c19b7105d0b703da9a14f5698b4089e5344250f1e93c26",
+      "empty-batch-build-apps.log": "0aa1954132d48f2804580fce61249b8dc27c13ed1ce9e1ecf7eda23f36bec7ac",
+      "empty-batch-build-wallet.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    }
+  },
+  "limits": "Component acceptance only; actual complete keys-only120s and nonempty preferences remainopen. Native/PXE flagsfalse fordevelopment; no realproofclaim."
+}

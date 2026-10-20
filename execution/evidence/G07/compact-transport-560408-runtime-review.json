@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "560408dd4e9cdfd2fbab6a9182ab4e47d0d0e5aa",
+  "verdict": "approved-bounded-transport-component-evidence",
+  "sourceReview": {
+    "path": "execution/evidence/G07/compact-transport-560408-source-review.json",
+    "sha256": "0143054fd3adf9cade81103b11d268be7878346125132f5843df8ed1053ebe6c"
+  },
+  "sourceBindings": [
+    {
+      "path": "prover/private-query.mjs",
+      "sha256": "f3e8d061c88b738ccba4053836aadaa0434ed4e35ae186cb7c4b38b185f9a395"
+    },
+    {
+      "path": "prover/private-query.test.mjs",
+      "sha256": "adb456c6309ddc53f4b7c8e7cbddba08a563de1c609d7f4b92bb01b5edbd4319"
+    },
+    {
+      "path": "shared/rolling/compact-client.mjs",
+      "sha256": "081d0bcf919ff6b93886debdc6f9ff70f4fff7cfd793bdbf11ea251b52ca20b9"
+    },
+    {
+      "path": "shared/rolling/compact-client.test.mjs",
+      "sha256": "3522cb07b2f9caf3ebb7e98d286ce455691316d982b6cf39ee4af1f1ad776057"
+    }
+  ],
+  "actualHttp": {
+    "receiptPath": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/compact-http-2.json",
+    "receiptSha256": "50fb6985047083f598c5fb8b329ec7e4c99bb568bfb026ac5d646d3370d9f72c",
+    "logSha256": "614c181abb6bcf8ea0fe6a215d59a133055adb5babe3ee39c0118de41dbf8eac",
+    "tests": 23,
+    "passed": 23,
+    "failures": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "elapsedMs": 1141,
+    "peakRssBytes": 330448896,
+    "exitCode": 0,
+    "observedPidsAbsentAtReview": true,
+    "ownedGroupAbsentAtCompletion": true,
+    "dependencyLinkRestoredAtReview": true,
+    "actualRc3PackageMetadataRehashed": 43
+  },
+  "clientCarry": {
+    "base": "3c4192e7357b60e496e2a8e3af8cf95ff6ca40c3",
+    "reason": "Client implementation and test are byte-identical; pure module has no SDK imports; no gateway-only repair changes client semantics.",
+    "independentLog": "execution/evidence/G07/compact-3c419-independent-client.log",
+    "sha256": "2bd03843ef0bde74fe5fffe539d01d286438e8a9e1fb296b2b934aa04da21667",
+    "passed": 12,
+    "skipped": 0
+  },
+  "findingClosure": [
+    "Origin object coercion sentinel executed and stayed0.",
+    "Real HTTP1025byte deliberately unfinished chunked request got413/Connection close; socket destroyed, no inspector/upstream; later valid request succeeded.",
+    "Actual handler socket doubles confirmed both declared/chunked active owner blocks concurrent429 until explicit close.",
+    "Both no-finish response paths triggered existing10s mocked deadline and cleaned abort/close/finish listeners.",
+    "Original10 RPC and7 compact listener cases preserved and passed."
+  ],
+  "limits": [
+    "HTTP listener tests use labelled upstream and readiness doubles; they do not qualify real native compact data or root authentication.",
+    "Held-close/deadline tests use deterministic socket/timer doubles; actual HTTP test independently covers unfinished chunked connection termination.",
+    "No service route registration, production outer admission/CORS/auth composition, actual browser or full cold recovery acceptance.",
+    "Client/gateway response remains untrusted until independent canonical compact-root/account context authentication.",
+    "This accepts exact component source/tests only; no overall G07/G14/release closure."
+  ],
+  "checksExecuted": "Read-only source/git/package/evidence hash verification and PID existence checks. No test replay/native job while Controls Rolling build."
+}

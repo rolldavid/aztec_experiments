@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "978431c3e1b424c094198706ff01a5fe60f03a5f",
+  "baseRevision": "1ce3c986f3bcc6904ecf60e153f6d99dda7dca3f",
+  "verdict": "source approved for focused eight-case check; changed node attempt conditional on check pass and unchanged source/assets closure",
+  "sourceHashes": {
+    "scripts/c01-native-profile.mjs": "ef6e538049dab87b554c1765602c6c091fddc7cc6adba5723d45830c31572e69",
+    "scripts/c01-real-node.mjs": "c1e7dbc527f47d7822a0a073cb632c07135dafb69997e47f3057905285b4a2f1",
+    "scripts/test-c01-native-profile.mjs": "b7a315573c0f64532a60def08823e64c10b38dc2d265f8542266f393ff5f3e14"
+  },
+  "findings": [],
+  "checked": [
+    "Exact three-file diff; no deployment/bootstrap/SDK edits.",
+    "Explicit option is applied only by test-only C01 node construction after number31337, P2Pfalse, both autominefalse, one loopback HTTP explicit-port URL without credentials/path/query/fragment checks. Upstream fixture independently owns Anvil and denies nonlocal network before this call.",
+    "Existing real application proof setting, no network prover, ordinary sequencer, and all timing/resource budgets unchanged.",
+    "Actual node config flag asserted; installed SequencerClient.getSequencer() and timetable method exist. Effective count uses actual configured cap and actual timetable; report explicitly excludes backlog-capacity qualification.",
+    "New cases reject wrong chain/type/P2P/automine/multiple or nonloopback/credentialed URLs. Actual installed guard regression rejects old short profile, warns with explicit local flag, accepts full capacity without flag. Existing profile composition checks retained."
+  ],
+  "testStatus": "Focused eight-case test is UNRUN at review time; no reviewer native execution.",
+  "requiredNext": [
+    "One focused test invocation under serialized slot; zero skips/failures.",
+    "Then at most one changed existing node scenario under unchanged60s/4GiB, exact source and all current build/dependency closures; independently review actual receipt."
+  ],
+  "limitations": [
+    "The URL check verifies local shape, not process ownership by itself; existing parent fixture ownership supplies that fact.",
+    "No inbox backlog throughput or production sequencer profile qualification.",
+    "No genuine Rolling or rc3 release/TXE/compiler260 clearance."
+  ]
+}

@@ -1,0 +1,11 @@
+✔ name availability uses normalized canonical ID and rejects a collision before fees or journal writes (61.45775ms)
+✔ name availability failures and changing canonical anchors never become available or taken (3.944291ms)
+✔ name preparation is encrypted, real ABI encoded and immutable across mutation/restart (7.618166ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 870.621917

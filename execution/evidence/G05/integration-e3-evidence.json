@@ -1,0 +1,110 @@
+{
+  "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+  "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "task_id": "G05-owned-names-wire-G14-bootstrap-development",
+  "holds": [],
+  "findings": [],
+  "scope_limits": "Bounded real names/recovery/request capture plus independently reviewed deployment source. Full privacy, remote query qualification, browser, race, social traces, specialist audit, 14-day soak and network release gates remain open.",
+  "checks": [
+    {
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "id": "source-and-regressions",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent serial Node affected tests; Python bootstrap/package tests; exact20path blob equivalence",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 nativeBB; real application proofs and controlled local settlement",
+      "observed": "247 passed (193 Node,48 bootstrap,6 package); exact candidate/base review",
+      "artifacts": [
+        {
+          "path": "evidence/G05/combined-e3-integration-review.json",
+          "sha256": "24d9aa94c7879e97f89d725155fff59e9b947421a07ef73d9c549edd62d4edca"
+        }
+      ]
+    },
+    {
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "id": "real-owned-names-wire",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 pinnedNode scripts/test-c01-application.mjs rolling-owned-names-wire",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 nativeBB; real application proofs and controlled local settlement",
+      "observed": "409255ms2158864KiB;4realnames,2freshPXE,12HTTP,50592010200000 humanfees,14661requests allsupported and5receiverreconciliations;allcleanup",
+      "artifacts": [
+        {
+          "path": "evidence/G05/owned-wire-e3-runtime-review.json",
+          "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+        },
+        {
+          "path": "evidence/G05/application-59c75f38-f340-418c-a31a-f30529fb7af1.json",
+          "sha256": "a804614003784c736f5246b93ee4b5779c383d8a8774c6b4b85d94c1764943ab"
+        }
+      ]
+    },
+    {
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "id": "coordination-and-gate",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 execution/graph.py validate; python3 -m unittest discover -s execution/tests -p test_integration_gate.py -v",
+      "environment": "macOS arm64 Node24.21.0 Aztec6rc1 nativeBB; real application proofs and controlled local settlement",
+      "observed": "53packages269criteria valid;19 gate tests including failing check/missingreview preventintegration",
+      "artifacts": [
+        {
+          "path": "evidence/G05/integration-e3-coordination.log",
+          "sha256": "e7c52bedf6e8e1a89a43c80ae2076558d59740587b112294d47cd7d2eb1b58be"
+        },
+        {
+          "path": "evidence/G05/integration-e3-gate-tests.log",
+          "sha256": "74ba7c859da06c2f35a3f4d940c614c587dce088c01e30933d1061d0a1c86016"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+    "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G05/owned-wire-e3-runtime-review.json",
+        "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+      },
+      {
+        "path": "evidence/G05/combined-e3-integration-review.json",
+        "sha256": "24d9aa94c7879e97f89d725155fff59e9b947421a07ef73d9c549edd62d4edca"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "id": "G05-owned-names-wire-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/owned-wire-e3-runtime-review.json",
+          "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+        }
+      ]
+    },
+    {
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "id": "G14-bootstrap-source-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/combined-e3-integration-review.json",
+          "sha256": "24d9aa94c7879e97f89d725155fff59e9b947421a07ef73d9c549edd62d4edca"
+        }
+      ]
+    }
+  ]
+}

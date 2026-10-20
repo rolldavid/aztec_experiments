@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+  "nonAztecVersionChanges": [
+    {
+      "path": "node_modules/@aws-sdk/checksums",
+      "old": "3.1001.0",
+      "new": "3.1001.2"
+    },
+    {
+      "path": "node_modules/@aws-sdk/client-s3",
+      "old": "3.1131.0",
+      "new": "3.1149.0"
+    },
+    {
+      "path": "node_modules/@aws-sdk/core",
+      "old": "3.978.0",
+      "new": "3.978.2"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-env",
+      "old": "3.972.71",
+      "new": "3.972.73"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-http",
+      "old": "3.972.73",
+      "new": "3.972.75"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-ini",
+      "old": "3.973.16",
+      "new": "3.973.18"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-login",
+      "old": "3.972.78",
+      "new": "3.972.80"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-node",
+      "old": "3.972.83",
+      "new": "3.972.85"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-process",
+      "old": "3.972.71",
+      "new": "3.972.73"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-sso",
+      "old": "3.973.15",
+      "new": "3.973.17"
+    },
+    {
+      "path": "node_modules/@aws-sdk/credential-provider-web-identity",
+      "old": "3.972.77",
+      "new": "3.972.79"
+    },
+    {
+      "path": "node_modules/@aws-sdk/middleware-sdk-s3",
+      "old": "3.972.76",
+      "new": "3.972.78"
+    },
+    {
+      "path": "node_modules/@aws-sdk/nested-clients",
+      "old": "3.997.45",
+      "new": "3.997.47"
+    },
+    {
+      "path": "node_modules/@aws-sdk/signature-v4-multi-region",
+      "old": "3.996.46",
+      "new": "3.996.48"
+    },
+    {
+      "path": "node_modules/@aws-sdk/token-providers",
+      "old": "3.1129.0",
+      "new": "3.1149.0"
+    },
+    {
+      "path": "node_modules/@aws-sdk/types",
+      "old": "3.974.5",
+      "new": "3.974.6"
+    },
+    {
+      "path": "node_modules/@aws-sdk/xml-builder",
+      "old": "3.972.40",
+      "new": "3.972.41"
+    },
+    {
+      "path": "node_modules/@babel/helpers",
+      "old": "7.29.7",
+      "new": "7.29.10"
+    },
+    {
+      "path": "node_modules/@babel/parser",
+      "old": "7.29.8",
+      "new": "7.29.9"
+    },
+    {
+      "path": "node_modules/@babel/traverse",
+      "old": "7.29.8",
+      "new": "7.29.10"
+    },
+    {
+      "path": "node_modules/@jest/console",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/core",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/environment",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/expect",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/expect-utils",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/fake-timers",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/globals",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/reporters",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/source-map",
+      "old": "30.5.0",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/test-result",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/test-sequencer",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@jest/transform",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-darwin-arm64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-darwin-x64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-linux-arm",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-linux-arm64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-linux-x64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-win32-arm64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@lmdb/lmdb-win32-x64",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/@napi-rs/wasm-runtime",
+      "old": "1.2.4",
+      "new": "1.2.5"
+    },
+    {
+      "path": "node_modules/@nodable/entities",
+      "old": "3.0.0",
+      "new": "3.1.0"
+    },
+    {
+      "path": "node_modules/@smithy/core",
+      "old": "3.34.1",
+      "new": "3.35.2"
+    },
+    {
+      "path": "node_modules/@smithy/signature-v4",
+      "old": "5.7.3",
+      "new": "5.7.4"
+    },
+    {
+      "path": "node_modules/@smithy/types",
+      "old": "4.18.0",
+      "new": "4.19.0"
+    },
+    {
+      "path": "node_modules/@tybys/wasm-util",
+      "old": "0.10.3",
+      "new": "0.10.4"
+    },
+    {
+      "path": "node_modules/babel-jest",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/baseline-browser-mapping",
+      "old": "2.11.22",
+      "new": "2.11.28"
+    },
+    {
+      "path": "node_modules/brace-expansion",
+      "old": "5.0.9",
+      "new": "5.0.12"
+    },
+    {
+      "path": "node_modules/browserslist",
+      "old": "4.28.9",
+      "new": "4.29.3"
+    },
+    {
+      "path": "node_modules/bser",
+      "old": "2.1.1",
+      "new": "2.1.2"
+    },
+    {
+      "path": "node_modules/caniuse-lite",
+      "old": "1.0.30001810",
+      "new": "1.0.30001815"
+    },
+    {
+      "path": "node_modules/cjs-module-lexer",
+      "old": "2.2.1",
+      "new": "2.3.0"
+    },
+    {
+      "path": "node_modules/electron-to-chromium",
+      "old": "1.5.427",
+      "new": "1.5.452"
+    },
+    {
+      "path": "node_modules/expect",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/express",
+      "old": "4.22.2",
+      "new": "4.22.3"
+    },
+    {
+      "path": "node_modules/fast-copy",
+      "old": "4.1.1",
+      "new": "4.1.2"
+    },
+    {
+      "path": "node_modules/fast-xml-parser",
+      "old": "5.11.1",
+      "new": "5.11.2"
+    },
+    {
+      "path": "node_modules/fb-watchman",
+      "old": "2.0.2",
+      "new": "2.0.4"
+    },
+    {
+      "path": "node_modules/idb",
+      "old": "8.0.3",
+      "new": "8.0.4"
+    },
+    {
+      "path": "node_modules/jest",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-circus",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-cli",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-config",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-diff",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-each",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-environment-node",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-matcher-utils",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-mock",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-mock-extended",
+      "old": "4.0.1",
+      "new": "4.0.2"
+    },
+    {
+      "path": "node_modules/jest-resolve-dependencies",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-runner",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-runtime",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-snapshot",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/jest-watcher",
+      "old": "30.5.1",
+      "new": "30.5.2"
+    },
+    {
+      "path": "node_modules/lmdb",
+      "old": "3.5.6",
+      "new": "3.5.7"
+    },
+    {
+      "path": "node_modules/node-releases",
+      "old": "2.0.55",
+      "new": "2.0.58"
+    },
+    {
+      "path": "node_modules/ordered-binary",
+      "old": "1.6.1",
+      "new": "1.6.2"
+    },
+    {
+      "path": "node_modules/path-scurry/node_modules/lru-cache",
+      "old": "11.5.2",
+      "new": "11.5.3"
+    },
+    {
+      "path": "node_modules/pg",
+      "old": "8.23.0",
+      "new": "8.23.1"
+    },
+    {
+      "path": "node_modules/pg-cloudflare",
+      "old": "1.4.0",
+      "new": "1.4.1"
+    },
+    {
+      "path": "node_modules/pg-connection-string",
+      "old": "2.14.0",
+      "new": "2.14.1"
+    },
+    {
+      "path": "node_modules/pg-protocol",
+      "old": "1.16.0",
+      "new": "1.16.1"
+    },
+    {
+      "path": "node_modules/pino-pretty",
+      "old": "13.1.3",
+      "new": "13.2.0"
+    },
+    {
+      "path": "node_modules/pino-pretty/node_modules/sonic-boom",
+      "old": null,
+      "new": "5.0.2"
+    },
+    {
+      "path": "node_modules/process-warning",
+      "old": "5.1.0",
+      "new": "5.1.1"
+    },
+    {
+      "path": "node_modules/proxy-addr",
+      "old": "2.0.7",
+      "new": "2.0.8"
+    },
+    {
+      "path": "node_modules/secure-json-parse",
+      "old": "4.1.0",
+      "new": "4.1.1"
+    },
+    {
+      "path": "node_modules/strnum",
+      "old": "2.4.2",
+      "new": "2.5.1"
+    },
+    {
+      "path": "node_modules/test-exclude/node_modules/ansi-regex",
+      "old": "6.3.0",
+      "new": "6.4.0"
+    },
+    {
+      "path": "node_modules/test-exclude/node_modules/brace-expansion",
+      "old": "2.1.4",
+      "new": "2.1.7"
+    },
+    {
+      "path": "node_modules/update-browserslist-db",
+      "old": "1.3.3",
+      "new": "1.3.4"
+    }
+  ],
+  "removedPaths": [],
+  "reason": "npm resolved dependencies of changed exact Aztec releases; all existing unrelated direct dependency pins and overrides retained",
+  "lockSha256": "825107bb65912344f28356160e513b30b553fe28e42c4c275ed66c70b1df0320"
+}

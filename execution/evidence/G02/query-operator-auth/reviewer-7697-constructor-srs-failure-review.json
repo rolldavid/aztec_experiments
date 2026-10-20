@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "00b0652ac226424ed8e813b224b92ee282550600",
+  "actualPacketSha256": "e2752d68cd81e7667efe2145ed38d0e0f42168259f0656cdeef8958b43c58075",
+  "verdict": "CONFIRMED_PRECONSTRUCTOR_SETUP_FAILURE",
+  "session": 7697,
+  "elapsedMs": 674,
+  "rssKiB": null,
+  "observed": "Actual network trap rejects NetCrs fetch during explicit WASM initializer; constructor derivation not reached. Packet artifact hashes and positive cleanup verified.",
+  "sourceBasis": [
+    "Pinned bb.js dest/node/barretenberg/index.js34 checks !options.skipSrsInit before initSRSChonk for explicit WASM backend.",
+    "Existing scripts/test-c01-base-parity-proof.mjs139 explicitly uses skipSrsInit:true for public hash runtime."
+  ],
+  "repairScope": "One test-only native initializer option skipSrsInit:true for public-only constructor hashing; retain actual hash derivation, network/wallet traps, exact constructor assertions, limits and cleanup. No production/SDK or proof-verification bypass.",
+  "holds": "Exact successor review and parent separate grant before same selected constructor test. No unchanged retry or CRS/proof qualification."
+}

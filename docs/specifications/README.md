@@ -1,0 +1,3 @@
+# Product specification
+
+The attached Draft 3 PDF is preserved verbatim for provenance. The owner subsequently amended development workflow, proof-disabled local iteration, acceptance sequencing, accessibility scope, soak duration, confirmation policy, hosting budget and scheduling. Read [current handover](../../START_HERE.md), [requirement map](../../execution/draft3-requirements.md) and [owner clarifications](../../execution/specification-clarifications.md). Historical commercial terms are not spending or hiring authorization. The current operator authority is USD1,500/month hosting; scheduled agent work is stopped.

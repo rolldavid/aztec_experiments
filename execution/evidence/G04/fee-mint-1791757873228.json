@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-11T22:31:13.563Z",
+  "mode": "inspect",
+  "helperRevision": "c11a0127a1ac89becf6435b06994495e1404da01",
+  "schemaVersion": 1,
+  "developmentOnly": true,
+  "testnetIssuance": true,
+  "hash": "0xdaed763cefa45997a7fb5dc45020a54ed2f574cad1967abdaa96c0784be9f050",
+  "status": "included-awaiting-finality",
+  "passed": false,
+  "blockNumber": 11894715,
+  "blockHash": "0xcbe909a8699065f190194033cd5749585f60b7a7ad157c94dd9c34fa0436771e",
+  "receiptStatus": 1,
+  "gasUsed": "50470",
+  "effectiveGasPrice": "1000023",
+  "actualGasCost": "50471160810"
+}

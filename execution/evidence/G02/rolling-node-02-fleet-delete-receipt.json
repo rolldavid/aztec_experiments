@@ -1,0 +1,10 @@
+{
+    "SuccessfulFleetDeletions": [
+        {
+            "CurrentFleetState": "deleted_terminating",
+            "PreviousFleetState": "active",
+            "FleetId": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4"
+        }
+    ],
+    "UnsuccessfulFleetDeletions": []
+}

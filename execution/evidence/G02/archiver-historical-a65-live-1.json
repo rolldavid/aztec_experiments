@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "scope": "single-public-historical-log-diagnostic",
+  "sourceSha256": "82a8bd88ca88a7746b75b070f199608a41c79265887e3c6d65c8078f6fa865d6",
+  "nodeStartupQualified": false,
+  "imageModuleBinding": "separate-evidence-required",
+  "originalSdkFailureCause": "undetermined; original method also repeats start-block eth_call",
+  "passed": false,
+  "status": "RPC_ERROR",
+  "httpStatus": 200,
+  "rpcCode": 4444,
+  "rawCount": null,
+  "sdkCount": null,
+  "strictDecodedCount": null,
+  "requests": 1,
+  "processCategory": "WORKER_FAILED",
+  "process": {
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "deadlineMs": 59000
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "candidate": "2f2528337782bb30f7a5d8dcb34d08032f9a4d1b",
+  "base": "e81939f6cc68b71e84465c8553977b0290decd33",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G14-live-authorization-release-withdrawal",
+  "implementer": "controls-20261011",
+  "allowed_paths": [
+    "scripts/run-bounded-browser-check.mjs",
+    "scripts/t04-metamask.mjs",
+    "scripts/test-t04-browser-journey.mjs",
+    "scripts/test-wallet-extension-browser.mjs"
+  ],
+  "required_checks": [
+    "refund-driver-composition-and-actual"
+  ],
+  "requirements": [
+    "RC22-RC37-native-original-refund"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-20261011",
+      "task_id": "G14-live-authorization-release-withdrawal",
+      "paths": [
+        "scripts/run-bounded-browser-check.mjs",
+        "scripts/t04-metamask.mjs",
+        "scripts/test-t04-browser-journey.mjs",
+        "scripts/test-wallet-extension-browser.mjs"
+      ]
+    }
+  ]
+}

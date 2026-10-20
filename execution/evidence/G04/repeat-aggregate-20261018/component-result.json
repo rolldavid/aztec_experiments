@@ -1,0 +1,34 @@
+{
+  "revision": "411ae1e557b78c4088c2c75326825379667b5e72",
+  "base": "2db3a5422cdf91a1a0d4b0675f19385a63c51b40",
+  "before": {
+    "test": "aggregate confirmed claim permits a fresh quote after the current application intent is replaced",
+    "result": "failed",
+    "code": "ROLLING_INTENT_NOT_FOUND",
+    "boundary": "archivePrevious calls reconcileClaim for the old application intent after a later action replaced it"
+  },
+  "after": {
+    "aggregateWalletSuite": {
+      "passed": 71,
+      "failed": 0
+    },
+    "sessionSelection": {
+      "pattern": "retained aggregate/top-up claim canonical check|funding continuation",
+      "passed": 8,
+      "failed": 0
+    },
+    "diffCheck": "passed"
+  },
+  "behavior": "Aggregate encrypted completion binds original three Ethereum receipts to reconciled L2 intent/hash; canonical exact L2 receipt verified before successor quote and payment. Automatic continuation and explicit submit/reconcile preserve completion.",
+  "limits": [
+    "Native labelled finite RPC boundary tests, not a live funding journey.",
+    "Existing records without a verified completion marker remain blocked; no migration or replay.",
+    "No chain, service, generated-output or SDK bundle changes."
+  ],
+  "sha256": {
+    "shared/rolling/aggregate-wallet.mjs": "ea3633ca4c601045615a3ba9ee96d6d5e315c5032a4c8bd05b44d3f24493b2b5",
+    "shared/rolling/aggregate-wallet.test.mjs": "bf3d9a4310e06a9977328159494feff9a3e487b5c6c6e12c0fe39647d80f0f21",
+    "apps/rolling/wallet-session.mjs": "9b692aba6430fabce728e3ac0f3d9de113cea76aef662180790e65953ffd9ec4",
+    "apps/rolling/wallet-session.test.mjs": "82e1470a51b367bbfbe54928046dbf2a86dd0b8e48fa9067225712ed9942c249"
+  }
+}

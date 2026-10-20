@@ -1,0 +1,121 @@
+{
+  "label": "Labelled UI and transport fixtures; no chain/proof acceptance",
+  "source": "e721 plus owned two-file selector repair",
+  "deadlineMs": 60000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 633824,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 568496
+    },
+    {
+      "elapsedMs": 2031,
+      "rssKiB": 548432
+    },
+    {
+      "elapsedMs": 3059,
+      "rssKiB": 294576
+    },
+    {
+      "elapsedMs": 4085,
+      "rssKiB": 282848
+    },
+    {
+      "elapsedMs": 5113,
+      "rssKiB": 580832
+    },
+    {
+      "elapsedMs": 6141,
+      "rssKiB": 610464
+    },
+    {
+      "elapsedMs": 7172,
+      "rssKiB": 581072
+    },
+    {
+      "elapsedMs": 8200,
+      "rssKiB": 629856
+    },
+    {
+      "elapsedMs": 9227,
+      "rssKiB": 622768
+    },
+    {
+      "elapsedMs": 10264,
+      "rssKiB": 633824
+    },
+    {
+      "elapsedMs": 11299,
+      "rssKiB": 631760
+    },
+    {
+      "elapsedMs": 12327,
+      "rssKiB": 616560
+    },
+    {
+      "elapsedMs": 13364,
+      "rssKiB": 333120
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "tests",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 10264,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 37517,
+        "ppid": 59636,
+        "rssKiB": 55904
+      },
+      {
+        "role": "tests",
+        "pid": 37527,
+        "ppid": 37517,
+        "rssKiB": 47616
+      },
+      {
+        "role": "tests",
+        "pid": 37528,
+        "ppid": 37527,
+        "rssKiB": 178432
+      },
+      {
+        "role": "tests",
+        "pid": 37669,
+        "ppid": 37528,
+        "rssKiB": 88608
+      },
+      {
+        "role": "tests",
+        "pid": 37670,
+        "ppid": 37669,
+        "rssKiB": 77984
+      },
+      {
+        "role": "tests",
+        "pid": 37671,
+        "ppid": 37669,
+        "rssKiB": 44000
+      },
+      {
+        "role": "tests",
+        "pid": 37672,
+        "ppid": 37669,
+        "rssKiB": 141280
+      }
+    ]
+  },
+  "elapsedMs": 13859,
+  "ownedTreeAbsent": true,
+  "passed": true
+}

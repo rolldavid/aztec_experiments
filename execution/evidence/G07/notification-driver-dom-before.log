@@ -1,0 +1,33 @@
+✖ notification campaign reviews, confirms, then navigates to private recovery (3980.768125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4280.762375
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:523:1
+✖ notification campaign reviews, confirms, then navigates to private recovery (3980.768125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'deadline'
+  - 'ready'
+  
+      at settled (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/apps/rolling/wallet-panel.browser.test.mjs:529:36)
+      at async reviewRollingNotificationAction (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/scripts/testing/rolling-notification-browser.mjs:97:2)
+      at async run (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/apps/rolling/wallet-panel.browser.test.mjs:531:57)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/apps/rolling/wallet-panel.browser.test.mjs:534:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'deadline',
+    expected: 'ready',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

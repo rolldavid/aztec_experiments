@@ -1,0 +1,40 @@
+✔ settlement-only continuation preserves original active request and never replays provider or finishes (5.430792ms)
+✔ settlement-only replacement binds exact original signed operation before saving authority (9.406834ms)
+✔ settlement-only continuation without replacement reconciles canonical original and rejects unknown provider (1.91575ms)
+✔ trusted original billing closes accounting without reply or another provider call (1.184083ms)
+✔ terminal no-reply admission authenticates original limits and canonical settlement read-only (1.22575ms)
+✔ terminal no-reply admission refuses changed phase (2.194084ms)
+✔ terminal no-reply admission refuses changed finished (0.90775ms)
+✔ terminal no-reply admission refuses changed call (2.887209ms)
+✔ terminal no-reply admission refuses changed receipt (1.412916ms)
+✔ terminal no-reply admission refuses changed charge (1.069ms)
+✔ terminal no-reply admission refuses changed budget (0.835458ms)
+✔ terminal no-reply admission refuses changed state (0.906375ms)
+✔ terminal no-reply admission refuses changed reserved (1.685166ms)
+✔ terminal no-reply admission refuses changed target (0.98375ms)
+✔ terminal no-reply admission refuses changed plugin (0.810166ms)
+✔ terminal no-reply admission refuses changed limits (0.823125ms)
+✔ terminal no-reply admission refuses changed sequence (0.76425ms)
+✔ bounded predecessor pages skip authenticated terminal history but stop at unknown barriers (2.205333ms)
+✔ terminal node pins checkpointed reads and retains original canonical rechecks (development=true) (0.208125ms)
+✔ terminal node pins checkpointed reads and retains original canonical rechecks (development=false) (0.050083ms)
+✔ terminal accounting from a different checkpoint cannot exempt a predecessor (0.821708ms)
+✔ accepted hosted recovery publishes once and finishes with settled original billing and no model replay (4.7485ms)
+✔ first received response resumes settlement and the original tool result without another provider call (1.881959ms)
+✔ restored reply intent waits for the exact saved operation before canonical inspection and never reposts (0.941209ms)
+✔ restored reply cannot finish on a waiter result without a matching canonical original receipt (3.908333ms)
+✔ hosted invocation accounting meters multiple calls under one reserve and settles before authenticated reply (3.35075ms)
+✔ hosted invocation accounting retains produced result across unsettled chain operation and resumes without agent (1.228541ms)
+✔ hosted invocation accounting preserves accepted revision recovery without replaying paid calls (2.750667ms)
+✔ hosted invocation accounting closes unknown original provider without a model or tool replay (2.966542ms)
+✔ hosted invocation result-ready is discoverable after restart without model admission (10.873042ms)
+✔ original hosted billing evidence is bounded owner-only regular input with exact hash (17.090292ms)
+✔ Seed sole broadcast records prepared and terminal classification without changing unknown reconciliation (0.751292ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1866.440916

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T10:13:57.398623+00:00",
+  "readOnly": true,
+  "source": "AWS Price List Query API GetProducts",
+  "filters": [
+    {
+      "Type": "TERM_MATCH",
+      "Field": "instanceType",
+      "Value": "m7a.4xlarge"
+    },
+    {
+      "Type": "TERM_MATCH",
+      "Field": "location",
+      "Value": "US East (N. Virginia)"
+    },
+    {
+      "Type": "TERM_MATCH",
+      "Field": "operatingSystem",
+      "Value": "Linux"
+    },
+    {
+      "Type": "TERM_MATCH",
+      "Field": "tenancy",
+      "Value": "Shared"
+    },
+    {
+      "Type": "TERM_MATCH",
+      "Field": "preInstalledSw",
+      "Value": "NA"
+    },
+    {
+      "Type": "TERM_MATCH",
+      "Field": "capacitystatus",
+      "Value": "Used"
+    }
+  ],
+  "available": true,
+  "rates": [
+    {
+      "sku": "TTPYSE2GSHDGSMTX",
+      "unit": "Hrs",
+      "usd": "0.9273600000",
+      "effectiveDate": "2026-10-01T00:00:00Z",
+      "beginRange": "0",
+      "endRange": "Inf"
+    }
+  ]
+}

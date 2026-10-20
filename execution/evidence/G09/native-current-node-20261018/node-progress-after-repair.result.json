@@ -1,0 +1,22 @@
+{
+    "CommandId": "d912896d-8236-4815-b2b7-c18a5d6e9b96",
+    "InstanceId": "i-042331bb699a44e4c",
+    "Comment": "",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-18T20:28:24.527Z",
+    "ExecutionElapsedTime": "PT0.012S",
+    "ExecutionEndDateTime": "2026-10-18T20:28:24.527Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "Result=success\nId=rolling-node.service\nActiveState=active\nSubState=running\n\nResult=success\nId=rolling-qualification.service\nActiveState=activating\nSubState=start\n\nResult=success\nId=rolling-query.service\nActiveState=inactive\nSubState=dead\n{\"schemaVersion\":2,\"instrumented\":true,\"runtimeAdapter\":\"publicnode-config-v1\",\"helperSha256\":\"f10d47fa2f26f50197bb36c44c75f2d34b41a2e5726caed26c935e42f2c69d15\",\"history\":[[\"registry-guard\",\"begin\"],[\"registry-guard\",\"complete\"],[\"rollup-compatibility\",\"begin\"],[\"rollup-compatibility\",\"complete\"],[\"l1-config\",\"begin\"],[\"l1-config\",\"complete\"],[\"genesis-compare\",\"begin\"],[\"genesis-compare\",\"complete\"],[\"telemetry\",\"begin\"],[\"telemetry\",\"complete\"],[\"factory\",\"begin\"],[\"factory-bb\",\"begin\"],[\"factory-bb\",\"complete\"],[\"factory-kzg\",\"begin\"],[\"factory-kzg\",\"complete\"],[\"factory-keystore\",\"begin\"],[\"factory-keystore\",\"complete\"],[\"factory-addresses\",\"begin\"],[\"factory-addresses\",\"complete\"],[\"factory-l1-constants\",\"begin\"],[\"factory-l1-constants\",\"complete\"],[\"factory-blob\",\"begin\"],[\"factory-blob\",\"complete\"],[\"factory-snapshot\",\"begin\"]],\"archiver\":{\"passesStarted\":0,\"passesCompleted\":0,\"passesFailed\":0,\"inFlight\":false,\"lastObservationMs\":0,\"lastProgressMs\":0,\"localL1Block\":null,\"observedHeadL1Block\":null,\"lastCheckpoint\":null,\"error\":null,\"droppedObservations\":0}}",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}

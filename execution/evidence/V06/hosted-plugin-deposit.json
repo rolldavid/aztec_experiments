@@ -1,0 +1,81 @@
+{
+  "phase": "plugin-deposit",
+  "passed": true,
+  "startedAt": "2026-10-10T11:54:17.724Z",
+  "stages": [
+    {
+      "stage": "restore-existing-hosted-account",
+      "at": "2026-10-10T11:54:22.529Z"
+    },
+    {
+      "stage": "deposit-one-test-usdc",
+      "at": "2026-10-10T11:54:54.679Z"
+    },
+    {
+      "stage": "phase-complete",
+      "at": "2026-10-10T11:55:41.103Z"
+    }
+  ],
+  "ethereumNonceBefore": 5,
+  "walletFees": [
+    {
+      "balanceBefore": "119872517093370",
+      "nonce": "5",
+      "gasLimit": "140018",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "baseFeePerGas": "17"
+    },
+    {
+      "balanceBefore": "118494944751501",
+      "nonce": "6",
+      "gasLimit": "969289",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "baseFeePerGas": "17"
+    }
+  ],
+  "ethereumPayments": [
+    {
+      "hash": "0x96315f65ecc595aa6bd73444e81ca631b6a6cd9e4c09d3bf8f834ae11bf55c93",
+      "nonce": 5,
+      "requestedTo": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "minedTo": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "wrapped": false,
+      "gasLimit": "140018",
+      "uiGasLimit": "140018",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "137757",
+      "blockNumber": 11884368,
+      "blockHash": "0x8c11c539b081f70287070e5089d90a7a410abae11f4e0c2dbeeadb75abf433e6",
+      "status": 1,
+      "exactContractEffect": true
+    },
+    {
+      "hash": "0x227b7ac877be5b40795540d2e12cb729d5e9635fd00e2f02fb0adc43d9713045",
+      "nonce": 6,
+      "requestedTo": "0x62126e7be3695809b1f9f40df3b1ab2a99f10ed8",
+      "minedTo": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+      "wrapped": true,
+      "gasLimit": "959956",
+      "uiGasLimit": "969289",
+      "maxFeePerGas": "50000000",
+      "maxPriorityFeePerGas": "10000000",
+      "gasUsed": "741504",
+      "blockNumber": 11884370,
+      "blockHash": "0x847a23b7351ec40fd63b97c74f7b43a99b5572cc33e03314768cb1b12b95598e",
+      "status": 1,
+      "exactContractEffect": true
+    }
+  ],
+  "deposit": {
+    "txHash": "0x227b7ac877be5b40795540d2e12cb729d5e9635fd00e2f02fb0adc43d9713045",
+    "key": "0x004223684e724bf919109f6d850ad068b2774c78743975d3fd8222c80e7815f3",
+    "leafIndex": "195",
+    "amount": "1000000"
+  },
+  "tokenBalanceBefore": "20000000",
+  "ethereumNonceAfter": 7,
+  "finishedAt": "2026-10-10T11:55:41.207Z"
+}

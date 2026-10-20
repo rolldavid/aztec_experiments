@@ -1,0 +1,233 @@
+{
+  "label": "synthetic-real-SQLite-reducer-query-component-only",
+  "sourceRevision": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965",
+  "command": "TMPDIR=/private/tmp NODE_BACKEND=js HARDWARE_CONCURRENCY=2 <pinned Node24> .build/g13-component-performance/measure.mjs",
+  "hardware": {
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64",
+    "cpu": "Apple M4 Pro",
+    "logicalCpus": 12,
+    "totalMemoryBytes": 25769803776,
+    "node": "v24.21.0"
+  },
+  "targets": {
+    "dataset": {
+      "posts": 10000,
+      "boards": 100,
+      "identities": 100
+    },
+    "cacheRebuildMs": 60000,
+    "feedColdMs": 2500,
+    "feedWarmMs": 1000,
+    "threadColdMs": 1500,
+    "threadWarmMs": 500,
+    "directoryMs": 500
+  },
+  "limitations": [
+    "Synthetic event positions/hashes and schema-branded events are NOT authenticated chain history.",
+    "Rebuild excludes archive RPC and network, but includes actual reducer, SQLite indexes, atomic transaction and FULL-synchronous commit costs.",
+    "Cold queries reopen SQLite; OS filesystem cache is not flushed. Warm queries reuse the same connection.",
+    "No browser/renderer, scrolling, debounce, input responsiveness, end-to-end latency, proof/finality or independent-node request observation.",
+    "No HTTP/RPC calls; request-budget criteria remain unmeasured, not zero-request acceptance."
+  ],
+  "preparationMs": 1515.577625,
+  "syntheticBlocks": 103,
+  "inputEvents": 10201,
+  "retainedEventBytes": 14831117,
+  "rebuildMs": 1342.979583,
+  "componentRebuildTargetPass": true,
+  "dataset": {
+    "posts": 10000,
+    "boards": 100,
+    "identities": 100,
+    "events": 10201
+  },
+  "queries": [
+    {
+      "view": "feed",
+      "phase": "reopened",
+      "queryMs": 23.096000000000004,
+      "reopenMs": 0.49770799999987503,
+      "rows": 100,
+      "responseBytes": 124568,
+      "work": {
+        "candidateRows": 101,
+        "materializedRows": 201,
+        "materializedBytes": 118783,
+        "seeks": 1
+      },
+      "targetMs": 2500,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "feed",
+      "phase": "warm",
+      "queryMs": 21.968541999999616,
+      "reopenMs": 0,
+      "rows": 100,
+      "responseBytes": 124568,
+      "work": {
+        "candidateRows": 101,
+        "materializedRows": 201,
+        "materializedBytes": 118783,
+        "seeks": 1
+      },
+      "targetMs": 1000,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "thread",
+      "phase": "reopened",
+      "queryMs": 22.69570799999974,
+      "reopenMs": 0.565708000000086,
+      "rows": 100,
+      "responseBytes": 123143,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 201,
+        "materializedBytes": 117358,
+        "seeks": 1
+      },
+      "targetMs": 1500,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "thread",
+      "phase": "warm",
+      "queryMs": 21.90362499999992,
+      "reopenMs": 0,
+      "rows": 100,
+      "responseBytes": 123143,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 201,
+        "materializedBytes": 117358,
+        "seeks": 1
+      },
+      "targetMs": 500,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "directory",
+      "phase": "reopened",
+      "queryMs": 1.1618330000001151,
+      "reopenMs": 0.5743750000001455,
+      "rows": 1,
+      "responseBytes": 289,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 101,
+        "materializedBytes": 26564,
+        "seeks": 1
+      },
+      "targetMs": 500,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "directory",
+      "phase": "warm",
+      "queryMs": 0.8925839999997152,
+      "reopenMs": 0,
+      "rows": 1,
+      "responseBytes": 289,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 101,
+        "materializedBytes": 26564,
+        "seeks": 1
+      },
+      "targetMs": 500,
+      "componentTargetPass": true,
+      "cacheTrusted": false
+    },
+    {
+      "view": "profile",
+      "phase": "reopened",
+      "queryMs": 13.172207999999955,
+      "reopenMs": 0.5851670000001832,
+      "rows": 100,
+      "responseBytes": 105742,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 201,
+        "materializedBytes": 111017,
+        "seeks": 1
+      },
+      "targetMs": null,
+      "componentTargetPass": null,
+      "cacheTrusted": false
+    },
+    {
+      "view": "profile",
+      "phase": "warm",
+      "queryMs": 12.440708000000086,
+      "reopenMs": 0,
+      "rows": 100,
+      "responseBytes": 105742,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 201,
+        "materializedBytes": 111017,
+        "seeks": 1
+      },
+      "targetMs": null,
+      "componentTargetPass": null,
+      "cacheTrusted": false
+    },
+    {
+      "view": "board",
+      "phase": "reopened",
+      "queryMs": 22.945416999999907,
+      "reopenMs": 0.5299999999997453,
+      "rows": 100,
+      "responseBytes": 123783,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 202,
+        "materializedBytes": 117715,
+        "seeks": 1
+      },
+      "targetMs": null,
+      "componentTargetPass": null,
+      "cacheTrusted": false
+    },
+    {
+      "view": "board",
+      "phase": "warm",
+      "queryMs": 23.492874999999913,
+      "reopenMs": 0,
+      "rows": 100,
+      "responseBytes": 123783,
+      "work": {
+        "candidateRows": 100,
+        "materializedRows": 202,
+        "materializedBytes": 117715,
+        "seeks": 1
+      },
+      "targetMs": null,
+      "componentTargetPass": null,
+      "cacheTrusted": false
+    }
+  ],
+  "fullFeedPagination": {
+    "total": 10000,
+    "pages": 100,
+    "ms": 2344.6642079999997,
+    "noDuplicates": true
+  },
+  "memory": {
+    "rss": 313688064,
+    "heapTotal": 197312512,
+    "heapUsed": 101892184,
+    "external": 4101555,
+    "arrayBuffers": 4556357
+  },
+  "status": "measured",
+  "databaseBytes": 112259072
+}

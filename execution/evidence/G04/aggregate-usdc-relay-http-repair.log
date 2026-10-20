@@ -1,0 +1,13 @@
+✔ invalid server host closes owner before any listener (1.4075ms)
+✔ invalid server port closes owner before any listener (0.063417ms)
+✔ invalid server pollMs closes owner before any listener (0.062125ms)
+✔ invalid server preserves falsy cleanup undefined (0.073833ms)
+✔ invalid server preserves falsy cleanup false (0.059959ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92.669042

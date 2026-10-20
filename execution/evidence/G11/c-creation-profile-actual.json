@@ -1,0 +1,97 @@
+{
+  "at": "2026-10-14T17:14:58.936095+00:00",
+  "creation": {
+    "at": "2026-10-14T17:12:08.092Z",
+    "available": {
+      "available": true,
+      "owner": "zac-williamson",
+      "ownerId": 1476668,
+      "appId": 5317701,
+      "installationId": 171412624
+    },
+    "sourceRevision": "85ba37b4058586076936856fff1d7052845c4db4",
+    "originalJournalSha256": "7141dd9f375d3dcdc1e712bf57e4d460cf351224f4c67a92367a1b24437ffdac",
+    "status": "failed",
+    "code": "GITHUB_BROKER_REJECTED",
+    "diagnostic": {
+      "kind": "http-rejection",
+      "status": 422,
+      "requestId": "C2A0:12CA79:689E7B:9B461F:6ACFB7EB",
+      "acceptedPermissions": "administration=write,contents=read; contents=read,repository_creation=write"
+    },
+    "trace": [
+      {
+        "method": "GET",
+        "route": "/app/installations/171412624",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/app/installations/171412624",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "route": "/app/installations/171412624/access_tokens",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap/actions/permissions",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap/git/ref/heads/main",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap/git/commits/b3e8ef46bb26002a02c949438f5d43d05422e9ff",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap/git/trees/131e291ea4ea28a7c1f0d5bb62131c6c9725f0e4",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "route": "/app/installations/171412624/access_tokens",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "route": "/installation/repositories",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "route": "/repos/zac-williamson/bok-7b109ea75ebed29c10aad697e2f0cee3f739826317b04be3e4ad6ebca6a2b07e",
+        "status": 404
+      },
+      {
+        "method": "POST",
+        "route": "/repos/zac-williamson/rolling-chat-bok-bootstrap/generate",
+        "status": 422
+      }
+    ],
+    "originalJournalUnchanged": true
+  },
+  "ownerReconciliation": {
+    "repository": 1419512819,
+    "name": "zac-williamson/bok-7b109ea75ebed29c10aad697e2f0cee3f739826317b04be3e4ad6ebca6a2b07e",
+    "private": true,
+    "actionsEnabled": false,
+    "createdButEmpty": true,
+    "creationStatus": 422,
+    "appAutomaticAccessQualified": false,
+    "noCreateReplay": true
+  },
+  "disposition": "Automatic template creation remains blocked despite correct broad installation and minimal documented new creation token. Third422createdemptyprivate; no repeatedcreate/selection. Reviewer diagnosing supported alternative; exactpersonalAppselection constraints preserved."
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "campaign": "native-version-20261013-d73c2bc3015b",
+  "sourceCommit": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+  "verdict": "PAYLOAD_AND_PREPARATION_APPROVED_SUBJECT_TO_SEPARATE_LEAD_LAUNCH_GRANT_AND_FINAL_BINDINGS",
+  "reviewedAt": "2026-10-13T01:26:39.298843+00:00",
+  "findings": [],
+  "payload": {
+    "bytes": 11948,
+    "sha256": "54cb9d47945e61995dd932329a84a9f60a8e5c4b67dc796568e94cc52bff8a5e",
+    "mode": "0600",
+    "byteEquivalentRegeneration": true,
+    "syntaxParsedNotExecuted": true,
+    "controlSourceSha256": "db751fe18563a58e6d6399e0dd4bcc29a600efe3987c74dec02e56112e38ce04",
+    "workerSha256": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878"
+  },
+  "sourceSha256": "864f2b7e9dc15c2999bc810a9c330fc4b60ed1dad3a7f7ed8f8f8f1d15b3299a",
+  "privateCapabilityValuesPrinted": false,
+  "checks": {
+    "actualPayloadHashSizeAndModes": true,
+    "decodedShellProgramAndSourceWorkerExactlyReconstructedFromPinnedSource": true,
+    "configClosedAndExact": true,
+    "urlFacts": [
+      {
+        "role": "binaryUrl",
+        "fixedHttpsBucketRegionPath": true,
+        "signedHeadersHostOnly": true,
+        "uniqueQueryKeys": true,
+        "expiresAfterBudgetStop": true
+      },
+      {
+        "role": "receiptPutUrl",
+        "fixedHttpsBucketRegionPath": true,
+        "signedHeadersHostOnly": true,
+        "uniqueQueryKeys": true,
+        "expiresAfterBudgetStop": true
+      }
+    ],
+    "sixOperatorHashesAndPristineCopiesVerified": true,
+    "onlyCoreBindingLiteralsAndFourWrapperHashRepins": true,
+    "uploadIntentResponseObjectReferenceHashesVerified": true,
+    "sourceCurrentAndUnchanged": true,
+    "ledgerBoundUsd": 215.28,
+    "remainingBudgetUsd": 84.72,
+    "launchAndPayloadReviewPinsCurrentlyUnset": true,
+    "noLTOrFleetIntent": true
+  },
+  "deadlines": {
+    "createdAt": "2026-10-13T01:22:30Z",
+    "latestLaunch": "2026-10-13T01:32:30Z",
+    "commissioningStop": "2026-10-13T01:52:30Z",
+    "budgetStop": "2026-10-13T02:07:30Z"
+  },
+  "operatorFiles": [
+    {
+      "role": "core",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-core.py",
+      "sha256": "3c0ed62d07dca6dfff98c3bd7d339aeffa0a467cf0f02dbce248ffb8afcd3157",
+      "pristineSha256": "4b434583de58543dff67699a1fd0a8a38ec31b01e435629cc5c6a1806a1cfdc1"
+    },
+    {
+      "role": "upload",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-upload.py",
+      "sha256": "7173798928a567bc56c49bef9fc53b15d4cbd3ba3bf7dce959320e2465e1b901",
+      "pristineSha256": "982a8d113f9996a2d593cf272d28897c9c48ccd8756ed0772618df01b5cabc3b"
+    },
+    {
+      "role": "launch",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-launch.py",
+      "sha256": "e5288ec495ee00acacb7ba7e4cc0b468088a566ae542ecc4a29d3f8c92bdb1ea",
+      "pristineSha256": "c3086f0469b49ea07bd2a67d72dfbbf1370ec42aeb8b5a0e3528114cfbadd220"
+    },
+    {
+      "role": "observe",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-observe.py",
+      "sha256": "4989f886078fb088f3bbec3d3aa8b3efedf3a9896da0a4be4030194eac6334be",
+      "pristineSha256": "7d1561a651f6fa1f534dceee31d8e4b99275cccdb11fce6531f72e59cb246858"
+    },
+    {
+      "role": "cleanup",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-cleanup.py",
+      "sha256": "6745f3fe9f375af849690186e0210fc654c78c60a37ece2046bd6ec0040365fa",
+      "pristineSha256": "99e4c4f347966b914104a39f7d6de9f4228abbe386a396ed96575b463f556de7"
+    },
+    {
+      "role": "test",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/native-version-operator-test.py",
+      "sha256": "af31c103b54e4c6679101f4fa3392c07ca4b0f03f2a788a34104a8e9fee41a8c",
+      "pristineSha256": "af31c103b54e4c6679101f4fa3392c07ca4b0f03f2a788a34104a8e9fee41a8c"
+    }
+  ],
+  "evidenceHashes": {
+    "review-packet.json": "68672166bfa8e8f9c40b6b1e72b6f4a510daa6f6bffc68e35d20dd744ae81424",
+    "actual-payload.json": "4e39dbd9eac7a8b43d15454dde6242324251e538d5d66e54e8c47faa8f544fe5",
+    "literal-bindings.json": "3ea68067e981cd1ea02b1eaead7a7cc3ca6e4a21b3ab92f1bd56adc9fdef7a4f",
+    "upload-result.json": "2bff564a8cc2043585ae242af529515b60e9d7ee63a40663ae04cb3c742dde19",
+    "capabilities-result.json": "48c34807e233ed5d675132ba9adef649aa61984d088f8ab366fc5aae5b8d6c55"
+  },
+  "scope": [
+    "One previously authorized immutable public binary upload verified by recorded version/checksum HEAD and exact-key signed GET prefix/version response. Capability URL has no versionId; runtime full size/SHA before executable permissions is mandatory. No upload replay.",
+    "Fixed x86_64 m7a.large two cores/8GiB, no ingress, exact owned40GiB encrypted gp3 root/delete-on-termination, single Fleet with fixed absolute expiry plus independent guest shutdown. Fresh runtime preflight/readbacks remain mandatory.",
+    "Guest preflight and version-only15s/512MiB/2CPU diagnostic; normal Linux pin remains absent and ordinary package/startup gate closed.",
+    "No guest libc/CPU facts or successful Linux execution inferred from payload or EC2 metadata."
+  ],
+  "remainingGates": [
+    "Separate lead one-shot launch grant and exact final two binding literals plus wrapper repins reviewed before execution.",
+    "Reject after01:32:30Z without silent redating; commission01:52:30Z and stop02:07:30Z.",
+    "Unknown financial mutation reconciled only; no replay.",
+    "Actual receipt, host/Fleet controls, cleanup and budget reconciliation require later independent review."
+  ],
+  "reviewNote": "An initial reviewer comparison used the extracted shared-controls subset hash for controlSourceSha256; corrected by reading actual receipt source: this field binds the entire runtime PINS.bootstrap, independently matched. No payload discrepancy."
+}

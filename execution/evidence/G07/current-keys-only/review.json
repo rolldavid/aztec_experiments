@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "packetSha256": "4de40c67a2ddbb988f7022048f300fd066a3149a50e68933f220a4a22e0adcb9",
+  "verdict": "accept scoped fresh completion observation plus separate retained exact-value verification; preserve failed original predicate",
+  "checks": {
+    "linkedHashesAndSizes": 12,
+    "allMatched": true,
+    "proceduresRead": [
+      "run.mjs",
+      "supervise.mjs",
+      "verify-retained.mjs",
+      "verify-retained-supervise.mjs"
+    ],
+    "sourceRead": [
+      "shared/rolling/preferences.mjs:131",
+      "shared/rolling/preferences.mjs:175",
+      "shared/rolling/cold-preference-reader.mjs:249"
+    ],
+    "reviewerExecution": "Read-only artifact/hash/source inspection and integer conversion only; no browser/RPC/SDK/model/native runs"
+  },
+  "fresh": {
+    "originalPassed": false,
+    "elapsedMs": 59747,
+    "supervisorElapsedMs": 60105,
+    "readCount": 16,
+    "maxReadMs": 4395,
+    "anchor": 863,
+    "nextBlock": 864,
+    "revision": "4",
+    "complete": true,
+    "sameReadMatches": [
+      "bookmarks",
+      "followedBoards",
+      "subscriptions",
+      "replyNotifications",
+      "noOrphans"
+    ],
+    "failure": "marker comparison expected string throughBlock and hex blockHash; official schema returns number and canonical decimal field",
+    "profile": "Exclusive previously absent profile; locked shell verified zero IndexedDB/localStorage/sessionStorage and absent SDK/account; no cursor/cache injection",
+    "import": "Production encrypted backup, decrypted in page to assert claims0/journals0 before ordinary UI import; no financial journal restored",
+    "originalFailureAndCleanup": "Original result false and supervisor exit failure preserved; context closed, owned tree absent, temporary files removed"
+  },
+  "retained": {
+    "passed": true,
+    "elapsedMs": 19959,
+    "supervisorElapsedMs": 20325,
+    "readCount": 3,
+    "priorAuthenticatedCursor": {
+      "complete": true,
+      "anchor": 863,
+      "nextBlock": 864
+    },
+    "completionAnchor": 869,
+    "nextBlock": 870,
+    "revision": "4",
+    "allExactValuesMatch": true,
+    "marker": {
+      "throughBlock": 688,
+      "canonicalHash": "0x01c002c744f96cac7b24220b3dc92b0e64ce13cf91800bc748f99b960db6010e",
+      "source": "Earlier canonical Anonymous reply result linked in packet; decimal conversion exactly equal"
+    },
+    "originalAndKeysOnlyBackupsUnchanged": true,
+    "journalAndEpochUnchangedByImport": true,
+    "cleanup": "context closed, owned tree absent, temp removed; no supervisor failures"
+  },
+  "traffic": {
+    "fresh": {
+      "walletAssets": 16,
+      "privateRequests": 590,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "compactRequests": 14,
+      "compactPreflights": 0,
+      "tagDiscoveryRequests": 0,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    },
+    "retained": {
+      "walletAssets": 18,
+      "privateRequests": 145,
+      "feedRequests": 0,
+      "boardRequests": 0,
+      "compactRequests": 2,
+      "compactPreflights": 0,
+      "tagDiscoveryRequests": 0,
+      "proofSubmits": 0,
+      "nodeSubmissions": 0,
+      "l1Submissions": 0,
+      "blockedRequests": 0,
+      "inspectionErrors": 0
+    },
+    "interpretation": "Zero observed tag discovery, proof, L2/L1 send, blocked and inspection errors after closure. Browser request classifier only, not full-node receiver trace or general privacy assurance."
+  },
+  "limits": [
+    "Fresh original overall acceptance remains false, not retroactively passed.",
+    "The separate retained verifier is not another fresh scan and not a fresh performance pass.",
+    "Measured current863 dataset and local development topology do not qualify original1572/1601 cold target or remote/real-proof environment.",
+    "Combined evidence supports keys-only recovery of current revision4 views and canonical marker688; no full financial/history restore is asserted.",
+    "Original keys-only backup read/validation precedes the timed launch/import interval; measured59.747 includes runtime fetch, browser launch, UI import, scan and cleanup."
+  ],
+  "runtime": {
+    "manifestSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+    "moduleSha256": "29257d4b5880db2f01dc347ae1839a11e052a7b3b6c40df7ac8ef4bdbcfe7f99",
+    "nativeProofs": false
+  }
+}

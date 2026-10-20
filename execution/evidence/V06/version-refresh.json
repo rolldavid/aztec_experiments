@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-10T14:29:54.959Z",
+  "registry": "https://registry.npmjs.org/@aztec-labs%2Faztec.js",
+  "tags": {
+    "latest": "6.0.0-nightly.20260829",
+    "tmp-publish": "6.0.0-nightly.20260924",
+    "prerelease": "6.0.0-rc.3",
+    "nightly": "6.0.0-nightly.20261010"
+  },
+  "v6Releases": [
+    "6.0.0-rc.1",
+    "6.0.0-rc.2",
+    "6.0.0-rc.3"
+  ],
+  "node": {
+    "version": "6.0.0-rc.1",
+    "rollupVersion": "2914217885",
+    "l1ChainId": "11155111",
+    "realProofs": true
+  },
+  "networkDocumentation": "https://docs.aztec.network/networks",
+  "decision": "Pin SDK, Aztec.nr and node-facing artifacts to6.0.0-rc.1, matching the current official Testnet version, RPC and rollup. Newer npm prerelease6.0.0-rc.3 is published but not the documented live testnet build."
+}

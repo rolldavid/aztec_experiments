@@ -1,0 +1,98 @@
+{
+  "revision": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "observedAt": "2026-10-18T08:28:45.948Z",
+  "chainId": 31337,
+  "realProofs": false,
+  "blocks": [
+    {
+      "blockNumber": 17,
+      "blockHash": "0x149664052e9c93dd6a3bb18562ed0a553e8008769eeb629635e571a7f53edb2e",
+      "transactions": [
+        {
+          "txHash": "0x0ad27c521db5d24d99d3ddc86da06a8ad23ebd11230b5b8aeb1a507473d59cf3",
+          "status": "finalized",
+          "executionResult": "success",
+          "fee": "19860730100000",
+          "eventTypes": [
+            "BioPublished"
+          ],
+          "events": [
+            {
+              "type": "BioPublished",
+              "payloadKeys": [
+                "schema",
+                "name_id",
+                "version",
+                "length",
+                "digest",
+                "content",
+                "trailer"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blockNumber": 19,
+      "blockHash": "0x13d0752c9bb142a2cac712d01fbd33dcec0f8c4a9ffdc2cf002a2e0f6d777610",
+      "transactions": [
+        {
+          "txHash": "0x11a7fc3cb07211cb1f5cb6bcd37748e9630b19d6e44d7ba4454c81ac5c42d86d",
+          "status": "finalized",
+          "executionResult": "success",
+          "fee": "8456338400000",
+          "eventTypes": [],
+          "events": []
+        }
+      ]
+    },
+    {
+      "blockNumber": 20,
+      "blockHash": "0x0235dce4edbe4909793ad1f455bcfde2e6cf5cd9fe9c0b5ed4f6f6993ae21d1b",
+      "transactions": [
+        {
+          "txHash": "0x1fb3d57c779b445e7230239049a7664b3dff655d0b6b4638d05cab19f543ac0f",
+          "status": "finalized",
+          "executionResult": "success",
+          "fee": "23146582400000",
+          "eventTypes": [
+            "PostPublished"
+          ],
+          "events": [
+            {
+              "type": "PostPublished",
+              "payloadKeys": [
+                "schema",
+                "id",
+                "record",
+                "timestamp",
+                "main_policy_version",
+                "local_policy_version",
+                "length",
+                "message"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "publicEffects": {
+    "bioAuthenticatedAndIndexed": true,
+    "postAuthenticatedAndIndexed": true,
+    "profileHistoryContainsPost": true,
+    "exactRequestedTextMatched": true
+  },
+  "collateralL1": {
+    "txHash": "0xc1d3e7675d057943d29bf0f0a0880bb844e1ba173cff8b4e4008266f66e1c02c",
+    "blockNumber": 123,
+    "blockHash": "0x56eaba3fb512c21269f1697c90af991f2ca7a74037060e312c5bdc98c5cab718",
+    "amount": "1000000000000000",
+    "receiptSuccessful": true,
+    "canonicalBlockMatched": true,
+    "expectedPortalMatched": true,
+    "depositEventMatched": true
+  },
+  "claimLimit": "Block19 has a successful canonical transaction but no Rolling public event; read-only public evidence alone cannot classify the private claim. Lead GUI evidence supplies claim semantics."
+}

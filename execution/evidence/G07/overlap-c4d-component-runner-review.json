@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:22:14.669761+00:00",
+  "sourceRevision": "c4d9416af7bd362307a3507f5c44d52921bd7a42",
+  "verdict": "eligible-one-bounded-component-run-after-parent-slot-grant",
+  "artifacts": {
+    "run-1.py": "c19b00c937480e571e7939a4c86e1d7d2da1d95fbf412e5f99af33085f2c303e",
+    "run-plan-1.json": "01830c539a2adb5043ede5e9c319baf55cdcfe4a0853baa99f40b1b5b5d21be9",
+    "inventory.json": "fece00cac713885e372c1741e27d93d41294661f92f5ae68861cbdbbafe77b20",
+    "preparation.json": "2b6a1bcbbb59ac9f123e90a629681627a6abd04d6343a2b7c8f4dad0435218eb"
+  },
+  "independentChecks": {
+    "cleanExactHead": true,
+    "sourceAndFixturePinsRehashed": 549,
+    "dependencyPinsRehashed": 283,
+    "mismatches": [],
+    "originalHelperAbsences": 2,
+    "nodeHashMatches": true,
+    "expectedCounts": {
+      "fixture": 139,
+      "recovery": 66,
+      "actor": 80,
+      "total": 285
+    },
+    "exactExpandedInventoryMatchesRequiredLabels": true,
+    "noFiltersOrSkips": true,
+    "selectedArtifact": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24",
+    "actualActorArtifactEnvironmentSelectionInspected": true,
+    "limits": {
+      "seconds": 60,
+      "aggregateBytes": 2147483648
+    },
+    "shortSocketPathIncludingNul": 84,
+    "lifecycle": [
+      "exclusive fsynced intent before launch",
+      "isolated HOME and 0700 short TMPDIR",
+      "immediate Popen owner registration",
+      "TERM/KILL/reap and positive group absence",
+      "restore own dependency link only after positive absence",
+      "post-run source/dependency and absence checks",
+      "exact TAP count and label multiset"
+    ]
+  },
+  "notes": [
+    "Inventory registration line numbers for several recovery entries are stale; literal sources exist in current hash-bound file. One fixture registration is explicitly a descriptive 11-row multiline table. These are explanatory locations, not execution/count gates.",
+    "All actual runtime results remain pending. Labelled PXE/proof/node fixtures plus actual engine/AEAD/SDK serialization/HTTP do not qualify cold SDK, ACIR, genuine reorg or performance.",
+    "No source, dependencies or runtime services were changed or executed by reviewer."
+  ]
+}

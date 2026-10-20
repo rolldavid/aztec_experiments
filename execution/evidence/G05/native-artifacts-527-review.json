@@ -1,0 +1,43 @@
+{
+  "candidate": "527abbea8923b0d81b78792960b815b3d3f1ffed",
+  "base": "13ac43af8ef4b9830cab3a271cff25d9e2b34ca1",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded fixture source",
+  "requirements": [
+    "G05 actual production application port acceptance harness, genuine PXE and routed prover unchanged",
+    "Exact pinned official artifact bytes, narrow native import adaptation, complete kernel/reset maps",
+    "Loader lifetime and cleanup, unchanged no-retry and proof/accounting gates"
+  ],
+  "source_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "7532e1d9da0b2d2e407277aa7419f7c9b224d236e2f9d1179f5d672d54727c64",
+    "scripts/testing/rolling-application-fixture.test.mjs": "a51a98e65e1d6e5391d0c3b890f16a9cee3c29ab4a487011520803f46f377148",
+    "scripts/testing/rolling-native-artifacts.mjs": "6c8d367fc0c08098adaedcade88bf00d381b56c5cfdcef95d3755016aaae99b2",
+    "scripts/testing/rolling-native-artifacts.test.mjs": "b327c2da9d00172047eaf7e802be61ad933b1fb19ab56ce855c33ce2520b3048"
+  },
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js <Node24.21.0> --test scripts/testing/rolling-native-artifacts.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "17 passed, 0 failed/skipped/cancelled, 1.69 seconds"
+    },
+    {
+      "command": "git diff --check 13ac43a..527abbea",
+      "result": "passed"
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "Seven actual installed lazy provider calls fail ERR_IMPORT_ATTRIBUTE_MISSING without adapter.",
+    "All 60 pinned protocol/standard/kernel JSON artifacts match official bytes and bundled values; 64 real/simulated kernel cases and VKs exercised without network.",
+    "Hook delegates all unlisted URLs and explicit attributes unchanged; adds only absent type=json then checks exact returned bytes. Package identities, seven complete loader maps and exact artifact inventory checked before registration.",
+    "Fixture installs before SDK facade import, verifies after completed proving, and closes after PXE/prover/node owners. Cleanup verifies again and deregisters in finally, even prior cleanup failure; report.closed reflects it.",
+    "No source/byte transformation, provider substitution, retry, protocol change or relaxed acceptance. Source inputs bounded to three package manifests, seven loader maps and sixty artifacts."
+  ],
+  "integration_notes": [
+    "New helper must also be bound in outer application fingerprint inventory on lead transfer; inner SOURCES already includes it."
+  ],
+  "limitations": [
+    "Native Node fixture compatibility only; actual genuine application campaign still required.",
+    "No browser or full G05/G06/privacy acceptance claimed.",
+    "Node module cache persists already-loaded module objects after deregistration; fresh unloaded import rejection is tested, and isolated campaign process owns lifetime."
+  ]
+}

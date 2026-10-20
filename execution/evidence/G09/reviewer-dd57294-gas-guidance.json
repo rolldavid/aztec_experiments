@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer_resume",
+  "candidate": "dd57294c743729817bce60841ecf83015503471f",
+  "base": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "verdict": "approve scoped funding gas-refusal guidance",
+  "findings": [],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.mjs": "d0bc295a8e732f238ca402e2c7e5542571a76140e4f22d6a7c16bd386ffef3cc",
+    "apps/rolling/wallet-panel.browser.test.mjs": "d5baa10d38188801766c676eadcc13a642ede0e7f7235d3df56406f3459915c3"
+  },
+  "assessment": [
+    "Specific guidance is restricted to the aggregate confirmation handler and exact own-data ROLLING_FUNDING_GAS_CHANGED code. Raw error messages and accessor values are not rendered. Other errors retain existing generic recovery guidance.",
+    "The existing confirmation handler clears the quote before attempting confirmation. Refusal leaves entered allocation and gas values intact; there is no automatic cap increase, quote, signature or payment. An edited amount requires Get fresh quote and another explicit confirmation.",
+    "The Ethereum journal maps errors after durable payment entry, including a late signer gas veto, to BB_ETH_SUBMISSION_UNKNOWN. Those uncertain errors do not match this new gas-specific handler; existing no-replay and reconciliation policy remain intact.",
+    "Claim scheduling, cryptographic and canonical checks, fees, custody, immutable signed records, network timeout and whole-cold bounds are unchanged.",
+    "No runtime/SDK loader or cold-recovery engine path is changed. The panel is served directly by the reader static handler, so no generated SDK/wallet input changes are required for this two-file change. Old-source cold observations do not establish current panel acceptance."
+  ],
+  "independentVerification": {
+    "command": "Node24 --test --test-concurrency=1 --test-timeout=15000 --test-name-pattern=\"aggregate gas refusal|aggregate funding UI\" apps/rolling/wallet-panel.browser.test.mjs",
+    "environment": "NODE_BACKEND=js, TMPDIR=/private/tmp, pinned Chrome155 headless against labelled local UI fixture",
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 4273.957709,
+    "cases": [
+      "exact allocation/consent single payment/claim",
+      "gas refusal retains cap and requires new quote plus confirmation",
+      "larger claim fee review",
+      "unknown claim reconcile without replay",
+      "interrupted checkpoint exact claim",
+      "saved attempted claim explicit review",
+      "fractional slippage exact basis points"
+    ],
+    "scope": "Existing lightweight local UI doubles; no application runtime, native service, live wallet, model or financial operation."
+  },
+  "packet": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/gas-guidance-packet.json",
+    "sha256": "330723c6069e21c1497f1aba5a50d376975c02a6a4845ae3dd9051cd955a239a",
+    "all4LinkedHashesVerified": true,
+    "beforeRegressionFailurePreserved": true
+  },
+  "limits": [
+    "Real prior GAS_CHANGED guard evidence is separate; these tests do not establish current real-wallet payment acceptance.",
+    "The preceding canonical claim succeeded but original 80s UI completion failed. This message-only component does not resolve or qualify that pending acceptance issue.",
+    "No complete G09, cold120, real-proof, testnet or privacy claim."
+  ]
+}

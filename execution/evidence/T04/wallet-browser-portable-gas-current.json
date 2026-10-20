@@ -1,0 +1,146 @@
+{
+  "script": "scripts/test-w02-browser.mjs",
+  "args": [],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "actualBuiltBrowser": true,
+      "freshProfiles": 4,
+      "maximumConcurrentProfiles": 2,
+      "deploymentPendingUiAndWalletLock": true,
+      "actualPortableJournalRestore": true,
+      "wrongPasswordRejected": true,
+      "sameRestoredAddress": true,
+      "restoredClaimCommitmentVerified": true,
+      "actualCrossTabExclusion": true,
+      "actualJournalReloadRecovery": true,
+      "actualEthereumIntentReloadRecovery": true,
+      "externalRequestsBlocked": 0,
+      "secretsWrittenToEvidence": false
+    }
+  ],
+  "deadlineMs": 60000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1649824,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 811296
+    },
+    {
+      "elapsedMs": 2029,
+      "rssKiB": 906752
+    },
+    {
+      "elapsedMs": 3052,
+      "rssKiB": 1092432
+    },
+    {
+      "elapsedMs": 4083,
+      "rssKiB": 1546848
+    },
+    {
+      "elapsedMs": 5116,
+      "rssKiB": 1198368
+    },
+    {
+      "elapsedMs": 6144,
+      "rssKiB": 1649824
+    },
+    {
+      "elapsedMs": 7168,
+      "rssKiB": 1393216
+    },
+    {
+      "elapsedMs": 8191,
+      "rssKiB": 1453888
+    },
+    {
+      "elapsedMs": 9246,
+      "rssKiB": 993504
+    },
+    {
+      "elapsedMs": 10270,
+      "rssKiB": 611648
+    },
+    {
+      "elapsedMs": 11329,
+      "rssKiB": 894560
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-w02-browser.mjs": "bc68722cc59f6d03237e9911f1c308d03cb03002abaea9864e27c07a0c15862e",
+    "shared/passkey-wallet.js": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+    "shared/account.js": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+    "shared/application.js": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+    "shared/wallet-buttons.js": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+    "shared/wallet-backup.js": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+    "scripts/run-bounded-browser-check.mjs": "7e7017328fb4e60071eef5c21c94a4de8f2d1a29c85c530e28ac66cf1264c682",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d",
+    ".build/apps-manifest.json": "50d16bcbce16117630a206bf41ad80824fc3c674a311b06e9917a4049cfce4ce",
+    ".build/sdk/sdk-manifest.json": "befd1ed48dc6574471f812a0279e378f52d38c73cd904df3efeeda0c65f8afae"
+  },
+  "peakMemory": {
+    "elapsedMs": 6144,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 77061,
+        "ppid": 1682,
+        "rssKiB": 71712
+      },
+      {
+        "role": "ui",
+        "pid": 77071,
+        "ppid": 77061,
+        "rssKiB": 216224
+      },
+      {
+        "role": "ui",
+        "pid": 77072,
+        "ppid": 77071,
+        "rssKiB": 98096
+      },
+      {
+        "role": "ui",
+        "pid": 77073,
+        "ppid": 77072,
+        "rssKiB": 79184
+      },
+      {
+        "role": "ui",
+        "pid": 77074,
+        "ppid": 77072,
+        "rssKiB": 46512
+      },
+      {
+        "role": "ui",
+        "pid": 77079,
+        "ppid": 77072,
+        "rssKiB": 617472
+      },
+      {
+        "role": "ui",
+        "pid": 77173,
+        "ppid": 77072,
+        "rssKiB": 520624
+      }
+    ]
+  },
+  "elapsedMs": 11785,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

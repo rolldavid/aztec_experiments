@@ -1,0 +1,15 @@
+{
+  "candidate": "94b5107ab3a384dd39d6d2082d76d20d7607f30c",
+  "base": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+  "reviewer": "/root/reviewer",
+  "verdict": "approve",
+  "findings": [
+    {
+      "severity": "P2",
+      "scenario": "Equal missing/malformed specification hashes passed",
+      "status": "resolved",
+      "verification": "Valid mapping passes; both hashes null/empty/nonsense/uppercase/absent block"
+    }
+  ],
+  "scope": "All11 authored control/map/authority/session/recovery/forecast files. G01 can close after gate integration; no product or host shutdown/sleep/heartbeat-run assurance."
+}

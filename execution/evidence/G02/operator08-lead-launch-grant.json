@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-12T09:00:50.171955+00:00",
+  "owner": "lead-20261011",
+  "operator": "controls-20261011",
+  "grant": "ONE operator08 launch template and request Fleet for reviewed exact payload; monitor and once-only owned cleanup. No replacement or implicit deadline extension.",
+  "review": "execution/evidence/G02/operator08-actual-payload-review.json",
+  "reviewSha256": "3f465b7d419bb5e6e2236582e7ff26ec7845403ca816982f2266307bb76433c9",
+  "payloadSha256": "5989e05b2c69ec5224538237328c0381526f7fc905137f0de14879562e14fdf4",
+  "payloadBytes": 16349,
+  "budgetStop": "2026-10-12T09:54:55Z",
+  "latestLaunchBefore": "2026-10-12T09:04:55Z",
+  "reservationUsd": 25,
+  "cumulativeBoundUsd": 200.28,
+  "remainingUsd": 99.72,
+  "configuration": "m7a.4xlarge us-east-1; encrypted40+1024GiB gp3 DOT;50Mbps; exact reviewed referenceAMI/SG; noIAM/noSSH/noadditionalingress; publicprover masked/query-only zerojobs",
+  "preconditions": [
+    "Fresh supported AWS identity matches052665140763; no live overlap, expectedSG/AMI/template unchanged, pluginreadyactive0",
+    "Preserve same exact source/payload/manifest/helper/runtimeAdapter and private08 files",
+    "Bind existing reviewed07 once-intent workflow to08 identity only; no weakened guards/retries or changed privileges",
+    "Persist/fsync exclusiveintents/clienttokens BEFORE one retry-disabledmutation; uncertainreceipt reconciled byexacttoken/name neverreplayed",
+    "Actual Fleet ValidUntil termination and persistenthosttimer both09:54:55; commission09:24:55; readiness09:38:55; qualifier09:53:55",
+    "ReadbackactualDOT/shutdownterminate/adminisolation/shaper/startupadapterbeforequalifiedservice; terminalfailure stopownedcompute andpreserveevidence",
+    "Ifcutoffmissed do notlaunch or silentlyredate; preservepreparation and report changedreviewnecessary"
+  ]
+}

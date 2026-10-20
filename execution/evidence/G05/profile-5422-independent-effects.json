@@ -1,0 +1,133 @@
+{
+  "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+  "scope": "Offline independent installed-SDK effect decoding/hash/fee/event-digest/raster checks; live canonical anchors remain recorded campaign evidence",
+  "limits": {
+    "flatPublicLogFields": 4096,
+    "maxLogFields": 4094,
+    "publicWrites": 63,
+    "blobFields": 8475
+  },
+  "privateVKs": [
+    "authenticate_name",
+    "claim_deposit",
+    "create_subboard",
+    "post",
+    "post_with_bok",
+    "register_name",
+    "screen",
+    "set_avatar",
+    "set_bio",
+    "set_like",
+    "update_portal",
+    "withdraw"
+  ],
+  "rows": [
+    {
+      "action": "name",
+      "hash": "0x25c354f3011524b21b4c8799b4d29a0d26e97a55e3aed3e6bca64839fe3152a5",
+      "effectBytes": 2431,
+      "publicLogFields": [
+        9,
+        3
+      ],
+      "flatPublicLogFields": 16,
+      "blobFields": 81,
+      "blobBytes": 2592,
+      "publicDataWrites": 2,
+      "fee": "10177600800000",
+      "event": "NameRegistered"
+    },
+    {
+      "action": "bio",
+      "hash": "0x12af8847437724a191ed057449001ed82b71f5cd82b220596a0ae87bd8271c32",
+      "effectBytes": 3871,
+      "publicLogFields": [
+        39,
+        3
+      ],
+      "flatPublicLogFields": 46,
+      "blobFields": 126,
+      "blobBytes": 4032,
+      "publicDataWrites": 9,
+      "fee": "21506526600000",
+      "event": "BioPublished"
+    },
+    {
+      "action": "avatar-maximum",
+      "hash": "0x2be3d9f62e0f13e267c70aacc1c3788c8411ad27e07cc9e8514dcf717c3904c8",
+      "effectBytes": 11391,
+      "publicLogFields": [
+        274,
+        3
+      ],
+      "flatPublicLogFields": 281,
+      "blobFields": 361,
+      "blobBytes": 11552,
+      "publicDataWrites": 9,
+      "fee": "45064365000000",
+      "event": "AvatarPublished",
+      "image": {
+        "bytes": 8192,
+        "version": "1",
+        "digest": "17812554590588671420829891120370446609990978623976434000229815536070436777992",
+        "sha256": "e4cffd6efa8a50239a2a3b37147c40f0f9684ee47edd769e0cae357ad71a9bc7"
+      }
+    },
+    {
+      "action": "avatar-clear",
+      "hash": "0x2bf0721ad1870277399e039ec45b7deec22c2dfae283063fbe9ca111fe29d7f3",
+      "effectBytes": 11391,
+      "publicLogFields": [
+        274,
+        3
+      ],
+      "flatPublicLogFields": 281,
+      "blobFields": 361,
+      "blobBytes": 11552,
+      "publicDataWrites": 9,
+      "fee": "60856413000000",
+      "event": "AvatarPublished",
+      "image": {
+        "bytes": 0,
+        "version": "2",
+        "digest": "12490243593010880667963705104620317360824676447847813862769894523867877273980",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "action": "avatar-replacement",
+      "hash": "0x2ae3007437edeb498c793f5b723bb3e97f6fb8f361926b36047d115d8a678e0e",
+      "effectBytes": 11391,
+      "publicLogFields": [
+        274,
+        3
+      ],
+      "flatPublicLogFields": 281,
+      "blobFields": 361,
+      "blobBytes": 11552,
+      "publicDataWrites": 9,
+      "fee": "60054937800000",
+      "event": "AvatarPublished",
+      "image": {
+        "bytes": 416,
+        "version": "3",
+        "digest": "1570242111116395545186414227235101078208938049363781793986721439439410268985",
+        "sha256": "c0dea019174c70e091bb00ada10e36139ef10130f1fed73e0d5f10baf116b800"
+      }
+    },
+    {
+      "action": "avatar-moderation",
+      "hash": "0x3019acd836f8d997bdde67797049a48c39aecd6f2aa22ab05351b6a63a996318",
+      "effectBytes": 943,
+      "publicLogFields": [
+        15
+      ],
+      "flatPublicLogFields": 17,
+      "blobFields": 31,
+      "blobBytes": 992,
+      "publicDataWrites": 5,
+      "fee": "9317547000000",
+      "event": "AvatarRemoved"
+    }
+  ]
+}

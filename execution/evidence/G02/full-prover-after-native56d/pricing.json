@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T07:10:41.880980+00:00",
+  "source": "AWS Price List Query API",
+  "readOnly": true,
+  "costExplorerUsed": false,
+  "rows": [
+    {
+      "sku": "TTPYSE2GSHDGSMTX",
+      "instanceType": "m7a.4xlarge",
+      "effectiveDate": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "0.9273600000"
+    }
+  ]
+}

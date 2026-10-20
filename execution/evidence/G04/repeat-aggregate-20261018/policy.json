@@ -1,0 +1,32 @@
+{
+  "base": "ac47b8180acf51b25093a4d6a9053c64e5b5c0a4",
+  "candidate": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "task_id": "G04-repeat-aggregate-funding",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "shared/rolling/aggregate-wallet.mjs",
+    "shared/rolling/aggregate-wallet.test.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "required_checks": [
+    "retained-aggregate-claim"
+  ],
+  "requirements": [
+    "RC18-RC22-successor-funding"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G04-repeat-aggregate-funding",
+      "paths": [
+        "shared/rolling/aggregate-wallet.mjs",
+        "shared/rolling/aggregate-wallet.test.mjs",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs"
+      ]
+    }
+  ]
+}

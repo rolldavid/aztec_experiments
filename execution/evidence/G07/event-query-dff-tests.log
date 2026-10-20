@@ -1,0 +1,27 @@
+✔ exact source/dest hash pins; verify-only does not mutate installed dependencies (3.240791ms)
+✔ unknown/mixed inputs fail before writes; symlinked target rejected (3.440125ms)
+✔ LMDB: differential scopes/contract/selector/tx/order, staged override and discard (12.072959ms)
+✔ LMDB: small historical fixture reads only selected range, at most one pending read (12.678625ms)
+✔ LMDB: rollback removes both indexes, re-add same height changes hash (3.838792ms)
+✔ LMDB: empty zero range never becomes an unbounded adapter query (1.457709ms)
+✔ LMDB: missing, misplaced and corrupt records fail safely; store remains usable (1.568041ms)
+✔ LMDB: record byte limit before decoder and no outstanding read on rejection (1.244ms)
+✔ IndexedDB adapter / fake-indexeddb platform: differential scopes/contract/selector/tx/order, staged override and discard (23.840625ms)
+✔ IndexedDB adapter / fake-indexeddb platform: small historical fixture reads only selected range, at most one pending read (63.727084ms)
+✔ IndexedDB adapter / fake-indexeddb platform: rollback removes both indexes, re-add same height changes hash (5.778125ms)
+✔ IndexedDB adapter / fake-indexeddb platform: empty zero range never becomes an unbounded adapter query (0.84325ms)
+✔ IndexedDB adapter / fake-indexeddb platform: missing, misplaced and corrupt records fail safely; store remains usable (1.09575ms)
+✔ IndexedDB adapter / fake-indexeddb platform: record byte limit before decoder and no outstanding read on rejection (0.874583ms)
+✔ LMDB: total bytes limit with actual encoded records, no plaintext error (118.521709ms)
+✔ labelled index-density injection: stop at row budget without silently truncating or scheduling more reads (34.619084ms)
+✔ staged byte accounting matches actual SDK encoding; staged limits cannot silently omit events (2.413417ms)
+✔ patched TypeScript syntax and emitted method match the pinned JavaScript transformation (128.987333ms)
+✔ delayed storage rejection settles the sole started read before query failure and releases the store lock (2.365ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 935.579958

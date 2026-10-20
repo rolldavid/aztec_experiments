@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-14T06:05:49.486072+00:00",
+  "currentSnapshotUntouched": "anvil-recovery-48266a03-0056-4940-aa1e-8a5fb32b7ac7.json",
+  "priorAdmittedSnapshotUntouched": [
+    "anvil-recovery-f97cd255-6e3c-4ace-901d-c5548383acd7.json",
+    "anvil-recovery-48266a03-0056-4940-aa1e-8a5fb32b7ac7.json"
+  ],
+  "receipts": [
+    {
+      "original": ".build/rolling-devnet-recovery-20261014/anvil-recovery-ae6577df-d9d7-4e64-9fc4-8023b76ea7c8.json",
+      "originalBytes": 1690837145,
+      "originalSha256": "6d86bfd91921cad91d1b748357ad71626f44ebe8f9fd3f45ea5a33d88aca5880",
+      "losslessArchive": ".build/rolling-devnet-recovery-20261014/anvil-recovery-ae6577df-d9d7-4e64-9fc4-8023b76ea7c8.json.gz",
+      "archiveBytes": 514587205,
+      "decompressedHashVerified": true,
+      "restore": "gzip -dk -- '.build/rolling-devnet-recovery-20261014/anvil-recovery-ae6577df-d9d7-4e64-9fc4-8023b76ea7c8.json.gz'"
+    },
+    {
+      "original": ".build/rolling-devnet-recovery-20261014/anvil-recovery-339c9640-d835-482d-bbba-88654f6017b3.json",
+      "originalBytes": 1314710497,
+      "originalSha256": "aa1aeb05c5fcc77ce23305b7f1932d55860c4e1bea151549d80da41f237e5fae",
+      "losslessArchive": ".build/rolling-devnet-recovery-20261014/anvil-recovery-339c9640-d835-482d-bbba-88654f6017b3.json.gz",
+      "archiveBytes": 393358883,
+      "decompressedHashVerified": true,
+      "restore": "gzip -dk -- '.build/rolling-devnet-recovery-20261014/anvil-recovery-339c9640-d835-482d-bbba-88654f6017b3.json.gz'"
+    }
+  ]
+}

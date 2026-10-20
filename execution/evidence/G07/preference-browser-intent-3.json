@@ -1,0 +1,21 @@
+{
+  "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+  "scenario": "rolling-preference-browser",
+  "recordedAt": "2026-10-12T06:52:19.960391+00:00",
+  "status": "completed-passed",
+  "attempt": 3,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/preference-browser-50ff-lock-review.json",
+  "reviewSha256": "78c213e3eaae68cf9b0fbfbbb9307b632494cc61fecadab26954300dde4f4ee9",
+  "hypothesis": "3aea passednativeprivateviewrecovery thenlockstagefailed. ActualproductionDOM reproduces driveropeningdetails duringpendingrefresh thenlosingexpandedDOM.50ff reusesexistingaria-busysettledobserver beforeexpanding/locking; independentactualDOMregressionpassed. This is a different diagnosed failure from1bbfnamespace; no unchangedretry.",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-browser",
+  "scope": "Three real local private proofs followedby actualfreshChromium/nativeIDB/keysonly recovery/privateviews/lockreload; no paidproofjob or persistentfinancialaction.",
+  "exitCode": 0,
+  "evidence": "execution/evidence/G07/application-a8eb985d-4ac6-4cce-83be-a135d246d8a6.json",
+  "evidenceSha256": "20c4b7934d716dc242d59c821c347292b1d6b94887368b5bad746553a29cfa25",
+  "elapsedMs": 380396,
+  "peakTreeRSSKiB": 2190304,
+  "finishedAt": "2026-10-12T06:58:40.431Z"
+}

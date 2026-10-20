@@ -1,0 +1,19 @@
+✖ actual saved-versus-reorg dispatch selects job counts and only initialized continuations (3.297708ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 296.853584
+
+✖ failing tests:
+
+test at scripts/testing/rolling-application-fixture.test.mjs:403:1
+✖ actual saved-versus-reorg dispatch selects job counts and only initialized continuations (3.297708ms)
+  TypeError: pausePreferenceBoundary is not a function
+      at eval (eval at <anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/scripts/testing/rolling-application-fixture.test.mjs:412:12), <anonymous>:14:72)
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-social/scripts/testing/rolling-application-fixture.test.mjs:415:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

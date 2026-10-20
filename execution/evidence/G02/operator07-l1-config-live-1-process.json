@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+  "reviewSha256": "e84b7801cde657973b13c737c0b3dd3a3355a43940510f2137ec90f1d336ed6d",
+  "finishedAt": "2026-10-12T07:15:06.023527+00:00",
+  "elapsedMs": 4548,
+  "exitCode": 1,
+  "outerTimedOut": false,
+  "ownedProcessGroup": 40965,
+  "ownedProcessGroupAbsent": true,
+  "stdoutBytesDiscarded": 46,
+  "stderrBytesDiscarded": 0,
+  "receiptPresent": true,
+  "receiptSha256": "b186746a0e9f644568efde5e87d122e199e6a6231d2c6394b831d92d85917244",
+  "passed": false,
+  "nodeStartupQualified": false,
+  "stages": [
+    {
+      "name": "source",
+      "status": "passed"
+    },
+    {
+      "name": "chain",
+      "status": "passed"
+    },
+    {
+      "name": "anchor-before",
+      "status": "passed"
+    },
+    {
+      "name": "collect-addresses",
+      "status": "passed"
+    },
+    {
+      "name": "contracts-config",
+      "status": "failed",
+      "category": "HTTP_ERROR",
+      "error": {
+        "httpStatus": 429,
+        "rpcCode": null
+      }
+    }
+  ]
+}

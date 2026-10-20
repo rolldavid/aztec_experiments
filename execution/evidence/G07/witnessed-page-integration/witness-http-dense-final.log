@@ -1,0 +1,21 @@
+▶ owned isolated SDK and ACIR suite
+  ﹣ application store fixture owns full isolated namespaces and deletes them after settled hooks (0.223875ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index (0.034833ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation (0.031292ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong ordinal before utility (0.025083ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong fee before utility (0.023208ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong execution before utility (0.021833ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page / actual SDK rejects consistent wrong slot before utility (0.021416ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated multi-tx page uses authenticated ordinal and detaches original mutable receipt (0.027166ms) # HTTP diagnostic only; original case unrun
+  ﹣ generated page final original-node receipt change discards validated staged event (0.037958ms) # HTTP diagnostic only; original case unrun
+  ﹣ actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing (0.123292ms) # HTTP diagnostic only; original case unrun
+  ✔ cold HTTP progress with actual encrypted ACIR and original bounded cursor (23279.156209ms)
+✔ owned isolated SDK and ACIR suite (24262.958416ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 10
+ℹ todo 0
+ℹ duration_ms 25267.836333

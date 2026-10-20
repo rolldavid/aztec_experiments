@@ -1,0 +1,54 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T16:48:27.977195+00:00",
+  "base": "3f57612f89d50215b3511246b511e3ca907af282",
+  "candidate": "72987b78d36accde73ccba9466c0f787f9bb6479",
+  "sourceAgent": "controls",
+  "sourceAgentCommit": "58c215350a003ae680007b5df7f2e1575f69746c",
+  "verdict": "APPROVE exact eight-path development integration through existing negative gates and compare-and-swap; not release or deployment approval",
+  "paths": [
+    "prover/private-query.integration.test.mjs",
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs",
+    "prover/server.mjs",
+    "prover/service.mjs",
+    "scripts/test-prover-service.mjs",
+    "scripts/test-remote-prover.mjs",
+    "scripts/test-w02-rpc.mjs"
+  ],
+  "sourceTransferReviewSha256": "ffcabbc12044d1b76f44b91c3f053e24fc979995f1c573982ea0abe44bca404f",
+  "whole34ActualPacketSha256": "e7222162f8a5b7d79fa141adae0256e71d16890de70bfcf1a184c75f0d3b516c",
+  "whole34RuntimeReviewSha256": "33eae6d9394dd850562cba8599dfc988869346505508d8c0afd2748713e929b9",
+  "auth50ActualPacketSha256": "af7c003de67607f44d30dcaf07b730b8a9f692e23669516a0ad92ab52d7254c0",
+  "auth50": {
+    "tests": 50,
+    "pass": 50,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "exactSourceExpandedLabelMultiset": true,
+    "allPacketArtifactHashesVerified": true,
+    "protectedPinsRehashed": 3306,
+    "elapsedMs": 3704,
+    "sampledPeakTreeRSSKiB": 833664,
+    "ownedCleanupPositive": true,
+    "temporaryDirectoryAbsent": true
+  },
+  "combined": {
+    "tests": 84,
+    "allPass": true,
+    "currentSourceClean": true,
+    "exactEightFinalBlobsMatchFrozenWorker": true,
+    "normalClosureSha256": "a349ae4350f280638c4199eebfe2b179d878fb4da9651a25d855e970c0e7d659",
+    "normalClosureBindingsRehashed": 3157,
+    "normalClosureAllMatch": true,
+    "allOtherSourceIncludingNativeProofDisabledDefaultsUnchanged": true
+  },
+  "limits": [
+    "Optional query-only capability authentication and explicit SDK-backed method boundary are development component qualified.",
+    "Actual normal CLI test seam runs prelude/loader/SDK node and read-only prover-disabled PXE; full transaction main, authenticated real deployment and remote gateway routing remain unqualified.",
+    "No application proof disabling changes, real proof, external provider, cloud activation, publication delegation, release or paid authorization inferred.",
+    "Do not call historical failed runs passed; all predecessor evidence remains retained."
+  ]
+}

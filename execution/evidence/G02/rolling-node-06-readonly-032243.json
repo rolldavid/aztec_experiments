@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-06",
+  "observedAt": "2026-10-12T03:22:43.166727+00:00",
+  "readOnly": true,
+  "readinessDeadline": "2026-10-12T03:53:27Z",
+  "deadlineElapsed": false,
+  "instance": {
+    "available": true,
+    "data": [
+      {
+        "id": "i-01b6bdaf005878edf",
+        "state": "running",
+        "type": "m7a.4xlarge",
+        "launchTime": "2026-10-12T03:15:28+00:00",
+        "volumes": [
+          {
+            "id": "vol-002e66a7b25e4d23d",
+            "deleteOnTermination": true
+          },
+          {
+            "id": "vol-0b3786b2c42eed3b8",
+            "deleteOnTermination": true
+          }
+        ]
+      }
+    ]
+  },
+  "fleet": {
+    "available": true,
+    "data": [
+      {
+        "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+        "state": "active",
+        "activity": "fulfilled",
+        "type": "request",
+        "validUntil": "2026-10-12T04:09:27+00:00",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "shutdown": {
+    "available": true,
+    "data": {
+      "InstanceId": "i-01b6bdaf005878edf",
+      "InstanceInitiatedShutdownBehavior": {
+        "Value": "terminate"
+      }
+    }
+  },
+  "volumes": {
+    "available": true,
+    "data": [
+      {
+        "id": "vol-0b3786b2c42eed3b8",
+        "state": "in-use",
+        "encrypted": true,
+        "size": 1024,
+        "type": "gp3",
+        "iops": 3000,
+        "throughput": 125
+      },
+      {
+        "id": "vol-002e66a7b25e4d23d",
+        "state": "in-use",
+        "encrypted": true,
+        "size": 40,
+        "type": "gp3",
+        "iops": 3000,
+        "throughput": 125
+      }
+    ]
+  },
+  "console": {
+    "available": true,
+    "timestamp": "2026-10-12T03:22:42+00:00",
+    "bootstrapObservations": [
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:09:27Z",
+        "egressBytes": 3401708,
+        "runtimeArchiveSha256": "3861a362a79c0389c458c08f50732477a5002212b0d2e90098141257c9e0913b",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:09:27Z",
+        "egressBytes": 3403500,
+        "runtimeArchiveSha256": "3861a362a79c0389c458c08f50732477a5002212b0d2e90098141257c9e0913b",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:09:27Z",
+        "egressBytes": 3584473,
+        "runtimeArchiveSha256": "3861a362a79c0389c458c08f50732477a5002212b0d2e90098141257c9e0913b",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      }
+    ],
+    "bootstrapDiagnostics": [
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "tc-package",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "observed",
+        "step": "tc-package",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "54ae87f7457201e9edaa72e63fc50a63f63b7c7e1fb7c5cb477abef6e5dde52c",
+        "bootstrapSourceSha256": "bb064d4c586c405ef73182db016eb9eae26e9267f4cf5af9ada0097139b60a9a",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "be38c8784994f3b90873e2c7f115ae6dec17b6d72802f192fe9c2e4924d21b64"
+      }
+    ],
+    "finalReceiptMarkers": []
+  },
+  "finalReceipt": {
+    "available": false,
+    "category": "NOT_FOUND"
+  },
+  "diagnostics": {
+    "finalReceiptSource": "/var/lib/rolling-bootstrap-private/final-receipt.json",
+    "readinessSource": "/var/lib/rolling-bootstrap/qualification/readiness-observation.json",
+    "uploadIntent": "/var/lib/rolling-bootstrap-private/upload-intent.json",
+    "uploadResult": "/var/lib/rolling-bootstrap-private/upload-result.json",
+    "remoteRead": "Exact S3 final receipt or ROLLING_QUALIFICATION_RECEIPT console marker; no host SSH/SSM assumed",
+    "pendingReadinessRemainsHostLocal": true
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "script": "scripts/test-wallet-extension-browser.mjs",
+  "args": [
+    "--wallet=metamask",
+    "--aggregate-devnet=USDC"
+  ],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "scope": "Retained disposable account initialization only; no signatures, funding, proof or L2 sends",
+      "privateRecoveryRetained": true,
+      "readinessOnly": true,
+      "cleanupComplete": true,
+      "blockedRequests": 0,
+      "blockedDetails": [],
+      "proofRequests": 0,
+      "l2Submissions": 0,
+      "extensionStartupDocuments": 4
+    }
+  ],
+  "deadlineMs": 120000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 3394160,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 508064
+    },
+    {
+      "elapsedMs": 2021,
+      "rssKiB": 1768512
+    },
+    {
+      "elapsedMs": 3040,
+      "rssKiB": 2960656
+    },
+    {
+      "elapsedMs": 4059,
+      "rssKiB": 3151360
+    },
+    {
+      "elapsedMs": 5090,
+      "rssKiB": 3293328
+    },
+    {
+      "elapsedMs": 6111,
+      "rssKiB": 3348672
+    },
+    {
+      "elapsedMs": 7128,
+      "rssKiB": 3325584
+    },
+    {
+      "elapsedMs": 8144,
+      "rssKiB": 3394160
+    },
+    {
+      "elapsedMs": 9160,
+      "rssKiB": 3365904
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-wallet-extension-browser.mjs": "a91ff2db9207d204aff85866b07d8ba01ae2bb7abb337eef17ae145ae3a20e37",
+    "apps/rolling/wallet-panel.mjs": "bc5ca9ff3f93f12c1a9761b3cca3d3474955ed6903057884f1fc5fdb33d8827d",
+    "scripts/t04-metamask.mjs": "5d86eeb4d2bcef785d2574c2bf5777342a7af47693aec1b552f9c1c9eeafcff6",
+    "scripts/t04-phantom.mjs": "3c813fa3c23f654790b149c5ba1d2c54d7610922e01e9a8b317b69f6842cdab4",
+    "shared/rolling/aggregate-funding.mjs": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+    "shared/rolling/aggregate-recovery.mjs": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+    "shared/ethereum-journal.mjs": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+    ".build/metamask-13.49.0/metamask-chrome-13.49.0.zip": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-rc22-20261014/wallet-acceptance/usdc-control.json": "fd4b17884f718b2cf667d8d28ba8674f6edef59c6aa54821620cda5b2a039827",
+    "scripts/run-bounded-browser-check.mjs": "14bec343e73f55b5ec80f0141c23d8e4bd5a19b4c301532cc075ca64e30fa2ea",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d"
+  },
+  "peakMemory": {
+    "elapsedMs": 8144,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 12565,
+        "ppid": 12555,
+        "rssKiB": 70016
+      },
+      {
+        "role": "ui",
+        "pid": 12566,
+        "ppid": 12565,
+        "rssKiB": 263616
+      },
+      {
+        "role": "ui",
+        "pid": 12567,
+        "ppid": 12566,
+        "rssKiB": 288192
+      },
+      {
+        "role": "ui",
+        "pid": 12575,
+        "ppid": 12567,
+        "rssKiB": 130880
+      },
+      {
+        "role": "ui",
+        "pid": 12576,
+        "ppid": 12567,
+        "rssKiB": 90592
+      },
+      {
+        "role": "ui",
+        "pid": 12578,
+        "ppid": 12567,
+        "rssKiB": 61856
+      },
+      {
+        "role": "ui",
+        "pid": 12580,
+        "ppid": 12567,
+        "rssKiB": 147264
+      },
+      {
+        "role": "ui",
+        "pid": 12582,
+        "ppid": 12567,
+        "rssKiB": 105040
+      },
+      {
+        "role": "ui",
+        "pid": 12583,
+        "ppid": 12567,
+        "rssKiB": 856304
+      },
+      {
+        "role": "ui",
+        "pid": 12584,
+        "ppid": 12567,
+        "rssKiB": 789136
+      },
+      {
+        "role": "ui",
+        "pid": 12587,
+        "ppid": 12567,
+        "rssKiB": 197120
+      },
+      {
+        "role": "ui",
+        "pid": 12589,
+        "ppid": 12567,
+        "rssKiB": 294192
+      },
+      {
+        "role": "ui",
+        "pid": 12590,
+        "ppid": 12567,
+        "rssKiB": 99952
+      }
+    ]
+  },
+  "walletStages": [
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-extension",
+      "pages": {
+        "application": 0,
+        "extensionHome": 0,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-application-open",
+      "pages": {
+        "application": 1,
+        "extensionHome": 0,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    },
+    {
+      "kind": "wallet-stage",
+      "stage": "aggregate-retained-readiness",
+      "pages": {
+        "application": 1,
+        "extensionHome": 0,
+        "extensionSidepanel": 0,
+        "extensionOther": 0,
+        "blank": 1,
+        "other": 0,
+        "workers": 1
+      }
+    }
+  ],
+  "elapsedMs": 9642,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

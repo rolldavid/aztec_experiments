@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-12T03:26:14.443734+00:00",
+  "workflow": ".github/workflows/build.yml",
+  "sha256": "d3062c27eafcd4491068ed6577eb81cbbe2b26bdb1b99a28850b4d2e25672771",
+  "triggers": [
+    "push",
+    "pull_request",
+    "workflow_dispatch"
+  ],
+  "permissions": "contents:read",
+  "observedEffects": "One ubuntu24 job60min build/rebuild/test workflow pluspinnedmodelisolationDocker; no deploy/release/publicationsteps",
+  "decision": "Developmentbranchpush allowed byuser mandate; serialize expensiveCI withlocal builds/proofs. No push orPRcreated yet. PreserveCIandreleasegates."
+}

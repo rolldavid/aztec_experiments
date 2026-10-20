@@ -1,0 +1,9 @@
+{
+  "reviewer": "reviewer-20261011",
+  "finalIntegrationReviewSha256": "42779c3dc97211d298d73ab1da4a976ceec117136da8ce0330ddbe49e80175cf",
+  "leadVolumeCarrySha256": "c4d379a3bb05bc6f72ed6c0384e3d55c891347ee3a0bb3207f0365a8e9fa99d3",
+  "independentDependencyHashesChecked": 2402,
+  "differences": [],
+  "source": "c200873ddf7151f8052fffc56048662a52804ff3",
+  "finding": "Exact dependency map underlying worker52797 matches current lead node_modules. Normal closure binds same processedRolling20c494. Combined exact source/dependency/artifact carry is eligible; no repeat volume required."
+}

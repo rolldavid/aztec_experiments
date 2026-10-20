@@ -1,0 +1,27 @@
+{
+  "base": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+  "candidate": "eea60ddad4ed44ea9c61275b95c42ce768be8ad6",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G10-browser-runtime-instructions",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/main.mjs"
+  ],
+  "required_checks": [
+    "model-hosted"
+  ],
+  "requirements": [
+    "RC29-browser-runtime-instruction-component",
+    "RC41-explicit-acceptance-preservation-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G10-browser-runtime-instructions",
+      "paths": [
+        "plugins/main.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "candidate": "04f41a280ff7eb8d64c9f0333bf0e6924b6b536f",
+  "base": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "task_id": "G14-startup06-diagnostic-development",
+  "implementer": "controls-20261011",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "deploy/prover/BOOTSTRAP.md",
+    "deploy/prover/bootstrap.py",
+    "deploy/prover/package.py",
+    "deploy/prover/startup-stages.mjs",
+    "deploy/prover/startup-stages.test.mjs",
+    "scripts/test-prover-bootstrap.py",
+    "scripts/test-prover-package.py"
+  ],
+  "required_checks": [
+    "source-tests",
+    "actual-package"
+  ],
+  "requirements": [
+    "G14-startup06-diagnostic-development"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "task_id": "G14-startup06-diagnostic-development",
+      "owner": "controls-20261011",
+      "paths": [
+        "deploy/prover/BOOTSTRAP.md",
+        "deploy/prover/bootstrap.py",
+        "deploy/prover/package.py",
+        "deploy/prover/startup-stages.mjs",
+        "deploy/prover/startup-stages.test.mjs",
+        "scripts/test-prover-bootstrap.py",
+        "scripts/test-prover-package.py"
+      ]
+    }
+  ],
+  "scope_limits": "Startup-stage diagnostic source and complete package only; Linux readiness, real fresh payload, budget/live/no-overlap and independent shutdown controls remain launch gates. No product/release acceptance."
+}

@@ -1,0 +1,233 @@
+{
+  "schema": "rolling-additional-host-feasibility-v1",
+  "at": "2026-10-15T00:07:04.989256+00:00",
+  "agentSession": "controls-resume-20261014",
+  "sourceRevision": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "scope": "Read-only feasibility; no reservation, purchase, download of runtime, launch, resize, or active moderator change",
+  "budget": {
+    "authority": "300 cumulative; at most one additional host",
+    "authoritativeLedger": "../aztec_experiments/execution/infrastructure-ledger.json",
+    "ledgerSha256": "7f8365fbaaddf646b5da1bacd67e37b95678e7830d308dd2ed35f145cca0a40a",
+    "currentBoundUsd": 235.28,
+    "remainingUsd": 64.72,
+    "warning": "Lead worktree ledger is older225.28/74.72; coordination ledger235.28/64.72 is authority. Existing delayed billing/storage reserves retained."
+  },
+  "actualModelCpu": {
+    "model": {
+      "id": "12c76077c6ddf9f48f507483f62d0670da42e3c90f949dee6acc65dd62048191",
+      "image": "sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+      "running": true
+    },
+    "limits": {
+      "NanoCpus": 4000000000,
+      "CpuPeriod": 0,
+      "CpuQuota": 0,
+      "CpusetCpus": "",
+      "CpuShares": 0,
+      "Memory": 8589934592,
+      "MemorySwap": 17179869184
+    },
+    "args": {
+      "--threads": "4",
+      "--ctx-size": "4096"
+    }
+  },
+  "hardware": [
+    {
+      "type": "g6.4xlarge",
+      "cpu": {
+        "DefaultVCpus": 16,
+        "DefaultCores": 8,
+        "DefaultThreadsPerCore": 2,
+        "ValidCores": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "ValidThreadsPerCore": [
+          1,
+          2
+        ]
+      },
+      "memory": 65536,
+      "gpu": [
+        {
+          "Name": "L4",
+          "Manufacturer": "NVIDIA",
+          "Count": 1,
+          "LogicalGpuCount": 1,
+          "GpuPartitionSize": 1.0,
+          "Workloads": [
+            "graphics",
+            "ml-ai"
+          ],
+          "MemoryInfo": {
+            "SizeInMiB": 22888
+          }
+        }
+      ],
+      "architecture": [
+        "x86_64"
+      ]
+    },
+    {
+      "type": "m7a.4xlarge",
+      "cpu": {
+        "DefaultVCpus": 16,
+        "DefaultCores": 16,
+        "DefaultThreadsPerCore": 1,
+        "ValidCores": [
+          1,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16
+        ],
+        "ValidThreadsPerCore": [
+          1
+        ]
+      },
+      "memory": 65536,
+      "gpu": null,
+      "architecture": [
+        "x86_64"
+      ]
+    }
+  ],
+  "cpuCandidate": {
+    "instanceType": "m7a.4xlarge",
+    "region": "us-east-1",
+    "vcpus": 16,
+    "physicalCores": 16,
+    "memoryGiB": 64,
+    "hourlyUsd": 0.92736,
+    "state": "Feasible budget and existing isolation; current Linux application/retained state qualification not ready",
+    "forecastUsd": {
+      "compute4.5h": 4.17312,
+      "encryptedGp3Storage1064GiB28.5h": 3.369333,
+      "dataVolumeExtra375MiBps28.5h": 0.59375,
+      "publicIPv44.5h": 0.0225,
+      "shapedEgress105GBConservativePathCeiling": 20.475,
+      "crossRegionInputAndVerification": 1.0,
+      "newBackupArchive30DaysUpTo20GB": 1.0,
+      "requestsAndMonitoring": 0.5,
+      "taxAndUnpriced20Percent": 6.226741,
+      "additionalCleanupAndDelayedBillingBuffer": 10.0
+    },
+    "forecastTotalUsd": 47.360444,
+    "proposedRoundedReservationUsd": 50,
+    "combinedBoundIfReservedUsd": 285.28,
+    "remainingAfterRoundedReservationUsd": 14.72,
+    "duration": "4h absolute runtime including setup +0.5h cleanup billing allowance; no automatic extension",
+    "storage": "40GiB root +1024GiB data encrypted gp3; baseline3000IOPS; data500MiB/s; delete-on-termination; forecast retains all storage extra24h for delayed cleanup",
+    "egress": "Existing whole-host50Mbps cap;4.5h gives101.25decimalGB, forecast105GB at prior0.195USD/GB conservative combined-path rate; no free-tier assumption",
+    "backup": "At most20GB immutable encrypted state/archive retained30days,1USD storage plus network/request budget; no whole-volume snapshots or NAT gateway/load balancer",
+    "performance": "Existing startModelRuntime permits threads1..16 without changing isolation. Serialize heavy native loading/model qualification and measure prompt batch throughput on actual host. Neither16cores nor64GiB proves10s or retained-load success."
+  },
+  "gpuComparison": {
+    "instanceType": "g6.4xlarge",
+    "region": "us-east-1",
+    "vcpus": 16,
+    "physicalCores": 8,
+    "memoryGiB": 64,
+    "gpu": "1 NVIDIA L4; AWS hardwareAPI22888MiB, marketed24GB",
+    "hourlyUsd": 1.3232,
+    "forecastUsd": {
+      "compute4.5h": 5.9544,
+      "encryptedGp3Storage1064GiB28.5h": 3.369333,
+      "dataVolumeExtra375MiBps28.5h": 0.59375,
+      "publicIPv44.5h": 0.0225,
+      "shapedEgress105GBConservativePathCeiling": 20.475,
+      "crossRegionInputAndVerification": 1.0,
+      "newBackupArchive30DaysUpTo20GB": 1.0,
+      "requestsAndMonitoring": 0.5,
+      "taxAndUnpriced20Percent": 6.582997,
+      "additionalCleanupAndDelayedBillingBuffer": 10.0
+    },
+    "forecastTotalUsd": 49.49798,
+    "status": "Not usable by current model runtime; no GPU operation authorized by this feasibility",
+    "blocker": "censor-daemon/model-runtime.mjs58 rejects all HostConfig.Devices and DeviceRequests. Launch path has no GPU option, uses digest-bound CPU image/platform probes. Enabling GPU would need separately reviewed device/isolation/image qualification; cannot waive current gate."
+  },
+  "existingMechanisms": {
+    "shutdown": "Reuse deploy/prover/bootstrap.py install_shutdown_controls, persistent absolute guest budget/commissioning timers, independent requestFleet ValidUntil terminate plus actual readback; instance-initiated-shutdown terminate; verify volumes deletion. Cloud expiry must bound an unresponsive host. Full time budget includes bootstrap and checkpoint/export.",
+    "network": "Reuse zero-ingress SG and existing trusted SSM/private forwarding route; no public devnet/private-query/model ports; existing model internal bridge+proxy, nonroot readonly root, caps dropped, no devices, limits unchanged. No developer credentials in model/generated-code process.",
+    "application": "Reuse plugins/devnet/start.mjs/bootstrap.mjs/network.mjs with native/PXEproofsfalse and current immutable runtime closure; do not use historical5235fullnode capsule as current acceptance."
+  },
+  "blockersBeforeAnyLaunch": [
+    "Current immutable AMD64 package must contain matching Node24.21/Anvil1.7/native Aztec libraries/current application closure. Prior bb --version qualification is not full current runtime qualification. Old bootstrap pins/historical5235 package cannot simply be reused unchanged.",
+    "Preserved local checkpoint cannot be blindly copied into active remote state: current recovery records bind paths and filesystemdev/inode cache ownership. Need existing recovery procedure with exact head/history/hash verification and explicit one-writer handoff, preserving Mac originals and all private journals; no chain reset or financial replay.",
+    "Fresh launch preflight must reconcile all remaining resources/volumes, selected account permissions, current offerings/capacity/quota, AMI/SSM and both actual shutdown controls. Current us-east-1 instance read showsnone; not an all-region final billing claim.",
+    "64GiB is capacity headroom, not a measured root cause for local load stalls. Baselinegp3125MiB/s could takeabout48s just to sequentially read6.34GB, so500MiB/s budgeted; actual parser/storage/native performance remains to measure.",
+    "Shared host must serialize expensive model and devnet tests or enforce measured CPU/memory headroom; full-corpus/model latency release gates remain.",
+    "Existing moderator is untouched and remains critical/stale; this host is one additional resource, not permission to migrate or restart that service."
+  ],
+  "sources": [
+    {
+      "url": "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
+      "fact": "Current v6rc1 full-node minimum8cores/16vCPU8GB1TB NVMe25Mbps; this is testnet guidance, not proof of cohost devnet/model capacity."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "fact": "M7a4xl16vCPU16physicalcores64GiB"
+    },
+    {
+      "url": "https://aws.amazon.com/ec2/instance-types/accelerated-computing/",
+      "fact": "G6 4xl16vCPU64GiB1L4GPU"
+    },
+    {
+      "url": "https://aws.amazon.com/ebs/pricing/",
+      "fact": "gp3 baseline3000IOPS125MiB/s; provisioned capacity and throughput charged until released"
+    },
+    {
+      "url": "https://aws.amazon.com/vpc/pricing/",
+      "fact": "Public IPv40.005USD/hour"
+    },
+    {
+      "url": "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "fact": "Linux persecond billing; no free-tier assumption used"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/using-price-list-query-api.html",
+      "fact": "Current official AWS PriceList API receipts saved for exact CPU/GPU/gp3 rates"
+    }
+  ],
+  "evidence": [
+    {
+      "path": ".build/infrastructure-feasibility/candidate-hardware.json",
+      "sha256": "9eaa8760416e95717415a25e326999890f482a0425c75964932bec2de6684741"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/current-us-east-1-instances.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/g6-us-east-1-price.json",
+      "sha256": "3981f080d38145a090bde584f1db4c75e3897e9a08a74b913572659822909bac"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/gp3-throughput-us-east-1-price.json",
+      "sha256": "8c8ba0e95cbfe7b446a2ae3f4a66f31227adfe33e29d399ba262d31c6f0a29b4"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/gp3-us-east-1-price.json",
+      "sha256": "f7f4cd82ab6c669c149ce07ae9d50c70ef36ceeda5ac1bfe60af9f59fdfbf91b"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/m7a-us-east-1-price.json",
+      "sha256": "c324c89d795165536f8a16cd07a8511053522cb6cd5bd67afe52b2fc3f177909"
+    },
+    {
+      "path": ".build/infrastructure-feasibility/model-cpu-result.json",
+      "sha256": "d3489ec6dfe842c6ea89f27718a4b0f2e17dc11389e95bc7e017b6b469126f2c"
+    }
+  ]
+}

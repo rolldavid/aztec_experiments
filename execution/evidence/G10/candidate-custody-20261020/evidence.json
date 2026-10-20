@@ -1,0 +1,85 @@
+{
+  "base": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+  "candidate": "b61c7a0876d6a076358d49168f6bfd477213a5bd",
+  "task_id": "G10-bok-candidate-custody",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+      "candidate": "b61c7a0876d6a076358d49168f6bfd477213a5bd",
+      "task_id": "G10-bok-candidate-custody",
+      "id": "focused-candidate-custody",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node --test plugins/test/thread-repositories.test.mjs plugins/test/github-checkout.test.mjs",
+      "environment": "Local actual Git/filesystem; no live network/model/proof actions",
+      "observed": "33 passed, 2 existing optional Docker cases skipped (not claimed passing). Required custody/discovery cases passed.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/focused.log",
+          "sha256": "5d86e42d42e335be83dd75b9531e5338874eb28549bd47f8686d9192f0785598"
+        },
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/review.json",
+          "sha256": "cd435bd07e0a569349dbc785fb32c157896c4bdce535bfecc90bea7137bfebe4"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+    "candidate": "b61c7a0876d6a076358d49168f6bfd477213a5bd",
+    "task_id": "G10-bok-candidate-custody",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G10/candidate-custody-20261020/focused.log",
+        "sha256": "5d86e42d42e335be83dd75b9531e5338874eb28549bd47f8686d9192f0785598"
+      },
+      {
+        "path": "execution/evidence/G10/candidate-custody-20261020/review.json",
+        "sha256": "cd435bd07e0a569349dbc785fb32c157896c4bdce535bfecc90bea7137bfebe4"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+      "candidate": "b61c7a0876d6a076358d49168f6bfd477213a5bd",
+      "task_id": "G10-bok-candidate-custody",
+      "id": "RC29-unaccepted-source-custody",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/focused.log",
+          "sha256": "5d86e42d42e335be83dd75b9531e5338874eb28549bd47f8686d9192f0785598"
+        },
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/review.json",
+          "sha256": "cd435bd07e0a569349dbc785fb32c157896c4bdce535bfecc90bea7137bfebe4"
+        }
+      ]
+    },
+    {
+      "base": "eb9615082ceb16b0a5cc9762b439c15f94295433",
+      "candidate": "b61c7a0876d6a076358d49168f6bfd477213a5bd",
+      "task_id": "G10-bok-candidate-custody",
+      "id": "RC29-safe-current-file-discovery",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/focused.log",
+          "sha256": "5d86e42d42e335be83dd75b9531e5338874eb28549bd47f8686d9192f0785598"
+        },
+        {
+          "path": "execution/evidence/G10/candidate-custody-20261020/review.json",
+          "sha256": "cd435bd07e0a569349dbc785fb32c157896c4bdce535bfecc90bea7137bfebe4"
+        }
+      ]
+    }
+  ]
+}

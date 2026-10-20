@@ -1,0 +1,479 @@
+{
+  "passed": true,
+  "deadlineMs": 150000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2062400,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 413968
+    },
+    {
+      "elapsedMs": 2021,
+      "rssKiB": 1426384
+    },
+    {
+      "elapsedMs": 3045,
+      "rssKiB": 1435552
+    },
+    {
+      "elapsedMs": 4081,
+      "rssKiB": 1449888
+    },
+    {
+      "elapsedMs": 5113,
+      "rssKiB": 1454032
+    },
+    {
+      "elapsedMs": 6149,
+      "rssKiB": 1458384
+    },
+    {
+      "elapsedMs": 7168,
+      "rssKiB": 1456672
+    },
+    {
+      "elapsedMs": 8182,
+      "rssKiB": 1459232
+    },
+    {
+      "elapsedMs": 9217,
+      "rssKiB": 1462192
+    },
+    {
+      "elapsedMs": 10250,
+      "rssKiB": 1465472
+    },
+    {
+      "elapsedMs": 11284,
+      "rssKiB": 1469072
+    },
+    {
+      "elapsedMs": 12323,
+      "rssKiB": 1521504
+    },
+    {
+      "elapsedMs": 13354,
+      "rssKiB": 1497568
+    },
+    {
+      "elapsedMs": 14388,
+      "rssKiB": 1501408
+    },
+    {
+      "elapsedMs": 15410,
+      "rssKiB": 1522208
+    },
+    {
+      "elapsedMs": 16434,
+      "rssKiB": 1522320
+    },
+    {
+      "elapsedMs": 17468,
+      "rssKiB": 1529936
+    },
+    {
+      "elapsedMs": 18500,
+      "rssKiB": 1536176
+    },
+    {
+      "elapsedMs": 19536,
+      "rssKiB": 1543792
+    },
+    {
+      "elapsedMs": 20572,
+      "rssKiB": 1548320
+    },
+    {
+      "elapsedMs": 21594,
+      "rssKiB": 1552368
+    },
+    {
+      "elapsedMs": 22626,
+      "rssKiB": 1557024
+    },
+    {
+      "elapsedMs": 23657,
+      "rssKiB": 1560944
+    },
+    {
+      "elapsedMs": 24690,
+      "rssKiB": 1565248
+    },
+    {
+      "elapsedMs": 25722,
+      "rssKiB": 1569520
+    },
+    {
+      "elapsedMs": 26751,
+      "rssKiB": 1574192
+    },
+    {
+      "elapsedMs": 27768,
+      "rssKiB": 1585008
+    },
+    {
+      "elapsedMs": 28803,
+      "rssKiB": 1592192
+    },
+    {
+      "elapsedMs": 29839,
+      "rssKiB": 1598704
+    },
+    {
+      "elapsedMs": 30870,
+      "rssKiB": 1605088
+    },
+    {
+      "elapsedMs": 31894,
+      "rssKiB": 1609136
+    },
+    {
+      "elapsedMs": 32920,
+      "rssKiB": 1613024
+    },
+    {
+      "elapsedMs": 33949,
+      "rssKiB": 1619536
+    },
+    {
+      "elapsedMs": 34982,
+      "rssKiB": 1626832
+    },
+    {
+      "elapsedMs": 35999,
+      "rssKiB": 1633680
+    },
+    {
+      "elapsedMs": 37031,
+      "rssKiB": 1639552
+    },
+    {
+      "elapsedMs": 38066,
+      "rssKiB": 1644128
+    },
+    {
+      "elapsedMs": 39101,
+      "rssKiB": 1648960
+    },
+    {
+      "elapsedMs": 40137,
+      "rssKiB": 1653856
+    },
+    {
+      "elapsedMs": 41172,
+      "rssKiB": 1658656
+    },
+    {
+      "elapsedMs": 42207,
+      "rssKiB": 1645712
+    },
+    {
+      "elapsedMs": 43243,
+      "rssKiB": 1650336
+    },
+    {
+      "elapsedMs": 44275,
+      "rssKiB": 1655088
+    },
+    {
+      "elapsedMs": 45312,
+      "rssKiB": 1660192
+    },
+    {
+      "elapsedMs": 46346,
+      "rssKiB": 1664624
+    },
+    {
+      "elapsedMs": 47380,
+      "rssKiB": 1668432
+    },
+    {
+      "elapsedMs": 48415,
+      "rssKiB": 1674672
+    },
+    {
+      "elapsedMs": 49451,
+      "rssKiB": 1683456
+    },
+    {
+      "elapsedMs": 50486,
+      "rssKiB": 1751440
+    },
+    {
+      "elapsedMs": 51502,
+      "rssKiB": 1791472
+    },
+    {
+      "elapsedMs": 52527,
+      "rssKiB": 1814176
+    },
+    {
+      "elapsedMs": 53543,
+      "rssKiB": 1754208
+    },
+    {
+      "elapsedMs": 54574,
+      "rssKiB": 1786944
+    },
+    {
+      "elapsedMs": 55609,
+      "rssKiB": 1812016
+    },
+    {
+      "elapsedMs": 56634,
+      "rssKiB": 1816832
+    },
+    {
+      "elapsedMs": 57669,
+      "rssKiB": 1839776
+    },
+    {
+      "elapsedMs": 58702,
+      "rssKiB": 1850976
+    },
+    {
+      "elapsedMs": 59733,
+      "rssKiB": 2062400
+    },
+    {
+      "elapsedMs": 60752,
+      "rssKiB": 1950016
+    },
+    {
+      "elapsedMs": 61769,
+      "rssKiB": 1883344
+    },
+    {
+      "elapsedMs": 62801,
+      "rssKiB": 1900912
+    },
+    {
+      "elapsedMs": 63832,
+      "rssKiB": 1912336
+    },
+    {
+      "elapsedMs": 64864,
+      "rssKiB": 1921984
+    },
+    {
+      "elapsedMs": 65886,
+      "rssKiB": 1938736
+    },
+    {
+      "elapsedMs": 66914,
+      "rssKiB": 1955760
+    },
+    {
+      "elapsedMs": 67944,
+      "rssKiB": 1906832
+    },
+    {
+      "elapsedMs": 68975,
+      "rssKiB": 1908464
+    },
+    {
+      "elapsedMs": 70007,
+      "rssKiB": 1853872
+    },
+    {
+      "elapsedMs": 71042,
+      "rssKiB": 1868288
+    },
+    {
+      "elapsedMs": 72062,
+      "rssKiB": 1874880
+    },
+    {
+      "elapsedMs": 73096,
+      "rssKiB": 1884544
+    },
+    {
+      "elapsedMs": 74110,
+      "rssKiB": 1891520
+    },
+    {
+      "elapsedMs": 75131,
+      "rssKiB": 1892336
+    },
+    {
+      "elapsedMs": 76168,
+      "rssKiB": 1892832
+    },
+    {
+      "elapsedMs": 77186,
+      "rssKiB": 1893264
+    },
+    {
+      "elapsedMs": 78219,
+      "rssKiB": 1891808
+    },
+    {
+      "elapsedMs": 79240,
+      "rssKiB": 1864560
+    },
+    {
+      "elapsedMs": 80266,
+      "rssKiB": 1864704
+    },
+    {
+      "elapsedMs": 81300,
+      "rssKiB": 1866736
+    },
+    {
+      "elapsedMs": 82334,
+      "rssKiB": 1874672
+    },
+    {
+      "elapsedMs": 83369,
+      "rssKiB": 1882192
+    },
+    {
+      "elapsedMs": 84383,
+      "rssKiB": 1790304
+    },
+    {
+      "elapsedMs": 85402,
+      "rssKiB": 311008
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "focused-components",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 59733,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 25164,
+        "ppid": 1682,
+        "rssKiB": 57904
+      },
+      {
+        "role": "focused-components",
+        "pid": 25174,
+        "ppid": 25164,
+        "rssKiB": 215600
+      },
+      {
+        "role": "focused-components",
+        "pid": 25175,
+        "ppid": 25174,
+        "rssKiB": 216528
+      },
+      {
+        "role": "focused-components",
+        "pid": 25184,
+        "ppid": 25175,
+        "rssKiB": 123488
+      },
+      {
+        "role": "focused-components",
+        "pid": 25185,
+        "ppid": 25175,
+        "rssKiB": 91664
+      },
+      {
+        "role": "focused-components",
+        "pid": 25186,
+        "ppid": 25175,
+        "rssKiB": 62080
+      },
+      {
+        "role": "focused-components",
+        "pid": 25188,
+        "ppid": 25175,
+        "rssKiB": 143776
+      },
+      {
+        "role": "focused-components",
+        "pid": 25190,
+        "ppid": 25175,
+        "rssKiB": 103632
+      },
+      {
+        "role": "focused-components",
+        "pid": 25191,
+        "ppid": 25175,
+        "rssKiB": 967008
+      },
+      {
+        "role": "focused-components",
+        "pid": 25192,
+        "ppid": 25175,
+        "rssKiB": 80720
+      }
+    ]
+  },
+  "observations": [
+    {
+      "stage": "unlock-retained-profile",
+      "at": 1792050509571
+    },
+    {
+      "stage": "reconcile-original-claim",
+      "at": 1792050574452
+    },
+    {
+      "stage": "saved-claim-and-account-status",
+      "at": 1792050589412
+    },
+    {
+      "passed": true,
+      "scope": "Read-only exact saved claim reconciliation; same Mac profile and origin",
+      "sourceRevision": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+      "runtimeSha256": "6eb53e9a9fc848fb382fb273a2cadf5c811a4e8de676c760942a3062c05b84f5",
+      "before": {
+        "paymentMatches": true,
+        "claimMatches": true,
+        "claimConfirmed": false,
+        "claimTxHash": null,
+        "paymentSaved": true,
+        "claimPresent": true,
+        "attempted": true,
+        "workflowPrepared": false,
+        "workflowStatus": "submitting",
+        "feeWithinSavedCap": true,
+        "explicitClaimReview": false
+      },
+      "exactJournal": {
+        "hash": "0x27f4f00d43443f7ba11598f00044d77dead16655b08706bc1ba0670ecaf1d3b1",
+        "operation": "ROLLING_WORKFLOW_V1:0x2220bac4f76949c4bb1717813d086ef5f160fb4396e267a95cc73bfdaeab95e7"
+      },
+      "current": {
+        "claimState": "complete",
+        "claimHash": "0x27f4f00d43443f7ba11598f00044d77dead16655b08706bc1ba0670ecaf1d3b1",
+        "accountStatus": "fee-ready",
+        "privateFeeCredit": "4681319064400000",
+        "depositCount": 1,
+        "postEligibility": "requires-action-simulation"
+      },
+      "after": {
+        "paymentMatches": true,
+        "claimMatches": true,
+        "claimConfirmed": true,
+        "claimTxHash": "0x27f4f00d43443f7ba11598f00044d77dead16655b08706bc1ba0670ecaf1d3b1",
+        "paymentSaved": true,
+        "claimPresent": true,
+        "attempted": true,
+        "workflowPrepared": false,
+        "workflowStatus": "confirmed",
+        "feeWithinSavedCap": true,
+        "explicitClaimReview": false
+      },
+      "contextClosed": true,
+      "blockedRequests": 0,
+      "inspectionErrors": 0,
+      "originalBackupUnchanged": true
+    }
+  ],
+  "elapsedMs": 85753,
+  "ownedTreeAbsent": true
+}

@@ -1,0 +1,22 @@
+{
+  "template": {
+    "LaunchTemplateId": "lt-02bde80c40c9f7003",
+    "LaunchTemplateName": "rolling-chat-node-20261011-03",
+    "CreateTime": "2026-10-11T18:41:41+00:00",
+    "CreatedBy": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson",
+    "DefaultVersionNumber": 1,
+    "LatestVersionNumber": 1,
+    "Operator": {
+      "Managed": false
+    }
+  },
+  "fleet": {
+    "FleetId": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c"
+  },
+  "deadlines": {
+    "createdAt": "2026-10-11T18:41:10Z",
+    "budgetStop": "2026-10-12T02:41:10Z",
+    "commissioningStop": "2026-10-11T19:11:10Z"
+  },
+  "payloadSha256": "48d3f9326741b129ce026e6a76fbf6dca506c698f0c80c02b48f4323dfbbd246"
+}

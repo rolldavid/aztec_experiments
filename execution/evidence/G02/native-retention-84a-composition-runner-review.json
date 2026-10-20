@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:10:35.323479+00:00",
+  "candidate": "84a1a8ac5576c3f0e5ca1f0c5513024ff7136bbb",
+  "verdict": "SOURCE_COMPOSITION_ACCEPTED; eligible for one bounded73-case bootstrap suite after parent slot grant",
+  "resourceMetadataCandidate": "1370bcb3eb30127dee5881e1be8a47d123583c39",
+  "metadataDisposition": "Only assets report changes: removed false WSDB1; SDK default rule stated and observedThreads null. No runtime configuration/supervisor/binary invocation changed. Future source-bound receipts must bind new assets bytes; historical a189 remains unchanged.",
+  "retentionSource": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "exactRetentionPaths": [
+    "deploy/prover/BOOTSTRAP.md",
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py"
+  ],
+  "retentionByteEquality": true,
+  "runnerPacketSha256": "5214077bb1c05fd120291d7a186247eafd32288734ac144ac618ab79ad69ae05",
+  "runnerSha256": "f6f4c012109daf5d29e74996ac749d18f8bf0d9a7a18c0eab68ef42f6d4b66f2",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "protectedCurrentHashesVerified": 3232,
+  "expectedAstTests": 73,
+  "bounds": {
+    "deadlineMs": 60000,
+    "rssLimitKiB": 2097152
+  },
+  "runnerChecks": [
+    "Pinned supported Python3.14 full test script no name filter; exact73/no skipped assertion and child exit0.",
+    "Current clean HEAD and hashes before exclusive intent; existing Supervisor drains/reaps owned tree.",
+    "Short owned external TMPDIR inode-guarded removal only after positive ownedTreeAbsent; sanitized HOME/environment.",
+    "Protected source/dependency hashes and test log/result retained."
+  ],
+  "carry": "Prior19 focused/source review carries exact8c bytes; package8 may carry unchanged source absent a new affected concern.",
+  "excluded": [
+    "Actual73 result not yet reviewed",
+    "Real Linux retention, native qualification or paid permission"
+  ]
+}

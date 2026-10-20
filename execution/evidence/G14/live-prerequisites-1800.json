@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-11T17:50:56.331671+00:00",
+  "executionEnvironment": "trusted local Mac lead",
+  "commands": [
+    "aws sts get-caller-identity --profile message-board-deploy",
+    "aws ec2 describe-instances/describe-volumes/describe-fleets --profile message-board-deploy --region us-east-1",
+    "GET localhost8787/health"
+  ],
+  "sts": "authenticated existing role",
+  "instances": [],
+  "volumes": [],
+  "fleets": [],
+  "plugin": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  },
+  "mutations": false
+}

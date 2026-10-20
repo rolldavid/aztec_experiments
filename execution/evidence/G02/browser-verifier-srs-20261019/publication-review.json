@@ -1,0 +1,19 @@
+{
+  "source": "eec3b6367b9a4cfb832ed706f1658a16504a7e27",
+  "verdict": "approved",
+  "scriptSha256": "d88bc99b0614df19581e6eeeb5d1bff8707de7ffaf85d8fcf14628a5b52679c2",
+  "deltaSha256": "6031e930bd86a647e55d272e2d00b2fbd877b23a2cd72be5c61146b11a0df64a",
+  "archiveSha256": "b0f1c6537891d0eb40dd2bad18a79db869afdf95ca4d9b74c9b33df911fb861c",
+  "reviewed": [
+    "Ten exact archive members independently match manifest and current built files.",
+    "Hardlink clone uses atomic replacement, never mutates shared original inode.",
+    "Existing complete wallet asset loader validates changed closure before app stop.",
+    "Pinned original unit, protected public/wallet/relay configs, zero active plan/reserved gas, preserved funding journal and other service PIDs.",
+    "Final failure handler stops only app, restores original unit atomically and starts original app; never rewrites funding journal or protected configs."
+  ],
+  "limits": [
+    "Download wrapper must pin exact script/archive/manifest before execution.",
+    "Actual affected browser flow remains acceptance; no node/prover/Bok restart or qualification needed."
+  ],
+  "resolvedFinding": "Add bounded restoration of original unit and original app after switch/start/postcondition failure. Preserve changed funding journal; never restore financial state."
+}

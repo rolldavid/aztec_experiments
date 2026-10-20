@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-14T15:49:18.322358+00:00",
+  "sourceRevision": "123fc8f454c5de10bf2621121b9f949d95a6d059",
+  "environment": "macOS pinnedNode24.21.0 native devnet realProofs=false PXE proverEnabled=false",
+  "command": "node .build/rolling-devnet-diagnostics/rc22-current.mjs (clean trusted env)",
+  "nativeSession": 92764,
+  "url": "http://127.0.0.1:8081",
+  "phase": "running",
+  "preservedSnapshot": "anvil-recovery-3dff9285-0fe9-42b3-86e8-d3b7a3ca20d8.json",
+  "snapshotHash": "9cff29914b45ba826077d7014f943b00831cfab6c028c9df590fc727627a5d58",
+  "retainedCheckpoint": {
+    "number": "0x79d",
+    "hash": "0x1f252c91a5f12edcc5afea0fa292095f4cf1be0d1bc84eab4e01527a96b4873f",
+    "pending": "924",
+    "proven": "924"
+  },
+  "actualRetainedL1Head": {
+    "number": "0x79d",
+    "hash": "0x1f252c91a5f12edcc5afea0fa292095f4cf1be0d1bc84eab4e01527a96b4873f"
+  },
+  "retainedHeadMatches": true,
+  "startupLog": ".build/rolling-devnet-diagnostics/storage-restored-native.log",
+  "startupLogSha256": "767852016c823a268b786c498fa53364a4818f690c6797cc413f42005214cfb9",
+  "observation": "Normal startup passed authenticated snapshot/head/protocol checkpoint checks and returned ready existing application. No financial/model action replay. User deletion did not remove this stopped snapshot. Current app path served; wholeproduct recovery remains separate."
+}

@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-14T08:02:55.650537+00:00",
+  "source": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+  "qualification": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/bare-9741-result.json",
+  "qualificationSha256": "8133bf8ce3ce590d0f58dd8d446c0d0c95a08dff771af03635af61ab9d2753cd",
+  "head": {
+    "number": "0x1b7",
+    "hash": "0x0d74a4dc67580636a399e5d8facc16c97d1e854e27ff7298d291d819d09c9377",
+    "pending": "177",
+    "proven": "177"
+  },
+  "snapshot": {
+    "sha256": "f34ea4d3c80feba881849a9c8a7048b4ef0afd14c47e3a9c40e5838c9558c66b",
+    "bytes": 524956924
+  },
+  "originalOwnerDead": true,
+  "portsReleased": true,
+  "originalFailureAndLeasePreserved": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-rc22-20261014/failed-health-38345",
+  "inventoryVerified": {
+    "transactionHash": "0xf05a6838146e3f1d4fe4b14a8128ff324c7b4c3da1f61e64cd36f43ebf3268af",
+    "canonical": true,
+    "exactTransfer": true,
+    "balance": "500000000",
+    "zeroEth": true,
+    "nonce": 0
+  },
+  "automaticUncleanRecovery": false
+}

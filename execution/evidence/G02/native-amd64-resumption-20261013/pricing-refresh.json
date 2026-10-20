@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T06:22:49.653077+00:00",
+  "officialSource": "AWS Price List API AmazonEC2",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "available": true,
+  "rows": [
+    {
+      "sku": "TX58337QN5B6HX4A",
+      "instanceType": "m7a.large",
+      "effectiveDate": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "0.1159200000"
+    }
+  ],
+  "exitCode": 0
+}

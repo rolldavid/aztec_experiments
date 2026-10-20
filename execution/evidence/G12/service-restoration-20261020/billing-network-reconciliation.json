@@ -1,0 +1,480 @@
+{
+  "billing": {
+    "GroupDefinitions": [
+      {
+        "Type": "DIMENSION",
+        "Key": "SERVICE"
+      },
+      {
+        "Type": "DIMENSION",
+        "Key": "REGION"
+      }
+    ],
+    "ResultsByTime": [
+      {
+        "TimePeriod": {
+          "Start": "2026-10-11",
+          "End": "2026-10-21"
+        },
+        "Total": {},
+        "Groups": [
+          {
+            "Keys": [
+              "AWS Cost Explorer",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0.08",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "AWS Glue",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "AWS Key Management Service",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "AWS Key Management Service",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon CloudFront",
+              "eu-west-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0.0012412534",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon CloudFront",
+              "global"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon CloudFront",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0.0019830319",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "EC2 - Other",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "2.8224087944",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "EC2 - Other",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "3.5200098819",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Elastic Compute Cloud - Compute",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "51.4148388894",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Elastic Compute Cloud - Compute",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "27.7001669121",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Lightsail",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "23.2574",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Simple Storage Service",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "1.3012535333",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Simple Storage Service",
+              "global"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Simple Storage Service",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0.0000050212",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Virtual Private Cloud",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "2.06",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "Amazon Virtual Private Cloud",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0.5401131183",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "AmazonCloudWatch",
+              "eu-west-2"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "AmazonCloudWatch",
+              "us-east-1"
+            ],
+            "Metrics": {
+              "UnblendedCost": {
+                "Amount": "0",
+                "Unit": "USD"
+              }
+            }
+          }
+        ],
+        "Estimated": true
+      }
+    ],
+    "DimensionValueAttributes": [],
+    "ResponseMetadata": {
+      "RequestId": "8c3b1388-7ff3-4484-95d6-d91c702c8ab2",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+        "date": "Tue, 20 Oct 2026 06:34:45 GMT",
+        "content-type": "application/x-amz-json-1.1",
+        "content-length": "2321",
+        "connection": "keep-alive",
+        "x-amzn-requestid": "8c3b1388-7ff3-4484-95d6-d91c702c8ab2",
+        "cache-control": "no-cache"
+      },
+      "RetryAttempts": 0
+    }
+  },
+  "core": {
+    "Label": "NetworkOut",
+    "Datapoints": [
+      {
+        "Timestamp": "2026-10-20 04:30:00+05:30",
+        "Sum": 33852342.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 23:30:00+05:30",
+        "Sum": 88728435.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 10:30:00+05:30",
+        "Sum": 275607241.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 05:30:00+05:30",
+        "Sum": 33242109.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 08:30:00+05:30",
+        "Sum": 280708029.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 18:30:00+05:30",
+        "Sum": 170426793.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 13:30:00+05:30",
+        "Sum": 87930777.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 07:30:00+05:30",
+        "Sum": 34208996.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 06:30:00+05:30",
+        "Sum": 35569442.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 17:30:00+05:30",
+        "Sum": 172975475.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 12:30:00+05:30",
+        "Sum": 37773476.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 15:30:00+05:30",
+        "Sum": 128398704.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 01:30:00+05:30",
+        "Sum": 151184911.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 20:30:00+05:30",
+        "Sum": 504269932.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 14:30:00+05:30",
+        "Sum": 149747596.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 09:30:00+05:30",
+        "Sum": 362319488.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 00:30:00+05:30",
+        "Sum": 154480813.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 19:30:00+05:30",
+        "Sum": 178460629.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 22:30:00+05:30",
+        "Sum": 92474939.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 04:30:00+05:30",
+        "Sum": 5936707.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 08:30:00+05:30",
+        "Sum": 512871.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 03:30:00+05:30",
+        "Sum": 35140627.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 21:30:00+05:30",
+        "Sum": 95190825.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 16:30:00+05:30",
+        "Sum": 132523152.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 07:30:00+05:30",
+        "Sum": 35310213.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 02:30:00+05:30",
+        "Sum": 131685499.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 05:30:00+05:30",
+        "Sum": 33256445.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 11:30:00+05:30",
+        "Sum": 26364330.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 06:30:00+05:30",
+        "Sum": 30896000.0,
+        "Unit": "Bytes"
+      }
+    ],
+    "ResponseMetadata": {
+      "RequestId": "813727c8-505d-4ddf-bdd7-b1daf6f8e5b0",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+        "x-amzn-requestid": "813727c8-505d-4ddf-bdd7-b1daf6f8e5b0",
+        "content-type": "application/x-amz-json-1.0",
+        "content-length": "1745",
+        "date": "Tue, 20 Oct 2026 06:34:45 GMT"
+      },
+      "RetryAttempts": 0
+    }
+  },
+  "bok": {
+    "Label": "NetworkOut",
+    "Datapoints": [
+      {
+        "Timestamp": "2026-10-19 21:30:00+05:30",
+        "Sum": 27745481.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 23:30:00+05:30",
+        "Sum": 25434412.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 00:30:00+05:30",
+        "Sum": 75545872.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 02:30:00+05:30",
+        "Sum": 24275.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 22:30:00+05:30",
+        "Sum": 27224171.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-20 01:30:00+05:30",
+        "Sum": 28990602.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-10-19 20:30:00+05:30",
+        "Sum": 15873430.0,
+        "Unit": "Bytes"
+      }
+    ],
+    "ResponseMetadata": {
+      "RequestId": "75327f33-fb93-40ed-9176-21439b412eb5",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+        "x-amzn-requestid": "75327f33-fb93-40ed-9176-21439b412eb5",
+        "content-type": "application/x-amz-json-1.0",
+        "content-length": "442",
+        "date": "Tue, 20 Oct 2026 06:34:45 GMT"
+      },
+      "RetryAttempts": 0
+    }
+  }
+}

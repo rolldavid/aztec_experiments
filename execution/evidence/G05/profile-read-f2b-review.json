@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f2b398335956a2fcaa14f12f0a95fcba017c4c51",
+  "base": "40ba01ac29b0b054a7599ea80b0f152c3ebf83f4",
+  "verdict": "changes_requested_readProfile_scalar_validation",
+  "files": {
+    "apps/rolling/reader.browser.test.mjs": "467ce035d7137a9a98cbf9fdc6c92b4c17979a57b7181b9ae903d8e6dbc28862",
+    "apps/rolling/start.mjs": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+    "apps/rolling/start.test.mjs": "89dfec1200781b1e92aa8ffc31bfa0f616997e8eb59c24ef907a874d21c80dc5",
+    "apps/rolling/wallet-session.test.mjs": "6d855d6df2bc364010a3364119304e1ba8751e564991e71d4f9efc0be680a37b",
+    "shared/rolling/application.mjs": "10b61125553da8de53abf3b347224573627f7efd29606e4a3227c6023f757538",
+    "shared/rolling/application.test.mjs": "e5c63a9750f87fb330453f90f3e1715cb32dd89ee4063193238bf6edc279d3ff",
+    "shared/rolling/synchronized-application.mjs": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+    "shared/rolling/synchronized-application.test.mjs": "ade03c20625919899906912d74eb7ab437841f3581ad38d0b27a5e9212d8c403"
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "shared/rolling/application.mjs",
+      "line": 221,
+      "scenario": "readProfile coerces scalar response versions with BigInt. utilityPlain preserves booleans and strings for an integer ABI, so true,false,empty string or whitespace can be accepted as valid0/1 instead of rejecting malformed profile state. Existing malformed tests cover only undefined/negative/overflow.",
+      "repair": "Validate exact supported normalized scalar type/representation before BigInt conversion, then enforce uint32 range for both versions. Installed actual unsigned integer ABI decoder returns bigint, normalized to canonical lowercase32byte field string. Add boolean/empty/whitespace/noncanonical string regressions for both fields and preserve final account guard."
+    }
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24 --test shared/rolling/synchronized-application.test.mjs apps/rolling/start.test.mjs",
+      "result": "Independently4passed0failed0skipped272.642291ms"
+    }
+  ],
+  "repairedFinding": {
+    "prior": "profile-ui-08be-review.json P1 production static import404",
+    "disposition": "Resolved: exact /profile-view.mjs and /avatar-upload.mjs allowed by production asset handler; actualHTTPtest passes with sensitive/config paths stilldenied. blob image CSP supports local uploader previews without opening external image origins."
+  },
+  "observations": [
+    "ReadProfile performs no mutation/fee/send; one trusted utility call with guard before and after",
+    "Synchronized facade includes new operation with captured capabilities and account guards; production cross-tab lock maps all facade methods",
+    "Wallet-session fixture now uses actual new metadata ABI decoder and actual name hash; existing provenance/registration guard assertions retained",
+    "Only reader test static fixture amended, not private routing or earlier acceptance assertions"
+  ],
+  "limits": [
+    "No browser/heavy checks run during lead build/check reservation",
+    "Normal profile ABI combined tests, TXE and genuine runtime remain separate pending checks",
+    "Malformed-type scenario is fail-closed API validation; no claim that installed correct ABI decoder normally emits booleans"
+  ]
+}

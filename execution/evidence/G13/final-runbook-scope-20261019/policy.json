@@ -1,0 +1,26 @@
+{
+  "base": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "candidate": "791297f7e0b075f85201a923c9603c228368ab9a",
+  "task_id": "G13-final-runbook-scope",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "documentation-scope"
+  ],
+  "requirements": [
+    "RC41-owner-scope"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G13-final-runbook-scope",
+      "paths": [
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

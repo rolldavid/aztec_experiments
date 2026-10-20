@@ -1,0 +1,147 @@
+{
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "startedAt": "2026-10-13T07:58:51.119Z",
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/live-paced-1.json"
+  ],
+  "reviewSha256": "7003b277212a28ac3d6219c2b5a58bf4a25e201645f2d0648d1a53cacf3a0547",
+  "deadlineMs": 65000,
+  "rssLimitKiB": 1048576,
+  "peakTreeRSSKiB": 307568,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 307568
+    },
+    {
+      "elapsedMs": 2038,
+      "rssKiB": 189728
+    },
+    {
+      "elapsedMs": 3069,
+      "rssKiB": 191280
+    },
+    {
+      "elapsedMs": 4105,
+      "rssKiB": 185760
+    },
+    {
+      "elapsedMs": 5129,
+      "rssKiB": 187904
+    },
+    {
+      "elapsedMs": 6165,
+      "rssKiB": 158336
+    },
+    {
+      "elapsedMs": 7208,
+      "rssKiB": 155024
+    },
+    {
+      "elapsedMs": 8238,
+      "rssKiB": 155216
+    },
+    {
+      "elapsedMs": 9275,
+      "rssKiB": 153312
+    },
+    {
+      "elapsedMs": 10311,
+      "rssKiB": 152128
+    },
+    {
+      "elapsedMs": 11346,
+      "rssKiB": 148256
+    },
+    {
+      "elapsedMs": 12374,
+      "rssKiB": 137408
+    },
+    {
+      "elapsedMs": 13397,
+      "rssKiB": 137344
+    },
+    {
+      "elapsedMs": 14433,
+      "rssKiB": 137472
+    },
+    {
+      "elapsedMs": 15466,
+      "rssKiB": 137280
+    },
+    {
+      "elapsedMs": 16500,
+      "rssKiB": 137376
+    },
+    {
+      "elapsedMs": 17537,
+      "rssKiB": 137488
+    },
+    {
+      "elapsedMs": 18564,
+      "rssKiB": 137872
+    },
+    {
+      "elapsedMs": 19598,
+      "rssKiB": 142640
+    },
+    {
+      "elapsedMs": 20635,
+      "rssKiB": 142848
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "public-network-read",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 1003,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 25444,
+        "ppid": 59636,
+        "rssKiB": 174960
+      },
+      {
+        "role": "public-network-read",
+        "pid": 25461,
+        "ppid": 25444,
+        "rssKiB": 130928
+      },
+      {
+        "role": "public-network-read",
+        "pid": 25462,
+        "ppid": 25461,
+        "rssKiB": 1680
+      }
+    ]
+  },
+  "publicSummary": {
+    "passed": true,
+    "readsComplete": true,
+    "requests": 18,
+    "elapsedMs": 21351,
+    "nodeStartupQualified": false
+  },
+  "elapsedMs": 21712,
+  "ownedTreeAbsent": true,
+  "finishedAt": "2026-10-13T07:59:12.833Z",
+  "protectedUnchanged": true,
+  "tempOwned": true,
+  "tempRemoved": true,
+  "receiptPresent": true,
+  "receiptSha256": "f9a66884ba2e91cc82938dfb107c8a58ced155102c2f3bf4c5b239b221f2e05f",
+  "completed": true
+}

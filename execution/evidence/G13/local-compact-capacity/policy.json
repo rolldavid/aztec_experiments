@@ -1,0 +1,30 @@
+{
+  "base": "9a3c40d8bf51cc51cbbecb60e2c37c36a0963193",
+  "candidate": "953429ed8fbf4a0afdf666d3de74adebb3588ca1",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G07-local-compact-capacity",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/devnet/bootstrap.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "config-rate"
+  ],
+  "requirements": [
+    "RC27-local-capacity-configuration-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G07-local-compact-capacity",
+      "paths": [
+        "plugins/devnet/bootstrap.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

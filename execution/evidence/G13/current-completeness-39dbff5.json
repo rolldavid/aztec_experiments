@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "source": "39dbff586a5092349c32d93b721d5417733e3532",
+  "scope": "Bounded read-only RC01-RC46 requirement/graph/source/evidence audit, interrupted for actual G07 and source4cc reviews. No new runs or whole-requirement certification.",
+  "conclusion": "Broad core features exist. Highest remaining development gaps are integrated journeys and measurable operation, not a missing general application skeleton. Planned graph nodes obscure accepted components; do not equate planned with unimplemented or component evidence with full closure.",
+  "priorities": [
+    {
+      "rank": 1,
+      "requirements": [
+        "RC13",
+        "RC22",
+        "RC37",
+        "RC39"
+      ],
+      "gap": "Current normal browser collateral exit, canonical original-recipient Ethereum refund, durable recovery and explicit fresh redeposit/claim/post cycle have not been established by inspected current evidence.",
+      "existingImplementation": [
+        "apps/rolling/wallet-panel.mjs:297-334",
+        "apps/rolling/wallet-session.mjs:57 createCollateralWithdrawal",
+        "scripts/t02-redeposit-flow.mjs",
+        "apps/rolling/wallet-session.test.mjs"
+      ],
+      "priorEvidence": "execution/evidence/G05/rejected-withdrawal-65c1-runtime-review.json proves historical genuine local proof/rejected-board withdrawal and exact L1 refund, explicitly excludes browser full withdrawal UX/current-source blanket equivalence. W03 current withdrawal tests use labelled providers.",
+      "next": "Select one retained funded account only after current eligibility, original depositor and recipient gas balance checks. Reuse normal Balance/Review collateral exit, then saved refund after existing official dev settlement. Preserve once-only journals; capture exact refund/gas/balances/export. Fresh deposit/claim requires new explicit normal review. Do not assume penalized collateral or zero-ETH USDC payer is eligible/gas-funded.",
+      "featureStatus": "Implemented path; important current actual gap, not demonstrated missing code."
+    },
+    {
+      "rank": 2,
+      "requirements": [
+        "RC10",
+        "RC19",
+        "RC22",
+        "RC29",
+        "RC33",
+        "RC41"
+      ],
+      "gap": "Ready from new aggregate funding has not yet demonstrated current post+Bok usage; zero-collateral subboard and complete owned-request accounting still lack current actual closure.",
+      "next": "After chosen collateral exit, if remaining fee balance permits, normal zero-collateral subboard is a high-value distinct check. Reuse current Check all Bok requests pagination before assuming no reservations. For a paid Bok interaction, require exact existing accepted thread/repository/network binding and current explicit budget; do not copy old journals onto current chain.",
+      "evidence": [
+        "execution/evidence/G13/current-usdc/recovery-packet.json",
+        "execution/evidence/G14/counter-reset-6c01/acceptance.json",
+        "execution/evidence/G10/two-user-current/browser-6c01.json",
+        "execution/evidence/G11/reviewer-current-c-mirror.json"
+      ],
+      "featureStatus": "Current accounting function and UI exist; current incomplete view is not missing accounting code. C/D actual concurrent apps, summaries, accounting and selected mirror already qualified in scoped historical evidence. New-thread automatic repo admission remains separate unqualified configuration/provider boundary; no repeat blocked alternatives."
+    },
+    {
+      "rank": 3,
+      "requirements": [
+        "RC23",
+        "RC24",
+        "RC25"
+      ],
+      "gap": "Full observer-scope assurance remains unqualified. Current browser summary filters/collapses selectors and does not prove absence of a disclosure to the actual full-node/archive receiver.",
+      "next": "Reuse existing trace/protocol analysis on the next genuine authorized action to compare named/Anonymous/owned-name/Bok public footprints and exact receiver boundary. Preserve explicit trusted prover/query/full-node operator containment assumption; do not add personalized cache endpoints or infer unlinkability from zero tags/equality counts.",
+      "evidence": [
+        "execution/evidence/G05/current-restore-privacy",
+        "execution/evidence/G11/reviewer-current-c-mirror.json",
+        ".build/reviewer-evidence/G07/reviewer-private-views-39dbff5.json"
+      ],
+      "featureStatus": "Evidence/architecture qualification gap; no new concrete leak found in this bounded audit."
+    },
+    {
+      "rank": 4,
+      "requirements": [
+        "RC09",
+        "RC27",
+        "RC36",
+        "RC38"
+      ],
+      "gap": "Independent fresh identities/origin deployment remains unexercised; retained host restore and source-bound bootstrap are not equivalent.",
+      "next": "Use existing skills/rolling-chat-deploy/SKILL.md and docs/rolling-deployment.md in a separate clean checkout/origin with own identities/config and ordinary development mode, after resource availability; verify no implicit contractor credentials/state and core/Bok backup restoration. No new deployment framework or paid host required by this recommendation.",
+      "featureStatus": "Skill/runbook/commands implemented; independent execution gap."
+    }
+  ],
+  "otherMaterialGaps": [
+    {
+      "requirements": [
+        "RC26",
+        "RC27",
+        "RC40"
+      ],
+      "detail": "Current863 fresh scan complete59.747s with failed marker predicate plus separate retained exact-value pass is useful scoped evidence. Original1572/1601 full120 target remains open; do not repeat without distinct capacity diagnosis."
+    },
+    {
+      "requirements": [
+        "RC17"
+      ],
+      "detail": "Actual100x100/597-byte flat-colour avatar and canonical bytes already evidenced; representative image quality/all formats and archive-retrieval breadth remain, not another identical flat-colour upload."
+    },
+    {
+      "requirements": [
+        "RC03",
+        "RC04",
+        "RC05",
+        "RC07",
+        "RC40"
+      ],
+      "detail": "Core pages and focused keyboard/mobile/scroll/focus/error tests exist, including d026 and39db tombstone controls. Broader current integrated accessibility/performance evidence remains; no missing page proven by this audit."
+    },
+    {
+      "requirements": [
+        "RC12",
+        "RC13",
+        "RC39",
+        "RC40"
+      ],
+      "detail": "Current human parent/local union and old-post reevaluation work. Same pinned model full isolated332-case campaign passed aggregate thresholds on AMD64; current ARM64 actual sampled latency exceeds10s and full end-to-end capacity is unqualified. Do not call entire model implementation missing or declare full quality from two actions."
+    }
+  ],
+  "alreadyImplementedOrScopedActual": [
+    "RC02 boundaries; RC06/08/11/14/15/16/44/45 core social/identity/recovery behaviors have source and scoped historical/current evidence. Current quote/repost worker packet arrived during audit; not independently reviewed here.",
+    "RC18/20/21 funding routes, supported/unsupported-wallet measurements and no-sponsorship controls exist; latest USDC payment and exact-claim recovery qualify scoped behavior, not automatic-ready deadline.",
+    "RC28 core works while hosted Bok stopped. RC30/31/34/35/46 workspace/revision/static publication/summary/isolation and private notification components have reviewed evidence, not all current full requirement closure.",
+    "RC43 is commercial context, not another executable feature or authorization."
+  ],
+  "externalOrFinalGates": [
+    "RC01/39 real-proof/current testnet, Sepolia nonce15 unresolved/429 once-slot consumed; no replay.",
+    "RC32 automatic new-repository selected access remains external setup prerequisite; accepted selected mirrors remain usable only within their exact binding.",
+    "RC42 expert audit, current network clearance and14-day soak remain mandatory; no mainnet authorization.",
+    "G13/T05 final-candidate conjunction and source-equivalence audit remain; stale graph checkpoints should be reconciled without erasing failure history."
+  ],
+  "noActions": "No source/graph edits, runtime/model/financial/network calls or heavy tests for this audit."
+}

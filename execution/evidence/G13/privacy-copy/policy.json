@@ -1,0 +1,28 @@
+{
+  "base": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "candidate": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-privacy-copy",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "apps/rolling/reader.mjs",
+    "apps/rolling/wallet-panel.mjs"
+  ],
+  "required_checks": [
+    "copy-syntax-review"
+  ],
+  "requirements": [
+    "PRIV-E9A-1"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G13-privacy-copy",
+      "paths": [
+        "apps/rolling/reader.mjs",
+        "apps/rolling/wallet-panel.mjs"
+      ]
+    }
+  ]
+}

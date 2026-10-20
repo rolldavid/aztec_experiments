@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T12:26:43.227683+00:00",
+  "scope": "Read-only interpretation of exact installed source and previously verified immutable-image module bindings. No09 failure conclusion; no provider requests or source edits.",
+  "runtimeAdapter": "publicnode-config-v1",
+  "helperSha256": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+  "imageBindingEvidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/rolling-static-107-fd7602d165da.json",
+    "sha256": "8c8d2f7b9a70bda03e24072238199f41512a6729ca7f170e265bf538951ac43a",
+    "limit": "Six instrumented modules byte-matched cached image; supplemental viem/config/retrieval source here is installed pinned SDK evidence, not newly extracted image-byte evidence."
+  },
+  "sourceHashes": {
+    "deploy/prover/startup-stages.mjs": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+    "deploy/prover/bootstrap.py": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+    "node_modules/@aztec-labs/archiver/dest/archiver.js": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+    "node_modules/@aztec-labs/archiver/dest/factory.js": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+    "node_modules/@aztec-labs/archiver/dest/modules/l1_synchronizer.js": "118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a",
+    "node_modules/@aztec-labs/archiver/dest/config.js": "43ddb6210482f6a915b4294d4bdb089b5a90a5e2d3e575b2fa4fce36070b60bf",
+    "node_modules/@aztec-labs/archiver/dest/l1/data_retrieval.js": "9d8b0b53599a2d9a22719b4432009a5bd0e2bafdc730dcea7287ff64a2a17701",
+    "node_modules/@aztec-labs/archiver/dest/l1/calldata_retriever.js": "198b36c2b680017e845e97f3deedcd7a4077c010251495838969f654c8f91c60",
+    "node_modules/@aztec-labs/ethereum/dest/client.js": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+    "node_modules/@aztec-labs/ethereum/dest/l1_reader.js": "0da011a422b13fe22861a24c00e2b8d4c52b404fd2e9626d0fb8581531b04d4f",
+    "node_modules/@aztec-labs/foundation/dest/promise/running-promise.js": "cd06a08234e17afaaf966196b1b41d82fecaad5bcf142b6e7f66444a61380886",
+    "node_modules/viem/_esm/clients/transports/fallback.js": "68f732eaa6dfcecb0ed5dd1ad65c40cf7a68989204f7483723854219cf55a739",
+    "node_modules/viem/_esm/clients/transports/createTransport.js": "9cbd5a51741901e5c522ec098634a42f0216f5e95191a953084f51880a3b20d3",
+    "node_modules/viem/_esm/utils/buildRequest.js": "b94fa2503457ac32de91b84965746b8240314091574c682011b194a519765e28"
+  },
+  "interpretation": [
+    {
+      "observation": "passesStarted=0",
+      "meaning": "No observed entry to Archiver.sync(). Use last unfinished phase to separate store/protocol/constants/header, blob/clock/trace/history tests, initial store reads, or loop startup. It does not establish a slow history backlog.",
+      "refs": [
+        "archiver/dest/archiver.js:512-539",
+        "startup-stages.mjs:234-249"
+      ]
+    },
+    {
+      "observation": "inFlight=true, head=null",
+      "meaning": "A pass entered, but latest-header observation has not completed: initial local getL2Tips/processInboundQueue or latest-L1 getBlock awaits are among possibilities. No endpoint/error attribution possible.",
+      "refs": [
+        "archiver/dest/archiver.js:654-661",
+        "l1_synchronizer.js:513-524"
+      ]
+    },
+    {
+      "observation": "inFlight=true, observedHeadL1Block set, localL1Block unchanged",
+      "meaning": "Latest header returned. Work may be finalized header, message sync, checkpoint reconciliation/log scans/calldata/trace/blob/validation/store writes, pruning/finality/speculation reconciliation. The counter does not identify which await or prove useful progress.",
+      "refs": [
+        "l1_synchronizer.js:556-616"
+      ]
+    },
+    {
+      "observation": "lastCheckpoint increases",
+      "meaning": "Observed post-updater successful checkpoint batch at the Downloaded checkpoint loop. This demonstrates forward ingestion progress, not finality, total remaining backlog or readiness; later rollback remains possible.",
+      "refs": [
+        "l1_synchronizer.js:1200-1258"
+      ]
+    },
+    {
+      "observation": "localL1Block increases",
+      "meaning": "The synchronizer advertised completion at this sampled head after message agreement and speculation gate checks. Not proof world-state/PXE/server readiness.",
+      "refs": [
+        "l1_synchronizer.js:598-616"
+      ]
+    },
+    {
+      "observation": "passesCompleted rises but local stays null/unchanged",
+      "meaning": "Whole Archiver.sync returned. A pass may return without advertising the head when messages/speculation are pending, or no new head. Completion is not initial-sync completion.",
+      "refs": [
+        "l1_synchronizer.js:600-608",
+        "archiver.js:757-775"
+      ]
+    },
+    {
+      "observation": "passesFailed rises with http/rpc/blob/old-block",
+      "meaning": "An error escaped a whole pass and was rethrown unchanged; recorded typed numeric cause helps classify it. RunningPromise catches and normally continues after polling delay. Counters count passes, not network calls/retries.",
+      "refs": [
+        "startup-stages.mjs:240-249,324-341",
+        "foundation/dest/promise/running-promise.js:45-67"
+      ]
+    },
+    {
+      "observation": "error remains set after later successful passes",
+      "meaning": "Error is last failed-pass category, not current fatal condition; recorder does not clear it on success. Correlate pass counts/inFlight and progress.",
+      "refs": [
+        "startup-stages.mjs:388-400"
+      ]
+    },
+    {
+      "observation": "lastProgressMs or lastObservationMs",
+      "meaning": "Monotonic elapsed milliseconds since recorder creation, not UTC. Progress updates only when localL1/checkpoint observed value increases vs previous. Head-only changes do not count. Snapshot timer flushes30s but does not itself advance observation time; stale timestamp is not proof dead process.",
+      "refs": [
+        "startup-stages.mjs:373-408,423-427"
+      ]
+    },
+    {
+      "observation": "archiver-initial-sync complete/factory-archiver complete",
+      "meaning": "Initial wait resolved when advertised local head+1 >= another latest L1 block-number read. Remaining world-state synchronizer/verifiers/P2P/server/admin and strict query qualification still required.",
+      "refs": [
+        "archiver.js:757-773",
+        "aztec-node/dest/factory.js"
+      ]
+    },
+    {
+      "observation": "droppedObservations>0 or instrumentation unavailable",
+      "meaning": "Some heights were not representable withinuint32, or source/persistence/schema checks failed. Do not treat missing data as zero/backlog-free. Exact last-good snapshot may be insufficient.",
+      "refs": [
+        "startup-stages.mjs:313-326,398-404"
+      ]
+    }
+  ],
+  "samplingLimits": [
+    "Single archiver pass is serial; inFlight is boolean, not a request concurrency count. Exact invariant completed+failed+(inFlight?1:0)=started.",
+    "No per-provider request counts, range cursor, byte throughput, message-recovery reason, individual current await, HTTP Retry-After delay or queue-depth counter. No metric estimates remaining sync time reliably.",
+    "Markers bracket awaits; an unfinished parent phase can contain nested operations. Fixed stage/error snapshots are trusted pinned-runtime diagnostics, not hostile-process attestation.",
+    "Errors swallowed inside subroutines before returning will not increment passesFailed; only pass-level escaped errors are classified. unknown also includes missing typed causes/depth/accessor exclusions."
+  ],
+  "defaultsAndLoad": {
+    "archiverConfig": "config.js maps ARCHIVER_POLLING_INTERVAL_MS default500ms, batch100. factory fallback10000ms exists but actual populated CLI config mapping overrides; bootstrap supplies no archiver override. InitialRunningPromise uses effective interval/10 (normally50ms), returns to effective500ms after initial sync.",
+    "http": "makeL1HttpTransport uses viem fallback over one explicitURL for each role, http batch:false, optional timeout. Bootstrap has no ETHEREUM_HTTP_TIMEOUT_MS; viemHTTP default10000ms applies absent other config.",
+    "retry": "Fallback makes inner HTTP retryCount0; outer createTransport default retryCount3/retryDelay150ms. buildRequest retries eligible errors with exponentialbackoff or HTTP Retry-After. No operator fallback is added; SDK automatic retries and subsequent passes still exist. These are defaults/source semantics, not measured09 request counts.",
+    "parallelism": "archiver/factory seven rollup constants are Promise.all. data_retrieval processes checkpoint logs asyncPool10; l1_synchronizer fetches blobs asyncPool10 for accepted checkpoints. Other epoch/blob internals may add operations.",
+    "range": "getBatchSizeInL1Blocks=max(1,floor(batchSize*slotDuration/ethereumSlotDuration)); nextRange nextStart=end+1, nextEnd=nextStart+size cappedathead (inclusive up to size+1 blocks). handleCheckpoints loops ranges until head in one pass; therefore one long inFlight can contain many scans. No configuredchain durations assumed here."
+  },
+  "recommendedNextUse": "At09 final receipt, compare finitephase/counter/height/error fields first. Active checkpoint/local progress can justify measuring workload duration; repeated429 or failed passes requires provider-capacity diagnosis, not automaticduration extension. Pre-loop phase wait requires narrower source-specific probe. No new paid action follows this report.",
+  "nodeStartupQualified": false
+}

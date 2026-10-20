@@ -1,0 +1,30 @@
+{
+  "base": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "candidate": "99e0669ccf98e152f7e4753d591327975064cfd3",
+  "task_id": "G07-public-read-refresh",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "scripts/rolling-public-server.mjs",
+    "scripts/rolling-public-server.test.mjs"
+  ],
+  "required_checks": [
+    "focused",
+    "independent"
+  ],
+  "requirements": [
+    "RC12-current-policy-refresh",
+    "RC27-shared-serial-index-validation"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G07-public-read-refresh",
+      "paths": [
+        "scripts/rolling-public-server.mjs",
+        "scripts/rolling-public-server.test.mjs"
+      ]
+    }
+  ]
+}

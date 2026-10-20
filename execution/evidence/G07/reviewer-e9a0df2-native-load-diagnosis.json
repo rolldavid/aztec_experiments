@@ -1,0 +1,64 @@
+{
+  "kind": "independent-read-only-native-load-diagnosis",
+  "revision": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "requirements": [
+    "RC26",
+    "RC39"
+  ],
+  "verdict": "cause-unresolved-no-source-repair-justified",
+  "observations": {
+    "normal120s": "No listener observed; original readiness failed; no restart attempted by reviewer.",
+    "isolated55_571s": "Exact protected snapshot successfully loaded without mining/dumping, under Supervisor.",
+    "normalConfiguration90sProbe": "Only48.721s native runtime; inconclusive comparison.",
+    "normalAnvilReportedSamples": [
+      {
+        "wallSeconds": 41,
+        "cpuSeconds": 20.21,
+        "rssKiB": 482624
+      },
+      {
+        "wallSeconds": 75,
+        "cpuSeconds": 43.1,
+        "rssKiB": 310912
+      },
+      {
+        "wallSeconds": 93,
+        "cpuSeconds": 53.96,
+        "rssKiB": 181776
+      }
+    ],
+    "sampleProvenance": "Root tool-history report; not independently reproduced.",
+    "failedCache": "05fdb absent at readonly inspection; only protected9fbc remains. No retrospective phase inference."
+  },
+  "sourceFindings": [
+    "Native waiter clock starts after pre-spawn snapshot validation; snapshot rehash/head/protocol checks after readiness cannot explain no listener.",
+    "Pinned Anvil loads initial state before mining mode selection and TCP bind; periodic dump setup follows try_spawn. No evidence automine/dump options cause the pre-listener delay.",
+    "Pinned Anvil clones state during startup and DB loading; historical restoration subsequently inserts snapshots and writes evicted history to cache. Cache allocation plus stack samples can distinguish these phases.",
+    "Normal stdio ignore, inherited process group/env and campaign cache differ from successful detached/piped Supervisor with PATH/HOME and separate cache. No causal launcher difference established.",
+    "Low resident RSS does not establish low compressed/paged footprint; BB footprint is not Anvil footprint."
+  ],
+  "nextDiscriminator": {
+    "procedure": "Only if lead authorizes: reuse existing isolated normal-configuration qualifier with current120s native bound, original snapshot read-only, no sends/mining requests. Capture bounded Anvil sample stack and vmmap summary plus cache count/allocated bytes around30s and60s. Keep raw diagnostics private and export only phase/resource summary. No new framework or timeout increase.",
+    "decision": "Parse/clone CPU or compressed footprint -> resource/load diagnosis; cache writes -> history I/O diagnosis; blocked stack -> exact synchronization/syscall diagnosis. Change only measured cause.",
+    "notPerformed": true
+  },
+  "sources": [
+    "https://raw.githubusercontent.com/foundry-rs/foundry/v1.7.0/crates/anvil/src/lib.rs",
+    "https://raw.githubusercontent.com/foundry-rs/foundry/v1.7.0/crates/anvil/src/cmd.rs",
+    "https://raw.githubusercontent.com/foundry-rs/foundry/v1.7.0/crates/anvil/src/eth/backend/mem/mod.rs",
+    "https://raw.githubusercontent.com/foundry-rs/foundry/v1.7.0/crates/anvil/src/eth/backend/mem/storage.rs"
+  ],
+  "localInspected": [
+    "../rolling-lead-bok/plugins/devnet/network.mjs",
+    "../rolling-lead-bok/plugins/devnet/start.mjs",
+    "../rolling-lead-bok/plugins/devnet/bootstrap.mjs",
+    "../rolling-lead-bok/.build/rolling-devnet-diagnostics/rc22-current.mjs",
+    "../rolling-lead-bok/.build/g07-recovery-cost/native-e9a0df2.log",
+    "../rolling-design/.build/rc22-native-diagnosis/qualify-load-08c88.mjs",
+    "../rolling-lead-bok/scripts/testing/supervisor.mjs"
+  ],
+  "limitations": [
+    "No current native process or live source profile; exact failure phase remains unknown.",
+    "No application acceptance, snapshot rollback, source edit, service start, state mutation, provider operation, or financial action performed."
+  ]
+}

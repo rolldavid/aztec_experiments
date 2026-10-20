@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T09:44:58.327026+00:00",
+  "scope": "Read-only source-bound diagnosis after terminal08; no provider probe, source edit, package or paid retry",
+  "sourceCandidate": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8",
+  "receipt": {
+    "evidence": "operator08-readonly-093951.json",
+    "sha256": "9bc266d11021948377fa450f620467ff18620938be3f13dace4d51d285baca38",
+    "rawFinalSha256": "67f6bc73cd69717996ceb1855cbd810063d0926653da42162e05b373de6160ac",
+    "bytes": 2227,
+    "recordedAt": "2026-10-12T09:38:56+00:00"
+  },
+  "observed": {
+    "qualification": {
+      "schemaVersion": 1,
+      "passed": false,
+      "stage": "readiness-failed",
+      "scope": "legacy-query-only",
+      "manifestSha256": "1988f7390765f02302804463588ea1a90f8c4493ac087c59e1cb273d77884a5e"
+    },
+    "readiness": {
+      "attempts": 133,
+      "ready": false,
+      "category": "UNAVAILABLE"
+    },
+    "services": {
+      "node": {
+        "available": true,
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success",
+        "ExecMainCode": 0,
+        "ExecMainStatus": 0,
+        "NRestarts": 0
+      },
+      "qualification": {
+        "available": true,
+        "LoadState": "loaded",
+        "ActiveState": "deactivating",
+        "SubState": "stop-post",
+        "Result": "success",
+        "ExecMainCode": 1,
+        "ExecMainStatus": 0,
+        "NRestarts": 0
+      },
+      "container": {
+        "available": true,
+        "status": "running",
+        "running": true,
+        "restarting": false,
+        "oomKilled": false,
+        "exitCode": 0
+      }
+    },
+    "instrumentation": {
+      "available": true,
+      "schemaVersion": 1,
+      "instrumented": true,
+      "runtimeAdapter": "publicnode-config-v1",
+      "helperSha256": "5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9",
+      "history": [
+        [
+          "registry-guard",
+          "begin"
+        ],
+        [
+          "registry-guard",
+          "complete"
+        ],
+        [
+          "rollup-compatibility",
+          "begin"
+        ],
+        [
+          "rollup-compatibility",
+          "complete"
+        ],
+        [
+          "l1-config",
+          "begin"
+        ],
+        [
+          "l1-config",
+          "complete"
+        ],
+        [
+          "genesis-compare",
+          "begin"
+        ],
+        [
+          "genesis-compare",
+          "complete"
+        ],
+        [
+          "telemetry",
+          "begin"
+        ],
+        [
+          "telemetry",
+          "complete"
+        ],
+        [
+          "factory",
+          "begin"
+        ],
+        [
+          "factory-bb",
+          "begin"
+        ],
+        [
+          "factory-bb",
+          "complete"
+        ],
+        [
+          "factory-kzg",
+          "begin"
+        ],
+        [
+          "factory-kzg",
+          "complete"
+        ],
+        [
+          "factory-keystore",
+          "begin"
+        ],
+        [
+          "factory-keystore",
+          "complete"
+        ],
+        [
+          "factory-addresses",
+          "begin"
+        ],
+        [
+          "factory-addresses",
+          "complete"
+        ],
+        [
+          "factory-l1-constants",
+          "begin"
+        ],
+        [
+          "factory-l1-constants",
+          "complete"
+        ],
+        [
+          "factory-blob",
+          "begin"
+        ],
+        [
+          "factory-blob",
+          "complete"
+        ],
+        [
+          "factory-snapshot",
+          "begin"
+        ],
+        [
+          "factory-snapshot",
+          "complete"
+        ],
+        [
+          "factory-epoch-cache",
+          "begin"
+        ],
+        [
+          "factory-epoch-cache",
+          "complete"
+        ],
+        [
+          "factory-world-state",
+          "begin"
+        ],
+        [
+          "factory-world-state",
+          "complete"
+        ],
+        [
+          "factory-avm",
+          "begin"
+        ],
+        [
+          "factory-avm",
+          "complete"
+        ],
+        [
+          "factory-archiver",
+          "begin"
+        ]
+      ]
+    },
+    "fixedErrors": [],
+    "lastPhase": "factory-archiver begin without completion",
+    "nodeStartupQualified": false,
+    "nativeProcessExitedBeforeReadinessFailure": false,
+    "rpcMethodCountsAvailable": false,
+    "syncHeightsAvailable": false,
+    "lastAdvanceTimestampsAvailable": false,
+    "providerRateErrorObserved": false,
+    "fullRawLogsRetained": false
+  },
+  "inferenceLimits": [
+    "Actualadapter configuration/genesis/telemetry/worldstate/AVM stages completed; previous07l1-config earlyfailure was passed onthisLinuxattempt.",
+    "Running process/noOOM and no classifiererrors do not prove healthy historysync. createArchiver includes store/protocolregistration, sevenconstants reads, historicaldeployheader, instrumentation, prerequisites and initialsync wait. Currentoneouterstage cannot distinguish whichawait is outstanding.",
+    "Archive start blocksuntilinitialsync bydefault, and officialsync loop catches/logs errors thencontinues. Therefore repeatedprovider errors or missingblob bodies can remainrunning with readinessUNAVAILABLE; emptyseven-enumerror list cannot exclude429/JSONRPC/range/blobvalidation failures.",
+    "factory-snapshot completion proves trySnapshotSync returned; it does not prove an actual snapshot was selected/applied or bound initialheight. No measuredprogress/rate/backlog is retained, so38minuteelapsed cannot support an extrapolated completiontime or justified longerwindow."
+  ],
+  "sourceFacts": [
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/factory.js",
+      "lines": "123-125,151-159",
+      "fact": "trySnapshotSync before createArchiver; blockUntilSync is !config.skipArchiverInitialSync. Do not change this flag to obtain readiness."
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/factory.js",
+      "lines": "46-95,130",
+      "fact": "Create store/register protocol; sevenparallelconstants; startblockheader; actual start awaited."
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/archiver.js",
+      "lines": "481,512-538,650,757-775",
+      "fact": "Beforeloop testblob/clock/trace/history. Then initialsync promise resolves only synchronizedL1height+1>=head; polling starts at configinterval/10. Source defaultconfig500ms gives50ms betweencompletedinitialpasses, but actual08resolvedvalue notobserved."
+    },
+    {
+      "path": "node_modules/@aztec-labs/foundation/dest/promise/running-promise.js",
+      "lines": "6-11,46-68",
+      "fact": "Loggingerrorhandler doesnotrequestEXIT. Loop catches handler errors and sleeps/continues; errors do not automatically rejectinitialsyncpromise."
+    },
+    {
+      "path": "node_modules/@aztec-labs/archiver/dest/modules/l1_synchronizer.js",
+      "lines": "513-578,1034-1060,1166,1232-1250",
+      "fact": "L1messages/checkpoints/ranges/blob retrieval/validationcanrequiremanyordinary/debug/beaconcalls; failedcheckpoint handlingrethrowsandmayresetpublicsyncpoint."
+    },
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "lines": "397-405,600-616",
+      "fact": "Snapshotmode, fixedordinaryTenderly/debugPublicNode/beaconPublicNode, strictflags; readiness min(qualificationDeadline-900s,created+90min), qualification min(budget-60s,created+105min)."
+    }
+  ],
+  "sourceHashes": {
+    "node_modules/@aztec-labs/aztec-node/dest/factory.js": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259",
+    "node_modules/@aztec-labs/archiver/dest/factory.js": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+    "node_modules/@aztec-labs/archiver/dest/archiver.js": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+    "node_modules/@aztec-labs/archiver/dest/config.js": "43ddb6210482f6a915b4294d4bdb089b5a90a5e2d3e575b2fa4fce36070b60bf",
+    "node_modules/@aztec-labs/archiver/dest/modules/l1_synchronizer.js": "118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a",
+    "node_modules/@aztec-labs/foundation/dest/promise/running-promise.js": "cd06a08234e17afaaf966196b1b41d82fecaad5bcf142b6e7f66444a61380886",
+    "deploy/prover/bootstrap.py": "68f52a1d9e5a44fcef511e5a1da7f6092717b348e0b4ff65797f493f20f1c8af",
+    "deploy/prover/startup-stages.mjs": "cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49"
+  },
+  "imageBinding": {
+    "previousExactExtraction": "archiver-six-image-equivalence-20261012.json",
+    "sha256": "3a15479b8ab4ad475d24236a6c05e7f2329667752265e800f00b54a37455a74a",
+    "scope": "Archiverfactory+archiver plus sixprerequisite modules previouslyimagebytecompared. Newlyreferenced l1_synchronizer/config/RunningPromise must be exactimagebound before instrumenting them; no newDockerextraction performed."
+  },
+  "recommendation": {
+    "choice": "Narrow source-reviewed startup/progress measurement before spending on a longerwindow",
+    "fixedSubstages": [
+      "archiver-store",
+      "archiver-protocol-registration",
+      "archiver-l1-constants",
+      "archiver-start-header",
+      "archiver-start-prerequisites-blob/clock/trace/history",
+      "archiver-initial-sync-wait"
+    ],
+    "boundedProgress": [
+      "Record at most one fixed publicprogress row per30s into existingprotectedstagefile: pass started/completed/failed counts,lastcompletedL1range/localcheckpoint/head/publictimestamp,lastprogressmonotonicelapsed. Cap counts/listlength/filebytes.",
+      "For failedpasses record only fixed exceptionclass and actualnumeric officialHTTP/RPC codes afterguardedboundedcapture, no message/stack/URLs/args. Preserve originalerror/return/await/retry/sleep semantics.",
+      "Read-onlyinitial/finalpublicsyncpoint differentiatesbacklogprogress fromrepeatedsameerror/noadvance; do not log privatequeries or requirepublicRPCbeforefactoryreturns.",
+      "Keep sourceSHA+uniqueanchor gate and independentfile schema; reuse existingattestor/projector, no logenable/globaltransportwrapping/newplatform. Newhooksource andaddedimagebindings requireindependentreview beforeexecution."
+    ],
+    "nextPathsIfClaimed": [
+      "deploy/prover/startup-stages.mjs",
+      "deploy/prover/startup-stages.test.mjs",
+      "deploy/prover/bootstrap.py",
+      "scripts/test-prover-bootstrap.py",
+      "deploy/prover/BOOTSTRAP.md"
+    ],
+    "acceptanceTests": [
+      "Knownasyncsubstage/countercompletion preserves value/erroridentity andsequence.",
+      "Repeatederror vsprogress vsblockedawait distinguishable with labelleddoubles.",
+      "Reject unsafe/malformed/oversized/forgedprogress records anderrorgetters.",
+      "Partialfinalreceipt retainsboundedprogress afterforcedshutdown; no weakenedreadiness orretries."
+    ],
+    "readinessUnchanged": true
+  },
+  "conditionalCostOptions": {
+    "notAllocated": true,
+    "recommendedFirstChangedDiagnostic": {
+      "operatingHours": 1,
+      "readinessMinutes": 44,
+      "qualificationMinutes": 59,
+      "proposedReservationUsd": 25,
+      "totalIfLeadAccepts15AccrualAnd25ReservationUsd": 215.28,
+      "remainingUsd": 84.72
+    },
+    "longerWindowOnlyIfMeasuredForwardProgress": {
+      "operatingHours": 2,
+      "readinessMinutes": 90,
+      "qualificationMinutes": 105,
+      "not104And119DueToExistingCaps": true,
+      "proposedReservationUsd": 40,
+      "totalIfLeadAccepts15AccrualAnd40ReservationUsd": 230.28,
+      "remainingUsd": 69.72,
+      "forecastBasis": "2.25hcompute2.08656,1064GiBgp3.26236,IPv4.01125,24horphandisk2.79847,60GBegress*.195=11.70,newarchive/receipt.5,crossregion.5,requests.25,tax5,remaining16.89136delay/cleanupbuffer=40. Existingretention includedprior175.28. Reconcileliveoverlap/prices before any grant."
+    },
+    "controls": "Fresh matchingFleetValidUntil+hostabsolute budget, commissioning30min, verifiedshaper50Mbps, encryptedDOT, no extension/disable/publicrouting/proofjobs. Existingterminated08cannotbeextended."
+  },
+  "noAutomaticReplay": true
+}

@@ -1,0 +1,91 @@
+{
+  "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+  "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+  "task_id": "G11-scoped-artifact-api",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+      "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+      "task_id": "G11-scoped-artifact-api",
+      "id": "api-capability",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test plugins/test/artifact-api.test.mjs",
+      "environment": "Pinned Node24; synthetic upstream, actual artifact HTTP/browser",
+      "observed": "5 passed, 0 failed, 0 skipped; 254.405834 ms",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/scoped-artifact-api-20261018/review.json",
+          "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+        }
+      ]
+    },
+    {
+      "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+      "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+      "task_id": "G11-scoped-artifact-api",
+      "id": "artifact-http-browser",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "BOK_PUBLICATION_BROWSER_TESTS=1 NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='actual browser runs generated|published thread API discovery|moderation change during' plugins/test/static-publication.test.mjs",
+      "environment": "Pinned Node24; synthetic upstream, actual artifact HTTP/browser",
+      "observed": "3 passed, 0 failed, 0 skipped; 1844.014375 ms",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/scoped-artifact-api-20261018/review.json",
+          "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+    "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+    "task_id": "G11-scoped-artifact-api",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G11/scoped-artifact-api-20261018/review.json",
+        "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+      "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+      "task_id": "G11-scoped-artifact-api",
+      "id": "RC35-scoped-secret-api",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/scoped-artifact-api-20261018/review.json",
+          "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+        }
+      ]
+    },
+    {
+      "base": "8c2596eb2cae632b1a0fc11f6a20e3fab0149ee1",
+      "candidate": "274aef85ee6672be9f0e3622bfd232f28c1f1ac2",
+      "task_id": "G11-scoped-artifact-api",
+      "id": "RC35-public-external-assets",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G11/scoped-artifact-api-20261018/review.json",
+          "sha256": "88aecab2f3cb5bd8510e83d983fd509d3d0960266c458805a554c6e86ae7440d"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Upstream transport is a synthetic injected provider; no real provider configured, no external paid call, no cost claim.",
+    "Request count bounds calls, not dollar cost; operator must choose public-data endpoint, dedicated restricted credential and provider-side spending limit. Arbitrarily encoded secrets from a misconfigured upstream are not made safe by literal echo checks.",
+    "This approval covers the focused feature source and tests. Normal integration gate and final privacy/recovery/real-proof/application acceptance remain separate."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "revision": "e1157aa0954bbc5d3fb5f8b4450f7497ec5e231d",
+  "base": "b7557360ff9b376a389f75452f3234d207dcda54",
+  "verdict": "structural-source-approved-pending-application-composition",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "d8358829e4470ba782a2eca9f81bb9fc58ba47f1d90095ac3c3ab93fb411690d",
+    "scripts/testing/rolling-application-fixture.test.mjs": "e4854939495a2082d818ba3174000671d834f5c3b1ddba6a650d43e8e8adbb28",
+    "scripts/testing/rolling-preference-reorg.mjs": "945359453165dc922c9aaf1df6555c0ccf8cf097c7182c4650edda7349135075",
+    "scripts/testing/rolling-preference-reorg.test.mjs": "f431c299e84443f53af786795650e739c940f017cd09c1de9f3b23a7920cebb8",
+    "scripts/testing/rolling-public-acceptance.mjs": "c2b78450b011fa164d93fa012a5cffc6606c3fc674f627c53be02e155a5cf8eb",
+    "scripts/testing/scenario-flows.mjs": "50d3826038d2fbbf7505d1b08c6f2874de7eb75d0f0c1b379b0ac77dc03ba6df",
+    "scripts/testing/scenarios.mjs": "4ecab810fbb40020cc482f27e9c903431151e11a274eee330855d4edf217a1e1"
+  },
+  "requiredDependency": "37c204cb1d64f8e30a5d9c8edf91e76c12511101 plus strict journal3ff; exact combined source and build provenance must be checked before genuine eligibility",
+  "checks": {
+    "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root normal artifact> <pinned Node24.21> --test --test-concurrency=1 scripts/testing/rolling-preference-reorg.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs",
+    "pass": 79,
+    "fail": 0,
+    "skipped": 0,
+    "durationMs": 1436.741417,
+    "log": "/tmp/reviewer-reorg-parent-e115-tests.log",
+    "logSha256": "20a06b2a2a6477930a1d5259d8f380877680df7b04df7dc25b6cc62e95bef8c1",
+    "diffCheck": true
+  },
+  "disposition": [
+    "Explicit sequencer pause is followed by proposed/checkpointed/L1-pending agreement before retained ancestor capture and again before original miner returns.",
+    "Joined/restored original miner precedes once-only official L1 suffix replacement. Replacement and subsequent real-wall mining are sequential, not overlapping.",
+    "Zero observed pending L1 transactions before and after replacement; pinned Anvil does not automatically requeue orphaned mined transactions. No pool deletion or SDK state mutation.",
+    "Actual L2 tips and world-state trees must unwind to retainedR; retained block hash remains bound. Signed original anchor exactly X; replacement uses same height with different canonical hash.",
+    "Initialization tests retained hot cache; marker cold reopens the same PXE namespace and journal directory before first post-fork private read. Reads assert unchanged proof/send activity and exact retained state.",
+    "Old attempt requires absent canonical effect, dropped receipt and only missing-header validation reason. No generic nullifier fallback.",
+    "Historical original signed bytes and paid receipt remain retained. Canonical current fee subtraction follows balance verification; new paid receipt/fee saved before mandatory success/effect semantics, preserving submission plus collection errors.",
+    "Replacement compares full expected private snapshot: original state/digest for initialization and independently derived domain-separated marker digest for changed same-height marker. Exact predecessor signed-byte SHA and inclusion history are verified.",
+    "Existing public reconstruction/HTTP/journal checks run before fork; this source does not claim post-fork public HTTP reorg acceptance.",
+    "Final proof job counts3/4, private fee conservation, public footprint, original dropped status, source hashes and owned cleanup remain mandatory."
+  ],
+  "limits": [
+    "No genuine reorg run, Linux qualification or browser recovery claimed.",
+    "79 tests include labelled control mutations, actual SDK/AEAD/ABI composition and structural parent assertions; they do not execute this new chain lifecycle.",
+    "Anvil source-only mempool reasoning recorded separately in preference-reorg-anvil-pool-review.json.",
+    "Natural archiver/PXE rollback timing and same-store behavior remain genuine runtime gates under unchanged540s/4GiB.",
+    "Public/Noir artifacts remain unchanged; application/wallet assets must reflect required repaired dependency before actual use."
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "base": "cbd417505760b4d2f4984662ead409e96d2ccbb5",
+  "candidate": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+  "task_id": "G07-prefix-transport-integration",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "cbd417505760b4d2f4984662ead409e96d2ccbb5",
+      "candidate": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "id": "reader-transport",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/prefix-transport-integration/checks.json",
+          "sha256": "58011ae96146ce023b37f02be91bc0bcd6c3abca21fee4fcfe9927e8e5e4c04e"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eec695-prefix-composition.json",
+          "sha256": "bd77abf3434a2a1fa32fed991b355d857f434215c8f7b76234244d7829e2c3b5"
+        }
+      ],
+      "command": "node --test shared/rolling/cold-preference-reader.test.mjs shared/rolling/compact-client.test.mjs",
+      "environment": "macOS Node24.21.0; retained native/PXE proofsfalse development",
+      "observed": "50pass0fail0skip160.975625ms",
+      "exit_code": 0
+    },
+    {
+      "base": "cbd417505760b4d2f4984662ead409e96d2ccbb5",
+      "candidate": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "id": "wallet-assets",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/prefix-transport-integration/checks.json",
+          "sha256": "58011ae96146ce023b37f02be91bc0bcd6c3abca21fee4fcfe9927e8e5e4c04e"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eec695-prefix-composition.json",
+          "sha256": "bd77abf3434a2a1fa32fed991b355d857f434215c8f7b76234244d7829e2c3b5"
+        }
+      ],
+      "command": "node scripts/rolling-wallet-assets.mjs",
+      "environment": "macOS Node24.21.0; retained native/PXE proofsfalse development",
+      "observed": "25outputs97inputs; SDK unchanged",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "cbd417505760b4d2f4984662ead409e96d2ccbb5",
+      "candidate": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "id": "RC25-authenticated-leading-prefix-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/prefix-transport-integration/checks.json",
+          "sha256": "58011ae96146ce023b37f02be91bc0bcd6c3abca21fee4fcfe9927e8e5e4c04e"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eec695-prefix-composition.json",
+          "sha256": "bd77abf3434a2a1fa32fed991b355d857f434215c8f7b76234244d7829e2c3b5"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "cbd417505760b4d2f4984662ead409e96d2ccbb5",
+    "candidate": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-eec695-prefix-composition.json",
+        "sha256": "bd77abf3434a2a1fa32fed991b355d857f434215c8f7b76234244d7829e2c3b5"
+      }
+    ]
+  }
+}

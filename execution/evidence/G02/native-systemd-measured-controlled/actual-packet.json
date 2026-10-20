@@ -1,0 +1,29 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourceReviewSha256": "b5eb3ee2d56488fe8e6ff638bb185a0081be581de446eac5be632605cca4424d",
+  "preparationPacketSha256": "094edcaa6d269ae53428087fa31d409c338d5e9ac9abdcb08d8a2ccb5350e845",
+  "runtimePreparationSha256": "11300aee0d36aa01eddb6cda53181ab1d764fbcd3f7d2e2e2d2be7d259bb0960",
+  "passed": true,
+  "tests": 12,
+  "skipped": 0,
+  "elapsedMs": 191,
+  "exitCode": 0,
+  "rssMeasured": false,
+  "protectedCount": 823,
+  "protectedUnchanged": true,
+  "ownedTreeAbsent": true,
+  "tempRemoved": true,
+  "files": {
+    "run.mjs": "341173ce4baf713770822abebcba0dde776d6f3489c40e5ad48dc891008f4eba",
+    "suite.py": "6118142b2f46866ff2fa5f27ff0332939ac289121ba9a5d5dacc3d683af7af76",
+    "child.py": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+    "result.json": "e772ea0673a887cf44840dddf1bf4443d3c71e8e8b5df0badcaad0384b9b7fd8",
+    "execution-intent.json": "879aa9d4bdf974aec1f3eab4715eb827145f6efd841d6b99de35bdebbb39975f",
+    "build.log": "f27da3e9db86fddd8ff7ca5ba77ba3d927563954d253ed226d709f46f0145ae8",
+    "before-source.json": "2cc27e6e179d578dffd98c8855806ec6eab7b51b8420fc5ef053ae8d36824207"
+  },
+  "limits": [
+    "Labelled controlled tests only; no Docker/network/native/guest actions.",
+    "Actual offline container remains separately gated."
+  ]
+}

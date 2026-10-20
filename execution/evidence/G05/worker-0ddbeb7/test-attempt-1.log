@@ -1,0 +1,186 @@
+{"role":"service","pid":5466,"port":63782,"realProofs":false}
+[12:36:02.767] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":63782}
+{"role":"tests","pid":5471,"port":63782,"realProofs":false}
+[rolling_contract] Running 35 test functions
+[rolling_contract] Testing tests::competing_case_variant_registration_rejected ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Name already registered 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::creator_cannot_change_parent_rules ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Only moderator 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::creator_cannot_reject_a_subboard ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Only moderator 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::duplicate_slug_is_atomic_public_conflict ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Subboard already exists 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::empty_name_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::hidden_name_suffix_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::incomplete_utf8_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::last_byte_of_32_byte_component_uses_high_byte_of_second_field ... [0m[32mok[0m
+[rolling_contract] Testing tests::leading_space_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::name_preimage_matches_javascript_vector ... [0m[32mok[0m
+[rolling_contract] Testing tests::names_are_case_insensitive_but_pair_boundaries_and_surnames_matter ... [0m[32mok[0m
+[rolling_contract] Testing tests::names_register_and_ownership_survives_reauthentication ... [0m[31mFAIL
+Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::other_account_cannot_authenticate_registered_name ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: No owned name 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::overlong_utf8_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::oversized_name_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::oversized_policy_rejected ... [0m[32mok[0m
+[12:36:08.147] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.148] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.170] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.192] INFO: txe_node Aztec Node version: txe
+[12:36:08.192] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.203] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.243] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.279] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.287] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.303] INFO: txe_node Aztec Node version: txe
+[12:36:08.303] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.309] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.333] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.368] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.376] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.392] INFO: txe_node Aztec Node version: txe
+[12:36:08.392] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.398] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.421] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.461] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.469] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.485] INFO: txe_node Aztec Node version: txe
+[12:36:08.485] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.491] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.513] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.591] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.599] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.614] INFO: txe_node Aztec Node version: txe
+[12:36:08.614] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.620] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.646] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.670] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.678] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.694] INFO: txe_node Aztec Node version: txe
+[12:36:08.694] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.700] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[12:36:08.721] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:08.944] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:08.952] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:08.980] INFO: txe_node Aztec Node version: txe
+[12:36:08.980] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:08.986] INFO: txe:top_level_context Created block 1 with timestamp 1791718568
+[rolling_contract] Testing tests::owning_one_name_does_not_authorize_another ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: No owned name 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[12:36:09.007] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::policy_hidden_bytes_rejected ... [0m[32mok[0m
+[12:36:09.035] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.043] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.056] INFO: txe_node Aztec Node version: txe
+[12:36:09.056] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.062] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[rolling_contract] Testing tests::public_registration_cannot_bypass_private_mint ... [0m[32mok[0m
+[12:36:09.082] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:09.106] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.113] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.130] INFO: txe_node Aztec Node version: txe
+[12:36:09.130] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.136] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[rolling_contract] Testing tests::public_subboard_creation_cannot_bypass_account_entrypoint ... [0m[32mok[0m
+[rolling_contract] Testing tests::punctuation_and_collapsed_ascii_space_are_supported ... [0m[32mok[0m
+[12:36:09.159] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:09.203] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.211] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.226] INFO: txe_node Aztec Node version: txe
+[12:36:09.226] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.232] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[rolling_contract] Testing tests::rejection_cannot_silently_overwrite_reason ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Already rejected 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[12:36:09.253] INFO: simulator:avm-pool AVM simulator pool destroyed
+[12:36:09.294] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.301] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.329] INFO: txe_node Aztec Node version: txe
+[12:36:09.329] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.335] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[rolling_contract] Testing tests::rejection_retains_identity_and_authenticated_reason ... [0m[31mFAIL
+Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::repeated_slug_hyphen_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::repeated_space_must_be_normalized_before_registration ... [0m[32mok[0m
+[rolling_contract] Testing tests::reserved_bot_first_name_cannot_use_another_surname ... [0m[32mok[0m
+[12:36:09.358] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::short_slug_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::slug_cannot_hide_suffix ... [0m[32mok[0m
+[12:36:09.424] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.431] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.445] INFO: txe_node Aztec Node version: txe
+[12:36:09.445] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.451] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[rolling_contract] Testing tests::subboard_usable_without_collateral_and_tracks_current_parent_policy ... [0m[31mFAIL
+Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[12:36:09.471] INFO: simulator:avm-pool AVM simulator pool destroyed
+[rolling_contract] Testing tests::text_accepts_multibyte_utf8_and_empty_local_rules ... [0m[32mok[0m
+[rolling_contract] Testing tests::trailing_hyphen_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::unicode_name_bytes_rejected ... [0m[32mok[0m
+[rolling_contract] Testing tests::unknown_subboard_has_no_effective_policy ... [0m[31mFAIL
+
+error: Test failed with the wrong message. 
+Expected: Unknown subboard 
+Got: Failed calling external resolver. ErrorObject { code: ServerError(-32702), message: "Could not generate contract artifact for RollingBoard: Error: Contract's public bytecode has not been transpiled", data: None }
+[0m
+[rolling_contract] Testing tests::uppercase_slug_is_not_an_alias ... [0m[32mok[0m
+[rolling_contract] Testing tests::utf8_surrogate_rejected ... [0m[32mok[0m
+
+[rolling_contract] Failures:
+     tests::competing_case_variant_registration_rejected
+     tests::creator_cannot_change_parent_rules
+     tests::creator_cannot_reject_a_subboard
+     tests::duplicate_slug_is_atomic_public_conflict
+     tests::names_register_and_ownership_survives_reauthentication
+     tests::other_account_cannot_authenticate_registered_name
+     tests::owning_one_name_does_not_authorize_another
+     tests::rejection_cannot_silently_overwrite_reason
+     tests::rejection_retains_identity_and_authenticated_reason
+     tests::subboard_usable_without_collateral_and_tracks_current_parent_policy
+     tests::unknown_subboard_has_no_effective_policy
+
+[rolling_contract] [0m[32m24 tests passed, [0m[31m11 tests failed
+[12:36:09.631] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[12:36:09.638] INFO: world-state:ipc-database Created IPC-backed world state instance
+[12:36:09.654] INFO: txe_node Aztec Node version: txe
+[12:36:09.654] INFO: txe_node Aztec Node started on chain 0x1
+[12:36:09.660] INFO: txe:top_level_context Created block 1 with timestamp 1791718569
+[12:36:09.681] INFO: simulator:avm-pool AVM simulator pool destroyed
+
+[0mError: Test command exited unexpectedly: 1
+    at exitError (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:58:26)
+    at runWithService (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/process-lifecycle.mjs:103:67)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/billboard/rolling_contract/test.mjs:14:3

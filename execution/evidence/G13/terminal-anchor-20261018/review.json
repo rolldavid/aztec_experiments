@@ -1,0 +1,45 @@
+{
+  "revision": "d8513dae8389f38769fddc4a052e62b34440d265",
+  "baseRevision": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approved",
+  "sourceVerdict": "approved",
+  "integrationVerdict": "qualified_for_normal_development_integration_gate",
+  "scope": [
+    "RC29",
+    "RC41",
+    "SDK BlockHash normalization at rolling board terminal predecessor anchor boundary"
+  ],
+  "findings": [],
+  "blockingSourceFindings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp ../aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-name-pattern='actual SDK board projection|terminal no-reply admission|terminal node pins|terminal accounting from a different checkpoint' plugins/test/hosted-private-bok.test.mjs",
+      "outcome": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 2139.224958
+      },
+      "evidence": ".build/reviewer-evidence/terminal-anchor/focused.log"
+    }
+  ],
+  "review": [
+    "Read exact two-path source/test diff before implementer evidence. One-line conversion preserves SDK BlockHash canonical identity while matching hostedTerminalNode string contract. Block number, finality selector, contract-class verification, canonical rechecks and all terminal billing gates unchanged.",
+    "Regression uses actual installed SDK BlockHash objects and composes board projection with hostedTerminalNode; nonterminal predecessor remains blocked and terminal predecessor becomes eligible. Existing moderation, class, hash-change and native-proof-mode assertions retained.",
+    "Independent adjacent checks cover both checkpointed and finalized selector pinning, changed checkpoint rejection, terminal original limits/settlements and twelve altered terminal accounting/identity cases."
+  ],
+  "operatorEvidence": {
+    "path": "../rolling-controls/.build/local-bok-service/dispatch-boundary-fixed-public.json",
+    "sha256": "27a820def103a58d8bafaad54b4a9e83914d796128a87e8c3ec38a23b7823b86",
+    "reviewed": "Sanitized supplied read-only observation at checkpoint 56 binds changed aztec.mjs digest to candidate; old terminal requests remain ineligible and pending Garden update is eligible with predecessorsClear. Reports zero provider calls/transactions and original journals unchanged. This review did not independently resubmit or rerun the live operation."
+  },
+  "limitations": [
+    "Scoped source and focused protocol-fixture approval only; no end-to-end provider execution, testnet real-proof or whole-application/release acceptance.",
+    "No service, chain, Docker or provider mutations performed."
+  ],
+  "sourceHashes": {
+    "plugins/aztec.mjs": "a22befa70d90199e69c6d006062fcef00e19afcb8dc55dd99d6a7e3389cff67d",
+    "plugins/test/hosted-private-bok.test.mjs": "0983b2eb21d7acbc38e00a814f8bfbcbad7e680bf8f521434d4aae079f6c035f"
+  }
+}

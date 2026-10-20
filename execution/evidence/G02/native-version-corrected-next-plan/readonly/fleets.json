@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-13T01:48:43.527177+00:00",
+  "profile": "message-board-deploy",
+  "region": "us-east-1",
+  "readOnly": true,
+  "attempts": 1,
+  "exitCode": 0,
+  "available": true,
+  "incomplete": false,
+  "observation": {
+    "rows": [
+      {
+        "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-87719d54-e165-4f5b-86e1-ffd26f39228b",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      },
+      {
+        "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+        "state": "deleted",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "finishedAt": "2026-10-13T01:48:44.431411+00:00"
+}

@@ -1,0 +1,37 @@
+✔ historical gateway: parsed numeric and anchored header selectors use checkpoint policy and final fences (73.392917ms)
+✔ historical gateway: public inspector metadata is explicitly checkpoint gated, health remains proposed (9.434958ms)
+✔ historical gateway: nonfixed selector "latest" stays strict (1.944625ms)
+✔ historical gateway: nonfixed selector "proposed" stays strict (1.034375ms)
+✔ historical gateway: nonfixed selector {"tag":"checkpointed"} stays strict (1.495042ms)
+✔ historical gateway: nonfixed selector {"archive":"0x0000000000000000000000000000000000000000000000000000000000000001"} stays strict (2.302584ms)
+✔ historical gateway: mixed latest batch gates strictly before any forwarding (1.8985ms)
+✔ historical gateway: rejects forked resolution (6.931959ms)
+✔ historical gateway: rejects final anchor reorg (11.305625ms)
+✔ historical gateway: unavailable/pruned state selector 0 cannot bypass bounds (3.7255ms)
+✔ historical gateway: unavailable/pruned state selector 8 cannot bypass bounds (3.365709ms)
+✔ historical gateway: typed mined receipt and effect witness resolve canonical history (24.457083ms)
+✔ historical gateway: archived receipts and effect witnesses survive world-state pruning (26.985417ms)
+✔ historical gateway: pruned archive read still rejects changed receipt identity (8.696042ms)
+✔ historical gateway: pruned archive read still rejects changed effect root (16.140209ms)
+✔ historical gateway: pruned archive read still rejects changed final canonical anchor (13.342375ms)
+✔ historical gateway: pending receipt needs stronger proposed policy and is never fabricated missing (4.107167ms)
+✔ historical gateway: wrong witness root produces fixed RPC failure, never historical success (13.190083ms)
+✔ historical gateway: failing final fence drains held sibling before response/slot release (10.650667ms)
+✔ historical gateway: explicit archive membership selector is canonicalized while archive-root form stays strict (11.080958ms)
+✔ historical gateway: mismatched receipt identity fails closed rather than escalating it into success (4.926125ms)
+✔ historical gateway: pending and above-checkpoint receipts cannot bypass unavailable strict readiness (7.923291ms)
+✔ historical gateway: returned header must match the resolved canonical selector (10.568ms)
+✔ historical gateway: typed genesis BlockResponse survives world-state pruning at1 (12.740375ms)
+✔ historical gateway: genesis header metadata remains canonical despite world-state pruning (10.5405ms)
+✔ historical gateway: orphaned genesis response cannot bypass final canonical fence (10.747875ms)
+✔ historical gateway: fixed public body and header at synced world head above checkpoint share canonical bounds (56.027417ms)
+✔ historical gateway: public body head allowance does not admit future bodies or pruned and above-checkpoint state (12.043916ms)
+✔ historical gateway: above-checkpoint public body still rejects orphan resolution and final reorg (16.0265ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1104.777458

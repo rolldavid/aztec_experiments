@@ -1,0 +1,52 @@
+{
+  "source": "01bdcbf08d83a6d4acfa759f71349c82a86d132f",
+  "base": "1202a82298a0d046f2d228bcf4827afe21575eed",
+  "checks": [
+    {
+      "files": [
+        "plugins/test/private-bok-escrow.test.mjs",
+        "plugins/test/conversation.test.mjs"
+      ],
+      "passed": 45,
+      "durationMs": 122.888458
+    },
+    {
+      "file": "plugins/test/hosted-private-bok.test.mjs",
+      "pattern": "actual SDK board projection|hosted projection preserves|terminal node pins|terminal accounting from a different checkpoint",
+      "passed": 6,
+      "durationMs": 3239.381833
+    },
+    {
+      "file": "plugins/test/private-bok-escrow.test.mjs",
+      "pattern": "historical finalized binding",
+      "passed": 1,
+      "durationMs": 48.776458,
+      "reason": "Added preservation of existing finalized observation history as well as pending signed operation"
+    },
+    {
+      "file": "plugins/private-bok-metering.test.mjs",
+      "passed": 71,
+      "durationMs": 1118.414167,
+      "scope": "Existing metering suite including retention limits and completed no-handoff fence"
+    },
+    {
+      "file": "plugins/test/hosted-private-bok.test.mjs",
+      "pattern": "accepted hosted recovery publishes once|explicit retained candidate validation|first received response resumes settlement",
+      "passed": 3,
+      "durationMs": 2059.317375
+    }
+  ],
+  "testScope": "Labelled unit ports plus genuine installed SDK hash/class/storage boundary; no native network/proofs/provider calls",
+  "preserved": [
+    "real testnet proof policy",
+    "disabled development proof policy",
+    "canonical receipt/effect/fee/block/identity checks",
+    "original historical finalized journal binding and operations",
+    "native waitForTx only",
+    "no repeat submission or model calls",
+    "legacy adapter and Outbox finality"
+  ],
+  "deploymentExecuted": false,
+  "uniqueChecksPassed": 125,
+  "completedResponseRetention": "Original bounded body/digest/delivery fence retained; finished journal forbids late delivery including previously undelivered response"
+}

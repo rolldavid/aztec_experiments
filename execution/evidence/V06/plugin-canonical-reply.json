@@ -1,0 +1,121 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-10T14:58:25.887Z",
+  "post": {
+    "schemaVersion": 1,
+    "scope": {
+      "l1ChainId": "11155111",
+      "rollupVersion": "2914217885",
+      "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+      "boardAddress": "0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752",
+      "portalAddress": "0xe664b6b5fd7575616653f75374d5fc7e8544b982"
+    },
+    "type": "PostPublished",
+    "position": {
+      "blockNumber": "15538",
+      "blockHash": "0x12d74ba268e543c8f96313988a0a00d881b30e78bc88c96f4cfb99d6c04da36a",
+      "txHash": "0x107f91ed4466ccb8fe62eeb0e2b1f6b5d3e96510289fa0570e2f89edec3e0674",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "payload": {
+      "postId": "0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203",
+      "orderIndex": "4",
+      "text": " V6 testnet plugin works",
+      "publishedAt": "1791643980",
+      "flagDeadline": "1791647580",
+      "policyVersion": "0x00f3a5d642af5b3350b9bfa51de40800eb2c34bd0ec331d8465607c9fdf176aa"
+    }
+  },
+  "linked": {
+    "schemaVersion": 1,
+    "scope": {
+      "l1ChainId": "11155111",
+      "rollupVersion": "2914217885",
+      "rollupAddress": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9",
+      "boardAddress": "0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752",
+      "portalAddress": "0xe664b6b5fd7575616653f75374d5fc7e8544b982"
+    },
+    "type": "PluginReplyLinked",
+    "position": {
+      "blockNumber": "15538",
+      "blockHash": "0x12d74ba268e543c8f96313988a0a00d881b30e78bc88c96f4cfb99d6c04da36a",
+      "txHash": "0x107f91ed4466ccb8fe62eeb0e2b1f6b5d3e96510289fa0570e2f89edec3e0674",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "1"
+    },
+    "payload": {
+      "postId": "0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203",
+      "parentId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+      "handle": "0x0000000000000000000000000000000000000000000000000000000000626f6b"
+    }
+  },
+  "receipt": {
+    "hash": "0x107f91ed4466ccb8fe62eeb0e2b1f6b5d3e96510289fa0570e2f89edec3e0674",
+    "status": "checkpointed",
+    "blockNumber": 15538,
+    "blockHash": "0x12d74ba268e543c8f96313988a0a00d881b30e78bc88c96f4cfb99d6c04da36a",
+    "transactionFee": "4081355653016800000"
+  },
+  "storage": {
+    "postCount": "5",
+    "requestCount": "2",
+    "balance": "999652",
+    "postId": "0x05576a599da430db1c5c11a46eac3fa5cd8e4707abe9f0c625a0dd9a551adc2c",
+    "invocation": [
+      "0x1ad525f91a610ac17693a40fa1a0a10125d69ca0af502b7d9005baaa3ea31b06",
+      "3",
+      "1",
+      "0",
+      "348",
+      "1791728076"
+    ],
+    "postText": "@bok Reply with exactly: V6 testnet plugin works. Do not use tools, add formatting, or create a pull request.",
+    "postFlagged": false,
+    "reply": {
+      "postId": "0x2f9a33c88d1641147f80f5bc29a996c1ef72fad984737d1d5465deaaeb0cf203",
+      "text": " V6 testnet plugin works",
+      "flagged": false
+    }
+  },
+  "replyBytes": {
+    "hex": "20563620746573746e657420706c7567696e20776f726b73",
+    "length": 24
+  },
+  "chainTips": {
+    "proposed": {
+      "number": 15542,
+      "hash": "0x045f2092b9548eecae495e63fcac6b8b712b836488b2f5d5c72e9787e02d654f"
+    },
+    "checkpointed": {
+      "block": {
+        "number": 15542,
+        "hash": "0x045f2092b9548eecae495e63fcac6b8b712b836488b2f5d5c72e9787e02d654f"
+      },
+      "checkpoint": {
+        "number": 14517,
+        "hash": "0x0084eaa92e347a147b9ab661dafac576e96a3147470f7611154324c6c4a5fcfe"
+      }
+    },
+    "proven": {
+      "block": {
+        "number": 15520,
+        "hash": "0x2e3fb078b7557ceac74caffeb5de9cbaf1608ba5d1d9bb47f1e84593a93263aa"
+      },
+      "checkpoint": {
+        "number": 14495,
+        "hash": "0x00b28b01f8c52e914faeaae38925dcf01f33e06262ac3984b39af0464182bf0c"
+      }
+    },
+    "finalized": {
+      "block": {
+        "number": 15520,
+        "hash": "0x2e3fb078b7557ceac74caffeb5de9cbaf1608ba5d1d9bb47f1e84593a93263aa"
+      },
+      "checkpoint": {
+        "number": 14495,
+        "hash": "0x00b28b01f8c52e914faeaae38925dcf01f33e06262ac3984b39af0464182bf0c"
+      }
+    }
+  }
+}

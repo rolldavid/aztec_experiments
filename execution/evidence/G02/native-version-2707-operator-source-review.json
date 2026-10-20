@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceCandidate": "a2820c290e1cb265757f08be7e263a99085368c7",
+  "packetSha256": "2f13551e6904f9247e26066eaf718a6aac06f77e2a70768cb8a89970b16eeba7",
+  "verdict": "source-approved-for-one-bounded-controlled-16-case-test-run-only",
+  "files": {
+    ".build/native-version-operator-2707-core.py": "c57321f2e37252a68f243fd9bed314beffda9ef21bf8fc8524e02f832de3c107",
+    ".build/native-version-operator-2707-launch.py": "a19d1ef6a2c1fde515d81673ce8a97b131f8a174a6844ffa2d7abb823e705ceb",
+    ".build/native-version-operator-2707-observe.py": "9ddbda9eb4e4d07846346913489868d5d6216d972681d94bade7d86dcf526d2b",
+    ".build/native-version-operator-2707-cleanup.py": "3d1ab90ab6a3f4989f5ee6e2f129201d009e83c888dc6f2a73f04580c3ed2c2e",
+    ".build/native-version-operator-2707-test.py": "d249179ffb9e9e1595a0199bd642b996ce4b049cddf3177ed35568faf6aa041b"
+  },
+  "independentChecks": {
+    "actualAndCopiedHashesEqual": true,
+    "pythonASTsParse": true,
+    "changedExistingFunctions": [
+      "launch_once"
+    ],
+    "addedFunctions": [
+      "verify_existing_binary"
+    ],
+    "wrapperCorePinsAndOperationExact": true,
+    "authoredTestCount": 16
+  },
+  "findings": [],
+  "reasoning": [
+    "The existing durable financial-intent fence precedes all new work. One fixed-region expected-owner versioned HEAD validates exact primitive types and size/SHA256/AES256/version before any LT intent or mutation.",
+    "Only fixed public binary metadata is persisted; extra response metadata is not projected. Missing, malformed, mismatched and thrown outcomes have no upload or alternate-version fallback.",
+    "The old authorization, immutable source/payload review, budget ledger, no-ingress, host/Fleet expiry, uncertain-action reconciliation and cleanup functions are AST-identical. Only launch_once adds the versioned HEAD and its safe readback.",
+    "Tests exercise the actual new function and launch ordering with controlled transport, including boolean size, missing keys, changed version, timeout and no financial journal on failure. They remain unexecuted."
+  ],
+  "limits": [
+    "This is not a preparation or paid-launch grant. Authority/date/payload bindings remain unset; proposed cumulative225.28 is not a reservation.",
+    "Versioned HEAD proves the selected stored version; a later signed URL may address current key, so final payload review and unchanged guest exact byte-size/SHA gate remain mandatory.",
+    "No provider calls, runtime tests, native work or secret payload inspection performed by reviewer.",
+    "Historical d73 native failure and independent Linux qualification hold remain."
+  ]
+}

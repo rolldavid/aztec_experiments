@@ -1,0 +1,11 @@
+{
+  "source": "93d5fcf",
+  "phase": "fresh-start",
+  "passed": false,
+  "failure": {
+    "stage": "fresh-start",
+    "name": "Error",
+    "code": null
+  },
+  "cleanStop": true
+}

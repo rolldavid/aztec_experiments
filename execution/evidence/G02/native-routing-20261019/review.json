@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "f54ec9aaa55e094b5bf2adfc3be2f82ad1c578ad",
+  "baseRevision": "2b5fb269b4f934657a8c6af7dbe4888221afa51f",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "carriedReview": "review-2b5fb269.json",
+  "inspection": "Exact sole three-line addition reviewed. Candidate selector accepts actual bool only; true chooses manifest-bound sibling directory. False default and all CLI dispatch calls unchanged. Directory lock, durable once intent/result, original budget-derived deadlines, full release/controls verification and qualification checks unchanged. Candidate does not itself switch active pins or publish final receipt. No API/CLI exposes candidate flag. Python AST parses. Prior nine focused checks carried for unchanged logic; no repeat suite.",
+  "sourceSha256": "ddb115da1f75811f367650a695427fbfd650e87844d9b43329982b77cf98d58f",
+  "limits": [
+    "Operational candidate context must provide exact validated new manifest/release and preserve existing live controls. Source approval does not approve a yet-unseen rollout script.",
+    "Candidate attempt remains once per exact manifest; interrupted intent cannot be replayed as fresh success."
+  ]
+}

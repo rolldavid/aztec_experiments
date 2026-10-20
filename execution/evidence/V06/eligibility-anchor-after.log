@@ -1,0 +1,25 @@
+✔ eligible anchor includes a checkpoint already in flight before normal fee simulation sync (1.235125ms)
+✔ browser actual module persists ciphertext and interoperates with Node AES-GCM (10.717791ms)
+✔ browser actual custody rejects wrong wallet, ciphertext corruption and moved scope (6.56225ms)
+✔ browser save observes transaction abort and never reports durable success (1.733125ms)
+✔ actual engine codec matches frozen claim, boundary and exit commitments (6.120875ms)
+✔ actual public deposit flow saves and reads back before send; returns bridge message index without secret (9.958167ms)
+✔ actual deposit flow fails closed for missing store, failed durability and disabled portal (4.269458ms)
+✔ actual deposit flow fails closed for mismatched read-back and existing receipt (2.875583ms)
+✔ actual recovery rejects inconsistent deposit metadata and requires its saved secret (4.052625ms)
+✔ wiped claim storage reports missing secret and cannot send another payment (1.679084ms)
+✔ claim checkpoint scope restores original settings after included claim and repeated cleanup (0.927ms)
+✔ claim failure and pre-handoff failure restore the original checkpoint settings (0.337708ms)
+✔ failed restoration remains retryable rather than claiming restoration succeeded (0.129ms)
+✔ restoration failure cannot skip RPC, wallet or backup cleanup (0.15575ms)
+✔ publication drain waits for actual convergence and always resumes production (202.496583ms)
+✔ setup simulations cannot close checkpoint production before actual deposit membership (0.429084ms)
+✔ deposit publication wait polls until checkpointed membership exists (202.682792ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1957.557333

@@ -1,0 +1,51 @@
+{
+  "revision": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "reviewer": "/root/reviewer_20261018",
+  "verdict": "approve_scoped_evidence_with_acceptance_gaps",
+  "requirements": [
+    "RC29",
+    "RC30",
+    "RC32",
+    "RC33",
+    "RC34",
+    "RC41"
+  ],
+  "requestId": "0x26bcd364302d53710568319d22e9ec0197efb41949c0d766f1cfd065eb064207",
+  "checks": [
+    "Read-only node SDK receipt, full block-body and tx-effect byte equality for all 12 reserve/settle transactions: canonical and finalized.",
+    "Independently recomputed six exact cached-token-aware integer charges and normalized billing receipt hashes: total 10048 micro-USDC.",
+    "Current canonical anchored storage at block45 validates pinned contract class, invocation target, sequence6, budget250000 = charged10048 + refunded239952; state4, available/reserved0.",
+    "Fetched public artifact and source via HTTP200; accepted revision headers match a7809ad963de416d7ff37056260a3afe35dab072. Verified all source file hashes, source manifest digest, archive hash and served artifact bytes against immutable isolated output.",
+    "Existing isolated result/outcome/log records show one actual passing generated test and successful build, exit0/noOOM and ownedContainerAbsent cleanup. Reviewed host executor: network-none, no mounts, fixed image, minimal environment, process/memory/time limits.",
+    "Public index request read still has reply:null. Public artifact remains available; mirror not claimed complete."
+  ],
+  "findings": [
+    {
+      "severity": "acceptance-blocker",
+      "scenario": "Generated artifact is available and request accounting now terminal/refunded, but no authenticated board reply exists; this is not a completed end-to-end Bok request.",
+      "recovery": "Implement/review bounded accepted-artifact reply recovery without repeating model calls or settled financial actions."
+    },
+    {
+      "severity": "external-prerequisite",
+      "scenario": "Dedicated private repository exists but recorded selected-installation access is unavailable; private GitHub mirror is not established.",
+      "recovery": "Resolve installation selection or approved source publication policy without recreating the existing repository."
+    }
+  ],
+  "review": [
+    "Public artifact is 1500-byte Garden notes page containing basil/mint/tomatoes; its generated test checks those three plant labels and attributes.",
+    "No credentials or owner association are present in inspected public source/HTTP artifacts; isolation source excludes service credentials from guest environment. This is a scoped observation, not a specialist audit.",
+    "Original second-request-public snapshot at block44 was nonterminal; current independent read at block45 supersedes its accounting observation."
+  ],
+  "limitations": [
+    "Local chain31337 uses native realProofsfalse/PXE disabled; no testnet proof or Ethereum browser-wallet acceptance.",
+    "Provider IDs/usage records and production metering path support live provider execution; reviewer did not contact provider or independently retrieve provider-side billing, and did not replay calls.",
+    "Recorded container result/cleanup corroborate isolated execution; reviewer did not rerun untrusted source or inspect a live already-removed container.",
+    "Generated test checks content presence only; not comprehensive visual or application correctness.",
+    "No full-product acceptance, external audit, network clearance or elapsed-soak certification."
+  ],
+  "evidence": {
+    "canonical-observations.json": "39e0b7f7b232a21d129b6d9451557284810b37ba97bd6c32e8b12ef15e2ce156",
+    "publication-observations.json": "191e2b4fbfc2db9d7a852e689a265d4821df52805b69a984570edc20aa41da01",
+    "public-request-observation.json": "ad979dd3e10d0e3832df27c8f04ad45d3a7f68f6eb5d39822c0c96e7e98b63ca"
+  }
+}

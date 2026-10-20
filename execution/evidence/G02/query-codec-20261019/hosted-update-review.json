@@ -1,0 +1,31 @@
+{
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "scriptSha256": "9eff733b1385306ef85681d1ef58b3f1ac6afe77798d6fcf1761436d92d50a41",
+  "verdict": "approved for existing-host stage/promote with exact supplied package metadata",
+  "baseManifestSha256": "986706a5102c52babc7a5657b377e7ac2127fa2c705eedc5350fa3fa9a0f366e",
+  "resolvedFindings": [
+    "Bootstrap bytes now checked against manifest and unchanged original startup pin before executing imported Python. Full new-release verifier retained.",
+    "Readiness child no longer imports plugins/operations.mjs, absent from verified Linux package. Uses packaged SDK native waiter and bounded exact authenticated local fetch."
+  ],
+  "review": [
+    "Changes limited to declared gateway/test files with exact manifest/file-set delta; unchanged files hardlinked and changed files atomically replaced, original source/receipt retained.",
+    "BASE writer and receipt lock exclude application observer and receipt writers during promotion. Fast independent budget/shaper timer remains live; normal verify_controls does not compare manifest pins across atomic update.",
+    "Genuine candidate query-only qualifier must pass; all checks, report hash, readiness and anchors retained. No manufactured carry-forward pass.",
+    "Promotion archives old qualification and records, preserves service identity/config and native container start identity, then restarts only query. SDK waitForNode observes authenticated readiness before structural readback.",
+    "Ordinary promotion exception restores old pins/unit/qualification/records, restarts old query and checks actual readiness/readback. Finally resumes application timer. Fixed02:30 deadline, budget/Fleet/egress unchanged.",
+    "Native waiter is state-driven;60-second child bound clipped to remaining budget is failure detection only. Credentials restricted to0600root file/0700parent, matched against service digest; no outputs expose them."
+  ],
+  "limitations": [
+    "No remote execution performed by reviewer. Exact final delta/archive/manifest metadata must be bound by lead.",
+    "A killed process mid-promotion needs explicit retained-state reconciliation; this is not a resumable/replayable updater.",
+    "Hosted compressed-Tx validation and original financial continuation remain separate observed steps."
+  ],
+  "previousScriptSha256": "b48105165a1952b496a60e29dcb6a8394a39ae48b932959ec3a69272cd178ae6",
+  "promotionRepair": {
+    "verdict": "approved",
+    "change": "Only removes unnecessary reset-failed for qualification and optional receipt units; daemon-reload and inactive/failed admission guards unchanged. Reconstructed predecessor digest matches prior approved script exactly.",
+    "retryCondition": "Lead must verify complete ordinary rollback, original active query/pins/records/qualification and unchanged node/timers/deadline, exact passed candidate retained. Under BASE lock preserve failed history via no-overwrite rename, then promote existing candidate only. No stage/qualifier rerun.",
+    "tests": "None needed for deleting optional lifecycle reset; source equivalence verified."
+  }
+}

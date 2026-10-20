@@ -1,0 +1,14 @@
+{
+  "reviewer": "reviewer-20261011",
+  "basis": "Original reviewer-volume-measurement-proposal-review.json (SHA prefix695fac) and proposal bd67f89370148911ac5be9f7544b84e6758a24e94757daabd41fecd86a77e86f reread after actual91279.",
+  "finding": "Original accepted scope requires individual kernel maxRSS receipts for observed Node processes and sampled aggregate RSS for all owned descendants. It does not independently require a native-child kernel receipt. An instantaneous aggregate hard limit was explicitly excluded.",
+  "prospectiveRepairEligible": [
+    "Retain all mandatory Node/controller/worker receipts and supervisor maximum.",
+    "Retain original all-descendant sampled aggregate512MiB,180s deadline,setup128MiB,growth64MiB and lifecycle/pin gates.",
+    "Use the proven bounded live exact-BB executable/hash/worker-parent/start-time/owned-socket classification; reject any other or unclassified additional process.",
+    "Report native kernel high-water unmeasured and aggregate sampled scope explicitly; no deduction of native memory.",
+    "Bind accepted91279 tiny setup before separately reviewed successor volume grant."
+  ],
+  "historicalDisposition": "31785 remains failed under its original exact allowed-PID reconciliation; no retrospective pass.",
+  "runtimeByReviewer": false
+}

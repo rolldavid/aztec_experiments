@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-14T11:18:48.549812+00:00",
+  "candidate": "023d1f20c160c8c76f7611da154a6c10f8620414",
+  "base": "f7e1fbde266314764ef3da814b164da00496aac3",
+  "disposition": "approved-source-component",
+  "sourceHashes": {
+    "scripts/t04-metamask.mjs": "37c5d3dab7e6b321a7b58a0a32258d176c13ff887b0c8ec0535db662b477cc89",
+    "scripts/test-wallet-extension-browser.mjs": "d3351f5d8ac5df8b24ee92452aeee6f33bdc29246567d866e8549a3fe31140b4",
+    "scripts/test-t04-browser-journey.mjs": "d12bda7b6917729cecc4b287f187c8a343688793e6f191043ff6318058c64a55",
+    "scripts/run-bounded-browser-check.mjs": "5b6c7d37c983d008c75cad17d7c1258372836a0785590b185558826f35eaef99"
+  },
+  "changedSourceCount": 3,
+  "unchangedOwnerRunner": "scripts/run-bounded-browser-check.mjs",
+  "verifiedEvidence": {
+    "handoffSha256": "3697e3e11b5984934604b29997a99f20147bd73f8a22ec453600db2dbac8e3b8",
+    "evidenceFiles": 5,
+    "mismatches": [],
+    "focused": "2 deadline +8 combined +1 saved-thread passes, overlapping coverage; not a whole suite",
+    "readinessActualPassed": true,
+    "readinessElapsedMs": 14940
+  },
+  "sourceAssessment": [
+    "Paired optional parent/root are exact decimal strings; absent remains original root-post behavior, one-sided or mixed zero/nonzero modes reject.",
+    "Exact approval parent/root checked against original encrypted saved action before authorization/post confirmations. UI only fills approved values; existing content, budget, fee, nonce, request, authorization and expiration checks remain.",
+    "Canonical original user post parent/root and authenticated bot reply parent/root must match exact expected thread; original event linkage, content digest, terminal accounting and canonical anchor rechecks retained.",
+    "Readiness helper receives remaining time from the existing owner deadline; no new timeout allocation or unchanged owner limit expansion.",
+    "Existing paid recovery, once-only Ethereum guard, native proof flags and outer financial counters unchanged."
+  ],
+  "blockingFindings": [],
+  "limitations": [
+    "Product Bok reply support is a separate Design component; this driver does not qualify it.",
+    "Second-user payment is reported canonically authenticated after ENOSPC, but its claim remains unknown/unqualified. No payment or signature replay authorized by this review.",
+    "No live threaded Bok, two-user/two-thread or testnet acceptance claimed. No new reviewer browser/financial/service action."
+  ]
+}

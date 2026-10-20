@@ -1,0 +1,33 @@
+✔ ordinary unknown fence with an empty authenticated Tx journal remains unresolved (12.609084ms)
+✔ positive pre-proof crash reload renews fees explicitly and preserves exact action before one send (10.527209ms)
+✔ positive pre-proof missing provenance never authorizes renewed preparation (3.096875ms)
+✔ positive pre-proof restored provenance never authorizes renewed preparation (2.871958ms)
+✔ positive pre-proof unsupported provenance never authorizes renewed preparation (2.810083ms)
+✔ positive pre-proof signed bytes win after journal interruption (3.238167ms)
+✔ positive pre-proof signed bytes win after signed interruption (3.768917ms)
+✔ positive pre-proof predecessor stays exact and canonically acknowledged after reload (10.589875ms)
+✔ positive pre-proof late proof is vetoed after exact workflow revocation, before signed journal (3.56275ms)
+✔ positive pre-proof restoration/account revocation before broadcast preserves signed bytes and prevents send (14.345791ms)
+✔ positive pre-proof renewed review cannot be submitted after financial restore invalidates provenance (3.365375ms)
+✔ signed replacement remains authoritative after an earlier positive pre-proof renewed review (1265.240041ms)
+✔ positive pre-proof preserves marker context at renewal (62.185625ms)
+✔ positive pre-proof preserves marker context at fee-estimate (4.617583ms)
+✔ positive pre-proof preserves marker context at submission (5.35925ms)
+✔ positive pre-proof preserves marker context at journal (7.103917ms)
+✔ positive pre-proof preserves marker context at broadcast (9.343375ms)
+✔ positive pre-proof preserves head context at renewal (3.453958ms)
+✔ positive pre-proof preserves head context at fee-estimate (3.686625ms)
+✔ positive pre-proof preserves head context at submission (5.077417ms)
+✔ positive pre-proof preserves head context at journal (7.093416ms)
+✔ positive pre-proof preserves head context at broadcast (9.492458ms)
+✔ positive pre-proof renewed Bok authorization advances to a distinct post attempt (55.850041ms)
+✔ positive pre-proof unchanged preference context renews and sends once (9.947542ms)
+✔ positive pre-proof unchanged read-marker context renews and sends once (9.741792ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2692.704666

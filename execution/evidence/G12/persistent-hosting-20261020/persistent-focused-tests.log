@@ -1,0 +1,21 @@
+test_persistent_policy_is_closed_and_source_bound (__main__.Bootstrap.test_persistent_policy_is_closed_and_source_bound) ... ok
+test_persistent_install_masks_elapsed_timer_keeps_emergency_and_commissioning (__main__.Bootstrap.test_persistent_install_masks_elapsed_timer_keeps_emergency_and_commissioning) ... ok
+test_persistent_monitor_requires_bound_private_policy_mask_and_egress (__main__.Bootstrap.test_persistent_monitor_requires_bound_private_policy_mask_and_egress) ... ok
+test_deadline_cannot_be_extended_or_package_replaced (__main__.Bootstrap.test_deadline_cannot_be_extended_or_package_replaced) ... ok
+test_actual_control_install_order_and_persistent_absolute_timers (__main__.Bootstrap.test_actual_control_install_order_and_persistent_absolute_timers) ... ok
+test_qualification_failures_and_deadline_are_never_retried (__main__.Bootstrap.test_qualification_failures_and_deadline_are_never_retried) ... ok
+test_qualification_dispatch_retains_state_unless_controls_are_lost (__main__.Bootstrap.test_qualification_dispatch_retains_state_unless_controls_are_lost) ... ok
+test_fast_monitor_never_runs_application_observation (__main__.Bootstrap.test_fast_monitor_never_runs_application_observation) ... ok
+test_persistent_query_admission_after_historical_deadline_keeps_native_checks (__main__.QueryHost.test_persistent_query_admission_after_historical_deadline_keeps_native_checks) ... ok
+test_simulated_commissioning_actual_readback_once_and_reader_modes (__main__.QueryHost.test_simulated_commissioning_actual_readback_once_and_reader_modes) ... ok
+test_unready_private_query_admission_preserves_host_and_allocates_nothing (__main__.QueryHost.test_unready_private_query_admission_preserves_host_and_allocates_nothing) ... ok
+test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent (__main__.ProverActivation.test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent) ... ok
+test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused (__main__.ProverActivation.test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused) ... ok
+test_persistent_delivery_has_one_finite_window_after_historical_deadline (__main__.ActivationDelivery.test_persistent_delivery_has_one_finite_window_after_historical_deadline) ... ok
+test_delivery_window_and_sixty_attempts_never_extend (__main__.ActivationDelivery.test_delivery_window_and_sixty_attempts_never_extend) ... ok
+test_delivery_budget_reserve_and_changed_qualification_reject_before_fetch (__main__.ActivationDelivery.test_delivery_budget_reserve_and_changed_qualification_reject_before_fetch) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.409s
+
+OK

@@ -1,0 +1,37 @@
+{
+  "candidate": "ebbc39c2e730431284c6330ce1f509a51fdd024c",
+  "base": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "G13-native-clock-G02-seed-component",
+  "implementer": "lead-20261011",
+  "allowed_paths": [
+    "plugins/devnet/network.mjs",
+    "plugins/devnet/operator-test.mjs",
+    "plugins/operations.mjs",
+    "plugins/operator.mjs",
+    "plugins/test/operations.test.mjs",
+    "plugins/test/operator-lifecycle.test.mjs"
+  ],
+  "required_checks": [
+    "combined-components"
+  ],
+  "requirements": [
+    "restored-native-clock",
+    "finite-testnet-seed-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "G13-native-clock-G02-seed-component",
+      "paths": [
+        "plugins/devnet/network.mjs",
+        "plugins/devnet/operator-test.mjs",
+        "plugins/operations.mjs",
+        "plugins/operator.mjs",
+        "plugins/test/operations.test.mjs",
+        "plugins/test/operator-lifecycle.test.mjs"
+      ]
+    }
+  ]
+}

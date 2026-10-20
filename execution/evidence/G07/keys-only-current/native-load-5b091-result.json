@@ -1,0 +1,233 @@
+{
+  "kind": "isolated-native-readonly-load",
+  "sourceRevision": "d815bc026ac0d524d10ed82969b13a8bfe81bb08",
+  "passed": true,
+  "financialOperations": 0,
+  "mining": false,
+  "dump": false,
+  "deadlineMs": 90000,
+  "rssLimitKiB": 12582912,
+  "peakTreeRSSKiB": 6151600,
+  "rssSamples": [
+    {
+      "elapsedMs": 1000,
+      "rssKiB": 798960
+    },
+    {
+      "elapsedMs": 1999,
+      "rssKiB": 802496
+    },
+    {
+      "elapsedMs": 2999,
+      "rssKiB": 427488
+    },
+    {
+      "elapsedMs": 3999,
+      "rssKiB": 439328
+    },
+    {
+      "elapsedMs": 5001,
+      "rssKiB": 1476432
+    },
+    {
+      "elapsedMs": 6028,
+      "rssKiB": 1881680
+    },
+    {
+      "elapsedMs": 7062,
+      "rssKiB": 1908048
+    },
+    {
+      "elapsedMs": 8102,
+      "rssKiB": 4306304
+    },
+    {
+      "elapsedMs": 9138,
+      "rssKiB": 5741296
+    },
+    {
+      "elapsedMs": 10163,
+      "rssKiB": 5334992
+    },
+    {
+      "elapsedMs": 11187,
+      "rssKiB": 3068496
+    },
+    {
+      "elapsedMs": 12228,
+      "rssKiB": 2336336
+    },
+    {
+      "elapsedMs": 13250,
+      "rssKiB": 2065232
+    },
+    {
+      "elapsedMs": 14287,
+      "rssKiB": 2112640
+    },
+    {
+      "elapsedMs": 15331,
+      "rssKiB": 2471072
+    },
+    {
+      "elapsedMs": 16356,
+      "rssKiB": 3003296
+    },
+    {
+      "elapsedMs": 17389,
+      "rssKiB": 2809920
+    },
+    {
+      "elapsedMs": 18412,
+      "rssKiB": 3403632
+    },
+    {
+      "elapsedMs": 19434,
+      "rssKiB": 4091280
+    },
+    {
+      "elapsedMs": 20456,
+      "rssKiB": 4094992
+    },
+    {
+      "elapsedMs": 21483,
+      "rssKiB": 1260320
+    },
+    {
+      "elapsedMs": 22508,
+      "rssKiB": 6151600
+    },
+    {
+      "elapsedMs": 23634,
+      "rssKiB": 5408608
+    },
+    {
+      "elapsedMs": 24669,
+      "rssKiB": 4879344
+    },
+    {
+      "elapsedMs": 25692,
+      "rssKiB": 4861056
+    },
+    {
+      "elapsedMs": 26714,
+      "rssKiB": 4834352
+    },
+    {
+      "elapsedMs": 27738,
+      "rssKiB": 4777744
+    },
+    {
+      "elapsedMs": 28787,
+      "rssKiB": 3787392
+    },
+    {
+      "elapsedMs": 29809,
+      "rssKiB": 3783376
+    },
+    {
+      "elapsedMs": 30832,
+      "rssKiB": 3776240
+    },
+    {
+      "elapsedMs": 31854,
+      "rssKiB": 3757584
+    },
+    {
+      "elapsedMs": 32875,
+      "rssKiB": 3733680
+    },
+    {
+      "elapsedMs": 33899,
+      "rssKiB": 3739888
+    },
+    {
+      "elapsedMs": 34924,
+      "rssKiB": 3272464
+    },
+    {
+      "elapsedMs": 35945,
+      "rssKiB": 3230864
+    },
+    {
+      "elapsedMs": 36968,
+      "rssKiB": 3193760
+    },
+    {
+      "elapsedMs": 37990,
+      "rssKiB": 5241120
+    },
+    {
+      "elapsedMs": 39029,
+      "rssKiB": 417328
+    },
+    {
+      "elapsedMs": 40050,
+      "rssKiB": 428064
+    },
+    {
+      "elapsedMs": 41072,
+      "rssKiB": 444656
+    },
+    {
+      "elapsedMs": 42093,
+      "rssKiB": 451008
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "anvil",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 22508,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 11122,
+        "ppid": 1682,
+        "rssKiB": 88656
+      },
+      {
+        "role": "anvil",
+        "pid": 11139,
+        "ppid": 11122,
+        "rssKiB": 6062944
+      }
+    ]
+  },
+  "snapshot": {
+    "sha256": "6e760a431e5a4c661682f18a0043900a76b4f0b38f669e0afc025250bb7cc07b",
+    "bytes": 5035668156
+  },
+  "ownedCache": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-native-diagnosis/anvil-cache-4c8aa1d2-8a23-4d50-a0e2-803e33873dae",
+    "dev": 16777232,
+    "ino": 233346501
+  },
+  "firstRpcReady": {
+    "ready": true,
+    "elapsedMs": 34160,
+    "attempts": 336
+  },
+  "head": {
+    "number": "0xa9f",
+    "hash": "0xa92ae138d3baded66e40f63634bcbf1da951b4f072ae5d1c589d9dd62098f4eb"
+  },
+  "headMatches": true,
+  "nativeExit": {
+    "role": "anvil",
+    "code": 0,
+    "signal": null,
+    "closed": true,
+    "cleanupComplete": true
+  },
+  "sourceUnchanged": true,
+  "elapsedMs": 42752,
+  "ownedTreeAbsent": true
+}

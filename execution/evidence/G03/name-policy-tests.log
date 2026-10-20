@@ -1,0 +1,11 @@
+✔ case and ASCII whitespace collisions have identical framed preimages (2.097125ms)
+✔ unsupported characters, reserved bot handles and malformed boundaries are rejected before spending (0.397959ms)
+✔ 32-byte boundary has unambiguous fixed width encoding without truncation (0.781459ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 71.743791

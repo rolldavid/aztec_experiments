@@ -1,0 +1,29 @@
+✔ public HTTP reader sends no account credentials and encodes untrusted query values (13.051416ms)
+✔ reader rejects unready, oversized, nonJSON and malformed responses (0.731625ms)
+✔ streaming size gate cancels before reading an unbounded response (0.365375ms)
+✔ public reader: navigation, unsafe content, failure recovery and narrow keyboard menu (1503.214083ms)
+✔ reader serves only browser assets and bounded public API from one origin (29.391ms)
+✔ strict public routes, bounded query parameters and no private/RPC surfaces (28.285042ms)
+✔ cold cache exposes status but data503; same-origin composition does not proxy (5.722333ms)
+✔ JSON content cannot execute, missing CORS and fixed error bodies omit upstream data (8.052125ms)
+✔ sync has one owner, close joins current update, no externally bound host (222.351917ms)
+✔ data HTTP joins one delayed successful canonical sync; status stays immediate (40.23475ms)
+✔ data HTTP joins one delayed failed canonical sync; status stays immediate (37.684875ms)
+✔ shared config factory rejects invalid port/extras/private URL before artifact or storage I/O (3.408583ms)
+✔ shared factory constructs real decoder and bounded storage without starting public RPC or listener (1016.886792ms)
+✔ cold canonical whole-block ingestion and metadata use real decoder/SQLite, no views before ready (126.61975ms)
+✔ restart re-fetches every retained block before exposing any cached view (222.563708ms)
+✔ cached omission with unchanged canonical hashes/count-adjusted JSON is rejected (208.586ms)
+✔ injected cached post text is rejected despite preserved position and checkpoint (208.605291ms)
+✔ append, hot reorg rollback and cold reorg reconstruct canonical replacement (226.264833ms)
+✔ CAS commit failure never publishes staged projection; another writer must reopen (315.995875ms)
+✔ network/class/deployment changes fail closed even with retained data (313.798542ms)
+✔ bounded capacity, read timeout and concurrent sync cannot produce partial ready state (221.8395ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6845.824583

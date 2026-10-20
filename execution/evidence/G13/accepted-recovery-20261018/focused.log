@@ -1,0 +1,23 @@
+✔ accepted hosted recovery publishes once and finishes with settled original billing and no model replay (3.660625ms)
+✔ accepted recovery fences mirror failures, unknown billing and canonical identity/accounting changes (11.064333ms)
+✔ accepted recovery rechecks canonical invocation after publication and never resends ambiguous reply (1.198792ms)
+✔ trusted accepted reply binds exact publication links and never exposes connected source (2.484083ms)
+✔ recovered reply absent or reverted receipts never permit another reply send or finish (1.258375ms)
+✔ actual local HTTP serves latest static bytes and matching exact source download (88.438292ms)
+✔ accepted recovery rejects missing retained files/index.html (62.309208ms)
+✔ accepted recovery rejects changed retained files/index.html (64.600291ms)
+✔ accepted recovery rejects missing retained source.json (50.460583ms)
+✔ accepted recovery rejects changed retained source.json (56.438084ms)
+✔ accepted recovery rejects missing retained artifacts.json (54.358209ms)
+✔ accepted recovery rejects changed retained artifacts.json (47.722292ms)
+✔ failed catalog update preserves immutable revision and safely resumes exact pending publication (55.338542ms)
+✔ accepted recovery reuses exact Git objects and validation, requires publication, creates no draft (574.540625ms)
+✔ accepted recovery refuses absent and unaccepted source without executing validation or creating storage (107.460584ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3723.050458

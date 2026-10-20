@@ -1,0 +1,22 @@
+{
+  "sourceRevision": "7a36784b3fffa5e435ac07cac1b0ad41ae1c10c5",
+  "baseRevision": "506ca88234424152d7438dcee016ae57d7fa06cc",
+  "reviewer": "/root/reviewer_resume2",
+  "verdict": "approved",
+  "scope": "Native compressed transaction codec initialization before gateway listener admission",
+  "findings": [],
+  "checks": [
+    "Inspected both changed paths and unchanged service composition: createPrivateQuery awaited before either query-only or prover listener creation.",
+    "Installed SDK singleton implementation selects Wasm, shares initialization promise, clears failed initialization and rethrows. Initialization creates codec backend, not a proof job.",
+    "Entire RPC batch schema validation and authentication/readiness/forwarding boundaries unchanged.",
+    "Independent focused test execution with retained original compressed transaction and local fake upstream: 2 passed, 0 skipped, 0 failed; 972.98ms process duration. Exact retained bytes roundtrip/forwarded once; operator header absent upstream. No blockchain request or proof generation."
+  ],
+  "files": {
+    "prover/private-query.mjs": "2e435cff5ead0d4f424bccd221e366554d8a69e3e8b1d7849e68eeb2691c3c13",
+    "prover/private-query.test.mjs": "ce247a1e964095301b8adb0ec7b73ebfe8ef8e893c63729a8f5ba18e79d0b4ee"
+  },
+  "limitations": [
+    "The forwarding test uses an explicitly labelled local upstream double; actual repaired hosted gateway and native validation remain operational acceptance.",
+    "Retained fixture test explicitly skips without the protected journal; this execution supplied it and did not skip."
+  ]
+}

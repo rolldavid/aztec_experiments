@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-14T08:53:42.610096+00:00",
+  "transactionHash": "0x05e3f0fad1e3eb0e50b85d824a1ca70db12d8bcfa51eedbd32d478424980a0ce",
+  "status": "0x1",
+  "blockNumber": 11912116,
+  "finalizedHead": 11912119,
+  "finalized": true,
+  "action": "read-only original receipt; no send"
+}

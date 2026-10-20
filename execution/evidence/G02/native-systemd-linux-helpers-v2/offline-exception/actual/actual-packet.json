@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "sourcePacketSha256": "9b611391d9be73b0735cde04a6db7e513fb00f546520ba39a643c1681f2260ac",
+  "reviewSha256": "263f6660a6f6c8d4d6266a6c24813aed1f69bf20d0b97ebd8df55334501e5b25",
+  "session": 66946,
+  "exitCode": 1,
+  "passed": false,
+  "elapsedMs": 3291,
+  "hostConfinement": true,
+  "systemdBarrier": {
+    "identity": {
+      "pid": 639,
+      "startedAt": "2026-10-13T05:14:38.376692708Z"
+    },
+    "processCount": 2,
+    "status": "ready"
+  },
+  "guestPreflight": {
+    "category": "confined",
+    "passed": true
+  },
+  "regressionPassed": false,
+  "checkpoint": {
+    "label": "none",
+    "operation": "timers-reload",
+    "timer": "none"
+  },
+  "originalException": {
+    "category": "called-process-error",
+    "returnCode": 1
+  },
+  "failureObservation": {
+    "nativeState": {
+      "ActiveState": "inactive",
+      "ExecMainCode": 0,
+      "ExecMainStartTimestampMonotonic": 0,
+      "ExecMainStatus": 0,
+      "Result": "success",
+      "SubState": "dead",
+      "status": "observed"
+    },
+    "resultAvailability": {
+      "status": "not-applicable"
+    }
+  },
+  "recordedCases": 0,
+  "sourceUnchanged": true,
+  "containerAbsent": true,
+  "beforeCleanupState": {
+    "Dead": false,
+    "ExitCode": 0,
+    "OOMKilled": false,
+    "Running": true,
+    "Status": "running"
+  },
+  "files": {
+    "before-cleanup.json": "89fbbcc920ee9a2d3a96fcb7fd0c9a4919f87d38cdb962369d48a750d29e83ef",
+    "create-intent.json": "78739b08fc9947bd5f20d0a84b31e0f88b67fee782cc689276a76e4b860358c1",
+    "host-inspect-projection.json": "1d9c4b069b03c0d1d38acfee08606d2a4f93ae7301b81fa33704e11550144618",
+    "intent.json": "516d18b77fc51510b1f00e31659ffa0d53732108434a0d29b81bb42c95c0a094",
+    "preflight.json": "9b2f6eea5aa3d977b6a6f7b12efcc0fa4df9a60c9d96b712ede2946d0de294e6",
+    "regression.json": "6ce35ed67f635f304b9a08f143b82ee661188d225af097c30495f904cff4347f",
+    "result.json": "6ad035545a930ba4d337a5794fc4995dc38292bad4105b0624369181fe46106d",
+    "start-intent.json": "27f2a7c5053b44a34ec6bffd20e4c7ae23b11e8576d66f7cecc5a7f493a2d3ec"
+  },
+  "limits": [
+    "Only captured original exception classification establishes failure type; no raw command output retained.",
+    "No native BB/systemd retention qualification or retry."
+  ]
+}

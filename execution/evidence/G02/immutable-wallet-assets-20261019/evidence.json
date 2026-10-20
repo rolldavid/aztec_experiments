@@ -1,0 +1,61 @@
+{
+  "task_id": "G02-browser-asset-delivery",
+  "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "focused-assets",
+      "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+      "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test apps/rolling/start.test.mjs; focused wallet-runtime.browser.test.mjs",
+      "environment": "macOS pinned Node24 and genuine Chromium HTTP cache; no proofs or payments",
+      "observed": "8server +5focused loader/browser cache checks pass; two documents reuse verified asset and fetch fresh metadata twice.",
+      "artifacts": [
+        {
+          "path": "evidence/G02/immutable-wallet-assets-20261019/review.json",
+          "sha256": "9dbcfefb3ebe16568fbc0ba1869137fd85847beb0b84d045048ac436316be841"
+        },
+        {
+          "path": "evidence/G02/immutable-wallet-assets-20261019/checks.json",
+          "sha256": "8489bfae81edd7f0c29790cb867d9c58edd3d40fdf7197efca5e04a1f724f99b"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+    "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G02/immutable-wallet-assets-20261019/review.json",
+        "sha256": "9dbcfefb3ebe16568fbc0ba1869137fd85847beb0b84d045048ac436316be841"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G02-pinned-browser-assets-native-delivery",
+      "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+      "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/immutable-wallet-assets-20261019/review.json",
+          "sha256": "9dbcfefb3ebe16568fbc0ba1869137fd85847beb0b84d045048ac436316be841"
+        },
+        {
+          "path": "evidence/G02/immutable-wallet-assets-20261019/checks.json",
+          "sha256": "8489bfae81edd7f0c29790cb867d9c58edd3d40fdf7197efca5e04a1f724f99b"
+        }
+      ]
+    }
+  ]
+}

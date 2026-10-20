@@ -1,0 +1,4201 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-15T01:46:02.431942+00:00",
+  "target": "0a848579c52e4eca887e582b4d75f8d9095b74fc",
+  "method": "Compare recorded SHA256 to git blob bytes at exact target; do not equate changed file with failed behavior or unchanged subset with full acceptance. Runtime binaries/generated artifacts excluded from production-source subset.",
+  "historical": [
+    {
+      "packet": "execution/evidence/G05/application-5422b57a-0567-45ef-af4c-2a0715e05105.json",
+      "sha256": "5ad596416a921fd71b8269cb1b26e71b0358059486b67f609f79037e156e34ad",
+      "files": [
+        {
+          "path": "shared/application-nullifier.mjs",
+          "recorded": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "recorded": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "changed"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "recorded": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "recorded": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "changed"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "recorded": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "recorded": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "recorded": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "recorded": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "changed"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "recorded": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "recorded": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "recorded": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "recorded": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "recorded": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "recorded": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "recorded": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "changed"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "recorded": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "recorded": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "recorded": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "recorded": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "recorded": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "changed"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "recorded": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "recorded": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "recorded": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "recorded": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "recorded": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "recorded": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "recorded": "37ac263fe5d6f0fe35b0c1c5125408c99b149d4fff76c51806e68b25d59e31a5",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "recorded": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "recorded": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "recorded": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "recorded": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "recorded": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "recorded": "977e8ce9ecef21d0b5ce1e4b63492531f6425725c7459485a34470f0797086e7",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "recorded": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "changed"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "recorded": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "changed"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "recorded": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "recorded": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "recorded": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "recorded": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "recorded": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "recorded": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "changed"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "recorded": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "recorded": "476c3e8cc99878083cfc9ea0d116fed4294b621180221a52ddd99f7d1cd3ba9f",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "changed"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "recorded": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "recorded": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "recorded": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "recorded": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "changed"
+        },
+        {
+          "path": "prover/service.mjs",
+          "recorded": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "changed"
+        },
+        {
+          "path": "prover/start.mjs",
+          "recorded": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "changed"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "recorded": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "changed"
+        }
+      ],
+      "counts": {
+        "same": 27,
+        "changed": 23,
+        "missing": 0
+      }
+    },
+    {
+      "packet": "execution/evidence/G05/application-da2510b2-87cc-417f-bb49-19d97c2371b4.json",
+      "sha256": "b35d4093d8bf0234f2ee61fc5ec86b5f4c69adafd020d7f1ccff5e6c24f1257e",
+      "files": [
+        {
+          "path": "shared/application-nullifier.mjs",
+          "recorded": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "recorded": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "changed"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "recorded": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "recorded": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "changed"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "recorded": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "recorded": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "recorded": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "recorded": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "changed"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "recorded": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "recorded": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "recorded": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "recorded": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "recorded": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "recorded": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "recorded": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "changed"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "recorded": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "recorded": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "recorded": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "recorded": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "recorded": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "changed"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "recorded": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "recorded": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "recorded": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "recorded": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "recorded": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "recorded": "d4d42b2ff4e8808640b7e924bedf5c6d98dcab126d553830151d052c9718931f",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "recorded": "37ac263fe5d6f0fe35b0c1c5125408c99b149d4fff76c51806e68b25d59e31a5",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "recorded": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "recorded": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "recorded": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "recorded": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "recorded": "446346166d3a677e88efa54bcee6eb79bc0ccb62402de10ace64aafc46ad9458",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "recorded": "feb2c27f6e090496b969340a3ad37e54abdb502836604f4b68bdebf5daf2731d",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "recorded": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "changed"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "recorded": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "changed"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "recorded": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "recorded": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "recorded": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "recorded": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "recorded": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "recorded": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "changed"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "recorded": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "recorded": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "changed"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "recorded": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "recorded": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "recorded": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "recorded": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "changed"
+        },
+        {
+          "path": "prover/service.mjs",
+          "recorded": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "changed"
+        },
+        {
+          "path": "prover/start.mjs",
+          "recorded": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "changed"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "recorded": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "changed"
+        }
+      ],
+      "counts": {
+        "same": 28,
+        "changed": 22,
+        "missing": 0
+      }
+    },
+    {
+      "packet": "execution/evidence/G05/application-d6dbc54a-9e7f-462a-8687-e6449f4c93f7.json",
+      "sha256": "f1737062586b1d46476e70703546ae9e79a277a450d16ffbb53c67f31f2498f8",
+      "files": [
+        {
+          "path": "shared/application-nullifier.mjs",
+          "recorded": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "recorded": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "changed"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "recorded": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "recorded": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "changed"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "recorded": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "recorded": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "recorded": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "recorded": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "changed"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "recorded": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "recorded": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "recorded": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "recorded": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "recorded": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "recorded": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "recorded": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "changed"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "recorded": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "recorded": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "recorded": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "recorded": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "recorded": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "changed"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "recorded": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "recorded": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "recorded": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "recorded": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "recorded": "8ac27c50b3cc413c74db48b9230c1c702ce6f6670a81a48d61b7f0cf21be2525",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "recorded": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "recorded": "37ac263fe5d6f0fe35b0c1c5125408c99b149d4fff76c51806e68b25d59e31a5",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "recorded": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "recorded": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "recorded": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "recorded": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "recorded": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "recorded": "977e8ce9ecef21d0b5ce1e4b63492531f6425725c7459485a34470f0797086e7",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "recorded": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "changed"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "recorded": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "changed"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "recorded": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "recorded": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "recorded": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "recorded": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "recorded": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "recorded": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "changed"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "recorded": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "recorded": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "changed"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "recorded": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "recorded": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "recorded": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "recorded": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "changed"
+        },
+        {
+          "path": "prover/service.mjs",
+          "recorded": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "changed"
+        },
+        {
+          "path": "prover/start.mjs",
+          "recorded": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "changed"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "recorded": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "changed"
+        }
+      ],
+      "counts": {
+        "same": 27,
+        "changed": 23,
+        "missing": 0
+      }
+    },
+    {
+      "packet": "execution/evidence/G05/application-65c1f05e-9108-482a-b081-69ea3b80289f.json",
+      "sha256": "8bbd64416e49fa464d27305d494d1eb6fd9ac199112bbcc51f3d0dcfcbe1714c",
+      "files": [
+        {
+          "path": "shared/application-nullifier.mjs",
+          "recorded": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "recorded": "391c4488e2523e1c897511239d2003b73de4bb25c978346a71850c3cef0663f3",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "changed"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "recorded": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "recorded": "5846f6904535469810a7eac465720db1e68f1597de94b017ccd9c03c1f1495ff",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "changed"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "recorded": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "recorded": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "recorded": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "recorded": "15365103ea58a312e7fdeb5f7754e8baddd6f58123670c05218400dd771c777a",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "changed"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "recorded": "c270be2944fc5c88cb38908c37db048cdfb3e7944de3fabedc54e5da2f8d86ad",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "recorded": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "recorded": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "changed"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "recorded": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "recorded": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "recorded": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "recorded": "98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "changed"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "recorded": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "recorded": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "recorded": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "recorded": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "recorded": "0f306ca3ad68b86df8d4554b718cb9acf6a7d42341562f0f2d26646a37905bbb",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "changed"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "recorded": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "recorded": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "recorded": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "recorded": "cf0046bbceeb23dc709cda7bb68f385c42796cd4d5a3d21820b112a269d759d2",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "recorded": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "recorded": "d4d42b2ff4e8808640b7e924bedf5c6d98dcab126d553830151d052c9718931f",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "recorded": "37ac263fe5d6f0fe35b0c1c5125408c99b149d4fff76c51806e68b25d59e31a5",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "recorded": "45706ce17e72851a78de40d04a316796cdc0624b1fbac247de7d39ff04b708a0",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "recorded": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "recorded": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "recorded": "337508580ecbcfb5df288d17602ef9d8948564e1a9e2791eb08b3a56cf7dbd23",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "recorded": "446346166d3a677e88efa54bcee6eb79bc0ccb62402de10ace64aafc46ad9458",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "recorded": "feb2c27f6e090496b969340a3ad37e54abdb502836604f4b68bdebf5daf2731d",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "recorded": "22367812e629c60960fffdd5409fbd9fc9e02a35c9407977f1d409c73d57b9a4",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "changed"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "recorded": "2cbd050f3d3e616a276787086e619073f9c91445e7c98b1a8c4f22b481b47895",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "changed"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "recorded": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "recorded": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "recorded": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "recorded": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "recorded": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "recorded": "d3f1822905228dc0d10f14c6289ff628bceeba7cb22463b97bb72e64a3ab4895",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "changed"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "recorded": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "recorded": "c65c892b3aa935bbad1c6e95e952a923fd24e611049c68035f2592fa876f832b",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "changed"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "recorded": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "recorded": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "recorded": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "recorded": "e7df51f4e38ce026b3c3bb64fd89045faba5d7ff207f0d13ff81e0d02ec2f41e",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "changed"
+        },
+        {
+          "path": "prover/service.mjs",
+          "recorded": "6a484b22d334030c3626ea5a286faf97792e3a609a3537130651f34f6d8068b8",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "changed"
+        },
+        {
+          "path": "prover/start.mjs",
+          "recorded": "bb94b162657c5388b8a262e4a14d4eb03b21e3c7d2d70dfa56044ea8be617dd5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "changed"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "recorded": "a96e1aa3d1702c5a66a7dd5c4273a4646b87bc7a6313aa87c3a39369cc213b28",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "changed"
+        }
+      ],
+      "counts": {
+        "same": 28,
+        "changed": 22,
+        "missing": 0
+      }
+    }
+  ],
+  "recent": [
+    {
+      "evidence": "name-bio",
+      "source": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+      "counts": {
+        "same": 144,
+        "changed": 5
+      },
+      "files": [
+        {
+          "path": "apps/rolling/DESIGN.md",
+          "before": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "current": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/README.md",
+          "before": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "current": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/app.mjs",
+          "before": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "current": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/avatar-upload.mjs",
+          "before": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "current": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/fixtures.mjs",
+          "before": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "current": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/index.html",
+          "before": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "current": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/live.html",
+          "before": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "current": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/model.mjs",
+          "before": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "current": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/navigation.mjs",
+          "before": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "current": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/profile-view.mjs",
+          "before": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "current": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "before": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader.mjs",
+          "before": "332b10e60994372f1d267d77b8192c515630ec282cee0ac04249ff84e56c9a64",
+          "current": "b4e830e08f0e850791948ee2220ac2721ca5007aa98f2682bb1c5bf35af64d59",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/serve.mjs",
+          "before": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "current": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "before": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/style.css",
+          "before": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "current": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-panel.mjs",
+          "before": "111b7d7c4ceaeb342e4c64e06943b0a38285818b02e85f5c4f140ec2a87d7c6d",
+          "current": "a76470eeb167ee856a15cb4f25291f9a4e7a7799cb6791e0380e9362ec59b106",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/wallet-runtime.mjs",
+          "before": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "current": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-session.mjs",
+          "before": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "current": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        },
+        {
+          "path": "noir-dependencies.json",
+          "before": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "current": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "before": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "same"
+        },
+        {
+          "path": "package.json",
+          "before": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "current": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "status": "same"
+        },
+        {
+          "path": "prover/QUALIFICATION.md",
+          "before": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "current": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "status": "same"
+        },
+        {
+          "path": "prover/README.md",
+          "before": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "current": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "status": "same"
+        },
+        {
+          "path": "prover/ROLLING.md",
+          "before": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "current": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "status": "same"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "before": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "same"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "before": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-block-native.mjs",
+          "before": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "current": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-registration.mjs",
+          "before": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "current": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-transform.mjs",
+          "before": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "current": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "status": "same"
+        },
+        {
+          "path": "prover/config.example.json",
+          "before": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "current": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "before": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binaries.json",
+          "before": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "current": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "before": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "before": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "before": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "before": "e8a615d6f5c0183aad1327a598fd819f71ddda77d9a23c76d800f234e2354d36",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "changed"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "before": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "before": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "same"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "before": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.json",
+          "before": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "current": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "before": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "before": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "before": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "same"
+        },
+        {
+          "path": "prover/service.mjs",
+          "before": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "same"
+        },
+        {
+          "path": "prover/start.mjs",
+          "before": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker-native-profile.mjs",
+          "before": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "current": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "before": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "same"
+        },
+        {
+          "path": "shared/account.js",
+          "before": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "current": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "status": "same"
+        },
+        {
+          "path": "shared/app-env.js",
+          "before": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "current": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "status": "same"
+        },
+        {
+          "path": "shared/application-nullifier.mjs",
+          "before": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/application.js",
+          "before": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "current": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-lib.js",
+          "before": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "current": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "before": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec_bundle.js",
+          "before": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "current": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.js",
+          "before": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "current": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.json",
+          "before": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "current": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-view.js",
+          "before": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "current": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-chonk-stream.mjs",
+          "before": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "current": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-connection-check.js",
+          "before": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "current": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-readiness.js",
+          "before": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "current": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-runtime-policy.mjs",
+          "before": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "current": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "status": "same"
+        },
+        {
+          "path": "shared/claim-secret-store.js",
+          "before": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "current": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "status": "same"
+        },
+        {
+          "path": "shared/cli-simulator.mjs",
+          "before": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "current": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "status": "same"
+        },
+        {
+          "path": "shared/crs-client.js",
+          "before": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "current": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "status": "same"
+        },
+        {
+          "path": "shared/deployment-manifest.mjs",
+          "before": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "current": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "status": "same"
+        },
+        {
+          "path": "shared/deposit-custody.mjs",
+          "before": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "current": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "before": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethers.min.js",
+          "before": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "current": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "status": "same"
+        },
+        {
+          "path": "shared/extract_thread_worker.cjs",
+          "before": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "current": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "status": "same"
+        },
+        {
+          "path": "shared/fee-onboarding.mjs",
+          "before": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "current": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "status": "same"
+        },
+        {
+          "path": "shared/helpers.js",
+          "before": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "current": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "before": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-indexeddb.mjs",
+          "before": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "current": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "before": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "before": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "same"
+        },
+        {
+          "path": "shared/moderation-policy.js",
+          "before": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "current": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "status": "same"
+        },
+        {
+          "path": "shared/operation-state.js",
+          "before": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "current": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "status": "same"
+        },
+        {
+          "path": "shared/passkey-wallet.js",
+          "before": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "current": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "status": "same"
+        },
+        {
+          "path": "shared/patch_bundle_workers.cjs",
+          "before": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "current": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.json",
+          "before": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "current": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.mjs",
+          "before": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "current": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "status": "same"
+        },
+        {
+          "path": "shared/poseidon2.js",
+          "before": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "current": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "before": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "before": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "before": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "before": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "before": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "before": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-commitments.mjs",
+          "before": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "current": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-schema.mjs",
+          "before": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "current": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "before": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-preference.js",
+          "before": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "current": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-toggle.js",
+          "before": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "current": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-bootstrap.js",
+          "before": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "current": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config-ui.js",
+          "before": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "current": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config.js",
+          "before": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "current": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-board-directory.mjs",
+          "before": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "current": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-browser.mjs",
+          "before": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "current": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-cli.mjs",
+          "before": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "current": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-connection.mjs",
+          "before": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "current": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "before": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-metadata.mjs",
+          "before": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "current": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-projection.mjs",
+          "before": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "current": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-rpc.mjs",
+          "before": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "current": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-source.mjs",
+          "before": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "current": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "before": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed.mjs",
+          "before": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "current": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "before": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-wire.mjs",
+          "before": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "current": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/ARCHITECTURE.md",
+          "before": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "current": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/PRIVACY_DESIGN.md",
+          "before": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "current": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-funding.mjs",
+          "before": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "current": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-recovery.mjs",
+          "before": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "current": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-wallet.mjs",
+          "before": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "current": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "before": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/cold-preference-reader.mjs",
+          "before": "76624647146025d7275f5dee257b205adaf0556bf8ea0bde682d50f92722adad",
+          "current": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/compact-block.mjs",
+          "before": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "current": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/compact-client.mjs",
+          "before": "a4952882cb3611dfd12281c1d009ff72bee17b0f895475d5957418f3ad3c4ecb",
+          "current": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "before": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "before": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "before": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "before": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-events.mjs",
+          "before": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "current": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-reader.mjs",
+          "before": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "current": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preferences.mjs",
+          "before": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "current": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/private-views.mjs",
+          "before": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "current": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "before": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "before": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "before": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-sqlite.mjs",
+          "before": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "current": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "before": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "before": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rpc-config.example.json",
+          "before": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "current": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "before": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "before": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/styles.css",
+          "before": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "current": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "status": "same"
+        },
+        {
+          "path": "shared/thread_worker.js",
+          "before": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "current": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "status": "same"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "before": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "before": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "before": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-buttons.js",
+          "before": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "current": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-providers.js",
+          "before": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "current": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "status": "same"
+        }
+      ]
+    },
+    {
+      "evidence": "subboard",
+      "source": "78ad4718583ca14a4bdc005f949e5db2db277744",
+      "counts": {
+        "same": 146,
+        "changed": 3
+      },
+      "files": [
+        {
+          "path": "apps/rolling/DESIGN.md",
+          "before": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "current": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/README.md",
+          "before": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "current": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/app.mjs",
+          "before": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "current": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/avatar-upload.mjs",
+          "before": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "current": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/fixtures.mjs",
+          "before": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "current": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/index.html",
+          "before": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "current": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/live.html",
+          "before": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "current": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/model.mjs",
+          "before": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "current": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/navigation.mjs",
+          "before": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "current": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/profile-view.mjs",
+          "before": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "current": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "before": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader.mjs",
+          "before": "332b10e60994372f1d267d77b8192c515630ec282cee0ac04249ff84e56c9a64",
+          "current": "b4e830e08f0e850791948ee2220ac2721ca5007aa98f2682bb1c5bf35af64d59",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/serve.mjs",
+          "before": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "current": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "before": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/style.css",
+          "before": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "current": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-panel.mjs",
+          "before": "111b7d7c4ceaeb342e4c64e06943b0a38285818b02e85f5c4f140ec2a87d7c6d",
+          "current": "a76470eeb167ee856a15cb4f25291f9a4e7a7799cb6791e0380e9362ec59b106",
+          "status": "changed"
+        },
+        {
+          "path": "apps/rolling/wallet-runtime.mjs",
+          "before": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "current": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-session.mjs",
+          "before": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "current": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        },
+        {
+          "path": "noir-dependencies.json",
+          "before": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "current": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "before": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "same"
+        },
+        {
+          "path": "package.json",
+          "before": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "current": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "status": "same"
+        },
+        {
+          "path": "prover/QUALIFICATION.md",
+          "before": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "current": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "status": "same"
+        },
+        {
+          "path": "prover/README.md",
+          "before": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "current": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "status": "same"
+        },
+        {
+          "path": "prover/ROLLING.md",
+          "before": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "current": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "status": "same"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "before": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "same"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "before": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-block-native.mjs",
+          "before": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "current": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-registration.mjs",
+          "before": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "current": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-transform.mjs",
+          "before": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "current": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "status": "same"
+        },
+        {
+          "path": "prover/config.example.json",
+          "before": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "current": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "before": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binaries.json",
+          "before": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "current": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "before": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "before": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "before": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "before": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "same"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "before": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "before": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "same"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "before": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.json",
+          "before": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "current": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "before": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "before": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "before": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "same"
+        },
+        {
+          "path": "prover/service.mjs",
+          "before": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "same"
+        },
+        {
+          "path": "prover/start.mjs",
+          "before": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker-native-profile.mjs",
+          "before": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "current": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "before": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "same"
+        },
+        {
+          "path": "shared/account.js",
+          "before": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "current": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "status": "same"
+        },
+        {
+          "path": "shared/app-env.js",
+          "before": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "current": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "status": "same"
+        },
+        {
+          "path": "shared/application-nullifier.mjs",
+          "before": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/application.js",
+          "before": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "current": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-lib.js",
+          "before": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "current": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "before": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec_bundle.js",
+          "before": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "current": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.js",
+          "before": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "current": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.json",
+          "before": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "current": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-view.js",
+          "before": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "current": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-chonk-stream.mjs",
+          "before": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "current": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-connection-check.js",
+          "before": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "current": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-readiness.js",
+          "before": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "current": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-runtime-policy.mjs",
+          "before": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "current": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "status": "same"
+        },
+        {
+          "path": "shared/claim-secret-store.js",
+          "before": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "current": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "status": "same"
+        },
+        {
+          "path": "shared/cli-simulator.mjs",
+          "before": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "current": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "status": "same"
+        },
+        {
+          "path": "shared/crs-client.js",
+          "before": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "current": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "status": "same"
+        },
+        {
+          "path": "shared/deployment-manifest.mjs",
+          "before": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "current": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "status": "same"
+        },
+        {
+          "path": "shared/deposit-custody.mjs",
+          "before": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "current": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "before": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethers.min.js",
+          "before": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "current": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "status": "same"
+        },
+        {
+          "path": "shared/extract_thread_worker.cjs",
+          "before": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "current": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "status": "same"
+        },
+        {
+          "path": "shared/fee-onboarding.mjs",
+          "before": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "current": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "status": "same"
+        },
+        {
+          "path": "shared/helpers.js",
+          "before": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "current": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "before": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-indexeddb.mjs",
+          "before": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "current": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "before": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "before": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "same"
+        },
+        {
+          "path": "shared/moderation-policy.js",
+          "before": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "current": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "status": "same"
+        },
+        {
+          "path": "shared/operation-state.js",
+          "before": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "current": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "status": "same"
+        },
+        {
+          "path": "shared/passkey-wallet.js",
+          "before": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "current": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "status": "same"
+        },
+        {
+          "path": "shared/patch_bundle_workers.cjs",
+          "before": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "current": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.json",
+          "before": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "current": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.mjs",
+          "before": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "current": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "status": "same"
+        },
+        {
+          "path": "shared/poseidon2.js",
+          "before": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "current": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "before": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "before": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "before": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "before": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "before": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "before": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-commitments.mjs",
+          "before": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "current": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-schema.mjs",
+          "before": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "current": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "before": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-preference.js",
+          "before": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "current": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-toggle.js",
+          "before": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "current": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-bootstrap.js",
+          "before": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "current": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config-ui.js",
+          "before": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "current": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config.js",
+          "before": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "current": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-board-directory.mjs",
+          "before": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "current": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-browser.mjs",
+          "before": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "current": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-cli.mjs",
+          "before": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "current": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-connection.mjs",
+          "before": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "current": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "before": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-metadata.mjs",
+          "before": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "current": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-projection.mjs",
+          "before": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "current": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-rpc.mjs",
+          "before": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "current": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-source.mjs",
+          "before": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "current": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "before": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed.mjs",
+          "before": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "current": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "before": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-wire.mjs",
+          "before": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "current": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/ARCHITECTURE.md",
+          "before": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "current": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/PRIVACY_DESIGN.md",
+          "before": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "current": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-funding.mjs",
+          "before": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "current": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-recovery.mjs",
+          "before": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "current": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-wallet.mjs",
+          "before": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "current": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "before": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/cold-preference-reader.mjs",
+          "before": "1cb2528ad658151f0b2a7aa209dfe6f215df7fe6ccbfcd51fbc35c14ef2b9abf",
+          "current": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+          "status": "changed"
+        },
+        {
+          "path": "shared/rolling/compact-block.mjs",
+          "before": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "current": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/compact-client.mjs",
+          "before": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+          "current": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "before": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "before": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "before": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "before": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-events.mjs",
+          "before": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "current": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-reader.mjs",
+          "before": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "current": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preferences.mjs",
+          "before": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "current": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/private-views.mjs",
+          "before": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "current": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "before": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "before": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "before": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-sqlite.mjs",
+          "before": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "current": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "before": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "before": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rpc-config.example.json",
+          "before": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "current": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "before": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "before": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/styles.css",
+          "before": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "current": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "status": "same"
+        },
+        {
+          "path": "shared/thread_worker.js",
+          "before": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "current": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "status": "same"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "before": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "before": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "before": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-buttons.js",
+          "before": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "current": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-providers.js",
+          "before": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "current": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "status": "same"
+        }
+      ]
+    },
+    {
+      "evidence": "fresh-avatar-restore",
+      "source": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "counts": {
+        "same": 149,
+        "changed": 0
+      },
+      "files": [
+        {
+          "path": "apps/rolling/DESIGN.md",
+          "before": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "current": "02f406ad277543268f1851b21d3a1711511238ad663977cb683c2ea391734479",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/README.md",
+          "before": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "current": "c2cd43a65dc8aa1a99d3bc4bd9bd5961f5bd5d184c82b41f161e0c0106181d3f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/app.mjs",
+          "before": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "current": "98c4e56e6844ecf33d483fd90bad9714a0cbdf1c13ffdd326bd31f06ebd00a89",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/avatar-upload.mjs",
+          "before": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "current": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/fixtures.mjs",
+          "before": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "current": "1a622509741431b01f02bc9794563a9ffb694efcb9967fc6b513dbf77624c0cb",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/index.html",
+          "before": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "current": "db0470ff32201811eb18ca2fccfdefcb2fb2f076f3f6b76af90da7a4a4f387a4",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/live.html",
+          "before": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "current": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/model.mjs",
+          "before": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "current": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/navigation.mjs",
+          "before": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "current": "0eaadba97ae42722d9e03f25df41c84fb8cf4995cc1792d7f91af1c737551d56",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/profile-view.mjs",
+          "before": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "current": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader-client.mjs",
+          "before": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "current": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/reader.mjs",
+          "before": "b4e830e08f0e850791948ee2220ac2721ca5007aa98f2682bb1c5bf35af64d59",
+          "current": "b4e830e08f0e850791948ee2220ac2721ca5007aa98f2682bb1c5bf35af64d59",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/serve.mjs",
+          "before": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "current": "6ef4208afa41132c4cd937f3a402d0072445f1f653c7bf7317cd3080f18de801",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/start.mjs",
+          "before": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "current": "bf4443ef1cd5963400100f024628498e74f71109b50fc0180ac8bfe752f9ff82",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/style.css",
+          "before": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "current": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-panel.mjs",
+          "before": "a76470eeb167ee856a15cb4f25291f9a4e7a7799cb6791e0380e9362ec59b106",
+          "current": "a76470eeb167ee856a15cb4f25291f9a4e7a7799cb6791e0380e9362ec59b106",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-runtime.mjs",
+          "before": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "current": "a89b64ff27582791194437bcef5ff9786dfc82a50fa712e477fa875567d43705",
+          "status": "same"
+        },
+        {
+          "path": "apps/rolling/wallet-session.mjs",
+          "before": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "current": "bce310b5c540a13445c47cfb98ae446aed7232a263fbb5ccffddaa84aa071365",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        },
+        {
+          "path": "noir-dependencies.json",
+          "before": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "current": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
+          "status": "same"
+        },
+        {
+          "path": "package-lock.json",
+          "before": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "current": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+          "status": "same"
+        },
+        {
+          "path": "package.json",
+          "before": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "current": "0c6c44fac417341634ed7e689016786ff0540ed43d773f7389c066983159e066",
+          "status": "same"
+        },
+        {
+          "path": "prover/QUALIFICATION.md",
+          "before": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "current": "ecac74fe5e38e0a42d6e8f4d26638fc6de1f5a332d64c2e71b85802e46137a39",
+          "status": "same"
+        },
+        {
+          "path": "prover/README.md",
+          "before": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "current": "7b8cd3e154c0c0c68e31a4e32eea5327783cbc8aec94ddb8249bf469354607ce",
+          "status": "same"
+        },
+        {
+          "path": "prover/ROLLING.md",
+          "before": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "current": "570d667d4fda37f416c974964ba73cb343544bdda744a604f9fabfb5ba510fea",
+          "status": "same"
+        },
+        {
+          "path": "prover/application-policy.mjs",
+          "before": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "current": "a882783e941bfcdddcdce0afab7f8a825878d7c57725e4b2aa4f590973239286",
+          "status": "same"
+        },
+        {
+          "path": "prover/catalog.mjs",
+          "before": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "current": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-block-native.mjs",
+          "before": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "current": "41563ac2a5c739c7bb9312b64a2f6f6b781851d5c0a1b60977b1f0d932fa99ef",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-registration.mjs",
+          "before": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "current": "07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c",
+          "status": "same"
+        },
+        {
+          "path": "prover/compact-node-transform.mjs",
+          "before": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "current": "d7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545",
+          "status": "same"
+        },
+        {
+          "path": "prover/config.example.json",
+          "before": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "current": "cf92794c8d8930ef46bc308baddf47bd7dc71615b2e5b61c49b7ba17e6143cda",
+          "status": "same"
+        },
+        {
+          "path": "prover/interfaces.mjs",
+          "before": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "current": "f35e2ae43ce7c92f764814203df56e63792834f24da0b5b9c1f6fae7dc9166f6",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binaries.json",
+          "before": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "current": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "status": "same"
+        },
+        {
+          "path": "prover/native-binary.mjs",
+          "before": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "current": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+          "status": "same"
+        },
+        {
+          "path": "prover/pin-rolling-artifacts.mjs",
+          "before": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "current": "09e1aad22a911ebaaea29ec045d98bdefd0e863cd88cc7575aec7a7f10133687",
+          "status": "same"
+        },
+        {
+          "path": "prover/plugin-policy.mjs",
+          "before": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "current": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+          "status": "same"
+        },
+        {
+          "path": "prover/private-query.mjs",
+          "before": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "current": "90ee9bb4c543eb9876b148541a5899dfac93b98bbc2562d6376fa1a33e14862a",
+          "status": "same"
+        },
+        {
+          "path": "prover/process-worker.mjs",
+          "before": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "current": "defc333adca99a68af3845aeb081c004e2d933fa4fff30ec9fc449cc78e20cd7",
+          "status": "same"
+        },
+        {
+          "path": "prover/qualify-runtime.mjs",
+          "before": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "current": "9da7524fc7c2e0443bd2c22bd30351366f88caf47a46a54f549bd456f6efff95",
+          "status": "same"
+        },
+        {
+          "path": "prover/queue.mjs",
+          "before": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "current": "ab754be24a487fb00c8e9419d9198c5f0956b9e61aee065e0d7f26efc0b979e7",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.json",
+          "before": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "current": "aaeab6b467fab9c87a03bb53362d2c51cf3ccefd3c5b05104a69403e0916bc93",
+          "status": "same"
+        },
+        {
+          "path": "prover/rolling-artifacts.mjs",
+          "before": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "current": "5c693ec02074d5745a12c72324c5d93b0431f5679d26e4177f0315b75c0d630b",
+          "status": "same"
+        },
+        {
+          "path": "prover/runtime.mjs",
+          "before": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "current": "f93438d334adb093c0e07625f0d99effab081d886f7ebc71ee6005058039b29a",
+          "status": "same"
+        },
+        {
+          "path": "prover/server.mjs",
+          "before": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "current": "5395337796f3465b96ab862478efd86eb05ced7faba6f799dfb6f187e008a417",
+          "status": "same"
+        },
+        {
+          "path": "prover/service.mjs",
+          "before": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "current": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+          "status": "same"
+        },
+        {
+          "path": "prover/start.mjs",
+          "before": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "current": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker-native-profile.mjs",
+          "before": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "current": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+          "status": "same"
+        },
+        {
+          "path": "prover/worker.mjs",
+          "before": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "current": "15763abf058c97efd51e7db834755e7c70ea3c7154fbfbfe8bc27c89f2002600",
+          "status": "same"
+        },
+        {
+          "path": "shared/account.js",
+          "before": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "current": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+          "status": "same"
+        },
+        {
+          "path": "shared/app-env.js",
+          "before": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "current": "b9d0348579d86028547d2a6a5df15774a12d697e11e5df0863c17936dbd7729d",
+          "status": "same"
+        },
+        {
+          "path": "shared/application-nullifier.mjs",
+          "before": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "current": "37230028641c51b72fc450cbb452861b90f58ecb7d825c456e4f1a71df848d37",
+          "status": "same"
+        },
+        {
+          "path": "shared/application.js",
+          "before": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "current": "ebab4687257279a333ff96afaa89c157265bc3510d1a251572649d0ee0219da9",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-lib.js",
+          "before": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "current": "962c1dceef53e7baf57986dea655d9e45aa7fa96d1fd4a7c2d6926885cf49523",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec-node-client.mjs",
+          "before": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "current": "ceea99e08176622edfe707adcbfccd7a9a5afc7f10b279fefdb2394b44b71a5c",
+          "status": "same"
+        },
+        {
+          "path": "shared/aztec_bundle.js",
+          "before": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "current": "4418ca4e73b3d09df35134897094e7de77623f05fe953edd7b52cf5469ec6347",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.js",
+          "before": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "current": "4c98162b2727bd8890bfb42bf11dd7fb732ed735a8da341986c8b120052d77c0",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-catalog.json",
+          "before": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "current": "8354cd759767a700cde2e501866a2be64425a04216abbeb64e2baf0fb8c2dab5",
+          "status": "same"
+        },
+        {
+          "path": "shared/board-view.js",
+          "before": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "current": "9b93f4150aed59e4b2736475efe6056800a091af0ae1f8c94ad61d499729a749",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-chonk-stream.mjs",
+          "before": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "current": "054846b3fe8e83b1ae5dfc5be346b9eb89a85f3f0be91d2135c18c6f417da68c",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-connection-check.js",
+          "before": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "current": "1bf1165e35a07da1e86cb29626ddec84785f827016244155da60a99231fd991b",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-readiness.js",
+          "before": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "current": "62fd221b476826d1b6a0573d9e511da2efbb29c17b94bbda5b4b352263401bbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/browser-runtime-policy.mjs",
+          "before": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "current": "c848b0b81256cfbba734d2038f352bbf3505422962f7821c86b098e582462bf7",
+          "status": "same"
+        },
+        {
+          "path": "shared/claim-secret-store.js",
+          "before": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "current": "2a1846295511ee02afaae6f92f7f554f4e88ff9ebc215411b857bb04169f4bca",
+          "status": "same"
+        },
+        {
+          "path": "shared/cli-simulator.mjs",
+          "before": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "current": "e68693d3212ee6722d41285b511ca0c882076f4aa6ba1606428137386d0dd5cb",
+          "status": "same"
+        },
+        {
+          "path": "shared/crs-client.js",
+          "before": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "current": "7a058831a5138213bb66fa7a9d3c926fb6d5ee2ee550e9cf69841549a130c8d3",
+          "status": "same"
+        },
+        {
+          "path": "shared/deployment-manifest.mjs",
+          "before": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "current": "eb067dc46f4b1d0270b6b0cd6a29c740f70b66014f6a3d6f29f6200d4c0d3e32",
+          "status": "same"
+        },
+        {
+          "path": "shared/deposit-custody.mjs",
+          "before": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "current": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethereum-journal.mjs",
+          "before": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "current": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+          "status": "same"
+        },
+        {
+          "path": "shared/ethers.min.js",
+          "before": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "current": "fd66c04651929c6a37806a37e8217e6b6aac07c7e816ad478f52690b7429bc61",
+          "status": "same"
+        },
+        {
+          "path": "shared/extract_thread_worker.cjs",
+          "before": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "current": "5a8444390852cdbbc68a3a72282b34b957a08303282262023f7f6b997764ae64",
+          "status": "same"
+        },
+        {
+          "path": "shared/fee-onboarding.mjs",
+          "before": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "current": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
+          "status": "same"
+        },
+        {
+          "path": "shared/helpers.js",
+          "before": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "current": "a5d8f92e385f8bea5de53b33fcd3c8b007f01a8af64b6782886c0ba008a5946c",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-backup.mjs",
+          "before": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "current": "791c115afb4a7818937d4a79900d2d3f111825e285492cf533afd3d70f41d173",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-indexeddb.mjs",
+          "before": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "current": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
+          "status": "same"
+        },
+        {
+          "path": "shared/journal-record.mjs",
+          "before": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "current": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
+          "status": "same"
+        },
+        {
+          "path": "shared/l2-journal.mjs",
+          "before": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "current": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
+          "status": "same"
+        },
+        {
+          "path": "shared/moderation-policy.js",
+          "before": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "current": "aa14713ca8dece25fbbb582ec219b33920da98e74b15de53f4a2f7a815f6429d",
+          "status": "same"
+        },
+        {
+          "path": "shared/operation-state.js",
+          "before": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "current": "423df2e96abca05dddbb3623876a0a4ca223fa5df482e0c7ba0a37184288a997",
+          "status": "same"
+        },
+        {
+          "path": "shared/passkey-wallet.js",
+          "before": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "current": "5f27433ccfcba746cd8b8f7b0116c7365f2d6bd744444818d41e9e439aec5060",
+          "status": "same"
+        },
+        {
+          "path": "shared/patch_bundle_workers.cjs",
+          "before": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "current": "db494f4b9168d85c96099153ceea6c0ce4276cfe911865557e37b49b71312110",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.json",
+          "before": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "current": "a3ca0707dc1bfbedd760ecce56a41ed723c6c1fc951aa12c947c08425f8dc9d1",
+          "status": "same"
+        },
+        {
+          "path": "shared/portal-runtime.mjs",
+          "before": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "current": "7fb6c193535226b0eeb98c0b5790a5dce0dab8674086ac4533114089b7fd546b",
+          "status": "same"
+        },
+        {
+          "path": "shared/poseidon2.js",
+          "before": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "current": "a96e48dcd4734518eb781119ce0e8345eb365cf85a3abd03a97245049640111e",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-client.mjs",
+          "before": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "current": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-estimation.mjs",
+          "before": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "current": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-funding.mjs",
+          "before": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "current": "64591d3a13bf21757dca2c8564d824d59bee25d74281b5a2001b36d4061ed452",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-payment.mjs",
+          "before": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "current": "ae73fde77c76b8fa63b348856e19e66f29fd4da7df7030caec772c9247a5f5e0",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-fee-simulation.mjs",
+          "before": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "current": "be337744a36d3ac6d08eea39df1ea74886f1fb9308cd8df87a51ee68a295c358",
+          "status": "same"
+        },
+        {
+          "path": "shared/private-pxe.mjs",
+          "before": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "current": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-commitments.mjs",
+          "before": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "current": "e5595fab13e6c3bc4c731bf59e5d6874fc63b67e0ce62a6a16b4a705a0efe913",
+          "status": "same"
+        },
+        {
+          "path": "shared/protocol-schema.mjs",
+          "before": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "current": "87b49cf70da76e60e89e7ada77b915edef61e1e84372f175ffd6c0d2a51170aa",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-policy.mjs",
+          "before": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "current": "bd383b307dd6a65530281d269e41c5f566341f64c1b80709168ce6b74f67d31c",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-preference.js",
+          "before": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "current": "ddbca7df8d6cb0025ec5eda88f7df8d76bd93764dd1dbff980aabd04e9345fe6",
+          "status": "same"
+        },
+        {
+          "path": "shared/proving-toggle.js",
+          "before": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "current": "e5c0ad162a657a276af2effa2c098062a96262979afb37f3ad66a02ff9df332f",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-bootstrap.js",
+          "before": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "current": "e0ecc5e69c174ab582ca8858519bb9cab02146479f723dcc0b3f58bf457bd23e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config-ui.js",
+          "before": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "current": "1ad937556e4ee6fb9f069736900fc3bb87b5eccedf61004598356f76b2d6c6ce",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-app-config.js",
+          "before": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "current": "0420e783d6ca001a8be8d7e22742c230db3aad9470fc1f49e8e3a57d69dcaf45",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-board-directory.mjs",
+          "before": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "current": "48b4bd07b4361169eab3e82d467c1645a595fc74a490119c9332400363e49e7e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-browser.mjs",
+          "before": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "current": "94da78ab1213c366003a4fa6af3090e93884d47b47e66788994bd13d857b1905",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-cli.mjs",
+          "before": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "current": "985dee9c875bf116789a502b27dfe89eaf24f1e91c53c98ff2fab4e51dc817d4",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-connection.mjs",
+          "before": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "current": "76c88a631c4531c9dc3e3259e9d5fd7fa4f932c6c63999536e6727fcc3772da2",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-file-storage.mjs",
+          "before": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "current": "f78d2b8ef28c3ef8e43dd787b0985b090568bd013eed40934939994b44ace907",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-metadata.mjs",
+          "before": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "current": "0f35dd8ad998db0f1cb97e0f373bd49ae832d7ee043d74260172942a7a90c884",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-projection.mjs",
+          "before": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "current": "c6d4d1c49a91f7cfeffe59c794e02b5b080692107a4b0bade135a786a93c4f5e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-rpc.mjs",
+          "before": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "current": "e9a09ce78928cdc72698d9e56c65cd72700895b4bd9dbabb9fb3e75ff5e78c3e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-source.mjs",
+          "before": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "current": "d68a0775f697a24092502bce2ae3192e07dbefe9348bc37f45065f69621588b1",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed-storage.mjs",
+          "before": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "current": "c79e3d990cf8e60c6a16706405a86173f5291815cb2ccf1292aedb32bc1d535e",
+          "status": "same"
+        },
+        {
+          "path": "shared/public-feed.mjs",
+          "before": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "current": "7cc5ac09cbedd27180b430997ae4e91185c863bca05e69b8e9ea24a2f398b1e2",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-client.mjs",
+          "before": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "current": "529394c9128318fa14dddd289f0aab9a5fc5e98b95413883e91b6310b58fecae",
+          "status": "same"
+        },
+        {
+          "path": "shared/remote-prover-wire.mjs",
+          "before": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "current": "800c5075a0eaf5ebb499f929cfd0a83faf88a6a54f5559e0afee609171e7ed7a",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/ARCHITECTURE.md",
+          "before": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "current": "6b51582c4c1bbcd264e38f69a24013a18418f6d1f38271a02cc0497a85c972e4",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/PRIVACY_DESIGN.md",
+          "before": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "current": "01aba893d4de055abb3cc0de9ec76fead366e497d78fece722a5ebc4d700d389",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-funding.mjs",
+          "before": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "current": "c2c9574f6d1b7b630808de2fb313961b2a4e8f6279a7525b209e5a95cf6b7377",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-recovery.mjs",
+          "before": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "current": "3b811190fc04c62d44d2847f1fe2b0fc57193feb00da77c6621a949c5b7a74eb",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/aggregate-wallet.mjs",
+          "before": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "current": "7d5e09d5664327e7f359b53f6faf4079cee1fc1313ae6cacb7c1ac5cab3967af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/application.mjs",
+          "before": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "current": "6afd935e28c367c60782119edbec0b598603c9f57860f762238f05bfa1a27bc2",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/cold-preference-reader.mjs",
+          "before": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+          "current": "a25a35c70d47cf9a9330158e54b58247fd4eae3cd40b669038b82c14e90add91",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/compact-block.mjs",
+          "before": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "current": "c31fdd48947b636c048a07aba2f4b10a12bda6124b53540ee9e0826234ea26af",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/compact-client.mjs",
+          "before": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+          "current": "06b503a927de05c71bb529135ab1b58e45c1599fd19d73f0b99297efd5f04744",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/deployment.mjs",
+          "before": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "current": "385e9790debbf36f93f4cc3eb127d7be2f67c7cee9789f99d065be1f329fd475",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/funding-receipts.mjs",
+          "before": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "current": "271ad8caa3bf6c544f4c9c3a23e5d19d7d68399cab5bd3ea27ac92e3d504f264",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/invocation.mjs",
+          "before": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "current": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/name-policy.mjs",
+          "before": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "current": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-events.mjs",
+          "before": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "current": "111190250df4e999efe24e36ca12724d3edfc6561d2d36d9919dbf1fc4478267",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preference-reader.mjs",
+          "before": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "current": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/preferences.mjs",
+          "before": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "current": "724e803c249305d4b223f8269a3811f7cf8e5768c701923edb95f915f48bed82",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/private-views.mjs",
+          "before": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "current": "dfee59d3254e4d835ad212a7abc53dba16c4ca6fcfca72799ef3175fe843c86d",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-events.mjs",
+          "before": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "current": "fd221cbd2dd294ba792cd362adeb16b92cd56fe27c219f225b6469a378c92605",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-index.mjs",
+          "before": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "current": "39d75966e6885e1c258e66eaa0a6a187d4e31b7c6e68b3415ec87c9804024a62",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-projection.mjs",
+          "before": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "current": "370a1a5e749d23d5bcdc1b8db69a35298388a7d1373441799648bf1fd30a57f5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/public-sqlite.mjs",
+          "before": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "current": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+          "status": "same"
+        },
+        {
+          "path": "shared/rolling/synchronized-application.mjs",
+          "before": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "current": "cfe5403844643a4d26dec73cda7d5301969fe9ff39b50c7377e70e5e12710c3f",
+          "status": "same"
+        },
+        {
+          "path": "shared/routed-kernel-prover.mjs",
+          "before": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "current": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
+          "status": "same"
+        },
+        {
+          "path": "shared/rpc-config.example.json",
+          "before": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "current": "7fef19f5d7ba758fed42af6e7a9b713539053fef7f680a9d5d85936423a41a25",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-entry.mjs",
+          "before": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "current": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
+          "status": "same"
+        },
+        {
+          "path": "shared/sdk-store.mjs",
+          "before": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "current": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+          "status": "same"
+        },
+        {
+          "path": "shared/styles.css",
+          "before": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "current": "240993792e1bd324cb429718c1e4e9c52820b76bf4acc7576afc14bdde78065f",
+          "status": "same"
+        },
+        {
+          "path": "shared/thread_worker.js",
+          "before": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "current": "27b2cca8c6429cdada92ea3e480101e754e438174528613d5d81d60822789e7d",
+          "status": "same"
+        },
+        {
+          "path": "shared/transaction-outcomes.mjs",
+          "before": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "current": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
+          "status": "same"
+        },
+        {
+          "path": "shared/trusted-private-node.mjs",
+          "before": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "current": "4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-backup.js",
+          "before": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "current": "aa3ec28f3242ce744a747a75f1fac2e3afac9326554cf2e687701ea5939a58fc",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-buttons.js",
+          "before": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "current": "0aad93a9e055a29327cecab662f5d1a4d6ca987617fb7abe0dcc3081432da3ed",
+          "status": "same"
+        },
+        {
+          "path": "shared/wallet-providers.js",
+          "before": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "current": "0425b5dae651d4374b290ed25802626e0c4beea6f1d3f68291ef47578eae83d1",
+          "status": "same"
+        }
+      ]
+    }
+  ],
+  "historicalContractSource": [
+    {
+      "label": "profile",
+      "source": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "files": [
+        {
+          "path": "billboard/rolling_contract/Nargo.toml",
+          "before": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+          "current": "713c597eadf4b54bc6b037d738101e5983009a0e42c83d0bb3050a3f35f87f73",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": null,
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": null,
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        }
+      ],
+      "counts": {
+        "same": 4,
+        "changed": 4
+      }
+    },
+    {
+      "label": "subboard",
+      "source": "8003f25ac7d982830a4f50d15796cb2e5096422e",
+      "files": [
+        {
+          "path": "billboard/rolling_contract/Nargo.toml",
+          "before": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+          "current": "713c597eadf4b54bc6b037d738101e5983009a0e42c83d0bb3050a3f35f87f73",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": null,
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": null,
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        }
+      ],
+      "counts": {
+        "same": 4,
+        "changed": 4
+      }
+    },
+    {
+      "label": "name-race",
+      "source": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "files": [
+        {
+          "path": "billboard/rolling_contract/Nargo.toml",
+          "before": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+          "current": "713c597eadf4b54bc6b037d738101e5983009a0e42c83d0bb3050a3f35f87f73",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": null,
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": null,
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        }
+      ],
+      "counts": {
+        "same": 4,
+        "changed": 4
+      }
+    },
+    {
+      "label": "rejected-withdrawal",
+      "source": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "files": [
+        {
+          "path": "billboard/rolling_contract/Nargo.toml",
+          "before": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+          "current": "713c597eadf4b54bc6b037d738101e5983009a0e42c83d0bb3050a3f35f87f73",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/admission.nr",
+          "before": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "current": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/encoding.nr",
+          "before": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "current": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/main.nr",
+          "before": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+          "current": "e467ed6e955043880eed2499314ee4a474716b059f62fbceb0ca02eb901e9938",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/posting.nr",
+          "before": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "current": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+          "status": "same"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preference_recovery.nr",
+          "before": null,
+          "current": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/preferences.nr",
+          "before": null,
+          "current": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
+          "status": "changed"
+        },
+        {
+          "path": "billboard/rolling_contract/src/profiles.nr",
+          "before": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "current": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
+          "status": "same"
+        }
+      ],
+      "counts": {
+        "same": 4,
+        "changed": 4
+      }
+    }
+  ],
+  "selection": "shared/, apps/rolling/, prover/, billboard/rolling_contract/src plus root package/lock/pins; excludes .test., /test/, /testing/, Noir tests files. Exact selected file inventory is supplied; not all deploy/runtime inputs. Historical packets omit Noir source; separate exact Git contract comparison supplied."
+}

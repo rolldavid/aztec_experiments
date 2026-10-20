@@ -1,0 +1,35 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "33e5e40c13f5f6e903c05a3732b51fbad2366757",
+  "packetSha256": "2fa0f7e51e5f75202f18560c4462d450dfbd03b640aa333d4e78a6dbc840554e",
+  "verdict": "accept both actual browser cases and capacity-preserving Grumpkin initialization repair at this source",
+  "checks": {
+    "allPacketHashesAndExactTwoLabels": true,
+    "tests": 2,
+    "pass": 2,
+    "failSkipCancelTodo": 0,
+    "all3236PinsRehashed": true,
+    "ownedTreeAndBrowserContextServerCleanup": true,
+    "shortTempAbsent": true,
+    "privateErrorFile0600HashOnlyVerified": true,
+    "elapsedMs": 6936,
+    "peakTreeRSSKiB": 1820688,
+    "actualAsyncWasmWorkerOneThread": true,
+    "allThreeFullCRSHashesPassedBeforeSRS": true,
+    "bn254Points": 524288,
+    "grumpkinPoints": 131072,
+    "grumpkinBytes": 8388608,
+    "allPrivateDiscoveryProofSendTraffic": 0,
+    "observerAndPageErrors": 0
+  },
+  "scope": [
+    "Original real SDK custody/export/recovery test against labelled unavailable private deployment.",
+    "Public-only production BB/WASM/CRS initializer using normal rebuilt assets."
+  ],
+  "historicalFailure": "20578 original complete-chunk failure remains retained; corrected capacity-preserving full two-chunk input now succeeds through original initializer.",
+  "holds": [
+    "No genuine application cold recovery/browser journey, reorg marker, nativeAMD64 or wholeG07 acceptance.",
+    "Any source composition requires exact subject-byte carry; no extra chain run authorized."
+  ],
+  "findings": []
+}

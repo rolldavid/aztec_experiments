@@ -1,0 +1,6 @@
+{
+  "before": "rejects identical authenticated payload reencrypted with fresh IV",
+  "after": "accepts without replacing local bytes",
+  "realAEAD": true,
+  "transactions": 0
+}

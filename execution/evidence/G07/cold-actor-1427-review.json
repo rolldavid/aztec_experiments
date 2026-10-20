@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "1427ff118a947f8e73262b1e9e4c6b68a2af5039",
+  "base": "cf46b92af58279b1e7111afc8be2f9adffc0279f",
+  "verdict": "APPROVED source-level optional harness observation; parent wiring and actual measurements remain separate",
+  "findings": [],
+  "sourceSha256": {
+    "scripts/testing/rolling-application-actor.mjs": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638",
+    "scripts/testing/rolling-application-actor.test.mjs": "648c97e54319c3005e1a2acb3d83379acefd20f4e7c8245db26ec4bea444d93c"
+  },
+  "analysis": [
+    "Own-data wrapCall capability captured before awaits. The trusted approved cf46 observer is a harness capability, not an arbitrary production plugin security boundary.",
+    "createPXE invocation preserves sdk receiver; exact branded PXE/node identities remain intact. Context/provenance validation precedes mutation of public instance methods. No prototype, node facade, private synchronization service or raw storage changes.",
+    "sync/events wrappers installed once before registration/initial sync/lazy reader binding; raw current application head callback rebound after journal rebuild, so no nested actor lease or extra synchronization.",
+    "Original close/partial-init cleanup, account guard, store ownership, queue and await behavior remain unchanged. Metrics owns no service or cleanup lifecycle.",
+    "Approved helper preserves original Promise/value/error, only fixed aggregate data, and reports unsupported observation. Discovery/fold/serialized-byte coverage remains unobserved."
+  ],
+  "independentChecks": [
+    {
+      "check": "Pinned Node syntax",
+      "result": "PASS"
+    },
+    {
+      "check": "Pure cf46 metrics suite",
+      "tests": 22,
+      "passed": 22,
+      "skipped": 0,
+      "durationMs": 264.759167,
+      "log": "execution/evidence/G07/cold-actor-1427-pure-metrics-tests.log"
+    }
+  ],
+  "workerChecksVerifiedByHash": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-actor-observation/metrics-first.log",
+      "sha256": "da35dbe8e0882ae1121497a89872e638f04b5f9b9d27793973f6aca8f1fbd157",
+      "claimedResult": "15/15 pass, first focused source"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/execution/evidence/G07/cold-actor-observation/affected-final.log",
+      "sha256": "e253758bd362cc0d7a7d071a2f2cc2ec2f7dcc59bc7bb1132498c441815f7a0f",
+      "claimedResult": "82/82 pass; no skips, failures or cancellations"
+    }
+  ],
+  "testLimit": "Actor tests independently inspected but not executed during parent genuine marker run: they call actual Poseidon/SDK and can initialize BB. Recorded worker82 checks are labelled SDK/PXE/node doubles, not genuine encrypted discovery. No reviewer native/browser/service execution.",
+  "integrationRequirements": [
+    "Use only approved cf46 metrics or semantically equivalent reviewed wrapper; no arbitrary metrics callback in production UI.",
+    "Parent source must bind helper and actor revisions, fixed cold interval and receiver counts; bytes remain unobserved without authentic serialization boundary.",
+    "Keep genuine exact head/state, empty local store and no proof/send assertions independent from metrics; fail or label incomplete observation on any unsupported/pending/overflow condition.",
+    "Future capacity claims need actual complete encrypted discovery measurements; this approval adds no qualification."
+  ]
+}

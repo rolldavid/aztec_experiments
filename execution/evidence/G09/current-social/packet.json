@@ -1,0 +1,491 @@
+{
+  "task": "G06-current-social-journey",
+  "related": "G05-current-subboard-journey",
+  "sourceRevision": "39dbff586a5092349c32d93b721d5417733e3532",
+  "runtimeSha256": "dfe0f3c85566e5a01c54632eadc42e637a6d8ddf539cc79e253201d10f94b2c2",
+  "at": "2026-10-15T13:54:30.236601+00:00",
+  "passed": true,
+  "newSocialSends": 3,
+  "includingPriorSubboardSends": 4,
+  "actions": [
+    {
+      "step": "01-subboard",
+      "canonicalAndPublicAcceptance": true,
+      "originalObserverPassed": true,
+      "scope": "Native/PXE proofs disabled; actual UI prepare/review/submit and canonical read-only effect verification",
+      "elapsedMs": 35881,
+      "maximumFee": "42007592701158",
+      "feeCap": "1000000000000000",
+      "transactionFee": "22579505400000",
+      "position": {
+        "blockNumber": "663",
+        "blockHash": "0x1eccfecb397e972a93bb7d65d872899a947a1b5e694f2e39af2dbcee7ef81428",
+        "txHash": "0x0f8355a3d1ca74c4c144affa04f9c5e5771a5c9f999307d48a9127d79b0deca0",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "eventType": "SubboardCreated",
+      "signedBytesSha256": "5597dea5331627c650f0787695cec72c868e8b227b03ff84ed061c3903803a78",
+      "effectSha256": "fc7a59c3bd11c362dae3a8bc13be454a55a34b50fcbf87ac56b4e89907f3202c",
+      "sends": 1,
+      "blockedRequests": 0,
+      "inspectionErrors": 0,
+      "contextClosed": true,
+      "ownedTreeAbsent": true,
+      "originalBackupUnchanged": true,
+      "subboard": {
+        "id": "15871475757490455924480017165732741444175512285364576713417295448282780379210",
+        "slug": "policy-union-20261015",
+        "name": "Policy Union",
+        "description": "Development policy-union acceptance",
+        "rules": "No advertising products for sale.",
+        "creationVersion": "1",
+        "rejected": false,
+        "rejection": null,
+        "mainVersion": "1",
+        "mainRules": "No threats."
+      },
+      "publicUi": {
+        "directorySearch": true,
+        "stableBoardLink": true,
+        "parentAndLocalRules": true,
+        "postingEntryEnabled": true
+      }
+    },
+    {
+      "step": "02-apricot",
+      "canonicalAndPublicAcceptance": true,
+      "originalObserverPassed": false,
+      "scope": "Native/PXE proofs disabled; actual UI prepare/review/submit and canonical read-only effect verification",
+      "elapsedMs": 40802,
+      "maximumFee": "41217917985300",
+      "feeCap": "1000000000000000",
+      "transactionFee": "22155573000000",
+      "position": {
+        "blockNumber": "682",
+        "blockHash": "0x1ac762d7d9743a5bd0541508c32ec6324def832c4d9f66dd3b01ec05a998680f",
+        "txHash": "0x265493e51055a57c9e49c795528259e438bb4c42ae69192b7e6e457f518df48c",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "eventType": "PostPublished",
+      "signedBytesSha256": "ff7050052b3d37ea07a7f3b033604bbfad9068a7192417ba470d3a45ea111f91",
+      "effectSha256": "4e04a9b1e462efee19671ea5363ae6871276aceb617ffa68395e185af845c7f2",
+      "sends": 1,
+      "blockedRequests": 0,
+      "inspectionErrors": 0,
+      "contextClosed": true,
+      "ownedTreeAbsent": true,
+      "originalBackupUnchanged": true,
+      "publicPost": {
+        "id": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+        "record": {
+          "subboard": "15871475757490455924480017165732741444175512285364576713417295448282780379210",
+          "parent": "0",
+          "root": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+          "kind": "1",
+          "name_id": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+          "reference": "0",
+          "content_digest": "11016578899863219933114757738849571081846287930554647482261100632865606896543"
+        },
+        "text": "The passphrase is apricot.",
+        "mainVersion": "1",
+        "localVersion": "1",
+        "likes": "0",
+        "removal": null,
+        "bot": null
+      },
+      "publicUi": {
+        "path": ".build/g09-current-ui/social/result.json",
+        "sha256": "292f1397d5731a688ed93a2280fffe8fe573e8cb75be84063bed96bf8c073a87"
+      },
+      "preservedFailure": {
+        "stage": "canonical-public-correlation",
+        "code": "ERR_ASSERTION",
+        "cause": "Fixture compared decimal public name_id with hexadecimal select value; exact BigInt identity equals. Original failed observer remains unchanged.",
+        "reconciliation": {
+          "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/accepted-result.json",
+          "bytes": 17955,
+          "sha256": "43abf76c3b9fb5381f28687bab9d50a62a89dbd4cd0cc7e7a05cebaf54ee985b"
+        },
+        "readonlyUi": {
+          "path": ".build/g09-current-ui/social/result.json",
+          "bytes": 1564,
+          "sha256": "292f1397d5731a688ed93a2280fffe8fe573e8cb75be84063bed96bf8c073a87"
+        }
+      }
+    },
+    {
+      "step": "05-anonymous-reply",
+      "canonicalAndPublicAcceptance": true,
+      "originalObserverPassed": true,
+      "scope": "Native/PXE proofs disabled; actual UI prepare/review/submit and canonical read-only effect verification",
+      "elapsedMs": 43871,
+      "maximumFee": "39970723170714",
+      "feeCap": "1000000000000000",
+      "transactionFee": "21486024600000",
+      "position": {
+        "blockNumber": "688",
+        "blockHash": "0x01c002c744f96cac7b24220b3dc92b0e64ce13cf91800bc748f99b960db6010e",
+        "txHash": "0x0e3889245a559dbca68a3e7cc82216dc9d2baf1e2adb1ccbf5407fbc6c5be6e5",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "eventType": "PostPublished",
+      "signedBytesSha256": "8ac20f9cd6a745f6a34f061891326c11e1d2e15768143975220327cdfec95a6c",
+      "effectSha256": "91bfe475fd6756b484be5062d30d461a802d53a54841a404c59363fc1c7112a4",
+      "sends": 1,
+      "blockedRequests": 0,
+      "inspectionErrors": 0,
+      "contextClosed": true,
+      "ownedTreeAbsent": true,
+      "originalBackupUnchanged": true,
+      "publicPost": {
+        "id": "3109230518034972853640518605994987186759313585510910494881784899134497775442",
+        "record": {
+          "subboard": "15871475757490455924480017165732741444175512285364576713417295448282780379210",
+          "parent": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+          "root": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+          "kind": "1",
+          "name_id": "0",
+          "reference": "0",
+          "content_digest": "732863165411753371979395685477169486767353146129520931642506461479469085753"
+        },
+        "text": "Thanks for sharing this apricot thought.",
+        "mainVersion": "1",
+        "localVersion": "1",
+        "likes": "0",
+        "removal": null,
+        "bot": null
+      },
+      "publicUi": {
+        "thread": true,
+        "text": true,
+        "author": true,
+        "likeCount": null
+      }
+    },
+    {
+      "step": "06-like",
+      "canonicalAndPublicAcceptance": true,
+      "originalObserverPassed": true,
+      "scope": "Native/PXE proofs disabled; actual UI prepare/review/submit and canonical read-only effect verification",
+      "elapsedMs": 33918,
+      "maximumFee": "15514056075042",
+      "feeCap": "1000000000000000",
+      "transactionFee": "8356666200000",
+      "position": {
+        "blockNumber": "690",
+        "blockHash": "0x1ff4ce49315e6c06d77272ca78cac92301e5433c65d05f299218d3a5fe87ca7b",
+        "txHash": "0x1de373c4ec1f69edffc4170aba33a1e6fbeb62e7895b7cc7c05ca556516f18fb",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "eventType": "LikeChanged",
+      "signedBytesSha256": "f44487dc95b832d6f6aefea66d8a2889e7e13e09c4dd467aec921b0747e908d6",
+      "effectSha256": "7bbdc5ce129e337692ef96f21cb9fe5f9dc5fd5aefc8eabf125ab3792ffc6cac",
+      "sends": 1,
+      "blockedRequests": 0,
+      "inspectionErrors": 0,
+      "contextClosed": true,
+      "ownedTreeAbsent": true,
+      "originalBackupUnchanged": true,
+      "publicPost": {
+        "id": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+        "record": {
+          "subboard": "15871475757490455924480017165732741444175512285364576713417295448282780379210",
+          "parent": "0",
+          "root": "17151702297251269509666759368903013107200002789920986473610794860918684764333",
+          "kind": "1",
+          "name_id": "19124043160244607135829281861091008788781661543597080479583742255491724648968",
+          "reference": "0",
+          "content_digest": "11016578899863219933114757738849571081846287930554647482261100632865606896543"
+        },
+        "text": "The passphrase is apricot.",
+        "mainVersion": "1",
+        "localVersion": "1",
+        "likes": "1",
+        "removal": null,
+        "bot": null
+      },
+      "publicUi": {
+        "thread": true,
+        "text": true,
+        "author": true,
+        "likeCount": 1
+      }
+    }
+  ],
+  "modelCalls": 0,
+  "fundingActions": 0,
+  "originalFailedObserverPreserved": true,
+  "latestWorkflow": {
+    "type": "like",
+    "status": "confirmed",
+    "txHash": "0x1de373c4ec1f69edffc4170aba33a1e6fbeb62e7895b7cc7c05ca556516f18fb",
+    "profile": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/attempt3/wallet/profile",
+    "doNotReplay": true
+  },
+  "limitations": [
+    "Not moderation, parent-policy-union or model acceptance. Advert and all policy/model actions remain unexecuted.",
+    "Native/PXE proofs disabled; no real-proof/testnet/release qualification.",
+    "Same funded account used named post, anonymous reply and like; no cross-account unlinkability claim.",
+    "Existing account has posting collateral; no zero-collateral creation claim.",
+    "Original post run observer failed after canonical receipt on a decimal/hex fixture comparison; separate no-wallet read-only UI confirmation closes its public check without replay.",
+    "Direct canonical receipt/effect reads and public confirmation fetches are outside browser observer counters.",
+    "Packets reference private signed wires/effects for local independent review; these raw files must not be committed or published.",
+    "No new encrypted export required or imported; latest authoritative wallet profile retained."
+  ],
+  "files": [
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/result.json",
+      "bytes": 12709,
+      "sha256": "212c75e7605974b61501d9726c0512084026d346866a6d6ab987216491004171"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/supervisor.json",
+      "bytes": 4552,
+      "sha256": "755db609796ccbd9547d981dc1121ce12037cf84bbf490c252428349ffa2dc26"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/dispatch-entered.json",
+      "bytes": 410,
+      "sha256": "b48438e5d9fcad15dd3116fb7af2fd7ff565994e77df731d1757b7c912d1aa44"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/prepared.json",
+      "bytes": 843,
+      "sha256": "f0315e894cc9e496cf157338f0ea47e90f8be6978b0c7cfc1f22be2b647f5fc9"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/canonical-events.json",
+      "bytes": 2891,
+      "sha256": "0ca584220b13d0808f01c23ffeb5bba2042fc58e14c01928f71d5647e83c1885"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/effect.bin",
+      "bytes": 3931,
+      "sha256": "fc7a59c3bd11c362dae3a8bc13be454a55a34b50fcbf87ac56b4e89907f3202c"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/wire-request.json",
+      "bytes": 169705,
+      "sha256": "4e8f74f852f3ef4a1d0b65cd48f4026fe9984b41da44cc48a946d6041f89d34e"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/created-board.png",
+      "bytes": 91849,
+      "sha256": "e44f6e97e3c4100124c318afc5728eaa1258dae3dd37e749ca6dfcab4a2d754f"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/result.json",
+      "bytes": 17457,
+      "sha256": "d2c8c6bc0f4d360718d341e5f38ab8072b280c843caefe1b5d6a2c01fbb5a364"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/supervisor.json",
+      "bytes": 4922,
+      "sha256": "e3b3750afccbd1b3d4fd124a430051239447c001f5e027ffb6773c048fc2cdbd"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/dispatch-entered.json",
+      "bytes": 409,
+      "sha256": "092fae384daf04425eb2ce3e80054c11687054dcdab0877e55485545e3bc149f"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/prepared.json",
+      "bytes": 975,
+      "sha256": "d34ae6e590542fa5e8170b48212e9ac859473b41ad04190f21da91548aa212f6"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/canonical-events.json",
+      "bytes": 2348,
+      "sha256": "8771773d29e812ca23ae78f259a47b32c94ff740b9c578fa1949e49a27b72fb8"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/effect.bin",
+      "bytes": 5607,
+      "sha256": "4e04a9b1e462efee19671ea5363ae6871276aceb617ffa68395e185af845c7f2"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/wire-request.json",
+      "bytes": 166186,
+      "sha256": "e8ea7156ff1f538b85540b10b9739233650828af806b636294aeea3b208d5458"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/02-apricot/accepted-result.json",
+      "bytes": 17955,
+      "sha256": "43abf76c3b9fb5381f28687bab9d50a62a89dbd4cd0cc7e7a05cebaf54ee985b"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/result.json",
+      "bytes": 19183,
+      "sha256": "d2ed091c4911c8b720df4d8ddcb1542455cb0428a43c01e5a64c6a2b571d217b"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/supervisor.json",
+      "bytes": 5077,
+      "sha256": "9770b153d12d55a535bb8baa57393c7706f5e58b1adc5e193eb29df5b9c75289"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/dispatch-entered.json",
+      "bytes": 417,
+      "sha256": "cf413cd7f2ee4e11b308ce4fa68cdce6d44e07f30c1ccb7363221c91c343323f"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/prepared.json",
+      "bytes": 1113,
+      "sha256": "e738374fd7721d7b217134cbcac719920f78c8ba0028844b4012fb3b7a025f6f"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/canonical-events.json",
+      "bytes": 2418,
+      "sha256": "6dd3e28abb6258fe08c794779106b4ebcbf16e9bc7abba115e1ebd0dcece58b4"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/effect.bin",
+      "bytes": 4995,
+      "sha256": "91bfe475fd6756b484be5062d30d461a802d53a54841a404c59363fc1c7112a4"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/wire-request.json",
+      "bytes": 166186,
+      "sha256": "1b5fb72963faddcae48abb7876f0d4ebffc3ab0723b32b0ac762fadb291e4155"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/05-anonymous-reply/social-result.png",
+      "bytes": 107772,
+      "sha256": "60f48754a446e5397bf26a6377f64ad3c0b1e36876ec91cce5a8dfa0c3d73d96"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/result.json",
+      "bytes": 15250,
+      "sha256": "0849c4845c6d1fe5eb0bb93a21b38431a421e066c692ac90e85cf106a7830aa3"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/supervisor.json",
+      "bytes": 4413,
+      "sha256": "9c183e111c813b042f951a026d9ddc260b31beb56f2249d48ea590f9d157662e"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/dispatch-entered.json",
+      "bytes": 406,
+      "sha256": "743fffc985492b3b5e9984d03e575b8b7271a2e57799561bc1d4941ae1ddba1a"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/prepared.json",
+      "bytes": 759,
+      "sha256": "3cecaf8564acf8befbed43184e16bf91dc1d8be0d7081b29841f2f23e75a469a"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/canonical-events.json",
+      "bytes": 1253,
+      "sha256": "d14f36f4675c01c1a12d9a35340f1dd9704c36d0e9eda58a85c553920a457317"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/effect.bin",
+      "bytes": 1819,
+      "sha256": "7bbdc5ce129e337692ef96f21cb9fe5f9dc5fd5aefc8eabf125ab3792ffc6cac"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/wire-request.json",
+      "bytes": 163357,
+      "sha256": "9fff9368bb9d65b0af9c7b226a748678021106a5307a6fe7141369b622b6b07c"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/06-like/social-result.png",
+      "bytes": 107462,
+      "sha256": "bd6c19a1cad754081bf2b2c8b0ddcd188ddd48fe2e80b804aed989cbcb52fbae"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/normal-post.mjs",
+      "bytes": 26896,
+      "sha256": "3217629022c7d3d22c92116a1d1a783c574e04eaaa65120fdd8e947ad7bb6ddf"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/normal-post-supervise.mjs",
+      "bytes": 2290,
+      "sha256": "3aa6d9e7bc1e0982e3acaae0b7cf38f36e6063b3b93882d4f468db6daffb2159"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/normal-post.social-initial.mjs",
+      "bytes": 26705,
+      "sha256": "95bcc42d62a0d0a2fd92d639363e11d99e81ab01b3efdf00574e5a782e09770c"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/normal-post-supervise.social-initial.mjs",
+      "bytes": 2290,
+      "sha256": "3aa6d9e7bc1e0982e3acaae0b7cf38f36e6063b3b93882d4f468db6daffb2159"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/action-plan.json",
+      "bytes": 4114,
+      "sha256": "e55d17946e09d1c4459c30f537f4e14f7c9a30d214cdad098b66cd3b8e53567d"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/runtime-binding.json",
+      "bytes": 673,
+      "sha256": "6dd9439e1dc391b7bf6e352b73e90710a18be67adc4e5751a41a3fbca61df015"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/step02-run.log",
+      "bytes": 570,
+      "sha256": "eb2a11654e8845d7e5354ef41ed44f25ccd438df64584dea2d7f03b8a0acb8ee"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/step05-run.log",
+      "bytes": 592,
+      "sha256": "a6479ff397c871bae869eeb047a7826fd814da1a973c68ac4ecc6dd7b8bba4e6"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/step06-run.log",
+      "bytes": 559,
+      "sha256": "0683661f6c03279ec7f17b3c3c89e4ac516a170c99f53155c92151f91a09e439"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/packet.json",
+      "bytes": 6550,
+      "sha256": "1449a63c06cc41915090842519e375997fbddd122940a94282104a0a0dd5a322"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/binding.json",
+      "bytes": 1317,
+      "sha256": "b734a7cbf6e9cb44df851eaef3d152420f40a2800bb81f8157dbc60d690b4a24"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/action-plan.json",
+      "bytes": 4114,
+      "sha256": "e55d17946e09d1c4459c30f537f4e14f7c9a30d214cdad098b66cd3b8e53567d"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/normal-post-supervise.mjs",
+      "bytes": 2205,
+      "sha256": "33d38c8df0b4d6ba3977f7db3e3508dda19b23f23a64834ebdef2230b194281f"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/normal-post.mjs",
+      "bytes": 23660,
+      "sha256": "5cd7732fd20b96eb887836e8ba56164f474b9ce7555810052b55d0ba4fde59b8"
+    },
+    {
+      "path": ".build/g09-current-moderation-journey/policy-union/01-subboard/inputs/runtime-binding.json",
+      "bytes": 651,
+      "sha256": "018b95872c9b872d9badbf70a5da3be3b1109785a3cb21541e81815f327cc795"
+    },
+    {
+      "path": ".build/g09-current-ui/social/apricot-thread.png",
+      "bytes": 85409,
+      "sha256": "f24af2807064fd0cb7a790bb1f34a3a0097d7cbf8796997c3a2e739f1a34c102"
+    },
+    {
+      "path": ".build/g09-current-ui/social/read-only.mjs",
+      "bytes": 5004,
+      "sha256": "2171cd2350c9ecad8977440214901e4cd5ecf77847a4bca2ce62008c8bb19ad7"
+    },
+    {
+      "path": ".build/g09-current-ui/social/result.json",
+      "bytes": 1564,
+      "sha256": "292f1397d5731a688ed93a2280fffe8fe573e8cb75be84063bed96bf8c073a87"
+    }
+  ]
+}

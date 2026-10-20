@@ -1,0 +1,26 @@
+{
+  "task_id": "G09-wallet-delivery",
+  "implementer": "controls_resume2",
+  "candidate": "5cdc69da61b162998c451672a63979f6fc15cc25",
+  "base": "0d5011b556455f4b46740781a946d5fbab6d95eb",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "docs/rolling-deployment.md"
+  ],
+  "required_checks": [
+    "wallet-delivery-documentation"
+  ],
+  "requirements": [
+    "RC41-reproducible-wallet-delivery"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G09-wallet-delivery",
+      "paths": [
+        "docs/rolling-deployment.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ import os,json,pathlib,subprocess,datetime,hashlib
+-P=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-08');E=pathlib.Path.cwd()/'execution/evidence/G02';F='fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e'
++P=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-09');E=pathlib.Path.cwd()/'execution/evidence/G02';F='fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35'
+ def aws(args):
+  q=subprocess.run(['/usr/local/bin/aws',*args,'--profile','message-board-deploy','--region','us-east-1','--no-cli-pager','--output','json'],capture_output=True,timeout=30,env={**os.environ,'AWS_MAX_ATTEMPTS':'1'})
+  if q.returncode:raise RuntimeError('AWS_UNAVAILABLE')
+@@ -8,20 +8,20 @@
+  fd=os.open(P/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  with os.fdopen(fd,'w') as f:json.dump(value,f,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+  fd=os.open(P,os.O_RDONLY);os.fsync(fd);os.close(fd)
+-p=sorted(E.glob('operator08-readonly-*.json'))[-1];obs=json.loads(p.read_text());receipt=obs['finalReceipt'].get('observation',{})
++p=sorted(E.glob('operator09-readonly-*.json'))[-1];obs=json.loads(p.read_text());receipt=obs['finalReceipt'].get('observation',{})
+ assert receipt.get('startup',{}).get('instrumentation',{}).get('runtimeAdapter')=='publicnode-config-v1'
+-assert receipt['startup']['instrumentation']['helperSha256']=='5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9'
+-assert receipt.get('bindingMatches')=={'manifest':True,'bootstrap':True}
++assert receipt['startup']['instrumentation']['helperSha256']=='259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c'
++assert receipt.get('bindingMatches')=={'manifest':True,'bootstrap':True,'qualificationManifest':True}
+ assert receipt.get('qualification',{}).get('passed') is False and receipt['qualification']['stage'] in ['qualification-failed','readiness-failed','qualifier-failed','interrupted-unknown']
+ assert aws(['sts','get-caller-identity'])['Account']=='052665140763'
+ f=aws(['ec2','describe-fleets','--fleet-ids',F])['Fleets'][0]
+ assert f['Type']=='request' and f['TerminateInstancesWithExpiration'] is True
+-assert datetime.datetime.fromisoformat(f['ValidUntil'].replace('Z','+00:00'))==datetime.datetime(2026,10,12,9,54,55,tzinfo=datetime.timezone.utc)
++assert datetime.datetime.fromisoformat(f['ValidUntil'].replace('Z','+00:00'))==datetime.datetime(2026,10,12,13,3,58,tzinfo=datetime.timezone.utc)
+ intent={'schemaVersion':1,'at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'operation':'DeleteFleets','fleetId':F,'terminateInstances':True,'attemptsAllowed':1,'failureEvidence':str(p),'failureEvidenceSha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+ if f['FleetState']=='deleted':result={'alreadyDeleted':True}
+ else:
+- save('fleet-08-delete-intent.json',intent)
+- result=aws(['ec2','delete-fleets','--fleet-ids',F,'--terminate-instances']);save('fleet-08-delete-receipt.json',result)
++ save('fleet-09-delete-intent.json',intent)
++ result=aws(['ec2','delete-fleets','--fleet-ids',F,'--terminate-instances']);save('fleet-09-delete-receipt.json',result)
+  assert not result.get('UnsuccessfulFleetDeletions')
+ safe={'schemaVersion':1,'at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'fleetId':F,'deleteRequestedOrAlreadyDeleted':True,'noReplacement':True,'failureEvidence':str(p),'resourceAbsencePending':True}
+-(E/'operator08-failure-cleanup.json').write_text(json.dumps(safe,indent=2)+'\n');print(json.dumps(safe))
++(E/'operator09-failure-cleanup.json').write_text(json.dumps(safe,indent=2)+'\n');print(json.dumps(safe))

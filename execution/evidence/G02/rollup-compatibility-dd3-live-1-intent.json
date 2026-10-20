@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T13:26:22.178235+00:00",
+  "sourceCommit": "dd3e2bc4e4cf9fe37bf5269deae108d0c4d89d7a",
+  "sourceSha256": "ffbf49fa4fa8329f74c69376d16d058ac5d4b92013085be7ffa9ef82cba3fbd7",
+  "reviewSha256": "a9ea5eb0e624e8a98ad5c4522fd3aabee35e83e46bf6821bd268c0f416907d7d",
+  "bindingSha256": "a4221b6341ad60fb5d91bbf3fb75126730c9dce2c01207bc5478a01758f9dc42",
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/deploy/prover/rollup-compatibility-diagnostic.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/rollup-compatibility-dd3-live-1.json",
+    "--image-binding",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/operator09-compatibility-image-binding.json"
+  ],
+  "provider": "fixed-public-Tenderly-Sepolia",
+  "readOnly": true,
+  "operatorAttempts": 1,
+  "sdkRetries": "installed transport defaults",
+  "deadlineMs": 59000,
+  "parentTimeoutSeconds": 65,
+  "receiptBytesMax": 16384,
+  "liveAuthorization": "Lead exactdd3 one read-only grant after a9ea review",
+  "financialActions": 0,
+  "noFallback": true
+}

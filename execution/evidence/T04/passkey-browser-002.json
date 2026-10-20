@@ -1,0 +1,67 @@
+{
+  "script": "scripts/test-passkey-browser.mjs",
+  "args": [],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "checks": [
+        "creation",
+        "reload",
+        "discovery",
+        "old-credential-preserved"
+      ],
+      "authenticator": "Chrome virtual PRF"
+    }
+  ],
+  "deadlineMs": 60000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 199696,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 199696
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-passkey-browser.mjs": "e1791b98f655fde2b2419d65fa79bc1978a2bd84aa72dd4d20ebe52e3217d845",
+    "shared/passkey-wallet.js": "37634497cda0bd90a89c4bfa82bd759e4c8c0ce8f94811e378cb1f933ed8e6e8",
+    "shared/wallet-buttons.js": "0357ee2a158826108455c88c13613d8aa1a56967f477a3cebbb4fcdc31db6f21",
+    "shared/wallet-backup.js": "8df8f15fe92adb0d1628ac64cbd3bd61761594dbd7a83eeb04655640d3d64a8b",
+    "scripts/run-bounded-browser-check.mjs": "11e17d20ec81b6edf2ce828d83ee74115f7ee5540557bc5b5e792abcc8757f33",
+    "scripts/testing/supervisor.mjs": "518d827972d68cce7bab14f56df6483a260f5f5dc4082b50e2e4bbd80b0723f2",
+    "scripts/owned-test-process-tree.mjs": "ed8a490c451afa0ac2d4f0d6accbd51edfcf33088e59b058422921a070ac6a26",
+    "deploy/hosting-config.mjs": "52ade3bf75fd0ca6bd1fd82b2a67e9d5eff064af09a52751c76693b227b3987d",
+    ".build/apps-manifest.json": "4d691732aab28813599ab8e6b3ad951c1aa31f6f1ea65bd637cad26ba621f728",
+    ".build/sdk/sdk-manifest.json": "98d24f590a07dcb798519e9b42cc9fde82529d190a2075f65d0875b279b33571"
+  },
+  "peakMemory": {
+    "elapsedMs": 1002,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 34253,
+        "ppid": 34241,
+        "rssKiB": 54432
+      },
+      {
+        "role": "ui",
+        "pid": 34254,
+        "ppid": 34253,
+        "rssKiB": 145264
+      }
+    ]
+  },
+  "elapsedMs": 1071,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

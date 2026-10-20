@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-14T01:00:37.856756+00:00",
+  "source": "cf729cb",
+  "state": "preserved stopped predecessor; no replay, reset, mutation or deletion",
+  "originalDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/.build/rolling-devnet-current",
+  "networkPhase": "stopped",
+  "snapshotMatches": true,
+  "leaseAbsent": true,
+  "files": {
+    "deployment-report.json": "2f809a94df2cc388fc5a994aef0babf4a4ac98d41320065aa86d0e74f12e069f",
+    "rolling-wallet-public.json": "d65315674522816355cb2a037ef724de32d180ade5afc6d88d833744247630cd",
+    "deployment.json": "b75176dc19afe6b70c3fb09355001313e600cfdc505ecb232bc0c7e60c82013d",
+    "bok-operator-config.json": "12aab8b1e9639fd71730fdc2dfd85283b92706c74646fe2a51dd77dd51da70ac",
+    "private-fee-publication.json": "ea7e22ba1449435efa4ac57ab097841e37d2df605a3450874891fb182503f120",
+    "bok-operations.json": "11a5c137f71e96e2226f2ea07660957fb77d97e3354ef285e1275de19c0a4b64",
+    "deployment-error-57321.json": "9b2c68bf0f283284efced7d83e619ca57d80004370394aa08c1285aa78af2a55",
+    "settlement-ready-progress.json": "6721e641a78ddf62e315934d9a6477a30d88bba1ecdfb1787efc7fd5797491fc",
+    "readiness.json": "c1ad10813627a0ddace7888c0488d0395ea9e1ebffd7aa4cbbab938e46624a6c",
+    "ethereum-wallet.json": "27cd7b3cb6a06b26648d974745646ab3aa1a0b5e0abf621363b6aa20b0ec2096",
+    "ethereum-state.json": "517e5b38e42e34e7b5b0f099dceb5cfd5e8aad812c3cf1ade01ae0d5353f99a9",
+    "network.json": "5c2f58cf2cdab7bda1aecf493009883fe53cb9b40fd327a96583b97bab0a2017",
+    "operator.json": "d04da1450e60d5b10677c9be5ee877d4416e4d035f430b87f541567d10cc0364",
+    "aztec-wallet.json": "50cd2f19793f74b631ea5832cbc88b025ac664856cc45f8ece8af2ef34388bb2",
+    "deployment-error-60644.json": "6207a79d266a2db88267b83525b4227ffbb976bc009d80d80f57714c9c986fe9",
+    "rolling-public.json": "2e8b7ec6cc6b2cb39d61b4bdbe4eb67ebe0bc384388ca2ae7b9fe16f7b337aee"
+  },
+  "reason": "Actual29886 pruned checkpoints4/5 after downtime; AutomineSequencer requires zero committee whereas original rollup has committee1. New isolated campaign required for supported native settlement configuration. Historical transaction records remain unchanged; no claim that old Bok constructor is canonical."
+}

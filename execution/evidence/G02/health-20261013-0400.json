@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-13T04:00:07.427348+00:00",
+  "mutations": false,
+  "message-board-deploy": {
+    "authenticated": true,
+    "account": "052665140763",
+    "arn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute2_78b72c3c5fe2e36f/zac-williamson"
+  },
+  "message-board-sso": {
+    "authenticated": true,
+    "account": "052665140763",
+    "arn": "arn:aws:sts::052665140763:assumed-role/AWSReservedSSO_MessageBoardCompute_f90529f105b748df/zac-williamson"
+  },
+  "plugin": {
+    "httpStatus": 200,
+    "status": "degraded",
+    "activeJobs": null
+  },
+  "remoteProver": {
+    "errorType": "HTTPError",
+    "httpStatus": 504
+  }
+}

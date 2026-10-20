@@ -1,0 +1,24 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "reviewSha256": "54652ab0d8e29b28bc1afb9ed06b86b08dcf82dc09088de113372dfd96effd1a",
+  "execSession": 6975,
+  "exitCode": 0,
+  "result": {
+    "passed": true,
+    "elapsedMs": 1140,
+    "peakTreeRSSKiB": 270912,
+    "ownedTreeAbsent": true,
+    "protectedUnchanged": true,
+    "tempRemoved": true,
+    "testCount": 19,
+    "noSkipped": true
+  },
+  "protectedCount": 769,
+  "pins": {
+    "result.json": "10a0733e3fcbbed573fedcb1dba5ceec4ac7a6b02c047d021288844997231b21",
+    "build.log": "49f67f7a52ee98cd2ce3e4036be2e91da40791adbadc14812deeb006c071e16a",
+    "execution-intent.json": "ba30b05816502f674cd3ef4e8cf48bbdaf4f46bb43f1d26dbcca8ef874775f25",
+    "review-packet.json": "99224147c65328823a75e21fe817abafa25cb354673a78e839c85ee47f8a82d5"
+  },
+  "scope": "19 labelled local unit/CLI tests; no actual Linux systemd/native qualification; full73 deferred to coherent lead composition; package8 unchanged"
+}

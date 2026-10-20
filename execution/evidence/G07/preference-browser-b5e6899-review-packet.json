@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "b5e6899ec9b93b449ce2bd8a946705886da1eb18",
+  "sourceFiles": {
+    "scripts/testing/rolling-preference-browser.mjs": "d787e6f9607037b5885e0468394753a2affbfedc6d468a3e7cbf7952814d4491",
+    "scripts/testing/rolling-preference-browser.test.mjs": "7cb46a1c1a83beec5d31d56bb8084ca9dccf8fd9b07a2e8efa5f788ee9a17ae2",
+    "apps/rolling/reader.mjs": "fb9d5da8eaa87b1b6cf1f57c74ab68f360428cec90fc6f9aab2c0752e6743874",
+    "apps/rolling/reader.browser.test.mjs": "e5371cd3873bfa1086f055f6cddcfb64c4b9c54740dcc21b045bbc8eee8df947"
+  },
+  "dependency": {
+    "original": "a3f7e200",
+    "cherry": "9223bae393eef381e00d860afe771192d65dd2ee",
+    "copyRepair": "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4"
+  },
+  "api": {
+    "validate": "validateRollingPreferenceBrowserControl(control,{directory})",
+    "run": "runRollingPreferenceBrowser({...control,directory,onStage})",
+    "controlKeys": [
+      "browserMode",
+      "browserEngine",
+      "origin",
+      "trustedOrigin",
+      "ethereumOrigin",
+      "backupPath",
+      "backupPassword",
+      "expected",
+      "timeoutMs"
+    ],
+    "expectedKeys": [
+      "postId",
+      "postText"
+    ],
+    "mode": "rolling-preferences",
+    "engine": "chromium",
+    "timeoutMs": "integer1..120000; original elapsed validation+launch consumes same allowance",
+    "onStage": "rolling-preferences- followed by fixed stage"
+  },
+  "coverage": [
+    "Explicit production encrypted import into fresh Chromium context/native IndexedDB",
+    "Locked page: no wallet assets, private network or feed requests",
+    "Explicit bounded recovery steps until complete; incomplete view remains hidden",
+    "Following and Bookmarks exact parent-known anonymous post; Unbookmark and Unfollow board state",
+    "Only ordinary feed limit/cursor and main-board id0 requests; no private preference endpoint",
+    "No proof, node submission, L1 submission; attempted forbidden requests fail before forwarding",
+    "Lock removes private cards then reload remains locked and SDK-free"
+  ],
+  "tests": {
+    "labelledControlAndTraffic": {
+      "passed": 56,
+      "failed": 0,
+      "durationMs": 106.95725,
+      "log": "preference-browser-driver-unit-final.log"
+    },
+    "syntax": "changed modules pass",
+    "readerCopyBrowser": "pending serialized slot",
+    "genuineDriver": "not run; parent three-proof canonical setup/receiver/accounting required"
+  },
+  "limitations": [
+    "Expected public content never enters runtime or report. No direct browser head digest exposed; production reader itself authenticates completion.",
+    "No preference arrays are extracted; only exact DOM states and aggregate counters.",
+    "Browser route observation is not blanket privacy assurance; parent must reconcile trusted proof/node/L1 receiver counts and fee balances.",
+    "Cold PXE synchronization can exceed budget; no allowance extension, financial action or retry.",
+    "This worker does not implement parent scenario/handshake/lifecycle."
+  ],
+  "evidence": {
+    "preference-browser-driver-unit-first.log": "9d3ef36d4b33e60397b98469b5251f2a6de0c7437f1bb6071c6a4d6d371f15b4",
+    "preference-browser-driver-unit-final.log": "637af94e62e18b3fe4d2198bdeefa95e4bfad0e54c3730d84de22d64e0bd03b5",
+    "preferences-ui-00e334-affected-browser.log": "5051eb96d3a4c70a41c8b47856f7e3698b90389985f14549666e21d6e27fe2ce"
+  }
+}

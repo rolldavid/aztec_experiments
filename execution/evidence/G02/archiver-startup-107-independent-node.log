@@ -1,0 +1,26 @@
+✔ all exact pinned SDK modules hash-bind; only selected complete config call changes, and modules parse without execution (200.558542ms)
+✔ source hash, duplicate/missing anchors, reversed offsets and unknown phase reject (0.358541ms)
+✔ synthetic awaited operation preserves receiver, argument identity, pending state, result and exact rejection (1.574334ms)
+✔ real dedicated atomic record retains nested begin/complete and no caller data (51.227167ms)
+✔ malformed, forged-hash, nonnested, duplicate, overflow and extra-field records reject (0.266875ms)
+✔ symlinks, public permissions, wrong-size and malformed dedicated files reject (1.823666ms)
+✔ recording failure is sticky and cannot change application success or error (5.860291ms)
+✔ loader forwards unrelated return/error identity and validates exact target bytes before substitution (0.259834ms)
+✔ actual Node24 synchronous load hook substitutes only exact target and deregisters (2.091666ms)
+✔ dangling record and temporary symlinks are rejected before recording (0.976292ms)
+✔ configuration provider rewrite requires one exact complete call and independently enforces call count (0.466333ms)
+✔ actual installed complete configuration call and merge retain all other arguments, awaited result, genesis guard and runtime providers (0.638209ms)
+✔ attestation requires the exact semantic runtime adapter label rather than diagnostic-only claim (10.000708ms)
+✔ actual pinned sync method preserves pending work, receiver, error identity and no retries while observing failures (4.015291ms)
+✔ progress snapshots distinguish advancing checkpoints, an in-flight wait and repeated errors; writes throttle and final flush (42.0445ms)
+✔ actual viem numeric errors, bounded cause chains and malicious accessors never disclose raw errors (162.487125ms)
+✔ progress schema rejects nonfinite, unsafe, incoherent, private and extra fields (0.28625ms)
+✔ new repeated-operation anchors are unique and mandatory, successful checkpoint observation is after actual persistence (2.134ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 551.225292

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+  "actualEvidence": "execution/evidence/G07/application-c7f1e021-9e25-4900-9765-ea9a5080f2e9.json",
+  "actualEvidenceSha256": "4cfac7594b6fed7cb7d34e34a52ef25b9d2025af20bbfdeb6408fe1be90d91f4",
+  "verdict": "failed genuine campaign retained; source-confirmed nullable interval incompatibility; no reorg acceptance",
+  "observed": {
+    "elapsedMs": 395748,
+    "peakTreeRSSKiB": 1911072,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "failure": {
+      "stage": "rolling-application:preference-real-l1-reorg",
+      "errorClass": "AssertionError",
+      "code": null,
+      "frames": [
+        "rolling-preference-reorg.mjs:25:51",
+        "rolling-application-fixture.mjs:571:13",
+        "rolling-application-fixture.mjs:1148:25",
+        "c01-real-node.mjs:74:18"
+      ]
+    },
+    "fork": {},
+    "cleanup": {
+      "applicationActorA": true,
+      "fundingWallet": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    }
+  },
+  "finding": {
+    "priority": "P2",
+    "path": "scripts/testing/rolling-preference-reorg.mjs",
+    "line": 25,
+    "detail": "Helper rejects SDK-supported null (disabled interval) before recording intent; paused callback also incorrectly requires exact numeric0. Installed getIntervalMining returns number|null, and execWithPausedAnvil deliberately skips interval mutation/restoration when null."
+  },
+  "independentProbe": {
+    "kind": "actual installed EthCheatCodes methods with labelled offline null RPC response; no service/network",
+    "sdkPausedCallbackInterval": null,
+    "sdkAutomineRestored": true,
+    "oldHelperRejectsBeforeIntent": true,
+    "persistCalls": 0,
+    "mutationCalls": 0
+  },
+  "repairRequirements": [
+    "Accept original null or validated nonnegative safe integer; reject undefined/strings/negative/unsafe/nonfinite.",
+    "Paused interval must be disabled (null or0), with autominingfalse; positive interval rejects before intent.",
+    "Preserve exact original automine/interval restoration readback and once-intent-before-mutation ordering.",
+    "Add actual pinned Anvil/SDK disabled interval smoke before another genuine campaign, alongside offline null/positive/malformed/restoration negatives."
+  ],
+  "limitations": [
+    "Historical raw interval value was not persisted, so offline null reproduction is source-backed explanation rather than recovered historical RPC bytes.",
+    "Fork observation is empty and failure precedes durable intent and official reorg; no fork/replacement/hot-cold rollback acceptance reached.",
+    "Prior pre-fork canonical actions are not a successful reorg campaign; marker remains held."
+  ],
+  "sourceHashes": {
+    "scripts/testing/rolling-preference-reorg.mjs": "945359453165dc922c9aaf1df6555c0ccf8cf097c7182c4650edda7349135075",
+    "node_modules/@aztec-labs/ethereum/dest/test/eth_cheat_codes.js": "182185bd1530e446256200f9c4f900fc2f26fa0bffe3c93cd86745df7b9a130a",
+    "node_modules/@aztec-labs/ethereum/dest/test/eth_cheat_codes.d.ts": "0335ec18d4de0c6d82d5e99d166a6e654ddb73323bb93309b6e0ad89bdac4221"
+  }
+}

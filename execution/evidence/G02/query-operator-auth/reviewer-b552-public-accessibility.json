@@ -1,0 +1,48 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T13:59:42.041252+00:00",
+  "source": "b5529b62723216197733c0b2b7c6678fcee19d91",
+  "base": "6bc12653fd767ec6b14d74359d8899fc323bc1a3",
+  "requirements": [
+    "RC03",
+    "RC04",
+    "RC05",
+    "RC39",
+    "RC40",
+    "REQ08",
+    "REQ09",
+    "G09-A01 keyboard/mobile/failure",
+    "G09-A03 usable mobile",
+    "G09-A04 required screens",
+    "G09-A05 accessible empty/error/stable links",
+    "G09-A07 safe bounded text"
+  ],
+  "verdict": "approved",
+  "findings": [],
+  "sourceHashes": {
+    "apps/rolling/reader.mjs": "332b10e60994372f1d267d77b8192c515630ec282cee0ac04249ff84e56c9a64",
+    "apps/rolling/style.css": "543a2b231971e292f72a10d571925a1f1c54c1647f6089b1be8a3a387de6a127",
+    "apps/rolling/reader.browser.test.mjs": "91563899f9b2aef50076c4df93baa858b5a73312f6f1dbfeafe7e441522b1fca",
+    "shared/rolling/public-index.mjs": "0ca66f47c34e86b3841f17b91ddcc6702e5608993fc423d1109501558601009c",
+    "shared/rolling/public-index.test.mjs": "d9065e75595c8f8dc6a6891c2cb0a27339b14e1692d3cb89315d5847730813bf",
+    "shared/rolling/public-sqlite.mjs": "5bf82c3a4b923c42c3bade89ad3cdf65e38542fb3d9e932707ed2697206b0375"
+  },
+  "packetSha256": "743c751b8c23e43f6cc98424fe0ef52b0edd5a76fc9914b31554dac5dc7db9db",
+  "checksPerformed": [
+    "Read six-file source/test diff before conclusions; exact source and every evidence hash verified.",
+    "Checked route title/aria-current assignments and existing focus policy. Unknown-profile error is classified and focus restored without wallet work; main/profile titles use textContent, no HTML interpolation.",
+    "SQLite profile existence check uses existing bounded point lookup cache and current generation; legacy projection identity check matches. Field syntax checks still precede not-found detection, preserving malformed400 and existing profile200.",
+    "Independently ran existing real SQLite/HTTP missing-profile test:1PASS0FAIL0SKIP1596.00575ms. Both production persistent and legacy routes asserted404/400/200.",
+    "Read final15 targeted browser checks and9index checks; prior full-file deadlines remain nonpassing evidence, no full-suite pass claimed.",
+    "Visually inspected candidate390px directory and1280px home captures: readable layout, usable search/buttons, visible current page, no clipping evident. Overlay is explicitly candidate-source/public-backend composition, not deployed server proof."
+  ],
+  "assessment": [
+    "Small coherent accessibility/navigation repair preserves public/private loading boundary and existing safety rendering. Long labels wrap, mobile controls remain usable.",
+    "Tests retain existing assertions; browser executable option reuses project flag; reduced per-operation timeout exposes failures sooner without suppressing them."
+  ],
+  "limits": [
+    "Actual running backend still returns400 for absent profile until integrated server reload/restart; root must verify404 and rendered error against final serving source.",
+    "Current live chain has no populated name/subboard examples; those layouts remain labelled synthetic browser coverage.",
+    "No WCAG audit, complete35case suite, full performance, privacy specialist, proof/testnet or release qualification inferred."
+  ]
+}

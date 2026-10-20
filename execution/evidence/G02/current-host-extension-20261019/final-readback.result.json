@@ -1,0 +1,36 @@
+{
+  "CommandId": "2f8580a0-5619-444a-a1b7-6b69a67f90d2",
+  "InstanceId": "i-09e2dbeea10854dc8",
+  "Comment": "Read unchanged node and extended independent host shutdown",
+  "DocumentName": "AWS-RunShellScript",
+  "DocumentVersion": "$DEFAULT",
+  "PluginName": "aws:runShellScript",
+  "ResponseCode": 0,
+  "ExecutionStartDateTime": "2026-10-19T00:43:17.584Z",
+  "ExecutionElapsedTime": "PT0.038S",
+  "ExecutionEndDateTime": "2026-10-19T00:43:17.584Z",
+  "Status": "Success",
+  "StatusDetails": "Success",
+  "StandardOutputContent": "NextElapseUSecRealtime=Mon 2026-10-19 06:30:00 UTC\nActiveState=active\n{\"createdAt\": \"2026-10-18T23:45:46Z\", \"budgetStop\": \"2026-10-19T06:30:00Z\", \"commissioningStop\": \"2026-10-19T00:15:46Z\", \"runtimeArchiveSha256\": \"4f5cf5a489105e63ad77ad5066687a9242ccbf37785773a4a0b1f2b7edcc14a2\", \"manifestSha256\": \"81f48a8b13fecaa901bcd85ed951c6a6403cc1d309b6bda157d4b890507e75e1\", \"hostResources\": {\"dataVolumeGiB\": 1024, \"egressMbps\": 50}}\n8728fd57a637a30a284ee819d4ff88ca4ead6ed10c3b1c367fcee3608ded5e77 2026-10-18T23:51:10.773211281Z\nactive\nactive\nclass htb 1:10 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 1600b cburst 1600b \n Sent 32436183 bytes 143508 pkt (dropped 0, overlimits 10171 requeues 0) \n backlog 0b 0p requeues 0\n lended: 135245 borrowed: 4205 giants: 0\n tokens: 7670 ctokens: 3835\n\nclass htb 1:1 root rate 50Mbit ceil 50Mbit burst 1Mb cburst 1Mb \n Sent 32436183 bytes 143508 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n lended: 4205 borrowed: 0 giants: 0\n tokens: 2621275 ctokens: 2621275\n\nclass htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 1600b cburst 1600b \n Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n lended: 0 borrowed: 0 giants: 0\n tokens: 8000 ctokens: 4000\n\n",
+  "StandardOutputUrl": "",
+  "StandardErrorContent": "",
+  "StandardErrorUrl": "",
+  "CloudWatchOutputConfig": {
+    "CloudWatchLogGroupName": "",
+    "CloudWatchOutputEnabled": false
+  },
+  "ResponseMetadata": {
+    "RequestId": "7c061580-c4ac-4883-b7cb-45f93ef783c6",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "server": "Server",
+      "date": "Mon, 19 Oct 2026 00:43:48 GMT",
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "1943",
+      "connection": "keep-alive",
+      "x-amzn-requestid": "7c061580-c4ac-4883-b7cb-45f93ef783c6",
+      "cache-control": "no-store"
+    },
+    "RetryAttempts": 0
+  }
+}

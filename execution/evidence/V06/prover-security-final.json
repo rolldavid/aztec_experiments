@@ -1,0 +1,17 @@
+[
+    {
+        "IpProtocol": "tcp",
+        "FromPort": 8080,
+        "ToPort": 8080,
+        "UserIdGroupPairs": [
+            {
+                "Description": "CloudFront private origin only",
+                "UserId": "052665140763",
+                "GroupId": "sg-076e39ea1d8dbf8d0"
+            }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+    }
+]

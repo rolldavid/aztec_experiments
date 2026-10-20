@@ -1,0 +1,157 @@
+{
+  "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+  "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+  "task_id": "G07-G10-G11-bok-recovery-permissions",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "broker-summary",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ],
+      "command": "node --test plugins/test/github-app-broker.test.mjs plugins/test/github.test.mjs",
+      "environment": "macOS Node24.21.0, development native/PXEproofsfalse",
+      "observed": "106pass0skip0fail12192ms",
+      "exit_code": 0
+    },
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "sdk-manifest-and-build",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ],
+      "command": "node scripts/build-sdk.mjs; node apps/build.mjs; node scripts/rolling-wallet-assets.mjs; node --test scripts/test-sdk-manifest.mjs",
+      "environment": "macOS Node24.21.0, development native/PXEproofsfalse",
+      "observed": "66pass0skip0fail1041ms;normal SDK2057inputs8outputs; apps build; wallet25outputs97inputs",
+      "exit_code": 0
+    },
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "actual-sdk-focused",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ],
+      "command": "Existing bounded scripts/test-pxe-preference-page.mjs actualSDK selection, worker packet records command",
+      "environment": "macOS Node24.21.0, development native/PXEproofsfalse",
+      "observed": "15selectedPASS5.265s actualSDK finitechain/ACIR; workerf17 source identical",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "RC25-coalesced-authenticated-scope-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ]
+    },
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "RC32-approved-installation-profile-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ]
+    },
+    {
+      "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+      "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+      "id": "RC29-app-completion-summary-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/bok-permissions-recovery/checks.json",
+          "sha256": "31a7fe7b4cbc32ea81f8e167db09e0e51217a20ea5ec28e8c08e9c7d8a163466"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+          "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+        },
+        {
+          "path": "rolling-design/execution/evidence/G07/keys-only-current/canonical-coalesced-review-packet.json",
+          "sha256": "c86671265c5ae40970a8fa88695eed00e2265e91111e150e458c149512cfad5e"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "eec695f288b3591bcc12465d73ad7da93a1934d8",
+    "candidate": "85ba37b4058586076936856fff1d7052845c4db4",
+    "implementer": "lead-20261011",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-85ba37-combined.json",
+        "sha256": "3dce21f833d405956679c5655e3095e2b6bf187b1e2136cf6cb503daeb0945d4"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "6b1691bf9b2dad9efffad35d171ee1de24845b69",
+  "phase": "stopped",
+  "snapshotFile": "anvil-recovery-3bdf07e1-b4cf-4862-aee9-07616ecca9e7.json",
+  "bytes": 1632789038,
+  "sha256": "ee6aee61aa160ccd160db338e718e5b4d90e022983ef839f2a4611fa0da37cb4",
+  "snapshotHead": {
+    "number": "0x44f",
+    "hash": "0x86d57581db0b6666f5502ae47826304e923a576a870d70ff33af65e4521049fb",
+    "pending": "507",
+    "proven": "507"
+  },
+  "locksPresent": false,
+  "nativeSession": 8945,
+  "exitCode": 0,
+  "claimCanonicalBlock": 489
+}

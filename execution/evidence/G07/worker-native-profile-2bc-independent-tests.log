@@ -1,0 +1,26 @@
+✔ invalid worker resource/mode/path input fails before any backend starts (4.695333ms)
+✔ actual native selector crypto retains configured 1 threads (85.914792ms)
+✔ actual native selector crypto retains configured 2 threads (78.717834ms)
+✔ old selector-first initialization is rejected without replacing its actual backend (77.309292ms)
+✔ disabled proofs still pin and bound real selector cryptography (77.912791ms)
+✔ native runtime reuses verified read-only CRS and rejects corrupted installed data (420.366833ms)
+✔ a nightly label alone cannot bypass the pinned native binary check (4.254667ms)
+✔ service health and failed bind use production lifecycle without leaking queue directories (209.838083ms)
+✔ rolling configuration rejects missing fee/Bok, aliases and unknown profiles before listening (0.35875ms)
+✔ query configuration rejects nonlocal upstream before creating service resources (0.138792ms)
+✔ actual isolated worker accepts configured board and rejects forged board/network metadata (2681.726375ms)
+✔ native route switched to local delegates to its SDK implementation (124.663292ms)
+✔ standalone fee funding is limited to the configured fee contract and network (3271.177042ms)
+✔ plugin-only proofs require configured receivers, exact entrypoint calls and network (7234.145292ms)
+✔ board and fee calls cannot bypass a private plugin claim binding (3932.338542ms)
+✔ actual fee payloads and plugin calls encode into the accepted account policy (11.416375ms)
+✔ catalog pins V6 circuit kinds with both hiding variants and application verification keys (90.422125ms)
+✔ rolling job checks every signed payload and private binding even in a mixed batch (89.976875ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21146.746667

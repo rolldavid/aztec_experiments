@@ -1,0 +1,69 @@
+{
+  "candidate": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+  "base": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+  "task_id": "G02-seed-broadcast-classification",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+      "base": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+      "id": "seed-focused-combined",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9f677-composition-runtime-review.json",
+          "sha256": "a3f8d3d807c122d3dc211d85052e6b70969720703ab8820ad5d2f3cb64e8b934"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-8a135-broadcast-diagnostics-review.json",
+          "sha256": "3416d2bf38916ca280265c93c72ccf689f6eabeba3764ad311a8d356c24036cd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/seed-broadcast-combined.log",
+          "sha256": "1a0bbfb1d219e683b748460617f68e0f5387a789f6d710241535e0b98ed72ece"
+        }
+      ],
+      "command": "node --test --test-name-pattern=Seed|seed plugins/test/operations.test.mjs",
+      "environment": "PinnedNode24.21.0; controlled existing operation tests, no send",
+      "observed": "20focusedPASS1563.98ms; exact2sourceblobs reviewed and equivalence independentlyapproved. Existing unresolved entries remain readonly.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+      "base": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+      "id": "RC37-RC38-once-only-broadcast-classification",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9f677-composition-runtime-review.json",
+          "sha256": "a3f8d3d807c122d3dc211d85052e6b70969720703ab8820ad5d2f3cb64e8b934"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-8a135-broadcast-diagnostics-review.json",
+          "sha256": "3416d2bf38916ca280265c93c72ccf689f6eabeba3764ad311a8d356c24036cd"
+        },
+        {
+          "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/seed-broadcast-combined.log",
+          "sha256": "1a0bbfb1d219e683b748460617f68e0f5387a789f6d710241535e0b98ed72ece"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "9f677349ffd94d9c6cd48eca781fd13f6190250d",
+    "base": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+    "implementer": "design-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-9f677-composition-runtime-review.json",
+        "sha256": "a3f8d3d807c122d3dc211d85052e6b70969720703ab8820ad5d2f3cb64e8b934"
+      }
+    ]
+  }
+}

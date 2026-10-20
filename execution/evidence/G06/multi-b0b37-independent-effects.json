@@ -1,0 +1,188 @@
+{
+  "source": "24934789146be25e5e32bef42b51ae87e644d3c3",
+  "scope": {
+    "chainId": "31337",
+    "rollupVersion": "1990552751",
+    "rollupAddress": "0x31f615c4406074aa3fef03c480205f6d7bf62c5d",
+    "boardAddress": "0x02f6056c95dcc45f4dfa75713a8c55755d3a36df69b282b5e29a69a735065acb",
+    "classId": "0x28364677067f3efcb70efb2bf1c13982c537185b0c21c53c9372c8f446eebb59"
+  },
+  "verification": "Actual saved binary effects decoded with installed SDK and authenticated ABI log validation; chain anchors independently rechecked by source-bound actual runtime, not live node replay",
+  "rows": [
+    {
+      "action": "account-reactions-root",
+      "sha256": "ffb387a3931844b172e717ed0d7523d0d4646b5f2a09cc685a42f5efbd9d76f6",
+      "txHash": "0x2aa59ea74ee048c95089105893c4edaf72bba5e1954f9536ab49392c9feac331",
+      "fee": "20914488000000",
+      "writes": 14,
+      "events": [
+        {
+          "type": "PostPublished",
+          "payload": {
+            "schema": "1",
+            "id": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "record": {
+              "subboard": "0",
+              "parent": "0",
+              "root": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+              "kind": "1",
+              "name_id": "0",
+              "reference": "0",
+              "content_digest": "6054492661735512793049627545871942087415986588228269967490800789056896543242"
+            },
+            "timestamp": "1791759843",
+            "main_policy_version": "1",
+            "local_policy_version": "0",
+            "length": "38",
+            "message": [
+              "140342836586508796832536084653363771356316766575501562312111392901610627427",
+              "175687119203570660159382810177506477773775215407399655225053863772174680064",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "action": "account-a-like",
+      "sha256": "ec66a5fc326854a82eac0ff98f610622f31c1e93c72c4be3330c7611946ef69e",
+      "txHash": "0x1f3eb0a4ea89cc0d3932a60d1fad020110ac5fd0d9fc3e84ca7a2b437c879000",
+      "fee": "8152666200000",
+      "writes": 3,
+      "events": [
+        {
+          "type": "LikeChanged",
+          "payload": {
+            "schema": "1",
+            "post": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "tag": "4924174290174332129667870880585484885966230197050966365112264902987425224433",
+            "active": true,
+            "count": "1"
+          }
+        }
+      ]
+    },
+    {
+      "action": "account-a-duplicate-like",
+      "sha256": "66ecc9ee9d2d296b574b8234f930f78d984e04281b6886b5a075957a2e3cd597",
+      "txHash": "0x008bf02c3295ad0828f8f607fc809717ec294a198c87b245cba430032fe5ab4e",
+      "fee": "7349865000000",
+      "writes": 1,
+      "events": []
+    },
+    {
+      "action": "account-b-like",
+      "sha256": "cce96c9188eb37fac7b48e8faccd4500e3e357c4fc3f70cc7a36c2ad25bf0884",
+      "txHash": "0x21a9cb2bee5d0bfd2517147271031744af67e1b2924abe465c3d206eff34bea5",
+      "fee": "8152666200000",
+      "writes": 3,
+      "events": [
+        {
+          "type": "LikeChanged",
+          "payload": {
+            "schema": "1",
+            "post": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "tag": "19626237896667933218039995529438610224099201405257059053392315883186695417244",
+            "active": true,
+            "count": "2"
+          }
+        }
+      ]
+    },
+    {
+      "action": "account-b-unlike",
+      "sha256": "afbf6b63a970d879d1dbefca332e676345dc51aefa6eb7aa38f2d5001a751fcd",
+      "txHash": "0x2efab84825963ce1b34fc8b4db1708457ef9f30bec0d64f33138dd26b863cbfb",
+      "fee": "8127849600000",
+      "writes": 3,
+      "events": [
+        {
+          "type": "LikeChanged",
+          "payload": {
+            "schema": "1",
+            "post": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "tag": "19626237896667933218039995529438610224099201405257059053392315883186695417244",
+            "active": false,
+            "count": "1"
+          }
+        }
+      ]
+    },
+    {
+      "action": "post-moderation",
+      "sha256": "8ca8824e8fad59117825d5ef5775b36fe1fd73486cd7c7c3c7c6a002e38e2497",
+      "txHash": "0x2799ae86d44c27ad211e94225096e431c67bc5308ae846d9e259ee2689ba7114",
+      "fee": "8685769200000",
+      "writes": 3,
+      "events": [
+        {
+          "type": "PostRemoved",
+          "payload": {
+            "schema": "1",
+            "id": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "policy_version": "1",
+            "penalized": false,
+            "reason_length": "43",
+            "reason": [
+              "145581486065409770287451315687373627614620252756766006150053619824346099232",
+              "173919733354393135126406006384361399828132810920750447395547727932485009408",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "action": "account-a-unlike-removed",
+      "sha256": "46c3a92375bc9ee5c8480ef937f74dab72109e9469bd8debfdc236783e3722a0",
+      "txHash": "0x21a7b8fe20ac65ee54815b2e3e3e60eff4123fbb3eae984241d9e59fb3c07d39",
+      "fee": "8127849600000",
+      "writes": 3,
+      "events": [
+        {
+          "type": "LikeChanged",
+          "payload": {
+            "schema": "1",
+            "post": "18905713637273721378058228216784821544627590244435461890370195281555686092103",
+            "tag": "4924174290174332129667870880585484885966230197050966365112264902987425224433",
+            "active": false,
+            "count": "0"
+          }
+        }
+      ]
+    }
+  ]
+}

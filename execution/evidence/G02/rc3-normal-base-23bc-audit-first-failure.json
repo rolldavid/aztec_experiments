@@ -1,0 +1,6 @@
+{
+  "stage": "raw Rolling inspection",
+  "failure": "KeyError: transpiled",
+  "cause": "Reviewer reused a processed-artifact property assumption for raw Nargo artifact; raw format omits transpiled key.",
+  "correction": "Require flag absent or false; no artifact modification and no processing rerun."
+}

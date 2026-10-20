@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "plan-and-ten-dollar-reservation-eligible-subject-to-fresh-price-and-lead-preparation-grant",
+  "proposalSha256": "6dc52fff2bbb2fe393f7bea6b92cb8ee5cec362891f9f244e5fce81a085e6820",
+  "sourceSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+  "sourceBindingsIndependentlyReconstructed": {
+    "runtime": "802f142df2aead47e7adbf084aaa649918deab8f0c9afd82f51ab7c5b7fbdc84",
+    "controls": "acace292896ef0adb33e47e85da3c89220c6b57f812681d500e17bc826594090",
+    "worker": "151d21ad85d85b37b02ae8589607b8787e06a6f6977d0fb1a7d9d1756d814878",
+    "nativeHost": "6f248d8281efc09ffbe2695feeb71f835df659f965f2ab30ff88c3c1a316ffdf"
+  },
+  "checks": {
+    "leadAndControlsBootstrapExact": true,
+    "historicalOperatorFiveHashesVerified": true,
+    "ledgerHash": "b82a584549da98cc0034159ab354e5275e28487467da36afbc44105cda24ef4d",
+    "retainedReadbacksInspected": true,
+    "allPriorResourceCleanupPreserved": true,
+    "forecastItemsSumExactly10": true
+  },
+  "budget": {
+    "priorBoundUsd": 225.28,
+    "remainingBeforeUsd": 74.72,
+    "proposedNewUsd": 10,
+    "resultingBoundUsd": 235.28,
+    "remainingAfterUsd": 64.72,
+    "reservationPerformedByReviewer": false
+  },
+  "rationale": [
+    "Same minimal m7a.large40GiB diagnostic, fixed15s512MiB2CPU worker and original strict metadata/guest/receipt gates.",
+    "Actual local retention regression supports changed source without downgrading classifier or repeating original campaign.",
+    "Reuse authenticated immutable binary and original one-shot operator logic with fresh campaign/authority/private paths; old intents cannot replay.",
+    "45min cloud expiry plus independently active host budget/commissioning deadlines and terminal shutdown remain mandatory.",
+    "Full-hour compute/IP,25h root,25GBegress,30daystorage,requests/tax/cleanup buffers included with all prior225.28 retained."
+  ],
+  "conditionsBeforePreparation": [
+    "Refresh current official pricing; retain exact readback and re-evaluate forecast without silently exhausting buffers",
+    "Lead records new10 reservation in single ledger and grants bounded preparation",
+    "Fresh campaign/data-only operator bindings and normalized logic equality independently reviewed",
+    "Refresh account/resource no-overlap,SG/AMI/subnet/offering and versionedobject facts before launch"
+  ],
+  "conditionsBeforeLaunch": [
+    "Actual bounded privatepayload syntax/size/source/worker/config/deadlines equality review",
+    "Fresh authority literals/wrapperpins review and explicit exclusive slot release",
+    "Exact immutable+10/+30/+45 timestamps; no silent redate",
+    "Actual cloud/host shutdown readbacks and strict nativeAMD64 outcome/oncecleanup evidence"
+  ],
+  "scope": "Preparation eligibility only; no paid launch, capability generation, operator mutation, Linux pin promotion or full-prover handoff authorized by reviewer. Price snapshot is historical and explicitly not certified current."
+}

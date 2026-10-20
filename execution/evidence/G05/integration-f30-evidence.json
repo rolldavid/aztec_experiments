@@ -1,0 +1,142 @@
+{
+  "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+  "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+  "task_id": "G05-G06-profile",
+  "holds": [],
+  "findings": [],
+  "scope_limits": "Bounded development profile acceptance only. Full product, funded browser, derived-identifier and request-trace privacy, actual image moderation model, remote qualification, audit, soak and network release gates remain open.",
+  "checks": [
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "affected-source-and-builds",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Normal canonical and Rolling build;151 TXE; independent source/artifact binding and native SDK regression",
+      "environment": "macOS arm64, Node24.21.0, pinned Aztec6rc1 nativeBB, local controlled settlement with real application proofs",
+      "observed": "12 private VKs,151 TXE,203 outer/48 inner/2 artifacts/14 Bok/70 native hashes verified;52 native-name repair checks",
+      "artifacts": [
+        {
+          "path": "evidence/G05/profile-runtime-5422-review.json",
+          "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+        },
+        {
+          "path": "evidence/G05/profile-build-txe-90a1-review.json",
+          "sha256": "47710ca31ab102784b4626e6a9262483ba515b6d9498e892e7afac639d76cb14"
+        },
+        {
+          "path": "evidence/G05/native-name-f30a8e3-review.json",
+          "sha256": "10850fd2a363c9315ede4f766b6d5cd8727538e75bf30158a87cd19155b2351b"
+        },
+        {
+          "path": "evidence/G05/profile-campaign-55e0772-review.json",
+          "sha256": "66cf5714c8e352ec29554bd0b9f6934950220953b6d7094bbeeb78729e3fdc53"
+        }
+      ]
+    },
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "real-profile-port",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real pinned Node24 scripts/test-c01-application.mjs rolling-profile-port",
+      "environment": "macOS arm64, Node24.21.0, pinned Aztec6rc1 nativeBB, local controlled settlement with real application proofs",
+      "observed": "409207ms2302912KiB; five genuine HTTP proofs plus moderator;992-byte bio,8192-byte image, removal/clear/replacement; fees and cleanup verified",
+      "artifacts": [
+        {
+          "path": "evidence/G05/profile-runtime-5422-review.json",
+          "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+        },
+        {
+          "path": "evidence/G05/application-5422b57a-0567-45ef-af4c-2a0715e05105.json",
+          "sha256": "5ad596416a921fd71b8269cb1b26e71b0358059486b67f609f79037e156e34ad"
+        },
+        {
+          "path": "evidence/G05/profile-5422-independent-effects.json",
+          "sha256": "f2343086afc8d0535fd2762e934d44ce0118c017c803dd39e81aaec55a23154d"
+        }
+      ]
+    },
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "public-profile-interface",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Independent browser profile editor/public reader checks plus actual canonical HTTP/SQLite cold reopen",
+      "environment": "macOS arm64, Node24.21.0, pinned Aztec6rc1 nativeBB, local controlled settlement with real application proofs",
+      "observed": "17 editor +10 public browser checks;7 canonical refetches; recovered current image;encrypted journal reopen0newproofs",
+      "artifacts": [
+        {
+          "path": "evidence/G05/profile-runtime-5422-review.json",
+          "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+        },
+        {
+          "path": "evidence/G05/profile-editor-fa0-browser-review.json",
+          "sha256": "6e9926ccd3f44a3b23a8da687333077c4e33aaf1361c7edf7af5845ab45260f7"
+        }
+      ]
+    },
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "coordination-and-gate",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "python3 -m unittest discover -s execution/tests -p '*integration*' -v; python3 execution/graph.py validate",
+      "environment": "macOS arm64, Node24.21.0, pinned Aztec6rc1 nativeBB, local controlled settlement with real application proofs",
+      "observed": "19 integration checks passed including deliberate failure and missing review;53 packages269 criteria valid",
+      "artifacts": [
+        {
+          "path": "evidence/G05/integration-f30-gate-tests.log",
+          "sha256": "0b15a78cfd39809244844226578212e53f99722889c67ade92337ecfbbbe95f1"
+        },
+        {
+          "path": "evidence/G05/integration-f30-coordination.log",
+          "sha256": "e7c52bedf6e8e1a89a43c80ae2076558d59740587b112294d47cd7d2eb1b58be"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+    "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "evidence/G05/profile-runtime-5422-review.json",
+        "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "G05-owned-profile-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/profile-runtime-5422-review.json",
+          "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+        }
+      ]
+    },
+    {
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "id": "G06-canonical-profile-reconstruction-development",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G05/profile-runtime-5422-review.json",
+          "sha256": "246809d83ff719a40a27b2416313dd8b17fbcc8060ab51adee1b2664b95a3348"
+        }
+      ]
+    }
+  ]
+}

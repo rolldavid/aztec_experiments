@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-12T03:20:22.807331+00:00",
+  "owner": "controls-20261011",
+  "kind": "bounded-read-only-process-not-independent-service",
+  "toolSession": 33889,
+  "command": "python3 .build/watch06-readonly.py",
+  "pollSeconds": 120,
+  "stopAt": "2026-10-12T04:11:27Z",
+  "receiptStopsWatcher": true,
+  "noMutationsInWatcher": true,
+  "cleanupRequiresTrustedOperatorReconciliation": true,
+  "instance": "i-01b6bdaf005878edf",
+  "fleet": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+  "budgetStop": "2026-10-12T04:09:27Z",
+  "readinessStop": "2026-10-12T03:53:27Z",
+  "privateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-06",
+  "sourceCommit": "c06235f83603e904dbc86cb9cad59dc2b8981584"
+}

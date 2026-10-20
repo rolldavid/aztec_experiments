@@ -1,0 +1,62 @@
+{
+  "sourceRevision": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "verdict": "existing_components_support_fresh_scoped_local_development_bok_pending_live_prerequisites",
+  "scope": "Read-only configuration/source assessment, not startup or provider readiness",
+  "findings": [
+    "Current retained626-family Bok operator config is Rolling/development=true, actor path exists; readiness records portal-active-registered and hostedService=false. Public scope contains exact Bok deployment/class/operator binding.",
+    "Current operator and network scope differ from accepted original C/D hosted config. Preserve original hosted-state/billing/repositories/artifacts and service.json entirely; do not repoint or reuse old state.",
+    "Existing LaunchAgent service.json is development=false legacy profile and is not the current Rolling runtime configuration. Its private plugin.env is an existing trusted credential reference; no credential values were emitted.",
+    "Existing accepted rolling-hosted-output4096.json is suitable as composition precedent, not current authority. Derive a separate current descriptor/scope/deployment/operatorFile/pluginId from current retained public/operator records. Use a new exclusive scoped hosted state path outside native and historical hosted-state directories.",
+    "Keep githubApp disabled/connectedRepositories empty for this labelled local-development journey; per-thread local bare repos and static publication are supported. Do not claim automatic personal GitHub provisioning or remote mirror acceptance.",
+    "Provider record2026-10-14T19:58:53.039Z balanceUsd4.86996733/canConsume=true, primarykimi-k2-5 and cheaper summaryzai-org-glm-4.7-flash exists, but is stale; current balance/model pricing/capability are not verified. No API called.",
+    "Existing isolated runner requires already installed pinned amd64 image44479404b67d\u2026d8651 and Docker socket; no automatic pull. Startup assertAvailable must pass. A stopped Docker VM must not be mistaken for available execution."
+  ],
+  "nextExistingActions": [
+    "After current native/wallet work finishes, prepare separate current scoped hosted config and bounded operation using existing main.runRollingHostedService composition; source-match all current descriptor/operator/deployment fields.",
+    "Read-only current provider availability and exact actor fee balance/node proof flags; no top-up. Reuse existing trusted env loading without exposing credentials to generated builds.",
+    "Normal hosted startup validates current canonical index/lease, isolated execution and reference repo; record ready before one bounded user-reviewed current-chain Bok request.",
+    "Keep original service and C/D journals unchanged; new current-chain requests use new operation/namespace/thread and explicitly bounded provider/USDC budget."
+  ],
+  "preserveReferences": [
+    "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/service.json",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-bok-acceptance/hosted-state",
+    "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state/bok-operations.json"
+  ],
+  "credentialReferenceOnly": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/plugin.env",
+  "references": [
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/service.json",
+      "sha256": "ab7dcc41674f5fa237cb0864d653812991e16a8caeb481abe697edd97d9bc9c1"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-bok-acceptance/rolling-hosted-output4096.json",
+      "sha256": "04cde052f9fcf25dde14e400b4fb3dc171a1659b83fa42d9a59803f9a3dfa5d5"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state/bok-operator-config.json",
+      "sha256": "d5751b10880617f568a7df0d83201f251cc8fb1b583eb2362e7e3eb8a0ebea29"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state/bok-lifecycle-config.json",
+      "sha256": "c9afd1ee822d31dffae2b507e7dad50890eff473061a99265fa64c0018b2dafe"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state/rolling-public.json",
+      "sha256": "4374f708cc6213a53bd76df0e14dcab43947d25c0037355f43e4bb4a956b2060"
+    },
+    {
+      "path": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state/readiness.json",
+      "sha256": "daa91018fd5ea5b134122ff13fb0a2e210bdfe2533d2c2f718875b4e29fc6232"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-diagnostics/provider-after-6c01.json",
+      "sha256": "1f5b74b249985a0da60f696c6faf7f69482bdbab45f5559a613a7f67df7b2b30"
+    }
+  ],
+  "notPerformed": [
+    "No actor/private-key read",
+    "No provider/GitHub/RPC call",
+    "No services/container/model/browser/financial actions",
+    "No config/source/state edits"
+  ]
+}

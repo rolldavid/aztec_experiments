@@ -1,0 +1,28 @@
+{
+  "task_id": "W03-native-funding-finality",
+  "implementer": "funding_resume2",
+  "candidate": "e03bc65678d0260e179f6d058b563978085b5e66",
+  "base": "eec3b6367b9a4cfb832ed706f1658a16504a7e27",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs"
+  ],
+  "required_checks": [
+    "focused-funding"
+  ],
+  "requirements": [
+    "W03-original-payment-state-driven-continuation"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "W03-native-funding-finality",
+      "paths": [
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs"
+      ]
+    }
+  ]
+}

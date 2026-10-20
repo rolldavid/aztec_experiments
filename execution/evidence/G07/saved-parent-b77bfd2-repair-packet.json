@@ -1,0 +1,31 @@
+{
+  "candidate": "b77bfd2c419117731a0ec65d7c8901fd1c1a3a1a",
+  "parent": "3e1aec931d92d557b4630a8d09febe921e5f8ec2",
+  "finding": "P2 saved mode incorrectly classified as reorg, invoking uninitialized continuations after paid work.",
+  "paths": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs"
+  ],
+  "repair": "Remove saved mode from preferenceReorg only; preserve preferences membership and dedicated two-job branch.",
+  "before": {
+    "tests": 1,
+    "failed": 1,
+    "observed": "TypeError: pausePreferenceBoundary is not a function"
+  },
+  "after": {
+    "passed": 115,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "elapsedMs": 2985,
+    "processExited": true
+  },
+  "regression": "Runs exact checked-in classification, job-count and pause/completion control-flow fragments with labelled continuation doubles; saved direct completion, both reorg continuations and incorrect job-count rejection are tested.",
+  "evidence": {
+    "saved-parent-dispatch-before/test.log": "e78a0015e99aaa27ef364975c020dcb8d8e886d2bfece104a2058ce0caa4f817",
+    "saved-parent-dispatch-before/binding.json": "71a706fc0c02b8eb4a0cd227bf84cd8d185f4760ab8b7c01701c0aa60d85eab7",
+    "saved-parent-dispatch-after/test.log": "80f3861e278f52a0faa43aaa582782c81709b85a230012b77f8810d7b70f35ea",
+    "saved-parent-dispatch-after/binding.json": "24b3a8fc61361364ddeec19b079563e91ceeceadfb8bb4f255eaa0786bf9cd8e"
+  },
+  "limitations": "Source/control-flow and labelled callbacks only; genuine chain/proof campaign still unrun. Clean checkout frozen; writer released pending independent repair review."
+}

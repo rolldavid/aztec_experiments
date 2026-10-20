@@ -1,0 +1,175 @@
+{
+  "operations": {},
+  "privateBokEscrow": {
+    "schemaVersion": 1,
+    "binding": {
+      "network": "eip155-31337:aztec-374956180:0x117e21ac0815f6cdc4f587417459250188a0a62c",
+      "escrow": "0x2572b544546990786b879f43f79ad3aaac467c1ae0dd05e82c070b1df9aadc05",
+      "requestId": "0x219f2d01622e854f04830771aa7121934dbcaf0311374ad753b3e31d508ad252",
+      "target": "0x184f5be491d47e6ff5b034e5b4c933ef113f24cbf0a4f498f9a4813cd651160b",
+      "operator": "0x2cb88e7514c35f047b827306b7d897cf264477a7eda929adf1ac8371f6691b10",
+      "board": "0x1888dca7a4f0de3ff6d8d1375691bf42069e6ab0cafdd7cea71a3091ed0a9528",
+      "classId": "0x278905ff308f40e32500b5241820f55ff506830652adb53ce57783b6200b5dff",
+      "finality": "checkpointed",
+      "proofMode": "disabled"
+    },
+    "operations": {
+      "e4b386b0c4ae3fe4809dc51d6d1a2e8f3aabe8ecda859161aab7c0c5576c0f97": {
+        "method": "reserve",
+        "argsDigest": "774df060e3fede169fafd325b0962a7cf63008b697bb703d1c4a52bebead0c6f",
+        "args": [
+          "0x219f2d01622e854f04830771aa7121934dbcaf0311374ad753b3e31d508ad252",
+          0,
+          "143584"
+        ],
+        "phase": "submission-unknown",
+        "proofMode": "disabled",
+        "txHash": "0x2de2bcc49574f10410d80eb570a9e17b3e139d0e1012507796d4ad7bee2ddaba",
+        "transactionSha256": "95d7ba40fa73e6fdfef8812830d8d510340b55ab0fd4e9cb796226895ffd8d0a",
+        "result": {
+          "status": "succeeded",
+          "canonical": true,
+          "method": "reserve",
+          "argsDigest": "774df060e3fede169fafd325b0962a7cf63008b697bb703d1c4a52bebead0c6f",
+          "txHash": "0x2de2bcc49574f10410d80eb570a9e17b3e139d0e1012507796d4ad7bee2ddaba",
+          "transactionFee": "11189706000000",
+          "blockNumber": 15,
+          "blockHash": "0x18bf10ea51d36f053a7343b18eaf242bc61031040178f02fcc8a0fdfc5f55e45"
+        },
+        "observation": {
+          "status": "checkpointed",
+          "transactionFee": "11189706000000",
+          "executionResult": "success",
+          "blockNumber": 15,
+          "blockHash": "0x18bf10ea51d36f053a7343b18eaf242bc61031040178f02fcc8a0fdfc5f55e45",
+          "effectSha256": "52bf563ecfc60dd2d904bfc82ce9cb6431d27ca464d8fdc949d5c01cce3354bc",
+          "canonical": true
+        },
+        "includedHistory": [
+          {
+            "status": "proposed",
+            "transactionFee": "11189706000000",
+            "executionResult": "success",
+            "blockNumber": 15,
+            "blockHash": "0x18bf10ea51d36f053a7343b18eaf242bc61031040178f02fcc8a0fdfc5f55e45",
+            "effectSha256": "52bf563ecfc60dd2d904bfc82ce9cb6431d27ca464d8fdc949d5c01cce3354bc",
+            "txHash": "0x2de2bcc49574f10410d80eb570a9e17b3e139d0e1012507796d4ad7bee2ddaba",
+            "canonicalAtObservation": true
+          },
+          {
+            "status": "checkpointed",
+            "transactionFee": "11189706000000",
+            "executionResult": "success",
+            "blockNumber": 15,
+            "blockHash": "0x18bf10ea51d36f053a7343b18eaf242bc61031040178f02fcc8a0fdfc5f55e45",
+            "effectSha256": "52bf563ecfc60dd2d904bfc82ce9cb6431d27ca464d8fdc949d5c01cce3354bc",
+            "txHash": "0x2de2bcc49574f10410d80eb570a9e17b3e139d0e1012507796d4ad7bee2ddaba",
+            "canonicalAtObservation": true
+          }
+        ]
+      },
+      "9775cf65cff902cd7d58daa17cc05e6cf3b2921c2cf0aecd22e1c3670e758cde": {
+        "method": "close_uncertain",
+        "argsDigest": "cbec80872ef00d5b4a7932ca5181b8cf1e84f7b2194c7c1c4829e2a89253d6aa",
+        "args": [
+          "0x219f2d01622e854f04830771aa7121934dbcaf0311374ad753b3e31d508ad252"
+        ],
+        "phase": "submission-unknown",
+        "proofMode": "disabled",
+        "txHash": "0x0ea1d0ad27ed628250bdc7bc78efe79df6d0517df1aaab02911a0cf3966d8e8c",
+        "transactionSha256": "c88b29934f94bf6336515508ba74e5a01a0de53b118d190940a89fe474227db9",
+        "result": {
+          "status": "succeeded",
+          "canonical": true,
+          "method": "close_uncertain",
+          "argsDigest": "cbec80872ef00d5b4a7932ca5181b8cf1e84f7b2194c7c1c4829e2a89253d6aa",
+          "txHash": "0x0ea1d0ad27ed628250bdc7bc78efe79df6d0517df1aaab02911a0cf3966d8e8c",
+          "transactionFee": "11461250400000",
+          "blockNumber": 16,
+          "blockHash": "0x1e200f1b80bb7ca994ee0bfe5b77155f4ec69ed62ec981dcc6fdcd94188e30fc"
+        },
+        "observation": {
+          "status": "checkpointed",
+          "transactionFee": "11461250400000",
+          "executionResult": "success",
+          "blockNumber": 16,
+          "blockHash": "0x1e200f1b80bb7ca994ee0bfe5b77155f4ec69ed62ec981dcc6fdcd94188e30fc",
+          "effectSha256": "04884e2c170b50055ce2a35928609820b8a9d91b0ca86f23fdfff30affbc6056",
+          "canonical": true
+        },
+        "includedHistory": [
+          {
+            "status": "proposed",
+            "transactionFee": "11461250400000",
+            "executionResult": "success",
+            "blockNumber": 16,
+            "blockHash": "0x1e200f1b80bb7ca994ee0bfe5b77155f4ec69ed62ec981dcc6fdcd94188e30fc",
+            "effectSha256": "04884e2c170b50055ce2a35928609820b8a9d91b0ca86f23fdfff30affbc6056",
+            "txHash": "0x0ea1d0ad27ed628250bdc7bc78efe79df6d0517df1aaab02911a0cf3966d8e8c",
+            "canonicalAtObservation": true
+          },
+          {
+            "status": "checkpointed",
+            "transactionFee": "11461250400000",
+            "executionResult": "success",
+            "blockNumber": 16,
+            "blockHash": "0x1e200f1b80bb7ca994ee0bfe5b77155f4ec69ed62ec981dcc6fdcd94188e30fc",
+            "effectSha256": "04884e2c170b50055ce2a35928609820b8a9d91b0ca86f23fdfff30affbc6056",
+            "txHash": "0x0ea1d0ad27ed628250bdc7bc78efe79df6d0517df1aaab02911a0cf3966d8e8c",
+            "canonicalAtObservation": true
+          }
+        ]
+      }
+    }
+  },
+  "privateBok": {
+    "version": 1,
+    "identity": {
+      "network": "eip155-31337:aztec-374956180:0x117e21ac0815f6cdc4f587417459250188a0a62c",
+      "escrow": "0x2572b544546990786b879f43f79ad3aaac467c1ae0dd05e82c070b1df9aadc05",
+      "requestId": "0x219f2d01622e854f04830771aa7121934dbcaf0311374ad753b3e31d508ad252",
+      "target": "0x184f5be491d47e6ff5b034e5b4c933ef113f24cbf0a4f498f9a4813cd651160b"
+    },
+    "limits": {
+      "maxCalls": 1,
+      "maxInputBytes": 1024,
+      "maxTokens": 64,
+      "maxReservation": "1000000",
+      "maxBudget": "1000000"
+    },
+    "calls": {
+      "0": {
+        "id": 0,
+        "phase": "fenced",
+        "inputDigest": "55d0c2d526bddd5ea7e9fbd5b18f9a89cc2b34fece620422cb42bd71a3f6808d",
+        "requestedTokens": 64,
+        "quote": {
+          "modelId": "kimi-k2-5",
+          "inputBound": 256000,
+          "maxTokens": 64,
+          "inputPrice": "560000000",
+          "outputPrice": "3500000000",
+          "cachePrice": "220000000",
+          "maximum": "143584"
+        },
+        "before": {
+          "budget": "1000000",
+          "available": "1000000",
+          "charged": "0",
+          "refunded": "0"
+        }
+      }
+    },
+    "operations": {
+      "e4b386b0c4ae3fe4809dc51d6d1a2e8f3aabe8ecda859161aab7c0c5576c0f97": {
+        "method": "reserve",
+        "argsDigest": "774df060e3fede169fafd325b0962a7cf63008b697bb703d1c4a52bebead0c6f"
+      },
+      "9775cf65cff902cd7d58daa17cc05e6cf3b2921c2cf0aecd22e1c3670e758cde": {
+        "method": "close_uncertain",
+        "argsDigest": "cbec80872ef00d5b4a7932ca5181b8cf1e84f7b2194c7c1c4829e2a89253d6aa"
+      }
+    },
+    "finished": false
+  }
+}

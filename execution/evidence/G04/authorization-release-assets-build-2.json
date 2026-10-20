@@ -1,0 +1,84 @@
+{
+  "source": "b9954f20dfe6929df2e2c3b468ea129cf5877133",
+  "purpose": "Normal SDK apps wallet build for interrupted Bok authorization release",
+  "setupRepair": "Existing pinned Forge1.4.1 in PATH verified before retry; original175ms failure preserved",
+  "passed": true,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 866832,
+  "rssSamples": [
+    {
+      "elapsedMs": 1002,
+      "rssKiB": 290016
+    },
+    {
+      "elapsedMs": 2022,
+      "rssKiB": 315840
+    },
+    {
+      "elapsedMs": 3040,
+      "rssKiB": 371216
+    },
+    {
+      "elapsedMs": 4055,
+      "rssKiB": 866832
+    },
+    {
+      "elapsedMs": 5076,
+      "rssKiB": 517088
+    },
+    {
+      "elapsedMs": 6108,
+      "rssKiB": 60288
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "apps/build.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "scripts/rolling-wallet-assets.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 4055,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 19115,
+        "ppid": 59636,
+        "rssKiB": 59360
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 19130,
+        "ppid": 19115,
+        "rssKiB": 93024
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 19176,
+        "ppid": 19130,
+        "rssKiB": 714448
+      }
+    ]
+  },
+  "elapsedMs": 6232,
+  "ownedTreeAbsent": true
+}

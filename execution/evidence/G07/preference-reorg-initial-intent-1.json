@@ -1,0 +1,35 @@
+{
+  "candidate": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+  "scenario": "rolling-preference-reorg-initial",
+  "recordedAt": "2026-10-12T07:49:55.512924+00:00",
+  "status": "finished-failed",
+  "attempt": 1,
+  "maxAttemptsWithoutNewEvidence": 1,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "review": "execution/evidence/G07/reorg-a699-source-eligibility-review.json",
+  "reviewSha256": "bb4a8fe6f3281b3515c07b2921dc4235d59f557aec2fe62a14bd100ec9da49a4",
+  "command": "NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/test-c01-application.mjs rolling-preference-reorg-initial",
+  "scope": "Three genuine local private proof jobs; actual disposable L1 rollback and natural L2/PXE recovery, retained exact predecessor bytes and fee history, explicit replacement. No persistent testnet or paid action.",
+  "hypothesis": "Reviewed initial preference proof anchors in removable suffix. Official reorg control preserves retained ancestor, then actual archiver/PXE rollback must restore the old private head before explicit strict replacement.",
+  "exitCode": 1,
+  "finishedAt": "2026-10-12T07:59:38.044Z",
+  "evidence": "execution/evidence/G07/application-355ffc49-1074-4105-bed2-0ec5304fe19e.json",
+  "evidenceSha256": "bfdb60ee54140aeb2c73b9f4a6f523b94c896a2e782749421cd7a503b47a7b7c",
+  "elapsedMs": 582364,
+  "peakTreeRSSKiB": 1179984,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true,
+  "failures": [
+    {
+      "stage": "resource-sampling",
+      "errorClass": "Error",
+      "code": "HARNESS_SAMPLING_GAP",
+      "frames": [
+        "supervisor.mjs:35:55",
+        "supervisor.mjs:29:52"
+      ]
+    }
+  ],
+  "nextAction": "Read-only host power and source diagnosis before any changed retry; no application reorg acceptance."
+}

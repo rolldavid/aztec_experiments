@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "task": "G13-complete-public-reader-observation",
+  "revision": "5bcb61859891187f3b76484008c4a3a3053c9268",
+  "baseRevision": "4cc7d27cd4f4027c63e1bcaa846de20ef91909c9",
+  "sourceFrozen": true,
+  "scope": "Test-only complete public-reader request URL/query/header projection and same-process receiver reconciliation. No application behavior changes.",
+  "exports": {
+    "browser": "createRollingPublicReaderObservation({origin,key,privateValues}) in rolling-preference-browser.mjs",
+    "receiver": "installRollingPublicReaderReceiver(sameOptions) in rolling-wire-campaign.mjs",
+    "assertion": "assertRollingPublicReaderObservation(browserSnapshot,receiverSnapshot), separate from unchanged broader assertRollingWireCampaign"
+  },
+  "semantics": [
+    "Every observed request is counted. Complete original URL is keyed, with exact query order, all keys/values and duplicates represented. Known route/header/key labels only; unknown names and all values are keyed tokens and byte lengths.",
+    "Unknown routes, headers, keys, malformed or oversized inputs, private known-value matches and overflow invalidate scoped acceptance. No sensitive values are emitted.",
+    "Actual browser headersArray and actual Node rawHeaders are canonicalized only for header order/case. Missing or changed receive shapes fail exact reconciliation.",
+    "Track every asynchronous browser inspection; early rejected tasks increment observerErrors before removal. Close browser and drain inspections before final snapshot. Close receiver after window before its final snapshot.",
+    "Receiver subscribes only to existing Node24 ingress diagnostics for the configured local public-reader port; no fetch replacement, listener, proxy, service, retry or network lifecycle is added.",
+    "Require positive feed, equal request totals and full matching rows; absent, failed, partial or mismatched coverage cannot pass."
+  ],
+  "boundaries": [
+    "One explicitly isolated public-reader window; other callers on the same port must be excluded or their extra requests make reconciliation fail.",
+    "No response-body analysis, native child/Anvil receiver observation, extension-wide capture, derived-account/cross-name unlinkability or timing guarantee.",
+    "Known private values and random32-byte HMAC key remain operator-private and identical for sender/receiver; never put them in public evidence or app configuration.",
+    "Use existing browser no-send/route guards alongside the new projection. This does not replace financial safeguards or the broader wire-campaign acceptance."
+  ],
+  "checks": [
+    {
+      "command": "node --test --test-name-pattern=\"public-reader|public reader\" scripts/testing/rolling-preference-browser.test.mjs scripts/testing/rolling-wire-campaign.test.mjs",
+      "pass": 31,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1926.444291
+    },
+    {
+      "command": "node --test scripts/testing/rolling-preference-browser.test.mjs scripts/testing/rolling-wire-campaign.test.mjs",
+      "pass": 159,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2612.317416,
+      "log": "focused.log"
+    }
+  ],
+  "actualAcceptance": "Not run. Root owns installation in the existing public-server process at next normal boundary and the read-only private-view journey.",
+  "dependencyRelease": "Temporary node_modules symlink to physical lead removed after tests; all test processes closed, installed tree untouched.",
+  "files": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/rolling-preference-browser.mjs",
+      "sha256": "43d39712b5bb0eb05e3d779552f6051fc336cdbe4c40bda15f099812da8d5bea",
+      "bytes": 26911
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/rolling-preference-browser.test.mjs",
+      "sha256": "5d29e339a49bf7d575e8420bb569bece905c3ac6caaec35d13e06593016e72b1",
+      "bytes": 27841
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/rolling-wire-campaign.mjs",
+      "sha256": "537e90a4004e65ed992e3c74bf79780f7093c6bc60616a9f8dd976909d969c4c",
+      "bytes": 7442
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/rolling-wire-campaign.test.mjs",
+      "sha256": "566c39e35df9b2856ac2edc110bcc8e24e0de1613ca696b263f2c904ec929cd9",
+      "bytes": 13174
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g09-current-moderation-journey/policy-union/reader-observation/focused.log",
+      "sha256": "4749ecf0966d226cf59ed7d837de0d1879000075f000e8e4d5612830c2f6189d",
+      "bytes": 12392
+    }
+  ]
+}

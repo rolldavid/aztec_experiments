@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T00:10:14.447008+00:00",
+  "passed": true,
+  "authority": "05b preparation only; lead review and fresh deadline check before compute",
+  "privateDirectoryReference": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-05",
+  "privateFiles": [
+    "archive-0502-reference.json",
+    "upload-0502-intent.json",
+    "upload-0502-receipt.json",
+    "bootstrap-0502.json",
+    "fleet-policy-0502.json",
+    "user-data-0502.gz",
+    "payload-verification-0502.json"
+  ],
+  "archive": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/rolling-0502-20261012-05/runtime.tar.gz",
+    "versionId": "aIICW0WL.4.hu8QYe4XGoXlIU9aPLU72",
+    "bytes": 383489689,
+    "sha256": "6d4813b4d9cf0f5826639ac616673eea5fd62bdcc5d17670aa4f07c5ea9485fd",
+    "checksumSHA256": "bUgTtNnPD1gmY5rGFmc+6l/WK9zF0XZwqk8HxeqUhf0=",
+    "headVerified": true
+  },
+  "payload": {
+    "bytes": 16332,
+    "sha256": "ae1fa87d4282c0933cd063486369969decb8acfb3198b1311c89681fcc277e77",
+    "headroomBytes": 52
+  },
+  "deadlines": {
+    "createdAt": "2026-10-12T00:09:37Z",
+    "budgetStop": "2026-10-12T02:09:37Z",
+    "commissioningStop": "2026-10-12T00:39:37Z"
+  },
+  "evidenceHashes": {
+    "operator05b-upload-preparation.json": "0c2c71544857e76ae4fc7a9c8ad1fb6c637fd064e284e4832b26e8ea32f52349",
+    "operator05-capability-preparation-0502.json": "16310d509db35da56ac986bcfc2958907949f6dd6fc8701538d8aaa746d6094d",
+    "operator05b-payload-verification.json": "88275aa63fe46e420f01ee78633f218f98dc1788871dc7ac2939c60dd7508ca1",
+    "runtime-package-0502-20261012.json": "6aaad3329749b87a2157609afaa00471a55952ad96302726b2506e2319078e24"
+  },
+  "newArchivePutAttempts": 1,
+  "oldArchiveUploadReplay": false,
+  "receiptProbeReplay": false,
+  "newReceiptProbe": false,
+  "launchTemplatesCreated": 0,
+  "fleetsCreated": 0,
+  "instancesCreated": 0,
+  "actualCloudHostControlReadback": "pending launch; source and prepared policy verified",
+  "budgetReservedUsd": 35,
+  "cumulativeReservedUsd": 165.28,
+  "remainingUsd": 134.72
+}

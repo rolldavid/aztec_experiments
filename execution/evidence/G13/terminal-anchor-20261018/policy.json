@@ -1,0 +1,29 @@
+{
+  "base": "f891dbaf494e389e23fc6ebfe923b8f14f9141f4",
+  "candidate": "d8513dae8389f38769fddc4a052e62b34440d265",
+  "task_id": "G13-fenced-request-dispatch",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "plugins/aztec.mjs",
+    "plugins/test/hosted-private-bok.test.mjs"
+  ],
+  "required_checks": [
+    "focused"
+  ],
+  "requirements": [
+    "RC29-canonical-predecessor-anchor",
+    "RC41-terminal-recovery"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G13-fenced-request-dispatch",
+      "paths": [
+        "plugins/aztec.mjs",
+        "plugins/test/hosted-private-bok.test.mjs"
+      ]
+    }
+  ]
+}

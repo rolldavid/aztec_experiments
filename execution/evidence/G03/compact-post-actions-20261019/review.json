@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "afaa23a9efd00d441188fa17fee05743888eefe8",
+  "baseRevision": "c186033d2f52675707fed1ea3e5642fc9246fe63",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "scope": "Compact post action presentation preserving all actions and private-state boundaries",
+  "checks": [
+    "Read full three-file diff before implementer conclusions. Existing el() recursively flattens nested threadControls and drops null entries; moving controls into native details retains event handlers.",
+    "Reply/Like/Bookmark stay primary; Unlike/Quote/Repost/subscription/read-marker remain available after explicit More expansion. Removed/rejected posts preserve only permitted management controls and navigation; moderator controls unchanged.",
+    "No new read, conditional like-state inference, wallet import or network action on disclosure toggle. Existing privateChanged traverses nested preference buttons, preserving private state updates.",
+    "Inspected changed assertions: closed details visibility now expected, explicit expansion and exact six action payloads checked; removed/rejected Unlike path still verified. Mobile layout assertion remains genuine.",
+    "Independently ran only existing labelled-social-records and rejected-board component cases at exact HEAD: 2 passed, 0 failed/skipped, 2811.825375ms. No chain/proof/full-suite/accessibility campaign."
+  ],
+  "command": "NODE_BACKEND=js TMPDIR=/private/tmp T04_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' <pinned Node24.21.0> --test --test-name-pattern='^labelled social records:|^rejected board remains' apps/rolling/reader.browser.test.mjs",
+  "sourceHashes": {
+    "apps/rolling/reader.mjs": "c9346cb5d093554b330986f664585bce4b5cdeb98574d4b547e85bed37725d84",
+    "apps/rolling/style.css": "cf857a62262c18596c20d0a33675f9c3a679d3d59f06843750a89e58b3255432",
+    "apps/rolling/reader.browser.test.mjs": "350aa841553ac4f018d6a02739bb494aceef061a2c861c2380d852cac8c9d6da"
+  },
+  "limitations": [
+    "Renderer fixture records action payloads; it does not independently execute onchain actions. Onchain semantics are unchanged.",
+    "No accessibility qualification is asserted; owner removed that requirement."
+  ]
+}

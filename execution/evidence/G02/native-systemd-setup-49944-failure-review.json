@@ -1,0 +1,34 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T03:15:35.177944+00:00",
+  "packetSha256": "9b21e3d6eead5f611ac80ad82f45aae3e328eea3a714f5835baf6bfb1f5076ae",
+  "resultSha256": "843d0c1df1a88a7869e0649213a5ae69e28ad05d315a4528fa9cceb4c247a3eb",
+  "verdict": "FAILED setup, cleanup confirmed by recorded successful immutable-ID removal and empty filtered readback; no derived-image acceptance",
+  "elapsedMs": 8466,
+  "actualState": {
+    "Dead": false,
+    "ExitCode": 153,
+    "OOMKilled": false,
+    "Running": false,
+    "Status": "exited"
+  },
+  "baseImageId": "sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7",
+  "writableBytes": 4280320,
+  "closureAvailable": false,
+  "derivedImageAvailable": false,
+  "sourceDiagnosis": {
+    "confirmed": "setup.sh global ulimit -f8192 is inherited by apt-get and applies to all regular-file writes, not just /run/setup/log. That is inconsistent with its intended log-only scope and legitimate bounded APT index/archive writes.",
+    "uncertain": "Exit153 is consistent with a file-size-limit failure; receipt does not identify the signalled process or exact write. Tmpfs log was not retained, so do not call the specific APT index/archive/log path proven. OOMKilled is false; no native/systemd regression ran.",
+    "minimalRepair": "Remove global file-size restriction from APT and independently bound public log capture, retaining existing signed archive100MiB/index64MiB/tmpfs/memory/time/network/disk gates. Preserve bounded public stage/failure diagnostics outside ephemeral log lifetime and attempt their read independently of mandatory owned cleanup.",
+    "requiredChecks": [
+      "Controlled logger over-cap input drains or terminates safely without truncation-as-success.",
+      "APT child no longer inherits the log file limit; archive/index bounds remain.",
+      "Diagnostic-read/persistence failure never suppresses cleanup.",
+      "Fresh one-shot setup identity/intent after exact source review; no automatic same-name replay."
+    ]
+  },
+  "limits": [
+    "No package/authenticated derived image closure yet. Base image pull identity alone does not qualify systemd packages.",
+    "No offline/container escalation/provider/paid/native grant."
+  ]
+}

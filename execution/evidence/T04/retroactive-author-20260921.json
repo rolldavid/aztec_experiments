@@ -1,0 +1,73 @@
+{
+  "recordedAt": "2026-09-20T23:29:35.200348+00:00",
+  "board": "0x1bbe99183f182c179ca47e0acb0ac5d7ad0e2782271ab9d45b85ea4dacf825c9",
+  "depositTx": "0xb94fbda4b5513fbca5e42fe5f2d00756118a14cff2f611f80f804dd9b8393a03",
+  "claim": {
+    "tx": "0x0a2003c4ba459a47ce41ebe86f934c47b2fba28309a154862a8afce8eadc2bf5",
+    "block": 89934,
+    "proofSeconds": 55,
+    "status": "checkpointed"
+  },
+  "post": {
+    "tx": "0x22f0fc14b68278a84592dbe44a91a71637c8fb55b82709218566f96eb6c6d827",
+    "block": 89938,
+    "proofSeconds": 60,
+    "status": "checkpointed"
+  },
+  "feeMethod": "author private Fee Juice balance",
+  "feed": {
+    "scope": {
+      "l1ChainId": "11155111",
+      "rollupVersion": "1821665230",
+      "rollupAddress": "0xd73a91bdcf6891c7642f3e460036e1ef2cc23178",
+      "boardAddress": "0x1bbe99183f182c179ca47e0acb0ac5d7ad0e2782271ab9d45b85ea4dacf825c9",
+      "portalAddress": "0x794df4e4af56748e9eb5cc3ea75a73961d9f9566"
+    },
+    "count": 1,
+    "posts": [
+      {
+        "index": 0,
+        "postId": "0x0cecb8100a3e4fc064ea8d8f91b4d3c62a22277c0ff013fedffe181a1de365b0",
+        "text": "BOARD_MODERATION_TEST: harmless deployment check.",
+        "flagged": false,
+        "timestamp": 1789946892,
+        "policyVersion": "0x007d4ea98fa3dc943f1f30752d943c32df21e6b8923f3771a01eafec8591eb2c",
+        "flagDeadline": "1789950492",
+        "censorResponse": null,
+        "flaggedBy": null,
+        "publication": {
+          "blockNumber": "89938",
+          "blockHash": "0x2211150e3a21829fe3a95e6848f7706029028d6e366f0c40d2c4fbf90561b163",
+          "txHash": "0x22f0fc14b68278a84592dbe44a91a71637c8fb55b82709218566f96eb6c6d827",
+          "txIndexWithinBlock": "0",
+          "logIndexWithinTx": "0"
+        },
+        "flagEvent": null
+      }
+    ],
+    "policy": "Test board: flag credible threats of violence against people. Do not flag ordinary criticism, disagreement, or clearly fictional discussion.",
+    "policyVersion": "0x007d4ea98fa3dc943f1f30752d943c32df21e6b8923f3771a01eafec8591eb2c",
+    "censorWindow": 3600,
+    "policies": [
+      {
+        "policyVersion": "0x007d4ea98fa3dc943f1f30752d943c32df21e6b8923f3771a01eafec8591eb2c",
+        "text": "Test board: flag credible threats of violence against people. Do not flag ordinary criticism, disagreement, or clearly fictional discussion.",
+        "censorWindow": "3600"
+      }
+    ],
+    "checkpoint": {
+      "number": 89938,
+      "hash": "0x2211150e3a21829fe3a95e6848f7706029028d6e366f0c40d2c4fbf90561b163"
+    },
+    "revision": 0
+  },
+  "limits": "Application transaction observations only; not full author gas envelope or production clearance.",
+  "greeting": {
+    "tx": "0x0db5a540d04d8dfff4fa2c730400a47336151faa7d4e1eee8c2f871d70d057d3",
+    "block": 89951,
+    "proofSeconds": 60,
+    "status": "checkpointed",
+    "visibleInHostedBrowser": true,
+    "moderatorAllowedAt": "2026-09-20T23:44:19.045Z"
+  }
+}

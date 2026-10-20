@@ -1,0 +1,51 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T16:59:31.227102+00:00",
+  "base": "72987b78d36accde73ccba9466c0f787f9bb6479",
+  "candidate": "c200873ddf7151f8052fffc56048662a52804ff3",
+  "workerSource": "81f7d6a2bb290e1ecc6bc260fe30dc2b469bf00b",
+  "verdict": "APPROVE exact eight-path component integration through existing negative gates and compare-and-swap; production factory/archive gates remain open",
+  "sourceTransferSha256": "f94f7965702c2ed4d2d6806e86adcc6a573ba8bd19d2f69b1569447a6a9b2a70",
+  "sourceCarryReviewSha256": "4cf2e2c65692d659567c24ee36613cf459dc4986aaacc08b1fe49a213cf0e775",
+  "actualPacketSha256": "9d1c99da792b49fa3c1b6be134fef0ae35918804701127630c5a746f7c99e718",
+  "actual91362": {
+    "tests": 191,
+    "pass": 189,
+    "namedOptInVolumeSkips": 2,
+    "failCancelTodo": 0,
+    "allLabelsAndSkipLabelsExact": true,
+    "elapsedMs": 33255,
+    "sampledPeakTreeRSSKiB": 941920,
+    "allPacketArtifactsVerified": true,
+    "protectedPinsRehashed": 3310,
+    "allMatch": true,
+    "ownedCleanupPositive": true,
+    "temporaryDirectoryAbsent": true,
+    "sourceClean": true
+  },
+  "normalClosure": {
+    "sha256": "235b2ec6fbbdd8be1f4236c649a79b3d8367589c27618e140cb2696cabd958b0",
+    "source": "c200873ddf7151f8052fffc56048662a52804ff3",
+    "base": "72987b78d36accde73ccba9466c0f787f9bb6479",
+    "all3157BindingsRehashedMatch": true
+  },
+  "volumeCarry": {
+    "actual52797Sha256": "936f635b434c1979309a599f415c78e693e090425fe7134ae87427ca5cee00ed",
+    "independentReviewSha256": "31b85d5e7d499505e0c145e96a0c5cc4b092c87b8e43b52523e078b8359eabac",
+    "basis": "All eight final component blobs exactly equal81f7; actual growing experiment carries within its synthetic plugin-dominated/sparse-post and sampled-resource scope.",
+    "older22496": "Historical105005 partial measurement retained as supplementary evidence; original2928-byte case remains exact in candidate. Not falsely described as rerun on c200."
+  },
+  "coverage": [
+    "Original event decoder, shared projection reducer, atomic SQLite/inverse/cursor, cold canonical replay/publication and bounded query component suites executed together.",
+    "Small actual-decoder late-post/reopen/fork companion included in191; no separate worker replay needed.",
+    "Native devnet proof-disabled config and prior query-auth source remain unchanged outside these eight paths."
+  ],
+  "limitations": [
+    "Factory/UI wiring unchanged; no complete-history production deployment or lifetime-cap-removal acceptance.",
+    "Dense authenticated wire/query, full canonical archive, operational storage/GC and target-network release gates remain open.",
+    "Native kernel high-water remains unmeasured in growing experiment; aggregate memory is sampled, not instantaneous hard cap.",
+    "Prior failures31785 and unrun erroneous184preparation remain retained.",
+    "No proof,testnet deployment,paid action or overall production readiness inferred."
+  ],
+  "runtimeByReviewer": false
+}

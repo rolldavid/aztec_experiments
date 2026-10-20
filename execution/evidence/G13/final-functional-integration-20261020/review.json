@@ -1,0 +1,97 @@
+{
+  "candidate": "e92233321a44e11745ce27c9ffe02117c08ccb8a",
+  "base": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+  "verdict": "approved-source-and-evidence-with-explicit-integration-conditions",
+  "blockers": [],
+  "scope": {
+    "generatedConsumers": 7,
+    "handoverDocuments": 5,
+    "safeEvidenceFiles": 28,
+    "authoredRuntimeSourceChanges": 0
+  },
+  "independentChecks": [
+    {
+      "check": "Normal apps/build.mjs reproduction using pinnedNode24.21.0 and existing current SDK",
+      "result": "pass; no tracked changes after build; all7 generated-consumer SHA256 values match committed evidence",
+      "log": ".build/reviewer-evidence/final-testnet-plan/review-e9223332-build.log",
+      "sha256": "930f4985f820f180f99f4106ae7e216c3b1138ef9882de8e64fd33db357be2ea"
+    },
+    {
+      "check": "SDK manifest closure",
+      "result": "2059 input hashes and8 output hashes match local current files; generatedSDK diff contains reviewed34cc finality/journal changes only."
+    },
+    {
+      "check": "Generated plugin delta",
+      "result": "Only existing finalized withdrawal condition becomes canonical checkpoint/proven/finalized success. Generated deploy consumer retains actual Outbox witness and portal.staticCall. Other HTML deltas remove obsolete finality error copy."
+    },
+    {
+      "check": "46-row evidence registry",
+      "result": "All46 IDs retained,97 paths exist and SHA256 match; all requirement evidence keys resolve."
+    },
+    {
+      "check": "Safe evidence and source boundaries",
+      "result": "No private-key material, signed capability URLs or credential token patterns found in added docs/evidence. Public config includes operator path/reference only; encrypted snapshots have hashes/version receipts, not plaintext credentials. Original failures and operator test repair retained."
+    }
+  ],
+  "assessedOutcomes": [
+    "0cc4 has canonical reply8960/finish8961, accepted4055 page/source and conserved250000=13944+236056 billing. No finalized or autonomous-untouched-output overclaim.",
+    "Five static routes match accepted bytes and headers under private S3/OAC; independent browser interaction retained. Interactive Bok is explicitly stopped; public artifacts survive compute.",
+    "Core and Bok encrypted snapshot verification is separately recorded, including inventories and exact versions. Core snapshot contains34cc before later fee/f3 amendments; documented deltas remain required for restore.",
+    "Actual prior moderator readback has six evaluated-ok posts including authenticated Bok, not six removals. f3 deployed source hashes match; its restarted catch-up is pending, not relabelled healthy from priorjobs.",
+    "20FEE configuration ceiling exceeds measured13.92375413638722FEE native maximum and remains below39.9655883944944FEE balance; amendment changes only cap, no new funding or transaction evidence claimed.",
+    "Application HTTP200 restoration evidenced; query/prover identities and03:00 shutdown retained. Budget479.248472398 forecast/reserve480/owner500 distinguished from actual costs.",
+    "Owner separate funded Bok, canonical inclusion progress, removed accessibility/elapsedsoak boundaries are preserved. X1/X2 are not agent-certified."
+  ],
+  "nonBlockingEditorialNotes": [
+    "Some high-level sentences still say core preservation/fee check are being closed, while detailed evidence already records completion; they conservatively underclaim. Final post-ingestion update should align these summaries."
+  ],
+  "integrationConditions": [
+    "Required candidate CI must pass; this source review is not CI completion.",
+    "Retain actual post-f3 resumed canonical ingestion/health receipt before marking current moderator closure complete. Existing f3readback is only active/startup and historical retainedjobs.",
+    "Final gate/publication should bind this exact revision or reviewed evidence-only follow-on, preserving service/base/overlay distinctions."
+  ],
+  "noLiveOperations": true,
+  "sourceReviewOnly": true,
+  "files": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/censor.html",
+    "apps/dist/deploy.html",
+    "apps/dist/fee-juice.html",
+    "apps/dist/plugins.js",
+    "apps/dist/sdk-manifest.json",
+    "apps/dist/user.html",
+    "execution/evidence/G09/current-moderator-20261019/f3-publish-result.json",
+    "execution/evidence/G09/current-moderator-20261019/f3-readback-result.json",
+    "execution/evidence/G09/current-moderator-20261019/fee-amendment-result.json",
+    "execution/evidence/G09/current-moderator-20261019/fee-quote-result.json",
+    "execution/evidence/G09/current-moderator-20261019/live-readback.json",
+    "execution/evidence/G09/current-moderator-20261019/restored-services-result.json",
+    "execution/evidence/G09/state-driven-catchup-20261020/focused.log",
+    "execution/evidence/G09/state-driven-catchup-20261020/integration.json",
+    "execution/evidence/G09/state-driven-catchup-20261020/review.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/bok-page-readback.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/bok-reply-readback.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/bok-runtime-publication.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/current-bok-final-public-effects.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/original-bok-completed.json",
+    "execution/evidence/G10/checkpoint-flow-20261020/publication.json",
+    "execution/evidence/G10/static-retention-20261019/browser-interaction.json",
+    "execution/evidence/G10/static-retention-20261019/object-versions.json",
+    "execution/evidence/G10/static-retention-20261019/provider-default-normalization.json",
+    "execution/evidence/G10/static-retention-20261019/public-retention-verified.json",
+    "execution/evidence/G10/static-retention-20261019/switch-deployed.json",
+    "execution/evidence/G12/final-preservation-20261019/bok-compute-stopped.json",
+    "execution/evidence/G12/final-preservation-20261019/bok-preservation.json",
+    "execution/evidence/G12/final-preservation-20261019/bok-resume.json",
+    "execution/evidence/G12/final-preservation-20261019/core-preservation.json",
+    "execution/evidence/G12/final-preservation-20261019/moderator-config-after-checkpoint.json",
+    "execution/evidence/G13/final-handover-20261020/frontend-build.log",
+    "execution/evidence/G13/final-handover-20261020/generated-consumers.json",
+    "execution/evidence/G13/final-handover-20261020/reference-check.json",
+    "execution/feature-status.md",
+    "execution/release/artifact-manifest.json",
+    "execution/release/final-requirement-disposition.json",
+    "execution/release/rolling-current-candidate.md",
+    "execution/specification-clarifications.md"
+  ]
+}

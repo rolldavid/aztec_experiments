@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "scenario": "rolling-preference-relationships",
+  "verdict": "PASS_BOUNDED_GENUINE_RELATIONSHIPS_AND_FINITE_KEYS_ONLY_RECOVERY_MEASUREMENT",
+  "outer": {
+    "path": "execution/evidence/G07/application-c43a9133-8fe1-4c9c-b2bb-0fab4f2a2d11.json",
+    "sha256": "30a4a2821ed99560f7f6e01067a52988451f0e6ed587c1c7bc1a37d106851a61",
+    "elapsedMs": 459781,
+    "peakTreeRSSKiB": 1917296,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "exitCode": 0,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "failures": []
+  },
+  "sourceBinding": {
+    "report": "execution/evidence/G07/cold-c43-source-checks.json",
+    "sha256": "bf47b2bfe2c2d78a80c693cc0eb5acf848b965e67d2e396a48069705eb925d8f",
+    "outerEntries": 267,
+    "innerEntries": 79,
+    "uniqueSourceFiles": 269,
+    "specialAnvilBinaryHash": "22d5eeb9e70e198d0feb76a15bb97d2061b653798080dad0cc328ab20495b0bd",
+    "allMatched": true,
+    "innerEqualsOuterBridge": true,
+    "inner": "execution/evidence/G06/application-port-82436a0c-fc60-410d-85b6-b59b372e092a/observation.json",
+    "innerSha256": "992c3a61a575e23280014aa1a712ca8f8fb872a36e82984b9defdd739cb9ee9c",
+    "artifacts": {
+      "billboard/target/rolling_contract-RollingBoard.json": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431",
+      ".build/contracts-manifest.json": "a7ad6de55782d8f2b4a3bf76d58b731decf6dec7165373742555af18fee1efe4"
+    }
+  },
+  "genuineActions": {
+    "actions": [
+      {
+        "action": "preference-name",
+        "blockNumber": 13,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "fee": "10177600800000",
+        "publicEvents": [
+          "NameRegistered"
+        ]
+      },
+      {
+        "action": "preference-root",
+        "blockNumber": 14,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "fee": "21779815200000",
+        "publicEvents": [
+          "PostPublished"
+        ]
+      },
+      {
+        "action": "preference-1",
+        "blockNumber": 15,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "fee": "8511002400000",
+        "publicEvents": []
+      },
+      {
+        "action": "preference-2",
+        "blockNumber": 16,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "fee": "8511002400000",
+        "publicEvents": []
+      },
+      {
+        "action": "preference-3",
+        "blockNumber": 17,
+        "status": "checkpointed",
+        "executionResult": "success",
+        "fee": "8511002400000",
+        "publicEvents": []
+      }
+    ],
+    "proverJobs": {
+      "jobs": 2,
+      "bytes": 0,
+      "running": false,
+      "submitted": 5,
+      "completed": 5,
+      "failed": 0
+    },
+    "applicationProofs": true,
+    "proofMode": "real",
+    "note": "Five actual production application actions use HTTP native prover. Standalone FPC funding, collateral claim and setup proofs are additional genuine setup work. jobs.jobs=2 is retained service queue state; submitted/completed=5 are totals."
+  },
+  "accounting": {
+    "files": [
+      {
+        "action": "preference-name",
+        "bytes": 2431,
+        "sha256": "e72e752fca66a0254eb959a0ecb7243b06b91328016f57d962d01049b7e73c5c"
+      },
+      {
+        "action": "preference-root",
+        "bytes": 5607,
+        "sha256": "cf6ac1a1b80b9f9c98916f081afdd472c79cfba7ddecf8fcd86f2bd8d1825062"
+      },
+      {
+        "action": "preference-1",
+        "bytes": 2655,
+        "sha256": "a0804ae77626d0a1f60f1ab061ea5ad1a1915d81a36ab9858810ede8a4b32c83"
+      },
+      {
+        "action": "preference-2",
+        "bytes": 2655,
+        "sha256": "d22b4c9900cac69f78f6289f645cfdc1ffba97ae7319924725d8a008ef47b04c"
+      },
+      {
+        "action": "preference-3",
+        "bytes": 2655,
+        "sha256": "32ff6b94f6b9393df98e0c3a20cbc4ea9f18f41833063509944d8faf9c040986"
+      }
+    ],
+    "fiveActionFees": "57490423200000",
+    "claimFee": "8418947400000",
+    "standaloneFee": "9148068000000",
+    "humanFees": "65909370600000",
+    "canonicalTotalDebit": "75057438600000",
+    "privateAndPoolBalance": "999999924942561400000",
+    "methodCalls": 717,
+    "observedPhaseCalls": 7,
+    "metricCountersConsistent": true
+  },
+  "canonicalFeeObservation": {
+    "status": "passed",
+    "stage": "complete",
+    "expected": {
+      "privateBalance": "999999924942561400000",
+      "authorPublicBalance": "0",
+      "poolBalance": "999999924942561400000"
+    },
+    "target": {
+      "number": 17,
+      "hash": "0x2e08330b05e5c799bcf5920fd29a74c5448a2cc9d40c09b13bc8e7b3ab0003be"
+    },
+    "anchorBeforeSync": {
+      "number": 11,
+      "hash": "0x288c201499fb762b06e6268237a6e0ecd52b6b005d5f3eaef1f350e38dcaf06a"
+    },
+    "anchorBeforeRead": {
+      "number": 17,
+      "hash": "0x2e08330b05e5c799bcf5920fd29a74c5448a2cc9d40c09b13bc8e7b3ab0003be"
+    },
+    "targetCanonicalBefore": true,
+    "anchorCanonicalBefore": true,
+    "privateBalance": "999999924942561400000",
+    "authorPublicBalance": "0",
+    "poolBalance": "999999924942561400000",
+    "anchorAfterRead": {
+      "number": 17,
+      "hash": "0x2e08330b05e5c799bcf5920fd29a74c5448a2cc9d40c09b13bc8e7b3ab0003be"
+    },
+    "targetCanonicalAfter": true,
+    "anchorCanonicalAfter": true
+  },
+  "recovery": {
+    "initialAndIncremental": {
+      "passed": true,
+      "preferenceTransactions": 3,
+      "publicPreferenceEvents": 0,
+      "initial": {
+        "steps": 1,
+        "elapsedMs": 2307,
+        "scannedThrough": 16,
+        "markersChecked": 0
+      },
+      "incremental": {
+        "steps": 1,
+        "elapsedMs": 2924,
+        "scannedThrough": 17,
+        "markersChecked": 0
+      },
+      "authenticatedHeadMatched": true,
+      "noReadProofOrSend": true
+    },
+    "journalReopen": {
+      "sameHash": true,
+      "newProofJobs": 0,
+      "transactionBytesRetained": true,
+      "actors": [
+        {
+          "sameHash": true,
+          "newProofJobs": 0,
+          "transactionBytesRetained": true
+        }
+      ]
+    },
+    "keysOnly": {
+      "freshPXEVerified": true,
+      "freshPrivateStoreVerified": true,
+      "oldActorClosed": true,
+      "passed": true,
+      "steps": 1,
+      "elapsedMs": 1650,
+      "scannedThrough": 17,
+      "markersChecked": 0,
+      "exactPrivateStateRecovered": true,
+      "newProofJobs": 0,
+      "newTransportSends": 0,
+      "newWalletSubmissions": 0,
+      "storagePlatform": "real SDK IndexedDB adapter on labelled CLI fake-indexeddb; native browser recovery is separate"
+    },
+    "sourceBasis": [
+      "Existing actual actor/PXE/wallet, branded node and exclusive guards remain authoritative. Cold actor created after old close/guard rejection; fresh namespace absent before/present after, distinct PXE/journal, same derived owner. New encrypted directory empty; no old journal/PXE store copied.",
+      "Reader uses official owner-scoped authenticated PXE private events, exact ABI/deployment/class, private head, contiguous revision/digest fold, canonical anchor rechecks and encrypted scoped CAS prefix. No raw event-store or private processing queue bypass.",
+      "Executed acceptance compares complete private state/head to in-memory checkpoint and requires zero proof/transport/wallet submission deltas. Private snapshot/digest not persisted; appropriately not independently recomputed from public evidence."
+    ],
+    "platform": "Actual SDK IndexedDB adapter with CLI fake-indexeddb; no native browser persistence claim."
+  },
+  "metrics": {
+    "coldWindowMs": 2967,
+    "readerRecoveryMs": 1650,
+    "phases": {
+      "pxe-construct": {
+        "calls": 1,
+        "fulfilled": 1,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 227,
+        "maxDurationMs": 227
+      },
+      "block-sync": {
+        "calls": 2,
+        "fulfilled": 2,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 247,
+        "maxDurationMs": 192
+      },
+      "head-utility": {
+        "calls": 3,
+        "fulfilled": 3,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 1173,
+        "maxDurationMs": 647
+      },
+      "discovery": {
+        "calls": 0,
+        "fulfilled": 0,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 0,
+        "maxDurationMs": 0
+      },
+      "events": {
+        "calls": 1,
+        "fulfilled": 1,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 0,
+        "maxDurationMs": 0
+      },
+      "fold": {
+        "calls": 0,
+        "fulfilled": 0,
+        "rejected": 0,
+        "pending": 0,
+        "totalDurationMs": 0,
+        "maxDurationMs": 0
+      }
+    },
+    "nodeMethodCalls": 717,
+    "privateTagQueries": 6,
+    "requestedTagSlots": 267,
+    "maxTagsPerRequest": 100,
+    "returnedLogSlots": 13,
+    "privateEventRows": 3,
+    "observerHealthy": true,
+    "settled": true,
+    "counters": {
+      "observerErrors": 0,
+      "overflows": 0,
+      "pending": 0,
+      "peakPending": 3,
+      "eventRows": 3,
+      "maxEventRows": 3,
+      "memorySamples": 2,
+      "rssHighWaterBytes": 748879872,
+      "heapHighWaterBytes": 470308312
+    },
+    "unobservedPhases": [
+      "discovery",
+      "fold"
+    ],
+    "wireCountsMatch": false,
+    "transportBytesObserved": false,
+    "discoverySeparationObserved": false,
+    "foldSeparationObserved": false,
+    "endToEndWorkBoundQualified": false,
+    "interpretation": [
+      "Only fixed numeric aggregates; source/test guards preserve receiver/args/Promise/result/error and no extra calls/retry.",
+      "Server-window counts include readiness, not unique actor attribution. Overlapping phases/methods cannot be summed as unique work.",
+      "13 returned log slots are not13 authenticated preference events: official processing returned3 preference rows. Zero event-duration is millisecond-floor rounding, not zero cost.",
+      "Two process-boundary memory samples are not cold-window/descendant peak; full supervisor peak1917296KiB is independent.",
+      "wireCountsMatch=false correctly denotes missing serialization hook. Zero byte counters are unobserved, not measured zero bytes.",
+      "One finite history cannot establish large-history encrypted discovery limits, worst-case latency/RSS or remote retention."
+    ]
+  },
+  "publicReconstruction": {
+    "rebuild": {
+      "passed": true,
+      "canonicalTransactionsRefetched": 6,
+      "normalizedCacheTreatedAsAuthority": false
+    },
+    "reader": {
+      "passed": true,
+      "sessions": [
+        {
+          "phase": "fresh",
+          "closed": true,
+          "catchup": {
+            "passes": 1,
+            "pages": 2
+          },
+          "checkpoint": {
+            "number": 17,
+            "hash": "0x2e08330b05e5c799bcf5920fd29a74c5448a2cc9d40c09b13bc8e7b3ab0003be"
+          },
+          "views": [
+            "feed",
+            "thread"
+          ],
+          "authenticatedRanges": 2
+        },
+        {
+          "phase": "reopened",
+          "closed": true,
+          "catchup": {
+            "passes": 1,
+            "pages": 2
+          },
+          "checkpoint": {
+            "number": 17,
+            "hash": "0x2e08330b05e5c799bcf5920fd29a74c5448a2cc9d40c09b13bc8e7b3ab0003be"
+          },
+          "views": [
+            "feed",
+            "thread"
+          ],
+          "authenticatedRanges": 2
+        }
+      ],
+      "readerPort": 58316,
+      "persistedRangesBeforeReopen": 2,
+      "scope": "Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim"
+    }
+  },
+  "independentCodec": {
+    "path": "execution/evidence/G07/cold-c43-independent-codec.json",
+    "sha256": "80ec6cf860ca621b3669c8f490a5b656fef120c2b70bb5f89b124c82f50b2342",
+    "effects": 5,
+    "allRoundtripHashAndNumericFeeMatches": true,
+    "scope": "Actual installed TxEffect codec; no BB hashing/proving/chain queries.",
+    "retainedProbeFailure": "Initial reviewer compared Fr hex text with decimal fee; initial stderr retained, numeric representation corrected only. Finalexit0."
+  },
+  "cleanup": {
+    "applicationActorA": true,
+    "fundingWallet": true,
+    "proverAndQuery": true,
+    "nodeRPC": true,
+    "indexedDBGlobals": true,
+    "nativeArtifactLoader": true
+  },
+  "carryDisposition": {
+    "currentCandidate": "1ec67f406645442965ced41e56b4e93c7097a050",
+    "through8ee": "8eea1f52acfa4fb9bd26200fffd181538613e08b",
+    "checkReport": "execution/evidence/G07/cold-c43-carry-8ee-checks.json",
+    "sha256": "a5305d3ee34fd683555fc6acd2831870fee3895c4bae844196d69a63428035b6",
+    "additionalMetadataOnly": [
+      "execution/infrastructure-ledger.json",
+      "execution/sessions/handoff-20261012-1140.md",
+      "execution/sessions/registry.json"
+    ],
+    "approved": "Historical c8 runtime evidence applies to unchanged finite relationships recovery and metrics on exactcurrent composition.",
+    "reason": "Three harness paths matchapproved720 notification-only deferred B setup/sanitizer/tests plus additive fingerprints; relationships multi=false never invokes helper. Exact cold section unchanged. Seven deployment/diagnostic paths matchapproved4f70 outside local application execution. Production preferences/PXE patches/artifacts unchanged.",
+    "notGranted": [
+      "Notification browser runtime remains unpassed; reordered campaign requires actual outcome.",
+      "Infrastructure archive/payload/Linux qualification remain separate.",
+      "Future compact-block/SDK adapter changes require affected review/evidence. This run did not use prototype."
+    ]
+  },
+  "limits": [
+    "No fullG07/G14/product/privacy/audit closure.",
+    "No high-history encrypted-discovery qualification from this3-event finite preference sample.",
+    "No native-browser recovery, notification delivery or reorg claim from this run; prior evidence separatelybound."
+  ],
+  "reviewerReportConstructionNote": "First report construction assertion expected status.md metadata; actual diff contains handoff-20261012-1140.md instead. Read actual names and corrected metadata-only assertion; no source/runtime evidence changed."
+}

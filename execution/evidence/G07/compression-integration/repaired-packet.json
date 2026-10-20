@@ -1,0 +1,81 @@
+{
+  "revision": "0c4fec48722bb14729660bd723a01e521d8bc480",
+  "base": "88944cd065bcc5b19e342381f6cd34a0b175e235",
+  "task": "G07 actual public wallet asset transfer",
+  "requirements": [
+    "G07 cold recovery120s",
+    "Existing30s runtime script loading and exact decoded asset/SRI integrity"
+  ],
+  "sourceFiles": [
+    {
+      "path": "apps/rolling/start.mjs",
+      "sha256": "e6874b76cac669bf2c3dd5c12dade720d5d3f8b2e8f97f8bb5ea93688f7e14fa"
+    },
+    {
+      "path": "apps/rolling/start.test.mjs",
+      "sha256": "16a1f14bcd88d4e1358c744bbaa044914da185362ddd110a608180f79cfe3c5d"
+    }
+  ],
+  "checks": {
+    "command": "TMPDIR=/private/tmp NODE_BACKEND=js HARDWARE_CONCURRENCY=1 node --test apps/rolling/start.test.mjs",
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": null,
+    "before": "same focused gzip test on889 original source:0pass1fail86.109541ms, missing content-encoding",
+    "dependencyAccess": "Temporary exact symlink to existing physical lead node_modules, removed after tests; no installation/copy",
+    "diffCheck": "passed",
+    "actualLog": "final.log"
+  },
+  "evidence": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-transfer/focused.log",
+      "sha256": "c6ce4f6f45fa6ee22018df783c3ae677c9786b6aeba84e841867d0171f4e0f86"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-transfer/before.log",
+      "sha256": "e43e02249679decb5a57a0ba9a20155228f10056b741d968d1a5901de0011e2f"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-transfer/compression-measurement.json",
+      "sha256": "200c05225121178fae8cb9cbf2b295ca4b297cabbc9d89ee0e8ea7248ba2affc"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-transfer/repaired.log",
+      "sha256": "dbb2ffd786ac46bef74a9813912af2616815d43d5e17ab4ec2dde46716dfe405"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g07-wallet-transfer/final.log",
+      "sha256": "19a95e77d63cddbdbff7960ba06062cb3c2cf90fc4e41f9dd92145cac488f6d9"
+    }
+  ],
+  "bounds": {
+    "decodedAssetMaxBytes": 134217728,
+    "compressedOutputMaxBytes": 134217728,
+    "cacheMaxBytes": 33554432,
+    "cacheMaxEntries": 4,
+    "activeWalletTransfers": "bounded by128MiB encoded response bytes, not one global outgoing slot",
+    "queuedWalletTransfers": 32,
+    "overload": "503 Retry-After1; no automatic retry added",
+    "activeReadCompressionJobs": 1,
+    "responseMaxBytes": 134217728,
+    "responseDeadlineMs": 30000
+  },
+  "semantics": [
+    "gzip6 or identity negotiated by Accept-Encoding quality, explicit exclusions and wildcard",
+    "Current source bytes validated on every request before content-hash compressed-cache lookup",
+    "Decoded bytes unchanged, SRI/runtime manifests/security headers preserved; no SDK rebuild",
+    "HEAD encoding and Content-Length match GET without body",
+    "Read/compression error never returns stale cache or identity fallback",
+    "Read/compression gate released only after that work finishes; delivery separately owns encoded byte budget until finish/close/deadline",
+    "Absolute30s outgoing deadline destroys stalled socket; no change to application30s script/120s cold limits",
+    "Actual paused16MiB identity socket does not block31 supported worker responses; separate deterministic timer/128MiB cap test proves release"
+  ],
+  "limitations": [
+    "Measured SDK compressed62.96MB to28.08MB in1.08s on Mac; no new SSM transfer/browser acceptance yet.",
+    "At observed transfer rate compressed SDK may still exceed unchanged30s script limit; cold120 remains unqualified.",
+    "No network/proof/model/service operation performed for this source change."
+  ],
+  "supersedesRevision": "05b4f4fa8b3974cf76c61b3bead95e980b62bac5",
+  "reviewRepair": "Independent05b review found global slow-reader starvation. Original candidate and before evidence preserved; repaired in0c4fec with separate byte/deadline ownership and31-worker actual burst regression."
+}

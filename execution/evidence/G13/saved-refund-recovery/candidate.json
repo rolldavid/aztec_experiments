@@ -1,0 +1,148 @@
+{
+  "task": "G13-saved-ethereum-refund-recovery",
+  "source": "4b31efaa4b1c1e3f39cae816c0fad8bc85d95e28",
+  "base": "5bcb6185",
+  "createdAt": "2026-10-15T19:12:49.346250+00:00",
+  "problem": "A pre-wallet transport failure persists an exact Ethereum refund request, but the existing Rolling UI only offered status-only recovery and could not explicitly continue it.",
+  "originalFailure": "Private fixture rejected ethers eth_blockNumber before eth_sendTransaction. Actual latest/pending nonce0 and balance unchanged; journal hash null is not treated as proof no broadcast. Startup blocked8 remains separately unclassified.",
+  "change": "Separate saved-request review and explicit same-nonce confirmation; authenticated immutable request binding, canonical winner returns read-only, current exit membership/wallet/context/gas rechecked, original encrypted journal retained.",
+  "checks": [
+    {
+      "name": "before regression",
+      "pass": 0,
+      "fail": 2
+    },
+    {
+      "name": "initial scoped",
+      "pass": 4,
+      "fail": 0
+    },
+    {
+      "name": "adversarial first",
+      "pass": 29,
+      "fail": 3,
+      "cause": "Test replaced provider methods after capability bound originals; state-driven seams corrected, not product guards."
+    },
+    {
+      "name": "two full Node files",
+      "pass": 310,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 34899.988958
+    },
+    {
+      "name": "final scoped",
+      "pass": 32,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1305.391458
+    },
+    {
+      "name": "isolated UI selection",
+      "status": "interrupted",
+      "code": "HARNESS_SAMPLING_GAP",
+      "ownedTreeAbsent": true,
+      "qualified": false
+    }
+  ],
+  "files": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/refund-result.json",
+      "sha256": "0aefa7aa2ba63f6b25f5f2a143968bed34fce0beed817a994090a286fb24b8b9",
+      "bytes": 1838
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/refund-journal-inspection.json",
+      "sha256": "2815dee970f714a86165dc9f871f36c1f2ade10d0aaf6cd8cf2c75cf054a428a",
+      "bytes": 1566
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/refund-readonly-state.json",
+      "sha256": "8c0f92f8b02c4fc303f541597a0067c4620019073b1558b967ed22508a3123c4",
+      "bytes": 174
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/refund-guard-reproduction.json",
+      "sha256": "016049ba34184e114eb1709d69199a3e3f139f28c272ca890c45936e578db547",
+      "bytes": 248
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-before.log",
+      "sha256": "bd8ec80e2420204b21df4e349e314ef4ca16c2d33b3e5d95415a55da94360631",
+      "bytes": 1319
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-first-after.log",
+      "sha256": "1512cbaa1efea836d15dacf2860a22c0b14462af3d5aed134e4f4e844ea2a995",
+      "bytes": 548
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-adversarial.log",
+      "sha256": "d3720b6a02d342892f578e98dbea4ba4cdfd533ada325d114f6ccd643b20ea8b",
+      "bytes": 4540
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-adversarial-fixed.log",
+      "sha256": "54d623143e9aec6297f66f333cd51ca9f703ca8a929d30d04431a0e45d0fc177",
+      "bytes": 2573
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-node-full.log",
+      "sha256": "9fc22757cff5920068fc6156a613a8501838f2c61a55de274ca7af28053fa227",
+      "bytes": 26695
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-final-node.log",
+      "sha256": "7bd2e8b40b44587bac101654ee07f0e4b9ed9fd84482ac78035db861ac221f5e",
+      "bytes": 2567
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g13-current-local-funding-gap/withdraw-restake/saved-recovery-ui-supervisor.json",
+      "sha256": "7cae1621b5c79cca087502990d859898f6ba79dd0b2a816d136b92e865a5b488",
+      "bytes": 1975
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-session.mjs",
+      "sha256": "59692f40abf8535ab4557a0dc5a58c02afbf61f8f59ee8c315ef9f067fbf1266",
+      "bytes": 42965
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-session.test.mjs",
+      "sha256": "6be418137cb56e99ce412f7524d47aa50abf0fa85e5da3ad72a5b8b8e8f3772c",
+      "bytes": 85379
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-panel.mjs",
+      "sha256": "bb97aa275102f3fcb84d3299bfba6e6a6673e4d196a9fa42deda9875aa34cc4e",
+      "bytes": 92292
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "2c77a0b6e0872075c4d566ec4bc698aa2fcdbb7ec3e7cffefc74edef9f75c3be",
+      "bytes": 157960
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/shared/ethereum-journal.mjs",
+      "sha256": "19a9dfa3fc400fd4d3afe772ffbc25549a240c816b80084e09360674a81cb62e",
+      "bytes": 22816
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/scripts/test-w03-ethereum-journal.mjs",
+      "sha256": "f319fadaa0cbcb3da07dfb5b8e2568b7cbb3fc74c850c16a8d66c0e90dd08af0",
+      "bytes": 24853
+    }
+  ],
+  "remaining": [
+    "Independent exact-source review",
+    "Focused panel browser checks in stable awake environment",
+    "Normal SDK/apps/wallet generated closure and integration gate",
+    "Actual saved refund continuation after matching runtime ready; no financial replay yet"
+  ],
+  "limits": [
+    "Labelled local unit and UI fixtures are not real-chain or real-proof acceptance.",
+    "Original failed runs and financial journals remain immutable.",
+    "No service, provider, financial or cloud mutation performed by this source repair."
+  ]
+}

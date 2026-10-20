@@ -1,0 +1,66 @@
+{
+  "source": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+  "passed": false,
+  "deadlineMs": 240000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 855760,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 290048
+    },
+    {
+      "elapsedMs": 2028,
+      "rssKiB": 669472
+    },
+    {
+      "elapsedMs": 3047,
+      "rssKiB": 855760
+    }
+  ],
+  "failures": [
+    {
+      "stage": "fee-sync-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "fee-sync",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 3047,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 84607,
+        "ppid": 59636,
+        "rssKiB": 50288
+      },
+      {
+        "role": "fee-sync",
+        "pid": 84617,
+        "ppid": 84607,
+        "rssKiB": 37728
+      },
+      {
+        "role": "fee-sync",
+        "pid": 84618,
+        "ppid": 84617,
+        "rssKiB": 767744
+      },
+      {
+        "role": "fee-sync",
+        "pid": 84627,
+        "ppid": 84618,
+        "rssKiB": 0
+      }
+    ]
+  },
+  "elapsedMs": 3559,
+  "ownedTreeAbsent": true
+}

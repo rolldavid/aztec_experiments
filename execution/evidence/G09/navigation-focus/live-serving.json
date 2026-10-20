@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-15T01:57:36.355870+00:00",
+  "source": "d026cee0054c89f4d4796b203322fb05c6492aac",
+  "url": "http://127.0.0.1:8181/",
+  "assets": [
+    {
+      "path": "reader.mjs",
+      "status": 200,
+      "sha256": "34b4ff50b910aeb2c803415998b1e1c78e71a9ceb9fb6a48d27821019f12ac08"
+    },
+    {
+      "path": "navigation.mjs",
+      "status": 200,
+      "sha256": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649"
+    },
+    {
+      "path": "wallet-panel.mjs",
+      "status": 200,
+      "sha256": "ba705d35fd9d099b92a73e62ab19fa3ccaf322e7456eccec29ea559389d21697"
+    }
+  ],
+  "ui": "CUA reload shows River Canvas profile, avatar, navigation, public empty state, canonicalblock223; no wallet actions",
+  "runtime": "Existing native18612; built SDK/runtime byte-unchanged fromd5. Served UI sources advanced via clean fast-forward; no restart or build.",
+  "limits": "Public preview observation does not replace interactive regression checks or proof/privacy acceptance."
+}

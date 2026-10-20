@@ -1,0 +1,48 @@
+{
+  "task": "G07",
+  "kind": "focused-readonly-Anvil-load",
+  "sourceRevision": "95331c623b6367d92476f6e03c531daa5c1d7f8a",
+  "procedure": ".build/rc22-native-diagnosis/qualify-load-08c88.mjs",
+  "procedureSHA256": "c7a49ef77803ddd4ebe87c48c766844e716fa251772a7011a2dfd72c969e6c04",
+  "environmentCorrection": "Initial import failed before Anvil/cache/output because NODE_BACKEND=js was omitted. Existing network module import-only check passed with established JS backend; single actual load then ran. No source/deadline change.",
+  "result": {
+    "passed": true,
+    "snapshot": {
+      "sha256": "34d2a80baddcc3347f5838c1e8d3ac378a893067bfc5df7b9939fb689aef71a8",
+      "bytes": 6340229738
+    },
+    "firstRpcReady": {
+      "ready": true,
+      "elapsedMs": 55571,
+      "attempts": 524
+    },
+    "head": {
+      "number": "0xcb0",
+      "hash": "0xd99db3e80579b4e057a2b77b0a0903e97047e976df3cd680677478637d9fd4fa"
+    },
+    "headMatches": true,
+    "sourceUnchanged": true,
+    "nativeExit": {
+      "role": "anvil",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    "ownedTreeAbsent": true,
+    "elapsedMs": 72030,
+    "peakTreeRSSKiB": 6600656,
+    "failures": []
+  },
+  "evidence": {
+    "native-load-08c88-result.json": "585ba7c1072c1028128b021ce582d3228aedd52e8358f3ccc077fe02c15403ed",
+    "native-load-08c88-cache-cleanup.json": "e49742037f9b188a926b94dffc1fba1b8c5ac4d04310caab98164733f62915c7"
+  },
+  "interpretation": "Current6.340GB snapshot is readable and restores exacthead under the90s standalone bound. FirstRPC55.571s is below production60s but close. This sample alone does not demonstrate a need to increase timeout; failedproduction60s cause remains unclassified beyond latency/resource variability. Root owns metadata/deadlease reconciliation and any normal restart.",
+  "cleanup": "Exact successful probe cache5,734,264KiB removed using existing ownedhandle helper after cleanexit/sourcehash checks. Original08c,d16,9fbc snapshots and live metadata not modified.",
+  "limits": [
+    "NoAztecnode/deployment/mine/sends/funding/dump.",
+    "Not application restart or recovery acceptance.",
+    "Existing fresh120s/page10s unchanged."
+  ]
+}

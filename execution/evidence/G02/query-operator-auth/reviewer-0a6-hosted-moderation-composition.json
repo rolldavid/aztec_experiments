@@ -1,0 +1,84 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "sourceRevision": "0a6bbdd79ca8f31d40073c0648c62c0416787365",
+  "base": "a82aaa13a763099fcd4400f4143234a5e866eb69",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "requirements": [
+    "RC12",
+    "RC13",
+    "RC29",
+    "RC30",
+    "RC32",
+    "RC33",
+    "RC34",
+    "RC39"
+  ],
+  "components": {
+    "317": "Previously independently reviewed Actions disable/readback before dedicated mirror writes, connected repositories unchanged.",
+    "a39": "One-line hosted agent maxTokens now equals the same configured value passed to metering, retaining default1500. Metering validates range, enforces each request, and refuses existing journal limit mismatch; no old journal/cap mutation.",
+    "4f6": "Uses supported owned-index query facade rather than nonexistent publication method. Per-post revision matches scan; final guarded query requires unchanged revision and full checkpoint. Read failure/mixed projection rejects before queue/model/signing; existing authority and durable uncertain-send guards unchanged."
+  },
+  "composition": {
+    "censor-daemon/rolling-adapter.mjs": {
+      "origin": "4f6fe2cdff74929d543b60bd02b88105ebf3844f",
+      "sha256": "a81e76e3bb36c493e217c11945c857ebceb14b586e71f21067b5bc78a7ecf103"
+    },
+    "censor-daemon/test_worker.mjs": {
+      "origin": "4f6fe2cdff74929d543b60bd02b88105ebf3844f",
+      "sha256": "3fcb3be32cc74afc6305191f03535c9897fd4c722478686f05d90059ff00f2e9"
+    },
+    "plugins/DEPLOYMENT.md": {
+      "origin": "317cd3048dd8f713cfc9709255f369efc8dcc3a9",
+      "sha256": "3bf00dd5b0024a6da7a97e63fcb1a90c333d685f463032616a9f342cbfb94d34"
+    },
+    "plugins/github-app-broker.mjs": {
+      "origin": "317cd3048dd8f713cfc9709255f369efc8dcc3a9",
+      "sha256": "a6379c2bf28f7042625ebbdd16d8814f9261fedb1eec754587a48c32c00b7b5e"
+    },
+    "plugins/main.mjs": {
+      "origin": "a39d7f1c70dd8a239e83fcb32317a757eceeaac6",
+      "sha256": "bb3ed099f7b15a724df1489878fad05b6e9f2ba40c4a09aa28b114a9c8eb9f6d"
+    },
+    "plugins/test/github-app-broker.test.mjs": {
+      "origin": "317cd3048dd8f713cfc9709255f369efc8dcc3a9",
+      "sha256": "c44251cf38fbca528334fd7344b5ab012218a7b48defe04734a45ac0eca8ed32"
+    }
+  },
+  "checks": [
+    {
+      "kind": "independent existing focused tests",
+      "command": "pinned-node24 --test --test-name-pattern=\"actual owned public-reader|final guarded query\" censor-daemon/test_worker.mjs",
+      "source": "4f6fe2cdff74929d543b60bd02b88105ebf3844f",
+      "pass": 3,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 113.445875
+    },
+    {
+      "kind": "inspected log",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-diagnostics/hosted-output-limit.log",
+      "pass": 96,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 3233.40975
+    },
+    {
+      "kind": "inspected component packet",
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G08/operator-fixture/adapter-repair-handoff.json",
+      "pass": 152,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "kind": "prior independent review",
+      "path": "reviewer-317-github-actions-enforcement.json"
+    }
+  ],
+  "limitations": [
+    "No live moderation/model/signature/browser actions by reviewer. Native moderation acceptance remains separate.",
+    "New4096 config is not part of source approval and must not mutate limits of original requests.",
+    "GitHub App real setup/publication acceptance remains pending."
+  ]
+}

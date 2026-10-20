@@ -1,0 +1,85 @@
+{
+  "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+  "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+  "task_id": "G09-G03-final-startup-accessibility",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+      "task_id": "G09-G03-final-startup-accessibility",
+      "id": "focused-module-closure-and-navigation",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Existing Python complete_source_closure test; existing locked-private-route browser test; actual connected current-preview navigation",
+      "environment": "Node24.21.0; actual Chrome; no transactions/proofs",
+      "observed": "Missing import repaired, focusedimportpassed0.454s; private-route H1focus/livepoliteannouncement verifiedthreeviews",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/review.json",
+          "sha256": "16d5c6649299a2e42a62a2294b05ceb0bda5ce8b3d4f325ed9c1f87a7a685017"
+        },
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/live-browser.json",
+          "sha256": "1e70d67b6b0811536c90c9be5230fb89b63d4e0280f5464f25a26685c03b9db1"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+    "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+    "task_id": "G09-G03-final-startup-accessibility",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer_resume2",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G09/final-startup-accessibility-20261018/review.json",
+        "sha256": "16d5c6649299a2e42a62a2294b05ceb0bda5ce8b3d4f325ed9c1f87a7a685017"
+      },
+      {
+        "path": "execution/evidence/G09/final-startup-accessibility-20261018/live-browser.json",
+        "sha256": "1e70d67b6b0811536c90c9be5230fb89b63d4e0280f5464f25a26685c03b9db1"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+      "task_id": "G09-G03-final-startup-accessibility",
+      "id": "RC36-native-module-closure",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/review.json",
+          "sha256": "16d5c6649299a2e42a62a2294b05ceb0bda5ce8b3d4f325ed9c1f87a7a685017"
+        },
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/live-browser.json",
+          "sha256": "1e70d67b6b0811536c90c9be5230fb89b63d4e0280f5464f25a26685c03b9db1"
+        }
+      ]
+    },
+    {
+      "base": "6f92d41150e3cb6d3772525a42a800329c922dd7",
+      "candidate": "996dba928ac024e4e2585befdec8c3520b07bc01",
+      "task_id": "G09-G03-final-startup-accessibility",
+      "id": "RC44-private-route-accessibility",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/review.json",
+          "sha256": "16d5c6649299a2e42a62a2294b05ceb0bda5ce8b3d4f325ed9c1f87a7a685017"
+        },
+        {
+          "path": "execution/evidence/G09/final-startup-accessibility-20261018/live-browser.json",
+          "sha256": "1e70d67b6b0811536c90c9be5230fb89b63d4e0280f5464f25a26685c03b9db1"
+        }
+      ]
+    }
+  ]
+}

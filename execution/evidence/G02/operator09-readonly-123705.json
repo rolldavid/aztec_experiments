@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "campaign": "rolling-node-20261012-09",
+  "observedAt": "2026-10-12T12:37:05.921498+00:00",
+  "readOnly": true,
+  "readinessDeadline": "2026-10-12T12:47:58Z",
+  "deadlineElapsed": false,
+  "instance": {
+    "available": true,
+    "data": [
+      {
+        "id": "i-0f0ba078e3ff50444",
+        "state": "running",
+        "type": "m7a.4xlarge",
+        "launchTime": "2026-10-12T12:14:00+00:00",
+        "volumes": [
+          {
+            "id": "vol-0ff2bbf64e8bd943d",
+            "deleteOnTermination": true
+          },
+          {
+            "id": "vol-0d960a6aa947389fc",
+            "deleteOnTermination": true
+          }
+        ],
+        "iam": null,
+        "securityGroups": [
+          "sg-03065d3c141f9b030"
+        ],
+        "key": null
+      }
+    ]
+  },
+  "fleet": {
+    "available": true,
+    "data": [
+      {
+        "id": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+        "state": "active",
+        "activity": "fulfilled",
+        "type": "request",
+        "validUntil": "2026-10-12T13:03:58+00:00",
+        "terminateWithExpiration": true
+      }
+    ]
+  },
+  "shutdown": {
+    "available": true,
+    "data": {
+      "InstanceId": "i-0f0ba078e3ff50444",
+      "InstanceInitiatedShutdownBehavior": {
+        "Value": "terminate"
+      }
+    }
+  },
+  "volumes": {
+    "available": true,
+    "data": [
+      {
+        "id": "vol-0ff2bbf64e8bd943d",
+        "state": "in-use",
+        "encrypted": true,
+        "size": 40,
+        "type": "gp3",
+        "iops": 3000,
+        "throughput": 125
+      },
+      {
+        "id": "vol-0d960a6aa947389fc",
+        "state": "in-use",
+        "encrypted": true,
+        "size": 1024,
+        "type": "gp3",
+        "iops": 3000,
+        "throughput": 125
+      }
+    ]
+  },
+  "console": {
+    "available": true,
+    "timestamp": "2026-10-12T12:37:05+00:00",
+    "bootstrapObservations": [
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T13:03:58Z",
+        "egressBytes": 3759109,
+        "runtimeArchiveSha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T13:03:58Z",
+        "egressBytes": 3772166,
+        "runtimeArchiveSha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      {
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T13:03:58Z",
+        "egressBytes": 3785379,
+        "runtimeArchiveSha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      }
+    ],
+    "bootstrapDiagnostics": [
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "tc-package",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "observed",
+        "step": "tc-package",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "started",
+        "step": "complete",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      },
+      {
+        "schemaVersion": 1,
+        "status": "passed",
+        "step": "complete",
+        "manifestSha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+        "bootstrapSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+        "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bbSha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9",
+        "catalogSha256": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+      }
+    ],
+    "finalReceiptMarkers": []
+  },
+  "finalReceipt": {
+    "available": false,
+    "category": "NOT_FOUND"
+  },
+  "diagnostics": {
+    "finalReceiptSource": "/var/lib/rolling-bootstrap-private/final-receipt.json",
+    "readinessSource": "/var/lib/rolling-bootstrap/qualification/readiness-observation.json",
+    "uploadIntent": "/var/lib/rolling-bootstrap-private/upload-intent.json",
+    "uploadResult": "/var/lib/rolling-bootstrap-private/upload-result.json",
+    "remoteRead": "Exact S3 final receipt or ROLLING_QUALIFICATION_RECEIPT console marker; no host SSH/SSM assumed",
+    "pendingReadinessRemainsHostLocal": true
+  }
+}

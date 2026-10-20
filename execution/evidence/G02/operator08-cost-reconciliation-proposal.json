@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T09:44:58.326528+00:00",
+  "recommendationOnly": true,
+  "ledgerChanged": false,
+  "priorBoundBefore08Usd": 175.28,
+  "currentIncluding08ReservationUsd": 200.28,
+  "currentReservationUsd": 25,
+  "recommended08AccrualBoundUsd": 15,
+  "recommendedCumulativeBoundUsd": 190.28,
+  "recommendedRemainingUsd": 109.72,
+  "launch": "2026-10-12T09:02:09Z",
+  "terminationObservedBy": "2026-10-12T09:39:51Z",
+  "volumeAbsenceVerifiedAt": "2026-10-12T09:41:01.180088+00:00",
+  "instanceLifetimeObservedUpperBoundSeconds": 2262,
+  "computeRetained": false,
+  "diskRetained": false,
+  "fleetMetadataState": "deleted_terminating after acknowledged onceDeleteFleets; no paid resource remains",
+  "componentsUsd": {
+    "computeFullHour": 0.92736,
+    "gp3_1064GiBFullHour": 0.1166027397260274,
+    "ipv4FullHour": 0.005,
+    "egressFullHour22_5GB_at0_195": 4.3875,
+    "archiveReceipt30days": 0.5,
+    "crossRegionReads": 0.5,
+    "requests": 0.25,
+    "taxDelayedBillingCleanupBuffer": 8.313537260273971
+  },
+  "basis": "Charge full1h despite observed37m42s upper bound; no free allowance deduction, not invoiceactual. Full50Mbpsnetworkhour, newarchive30days, requests/region/tax/delayedcleanup buffer. Priorarchives remain inside175.28 priorbound. Keep full25 pendinglead reconciliation.",
+  "cleanupEvidence": "operator08-cleanup-reconciliation.json",
+  "cleanupSha256": "c38bed2f32d4a5420eaf20dbbe280c55b4cd3010c750f55075ffbae65f9886b6"
+}

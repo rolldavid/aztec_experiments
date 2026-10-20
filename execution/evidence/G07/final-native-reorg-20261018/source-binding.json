@@ -1,0 +1,13 @@
+{
+  "plugins/devnet/network.mjs": "266723a55f61842826a6284f50e8f2d76a54cbe99983b81e66106104f9ad45d7",
+  "plugins/devnet/bootstrap.mjs": "bc1498c4bd162076236854fbd3ae2589375919fc6e79f3b5d43f923c7784494d",
+  "plugins/devnet/operator-test.mjs": "42d874e61a09a88d81e4dde2648d1fdb6423df30a0aa2a1566b4b7763415027a",
+  "prover/private-query.mjs": "f145924694617da04bb266e8ec784f9357f041f5fc36ddccc800715d01316439",
+  "shared/rolling/cold-preference-reader.mjs": "9f25b857a60401c74a89ffc8e7b13d3f89727df052297e88e1c97240b69cbed3",
+  "scripts/testing/rolling-application-actor.mjs": "010a5ff452a894b0a85845d107ea8ea83f9874fa0138dcf0b4003ec633589ee9",
+  "node_modules/@aztec-labs/stdlib/src/block/l2_block_stream/l2_block_stream.ts": "95a64bb5cb2d06bf049a5e1f6a7ebfa8ec385f7e49c5e59edfb0b4c5e5c45dda",
+  "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_stream_source.ts": "ece4fd4fb6c1ddded3a4a471d6242f3893dcd19433e1f41a3ced54d71504f2b0",
+  "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "f895806904e315a314a56ec80736f28a89453bf821fbb084d3e1a71701a652fd",
+  "prover/private-query.test.mjs": "c1afb42874301ee9462af6c98765d2e28e837df57d8825d960a0d21e14500e38",
+  ".build/final-native-reorg/run.mjs": "d62e2268ddca394ce0e6b881ff20b33123687f735dbc8b34310f019ab58d5b0e"
+}

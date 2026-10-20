@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-14T10:38:23.584Z",
+  "syncedL1": "1791973660",
+  "lagSeconds": 643,
+  "ethereumTimestamp": 1791973660,
+  "ethereumNumber": 1042,
+  "proposed": 477,
+  "trustedReady": false,
+  "code": "BB_TRUSTED_NODE_STALE"
+}

@@ -1,0 +1,30 @@
+{
+  "base": "d91ff119c6919147b2ef47f93347b9dab115f80b",
+  "candidate": "582b2cdb95ddfa21cbd32c9c6ac965ea5782bdc1",
+  "task_id": "G07-bok-accounting-continuation",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "bok-accounting-continuation"
+  ],
+  "requirements": [
+    "RC04-one-action-progress",
+    "RC22-complete-accounting",
+    "RC33-stop-and-identity-fences"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G07-bok-accounting-continuation",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

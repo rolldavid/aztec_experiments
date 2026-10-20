@@ -1,0 +1,11 @@
+
+> build:apps
+> node apps/build.mjs
+
+Built billboard/boards -> boards.html: 47KB
+Built billboard/censor -> censor.html: 11390KB
+Built billboard/deploy -> deploy.html: 11247KB
+Built billboard/feed -> feed.html: 48KB
+Built billboard/user -> user.html: 11397KB
+Built fee-juice -> fee-juice.html: 3520KB
+{"publicFeedBytes":37517,"publicOnly":true}

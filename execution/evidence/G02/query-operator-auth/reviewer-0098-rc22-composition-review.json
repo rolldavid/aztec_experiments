@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "candidate": "0098b43a12922e2b63f4aa88954f5160b4b1a9c4",
+  "base": "435750278e742deace48f20d641b3154f664be58",
+  "verdict": "approve-source-component-composition",
+  "blockingFindings": [],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "a24eb4beece90820d5e4792a852077c81c091e01ca2c9d9fc8dda230c8103e5a",
+    "apps/rolling/wallet-panel.mjs": "bc5ca9ff3f93f12c1a9761b3cca3d3474955ed6903057884f1fc5fdb33d8827d",
+    "apps/rolling/wallet-session.mjs": "441316f30fa9a905b2a375bccdcc055bc518aa2aefadd82ef3f4dc6b546c7e3a",
+    "apps/rolling/wallet-session.test.mjs": "b074aa41d66670aae4c706e62e07b0e9589f797d1e98aa99e324fe15a648b646",
+    "experiments/private-bok/escrow/src/main.nr": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260",
+    "experiments/private-bok/tests/src/lib.nr": "2638510d73efd9dedb49b570270216215133119e559769002bbfeb553b79d615",
+    "scripts/test-txe-message-witness.mjs": "f4651417986ba3f05c9c69399cfbe76366c53876bae83067e9853144a5112355",
+    "scripts/test-w03-ethereum-journal.mjs": "30f88376dc5a54df1691c46f71f3a3b97525fc5186ae987987515d2886a644a3",
+    "scripts/txe-message-witness.mjs": "d02b36a258388dd97b93bcb0d8c92e7a608abe293cfee513f8228d5abda16d9a",
+    "shared/ethereum-journal.mjs": "c679361d3cbc8657da550078876321880c2628e2a7bf5ee33be44ff11aa1569e",
+    "shared/rolling/application.mjs": "e690b7d9f9338e33201b029d3e713dc2db2857246281c54b1f9c9f62188a4638",
+    "shared/rolling/application.test.mjs": "b91c3b6fc236116e9127681f7112de31cb28b9d545919970e4f951315146a1d5",
+    "shared/rolling/synchronized-application.mjs": "a46284a83b48e0f46f8c81b835dc67ea05f47579b596deda926d7088cd06bc50",
+    "shared/rolling/synchronized-application.test.mjs": "f1913045a295e6cd78b8b7687b0a1d88d763b98d6cdcc00a6683bf0a96aaddf5"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/complete-private-wallet/handoff.json",
+    "sha256": "42d23a344afc2514720aaf433f5465355278d01b95daa417caabafa8f550ce03"
+  },
+  "compositionReview": [
+    "Exact fourteen-path union verified. Noir owner discovery/cancel note preservation and TXE helper four files equal reviewed08793 bytes.",
+    "Application and application tests equal reviewedb413 expiry/canonical accounting/withdrawal composition. Ethereum journal, journal tests and synchronized application pair equal reviewed14363/b413 bytes.",
+    "Four composed panel/session files differ from reviewedb413 only by reviewed d667 fixed claim diagnostic forwarding/projection and its source-served fixture dependencies/tests. Both sides of append-test conflicts retained; no prior b413 or d667 literal test labels lost.",
+    "Owner-only local note discovery, complete uniform public accounting intersection, canonical scope/cursor anchors, no partial totals, original recipient/nonce exact two-stage exit, unknown-send fences and partial expiry refund semantics carry unchanged."
+  ],
+  "verification": {
+    "all14GitSourceHashesMatch": true,
+    "all5EvidenceHashesMatch": true,
+    "focusedRC22AndClaimDiagnosticsPass": 68,
+    "wholeEthereumJournalAndTXEHelperPass": 154,
+    "syntaxFiles": 12,
+    "reviewerRuntimeRuns": 0
+  },
+  "historicalFailures": "Initial32ms owner-caller setup failure remains retained and had no test dispatch. No test or product assertion weakened.",
+  "remainingGates": [
+    "Normal new PrivateBok/SDK/wallet artifact build is required; utility changes contract class identity.",
+    "This composition does not upgrade or reinterpret the existing paid campaign contract or its ownership notes/liabilities. Preserve original payment and claims.",
+    "Combined current browser and actual new-class ownership/accounting/cancel/expiry/withdraw/refund acceptance remain unqualified.",
+    "No live funding, full RC22/G14 or real-proof testnet claim."
+  ]
+}

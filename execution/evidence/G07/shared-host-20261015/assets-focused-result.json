@@ -1,0 +1,9 @@
+{
+  "CommandId": "80034371-520e-4ad0-9979-f3dc8578195d",
+  "Status": "Failed",
+  "ResponseCode": 1,
+  "ExecutionStartDateTime": "2026-10-15T02:50:24.129Z",
+  "ExecutionEndDateTime": "2026-10-15T02:50:24.129Z",
+  "StandardOutputContent": "{\"phase\": \"stopped\", \"snapshotHash\": \"f054ee41276c33248b857a79907ab1f876915bc0bda130aae018d84716d47a1b\", \"snapshotHead\": {\"number\": \"0xcb6\", \"hash\": \"0x8eafddd431c4976e35d46d26e1829f72ee64a48c538eadf3f7edc49a3e4ec870\", \"pending\": \"1575\", \"proven\": \"1575\"}, \"recoverySnapshot\": null}\n{\"kind\":\"retained-wallet-assets-only\",\"passed\":false,\"servicesStarted\":0,\"code\":\"ENOENT\",\"missingPath\":\".build/rolling-wallet/manifest.json\",\"elapsedMs\":466}\n",
+  "StandardErrorContent": "failed to run commands: exit status 1"
+}

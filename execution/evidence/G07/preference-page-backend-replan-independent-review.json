@@ -1,0 +1,46 @@
+{
+  "reviewer": "reviewer-20261011",
+  "at": "2026-10-12T21:13:26.576781+00:00",
+  "verdict": "APPROVE requirement-based fixture replan; do not continue legacy-v1 debugger iterations by default",
+  "bindings": {
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/shared/private-pxe.mjs": "2526df63f7e29d2a5854a96666c62f3e695e85a8944078d6d447d3de9a04d59c",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/scripts/testing/rolling-application-actor.mjs": "3f6529517f91cf361dff75dbe49eb87c152c93cfe4cc264310cffd51d3cbb638",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/test-pxe-preference-page.mjs": "30171afca02b3b24588d1037323ec86513c695cc87103ea900c5dcc68a0012d2",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/patch-pxe-preference-page.mjs": "f27c2b0677bed2059c0e7ec5f2dbed738906b83ce4196c788651318022d9c860",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/node_modules/@aztec-labs/pxe/dest/entrypoints/server/store.js": "bb873e9ce2cc63978490edf899c3aee4a106b419a2ecb3eae50809ab2ba18593"
+  },
+  "diagnostic": {
+    "receiptSha256": "fb6301bb41a25dd06a8c2060ed895475c80f254f63d6684c3e2beaf6920d079d",
+    "elapsedMs": 4766,
+    "peakRssBytes": 928284672,
+    "status": "First arm stopped at debugger breakpoint without callback verification/native return capture; zero selected completions; second arm unrun. Full owned group/descendant cleanup recorded.",
+    "conclusion": "No original mdb_env_open code or allocator cause established. The run is failed/inconclusive and remains so."
+  },
+  "sourceFindings": [
+    "Product shared/sdk-store.mjs opens explicit AztecIndexedDBStore with full chain/rollup/schema/account/namespace identity; actual actor passes that store into PXE.",
+    "Official installed server/store.js uses mkdir then lmdb-v2 openStoreAt.",
+    "Prototype general stores() still uses legacy AztecLmdbStore; ACIR receiver already uses official v2. The current mixed fixture is neither the product backend nor a consistent official native backend."
+  ],
+  "preferredSmallestNativeRoute": [
+    "Change only fixture store construction/imports so both helpers use official lmdb-v2 openStoreAt, creating directory first. Bind exact installed implementation and preserve source snapshots/history.",
+    "Retain all original event and note rollback assertions, actual encrypted ACIR/class/keys/nullifier/registry checks, contributor-drain/canonical/account guards, queue ordering, late staged-store failure and BlockSynchronizer indexes. No assertion removal or bypass.",
+    "Keep deterministic unique stores, queue stop before store delete, finally cleanup on failed construction, one global crypto owner.",
+    "Run only after frozen changed-source review and explicit bounded slot; not an unchanged fourth debugger/full-suite retry."
+  ],
+  "alternativeApplicationRoute": [
+    "Use actual shared openPXEStore for BOTH helpers with explicitly labelled Node fake-indexeddb and b440 patched TS/dest/installer pins. Preserve store identity fields and register/reset globals once with all stores closed.",
+    "Real ACIR and original stores/coordinator remain actual; chain is synthetic and IndexedDB implementation is a Node test adaptation. This does not replace native Chromium commit-guard acceptance."
+  ],
+  "qualificationBoundary": [
+    "Legacy v1 crash and observed partial commit remain unresolved historical failures. They can be excluded from this application-targeted scope because no delivered application/default-native PXE selects that backend; no generic all-backend SDK guarantee may be made.",
+    "b440 browser atomicity+genuine wallet validates current store behavior, not new page guard before it is integrated. New guard needs faithful backend conjunction and eventual actual-browser/application validation.",
+    "Consistent v2 result can establish official native prototype behavior only. No head completeness, full synchronization, real chain recovery, performance or production acceptance follows."
+  ],
+  "nextEvidence": [
+    "Exact source diff showing all old assertions preserved and no new fallback.",
+    "Recorded selected/backend cases and actual construction/cleanup, pass/fail counts and output bindings.",
+    "Separate statement of which backend was exercised, no relabeling prior legacy failures."
+  ],
+  "reviewerExecution": "Source/hash/receipt inspection only; no debugger, native module, browser or process experiment."
+}

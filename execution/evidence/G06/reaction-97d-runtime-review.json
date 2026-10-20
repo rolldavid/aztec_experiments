@@ -1,0 +1,124 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+  "verdict": "approved bounded genuine reaction-wire runtime; no blocking findings",
+  "findings": [],
+  "evidence": {
+    "execution/evidence/G06/application-97d1293b-66f2-4fcf-bbc2-fb241a5a7856.json": "231d015b7fd9161fcb7cf70e7d64996d42b3322cfa5ab5c60e3f9d388103956a",
+    "execution/evidence/G06/application-port-4ec02852-1309-48ae-bc3f-2e1982107f03/observation.json": "db818d1805366e34eadceece220c04110959daddda476824e6595daf631cf354"
+  },
+  "elapsed_ms": 473778,
+  "peak_tree_rss_kib": 2463632,
+  "limits": {
+    "deadline_ms": 540000,
+    "rss_kib": 4194304
+  },
+  "checks": {
+    "sourceCounts": {
+      "outer": {
+        "git": 213,
+        "filesystem": 12
+      },
+      "inner": {
+        "git": 57,
+        "filesystem": 0
+      },
+      "artifacts": {
+        "git": 0,
+        "filesystem": 2
+      },
+      "bok": {
+        "git": 14,
+        "filesystem": 0
+      },
+      "native": {
+        "git": 0,
+        "filesystem": 70
+      }
+    },
+    "unresolvedAliases": [],
+    "sixActionFeeSum": "74352400200000",
+    "claimFee": "9319842000000",
+    "aFees": "75519576000000",
+    "bActionFees": "8152666200000",
+    "bStandaloneFee": "7985178000000",
+    "totalPrivateDebits": "91657420200000",
+    "wireCounts": {
+      "trusted-upstream": 7051,
+      "trusted-query": 1023,
+      "public-l1": 7078,
+      "trusted-proof": 178,
+      "ordinary-node": 235,
+      "public-reader": 10
+    },
+    "opaqueTransactions": 188,
+    "allChecksPassed": true
+  },
+  "effects": [
+    {
+      "action": "reaction-wire-root-1",
+      "sha256": "5bf39d69adc88b9a04349dfa29eb683206088c502cd8ff260902117503e21eaf",
+      "bytes": 4995,
+      "fee": "20883276000000",
+      "blockNumber": 16,
+      "type": "PostPublished"
+    },
+    {
+      "action": "reaction-wire-root-2",
+      "sha256": "745599c92f0fa6d967aafe49b798183eeebd95f2dd904fed76c2166efbe8f770",
+      "bytes": 4995,
+      "fee": "20883276000000",
+      "blockNumber": 21,
+      "type": "PostPublished"
+    },
+    {
+      "action": "reaction-wire-change-1",
+      "sha256": "93bc5aa21398bf69df98c6531e4f82b0b0b5682bbb21c63a8e51ca68abe018b4",
+      "bytes": 1819,
+      "fee": "8152666200000",
+      "blockNumber": 22,
+      "type": "LikeChanged"
+    },
+    {
+      "action": "reaction-wire-change-2",
+      "sha256": "db99131806eea32b71352929a76bbabb4ac97837b6811864cae5c65a2397c09e",
+      "bytes": 1819,
+      "fee": "8152666200000",
+      "blockNumber": 23,
+      "type": "LikeChanged"
+    },
+    {
+      "action": "reaction-wire-change-3",
+      "sha256": "3dc4fd7f3280a781d864c6c8253563454d934a63ffcafaf2aceca9ba2c0f3ad5",
+      "bytes": 1819,
+      "fee": "8152666200000",
+      "blockNumber": 24,
+      "type": "LikeChanged"
+    },
+    {
+      "action": "reaction-wire-change-4",
+      "sha256": "0de677241c9954fae06fd992cf4db56993567e2c45c9ee7da43814a761c02f3b",
+      "bytes": 1819,
+      "fee": "8127849600000",
+      "blockNumber": 25,
+      "type": "LikeChanged"
+    }
+  ],
+  "assessment": [
+    "Independent installed SDK TxEffect decoding of all6 saved binaries confirms exact SHA256/transaction hash/fee and actual Rolling emitter/class/event tag/ABI/digest. Two Anonymous root PostPublished events then4 LikeChanged events; roots stay name0/parent0/kind1.",
+    "Authenticated reaction tags are distinct across two posts byA and acrossA/B on firstpost; unlike reuses A firstpost tag. Counts1,1,2,1 and active true,true,true,false preserved. Final post counts1/1.",
+    "Canonical consumer paths authenticate actual whole transaction effects against block bodies/receipts and recheck anchors. Seven canonical transactions refetched, including initialpolicy. Ten real HTTPviews through fresh+cold SQLite agree; bothsessionsclosed checkpoint25 and3authenticatedranges,2boundedcatchup passes each.",
+    "Real application proofs enabled in fixture andnode;6HTTP/native proofjobs submitted/completed,0failed/runningfalse. B standalone genuine proof valid and checkpointed. Localcontrolledsettlement means no epochproof/networkqualification.",
+    "Actual sixactionfees74352400200000 plusAclaim9319842000000 equal83672242200000 applicationhumanfees. B standalone7985178000000 separately accounted, so totalprivate debit91657420200000. Bothfunded1e21 withrealone-sendL1deposits, privatebalance conservation/crosspoolnet exact, zero human publicFeeJuice.",
+    "Bothactor encryptedjournal reopen retains samecanonicaltransaction hash/bytes with0newproofjobs. Allincludedtransactions success and bothhumanaddressabsence/sharedFPC assertions hold in eight checked public categories; no derived-linkability inference.",
+    "15575serializedrequests allcompleted;0pending/unknown/unsupported/truncated/observererrors and0receivererrors. Exactfiveleg receivercounts independently reconciled; bothtrustedqueryhumanrolespositive, no knownhumanroles ordinarynode/publicreader/publicL1.188opaque transactions retain requestCoverageCompletefalse and privacyAcceptancenot-evaluated.",
+    "Source hashes independently verified: outer213Git+12filesystemincludingresolvedAnvilalias,inner57Git,Bok14Git,2artifactfiles,70nativeinputs. Allsourceboundef533; artifactdigest6553d89 unchanged.",
+    "Everyownedresourcecleanuptrue, outertreeabsent/tempremoved, failures empty. Previous5eb7 remains failed and is not relabelled."
+  ],
+  "limitations": [
+    "Runtime recipient/node accounts and L1funding are disposablelocal31337; no deployed operator topology, native/response/header/IP/timing coverage or fullcryptographicprivacy assurance.",
+    "Binary decoding independently revalidates storedpubliceffects; disposedchain cannotbequeriedlive. Canonicalblock/refetch assertions are exactsource-bound observations of actualrun.",
+    "No fullG06/product acceptance; trusted-denial/staleness, networkclearance/specialistaudit and other mappedcriteria remainopen."
+  ]
+}

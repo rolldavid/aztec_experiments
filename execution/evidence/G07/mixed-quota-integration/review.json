@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent reviewer_resume",
+  "revision": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "base": "57c1582cd76770af0ffb6c11573d6bbc701c7da6",
+  "verdict": "approve-scoped-combined-source-and-generated-closure",
+  "blockingFindings": [],
+  "criteria": {
+    "RC25": "No newly identified authentication or query-privacy weakening in changed recovery component; not a full privacy qualification.",
+    "RC26": "Bounded mixed recovery and replay/atomic publication safeguards verified at source and focused-test level.",
+    "RC27": "Contiguous authenticated history, reorg checks and bounded native work retained.",
+    "RC40": "Original full-history 120-second acceptance remains OPEN; no live qualification claimed.",
+    "G02": "Closed immutable resource configuration approved; budget/host operation acceptance separate."
+  },
+  "sourceReview": {
+    "changedPaths": [
+      {
+        "path": "apps/dist/aztec_bundle.js",
+        "sha256": "d924595e13c0682367fb8cc48efb906791e84716adfa9e31542f250e49d5803f"
+      },
+      {
+        "path": "apps/dist/sdk-manifest.json",
+        "sha256": "8526215155c2cbc2ba647898e362410967ab626046a7712041012d1af0f23212"
+      },
+      {
+        "path": "deploy/prover/bootstrap.py",
+        "sha256": "c53b077d865d03ec8514b22e1379947a9ec5a70e9a2a0d2d7059bd0736d0de85"
+      },
+      {
+        "path": "prover/compact-block-native.mjs",
+        "sha256": "6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888"
+      },
+      {
+        "path": "prover/compact-block-native.test.mjs",
+        "sha256": "eae9611e4246a5b925efa4f2abb719f8c2ca5e1af516e61fdf9253cdc520233d"
+      },
+      {
+        "path": "prover/compact-service.test.mjs",
+        "sha256": "f849bc29c64d358be3403b071f4d7a086076db4b233cdad1f1b1ff633750bd56"
+      },
+      {
+        "path": "prover/private-query.mjs",
+        "sha256": "c6a24a015052c32189a73faf42619460f00bed5b469ad84912d17d62e5152bf9"
+      },
+      {
+        "path": "prover/private-query.test.mjs",
+        "sha256": "134e9d39cbe5c9e6473ec9fe3200d2ca8a1fedf40cc7beebc3ba8e076ed6184a"
+      },
+      {
+        "path": "prover/server.mjs",
+        "sha256": "eb02d15f998d37ff6ab49170a5074fc1aa1ceecf0500907f26c9994ac4061929"
+      },
+      {
+        "path": "scripts/patch-pxe-preference-page.mjs",
+        "sha256": "34c568fe26630e460ce6488d43eeb412517b40e12bdf36bda141fa55c1d8e413"
+      },
+      {
+        "path": "scripts/test-prover-bootstrap.py",
+        "sha256": "98b4b1546345d10020076134c9cb6ada05cd93c73f33b5d3891849b78d3369fb"
+      },
+      {
+        "path": "scripts/test-pxe-preference-page.mjs",
+        "sha256": "ffe63e8fd050d0384bfcdbfeda223626f529182fb306104dd7ea494cc71bc4f7"
+      },
+      {
+        "path": "shared/rolling/cold-preference-reader.mjs",
+        "sha256": "9f25b857a60401c74a89ffc8e7b13d3f89727df052297e88e1c97240b69cbed3"
+      },
+      {
+        "path": "shared/rolling/cold-preference-reader.test.mjs",
+        "sha256": "d596dfe4e344c3d5f234a2065710f3d4a95194397dec0d8c310dd60c92958250"
+      },
+      {
+        "path": "shared/rolling/compact-client.mjs",
+        "sha256": "3be616f60d7267ccf71f537ddd117ac78ea4e85a29bfd37c487e06b8c257060e"
+      },
+      {
+        "path": "shared/rolling/compact-client.test.mjs",
+        "sha256": "61e110f23f36ab5bd6f84c94b0d4fbfaa960b246b04308feee02d285cc6eae1c"
+      }
+    ],
+    "mixedWorker": "19e4490ce7717ab8b8c2151703ac4b25e3db9cfc",
+    "quotaWorker": "e013c650d319ffd532cd224bd6f3bb710a3cb325",
+    "resourcesWorker": "7e02e8b9b26c726bf7d36635c0fd00b7fa96dd24",
+    "mapping": "All 14 worker source/test blobs exact except bootstrap.py has only two additional exact STARTUP_SOURCES digest corrections. Only two generated dist outputs added; 16 unique changed paths.",
+    "sourceAndChangedTestsReadBeforeImplementerPacket": true
+  },
+  "safetyAssessment": [
+    "Explicit witnessed transport admits contiguous mixed blocks up to eight total public log hints; all actual physical logs including foreign envelopes count toward the SDK eight-log limit. Legacy grammar and oversized/unknown first scalar handling retained. Hints never authenticate absence.",
+    "Native reads serially and stops at the first omitted body for bytes/logs/unknown shape. It never skips a block or converts a later thrown error into successful prefix. Thus quota settlement min(requested, returned+1) conservatively covers native work.",
+    "Every supplied body/header/archive path is authenticated before staging. Index/root/network/anchor checks, 256-block/2MiB pre-copy limits, eight physical logs and 64 rows remain. Original ingestion/receipt/effect validation and atomic cursor state remain.",
+    "Frame validators are flattened into one four-closure draining loop. Each is read-only; ingestion and contributor mutation do not overlap this validation. Exact final staged union is checked after all groups; fresh canonical/network/proof/account checks follow at both original commit boundaries. No settled current-authority cache introduced.",
+    "Historical event heights are checked in groups of at most four, fully drained before ordered folding. Post-CAS canonical-anchor check and SDK mailbox may overlap but both settle before their values are used; full readiness remains AFTER mailbox confirmation, and final canonical anchor remains last. Held-peer failures keep reader ownership.",
+    "Scheduling depends on full public contiguous history/log counts and acknowledged cursor progress, not ownership/decrypted content. No tag-filter transport or retry/fallback was added.",
+    "Quota keeps full upfront reservation, nonrefundable request count, original-bucket one-shot settlement only after valid finished successful response. Abort/error/timeout does not refund; unchanged production600/development1800 and10s single-flight ownership retained.",
+    "Resource defaults1024GiB/50Mbps and optional closed128GiB/10Mbps retain immutable fresh-record binding, timer controls and exact unique-disk/UUID/mount checks. Two stale bootstrap source pins now equal actual native/trusted-node bytes."
+  ],
+  "independentChecks": {
+    "mixed": {
+      "passed": 206,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2589.8195,
+      "log": "rolling-design/.build/reviewer-evidence/G07/reviewer-19e4490-checks.log",
+      "sha256": "44baca4b6854719a111ddd9b1ffdf7afb71339663f9914ca70c1da796d89ae96"
+    },
+    "quotaPriorExactBlobs": {
+      "passed": 93,
+      "report": "rolling-controls/.build/reviewer-evidence/G07/reviewer-e013c65-short-prefix-quota.json",
+      "sha256": "eb1f4a2355dd29553f208b9f9d0b356008af414f388bd49756e6df4a1c4dc1eb"
+    },
+    "resources": {
+      "passed": 7,
+      "report": "rolling-controls/.build/reviewer-evidence/G02/reviewer-7e02e8b-host-resources.json",
+      "sha256": "dd5e8181183325f6f38214eaec174b2615b68075ff8f799d78ea1ec204ed3899"
+    },
+    "dependencyOwnership": "Temporary read-only Design link removed after checks; no installed dependency mutation by reviewer."
+  },
+  "generatedClosure": {
+    "allHashesIndependentlyRecomputed": true,
+    "sdkInputs": 2057,
+    "sdkOutputs": 8,
+    "walletInputs": 97,
+    "walletServedFiles": 25,
+    "sdkManifestIdenticalBuildAndDist": true,
+    "sdkManifestSha256": "8526215155c2cbc2ba647898e362410967ab626046a7712041012d1af0f23212",
+    "walletManifestSha256": "942231611f207b5a35e2db6154b380117aaac8d029b81944a9834c491c076e83",
+    "helperSha256": "c2c46e0a1153ebd74466eb981f4eeb011d9875a4b348fd38467bb5586b51cc36",
+    "normalBuilds": "SDK/apps/wallet/check-sdk logs inspected; no independent rebuild required."
+  },
+  "otherVerification": {
+    "rootCombined": {
+      "passed": 432,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 3089.833292
+    },
+    "rootBootstrapFull": {
+      "passed": 120,
+      "failed": 0,
+      "seconds": 5.789
+    },
+    "rootInstalledClosure": {
+      "passed": 1
+    },
+    "designActualSdkAcir": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 115540.117416,
+      "scope": "Selected owned isolated actual SDK/ACIR suite; exact source/test hashes carried into final composition, not a claim the entire default file was rerun."
+    },
+    "rootLogHashes": {
+      ".build/g07-mixed-integration/sdk-check.log": "0e7caf342520231a9482ff5fcada54c5757085c5e208acbff375838f384941db",
+      ".build/g07-mixed-integration/sdk-build.log": "a1958cc6af62800df8f860d24cc900e35deb1bdf62353dd03d654c6d818fb5f4",
+      ".build/g07-mixed-integration/sdk-native.log": "a30088386fbfe4b768a41fc7603a8986bd8e591fc1cf19e73b088211dc30931f",
+      ".build/g07-mixed-integration/combined.log": "3e1e9a6dbb786a88a2804f80cd079272e4e59f9f71bec98b79f9b6d0210e9540",
+      ".build/g07-mixed-integration/bootstrap.log": "578423676ee0d71f0867936bb7e92ed26418d4b6cc389edca9a4db5dd41eb480",
+      ".build/g07-mixed-integration/apps-build.log": "1e38abd3745bb2781a13b610cb1f4b63e11c2efb2ef118cd36807c1f4935f842",
+      ".build/g07-mixed-integration/installed-check.log": "3230a4a642325da20c687ebd4ad5c84306bd3cb2181e64d9e30a7c9ed47fe12d",
+      ".build/g07-mixed-integration/wallet-build.log": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    },
+    "workerPacket": {
+      "path": "rolling-design/.build/g07-mixed-witnessed-prefix/review-packet.json",
+      "sha256": "60e3ab6cd580e74b7423f1c185972ded7be6e4854692a0715a245c3517821621",
+      "all8SourceAnd23EvidenceHashesVerified": true
+    }
+  },
+  "performanceLimits": [
+    "Matched synthetic chain525 with two actual owned ACIR revisions and5+2physical logs at130ms injected gateway latency: base data reads6.481+6.277s/72HTTP to next6; candidate9.629s/48HTTP to next33, including27trailing empties.",
+    "The remaining0.371s per-page margin is narrow. This is not robust WAN qualification, nor original1601-block full recovery under120s. Startup, dense distribution and other original-history work remain material.",
+    "Eight foreign transactions locally measured807.6ms do not qualify eight owned revisions or WAN latency.",
+    "Earlier10s failures and baseline diagnostic active-head assertion correction are preserved. No inferred encrypted CAS success merely from SDK advance success.",
+    "Optional legacy non-phase HTTP diagnostic was not run. No assertion or acceptance deadline was relaxed."
+  ],
+  "releaseLimits": [
+    "No live browser/native/cloud/model/financial action performed by reviewer.",
+    "The full120s recovery, actual remote host resource controls, infrastructure budget accounting, real-proof/testnet, specialist privacy and broader release gates remain separate."
+  ]
+}

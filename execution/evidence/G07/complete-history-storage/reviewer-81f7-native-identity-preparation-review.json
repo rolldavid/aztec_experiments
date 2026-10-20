@@ -1,0 +1,26 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T16:44:37.965537+00:00",
+  "source": "81f7d6a2bb290e1ecc6bc260fe30dc2b469bf00b",
+  "packetSha256": "190aeb748494044d4a293b9ef2d485369a38a81509875b4f74d64c05523e7797",
+  "runnerSha256": "030bab5674ce929a46c253bc9a4096490cfca0464d2796b1e7752952a2f40cd0",
+  "verdict": "eligible for one separately parent-granted identity diagnostic; no runtime performed by reviewer",
+  "verified": {
+    "packetFiles": true,
+    "sourcePins": 551,
+    "dependencyPins": 2402,
+    "allPinsMatch": true,
+    "nativeBinaryHashAndRealPathMatch": true
+  },
+  "assessment": [
+    "Original public digest and empty SQLite only; fixed three-second observation and actual singleton destruction in finally. No proving, volume or SDK override.",
+    "Per-instance sample wrapper awaits and returns the original sampler result. Supervisor start records child synchronously before the wrapper is installed. Existing process identity uses the same normalized lstart format.",
+    "Bounded ps reads enforce exact pinned executable, literal msgpack/run/--input grammar, owned temporary socket with actual worker PID, and stable start time. Raw command is not retained.",
+    "All Node receipts and exactly one additional classified native process remain mandatory. Original tree memory samples, limits and cleanup ownership remain active.",
+    "15-second and 512-MiB limits, 128-MiB setup guard and positive cleanup before link restoration remain unchanged."
+  ],
+  "limits": [
+    "Identity-only result cannot establish historical PID75390 identity.",
+    "Native kernel high-water remains explicitly unmeasured. Original31785 resource reconciliation failure remains failed; no volume replay or resource waiver authorized."
+  ]
+}

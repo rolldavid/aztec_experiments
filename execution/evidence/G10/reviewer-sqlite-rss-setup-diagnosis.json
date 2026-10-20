@@ -1,0 +1,68 @@
+{
+  "reviewer": "/root/reviewer_resume",
+  "kind": "independent focused setup diagnosis",
+  "conclusion": "The tiny fixture absolute RSS failure follows long TMPDIR on unchanged base as well as candidate; candidate passes unchanged assertions with short canonical TMPDIR. This is not evidence of queue-index memory regression.",
+  "baseRevision": "6a9494fd2f94882c814ece270ed5d35cae4aeeef",
+  "baseSourceHashes": {
+    "shared/rolling/public-sqlite.mjs": "5bf82c3a4b923c42c3bade89ad3cdf65e38542fb3d9e932707ed2697206b0375",
+    "shared/rolling/public-sqlite.test.mjs": "a16454fb1e9862a7566dcaba6bbe6f185db0ac541c6843287bc10077cfc63a38"
+  },
+  "candidateUnfrozenSourceHashes": {
+    "shared/rolling/public-sqlite.mjs": "b3cda1d8aa7a9006e31046491fb91beb9eee626be3421ea733f1e890158a3d9e",
+    "shared/rolling/public-sqlite.test.mjs": "95ea68c8864c4dbe45ae7a5c24b2918ebbc2ddcbfd6bb7640078f24fcaf1b4e5"
+  },
+  "controlledChecks": [
+    {
+      "checkout": "rolling-controls",
+      "TMPDIR": "/private/tmp",
+      "result": "PASS1,0skip,546.048625ms; actual26events,20plugin rows, finalRss144719872, growth720896; exact reopen/rollback and both memory limits pass",
+      "evidence": "execution/evidence/G10/reviewer-sqlite-short-tmp.log",
+      "sha256": "2d6e608461e527d3589c2f2438ea18f2f566493a83419557557ba5eaf5693edf"
+    },
+    {
+      "checkout": "rolling-lead-bok unchanged SQLite base",
+      "TMPDIR": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/g14-counter-reset-eea/test-tmp",
+      "result": "FAIL unchanged finalRss<=512MiB assertion; isolated case533.248ms",
+      "evidence": "execution/evidence/G10/reviewer-sqlite-base-long-tmp.log",
+      "sha256": "5bf5fa940a56c0be0fed271a91e0e45556aa17362d4a5c5a9cd54869436dd3fb"
+    }
+  ],
+  "sourceMechanism": {
+    "nativeSocketPath": "Installed bb.js constructs path.join(os.tmpdir(), `bb-${process.pid}-${threadId}-${instanceCounter++}.sock`).",
+    "longTMPDIRCharacters": 107,
+    "backendSelection": "Installed Barretenberg.new default first tries NativeUnixSocket then falls back to Node WASM with SRS initialization. Fixture lazily invokes original Poseidon after baseline RSS capture.",
+    "qualification": "TMPDIR causality is measured; long UNIX socket path causing native fallback is source-supported inference, not directly observed backend trace."
+  },
+  "recommendation": "Use the existing short canonical private TMPDIR convention (/private/tmp or an owned short mkdtemp directory there), preserving all fixture assertions and512MiB/64MiB thresholds. No source change or new test framework required.",
+  "additionalDiagnosticAttempts": [
+    {
+      "result": "Inline --input-type=module backend trace failed before measurement because worker inherited incompatible flag; preserved log reviewer-sqlite-backend-diagnosis.log."
+    },
+    {
+      "result": "Corrected inline backend trace produced no result; exact owned PID13909 verified, no children, stopped (SIGTERM then SIGKILL), exit137. Not evidence of backend or test pass; no further trace attempted.",
+      "log": "execution/evidence/G10/reviewer-sqlite-backend-diagnosis-corrected.log"
+    }
+  ],
+  "scope": "No broad test rerun, source edits, application services, wallet/model operations or assertion changes.",
+  "measuredExistingCallObservations": {
+    "method": "Evidence-only require preload logs return values of existing process.memoryUsage calls unchanged, without source/test/assertion edits. Same long TMPDIR and NODE_BACKEND=js/LOG_LEVEL=silent/HARDWARE_CONCURRENCY=1 for both.",
+    "base": {
+      "startRss": 141737984,
+      "nearRss": 578551808,
+      "finalRss": 579059712,
+      "log": "execution/evidence/G10/reviewer-sqlite-base-memory.log"
+    },
+    "candidate": {
+      "startRss": 142344192,
+      "nearRss": 578142208,
+      "finalRss": 566837248,
+      "log": "execution/evidence/G10/reviewer-sqlite-candidate-memory.log"
+    },
+    "shortTMPDIRCandidate": {
+      "startRss": 141639680,
+      "nearRss": 143998976,
+      "finalRss": 144719872
+    },
+    "conclusion": "Approx436MB initialization increase occurs on both base and candidate under long TMPDIR. Short TMPDIR holds candidate below145MB with exact unchanged query/reopen/rollback/RSS assertions."
+  }
+}

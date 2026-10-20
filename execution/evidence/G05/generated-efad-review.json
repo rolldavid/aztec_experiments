@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "efad39b62809bd21ffafcb97db09f3dd36c65421",
+  "base": "ae67d75fa98b86f677d10d02bd2b02f0e85f1521",
+  "verdict": "approved-bounded-generated-source",
+  "findings": [],
+  "scope": "Generated SDK/apps continuation of approved PXE/wallet provenance and worker port/projection sources; not real application acceptance",
+  "checks": [
+    {
+      "procedure": "Inspect exact8file delta; only three generated HTML consumers, SDKbundle/manifest, README, registry and whitespace-onlytestline",
+      "result": "pass; functional source unchanged fromae67"
+    },
+    {
+      "procedure": "Independently run checkSdk against both.build/sdk andapps/dist; exactmanifest equality",
+      "result": "pass",
+      "inputFiles": 2035,
+      "outputFiles": 8
+    },
+    {
+      "procedure": "Verify generated SDK exportsisPrivatePXEForNode and records source/cachednode; all3HTMLconsumersembedexactcurrentengine source",
+      "result": "pass"
+    },
+    {
+      "procedure": "Inspect retained combined104tests log plus SDK/apps build logs",
+      "result": "104unique completed testrows;104pass0fail; builds completed. Prior43independenttests remain applicable; no duplicateheavybuild."
+    },
+    {
+      "procedure": "git diff --check3c802..efad39b",
+      "result": "pass; previousP3whitespaceclosed"
+    }
+  ],
+  "documentation": "Current README accurately distinguishes realgenuine local reply fromsyntheticbilling/separateprovider campaign and retainsprivacy/network/compiler/production limitations. Historicalpending sections areidentifiedashistorical.",
+  "remaining": [
+    "ActualRollingapplicationwalletport+trustedconstructionruntimefixture and publichistoryfullchain/reorg evidence still required.",
+    "Generatedexport/staticconsumerchecks do not certify runningbrowser/privatequeryprivacy.",
+    "FullG05/G06/G14/product/release criteria remainopen."
+  ],
+  "changedPaths": [
+    "apps/dist/aztec_bundle.js",
+    "apps/dist/censor.html",
+    "apps/dist/fee-juice.html",
+    "apps/dist/sdk-manifest.json",
+    "apps/dist/user.html",
+    "billboard/rolling_contract/README.md",
+    "execution/sessions/registry.json",
+    "shared/rolling/public-projection.test.mjs"
+  ],
+  "evidence": {
+    "execution/evidence/G05/rolling-port-combined-tests.log": "296d04cf75b09ddd537222b92ff272d2d227c295613f0c81362276aa1d1d2e10",
+    "execution/evidence/G05/rolling-port-sdk-build.log": "b569f3df542891a877e171883d1665fdf426c998b45e18767306c94b35e47b79",
+    "execution/evidence/G05/rolling-port-apps-build.log": "e68b59b465e981aeffd7dd5923248d9c3d5d6316158c9bd095878d07e2b12c04"
+  },
+  "generatedHashes": {
+    "apps/dist/aztec_bundle.js": "b662c01d1ad63f2754de49990a3f45505622187fc3f2e906b2814a6811e2c2b7",
+    "apps/dist/censor.html": "82aba7b43e3de53fc189983c66f5595eb51c3211160af699ac3b5f6939b7640c",
+    "apps/dist/fee-juice.html": "f408f021100de72ac53967abe754aae1607b5b3511df77924f0f56a30164fb83",
+    "apps/dist/sdk-manifest.json": "9d8765e3b864135e5a784300c879838f18a11ecca44c3fda083a720837a788b0",
+    "apps/dist/user.html": "5f2bdb51774a81f7f9eff7f61516dfa11597cf18c42a30c858f86dc6cf9b0274"
+  }
+}

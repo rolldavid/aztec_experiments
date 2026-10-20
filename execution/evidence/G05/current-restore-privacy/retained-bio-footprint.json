@@ -1,0 +1,269 @@
+{
+  "passed": true,
+  "sourceRevision": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "actions": "Offline authenticated retained Tx/TxEffect classification only; no network, sign, send, proof or service.",
+  "binding": {
+    "originalSourceRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+    "transactionHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+    "txBytesSha256": "96d27661a82d159ff3d088808c50635d2a46d7e3b3b305a0182a65373020dfc6",
+    "effectBytesSha256": "173756279d7498970049884f65eaab6cfde534d143a01f4674c594cb78602e35",
+    "backupSha256": "138ce0dc741c08233dc788a1a12d208828f3565cd14c61809a0d27df4ed6997f",
+    "canonicalReceipt": {
+      "scope": "Trusted operator read-only receipt/effect/full-block collection, outside browser traffic counters; no ownership or fee-payer privacy verdict.",
+      "status": "proven",
+      "executionResult": "success",
+      "receiptFeeObserved": true,
+      "blockNumber": 341,
+      "blockHash": "0x1ceb3c929ef8ccd2dfcf11a158836cb50cc4b7951fba4803da84cf96e7cf1a5a",
+      "transactionFee": "18754750200000",
+      "submission": "included",
+      "file": "resume-effect.bin",
+      "bytes": 3871,
+      "sha256": "173756279d7498970049884f65eaab6cfde534d143a01f4674c594cb78602e35",
+      "canonical": true
+    },
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "2529018267",
+      "rollupAddress": "0x708dc0586077ef4822711bcaf55ec74f29cce9bb",
+      "boardAddress": "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8",
+      "bok": {
+        "address": "0x15b4402f1c7243006cfaec74a009360ff00f8265b52e2207394783da434cdf68",
+        "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+        "operatorAddress": "0x25cf2ffff1aa94b24191bbc9dcc693311cdd0572490f512a68930a1adf5b5926",
+        "deployer": "0x25cf2ffff1aa94b24191bbc9dcc693311cdd0572490f512a68930a1adf5b5926",
+        "salt": "0x00a3129cc3ebfe966b84eaf0fde557416fb37de10f78aa2c22ecfd6611d64227",
+        "deployment": {
+          "blockNumber": 8,
+          "blockHash": "0x1c7692d4599bffba7e8ca8e3427b05027ab269d5a135f46065f1b33d2a6c50de",
+          "txHash": "0x2414e2a1ad025fafb14212d0a627f6285224aa8b85e8b78a85121de7062b3977"
+        }
+      }
+    },
+    "accountScopeMatchesDeployment": true
+  },
+  "footprint": {
+    "schemaVersion": 1,
+    "scope": "Exact known-role equality in named public transaction/effect fields; no witness or decrypted-note inspection",
+    "matching": "Whole field numeric equality; no substring scan; commitments and delivery matches do not decode identities",
+    "sharedFeePayer": true,
+    "authorIsPublicFeePayer": false,
+    "counts": {
+      "publicCalls": 2,
+      "publicCalldataFields": 39,
+      "publicDataWrites": 9,
+      "publicLogs": 2,
+      "noteCommitments": 3,
+      "nullifiers": 5,
+      "l2ToL1MessageHashes": 0,
+      "privateDeliveryLogs": 3,
+      "privateDeliveryEmittedFields": 48,
+      "contractClassLogs": 0
+    },
+    "rolePresence": {
+      "feePayer": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": true,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicCallSenders": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": true,
+        "board": true,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicCallTargets": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": true,
+        "board": true,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicCallCalldata": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicWriteSlots": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicWriteValues": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicLogContracts": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": true,
+        "board": true,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "publicLogFields": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "noteCommitments": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "nullifiers": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "l2ToL1MessageHashes": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "privateDeliveryTags": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      },
+      "privateDeliveryPayloadFields": {
+        "author": false,
+        "otherAuthor": null,
+        "sharedPayer": false,
+        "board": false,
+        "moderator": null,
+        "funder": null,
+        "collateralFunder": null,
+        "otherCollateralFunder": null,
+        "feeFunder": null,
+        "otherFeeFunder": null,
+        "coinbase": null
+      }
+    },
+    "limits": "Does not test derived identifiers, linkability across transactions, funding timing, RPC metadata, proof bytes, protocol constants or contract-class contents. Private delivery tags/payload are public serialized fields, not decrypted private data. Absence of exact matches is not proof of anonymity."
+  },
+  "publicContracts": {
+    "feePayer": "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e",
+    "board": "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+    "publicCallTargets": [
+      "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+      "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e"
+    ],
+    "publicLogContracts": [
+      "0x10514a7cc9d5e314466b27d3570212d18701199a2648fced4229a92f54470a43",
+      "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e"
+    ]
+  },
+  "events": [
+    {
+      "type": "BioPublished",
+      "position": {
+        "blockNumber": "341",
+        "blockHash": "0x1ceb3c929ef8ccd2dfcf11a158836cb50cc4b7951fba4803da84cf96e7cf1a5a",
+        "txHash": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "selectedNameMatches": true
+    }
+  ],
+  "limits": [
+    "One bio for one name: no cross-name or two-human relational inference.",
+    "Whole-field equality smoke check only; nonzero commitments/nullifiers/delivery tags remain opaque and are not proofs of unlinkability.",
+    "Canonical binding reuses preserved successful receipt/effect/block observation; no new live finality claim.",
+    "Does not cover node/backend receiver traces, runtime-added headers, derived identities, proof witness transport or extension traffic."
+  ],
+  "networkAttempts": 0
+}

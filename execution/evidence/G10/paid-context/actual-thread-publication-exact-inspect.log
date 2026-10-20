@@ -1,0 +1,10 @@
+{"acceptedRevision":"d216d7ffa94296ef8da3b86dc9a11b4132da891e","sourceDigest":"bb6c2da5c4810f7671f85d9b5aeb28b0f5f59f79ce104c94bcf0ee3ad60e170a","artifactSha256":"bf71ea452b7248e35a85583cc8c5b1a278c137c6d6a66b3fb5add440cc1e7302","matchingHttpRevision":true,"realGit":true,"realIsolatedExecution":true,"realHttp":true,"externalGitHub":false}
+✔ actual accepted Git and isolated artifact publish matching source over separate HTTP origin (12272.02525ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12352.863042

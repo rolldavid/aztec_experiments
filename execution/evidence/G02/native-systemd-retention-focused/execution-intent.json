@@ -1,0 +1,24 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T02:47:54.372Z",
+  "pid": 91538,
+  "runnerSha256": "9e7a7555a30797407a3b36d68e2d263f7bb036285f8b3e59dbf1162e87e88612",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "preparationSha256": "5d8500e48d8db66d194d4fcf32469834760bdb30dfdea974428310d771f6bf78",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "scripts/test-prover-bootstrap.py",
+    "NativeVersionDiagnostic",
+    "-v"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-retention-focused/home",
+    "TMPDIR": "/private/tmp/r8c-u98r6d7x",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "retry": false
+}

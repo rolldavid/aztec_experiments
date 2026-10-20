@@ -1,0 +1,50 @@
+{
+  "candidate": "ed6177ba602604598ca6fbf6013e884859f6dfa5",
+  "base": "d016f81597d40f9ac4a1c395b3ed506f9c85fd20",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded session source with mandatory c99 reader and1cf backup repairs",
+  "findings": [],
+  "sourceSha256": {
+    "apps/rolling/wallet-session.mjs": "4ec5ffcdc5de053a64a1550686cfeb48b135fa5494794b499a75d16b089054de",
+    "apps/rolling/wallet-session.test.mjs": "1218680b0e4221b688b94277d3945a7698b0ba147123c6d7ff96702d635daae1"
+  },
+  "requirements": [
+    "G07 private preferences recovery",
+    "Existing account lock, trusted PXE/wallet routing and financial intent preservation"
+  ],
+  "independentChecks": {
+    "command": "Pinned Node24 NODE_BACKEND=js --test --test-concurrency=1 apps/rolling/wallet-session.test.mjs",
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 7514.427792,
+    "log": "/tmp/reviewer-session-ed617-tests.log",
+    "label": "Actual session/application/AEAD/ABI; labelled node/PXE/proof-routing doubles"
+  },
+  "assessment": [
+    "Lazy reader constructed only on explicit readPreferences while existing account lock held",
+    "Reader owns one official synchronization; raw guarded application readPreferenceHead capability avoids nesting public session lock",
+    "Same trusted node/PXE/wallet routes checked around async boundaries; account change/failed query prevents publication and sends",
+    "Abort retains busy state and lock until original unabortable operation settles; session close/other operations reject while busy",
+    "Prepared financial intent survives failed read; private cache uses same encrypted store without exposing preference IDs to public reader",
+    "No second lifecycle owner, retries, public-node fallback or cancellation override introduced"
+  ],
+  "dependencyDisposition": {
+    "historicalCandidate": "ed617 itself inherits old0d6 reader and lacks newbackupdomain. Do not deploy that historical tree standalone.",
+    "required": "c99d79a reader +1cf4f3f backup +reviewed G07 artifact/SDK exports and explicitquerypatch distribution",
+    "root83406aa": "All six relevant repair/session blobs independently byte-match approved exact revisions; full root source/build composition still separate",
+    "paths": [
+      "shared/rolling/preference-reader.mjs",
+      "shared/rolling/preference-reader.test.mjs",
+      "shared/journal-backup.mjs",
+      "shared/journal-backup.test.mjs",
+      "apps/rolling/wallet-session.mjs",
+      "apps/rolling/wallet-session.test.mjs"
+    ]
+  },
+  "limits": [
+    "No actual wallet/browser/cold preference recovery or capacity qualification",
+    "Official cold PXE sync remains unbounded; deadline suppresses publication only after outstanding SDK operation settles",
+    "Build/patched dependency provenance and genuine recovery tests remain required before runtime acceptance"
+  ]
+}

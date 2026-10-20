@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T01:17:57.767006+00:00",
+  "source": "14b0cfcbf8e26d1a0dbb9e7102184f00fc7b2c12",
+  "verdict": "full-bootstrap-and-isolated-package-component-tests-accepted",
+  "stages": [
+    {
+      "stage": "full",
+      "receiptSha256": "c2a6c0cdea383de696372cc0ba09d2e9d5bd42e298ce40f391f2f5d18d25c02b",
+      "logSha256": "0a54997519b0c501aec475cc5a7e68eeefd30bc3e74b53d3655a699fcb5524af",
+      "tests": 66,
+      "pass": 66,
+      "skips": 0,
+      "elapsedMs": 5848,
+      "peakTreeRSSKiB": 492768,
+      "rssStatus": "sampled",
+      "ownedTreeAbsent": true,
+      "ownedTemporaryAbsent": true,
+      "protectedInputsRehashed": 1167
+    },
+    {
+      "stage": "package",
+      "receiptSha256": "6e53173d158f269fb0f4d126f01b143359e760545c97f04cfceade9140539718",
+      "logSha256": "184cfd9ff4775bafcbaddec21c11a80db2f58f7bbd7f5a66f54c7ad49d7753bb",
+      "tests": 8,
+      "pass": 8,
+      "skips": 0,
+      "elapsedMs": 638,
+      "peakTreeRSSKiB": null,
+      "rssStatus": "unmeasured-subsecond",
+      "ownedTreeAbsent": true,
+      "ownedTemporaryAbsent": true,
+      "protectedInputsRehashed": 1167
+    }
+  ],
+  "priorFocusedReview": "b553f7533a13999cb9792b1b544da1683f666ac51668823a641c857a13ae30db",
+  "assessment": [
+    "All66 bootstrap cases and8 package cases passed without skips. Package pending-artifact negative emits its expected child rejection between the case label and standalone ok; it is not an actual suite failure.",
+    "SupportedPython3.14/pinnedNode24/externalTMPDIR; Linux qualification refusal, exact helper closure, bounded lifecycle and copied-module tests preserved.1167 bindings independently rehashed unchanged.",
+    "No actual native Linux binary, guest/service, provider operation or real release archive qualified."
+  ],
+  "nextEligibility": "Source-bound bounded preparation can proceed under parent authority; final upload/payload/operator bindings must be separately reviewed. This runtime review is not a paid-action grant.",
+  "holds": [
+    "Exact reservation/current cumulative ledger and operation-specific lead grant remain required.",
+    "Actual private compressed payload/capabilities/sourcepins/deadlines need independent review before launch.",
+    "Fresh account/no-overlap/no-ingress/resource controls and absolute dual shutdown remain mandatory; uncertain sends reconcile-only.",
+    "Actual AMD64 guest/version evidence and cleanup review required before active Linux pin promotion."
+  ],
+  "reviewerExecution": "None; read/hash/evidence only."
+}

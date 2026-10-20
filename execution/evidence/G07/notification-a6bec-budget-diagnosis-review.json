@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+  "receipt": "execution/evidence/G07/application-a6bec3ca-5b4b-4025-8999-9a7ad610a110.json",
+  "receiptSha256": "8d4521fa0cafecaf8a36749b69a34cfa293357c4ec09a7042e6d9d47be63d7b8",
+  "verdict": "FAILED_ACTUAL_NOTIFICATION_ACCEPTANCE; FUNDING_REPAIR_REACHED_AND_VERIFIED; BOUNDED_REORDER_SOURCE_FEASIBLE_PENDING_IMPLEMENTATION_REVIEW",
+  "actual": {
+    "passed": false,
+    "elapsedMs": 365098,
+    "peakTreeRSSKiB": 2142256,
+    "deadlineMs": 540000,
+    "rssLimitKiB": 4194304,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "componentCleanup": {
+      "applicationActorA": true,
+      "applicationActorB": true,
+      "fundingWallet": true,
+      "fundingWalletB": true,
+      "proverAndQuery": true,
+      "nodeRPC": true,
+      "indexedDBGlobals": true,
+      "nativeArtifactLoader": true
+    },
+    "failureStage": "production-browser-notifications",
+    "failureFrames": [
+      "rolling-notification-fixture.mjs:14:2",
+      "rolling-notification-fixture.mjs:66:2",
+      "rolling-application-fixture.mjs:567:9",
+      "rolling-application-fixture.mjs:624:11"
+    ],
+    "secondReadiness": {
+      "status": "collateral-pending",
+      "privateFeeCredit": "999999991782244000000"
+    },
+    "standalone": {
+      "passed": true,
+      "applicationProof": true,
+      "proofMilliseconds": 12545,
+      "transactionFee": "8217756000000",
+      "status": "checkpointed",
+      "executionResult": "success",
+      "canonicalCheckpoint": true
+    },
+    "root": {
+      "action": "preference-root",
+      "transactionFee": "20905124400000",
+      "blockNumber": 13,
+      "status": "checkpointed",
+      "effectSha256": "3c645744dad93e65f32e9c9cff2c335d6a8176549b791178ffcb96b4f7dc8b53"
+    },
+    "clockElapsedMs": 94375,
+    "browserObservationEmpty": true,
+    "finalFeeVerificationReached": false
+  },
+  "sourceDiagnosis": {
+    "location": "scripts/testing/rolling-notification-fixture.mjs:14",
+    "reason": "notificationBrowserBudget(ctx.applicationDeadlineAt) asserts at least180000ms before observation initialization, key backup, native B close, HTTP adapters or browser handoff. Actual failure stack exactly this assertion. No subscription/reply/marker/browser steps occurred. Earlier source c8 funding repair succeeded; whole scenario remains failed.",
+    "timing": {
+      "standaloneProveStage": 110952,
+      "standaloneIncludeStage": 123644,
+      "aClaimStage": 134638,
+      "aClaimToEligibility": 66235,
+      "wallReadinessStage": 214615,
+      "applicationPXEStage": 310666,
+      "rootStage": 316702,
+      "browserAdmissionStage": 353354,
+      "latestAdmissionAtParent525000": 345000,
+      "stageOverLatestAdmissionMs": 8354,
+      "standaloneBeforeAClaimMs": 23686
+    }
+  },
+  "sourceBackedRecommendation": {
+    "feasibility": "Narrow sequential reordering is supported, no extra lifecycle or protocol change required. Both prepareW01PrivateFees bridge preparations must stay before A collateral claim so both poolBefore baselines remain equal. Only notification B standalone invocation is deferred.",
+    "sequence": [
+      "Prepare A and B existing wallets/real bridge claims and capture both initial pool baselines; notification B uses standalone:false during preparation.",
+      "Perform existing genuine A depositAndClaimC01, canonical inclusion and fee capture/assertions unchanged.",
+      "Invoke existing proveAndIncludePrivateFeeStandalone ONCE using feesB.browserFixture.wallet, feesB.authorAccount.address, feesB.privateFeeAction, that same wallet/node route, same mineL1/mark. Store successful observation on feesB.standalone before further work.",
+      "Continue existing Bok deployment, A eligibility and natural wall-clock catchup, then both strict readiness checks and unchanged180s browser admission."
+    ],
+    "whyMayHelp": "Rolling claim_deposit computes next_allowed_time from captured claim anchor timestamp plus cooldown. Current B proof/inclusion happens before that timer begins. Moving its real work after A claim may consume part of required eligibility/clock progression rather than delay its start. Actual warp/checkpoint counts and variable proof time mean no guaranteed saved duration.",
+    "requirements": [
+      "Do not move B entire preparation after A claim: poolBefore baselines would differ and existing cross-pool conservation would fail.",
+      "Standalone helper/privateFeeAction is not an idempotent public retry API. Record attempt before invocation; never re-invoke after any partial/uncertain failure. first claim is consumed by the preparation callback before downstream proof/send completion.",
+      "On failure preserve error.privateFeeStandaloneObservation on existing B report before original error propagation; no cleared paid outcome. Preserve both existing wallet cleanup owners.",
+      "Final A verification subtracts B standalone transactionFee in other-pool delta; B verification already subtracts its own standalone. No double subtraction, zero-assumption or hidden new fee.",
+      "Keep four application service proof jobs, authentic separate setup proof, no B collateral, current source/artifact binding, unchanged540s/4GiB and180s admission."
+    ],
+    "smallestChecks": [
+      "Actual-used orchestration seam with labelled callbacks: both preparations before A claim, exactly one B standalone afterward; no later stage after claim/standalone failure.",
+      "Failure injection before proof/after send: partial standalone receipt retained and zero duplicate invocation; original error identity or explicit aggregate retained.",
+      "Positive/negative cross-pool arithmetic both roles, same baseline; deliberate reordered B pool snapshot and omitted standalone debit must reject.",
+      "Existing actual SDK standalone helper remains unchanged; next genuine attempt must confirm strict collateral-pending/positive-credit readiness and browser admission, not merely setup completion."
+    ]
+  },
+  "notClaimed": [
+    "No notification runtime success; final both-account accounting and four application proofs not reached.",
+    "No exact historical net time saving inferred, no unchanged retry recommended, no readiness/deadline relaxation.",
+    "No native or browser execution by reviewer for this diagnosis; preserved failed receipt unchanged."
+  ]
+}

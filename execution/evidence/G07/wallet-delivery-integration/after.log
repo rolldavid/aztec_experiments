@@ -1,0 +1,18 @@
+✔ funding runtime captures named custody and rechecks chain/account without signature or send (0.872542ms)
+✔ funding runtime invalidates chain during custody read (0.1185ms)
+✔ funding runtime invalidates account during custody read (0.068ms)
+✔ funding runtime invalidates transport during custody read (0.072584ms)
+✔ funding runtime invalidates provider during custody read (0.062042ms)
+✔ funding runtime invalidates invalidated during custody read (0.062792ms)
+✔ funding relay uses only bounded same-origin fixed requests and never retries a failed POST (1.341292ms)
+✔ funding relay caps response bytes and rejects a late account change before publication (0.395417ms)
+✔ public asset loader permits slow scripts within 60s and fences timeout without replay (4.106ms)
+✔ public artifact loader aborts and cancels a stalled body at 60s without script or replay (1.486166ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 181.164583

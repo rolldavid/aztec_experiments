@@ -1,0 +1,143 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "status": "review preparation only; not evidence/G06.json and not task completion",
+  "criteria": [
+    {
+      "id": "G06-A01",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/anonymous-687-runtime-review.json",
+          "sha256": "1930ba249aaba3af6a28d9b65cfdfbd99b9c28566812a8dcd9bc989fb59906e9"
+        },
+        {
+          "path": "evidence/G06/repost-e030-runtime-review.json",
+          "sha256": "4b7efc2591dde8be76a3a026c4437b4fd485bd7794a6f04d40d68282effff6ab"
+        },
+        {
+          "path": "evidence/G06/account-reactions-b0b37-runtime-review.json",
+          "sha256": "bc843e12dcf345805558145739df4b5f532b2ae1a11996e07b10cb298f429839"
+        },
+        {
+          "path": "evidence/G06/reply-e58-runtime-review.json",
+          "sha256": "deb333d192d9a23340dbf27263a4f6dc9c4f60674a48503bac201ca5b772923b"
+        }
+      ]
+    },
+    {
+      "id": "G06-A02",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/anonymous-687-runtime-review.json",
+          "sha256": "1930ba249aaba3af6a28d9b65cfdfbd99b9c28566812a8dcd9bc989fb59906e9"
+        },
+        {
+          "path": "evidence/G06/composer-7328-runtime-review.json",
+          "sha256": "c032b03455a0a2b7fccff62d4626c52c937caf76e0be6b8588e5412141b98447"
+        },
+        {
+          "path": "evidence/G06/social-9745-runtime-review.json",
+          "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+        }
+      ]
+    },
+    {
+      "id": "G06-A03",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/anonymous-687-runtime-review.json",
+          "sha256": "1930ba249aaba3af6a28d9b65cfdfbd99b9c28566812a8dcd9bc989fb59906e9"
+        },
+        {
+          "path": "evidence/G06/reply-e58-runtime-review.json",
+          "sha256": "deb333d192d9a23340dbf27263a4f6dc9c4f60674a48503bac201ca5b772923b"
+        }
+      ]
+    },
+    {
+      "id": "G06-A04",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/composer-7328-runtime-review.json",
+          "sha256": "c032b03455a0a2b7fccff62d4626c52c937caf76e0be6b8588e5412141b98447"
+        },
+        {
+          "path": "evidence/G06/social-9745-runtime-review.json",
+          "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+        }
+      ]
+    },
+    {
+      "id": "G06-A05",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/repost-e030-runtime-review.json",
+          "sha256": "4b7efc2591dde8be76a3a026c4437b4fd485bd7794a6f04d40d68282effff6ab"
+        },
+        {
+          "path": "evidence/G06/account-reactions-b0b37-runtime-review.json",
+          "sha256": "bc843e12dcf345805558145739df4b5f532b2ae1a11996e07b10cb298f429839"
+        }
+      ]
+    },
+    {
+      "id": "G06-A06",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G05/owned-wire-e3-runtime-review.json",
+          "sha256": "eb40050cac198167408412d4b249662c8ea7b6695a154d7ef8edfa3e0fb1ba54"
+        },
+        {
+          "path": "evidence/G06/composer-7328-runtime-review.json",
+          "sha256": "c032b03455a0a2b7fccff62d4626c52c937caf76e0be6b8588e5412141b98447"
+        }
+      ]
+    },
+    {
+      "id": "G06-A07",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/social-9745-runtime-review.json",
+          "sha256": "bdaf49375f0a1ca740fdeb9d36debfb854ebdde78933050c002dc24e070a33c7"
+        },
+        {
+          "path": "evidence/G06/reaction-97d-runtime-review.json",
+          "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+        },
+        {
+          "path": "evidence/G06/privacy-source-4c76-composition.json",
+          "sha256": "28052ea4e8748ddfc7733ec7f445dc9e34c5545473775181c8abc268f7671db7"
+        }
+      ]
+    },
+    {
+      "id": "G06-A08",
+      "status": "independent final-source review required",
+      "artifacts": [
+        {
+          "path": "evidence/G06/account-reactions-b0b37-runtime-review.json",
+          "sha256": "bc843e12dcf345805558145739df4b5f532b2ae1a11996e07b10cb298f429839"
+        },
+        {
+          "path": "evidence/G06/reaction-97d-runtime-review.json",
+          "sha256": "2c1c409c7ea378cfd6aee774989d090ecb71f13f3caecd48126a3480caac65c6"
+        },
+        {
+          "path": "evidence/G05/foundation-review.json",
+          "sha256": "38fb6de21524d1cf56dd4f9035ec6755f5f74849a2a2976ef5dea841a448c66b"
+        }
+      ]
+    }
+  ],
+  "pending": [
+    "G06-A07 actualrecovery2 completewiregate +runtime review",
+    "G06-A04 exactsafeURL/markup/normalization source/test disposition",
+    "G06-A08 normalized collision: source/TXE foundation and actualname registration exist; concurrentgenuine race remains pending72eed forG05, independently determine G06 component sufficiency. No automaticclosure."
+  ]
+}

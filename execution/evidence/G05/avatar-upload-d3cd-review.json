@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "d3cd85f9c5a31d5df5c2deef2bb243ffdbbbf8ba",
+  "verdict": "approved_bounded_browser_helper",
+  "files": {
+    "apps/rolling/avatar-upload.mjs": "290fbdcfa31d95cc8e09eae95cf6d3551c07dc24262dacff8965a803f06ab269",
+    "apps/rolling/avatar-upload.browser.test.mjs": "e97e6615e9d2bd1243331cd69e78ed53fbabb8adb4ae10a53050075febe704b5"
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinned Node24.21.0 --test --test-concurrency=1 apps/rolling/avatar-upload.browser.test.mjs",
+      "result": "15 independently passed,0failed,4611.697708 ms; real Chromium/canvas raster fixtures"
+    }
+  ],
+  "provisionalGapDisposition": [
+    "Real WebP input XMP removal and output ICCP/EXIF/XMP+VP8X flag removal exercised; final actual decode succeeds",
+    "WebP ANIM/animation flag/malformed chunk length reject before native decode",
+    "Correctly typed small opaque PNG/WebP replacements for transparent source rejected across all7 candidates",
+    "Labelled unavailable WebP encoder forces actual JPEG encoder fallback; strips JFIF and exact-byte preview decodes identically"
+  ],
+  "positiveChecks": [
+    "Supported input headers bounded8MiB/8192edge/16Mpixels before native decode; SVG/corrupt/APNG rejected",
+    "Actual center crop100x100 and automatic compression <=8192bytes; no original-byte passthrough",
+    "Exact sanitized bytes construct previewBlob; final decode dimensions/alpha checked",
+    "Late native bitmap closed on abort/timeout, canvas buffers cleared on success/contextfailure",
+    "Fixed error messages only and no wallet/network/storage capability in helper"
+  ],
+  "limitations": [
+    "10second timeout does not forcibly cancel native decoder/encoder and is not a hard memory sandbox",
+    "Compression quality verified with generated patterns, not human photographic approval",
+    "Returned Uint8Array is mutable; publisher must consume immutable previewBlob bytes or verify exact hash/length before publication",
+    "No chain publication/profilemoderation/archive retrieval or privacy acceptance",
+    "Centre crop/8MiB input/edge/pixel/deadline bounds are documented reversible engineering choices"
+  ]
+}

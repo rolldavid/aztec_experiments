@@ -49,10 +49,8 @@ transaction-journal-v1/
 # Durable local moderator state and model provenance.
 .moderation-state/
 
-# Local planning, reports and agent instructions
-/execution/
+# Private scratch reports (public execution records and AGENTS.md are versioned)
 /reports/
-AGENTS.md
 /CHANGES-FROM-UPSTREAM.md
 /LATEST_CHANGE.md
 /fv/PLAN.md

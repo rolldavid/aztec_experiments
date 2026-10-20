@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "createdAt": "2026-10-12T20:31:53.506763+00:00",
+  "subject": "Uncommitted IndexedDB active-event scheduler structural assessment",
+  "source": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social/scripts/patch-indexeddb-atomicity.mjs",
+  "sourceSha256": "6a1ec23e8bb23a8e8e619325ffdc13bb9e70eae5e75fa567e53d18e3d21a764a",
+  "verdict": "Draft assessment only; no final source or runtime approval.",
+  "positiveFindings": [
+    "Primitive request closures are dispatched synchronously from native heartbeat success events, addressing the actual timer-continuation inactivity failure. Whole async callback is no longer the scheduling unit.",
+    "Container codecs remain upstream; new containers and clear use transaction-owned scheduled store. Index handles recursively scheduled; cursor movement and custom async iteration route through enqueue.",
+    "Inputs cloned at method call rather than deferred dispatch; immutable IDBKeyRange explicitly exempt. Immediate transaction completion rejection handler, callback failure abort, pending rejection, finally restoration and unchanged serial queue are retained.",
+    "For correctly awaited callback operations, callbackPending retains heartbeat through intervening timers; request results resolve callback continuations. No obvious deadlock was identified in that supported path by inspection."
+  ],
+  "openConcerns": [
+    {
+      "id": "raw-handle-escape",
+      "location": "scheduled proxy get: nonfunction property returned unchanged",
+      "scenario": "store.transaction exposes transaction object, and cursor.source exposes an index/store; these provide routes to issue unscheduled operations during an inactive timer. Generic function forwarding also does not constitute a closed supported method set.",
+      "requiredDisposition": "Explicitly close/whitelist facade surface or document and source-check exact supported production accesses; preserve necessary index/cursor metadata without returning unscheduled mutable handles. No claim of complete raw-fallback prevention yet.",
+      "status": "Structural concern; no browser repro executed."
+    },
+    {
+      "id": "submitted-request-drain",
+      "location": "heartbeat onsuccess pending.splice dispatch; stop condition callbackPending || pending.length",
+      "scenario": "Already-dispatched operation promises are not explicitly tracked. tx.done drains native transaction requests, but JS operation continuations and late enqueue/result errors need explicit testing when callback returns or aborts with work submitted.",
+      "requiredDisposition": "Prove no false success/unhandled rejection/late work escapes after queue release; track inflight operations if needed. Preserve callback return and original errors, do not silently retry.",
+      "status": "Evidence gap, not proven failing behavior."
+    }
+  ],
+  "requiredFinalTests": [
+    "Delayed success/failure and falsy/synchronous callback errors in actual browser, all live and reopen invariants.",
+    "Every container path including multimap read-modify-write, array size/push/pop, bulk getMany, singleton/set and clear.",
+    "Async cursor iteration with timer between yields, continue/advance/continuePrimaryKey/delete/update, early break and request error.",
+    "New containers mid-callback remain atomic. Queued second callback cannot enter early; abort drains and rejects pending operations with no writer escape.",
+    "Mutable input changed after call must preserve call-time structured clone; IDBKeyRange passes without serialization; relevant invalid-key/request errors preserve behavior.",
+    "Actual coordinator late staged-store failure and all persistence/isolation regressions on rebuilt exact SDK."
+  ],
+  "scopeLimits": [
+    "No expensive/native/browser tests performed.",
+    "Draft remains writable by lead; source hash binds this inspection only and all later changes need review.",
+    "No application-store atomicity hold release or historical evidence relabeling."
+  ]
+}

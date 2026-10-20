@@ -1,0 +1,28 @@
+✔ real projection feed/thread shape is distinct from enriched HTTP shape (1.414667ms)
+✔ canonical reconstruction rejects altered post or continuation cursor (1.426542ms)
+✔ full HTTP acceptance still requires every name and board enrichment field (1.118667ms)
+✔ owned-name canonical profiles retain all four full public identities without posts (0.386958ms)
+✔ owned-name profile reconstruction rejects missing duplicate altered and unexpected content (2.307958ms)
+✔ social canonical profile checks identity posts and cursors independently of index metadata (0.632625ms)
+✔ bounded catchup rejects stalled pages and never retries an index error (0.319625ms)
+✔ cold canonical whole-block ingestion and metadata use real decoder/SQLite, no views before ready (123.400167ms)
+✔ restart re-fetches every retained block before exposing any cached view (213.008125ms)
+✔ cached omission with unchanged canonical hashes/count-adjusted JSON is rejected (217.671833ms)
+✔ injected cached post text is rejected despite preserved position and checkpoint (198.636125ms)
+✔ append, hot reorg rollback and cold reorg reconstruct canonical replacement (203.568209ms)
+✔ CAS commit failure never publishes staged projection; another writer must reopen (300.980833ms)
+✔ network/class/deployment changes fail closed even with retained data (302.699625ms)
+✔ bounded capacity, read timeout and concurrent sync cannot produce partial ready state (207.451375ms)
+✔ labelled actual HTTP/reader: 100 maximum avatars, same author deduplicates (241.562541ms)
+✔ labelled actual HTTP/reader: 100 maximum avatars, distinct authors paginate by bytes (528.92675ms)
+✔ labelled actual HTTP/reader: every public profile route redacts removed avatar, reopen and replacement preserve history (219.883875ms)
+✔ labelled actual HTTP: owned-name content and index metadata use separate revision contracts (107.835583ms)
+✔ acceptance catchup completes three ABI-decoded synthetic ranges before HTTP on fresh and cold SQLite (201.351666ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4713.394625

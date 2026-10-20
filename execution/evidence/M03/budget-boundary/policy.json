@@ -1,0 +1,28 @@
+{
+  "base": "d026cee0054c89f4d4796b203322fb05c6492aac",
+  "candidate": "ecc3f0c5f559578e224015f7b82053aff1ca56f7",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "task_id": "M03-model-budget-boundary",
+  "implementer": "controls-resume-20261014",
+  "allowed_paths": [
+    "censor-daemon/evaluate-model.mjs",
+    "censor-daemon/test_evaluation.mjs"
+  ],
+  "required_checks": [
+    "evaluator-budget-regression"
+  ],
+  "requirements": [
+    "M03-bounded-evaluation-preserves-full-model-timeout"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls-resume-20261014",
+      "task_id": "M03-model-budget-boundary",
+      "paths": [
+        "censor-daemon/evaluate-model.mjs",
+        "censor-daemon/test_evaluation.mjs"
+      ]
+    }
+  ]
+}

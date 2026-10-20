@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "parentSession": "lead-20261011",
+  "candidate": "ebb6e5a7bd4db016241ead58dec2eac5bda95937",
+  "repairBase": "5674e7c77e98f31f46d2144f27bb5cd923c87dd1",
+  "combinedBase": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+  "verdict": "approved",
+  "scope": "Bounded bootstrap and automatic Linux qualification source only; no paid launch or actual Linux qualification acceptance",
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "43a36982f293d91f51b866023beb6cb57efe102b00bb2abd5fcea8bfaf56a3d9",
+    "deploy/prover/BOOTSTRAP.md": "a65dfa59d0f35d71283772c5f5e1298fe563a4a26cd6cf57f9a153135dbb992f",
+    "scripts/test-prover-bootstrap.py": "54dbd41c49021f305f4de1885149d0bfe1eb5f4bb75746f1c911a481ecb79ad6"
+  },
+  "checks": [
+    {
+      "command": "python3 scripts/test-prover-bootstrap.py",
+      "cwd": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/rolling-design",
+      "performedBy": "reviewer",
+      "result": "20 tests passed; no cloud/Linux service/proof jobs"
+    },
+    {
+      "check": "Actual generated user-data QUALIFICATION extraction, actual validateQualification and startProverService preflight",
+      "result": "Explicit origins[] reaches identity-sentinel boundary after real service guards; omission fails original guard; throw occurs before createPrivateQuery/native/network startup"
+    },
+    {
+      "check": "Complete bootstrap lifecycle and new one-attempt qualification source review",
+      "result": "Exclusive fsynced intent precedes readiness polling and sole qualifier attempt; partial/unknown/reboot intent is not replayed; readiness uses actual SDK public inspector and canonical public snapshot; qualifier path and all-file manifest pinned; original shaper/budget/commission controls and masked prover retained"
+    },
+    {
+      "check": "Timing and ownership review",
+      "result": "Readiness cutoff at createdAt+90min and qualifier within createdAt+105min or budgetStop-60s; one systemd control-group owns subprocesses; loopback restriction, private temporary directory, fixed sanitized projections; failures request shutdown"
+    },
+    {
+      "check": "Previous Noble iproute parser repair source review retained",
+      "result": "Pinned package/version C-locale class text, qdisc JSON, exact topology/rates/ceilings, mandatory uint64 counters; malformed output fails closed"
+    }
+  ],
+  "priorFindings": [
+    {
+      "severity": "P1",
+      "revision": "5674e7c77e98f31f46d2144f27bb5cd923c87dd1",
+      "issue": "Generated qualification config lacked required origins array, guaranteeing real service startup failure",
+      "disposition": "Fixed with explicit origins[] and actual service preflight regression"
+    },
+    {
+      "severity": "P1",
+      "revision": "97b29162c8082a4a8cb24395f2f292eb925f0114",
+      "issue": "Unsupported tc class JSON format",
+      "disposition": "Previously fixed at a212939; preserved"
+    }
+  ],
+  "findings": [],
+  "blockingFindings": [],
+  "limitations": [
+    "Unit fixtures and syntax/configuration checks are not actual Linux evidence",
+    "Actual canonical fullnode sync, admin pause-STALE-resume, real packaged native/catalog/client/server operation, whole-control-group cleanup and timeout readbacks remain commissioning requirements",
+    "Systemd TimeoutStartSec is job-relative; Python cutoff uses original absolute creation/budget times. Scheduling/command/shutdown latency is not a hard real-time bound and must remain in spending forecast",
+    "Source-derived tc fixtures require actual host output, counter and bounded throughput validation; sub-Kbit formatter tolerance remains",
+    "Historical legacy public network/address configuration must match real inspected network; does not identify a Rolling deployment",
+    "Prover remains masked; no proof job/model/wallet operation or new paid action authorized by this review",
+    "Existing cumulative budget reconciliation and independent cloud shutdown controls required before launch"
+  ]
+}

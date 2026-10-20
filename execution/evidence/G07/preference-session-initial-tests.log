@@ -1,0 +1,27 @@
+✔ unsupported cross-tab custody fails before any SDK/network access (0.803416ms)
+✔ another active tab rejects setup without reading or opening private stores (0.156625ms)
+✔ invalidated account rejects before trusted-node construction; lock callback settles (0.110458ms)
+✔ query construction receives captured scope and preserves failure without fallback (0.24ms)
+✔ constructs verified deployment/account, registers with one trusted PXE, and guards every application operation (439.875167ms)
+✔ replacement session preserves actual encrypted Rolling intent and unknown fence without a second send (370.846792ms)
+✔ setup failures clean private resources while still holding the cross-tab lock (926.96375ms)
+✔ cleanup errors preserve original failure and close the store when PXE.stop fails (231.01ms)
+✔ simultaneous close shares one cleanup; busy action prevents close or competing action (230.993667ms)
+✔ identity mutation inside asynchronous guard rejects before private setup or synchronization (356.454125ms)
+✔ altered private routing is rejected before per-operation PXE synchronization (716.513166ms)
+✔ failed close leaves session unusable, preserves error, and permits explicit cleanup retry (471.232709ms)
+✔ account mutation during each awaited initialization step blocks the next private operation (1154.545583ms)
+✔ account mutation while opening storage prevents PXE creation and closes only the acquired store (227.723875ms)
+✔ preferences initialize lazily and read under the one existing lock with one synchronization (240.605333ms)
+✔ preference cancellation retains account lock until unabortable SDK read settles (237.379083ms)
+✔ different active tab rejects preference read before synchronization or event lookup (245.005ms)
+✔ account change during private preference event read prevents publication without a send (251.927125ms)
+✔ failed preference read preserves session and existing prepared financial intent (272.428167ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7564.8315

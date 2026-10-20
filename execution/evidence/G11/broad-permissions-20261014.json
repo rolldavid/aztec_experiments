@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-14T16:58:45.747308+00:00",
+  "owner_instruction": "Broad bot permissions and standing application-scoped GitHub authorization",
+  "app": 5317701,
+  "installation": 171412624,
+  "ui_save": "Got it. Your GitHub App has been updated.",
+  "ui_installation": "Okay, Rolling Chat Bok was updated for the @zac-williamson account.",
+  "read_write": [
+    "installation_repositories",
+    "actions",
+    "actions_variables",
+    "administration",
+    "artifact_metadata",
+    "checks",
+    "contents",
+    "statuses",
+    "deployments",
+    "discussions",
+    "environments",
+    "issues",
+    "merge_queues",
+    "packages",
+    "pages",
+    "pull_requests",
+    "repository_creation",
+    "repository_hooks",
+    "repository_projects",
+    "workflows"
+  ],
+  "metadata": "read",
+  "repository_selection": "selected",
+  "selected_count": 2,
+  "selection_probe": {
+    "at": "2026-10-14T16:57:52.989Z",
+    "installation": 171412624,
+    "repository": 1419345087,
+    "status": 404,
+    "requestId": "FA1C:1612AE:631EF9:933474:6ACFB48F",
+    "inventoryStatus": 200,
+    "selected": [
+      {
+        "id": 1419258557,
+        "name": "zac-williamson/rolling-chat-bok-bootstrap",
+        "private": true
+      },
+      {
+        "id": 1419307628,
+        "name": "zac-williamson/bok-b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0",
+        "private": true
+      }
+    ],
+    "totalCount": 2
+  },
+  "probe_disposition": "One PUT returned404; inventory unchanged. No retry. Focused independent API diagnosis underway; automatic personal provisioning remains unqualified."
+}

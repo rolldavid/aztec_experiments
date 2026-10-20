@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+  "base": "207bc89359da15885e79513f1f426070b95dc84f",
+  "verdict": "approved-source-for-explicit-stopped-consumer-bootstrap-and-normal-rebuild",
+  "scope": "Pinned PXE BlockSynchronizer sparse reorg anchor delivery; actual encrypted rediscovery and genuine reorg remain pending",
+  "findings": [],
+  "sourceSha256": {
+    "BUILDING.md": "a4942340fcaa398b7a66b286a62b055cd7cae2a46f5dfa11c66a641d5a36e042",
+    "package.json": "1854b9e2a0cc0170d350c8d82c52da88a3cfb1abee1740795f3f5745fe1aa13d",
+    "scripts/build-sdk.mjs": "651c79888520522b0c07bd7300687df550804623dca3ce2f4819d3a4c7a8a25a",
+    "scripts/check-sdk.mjs": "e85877c5d4cb32087d1225db2f5c6a7b580f8f3546242e5a3e587ac9442c4176",
+    "scripts/patch-pxe-reorg-anchor.mjs": "b0dbc2608f641db11ec013e549a48362aeca75f21e383325b42111e1c312b7e6",
+    "scripts/patch-pxe-reorg-anchor.test.mjs": "84183ff6d650954938db595c919e565cfd91124ca1391d364c11fe61706434be",
+    "scripts/test-sdk-manifest.mjs": "51c7aae92da3aa515c1fbc1bce428ffc411ecaeb6525b197d2dcaa7a25b95c20",
+    "scripts/testing/fixtures/pxe-reorg-anchor/README.md": "d991a07eb20bfabcbcff74dbd31dfdc0b23765461f9a85aa4940936dfc914c60",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.js": "bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a",
+    "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.ts": "82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72"
+  },
+  "checks": {
+    "independent": {
+      "tests": 64,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2327.310833,
+      "log": "execution/evidence/G07/pxe-7867-independent-tests.log",
+      "composition": "21 candidate actual SDK/LMDB +39 synthetic-manifest validator +4 independently added actual ArchiverDataSourceBase/UnseenBlockHoldOff/NodeBlockProvider genesis tests across all configured tip modes"
+    },
+    "probe": {
+      "path": "execution/evidence/G07/reviewer-pxe-7867-extra.test.mjs",
+      "sha256": "b4f1189c731ec3309f5cdf62fd9ca00f55193a32809f9d6f2a210d1a078d9568"
+    },
+    "sharedDependencies": "Test captures original installed exact pair and rechecks unchanged at cleanup; only temporary copied targets patched; stores/queues/BB singletons closed and temporary tree removed."
+  },
+  "sourceAnalysis": [
+    "Exact TS/dest upstream fixtures independently hash-checked; deterministic transforms assert exact source and output pins. Unknown/mixed/symlink installation rejected; explicit installer only, no runtime mutation/fallback.",
+    "Original doSync already initializes from getBlockData(BlockNumber.ZERO). Native getBlock without transactions projects metadata; genesis number/hash are supported by actual archiver base. All four independent empty-genesis regressions pass; no genesis regression found.",
+    "Sparse 10\u219215\u219212 preserves conservative all-store rollback to10, updates canonical configured anchor12 in same transaction, clears original contract/node caches; no invented retained notes (balance remains0 until actual rediscovery). Witnessed12 case restores100 using actual NoteStore rollback.",
+    "Prune and configured headers use actual typed BlockHash plus by-number canonical lookup and header-hash/number checks. Source snapshots rechecked before mutation; final selected canonical header check prevents reporting success after a changed source/anchor mismatch.",
+    "All original rollbackables remain in one KV transaction. Tips acknowledgement occurs after commit because tips store owns its transaction; no nested IndexedDB transaction introduced. A failure after commit is not a successful sync; subsequent actual reorg/cold persistence qualification remains required.",
+    "Normal selected events refuse unpruned orphan replacement (including contradictory finalized source); failed handlers surface fixed errors despite stream swallowing, and final anchor mismatch throws. Stop/concurrent sync awaits original work; no detached retry.",
+    "SDK build refuses unpatched/unknown pair before bundling; SDK check requires exact patched TS/dest and patch-script provenance. Installer/body/artifact changes cannot be hidden by stale manifest. Existing query patch and CI/read-only build behavior retained."
+  ],
+  "remainingGates": [
+    "Stop all SDK consumers before explicit shared bootstrap; no shared installation authorized while any consumer remains active.",
+    "Normal SDK and wallet rebuild, exact manifests and affected combined checks after transfer before genuine campaign.",
+    "Genuine encrypted FPC note rediscovery, private/public/pool accounting, initial and marker reorg campaign acceptance; source repair alone does not establish actual1b908 mismatch cause or amount.",
+    "Native browser IndexedDB rollback/cold recovery and Linux package/runtime requalification are not established by LMDB and synthetic-manifest tests.",
+    "No full TypeScript package typecheck performed; candidate TS/dest syntax transform checked."
+  ],
+  "historicalEvidence": "Preserved pristine stuck-anchor reproduction and prior finalized-contradiction negative; no relabelling failed real reorg as pass."
+}

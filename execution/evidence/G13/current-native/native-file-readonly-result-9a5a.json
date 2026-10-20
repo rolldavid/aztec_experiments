@@ -1,0 +1,77 @@
+{
+  "source": "e60bb2b7fd21a207f1617f0e504fcb55f59fe71a",
+  "kind": "native-file-read-only-recovery-qualification",
+  "passed": true,
+  "deadlineMs": 120000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2357984,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 1437472
+    },
+    {
+      "elapsedMs": 2076,
+      "rssKiB": 2357984
+    },
+    {
+      "elapsedMs": 3103,
+      "rssKiB": 2303552
+    },
+    {
+      "elapsedMs": 4121,
+      "rssKiB": 2171776
+    },
+    {
+      "elapsedMs": 5139,
+      "rssKiB": 2162928
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "anvil",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "snapshot": {
+    "sha256": "fc4d41a020d523f9908975db3cf4194f3c0cf93bb5412d3cf864b945f5d6aae4",
+    "bytes": 1311395222
+  },
+  "peakMemory": {
+    "elapsedMs": 2076,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 86857,
+        "ppid": 59636,
+        "rssKiB": 461808
+      },
+      {
+        "role": "anvil",
+        "pid": 86879,
+        "ppid": 86857,
+        "rssKiB": 1896176
+      }
+    ]
+  },
+  "head": {
+    "number": "0x3a1",
+    "hash": "0x2630e779d6974629138b943206b34497961b6e0f19f5176f7615e6ec244c0620",
+    "pending": "421",
+    "proven": "421"
+  },
+  "payment": {
+    "transactionHash": "0x0f2802dabc1e994f8916f8ad52caab046a96c6f01d64f9a1847f1e674dd72e8c",
+    "planHash": "0xbb07b649d9630d6cb815be820de0f8288ae5c5becca62c783018b02adf9efbee",
+    "canonical": true,
+    "allThreeEffectsVerified": true,
+    "historicalRouterCodeVerified": true,
+    "payerNonce": 1
+  },
+  "elapsedMs": 5500,
+  "ownedTreeAbsent": true
+}

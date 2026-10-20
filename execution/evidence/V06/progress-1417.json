@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-10T14:16:22.440Z",
+  "tips": {
+    "proposed": 15507,
+    "checkpointed": 15507,
+    "proven": 15488,
+    "finalized": 15488
+  },
+  "receipts": {
+    "pluginRequest": {
+      "hash": "0x1d837c1f390cc8dabc545b2cc4e59a0109a92370f64ca22502ecbed5bb5e42d1",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15397
+    },
+    "newPluginRequest": {
+      "hash": "0x227f0ec9c66a908f5c0337c6b0d1f58456a9968fdae468589dcac8ee79caffdb",
+      "status": "finalized",
+      "executionResult": "success",
+      "blockNumber": 15484
+    }
+  },
+  "plugin": {
+    "status": "working",
+    "active": 1,
+    "lastFailure": null,
+    "lastSuccess": null
+  }
+}

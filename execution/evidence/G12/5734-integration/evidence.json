@@ -1,0 +1,77 @@
+{
+  "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+  "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+  "task_id": "G12-native-deployment-build",
+  "holds": [],
+  "findings": [],
+  "review": {
+    "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+    "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-5734-normal-deployment-review.json",
+        "sha256": "8c66ab742ab094a0c848ed8e53df1aebcb73fa17dfc6701586b1aabb1d97e619"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+      "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+      "id": "native-mode-reconciliation-and-normal-assets",
+      "status": "pass",
+      "command": "Existing manifest48, engine50 plus final oldbundle1, journal8 staged checks; normal build-sdk/apps/wallet commands50585",
+      "environment": "macOS Node24.21, existing qualified artifacts",
+      "observed": "Source-identical staged641 checks; normalSDK/apps/wallet exit0, manifests independently rehashed. Actual deployment separate.",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-5734-normal-deployment-review.json",
+          "sha256": "8c66ab742ab094a0c848ed8e53df1aebcb73fa17dfc6701586b1aabb1d97e619"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-6414-deployment-mode-review.json",
+          "sha256": "da06884628a379f7b1595d274f1596faa48df626f1346be1d8d57bfcaaf90f63"
+        },
+        {
+          "path": "rolling-lead-social/execution/evidence/G12/deployment-build/result.json",
+          "sha256": "002a27dc070e5c1d931feaa9be9448f33fa210e4b94ff086f6e9ef7e4c380f2b"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/rolling-deployment-reuse/native-reconciliation-handoff.json",
+          "sha256": "51aeedc182d0e5234842ad285757446ac9718cdaa83405d4162dada168c8687b"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "native-mode-reconciliation-and-normal-assets",
+      "candidate": "5734ac0513959c150be80d70c3578cfcbd2cb642",
+      "base": "252b6c639bcfe4bf6959f1904cf4d3dbd5d988b9",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-5734-normal-deployment-review.json",
+          "sha256": "8c66ab742ab094a0c848ed8e53df1aebcb73fa17dfc6701586b1aabb1d97e619"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-6414-deployment-mode-review.json",
+          "sha256": "da06884628a379f7b1595d274f1596faa48df626f1346be1d8d57bfcaaf90f63"
+        },
+        {
+          "path": "rolling-lead-social/execution/evidence/G12/deployment-build/result.json",
+          "sha256": "002a27dc070e5c1d931feaa9be9448f33fa210e4b94ff086f6e9ef7e4c380f2b"
+        },
+        {
+          "path": "rolling-controls/execution/evidence/G11/rolling-deployment-reuse/native-reconciliation-handoff.json",
+          "sha256": "51aeedc182d0e5234842ad285757446ac9718cdaa83405d4162dada168c8687b"
+        }
+      ]
+    }
+  ]
+}

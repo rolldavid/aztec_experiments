@@ -1,0 +1,36 @@
+{
+  "base": "479de808a277fcaff4e4279d5b51e35af083b3f5",
+  "candidate": "9860a1cb35b13bc20a18c46b3b488677509d10c4",
+  "task_id": "G10-bounded-direct-history",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "controls_resume2",
+  "allowed_paths": [
+    "plugins/DEPLOYMENT.md",
+    "plugins/agent.mjs",
+    "plugins/test/hosted-private-bok.test.mjs",
+    "plugins/test/model.test.mjs",
+    "plugins/test/thread-repositories.test.mjs"
+  ],
+  "required_checks": [
+    "focused-conversation-policy"
+  ],
+  "requirements": [
+    "RC29-small-history-direct",
+    "RC30-conditional-summary-and-retrieval",
+    "RC33-metering-preserved"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "controls_resume2",
+      "task_id": "G10-bounded-direct-history",
+      "paths": [
+        "plugins/DEPLOYMENT.md",
+        "plugins/agent.mjs",
+        "plugins/test/hosted-private-bok.test.mjs",
+        "plugins/test/model.test.mjs",
+        "plugins/test/thread-repositories.test.mjs"
+      ]
+    }
+  ]
+}

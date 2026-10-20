@@ -1,0 +1,26 @@
+{
+  "candidate": "2803d6dd5d422fffb59ad7db6a339c7307204e51",
+  "base": "efa013888529d85a4c17bc5e27c15b3ef1a7e033",
+  "verdict": "approved",
+  "scope": "Panel reopen observation reuse only; no application/session/protocol changes.",
+  "files": {
+    "apps/rolling/wallet-panel.mjs": "239443b8765f7b71d332ab142474059643133633ccea45fe4e95489092efd0c4",
+    "apps/rolling/wallet-panel.browser.test.mjs": "816844a9f5f435e235572acbe4474807f54d925bfc0ffe342e0db3c08a9153ee"
+  },
+  "findings": [],
+  "reasoning": [
+    "Custody identity is checked before rendering cached account data. Invalidated or replaced accounts clear private views and require reload.",
+    "Blocked or absent status still refreshes through existing serialized work. Retained intents take precedence over new defaults.",
+    "An unlocked established account loads only missing view data. Explicit refresh and authoritative prepare/submit remain unchanged. Cached balance/capability display is not transaction authorization.",
+    "Changed held-refresh test explicitly triggers Refresh and preserves real lock serialization; three new cases cover ordinary reopen, retained recovery and unnoticed account replacement."
+  ],
+  "verification": {
+    "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinned-node --test --test-name-pattern='reopening an unlocked composer|reopening a blocked account|reopening after an unnoticed|preference lock driver|account overview enables|explicit composer waits|uncertain submission cannot' apps/rolling/wallet-panel.browser.test.mjs",
+    "result": "7 passed, 0 failed/skipped/cancelled; 3868.028584 ms",
+    "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-independent-deploy/.build/reopen-account-independent.log",
+    "logSha256": "1bc39fcf13d91603d67b36af2fce3b8ec315cbb91e64a9128cf76b7714d70299"
+  },
+  "limits": [
+    "Browser component checks use existing doubles; no live transaction, service or acceptance rerun."
+  ]
+}

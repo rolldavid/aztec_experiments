@@ -1,0 +1,36 @@
+{
+  "task_id": "W03-prepayment-credit",
+  "implementer": "lead-20261011",
+  "candidate": "918f3581ccf54bdaa2a8c4f6146396d2a44f1a6a",
+  "base": "907f4132c0109ea1a5d7f7efe00cf329a5276bd8",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "shared/rolling/aggregate-wallet.mjs",
+    "shared/rolling/aggregate-wallet.test.mjs"
+  ],
+  "required_checks": [
+    "focused-prepayment"
+  ],
+  "requirements": [
+    "RC19-prepayment-affordability"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "lead-20261011",
+      "task_id": "W03-prepayment-credit",
+      "paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs",
+        "shared/rolling/aggregate-wallet.mjs",
+        "shared/rolling/aggregate-wallet.test.mjs"
+      ]
+    }
+  ]
+}

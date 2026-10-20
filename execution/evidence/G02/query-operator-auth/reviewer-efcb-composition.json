@@ -1,0 +1,40 @@
+{
+  "reviewer": "reviewer-resume-20261014",
+  "reviewedAt": "2026-10-14T13:02:06.785263+00:00",
+  "source": "efcb5d2cd79840c38084bd9042dd0b92925f8edc",
+  "base": "a2c69062b5361dfc76da8302008f5f4363292bb6",
+  "verdict": "approved",
+  "findings": [],
+  "priorReviews": [
+    "reviewer-a2c-composition-native-capacity.json",
+    "reviewer-6bc-deterministic-union.json"
+  ],
+  "paths": [
+    "censor-daemon/README.md",
+    "censor-daemon/moderation.mjs",
+    "censor-daemon/test_moderation.mjs",
+    "censor-daemon/test_worker.mjs",
+    "censor-daemon/worker.mjs",
+    "docs/rolling-deployment.md"
+  ],
+  "sourceHashes": {
+    "censor-daemon/README.md": "01f13e67cf1e80e4bfeb64f3e0e566bb593779882ac5f769d4f7bbc2bf217f69",
+    "censor-daemon/moderation.mjs": "5448100e0686f613ac93c72fd5b8132bd760ac2150a6328087ff0274156f6dca",
+    "censor-daemon/test_moderation.mjs": "216b0eeee0e9fce340ad9eeff010f8944292a2bbde2c4e34832733e830fe1ddf",
+    "censor-daemon/test_worker.mjs": "ab39ff1aaa9fe07d57aa08b9f9818fa1c91b8e6e32efcc9e4ddb98bbf97f4b0d",
+    "censor-daemon/worker.mjs": "b5dbd2569f9af73141e4fc4173abca5f4d66d7d9a3c4aa186d8e115743ce9fdf",
+    "docs/rolling-deployment.md": "037fbc4d2820332645db868fd64da8d8c7a03324f82f4343cb0fd7702067e92b"
+  },
+  "checks": [
+    "All six changed blobs are exactly independently reviewed Design6bc1265. Application/hash fix and native-capacity source inherited unchanged from reviewed a2c.",
+    "Read existing full censor-daemon/run_tests.sh output:94 moderation,130 signer and194 final TAP tests pass0fail0skip; direct suites retained.",
+    "Worker interface still uses existing evaluate(text,policy) provider; union helper wraps sequential calls only. Runtime source identity invalidation and queue/accounting boundaries unchanged."
+  ],
+  "evidence": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/rolling-devnet-diagnostics/efcb-moderation.log",
+    "sha256": "2e6265c4f7d41fd01a9d79cf721614c681c5932ca6be667414fc2c3671cb6c73"
+  },
+  "limits": [
+    "Actual new union remote diagnosis pending, not qualification. Full quality, native removal, real-proof acceptance and elapsed gates remain open."
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+  "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+  "task_id": "W03-browser-ci-sdk-heap",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+      "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "task_id": "W03-browser-ci-sdk-heap",
+      "id": "wallet-browser",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "NODE_BACKEND=js pinnedNode scripts/run-bounded-browser-check.mjs scripts/test-w02-browser.mjs execution/evidence/T04/wallet-browser-20261018-heap128.json",
+      "environment": "macOS Node24 compatible built artifacts; actual browser component test",
+      "observed": "Existing check passes9.635s, peak1885552KiB, originalassertions/deadline/treecap retained and cleanupverified. Reviewer checked exactsourcehashes and independentimportonly64failure/128success.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/review.json",
+          "sha256": "379120a6992b3373911e835f9b407da02248309a30cf7680b0c8e9a5d388451a"
+        },
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/wallet-browser.json",
+          "sha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+    "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+    "task_id": "W03-browser-ci-sdk-heap",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-20261018",
+    "implementer": "design-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/W03/browser-ci-heap-20261018/review.json",
+        "sha256": "379120a6992b3373911e835f9b407da02248309a30cf7680b0c8e9a5d388451a"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+      "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "task_id": "W03-browser-ci-sdk-heap",
+      "id": "W03-native-sdk-receipt-consumers",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/review.json",
+          "sha256": "379120a6992b3373911e835f9b407da02248309a30cf7680b0c8e9a5d388451a"
+        },
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/wallet-browser.json",
+          "sha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12"
+        }
+      ]
+    },
+    {
+      "base": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+      "candidate": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc",
+      "task_id": "W03-browser-ci-sdk-heap",
+      "id": "RC38-bounded-component-check",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/review.json",
+          "sha256": "379120a6992b3373911e835f9b407da02248309a30cf7680b0c8e9a5d388451a"
+        },
+        {
+          "path": "execution/evidence/W03/browser-ci-heap-20261018/wallet-browser.json",
+          "sha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12"
+        }
+      ]
+    }
+  ]
+}

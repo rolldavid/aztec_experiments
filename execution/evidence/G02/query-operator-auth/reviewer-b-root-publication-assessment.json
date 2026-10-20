@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "parent": "/root",
+  "observedAt": "2026-10-14T12:13:57.419936+00:00",
+  "independent": true,
+  "sourceRevision": "3fc51f58362755ac6f3173d2c98c53710d8e8866",
+  "requestId": "0x28908ae63f7067953b07e9515a12a4e40a430127f7cbb20c19052d13119a6714",
+  "verdict": "product-failure-confirmed-recovery-eligible",
+  "findings": [
+    {
+      "severity": "P1",
+      "path": "plugins/agent.mjs",
+      "scenario": "Final allowed model call successfully checks generated source; maxCalls exit returns summary directly instead of accepted(). finally closes draft. Hosted finished is then true, yet no source revision or app publication exists.",
+      "observed": "B used eight settled kimi-k2-5 calls costing 15987 micro-units; returned 50-byte step-limit text without App or Source links. Repository acceptedRevision null and operations empty; publication catalog bytes/files zero.",
+      "repair": "Finalize normal maxCalls exhaustion through existing accepted() path and retain unchanged isolated validation/publication gates. Add regression in existing model tests; no provider replay."
+    }
+  ],
+  "artifact": {
+    "privateDirectory": "rolling-design/.build/rc22-bok-acceptance/hosted-state/static-artifacts/bok-static-20fd717b-61e6-4ea3-a423-7e6950172315",
+    "revision": "5db818f3ba1b1eda867c861af2bfa7044b95311a",
+    "sourceDigest": "62819172c0c053429d8bb38f43be098ed8f036eb3e4073fd2adbec820ed3bea4",
+    "resultSha256": "129513dc5a2adf54f449e0868ee56c818ca77837d4a0588684ee48dfeaabaa7f",
+    "sourceArchiveSha256": "a197080b3e1623a4a3f25f71a8927cccbd7c005b4bec8d4abf2286e5415322c0",
+    "artifactArchiveSha256": "24916967fabaff5a948c66e71b96ed22e0c01ef6eed4ef540a813b508db4e853",
+    "testsPassed": true,
+    "buildPassed": true,
+    "testCount": 1,
+    "ownedContainerAbsent": true,
+    "functionality": "Retained generated HTML/CSS/JS implements bill and tip percentage inputs and computed tip/total. Default 80 at 12.5 percent computes 10 tip and 90 total. Inspected source; did not execute generated code on host."
+  },
+  "recoveryAssessment": {
+    "eligible": true,
+    "mechanism": "Existing threadRepositories + githubToolbox + createIsolatedExecution + normal publication callback only.",
+    "conditions": [
+      "Stop hosted service and confirm active work absent; acquire its actual exclusive lease, never a fabricated assertHeld.",
+      "Recheck original namespace, thread, invocation, repository identity and absence of prepared or accepted operation/ref movement.",
+      "Hash-check retained archive and every manifest file; use original snapshot UTF-8 entries with existing write_file to initialize the safe startEmpty draft. Do not restore .git, paid journal, old validation or hosted status.",
+      "Call existing session.accept with fresh isolated validation and normal publication callback; close owned draft. Newly produced accepted revision may differ and must receive its own receipt.",
+      "Record explicit operator recovery time and links separately; preserve original failed publication/finished reply as historical evidence. No new provider/wallet action or financial replay."
+    ],
+    "performed": false
+  },
+  "remainingAcceptance": [
+    "B original application publication failed despite generated passing source; terminal hosted status is insufficient.",
+    "Conversation summary/original-message retrieval and two subsequent real reply iterations remain unproven.",
+    "A remains fenced; transaction-history missing row is not proof of zero charge."
+  ],
+  "providerRecovery": {
+    "walletSupportedReads": [
+      "balance",
+      "transactions"
+    ],
+    "alternative": "Current Bearer-authenticated /billing/usage-history can expose account requestId and inference details, but current setup has wallet authentication only and no verified account-key coverage for this call.",
+    "noAvailableReceiptRetrievalVerified": true,
+    "officialSources": [
+      "https://github.com/veniceai/api-docs/blob/main/guides/integrations/x402-venice-api.mdx",
+      "https://docs.venice.ai/api-reference/endpoint/billing/usage-history"
+    ],
+    "caution": "Old /billing/usage sunset September 16 2026; no documented chat-completion retrieval endpoint found. No external messages or credential queries performed."
+  }
+}

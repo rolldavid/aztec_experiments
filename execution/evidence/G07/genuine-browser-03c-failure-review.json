@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T04:52:28.864116+00:00",
+  "source": "03c4db3015d67381474b928edd8eed8370491e83",
+  "verdict": "failed-genuine-browser-import; cleanup-and-source-closure-accepted; no-unchanged-retry",
+  "packetSha256": "e35486fb4d32bc268e5ace20545a40367da696e7084d801c119e175fae5f7ba2",
+  "receiptSha256": "b15c4f32d5710f6b3bd5f7621472ca6ed4a07850f47d0f2ac496b0f9f90a91e9",
+  "sourceBindingsRehashed": 3158,
+  "mismatches": [],
+  "actual": {
+    "elapsedMs": 358219,
+    "peakTreeRSSKiB": 1804064,
+    "browserElapsedMs": 4169,
+    "browserStage": "import",
+    "diagnostic": "connection-unavailable",
+    "browserTimedOut": false,
+    "browserAdmissionElapsedMs": 351964,
+    "browserLaunchElapsedMs": 353803,
+    "privateRequests": 29,
+    "compactRequests": 0,
+    "tagDiscoveryRequests": 0,
+    "recoverySteps": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "ownedTreeAbsent": true,
+    "temporaryDirectoryRemoved": true,
+    "fixtureTerminatedBySupervisor": "SIGKILL",
+    "finalFixtureReceiptPresent": false
+  },
+  "acceptedPartialObservations": [
+    "Fresh native browser database and public-before-unlock checks passed.",
+    "Browser entered actual import within unchanged150s admission reserve,120s Chrome cap and540s whole-journey bound. It was not refused by the former timing gate.",
+    "Observed browser route counters contain no tag discovery/proof/node/L1 send or blocked/inspection error. This is only the failed prefix, not a completed cold-recovery privacy qualification.",
+    "Both browser context/browser closed and supervisor owned tree/temp cleanup recorded; all3158 source/artifact/browser bindings independently rehashed equal and tracked tree clean."
+  ],
+  "diagnosis": {
+    "knownBoundary": "apps/rolling/wallet-panel.mjs:113-121 connect catches createSession/context/refresh failure into a shared sentinel. Preferences mode bypasses refresh, so ordinary account status/names are not intentionally invoked here.",
+    "unknownCause": "No initialization-stage or underlying finite error code/method/status readback was retained. The UI sentinel does not establish a connection, RPC, deployment, account, storage or PXE failure.",
+    "possibleInitializationStages": [
+      "trusted private node and deployment verification",
+      "account derivation/address validation",
+      "IndexedDB store/PXE creation and route branding",
+      "account/contract registration and PXE sync",
+      "journal/private wallet and AccountManager construction",
+      "account/context guard"
+    ],
+    "coldBoundary": "Recover control was never reached. readColdPreferences constructs the compact reader lazily only after Recover; zero compact traffic is expected for this failed initialization prefix, not evidence of a compact transport defect.",
+    "nextMinimalInvestigation": "Source-review a bounded fixed-enum initialization stage and closed error-code observation seam, preserving original exceptions and cleanup; obtain an actual-session/browser reproduction with verified real configuration/artifacts before considering another full genuine run. No raw error messages, keys, request bodies or endpoints should enter evidence."
+  },
+  "timingLimits": [
+    "Recorded real-wall readiness stage136513ms to node RPC235445ms is98.932s. This is not a saved setup-clock report and does not prove a precise clock cause.",
+    "No no-Bok saved-time estimate is inferred across different runs.",
+    "Stage logs show three write phases progressed, but cannot replace missing final receipts, transaction hashes, fee/account conservation or service-counter acceptance."
+  ],
+  "holds": [
+    "Complete recovery/private views/bookmarks/following/main-board/lock/reload remain unexecuted or failed.",
+    "Final worker receipt absent after parent browser-exit termination; no final proof/accounting/fee/conservation qualification.",
+    "Full initial and initialized-marker reorg, notifications, Bok and other remaining product gates unchanged."
+  ],
+  "reviewerExecutedRuntime": false
+}

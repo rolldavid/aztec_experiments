@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "reviewer": "independent-reviewer",
+  "candidate": "b4134543c63078eec45dd18957b5ac183bc58249",
+  "base": "14363ed0f2c0f747defeb2ad94c192f573306857",
+  "verdict": "approve-scoped-component",
+  "blockingFindings": [],
+  "requirements": [
+    "RC22",
+    "RC33",
+    "G14-A02"
+  ],
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.browser.test.mjs": "7de17baf8f702b4b93e8538b72ade5c1628bfc09622210dc3fae60e937f4573c",
+    "apps/rolling/wallet-panel.mjs": "af0ff1856a59c8342efc529f0044683fb6991fb7fcb5583531b90fb341d3e3a4",
+    "apps/rolling/wallet-session.test.mjs": "c68bda6dbeb71fc29a5b1b34031b656ca84e4b25526072c5e5076a221df3d54e",
+    "shared/rolling/application.mjs": "e690b7d9f9338e33201b029d3e713dc2db2857246281c54b1f9c9f62188a4638",
+    "shared/rolling/application.test.mjs": "b91c3b6fc236116e9127681f7112de31cb28b9d545919970e4f951315146a1d5"
+  },
+  "handoff": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G04/private-expiry/handoff.json",
+    "sha256": "6d46051b6271ad5e7550cffeb021ab3eea5fcae17ec54ca58a98eabc32706aa7"
+  },
+  "verification": {
+    "exactFiveChangedPaths": true,
+    "allFiveGitBlobHashesMatch": true,
+    "allSevenEvidenceHashesMatch": true,
+    "reviewerRuntimeRuns": 0
+  },
+  "assessment": [
+    "Expiry is a contextual action selected only from complete owner-local WAITING/ACTIVE accounting after canonical balance-anchor verification; no request-ID selection query is added. Reserved requests are permitted for expiry but not cancellation.",
+    "The unchanged private expire ABI invokes the unchanged public contract deadline/state checks. Original fee estimation simulates at preparation and again at explicit submit. A changed fee above the saved ceiling refuses before the durable submission fence. Browser time/public event data do not authorize expiry.",
+    "The original encrypted workflow retains exact request arguments and Bok scope; restart validates that scope. Original journal and workflow submitting/unknown fences prevent a second prepare/send and retain canonical reconciliation behavior. Expiry does not add a replacement/replay route.",
+    "Unreserved credit is returned while unresolved reserved liability remains fenced by the unchanged contract. UI states this at selection/review/confirmation and renders FENCED accounting without treating refunded amounts as extra available credit.",
+    "Current state may change between review and inclusion; unchanged authoritative contract execution can revert the transaction. This component makes no atomic snapshot or guaranteed-refund promise."
+  ],
+  "tests": {
+    "application": {
+      "passed": 37,
+      "includesNewExpiry": 9,
+      "runtimeScope": "installed ABI/encrypted workflow with controlled node, simulation and accounting outcomes"
+    },
+    "session": {
+      "passed": 1
+    },
+    "chromium": {
+      "distinctPassed": 2,
+      "coverage": "staged original unaffected pass plus repaired strict-locator case; not a new whole-two run"
+    },
+    "failedEvidencePreserved": "Original Chromium strict locator failure retained. Only the failed case was repeated; production semantics were not weakened."
+  },
+  "remainingGates": [
+    "Normal integrated SDK/wallet build after composition.",
+    "Actual expiry transaction, premature protocol rejection, post-expiry canonical balance refresh and subsequent operator reconciliation remain unqualified by these component checks.",
+    "Existing deployed class/new owned_requests utility compatibility and full live wallet journey remain separate integration/acceptance work."
+  ],
+  "scope": "Source/component approval only. No full RC22/G14, live protocol, funding or testnet acceptance claim."
+}

@@ -1,0 +1,24 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "verdict": "ACCEPT_THREE_EXISTING_CRASH_REGRESSIONS",
+  "actualPacketSha256": "aced5ff14779e36f602998992a21aab916df4e61a2d0cb9c22df7d4ad8eb92aa",
+  "elapsedMs": 2521,
+  "sampledPeakTreeRSSKiB": 516512,
+  "limits": {
+    "deadlineMs": 15000,
+    "rssLimitKiB": 524288
+  },
+  "verification": [
+    "All bound actual source/runner/receipt/log hashes verified.",
+    "Raw TAP exact before-begin/before-commit/after-commit3pass0skip,27excluded,exit0/no supervisor failures.",
+    "All original child.error undefined,signal,status71/72/73 and old/new atomic rollback assertions passed.",
+    "Five main-thread kernel receipts reconcile controller0/testworker0/crash71/72/73 parentage; no uncaught observer events; all individual maxima under512MiB.",
+    "Positive owned tree/TMP absence/link restoration and558source2402dependency closure retained."
+  ],
+  "scope": "Three crash-case qualification only; close sampled aggregate peak is reported literally, not instantaneous aggregate proof.",
+  "holds": [
+    "Exact fullvolume successor source/measurement preparation and separate grant remain required. No threshold relaxation.",
+    "4x history/later-post/dense-wire/production capacity remain open."
+  ]
+}

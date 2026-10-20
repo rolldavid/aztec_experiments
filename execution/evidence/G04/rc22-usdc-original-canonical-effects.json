@@ -1,0 +1,13 @@
+{
+  "source": "0c1485c",
+  "at": "2026-10-14T09:02:43.117Z",
+  "originalOnly": true,
+  "transactionHash": "0xed4c74902ae7b03d49e0ad14ee9d705927cf9e1f64a4c05fbfdacc1fa7cf5840",
+  "outcome": "success",
+  "collateral": "1000000000000000",
+  "privateFee": "10000000000000000",
+  "bok": "1000000",
+  "userEth": "0",
+  "userNonce": 0,
+  "newSends": 0
+}

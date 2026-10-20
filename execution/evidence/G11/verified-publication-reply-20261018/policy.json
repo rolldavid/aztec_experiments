@@ -1,0 +1,31 @@
+{
+  "base": "206a1c7af91c38e769f19ef445e387ab66dfc9cd",
+  "candidate": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "task_id": "G11-verified-publication-reply",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "plugins/agent.mjs",
+    "plugins/test/model.test.mjs",
+    "plugins/test/github.test.mjs"
+  ],
+  "required_checks": [
+    "focused"
+  ],
+  "requirements": [
+    "RC29-trusted-completion",
+    "RC31-verified-publication-links"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G11-verified-publication-reply",
+      "paths": [
+        "plugins/agent.mjs",
+        "plugins/test/model.test.mjs",
+        "plugins/test/github.test.mjs"
+      ]
+    }
+  ]
+}

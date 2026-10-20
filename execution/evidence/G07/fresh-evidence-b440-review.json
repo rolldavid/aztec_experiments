@@ -1,0 +1,33 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "b44010c38da83d04b123382d92ed522b13b6979f",
+  "base": "7e452036ecf8afb4d9ac8c3b185a92dc18d3d2ed",
+  "verdict": "approve narrow fresh-checkout repair and one changed genuine notification-browser attempt; no runtime acceptance claimed",
+  "changedHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "e61c7943a4ca8cc1d62545bd930a4d6cdae1b263071cc3d16627683ffe1597de",
+    "scripts/testing/rolling-application-fixture.test.mjs": "73cea5ab83b1820f43dcd9f34b66e7b5b46a8926529cec93716d6ac2da5e0f09"
+  },
+  "requirements": "Fresh isolated execution must create shared evidence parent without reusing private run directories or weakening failure behavior.",
+  "sourceAssessment": [
+    "Actual fixture now calls exported actual-used helper. Shared G06 parent is recursive mode0700; unique UUID child remains nonrecursive mode0700. Existing child collision remains EEXIST and evidence is not overwritten.",
+    "Parent-file failure propagates. Existing evidence permissions are not rewritten. No funding, browser, proof, fee, deadline or cleanup semantics altered."
+  ],
+  "independentChecks": {
+    "actualFilesystemCases": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 294.114917,
+    "log": "fresh-evidence-b440-independent.log",
+    "logSha256": "fc926d0041a5486bca053c4cb03ef9c5a650baf5fa75b2d8a73d8a2cf0f9a0ad",
+    "meaning": "Fresh parent/private distinct children and prior file preservation; file obstruction rejection; injected competing real child mkdir preserves prior data and rejects EEXIST.",
+    "sourceAndBuildClosure": "Clean committed two-file delta; all 143 prior browser fingerprints and all prior unchanged native source paths rehashed; SDK2042 inputs/8outputs unchanged. No rebuild required for harness-only change."
+  },
+  "historicalFailure": "application-80b000fd-7c53-4d40-b651-cafadadf09c3.json remains failed and is not relabelled.",
+  "runConditions": [
+    "Freeze exact source and record new fixture/test fingerprints before launch.",
+    "Use same isolated dependency/build tree, unchanged540s4GiB and existing browser admission/accounting limits.",
+    "Require actual four-job browser write/recovery/fee/source/cleanup acceptance before integration."
+  ],
+  "limits": "Earlier04bf component and Chromium tests carry by unchanged implementation/SDK hash; this repair does not supply genuine wallet acceptance."
+}

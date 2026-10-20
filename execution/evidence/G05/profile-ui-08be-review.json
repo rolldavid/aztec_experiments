@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "08be5b9d57a93fd7f200194809e1bf41bc03c8eb",
+  "verdict": "changes_requested_production_static_composition",
+  "files": {
+    "apps/rolling/profile-view.browser.test.mjs": "86ce734abbda85a7159b4511a8152d814d3b52292ae4aa13b207f0d78e8885e7",
+    "apps/rolling/profile-view.mjs": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+    "apps/rolling/reader.mjs": "2567aece7a6dc79b8978299ae786e3a84991a3f2c5faf3b155c8176fdb2ff4fc",
+    "apps/rolling/style.css": "2069395877e28a34db09adeb2f3da496a5fe541705859f7f6fcf7d7323a00712"
+  },
+  "findings": [
+    {
+      "severity": "P1",
+      "path": "apps/rolling/reader.mjs",
+      "line": 2,
+      "scenario": "Production staticHandler rejects /profile-view.mjs because apps/rolling/start.mjs allowlist omits new imported module. Browser cannot evaluate reader module, so all reader navigation fails after this transfer. Worker browser fixture has its own files Set and masks this integration defect.",
+      "repair": "Add exact new public module to existing production allowlist, keep sensitive files denied, and verify through actual production handler/composition. Include source in relevant browser source binding."
+    }
+  ],
+  "sourceObservations": [
+    "No private queries/wallet imports; named avatars separate from Anonymous and authenticated Bok",
+    "Canonical padded base64<=8192 bytes and exact declared100x100, PNG/JPEG/WebP headers/dimensions/animation checked before native decode; no URL/HTML image injection",
+    "Removed state short-circuits all byte decoding; reason/bio/name rendered with textContent and bounded text",
+    "Native decode at most4active/128queued and5second visible deadline; late bitmaps close, abort makes placeholder, failed native codec cannot expose raw error",
+    "100px accessible profile canvas and feed thumbnail use role img labels; no claim native codec memory/process sandbox",
+    "Source reviewed synthetic-API/native-browser tests including poisoned inputs, timeout/abort/concurrency and anonymous/bot separation; not independently executed due build reservation"
+  ],
+  "checks": [
+    "Read all four exact git objects and production static serving boundary",
+    "Read worker test source; no browser/heavy tests executed"
+  ],
+  "remainingQualification": [
+    "Production module serving/composition repair",
+    "Independent browser checks after slot release",
+    "Actual onchain profile rendering/metadata/current-version moderation and archive reconstruction acceptance"
+  ]
+}

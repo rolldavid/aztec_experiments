@@ -1,0 +1,23 @@
+--- test.approved-unbound
++++ test.actual-bound
+@@ -82,10 +82,19 @@
+   self.assertEqual(self.project(Malicious()),{'validShape':False})
+  def test_import_safe_and_direct_execution_refuses_unbound_package(self):
+   with mock.patch.multiple(op,EXPECTED_MANIFEST=None,EXPECTED_ATTESTOR=None):
+-   with self.assertRaisesRegex(ValueError,'Unbound package'):op.receipt(fixture())
++   with self.assertRaisesRegex(ValueError,'Unbound package'):op.receipt(fixture(),expected_manifest=None,expected_bootstrap=None)
+    with self.assertRaisesRegex(ValueError,'Wrong package binding'):self.project(fixture())
+   p=subprocess.run(['python3',str(HERE/'rolling-node-09-operator.py')],capture_output=True,text=True,timeout=3)
+   self.assertNotEqual(p.returncode,0);self.assertEqual(p.stdout,'');self.assertEqual(p.stderr.strip(),'OFFLINE_PREPARATION_ONLY: fresh package, payload review and scoped grant required')
++ def test_actual_bound_default_arguments_match_package_constants(self):
++  # Python defaults capture reviewed actual pins at import; other tests explicitly
++  # pass synthetic pins. Exercise real binding consistency without any network.
++  pins=op.receipt.__kwdefaults__
++  manifest=pins['expected_manifest'];attestor=pins['expected_bootstrap']
++  self.assertTrue(op.digest(manifest));self.assertTrue(op.digest(attestor))
++  with mock.patch.multiple(op,EXPECTED_MANIFEST=manifest,EXPECTED_ATTESTOR=attestor):
++   d=fixture();d['manifestSha256']=manifest;d['bootstrapSourceSha256']=attestor;d['qualification']['manifestSha256']=manifest
++   self.assertTrue(all(op.receipt(d)['bindingMatches'].values()))
+  def test_known_outer_fields_reject_private_and_oversized_strings(self):
+   d=fixture();d['services']['node']={'available':True,'LoadState':'loaded','ActiveState':'active','SubState':'running','Result':'success','ExecMainCode':0,'ExecMainStatus':0,'NRestarts':0}
+   d['services']['qualification']=dict(d['services']['node'])

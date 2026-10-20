@@ -1,0 +1,27 @@
+{
+  "inputs": 97,
+  "outputs": 25,
+  "badInputs": [],
+  "badOutputs": [],
+  "runtimeConfigSHA256": "252cc3c1488737220ba40a2d0d9d2922bfe3b1617eecbe8d5f0eef3e9a05743d",
+  "nativeProofsDisabled": true,
+  "chainId": "31337",
+  "served": {
+    "/wallet/runtime.mjs": {
+      "sha256": "4fd23967d6cf6ae88f59796ea7414d9f68fa29509ede27886364e213130705a0",
+      "matchesManifest": true
+    },
+    "/wallet/account.js": {
+      "sha256": "92c89975961f5984f351d38e6115fe8d68086b4eb7b438ad9d19574628d89059",
+      "matchesManifest": true
+    },
+    "/wallet/aztec_bundle.js": {
+      "sha256": "8b3430289334d19291d89c891d193e62b3b930c17a54005837cfd39e93d1dd0d",
+      "matchesManifest": true
+    }
+  },
+  "manifestSHA256": "a34b9371cece7a126fb8abec86641e68b365e3be870e697b1f22b248def65189",
+  "backupSourceMatchesF7": true,
+  "ethRpcUrl": "http://127.0.0.1:18546",
+  "nodeUrl": "http://127.0.0.1:18081"
+}

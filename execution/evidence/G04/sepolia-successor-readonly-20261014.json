@@ -1,0 +1,105 @@
+{
+  "at": "2026-10-14T17:40:49.804101+00:00",
+  "purpose": "Read-only fresh canonical/fee facts for separately planned nonce successor, no key/sign/send",
+  "results": [
+    {
+      "method": "eth_chainId",
+      "params": [],
+      "result": "0xaa36a7",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getBalance",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "latest"
+      ],
+      "result": "0xd12c0614b14ba4",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "latest"
+      ],
+      "result": "0xf",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x0443527ca2fd922e62cda88a087757116c71dc21",
+        "pending"
+      ],
+      "result": "0xf",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "finalized",
+        false
+      ],
+      "result": {
+        "number": "0xb5cdea",
+        "hash": "0x3ce5812f783f30247df74948a0e92a0dcc56872eeb9cdde1e3e4698c311d3c37",
+        "timestamp": "0x6acfbad4",
+        "baseFeePerGas": "0x10"
+      },
+      "errorCode": null
+    },
+    {
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "result": {
+        "number": "0xb5ce3a",
+        "hash": "0xae9c4622f304b4686854666210b65f4988e3da3e43843b8cb66110b4b0bd51aa",
+        "timestamp": "0x6acfbe94",
+        "baseFeePerGas": "0x15"
+      },
+      "errorCode": null
+    },
+    {
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "result": "0xf4240",
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61"
+      ],
+      "result": null,
+      "errorCode": null
+    },
+    {
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61"
+      ],
+      "result": null,
+      "errorCode": null
+    }
+  ]
+}

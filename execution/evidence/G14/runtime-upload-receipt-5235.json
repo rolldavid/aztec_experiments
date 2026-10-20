@@ -1,0 +1,12 @@
+{
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "key": "releases/rolling-5235-20261011/runtime.tar.gz",
+  "version_id": "5sJL2qArC3lcnmSCR8OPK5O.u09Nao95",
+  "etag": "66c71ce39b2f5a6b317a0a05f1630add",
+  "checksum_sha256_base64": "fMAVBC4Z3mfPRCw1rvQB+u0GBPWpJNlBZXmLntKnHfw=",
+  "sha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+  "bytes": 383514675,
+  "observed_at": "2026-10-11T18:19:16.554240+00:00",
+  "source": "Successful first conditional S3 PutObject receipt; no repeat upload",
+  "compute_launched": false
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "passed": true,
+  "sourceCommit": "1ec67f406645442965ced41e56b4e93c7097a050",
+  "privateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-09",
+  "directoryMode": "0700",
+  "allFilesMode": "0600",
+  "privateConfigNotPublished": true,
+  "runtimeAdapter": "publicnode-config-v1",
+  "startupStageHelperSha256": "259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c",
+  "bootstrapSourceFileSha256": "f34ea9d7d3c0a38c5ca2799a71c0f5e2fbba79270d5665dd6065e79011ca50f1",
+  "attestorSourceSha256": "c41ab30d90137c349e575d12c597971adc77bbce830fec3375371e94e2e953a3",
+  "payload": {
+    "bytes": 16367,
+    "sha256": "5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9",
+    "headroomBytes": 17,
+    "exactRegeneration": true,
+    "gzipLzmaRoundtrip": true,
+    "shellAndDecodedSyntax": true,
+    "pinsVerified": true
+  },
+  "capabilities": {
+    "runtimeUrl": {
+      "urlBytes": 1604,
+      "scopedPathVerified": true,
+      "regionVerified": true,
+      "expiresInSeconds": 7200,
+      "signedHeadersHostOnly": true,
+      "versionBound": true
+    },
+    "receiptPutUrl": {
+      "urlBytes": 1555,
+      "scopedPathVerified": true,
+      "regionVerified": true,
+      "expiresInSeconds": 7200,
+      "signedHeadersHostOnly": true,
+      "versionBound": false
+    }
+  },
+  "deadlines": {
+    "createdAt": "2026-10-12T12:03:58Z",
+    "budgetStop": "2026-10-12T13:03:58Z",
+    "commissioningStop": "2026-10-12T12:33:58Z",
+    "readinessStop": "2026-10-12T12:47:58Z",
+    "qualificationStop": "2026-10-12T13:02:58Z",
+    "credentialExpiration": "2026-10-12T20:03:57.000Z",
+    "capabilityLifetimeSeconds": 7200
+  },
+  "latestLaunchBefore": "2026-10-12T12:13:58+00:00",
+  "bindingFiles": {
+    "upload-intent.json": "e38ecefbffac35537553aa8afdc34c94eb984e18a0a3a6c88ecec068d48913e7",
+    "upload-send-intent.json": "21c317da7f727415358e656821692f4de9f4a6d22bd43f4f71fc7b9be6a2d769",
+    "upload-receipt.json": "88a0f4b1773fe90f9f08f31429fa70c08419edfbef88654abad3e0aed7d31ebc",
+    "archive-reference.json": "51385d2c8b3e89deea2cf0c8da595b82621c4ac8d15aa8ce5814000f7a6a6088",
+    "bootstrap.json": "7cea9090c7e6b7eed0e5f4b9e23b2656011d484302d7381613ea735872b07c6a",
+    "fleet-policy.json": "959e110b160d15ddf8724e59e464ad76a83785e9107739a6a2c0a9882bb03713",
+    "launch-template-reference.json": "9efb4e85cc2570e5ce7d00e11156dbef996cfea9b572dcbf109c132e6a0ed82b"
+  },
+  "archive": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/rolling-1ec67f-20261012-09/runtime.tar.gz",
+    "versionId": "w2oOS5NNWwfI.V_pziYODw9mTlRhKhE6",
+    "bytes": 383879744,
+    "sha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+    "checksumSHA256": "xBpVkIyaQPUMcAwtcChsFrsoX4l+6bMtUBmi1+6I7z4=",
+    "headVerified": true
+  },
+  "fleetDraft": {
+    "type": "request",
+    "validUntil": "2026-10-12T13:03:58Z",
+    "terminateWithExpiration": true,
+    "computeCreated": false
+  },
+  "controlsPreserved": [
+    "hostpersistentbudget andcommissiontimer",
+    "50Mbpsegresstrafficcontrol",
+    "privateadmincapability/hashandloopbackonly",
+    "stricttrace/blob/history",
+    "encryptedDOT/noIAM/noSSH/referenceunchanged",
+    "query-onlyqualifier0proofjobs/publicprovermasked",
+    "durableonesend/noautomaticretry/nohistoricaljournalsmodified"
+  ],
+  "reviewScope": "Operator verification only; independent exactpayload/operator review pending; no launch authorization."
+}

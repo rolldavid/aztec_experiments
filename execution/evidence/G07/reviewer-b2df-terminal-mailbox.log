@@ -1,0 +1,29 @@
+{"status":"complete","anchor":1,"head":"2","promotions":0}
+✖ reviewer lost terminal mailbox followed by extension must not publish old completion (17.647167ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.168834
+
+✖ failing tests:
+
+test at execution/evidence/G07/reviewer-b2df-terminal-mailbox.test.mjs:233:1
+✖ reviewer lost terminal mailbox followed by extension must not publish old completion (17.647167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/aztec_experiments/execution/evidence/G07/reviewer-b2df-terminal-mailbox.test.mjs:233:481)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-14T15:04:25.144495+00:00",
+  "endpoint": "https://sepolia.gateway.tenderly.co",
+  "purpose": "Capability diagnostic with invalid empty bytes; no signed transaction, account, financial operation or replay",
+  "method": "eth_sendRawTransaction",
+  "input": "0x",
+  "httpStatus": 200,
+  "errorCode": -32602,
+  "message": "typed transaction too short",
+  "hasResult": false
+}

@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-14T05:27:05.316312+00:00",
+  "qualification": "native-file-readonly-94003-result.json",
+  "originalSnapshotHash": "603ca99b29c4d977e55739144944e96ba40ec884dfcdfdc92468d50875fabfb6",
+  "newStartup": "failed before localEthereum ready, no rollupbootstrap or transactions",
+  "newEmptyDumpPreserved": true,
+  "failedMetadataLeaseShutdownPreserved": true,
+  "admission": "Explicit samequalified source preserved; independentlysameargs bareAnvil Design44528 ready8.495s vsold6s, originalhashunchanged",
+  "automaticRecovery": false
+}

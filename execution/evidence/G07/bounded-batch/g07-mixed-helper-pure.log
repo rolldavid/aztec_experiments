@@ -1,0 +1,67 @@
+✔ source pin is exact pristine rc3 original; transformed TS and JS are exact output pins (1.990417ms)
+✖ installed package inspection accepts only a complete original or complete reviewed patched closure (4.844541ms)
+✔ installed mode applies only to its physical owning repository and is byte-idempotent (24.66825ms)
+✔ installed mode rejects mismatched version metadata: toolchain.json (7.96575ms)
+✔ installed mode rejects mismatched version metadata: node_modules/@aztec-labs/pxe/package.json (9.276042ms)
+✔ installed mode rejects arbitrary destinations, coercion and borrowed dependency trees before writes (14.088875ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs (10.553291ms)
+✔ installed mode rejects symlink ownership at node_modules/@aztec-labs/pxe (12.139125ms)
+✔ installed mode rejects hard-linked writable targets before changing their other owner (7.892209ms)
+✔ installed mode rejects mixed and unknown bytes before any helper or sibling write (18.390875ms)
+✔ installed mode rejects changed compact source even for an otherwise complete patched package (16.699792ms)
+✔ installed mode rejects missing or changed rolling-preference-compact.mjs (13.710583ms)
+✔ installed mode rejects missing or changed rolling-preference-recovery.mjs (16.291333ms)
+✔ rc3 queue pressure, wait timer cleanup and error handling remain byte-identical (0.243625ms)
+✔ unknown source and already transformed source cannot be transformed again (1.218917ms)
+✔ isolated complete apply, verify and repeated apply preserve exact bytes (9.443084ms)
+✔ mixed/unknown state rejects before changing either copied file (5.7225ms)
+✔ shared installed package and symlink target are never writable by prototype (2.467875ms)
+✔ isolated helper is exact reviewed source and a missing/tampered copy fails verification (9.453833ms)
+✔ cursor helper bytes are pinned and missing/tampered helper never confer patched state (8.208958ms)
+✔ added method does not rewrite original executeUtility, discovery, private calls or event retrieval (1.116167ms)
+✔ transformed JS parses without importing SDK or starting native work (95.340875ms)
+✔ Noir page uses original dispatcher and original validator, has no direct store or sync frontier (0.641292ms)
+✔ generated batch control drains peers and preserves exact rejection undefined (0.380167ms)
+✔ generated batch control drains peers and preserves exact rejection null (0.163ms)
+✔ generated batch control drains peers and preserves exact rejection false (0.106958ms)
+✔ generated batch control drains peers and preserves exact rejection 0 (0.098916ms)
+✔ generated batch control drains peers and preserves exact rejection Error: labelled rejection (0.100042ms)
+✔ generated batch control preserves declaration-order error and result ordering (0.15475ms)
+✔ labelled boundary double rejects zero count before queue or utility (1.230125ms)
+✔ labelled boundary double rejects nine logs before queue or utility (0.824542ms)
+✔ labelled boundary double rejects past physical log bound before queue or utility (0.385166ms)
+✔ labelled boundary double rejects unknown key before queue or utility (1.062ms)
+✔ labelled boundary double rejects negative block before queue or utility (0.347625ms)
+✔ labelled boundary double rejects malformed hash before queue or utility (0.31925ms)
+✔ labelled boundary double rejects scope getter before queue or utility (0.30925ms)
+✔ labelled boundary double rejects network getter before queue or utility (0.335167ms)
+✔ labelled boundary double rejects proof policy before queue or utility (0.33925ms)
+✔ labelled boundary double rejects symbol property before queue or utility (0.336959ms)
+✔ labelled boundary double rejects oversize compact input before traversal before queue or utility (0.36725ms)
+✔ labelled boundary double rejects wrong header width before queue or utility (0.306791ms)
+✔ labelled boundary double rejects compact field accessor before queue or utility (0.574625ms)
+✔ labelled boundary double preserves account guard failure and exposes no raw cause (0.376459ms)
+✔ labelled boundary double calls exactly one existing queue after valid capture (0.356084ms)
+▶ awaited suite owns delayed copy and failed partial initialization cleanup
+  ▶ held-copy owner
+    ✔ copied resource remains owned for child (0.109167ms)
+  ✔ held-copy owner (0.9515ms)
+✔ awaited suite owns delayed copy and failed partial initialization cleanup (70.590125ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 46
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 419.078417
+
+✖ failing tests:
+
+test at scripts/test-pxe-preference-page.mjs:35:1
+✖ installed package inspection accepts only a complete original or complete reviewed patched closure (4.844541ms)
+  Error: PREFERENCE_PAGE_PATCH_STATE
+      at inspectPreferencePage (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/patch-pxe-preference-page.mjs:670:140)
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-design/scripts/test-pxe-preference-page.mjs:36:43)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

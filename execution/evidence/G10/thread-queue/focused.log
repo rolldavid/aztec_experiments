@@ -1,0 +1,17 @@
+✔ on-chain invocation must be finalized before starting; restart skips claimed work (115.831334ms)
+✔ health reports a failed job without exposing its private error detail (41.614709ms)
+✔ independent users run concurrently, while a new deposit can fund overlapping work for the same account (11.571208ms)
+✔ transient start failure is reconsidered, but started executions never replay (36.433ms)
+✔ transient reads cannot lose a previously deferred invocation (12.239541ms)
+✔ concurrency stays bounded and shutdown drains active work without starting queued work (48.810125ms)
+✔ health clears a recovered polling failure without waiting for a new job (7.852917ms)
+✔ Rolling threads overlap while same-thread requests remain ordered and shutdown drains (11.317334ms)
+✔ Rolling deferred thread does not prevent discovering a later independent thread (10.96575ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 425.667458

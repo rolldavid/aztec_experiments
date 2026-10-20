@@ -1,0 +1,19 @@
+{
+  "applicationEvidence": "application-8d7d78f5-02b8-497a-90ef-520b0c127b55.json",
+  "source": "11c87e3",
+  "outcome": "HARNESS_SAMPLING_GAP; productdiagnosticnotreached",
+  "elapsedMs": 1107700,
+  "peakKiB": 894304,
+  "ownedCleanup": true,
+  "lastResourceSampleMs": 39111,
+  "hostEvidence": {
+    "procedure": "pmset -g log filtered Sleep/Wake2026-10-11",
+    "sleepAt": "2026-10-11T17:34:29+01:00",
+    "reason": "Clamshell Sleep",
+    "sleepDurationSeconds": 1069,
+    "darkWakeAt": "2026-10-11T17:52:18+01:00",
+    "fullWakeAt": "2026-10-11T17:58:02+01:00",
+    "powerAfterWake": "AC"
+  },
+  "conclusion": "Mac lid sleep suspends supervisor despite idle caffeinate; onwake gapguard fails andcleans. No unattendedsleepcontinuation claim. AwakeAC prerequisite restored; allowone freshboundeddiagnostic keepingallgates."
+}

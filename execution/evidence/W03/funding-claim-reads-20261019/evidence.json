@@ -1,0 +1,69 @@
+{
+  "task_id": "W03-funding-claim-reads",
+  "candidate": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+  "base": "e03bc65678d0260e179f6d058b563978085b5e66",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "focused-funding",
+      "candidate": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+      "base": "e03bc65678d0260e179f6d058b563978085b5e66",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test shared/rolling/funding-receipts.test.mjs; node --test --test-name-pattern=funding|aggregate|fence shared/rolling/application.test.mjs",
+      "environment": "macOS pinned Node24.21; focused native/component checks, no proofs/payment",
+      "observed": "Actual originalclaim trace:only2reads before20sdeadline failure. Independent68receipt+28selectedapplication checks pass afteroperation-localreadreuse andnetworkattestation boundary repair.",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/review.json",
+          "sha256": "5a68be31132286d51eb77b60d910e9d681bc908ad5313db463dc41e8ea1bd45d"
+        },
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/checks.json",
+          "sha256": "5018e7a9500094931bd0ba4557edd08ce6794a64ccf702093bd3efc24b84af1c"
+        },
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/boundary-trace.json",
+          "sha256": "7d89f72a8ffa3df803baa329a89d6c46cfade25966b4af21366e321d4489430d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+    "base": "e03bc65678d0260e179f6d058b563978085b5e66",
+    "kind": "independent",
+    "reviewer": "reviewer_resume2",
+    "implementer": "funding_resume2",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/W03/funding-claim-reads-20261019/review.json",
+        "sha256": "5a68be31132286d51eb77b60d910e9d681bc908ad5313db463dc41e8ea1bd45d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "W03-original-paid-claim-without-redundant-network-attestation",
+      "candidate": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+      "base": "e03bc65678d0260e179f6d058b563978085b5e66",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/review.json",
+          "sha256": "5a68be31132286d51eb77b60d910e9d681bc908ad5313db463dc41e8ea1bd45d"
+        },
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/checks.json",
+          "sha256": "5018e7a9500094931bd0ba4557edd08ce6794a64ccf702093bd3efc24b84af1c"
+        },
+        {
+          "path": "evidence/W03/funding-claim-reads-20261019/boundary-trace.json",
+          "sha256": "7d89f72a8ffa3df803baa329a89d6c46cfade25966b4af21366e321d4489430d"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-14T11:00:51.383721+00:00",
+  "candidate": "239c9138c4981122c58f34e0041fa973fa04e8b8",
+  "base": "79c8b459d77ef6dacae6c2cd8a4051a8e582ce03",
+  "disposition": "changes-required",
+  "sourceHashes": {
+    "scripts/t04-metamask.mjs": "bc3ebd017f27fcdfb74951739538d51f3df1017caa794018e1730aeb1c67fffd",
+    "scripts/test-t04-browser-journey.mjs": "f661e38558708683302143197214e7171e2bbce6303c551e48372af39cacca28"
+  },
+  "findings": [
+    {
+      "id": "refund-reopen-denial-observer",
+      "priority": "P2",
+      "file": "scripts/t04-metamask.mjs",
+      "lines": [
+        1024,
+        1180
+      ],
+      "problem": "Latest-full-backup reopen installs paid recovery guard before import, but withdrawal/refund flow does not expose its __paidRecoveryDenied callback. A forbidden wallet operation in this interval is blocked without reaching the Node-owned denial count. The refund read-only guard is installed only after import.",
+      "repair": "Bind this interval to existing Node refund observer, or install existing refund read-only guard immediately after discovery and before import. Verify a forbidden request during import is reflected in final counters after page loss."
+    }
+  ],
+  "unchangedChecks": [
+    "Exact original exit and canonical refund checks retained, recipient/token balance delta and nonce+1 checked.",
+    "No second L2 send; existing outer once-only exact Ethereum tuple guard retained through context close.",
+    "Latest new export imported via real UI; post-reopen accounting compared and original exit/canonical refund rechecked.",
+    "Failfast initialization alert does not retry private account creation or financial operation."
+  ],
+  "evidence": {
+    "focusedLog": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G14/live-authorization-release-withdrawal/refund-reopen-focused-2.log",
+    "focusedPassed": 9,
+    "focusedDurationMs": 652.353667,
+    "readonlyActualReport": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/T04/original-usdc-bok-refund-readonly-5.json",
+    "readonlyActualSha256": "96a873f86512aff3ee60c31abe2b9f2c9d5470cf515fe169dd1c17f028c80532",
+    "readonlyElapsedMs": 27774
+  },
+  "scope": "Source review; running owner financial actual not repeated or interfered with. Final component acceptance awaits repaired observation boundary and actual handoff."
+}

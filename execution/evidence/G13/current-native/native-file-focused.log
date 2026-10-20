@@ -1,0 +1,13 @@
+✔ actual checkpoint boundary surfaces miner failure and incomplete shutdown without saving (2.5395ms)
+✔ retained local Anvil uses official SDK finality depth without removing snapshot or application guards (0.589583ms)
+✔ native checkpoint lifecycle drains, settles and verifies before a clean snapshot (controlled SDK) (0.286833ms)
+✔ native recovery dump is distinct from qualified checkpoint and cannot admit an unclean restart (0.163167ms)
+✔ native file checkpoint streams private bytes and rejects unsafe files and mismatched formats (5.45275ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2419.752833

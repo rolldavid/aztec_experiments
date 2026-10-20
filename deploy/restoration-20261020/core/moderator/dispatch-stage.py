@@ -1,0 +1,10 @@
+import boto3,pathlib,json,base64,hashlib
+p=pathlib.Path(__file__).parent;assert not (p/'stage-command-id').exists();s=boto3.Session(profile_name='message-board-deploy');s3=s.client('s3',region_name='eu-west-2');ssm=s.client('ssm',region_name='us-east-1');u=json.loads((p/'source-upload-result.json').read_text());url=s3.generate_presigned_url('get_object',Params={'Bucket':'anonymous-message-board-testnet-backups-nvdhcyurtoga','Key':u['key'],'VersionId':u['version']},ExpiresIn=3600)
+config=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-final-20261018-c71ecfaa7e/checkpoint-20261019/deadline-0300-20261020-two-hosts/core/moderator-config-after-checkpoint.json').read_bytes();assert hashlib.sha256(config).hexdigest()=='cf4a876b0bb1bb209ba88b88540099d7b0f771cb3e581c36fb318469cf76d184'
+code="import pathlib,urllib.request,base64,subprocess\np=pathlib.Path('/var/lib/rolling-bootstrap-private/moderator-restore-input');p.mkdir(mode=0o700,exist_ok=False)\nwith urllib.request.urlopen("+repr(url)+",timeout=60)as r:data=r.read(200000)\n(p/'f3-source-overlay.tar.gz').write_bytes(data)\n"
+for n,b in [('config-after-checkpoint.json',config),('f3-source-binding.json',(p/'f3-source-binding.json').read_bytes()),('restore-moderator.py',(p/'restore-moderator.py').read_bytes())]:code+="(p/"+repr(n)+").write_bytes(base64.b64decode("+repr(base64.b64encode(b).decode())+"))\n"
+code+="subprocess.run(['python3',str(p/'restore-moderator.py')],check=True)\n"
+r=ssm.send_command(InstanceIds=['i-0a9b5b9ba55815cda'],DocumentName='AWS-RunShellScript',Parameters={'commands':["umask 077\npython3 - <<'STAGE'\n"+code+"\nSTAGE"],'executionTimeout':['180']},TimeoutSeconds=120);i=r['Command']['CommandId'];(p/'stage-command-id').write_text(i);print(i,flush=True)
+try:ssm.get_waiter('command_executed').wait(CommandId=i,InstanceId='i-0a9b5b9ba55815cda',WaiterConfig={'Delay':5,'MaxAttempts':36})
+finally:
+ r=ssm.get_command_invocation(CommandId=i,InstanceId='i-0a9b5b9ba55815cda');(p/'stage-result.json').write_text(json.dumps(r,default=str));print(r['Status'],r['StandardOutputContent'],r['StandardErrorContent'][-1300:])

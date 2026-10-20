@@ -1,0 +1,49 @@
+{
+  "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+  "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+  "task_id": "G04-state-driven-funding",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.browser.test.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "plugins/rolling-funding-relay.mjs",
+    "plugins/test/rolling-funding-relay.test.mjs",
+    "shared/rolling/aggregate-wallet.mjs",
+    "shared/rolling/aggregate-wallet.test.mjs",
+    "shared/rolling/application.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/sdk-entry.mjs"
+  ],
+  "required_checks": [
+    "state-boundaries",
+    "browser-continuation",
+    "generated-runtime"
+  ],
+  "requirements": [
+    "RC19-state-driven-continuation",
+    "RC22-exact-saved-payment-and-claim"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G04-state-driven-funding",
+      "paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs",
+        "plugins/rolling-funding-relay.mjs",
+        "plugins/test/rolling-funding-relay.test.mjs",
+        "shared/rolling/aggregate-wallet.mjs",
+        "shared/rolling/aggregate-wallet.test.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/sdk-entry.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-15T09:40:49.269893+00:00",
+  "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+  "region": "eu-west-2",
+  "readOnly": true,
+  "configuration": {
+    "TransitionDefaultMinimumObjectSize": "all_storage_classes_128K",
+    "Rules": [
+      {
+        "Expiration": {
+          "Days": 30
+        },
+        "ID": "ExpireBackups",
+        "Filter": {
+          "Prefix": ""
+        },
+        "Status": "Enabled",
+        "NoncurrentVersionExpiration": {
+          "NoncurrentDays": 7
+        },
+        "AbortIncompleteMultipartUpload": {
+          "DaysAfterInitiation": 1
+        }
+      }
+    ]
+  },
+  "interpretation": "Enabled existing bucket rule expires current objects after30days, noncurrent versions after7days and incomplete multipart after1day. No configuration change. Object versions can therefore remain chargeable beyond the nominal30day current-version window; the retained-storage USD1 reservation covers20GB for37days at the recorded standard storage rate, with delayed-cleanup buffer retained. Expiration is asynchronous; do not claim immediate deletion."
+}

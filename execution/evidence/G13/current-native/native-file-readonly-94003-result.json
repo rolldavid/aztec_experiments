@@ -1,0 +1,89 @@
+{
+  "source": "435750278e742deace48f20d641b3154f664be58",
+  "kind": "native-file-read-only-recovery-qualification",
+  "passed": true,
+  "deadlineMs": 120000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 2984880,
+  "rssSamples": [
+    {
+      "elapsedMs": 1000,
+      "rssKiB": 815664
+    },
+    {
+      "elapsedMs": 2001,
+      "rssKiB": 2984880
+    },
+    {
+      "elapsedMs": 3020,
+      "rssKiB": 2810528
+    },
+    {
+      "elapsedMs": 4034,
+      "rssKiB": 2790608
+    },
+    {
+      "elapsedMs": 5050,
+      "rssKiB": 2652928
+    },
+    {
+      "elapsedMs": 6068,
+      "rssKiB": 2551584
+    },
+    {
+      "elapsedMs": 7087,
+      "rssKiB": 2484960
+    },
+    {
+      "elapsedMs": 8104,
+      "rssKiB": 2715440
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "anvil",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 2001,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 98904,
+        "ppid": 59636,
+        "rssKiB": 816144
+      },
+      {
+        "role": "anvil",
+        "pid": 98915,
+        "ppid": 98904,
+        "rssKiB": 2168736
+      }
+    ]
+  },
+  "snapshot": {
+    "sha256": "603ca99b29c4d977e55739144944e96ba40ec884dfcdfdc92468d50875fabfb6",
+    "bytes": 1760844223
+  },
+  "head": {
+    "number": "0x4a7",
+    "hash": "0xa06e46b72fe2c479e265c6b28aa0c918eb4b992201ecf13956683dab536a994a",
+    "pending": "552",
+    "proven": "552"
+  },
+  "payment": {
+    "transactionHash": "0x0f2802dabc1e994f8916f8ad52caab046a96c6f01d64f9a1847f1e674dd72e8c",
+    "planHash": "0xbb07b649d9630d6cb815be820de0f8288ae5c5becca62c783018b02adf9efbee",
+    "canonical": true,
+    "allThreeEffectsVerified": true,
+    "historicalRouterCodeVerified": true,
+    "payerNonce": 1
+  },
+  "elapsedMs": 8592,
+  "ownedTreeAbsent": true
+}

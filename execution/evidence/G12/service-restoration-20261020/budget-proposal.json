@@ -1,0 +1,79 @@
+{
+  "status": "PREPARED ONLY; no ledger/resource mutation",
+  "billingAsOfUtc": "2026-10-20T06:34:45Z",
+  "cePeriod": {
+    "startInclusive": "2026-10-11",
+    "endExclusive": "2026-10-21"
+  },
+  "ceEstimated": true,
+  "excludedKnownUnrelatedServiceRegionPairs": [
+    [
+      "Amazon Elastic Compute Cloud - Compute",
+      "eu-west-2"
+    ],
+    [
+      "Amazon Lightsail",
+      "eu-west-2"
+    ]
+  ],
+  "observedAllocatedUsd": "38.0271815465",
+  "allocationMethod": "Same conservative region/service allocation as prior ledger reconciliation: exclude only known London compute and Lightsail; retain all other charges. Not final billed/campaign invoice.",
+  "replacementAccounting": "Replace the single closed-campaign479.248472398 forecast/reservation480 with this consolidated cumulative bound; do not add that former forecast again or release its individual sub-reservations separately. Historical83.27 retained; new measured allocation supersedes old140 consolidated bound only as a whole. Old unopened future compute/capped-egress projections are no longer treated as spend.",
+  "formerHostLagCalculationBeforeTax": {
+    "core28hCompute": "25.96608",
+    "bok6hCompute": "1.5876",
+    "core1064GiB28h": "3.264876712328767123287671233",
+    "core375MiBsExtra28h": "0.5753424657534246575342465753",
+    "bok128GiB12h": "0.1683287671232876712328767123",
+    "publicIPv4Core28Bok6h": "0.170",
+    "twoEndpoints28h": "0.56",
+    "bothHostsObservedNetworkRounded4GB": "0.780"
+  },
+  "formerHostLagCalculatedWith20PercentTax": "39.68667353424657534246575342",
+  "formerHostLagReason": "45USD rounds above full28h core+6h Bok compute/28h core and12h Bok storage, original375MiB/s gp3 throughput adder, public IPv4,endpoints and4GB actual-network bound plus20%tax. This intentionally overlaps estimated CE. Other delayed-account charges remain covered by30 buffer and retained200GB failure allowance.",
+  "componentsUsd": {
+    "priorHistoricalBound": "83.27",
+    "allocatedEstimatedBillingWith20PercentTax": "45.63261785580",
+    "fullFormerHostLagAllowance": "45",
+    "delayedBillingAndCleanupBuffer": "30",
+    "retainedArchiveAllowance": "10",
+    "existingStatic12MonthAllowance": "20",
+    "retained200GBFailureNetworkTaxed": "46.8",
+    "new24hBothHostsCappedAllIn": "191.538848",
+    "newRestagingAllowance": "4",
+    "additionalCleanupOrphanStorageAllowance": "10"
+  },
+  "cumulativeForecastUsd": "486.24146585580",
+  "proposedReservationUsd": 490,
+  "ceilingUsd": 500,
+  "horizonHours": 24,
+  "deadlineRule": "Fresh planned launch time +24h, endpoint cleanup +5min; freeze absolute timestamps before dispatch. Fresh bootstrap retains8h admission, then existing reviewed explicit extension under independent exact-instance Scheduler. No deadline refresh on retries.",
+  "rates": {
+    "coreOnDemandHourlyUsd": ".92736",
+    "bokOnDemandHourlyUsd": ".2646",
+    "gp3GiBMonthUsd": ".08",
+    "gp3ExtraMiBsMonthUsd": ".04",
+    "coreDataThroughputMiBs": 500,
+    "gp3IncludedMiBs": 125,
+    "bothVolumeIOPS": 3000,
+    "iopsAdders": 0,
+    "coreGiB": 1064,
+    "bokGiB": 128,
+    "coreEgressMbps": 50,
+    "bokEgressMbps": 10,
+    "conservativeTransferUsdGB": ".195",
+    "taxFactor": "1.2",
+    "coreAllInHourlyUsd": "6.563198666666666666666666665",
+    "bokAllInHourlyUsd": "1.393586666666666666666666666",
+    "twoEndpointsTaxedHourlyUsd": ".024"
+  },
+  "newCapacity": "One replacement m7a.4xlarge core and one distinct r7i.xlarge Bok, on-demand not Spot; no other server.",
+  "networkScope": "New24h full shaped maximum648GB combined (core540+Bok108), plus retained200GB failure reserve. No free tier assumed.",
+  "sources": [
+    "billing-network-reconciliation.json",
+    "aws-readonly.json",
+    "../final-testnet-plan/dedicated-bok-host/extension-0300/proposal.json",
+    "../final-testnet-plan/dedicated-bok-host/extension-2200-proposal.json"
+  ],
+  "controls": "Independent exact-instance AWS terminate schedule plus native immutable absolute watchdog/timer; encrypted DeleteOnTermination volumes; fresh interface endpoint cleanup. Tags not controls. Existing staticS3/CF remains."
+}

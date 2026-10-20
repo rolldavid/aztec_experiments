@@ -1,0 +1,11 @@
+{
+  "source": "41ecbb05347b92724c4b02e5beb95b556aaf6630",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "--test",
+    "scripts/test-t04-browser-journey.mjs"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 1.127,
+  "environment": "macOS pinned Node24.21.0; native configuration false; controlled driver tests, no network/funding qualification"
+}

@@ -1,0 +1,25 @@
+{
+    "Role": {
+        "Path": "/aws-service-role/ec2fleet.amazonaws.com/",
+        "RoleName": "AWSServiceRoleForEC2Fleet",
+        "RoleId": "AROAQYQYWIYNRKENX33GK",
+        "Arn": "arn:aws:iam::052665140763:role/aws-service-role/ec2fleet.amazonaws.com/AWSServiceRoleForEC2Fleet",
+        "CreateDate": "2026-10-11T18:20:16+00:00",
+        "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": [
+                        "sts:AssumeRole"
+                    ],
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": [
+                            "ec2fleet.amazonaws.com"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

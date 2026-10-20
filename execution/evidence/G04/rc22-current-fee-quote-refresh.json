@@ -1,0 +1,9 @@
+{
+  "oldFeePerL2Gas": "11403030306",
+  "newFeePerL2Gas": "17272731",
+  "onlyConfigurationDifference": "privateFee.gasSettings.maxFeesPerGas.feePerL2Gas",
+  "runtimeSha256": "87efae754812114e5a2b323330ea1c4941ba7fdfa276428184e379bbd9aba1c7",
+  "allocationAndConsentCapsUnchanged": true,
+  "privateOriginalPreserved": true,
+  "proofsEnabled": false
+}

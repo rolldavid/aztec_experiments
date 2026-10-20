@@ -1,0 +1,56 @@
+{
+  "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+  "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+  "task_id": "W03-deterministic-ciphertext-damage",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+      "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+      "task_id": "W03-deterministic-ciphertext-damage",
+      "id": "descriptor-damage",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Focused existing foreignwallet/movedkey/descriptordamage/duplicaterecord case;256prefix onebitmutation",
+      "environment": "PinnedNode24, installedSDK, no network",
+      "observed": "1casepasses; all256prefixes mutate exactlyonebit; originalrejection/no-writeassertionspreserved",
+      "artifacts": [
+        {
+          "path": "execution/evidence/W03/ciphertext-damage-20261018/review.json",
+          "sha256": "087152442955fac10ef5848b41a515a31cd89c0a14fd2836885b129e9bd899cb"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+    "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+    "task_id": "W03-deterministic-ciphertext-damage",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "lead-20261011",
+    "artifacts": [
+      {
+        "path": "execution/evidence/W03/ciphertext-damage-20261018/review.json",
+        "sha256": "087152442955fac10ef5848b41a515a31cd89c0a14fd2836885b129e9bd899cb"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "0cf442741c910b1e2b9856ef98f1929c879d817e",
+      "candidate": "b4871a1555f290dea7ef8b50900bdc8254bb6baf",
+      "task_id": "W03-deterministic-ciphertext-damage",
+      "id": "W03-recovery-authentication",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/W03/ciphertext-damage-20261018/review.json",
+          "sha256": "087152442955fac10ef5848b41a515a31cd89c0a14fd2836885b129e9bd899cb"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "modelIdentity": {
+    "imageDigest": "0x3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+    "weightsDigest": "0x03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "configurationDigest": "0x4a2646bf8bea8de0e2494ab0f757ea22701373d50758a51a8639f4d1c72c6d41",
+    "promptDigest": "0xd7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862",
+    "modelVersion": "0xa8618917c09f094f93cab5b6ea6346e879d7ffcce5143b40a5f05558c58978e0"
+  },
+  "containerId": "83512e137400af6f4879b8328dfac79d24f07cff71e1877eb2334d39d2bcff64",
+  "proxyId": "0fcdf03b894d74d9edf7aa3f0884737d3a4a8f1638e4ea067b9ac525c4afd496",
+  "platformIdentity": {
+    "manifestDigest": "sha256:3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+    "configDigest": "sha256:45951ce06ab9833edbcd31b0621449cc2fe4fcf0cbf871d9da55d4943d896248",
+    "localImageId": "sha256:3a6c3e3b22dca42ae12dbdfb5cb53531ca1f7ea8fd4348e9ef2503b2bc8629a6",
+    "os": "linux",
+    "architecture": "arm64",
+    "variant": null
+  }
+}

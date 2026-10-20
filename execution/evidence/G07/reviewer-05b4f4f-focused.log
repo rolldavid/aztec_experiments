@@ -1,0 +1,13 @@
+✔ reader serves only browser assets and bounded public API from one origin (39.049ms)
+✔ wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD (8.825125ms)
+✔ wallet encoding negotiation honors quality, exclusions, wildcard and unsupported encodings (5.696542ms)
+✔ wallet compressed representations revalidate changing source bytes and do not mask missing/error assets (2.8975ms)
+✔ wallet admission bounds concurrent reads and queued compression work, rejecting overload without reading (14.152ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 144.593375

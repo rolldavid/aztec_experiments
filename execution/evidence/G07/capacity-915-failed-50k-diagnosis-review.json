@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "915dfee5cbe4f3cb3865b4ed93850110af918582",
+  "productRevision": "9a6a91cba9b1073bb8c2a518eaee1b8f803a44b9",
+  "disposition": "interrupted-measurement-unqualified",
+  "findings": [
+    {
+      "priority": "P2",
+      "scope": "measurement diagnostics",
+      "source": "scripts/measure-private-event-query.mjs:171-186",
+      "finding": "Result is written only after the complete two-variant experiment and cleanup; forced termination retains no stage, variant, seeded count, query number, partial completed variant, or per-process memory report. Browser setup/page execution/IDB seed/warm query/cleanup cannot be distinguished from this log. Fix diagnostics before changed measurement."
+    }
+  ],
+  "confirmedEvidence": {
+    "supervisorElapsedMs": 553624,
+    "samples": 103,
+    "peakTreeRSSKiB": 1687680,
+    "cleanupComplete": true,
+    "exitSignal": "SIGKILL",
+    "limitFailure": "deadline",
+    "recordBirthLocal": "2026-10-12T05:39:41+01:00",
+    "recordModifiedLocal": "2026-10-12T05:48:54+01:00",
+    "hostSleepIntervals": [
+      {
+        "start": "2026-10-12T05:39:44+01:00",
+        "end": "2026-10-12T05:44:44+01:00",
+        "seconds": 300
+      },
+      {
+        "start": "2026-10-12T05:45:29+01:00",
+        "end": "2026-10-12T05:48:54+01:00",
+        "seconds": 205
+      }
+    ],
+    "hostSleepSeconds": 505,
+    "powerEvents": "execution/evidence/G07/capacity-915-chromium-50000-power-events.log",
+    "powerEventsSha256": "1f0eb0a3121bbd2bf56c2ec2b1f1333b43b850f988db6f6c14f149e095a09e68",
+    "interpretation": "Host sleep directly overlaps almost all elapsed run time; final deadline termination coincides with second wake. Sparse samples support interruption, but are not an exact active-CPU-time measurement. No evidence establishes a browser/IDB stall or a 50k query performance failure.",
+    "currentProcesses": "Read-only ps found no remaining matching benchmark or Chromium process at inspection."
+  },
+  "independentBindingChecks": [
+    {
+      "platform": "lmdb",
+      "events": 1000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": true
+    },
+    {
+      "platform": "lmdb",
+      "events": 10000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": true
+    },
+    {
+      "platform": "lmdb",
+      "events": 50000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": true
+    },
+    {
+      "platform": "chromium",
+      "events": 1000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": true
+    },
+    {
+      "platform": "chromium",
+      "events": 10000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": true
+    },
+    {
+      "platform": "chromium",
+      "events": 50000,
+      "supervisorHashMatches": true,
+      "resultHashMatches": false
+    }
+  ],
+  "sourceAnalysis": [
+    "Supervisor uses performance.now elapsed deadline and sequential sample/500ms wait; it has no persisted sample timestamps, maximum gap or heartbeat and writes only its terminal record. OwnedBuildTree ps has a 2s timeout; eventual cleanup is independently recorded successful.",
+    "Benchmark has Date.now cooperative checks between seed chunks and queries; Chromium close timer begins after launch/context setup. A missing result cannot locate which awaited operation was active.",
+    "Aggregate tree RSS 1.687GB is below outer4GiB cap and cannot establish violation of per-process1GiB target; per-process report was not produced."
+  ],
+  "smallerRunDisposition": [
+    "All five completed result/supervisor hashes independently verified.",
+    "Chromium1k patched warm p95 0.8000000715ms, Chromium10k 1ms; respective upstream58ms/783.5ms.",
+    "LMDB50k patched warm p95 0.220625ms versus upstream277.884417ms; correct eight selected rows and bounded read assertions passed.",
+    "These do not establish nativeChromium50k success or end-to-end private event recovery bounds."
+  ],
+  "minimalRepair": [
+    "Add fixed-stage checkpoint fields before/after setup, launch, page-ready, variant-open, seed, warmup, query and delete/close; variant enum, retained count, committed seed count and query index only. Persist bounded last-stage plus completed variant metrics in a separate owner-only fresh record, including failure/termination paths. No event values or raw errors.",
+    "At seed chunk boundaries update in-memory progress; rate-limit durable checkpoint writes, and flush stage transitions. Keep checkpoint overhead outside timed query interval. Browser reports only fixed numeric stage data through a bounded parent callback; validate schema.",
+    "Supervisor persists source/helper hashes, wall start/end, monotonic elapsed, sample start/end and maximum wall/monotonic sample gap with a bounded latest heartbeat. A large gap invalidates measurement; it must not be subtracted to manufacture a passing duration. Correlate safe host sleep events separately.",
+    "Retain unchanged resource/deadline/cleanup and query correctness gates. An awake, separately authorized changed run is required for 50k qualification; do not retro-pass this run."
+  ],
+  "actionsNotTaken": [
+    "No retry, browser launch, benchmark, source edit, live service call or power-setting change."
+  ]
+}

@@ -1,0 +1,29 @@
+✔ actual installed source pins and fixed official client configuration without network (5.993416ms)
+✔ labelled fake phases persist before/after in exact order and pass exact addresses to official-config seam (0.599166ms)
+✔ each failing phase stops without replay or downstream calls (0.80575ms)
+✔ separate address and26-read config failures retain exact phase and numeric official HTTP/RPC status (0.474209ms)
+✔ official typed numeric causes accepted, arbitrary names/code/messages not accepted (0.221125ms)
+✔ changing/throwing numeric, message and cause getters never execute (0.081291ms)
+✔ cyclic/deep/error-proxy cause chains terminate with no raw values (0.08475ms)
+✔ wrong chain, registry, rollup and configuration version are distinct rejection gates (0.421542ms)
+✔ source failure and malformed public projection fail closed without leaking extra fields (0.666208ms)
+✔ anchor continuity preserves exact number/hash/timestamp and retains preceding successes (0.423167ms)
+✔ receipt creation is exclusive, symlinks/relative paths reject before child (0.80825ms)
+✔ actual disposable child timeout preserves partial phase and kills/reaps TERM-ignoring process (584.687708ms)
+✔ spawn failure rejects promptly and retains initial safe receipt (8.0895ms)
+✔ explicit split roles are immutable; default Tenderly mode is preserved; unsupported selectors fail before work (1.124792ms)
+✔ split full config plus actual historical seam pass only after both before/after common anchors (0.920166ms)
+✔ split wrong chain/common anchor fails before address collection or any history request (0.497375ms)
+✔ split config429 and historical4444 stay errors without retry/fallback (0.8775ms)
+✔ split logs require nonempty <=128 actual SDK event name and exact deployment/address/removal binding (2.668459ms)
+✔ split post-history reorg on either provider rejects all preceding successful checks (0.870792ms)
+✔ split labels survive child failure and invalid mode refuses receipt creation (39.352ms)
+✔ actual installed SDK full configuration and history use distinct fixed transports against labelled fetch doubles only (19.379291ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1531.631458

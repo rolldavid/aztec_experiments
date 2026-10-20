@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "79f3133c90c6a0c7a3b3599c32f081abe893fcb3",
+  "base": "7ac0ebb12613a814f983158dd593e3ff7879e36b",
+  "disposition": "source-eligible-for-bounded-distribution-manifest-and-full-component-ACIR-tests",
+  "blockingFindings": [],
+  "packetSha256": "366b73e061adc7555136e92018439a2c4a21e013920d769caea04a7baf15c2ba",
+  "exactChangedFiles": {
+    "BUILDING.md": "4abde6d054c0b58eaac43d8ea509268e654825a61f3ee85910d7511fd5351197",
+    "package.json": "cadc7d1c1ec51ff897dc2473217a8f0c65a168c0a2c937b888ab9df6838c12be",
+    "scripts/build-sdk.mjs": "1b1a2ed6ad6f03f9c02523a8bc268dcad4fc36dc21961773d4f47c4cca48a561",
+    "scripts/check-sdk.mjs": "3ea3212f2a6c54eb176bc098f545a26141c6aa89fb0b99f6d870a0b30855fb58",
+    "scripts/patch-pxe-preference-page.mjs": "18318b26c720285bbe3c2b502307a97c62673c54a1ac9fbb5dc066ea77922380",
+    "scripts/test-pxe-preference-page.mjs": "8367a4771752d93380a13b34263cb94e782b8a600bff991f7106ebac5b581853",
+    "scripts/test-sdk-manifest.mjs": "20982438a0027bde55ae85e36640b493155d64edaa22d3646eed51d573f4b55e",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/operation_lifecycle.js": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/operation_queue.js": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/pxe.js": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/dest/storage/note_store/note_store.js": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/operation_lifecycle.ts": "c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/operation_queue.ts": "a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/pxe.ts": "514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd",
+    "scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/src/storage/note_store/note_store.ts": "35faa7333be56582580115602ef63fee798f80d18f65637b9fbf5a5d39a089ea",
+    "shared/sdk-entry.mjs": "d04e410abbbc898f8c0b49d1b0eec9f5d26150778bcbc57307c55112c4d7c450"
+  },
+  "independentSourceChecks": [
+    "All16 changed Git blob hashes match packet; exactly declared eight pristine fixture files plus eight implementation/document/test files.",
+    "Original template/helper/transform section const sha through async paths is byte-identical to7ac; native test suffix from patchedImp through EOF is byte-identical (SHA086ef9cb4c085b2190edbbac2b37dca98d5c98fd63fc92e55d1a9cb8dcebcd54).",
+    "Eight newly checked-in originals independently equal literal before pins and current frozen Controls rc3 installed originals; no reverse transform.",
+    "Installed destination resolves only to installer repository/node_modules/@aztec-labs/pxe; physical repository/ancestor/package checks plus every regular target realpath check reject symlink borrowing, target nlink1 rejects hardlinks. Wrong path and nonstring argument reject before coercion.",
+    "Node/toolchain/PXE name/version validated before apply; apply validates whole8-original+helpers-absent OR8-patched+2-exact closure, compact source and generated recovery literal before writes. Mixed/unknown/missing helper fails closed. Patched idempotence still validates source.",
+    "Isolated mode remains separate and rejects node_modules/shared installed targets. No automatic build mutation. Sequential explicit bootstrap extension is documented; stopped owners/borrowers prerequisite is explicit and not falsely inferred by filesystem checks.",
+    "Build verifies installed patched state and canonical compact source before bundling; all12 provenance paths mandatory and postbuild literal8+2+compact checks reject missing/tampered inputs. Checker requires literals and actual bytes even if manifest hashes refreshed. Installer itself is provenance-bound, not claimed signed-release authentication.",
+    "Actual upstream computeArtifactHash is exported without shim. Original constructor/function artifact field hash remains distinct from artifact JSON digest.",
+    "Pristine fixture overlay applies only to owned temporary package; pristine queue/lifecycle imports move off possibly patched installed files. Existing awaited suite teardown and original ACIR semantic body retained."
+  ],
+  "testAssessment": [
+    "New owned-fixture installed/idempotence, wrongversion/destination, symlink/hardlink, mixed/unknown, wrongcompact and helperloss tests exercise actual installer on disposable copied repository.",
+    "Manifest tests require all12inputs, reject refreshed wrong literal bytes and installer provenance drift.",
+    "Native differential suite retains all prior semantic cases and constructs pristine and patched copies regardless of installed complete state; runtime still needed to validate new copied-module resolution and fixture lifecycle."
+  ],
+  "executionEligibility": {
+    "manifest": "One bounded pure manifest suite under parent serialized grant.",
+    "component": "One full test-pxe-preference-page.mjs with both native and ACIR opt-ins, no filters/skips, <=180s/4GiB owned supervisor and qualified20c494 artifact.",
+    "preconditions": [
+      "Rebind exact original/complete-patched rc3 dependency closure; current default Design link remains rc1 and is not an eligible test dependency.",
+      "Own every disposable install/package directory, restore borrowed link only after all consumers exit, preserve old failures and pre/post pins."
+    ],
+    "executedByReviewer": false
+  },
+  "laterInstallationAndBuildGates": [
+    "Explicit lead stopped-owner authorization before physical installed-tree mutation; no installation authorized by this source report.",
+    "Ten sequential writes are not atomic. Interruption yields rejected mixed state and requires fresh locked dependency installation; no partial recovery/force.",
+    "Test actual application consumer only after normal SDK/wallet rebuild and complete new input/source inventory closure.",
+    "Route/startup/bootstrap/package composition and genuine cold/native/browser/large-history acceptance remain separate."
+  ],
+  "limits": [
+    "No new tests, installs, builds, dependency changes or network actions by reviewer.",
+    "Source69 semantic carry does not establish79f runtime success.",
+    "No integration, Linux/current-network readiness, compiler260 clearance or full cold recovery qualification."
+  ]
+}

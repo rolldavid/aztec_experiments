@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-13T12:43:41.913302+00:00",
+  "candidate": "2812bbc4ce857886af68795ab7e450eae679484a",
+  "requestedTarget": "3bfc7f60b6bb214860dade02b05a1236c457c871",
+  "observedLeadHead": "70e3a2a7b7af6900a8c215a71c835ff5f3a02125",
+  "headAdvance": "Initial exact HEAD assertion caught lead advancing to70e3. No evidence or source was written by that failed preparation. Reconciled all eight current lead bytes equal3bfc/prechange bases.",
+  "leadTreeClean": true,
+  "transferFiles": [
+    {
+      "path": "toolchain.json",
+      "sourceRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "sourceSha256": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8",
+      "expectedLeadSha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+      "baseRevision": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "scripts/test-toolchain-packages.mjs",
+      "sourceRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "sourceSha256": "ab491be264306d8cf0173c0aa438a81697ee405e24a06af8c9a5f917bdfffc3b",
+      "expectedLeadSha256": "4ac0fa2b24ccce11e8584f5c04e8c45e0b1862b8187e07c3a93e1fefe4af8519",
+      "baseRevision": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "deploy/prover/bootstrap.py",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "1832af600c7dab47f3ba93dd4e85b9dbd81c5cdc8d4d10da1e509cf854220203",
+      "expectedLeadSha256": "31cd1316b908c46148015f5a0ce46deaf8f5fca26f0dd0b85891f24db1494535",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "scripts/test-prover-bootstrap.py",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "ca4c92bae490508351e66e3328229a4a4532b38ef08e2166b606114ceddb8e7a",
+      "expectedLeadSha256": "f2469c70e94e3d519417c842dcb45d96f1185ace239f218b5830a7acba631c60",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "deploy/prover/package.py",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "de1e1e29aa478f18ffb0fc4046673c1e265064db9f231584f160b3d389445ebb",
+      "expectedLeadSha256": "b4107a0d5391312aaae087fe86bd3eef73eb76e85bf40c8a350ec323e8e1782c",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "scripts/test-prover-package.py",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "61c67c403053973e264ce11244e378aed064642f4ffed0d1a6535581e3c8c7bf",
+      "expectedLeadSha256": "1c741526c7bdcda41f9943deb2867a4491c5014d055542646795301ca031ce46",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "deploy/prover/BOOTSTRAP.md",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "dff912c695e217556af03729172e257fbd347f7811cc553d66247463fd8786e3",
+      "expectedLeadSha256": "40d2c60081ba6f382f6749d932ebb10b2e4bf819dd76b15b052c112430819f6c",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    },
+    {
+      "path": "deploy/prover/README.md",
+      "sourceRevision": "2812bbc4ce857886af68795ab7e450eae679484a",
+      "sourceSha256": "5b0c96599580c4c0330923099ec8339395005b759fae1fd2ebe7762fca232289",
+      "expectedLeadSha256": "f74c0ba4cf034e8bec53d6801e4440e854e336f3ce9cb4e842b98f795cea6144",
+      "baseRevision": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+      "currentLeadEqualsTargetAndExactPrechangeBase": true,
+      "conflict": false
+    }
+  ],
+  "transferMethod": "After lead claim, replace only these eight files following expected lead byte checks. All eight match their exact prechange bases; no merge resolution. Do not cherry-pick unrelated Controls history.",
+  "sourceReviewSha256": "1426d454b138fbc5bd87506d40f6694924a54fd464c5df664612009185c22475",
+  "focusedRuntimeReviewSha256": "4803922ca0d0716bffac07836abe7ea143e02dd3be7af1066ff0fa8f487fc811",
+  "pinRuntimeReviewSha256": "4c8df156cbfa9df4f6a230be2b5ed8f1a09873f5e97b97d458ccd91b4c46d296",
+  "testStages": [
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "scripts/test-prover-bootstrap.py",
+        "-v"
+      ],
+      "expected": 91
+    },
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "scripts/test-prover-package.py",
+        "-v"
+      ],
+      "expected": 9
+    }
+  ],
+  "testBounds": "Each60s/2GiB existing Supervisor; Python3.14, pinned Node24 via PROVER_VALIDATION_NODE, short owned external TMPDIR, clean HOME and no AWS/private config. Actual helper closure and current normal provenance prerequisites must pass; no stubs or repin bypass.",
+  "normalRebuildOrder": [
+    {
+      "stage": "base",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "scripts/build-contracts.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-normal-base-23bc/preparation.json",
+      "preparationSha256": "13077a634f44169352855f1b0de21d0c212dc271bb03cccc9cfcb9e8c282e8f9",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "rolling",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "billboard/rolling_contract/build.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-normal-rolling-23bc/preparation.json",
+      "preparationSha256": "da812fa9acfea0124a4c044a1f99d55c0b8a8a044dec007053079d761356f87f",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "avatar",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "experiments/avatar/build.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-normal-avatar-23bc/preparation.json",
+      "preparationSha256": "e7d8c586b73bf0a8b83d7b46c961cd118cf70f8fe6b09cbec9208ee9babf7383",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "private-bok",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "experiments/private-bok/build.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-normal-private-bok-23bc/preparation.json",
+      "preparationSha256": "1808df3dea06c3520461b2ac24fce9701be54031f2cb8c229cf72be7f3360113",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "sdk",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "scripts/build-sdk.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-normal-sdk-23bc/preparation.json",
+      "preparationSha256": "095c1428627871893aa568b9dc45183ca438478d597aeb23058074b2793b3d79",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "crs",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "scripts/build-crs.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-remaining-builds-23bc/crs/preparation.json",
+      "preparationSha256": "c0385f05c41f6c245725fc5b8d4aad7f5c858d8a83d9fc5bfb32ced37565e2cd",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "frontend",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "apps/build.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-remaining-builds-23bc/frontend-v2/preparation.json",
+      "preparationSha256": "804e1ce5e5800b8f9022f76247472b10e007b26ac3c091c965b464d36aef9d5a",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    },
+    {
+      "stage": "wallet",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "scripts/rolling-wallet-assets.mjs"
+      ],
+      "existingPreparation": "execution/evidence/G02/rc3-remaining-builds-23bc/wallet-v2/preparation.json",
+      "preparationSha256": "5a160665de4a1a19c5eede568a5bae9ff7e9930e80934412a8fa47ccfaee0c61",
+      "bounds": {
+        "deadlineMs": 540000,
+        "rssLimitKiB": 4194304,
+        "hardwareConcurrency": 1
+      },
+      "executionAuthorized": false
+    }
+  ],
+  "rebuildRationale": [
+    "toolchain.json is a declared input of contractInputs, SDK, avatar, PrivateBok, Rolling artifact catalog and transitively frontend/wallet. Existing outputs remain historical after transfer.",
+    "Base normal builder processes all canonical outputs and Forge; subsequent Rolling normal builder intentionally overwrites its shared target with normal transpilation/VKs. Preserve snapshots at each stage.",
+    "SDK normal builder validates current actual PXE/IndexedDB patch bytes and builds actual portal AST; no shared dependency mutation.",
+    "CRS stage may reuse only already verified complete mathematical assets; no download/new derivation implied.",
+    "Frontend and wallet must consume new exact manifests. Never manually rewrite old hashes as a rebuild."
+  ],
+  "prebuild": "Fresh final source/patch/toolchain inventory and bounded version readiness; preserve old generated outputs and seven historical raw artifacts. Mechanically derive fresh current-source intents from listed existing runners, never execute historical hardcoded source runners. No build grant in this packet.",
+  "postbuild": [
+    {
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+        "prover/pin-rolling-artifacts.mjs"
+      ],
+      "bounds": "60s/1GiB existing reviewed generator/auditor",
+      "prerequisite": "All actual normal artifacts and current manifests reviewed; explicit catalog write claim."
+    },
+    {
+      "action": "If normal catalog bytes change, separately claim/bootstrap CATALOG_SHA and affected checks. Do not manually rewrite build manifests."
+    },
+    {
+      "action": "Validate composed contracts/SDK/frontend/wallet/release closure; package/archive/userdata16KiB gate and paid preparation remain separate."
+    }
+  ],
+  "currentManifestFacts": [
+    {
+      "path": ".build/contracts-manifest.json",
+      "sha256": "49f39410aa6df76b96ea84944af89aa8eac7ff4f02e569c8ff40c00e7b746f36",
+      "recordedToolchainSha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+      "wouldBeStaleAfterTransfer": true
+    },
+    {
+      "path": ".build/sdk/sdk-manifest.json",
+      "sha256": "9623a4799debdd2eceec4548e929c2450341127b18e08f2598ccef2465ff7214",
+      "recordedToolchainSha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+      "wouldBeStaleAfterTransfer": true
+    },
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "sha256": "9f7d2925e3c7ccf2f01bb137fbf98d96d601cbe08330e515386b1f841e392187",
+      "recordedToolchainSha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+      "wouldBeStaleAfterTransfer": true
+    },
+    {
+      "path": "prover/rolling-artifacts.json",
+      "sha256": "fafaf3387cdb360e11dff386f30be2fac40e5547ee642cb969aac449b40efb7e",
+      "recordedToolchainSha256": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d",
+      "wouldBeStaleAfterTransfer": true
+    }
+  ],
+  "newToolchainSha256": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8",
+  "sourceMutated": false,
+  "testsOrBuildsExecuted": false,
+  "paidActions": false
+}

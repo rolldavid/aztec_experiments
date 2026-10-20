@@ -1,0 +1,32 @@
+{
+  "candidate": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "command": [
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "execution/evidence/G07/bounded-command.mjs",
+    "combined-ad1-source-tests",
+    "--test",
+    "--test-concurrency=1",
+    "shared/rolling/preferences.test.mjs",
+    "shared/rolling/preference-reader.test.mjs",
+    "shared/rolling/preference-events.test.mjs",
+    "shared/rolling/private-views.test.mjs",
+    "shared/rolling/application.test.mjs",
+    "shared/rolling/synchronized-application.test.mjs",
+    "shared/journal-backup.test.mjs",
+    "apps/rolling/wallet-session.test.mjs",
+    "scripts/test-private-event-query.mjs",
+    "scripts/test-sdk-manifest.mjs",
+    "prover/application-policy.test.mjs",
+    "scripts/testing/rolling-application-actor.test.mjs",
+    "scripts/measure-private-event-query.test.mjs",
+    "scripts/rolling-wallet-assets.test.mjs",
+    "scripts/testing/rolling-preference-recovery.test.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-public-acceptance.test.mjs",
+    "scripts/testing/rolling-preference-browser-fixture.test.mjs",
+    "scripts/testing/rolling-preference-browser.test.mjs",
+    "scripts/testing/rolling-composer-browser.test.mjs",
+    "scripts/testing/private-bok-build-preflight.test.mjs",
+    "deploy/prover/archiver-prerequisites.test.mjs"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "base": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+  "candidate": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+  "task_id": "G07-lifecycle-broadcast",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "candidate": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+      "id": "lifecycle-observation-and-no-replay",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/checks.json",
+          "sha256": "5b75dad844ec882b4559c406cf69599b24d8750beeb7c29dcf2ffa4695c47318"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/worker-dependency-mismatch.log",
+          "sha256": "b66b6c95633e88ddb6d6aacf585b764f36ac34b79d67e3626e3e9fe713850dc1"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/constructor-rc3.log",
+          "sha256": "ae9d568d1080502e2a9dba1483b4e99aa62302d6ad1a20d9fab5995d3c8fbbe5"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-b1fc992-lifecycle-broadcast.json",
+          "sha256": "a633405aaeb48ae023e2f8871e59a8e4d62b3166c95debe3c7c104c2c49931f4"
+        }
+      ],
+      "command": "Pinned Node24 operations and operator-lifecycle tests; failed unchanged SDK constructor case rerun alone with matching rc3 dependencies",
+      "environment": "macOS Node24; candidate pure checks in isolated worker; unchanged SDK case in lead rc3 installation",
+      "observed": "All93 operations/lifecycle cases pass after resolving test-environment mismatch; no code/test weakening, dependency install or expensive retry",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "base": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+      "candidate": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+      "id": "G07-recoverable-lifecycle-observation-component",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/checks.json",
+          "sha256": "5b75dad844ec882b4559c406cf69599b24d8750beeb7c29dcf2ffa4695c47318"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/worker-dependency-mismatch.log",
+          "sha256": "b66b6c95633e88ddb6d6aacf585b764f36ac34b79d67e3626e3e9fe713850dc1"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/lifecycle-broadcast/constructor-rc3.log",
+          "sha256": "ae9d568d1080502e2a9dba1483b4e99aa62302d6ad1a20d9fab5995d3c8fbbe5"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G07/reviewer-b1fc992-lifecycle-broadcast.json",
+          "sha256": "a633405aaeb48ae023e2f8871e59a8e4d62b3166c95debe3c7c104c2c49931f4"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "d5f4138838628883484a686e8c3733a9d06c6ecd",
+    "candidate": "b1fc992b6abdb94d030851376e51fefdd2f55957",
+    "implementer": "design-resume-20261014",
+    "reviewer": "reviewer-resume-20261014",
+    "kind": "independent",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G07/reviewer-b1fc992-lifecycle-broadcast.json",
+        "sha256": "a633405aaeb48ae023e2f8871e59a8e4d62b3166c95debe3c7c104c2c49931f4"
+      }
+    ]
+  }
+}

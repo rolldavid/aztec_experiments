@@ -1,0 +1,115 @@
+{
+  "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+  "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+  "task_id": "G04-state-driven-funding",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+      "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+      "task_id": "G04-state-driven-funding",
+      "id": "state-boundaries",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='funding continuation|funding pause|funding invalidate|funding finality|attempted funding claim|funding prepare preserves|known original ETH hash|USDC lost|USDC malformed|status awaits the owned' apps/rolling/wallet-session.test.mjs shared/rolling/aggregate-wallet.test.mjs shared/rolling/application.test.mjs plugins/test/rolling-funding-relay.test.mjs",
+      "environment": "Pinned Node24, focused existing component checks",
+      "observed": "12 pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/review.json",
+          "sha256": "11e5b45d84cc94e79c4c48cf107c80d639eeb895b5fc651d8e5eb075157e5639"
+        }
+      ]
+    },
+    {
+      "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+      "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+      "task_id": "G04-state-driven-funding",
+      "id": "browser-continuation",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "env NODE_BACKEND=js TMPDIR=/private/tmp '/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test --test-name-pattern='funding pause fences|aggregate funding UI reconciles an unknown|aggregate funding UI reviews exact|funding completion reports refreshed|top-up' apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "Pinned Node24, focused existing component checks",
+      "observed": "7 pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/review.json",
+          "sha256": "11e5b45d84cc94e79c4c48cf107c80d639eeb895b5fc651d8e5eb075157e5639"
+        }
+      ]
+    },
+    {
+      "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+      "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+      "task_id": "G04-state-driven-funding",
+      "id": "generated-runtime",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "Pinned Node24 scripts/build-sdk.mjs then scripts/rolling-wallet-assets.mjs",
+      "environment": "NODE_BACKEND=js HARDWARE_CONCURRENCY=2 TMPDIR=/private/tmp",
+      "observed": "Both builds exit0; wallet25files97inputs",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/sdk-build.log",
+          "sha256": "940fe5825a83b51bbe2af44239d7ebf22f06de51995df509fe92d2db63f8a33e"
+        },
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/wallet-build.log",
+          "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+    "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+    "task_id": "G04-state-driven-funding",
+    "kind": "independent",
+    "verdict": "approve",
+    "reviewer": "reviewer-features-20261018",
+    "implementer": "funding-feature-20261018",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G04/state-driven-funding-20261018/review.json",
+        "sha256": "11e5b45d84cc94e79c4c48cf107c80d639eeb895b5fc651d8e5eb075157e5639"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+      "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+      "task_id": "G04-state-driven-funding",
+      "id": "RC19-state-driven-continuation",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/review.json",
+          "sha256": "11e5b45d84cc94e79c4c48cf107c80d639eeb895b5fc651d8e5eb075157e5639"
+        }
+      ]
+    },
+    {
+      "base": "923871bb4e6497e48776ef17eb8c851e57f2179a",
+      "candidate": "f7bbfd06f413bdd72243d9a46c382926617f2000",
+      "task_id": "G04-state-driven-funding",
+      "id": "RC22-exact-saved-payment-and-claim",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G04/state-driven-funding-20261018/review.json",
+          "sha256": "11e5b45d84cc94e79c4c48cf107c80d639eeb895b5fc651d8e5eb075157e5639"
+        }
+      ]
+    }
+  ],
+  "residuals": [
+    {
+      "kind": "pre-existing-test-fixture-mismatch",
+      "test": "ordinary claim-deposit saved bytes survives restart with immutable consent",
+      "evidence": "Reproduced on candidate. replacementFixture is byte-identical to base923; its node.sendTx/getTxReceipt return plain objects lacking isPending/isDropped/isMined/hasExecutionSucceeded. Unchanged shared/transaction-outcomes.mjs delegates those objects to installed waitForTx, which calls these methods; exception becomes BB_SUBMISSION_UNKNOWN. realJournalFixture also has the same plain-receipt shape. Candidate application change only preserves not-ready reason.",
+      "limit": "No broad recovery suite or baseline full run; not claiming wider application qualification. Repair those receipt doubles at their existing SDK boundary before using these tests as acceptance evidence."
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "accepted-actual-harmless-systemd-retention-regression",
+  "actualPacketSha256": "f0d0f58528a705b62678bb4aecc5379991decc473862bcb0307ff83c3306c904",
+  "regressionSha256": "876dd27f3bd4a249b0d133e9dcc0137d21a2d50cd06417a7fd7eb9e116da1093",
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "runnerSha256": "636ca1e3f93ddb6fd8d30075fc24701b22eef0fa3ade30d9851ce182217cff7a",
+  "image": "sha256:b1e7de12ba7c3261f8b8283f807ed56153f31e46fce16a8decfb31b84f0d456a",
+  "elapsedMs": 13948,
+  "checks": {
+    "allActualPacketFilesRehashed": true,
+    "protectedPins": 921,
+    "mismatches": 0,
+    "sourceFunctionHashesMatchReviewedSubset": true,
+    "fourWorkerHashesRecomputed": true,
+    "hostConfinementAndGuestPreflight": true,
+    "systemBusReady": true,
+    "originalCallsAndClassifierUnchanged": true,
+    "oneCreateOneStart": true,
+    "killWaitRemovePositiveAbsence": true,
+    "hostExited": true
+  },
+  "observed": [
+    {
+      "label": "baseline",
+      "workerReturnCode": 0,
+      "started": true,
+      "reaped": true,
+      "execMainCode": 0,
+      "execStartMonotonic": 0,
+      "classification": "unqualified"
+    },
+    {
+      "label": "success",
+      "workerReturnCode": 0,
+      "execMainCode": 1,
+      "execStartMonotonic": 2175354,
+      "classification": "passed",
+      "metadataUnchangedAfter3Seconds": true
+    },
+    {
+      "label": "nonzero",
+      "workerReturnCode": 1,
+      "execMainCode": 1,
+      "classification": "nonzero",
+      "metadataUnchangedAfter3Seconds": true
+    },
+    {
+      "label": "timeout",
+      "workerReturnCode": -9,
+      "timeout": true,
+      "execMainCode": 1,
+      "classification": "timeout",
+      "metadataUnchangedAfter3Seconds": true
+    }
+  ],
+  "interpretation": [
+    "Local actual systemd255 on authenticated ARM64 image reproduces lost metadata after unretained successful oneshot and preserves metadata using the reviewed active-timer ordering reference.",
+    "Capture worker systemd success is distinct from captured child success; classifier correctly rejects child return1 and timeout despite successful capture unit.",
+    "VersionMatches in harmless cases uses labelled empty expected output; it is not a BB version check.",
+    "Readback projection retains historical list-order equality false fields; actual closed set/length confinement predicate independently passes the exact measured representation."
+  ],
+  "scope": [
+    "Read-only planning of separately reviewed nativeAMD64 continuation is supported.",
+    "No BB/nativeAMD64 version execution, production Linux pin promotion, paid action, full product qualification, or retroactive proof of historical guest cause.",
+    "Any future paid campaign still needs fresh source/payload/runtime/budget/authority and shutdown/cleanup review."
+  ]
+}

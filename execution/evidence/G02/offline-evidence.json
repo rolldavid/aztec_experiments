@@ -1,0 +1,57 @@
+{
+  "candidate": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+  "base": "f27b9591b76a835c8238d81c44c58984af946552",
+  "task_id": "G02",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+      "base": "f27b9591b76a835c8238d81c44c58984af946552",
+      "id": "offline-cli",
+      "status": "pass",
+      "command": "node scripts/test-cli-prover-offline.mjs",
+      "environment": "pinned Node24.21.0, installed V6, real built bundle, macOS ARM64",
+      "observed": "Actual simulator/sync/async WASM prover passed;3 loopback and0 external requests;1477ms",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "evidence/G02/offline-cli-fixed.log",
+          "sha256": "db8c4d15b0f7e97afeb5ff1320296341ebb367ea248c6b8ef441f82dd03f421f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+    "base": "f27b9591b76a835c8238d81c44c58984af946552",
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "implementer": "/root/controls",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G02/offline-review.json",
+        "sha256": "d9dd224e095bffead7c5481eac52b864d84c4f937fd3bdb41a7ed2818f1dbce8"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "ff55c26f5aa4da0b07ae1d866d200ff5e64cba99",
+      "base": "f27b9591b76a835c8238d81c44c58984af946552",
+      "id": "G02-offline-fixture",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/offline-cli-fixed.log",
+          "sha256": "db8c4d15b0f7e97afeb5ff1320296341ebb367ea248c6b8ef441f82dd03f421f"
+        },
+        {
+          "path": "evidence/G02/offline-review.json",
+          "sha256": "d9dd224e095bffead7c5481eac52b864d84c4f937fd3bdb41a7ed2818f1dbce8"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "reviewer": "reviewer-20261011",
+  "reviewedAt": "2026-10-13T19:01:40.267661+00:00",
+  "candidate": "4d9198d1ad3e874b23feb90c7e2a8d42e3c7a644",
+  "base": "27e7eadb6d849ecd7dcae4ce248447655dace433",
+  "verdict": "PASS exact four-path source composition and narrow staged30 component carry; current wallet/PXE runtime remains separately gated",
+  "preflightSha256": "3fa756b9262dfea512f3438acae8afc4d045c32fe261580db92d0225ec8fcc47",
+  "priorStaged30ReviewSha256": "4b1ff7c15a3b244fee3bd66be14a405c232561e47b04a7dc1dbf041377ceb8bc",
+  "verified": [
+    "Four current blobs equal accepted fc21/d941; only four paths differ from27e7.",
+    "Eleven local imports exact; da7 to27e7 only browser fixture change is unrelated.",
+    "First27 unchanged controlled helper cases and three staged actual SDK boundary tests remain the same; no same-process whole30 execution claim.",
+    "Receipt stage invokes stdlib receipt/block types; constructor stage explicitly forbids wallet reads and performs public hashing with skipSrsInit; HTTP stage invokes SDK node transport and real local auth server with controlled downstream. None constructs PXE."
+  ],
+  "dependencyComparisons": [
+    {
+      "stage": "actual-sdk-receipt",
+      "dependencyPinsCompared": 2440,
+      "differences": [
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_lifecycle.js",
+          "historicalSha256": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114",
+          "leadSha256": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_queue.js",
+          "historicalSha256": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6",
+          "leadSha256": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/pxe.js",
+          "historicalSha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+          "leadSha256": "f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/storage/note_store/note_store.js",
+          "historicalSha256": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+          "leadSha256": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478"
+        }
+      ]
+    },
+    {
+      "stage": "actual-sdk-constructor-v2",
+      "dependencyPinsCompared": 2440,
+      "differences": [
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_lifecycle.js",
+          "historicalSha256": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114",
+          "leadSha256": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_queue.js",
+          "historicalSha256": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6",
+          "leadSha256": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/pxe.js",
+          "historicalSha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+          "leadSha256": "f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/storage/note_store/note_store.js",
+          "historicalSha256": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+          "leadSha256": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478"
+        }
+      ]
+    },
+    {
+      "stage": "actual-http-adapter-v2",
+      "dependencyPinsCompared": 2440,
+      "differences": [
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_lifecycle.js",
+          "historicalSha256": "80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114",
+          "leadSha256": "68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/operation_queue.js",
+          "historicalSha256": "f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6",
+          "leadSha256": "a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/pxe.js",
+          "historicalSha256": "94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360",
+          "leadSha256": "f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b"
+        },
+        {
+          "path": "node_modules/@aztec-labs/pxe/dest/storage/note_store/note_store.js",
+          "historicalSha256": "fe8539daa47f61b4768c4820224f6f9eea9bd672936674e55bddac12f2d8f1e6",
+          "leadSha256": "e04546ab30a8db718e095abad464821b6e719eee08ecde138558146d6e3cc478"
+        }
+      ]
+    }
+  ],
+  "requiredNextChecks": [
+    "Bind current normal closure to4d919 before final component integration.",
+    "Any actual EmbeddedWallet/PXE work must use current lead closure, including all four patched PXE modules. Prior staged30 supplies no wallet lifecycle, note store or transaction qualification.",
+    "Proposed fixture focused13 remains controlled coverage; separately reviewed nativefalse no-send wallet stage must precede any separately granted constructor send."
+  ],
+  "limitations": [
+    "No deployment, portal, hosted service, registration, full Bok lifecycle or genuine testnet proof qualification.",
+    "No SDK mutation, rebuild or runtime by reviewer."
+  ]
+}

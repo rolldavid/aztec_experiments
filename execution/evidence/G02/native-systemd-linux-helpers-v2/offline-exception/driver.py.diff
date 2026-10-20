@@ -1,0 +1,44 @@
+--- historical/driver.py
++++ exception-candidate/driver.py
+@@ -1,5 +1,5 @@
+ """Public, harmless real-systemd fixtures; not native/prover qualification."""
+-import json,os,pathlib,time,hashlib,stat
++import json,os,pathlib,time,hashlib,stat,subprocess,math
+ exec(pathlib.Path('/run/native-subset.py').read_text(),globals())
+ receipt={'schemaVersion':1,'passed':False,'nativeQualified':False,'cases':[],'sourceFunctionHashes':SOURCE_FUNCTION_HASHES}
+ RECEIPT_DIRECTORY='/run'
+@@ -18,6 +18,23 @@
+   return {'status':'regular','bytes':info.st_size}
+  except FileNotFoundError:return {'status':'missing'}
+  except Exception:return {'status':'unavailable'}
++def original_exception(error):
++ # Only exact trusted stdlib exception types; never inspect unknown subclasses
++ # or serialize messages, args, cmd, output, stderr, errno or arbitrary objects.
++ kind=type(error)
++ if kind is subprocess.CalledProcessError:
++  result={'category':'called-process-error'}
++  fields=object.__getattribute__(error,'__dict__')
++  code=dict.get(fields,'returncode') if type(fields) is dict else None
++  if type(code) is int and -255<=code<=255:result['returnCode']=code
++  return result
++ if kind is subprocess.TimeoutExpired:
++  result={'category':'timeout-expired'}
++  fields=object.__getattribute__(error,'__dict__')
++  seconds=dict.get(fields,'timeout') if type(fields) is dict else None
++  if type(seconds) in (int,float) and 0<seconds<=120 and math.isfinite(seconds):result['timeoutSeconds']=seconds
++  return result
++ return {'category':'os-error' if kind is OSError else 'unknown'}
+ def failure_observation():
+  # Exact production native_state uses its existing bounded3s capture and finite
+  # projection. Failure diagnostics never replace the original outcome or run
+@@ -114,8 +131,9 @@
+  if case('timeout',['/usr/bin/sleep','10'],1,True)!='timeout':raise ValueError('Timeout gate')
+  checkpoint('complete')
+  receipt['passed']=True
+-except Exception:
++except Exception as failure:
+  receipt['failureCategory']='precondition-or-assertion'
++ receipt['originalException']=original_exception(failure)
+  try:receipt['failureObservation']=failure_observation()
+  except Exception:receipt['failureObservation']={'status':'diagnostic-unavailable'}
+ finally:

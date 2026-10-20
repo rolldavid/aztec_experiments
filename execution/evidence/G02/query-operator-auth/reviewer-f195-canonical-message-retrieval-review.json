@@ -1,0 +1,27 @@
+{
+  "revision": "f195e9c451c55ac0c7b964fb3d11b89cf145988b",
+  "base": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+  "verdict": "approved scoped RC30 original-message retrieval component; no blocking findings",
+  "source": {
+    "plugins/agent.mjs": "bf53171c03092ccee2fa22858b72b9f6fc067cd63283b04a524b23e9be9c8435",
+    "plugins/test/model.test.mjs": "bd93ceeeaff8bc0c78f10990ab968c5c331f7532506ac9196fcd194d7d132f1d"
+  },
+  "assessment": [
+    "History must provide canonical complete capture and current-anchor guard. Exact copied prior rows preserve IDs, roles, text and order, excluding latest; thread ID is captured before summary.",
+    "Tool accepts only exact threadId/offset/limit keys and safe bounded numbers. No external tool dispatch or fresh history load for retrieval.",
+    "At most eight messages and 14000 UTF-8 JSON bytes; whole rows are removed to fit, preserving continuation and valid JSON. Existing 992-byte row cap ensures at least one row can fit.",
+    "Before/after retrieval and pre-next-paid-call guard errors become fixed fatal BOK_HISTORY_CHANGED; session finally closes. Existing hosted metering guard independently checks original history after reservation before provider execution.",
+    "Malformed retrieval input yields fixed tool error without disclosure; any corrective main call still consumes original maxCalls budget. Summary remains counted and retrieved content explicitly untrusted.",
+    "No new framework, network history replacement, provider port or financial action. Tool uses the existing model loop and captured loader closure."
+  ],
+  "evidencePacketSHA256": "915f65c31c1cd541c770e1960e42a5bf43ecec3a332a36a7d11c6e85ea5e55b4",
+  "verification": {
+    "worker": "65 combined model/hosted pass plus final34 model including three additions:68 distinct staged checks, not whole68 rerun",
+    "reviewer": "34 actual existing model cases passed, zero fail/skip,282.679416ms, tool chunk4ac0bc; controlled ports, no provider/network",
+    "allPacketSourceReceiptLogHashesVerified": true
+  },
+  "limitations": [
+    "No actual paid-provider retrieval, multi-user quality/cost or full G10 acceptance established.",
+    "Existing 4096-row/60000-byte history limits remain."
+  ]
+}

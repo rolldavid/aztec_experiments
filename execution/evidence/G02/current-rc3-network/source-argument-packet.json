@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-10-13T07:37:16.101398+00:00",
+  "purpose": "One fresh canonical/selected rc3 compatibility and liveness snapshot; source only until independent review+lead grant",
+  "sourceCommit": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "leadSource": "a9da602b38cf00d47e40f8fb5d201809f1b48c0d",
+  "helpers": {
+    ".build/rc3-current-network-readonly.mjs": "95757fcd1d31f62366588c01b6b3695f68549818e4e97f88edbde608a3ad44e9",
+    ".build/rc3-current-network-liveness.mjs": "e1db6d5f684e61bcf8a8a88b5351c14a1be9711e0c1044942b1c565584aa1846"
+  },
+  "moduleBindingSha256": "0dd27060a5a5fbb28162894d03f9f0ec146240fb772a146108f0e04b02c4ce45",
+  "expectedFromExactInstalledSource": {
+    "genesisArchiveRoot": "0x29eb2c527f8d45276430363214e6c8d709ef3f657a3670ebac3179373d41e5c4",
+    "vkTreeRoot": "0x13eeb174d4119b221a22721853261759f57a65a57e864ad78b840b23cde69e02",
+    "protocolContractsHash": "0x0f54271c52865841a77aaa66036eed901aff22fdce9f08e123ec8b205c9854d7"
+  },
+  "sourceExtraction": "Exact hash-gated constants.gen GENESIS_ARCHIVE_ROOT literal, protocol_contract_data protocolContractsHash literal,255-node height7 vk_tree final node as exact official MerkleTree.root getter. No recomputed/native genesis.",
+  "dependencyIdentity": {
+    "labs": "6.0.0-rc.3",
+    "foundationArtifacts": "6.0.0-rc.6",
+    "viem": "2.38.3",
+    "ownAndLead22ModuleBytesEqual": true,
+    "ownDependencySymlink": false,
+    "dependencyWrites": false
+  },
+  "scope": {
+    "chainId": 11155111,
+    "registry": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
+    "selectedVersion": "3409706519",
+    "selectedExpectedAddress": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "selector": "canonical",
+    "provider": "fixed-public-Tenderly-Sepolia",
+    "fallback": false,
+    "SDKtransportRetries": 0,
+    "operatorRetries": 0,
+    "publicRawRpc": true
+  },
+  "reads": [
+    "Chain11155111; freshlatestL1anchor and300-block-oldanchor",
+    "Canonicalregistryaddress andregisteredselectedversion atsameanchor",
+    "Code/version/genesisArchiveRoot=archiveAt(0)/VKroot/protocolhash forcanonical andselected (reuse ifsameaddress)",
+    "Tips pending/proven atbothanchors; currentprovencheckpoint slot/timestamp/age; monotonicity andprogressobserved",
+    "Bothanchorhashes+timestamps andcanonical/selectedregistry addressesrechecked atsameheight"
+  ],
+  "bounds": {
+    "requestsMax": 32,
+    "worstCasePlannedRequests": 27,
+    "requestTimeoutMs": 8000,
+    "totalWorkMs": 59000,
+    "outerProcessSeconds": 65,
+    "responseBytesMax": 65536,
+    "receiptBytesMax": 16384,
+    "redirects": "error",
+    "credentials": "omit",
+    "noWalletOrSignerImports": true,
+    "noNativeOrFullNodeExecution": true
+  },
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/.build/rc3-current-network-readonly.mjs",
+    "--output",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G02/current-rc3-network/live-1.json"
+  ],
+  "environment": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/usr/bin:/bin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "NODE_OPTIONS": "",
+    "NODE_PATH": "",
+    "HOME": "fresh owned empty directory at execution",
+    "credentialVariables": "not inherited"
+  },
+  "executionProcedure": [
+    "Rehash helpers+22modules andsource review, verifyfreshoutputabsent",
+    "Persist exclusive fsynced intent with exactcommand/source/review/clock beforeoneinvocation",
+    "Run with existingboundedowner/65s outer processdeadline and sanitizedenv; freshoutputexclusivecreated/fsynced beforefirstrequest",
+    "Capture safe summary/exit andpartialreceipt plusownprocesscleanup; no automaticretryregardlessresult"
+  ],
+  "resultSemantics": {
+    "passed": "All readscomplete, expectedselectedversion/address remainscanonical,3SDKdefaultconstantsmatch, recentL1head<=120s, pending+provenincrease in300-blockwindow",
+    "changedCanonical": "Record actualcanonical/selectedseparately, constants+mismatchnames; falsepass,noauto target/providerupdate",
+    "liveness": "Recordedcheckpointage andprogress are snapshot observations; no fullnode sync/readiness/service qualification",
+    "contractScope": "Does not authenticate applicationRolling/FPC/Bok deployments; historical2914addressesremainunusablewithoutactualcurrentdeploymentrecords",
+    "imageBinding": "22installedsourcebytesbound toleadSDK. Priorcachedrc3imageextractionverified7startupmodules only; no falsecomplete3constant-imageclaim",
+    "historicalFailure": "No attribution ofold09mismatchfromnewreading"
+  },
+  "priorEvidence": {
+    "compatibility": "execution/evidence/G02/rollup-compatibility-dd3-live-1.json",
+    "liveness": "execution/evidence/G02/operator09-target-liveness-live-1.json",
+    "oldSource": "git dd3e2bc4:deploy/prover/rollup-compatibility-diagnostic.mjs,rc1hardpinsnotreused",
+    "oldLivenessProcedureSha256": "22a917e37586af2f50788c08387a1711ea669f3a73cd717b9196160caecfa4bb"
+  },
+  "noNetworkExecuted": true,
+  "noTrackedSourceMutation": true,
+  "needsReviewBeforeRun": true
+}

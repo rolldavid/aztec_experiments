@@ -1,0 +1,8 @@
+{
+  "candidate": "39dbff586a5092349c32d93b721d5417733e3532",
+  "base": "cf001334dd3548a4e74ba61fb6a57a6b92629822",
+  "inputs": 97,
+  "outputs": 25,
+  "result": "pass",
+  "reason": "Only directly served reader and tests changed; neither wallet inputs nor generated outputs changed; all existing manifest bytes verified."
+}

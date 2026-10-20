@@ -1,0 +1,46 @@
+{
+  "reviewer": "reviewer-20261011",
+  "implementer": "lead-20261011",
+  "kind": "independent",
+  "base": "2f196a9b41cec91f0636038f7f5ba2bb3ad61d9e",
+  "candidate": "6b0a68f637c21c28e0af30a29f9b5cde06830fa0",
+  "task_id": "G07-initial-reorg-browser-components",
+  "verdict": "approve",
+  "scope": "Bounded component development integration only; not full G07/G14/application/release completion.",
+  "packetSha256": "cbaa33e233c5135923ccb5cd76d402929d58a2e27f540dda73cc45258be08281",
+  "policySha256": "6df65daadc378cf25c3ba3c3186c62ef07d3b0ed1eb6992eda493439ff2b513a",
+  "carryMapSha256": "fa2aac8e5758798796057a405e6c1859197819c33020aed0e5d050feddef3f8d",
+  "evidenceDraftSha256": "c9563b885019ee88d4d1654a3285298ae6371be10003d999a1a640885541ab3c",
+  "verification": {
+    "changedPathsExactToAcceptedAnchors": 35,
+    "unchangedBaseCarryPaths": 166,
+    "reviewReferenceHashes": 23,
+    "currentInputOutputBindings": 3157,
+    "contractOutputs": 12,
+    "mismatches": [],
+    "cleanCandidate": true
+  },
+  "ownership": "Controls explicitly released1797 writer and allowed integration of earlier6b0 bootstrap bytes; Design6763 storage and lead7d3 deployment branches remain separate and are not integrated here. This clears previous8fca ownership hold only.",
+  "findings": [],
+  "holds": [],
+  "requirementsBasis": [
+    "Previously recorded8fca per-group source/runtime review, now exact final carry map independently byte checked.",
+    "Actual27864 initial cold/fork/replacement receipt00ea remains scoped initial-only.",
+    "Grumpkin browser75707 is real SDK initialization/custody component acceptance, not genuine cold wallet journey.",
+    "Normal manifests/current3157closure and named contract outputs match; no need new heavy rerun solely for unchanged combination."
+  ],
+  "openMandatory": [
+    "full genuine cold preference browser (initializer success is not account recovery)",
+    "initialized read-marker fork/reopen/former-head promotion",
+    "cold notification journey",
+    "full Bok outage/authenticated reply/economic journey",
+    "complete-history public index and operated archive capacity",
+    "actual Linux fullnode/prover scope/deployment/activation",
+    "independent privacy, audit, soak and release gates"
+  ],
+  "advanceConditions": [
+    "Parent must bind this exact independent review into final evidence without changing reviewed source/policy/carry map.",
+    "Run existing integration negative gates proving absent review and deliberately failed check refuse ref advance, then exact expected-base CAS. Reviewer did not advance any ref.",
+    "Preserve failed evidence and all explicit open mandatory scopes. No isolated ControlsLinuxpin/activation or DesignSQLite/clock source included."
+  ]
+}

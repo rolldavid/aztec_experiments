@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-11T16:32:04.958502+00:00",
+  "operations": "read-only AWS GetRole/DescribeFleets/SimulatePrincipalPolicy",
+  "deployIdentityVerified": true,
+  "fleetRoleExists": false,
+  "spotFleetRoleExists": false,
+  "spotRoleExists": true,
+  "fleets": [],
+  "deployCreateEC2FleetServiceRole": "allowed (all context supplied)",
+  "ssoCreateEC2FleetServiceRole": "implicitDeny;missing irrelevantS3context reported",
+  "source": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-prerequisites.html",
+  "conclusion": "Existing deploy profile allows creating required AWS fleet service-linked role; no permission expansion needed. Request fleet can bind ValidUntil+TerminateInstancesWithExpiration; verify actual configured control and independent host absolute timer before operations. No role created and no compute launched yet.",
+  "dockerLocal": "daemon unavailable; Linux package validation requires supported Linux environment"
+}

@@ -1,0 +1,22 @@
+{
+  "source": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "startedAt": "2026-10-13T05:55:56.543Z",
+  "pid": 11431,
+  "runnerSha256": "c629a7ae38bae13b2933771822c80a9bbf6d6eca314d30574e7f264812abc341",
+  "childSha256": "30e27eca1092f6e223140e2df3e71644197393ce73efbe9b45252cdc73ee9436",
+  "preparationSha256": "9d5ead22d96fc89f7041457d04de868bdc7b0b382bdd8db1e83d74f33121d64a",
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-system-bus-controlled/suite.py"
+  ],
+  "env": {
+    "PATH": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin:/opt/homebrew/opt/python@3.14/libexec/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "NODE_BACKEND": "js",
+    "LOG_LEVEL": "silent",
+    "HARDWARE_CONCURRENCY": "1",
+    "HOME": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-controls/execution/evidence/G02/native-systemd-system-bus-controlled/home",
+    "TMPDIR": "/private/tmp/sbc-q0lgfue_",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "retry": false
+}

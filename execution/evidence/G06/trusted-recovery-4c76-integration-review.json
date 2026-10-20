@@ -1,0 +1,127 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "reviewed_at": "2026-10-12T02:53:38.968295+00:00",
+  "findings": [],
+  "verdict": "approved for bounded development integration; G06-owned component evidence conjunction sufficient at this exact source",
+  "allowed_changed_paths": [
+    "scripts/testing/rolling-application-fixture.mjs",
+    "scripts/testing/rolling-application-fixture.test.mjs",
+    "scripts/testing/rolling-public-acceptance.mjs",
+    "scripts/testing/rolling-trusted-recovery.mjs",
+    "scripts/testing/rolling-trusted-recovery.test.mjs",
+    "scripts/testing/rolling-wire-trace.mjs",
+    "scripts/testing/rolling-wire-trace.test.mjs",
+    "scripts/testing/scenario-flows.mjs",
+    "scripts/testing/scenarios.mjs",
+    "shared/rolling/public-index.test.mjs"
+  ],
+  "candidate_file_sha256": {
+    "scripts/testing/rolling-application-fixture.mjs": "c713243bda6c8822f118320ac0c8a9b109b3f96d40a6a860538a25b02dabff9c",
+    "scripts/testing/rolling-application-fixture.test.mjs": "6ba3f7b5716310ba2a52ba1bdc208d200500f2d0bb5794fd252c2353212d3e9d",
+    "scripts/testing/rolling-public-acceptance.mjs": "88e8d89626203a0a25dd85a7729cae97afab5efc5dc1ae5f62cf3131d5283abf",
+    "scripts/testing/rolling-trusted-recovery.mjs": "2b153489345016f156c0578c6f0a486ce78fbb4d9072adcce372ae8e46a48c1d",
+    "scripts/testing/rolling-trusted-recovery.test.mjs": "b5d80470bc655278e24dd23baf58646eb999074d7462a334bbc40b7e2953a878",
+    "scripts/testing/rolling-wire-trace.mjs": "95cf9a2ccfe9f2d3eb9d5547258f4143848d48c55b8b8c97f2131386de13b723",
+    "scripts/testing/rolling-wire-trace.test.mjs": "0a36dff8d66830b8120244f68af3d07a907a238051b8585ecd983612de7227cc",
+    "scripts/testing/scenario-flows.mjs": "6f7fab7dee2a13c41db51e2e452b80ee2f5ab94151b1303b2e070142d98beecd",
+    "scripts/testing/scenarios.mjs": "8f72cfd2bddbe848dac7dec58328368b3c7c31ee45ac012f17d3cd58e7cc72d9",
+    "shared/rolling/public-index.test.mjs": "048f611b527588a356ca270a119e20c9ea38a19347f7f86e281d08c72f5483ef"
+  },
+  "runtime_review": {
+    "path": "execution/evidence/G06/trusted-recovery-cd2a-runtime-review.json",
+    "sha256": "c1d2cbe2ef43d7f62f4abcec75ec2ec72278b10d3b2763edfcafeb1cbd02acc1"
+  },
+  "source_reviews": [
+    {
+      "path": "execution/evidence/G06/trusted-recovery-4c76-review.json",
+      "sha256": "b8958d084bebecd64533c8217b3b86264f00f0bc0965af06078ae0f6ff79af33"
+    },
+    {
+      "path": "execution/evidence/G06/trusted-recovery-68e-transfer-review.json",
+      "sha256": "223b54c1886de44ef750d4f5fe83cb7671f7490aa838f68e85a31be7abcf2a33"
+    },
+    {
+      "path": "execution/evidence/G06/component-sufficiency-4c76-review.json",
+      "sha256": "7fcd28caf0075b7e1c379dfce69d7f824dd41ddd8bebeae8c4a63f870ad2afd3"
+    }
+  ],
+  "final_source_composition": {
+    "path": "execution/evidence/G06/final-source-4c76-composition.json",
+    "sha256": "7437ae13a23baf272aa2fff3f250c778de2984fa69461abebabc9f1cbe3cba5a"
+  },
+  "independent_checks": {
+    "affected_source_regressions": {
+      "passed": 198,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/reviewer-recovery-4c76-tests.log"
+    },
+    "component_tests": {
+      "command": "NODE_BACKEND=js <pinned Node24.21.0> --test --test-concurrency=1 apps/rolling/model.test.mjs shared/rolling/name-policy.test.mjs shared/rolling/application.test.mjs",
+      "log": "/tmp/reviewer-g06-components-4c76-tests.log",
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 1218.973333
+    },
+    "wallet_assets": "All75 inputs and24 outputs independently hash/size verified; manifest3d8f52a661d15537952a0f4d300214d7d14aa772d9292a84a5bf6915ea511951.",
+    "frontend": "All six named frontend/application blobs exactly equal7328 actual composer source.",
+    "protocol": "All39 tracked Rolling contract files exactly equal90a1; prior151 normal TXE/build evidence hashes rechecked; current processed artifact6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace,12 private VKs; current loadRollingArtifacts succeeded.",
+    "privacy_source": "All19 mapped source hashes and equality flags checked;17 production/core files unchanged.",
+    "gate_and_coordination": "Strict policy10-path scope matches exact git diff. Existing19 negative gate checks and graph validation inspected; missing/failed/stale checks remain rejection conditions. Reviewer does not advance branch."
+  },
+  "G06_owned_criteria": [
+    {
+      "id": "G06-A01",
+      "disposition": "Existing genuine anonymous687/reposte030/account-reactions-b0b37/reply-e58 plus social9745/reaction97d support owned canonical protocol behavior. No new all-in-one campaign is required.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A02",
+      "disposition": "Actual992 social content and production composer992 preparation/996 rejection without truncation; actual removed-parent canonical tombstones and absence of reusable public author field.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A03",
+      "disposition": "Actual parent/root/reference and authenticated moderator tombstone behavior supported by anonymous687/reply-e58. Existing reader safely omits removed text and preserves links.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A04",
+      "disposition": "No additional funded/proof campaign needed for rendering safety. Current model safeURL permits only absolute HTTP/HTTPS. Reader emits text nodes for markup and unsupported links; labelled HTTP links receive noopener/noreferrer. Composer grapheme count is explicitly paired with UTF8 bytes, validates992 without truncation. Existing actual composer and labelled DOM tests complement pure validators.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A05",
+      "disposition": "Actual canonical events for quotes/reposts/likes and same-account duplicate/unlike/removal cases support protocol component.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A06",
+      "disposition": "Genuine owned-wire-e3 two accounts/two names each plus production composer7328 encrypted imports/private choices/Anonymous/account switch support composer identity component.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A07",
+      "disposition": "Actual social9745/reaction97d requests + decoded canonical effects, owned-wire-e3, source privacy argument and construction routing form bounded engineering evidence. Live unavailable/stale/personalized-denial recovery is the outstanding actual scenario.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    },
+    {
+      "id": "G06-A08",
+      "disposition": "Actual duplicate paid no-op/unlike and two-account tags plus source like_tag(account NHK,chain,version,board,post) independent of name establish alias-independent counting component. Name normalization and Unicode bounds are circuit-enforced delegated charset decisions: ASCII letters/spaces/apostrophe/hyphen,1-32 each, Bok reserved, unsupported Unicode explicitly rejected. Case/whitespace framing/hidden padding/malformed UTF8 tested.",
+      "final_composition": "Satisfied for the explicitly scoped engineering component through historical actual reviews, exact source/artifact/render binding and current cd2a recovery; inherited and release limitations remain as documented."
+    }
+  ],
+  "remaining_requirements_not_closed": [
+    "Local chain31337 with genuine application proofs and controlled settlement; no epoch/network proof qualification.",
+    "One confirmed predecessor and prepared unsent action preserved across faults; not lost receipt after accepted send or broadcast replay recovery.",
+    "Opaque transaction/proof bytes and runtime-added headers are explicit observation gaps; no complete cryptographic unlinkability, timing/content anonymity, independent deployed topology or specialist audit claim.",
+    "G05, G07, G09, G14 full product obligations,99 compiler diagnostic obligations, G13 specialist review, elapsed soak and network release clearance remain open.",
+    "G05 concurrent normalized-name race, funding/device-loss/rejected-withdrawal requirements are not completed by this verdict.",
+    "G07 encrypted social state, G09 full UI/moderation-model behavior and real provider-to-authenticated-reply integration remain in their owning criteria.",
+    "Later queued source/UI/protocol changes require affected re-review/tests; this is not approval of unintegrated branches."
+  ],
+  "integration_condition": "Lead must run the exact-source enforceable gate and advance expected-old integration ref atomically; only lead may change graph/task state. No other G06-owned genuine scenario identified after this conjunction. G07 may begin under existing graph dependency once lead records legitimate G06 component completion."
+}

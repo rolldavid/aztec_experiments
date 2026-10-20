@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "3bead1adc9d9ffbd0274f784cd3138c67af2a0e4",
+  "base": "d5d9bda727abdcd8c79586a376beca217e008869",
+  "verdict": "source-and-existing-visual-evidence-approved; independent DOM execution pending reserved slot",
+  "findings": [],
+  "scope": "G07 RC26/46 saved-byte preference/read-marker UI confirmation only",
+  "sourceHashes": {
+    "apps/rolling/wallet-panel.mjs": "cecca39139e6ba679045471269971c6e6ff78a2ff3f09a690d182909b84a6616",
+    "apps/rolling/wallet-panel.browser.test.mjs": "71013c05fe8b94403c653ce98095f09f1dfc49baae7b089d585220806d83e3a4"
+  },
+  "packetSha256": "5a1f5b7cf2bdedc29060a8f8e7663d696c724567b655cb5b31df476a4749f8e2",
+  "evidenceHashesVerified": {
+    "saved-ui-first/test.log": "c2be805185f9cedb4b4d8c5e203d19320c1426d05fd9832b47a179987984b2a8",
+    "saved-ui-first/binding.json": "e50cb3f07ad2841f93675418366bd17bea01592bb545f9d3e4b1d45555908e4a",
+    "saved-ui-first/saved-original-390.png": "3500cb34aaac76248ed290e30e9d4eda10695089eaf8004bdca70f1bae606f67",
+    "saved-ui-first/saved-original-1280.png": "202af5c605e94433e2ce6ad7d3541b446dbbd90b170accc0526c185c3dc491c0",
+    "saved-ui-first/saved-replacement-390.png": "69bbc4856e15ef92271bf9158dc84418029dbb745c0455f8b4448cd16f0e2437",
+    "saved-ui-first/saved-replacement-1280.png": "206e12ae7b5ab2cae0a0d5ad0a66d5f4d83fdc91af84cecd49fef9c2f0fab0bd"
+  },
+  "independentChecks": [
+    "Inspected exact two-file git delta and surrounding busy, account epoch, invalidation, receive, refresh and close boundaries.",
+    "Verified checkout source bytes equal candidate git blobs and all six bound evidence hashes.",
+    "Inspected all four existing original/replacement screenshots at 390 and 1280 widths: complete wrapped hashes, saved fee attribution and visible confirmation; vertical dialog scroll is intentional.",
+    "Inspected added status, metadata, exact API counter, unknown outcome, account invalidation and RAM-only eligibility tests; prior tests retained. No browser/heavy process run during parent native campaign."
+  ],
+  "behavior": [
+    "Confirmation exists only after explicit read-only inspection with resumable exactResume, unknown current outcome, matching current hash and consistent signed fee/marker metadata.",
+    "Original versus replacement fee ceilings are distinguished from historical charges; replacement candidate cannot equal source candidate.",
+    "Confirmation captures primitive expectedTxHash and invokes only resumeSaved; no prepare, prepareReplacement, estimate or proof API is added.",
+    "Busy state prevents duplicate activation/closing; RAM inspection clears before send and on failure, close, reload or account invalidation. Late results are checked against the account epoch.",
+    "Full head, authenticated exact bytes, chain/predecessor eligibility and final submit boundaries remain the responsibility of reviewed production application/journal c6fc184; UI metadata is not an independent chain authority."
+  ],
+  "testDisposition": {
+    "workerEvidence": "68 actual Chromium DOM checks with labelled application/account doubles, 0 failures/skips, source/hash-bound log inspected",
+    "independentDOM": "pending; prohibited while exec25077 owns heavy slot",
+    "requiredNext": "Run affected saved-transaction DOM subset when parent releases browser slot; root composition and normal wallet asset rebuild before integration."
+  },
+  "limitations": [
+    "No genuine saved-transaction browser recovery or reorg acceptance asserted.",
+    "Existing screenshots are independently visually inspected worker-generated artifacts, not a new independent browser capture.",
+    "No root source, asset, dependency, cloud or service mutation."
+  ]
+}

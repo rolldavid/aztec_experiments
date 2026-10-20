@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+  "disposition": "Prepared runner eligible for ONE source-approved diagnostic after parent grants stopped-consumer exclusive slot; unexecuted",
+  "runnerSha256": "51893cb238f904cf35c6954666a076966322c5619883e77812d283e1d3d630be",
+  "planSha256": "70fffe2a9974d3fef858301e4bca847b6354341626b1a6be36fafab7ed2c9d1e",
+  "verified": {
+    "sourceAndFixturePins": 22,
+    "dependencyPins": 67,
+    "pinnedNode": true,
+    "originalOwnSymlink": true
+  },
+  "review": [
+    "Clean exact HEAD/source/artifact/Node/dependency pins are checked before exclusive intent and link mutation. Original dependency target is read-only; only own symlink temporarily changes.",
+    "Environment copies only PATH/HOME/TMPDIR plus fixed JS backend/log and diagnostic opt-ins, excluding provider/credential environment variables. No provider/cloud/paid/proving command.",
+    "Popen assignment arms group cleanup before process inspection. Discovery failure enters unconditional SIGKILL fallback/reap, and unavailable final inspection fails closed.",
+    "60s/2GiB sampled aggregate limit; TERM/KILL/reap and final group absence precede owned temporary directory removal. This is process-group ownership, not proof against deliberately escaped process groups; the fixed reviewed test has no such escape path.",
+    "Exclusive intent/log and fixed absent report prevent replay. One newly created actual report is hash-bound and copied; exit0 alone cannot pass if diagnostic/cleanup/pins/link restoration fail.",
+    "Temporary test-owned prefixes are compared before/after under serialized slot. No other native consumer may create those prefixes during this job.",
+    "No installed patch/build; test copies pristine targets into its own isolated temporary SDK before applying baseline transforms there."
+  ],
+  "acceptance": [
+    "Actual diagnostic runs; truthful excluded-case count, no full81-suite claim.",
+    "Final runtime and diagnostic source hashes match approved pins; all owned groups/directories absent, symlink restored and dependency pins unchanged.",
+    "Report complete actual event/head digest plus numeric cursor progress, native4 accepted/tag0/errors0/pending0 or preserve failure evidence."
+  ],
+  "limitations": [
+    "Source-only eligibility, no execution or resource slot granted by reviewer.",
+    "No full constructor/native-chain/browser/capacity acceptance.",
+    "60s is work bound plus bounded cleanup overhead; no automatic retry or deadline increase."
+  ]
+}

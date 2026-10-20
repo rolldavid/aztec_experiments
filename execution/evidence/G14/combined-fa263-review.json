@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "parentSession": "lead-20261011",
+  "candidate": "fa2630e15d1c30e31177d0b33b9e2ab344cf7336",
+  "base": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+  "verdict": "changes requested for deployment; local query rerun source approved",
+  "scope": "Split disposition: bounded local disabled-proof query-policy experiment approved; bootstrap deployment not approved until netlink sandbox repair",
+  "independentChecks": [
+    {
+      "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test scripts/testing/trusted-query-fixture.test.mjs",
+      "result": "12 passed,0 failed,0 skipped; actual local run pending"
+    },
+    {
+      "command": "python3 scripts/test-prover-bootstrap.py",
+      "result": "20 passed; unit/syntax/configuration evidence does not exercise Linux seccomp/netlink"
+    },
+    {
+      "check": "Exact transfers",
+      "result": "Root bootstrap3files byte-equivalent ebb6e5a; root queryhelper/test byte-equivalent7a643 diagnostic candidate"
+    },
+    {
+      "check": "Genesis adjustment and diagnostic source",
+      "result": "Only trusted-query-policy creates its new disposable Anvil chain120seconds in past and records observed wall/genesis times. Existing chains, product/service Date.now and freshness inspector are unchanged; no nowSeconds override, retries or weakened HTTP/identity/freshness assertions. Actual node timestamp and fixed readiness category captured before/after; sourcebound report and parent cleanup retained."
+    }
+  ],
+  "blockingFindings": [
+    {
+      "severity": "P1",
+      "paths": [
+        "deploy/prover/bootstrap.py:install_qualification",
+        "deploy/prover/bootstrap.py:verify_controls"
+      ],
+      "issue": "Qualification unit RestrictAddressFamilies excludes AF_NETLINK required by tc control readback",
+      "scenario": "On supported x86_64 systemd, qualifier calls verify_controls; tc opens AF_NETLINK/NETLINK_ROUTE and fails under unit allowlist before node-readiness qualification. Fake tests do not execute this kernel boundary.",
+      "repair": "Add AF_NETLINK to exact qualification unit socket-family allowlist, retaining empty CapabilityBoundingSet, loopback IP restrictions and mandatory tc validation. Assert minimal family set and no capability widening; actual Linux commissioning still required.",
+      "discoveredBy": "lead; independently confirmed reviewer from primary sources",
+      "sources": [
+        "https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/lib/libnetlink.c",
+        "https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd.exec.xml"
+      ],
+      "priorReviewDisposition": "Amends source-only approval in bootstrap-ebb-review.json; original report retained for history, deployment approval withheld pending repair."
+    }
+  ],
+  "launchProposalReview": {
+    "path": "execution/evidence/G02/node-launch-template-proposal.json",
+    "sha256": "7148b29c659d8d779fb2f52cec547034cc29c892305365d85c087022f296a5a6",
+    "scope": "Static proposal review only; no cloud calls or paid action performed by reviewer",
+    "observed": {
+      "instance": "m7a.4xlarge",
+      "rootGiB": 40,
+      "dataGiB": 1024,
+      "bothEncrypted": true,
+      "bothDeleteOnTermination": true,
+      "instanceInitiatedShutdown": "terminate",
+      "IMDSv2Required": true,
+      "metadataHopLimit": 1,
+      "newTemplateOmitsInheritedKeyRoleAndUserData": true,
+      "existingSecurityGroup": "sg-03065d3c141f9b030"
+    },
+    "forecastDisposition": "Ledger conservatively reserves prior108.28USD plus proposed105USD =213.28USD against300USD ceiling;250GB allowance explicitly contingency, not hard traffic bound. Live pricing/resource reconciliation, security-group/AMI verification, immutable payload hash, actual independent Fleet expiry and host shutdown/egress controls remain lead prerequisites. No approval to launch from proposal alone."
+  },
+  "limitations": [
+    "Local query run requires BOARD_TEST_PROOFS=disabled, parent included-board checkpoint,120s/4GiB and owned cleanup; actual result remains pending",
+    "Bootstrap repair independent of local fixture: paid launch remains held; no weakening or skipping tc readback",
+    "Prior5235 integration review and completed gatedintegration are not changed by this new source verdict",
+    "Full Linux/private-query privacy/network/production acceptance remains open"
+  ]
+}

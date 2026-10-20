@@ -1,0 +1,28 @@
+{
+  "candidate": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+  "environment": "macOS arm64 Node24.21.0 Aztec6.0.0-rc.1 NODE_BACKEND=js",
+  "walletBuild": {
+    "command": "NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/rolling-wallet-assets.mjs",
+    "execSession": 56056,
+    "exitCode": 0,
+    "files": 24,
+    "inputs": 81,
+    "log": "saved-f52-wallet-build.log"
+  },
+  "combinedChecks": {
+    "command": "NODE_BACKEND=js caffeinate -i .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 --test-timeout=20000 scripts/testing/rolling-preference-saved.test.mjs scripts/testing/rolling-application-fixture.test.mjs scripts/testing/rolling-public-acceptance.test.mjs scripts/testing/rolling-preference-reorg.test.mjs apps/rolling/wallet-panel.browser.test.mjs",
+    "execSession": 56999,
+    "exitCode": 0,
+    "passed": 213,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 35583.888208,
+    "log": "saved-f52-combined-tests.log",
+    "limits": "Labelled component/double tests plus actual Anvil mode smoke/nativeChromiumDOM. No full real saved-byte qualification or aggregate capacity claim."
+  },
+  "logsSha256": {
+    "saved-f52-wallet-build.log": "1881ee31bfc7483b5b4463305debd11640c241d988c3a2cc537e9fe2469ab890",
+    "saved-f52-combined-tests.log": "7d7e66c93ae63df3304cfc787299120055b177b0d9afb59fe69a246044f60fab"
+  },
+  "sourceComposition": "saved-f52-composition.json"
+}

@@ -1,0 +1,27 @@
+{
+    "FleetId": "fleet-fb063004-d997-4b14-06b2-a4806ef2c2d6",
+    "Errors": [],
+    "Instances": [
+        {
+            "LaunchTemplateAndOverrides": {
+                "LaunchTemplateSpecification": {
+                    "LaunchTemplateId": "lt-0229bbe3ac4fa4df9",
+                    "Version": "2"
+                },
+                "Overrides": {
+                    "InstanceType": "c7a.4xlarge",
+                    "MaxPrice": "0.40",
+                    "SubnetId": "subnet-aa91f4ce"
+                }
+            },
+            "Lifecycle": "spot",
+            "InstanceIds": [
+                "i-0025eb05db3c2491c"
+            ],
+            "InstanceType": "c7a.4xlarge",
+            "AvailabilityZoneId": "use1-az1",
+            "AvailabilityZone": "us-east-1b",
+            "SubnetId": "subnet-aa91f4ce"
+        }
+    ]
+}

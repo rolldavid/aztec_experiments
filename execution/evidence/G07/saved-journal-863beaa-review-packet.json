@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "revision": "863beaa18cf1ef0fcaf6e8b7bb9b18a36622fcdc",
+  "base": "ead183a",
+  "reviewStatus": "pending independent review",
+  "claimedPaths": [
+    "shared/l2-journal.mjs",
+    "scripts/test-w03-proof-replacement.mjs",
+    "scripts/test-w03-journal.mjs"
+  ],
+  "changedPaths": [
+    "shared/l2-journal.mjs",
+    "scripts/test-w03-proof-replacement.mjs"
+  ],
+  "source": {
+    "shared/l2-journal.mjs": "b8e4510e7a711f16a7fca030e5618d0cf5cee3947faef6e01e10d3928c87b905",
+    "scripts/test-w03-proof-replacement.mjs": "300f43db8cebc6f04dfc55fbc3fff0a89ec52d8fb156b0e24969808050e0671e"
+  },
+  "api": {
+    "inspectSavedRecovery": "inspectSavedRecovery(expectedOperation,expectedTxHash) -> frozen {status:empty|resumable|pending|canonical|unknown,operation,txHash}. Authenticates exact retained bytes/hash/op. Dropped requires valid isValidTx and second matching dropped receipt; strict predecessors must still be missing-anchor invalid. No permit, acknowledge, write or send.",
+    "recover": "recover({expectedOperation,expectedTxHash,beforeSubmit?}) optional bound options; exact own data captured before first await, callback receives only current hash. No-arg behavior retained with mandatory safety repairs. No signing/proof/fee generation. Callback is a trusted app capability, not a user-supplied function.",
+    "reconcilePrevious": "Same optional binding; existing return {receipt,operation} and empty null semantics retained.",
+    "sendBoundary": "After dropped+valid classification, re-read receipt; pending/canonical transitions do not resend. For actual resend, context guard, optional app callback, persisted strict predecessor guard, authenticated ciphertext read, context guard, second ciphertext read, final context guard then identical-byte submission. Caller holds exclusive account lease throughout.",
+    "timeout": "Inspection has bounded reads and active flag to prevent timed-out initial SDK result from spawning further validation reads; current pending SDK call cannot be cancelled."
+  },
+  "verification": {
+    "command": "<pinnedNode24.21.0> --test --test-concurrency=1 scripts/test-w03-proof-replacement.mjs scripts/test-w03-journal.mjs",
+    "passed": 134,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 37581.550375,
+    "exitCode": 0,
+    "cleanup": "test process exited; no services/heavy jobs",
+    "beforeFix": "Both recover/reconcilePrevious first-attempt storage-mutation and last-read account-lock regressions failed before source repair.",
+    "coverage": [
+      "Original118 cases preserved",
+      "Read-only exact inspection allstatuses/cipher equality/no acknowledgment",
+      "Exact bytes single broadcast then canonical repeat read-only",
+      "Wrong operation/hash, malformed/accessor options, mutable options captured, callback error preserved",
+      "Reinclusion between validity and second receipt no resend",
+      "Strict predecessor pending fences inspection/recovery",
+      "Timeout no later validation follow-up"
+    ]
+  },
+  "evidence": {
+    "saved-journal-first-attempt-before-fix.log": "3a0805282c9ca058f8efbf6197e295bb05bc2f4da91b74d8a16ca0b8f2044d99",
+    "saved-journal-expanded-first.log": "5150c1aee09f8e7e822b6f74f18392d55330b6df976e5b2da16a7a0ca5fe63b7"
+  },
+  "limits": [
+    "Actual SDK random Tx serialization and AEAD with labelled proof/node/storage doubles; no genuine chain/reorg acceptance.",
+    "App original/replacement head/marker/fee attribution and explicit UI consent still require subsequent source wiring/review.",
+    "No changes to frozen UI56e in actor checkout, SDK dependencies, services or build outputs."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "candidate": "5f4e6e2f59656cedc37a7d591facc4d856ebcdcb",
+  "base": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+  "task_id": "G02",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "5f4e6e2f59656cedc37a7d591facc4d856ebcdcb",
+      "base": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+      "id": "diagnostic-unit",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "node --test scripts/test-u01-browser-rpc.mjs experiments/avatar/codec.test.mjs",
+      "environment": "macOS arm64 Node24.21.0",
+      "observed": "11 passed",
+      "artifacts": [
+        {
+          "path": "evidence/G02/diagnostic-combined-tests.log",
+          "sha256": "f43236c4c4133183dcab29142086376583f01ee72c8463b251d3548d3157075d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "5f4e6e2f59656cedc37a7d591facc4d856ebcdcb",
+    "base": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "implementer": "design-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "evidence/G02/diagnostic-review.json",
+        "sha256": "67ce135e1e109455c430f1b157d6aa074edc769cd4eef842b162083c89a1064f"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "candidate": "5f4e6e2f59656cedc37a7d591facc4d856ebcdcb",
+      "base": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+      "id": "G02-diagnostics",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "evidence/G02/diagnostic-combined-tests.log",
+          "sha256": "f43236c4c4133183dcab29142086376583f01ee72c8463b251d3548d3157075d"
+        },
+        {
+          "path": "evidence/G02/diagnostic-review.json",
+          "sha256": "67ce135e1e109455c430f1b157d6aa074edc769cd4eef842b162083c89a1064f"
+        }
+      ]
+    }
+  ]
+}

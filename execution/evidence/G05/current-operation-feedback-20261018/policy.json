@@ -1,0 +1,29 @@
+{
+  "base": "a2c08af364df9788cee13165bc533e02025f97b2",
+  "candidate": "7ea580d011fc75e4cdd7afb4271a4d005c90e04e",
+  "task_id": "G05-current-operation-feedback",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "design-20261018",
+  "allowed_paths": [
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-panel.browser.test.mjs"
+  ],
+  "required_checks": [
+    "current-feedback"
+  ],
+  "requirements": [
+    "RC04-current-operation-state",
+    "RC40-status-feedback"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "design-20261018",
+      "task_id": "G05-current-operation-feedback",
+      "paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
+      ]
+    }
+  ]
+}

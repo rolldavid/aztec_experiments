@@ -1,0 +1,16 @@
+{
+  "label": "actual production SDK transport, controlled503 receiver, no network/browser/chain run",
+  "oldRevision": "ad1d9eb8803514c55c901b28901587bdf82c2148",
+  "candidate": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+  "rows": [
+    {
+      "methods": [
+        "aztec_getNodeInfo"
+      ],
+      "oldAllowed": false,
+      "newAllowed": true
+    }
+  ],
+  "oldInspectionErrors": 1,
+  "newInspectionErrors": 0
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-12T06:53:26.030481+00:00",
+  "readOnly": true,
+  "volumeRecords": [],
+  "bothVolumesAbsent": true,
+  "fleet": [
+    {
+      "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+      "state": "deleted_terminating"
+    }
+  ],
+  "deleteRequestedExactlyOnce": true,
+  "instanceTerminatedEvidence": "rolling-node-07-readonly-065232.json",
+  "receiptSha256": "657eb1427d1a43a2fd7b6a3f475ca94eee0f33a7d19fdc333555d1d2a7c50bdd",
+  "noReplacement": true
+}

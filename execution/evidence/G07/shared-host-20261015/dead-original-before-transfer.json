@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-15T02:20:56.109590+00:00",
+  "checks": {
+    "60012": {
+      "returncode": 1,
+      "output": ""
+    },
+    "60176": {
+      "returncode": 1,
+      "output": ""
+    },
+    "port18546": {
+      "returncode": 1,
+      "output": ""
+    },
+    "port18081": {
+      "returncode": 1,
+      "output": ""
+    },
+    "port8081": {
+      "returncode": 1,
+      "output": ""
+    }
+  },
+  "networkSha256": "756fbc4d9fcf552496eb46eb8982f21b3e623d987a888bd4427c0a7796b92e16",
+  "originalUnmodified": true,
+  "owner": "lead-20261011"
+}

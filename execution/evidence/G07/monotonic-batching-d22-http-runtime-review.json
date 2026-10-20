@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "d22f64f52a6a9a031697d2c27fac54c88e33a883",
+  "verdict": "ACCEPT_MATCHED_FINITE_HTTP_DIAGNOSTIC",
+  "findings": [],
+  "evidenceHashes": {
+    "runtime-packet-1.json": "1b4a79db9a5e7886d07d0cabfede55b698b282b0e4086619f23236fd939550e4",
+    "run-1.json": "ebbae2624bd1e61e703f7010cd009ff58e263638a126daf1de9c597092808693",
+    "actual-report-1.json": "336e57d86ea7c4d2aeeb6fa1991f3fd86c3f7bf9b55d4244172a22b319fbbb04",
+    "run-1.log": "7c3a36598dd7528ab72bfb27072e8df812605747a932a09141c3443ba76b9da8",
+    "run-1.py": "348dfdc765f7a4dbe551bd74f6a7eb02c0fb3226691899237e8a1c5b2d33fc6c",
+    "run-plan-1.json": "357e9672b3d8a43c1882e76ef312c16a07c2efeb2b4d692ca54170e078b31e6b"
+  },
+  "independentChecks": {
+    "sourceAndFixtureHashesMatched": 24,
+    "physicalOriginalDependencyHashesMatched": 65,
+    "helpersAbsent": 2,
+    "previousSymlinkRestored": true,
+    "receiptLogPlanRunnerReportCrossHashesMatched": true,
+    "tap": {
+      "tests": 11,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 9
+    },
+    "skips": "Nine explicit HTTP-diagnostic-only cases, not a full component run. Full component169 has separate independent acceptance.",
+    "progressSequences": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "readerTimeSumMs": 7994,
+    "gatewayRequests": 365,
+    "fixedTargets": {
+      "maximumGatewayRequests": 400,
+      "maximumReaderMs": 8500
+    },
+    "sdk": {
+      "calls": 17,
+      "status": 12,
+      "advance": 5,
+      "errors": 0,
+      "pending": 0,
+      "initialSyncChecks": 1
+    },
+    "native": {
+      "requests": 4,
+      "accepted": 4,
+      "errors": 0,
+      "pending": 0
+    },
+    "tags": {
+      "private": 0,
+      "public": 0
+    },
+    "cleanup": {
+      "listenersClosed": true,
+      "pendingSettled": true,
+      "databasesDeleted": true
+    }
+  },
+  "semanticEvidence": [
+    "Inspected executed fixture assertions requiring revision1, bookmark77, exact empty remaining choice sets, reply notifications true, exactly one original stored event and head note, and independently computed Poseidon event digest equal to both returned and stored head.",
+    "Same six steps, 17 SDK calls (12 status/5 advance), four accepted compact requests, zero gateway/native/SDK errors and zero public/private tagged discovery.",
+    "Terminal pass assigned only after settled listener/pending cleanup and later database-deletion hook. Receipt reports positive owned group absence, no remaining PIDs or temporary directories, and unchanged source/dependency pins."
+  ],
+  "actualProcess": {
+    "exitCode": 0,
+    "elapsedMs": 12602,
+    "peakAggregateRssBytes": 1041186816,
+    "limits": {
+      "seconds": 60,
+      "aggregateBytes": 2147483648
+    },
+    "ownedGroupAbsent": true,
+    "remainingPids": [],
+    "supervisorFailure": null
+  },
+  "comparison": {
+    "b3GatewayRequests": 365,
+    "b3ReaderMs": 7928,
+    "d22GatewayRequests": 365,
+    "d22ReaderMs": 7994,
+    "interpretation": "Same request count and same fixed acceptance; one timing observation, not a percentile or speed guarantee."
+  },
+  "limits": [
+    "Finite four-block synthetic chain and extracted receiver/initial-sync identity seam, original ACIR/crypto/validators and Node fake-indexeddb.",
+    "Own pristine installed dependency tree plus generated candidate only in owned test copy; no installed d22 distribution/build qualification.",
+    "This initial-read HTTP workload does not exercise monotonic extension or reorg over HTTP; separate169 component result covers labelled extension correctness.",
+    "No genuine blockchain proof/browser, whole-history capacity or production acceptance."
+  ],
+  "nextScope": "May carry exact-source diagnostic into reviewed combined d22/e71 preparation. Fresh owned installed closure, normal builds, affected combined source checks and final genuine acceptance remain required."
+}

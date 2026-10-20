@@ -1,3 +1,5 @@
+> **Current project handover:** [START_HERE.md](START_HERE.md). Use `codex/rolling-chat-draft3` for the delivered application and current operations.
+
 # Rolling Chat — anonymous message board on Aztec
 
 The current application is Rolling Chat (Draft 3), based on

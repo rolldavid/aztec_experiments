@@ -1,0 +1,89 @@
+{
+  "source": "f502af801b993f8e8b7b63c0b797f06d776d07e2",
+  "purpose": "Normal SDK apps wallet build for balances and refresh diagnostics",
+  "passed": true,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 598608,
+  "rssSamples": [
+    {
+      "elapsedMs": 1001,
+      "rssKiB": 334544
+    },
+    {
+      "elapsedMs": 2021,
+      "rssKiB": 356496
+    },
+    {
+      "elapsedMs": 3040,
+      "rssKiB": 374816
+    },
+    {
+      "elapsedMs": 4059,
+      "rssKiB": 598608
+    },
+    {
+      "elapsedMs": 5083,
+      "rssKiB": 526848
+    },
+    {
+      "elapsedMs": 6123,
+      "rssKiB": 509232
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "apps/build.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "scripts/rolling-wallet-assets.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 4059,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 82987,
+        "ppid": 59636,
+        "rssKiB": 59424
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 82997,
+        "ppid": 82987,
+        "rssKiB": 45936
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 82998,
+        "ppid": 82997,
+        "rssKiB": 95168
+      },
+      {
+        "role": "scripts/build-sdk.mjs",
+        "pid": 83127,
+        "ppid": 82998,
+        "rssKiB": 398080
+      }
+    ]
+  },
+  "elapsedMs": 6330,
+  "ownedTreeAbsent": true
+}

@@ -1,0 +1,190 @@
+{
+  "concurrency-summary-core": [
+    {
+      "path": "plugins/agent.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "76c83d3af3f89994845678265179d1351e360f109f5176f56d833b6c15aa35cc"
+    },
+    {
+      "path": "plugins/conversation.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "55579dcaccbaf25a993db1fe94cb1c5a32296b612c2781553fa3818177401452"
+    },
+    {
+      "path": "plugins/private-bok-metering.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864"
+    },
+    {
+      "path": "plugins/venice.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "a49ab070e2a1c04f13ed0bdf92723e8b6a012217043d8820c2b5afc0da964fbf"
+    },
+    {
+      "path": "plugins/venice-metered.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28"
+    },
+    {
+      "path": "plugins/escrow-service.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "da885ef6d54c7a68dda501479be716cebe070f9e29d44e23c538af22e8efc3ff"
+    },
+    {
+      "path": "plugins/thread-repositories.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "886fcfcac043ba4df04da1ee5b1add26ee215fcebf2074c3d072a7c160268e92"
+    },
+    {
+      "path": "plugins/isolated-execution.mjs",
+      "base": "0fd3683",
+      "unchanged": true,
+      "currentSHA256": "9c79bd73cea5196bdfc44b0b7e6e42a95ae9a299de0bc8958c6f1ff32c19dc8d"
+    }
+  ],
+  "current-artifact-isolation": [
+    {
+      "path": "plugins/main.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "a760a30eb76b62f97ceac1b830f84f8f38b7deebf18da1414ca248a1617b778a"
+    },
+    {
+      "path": "plugins/static-publication.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "4497995e317504b50cedf48531f94955036c79f4666fadb0b77ccf7cf29e1881"
+    },
+    {
+      "path": "plugins/artifact-api.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "286db13dc5cc521f3e22be8307dac4da1ca08baac050d08e8ad6597fcb95953a"
+    },
+    {
+      "path": "plugins/isolated-execution.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "9c79bd73cea5196bdfc44b0b7e6e42a95ae9a299de0bc8958c6f1ff32c19dc8d"
+    },
+    {
+      "path": "plugins/github-app-broker.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "7343366a78c90968437123906ee0ab760d2a48475198204004b0bb898adc6719"
+    },
+    {
+      "path": "plugins/thread-repositories.mjs",
+      "base": "274aef85",
+      "unchanged": true,
+      "currentSHA256": "886fcfcac043ba4df04da1ee5b1add26ee215fcebf2074c3d072a7c160268e92"
+    }
+  ],
+  "latest-actual-crash-fence": [
+    {
+      "path": "plugins/main.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "a760a30eb76b62f97ceac1b830f84f8f38b7deebf18da1414ca248a1617b778a"
+    },
+    {
+      "path": "plugins/escrow-service.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "da885ef6d54c7a68dda501479be716cebe070f9e29d44e23c538af22e8efc3ff"
+    },
+    {
+      "path": "plugins/thread-repositories.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "886fcfcac043ba4df04da1ee5b1add26ee215fcebf2074c3d072a7c160268e92"
+    },
+    {
+      "path": "plugins/agent.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "76c83d3af3f89994845678265179d1351e360f109f5176f56d833b6c15aa35cc"
+    },
+    {
+      "path": "plugins/metering.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "d2247b49e2bfa79477884b7ab209e9648db1511d589a074f4cde852d9f1dd4d6"
+    },
+    {
+      "path": "plugins/private-bok-metering.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "54f949dc75ceafc88d8beb9461d23f42c75f85ae3cc02b0d701258cecc777864"
+    },
+    {
+      "path": "plugins/venice-metered.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "2ef737d3276dbde3862fe52ce88b4e4bfbbc5716844d47b4bac18a25f865ac28"
+    },
+    {
+      "path": "plugins/static-publication.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "4497995e317504b50cedf48531f94955036c79f4666fadb0b77ccf7cf29e1881"
+    },
+    {
+      "path": "plugins/artifact-api.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "286db13dc5cc521f3e22be8307dac4da1ca08baac050d08e8ad6597fcb95953a"
+    },
+    {
+      "path": "plugins/github-app-broker.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "7343366a78c90968437123906ee0ab760d2a48475198204004b0bb898adc6719"
+    },
+    {
+      "path": "plugins/isolated-execution.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "9c79bd73cea5196bdfc44b0b7e6e42a95ae9a299de0bc8958c6f1ff32c19dc8d"
+    }
+  ],
+  "current-d7-components": [
+    {
+      "path": "deploy/operations-monitor.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "49b8320c83f4a3615474d370b16077f4ba7ad83aa029162ded5e189d96195e9e"
+    },
+    {
+      "path": "censor-daemon/worker.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "b5dbd2569f9af73141e4fc4173abca5f4d66d7d9a3c4aa186d8e115743ce9fdf"
+    },
+    {
+      "path": "censor-daemon/job-store.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "1f86f1ec596086c1162e5df1ca2cf3dec432465b4bd0275b5978e16ddc312b25"
+    },
+    {
+      "path": "shared/private-fee-client.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "523941c97647b02128bd00054c86b72a48ab8782b0bf8c1763f53d4c438cdfbf"
+    },
+    {
+      "path": "shared/private-fee-estimation.mjs",
+      "base": "b27bec99",
+      "unchanged": true,
+      "currentSHA256": "f4f336ecff998c575e40a05ebf504054529d79857b09f2ea9d7c56c132ec2943"
+    }
+  ]
+}

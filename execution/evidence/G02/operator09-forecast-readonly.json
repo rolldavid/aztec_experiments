@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-12T11:53:39.085494+00:00",
+  "finishedAt": "2026-10-12T11:53:41.339959+00:00",
+  "scope": "Existing project AWS account/us-east-1 EC2 and exact m7a.4xlarge PriceList; plugin loopback health",
+  "profileReferences": [
+    "message-board-deploy",
+    "message-board-sso"
+  ],
+  "awsRequests": 6,
+  "maxAttemptsPerCommand": 1,
+  "maxCommandSeconds": 25,
+  "reads": {
+    "deployIdentity": {
+      "available": true,
+      "data": {
+        "account": "052665140763"
+      }
+    },
+    "ssoIdentity": {
+      "available": true,
+      "data": {
+        "account": "052665140763"
+      }
+    },
+    "instances": {
+      "available": true,
+      "data": []
+    },
+    "volumes": {
+      "available": true,
+      "data": []
+    },
+    "fleets": {
+      "available": true,
+      "data": [
+        {
+          "id": "fleet-df127a8c-551b-488c-903d-aa8f1c3a709a",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T02:09:37+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-671ac9df-17d2-473d-b961-4a530a4e455f",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T02:20:37+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T04:42:35+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-4c70ab63-5372-49d9-8428-6ec8935309a4",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T02:34:35+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-2d6a2f57-89ab-41d0-9279-bd30bddcd800",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T04:09:27+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-bed1edff-094b-46cf-831b-31d3065cd04c",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T07:06:50+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-9cfd409b-3ca9-4061-a9aa-1cd6b648cf7c",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T02:41:10+00:00",
+          "terminate": true
+        },
+        {
+          "id": "fleet-558fc172-30e9-4dcc-a49d-45a04a6ef47e",
+          "state": "deleted",
+          "type": "request",
+          "expires": "2026-10-12T09:54:55+00:00",
+          "terminate": true
+        }
+      ]
+    },
+    "computePrice": {
+      "available": true,
+      "data": [
+        {
+          "sku": "TTPYSE2GSHDGSMTX",
+          "unit": "Hrs",
+          "usd": "0.9273600000",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    "plugin": {
+      "available": true,
+      "httpStatus": 200,
+      "status": "degraded",
+      "active": 0,
+      "lastFailurePresent": true
+    }
+  },
+  "mutations": false,
+  "costExplorerUsed": false,
+  "rawErrorsOrSecretsRetained": false
+}

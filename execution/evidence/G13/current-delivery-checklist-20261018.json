@@ -1,0 +1,1328 @@
+{
+  "schemaVersion": 1,
+  "task": "G13-current-delivery-checklist",
+  "preparedAt": "2026-10-18T11:41:44.078176+00:00",
+  "catalog": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/draft3-requirements.json",
+  "specificationSha256": "af9c151b8605fdad7053b8eb25da1f9e96d8d36f33fc43f2cd0bf8b16e16b402",
+  "applicationBase": "4770968094bb47af72613d2a2e46570b96c59dc3",
+  "pendingRepairCandidate": null,
+  "reviewStatus": "pending independent review",
+  "overall": "Application implementation substantially present; scoped cold-recovery, fresh deployment and synthetic performance demonstrated. Internal acceptance work and external release gates remain; neither whole-app completion nor all-work-blocked is claimed.",
+  "snapshotLimits": [
+    "Read-only mapping plus this one output file; no new tests, services, model calls or transactions.",
+    "Evidence references retain their own source revisions and limitations; no historical result silently rebound to current source.",
+    "Cold recovery/public SQLite repair and independent fresh deployment are completed within their explicitly scoped development acceptance; historical evidence retains exact source bindings.",
+    "No new concrete absent user-visible feature found in bounded source review; missing qualification is listed explicitly and is not reclassified as implementation defect."
+  ],
+  "sourcePresence": [
+    "apps/rolling/reader.mjs",
+    "apps/rolling/wallet-panel.mjs",
+    "apps/rolling/wallet-session.mjs",
+    "apps/rolling/profile-view.mjs",
+    "shared/rolling/private-views.mjs",
+    "shared/rolling/public-events.mjs",
+    "plugins/agent.mjs",
+    "plugins/thread-repositories.mjs",
+    "plugins/escrow-service.mjs",
+    "docs/rolling-deployment.md"
+  ],
+  "evidence": {
+    "prototype": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G03/prototype-review.json",
+      "sha256": "6d5ef8b131bf39ac478405f6976a8551bb95aff6560b99ebe675038dcedbff1d",
+      "recordedSource": "a23b106ac2291acce9ebea650d4fe9ec28987136"
+    },
+    "interfaces": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G03.json",
+      "sha256": "bca2c8b2c5f41a64957a64cae9711ef80086d5cdef1579b08020634215ff8c77",
+      "recordedSource": "See exact linked record/source inventory; no revision inferred.",
+      "sourceFingerprint": "46f826f5defc6ba231cde9ffb4cc523e5edbae472fe266426ffcf256bad2715e"
+    },
+    "targets": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G03/targets.md",
+      "sha256": "d372cc6e9cae74de8a5dd0a5bbf1a0adfd9c3b79f81e61f0f61b3150caba373e",
+      "recordedSource": "See exact linked record/source inventory; no revision inferred."
+    },
+    "avatar-prototype": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G03/avatar-measurement-summary.json",
+      "sha256": "21555633946588e6f0fee35844a08d0627158d7ab8550aa632489a1616aa8cd7",
+      "recordedSource": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7"
+    },
+    "protocol": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G06.json",
+      "sha256": "3832e34b4fc56f2c855c16d35dbfa160556577bac1aeee719f650e8ce6829ecd",
+      "recordedSource": "See exact linked record/source inventory; no revision inferred.",
+      "sourceFingerprint": "6171e8b8b4957eebcffb8accc1926f4c10ebdde4ef4f0bcacb2ec983e145b5a0"
+    },
+    "native": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/native-bootstrap-20261018/live-startup.json",
+      "sha256": "e325e5b4b63d2162f485cc12f7a16916259fc9394cec7e7b1451d8b1c55408a7",
+      "recordedSource": "c8a287c4311a8fd66d4ace122fca4e7b4b09520f"
+    },
+    "fee-only": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G05/live-fee-only-20261018/review.json",
+      "sha256": "492bfe4a9669d3510abeca881257c369d85177cf1a0c536844b68858ef6fccf1",
+      "recordedSource": "a2c08af364df9788cee13165bc533e02025f97b2"
+    },
+    "social": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/live-social-20261018/review.json",
+      "sha256": "21b3cc09eb8657d3c8066f18a7093eab57a534d180ce742a9a1fe4f4496cff7d",
+      "recordedSource": "72fe6e707f0fd9b09b9b25afb8bd617e4f400bcc"
+    },
+    "quotes": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-social-references/review.json",
+      "sha256": "27e87fa0c00948216d5bfe896bf1096ce8c4d4f1af6842612d23211963f7a5bd",
+      "recordedSource": "39dbff586a5092349c32d93b721d5417733e3532"
+    },
+    "profiles": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-profile-boundaries-20261018/acceptance.json",
+      "sha256": "1a8e560bca6e63bbd37de0a15101ed2f1a309dd7425d87f6066a6ed7cdd1df73",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "preferences": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-notifications-20261018/acceptance.json",
+      "sha256": "6fc6b25c53719ba0b4e0d85b858002d4fe0da67a22deeb28094e1003dce50d05",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "mobile": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/mobile-navigation-20261018/observations.json",
+      "sha256": "8675cd35b599d97849e51e9ce87286b0f97a59544fd2ce5f1438fd620e9ea6f9",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "policy": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-policy-union/review.json",
+      "sha256": "9368e77b10b9da567588c152a2aa8b094a3c2c12a4f1629c574f2b07781f947d",
+      "recordedSource": "39dbff586a5092349c32d93b721d5417733e3532"
+    },
+    "human-model": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/current-post-model/review.json",
+      "sha256": "cae4a810b627a06dcb722795d89edfb210d3e4a29e7ce4699ec722dcd4c00d50",
+      "recordedSource": "6b1691bf9b2dad9efffad35d171ee1de24845b69"
+    },
+    "preview": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G09/message-preview-parity-20261018/evidence.json",
+      "sha256": "60882ed8b2b3b441e04377d38203d67a10a4bfeb145127208ef214cf2af1d817",
+      "recordedSource": "d91ff119c6919147b2ef47f93347b9dab115f80b"
+    },
+    "garden": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/current-garden-20261018/acceptance.json",
+      "sha256": "57e5850b26a9f13c15a89b2fb3ffb306936fc341fc6418ebe25e6adf9b202c44",
+      "recordedSource": "206a1c7af91c38e769f19ef445e387ab66dfc9cd"
+    },
+    "summary": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G10/current-summary-20261018/review.json",
+      "sha256": "8e88e369ae3dc04b4ef573f28ccfc23f0130bcee876cca7794326364957d7209",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "concurrency-retention": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G10/current-summary-20261018/assessment.json",
+      "sha256": "289b45f63d969b49ff8c65549eee6b3d40768d0cad546917033437dbd1cdaede",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "github": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G11/thread-pool-20261018/review.json",
+      "sha256": "974a4e3021c06cf7758c9c268d44659de8773f966b51c3e3966d86ba94c34321",
+      "recordedSource": "8c70150df47758a79a2091fb3de6a3bbc88938e1"
+    },
+    "publication": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G11/verified-publication-reply-20261018/evidence.json",
+      "sha256": "0bde04e38e42d90fb172c9b504d2c8180c824a4fc992433d6d81f817f3ee9f2e",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "candidate-recovery": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/retained-candidate-20261018/review.json",
+      "sha256": "08c6dfe114f09ed23e739df5859f175c9b83da68244902b25ddaf3244b719026",
+      "recordedSource": "206a1c7af91c38e769f19ef445e387ab66dfc9cd"
+    },
+    "accepted-recovery": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/accepted-recovery-20261018/review.json",
+      "sha256": "1081e283a5f1c9d1fbb928a62db1c6d4a005b267aa80da8e0c6ce067b970b2e3",
+      "recordedSource": "519b0b072a51b019f8d5cec26ec842c2e08118be"
+    },
+    "billing-recovery": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G13/docker-resource-saver-20261018/garden-update-billing.json",
+      "sha256": "b2bc72ee4c43d6b646ac857b8d54af6fd5c1493d2f244b57b1bf86d73cf6b5b9",
+      "recordedSource": "d8513dae8389f38769fddc4a052e62b34440d265"
+    },
+    "accounting-ui": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/bok-accounting-continuation-20261018/live.json",
+      "sha256": "4726c2119c97bf05a38f31aaf50fe8199768cee7052ae87de37c544c61ec296e",
+      "recordedSource": "582b2cdb95ddfa21cbd32c9c6ac965ea5782bdc1"
+    },
+    "privacy": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/reviewer-e9a0df2-privacy-boundary.json",
+      "sha256": "8255e1af27d25dce69064be2fccac9b21ed3999a20ce5275b8d9fef9ebcc6a3e",
+      "recordedSource": "e9a0df20c8064b3a135f03de088831e483ae423c"
+    },
+    "cold-failure": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/current1591-anchored-cold/packet.json",
+      "sha256": "6a5a295871fe6274a8827459cdf40312441d19bc26f4c6bf8dbfde076951dcf1",
+      "recordedSource": "7e2d443995b95947ca5ae4c76189fec84b8d000d"
+    },
+    "cold-repair": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/cold-archive-20261018/review.json",
+      "sha256": "165288bbf90d115d572706648c39930dbfe74fd39fb765df891d11bd60a228aa",
+      "recordedSource": "bc6bfb6754882259ef24927316cbc97ced31442d"
+    },
+    "runbook": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G12/native-runbook-20261018/review.json",
+      "sha256": "966fa647da91da4d168fedbce17a7919ea695de15097616429d44d8edc39a9a5",
+      "recordedSource": "03acd93e0c0208eb9cc33cb6ad2d0f14e0d7b65e"
+    },
+    "testnet": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G04/testnet-prerequisite-20261018.json",
+      "sha256": "76d6fdee991421ad140375c3c15149526d007bf9b41d3360b1317cde7d31fc81",
+      "recordedSource": "See exact linked record/source inventory; no revision inferred."
+    },
+    "cold-browser": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/cold-archive-20261018/browser-acceptance.json",
+      "sha256": "e405d5d98f4c2df99a13c82038dc90482371efda3c2c9c6a7e610405660765eb",
+      "recordedSource": "bc6bfb6754882259ef24927316cbc97ced31442d"
+    },
+    "cold-index-browser": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G07/cold-public-index-20261018/browser-acceptance.json",
+      "sha256": "758e01f2f6db3f6202d8c404d3cfed19dc1f2e4c6f6d45e8029e2bfed9ef0c54",
+      "recordedSource": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965"
+    },
+    "clean-operator": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G12/clean-operator-20261018/acceptance-public.json",
+      "sha256": "86f4e32a989e00876f9630a101ac9ea8fad475492dae0d498a6aa1faaf744ee3",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "clean-operator-review": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/execution/evidence/G12/clean-operator-20261018/review.json",
+      "sha256": "bc78d6834806402f6f93e6401eac7147d1987fb25a91130bb7f03187a4af8f0a",
+      "recordedSource": "0fd3683e3f036748e9f5b618a097c50f3c5443bc"
+    },
+    "component-performance": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g13-component-performance/packet.json",
+      "sha256": "c846b54bc59af5b906e26857b3cb9c776e70e1edd66c549f9c15cb231dfedab5",
+      "recordedSource": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965 dataset; 4770968094bb47af72613d2a2e46570b96c59dc3 frontend"
+    },
+    "current-observer": {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/g13-current-observer/reconciliation.json",
+      "sha256": "bc45da9f2712ec66f5e8fe81037ca3369e612c826680a4fb53081301a263f37c",
+      "recordedSource": "0b06c52afcf3c7344cf3af6aaefef7ebc9538965"
+    }
+  },
+  "requirements": [
+    {
+      "id": "RC01",
+      "authority": "mandatory",
+      "tasks": [
+        "G02",
+        "G08"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Compatible native startup demonstrated; node/PXE proof flags disabled.",
+      "evidence": [
+        "native",
+        "testnet"
+      ],
+      "remaining": [
+        "X1",
+        "X5"
+      ]
+    },
+    {
+      "id": "RC02",
+      "authority": "mandatory",
+      "tasks": [
+        "G03"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Interface design and implementation boundaries reviewed.",
+      "evidence": [
+        "interfaces"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC03",
+      "authority": "mandatory",
+      "tasks": [
+        "G03",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Original labelled prototype reviewed before full UI; actual mobile navigation/search inspected.",
+      "evidence": [
+        "prototype",
+        "mobile",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC04",
+      "authority": "mandatory",
+      "tasks": [
+        "G03",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Required reader/account/moderator surfaces exist; actual named posting, profiles, social and balances exercised in scoped records. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "fee-only",
+        "social",
+        "profiles",
+        "preferences",
+        "mobile",
+        "accounting-ui",
+        "cold-browser",
+        "cold-index-browser",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC05",
+      "authority": "mandatory",
+      "tasks": [
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Continuous pagination, stable links and anchor restoration implemented with focused browser coverage; broad final workload not claimed.",
+      "evidence": [
+        "mobile",
+        "quotes",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC06",
+      "authority": "mandatory",
+      "tasks": [
+        "G06",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Canonical social records and tombstone navigation demonstrated for scoped human cases.",
+      "evidence": [
+        "protocol",
+        "quotes",
+        "policy",
+        "human-model"
+      ],
+      "remaining": [
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC07",
+      "authority": "mandatory",
+      "tasks": [
+        "G06",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Exact message-byte boundaries and shared safe labelled/plain link renderer reviewed; actual preview observation retained.",
+      "evidence": [
+        "preview",
+        "protocol"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC08",
+      "authority": "mandatory",
+      "tasks": [
+        "G06",
+        "G07",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual like/bookmark/reply, ordinary-UI quote/repost, private follow/subscription/read-marker and fresh private recovery demonstrated. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "social",
+        "quotes",
+        "preferences",
+        "cold-browser",
+        "cold-index-browser",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC09",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G12"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Main board/subboard distinction and independent operator deployment documented; no automatic Home inclusion. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "runbook",
+        "fee-only",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC10",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G07"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual zero-collateral standalone fee account registered name/created subboard; separate actual UI actions corroborated.",
+      "evidence": [
+        "fee-only"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC11",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G07"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Authenticated directory metadata, immutable links, effective rules and rejection records implemented; scoped policy UI evidence.",
+      "evidence": [
+        "fee-only",
+        "policy"
+      ],
+      "remaining": [
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC12",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual parent/local human moderation cases retained on39db; current source has parent union and policy-version provenance.",
+      "evidence": [
+        "policy"
+      ],
+      "remaining": [
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC13",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual human removal and authorized avatar removal demonstrated; complete Bok parity/withdrawal consequences not established by those records.",
+      "evidence": [
+        "policy",
+        "human-model",
+        "profiles"
+      ],
+      "remaining": [
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC14",
+      "authority": "mandatory",
+      "tasks": [
+        "G05"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Names, suggestions, availability and uniqueness implemented; actual named registrations and two-owned-name UI observed.",
+      "evidence": [
+        "fee-only",
+        "protocol"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC15",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G06",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Own-name/Anonymous composition implemented and actual named/anonymous actions observed; unlinkability requires separate observer qualification.",
+      "evidence": [
+        "social",
+        "protocol",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "X2",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC16",
+      "authority": "mandatory",
+      "tasks": [
+        "G05",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual profile/bio/avatar history and authenticated Bok reply; account import used genuine encrypted recovery. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "social",
+        "profiles",
+        "garden",
+        "cold-browser",
+        "cold-index-browser",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC17",
+      "authority": "mandatory",
+      "tasks": [
+        "G03",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "8192-byte publication, moderator removal, clear and replacement reconstructed by fresh index; prototype measurements retained separately.",
+      "evidence": [
+        "profiles",
+        "avatar-prototype",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC18",
+      "authority": "mandatory",
+      "tasks": [
+        "G04"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Noncustodial funding implementation present; dev Node-signer fee/collateral checks are not authentic Ethereum-wallet funding acceptance.",
+      "evidence": [
+        "fee-only",
+        "social",
+        "testnet"
+      ],
+      "remaining": [
+        "X1",
+        "X5",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC19",
+      "authority": "mandatory",
+      "tasks": [
+        "G04",
+        "G08"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Native account/post/Bok paths and saved operation recovery implemented; full fresh external-wallet onboarding still unqualified.",
+      "evidence": [
+        "native",
+        "social",
+        "garden"
+      ],
+      "remaining": [
+        "X1",
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC20",
+      "authority": "mandatory",
+      "tasks": [
+        "G04"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "MetaMask/Phantom adapter paths present; required real wallet/asset/chain/prompt matrix not established by local signer evidence.",
+      "evidence": [
+        "testnet"
+      ],
+      "remaining": [
+        "X1",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC21",
+      "authority": "owner-reserved",
+      "tasks": [
+        "G04"
+      ],
+      "implementation": "owner-reserved",
+      "demonstrated": "Owner-reserved fallback decision remains conditional on measured unsupported route; no silent weakening authorized.",
+      "evidence": [
+        "testnet"
+      ],
+      "remaining": [
+        "O1",
+        "X1"
+      ]
+    },
+    {
+      "id": "RC22",
+      "authority": "mandatory",
+      "tasks": [
+        "G04",
+        "G08"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Exact Bok available/reserved/charge/refund shown with genuine billing and recovery; collateral/fee separation implemented.",
+      "evidence": [
+        "accounting-ui",
+        "garden",
+        "billing-recovery",
+        "social"
+      ],
+      "remaining": [
+        "X1",
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC23",
+      "authority": "mandatory",
+      "tasks": [
+        "G03",
+        "G05",
+        "G06",
+        "G10",
+        "G13",
+        "G14"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Protocol design and scoped code review present; no full unlinkability claim against all required observers.",
+      "evidence": [
+        "privacy",
+        "protocol",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "X1",
+        "X2"
+      ]
+    },
+    {
+      "id": "RC24",
+      "authority": "mandatory",
+      "tasks": [
+        "G10",
+        "G14"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Private human invocation architecture and publicly authenticated Bok reply demonstrated locally; human observer-privacy remains open.",
+      "evidence": [
+        "garden",
+        "privacy",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "X1",
+        "X2"
+      ]
+    },
+    {
+      "id": "RC25",
+      "authority": "mandatory",
+      "tasks": [
+        "G07",
+        "G13"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "No plaintext preference-owner API by design; private events absent in scoped public decoder check. Full receiver/query trace reconciliation missing.",
+      "evidence": [
+        "privacy",
+        "preferences",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "X2"
+      ]
+    },
+    {
+      "id": "RC26",
+      "authority": "mandatory",
+      "tasks": [
+        "G07"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Fresh public profile/index and private preference recovery demonstrated; archived receipt bug repaired. New cold public-index repair candidate pending review. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "profiles",
+        "preferences",
+        "cold-repair",
+        "cold-browser",
+        "cold-index-browser"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC27",
+      "authority": "mandatory",
+      "tasks": [
+        "G02",
+        "G07",
+        "G12"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Bounded incremental/reorg-safe index implemented; retained-state/pruned-archive defects repaired or under review. Full retained workload/capacity/cost qualification remains. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "native",
+        "runbook",
+        "cold-failure",
+        "cold-browser",
+        "cold-index-browser",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "X5",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC28",
+      "authority": "mandatory",
+      "tasks": [
+        "G07",
+        "G10",
+        "G13"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Core public app independent of Bok service; scoped recovery/outage controls exist. Final-source outage disposition remains.",
+      "evidence": [
+        "garden",
+        "accepted-recovery"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC29",
+      "authority": "mandatory",
+      "tasks": [
+        "G10"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual model/build/repository update and recovery demonstrated; historical two-thread campaign explicitly retained with source-delta assessment.",
+      "evidence": [
+        "garden",
+        "concurrency-retention",
+        "candidate-recovery"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC30",
+      "authority": "mandatory",
+      "tasks": [
+        "G10"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Single predeclared Qwen summary fixture independently accepted: instructions/decisions/unresolved/references retained, latest excluded;92microUSDC,2891.905333ms. No broad/statistical quality claim.",
+      "evidence": [
+        "summary",
+        "concurrency-retention"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC31",
+      "authority": "mandatory",
+      "tasks": [
+        "G10",
+        "G11"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Automatic accepted thread commits/publish demonstrated; deterministic trusted-link repair integrated after original model-invented reply URLs.",
+      "evidence": [
+        "garden",
+        "github",
+        "publication"
+      ],
+      "remaining": [
+        "D7"
+      ]
+    },
+    {
+      "id": "RC32",
+      "authority": "mandatory",
+      "tasks": [
+        "G11"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Owner-selected personal account, selected App repositories, broker and isolated build/test demonstrated; no developer credentials given to generated code.",
+      "evidence": [
+        "github",
+        "garden"
+      ],
+      "remaining": [
+        "D6",
+        "X2",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC33",
+      "authority": "mandatory",
+      "tasks": [
+        "G10",
+        "G11",
+        "G14"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Actual9941microUSDC charge +240059refund from250000budget; reserved zero and independently read accounting; bounded uncertain-call recovery controls.",
+      "evidence": [
+        "garden",
+        "accounting-ui",
+        "billing-recovery"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC34",
+      "authority": "mandatory",
+      "tasks": [
+        "G11"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Exact static/source bytes and remote accepted commit verified; stable latest publication implemented. Indefinite hosting is continuing operator obligation. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "garden",
+        "github",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC35",
+      "authority": "mandatory",
+      "tasks": [
+        "G11"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Separate artifact origin and isolated generated build demonstrated; hosting/abuse/storage/backups policy and final deployment require operational closure. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "garden",
+        "github",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": [
+        "D6",
+        "X2"
+      ]
+    },
+    {
+      "id": "RC36",
+      "authority": "mandatory",
+      "tasks": [
+        "G12"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Independent deployment skill and corrected native runbook exist; fresh independent run owned by Controls is ongoing. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "runbook",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": []
+    },
+    {
+      "id": "RC37",
+      "authority": "mandatory",
+      "tasks": [
+        "G12"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Exact recovery and rotation/rollback/spending controls documented; actual scoped billing recovery preserved uncertain calls. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "runbook",
+        "accepted-recovery",
+        "billing-recovery",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": [
+        "D6",
+        "X5"
+      ]
+    },
+    {
+      "id": "RC38",
+      "authority": "mandatory",
+      "tasks": [
+        "G12"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Clean fresh-identity deployment and backup rehearsal ongoing; no completion inferred from documentation alone. Independently reviewed clean-operator deployment/rebuild demonstrated at exact0fd; not full user-wallet/testnet acceptance.",
+      "evidence": [
+        "runbook",
+        "clean-operator",
+        "clean-operator-review"
+      ],
+      "remaining": [
+        "D6"
+      ]
+    },
+    {
+      "id": "RC39",
+      "authority": "mandatory",
+      "tasks": [
+        "G08",
+        "G13"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Several actual source-bound dev components passed. Full final-candidate conjunction including authentic wallets/proofs/privacy/reorg/outage remains open. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "profiles",
+        "preferences",
+        "garden",
+        "human-model",
+        "testnet",
+        "cold-browser",
+        "cold-index-browser",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "D4",
+        "D6",
+        "D7",
+        "X1",
+        "X2"
+      ]
+    },
+    {
+      "id": "RC40",
+      "authority": "mandatory",
+      "tasks": [
+        "G03",
+        "G13"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Targets predeclared; focused UI/prototype measurements exist.1601-block120s cold qualification previously failed; no later full pass inferred.",
+      "evidence": [
+        "targets",
+        "mobile",
+        "avatar-prototype",
+        "cold-failure",
+        "component-performance"
+      ],
+      "remaining": [
+        "D2",
+        "X1",
+        "X5"
+      ]
+    },
+    {
+      "id": "RC41",
+      "authority": "mandatory",
+      "tasks": [
+        "G10",
+        "G11",
+        "G13"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Current accepted Garden update, real accounting, isolated test/build and GitHub bytes verified; historical concurrency retained; changed recovery controls separately reviewed.",
+      "evidence": [
+        "garden",
+        "concurrency-retention",
+        "candidate-recovery",
+        "accepted-recovery"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC42",
+      "authority": "release-gate",
+      "tasks": [
+        "G13"
+      ],
+      "implementation": "release-gate",
+      "demonstrated": "External audit,14-day representative soak and current network clearance remain unfulfilled release gates; mainnet separately authorized.",
+      "evidence": [
+        "testnet",
+        "privacy"
+      ],
+      "remaining": [
+        "X2",
+        "X3",
+        "X4"
+      ]
+    },
+    {
+      "id": "RC43",
+      "authority": "commercial",
+      "tasks": [
+        "G01"
+      ],
+      "implementation": "commercial-context",
+      "demonstrated": "Commercial schedule/staffing/bid are context, not spending or hiring authority.",
+      "evidence": [
+        "prototype"
+      ],
+      "remaining": []
+    },
+    {
+      "id": "RC44",
+      "authority": "proposed-default",
+      "tasks": [
+        "G03",
+        "G05",
+        "G09"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "Proposed defaults implemented: deterministic Home/chronological Following, immutable slugs/rejection tombstones and no implicit creator authority.",
+      "evidence": [
+        "policy",
+        "quotes"
+      ],
+      "remaining": [
+        "D4",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC45",
+      "authority": "proposed-default",
+      "tasks": [
+        "G03",
+        "G05",
+        "G06"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "One account/post like semantics and immutable normalized names implemented; authenticated bot reservations defined.",
+      "evidence": [
+        "protocol",
+        "fee-only",
+        "current-observer"
+      ],
+      "remaining": [
+        "D3",
+        "D7"
+      ]
+    },
+    {
+      "id": "RC46",
+      "authority": "proposed-default",
+      "tasks": [
+        "G03",
+        "G07",
+        "G11"
+      ],
+      "implementation": "present (bounded source inspection), not complete acceptance",
+      "demonstrated": "In-app replies/private read markers, automatic accepted thread publish and latest hosting implemented with scoped actual evidence. Current actual cold recovery and rebuilt public-index UI demonstrated at chain93; no large-history performance claim.",
+      "evidence": [
+        "preferences",
+        "garden",
+        "publication",
+        "cold-browser",
+        "cold-index-browser"
+      ],
+      "remaining": [
+        "D6",
+        "D7"
+      ]
+    }
+  ],
+  "remainingWork": {
+    "D1": {
+      "kind": "completed-scoped-development",
+      "requirements": [
+        "RC04",
+        "RC08",
+        "RC16",
+        "RC26",
+        "RC27",
+        "RC39",
+        "RC46"
+      ],
+      "work": "Actual fresh-origin private recovery completed on reused original chain93, followed by successful rebuilt public SQLite reader: Following9, retained bookmark, notifications0 and authentic Bok visible. Reviewed/gated archive and immutable-state repairs integrated.",
+      "unlock": "Completed local scope; large-history timing, observer privacy and external wallet/proof gates remain D2/D3/X1.",
+      "evidence": [
+        "cold-browser",
+        "cold-index-browser"
+      ]
+    },
+    "D2": {
+      "kind": "internal-partially-demonstrated",
+      "requirements": [
+        "RC03",
+        "RC04",
+        "RC05",
+        "RC17",
+        "RC27",
+        "RC40"
+      ],
+      "work": "Measured real SQLite/reducer/query components with synthetic10kposts/100boards/100names: rebuild1.343s; reopened/warm feed23.10/21.97ms, thread22.70/21.90ms, directory1.16/0.89ms. Current477 browser command-to-first-visible samples141ms warm feed,133ms warm thread,149ms search,141ms new thread; observed100 unique thread posts. Browser API log11requests across multiple navigations, page<=30. These do not qualify cold paint,30-second scroll p95,input/viewport targets, authenticated archive/RPC budgets, or retained1601-block recovery<=120s. Avatar quality/cost/archive and accessibility reconciliation still required.",
+      "unlock": "Healthy compatible local state/artifacts and available bounded runtime. Any paid capacity requires renewed ledger reconciliation; do not waive limits or recreate harness.",
+      "evidence": [
+        "component-performance",
+        "targets",
+        "cold-failure"
+      ]
+    },
+    "D3": {
+      "kind": "internal-acceptance",
+      "requirements": [
+        "RC08",
+        "RC15",
+        "RC16",
+        "RC23",
+        "RC24",
+        "RC25",
+        "RC39",
+        "RC45"
+      ],
+      "work": "Actual readonly current observer captured288requests:285trusted-query,2public direct-node setup,1publicfeed. Human address appears at trustedquery getContract; zero clear humanaddress in decoded six retained transactions. Oneopaque publicsimulationbody and no upstream receiver capture prevent full privacy qualification. Required independently operated-node containment/two-human unlinkability remain unqualified; do not infer anonymity from proxy or same-operator topology.",
+      "unlock": "Use existing observer composition with healthy local services; preserve observer distinctions and disclose timing/content/IP limits. Specialist review remains X2.",
+      "evidence": [
+        "current-observer",
+        "privacy"
+      ]
+    },
+    "D4": {
+      "kind": "internal-acceptance",
+      "requirements": [
+        "RC04",
+        "RC06",
+        "RC11",
+        "RC12",
+        "RC13",
+        "RC39",
+        "RC44"
+      ],
+      "work": "Existing39db policy-union/human removal records exclude authentic Bok moderation parity, hostile-local-rule adversarial case, withdrawal consequences and moderator-UI policy update. Reconcile any later evidence before running narrowly missing scenarios; these are missing acceptance, not a demonstrated missing feature.",
+      "unlock": "Reuse existing local model/moderator controls and funded state; no broad onboarding rerun."
+    },
+    "D5": {
+      "kind": "completed-scoped-development",
+      "requirements": [
+        "RC09",
+        "RC34",
+        "RC35",
+        "RC36",
+        "RC37",
+        "RC38"
+      ],
+      "work": "Independent clean checkout installed pinned dependencies, regenerated contracts/VKs/SDK/apps/wallet assets, started fresh native environment and new operator, published name and rebuilt public index. Independent review approved exact0fd scoped result. No prior private application state copied. Rehearsal was cleaned up.",
+      "unlock": "Completed clean-operator development scope. Authentic browser wallet funding, hosted model and testnet/full application acceptance remain separately required.",
+      "evidence": [
+        "clean-operator",
+        "clean-operator-review"
+      ]
+    },
+    "D6": {
+      "kind": "internal-acceptance-reconciliation",
+      "requirements": [
+        "RC19",
+        "RC22",
+        "RC26",
+        "RC28",
+        "RC29",
+        "RC32",
+        "RC33",
+        "RC34",
+        "RC35",
+        "RC37",
+        "RC38",
+        "RC39",
+        "RC41",
+        "RC46"
+      ],
+      "work": "Bind retained backup/restore, reorg, Bok-outage, restart-after-accepted/candidate and uncertain-paid-call evidence to current changed components. Preserve reviewed historical concurrency rather than reflexively rerunning the full campaign; run only uncovered changed behavior.",
+      "unlock": "Independent source-delta disposition and existing exact recovery receipts; never replay ambiguous model/financial operations."
+    },
+    "D7": {
+      "kind": "internal-handover",
+      "requirements": [
+        "RC02",
+        "RC03",
+        "RC04",
+        "RC05",
+        "RC06",
+        "RC07",
+        "RC08",
+        "RC09",
+        "RC10",
+        "RC11",
+        "RC12",
+        "RC13",
+        "RC14",
+        "RC16",
+        "RC17",
+        "RC18",
+        "RC19",
+        "RC20",
+        "RC22",
+        "RC26",
+        "RC27",
+        "RC28",
+        "RC29",
+        "RC30",
+        "RC31",
+        "RC32",
+        "RC33",
+        "RC34",
+        "RC39",
+        "RC41",
+        "RC44",
+        "RC45",
+        "RC46"
+      ],
+      "work": "Reconcile scoped evidence and source deltas to one final integration candidate, complete affected required checks/review, and assemble runnable access/recovery/blocker handover. Catalog top-level G04/G07/G08/G09/G10/G11/G12/G13 evidence files are absent; a requirement row is not acceptance.",
+      "unlock": "Conjunction of affected accepted evidence; do not require pointless full repetitions or claim a feature defect solely because a summary file is absent."
+    },
+    "X1": {
+      "kind": "external-prerequisite-and-acceptance",
+      "requirements": [
+        "RC01",
+        "RC18",
+        "RC19",
+        "RC20",
+        "RC21",
+        "RC22",
+        "RC23",
+        "RC24",
+        "RC39",
+        "RC40"
+      ],
+      "work": "Authentic MetaMask/Phantom Ethereum ETH/USDC routes, chain/prompts/transaction counts, one-funding-transaction behavior and gas resolution; targeted real-proof V6 testnet posting/Bok/accounting/withdrawal acceptance.",
+      "unlock": "Supported wallet environment, verified current node/prover, reconciled test funds and original uncertain Sepolia actions.18Oct record has three null receipts and nonce15; absence never authorizes replay. Local Node signer/native-proof-disabled tests cannot close this."
+    },
+    "X2": {
+      "kind": "external-release-gate",
+      "requirements": [
+        "RC15",
+        "RC23",
+        "RC24",
+        "RC25",
+        "RC32",
+        "RC35",
+        "RC39",
+        "RC42"
+      ],
+      "work": "Independent specialist security/privacy review and resolution of blocking findings on exact candidate.",
+      "unlock": "Qualified independent review engagement; agent code review is insufficient."
+    },
+    "X3": {
+      "kind": "elapsed-release-gate",
+      "requirements": [
+        "RC42"
+      ],
+      "work": "14days representative soak with monitoring and no fabricated elapsed duration.",
+      "unlock": "Stable qualified candidate, authorized operating environment and completed real interval."
+    },
+    "X4": {
+      "kind": "external-release-gate",
+      "requirements": [
+        "RC42"
+      ],
+      "work": "Current target-network suitability/clearance.",
+      "unlock": "Applicable authoritative clearance and live network validation; historical incident guidance or successful local run does not suffice."
+    },
+    "X5": {
+      "kind": "resource-prerequisite",
+      "requirements": [
+        "RC01",
+        "RC18",
+        "RC27",
+        "RC37",
+        "RC40"
+      ],
+      "work": "Shared cumulative300USD ceiling; retained ledger records final rounded headroom3.70USD, not a fresh balance or new spending authorization. No paid action was performed for this packet.",
+      "unlock": "Trusted lead reconciles actual accrual/storage/network/cleanup buffer before any paid launch/extension; continue local independent work within allowances."
+    },
+    "O1": {
+      "kind": "conditional-owner-decision",
+      "requirements": [
+        "RC21"
+      ],
+      "work": "If authentic wallet evidence establishes a required one-transaction route impossible or unsupported, present measured alternative for owner decision.",
+      "unlock": "Concrete measured evidence; no additional owner decision is asserted necessary merely because qualification is incomplete."
+    }
+  },
+  "independentlyExecutableNow": [
+    "D2 remaining bounded local performance/accessibility and1601-block feasibility work",
+    "D3 existing receiver observation at authorized service boundary and trust-topology analysis",
+    "D4 reconcile latest moderator evidence before narrowly missing scenarios",
+    "D6 source/evidence recovery reconciliation",
+    "D7 final candidate review/check conjunction and handover assembly"
+  ],
+  "externalOrOwnerDependencies": [
+    "X1",
+    "X2",
+    "X3",
+    "X4",
+    "X5 if paid capacity is needed",
+    "O1 only if measured route requires scope decision"
+  ],
+  "wholeRequirementAccepted": false,
+  "updatedAt": "2026-10-18T12:09:01.927648+00:00"
+}

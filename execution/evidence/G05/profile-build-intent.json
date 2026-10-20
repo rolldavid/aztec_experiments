@@ -1,0 +1,8 @@
+{
+  "candidate": "90a1b3e9783c9984fcd6810969fa213225b64c6c",
+  "startedAt": "2026-10-11T21:37:31.299649+00:00",
+  "command": "Pinned Node scripts/build-contracts.mjs followed after success by Rolling normal build; separately supervised540s4GiB each",
+  "owner": "lead-20261011",
+  "immutable_inputs": "AllbillboardNoir/build/source inputs frozen; designreaderisolated complete; no otherheavy active",
+  "reason": "Normal canonical manifest covers addedNoir inputs; then processedRolling artifact/VKs; no manualmanifestfake"
+}

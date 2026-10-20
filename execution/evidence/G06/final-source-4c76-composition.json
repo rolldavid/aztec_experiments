@@ -1,0 +1,52 @@
+{
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "at": "2026-10-12T02:45:22.161816+00:00",
+  "status": "source/artifact/test composition verified; actualrecovery2 pending",
+  "walletAssets": {
+    "manifestSha256": "3d8f52a661d15537952a0f4d300214d7d14aa772d9292a84a5bf6915ea511951",
+    "inputs": 75,
+    "outputs": 24,
+    "allCurrentInputsOutputHashesAndSizesMatch": true
+  },
+  "frontend": {
+    "apps/rolling/reader.mjs": {
+      "sha256": "2567aece7a6dc79b8978299ae786e3a84991a3f2c5faf3b155c8176fdb2ff4fc",
+      "same_as_composer7328": true
+    },
+    "apps/rolling/model.mjs": {
+      "sha256": "cd6d315a7c66ca9b365ad2f954f584d732d2a9abdd81f49a525817f5836f38af",
+      "same_as_composer7328": true
+    },
+    "apps/rolling/wallet-panel.mjs": {
+      "sha256": "67e5dc261d5d1e56b8500ec7965c4fb7d5e2ffd01f0cd2b9ec8ecb474ec61cfc",
+      "same_as_composer7328": true
+    },
+    "apps/rolling/wallet-session.mjs": {
+      "sha256": "d3cbd87202efafc6b44a2512e3404feb8c92494f8c713d5e7efcca8f5e69eecd",
+      "same_as_composer7328": true
+    },
+    "shared/rolling/name-policy.mjs": {
+      "sha256": "ded4edbdcff187aa3f49f4f7b39f998c08642f81bbcbf0c1d47ad3d70d8846d6",
+      "same_as_composer7328": true
+    },
+    "shared/rolling/application.mjs": {
+      "sha256": "071e2bbe9c6226b2d10c15425cabcacb8ccca445cea9396b617a8d9c613151d6",
+      "same_as_composer7328": true
+    }
+  },
+  "contract": {
+    "allTrackedRollingContractFilesSameAs": "90a1b3e9783c9984fcd6810969fa213225b64c6c",
+    "files": 39,
+    "processedArtifactSha256": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace",
+    "independentlyReviewedBuildTXE": "evidence/G05/profile-build-txe-90a1-review.json",
+    "allReferencedEvidenceHashesVerified": true,
+    "tests": 151,
+    "verificationKeys": 12,
+    "currentCatalogLoad": "passed via pinnedNode loadRollingArtifacts()"
+  },
+  "limitations": [
+    "No new heavybuild/TXE rerun because exactinputs unchanged; sourceequivalence explicitlyverified",
+    "Browser composer7328 actualprepare/cancel covers ownnames/Anonymous/counts/accountswitch; not fullbrowserpublication",
+    "99 compilerdiagnostic obligations and specialistreview remainopen"
+  ]
+}

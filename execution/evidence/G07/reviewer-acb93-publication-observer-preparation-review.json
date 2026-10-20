@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_ONE_EIGHT_CASE_CONTROLLED_RUN_AFTER_LEAD_GRANT",
+  "source": "acb93b26694c6d81942da63f8e0221b99b936288",
+  "packetSha256": "ccf016c70288ae07d4cedf86f6562abaabd8b03183e70710308d55aae9d8125c",
+  "runnerSha256": "7cae20f8546c7894e9b1fb391a2a0ac5af75767b3d338f621283f37cfd1445ab",
+  "preparationSha256": "3dbcfe096d410730b2ecc4d0402efc4932f4f5ed1d8166e1cebffc184e9386cd",
+  "carrySourceReview": "43f6470dfa33911b167d232150a3dc6f6c3e49e224d2b1a134cf91a6116ac2ad",
+  "verifiedPins": 4278,
+  "delta": "Only existing test cases extended with actual installed job undefined-response and falsy-error, plus hostile array getter/shadowed includes privacy negatives. Observer source and runner unchanged.",
+  "counts": 8,
+  "deadlineMs": 60000,
+  "rssLimitKiB": 2097152,
+  "holds": "No chain run, publication/root cause, marker or inclusion acceptance. Actual controlled result must be reviewed; no timing or offset changed.",
+  "reviewerRuntimeExecuted": false
+}

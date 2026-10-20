@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "revision": "9ee08df5bd530fc55f8e50a5d20d975c7c588ecb",
+  "base": "56a8de98c18c95b16eb8e7354af3231f0c561a02",
+  "verdict": "changes-requested",
+  "scope": "G07-A03/A10 four-transaction native notification browser source eligibility; no genuine runtime claim",
+  "sourceSha256": {
+    "scripts/testing/browser-worker.mjs": "b4c442cf153eda18188ae4370a73391851594c0b186b2a576507b3e0dfe1d9e0",
+    "scripts/testing/rolling-application-fixture.mjs": "6d1307b9836dc172de7b2cf0d3aadaf3db490014d4e5d59af7b48414e7b822a8",
+    "scripts/testing/rolling-application-fixture.test.mjs": "8ea6fe177ff702767097d491fe3f4f8958213deef30c59380cd16e577e4ceb46",
+    "scripts/testing/rolling-notification-fixture.mjs": "13b18be689fd771a618dd8439163f9936ee85768768ff02b506806e0c2c24c08",
+    "scripts/testing/rolling-notification-fixture.test.mjs": "9ae99ac6da515f3cf301a2a2f749a385b493b454834cb5305dc9a70107d77dee",
+    "scripts/testing/rolling-public-acceptance.mjs": "955dbc9a2d95a47e840909b34daf22fab3ae8040cdc312b7767f26136591cc6e",
+    "scripts/testing/run-application.mjs": "7ac076e770ad59153914a19753fd0edb1186e1ecabd0d5af332b089f1686a16d",
+    "scripts/testing/scenario-flows.mjs": "e24300a0a66bdc288bf02958fda4e95ef2a889e08323c4af92594ca8629509f9",
+    "scripts/testing/scenarios.mjs": "1495e4cccff12757b23325db1b236b2f472f1cb600a4267b838340ef675d5e1d"
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "scripts/testing/rolling-application-fixture.mjs",
+      "lines": [
+        514,
+        534,
+        574,
+        579
+      ],
+      "issue": "Browser-paid failure evidence collection is sequential and gated by success assertions. A subscription read failure skips marker collection; A balance failure skips B. An included reverted B transaction has its fee total accumulated but its canonical receipt/effect row is not persisted before success assertion. Outer fallback only reconciles active native actor A, not the closed browser subscriber.",
+      "requiredRepair": "Independently attempt every forwarded browser transaction and both role balances within remaining bound; persist available included receipt/effect/hash/fee before semantic checks; aggregate original/collection/accounting failures and persist before ACK. Add used-code regression for first-read failure with later included marker, paid revert, and A balance failure with B still attempted."
+    }
+  ],
+  "checks": {
+    "independentBridgeTests": {
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 108.030375,
+      "log": "execution/evidence/G07/notification-parent-9ee-independent-tests.log"
+    },
+    "independentProductionPanelRegression": {
+      "revision": "56a8de98c18c95b16eb8e7354af3231f0c561a02",
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 1257.072834,
+      "log": "execution/evidence/G07/notification-driver-56a8-independent-dom.log",
+      "labels": "Real Chromium and production DOM; application/custody doubles; closes prior wrong-label/navigation source findings."
+    },
+    "sourceInspection": [
+      "Exact nine-path diff; explicit notification dispatch and four-job count retain saved/reorg routes.",
+      "Distinct funded B without collateral, original B actor closed before browser; phase signal validated owner/mode/schema and consumed once before fresh private subscription snapshot and one A reply.",
+      "Canonical transaction/effect block-byte binding and actual decoder; exact private head replay/read marker/public projection comparison.",
+      "Fresh temporary private readers close in finally; proof/send deltas checked.",
+      "Original parent owns miner/prover/actors and cleanup; hard 540s/4GiB remains; 150s browser plus nominal 30s reserve.",
+      "Independent source/test inspection before lead test claims; new bridge tests are filesystem/budget only and do not cover finalization faults."
+    ]
+  },
+  "limits": [
+    "Runtime and time-budget feasibility pending; no browser-chain acceptance from DOM doubles.",
+    "No integration/runtime approval until P2 repaired and exact-source re-reviewed.",
+    "SDK sparse-reorg repair and 207 fee observability not present in this candidate; no claim they are."
+  ]
+}

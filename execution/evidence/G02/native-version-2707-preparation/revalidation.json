@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "campaign": "native-version-20261013-2707fd93cc0e",
+  "passed": true,
+  "preflight": {
+    "identityVerified": true,
+    "instances": 0,
+    "volumes": 0,
+    "activeFleets": 0,
+    "plugin": {
+      "status": "degraded",
+      "active": 0,
+      "diagnosticOnly": true
+    }
+  },
+  "existingObject": {
+    "bucket": "anonymous-message-board-testnet-backups-nvdhcyurtoga",
+    "key": "releases/native-bb-fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f/bb",
+    "versionId": "GODU5XvItcwYTvFkDmb9sRJA50HHLSqL",
+    "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f",
+    "bytes": 44698432,
+    "encrypted": true,
+    "verifiedBy": "versioned-head"
+  },
+  "uploadPerformed": false,
+  "computeCreated": false
+}

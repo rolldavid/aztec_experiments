@@ -1,0 +1,25 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "SOURCE_AND_ONE_BOUNDED_184_COMPONENT_RUN_ELIGIBLE",
+  "source": "6b0a68f637c21c28e0af30a29f9b5cde06830fa0",
+  "base": "a9da602b38cf00d47e40f8fb5d201809f1b48c0d",
+  "packetSha256": "acdf6ef95f317dd08831bdbb65888146426bc12aa9ff6d2d7e8836fb588807ac",
+  "decisionSha256": "0988c32fd891aa38b52248e08f2f73b21fa1de6b10d859aee2a99ad4a847694c",
+  "designTimingSha256": "11bbdd8da3d056a6bc188de93a93491c38a85ce5ff40b65c3927735722da9afe",
+  "sourceChecks": [
+    "Exact two-file diff: initial scenario deadline540000\u2192585000, test expects initial585000/marker540000 and asserts below600000. No fixture/actor/readiness/proof/accounting/clock source changed.",
+    "run-application derives applicationDeadlineAt from same report start+scenario deadline-15000: inner570000 and cleanup allowance15000. Supervisor still counts cleanup in elapsed and fails beyond585000.",
+    "Cold full45s, suffix15s and fork150s reserve, two-worker profile,4GiB tree/768MiB heap, three real application jobs and all actual predicates unchanged. Marker and browser remain540000.",
+    "Parent decision records reasoned initial-only engineering-envelope revision, one-attempt budget and no unchanged retry. User<600000 requirement retained; this is explicit deadline revision, not retroactive pass or weaker fork reserve.",
+    "Actual18828 arithmetic would leave168636ms at same fork point,18.636s over unchanged reserve; timing is counterfactual, not postfork performance measurement."
+  ],
+  "componentRunnerChecks": [
+    "Exact accepted37804 wrapper with directory substitution only; child byte-identical;60s2GiB unchanged.",
+    "All3236 current protected bindings independently rehashed. Whole184 fixture cases, concurrency1,TAP and no filter/skips; source/shortTMP/normal artifact captured."
+  ],
+  "holds": [
+    "No genuine launch authorization in this component review: actual184 receipt and exact updated genuine preparation/launcher bindings/current closure still required.",
+    "No guarantee of<585s actual completion; elapsed/cleanup failure remains failed and historical18828 preserved.",
+    "No genesis/Anvil mutation or new actor lifecycle added."
+  ]
+}

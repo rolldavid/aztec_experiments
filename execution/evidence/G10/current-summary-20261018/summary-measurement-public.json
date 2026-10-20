@@ -1,0 +1,63 @@
+{
+  "measurementId": "RC30-qwen-summary-20261018-01",
+  "sourceRevision": "0fd3683e3f036748e9f5b618a097c50f3c5443bc",
+  "modelCalls": 1,
+  "topups": 0,
+  "mainModelCalls": 0,
+  "chainTransactions": 0,
+  "inputSha256": "dfa1a6f8d0fba86f6d052f3b589434a06d4560ea1f862a454b967ca1090d1af1",
+  "latestExcluded": true,
+  "durationMs": 2891.905333,
+  "finishReason": "stop",
+  "message": {
+    "role": "assistant",
+    "content": "- **Participant Instructions**: Keep `app.ts` and revision `abc123`.  \n- **Decisions**: Keep blue.  \n- **Unresolved Issues**: Add tests.  \n- **Repository Paths**: `app.ts`  \n- **Accepted Revision References**: `abc123`  \n- **Earlier Bok Results**: Not specified.",
+    "refusal": null,
+    "annotations": null,
+    "audio": null,
+    "function_call": null
+  },
+  "billing": {
+    "providerId": "chatcmpl-0cbc274e94a7f1d442ab69f08fc766a1",
+    "modelId": "qwen3-235b-a22b-instruct-2507",
+    "promptTokens": 247,
+    "completionTokens": 72,
+    "cachedTokens": 0,
+    "inputPrice": "150000000",
+    "outputPrice": "750000000",
+    "cachePrice": null,
+    "charge": "92",
+    "receipt": "0x067574f2ffe4a1a24bf4900df1f2d2451d1184a731ff96311f615fa1b0005bce"
+  },
+  "quoteMaximumMicroUsdc": "20100",
+  "identicalTokenComparison": {
+    "mainModel": "kimi-k2-5",
+    "promptTokens": 247,
+    "completionTokens": 72,
+    "cachedTokens": 0,
+    "summaryMicroUsdc": "92",
+    "mainHypotheticalMicroUsdc": "391"
+  },
+  "qualityCriteria": [
+    {
+      "id": "instructions",
+      "pass": "Preserves instruction to keep app.ts and accepted revision abc123."
+    },
+    {
+      "id": "decisions",
+      "pass": "Preserves the prior decision to keep blue."
+    },
+    {
+      "id": "unresolved",
+      "pass": "Preserves adding tests as unresolved, not completed."
+    },
+    {
+      "id": "repositoryReferences",
+      "pass": "Preserves exact app.ts and abc123 references."
+    }
+  ],
+  "limitations": [
+    "Single public fixture; no claim of broad model quality or full main-model journey.",
+    "Main comparison is arithmetic using current published rates, not a second paid call."
+  ]
+}

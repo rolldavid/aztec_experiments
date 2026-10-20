@@ -1,0 +1,27 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "eligible-parent-claimed-two-existing-test-files-only",
+  "proposalSha256": "fdeda69ce63ae2fe40dc17cda61201ab663d70a5aa54d89cbdcd5fb2d1ba3e8d",
+  "source": "ad2029897e5ffe15d06d628cfe7c41909dfda605",
+  "bindingCount": 15,
+  "historicalGitBindingsForNowChangedTests": [
+    "scripts/test-w02-rpc.mjs",
+    "prover/private-query.integration.test.mjs"
+  ],
+  "verifiedCallGraph": [
+    "CLI exact endpoint fetch wrapper installed before SDK bundle evaluation.",
+    "Deployment raw node is ordinary createAztecNodeClient and same node is passed into actual createPXE/store.",
+    "ReadOnly wrapper skips application prover initialization and replaces proveTx with rejection; SDK initialization is still real and can be substantive.",
+    "Credential-free private facade retains omit/no-referrer bypass and must not be modified to pass this operator test."
+  ],
+  "conditions": [
+    "Start with smallest actual installed SDK node plus unchanged extracted CLI wrapper real-local-HTTP regression before admitting substantive actual PXE case.",
+    "Preserve real SDK schema/cache/protocol provider/store; use labelled public synthetic identities and no account import/sign/send/proof.",
+    "Assert endpoint/key isolation, batching <=3, exact known allowlist, upstream credential stripping and original pending-work cleanup; unsupported requested method is a finding rather than automatic allowlist addition.",
+    "Original no-auth/default and credential-free tests remain.",
+    "Later current normal-bundle test is mandatory for actual bundled CLI coverage; source-module success alone is not it.",
+    "ReadOnly PXE transport does not qualify full proof-enabled deployment, retries or cloud routing.",
+    "Changed source and exact bounded existing-runner review before execution; no runtime authorization from this proposal review."
+  ],
+  "runtimeExecutedByReviewer": false
+}

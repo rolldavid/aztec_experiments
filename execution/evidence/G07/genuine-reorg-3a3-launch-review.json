@@ -1,0 +1,37 @@
+{
+  "reviewer": "reviewer-20261011",
+  "source": "3a38d10a10ae2b192597d1b599558fe0f44f67b6",
+  "packetSha256": "67eec1a85a48bcf58d6ce210240bfcb72cdf7ebce015c8593af667278822e5d2",
+  "designDecisionTreeSha256": "d98250ab2330997de45e0458287a8a3d5fbabd6b3cde3125decc7b3647257990",
+  "verdict": "eligible for one separately granted changed initial-reorg diagnostic measurement only after native campaign terminal cleanup and explicit slot release",
+  "checks": {
+    "allPacketFilesAnd3157CurrentBindingsRehashed": true,
+    "launcherOnlyEvidenceDirectoryAndCurrentClosurePathChangedFrom41e": true,
+    "actualFixtureByteIdenticalTo41e": true,
+    "actual169ComponentReview": "012c224dcc1a10cf801f1262e4868e962a7f66fb71180ffe4c61f79f11a7c219",
+    "currentClosure": "ecaa493474e068f8163af0a5a1c917d6334cb67d0160ddc543c65375c75d63a8",
+    "changedTestingPathsNotManifestInputs": true,
+    "normalGrumpkinRepairActualBrowserCarry": "7db8260b0a003beaf8fb162eaf6a5e2216c201192f38fd64714e765d4807d575"
+  },
+  "bounds": {
+    "outerMs": 540000,
+    "innerMs": 525000,
+    "rssLimitKiB": 4194304,
+    "fullColdReadMs": 45000,
+    "suffixReadMs": 15000,
+    "forkReserveMs": 150000,
+    "genuineApplicationJobs": 3,
+    "applicationRequestedThreads": 2
+  },
+  "measurement": "Fixed111 predicate/getter/callback identifiers distinguish the previously sanitized bootstrap failure through the unchanged actual helper path. This is changed diagnostic evidence, not a proposed behavioral fix or unchanged retry.",
+  "acceptance": "All original authentic empty head/full enumeration/zero cold effects and discovery, exact root admission, actual fork/unwind/rebuild, dropped attempt/replacement, immutable intent/journal, fee conservation, public footprint and terminal cleanup checks remain mandatory.",
+  "decisionLimits": [
+    "Exact false predicate must be compared to production contract and reproduced narrowly before a fix.",
+    "Opaque physical oracle rejection or outer failure without ID is not attributed to an internal cause or treated as pass.",
+    "No speedup, successful fork or timing feasibility inferred; prior339559ms failed run leaves substantial work unmeasured.",
+    "Early budget refusal remains failure.",
+    "Initialized-marker scenario remains separate mandatory acceptance.",
+    "No further full-chain run follows automatically from this grant."
+  ],
+  "findings": []
+}

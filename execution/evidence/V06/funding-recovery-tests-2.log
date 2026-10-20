@@ -1,0 +1,31 @@
+✔ withdrawal claim is saved before a debit can be broadcast (7.407583ms)
+✔ confirmed claim reconciles a lost response without claiming twice (2.04325ms)
+✔ reverted withdrawal clears its intent so available funds can be withdrawn again (2.400833ms)
+✔ confirmed Ethereum redemption reconciles a lost response without withdrawing twice (2.422458ms)
+✔ proposed claim does not discard its deposit metadata (1.27525ms)
+✔ request IDs are canonical fields usable by cancellation; results filter other accounts (6.3985ms)
+✔ public redemption waits for finality without creating a submission intent (1.138625ms)
+✔ failed redemption gas preflight does not poison the saved withdrawal (3.325583ms)
+✔ failed deposit gas preflight leaves funding retryable after approval (3.710375ms)
+✔ V6 plugin deposit allows changing Inbox gas while retaining its saved nonce (3.180791ms)
+✔ lost wrapped deposit response recovers the V6 message and only claims once on Aztec (3.33375ms)
+✔ lost wrapped redemption response clears only after exact canonical withdrawal effects (1.289834ms)
+✔ wrong effects retain cached deposit and redemption intents and never send (2.962125ms)
+✔ a canonical reverted deposit clears only that payment and does not send again (1.479166ms)
+✔ direct and wallet-wrapped payments bind canonical transaction and exact effects (7.880584ms)
+✔ deposit binds the portal event and full official V6 Inbox message (8.082417ms)
+✔ withdrawal rejects missing, duplicate or mismatched exact effects (1.453125ms)
+✔ both payments reject transaction identity substitution and noncanonical receipts (4.117292ms)
+✔ pending and canonical reverted payments do not claim a successful effect (0.78775ms)
+✔ actual journey exit helper matches frozen Solidity commitment and independently serialized message leaf (3.660958ms)
+✔ exit helper binds receipt and domain inputs and rejects malformed/out-of-range shapes (4.100417ms)
+✔ actual exit assertion rejects duplicate/missing leaves, wrong spent note and premature anchor (0.687583ms)
+✔ actual refund verifier decodes a real ABI event and rejects wrong receipt identity/accounting (9.088584ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 907.090208

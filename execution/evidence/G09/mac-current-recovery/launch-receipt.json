@@ -1,0 +1,14 @@
+{
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "sessionId": 86149,
+  "ownerPids": [
+    "34438"
+  ],
+  "launchObservedAt": "2026-10-15T08:53:59.739346+00:00",
+  "normalStopNoLaterThan": "2026-10-15T09:03:59.739346+00:00",
+  "cleanupAllowanceSeconds": 120,
+  "runtime": "normal plugins/devnet/start.mjs --profile rolling",
+  "stateDirectory": "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-shared-20261015-22d2224caaab/mac-current-state",
+  "financialActionsRequested": false,
+  "additionalModelServicesRequested": false
+}

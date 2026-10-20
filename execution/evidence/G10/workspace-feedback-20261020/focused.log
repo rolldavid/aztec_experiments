@@ -1,0 +1,25 @@
+✔ captures exact public invocation bytes with content identity independent of file times (13.701792ms)
+✔ source rejects symlink (4.091667ms)
+✔ source rejects hardlink (2.721375ms)
+✔ source rejects hidden credential (1.613208ms)
+✔ source rejects workflow (1.478125ms)
+✔ source rejects node_modules (2.155041ms)
+✔ source rejects missing tests (4.060375ms)
+✔ source rejects missing build (4.107375ms)
+✔ source rejects oversize (11.789791ms)
+✔ finite source prerequisite missing package (2.154ms)
+✔ finite source prerequisite invalid package (2.875292ms)
+✔ finite source prerequisite null package (3.26ms)
+✔ finite source prerequisite array package (2.367584ms)
+✔ finite source prerequisite blank build (2.705958ms)
+✔ model can check and repair an empty thread; acceptance reuses only the exact checked source (1266.95725ms)
+✔ workspace listing reflects staged, untracked, ignored and deleted files without adopting HEAD (367.403542ms)
+✔ workspace prerequisite feedback identifies repair without leaking arbitrary source errors (767.416292ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2488.4195

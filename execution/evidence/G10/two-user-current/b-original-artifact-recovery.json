@@ -1,0 +1,103 @@
+{
+  "at": "2026-10-14T12:18:04.629Z",
+  "kind": "explicit original-B operator artifact recovery",
+  "sourceRevision": "442c0895ef997d9c17c1256a164d1431a86ffed5",
+  "originalSnapshotSha256": "a197080b3e1623a4a3f25f71a8927cccbd7c005b4bec8d4abf2286e5415322c0",
+  "originalHostedJournalsUnchanged": true,
+  "modelCalls": 0,
+  "walletCalls": 0,
+  "receipt": {
+    "repositoryId": "edf11c1f053b3a537ccd4ddb85a72aa36a27dfe3f79e37c87835b0eea6b0f511",
+    "threadId": "0x094749151a6abb8e79fa917fa003c97976dd8c7492096490c303d379c0365ce6",
+    "invocationId": "0x28908ae63f7067953b07e9515a12a4e40a430127f7cbb20c19052d13119a6714",
+    "readRevision": null,
+    "acceptedRevision": "d83516a91a55d15a2c6a3948486e9831fe422411",
+    "validation": {
+      "schema": 1,
+      "passed": true,
+      "sourceArchiveSha256": "da4bd9b234c0a0715a0c21efc649c603ceb17042aaca385be0725c0b5a7ab8c5",
+      "artifactArchiveSha256": "24916967fabaff5a948c66e71b96ed22e0c01ef6eed4ef540a813b508db4e853",
+      "revision": "d83516a91a55d15a2c6a3948486e9831fe422411",
+      "sourceDigest": "62819172c0c053429d8bb38f43be098ed8f036eb3e4073fd2adbec820ed3bea4",
+      "sourceSha256": "62819172c0c053429d8bb38f43be098ed8f036eb3e4073fd2adbec820ed3bea4",
+      "sourceManifest": [
+        {
+          "path": "app.js",
+          "sha256": "93923c63a3ce5ad516e44287c7d4c446c73e678b2ad5daf059fcc56b528bc01a",
+          "bytes": 849
+        },
+        {
+          "path": "index.html",
+          "sha256": "b109d06b255196cf056ca8b391cfff5797e5f09cd100d12afc26ae8b1f0da738",
+          "bytes": 1775
+        },
+        {
+          "path": "package.json",
+          "sha256": "ca2291474e4dcf962d7281ae4f642b9f69be268ece2b89a3de8a4de3559d9ea8",
+          "bytes": 305
+        },
+        {
+          "path": "style.css",
+          "sha256": "61e0d56c2fac474384d05f7fdeaf1232fe0d480df7968c335d3f4dd0e0e2ab67",
+          "bytes": 1273
+        },
+        {
+          "path": "test.js",
+          "sha256": "d60041e1f14ec69c0ad702aff935fd52ee7d7914084ae4c98fd65278bc9fd8c9",
+          "bytes": 2111
+        }
+      ],
+      "image": "sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651",
+      "node": "v24.21.0",
+      "testCount": 1,
+      "testsPassed": true,
+      "buildPassed": true,
+      "artifacts": [
+        {
+          "path": "app.js",
+          "bytes": 849,
+          "sha256": "93923c63a3ce5ad516e44287c7d4c446c73e678b2ad5daf059fcc56b528bc01a"
+        },
+        {
+          "path": "index.html",
+          "bytes": 1775,
+          "sha256": "b109d06b255196cf056ca8b391cfff5797e5f09cd100d12afc26ae8b1f0da738"
+        },
+        {
+          "path": "style.css",
+          "bytes": 1273,
+          "sha256": "61e0d56c2fac474384d05f7fdeaf1232fe0d480df7968c335d3f4dd0e0e2ab67"
+        }
+      ],
+      "artifactSha256": "45f86007919064229c4434c202e0501eaa48e0f2a406df7873fad4b40f15d4a4",
+      "logSha256": "c74f6abb08347a71dfba908d0eee0da45f434317ddc937ea51026249ef934b52",
+      "logBytes": 677,
+      "log": "TAP version 13\n# Running tip calculator tests...\n# ✓ Bill input defaults to 80\n# ✓ Tip percentage defaults to 12.5\n# ✓ Default tip result shows $10.00\n# ✓ Default total result shows $90.00\n# ✓ Bill input has associated label\n# ✓ Tip input has associated label\n# ✓ Has lang attribute\n# ✓ Has main landmark\n# ✓ Inputs have aria-describedby\n# ✓ Output has aria-labelledby\n# ✓ Form has aria-label\n# ✓ Links to style.css\n# ✓ Links to app.js\n# 13 passed, 0 failed\n# Subtest: test.js\nok 1 - test.js\n  ---\n  duration_ms: 1230.407834\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1392.578584\n",
+      "outputDirectory": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/rc22-bok-acceptance/hosted-state/static-artifacts/bok-static-e672a6b1-a840-471e-9e44-43e2dcad3566",
+      "limits": {
+        "sourceBytes": 8388608,
+        "fileBytes": 1048576,
+        "files": 512,
+        "artifactBytes": 1048576,
+        "logBytes": 65536,
+        "workMs": 45000,
+        "totalMs": 60000,
+        "memory": 268435456,
+        "pids": 64
+      },
+      "publication": "untrusted static output; separate origin required; no publication performed"
+    },
+    "publication": {
+      "published": true,
+      "repositoryId": "edf11c1f053b3a537ccd4ddb85a72aa36a27dfe3f79e37c87835b0eea6b0f511",
+      "threadId": "0x094749151a6abb8e79fa917fa003c97976dd8c7492096490c303d379c0365ce6",
+      "acceptedRevision": "d83516a91a55d15a2c6a3948486e9831fe422411",
+      "publicationId": "b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0",
+      "artifactUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/r/d83516a91a55d15a2c6a3948486e9831fe422411/files/index.html",
+      "sourceUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/r/d83516a91a55d15a2c6a3948486e9831fe422411/source.json",
+      "latestUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/latest/",
+      "latestSourceUrl": "http://127.0.0.1:18788/t/b8031e31ab86feb0795aeac304c974c662e640b76364f2e5a2e6badab41cabe0/source.json"
+    }
+  },
+  "limit": "Original failed publication reply remains unchanged; this is a later recovery, not retrospective original success."
+}

@@ -1,0 +1,193 @@
+{
+  "at": "2026-10-14T12:06:53.644Z",
+  "operation": "read-only provider transactions",
+  "sourceRevision": "f93aa7a",
+  "transactions": [
+    {
+      "id": "7d93c84c-ebb8-4b0c-8fc6-cdb0d60e8908",
+      "amount": -0.00119937,
+      "balanceAfter": 4.95071459,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:02:33.971Z",
+      "requestId": "chatcmpl-ed9c0330c006546e4da7fab693aa537c",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "3d0c0163-513c-4ad2-83bc-6dd2824e471c",
+      "amount": -0.00345246,
+      "balanceAfter": 4.95191396,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:02:11.805Z",
+      "requestId": "chatcmpl-b6213580c5ee70a6c14c94f6a9ae962d",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "eb7ddedb-4b4c-4763-b0d4-9f0f1f546fb0",
+      "amount": -0.00314116,
+      "balanceAfter": 4.95536642,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:01:42.747Z",
+      "requestId": "chatcmpl-79f1690c8a995f3f13c657ad73cc1ab2",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "4c47a2e9-6216-4de6-8757-5af1286d1e6b",
+      "amount": -0.00165626,
+      "balanceAfter": 4.95850758,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:01:13.556Z",
+      "requestId": "chatcmpl-2a0e6794091c0ad246f8daf405e06a6d",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "52ce4ad6-5530-42f8-a1db-8f610a164fdd",
+      "amount": -0.00258262,
+      "balanceAfter": 4.96016384,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:00:50.433Z",
+      "requestId": "chatcmpl-136a09fabd4fe732b95b481f6e1977f9",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "0299d61b-41b1-4e20-9b51-200c703e3fe0",
+      "amount": -0.00221484,
+      "balanceAfter": 4.96274646,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T12:00:21.734Z",
+      "requestId": "chatcmpl-7ea2c58d4f531c29044ed2bae3a53538",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "91fc9152-07d1-4847-9a34-38f8850c0a18",
+      "amount": -0.00096528,
+      "balanceAfter": 4.9649613,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T11:59:50.970Z",
+      "requestId": "chatcmpl-b451e61102a95d3f2e6766e796dd178d",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "82d6a32b-30d6-4dfd-9fcb-3380486aaf56",
+      "amount": -0.0007707,
+      "balanceAfter": 4.96592658,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T11:59:30.932Z",
+      "requestId": "chatcmpl-4af845724c6a36455d0cb7b004c43b34",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "16a17061-fd33-4418-aad8-c2d20fea8e29",
+      "amount": -0.00555912,
+      "balanceAfter": 4.96669728,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T11:56:56.571Z",
+      "requestId": "chatcmpl-91085fb354fcd02e84e509e1a9d88813",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "cc4c3dc5-0c84-4ee2-8343-4f043d16a58d",
+      "amount": -0.00031542,
+      "balanceAfter": 4.9722564,
+      "type": "CHARGE",
+      "createdAt": "2026-10-14T05:53:44.893Z",
+      "requestId": "chatcmpl-8d6345b785d66e58f928dc0e4a170f11",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "1bbbf5b5-9606-4d6e-a8e8-fb4037f1927c",
+      "amount": -0.00015092,
+      "balanceAfter": 4.97257182,
+      "type": "CHARGE",
+      "createdAt": "2026-10-11T18:53:45.065Z",
+      "requestId": "chatcmpl-70eb5b76aae26dfee0cb31263cf6864c",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "ea689324-4a90-45ff-9046-a62d9819cf6f",
+      "amount": -0.00034776,
+      "balanceAfter": 4.97272274,
+      "type": "CHARGE",
+      "createdAt": "2026-10-10T14:51:32.395Z",
+      "requestId": "chatcmpl-c9ea14b8999eefc3da2890079a80aa1e",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "2bbc695c-39f0-4e27-93df-ad22e7534bb3",
+      "amount": -0.0005194,
+      "balanceAfter": 4.9730705,
+      "type": "CHARGE",
+      "createdAt": "2026-09-23T02:16:17.068Z",
+      "requestId": "79659e76d7de4f82a6e08ef056950e05",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "6bf30493-ac56-4cbd-8a41-4807144aec6f",
+      "amount": -0.00094794,
+      "balanceAfter": 4.9735899,
+      "type": "CHARGE",
+      "createdAt": "2026-09-23T02:16:08.914Z",
+      "requestId": "c2fbd105362340f1b327f3a2340aed64",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "3c9bab68-ecce-437a-8487-b6635bcf0966",
+      "amount": -0.0010654,
+      "balanceAfter": 4.97453784,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T23:48:45.383Z",
+      "requestId": "680cd8a25d1c4d9aabb5612a964a1594",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "c2270333-5f7b-4e32-9d7b-a09d0bfb11ad",
+      "amount": -0.000392,
+      "balanceAfter": 4.97560324,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T23:48:41.942Z",
+      "requestId": "675dc2cf84c640a2a796bcc13566c4bd",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "ecc375ac-d0b7-4396-9669-c9004e811fe5",
+      "amount": -0.00040468,
+      "balanceAfter": 4.97599524,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T23:02:38.979Z",
+      "requestId": "71f84813e82e4e8ba65728a73ee63dff",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "1cf7545d-e242-4c7e-8ea6-b3f14393d316",
+      "amount": -0.00051282,
+      "balanceAfter": 4.97639992,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T23:02:32.085Z",
+      "requestId": "4ee87de71fb74af4a362c61788468120",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "cd5fd90c-ea13-4f59-8c6d-254571a03303",
+      "amount": -0.00074844,
+      "balanceAfter": 4.97691274,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T23:02:29.583Z",
+      "requestId": "86e3f8c1a30c487a92c38cd325fae41c",
+      "modelId": "kimi-k2-5"
+    },
+    {
+      "id": "1d98d751-5a3a-4caf-b9d7-a5581fa292eb",
+      "amount": -0.00058646,
+      "balanceAfter": 4.97766118,
+      "type": "CHARGE",
+      "createdAt": "2026-09-22T22:11:23.388Z",
+      "requestId": "d9319ffd86174783bffdf627a331c6cc",
+      "modelId": "kimi-k2-5"
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "hasMore": true
+  },
+  "limits": "No call outcome inferred from missing row; no model request/top-up performed."
+}

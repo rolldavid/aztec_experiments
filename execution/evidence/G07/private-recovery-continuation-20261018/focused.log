@@ -1,0 +1,17 @@
+✔ account invalidation synchronously removes private DOM and partial recovery never requests public pages (6380.101459ms)
+✔ notification partial recovery preserves public roots but never exposes an incomplete private feed (1339.853208ms)
+✔ one explicit recovery continues sequential bounded reads, including equal progress, without exposing partial preferences (697.738834ms)
+✔ anonymous reply review identifies Anonymous and opening private views clears the previous confirmation (760.036375ms)
+✔ every preference and read marker captures a fresh head and requires maximum-fee confirmation (1355.603667ms)
+✔ account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result (852.526458ms)
+✔ preference head failure does not prepare and recovery failure never implies an empty successful view (840.033417ms)
+✔ locking clears recovered private capability before asynchronous session cleanup settles (764.268625ms)
+✔ explicit recovery abort waits for the original private call and does not publish its late complete result (890.969125ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14350.595667

@@ -1,0 +1,19 @@
+{
+  "sourceRevision": "d8513dae8389f38769fddc4a052e62b34440d265",
+  "requestId": "0x2b933a1efc5cb2b8dfe1ead548d2ae7909614ec34cb1f844a26ebb2ee0a0c970",
+  "phase": "accounted-without-reply",
+  "finished": true,
+  "originalFiveCallsUnchanged": true,
+  "totalChargedMicroUSDC": "5563",
+  "finishTransaction": "0x0b8a9298d6c22059ab9a3405546ba181dee08788a17cdb4de56924bf9bdade50",
+  "observation": {
+    "status": "proven",
+    "transactionFee": "11461525800000",
+    "executionResult": "success",
+    "blockNumber": 68,
+    "blockHash": "0x1cea99a2cbd3bab00041e328b473649ffd556a51cc03d14126fe5f6c10c3085b",
+    "effectSha256": "114da95729552db55a66f9d8f0bf16570711da937ab42bbee40b044d617c65c3",
+    "canonical": true
+  },
+  "limitation": "Failed generated revision b5a457 was not retained by old implementation. No source or provider replay; terminal accounting does not establish delivered reply."
+}

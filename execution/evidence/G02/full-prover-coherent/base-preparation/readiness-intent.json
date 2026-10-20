@@ -1,0 +1,50 @@
+{
+  "source": "ae1a220b2d5694ba84ff6875d36882e4d97eceaf",
+  "commands": [
+    {
+      "label": "nargo",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/toolchain/nargo",
+        "--version"
+      ],
+      "mustContain": [
+        "nargo version = 1.0.0-rc.3",
+        "5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
+      ]
+    },
+    {
+      "label": "forge",
+      "argv": [
+        "/Users/zac/.foundry/versions/v1.4.1/forge",
+        "--version"
+      ],
+      "mustContain": [
+        "Version: 1.4.1"
+      ]
+    },
+    {
+      "label": "solc",
+      "argv": [
+        "/Users/zac/Library/Application Support/svm/0.8.27/solc-0.8.27",
+        "--version"
+      ],
+      "mustContain": [
+        "Version: 0.8.27+"
+      ]
+    },
+    {
+      "label": "bb",
+      "argv": [
+        "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-runtime/node_modules/@aztec-foundation/bb.js/build/arm64-macos/bb",
+        "--version"
+      ],
+      "exact": "6.0.0-rc.6"
+    }
+  ],
+  "deadlineSeconds": 30,
+  "timeoutPerCommandSeconds": 8,
+  "outputMutation": false,
+  "preparedAt": "2026-10-13T12:55:24.883583+00:00",
+  "executionAuthorized": false,
+  "startedAt": "2026-10-13T13:05:17.198940+00:00"
+}

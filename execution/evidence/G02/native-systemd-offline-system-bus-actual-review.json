@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "verdict": "controlled46-accepted-and-one-exact-offline-run-eligible-after-parent-grant",
+  "actualPacketSha256": "3990c5e496e6d2329262e9631847da428e32d5200426a4f2335c4cbcbbb4ba9a",
+  "sourcePacketSha256": "5e7c25e8aa2a490ec3be7926bafca67e692ae0b009ed1e62b9bec0ea639d102a",
+  "sourceReviewSha256": "7a63d6266a45f434448c84cfe03bc32429861131b9f6f0d4783caba961b79a83",
+  "actual": {
+    "tests": 46,
+    "pass": 46,
+    "skips": 0,
+    "elapsedMs": 480,
+    "peakRSS": "unmeasured-short-run",
+    "protectedPins": 921,
+    "mismatches": 0,
+    "exactLogLabelMultiset": true,
+    "allPacketFileHashes": true,
+    "exitCode": 0,
+    "ownedTreeAbsent": true,
+    "ownedTempAbsent": true
+  },
+  "offline": {
+    "runnerSha256": "636ca1e3f93ddb6fd8d30075fc24701b22eef0fa3ade30d9851ce182217cff7a",
+    "image": "sha256:b1e7de12ba7c3261f8b8283f807ed56153f31e46fce16a8decfb31b84f0d456a",
+    "imageBytes": 60022710,
+    "closureSha256": "23251cfcfe792455235cfeffd5e13c699fd1fb098e4f06568ccbeed4d1210e31",
+    "seconds": 60,
+    "workSeconds": 43,
+    "cleanupSeconds": 17,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "aggregateTmpfsMiB": 67,
+    "network": "none",
+    "noPull": true,
+    "noHostMounts": true,
+    "noPrivilegeFallback": true
+  },
+  "conditions": [
+    "Separate explicit parent one-run grant and exclusive slot",
+    "Keep exact source/image/pins and positive cleanup; no retry or fallback"
+  ],
+  "limits": [
+    "Harmless Linux systemd workload and retention regression only",
+    "No BB binary, proof, provider, paid operation or production qualification"
+  ]
+}

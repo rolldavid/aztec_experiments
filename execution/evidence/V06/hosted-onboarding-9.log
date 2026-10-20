@@ -1,0 +1,13 @@
+{"stage":"published-board","at":"2026-10-10T11:41:12.536Z"}
+{"stage":"sepolia-network","at":"2026-10-10T11:41:19.960Z"}
+{"stage":"fund-disposable-test-wallet","at":"2026-10-10T11:41:19.965Z"}
+{"stage":"connect-with-fresh-passkey","at":"2026-10-10T11:41:20.598Z"}
+{"stage":"complete-wallet-setup","at":"2026-10-10T11:41:21.543Z"}
+{"stage":"single-deposit-click","at":"2026-10-10T11:41:30.112Z"}
+{"stage":"approve-deposit","at":"2026-10-10T11:41:30.141Z"}
+{"stage":"metamask-gas-fields","functionName":"deposit","gasLimit":"1687746","requestGas":"0x19c0c2"}
+{"stage":"automatic-testnet-claim","at":"2026-10-10T11:41:51.198Z"}
+{"stage":"testnet-post","at":"2026-10-10T11:43:30.525Z"}
+{"stage":"confirmed-testnet-post","at":"2026-10-10T11:45:54.497Z"}
+{"passed":true,"result":"/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/hosted-v6-onboarding-20261010/result.json"}
+{"passed":true,"ownedTreeAbsent":true}

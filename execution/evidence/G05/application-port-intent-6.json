@@ -1,0 +1,21 @@
+{
+  "createdAt": "2026-10-11T21:08:16.704423+00:00",
+  "source": "8a1e58529cd012dd0d0d960f658681351595a22b",
+  "attempt": 6,
+  "scenario": "rolling-application-port",
+  "proofs": "real",
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "hypothesis": "Installed OperationQueue autoSync:false requires explicit sync before read after canonical send; shared synchronized facade now matches production before/after context guards. Ownership assertion retained and anchors recorded. No acceptance relaxation.",
+  "priorFailure": "application-0fbb562d-ac53-4da1-9fd2-4f8098e11342.json",
+  "diagnosis": "owned-identities-0fbb-diagnosis.json",
+  "review": "combined-campaign-8a1-review.json",
+  "scope": "Five genuine application actions; encrypted journal recovery; actual canonical HTTP index and SQLite cold reopen.",
+  "status": "failed",
+  "serialization": "Profile raw compiler exited0; no other localheavyjob. Remote04 query-only qualification requires zero proof jobs.",
+  "result": "application-a7615508-10c0-40fa-95d6-284da5eb7fe4.json",
+  "diagnosisAfter": "option-none-a761-diagnosis.json",
+  "elapsedMs": 344315,
+  "peakTreeRSSKiB": 1749760,
+  "cleanupComplete": true
+}

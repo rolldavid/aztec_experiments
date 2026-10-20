@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/reviewer_resume2",
+  "sourceRevision": "8cc56ff93741ef3236545d14279834348cb22471",
+  "baseRevision": "817db02f040fdaea40a078a5d9d078b7e04dfcb2",
+  "verdict": "approved",
+  "blockingFindings": [],
+  "scope": "Native freshness qualification repair and private authenticated operator admission independent of full acceptance",
+  "sourceAssessment": [
+    "Full five-file diff inspected. Native retryUntil retries only false results and propagates non-readiness errors. Frozen timestamp must remain exact, actual wallclock lag must exceed limit, and only STALE or UNSYNCED qualifies as expected rejection; transport/identity/config errors do not pass.",
+    "Finally attempts resume even after failed pause or stale assertion; recovery requires actual healthy inspector and advanced timestamp. Fixed diagnostic allowlists avoid raw error leakage.",
+    "Prior blocking missing-helper entrypoint issue is repaired by lazy diagnostic import inside exerciseFreshness. Actual child entrypoint case succeeds with helper absent.",
+    "Failed private-query qualification must remain exact manifest/bootstrap bound, contain all six positive native/healthy/scope/release/noProof prerequisite checks and validated readiness, and pass current live readiness before allocation. Failed receipt is unchanged.",
+    "Ordinary unready pre-admission returns pending without identity/service/intent allocation. Continuous structural/auth/control audit no longer conflates valid sync transitions with host compromise; unchanged service still checks identity/sync/freshness before and after every authenticated request.",
+    "Private address, operator API-key digest, origins, method allowlist, process permissions, proof queue absence and safety controls unchanged. Operator route includes signed sendTx; this review does not characterize it as read-only.",
+    "Prover activation and activation-delivery still require full passed qualification; malformed/binding/uncertain intent paths remain fail-closed."
+  ],
+  "independentChecks": [
+    {
+      "selection": "Five existing Python query/delivery admission and failure containment cases",
+      "passed": 5,
+      "failed": 0,
+      "seconds": 0.045
+    },
+    {
+      "selection": "Eight focused freshness cases plus actual missing-helper child in existing Node suite",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 2.182496333
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "sourceRevision": "d8bb3d94b5c472e3566910dc3f18f83cbdc35440",
+      "finding": "static helper import prevented missing-helper child controlled rejection",
+      "resolution": "Lazy diagnostic import plus actual entrypoint focused check."
+    }
+  ],
+  "limitations": [
+    "No real pause/resume, cloud mutation, proof or broad campaign run. Real native boundary execution remains lead-owned.",
+    "No full acceptance or production/privacy clearance is inferred from private operator availability.",
+    "Prior monolithic userdata16KiB failure remains unchanged in disposition; staged route must preserve payload limits."
+  ],
+  "nonBlockingNotes": [
+    "BOOTSTRAP.md earlier paragraph still says query/prover activation refused after failed qualification; final private-operator admission section correctly qualifies this. Clarify earlier wording during next ordinary documentation edit; no separate review cycle required."
+  ],
+  "sourceHashes": {
+    "deploy/prover/bootstrap.py": "4a1af6f9ae1eb3196b28c0928c654c521bc0553ebc93aba126f2164860b9e601",
+    "deploy/prover/BOOTSTRAP.md": "ced61b1dbe6461ee440740fba3b636e5bb3756739ba110222fc102690d7682c4",
+    "prover/qualify-runtime.mjs": "3027aaa4d34e4c0857f4eb7afe90ad6813a04079dc51835a547ca70bf13e4f3d",
+    "prover/qualify-runtime.test.mjs": "3d3d45f73cb35a6c4dc2b134ad8ba59b9fb87ac6ba8d7dee8608054af80c6ac9",
+    "scripts/test-prover-bootstrap.py": "8387d51458d044f539fb9bbb421376d203c3407cc90b98f3026bba05e50d03e4"
+  }
+}

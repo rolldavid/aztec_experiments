@@ -1,0 +1,1387 @@
+{
+  "passed": false,
+  "scope": "Bounded retained05c profile continuation from next728/anchor1488, bounded120s interrupted independent keys-only recovery after original-U1 preference writes; not fresh120s acceptance.",
+  "sourceRevision": "7ccf6930eb1f46bf970e2abfbb4a12cde0c94f3b",
+  "predecessorRevision": "05cdbcef22fdc282dd4208ddf0aeeceb3c06e5eb",
+  "diagnosticRevision": "952161a0e5fc4d293ce2d26e44f904e49a9f6394",
+  "backupSHA256": "43c3eda3d5871c725a139db0f0ca00621dfec5c2c11aee2904d4951b3a565fd4",
+  "checks": {
+    "isolatedProfilePreserved": true,
+    "retainedNativeDatabase": true,
+    "publicBeforeUnlock": true,
+    "measuredNonzeroCursorObserved": true,
+    "cursorAdvanced": true
+  },
+  "views": {},
+  "deniedRequestShapes": [],
+  "recoverySteps": 44,
+  "cleanup": {
+    "contextClosed": true,
+    "isolatedCursorPreserved": true
+  },
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuModel": "Apple M4 Pro",
+    "logicalCPUs": 12,
+    "totalMemoryBytes": 25769803776,
+    "node": "v24.21.0",
+    "chromium": "155.0.8059.79"
+  },
+  "environment": {
+    "network": "retained native local devnet",
+    "nodeProofs": false,
+    "pxeProofs": false,
+    "cold": "Not cold: reopen retained failed isolated05c profile; identical keys-only backup unlock",
+    "warm": "Retained encrypted prefix; no fresh acceptance measurement",
+    "wholeAcceptanceMs": 120000,
+    "pageDeadlineMs": 10000
+  },
+  "steps": [
+    {
+      "ordinal": 1,
+      "continuation": false,
+      "before": {},
+      "http": {
+        "aztec_getNodeInfo:200": 16,
+        "aztec_getChainTips:200": 10,
+        "aztec_getWorldStateSyncStatus:200": 7,
+        "aztec_getSyncedL1Timestamp:200": 7,
+        "aztec_getBlockData:200": 49,
+        "aztec_getBlock:200": 1,
+        "aztec_getContract:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2234,
+      "after": {
+        "nextBlock": 728,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 2,
+      "continuation": false,
+      "before": {
+        "nextBlock": 728,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1,
+        "aztec_findLeavesIndexes:200": 2
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2393,
+      "after": {
+        "nextBlock": 729,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 3,
+      "continuation": false,
+      "before": {
+        "nextBlock": 729,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 49,
+        "compact:200": 15,
+        "aztec_getBlockHashMembershipWitness:200": 14
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2267,
+      "after": {
+        "nextBlock": 743,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 4,
+      "continuation": false,
+      "before": {
+        "nextBlock": 743,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2292,
+      "after": {
+        "nextBlock": 744,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 5,
+      "continuation": false,
+      "before": {
+        "nextBlock": 744,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2334,
+      "after": {
+        "nextBlock": 745,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 6,
+      "continuation": false,
+      "before": {
+        "nextBlock": 745,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1954,
+      "after": {
+        "nextBlock": 746,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 7,
+      "continuation": false,
+      "before": {
+        "nextBlock": 746,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 2,
+      "state": "ready",
+      "elapsedMs": 2278,
+      "after": {
+        "nextBlock": 747,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 8,
+      "continuation": false,
+      "before": {
+        "nextBlock": 747,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2009,
+      "after": {
+        "nextBlock": 748,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 9,
+      "continuation": false,
+      "before": {
+        "nextBlock": 748,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1950,
+      "after": {
+        "nextBlock": 749,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 10,
+      "continuation": false,
+      "before": {
+        "nextBlock": 749,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 2,
+      "state": "ready",
+      "elapsedMs": 1909,
+      "after": {
+        "nextBlock": 750,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 11,
+      "continuation": false,
+      "before": {
+        "nextBlock": 750,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1922,
+      "after": {
+        "nextBlock": 751,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 12,
+      "continuation": false,
+      "before": {
+        "nextBlock": 751,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2025,
+      "after": {
+        "nextBlock": 752,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 13,
+      "continuation": false,
+      "before": {
+        "nextBlock": 752,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1937,
+      "after": {
+        "nextBlock": 753,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 14,
+      "continuation": false,
+      "before": {
+        "nextBlock": 753,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1941,
+      "after": {
+        "nextBlock": 754,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 15,
+      "continuation": false,
+      "before": {
+        "nextBlock": 754,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 2,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1922,
+      "after": {
+        "nextBlock": 755,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 16,
+      "continuation": false,
+      "before": {
+        "nextBlock": 755,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2069,
+      "after": {
+        "nextBlock": 756,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 17,
+      "continuation": false,
+      "before": {
+        "nextBlock": 756,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 1888,
+      "after": {
+        "nextBlock": 757,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 18,
+      "continuation": false,
+      "before": {
+        "nextBlock": 757,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 1904,
+      "after": {
+        "nextBlock": 758,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 19,
+      "continuation": false,
+      "before": {
+        "nextBlock": 758,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 53,
+        "compact:200": 18,
+        "aztec_getBlockHashMembershipWitness:200": 17
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2684,
+      "after": {
+        "nextBlock": 775,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 20,
+      "continuation": false,
+      "before": {
+        "nextBlock": 775,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2549,
+      "after": {
+        "nextBlock": 776,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 21,
+      "continuation": false,
+      "before": {
+        "nextBlock": 776,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1768,
+      "after": {
+        "nextBlock": 777,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 22,
+      "continuation": false,
+      "before": {
+        "nextBlock": 777,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 61,
+        "compact:200": 26,
+        "aztec_getBlockHashMembershipWitness:200": 25
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2990,
+      "after": {
+        "nextBlock": 802,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 23,
+      "continuation": false,
+      "before": {
+        "nextBlock": 802,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2593,
+      "after": {
+        "nextBlock": 803,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 24,
+      "continuation": false,
+      "before": {
+        "nextBlock": 803,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1837,
+      "after": {
+        "nextBlock": 804,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 25,
+      "continuation": false,
+      "before": {
+        "nextBlock": 804,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 2,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 1850,
+      "after": {
+        "nextBlock": 805,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 26,
+      "continuation": false,
+      "before": {
+        "nextBlock": 805,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1939,
+      "after": {
+        "nextBlock": 806,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 27,
+      "continuation": false,
+      "before": {
+        "nextBlock": 806,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 49,
+        "compact:200": 16,
+        "aztec_getBlockHashMembershipWitness:200": 15
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 2,
+      "state": "ready",
+      "elapsedMs": 2755,
+      "after": {
+        "nextBlock": 821,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 28,
+      "continuation": false,
+      "before": {
+        "nextBlock": 821,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2593,
+      "after": {
+        "nextBlock": 822,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 29,
+      "continuation": false,
+      "before": {
+        "nextBlock": 822,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2606,
+      "after": {
+        "nextBlock": 823,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 30,
+      "continuation": false,
+      "before": {
+        "nextBlock": 823,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 41,
+        "compact:200": 5,
+        "aztec_getBlockHashMembershipWitness:200": 4
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2039,
+      "after": {
+        "nextBlock": 827,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 31,
+      "continuation": false,
+      "before": {
+        "nextBlock": 827,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2593,
+      "after": {
+        "nextBlock": 828,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 32,
+      "continuation": false,
+      "before": {
+        "nextBlock": 828,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2573,
+      "after": {
+        "nextBlock": 829,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 33,
+      "continuation": false,
+      "before": {
+        "nextBlock": 829,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1850,
+      "after": {
+        "nextBlock": 830,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 34,
+      "continuation": false,
+      "before": {
+        "nextBlock": 830,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1863,
+      "after": {
+        "nextBlock": 831,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 35,
+      "continuation": false,
+      "before": {
+        "nextBlock": 831,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2561,
+      "after": {
+        "nextBlock": 832,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 36,
+      "continuation": false,
+      "before": {
+        "nextBlock": 832,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 65,
+        "compact:200": 32,
+        "aztec_getBlockHashMembershipWitness:200": 32
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 3257,
+      "after": {
+        "nextBlock": 864,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 37,
+      "continuation": false,
+      "before": {
+        "nextBlock": 864,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 4,
+        "aztec_getBlockHashMembershipWitness:200": 3
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 8751,
+      "after": {
+        "nextBlock": 867,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 38,
+      "continuation": false,
+      "before": {
+        "nextBlock": 867,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 2616,
+      "after": {
+        "nextBlock": 868,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 39,
+      "continuation": false,
+      "before": {
+        "nextBlock": 868,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 2,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1933,
+      "after": {
+        "nextBlock": 869,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 40,
+      "continuation": false,
+      "before": {
+        "nextBlock": 869,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 1,
+      "state": "ready",
+      "elapsedMs": 1903,
+      "after": {
+        "nextBlock": 870,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 41,
+      "continuation": false,
+      "before": {
+        "nextBlock": 870,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 4,
+        "aztec_getBlockHashMembershipWitness:200": 3
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2029,
+      "after": {
+        "nextBlock": 873,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 42,
+      "continuation": false,
+      "before": {
+        "nextBlock": 873,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 20,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 43,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1,
+        "aztec_getTxReceipt:200": 4,
+        "aztec_getTxEffectMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 2666,
+      "after": {
+        "nextBlock": 874,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 43,
+      "continuation": false,
+      "before": {
+        "nextBlock": 874,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 1,
+        "aztec_getBlockHashMembershipWitness:200": 1
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 2,
+      "state": "ready",
+      "elapsedMs": 1864,
+      "after": {
+        "nextBlock": 875,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    },
+    {
+      "ordinal": 44,
+      "continuation": false,
+      "before": {
+        "nextBlock": 875,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      },
+      "http": {
+        "aztec_getNodeInfo:200": 14,
+        "aztec_getChainTips:200": 5,
+        "aztec_getWorldStateSyncStatus:200": 5,
+        "aztec_getSyncedL1Timestamp:200": 5,
+        "aztec_getBlockData:200": 37,
+        "compact:200": 4,
+        "aztec_getBlockHashMembershipWitness:200": 3
+      },
+      "rpcErrors": {},
+      "responseInspectionFailures": 0,
+      "state": "ready",
+      "elapsedMs": 1915,
+      "after": {
+        "nextBlock": 878,
+        "anchorBlock": 1520,
+        "processedRevision": 0,
+        "markersChecked": 0
+      }
+    }
+  ],
+  "profile": {
+    "retained": true,
+    "device": 16777232,
+    "inode": 233425597
+  },
+  "initializationTraffic": {
+    "http": {
+      "aztec_getNodeInfo:200": 7,
+      "aztec_getChainTips:200": 10,
+      "aztec_getWorldStateSyncStatus:200": 4,
+      "aztec_getSyncedL1Timestamp:200": 4,
+      "aztec_getBlockData:200": 14,
+      "aztec_getContract:200": 3,
+      "aztec_getPublicStorageAt:200": 15,
+      "aztec_getL1ContractAddresses:200": 1,
+      "aztec_getBlock:200": 8
+    },
+    "rpcErrors": {},
+    "responseInspectionFailures": 0
+  },
+  "lastSettledState": "ready",
+  "initialization": {
+    "status": "captured",
+    "value": {
+      "stage": "session-initialization",
+      "step": "application-bind",
+      "deploymentStep": null,
+      "state": "complete",
+      "code": null
+    }
+  },
+  "fixedFailures": [],
+  "diagnosticComplete": true,
+  "stoppedBeforePageDeadline": true,
+  "traffic": {
+    "walletAssets": 16,
+    "privateRequests": 2496,
+    "feedRequests": 0,
+    "boardRequests": 0,
+    "compactRequests": 161,
+    "compactPreflights": 0,
+    "tagDiscoveryRequests": 0,
+    "proofSubmits": 0,
+    "nodeSubmissions": 0,
+    "l1Submissions": 0,
+    "blockedRequests": 0,
+    "inspectionErrors": 0
+  },
+  "stage": "bounded-independent-nonempty-recovery-complete",
+  "elapsedMs": 112038,
+  "originalBackupUnchanged": true
+}

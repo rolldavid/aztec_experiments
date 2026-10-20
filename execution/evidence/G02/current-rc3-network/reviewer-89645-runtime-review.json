@@ -1,0 +1,51 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "PASS_FIXED_SNAPSHOT_COMPATIBILITY_AND_HISTORICAL_PROGRESS_ONLY",
+  "source": "03314d085a0ee9b2ae0bc279fa763087e7eefd69",
+  "packetSha256": "1f9d29c74aa7a5623bd80e82df0786e43c8ca92d90d2169aa4bd051268e38adb",
+  "receiptSha256": "f9a66884ba2e91cc82938dfb107c8a58ced155102c2f3bf4c5b239b221f2e05f",
+  "sourceReviewSha256": "7003b277212a28ac3d6219c2b5a58bf4a25e201645f2d0648d1a53cacf3a0547",
+  "grantSha256": "7707560094e2ea9ddfa86142b93ded6f7a54f8dee596bf73557fe1cb268a3e7c",
+  "independentChecks": [
+    "All packet artifact hashes, exact grant/review/preparation/intent/command and all33 protected inputs rehashed.",
+    "Original failed429 receipt retained unchanged.",
+    "18 request starts independently differ by>=1250ms; source has no retry/fallback; read sequence and both historical block/registry continuity checks complete.",
+    "All three source-extracted SDK constants equal canonical/registered rollup; selected scope/version unchanged.",
+    "Bounded owner exit0/no failures, owned tree absent, temporary directory physically absent, launcher PID absent."
+  ],
+  "observation": {
+    "at": "2026-10-13T07:59:12.769Z",
+    "elapsedNetworkMs": 21351,
+    "elapsedOwnerMs": 21712,
+    "peakTreeRSSKiB": 307568,
+    "requests": 18,
+    "minimumStartIntervalMs": 1250,
+    "canonicalRollup": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "version": "3409706519",
+    "l1Anchor": {
+      "number": "11904731",
+      "timestamp": "1791878328",
+      "hash": "0x6fcc7855a05b8cff228dc687c728b5e1e8de0568be6ea77c5cfbc5ef2ad19d7a"
+    },
+    "l1HeadAgeSeconds": 24,
+    "progressWindowSeconds": 3612,
+    "pending": [
+      959,
+      1009
+    ],
+    "proven": [
+      926,
+      990
+    ],
+    "latestProvenCheckpointAgeAtAnchorSeconds": 1380,
+    "latestProvenCheckpointAgeMinutes": 23,
+    "continuityPassed": true
+  },
+  "limits": [
+    "The23-minute age is measured against the fixed L1 anchor, not a claim that checkpoint/query freshness meets120s; at receipt wall time it is about1404s old.",
+    "Progress is a comparison of two anchored historical states over3612s, not a sustained-provider load test or independent full-node synchronization.",
+    "No current Rolling/FPC/Bok deployment authentication, immutable-image full closure, node startup, actual proof, remote query freshness, full prover or release qualification.",
+    "One paced success does not establish the public provider quota or guarantee stock full-node traffic capacity."
+  ],
+  "newRuntimeOrNetworkByReviewer": false
+}

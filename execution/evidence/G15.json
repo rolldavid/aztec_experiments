@@ -1,0 +1,62 @@
+{
+  "task_id": "G15",
+  "outcome": "pass",
+  "recorded_at": "2026-10-11T12:04:46.131771+00:00",
+  "source_fingerprint": "a72dbfafc3fc8ce6739b0e12178329828ec554e8a23689920ffc392670a7c5ca",
+  "source_inventory": "evidence/G15/source-001.json",
+  "artifacts": [
+    {
+      "path": "evidence/G15/source-001.json",
+      "sha256": "d79ef6de667900a05e8d4d563d7946c00ade6da7f9aa3165df3b8e318f5d7ab9"
+    },
+    {
+      "path": "evidence/G05/combined-build.log",
+      "sha256": "25aed03d6dc964c1996cf52efc80929dc71f501bb4174eb819750495a5e72222"
+    },
+    {
+      "path": "evidence/G05/combined-test.log",
+      "sha256": "caa43ee83167d8f1e224a4936f4158c85918986cea2cdef97f1c4f0cfe8fb157"
+    },
+    {
+      "path": "evidence/G05/foundation-review.json",
+      "sha256": "38fb6de21524d1cf56dd4f9035ec6755f5f74849a2a2976ef5dea841a448c66b"
+    },
+    {
+      "path": "evidence/G05/foundation-integration.json",
+      "sha256": "d91f083790deab41bf7fc5058b944409e76328b63e20e47dd1129ce9d4b1c6f3"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G15-A01",
+      "result": "pass",
+      "summary": "Pinned normal build and development TXE suite verify name ownership/uniqueness/argument pagination and authentic subboard policy/rejection foundation. At f9911f0; foundation only, real proofs and complete G05 remain open.",
+      "artifacts": [
+        "evidence/G05/combined-build.log",
+        "evidence/G05/combined-test.log",
+        "evidence/G05/foundation-review.json",
+        "evidence/G05/foundation-integration.json"
+      ]
+    },
+    {
+      "id": "G15-A02",
+      "result": "pass",
+      "summary": "Independent exact revision review and enforceable integration pass with upstream diagnostics and full-product gaps retained. At f9911f0; foundation only, real proofs and complete G05 remain open.",
+      "artifacts": [
+        "evidence/G05/combined-build.log",
+        "evidence/G05/combined-test.log",
+        "evidence/G05/foundation-review.json",
+        "evidence/G05/foundation-integration.json"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/reviewer",
+    "summary": "Exact f9911f0 approved bounded foundation. Dependency split independently reviewed, G13 requires fullG05.",
+    "artifacts": [
+      "evidence/G05/foundation-review.json",
+      "evidence/G05/foundation-integration.json"
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "source": "a8c22faa923ee550e6e62518c72fe487ffa9f22e",
+  "purpose": "Normal SDK apps wallet build for canonical Bok refund transport",
+  "passed": true,
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 425280,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 332816
+    },
+    {
+      "elapsedMs": 2019,
+      "rssKiB": 350592
+    },
+    {
+      "elapsedMs": 3035,
+      "rssKiB": 372592
+    },
+    {
+      "elapsedMs": 4051,
+      "rssKiB": 195520
+    },
+    {
+      "elapsedMs": 5066,
+      "rssKiB": 425280
+    },
+    {
+      "elapsedMs": 6098,
+      "rssKiB": 221232
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "scripts/build-sdk.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "apps/build.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    },
+    {
+      "role": "scripts/rolling-wallet-assets.mjs",
+      "code": 0,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "peakMemory": {
+    "elapsedMs": 5066,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 6608,
+        "ppid": 59636,
+        "rssKiB": 55280
+      },
+      {
+        "role": "apps/build.mjs",
+        "pid": 6722,
+        "ppid": 6608,
+        "rssKiB": 45616
+      },
+      {
+        "role": "apps/build.mjs",
+        "pid": 6723,
+        "ppid": 6722,
+        "rssKiB": 266992
+      },
+      {
+        "role": "apps/build.mjs",
+        "pid": 6724,
+        "ppid": 6723,
+        "rssKiB": 57392
+      }
+    ]
+  },
+  "elapsedMs": 6528,
+  "ownedTreeAbsent": true
+}

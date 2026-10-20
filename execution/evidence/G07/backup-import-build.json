@@ -1,0 +1,22 @@
+{
+  "candidate": "f7f3549a776e745b110131b59c84dc63c80bc9e4",
+  "at": "2026-10-14T10:15:14.229513+00:00",
+  "command": "node scripts/build-sdk.mjs && node apps/build.mjs; node scripts/rolling-wallet-assets.mjs",
+  "exit_code": 0,
+  "environment": "Pinned Node24.21.0; existing normal contract artifacts; no dependency mutations",
+  "result": "Normal SDK and application build passed; Rolling wallet 25 outputs/97 inputs. Native restarted to reload immutable asset inventory. Actual full-profile reopen remains separate pending.",
+  "artifacts": [
+    {
+      "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/backup-import-build.log",
+      "sha256": "a32dd2395f4d8f5c9a03eca4d750e03a5785e4bb9e4c68eb3dfeb0527dd81b8e"
+    },
+    {
+      "path": "rolling-lead-bok/.build/rolling-devnet-diagnostics/backup-import-wallet-build.log",
+      "sha256": "769624d74b2c0be6cf93144492b4e4555e25cf6ff029a5637564f0196973c4bd"
+    },
+    {
+      "path": "rolling-lead-bok/.build/rolling-wallet/manifest.json",
+      "sha256": "a34b9371cece7a126fb8abec86641e68b365e3be870e697b1f22b248def65189"
+    }
+  ]
+}

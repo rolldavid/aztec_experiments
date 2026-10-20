@@ -1,0 +1,82 @@
+--- operator08-launch.py
++++ operator09-launch.py
+@@ -1,6 +1,8 @@
+ import pathlib,json,subprocess,os,datetime,hashlib,base64,urllib.request,uuid,sys
+-P=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-08');E=pathlib.Path.cwd()/'execution/evidence/G02/operator08-launch.json';ROOT=pathlib.Path('/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments')
+-r={'schemaVersion':1,'campaign':'rolling-node-20261012-08','startedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'passed':False,'publicRoutingUnchanged':True,'proverJobsAuthorized':False};stage='preflight'
++P=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-09');E=pathlib.Path.cwd()/'execution/evidence/G02/operator09-launch.json';ROOT=pathlib.Path('/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments')
++GRANT_SHA=None # Bind only after separate lead launch authorization.
++REVIEW_SHA=None # Bind exact independent payload review before launch.
++r={'schemaVersion':1,'campaign':'rolling-node-20261012-09','startedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'passed':False,'publicRoutingUnchanged':True,'proverJobsAuthorized':False};stage='preflight'
+ def save(name,data):
+  fd=os.open(P/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  with os.fdopen(fd,'w') as f:json.dump(data,f,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+@@ -12,47 +14,49 @@
+ def now():return datetime.datetime.now(datetime.timezone.utc)
+ def stamp(s):return datetime.datetime.fromisoformat(s.replace('Z','+00:00'))
+ try:
+- assert hashlib.sha256((ROOT/'execution/evidence/G02/operator08-lead-launch-grant.json').read_bytes()).hexdigest()=='68c0ef1f76ca32df1f393b380f0e83663c8cea300635aa429f740fa318f50feb'
++ assert hashlib.sha256((ROOT/'execution/evidence/G02/operator09-lead-launch-grant.json').read_bytes()).hexdigest()==GRANT_SHA
+  assert (P.stat().st_mode&0o777)==0o700
+- assert hashlib.sha256((ROOT/'execution/evidence/G02/operator08-actual-payload-review.json').read_bytes()).hexdigest()=='3f465b7d419bb5e6e2236582e7ff26ec7845403ca816982f2266307bb76433c9'
+- assert not (P/'launch-template-08-intent.json').exists() and not (P/'fleet-08-intent.json').exists()
++ assert hashlib.sha256((ROOT/'execution/evidence/G02/operator09-actual-payload-review.json').read_bytes()).hexdigest()==REVIEW_SHA
++ assert not (P/'launch-template-09-intent.json').exists() and not (P/'fleet-09-intent.json').exists()
+  config=json.loads((P/'bootstrap.json').read_text());body=(P/'user-data.gz').read_bytes()
+- assert len(body)==16349 and hashlib.sha256(body).hexdigest()=='5989e05b2c69ec5224538237328c0381526f7fc905137f0de14879562e14fdf4'
+- assert config['budgetStop']=='2026-10-12T09:54:55Z' and config['commissioningStop']=='2026-10-12T09:24:55Z'
++ assert config['manifestSha256']=='d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41'
++ assert config['runtimeArchiveSha256']=='c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e'
++ assert len(body)==16367 and hashlib.sha256(body).hexdigest()=='5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9'
++ assert config['budgetStop']=='2026-10-12T13:03:58Z' and config['commissioningStop']=='2026-10-12T12:33:58Z'
+  # Keep at least twenty minutes of the fixed original commissioning window for host setup.
+- assert now() < stamp(config['commissioningStop'])-datetime.timedelta(minutes=20)
+- assert json.loads((ROOT/'execution/infrastructure-ledger.json').read_text())['conservative_committed_and_reserved_usd']==200.28
++ assert now() < stamp('2026-10-12T12:13:58Z') and now() < stamp(config['commissioningStop'])-datetime.timedelta(minutes=20)
++ assert json.loads((ROOT/'execution/infrastructure-ledger.json').read_text())['conservative_committed_and_reserved_usd']==215.28
+  assert aws(['sts','get-caller-identity'])['Account']=='052665140763'
+  assert all(s=='terminated' for s in aws(['ec2','describe-instances','--query','Reservations[].Instances[].State.Name']))
+  assert not aws(['ec2','describe-volumes','--query','Volumes[].VolumeId'])
+  fleets=aws(['ec2','describe-fleets','--query','Fleets[].FleetState']);assert all(x=='deleted' for x in fleets)
+- with urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=5) as f:h=json.loads(f.read(16384));assert h['status']=='ready' and h['active']==0
++ with urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=5) as f:h=json.loads(f.read(16384));assert h['status'] in ['ready','degraded'] and h['active']==0
+  sg=aws(['ec2','describe-security-groups','--group-ids','sg-03065d3c141f9b030','--query','SecurityGroups[].{id:GroupId,ingress:IpPermissions,egress:IpPermissionsEgress}'])
+  assert len(sg)==1 and all(not (x.get('IpProtocol') in ['-1','tcp'] and x.get('FromPort',0)<=22<=x.get('ToPort',65535)) for x in sg[0]['ingress'])
+  prior=pathlib.Path('/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-node-20261012-05');assert sg==json.loads((prior/'security-group-0502-before.json').read_text())
+- save('security-group-08-before.json',sg);r['preflight']={'at':now().isoformat(),'identityVerified':True,'instances':0,'volumes':0,'activeFleets':0,'pluginReady':True,'pluginActive':0,'sshIngressAbsent':True};save('launch-08-preflight.json',r['preflight'])
++ save('security-group-09-before.json',sg);r['preflight']={'at':now().isoformat(),'identityVerified':True,'instances':0,'volumes':0,'activeFleets':0,'pluginReady':h['status']=='ready','pluginStatus':h['status'],'pluginActive':0,'pluginDegradedDisposition':'dependency-diagnostic-only-no-plugin-jobs','sshIngressAbsent':True};save('launch-09-preflight.json',r['preflight'])
+  template={k:v for k,v in json.loads((P/'launch-template-reference.json').read_text()).items() if v is not None}
+  live=aws(['ec2','describe-launch-template-versions','--launch-template-id','lt-0c91eae17cc765d87','--versions','1','--query','LaunchTemplateVersions[0].LaunchTemplateData.{ImageId:ImageId,InstanceType:InstanceType,InstanceInitiatedShutdownBehavior:InstanceInitiatedShutdownBehavior,MetadataOptions:MetadataOptions,BlockDeviceMappings:BlockDeviceMappings,NetworkInterfaces:NetworkInterfaces,IamInstanceProfile:IamInstanceProfile,KeyName:KeyName}']);assert {k:v for k,v in live.items() if v is not None}==template
+  image=aws(['ec2','describe-images','--image-ids',template['ImageId'],'--query','Images[].{id:ImageId,state:State,owner:OwnerId,arch:Architecture,root:RootDeviceType}']);assert len(image)==1 and image[0]['state']=='available' and image[0]['owner']=='099720109477' and image[0]['arch']=='x86_64' and image[0]['root']=='ebs';r['amiVerified']=image[0]
+  assert 'IamInstanceProfile' not in template and 'KeyName' not in template and template['InstanceInitiatedShutdownBehavior']=='terminate'
+  assert template['ImageId']=='ami-0fa5967347d08d2df' and template['InstanceType']=='m7a.4xlarge'
+  assert all(x['Ebs']['Encrypted'] and x['Ebs']['DeleteOnTermination'] for x in template['BlockDeviceMappings'])
+- template['UserData']=base64.b64encode(body).decode();template['TagSpecifications']=[{'ResourceType':t,'Tags':[{'Key':'Name','Value':'rolling-chat-development-node-08'},{'Key':'Task','Value':'G14'}]} for t in ['instance','volume']]
+- save('launch-template-08-data.json',template)
+- token=str(uuid.uuid4());name='rolling-chat-node-5ce91b-20261012-08'
+- save('launch-template-08-intent.json',{'schemaVersion':1,'at':now().isoformat(),'clientToken':token,'name':name,'inputSha256':hashlib.sha256((P/'launch-template-08-data.json').read_bytes()).hexdigest(),'attemptsAllowed':1});stage='create-launch-template'
+- result=aws(['ec2','create-launch-template','--launch-template-name',name,'--client-token',token,'--launch-template-data','file://'+str(P/'launch-template-08-data.json')]);lt=result['LaunchTemplate'];assert lt['LaunchTemplateName']==name;save('launch-template-08-receipt.json',lt);r['launchTemplate']={'id':lt['LaunchTemplateId'],'version':str(lt['LatestVersionNumber'])}
++ template['UserData']=base64.b64encode(body).decode();template['TagSpecifications']=[{'ResourceType':t,'Tags':[{'Key':'Name','Value':'rolling-chat-development-node-09'},{'Key':'Task','Value':'G14'}]} for t in ['instance','volume']]
++ save('launch-template-09-data.json',template)
++ token=str(uuid.uuid4());name='rolling-chat-node-1ec67f-20261012-09'
++ save('launch-template-09-intent.json',{'schemaVersion':1,'at':now().isoformat(),'clientToken':token,'name':name,'inputSha256':hashlib.sha256((P/'launch-template-09-data.json').read_bytes()).hexdigest(),'attemptsAllowed':1});stage='create-launch-template'
++ result=aws(['ec2','create-launch-template','--launch-template-name',name,'--client-token',token,'--launch-template-data','file://'+str(P/'launch-template-09-data.json')]);lt=result['LaunchTemplate'];assert lt['LaunchTemplateName']==name;save('launch-template-09-receipt.json',lt);r['launchTemplate']={'id':lt['LaunchTemplateId'],'version':str(lt['LatestVersionNumber'])}
+  actual=aws(['ec2','describe-launch-template-versions','--launch-template-id',lt['LaunchTemplateId'],'--versions',str(lt['LatestVersionNumber'])])['LaunchTemplateVersions'][0]['LaunchTemplateData']
+  assert actual['UserData']==template['UserData']
+  for k in ['ImageId','InstanceType','InstanceInitiatedShutdownBehavior','MetadataOptions','BlockDeviceMappings','NetworkInterfaces']:assert actual[k]==template[k],k
+  assert not actual.get('KeyName') and not actual.get('IamInstanceProfile')
+- assert now()<stamp(config['commissioningStop'])-datetime.timedelta(minutes=20)
+- request={'Type':'request','ClientToken':str(uuid.uuid4()),'TargetCapacitySpecification':{'TotalTargetCapacity':1,'OnDemandTargetCapacity':1,'SpotTargetCapacity':0,'DefaultTargetCapacityType':'on-demand'},'OnDemandOptions':{'AllocationStrategy':'lowest-price'},'LaunchTemplateConfigs':[{'LaunchTemplateSpecification':{'LaunchTemplateId':lt['LaunchTemplateId'],'Version':str(lt['LatestVersionNumber'])},'Overrides':[{'SubnetId':'subnet-aa91f4ce'},{'SubnetId':'subnet-a705ce88'}]}],'ValidUntil':config['budgetStop'],'TerminateInstancesWithExpiration':True,'TagSpecifications':[{'ResourceType':'fleet','Tags':[{'Key':'Name','Value':'rolling-chat-development-node-08'},{'Key':'Task','Value':'G14'}]}]}
+- save('fleet-08-request.json',request);save('fleet-08-intent.json',{'schemaVersion':1,'at':now().isoformat(),'clientToken':request['ClientToken'],'requestSha256':hashlib.sha256((P/'fleet-08-request.json').read_bytes()).hexdigest(),'attemptsAllowed':1});stage='create-fleet'
+- receipt=aws(['ec2','create-fleet','--cli-input-json','file://'+str(P/'fleet-08-request.json')],60);save('fleet-08-receipt.json',receipt);r['fleetId']=receipt['FleetId'];r['createErrors']=[x.get('ErrorCode') for x in receipt.get('Errors',[]) if type(x.get('ErrorCode')) is str]
++ assert now()<stamp('2026-10-12T12:13:58Z') and now()<stamp(config['commissioningStop'])-datetime.timedelta(minutes=20)
++ request={'Type':'request','ClientToken':str(uuid.uuid4()),'TargetCapacitySpecification':{'TotalTargetCapacity':1,'OnDemandTargetCapacity':1,'SpotTargetCapacity':0,'DefaultTargetCapacityType':'on-demand'},'OnDemandOptions':{'AllocationStrategy':'lowest-price'},'LaunchTemplateConfigs':[{'LaunchTemplateSpecification':{'LaunchTemplateId':lt['LaunchTemplateId'],'Version':str(lt['LatestVersionNumber'])},'Overrides':[{'SubnetId':'subnet-aa91f4ce'},{'SubnetId':'subnet-a705ce88'}]}],'ValidUntil':config['budgetStop'],'TerminateInstancesWithExpiration':True,'TagSpecifications':[{'ResourceType':'fleet','Tags':[{'Key':'Name','Value':'rolling-chat-development-node-09'},{'Key':'Task','Value':'G14'}]}]}
++ save('fleet-09-request.json',request);save('fleet-09-intent.json',{'schemaVersion':1,'at':now().isoformat(),'clientToken':request['ClientToken'],'requestSha256':hashlib.sha256((P/'fleet-09-request.json').read_bytes()).hexdigest(),'attemptsAllowed':1});stage='create-fleet'
++ receipt=aws(['ec2','create-fleet','--cli-input-json','file://'+str(P/'fleet-09-request.json')],60);save('fleet-09-receipt.json',receipt);r['fleetId']=receipt['FleetId'];r['createErrors']=[x.get('ErrorCode') for x in receipt.get('Errors',[]) if type(x.get('ErrorCode')) is str]
+  fleet=aws(['ec2','describe-fleets','--fleet-ids',receipt['FleetId']])['Fleets'][0]
+  assert fleet['Type']=='request' and fleet['TerminateInstancesWithExpiration'] is True and stamp(fleet['ValidUntil'])==stamp(config['budgetStop'])
+- r['cloudControls']={'type':fleet['Type'],'validUntil':fleet['ValidUntil'],'terminateWithExpiration':True,'state':fleet['FleetState'],'activity':fleet['ActivityStatus']};save('fleet-08-controls.json',r['cloudControls']);r['passed']=True;r['hostControls']='pending boot attestation'
++ r['cloudControls']={'type':fleet['Type'],'validUntil':fleet['ValidUntil'],'terminateWithExpiration':True,'state':fleet['FleetState'],'activity':fleet['ActivityStatus']};save('fleet-09-controls.json',r['cloudControls']);r['passed']=True;r['hostControls']='pending boot attestation'
+ except Exception:r['failureStage']=stage;r['category']='LAUNCH_CHECK_FAILED';r['reconcileOnlyAfterIntent']=True
+ finally:
+  r['finishedAt']=now().isoformat();E.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r));print('evidenceSha256',hashlib.sha256(E.read_bytes()).hexdigest())

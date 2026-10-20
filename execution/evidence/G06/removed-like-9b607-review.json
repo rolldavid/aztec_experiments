@@ -1,0 +1,29 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "9b607acfbceeab62c5b547bc136f7d26f4496bb6",
+  "verdict": "changes-requested",
+  "scope": "Removed-like exact installed ABI rejection attribution",
+  "tests": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 335.523542,
+    "qualifier": "Synthetic SimulationError with actual SDK/processed artifact; actual stderr WASM panic makes boundary unqualified"
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "scenario": "Unknown revert selector reaches resolveAssertionMessageFromRevertData and emits Missing error type panic/stack to stderr before catch returnsfalse.",
+      "repair": "Capture unique exact Post removed static selector at configuration; require data field equality before any decoder call. Retain ABI decoded equality. Regression must prove unknown selector emits no diagnostic, not only returnsfalse."
+    }
+  ],
+  "retainedChecks": [
+    "Actual SimulationError only, exact deepest board/_set_like only_self selector, bounded stack, one typed static field",
+    "Own-data descriptors reject getters, error-owned render methods not invoked, parent verified artifact detached",
+    "Wrongcallees/message-only/outages do not qualify"
+  ],
+  "limits": [
+    "No AVM/chain acceptance",
+    "Repair required before combined parent approval"
+  ]
+}

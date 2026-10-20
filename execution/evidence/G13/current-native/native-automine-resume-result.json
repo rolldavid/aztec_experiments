@@ -1,0 +1,66 @@
+{
+  "source": "3c27c4e",
+  "phase": "clean-stop",
+  "passed": true,
+  "readiness": {
+    "core": "configured",
+    "publicIndex": "live-status-required",
+    "nativeProofs": false,
+    "privateBok": "portal-active-registered",
+    "bokAddress": "0x0006a34be6db3096990b463e6c74206d3cf4601ce18f4949718b63ade52cc8a1",
+    "bokPortal": "0x0dbcd1d117e37fbe327562104ca2e9638df51dd5",
+    "developmentToken": "0x5d487fea384e2fbdcf05d84b8355b8e3579b6bf0",
+    "developmentInventory": {
+      "kind": "official-circle-development-issuance",
+      "amount": "1000000000000",
+      "decimals": 6,
+      "recipient": "0x376d7da2125aa20fc4c15535bf958dcad620e3d1"
+    },
+    "userBokCredit": "unfunded",
+    "hostedService": false,
+    "fundingRelay": "configured-not-started",
+    "aggregateFunding": "eth-usdc-configured",
+    "localSettlement": "explicitly test-controlled, not a network proof",
+    "usdcRelay": "configured"
+  },
+  "status": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "31337",
+      "rollupVersion": "1050651705",
+      "rollupAddress": "0x31c7a7ac1bf6563c2b2587b7e52a31ff01f67948",
+      "boardAddress": "0x182f55166b903e7109df311e092690dd01176a58509c28be44b96243d09b8385",
+      "classId": "0x0417e06f92594ee435b8f84231ad04c4889f37ee637ec5b03a0c3935f4b27bf8"
+    },
+    "complete": true,
+    "authenticationEpoch": "eace731f-75eb-42eb-bf31-417b79c7f801",
+    "revision": "eace731f-75eb-42eb-bf31-417b79c7f801:1:23",
+    "checkpoint": {
+      "number": 17,
+      "hash": "0x238f90541f27153d87e2c09a603343a2c569540d996d14f2bd07f04778e02561"
+    },
+    "cursor": {
+      "blockNumber": "18",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "complete"
+  },
+  "creationAnchor": {
+    "txHash": "0x1209f44d9a18c8cb61b6400fb352c8e2eda697bcef8c20ca263717f61e9d6ee0",
+    "blockNumber": 2,
+    "blockHash": "0x05550dbd47348a8eacad96022da1cd206f4622237357a082e0f2d581ebed0712"
+  },
+  "walletScope": {
+    "board": "0x182f55166b903e7109df311e092690dd01176a58509c28be44b96243d09b8385",
+    "fpc": "0x11446bb2e806513bdd80d1fc3d0e2d5fc3a67859f28ca0778841ba41dfacf73e"
+  },
+  "runtimeSha256": "86500f19e7146444315110a18d4f5b50d2ddc511fbbb8ef0ab3912f43aacf59f",
+  "saved": {
+    "operator.json": "109673d094619a5c1a9299a67820e06d7857a42f1627413048af70a4a8a6a62d",
+    "deployment-report.json": "e787c5e2f24d9208958e632f36eca8902b1f8d22043016d434fe2cc18ef35864",
+    "bok-operations.json": "ae78d862dd003af217fff12c6d48113850b3f79eda6d7f1586982f01b6ba0784"
+  },
+  "cleanStop": true
+}

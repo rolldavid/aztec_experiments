@@ -1,0 +1,233 @@
+{
+  "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+  "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+  "task_id": "G04-G13-G14-claim-billing-recovery",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "receipt-verification",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/claim-preparation/fee-sender-handoff.json",
+          "sha256": "ffa60bdc6de9f9a45c554fb5f6a24a839050241586773481648f90e334398703"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/original-private-fee-fixed.json",
+          "sha256": "eadab0194f043418c45c7146d42dd73302298f9946063eadfec7487327dda454"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "64receiptchecks, oldwrongverifier red, actualoriginalpublicmessagekey and fullactualprivatefeeclaim-ready; originalpaid5failure preserved.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "wallet-diagnostics",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/claim-preparation/handoff.json",
+          "sha256": "b7ec911bd51daa1bb5a2d87804cf149062491d82f14ef3d828dec4a012107d5e"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "62aggregate+18overlappingfocus+1labelledChromium; actualpaid5classifiesoriginalpreparemismatch withoutreplay.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "hosted-billing",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-a6c73-trusted-billing-review.json",
+          "sha256": "9b04ba869b056afb90037b5889b6a007b3cfd524af31abc2db27823e0044bd1b"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G14/trusted-billing-constructor-owner-2.json",
+          "sha256": "31fc792504687843fa19dc8fb3c5f23f1782a612494504515e2f0dfb250f02f1"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "118source-boundstagedcontrols plus1existingactualSDKconstructor oncorrectartifact=119pass; provider/chainacceptancepending.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "retained-bok-driver",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G14/retained-wallet-bok/review.json",
+          "sha256": "69dbdaadc4481a09779c44fd3a2fcbc1993555471ecc76e4d28f301903c9ab9f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-dd381-retained-bok-driver-review.json",
+          "sha256": "18c5d3181e0ce51a5b816538cc67fe6d76f463c1dd7c57a860b0a281f188c6fb"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "59controlleddriverchecks, defaultnoaction/explicitcaps/twoUIconfirmations; actualBokpending.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "retained-startup",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G13/native-startup-readiness/review.json",
+          "sha256": "0b56fc0c767ec5a268a350f5a195ce3da6158c2846b86328d93eeef89666a968"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-file-readonly-94003-result.json",
+          "sha256": "eaf181f9aa8b4a499283b8fbe197f6f71e10c16cb85d7927c9fc66716d57a32d"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "3focusedchecks andactualsameargs1.76GBloadfirstRPC8.495s, identityunchanged; originalnativecheckpoint552/readqualification8.592s; live52909samechainnowready.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "normal-assets",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/fee-sender-assets-build-owner-2.json",
+          "sha256": "ad85434a17da3993618d816fa36999c7180763e3618c7f2c76fe2ec9de803091"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/claim-billing-integration/source-and-assets.json",
+          "sha256": "7af206a53b2dea1f594330fc3dbaad0ec31e30e92d80635921435d5ed34430a0"
+        }
+      ],
+      "command": "Existing commands, source hashes and outcomes in linked original evidence; combined source-bound carry subject independent review",
+      "observed": "NormalSDK/apps/walletbuild and3manifests2251inputentries/43outputs verified oncandidate.",
+      "environment": "Local macOS pinnedNode24.21.0 Aztec6rc3 devnet/PXE nativeproofflagsfalse; controlledfixtures explicitlylabelled; real testnetproof gatesopen",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": [
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "receipt-verification",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/claim-preparation/fee-sender-handoff.json",
+          "sha256": "ffa60bdc6de9f9a45c554fb5f6a24a839050241586773481648f90e334398703"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/original-private-fee-fixed.json",
+          "sha256": "eadab0194f043418c45c7146d42dd73302298f9946063eadfec7487327dda454"
+        }
+      ]
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "wallet-diagnostics",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-controls/execution/evidence/G04/claim-preparation/handoff.json",
+          "sha256": "b7ec911bd51daa1bb5a2d87804cf149062491d82f14ef3d828dec4a012107d5e"
+        }
+      ]
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "hosted-billing",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-a6c73-trusted-billing-review.json",
+          "sha256": "9b04ba869b056afb90037b5889b6a007b3cfd524af31abc2db27823e0044bd1b"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G14/trusted-billing-constructor-owner-2.json",
+          "sha256": "31fc792504687843fa19dc8fb3c5f23f1782a612494504515e2f0dfb250f02f1"
+        }
+      ]
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "retained-bok-driver",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G14/retained-wallet-bok/review.json",
+          "sha256": "69dbdaadc4481a09779c44fd3a2fcbc1993555471ecc76e4d28f301903c9ab9f"
+        },
+        {
+          "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-dd381-retained-bok-driver-review.json",
+          "sha256": "18c5d3181e0ce51a5b816538cc67fe6d76f463c1dd7c57a860b0a281f188c6fb"
+        }
+      ]
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "retained-startup",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-design/execution/evidence/G13/native-startup-readiness/review.json",
+          "sha256": "0b56fc0c767ec5a268a350f5a195ce3da6158c2846b86328d93eeef89666a968"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/current-native/native-file-readonly-94003-result.json",
+          "sha256": "eaf181f9aa8b4a499283b8fbe197f6f71e10c16cb85d7927c9fc66716d57a32d"
+        }
+      ]
+    },
+    {
+      "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+      "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+      "id": "normal-assets",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "rolling-lead-bok/execution/evidence/G04/fee-sender-assets-build-owner-2.json",
+          "sha256": "ad85434a17da3993618d816fa36999c7180763e3618c7f2c76fe2ec9de803091"
+        },
+        {
+          "path": "rolling-lead-bok/execution/evidence/G13/claim-billing-integration/source-and-assets.json",
+          "sha256": "7af206a53b2dea1f594330fc3dbaad0ec31e30e92d80635921435d5ed34430a0"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "723c53c4e95d3ff05fc256fc8db633d8985e481d",
+    "base": "9d4306d4c6e6c260a24746dc0359f5614f7583fa",
+    "implementer": "lead-20261011",
+    "kind": "independent",
+    "reviewer": "reviewer-20261011",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "aztec_experiments/execution/evidence/G02/query-operator-auth/reviewer-723c-claim-billing-integration-review.json",
+        "sha256": "e9502663d4b59816d66ab0ff6c47de67c22156286b25dbb99a5d8191e56199e3"
+      }
+    ]
+  }
+}

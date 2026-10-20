@@ -1,0 +1,17 @@
+{
+  "trace": [
+    "signed",
+    "receipt",
+    "block",
+    "effect",
+    "block"
+  ],
+  "outcome": {
+    "status": "succeeded",
+    "scope": "constructor-only",
+    "canonical": true,
+    "transactionHash": "0x1e7f903f20cfc6e859f6231391c47134ce7428359768e58e0e330c26a1b131de",
+    "blockNumber": 1565,
+    "blockHash": "0x15350de683f4550c68baa844142aab4ec766b9c33ddf94be832f2b7b063d9f78"
+  }
+}

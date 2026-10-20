@@ -1,0 +1,16 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ELIGIBLE_ONE_SEPARATELY_GRANTED_THREE_CRASH_CASE_RUN",
+  "source": "33069dbc8a2101f926e0b8613f911c02a5aaf5e1",
+  "packetSha256": "dac59c7bfe58d36e2e459ba644dcc504ecb481c5381cc4f4ca57a4886e66988a",
+  "runnerSha256": "b07221e5b1e369649862f706f1cb3777262fd3e523c07b331e591fe318bbe03c",
+  "planSha256": "5d2a9db2289117af434a7de6b52ad899a5e3796e0b40cf4573b2036ce572dfd6",
+  "findings": [
+    "Mechanical runner delta only evidence directory and exact five-Node receipt validation with controller0, testworker0, crash71/72/73.",
+    "Three anchored original test labels,27excluded; source33069 unchanged and10s child/15s outer512MiB limits retained.",
+    "All558 source/helper pins rehashed;2402 dependency map identical to accepted focused actual. Existing copy ownership, process cleanup, TMP removal and original link restore gates retained."
+  ],
+  "holds": [
+    "Actual three-case acceptance required before separately prepared volume run. No automatic advance."
+  ]
+}

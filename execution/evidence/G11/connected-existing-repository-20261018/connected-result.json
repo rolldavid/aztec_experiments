@@ -1,0 +1,299 @@
+{
+  "at": "2026-10-18T18:38:37.209Z",
+  "sourceRevision": "5fad773c78a927c5518f6fc96c2dac83ff68a8fd",
+  "scope": "Real connected repository broker with retained genuinely tested accepted source; no new model/chain/build",
+  "mapping": {
+    "threadId": "0x15e5432b65ca1d4268bbe2ff16820b4e3b5e657a82eaa9c0e5ee9225ccfb5261",
+    "repositoryId": 1420006121,
+    "ownerId": 1476668,
+    "fullName": "zac-williamson/rolling-chat-bok-pool-20261015-01",
+    "baseBranch": "main",
+    "workBranch": "bok/acceptance-connected-20261018",
+    "baseCommit": "30ac0bd3537c1a30bcd10030608127e202352f20"
+  },
+  "before": {
+    "id": 1420006121,
+    "private": true,
+    "visibility": "private",
+    "archived": false,
+    "defaultBranch": "main",
+    "permissions": {
+      "admin": true,
+      "maintain": true,
+      "push": true,
+      "triage": true,
+      "pull": true
+    },
+    "actions": {
+      "enabled": false,
+      "sha_pinning_required": false
+    },
+    "branches": [
+      {
+        "name": "main",
+        "sha": "30ac0bd3537c1a30bcd10030608127e202352f20",
+        "protected": false
+      }
+    ]
+  },
+  "newModelCalls": 0,
+  "newChainTransactions": 0,
+  "tokenScope": {
+    "repositoryIds": [
+      1420006121
+    ],
+    "permissions": {
+      "contents": "write",
+      "metadata": "read",
+      "pull_requests": "write"
+    },
+    "selection": "selected"
+  },
+  "actualReadFiles": [
+    {
+      "path": "index.html",
+      "mode": "100644",
+      "sha256": "e99dd14483a0a78b6f2dc44255f06f710b7e8f3ffb2d9e890a2634f61dfee36c"
+    },
+    {
+      "path": "index.js",
+      "mode": "100644",
+      "sha256": "3106d619b48e13d635406561202fc79f3d72c7172bb94e149e96db58cd92dbb1"
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "sha256": "7a32acafe08a2fcc220425a06681a714ed5d1eb1a40339da157586eabb776ac5"
+    },
+    {
+      "path": "test.js",
+      "mode": "100644",
+      "sha256": "f1da202277267dfe2cd3800d863bd5d4ea931989292ae242e98d21cc021dc215"
+    }
+  ],
+  "otherSelectedRepositoryReadStatus": 404,
+  "unmappedThreadAndBranchAndRepositoryRejectedBeforeNetwork": true,
+  "publication": {
+    "connected": true,
+    "number": 1,
+    "url": "https://github.com/zac-williamson/rolling-chat-bok-pool-20261015-01/pull/1",
+    "repositoryId": "69f0310ce22905259ca81fc59f6c35693fdb493e185f5396b5fb9f84daa6dde5",
+    "acceptedRevision": "c1fce1b48d4f0b656f213713bf8cff838817a862",
+    "remoteCommit": "5478309150f91d9522fb21c93fe15fb237cdfd57"
+  },
+  "repeatPublicationNoMutation": true,
+  "after": {
+    "id": 1420006121,
+    "private": true,
+    "visibility": "private",
+    "archived": false,
+    "defaultBranch": "main",
+    "permissions": {
+      "admin": true,
+      "maintain": true,
+      "push": true,
+      "triage": true,
+      "pull": true
+    },
+    "actions": {
+      "enabled": false,
+      "sha_pinning_required": false
+    },
+    "branches": [
+      {
+        "name": "bok/acceptance-connected-20261018",
+        "sha": "5478309150f91d9522fb21c93fe15fb237cdfd57",
+        "protected": false
+      },
+      {
+        "name": "main",
+        "sha": "30ac0bd3537c1a30bcd10030608127e202352f20",
+        "protected": false
+      }
+    ]
+  },
+  "permissionsAndOtherBranchesPreserved": true,
+  "pr": {
+    "number": 1,
+    "url": "https://github.com/zac-williamson/rolling-chat-bok-pool-20261015-01/pull/1",
+    "draft": true,
+    "state": "open",
+    "base": "30ac0bd3537c1a30bcd10030608127e202352f20",
+    "head": "5478309150f91d9522fb21c93fe15fb237cdfd57"
+  },
+  "remoteSourceBytesVerified": true,
+  "originalAcceptedJournalUnchanged": true,
+  "status": "passed",
+  "trace": [
+    {
+      "method": "GET",
+      "route": "/app/installations/171412624",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/app/installations/171412624/access_tokens",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/main",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/commits/30ac0bd3537c1a30bcd10030608127e202352f20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/trees/ad274770f8a12d7f25d539a1b1c704a75b2a2025",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs/ab0f520d201a8d24d1c6f962206ec7eff98ad3d3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs/81e656ad1670ef502dc01165bda731c36aa7fd1a",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs/0d0c67e518d1ff54a12ba772c65561f0cd811203",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs/060b6885cd708b445eaf2370b6e5b16cf61cdae3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/app/installations/171412624",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/app/installations/171412624/access_tokens",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/main",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/bok/acceptance-connected-20261018",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/pulls",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/blobs",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/trees",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/commits",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/main",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/bok/acceptance-connected-20261018",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/refs",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/pulls",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/pulls/1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/bok/acceptance-connected-20261018",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/main",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/app/installations/171412624",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/app/installations/171412624/access_tokens",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/main",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/repos/zac-williamson/rolling-chat-bok-pool-20261015-01/git/ref/heads/bok/acceptance-connected-20261018",
+      "status": 200
+    }
+  ]
+}

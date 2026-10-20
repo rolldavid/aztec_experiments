@@ -1,0 +1,82 @@
+{
+  "scope": "Read-only fresh reconciliation; no signing, financial send, journal mutation or replay. Previous exact-dispatch slot remains consumed.",
+  "sourceRevision": "7e2d443995b95947ca5ae4c76189fec84b8d000d",
+  "providers": {
+    "primary": {
+      "at": "2026-10-15T09:13:13.505Z",
+      "providerHost": "sepolia.gateway.tenderly.co",
+      "chainId": "11155111",
+      "nonce": {
+        "latest": 15,
+        "pending": 15
+      },
+      "balanceWei": "58876674761116580",
+      "transactions": {
+        "original": {
+          "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        },
+        "first": {
+          "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        },
+        "next": {
+          "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        }
+      },
+      "anchorStable": true,
+      "readonly": true,
+      "originalFilesUnchanged": true,
+      "rawReceiptSha256": "32884d41dbcaf5cb897893260f90b4074bd2ee436a92beadb3ac23f30936406e"
+    },
+    "independent": {
+      "at": "2026-10-15T09:13:13.505Z",
+      "providerHost": "ethereum-sepolia-rpc.publicnode.com",
+      "chainId": "11155111",
+      "nonce": {
+        "latest": 15,
+        "pending": 15
+      },
+      "balanceWei": "58876674761116580",
+      "transactions": {
+        "original": {
+          "hash": "0x405b19bb9cfb6f88fce7aef123460cf0a809df0cbfd4c9b68d11e6fe52d6c746",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        },
+        "first": {
+          "hash": "0x65bef1b976cf34cb08520796608d4b21d8bbba9228ca890ad38ef2aef9b11e61",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        },
+        "next": {
+          "hash": "0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62",
+          "signedIdentityValid": true,
+          "transaction": "absent",
+          "receipt": "absent",
+          "broadcast": null
+        }
+      },
+      "anchorStable": true,
+      "readonly": true,
+      "originalFilesUnchanged": true,
+      "rawReceiptSha256": "df982dbef5facc4e95394178fab88db69325be44fb8553e7c23994581a4b0660"
+    }
+  },
+  "status": "blocked",
+  "unblock": "Unique successful finalized canonical winner and exact effects/accounting; current two-provider absence does not authorize financial replay."
+}

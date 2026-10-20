@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "sourceRevision": "a2718c5018cf35576bdf53bee033ac306bf4950d",
+  "baseRevision": "0f65336fe06a429db5b72f99e37c63cce564ace1",
+  "verdict": "approved bounded source adapter; real screening/recovery acceptance pending",
+  "sourceHashes": {
+    "shared/rolling/application.mjs": "d4d42b2ff4e8808640b7e924bedf5c6d98dcab126d553830151d052c9718931f",
+    "shared/rolling/application.test.mjs": "d8fd572e94ccd03fc7d3db7bcfbbfcb78e51604be31bbce3052249aa2ebd2c8a"
+  },
+  "requirements": [
+    "G05 recovery and existing collateral/penalty/exit protocol; private authenticated owned-deposit history; no ordinary-node fallback"
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json <pinned Node24.21.0> --test --test-concurrency=1 shared/rolling/application.test.mjs",
+      "cwd": "rolling-design",
+      "result": "40 passed,0failed/skipped,949.02475ms",
+      "log": "/tmp/reviewer-screen-a271-tests.log"
+    }
+  ],
+  "review": [
+    "screen admits only canonical nonzero deposit identifier; caller cannot supply hints,content,from or arbitrary method.",
+    "Exact trusted-wallet utility result passes existing ABI-guided None/Some normalization; child/grandchild relationship checked. Installed processed ABI screen encodes deposit+two14field options exactly.",
+    "Shared helper leaves post/reply/quote/repost hints unchanged. screen bypasses public-content/subboard policy gate consistently with Noir private screen\u2192Admission.consume(...,screening=true). Contract remains authoritative for note ownership/inclusion,maturity,debt.",
+    "Hints and encoded args persist with immutable fee ceiling in existing encrypted workflow; restart uses retained args and normal simulator rejection rather than refreshing transaction intent.",
+    "Existing sole journal/prove/send owner retained; cancel only prepared; uncertain send remains fenced; private utility failure cannot create/send intent.",
+    "Tests use real ABI/decoder/encrypted persistence with labelled wallet/node/fee doubles. They do not establish actual screen maturity,penalty accounting or withdrawal."
+  ],
+  "findings": [],
+  "remaining": [
+    "Normal root transfer composition and generated wallet assets refresh required before production browser use.",
+    "Actual real-proof screen and canonical private history/debt/exit behavior remain acceptance work."
+  ]
+}

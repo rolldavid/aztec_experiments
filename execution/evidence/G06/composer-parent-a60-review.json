@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "a60a6cf38d0975ed25b9beff5871b02526fb89f3",
+  "base": "299124804a468f256cba4b3bcf5bb1d83cffb995",
+  "verdict": "changes-requested",
+  "scope": "G05-A09/G06-A06 production composer parent/browser coordination; no actual browser acceptance",
+  "files": {
+    "scripts/testing/assets.mjs": "28d8cbfe0602a849c7c5227b25e38ad2cd918ada172033ae5d555477a7d6a378",
+    "scripts/testing/browser-worker.mjs": "48d7a005a9aad8ecc301deed9b9288e878448cd723ad0d79fc128d123fa2b33f",
+    "scripts/testing/rolling-application-fixture.mjs": "60ebdeb338b2283e18f07ed2ab70e1ed1c01048bf300aa768f32951f3e84fc60",
+    "scripts/testing/rolling-composer-fixture.mjs": "72620b31b6c248abef14b19c8984448a20b34c261e71e130be850dbb18911390",
+    "scripts/testing/rolling-composer-fixture.test.mjs": "b1075b937c458f6d95b619249808e90e9c84fcbd9dfbc6abbb592c214a190fd6",
+    "scripts/testing/run-application.mjs": "c746228245c636190758955c57d2cf86251ea7fa305d3a374fc0f04501bbc494",
+    "scripts/testing/scenario-flows.mjs": "8848dc853e1a1a1191d7949ecaea4060c1c386a86462be993a77e542dd447a08",
+    "scripts/testing/scenarios.mjs": "39c477cbfdfa37eb26e13ad519071947974c2f75cd59a744d581c05890694f76"
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "scripts/testing/browser-worker.mjs",
+      "scenario": "Any failed browser check writes browser-result then exits1. Supervisor.start close handler immediately calls fail and SIGKILLs every owned child. The fixture polls at100ms and can be terminated before retaining browser result and actual receiver deltas in its durable observation or attempting final fee evidence/reader cleanup. An unexpected proof/send makes this evidence loss material.",
+      "support": [
+        "scripts/testing/browser-worker.mjs result write then process.exitCode=result.passed?0:1",
+        "scripts/testing/supervisor.mjs close handler fail(role-exit) and fail SIGKILL all owned trees",
+        "scripts/testing/rolling-composer-fixture.mjs polling browser-result then copying observation/receiver"
+      ],
+      "repair": "Use bounded scenario-specific result/ack coordination so parent retains fixed browser outcome and actual receiver observations before deliberate failed-result termination. Keep failed result fatal and hard deadline/RSS controls unchanged. Test browser failure with deterministic coordination and retained parent evidence."
+    }
+  ],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json pinned Node v24.21.0 --test --test-concurrency=1 scripts/testing/rolling-composer-browser.test.mjs scripts/testing/rolling-composer-fixture.test.mjs scripts/testing/rolling-application-fixture.test.mjs",
+      "result": "57 passed, 0 failed/skipped,1495.113583 ms",
+      "log": "/tmp/reviewer-composer-a60-tests.log"
+    }
+  ],
+  "nonblocking_review": [
+    "Actual W01 author restoration uses application-derived signing key; exported secret/salt reconstruct same browser identity. A backup includes exact validated claim scope/secret and B includes none, encrypted via actual wallet-backup module.",
+    "Command-line actor handles are closed before browser; funding verification handles and single node/miner/prover owners remain alive. Actual production reader/assets, deployment verifier and private route are used without runtime replacement.",
+    "Read-only L1 proxy enforces fixed methods and origin, bounded request/response, timeout and no redirect; installed deployment verification needs included methods.",
+    "Proof/job and actual RPC send counters plus fee-pool verification remain mandatory on success. Four genuine name jobs unchanged.",
+    "Browser fingerprints include Rolling source, asset builder, manifest inputs/output bytes before and after; parent passes private controls over stdin and0600 handoff in0700 directory.",
+    "Maximum120s browser admission leaves cleanup reserve; whole scenario540s/4GiB and supervised tree unchanged."
+  ],
+  "limitations": [
+    "No Chromium, genuine proof, service deployment or paid action run in review.",
+    "Existing driver0379 remains approved source; this report blocks new parent composition until failure-evidence coordination repair.",
+    "No complete wire privacy, browser publication, extension funding or full product claim."
+  ]
+}

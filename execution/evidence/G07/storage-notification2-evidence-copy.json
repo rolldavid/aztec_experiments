@@ -1,0 +1,30 @@
+{
+  "sourceWorktree": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-social",
+  "files": [
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/notification-marker-effect.bin",
+      "sha256": "2de25f321ebe5d20c11930917aec243d3ed1d9c83548a9e083be1a8a5bfc1442"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/observation.json",
+      "sha256": "60c84725af5f48fda53b59e4e2b89e9d6dc020f66265528fb598304dc6d6ee21"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/notification-subscription-effect.bin",
+      "sha256": "a96c04a80d95a71a08c61fcd0f3ef667e683bf7e6cd12d331214f076bdd5872b"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/preference-root-effect.bin",
+      "sha256": "5170b8a2d1e832ae65e6023c83bea8ef8e9e90ec78f406a57ff0463017124dc1"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/notification-reply-effect.bin",
+      "sha256": "609121f13aedd88e325ad9cd7e807a4f472c208ff899dd5bbbaddce081127721"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-19b9615d-5c0f-4cb4-8ec3-a77987c2f000/bok-deployment-intent.json",
+      "sha256": "ffb0e195a9f97da72da344fe6d5841b186f6b861abc4b6618d55380ed0d61592"
+    }
+  ],
+  "publicEffectsAndSanitizedObservationOnly": true
+}

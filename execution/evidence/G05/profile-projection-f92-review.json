@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "f92e5a0aabc3cc692f47f43cf9ca0921259cd3d3",
+  "prior": "e4fc06a8a037d9943d62aa7308760145be270207",
+  "verdict": "approved_source_only_pending_processed_ABI_and_HTTP_checks",
+  "files": {
+    "shared/rolling/public-events.mjs": "7e94de3a0b69bd55c46a44a294b35d27e75ec8a2b466d8948e7a2ef03184eee9",
+    "shared/rolling/public-events.test.mjs": "6bf88b491ce0013e981ebd8f379b5ab9d1153d9b26b2e7dde410d63834efa396",
+    "shared/rolling/public-projection.mjs": "93c0da81116c0a67afe51907afac7f13702c9af9a9421f52451b74e6b20ad868",
+    "shared/rolling/public-projection.test.mjs": "bfb83aedea79acb94b54e76d734a77dab0f916dd150924df3400608b79bf582e",
+    "shared/rolling/public-index.mjs": "d3bbd418f9f8aca9bc93021ecd04b7da3e92983c3e7f1b0a086cd0bcb6ca5d4f",
+    "shared/rolling/public-index.test.mjs": "72890f96a81461003c5d5a8c2c6dbea6a7bc93d18f12fc82aaf0bea328be1f74"
+  },
+  "findingDisposition": {
+    "PROFILE-PROJECTION-P2-01": "Source repair accepted. Historical posts no longer duplicate identity/avatar payload. Public envelope names map resolves each selected identity at read time. UTF8 JSON envelope size selects a bounded page without increasing1MiB transport limits."
+  },
+  "findings": [],
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js pinnedNode24.21.0 --test shared/rolling/public-projection.test.mjs",
+      "result": "19 independently passed,0failed,586.669959 ms"
+    }
+  ],
+  "sourceChecks": [
+    "Entire envelope counted via Buffer.byteLength(JSON.stringify(...),utf8), including cursor/scope/checkpoint/identity and boards",
+    "Feed/thread/profile/directory all re-query projection with unchanged starting cursor; projection-generated continuation retains revision+epoch binding; no slicing without cursor recomputation",
+    "Single-post overflow fails capacity; if no first-row limit fits, capacity failure rather than silent omission",
+    "Same-name dedup and current-name lookup preserve avatar updates on old posts; anonymous post produces no names entry",
+    "Query synchronous without awaited mutation, so binary-search candidates use same canonical projection and revision",
+    "Existing standard projection page/hasMore remains unchanged; public index uses cursor-based select routes",
+    "Regression authored through actual HTTP server+reader for100same-name and100distinct-name full-size profiles, complete unique traversal, stalecursor and profile endpoint"
+  ],
+  "pendingChecks": [
+    "Normal processed profile artifact missing; SDK event and new actualHTTP fixture tests NOT executed or counted passing",
+    "Run artifact-backed event/index/server tests before integration; include canonical decode/source hashes",
+    "Actual chain profile updates, reorg/archive reconstruction and UI render/moderation remain pending"
+  ],
+  "limits": [
+    "Source-only approval does not close full G05-A10 or unlinkability",
+    "No build/proof/browser/services started by reviewer; small projection test spawns bounded labelled memory probe",
+    "Current rootport7 remains frozen and does not include this isolated candidate"
+  ]
+}

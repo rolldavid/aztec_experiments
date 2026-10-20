@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-resume-20261014",
+  "runtime": "/root/reviewer_resume",
+  "candidate": "fe72ac7666d09f271569e6e80d505a592fe140da",
+  "base": "449319e16dd14b2e96613c17c736ba6a39906207",
+  "componentRevision": "f7205fe9c600f9bde3862b66117ca241ecab0388",
+  "verdict": "approved",
+  "findings": [],
+  "requirements": [
+    "RC18",
+    "RC19",
+    "RC20",
+    "RC21",
+    "RC25",
+    "RC26",
+    "G07-A01",
+    "G07-A02",
+    "G07-A06",
+    "G07-A07",
+    "G07-A08",
+    "G07-A10"
+  ],
+  "scope": [
+    "scripts/patch-pxe-preference-page.mjs",
+    "scripts/test-pxe-preference-page.mjs",
+    "shared/rolling/cold-preference-reader.mjs",
+    "shared/rolling/cold-preference-reader.test.mjs",
+    "shared/rolling/compact-client.mjs",
+    "shared/rolling/compact-client.test.mjs"
+  ],
+  "sourceSha256": {
+    "scripts/patch-pxe-preference-page.mjs": "ccdfc95bc98d7bd34626d74671ab3e070c6610de88453ccc3873326b3fbeb3f1",
+    "scripts/test-pxe-preference-page.mjs": "7e33813bcbfd60801f93226f81423c65308722a8142aaae9f0e834b7db6e9a1d",
+    "shared/rolling/cold-preference-reader.mjs": "ae9e38eef5004ccf0d7d1d8c1187a530923cae84447db5e0b432433521ebda1c",
+    "shared/rolling/cold-preference-reader.test.mjs": "f2616520a0a44531e15345a07771a2793007611292adf24878b49ca0b2e542b2",
+    "shared/rolling/compact-client.mjs": "8c6e70fbb5ecc761506bf9d06075cad7a5cd9a70c4cd8479af138d0bbefa973f",
+    "shared/rolling/compact-client.test.mjs": "e6daa70b322f168b20246f8bb9bc4cc6c0e8dd1457e944d6c5eb0f802a00d740"
+  },
+  "checksPerformed": [
+    "Read six-file implementation/test diff and original transaction/queue/commit code before evidence conclusions. All six combined candidate blobs equal Designf7205fe and packet hashes.",
+    "SDK snapshots dense accessor-free array <=32; requires consecutive cursor-start heights at nextLog0 with no pending partial transaction and final height<=anchor. Every body authenticates root/header/canonical block and must decode txCount0 and zero ciphertexts. Length7 is only transport eligibility, not authenticity.",
+    "State loaded from serialized KV is detached. Any malformed middle block, missing block, nonempty decode or guard failure leaves staged cursor uncommitted; grouped Promise.allSettled drains all peers. Same one-sequence mailbox replay and terminal authenticated head remain.",
+    "Every successful empty-block authenticator installs its original canonical validator. Validators run before callback completion and again after contributor settlement before atomic commit; account/context, deployment identity and anchor checks retained. Nonempty eight-log path unchanged.",
+    "Transport uses <=32 consecutive public selectors with four in flight; owned single-flight state persists until failed group drains; no new account selectors, endpoints, timeout extension or retry.",
+    "Independent existing reader+transport42tests PASS0skip212.661ms. Verified every supplied evidence hash, read selected actualSDK test evidence and changed regression covering gap, middle hash, mixed body, precommit reorg, account abort, mailbox replay and subsequent authentic ciphertext. No fullSDK pass inferred.",
+    "Independently generated helper source hash matches437a296acf2d579ddbabb6b1ea5fed33ae165f2020065fb07dbcc69699a2432a. Other transformed SDK pins unchanged."
+  ],
+  "installationAdvice": "No in-place old-helper upgrade supported. Stop all consumers; archive exact known installed closure; restore only pinned upstream files and archive/remove both exact known generated helpers; verify original state, then existing --apply-installed from physical owning repository with pinned Node. Preserve no-force/version/hardlink/ownership guards and verify new closure before bundle rebuild.",
+  "limitations": [
+    "Actual929-block keys-only recovery under unchanged120s remains unmeasured. This source review is not performance acceptance.",
+    "InstalledSDK/built browser closure and fresh original-key preference/read-marker recovery remain actual acceptance work; no real-proof/testnet/privacy-audit/soak qualification inferred.",
+    "Selected actual SDK tests are bounded partial coverage, not complete SDK suite. The prior selection-timeout remains a failed observation."
+  ]
+}

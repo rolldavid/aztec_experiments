@@ -1,0 +1,35 @@
+{
+  "candidate": "12f2f285c11ca4059774197e38306914e2b7e038",
+  "base": "34e7816112c011db9e024ad479fd7630be0a8d7a",
+  "checks": {
+    "normalSdkBuild": "pass",
+    "normalAppsBuild": "pass",
+    "normalWalletBuild": {
+      "files": 25,
+      "inputs": 97
+    },
+    "checkSdk": {
+      "inputs": 2057,
+      "outputs": 8,
+      "aztecVersion": "6.0.0-rc.3"
+    },
+    "staticLoader": {
+      "scripts": 9,
+      "proofsEnabled": false
+    },
+    "combinedTests": {
+      "pass": 126,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "hashes": {
+    "apps/dist/aztec_bundle.js": "7d7fc810cddc0eeea1cbcbba7e7306104ca15321777df8280afc8949df7b8db9",
+    "apps/dist/sdk-manifest.json": "e41698dcc6370aa1ef8d60c04ae9a4d099e29de278aa69dc88e1362f0d4c5e47",
+    ".build/rolling-wallet/runtime.mjs": "cefc26578d73a5d7c0198af58521aff11b224d38c0f52db161f97637ea848bdc",
+    ".build/rolling-wallet/manifest.json": "62c0297bbd65e7f05c5b7dc7067320e2fd68c7f1abdd61d68edd1dbc1098f505",
+    "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "f895806904e315a314a56ec80736f28a89453bf821fbb084d3e1a71701a652fd",
+    "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "c845d93e1fbe90855810a615607da8ac781f0c4d65f2dc2eb0c1ca4bf01f2771"
+  },
+  "scope": "Generated closure and focused actualSDK/LMDB+labelled reader checks. No full120second coldacceptance or realproof qualification."
+}

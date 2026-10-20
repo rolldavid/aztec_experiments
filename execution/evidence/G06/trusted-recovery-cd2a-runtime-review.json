@@ -1,0 +1,143 @@
+{
+  "reviewer": "reviewer-20261011",
+  "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+  "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+  "reviewed_at": "2026-10-12T02:53:38.968295+00:00",
+  "findings": [],
+  "verdict": "approved: bounded actual trusted-recovery development acceptance",
+  "evidence": [
+    {
+      "path": "execution/evidence/G06/application-cd2a37e2-4fa1-45e5-a64d-344c3fdbf981.json",
+      "sha256": "5b52a2dae88cb58a6506fabb63136d7e5bcce88421ce368d2e348cfac35fe391"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-4ce6dcc8-4f74-44c6-be73-08cce467479b/observation.json",
+      "sha256": "65b76ffe0318a6f3831256b2fb4ebdfef3d6f997b486f08c17b4cd6a28cfa27d"
+    },
+    {
+      "path": "execution/evidence/G06/application-port-4ce6dcc8-4f74-44c6-be73-08cce467479b/name-effect.bin",
+      "sha256": "bdb30062c0d3c17b36be743b89148269496caf047538e361528a1facb2762dfe"
+    }
+  ],
+  "independent_validation": {
+    "inner_equals_outer_worker_bridge": true,
+    "runtime": {
+      "elapsed_ms": 450528,
+      "peak_rss_kib": 1842368,
+      "budget_ms": 540000,
+      "budget_kib": 4194304,
+      "failures": [],
+      "owned_tree_absent": true,
+      "temporary_directory_removed": true,
+      "fixture_exit_code": 0
+    },
+    "canonical_effect": {
+      "effectBytes": 2431,
+      "effectSha256": "bdb30062c0d3c17b36be743b89148269496caf047538e361528a1facb2762dfe",
+      "txHash": "0x2980ce6feb9f67eb3156f499ecfca393cfbead2ff26631fad75dfbf9b504469b",
+      "fee": "10177600800000",
+      "events": [
+        "NameRegistered"
+      ],
+      "name": "River Stone",
+      "noteCommitments": 3,
+      "nullifiers": 4,
+      "publicLogs": 2
+    },
+    "effect_method": "Actual installed TxEffect decoder and authenticated Rolling event decoder; binary SHA, tx hash, fee and NameRegistered digest checked. Historical block inclusion is source-enforced retained runtime evidence, not a fresh query to the deleted disposable node.",
+    "proofs": {
+      "application_proofs": true,
+      "node_validation": "valid",
+      "HTTP_native_jobs_submitted": 1,
+      "completed": 1,
+      "failed": 0,
+      "recovery_additional_proofs_or_sends": 0
+    },
+    "accounting": {
+      "wireCounts": {
+        "trusted-upstream": 3682,
+        "public-l1": 2735,
+        "trusted-query": 534,
+        "trusted-proof": 27,
+        "ordinary-node": 234,
+        "public-reader": 12
+      },
+      "feeA": "19497442800000",
+      "feeBStandalone": "7985178000000",
+      "totalDebit": "27482620800000",
+      "validated": true
+    },
+    "accounting_details": {
+      "claim_fee": "9319842000000",
+      "name_fee": "10177600800000",
+      "A_private_balance": "999999980502557200000",
+      "B_private_balance": "999999992014822000000",
+      "each_funding_amount": "1000000000000000000000",
+      "both_pool_baselines_and_other_pool_change_verified": true,
+      "human_public_feejuice_zero": true
+    },
+    "recovery": {
+      "unavailable_owned_and_submit_rejected": true,
+      "personalized_denial_count": 1,
+      "personalized_forwarded": 0,
+      "readiness_positive_before_denial": true,
+      "personalized_query_and_upstream_HTTP200_rows": 2,
+      "actual_client_error": "BB_TRUSTED_NODE_UNAVAILABLE",
+      "natural_stale_lag_seconds": 121,
+      "unchanged_default_max_lag_seconds": 120,
+      "failure_auth_proof_submit_send_deltas_all_zero": true,
+      "ciphertext_prepared_intent_and_successful_predecessor_preserved": true,
+      "healthy_recoveries": 3,
+      "cancel_after_recovery": true,
+      "public_HTTP_views": 12,
+      "same_reader_port": true,
+      "two_sequential_miner_scopes_stopped_and_automining_restored": true
+    },
+    "wire": {
+      "requests": 7224,
+      "completed": 7224,
+      "unknown": 0,
+      "unsupported": 0,
+      "pending": 0,
+      "truncated": 0,
+      "observer_errors": 0,
+      "opaque": 36,
+      "all_five_receiver_controls_exact": true,
+      "intentional_503_only_outage": 12,
+      "personalized_denial_pair_exact_role_a_count_one_each": true,
+      "ordinary_node_public_reader_public_L1_known_human_role_matches": 0
+    },
+    "source_bindings": {
+      "outer_git_files": 215,
+      "outer_filesystem_files": 11,
+      "inner_git_files": 58,
+      "native_filesystem_files": 70,
+      "Bok_git_files": 14,
+      "artifact_files": 2,
+      "all_checked": true,
+      "local_anvil_binary_hash_checked": true
+    },
+    "cleanup": "All retained actor/funding/prover/query/RPC/observer/indexedDB/native cleanup flags true; outer owned-process and temporary-file checks true."
+  },
+  "checks": {
+    "offline_decoder_result": {
+      "path": "/tmp/reviewer-recovery-cd2a-effect.json",
+      "sha256": "90f3a224d8d001e2d28f53b867f93484de61731dc911bb69c7a244878343856c"
+    },
+    "independent_accounting_wire_validation": {
+      "path": "/tmp/reviewer-recovery-cd2a-validation.json",
+      "sha256": "9670f9586035c5219d22033d916e07bc0ea46409fde3eb937de93dd3bbcd614e"
+    },
+    "source_regressions": {
+      "path": "execution/evidence/G06/trusted-recovery-4c76-review.json",
+      "sha256": "b8958d084bebecd64533c8217b3b86264f00f0bc0965af06078ae0f6ff79af33"
+    }
+  },
+  "prior_failed_evidence_retained": "execution/evidence/G06/application-f61bd071-35e6-4839-9298-1a97b64ba2e3.json",
+  "limitations": [
+    "Local chain31337 with genuine application proofs and controlled settlement; no epoch/network proof qualification.",
+    "One confirmed predecessor and prepared unsent action preserved across faults; not lost receipt after accepted send or broadcast replay recovery.",
+    "Opaque transaction/proof bytes and runtime-added headers are explicit observation gaps; no complete cryptographic unlinkability, timing/content anonymity, independent deployed topology or specialist audit claim.",
+    "G05, G07, G09, G14 full product obligations,99 compiler diagnostic obligations, G13 specialist review, elapsed soak and network release clearance remain open."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "candidate": "d801f1e78bd4136b31d7b3087cff8eb5eea77dfd",
+  "priorCandidate": "c9f3fa52fa903210577eae693f0a866360dc4e9c",
+  "verdict": "approved scoped standalone direct-token top-up component; normal integrated build and actual chain acceptance remain open",
+  "blockingFindings": [],
+  "packetSha256": "68527c7d33078be580337ec9b53e3f94c53df8faa07e85ccbbd62592789c07d4",
+  "coverageCorrectionSha256": "c16ab679781a33909240ee52eaa841b5bbe364b74a5599384617478586fa01c5",
+  "sourceBindings": [
+    {
+      "path": "apps/rolling/wallet-panel.browser.test.mjs",
+      "sha256": "7fdce4c52021fa41022107c85b03c99b9e6148114238a3f8dac10b065543b2ab"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "sha256": "ee1316bc5af18e3c8aeb42ba5e31a00912dc72f84a37804b14e0dbd4cb6a3924"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "sha256": "519bb5093b0145b001a574231b59b3c37c92e580934a03b8e1cda19ae5fd14d4"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "sha256": "a78ad321c67f1d4a0916309d4d6643d39d25d633a10fd03abfa666b01ec83d16"
+    },
+    {
+      "path": "shared/journal-backup.mjs",
+      "sha256": "105e2b3305528431dfe185135522e1674109cef8ce81277b9db27eff21901937"
+    },
+    {
+      "path": "shared/journal-backup.test.mjs",
+      "sha256": "c4bd28ed757eb19623d3e34014c3ec4efd6ce25ee5014a68dbd2c04dc726acff"
+    },
+    {
+      "path": "shared/rolling/aggregate-wallet.mjs",
+      "sha256": "e1b5a52eae5a79a2a678de3d9c033e9a26346839b43ffe81ccd61bf0a798d0c4"
+    },
+    {
+      "path": "shared/rolling/aggregate-wallet.test.mjs",
+      "sha256": "2f4321cd93b6b9c2064f941c270bdf76f354e51168278b0fef3738bc0f43fca7"
+    }
+  ],
+  "reviewedBoundaries": [
+    "Only private-fee and Bok claim actions; posting collateral is not withdrawn, replaced or replenished by this route.",
+    "Protocol FeeJuice portal methods match actual installed ABI; token/rollup/version/recipient verified at a rechecked canonical L1 block. Bok portal read from authenticated L2 contract storage, canonical block rechecked, and escrow/version/chain/inbox/outbox/active/token decimals validated.",
+    "Approval only exact displayed amount to verified portal; approval and deposit require separate explicit reviews. Existing Ethereum journal binds from/to/chain/nonce/calldata/value/effects and recovers without retransmitting unknown submissions.",
+    "Gas estimate and fee price capped at preparation and actual send. Captured account/context guards precede payments; proven cancellation/insufficient funds restore the never-sent draft.",
+    "Original nonce-derived FPC secret path and randomly salted Bok custody saved in real AEAD slot before send; backup domain validates scope and archives retain private secrets.",
+    "Existing private funding verifier and application workflow reused, including private fee mint/pay, canonical receipts and claim fee review.",
+    "Confirmed claim transaction identity is privately retained and canonically checked before successor review and confirmation, even if another application workflow has replaced the original active slot."
+  ],
+  "resolvedFinding": {
+    "problem": "Explicit over-cap/private-claim review left attempted=false; successful direct submit then failed the confirmed-claim recorder.",
+    "repair": "Actual session submit path now uses submitWithStandaloneTopupCheckpoint. It reconciles the original intent, matches the saved top-up intent and full receipt, writes attempted:true before submission and records canonical confirmation afterward. Unrelated imported claims leave the funding record unchanged.",
+    "evidence": "Both kinds exercised against original encrypted application workflow: explicit fee review -> manual submit -> confirmed -> unrelated workflow replacement -> next top-up. Substituted receipt rejects before send; unrelated intent does not mark attempt."
+  },
+  "actualEvidence": {
+    "allFourReceiptsAndLogsMatchPacketHashes": true,
+    "currentHelperSession": 123,
+    "unchangedBackupCarry": 31,
+    "ordinaryDistinct": 154,
+    "unchangedChromium": 3,
+    "totalDistinct": 157,
+    "note": "Staged conjunction, not a fresh whole157 execution. Historical151 and failed attempts preserved. Browser uses labelled funding adapter; actual original AEAD/journal/ABI/claim workflow uses finite labelled node/RPC adapters.",
+    "latestElapsedMs": 30608,
+    "latestSampledPeakKiB": 782160,
+    "ownedTreeAbsent": true,
+    "temporaryStateRemoved": true,
+    "originalDependencyLinkRestored": true
+  },
+  "remaining": [
+    "Normal SDK/wallet build on final integrated source",
+    "Actual direct FEE/Bok payment, bridge and private claim on deployed supported chain",
+    "Named wallet behavior and canonical recovery through genuine chain interruption",
+    "Zero-ETH relayed standalone top-ups are not provided by this direct-token route; Ethereum gas is explicitly required",
+    "Full G04/testnet/release acceptance"
+  ],
+  "reviewExecution": "Read-only exact source diffs, original journal/application interfaces, installed FeeJuice ABI, evidence hash checks. No reviewer test or heavy job."
+}

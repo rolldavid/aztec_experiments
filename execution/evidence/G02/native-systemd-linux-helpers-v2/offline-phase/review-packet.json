@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "8c738900ddb9d31459b4e40585bd9b540a8055f9",
+  "trackedTreeClean": true,
+  "executionAuthorized": false,
+  "testsExecuted": false,
+  "authoredTests": 31,
+  "purpose": "Finite operation checkpoint plus failure-only bounded existing native state and result-file availability; retain original workload assertions",
+  "historicalActualPacketSha256": "5a70cb7a0152b85ad51d31940892b8b418441f4780f28da65fddfebab43bf730",
+  "image": "sha256:8e0b572feae06ff8843f458d2cc4343ecd6995c37f254c0e5de547433c674aee",
+  "closureSha256": "41001f37ac6c7cd235bebe934c46e42c9060cc1f880104df60c3d4fffa791975",
+  "checks": {
+    "confined": true,
+    "cleanup": true,
+    "process_identity": true,
+    "systemd_barrier": true,
+    "read_after_barrier": true,
+    "productionSubset": true,
+    "caseOperationsAfterRemovingCheckpoints": true,
+    "atomicPublication": true,
+    "reader": true
+  },
+  "bounds": {
+    "seconds": 60,
+    "workSeconds": 43,
+    "cleanupSeconds": 17,
+    "memoryMiB": 512,
+    "cpu": 2,
+    "network": "none",
+    "pull": false,
+    "hostMounts": false,
+    "privilegeFallback": false
+  },
+  "diagnosticSemantics": [
+    "Checkpoint names and labels are fixed enums before operations.",
+    "Exact existing native_state only once on failure:3s capture plus existing bounded2s reap; unchanged outer43s work limit.",
+    "lstat only for fixed case result path; no reading or exposing result contents.",
+    "Diagnostic failure retains original failed outcome and still publishes fixed diagnostic-unavailable.",
+    "No raw exceptions/command output retained; production capture/classifier/subset unchanged.",
+    "No specific historical85080 cause asserted; escaped-newline hypothesis disproved."
+  ],
+  "files": {
+    "boot-bound.py": "950f70c47a69f3f495078f1d6b027ab9a34d2339ca9ad6401039dd784e47c97a",
+    "boot-template.py": "2e3f04821124e9e672e7e13c63c795efeefb745feed7950099a71f663a04c3ea",
+    "driver.py": "dcd97f8228dc82eb73359712f43038c6cceff4321297f2e6f0d684dd922c6b1b",
+    "driver.py.diff": "164c2d2d8043a97c9c24092b217f4388ca43510d5881aad56a05961114f6f675",
+    "native-subset.py": "79fb4e3a89e77ed05ec659aa84470a3cb8269ec8c868a395ab49ec2d5ed90176",
+    "receipt-reader.py": "4971d13b9c73d7366b87f6e5ff80455b78eb1ef5b5310a808c78b4949b13ae29",
+    "run.py": "c2b60157018eaa5a63a8e02f662ebc083114a903182fb3989553b3b242f90d77",
+    "run.py.diff": "3c51a293c394201a9d364114e7842cad40156b3cedd13dbb404abd4c9f12465d",
+    "test-runner.py": "ee9c517322b4c67b17cb73862c7523e91ca615dacb1252fac6839a8972cd4d29",
+    "test-runner.py.diff": "bcc0f2d339b2f28ce7d1f3178611d0d93caeaa174b746ae0c118a25f427a363e"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "packetSha256": "ed8d7ee65e65e43f90badec3b3b11e9ba6f7858d554703b6c716171924861926",
+  "files": {
+    "intent.json": "d399212c049fed08e134e66d8bc871a8d9dbf7e8ce6973d93648c52d6c8e74a8",
+    "result.json": "369130335864e4f2251283eb921fa655a2aecbd9f70a38f7dfd408bfa381740e",
+    "create-intent.json": "9993cfc6beac6739352a11693a2a92a19d65e64325a5192ff595bb52666df4d2",
+    "before-cleanup.json": "45fda6c9c416adf7646e91db1159d9cf60924a1ac18c1e84f731f98c7364e3d2"
+  },
+  "sourceRunnerSha256": "bc9dc63f09b7012049f6c3f5957fc3e03526f3a7c2d4d23558d3d05e29bfacac",
+  "verdict": "failed-before-start; exact rejected confinement field unknown; no identical retry",
+  "actual": {
+    "passed": false,
+    "elapsedMs": 2144,
+    "exitCode": 1,
+    "hostConfinementPassed": false,
+    "containerStarted": false,
+    "guestExecuted": false,
+    "nativeQualified": false,
+    "beforeCleanupState": {
+      "Dead": false,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Running": false,
+      "Status": "created"
+    },
+    "containerAbsent": true,
+    "sourceUnchanged": true
+  },
+  "independentDiagnosis": [
+    "Full inspect returned exit0 and50214bytes, below65536 source cap. No hostConfinement true assignment, no start call or start-intent, no guest receipt. Source position confines failure to full inspect parsing/confinement evaluation before startup; rejected field or exception not retained.",
+    "Created/nonrunning state and successful wait/remove/finalps0empty prove owned container cleanup. Kill1 corresponds to unstarted container.",
+    "No evidence of guest remount, cgroup delegation, systemd retention or native failure.",
+    "Strict compare contains several Docker serialization-sensitive checks (capability spelling/list defaults, Mounts/tmpfs representation, Env order and exact flags). None can be identified as cause from current receipt."
+  ],
+  "minimumNext": [
+    "Add fixed named pass/fail predicates and bounded allowlisted observed values before rejection: image/namespaces, mount types and expected destinations, resource numbers, privilege/security/capability enums, expected environment-key identity and exact expected-value booleans. Avoid raw inspect/env/entrypoint payload or arbitrary error text.",
+    "Record missing/type-invalid as finite categories so malformed inspect cannot discard which predicate failed. Preserve original raw validation predicates initially.",
+    "If no surviving evidence proves the cause, separately review/grant one never-started same-configuration create/inspect/owned-cleanup diagnostic. No guest start or fallback, no resource/capability widening.",
+    "Only normalize a representation after exact observation establishes semantic equivalence; reject unexpected values/duplicates and retain all isolation/resource requirements."
+  ],
+  "reviewerDockerActions": 0
+}

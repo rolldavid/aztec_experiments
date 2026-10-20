@@ -1,0 +1,14 @@
+{
+  "revision": "de7e1547083e353b2efd0fcacbbf903aa5eb4b80",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source integration",
+  "checks": [
+    "independently passed seven boundary/policy tests",
+    "controls patch equivalence to fa001 verified"
+  ],
+  "pending": [
+    "both-case chain",
+    "stable artifact pins",
+    "genuine proof qualification"
+  ]
+}

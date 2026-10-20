@@ -1,0 +1,32 @@
+{
+  "candidate": "c99d79a86764f5839b8d2abc7b2e87bc6df61682",
+  "base": "0d6b5f9f0c099f3f2219832b8289ad24908c987a",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source repair",
+  "findings": [],
+  "sourceSha256": {
+    "shared/rolling/preference-reader.mjs": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+    "shared/rolling/preference-reader.test.mjs": "2a3cfa336fd5b1137df01b83330154543b70f518f6876f7326d72632042c6b80"
+  },
+  "findingDisposition": "0d6 native BlockHash P2 repaired; separate backup composition covered by1cf review. Historical0d6 report retained.",
+  "checks": {
+    "independentCommand": "Pinned Node24 NODE_BACKEND=js --test --test-concurrency=1 preference-reader,preference-events,preferences tests",
+    "passed": 185,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 2387.186791,
+    "log": "/tmp/reviewer-reader-c99-tests.log",
+    "sourceBinding": "Current design relevant files exactly match c99 blobs despite later checkout commits"
+  },
+  "assessment": [
+    "Actual typed header hash retained only in private WeakMap keyed by immutable serialized anchor; native class request receives exact original SDK object",
+    "Canonical hex equality checked before association and use; serialized cache/returned anchors stay canonical strings",
+    "Regression uses installed normalizeBlockParameter/UnseenBlockHoldOff and RPC schema, reproduces old string failure and verifies exact typed identity through real reader",
+    "No state, freshness, provenance, event validation, lock or error gate relaxation"
+  ],
+  "limits": [
+    "Native backing data source and PXE are labelled fixtures; no actual node recovery claim",
+    "Official cold PXE ingestion remains unbounded; benchmark/genuine recovery/browser integration pending",
+    "Requires reviewed backup domain support before same-store wallet wiring"
+  ]
+}

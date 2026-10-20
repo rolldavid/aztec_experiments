@@ -1,0 +1,23 @@
+{
+  "test-setup-cleanup.py": [
+    "OwnedCleanup.test_normal_owned_cleanup_requires_positive_absence",
+    "OwnedCleanup.test_state_timeout_cannot_skip_owned_cleanup",
+    "OwnedCleanup.test_malformed_or_missing_state_cannot_skip_owned_cleanup",
+    "OwnedCleanup.test_before_cleanup_persistence_failure_cannot_skip_owned_cleanup",
+    "OwnedCleanup.test_multiple_failure_still_attempts_removal_and_absence",
+    "OwnedCleanup.test_removal_failure_still_checks_actual_absence",
+    "OwnedCleanup.test_unknown_or_foreign_identity_never_mutates",
+    "OwnedCleanup.test_valid_shaped_unknown_id_never_mutates",
+    "OwnedCleanup.test_absence_transport_failure_is_not_absence"
+  ],
+  "test-helper-repairs.py": [
+    "Repairs.test_sink_drains_oversized_no_newline_input_with_bounded_files",
+    "Repairs.test_sink_small_input_and_empty_eof",
+    "Repairs.test_log_limit_no_longer_applies_to_apt_data",
+    "Repairs.test_fixed_public_diagnostic_projection_and_cleanup_independence",
+    "Repairs.test_every_apt_stage_uses_explicit_authenticated_main_only_source",
+    "Repairs.test_actual_extracted_capture_eof_wiring_without_process",
+    "Repairs.test_actual_extracted_capture_timeout_wiring_without_process",
+    "Repairs.test_capture_function_is_exact_frozen_production_bytes"
+  ]
+}

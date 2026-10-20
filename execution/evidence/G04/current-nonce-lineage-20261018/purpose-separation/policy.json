@@ -1,0 +1,30 @@
+{
+  "base": "fbf33a57a3366afc5136365f844018ac3c76b47d",
+  "candidate": "628a0d64b28221756c22765b1d9e269cad8695df",
+  "task_id": "G04-nonce-purpose-separation",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "implementer": "funding-feature-20261018",
+  "allowed_paths": [
+    "plugins/operations.mjs",
+    "plugins/operator.mjs",
+    "plugins/test/operations.test.mjs"
+  ],
+  "required_checks": [
+    "nonce-lineage"
+  ],
+  "requirements": [
+    "RC19-RC22-explicit-recovery-component"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding-feature-20261018",
+      "task_id": "G04-nonce-purpose-separation",
+      "paths": [
+        "plugins/operations.mjs",
+        "plugins/operator.mjs",
+        "plugins/test/operations.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "scope": "public-read-only-archiver-prerequisites",
+  "provider": "tenderly-publicnode-debug",
+  "ordinaryProvider": "tenderly",
+  "debugProvider": "publicnode",
+  "network": {
+    "chainId": 11155111,
+    "version": 2914217885,
+    "rollup": "0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9"
+  },
+  "nodeStartupQualified": false,
+  "imageExecution": false,
+  "imageModuleBinding": "separate-evidence-required",
+  "sdkReadRetries": "installed SDK defaults; no operator retry",
+  "passed": true,
+  "stages": [
+    {
+      "name": "source",
+      "status": "passed",
+      "observation": {
+        "node": "24.21.0",
+        "aztec": "6.0.0-rc.1",
+        "sourceSha256": "ce333305e443fc9b9a7b04a8b0f7f3f5d297b0de13da592c7c8d80a179222fc9",
+        "sourceFiles": {
+          "node_modules/@aztec-labs/archiver/dest/factory.js": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+          "node_modules/@aztec-labs/archiver/dest/archiver.js": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+          "node_modules/@aztec-labs/archiver/dest/l1/validate_trace.js": "6fca83f140c3da28950121661081f29360e690b26c18d53e3f63577fc84b0584",
+          "node_modules/@aztec-labs/archiver/dest/l1/validate_historical_logs.js": "8125975052ab85070a193eecce0b72290b50a0aec8ae676624da585a7c825727",
+          "node_modules/@aztec-labs/ethereum/dest/contracts/rollup.js": "52f1abedbd8220a87eddea5b65e6cefcebcce129409f09294714972df5ac91a2",
+          "node_modules/@aztec-labs/ethereum/dest/client.js": "40cc39d606d3bf3ed3464470533810b195b2dd89549d84190b3ab10c04be019a",
+          "node_modules/@aztec-labs/blob-client/dest/client/factory.js": "3ecb8952034a058ef69b35191933ca18c9dc351818997566b0ba8dfb60ed01c3",
+          "node_modules/@aztec-labs/blob-client/dest/client/http.js": "311a662c12aa687d513dda693286fa95b0680d586afdbab32028e9fe164d2d6f"
+        }
+      }
+    },
+    {
+      "name": "chain",
+      "status": "passed",
+      "observation": {
+        "matched": true
+      }
+    },
+    {
+      "name": "finalized-anchor",
+      "status": "passed",
+      "observation": {
+        "number": "11896697",
+        "timestamp": "1791781716",
+        "hash": "0x59902b4bfe8f66b725175dc2d36b2cadc0165f77e179b8707b7a9ec2d8bbedc7"
+      }
+    },
+    {
+      "name": "rollup-identity",
+      "status": "passed",
+      "observation": {
+        "matched": true,
+        "codeSha256": "0x9c7b822206c4db42504a94fd087262e36abf9d830cf5eee2fcf4d0ae30c648e6"
+      }
+    },
+    {
+      "name": "rollup-constants",
+      "status": "passed",
+      "observation": {
+        "startBlock": "11785332",
+        "genesisTime": "1790414724",
+        "proofSubmissionEpochs": "1",
+        "genesisArchiveRoot": "0x2ef904bbd5edc11a43cf48c4270edbf631d14aeaddafe307f8fa959e8113bfb6",
+        "slashingProposer": "0xb7d4e1aeed9238576299cf3e2556e7e14c38c386",
+        "committeeSize": "48",
+        "manaLimit": "150000000"
+      }
+    },
+    {
+      "name": "deploy-block",
+      "status": "passed",
+      "observation": {
+        "number": "11785332",
+        "timestamp": "1790414724",
+        "hash": "0x58d0033b3e1bd75ef5035779824d90a6bf4312be8d7cf2989ecb9c5ad4e34622"
+      }
+    },
+    {
+      "name": "historical-logs",
+      "status": "passed",
+      "observation": {
+        "ownershipTransferredEvents": 1,
+        "deployBlockMatched": true
+      }
+    },
+    {
+      "name": "latest-clock",
+      "status": "passed",
+      "observation": {
+        "number": "11896765",
+        "timestamp": "1791782532",
+        "hash": "0x078b18b6d5f8211baa8ab40cd359555b55ac2d5512c929f52f7be941060b4c04",
+        "observedWallSeconds": 1791782542,
+        "lagSeconds": "10",
+        "maxAllowedDriftSeconds": 300
+      }
+    },
+    {
+      "name": "debug-chain-and-anchor",
+      "status": "passed",
+      "observation": {
+        "chainMatched": true,
+        "anchorMatched": true,
+        "blockNumber": "11896697",
+        "blockHash": "0x59902b4bfe8f66b725175dc2d36b2cadc0165f77e179b8707b7a9ec2d8bbedc7"
+      }
+    },
+    {
+      "name": "trace",
+      "status": "passed",
+      "observation": {
+        "debugTraceRecent": false,
+        "traceTransactionRecent": true,
+        "debugTraceOld": false,
+        "traceTransactionOld": true
+      }
+    },
+    {
+      "name": "blob-sources",
+      "status": "passed",
+      "observation": {
+        "strictSdkTestSourcesPassed": true,
+        "uploadConfigured": false
+      }
+    },
+    {
+      "name": "anchor-continuity",
+      "status": "passed",
+      "observation": {
+        "finalizedAnchorUnchanged": true
+      }
+    }
+  ],
+  "cleanup": true,
+  "process": {
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "deadlineMs": 59000
+  }
+}

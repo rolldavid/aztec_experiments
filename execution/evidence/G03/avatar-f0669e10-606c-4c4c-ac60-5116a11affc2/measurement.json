@@ -1,0 +1,147 @@
+{
+  "passed": true,
+  "realProofs": false,
+  "proofMode": "proofs-disabled",
+  "realProofAcceptance": "missing",
+  "operatorIdentityPublic": true,
+  "privateNameOwnership": "not implemented by this experiment",
+  "measurements": [
+    {
+      "label": "deploy",
+      "proofMode": "proofs-disabled",
+      "prepareMs": 1064,
+      "txHash": "0x146d4cb4bd0f5da0fa2d3759225bdd9c66fb98d54cbabc96e0865deded00ea24",
+      "serializedTxBytes": 218688,
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 13888,
+          "l2Gas": 911705
+        },
+        "teardownGas": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      },
+      "inclusionMs": 10984,
+      "effectReadMs": 8,
+      "blockNumber": 2,
+      "blockHash": "0x0531aa9ad6d6c50902ef85a24b885703f632ee4f8fedde0a0836ca731672b6e6",
+      "transactionFee": "1230528238500000",
+      "effectBytes": 97747,
+      "blobFields": 436,
+      "publicWrites": 3,
+      "publicLogFields": 0
+    },
+    {
+      "label": "publish-v1",
+      "proofMode": "proofs-disabled",
+      "prepareMs": 540,
+      "txHash": "0x2506fc598f6113b80a7d92660dec981f49cf8110bac6bf0ba4c0c69aea286baa",
+      "serializedTxBytes": 130560,
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 9056,
+          "l2Gas": 5551562
+        },
+        "teardownGas": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      },
+      "inclusionMs": 8299,
+      "effectReadMs": 0,
+      "blockNumber": 3,
+      "blockHash": "0x25014c182a2cd9b55aba7884a72104c49740deddbf5421540bbca16e994f555a",
+      "transactionFee": "7492943231400000",
+      "effectBytes": 9071,
+      "blobFields": 285,
+      "publicWrites": 3,
+      "publicLogFields": 275,
+      "currentVersion": "1",
+      "currentVersionType": "bigint",
+      "currentDigest": "5368798941677895227724274549960794867107723576848634823496745241360044853480",
+      "currentDigestType": "bigint",
+      "expectedDigestDecimal": "5368798941677895227724274549960794867107723576848634823496745241360044853480",
+      "rasterBytes": 416,
+      "noisyPixels": 0,
+      "rasterSha256": "c0dea019174c70e091bb00ada10e36139ef10130f1fed73e0d5f10baf116b800",
+      "poseidonDigest": "0x0bdea1ec9010e311f3ee2489bcc66363b6380cab5228abb3e73c9603c98708e8",
+      "avatarLogBytes": 8772,
+      "avatarLogFields": 275,
+      "losslessPixelEquality": true,
+      "coreArchiveApiReconstruction": true,
+      "retentionQualification": "not measured"
+    },
+    {
+      "label": "publish-v2",
+      "proofMode": "proofs-disabled",
+      "prepareMs": 538,
+      "txHash": "0x0e8da006aa36d47014b72a1b7da6665d5fad0d0bfad3fa7caa016ce35e9e6592",
+      "serializedTxBytes": 130560,
+      "submission": "included",
+      "gas": {
+        "totalGas": {
+          "daGas": 9056,
+          "l2Gas": 4036022
+        },
+        "teardownGas": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      },
+      "inclusionMs": 8376,
+      "effectReadMs": 0,
+      "blockNumber": 4,
+      "blockHash": "0x0737d3e1861c57e6dec0bce53c571716cdd15eedcc543c9f5d09d266d50e2b9d",
+      "transactionFee": "293418799400000",
+      "effectBytes": 9071,
+      "blobFields": 285,
+      "publicWrites": 3,
+      "publicLogFields": 275,
+      "currentVersion": "2",
+      "currentVersionType": "bigint",
+      "currentDigest": "286061577834938425882300913282627153690203429054952831501661764004284767200",
+      "currentDigestType": "bigint",
+      "expectedDigestDecimal": "286061577834938425882300913282627153690203429054952831501661764004284767200",
+      "rasterBytes": 8188,
+      "noisyPixels": 2546,
+      "rasterSha256": "511d80f8029167f84945b2bdfc60b7127b2e831db85a69d84452ac420f626ac6",
+      "poseidonDigest": "0x00a1e7b5a3ca6498ae5bc601f8def496381af9feb7e522d0b34ccc62389c9be0",
+      "avatarLogBytes": 8772,
+      "avatarLogFields": 275,
+      "losslessPixelEquality": true,
+      "coreArchiveApiReconstruction": true,
+      "retentionQualification": "not measured"
+    }
+  ],
+  "sourceRevision": "6f0445dfbdd56cea9960d1ba9f0602f564eb80c7",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "6.0.0-rc.1",
+    "rollupVersion": "1406783620",
+    "startedAt": "2026-10-11T10:57:59.276Z"
+  },
+  "build": {
+    "inputs": {
+      "experiments/avatar/Nargo.toml": "cef7a8860c82e081e24296a47228100b99670e23e73caf15b5d69a50d21fb4f3",
+      "experiments/avatar/src/main.nr": "174ecec61724bbd55316b6a17e47e78a56c6200bd414f11b4406fdc28fb7d14c",
+      "experiments/avatar/build.mjs": "bb5c8dba79b63d78dbfe515b65fe64e69c682615fc1cc437b3b3fb7d7420da2b",
+      "noir-dependencies.json": "b4ebfe0d0a1dd79ed1983103763379e07df3f337dbda28e7f0494adcc6d82431",
+      "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+      "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+      "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895"
+    },
+    "artifactSha256": "ac475e33c3ff5abee80347bc1fe271c7f2f3bac22f3b9d7ad80cc28fc60f0a24"
+  },
+  "driverHashes": {
+    "measure.mjs": "e9aa44e02ae16f5244ae4bfb0eac0a0e59ba57ee69e6bea667f5bdbbb90447c0",
+    "codec.mjs": "d950b545769c33f21734d0884ab9a3f471c313c43d463bdd526a4854ef7a1b03",
+    "raster-fixture.mjs": "3837ee90fc89f3347694b41841fd0189bdbb1aa955edc927ed2bf0008570c627"
+  },
+  "contractAddress": "0x13a116e676107cbd0ae1ea3a09b0e25540fb0a286fd57d6bb82171ad783a2538",
+  "visualQuality": "Generated smile raster is lossless; human assessment and real user-image conversion outstanding"
+}

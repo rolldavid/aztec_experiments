@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "reviewer-20261011",
+  "candidate": "96825e16271baf7d81442415565fe51b1533737e",
+  "comparison": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+  "verdict": "approved-source-for-one-genuine-notifications-campaign; actual acceptance pending",
+  "findings": [],
+  "sourceHashes": {
+    "scripts/testing/rolling-application-fixture.mjs": "d8c7ecc5d61a30cdc2827ac275a0885323fd482854c7183176e59403fadfb975",
+    "scripts/testing/rolling-preference-recovery.mjs": "d3632c6f09c83a1d7c96d9ffb20151e6a8026bec6beab189ec51c84fc3db31ce",
+    "scripts/testing/rolling-application-actor.mjs": "50d76610020e1156d40854bb720f06ef382279048a146dfed62873703b368384",
+    "scripts/testing/scenarios.mjs": "a8dbf6f8c45eb0ed8a6c95ee515e189146b0e3d40f847a9b7c393fef44cf2cb0",
+    "scripts/testing/scenario-flows.mjs": "906986e5d63d0e93a4f3493df5c5e634f446d675e4fa31752cd0ba68e1e621e1",
+    "shared/rolling/application.mjs": "a9643703e253dca62c56e85c19e7eedd90d5231f7d26420ce04b8de3c42bed55",
+    "shared/rolling/preference-reader.mjs": "d474007d19e1fc49be6157ca707cd13750ce894c79ab59142b36981670bb2bb0",
+    "prover/application-policy.mjs": "95bdd2dcec524b513bfc651f6ac66b6f432041a82687cf991e0fbcdf52517b1a",
+    "prover/rolling-artifacts.json": "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+  },
+  "unchangedCriticalSourceAgainst11d": true,
+  "fullDeltaPaths": [
+    "BUILDING.md",
+    "deploy/prover/BOOTSTRAP.md",
+    "deploy/prover/archiver-prerequisites.mjs",
+    "deploy/prover/archiver-prerequisites.test.mjs",
+    "deploy/prover/bootstrap.py",
+    "scripts/test-prover-bootstrap.py",
+    "scripts/testing/private-bok-build-preflight.mjs",
+    "scripts/testing/private-bok-build-preflight.test.mjs",
+    "scripts/testing/run-application.mjs"
+  ],
+  "changedSourceDisposition": [
+    "Nine changed paths are previously reviewed prerequisite/bootstrap/documentation and read-only early PrivateBok preflight changes; production preference/actor/reader/prover/scenario code and catalog unchanged.",
+    "Early preflight runs after source fingerprinting, before runtime, fixture or browser reservation; no auto build or retry. Existing fixture/final validation remains."
+  ],
+  "actualPreflight": {
+    "inputCount": 14,
+    "manifestSha256": "a74b36e849a6845cb329802557ba42b5db86ad3ffda7efacf43f0fb2c33f4f9f",
+    "artifactSha256": "524078a8f81f14f811be4fa8687a55ee1fc65ca81926a4d69803191d29bc7935",
+    "boardArtifactSha256": "a0e21d4b1411cbc652fedcd477ae68a32f3e7444a2f2fa506bf16cd7e2d04925",
+    "normalCanonical52InputsMatch": true,
+    "catalogLoad": "passed",
+    "privateVKs": [
+      14,
+      6
+    ]
+  },
+  "independentTests": {
+    "command": "Pinned Node 24.21.0 --test --test-concurrency=1 scripts/testing/private-bok-build-preflight.test.mjs scripts/testing/rolling-preference-recovery.test.mjs",
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 72.642291,
+    "log": "/tmp/reviewer-968-preflight-notifications-tests.log",
+    "sha256": "ce105ce83a00a48c09c43bca282ce6d14a49d0f2167ceec5d07dc6bf32de2188"
+  },
+  "requiredActualAssertions": [
+    "Five genuine actions: anonymous root, subscribe, notification disable, authenticated read marker, notification enable.",
+    "Initial revision 3 and incremental revision 4 exact private state and canonical marker hash; preference writes produce no public Board events.",
+    "All five actual receipt/effect/fees and private pool accounting, exact HTTP/native proof counts, canonical public rebuild and fresh/reopened HTTP.",
+    "Original encrypted journal recovery before actor closure, fresh PXE namespace and empty AEAD cache, exact final private state and no new proof/send/submission during cold recovery.",
+    "Retain all failure/cleanup records under unchanged 540 seconds / 4 GiB with 768 MiB fixture heap."
+  ],
+  "limitations": [
+    "Relationships 2aafe pass does not establish notifications/read-marker runtime acceptance.",
+    "CLI fake-indexeddb is labelled and remains distinct from native browser recovery.",
+    "No reorg/wire unlinkability/full G07 or remote Linux qualification claimed."
+  ]
+}

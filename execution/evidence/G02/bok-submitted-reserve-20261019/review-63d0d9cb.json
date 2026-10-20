@@ -1,0 +1,28 @@
+{
+  "candidate": "63d0d9cb88ccd4833f7faa55494b5442c5400ed9",
+  "base": "d1cc97a1587b61b4be1004d01469864363c31424",
+  "verdict": "changes-requested",
+  "findings": [
+    {
+      "path": "plugins/private-bok-escrow.mjs",
+      "line": 218,
+      "issue": "Native waitForTx inherits DefaultWaitOpts.timeout=300; finalized continuation can fail solely because finality takes longer than five minutes.",
+      "repair": "Pass timeout:0 to the existing SDK waiter and assert the option in its existing focused test."
+    }
+  ],
+  "acceptedReasoning": [
+    "Exact first quoted call, original arguments, operation ID and persisted submitted hash remain bound.",
+    "Native observation is read-only; original canonical receipt/block/effect/class/storage checks remain authoritative.",
+    "Agent continuation marker is persisted before reentry; provider-entered, failed/unknown operations are not authorized for replay.",
+    "Existing metering resumes the exact quote/input and inspects successful reserve without a second send."
+  ],
+  "independentFocusedChecks": {
+    "passed": 4,
+    "failed": 0,
+    "durationMs": 1114.520833,
+    "output": "164ccb"
+  },
+  "limits": [
+    "No live transaction, proof, service operation or whole-flow rerun."
+  ]
+}

@@ -1,0 +1,44 @@
+✔ unit fake: public request is hash-pinned and configuration-bound (4.032792ms)
+✔ unit fake: exact canonical success records fee and only one submission across restart (1.941ms)
+✔ unit fake: accepted send with lost response reconciles without another send (0.823292ms)
+✔ unit fake: pending outcome remains pending after restart and never reproves (0.735625ms)
+✔ unit fake: pending finish reopens original hash and records canonical fee without resubmission (1.301083ms)
+✔ unit fake: failure before send consumes intent without leaking error or reproving (0.39175ms)
+✔ unit fake: actual reverted receipt records charged fee before returning failure (0.534417ms)
+✔ unit fake: mismatched receipt hash retains fee evidence but cannot pass (0.599375ms)
+✔ unit fake: mismatched effect or reorg cannot qualify canonical inclusion (1.463083ms)
+✔ unit fake: changed network, class or operator denies subsequent action (0.459291ms)
+✔ unit fake: wrong proven public target is never submitted (0.238583ms)
+✔ unit fake: lost lease or failed durable write prevents proving and sending (0.239417ms)
+✔ unit fake: real-proof production advances at checkpoint without waiting for finalized tip (0.98525ms)
+✔ unit fake: historical finalized binding reopens exact original operation without rewriting history or resending (1.172583ms)
+✔ unit fake: policy evolution never admits changed identity or unrecognized confirmation policy (1.722958ms)
+✔ unit fake: reservation, canonical receipt and 180-second margin required before inference (0.878875ms)
+✔ unit fake: conservation, target and operation digest mismatches fail closed (0.224292ms)
+✔ unit fake: explicit local restriction and proof labels cannot be silently changed (0.172417ms)
+✔ unit fake: all allowed operator ABI methods retain exact args and reject copied identities (3.233375ms)
+✔ unit fake: absent, unreadable and dropped outcomes do not authorize submission replay (0.453917ms)
+✔ unit fake: changed actual fee payer or effect fee cannot pass (0.377167ms)
+✔ unit fake: malformed schema and changed proof mode reject journal reopening (0.208958ms)
+✔ unit fake: included fee/effect history survives unavailable, pending, dropped and reorg observations (1.004042ms)
+✔ unit fake: requested real rejects disabled node or disabled/unknown PXE before proof/send (0.525292ms)
+✔ unit fake: disabled requires matching actual node and native PXE false (0.405917ms)
+✔ unit fake: loss of network verification invalidates current pass while retaining inclusion history (0.501792ms)
+✔ unit fake: authenticated reply uses exact flattened ABI and cannot replay after restart (2.551208ms)
+✔ unit fake: only first never-submitted reserve can continue once after proof preparation failure (0.873125ms)
+✔ unit fake: native observer waits on original submitted hash then rechecks canonical effect without proving or sending (0.950583ms)
+✔ unit fake: first settlement and reply remain owned until native checkpoint, then inspect exact original effect (2.097541ms)
+✔ unit fake: native observation preserves reverted or dropped outcomes and does not replay (0.982625ms)
+✔ unit fake: lost native observation retains signed intent for state-driven continuation without another proof/send (2.525542ms)
+✔ explicit dropped settlement replacement retains both hashes, canonical fees and one-use lineage (3.101167ms)
+✔ replacement never admits missing/pending receipts, wrong authority or changed reservation (2.009917ms)
+✔ replacement admission consumed before proof; failure and unknown send never reprove or resend (3.540792ms)
+✔ replacement rechecks reservation and late original inclusion after proof before broadcasting (2.017375ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.87275

@@ -1,0 +1,22 @@
+{
+  "sourceHashesVerified": 12,
+  "verifiedLocations": {
+    "scripts/test-w02-browser.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/test-w02-browser.mjs",
+    "shared/passkey-wallet.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/passkey-wallet.js",
+    "shared/account.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/account.js",
+    "shared/application.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/application.js",
+    "shared/wallet-buttons.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/wallet-buttons.js",
+    "shared/wallet-backup.js": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/shared/wallet-backup.js",
+    "scripts/run-bounded-browser-check.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/run-bounded-browser-check.mjs",
+    "scripts/testing/supervisor.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/testing/supervisor.mjs",
+    "scripts/owned-test-process-tree.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/scripts/owned-test-process-tree.mjs",
+    "deploy/hosting-config.mjs": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/deploy/hosting-config.mjs",
+    ".build/apps-manifest.json": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/apps-manifest.json",
+    ".build/sdk/sdk-manifest.json": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/sdk/sdk-manifest.json"
+  },
+  "reportSha256": "efc1c8cb8f1fd306e604c2a7054af18876836752a029d747a0d96222dc0c4c12",
+  "elapsedMs": 9635,
+  "peakTreeRSSKiB": 1885552,
+  "cleanupVerifiedFromReport": true,
+  "note": "Worker build dependency links were temporary; exact recorded manifests survive in lead checkout. Reviewer verified those bytes rather than claiming stale/missing worker paths matched."
+}

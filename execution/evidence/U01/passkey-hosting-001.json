@@ -1,0 +1,194 @@
+{
+  "script": "scripts/test-u01-hosting-browser.mjs",
+  "args": [
+    "chromium"
+  ],
+  "passed": true,
+  "observations": [
+    {
+      "passed": true,
+      "browserEngine": "chromium",
+      "browserVersion": "153.0.8010.12",
+      "profile": "fresh disposable persistent normal profile",
+      "sdkTransfer": {
+        "encoding": "gzip",
+        "compressedBytes": 28400791,
+        "decodedBytes": 51980627,
+        "decodedHashMatchesBuild": true
+      },
+      "leafDeadlineMs": 120000,
+      "sdkNavigationReadyMs": 734,
+      "crsMeasurement": null,
+      "checks": {
+        "secure": true,
+        "isolated": true,
+        "shared": "function",
+        "publicLoaded": true,
+        "wasm": true,
+        "worker": "function"
+      },
+      "privateChecks": {
+        "ready": true,
+        "privateWorkersInitialized": true,
+        "sqlite": "value",
+        "isolated": true
+      },
+      "history": {
+        "passed": true,
+        "status": "passed",
+        "fixture": "synthetic persisted NoteDao history; no proofs",
+        "pxeVersion": "5.2.0",
+        "historyNotes": 1100,
+        "checks": [
+          "beyond old cap",
+          "two successors",
+          "deposit isolation",
+          "owner/slot/contract isolation",
+          "missing match",
+          "reverse insertion",
+          "persistent reopen",
+          "scope deduplication",
+          "duplicate detection",
+          "pagination after selectors",
+          "bounded duplicates"
+        ],
+        "elapsedMs": 2000
+      },
+      "historyBundleHash": "99b3448b85d7bac94936905ef49edf688eb3d2f64f543289ddbbe5d0cf62f611",
+      "encryptedWalletCreated": true,
+      "externalRequests": 0,
+      "privateWorkerAssets": [
+        "/bb-main.worker.js",
+        "/sqlite.worker.js",
+        "/sqlite3.wasm"
+      ],
+      "rangeRequests": true,
+      "privatePathsDenied": true,
+      "actualBuiltPublicPage": true,
+      "actualBuiltWalletPage": true,
+      "actualAcvmWasmCompiled": true,
+      "crsInitialized": false,
+      "crsPaths": [],
+      "provingQualified": false,
+      "tlsScope": "disposable certificate; browser exception scoped to fresh test context"
+    },
+    {
+      "passed": true,
+      "ownedServerStopped": true,
+      "temporaryDirectoryRemoved": true
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 1251936,
+  "rssSamples": [
+    {
+      "elapsedMs": 1003,
+      "rssKiB": 486880
+    },
+    {
+      "elapsedMs": 2026,
+      "rssKiB": 869232
+    },
+    {
+      "elapsedMs": 3078,
+      "rssKiB": 1094304
+    },
+    {
+      "elapsedMs": 4106,
+      "rssKiB": 1223200
+    },
+    {
+      "elapsedMs": 5132,
+      "rssKiB": 1251936
+    },
+    {
+      "elapsedMs": 6157,
+      "rssKiB": 483504
+    }
+  ],
+  "failures": [],
+  "children": [
+    {
+      "role": "ui",
+      "code": 0,
+      "signal": null,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-u01-hosting-browser.mjs": "195c6f0c4c09ca97ee681a95c3eb4ebcd9406d9831affa6772d9a6c1c20958b0",
+    "scripts/browser-history-entry.mjs": "0e1c1a3d5d9ab2473829fb3665ae98ca6e735983fcfc03a0ccfbc1e6321e16fc",
+    "scripts/screening-history-fixture.mjs": "2b3d87364865c64580b94d682eddf509c307ab8fec2f0db54877dbd4a3ff0eda",
+    "shared/sdk-store.mjs": "083710db7c2911bf3f6a5008d0618f49317a1cd93d686d483fe089e2c433e01f",
+    "package-lock.json": "3ac2d895f6eddffba40c8889c1d88cb73c48571530595433da27c7bb4ad6b805",
+    "scripts/run-bounded-browser-check.mjs": "11e17d20ec81b6edf2ce828d83ee74115f7ee5540557bc5b5e792abcc8757f33",
+    "scripts/testing/supervisor.mjs": "518d827972d68cce7bab14f56df6483a260f5f5dc4082b50e2e4bbd80b0723f2",
+    "scripts/owned-test-process-tree.mjs": "ed8a490c451afa0ac2d4f0d6accbd51edfcf33088e59b058422921a070ac6a26",
+    "deploy/hosting-config.mjs": "52ade3bf75fd0ca6bd1fd82b2a67e9d5eff064af09a52751c76693b227b3987d",
+    ".build/apps-manifest.json": "09aae25545316d99f67a7278ec10d1bc1389f9ac790029627e10f31bf2015663",
+    ".build/sdk/sdk-manifest.json": "98d24f590a07dcb798519e9b42cc9fde82529d190a2075f65d0875b279b33571"
+  },
+  "peakMemory": {
+    "elapsedMs": 5132,
+    "processes": [
+      {
+        "role": "supervisor",
+        "pid": 34521,
+        "ppid": 23665,
+        "rssKiB": 55216
+      },
+      {
+        "role": "ui",
+        "pid": 34530,
+        "ppid": 34521,
+        "rssKiB": 213680
+      },
+      {
+        "role": "ui",
+        "pid": 34533,
+        "ppid": 34530,
+        "rssKiB": 169968
+      },
+      {
+        "role": "ui",
+        "pid": 34537,
+        "ppid": 34530,
+        "rssKiB": 52032
+      },
+      {
+        "role": "ui",
+        "pid": 34538,
+        "ppid": 34530,
+        "rssKiB": 137872
+      },
+      {
+        "role": "ui",
+        "pid": 34539,
+        "ppid": 34538,
+        "rssKiB": 58256
+      },
+      {
+        "role": "ui",
+        "pid": 34540,
+        "ppid": 34538,
+        "rssKiB": 47760
+      },
+      {
+        "role": "ui",
+        "pid": 34541,
+        "ppid": 34538,
+        "rssKiB": 67680
+      },
+      {
+        "role": "ui",
+        "pid": 34544,
+        "ppid": 34538,
+        "rssKiB": 449472
+      }
+    ]
+  },
+  "elapsedMs": 6235,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

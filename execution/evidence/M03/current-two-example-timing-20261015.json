@@ -1,0 +1,190 @@
+{
+  "schema": "rolling-m03-current-phase-diagnostic-v1",
+  "at": "2026-10-15T00:01:58.267501+00:00",
+  "task": "M03",
+  "agentSession": "controls-resume-20261014",
+  "parentSession": "lead-20261011",
+  "sourceRevision": "e9a0df20c8064b3a135f03de088831e483ae423c",
+  "environment": {
+    "instance": "i-0cb8555882d6cfecc",
+    "region": "eu-west-2",
+    "type": "m6a.xlarge",
+    "weightsSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "weightsBytes": 5680522464,
+    "threads": 4,
+    "context": 4096,
+    "memoryLimit": 8589934592,
+    "activeOperatorHelperSha256": "8143eeb1845bd915c4fe0212726eb59ee8c2b2d4ba339f9b0e3050a2f7f52cda",
+    "activeOperatorUnchanged": true
+  },
+  "commandId": "a5defb25-492d-4b85-9001-296616784f0f",
+  "commandStatus": "Success",
+  "procedure": {
+    "existingOriginal": "aztec_experiments/.build/aws-testnet/model-phase-check-323.mjs",
+    "adaptation": "Import current helper via relative path only; original two examples and labels unchanged",
+    "privateComposition": ".build/m03-current/run-remote-diagnostic.py",
+    "outerBoundSeconds": 180,
+    "innerBoundSeconds": 170,
+    "temporaryRemoteDirectoryRemoved": true,
+    "retries": 0
+  },
+  "actual": {
+    "at": "2026-10-15T00:00:33.703528+00:00",
+    "scope": "Two sequential diagnostic inferences only; active operator unchanged; stale critical feed state preserved",
+    "modelRequestsMaximum": 2,
+    "journalBefore": [
+      {
+        "name": "0d2441821f7a29cdd19c706974eb13b8f41890cb578e4e4d8487b459a761434d.sqlite",
+        "bytes": 40960,
+        "sha256": "28f043a61399a11ac447a05c83d5237971946ca1b505b7310989f1bd5a41c5b7",
+        "stableRead": true
+      },
+      {
+        "name": "0d2441821f7a29cdd19c706974eb13b8f41890cb578e4e4d8487b459a761434d.sqlite-wal",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stableRead": true
+      }
+    ],
+    "modelContainer": "12c76077c6ddf9f48f507483f62d0670da42e3c90f949dee6acc65dd62048191",
+    "modelImage": "sha256:15e2235a766c30b62371969bf885b5fe7eb789cdf221fb0b6e75283d9f6b8cb7",
+    "modelStartedAt": "2026-10-14T11:15:48.459532729Z",
+    "slotsImmediatelyBefore": [
+      {
+        "id": 0,
+        "is_processing": false
+      },
+      {
+        "id": 1,
+        "is_processing": false
+      },
+      {
+        "id": 2,
+        "is_processing": false
+      },
+      {
+        "id": 3,
+        "is_processing": false
+      }
+    ],
+    "preparedFiles": [
+      {
+        "name": "runtime-configuration.mjs",
+        "bytes": 759,
+        "sha256": "25b77c3ddb7d14d90593ace60f4d22c762efb6b82565658fdf856e092768a1da"
+      },
+      {
+        "name": "moderation.mjs",
+        "bytes": 8766,
+        "sha256": "5448100e0686f613ac93c72fd5b8132bd760ac2150a6328087ff0274156f6dca"
+      },
+      {
+        "name": "prompt-template.json",
+        "bytes": 1146,
+        "sha256": "d7d179ba3067dcf3c0a407649ec5d9f8d6c0b4598c80e66bf7f52c90413bc862"
+      },
+      {
+        "name": "model-phase-check.mjs",
+        "bytes": 1745,
+        "sha256": "cdb64447d1429a1ec8993db286cae075da366e5ab521a4363e02518055b58f07"
+      }
+    ],
+    "exitCode": 0,
+    "category": "completed",
+    "results": [
+      {
+        "label": "allowed",
+        "expectedClassification": true,
+        "elapsedMs": 14148,
+        "metadata": {
+          "timings": {
+            "cache_n": 152,
+            "prompt_n": 123,
+            "prompt_ms": 10891.492,
+            "predicted_n": 21,
+            "predicted_ms": 3202.44,
+            "prompt_per_token_ms": 88.54871544715448,
+            "prompt_per_second": 11.293218596680784,
+            "predicted_per_token_ms": 160.122,
+            "predicted_per_second": 6.24523800602041
+          },
+          "usage": {
+            "prompt_tokens": 275,
+            "completion_tokens": 21,
+            "total_tokens": 296
+          }
+        }
+      },
+      {
+        "label": "threat",
+        "expectedClassification": true,
+        "elapsedMs": 19060,
+        "metadata": {
+          "timings": {
+            "cache_n": 152,
+            "prompt_n": 138,
+            "prompt_ms": 12081.04,
+            "predicted_n": 43,
+            "predicted_ms": 6968.534,
+            "prompt_per_token_ms": 87.54376811594203,
+            "prompt_per_second": 11.422857634773164,
+            "predicted_per_token_ms": 165.91747619047618,
+            "predicted_per_second": 6.027092642441008
+          },
+          "usage": {
+            "prompt_tokens": 290,
+            "completion_tokens": 43,
+            "total_tokens": 333
+          }
+        }
+      }
+    ],
+    "journalAfter": [
+      {
+        "name": "0d2441821f7a29cdd19c706974eb13b8f41890cb578e4e4d8487b459a761434d.sqlite",
+        "bytes": 40960,
+        "sha256": "28f043a61399a11ac447a05c83d5237971946ca1b505b7310989f1bd5a41c5b7",
+        "stableRead": true
+      },
+      {
+        "name": "0d2441821f7a29cdd19c706974eb13b8f41890cb578e4e4d8487b459a761434d.sqlite-wal",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stableRead": true
+      }
+    ],
+    "journalHashesUnchanged": true,
+    "elapsedMs": 33433
+  },
+  "result": "Both expected classifications passed using real existing isolated model and current helper/prompt. Allowed14.148s; threat19.060s. Saved operator journals unchanged.",
+  "interpretation": {
+    "promptPrefillDominant": true,
+    "allowedPromptFraction": 0.7698255583828103,
+    "threatPromptFraction": 0.6338426023084995,
+    "limitations": [
+      "Only two sequential warm-cache examples, not full-corpus accuracy or percentile acceptance",
+      "Both measured latencies exceed10s; prompt processing alone10.891s/12.081s, so output shortening alone cannot establish10s on these measured conditions",
+      "No claim of exclusive production capacity: slots idle at start, durable queue terminal, but feed ingestion stale and live daemon reports critical MODERATION_UNAVAILABLE",
+      "Current helper/prompt ran in private temporary directory; active old operator was not updated",
+      "No model output, raw transcript, prompt body, keys, tokens, or response headers retained in evidence",
+      "This is not Rolling union-policy qualification; the two existing examples use a single fixed policy"
+    ]
+  },
+  "infrastructure": {
+    "newCapacity": false,
+    "launchResizeExtension": false,
+    "providerPayment": false,
+    "existingModeratorScope": true,
+    "actualElapsedSeconds": 33.433
+  },
+  "evidence": [
+    {
+      "path": ".build/m03-current/actual-two-example-result.json",
+      "sha256": "b656d71fb4afd9dbe7c971f658d0d26c1645a4f9f700c2c9d85fa962b9df85f4"
+    },
+    {
+      "path": "execution/evidence/M03/current-remote-readonly-20261015.json",
+      "sha256": "b63a1f6f9ab02f0304656f0b293bdfd359f406fd4fbdc9b16d3be9c10fa70333"
+    }
+  ]
+}

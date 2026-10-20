@@ -1,0 +1,23 @@
+// One-time read-only reconciliation; never opens a browser or signs/submits.
+import fs from 'node:fs/promises';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
+import {createAztecNodeClient} from '../../shared/aztec-node-client.mjs';
+import {TxHash} from '@aztec-labs/stdlib/tx';
+import {canonicalReceipt} from '../../scripts/hosted-existing-account.mjs';
+import {journeyExitLeaf} from '../../scripts/t04-browser-journey-verify.mjs';
+import {JsonRpcProvider,Contract} from 'ethers';
+const dir='.build/hosted-v6-onboarding-20261010';
+const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
+const run=await read(dir+'/withdraw.json'),config=await read('.build/v6/board-reader-config.json'),onboarding=await read(dir+'/result.json');
+assert.equal(run.passed,false);assert(run.exit);assert.equal(run.ui.operation.status,'paused');assert.equal(run.ui.operation.stage,'settlement');assert.equal(run.ui.operation.result.lastL2TxHash,run.exit.hash);
+const depositor='0x374f2eEB49A9Cc4a8BB732BB45b3C1fd751fdFC7',amount=BigInt(run.plan.amount);
+assert.equal(run.plan.chainTime>=run.readyAt,true);assert.equal(run.authorPostDeadlines.length,4);assert(run.authorPostDeadlines.every(x=>x.flagDeadline<=run.plan.chainTime));
+const scope={l1ChainId:config.network.chainId,rollupAddress:config.network.rollupAddress,rollupVersion:config.network.rollupVersion,boardAddress:config.board.contractAddress,portalAddress:config.board.portalAddress};
+const {rollupAddress,...badScope}=scope;assert.throws(()=>journeyExitLeaf({scope:badScope,depositor,amount}),/Invalid network scope fields/);assert.throws(()=>journeyExitLeaf({scope,depositor,amount}),/Invalid depositor/);
+const {leaf}=journeyExitLeaf({scope,depositor:depositor.toLowerCase(),amount});
+const node=createAztecNodeClient(config.network.nodeUrl);const info=await node.getNodeInfo();assert.equal(String(info.l1ChainId),scope.l1ChainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);const receipt=await canonicalReceipt(node,run.exit.hash);assert.equal(receipt.blockNumber,run.exit.blockNumber);assert.equal(receipt.blockHash,run.exit.blockHash);
+const effect=await node.getTxEffect(TxHash.fromString(run.exit.hash));assert(effect?.data);assert.equal(Number(effect.l2BlockNumber),receipt.blockNumber);assert.equal(String(effect.l2BlockHash),receipt.blockHash);assert.equal(String(effect.data.txHash),run.exit.hash);assert.equal(effect.data.l2ToL1Msgs.filter(x=>x.equals(leaf)).length,1);
+const provider=new JsonRpcProvider(config.network.ethRpcUrl),abi=(await read('billboard/portal/out/BillboardPortal.sol/BillboardPortal.json')).abi,portal=new Contract(config.board.portalAddress,abi,provider);
+const nonce=await provider.getTransactionCount(depositor,'latest'),pending=await provider.getTransactionCount(depositor,'pending'),principal=await portal.getDeposit(depositor);
+assert.equal(nonce,run.ethereumNonceBefore);assert.equal(pending,nonce);assert.equal(principal,amount);
+console.log(JSON.stringify({passed:true,verifiedAt:new Date().toISOString(),method:'Read-only reconciliation after completed browser exit; no transaction repeated',originalBrowserRunPassed:false,originalReport:dir+'/withdraw.json',originalReportSha256:createHash('sha256').update(await fs.readFile(dir+'/withdraw.json')).digest('hex'),networkIdentityVerified:true,beforeFixRejected:true,checksummedDepositorRejected:true,receipt,exitLeaf:leaf.toString(),amount:String(amount),ethereumNonceBefore:run.ethereumNonceBefore,ethereumNonceAfter:nonce,portalPrincipal:String(principal),canonicalEffectBinding:true,exactlyOneExitLeaf:true,moderationDeadline:run.readyAt,chainTimeAtExit:run.plan.chainTime},null,2));
+provider.destroy();

@@ -1,0 +1,29 @@
+{
+  "candidate": "956b453e4be6b83c3d03e10c936d2db745f8ce39",
+  "base": "307ae91777b421c0951c325794abfdea57c03436",
+  "reviewer": "reviewer-20261011",
+  "verdict": "approved bounded source",
+  "scope": "G05 wallet session source only",
+  "checks": [
+    {
+      "command": "NODE_BACKEND=js ROLLING_TEST_ARTIFACT=<root>/billboard/target/rolling_contract-RollingBoard.json <Node24.21.0> --test apps/rolling/wallet-session.test.mjs",
+      "result": "14 passed, 0 failed, skipped or cancelled"
+    }
+  ],
+  "source_sha256": {
+    "apps/rolling/wallet-session.mjs": "c99d183926a0a0a466db77ccbe56384201aad7911f8ab79109cd5e450f45614e",
+    "apps/rolling/wallet-session.test.mjs": "392d2cc441e77150269a824abaa7e696512704222eb497ce092c07f0613ec978"
+  },
+  "resolved": [
+    "Account mutation during partial-address derivation blocks account registration.",
+    "Mutation during class/final instance registration blocks next registration/sync.",
+    "Mutation during account manager/signing-key work blocks subsequent private simulation.",
+    "Guard after awaited store opening prevents obsolete-context PXE creation; independent regression verifies zero createPXE calls, zero PXE stops and one store close before unlock."
+  ],
+  "findings": [],
+  "limitations": [
+    "Actual verifier, account derivation and encrypted IndexedDB journal composition exercised with labelled PXE, wallet and node/provider doubles.",
+    "No actual browser, private proof, live deployment, or completed application acceptance.",
+    "Prior cf3144/307 findings are resolved. Source review is not actual-browser or full-product acceptance; no source edits were made."
+  ]
+}

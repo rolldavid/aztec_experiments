@@ -1,0 +1,28 @@
+✔ unsupported cross-tab custody fails before any SDK/network access (2.245917ms)
+✔ another active tab rejects setup without reading or opening private stores (0.569416ms)
+✔ invalidated account rejects before trusted-node construction; lock callback settles (0.174ms)
+✔ query construction receives captured scope and preserves failure without fallback (0.519917ms)
+✔ constructs verified deployment/account, registers with one trusted PXE, and guards every application operation (447.025333ms)
+✔ replacement session preserves actual encrypted Rolling intent and unknown fence without a second send (381.363708ms)
+✔ setup failures clean private resources while still holding the cross-tab lock (945.196625ms)
+✔ cleanup errors preserve original failure and close the store when PXE.stop fails (242.105583ms)
+✔ simultaneous close shares one cleanup; busy action prevents close or competing action (238.405417ms)
+✔ identity mutation inside asynchronous guard rejects before private setup or synchronization (358.134708ms)
+✔ altered private routing is rejected before per-operation PXE synchronization (716.510583ms)
+✔ failed close leaves session unusable, preserves error, and permits explicit cleanup retry (477.078875ms)
+✔ account mutation during each awaited initialization step blocks the next private operation (1177.953959ms)
+✔ account mutation while opening storage prevents PXE creation and closes only the acquired store (236.235125ms)
+✔ actual artifact layout/hash/runtime yields detached application deployment and canonical instances (438.760375ms)
+✔ changed board class/address/storage/portal/config hash and FPC publication fail closed (2820.712459ms)
+✔ wrong runtime, Ethereum identity and reorg anchors are rejected with provider disposed (910.822958ms)
+✔ untrusted/stale node, missing guard and secret-bearing URL fail without funding or ordinary node fallback (554.64325ms)
+✔ context changed after canonical reads rejects; whole operation has a fixed20s deadline (333.679167ms)
+✔ unactivated canonical portal cannot authorize funding, and activation must remain canonically anchored (1102.432542ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7474.65675

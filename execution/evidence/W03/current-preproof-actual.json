@@ -1,0 +1,57 @@
+{
+  "recordedAt": "2026-10-15T05:05:37.668523+00:00",
+  "task": "W03",
+  "criteria": [
+    "W03-A02",
+    "W03-A04"
+  ],
+  "scope": "Builtin bio action positive preproof, saved signed bytes and backup-provenance development acceptance",
+  "sourceRevision": "c803b4dcc1565f68b278a85373fb89f3b0d70122",
+  "runtimeSHA256": "6738d8a3e5ab22ddbd831b2668d1ffd510109b97e374023909fe01f647398958",
+  "environment": "Retained local native devnet331, PXE and node native proof flags disabled; existing River Canvas development identity; no new funding/deployment",
+  "phases": [
+    {
+      "phase": "preproof-crash",
+      "passed": true,
+      "durationMs": 33771,
+      "sends": 0
+    },
+    {
+      "phase": "signed-crash",
+      "passed": true,
+      "durationMs": 34797,
+      "sends": 0
+    },
+    {
+      "phase": "resume-saved",
+      "passed": true,
+      "durationMs": 31740,
+      "sends": 1,
+      "reproved": false
+    },
+    {
+      "phase": "restored-corrected",
+      "passed": true,
+      "durationMs": 14625,
+      "sends": 0,
+      "isolatedProfile": true,
+      "oldProvenanceInvalidated": true
+    }
+  ],
+  "canonicalTransaction": "0x22a48107d7ce238367b7803137e1fa4dab9e6d84037a22ccf062a26a3a167bf5",
+  "block": 341,
+  "transactionFee": "18754750200000",
+  "effectBytes": 3871,
+  "effectSHA256": "173756279d7498970049884f65eaab6cfde534d143a01f4674c594cb78602e35",
+  "review": "execution/evidence/W03/reviewer-actual-preproof-c803.json",
+  "reviewSHA256": "11d6a083e37ad166a554b30e5006a24492cf89f8325ca455827bdd295782cbf8",
+  "historicalFailure": "First restored phase101887ms failed implicit dialog selector; preserved. Small actual semantic-DOM check reproduced/fixed; no successful transaction phases replayed.",
+  "limitations": [
+    "Native development flags only; not real-proof acceptance",
+    "Broader action/stale-proof/reorg coverage still requires current-candidate reconciliation",
+    "Restored scenario after canonical confirmation does not isolate provenance as sole cause of refusal",
+    "Bio event has no owner field; other public effects/general observer privacy not qualified"
+  ],
+  "allOwnedBrowserProcessesClosed": true,
+  "fullTaskClosed": false
+}

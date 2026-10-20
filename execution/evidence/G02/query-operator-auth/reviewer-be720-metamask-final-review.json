@@ -1,0 +1,31 @@
+{
+  "candidate": "be72040637ea4aea787a62b0d6a40f4d8aa2e1a5",
+  "verdict": "approved-component",
+  "scope": "Actual-extension aggregate acceptance driver implementation; no browser/payment acceptance",
+  "source": {
+    "scripts/run-bounded-browser-check.mjs": "f25c62312071f3187b520a619633804541475a40413c0d9e9ab3b956d9c61f24",
+    "scripts/t04-metamask.mjs": "22f1b93f1faea1cdeec7832bc0eb64fb0d5c2150e2a7f5954b0ef26d39374586",
+    "scripts/t04-phantom.mjs": "3c813fa3c23f654790b149c5ba1d2c54d7610922e01e9a8b317b69f6842cdab4",
+    "scripts/test-t04-browser-journey.mjs": "c858636ecf114c297633ecd32f564d3497ff52d78f69895c7f3fb2bda69e6f6e",
+    "scripts/test-wallet-extension-browser.mjs": "435a0c2cda12b8c27ccca3bc1cfda830b2c766c0afd6bc051cb5c048cfe7493f"
+  },
+  "carry": "reviewer-764-metamask-component-findings.json",
+  "closedFinding": "Actual-used RPC observer now matches configured exact origin/path, including root endpoints, checks query/hash and bounded valid batches, counts every aztec_sendTx attempt. Malformed matching bodies reject.",
+  "evidence": {
+    "execution/evidence/G07/native-social-wire/metamask-aggregate-observer-6.json": "08f069702530e5fb840b8377ea437fc1de10d4f5ab4db9746f62d357a1bbba43",
+    "execution/evidence/G07/native-social-wire/metamask-aggregate-observer-6.log": "08b779f80b60f50243fea9ca166627228d26de833db441e4983031a95c401db0"
+  },
+  "retainedSafeguards": [
+    "No provider response substitution",
+    "Stable retained private extension/profile path",
+    "No duplicate automatic payment run",
+    "Explicit exact signature/transaction admission and canonical all-effects check",
+    "Private claim/post qualification remains false"
+  ],
+  "blockingFindings": [],
+  "remaining": [
+    "Actual MetaMask ETH/USDC wallet UI/payment execution",
+    "Private claim and full application acceptance",
+    "Phantom external availability and testnet proofs"
+  ]
+}

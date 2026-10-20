@@ -1,0 +1,51 @@
+{
+  "candidate": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
+  "base": "9b78e31a116f776f3802bd4739f614e173f2c7cd",
+  "fullReviewedBase": "f3e23bf4a09ac6350ea2add12feb47b475a427a3",
+  "verdict": "approved; required exact-candidate CI must pass before integration",
+  "blockers": [],
+  "priorReview": {
+    "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-9b78e31a.json",
+    "sha256": "ceb6a4bb05dab48ecea93b9553241db646ce4022d29a8161f4dcdc1f32e8cb81",
+    "carryForward": "All previous source/generated/evidence/dossier/service bindings unchanged."
+  },
+  "scope": "Five test/workflow files only; no runtime/generated/evidence changes.",
+  "findings": [
+    "Deployment fixture uses native getL2ToL1MembershipWitness, asserts retained original hash and Ready leaf, and returns absent witness; pending-settlement coverage remains genuine at mocked native boundary. Existing successful witness/staticCall/reorg tests retained.",
+    "Preflight double explicitly supplies proofsEnabled:false to match disposable native-development contract, not a production proof bypass.",
+    "Moderator fixture now confirms canonical checkpointed then proven result across reopen with one model invocation/one signing call. Actual pending receipt still fails completion across reopen and never resends.",
+    "Application real-journal cases admit canonical checkpointed revert without invented finalized lock, retain reorg rejection before estimation/send, and test successful next action without mutating original receipt status.",
+    "Disposable SQLite realpath normalization fixes platform symlink alias only; production strict canonical-path checks unchanged.",
+    "Workflow replaces a nonexistent test deliberately removed in e64c95ce with existing current Rolling application suite. Deleted test used obsolete BillboardWithdrawalHistory/getBlocks API; current suite includes encrypted exit reopen, preserved depositor, verified-refund overwrite fence, rejected-policy independent exit, reserved credit/unknown-send fencing, canonical/reorg checks and actual persistent-index cursor coverage. Existing shell/receipt/client checks remain."
+  ],
+  "independentChecks": [
+    {
+      "command": "NODE_BACKEND=js TMPDIR=/private/tmp pinnedNode24.21.0 --test --test-name-pattern=\"actual restarted checkpointed revert|acknowledged checkpointed revert|RC22 real persistent-index cursor\" shared/rolling/application.test.mjs",
+      "result": "4/4 passed,0fail/skip/cancel;1966.313416ms",
+      "log": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/reviewer-evidence/final-testnet-plan/review-f4eb6515-tests.log",
+      "sha256": "c7040255d4e77ec80f6ebbf999b9ea9ff511989d21707f230b7e0a77e1c7d22d"
+    }
+  ],
+  "ownerChecksReviewed": [
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/final-handover/deploy-fixture-after.log",
+      "sha256": "3bad661efe7d15bda5dc0e10309054cee3679c82ec731972708eef9affa525f6"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/final-handover/moderation-tests.log",
+      "sha256": "be158322e67b132d0372601dd10c2cfd0ef4103ddc9cad66c36f681fe9a095af"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/final-handover/remaining-unit.log",
+      "sha256": "0cebc8886480ed0a0e905e81e6456145ab3923081f504534f89859af3dd97806"
+    },
+    {
+      "path": "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/final-handover/application-fixtures.log",
+      "sha256": "261e4b467d6afd6a747c1ab0a50da504206d02923412c58dccc813c41ef2eecd"
+    }
+  ],
+  "validationLimits": [
+    "Owner deployment86 and moderation command including208Nodecases pass. Earlier550-unit run failures remain recorded; repaired4affected cases independently pass. Do not label the initial failing run a full pass.",
+    "No build, live model/proof/financial/service actions performed. RequiredCI pending; no waiver."
+  ]
+}

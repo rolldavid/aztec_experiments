@@ -1,0 +1,32 @@
+{
+  "task_id": "G02-browser-asset-delivery",
+  "implementer": "funding_resume2",
+  "candidate": "fab185d484feb562d6caaf1f7d6010adfbd6b01b",
+  "base": "404c5e79168527fb9f90f24ca28c984fc15fec8d",
+  "integration_ref": "refs/heads/codex/rolling-chat-draft3",
+  "allowed_paths": [
+    "apps/rolling/start.mjs",
+    "apps/rolling/start.test.mjs",
+    "apps/rolling/wallet-runtime.mjs",
+    "apps/rolling/wallet-runtime.browser.test.mjs"
+  ],
+  "required_checks": [
+    "focused-assets"
+  ],
+  "requirements": [
+    "G02-pinned-browser-assets-native-delivery"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "owner": "funding_resume2",
+      "task_id": "G02-browser-asset-delivery",
+      "paths": [
+        "apps/rolling/start.mjs",
+        "apps/rolling/start.test.mjs",
+        "apps/rolling/wallet-runtime.mjs",
+        "apps/rolling/wallet-runtime.browser.test.mjs"
+      ]
+    }
+  ]
+}

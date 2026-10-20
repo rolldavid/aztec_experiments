@@ -1,0 +1,17 @@
+{
+  "reviewer": "reviewer-20261011",
+  "verdict": "ACCEPT_NARROW_SOURCE_AND_ELIGIBLE_ONE_ZERO_NETWORK_FOCUSED_CASE",
+  "source": "8ac1e7c1b71f322b0d9ad89f81f6efb47649a9bb",
+  "sourcePacketSha256": "174b46ee489ae6e2d788a358939eb66afd28575e6bfc88a439ecdb1453eab73a",
+  "preparationPacketSha256": "63cece2984acb12f7db5299d937f18d9180f9717033d75a750a532fdfc35a3a6",
+  "runnerSha256": "13dd81c2749bc78bca96551f158c3ac65c6643f2280033dc6d442339226180eb",
+  "protectedPinsVerified": 5375,
+  "checks": [
+    "Only integration test modified: synthetic address constructor and focused actual CLI-loaded bundle preflight",
+    "Original absent fromString invoked and required TypeError; fromStringUnsafe function and exact unchanged hex roundtrip asserted",
+    "Address mode denies all fetch before native call and requires zero recorded requests; no actual node/PXE created",
+    "Same normal SDK source/manifest closure before and after, exactCLI seam, fresh bounded child",
+    "Existing60s2GiB wrapper directory-only delta;child20s1GiB;exactonecase/no skips;cleanup unchanged"
+  ],
+  "limits": "No curve validity, auth, bundled PXE,drain,production deployment,signing or proof claim. Failed99958 retained. Separate parent grant required; reviewer executed no runtime."
+}
