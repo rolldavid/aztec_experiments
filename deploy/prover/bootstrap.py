@@ -63,9 +63,17 @@ def host_resources(value):
         raise ValueError('Invalid host resources')
     return dict(value)
 
+def persistent_hosting(value):
+    # Explicit owner-authorized monthly policy, bound to a verified AWS Budget
+    # readback. It is not a service lifetime lease or a spending hard cap.
+    keys={'schemaVersion','budgetName','monthlyUsd','budgetReadbackSha256'}
+    if type(value) is not dict or set(value)!=keys or type(value['schemaVersion']) is not int or value['schemaVersion']!=1 or value['budgetName']!='Rolling Chat ongoing hosting' or type(value['monthlyUsd']) is not int or value['monthlyUsd']!=1500 or type(value['budgetReadbackSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['budgetReadbackSha256']):
+        raise ValueError('Invalid persistent hosting policy')
+    return dict(value)
+
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery","hostResources","proxyHost"}: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery","hostResources","proxyHost","persistentHosting"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -87,9 +95,12 @@ def validate(config, now=None):
     if 'hostResources' in config:
         try: host_resources(config['hostResources'])
         except ValueError: raise Invalid('Invalid host resources') from None
+    if 'persistentHosting' in config:
+        try: persistent_hosting(config['persistentHosting'])
+        except ValueError: raise Invalid('Invalid persistent hosting policy') from None
     if 'queryHost' in config: query_host_record(config['queryHost'])
     if 'proxyHost' in config: proxy_host_record(config['proxyHost'])
-    if 'activationDelivery' in config: activation_delivery_record(config['activationDelivery'],config['budgetStop'])
+    if 'activationDelivery' in config: activation_delivery_record(config['activationDelivery'],None if 'persistentHosting' in config else config['budgetStop'])
     return dict(config)
 
 # Executed only on the future Linux host, never while generating or testing.
@@ -228,26 +239,61 @@ def host_resources(value):
         raise ValueError('Invalid host resources')
     return dict(value)
 
+def persistent_hosting(value):
+    # Explicit owner-authorized monthly policy, bound to a verified AWS Budget
+    # readback. It is not a service lifetime lease or a spending hard cap.
+    keys={'schemaVersion','budgetName','monthlyUsd','budgetReadbackSha256'}
+    if type(value) is not dict or set(value)!=keys or type(value['schemaVersion']) is not int or value['schemaVersion']!=1 or value['budgetName']!='Rolling Chat ongoing hosting' or type(value['monthlyUsd']) is not int or value['monthlyUsd']!=1500 or type(value['budgetReadbackSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['budgetReadbackSha256']):
+        raise ValueError('Invalid persistent hosting policy')
+    return dict(value)
+
+def persistent_mode(record):
+    value=record.get('persistentHosting')
+    expected=PINS.get('persistentHosting')
+    if value is None:
+        if expected is not None:raise ValueError('Persistent hosting policy missing')
+        return False
+    value=persistent_hosting(value)
+    actual=hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    if expected!=actual:raise ValueError('Persistent hosting policy changed')
+    return True
+
+def operation_deadline(record, seconds, reserve=0, started_at=None):
+    # Finite operation bound; persistent service lifetime is never renewed here.
+    start=time.time() if started_at is None else started_at
+    if persistent_mode(record):return start+seconds
+    return min(start+seconds,dt.datetime.fromisoformat(record['budgetStop'].replace('Z','+00:00')).timestamp()-reserve)
+
 def immutable_deadline(config):
     public = {k:config[k] for k in ('createdAt','budgetStop','commissioningStop','runtimeArchiveSha256','manifestSha256')}
     public['hostResources']=host_resources(config.get('hostResources',{'dataVolumeGiB':1024,'egressMbps':50}))
+    if 'persistentHosting' in config:public['persistentHosting']=persistent_hosting(config['persistentHosting'])
+    persistent=persistent_mode(public)
     record = BASE / 'deadline.json'
     if record.exists():
         if json.loads(record.read_text()) != public: raise ValueError('Deadline changed')
     else: write(record, json.dumps(public))
-    if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')):
+    if not persistent and dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')):
         raise ValueError('Budget expired')
 
 def install_controls(config):
     mark('deadline');immutable_deadline(config)
     resources=host_resources(config.get('hostResources',{'dataVolumeGiB':1024,'egressMbps':50}))
     ceiling=resources['egressMbps'];share=ceiling//2
+    persistent=persistent_mode(config)
     mark('timer-files')
     for name, stop in [('budget',config['budgetStop']),('commissioning',config['commissioningStop'])]:
         write('/etc/systemd/system/rolling-'+name+'.service', '[Unit]\nDescription=Rolling bounded shutdown\n[Service]\nType=oneshot\nExecStart=/usr/sbin/poweroff\n', 0o644)
+        if name=='budget' and persistent:continue
         write('/etc/systemd/system/rolling-'+name+'.timer', '[Unit]\nDescription=Rolling absolute shutdown\n[Timer]\nOnCalendar='+stop.replace('T',' ').replace('Z',' UTC')+'\nPersistent=true\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n', 0o644)
     mark('timer-reload');run(['systemctl','daemon-reload'])
-    for name in ('budget','commissioning'):
+    if persistent:
+        timer=pathlib.Path('/etc/systemd/system/rolling-budget.timer')
+        if timer.exists() or timer.is_symlink():
+            run(['systemctl','disable','--now','rolling-budget.timer'])
+            if not timer.is_symlink():timer.unlink()
+        run(['systemctl','mask','rolling-budget.timer'])
+    for name in (('commissioning',) if persistent else ('budget','commissioning')):
         mark(name+'-timer');run(['systemctl','enable','--now','rolling-'+name+'.timer'])
         run(['systemctl','is-active','--quiet','rolling-'+name+'.timer'])
     # No proof server can start accidentally during bootstrap or a reboot.
@@ -305,10 +351,17 @@ def class_bytes(text, egress_mbps=50):
     return records['1:1']
 
 def verify_controls():
-    mark('verify-budget');run(['systemctl','is-active','--quiet','rolling-budget.timer'],timeout=2)
-    config = json.loads((BASE/'deadline.json').read_text())
+    mark('verify-budget')
+    record=BASE/'deadline.json';config=json.loads(record.read_text())
+    if persistent_mode(config):
+        info=record.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o600 or info.st_nlink!=1:raise ValueError('Persistent policy ownership')
+        if run(['systemctl','show','rolling-budget.timer','--property=LoadState','--value'],capture=True,timeout=2)!='masked':raise ValueError('Persistent timer must be masked')
+        if run(['systemctl','is-enabled','rolling-egress.service'],capture=True,timeout=2)!='enabled':raise ValueError('Persistent egress startup')
+    else:
+        run(['systemctl','is-active','--quiet','rolling-budget.timer'],timeout=2)
     resources=host_resources(config['hostResources'])
-    if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
+    if not persistent_mode(config) and dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
     dev = (BASE/'interface').read_text()
     mark('tc-version');tc=run(['tc','-V'],capture=True,timeout=2)
     accepted=bool(re.fullmatch(r'tc utility, iproute2-6\.1\.0(?:, libbpf [0-9]+\.[0-9]+\.[0-9]+)?',tc))
@@ -674,8 +727,7 @@ def qualify(aborted=False, candidate=False):
         if aborted or intent.exists():
             exclusive_record(result_path,qualification_failure('interrupted-unknown'));return
         deadline_record=json.loads((BASE/'deadline.json').read_text())
-        epoch=lambda key:dt.datetime.fromisoformat(deadline_record[key].replace('Z','+00:00')).timestamp()
-        deadline=epoch('budgetStop')-60
+        deadline=operation_deadline(deadline_record,8*3600-60,60)
         exclusive_record(intent,{'schemaVersion':1,'manifestSha256':PINS['manifest'],'deadline':int(deadline),'attempts':1})
         stage='readiness';result=qualification_failure(stage)
         try:
@@ -725,7 +777,7 @@ def qualify(aborted=False, candidate=False):
 
 def install_qualification():
     record=json.loads((BASE/'deadline.json').read_text())
-    remaining=int(dt.datetime.fromisoformat(record['budgetStop'].replace('Z','+00:00')).timestamp()-time.time()-60)
+    remaining=int(operation_deadline(record,8*3600-60,60)-time.time())
     if remaining<=0: raise ValueError('Qualification deadline')
     unit='[Unit]\nDescription=One bounded Linux query qualification\nWants=rolling-node.service\nRequires=rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=HOST_REMAINING\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
     unit=unit.replace('HOST_REMAINING',str(remaining))
@@ -812,10 +864,11 @@ def application_observation():
     record=json.loads((BASE/'deadline.json').read_text())
     status=(BASE/'stage').read_text() if (BASE/'stage').exists() else 'initial'
     if status not in ('controls','package','node','installed','failed'): status='initial'
-    output={'schemaVersion':1,'stage':status,'controlsVerified':good,'budgetStop':record['budgetStop'],
+    output={'schemaVersion':1,'stage':status,'controlsVerified':good,'budgetStop':None if persistent_mode(record) else record['budgetStop'],
             'egressBytes':count if type(count)==int and count>=0 else 0,
             'runtimeArchiveSha256':record['runtimeArchiveSha256'],'manifestSha256':record['manifestSha256'],
             'proverPolicy':'masked-pending-qualification','linuxQueryQualified':False}
+    if persistent_mode(record):output['persistentHosting']=persistent_hosting(record['persistentHosting'])
     application_good=True
     if (PRIVATE/'prover-activation-intent.json').exists():
         try: output.update(activation_support('observe'))
@@ -1339,7 +1392,8 @@ def query_host(h):
                 if not all(q.get('checks',{}).get(k) is True for k in required) or 'readiness' not in q:
                     return {'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False}
             elif q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
-            if timestamp(h['read_bounded_json'](h['BASE']/'deadline.json')['budgetStop']).timestamp()-time.time()<900:raise Invalid('Query budget reserve')
+            deadline=h['read_bounded_json'](h['BASE']/'deadline.json')
+            if not h['persistent_mode'](deadline) and timestamp(deadline['budgetStop']).timestamp()-time.time()<900:raise Invalid('Query budget reserve')
             h['verify_release'](h['RELEASE']);h['verify_controls']();activation_proxy_masked(h)
             if h['run'](['systemctl','show','board-prover.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proof service must be masked')
             addresses=json.loads(h['run'](['ip','-j','-4','address','show'],capture=True,timeout=5))
@@ -1389,7 +1443,7 @@ def activation_delivery_record(value, budget_stop):
         if u.path!='/receipts/'+value['campaign']+'/activation.json':raise ValueError()
         q=urllib.parse.parse_qs(u.query,strict_parsing=True)
         expires=dt.datetime.strptime(q['X-Amz-Date'][0],'%Y%m%dT%H%M%SZ').replace(tzinfo=dt.timezone.utc)+dt.timedelta(seconds=int(q['X-Amz-Expires'][0]))
-        if expires<timestamp(budget_stop):raise ValueError()
+        if budget_stop is not None and expires<timestamp(budget_stop):raise ValueError()
     except Exception:raise Invalid('Delivery capability') from None
     return dict(value)
 
@@ -1427,7 +1481,7 @@ def activation_delivery(h):
     # Existing private-file validation establishes canonical root ownership before
     # opening the lock. Every attempt/result is exclusive and fsynced.
     deadline=h['read_bounded_json'](h['BASE']/'deadline.json')
-    request=activation_delivery_record(activation_private(private/(prefix+'request.json')),deadline['budgetStop'])
+    request=activation_delivery_record(activation_private(private/(prefix+'request.json')),None if h['persistent_mode'](deadline) else deadline['budgetStop'])
     if activation_delivery_digest(request)!=h['PINS'].get('activationDelivery'):raise Invalid('Delivery campaign binding')
     fd=os.open(private/(prefix+'lock'),os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
     with os.fdopen(fd,'a') as lock:
@@ -1453,13 +1507,13 @@ def activation_delivery(h):
             if window.exists():raise Invalid('Delivery qualification changed')
             return {'activationDelivery':'qualification-failed'}
         if q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Delivery qualification')
-        now=int(time.time());stop=int(timestamp(deadline['budgetStop']).timestamp())-900
+        now=int(time.time());stop=None if h['persistent_mode'](deadline) else int(timestamp(deadline['budgetStop']).timestamp())-900
         paths=list(private.glob(prefix+'attempt-*.json'))
         if not window.exists():
             if paths:raise Invalid('Delivery window disappeared')
-            h['exclusive_record'](window,{'startedAt':now,'stopAt':min(now+1800,stop),'attempts':0,'lastAttemptAt':None})
+            h['exclusive_record'](window,{'startedAt':now,'stopAt':now+1800 if stop is None else min(now+1800,stop),'attempts':0,'lastAttemptAt':None})
         limits=activation_private(window)
-        if set(limits)!={'startedAt','stopAt','attempts','lastAttemptAt'} or any(type(limits[k]) is not int for k in ('startedAt','stopAt','attempts')) or not 0<=limits['attempts']<=60 or limits['stopAt']!=min(limits['startedAt']+1800,stop) or not limits['startedAt']<=now<limits['stopAt']:raise Invalid('Delivery window expired')
+        if set(limits)!={'startedAt','stopAt','attempts','lastAttemptAt'} or any(type(limits[k]) is not int for k in ('startedAt','stopAt','attempts')) or not 0<=limits['attempts']<=60 or limits['stopAt']!=(limits['startedAt']+1800 if stop is None else min(limits['startedAt']+1800,stop)) or not limits['startedAt']<=now<limits['stopAt']:raise Invalid('Delivery window expired')
         count=limits['attempts'];last=None
         if len(paths)!=2*count:raise Invalid('Delivery interrupted read; reconcile only')
         for number in range(1,count+1):
@@ -1912,7 +1966,7 @@ def prover_activation(h, operation, expected=None):
             q=h['validated_qualification'](final.get('qualification',{}))
             if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Current query qualification required')
             deadline=h['read_bounded_json'](h['BASE']/'deadline.json')
-            if timestamp(deadline['budgetStop']).timestamp()-time.time()<900:raise Invalid('Activation budget reserve')
+            if not h['persistent_mode'](deadline) and timestamp(deadline['budgetStop']).timestamp()-time.time()<900:raise Invalid('Activation budget reserve')
             unit=h['RELEASE']/'deploy/prover/board-prover.service'
             if h['digest'](unit)!=PROVER_UNIT_SHA:raise Invalid('Prover unit changed')
             activation_identity(h,scope);h['verify_controls']()
@@ -1956,6 +2010,7 @@ def generate(config, now=None):
     # Tokenization preserves every string, executable token and line boundary.
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
+    if 'persistentHosting' in config:pins['persistentHosting']=activation_delivery_digest(persistent_hosting(config['persistentHosting']))
     if 'proxyHost' in config:pins['proxyHost']=activation_delivery_digest(config['proxyHost'])
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
@@ -1977,7 +2032,7 @@ def generate(config, now=None):
 # This closed diagnostic does not qualify normal deployment or run node/proof work.
 NATIVE_BYTES = 44698432
 NATIVE_REUSE = ('receipt_url','diagnostic','emit_diagnostic','mark','version_facts','run','write','digest',
-                'host_resources','immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
+                'host_resources','persistent_hosting','persistent_mode','operation_deadline','immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
                 'read_bounded_json','upload_receipt')
 NATIVE_GLOBALS = ('BASE','PRIVATE','STAGE','DIAGNOSTICS_ACTIVE','STEP','STEPS')
 

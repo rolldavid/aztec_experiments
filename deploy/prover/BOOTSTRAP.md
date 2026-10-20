@@ -1153,3 +1153,32 @@ observer exits. Keep deliberate installation, activation and manual containment
 operations serialized: the containment service's watchdog bounds an uncompleted
 containment operation, including a blocked writer, while the independent controls
 watchdog and absolute budget deadline continue unchanged.
+
+### Explicit persistent hosting
+
+An owner-authorized persistent deployment may set `persistentHosting` to the
+closed record `{schemaVersion: 1, budgetName: "Rolling Chat ongoing hosting",
+monthlyUsd: 1500, budgetReadbackSha256: "<SHA-256 of verified AWS Budget readback>"}`.
+The generated control pins bind this exact record. Its root-owned, mode0600
+`deadline.json` retains the original dates as history; application attestation
+reports `budgetStop: null` and the persistent policy. The budget is monitoring and
+an operating allowance, not a guaranteed AWS spending cap.
+
+Persistent mode masks only the elapsed `rolling-budget.timer`. The emergency
+`rolling-budget.service`, independent control watchdog, egress ceiling/accounting,
+application containment, source/identity checks and financial replay fences remain.
+Initial commissioning remains bounded. Query/prover admission after the historical
+date still requires fresh native readiness and all normal admission checks. A
+qualification attempt remains bounded to eight hours, and each activation delivery
+keeps its original immutable thirty-minute window and finite capability. No chat,
+laptop, heartbeat renewal or synthetic future shutdown date maintains availability.
+
+For an already admitted host, preserve the original control/source and receipt
+records, install the reviewed source/control amendment under the existing writer
+locks, and verify its policy digest and masked timer before retiring the exact old
+Fleet/Scheduler expiry and endpoint cleanup schedules. Keep failure shutdown active.
+Enable the already admitted application/query/prover units for boot using their
+existing isolation and ordering; do not replay qualification, activation or financial
+intents. Monthly AWS budget visibility, alerts and actual usage review must be in
+place before retiring the demo cloud expiry. Changes to budget authority or source
+binding require another explicit reviewed operator amendment.

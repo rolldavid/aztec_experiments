@@ -171,6 +171,72 @@ class Bootstrap(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'^Redirect rejected$'):ns['fetch_package'](wrong['runtimeUrl'],destination)
             self.assertEqual(calls,[wrong['runtimeUrl']]);self.assertFalse(destination.exists())
 
+    def test_persistent_policy_is_closed_and_source_bound(self):
+        policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+        c={**config(),'persistentHosting':policy};self.assertEqual(b.validate(c,NOW),c)
+        for bad in [True,{},dict(policy,monthlyUsd=True),dict(policy,monthlyUsd=1501),dict(policy,budgetReadbackSha256='bad'),dict(policy,extra=True)]:
+            with self.subTest(bad=bad),self.assertRaises(ValueError):b.validate({**config(),'persistentHosting':bad},NOW)
+        ns=host();record={'budgetStop':'2000-01-01T00:00:00Z','persistentHosting':policy}
+        with self.assertRaisesRegex(ValueError,'policy changed'):ns['persistent_mode'](record)
+        ns['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+        self.assertTrue(ns['persistent_mode'](record))
+        self.assertEqual(ns['operation_deadline'](record,1800,900,started_at=100),1900)
+        with self.assertRaisesRegex(ValueError,'policy missing'):ns['persistent_mode']({'budgetStop':record['budgetStop']})
+        changed={**record,'persistentHosting':dict(policy,budgetReadbackSha256='f'*64)}
+        with self.assertRaises(ValueError):ns['persistent_mode'](changed)
+        del ns['PINS']['persistentHosting']
+        self.assertLess(ns['operation_deadline']({'budgetStop':record['budgetStop']},1800),ns['time'].time())
+
+    def test_persistent_install_masks_elapsed_timer_keeps_emergency_and_commissioning(self):
+        ns=host();policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+        ns['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+        writes={};calls=[];ns['immutable_deadline']=lambda _:None;ns['verify_controls']=lambda:0
+        ns['write']=lambda path,value,*a:writes.__setitem__(str(path),value)
+        def run(args,**kwargs):
+            calls.append(args)
+            if args[:4]==['ip','-j','route','show']:return '[{"dev":"ens5"}]'
+            if args[:3]==['systemctl','is-active','--quiet'] and args[-1].startswith('board-prover'):raise subprocess.CalledProcessError(3,args)
+            return ''
+        ns['run']=run
+        with patch.object(pathlib.Path,'exists',return_value=False):ns['install_controls']({**config(),'persistentHosting':policy})
+        self.assertIn(['systemctl','mask','rolling-budget.timer'],calls)
+        self.assertNotIn(['systemctl','enable','--now','rolling-budget.timer'],calls)
+        self.assertIn(['systemctl','enable','--now','rolling-commissioning.timer'],calls)
+        self.assertIn('ExecStart=/usr/sbin/poweroff',writes['/etc/systemd/system/rolling-budget.service'])
+        self.assertNotIn('/etc/systemd/system/rolling-budget.timer',writes)
+        self.assertIn('ceil 50mbit',writes['/usr/local/sbin/rolling-egress'])
+        # Controls-only/native diagnostic generation includes every dependency.
+        native=b.native_control_source();compile(native,'native','exec')
+        for name in ['persistent_hosting','persistent_mode','operation_deadline']:self.assertIn('def '+name+'(',native)
+
+    def test_persistent_monitor_requires_bound_private_policy_mask_and_egress(self):
+        ns=host();policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+        ns['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);record=ns['BASE']/'deadline.json';record.write_text(json.dumps({'budgetStop':'2000-01-01T00:00:00Z','persistentHosting':policy,'hostResources':{'dataVolumeGiB':1024,'egressMbps':50}}));record.chmod(0o600)
+            (ns['BASE']/'interface').write_text('ens5');calls=[];state={'timer':'masked','egress':'enabled'}
+            def run(args,**kw):
+                calls.append(args)
+                if args[:2]==['systemctl','show']:return state['timer']
+                if args[:2]==['systemctl','is-enabled']:return state['egress']
+                if args==['tc','-V']:return 'tc utility, iproute2-6.1.0'
+                if args[0]=='dpkg-query':return '6.1.0-1ubuntu6.4'
+                if 'qdisc' in args:return '[{"root":true,"kind":"htb","handle":"1:","options":{"default":"0x10"}}]'
+                return 'fixture statistics'
+            ns['run']=run;ns['class_bytes']=lambda text,rate:123
+            original=pathlib.Path.lstat
+            def owned(path,*args,**kw):
+                info=list(original(path,*args,**kw));info[4]=0;return os.stat_result(info)
+            with patch.object(pathlib.Path,'lstat',owned):
+                self.assertEqual(ns['verify_controls'](),123)
+                state['timer']='loaded'
+                with self.assertRaisesRegex(ValueError,'timer'):ns['verify_controls']()
+                state['timer']='masked';state['egress']='disabled'
+                with self.assertRaisesRegex(ValueError,'egress startup'):ns['verify_controls']()
+                state['egress']='enabled';record.chmod(0o644)
+                with self.assertRaisesRegex(ValueError,'ownership'):ns['verify_controls']()
+            self.assertTrue(any('class' in a for a in calls));self.assertTrue(any('qdisc' in a for a in calls))
+
     def test_deadline_cannot_be_extended_or_package_replaced(self):
         ns=host()
         with tempfile.TemporaryDirectory() as t:
@@ -2099,6 +2165,7 @@ class ProverActivation(unittest.TestCase):
            'verify_release':lambda r:events.append(('verify-release',)),'verify_controls':lambda:events.append(('controls',)),
            'validated_qualification':lambda r:r,'read_bounded_json':lambda p:{'budgetStop':'2099-01-01T00:00:00Z','hostResources':{'dataVolumeGiB':1024,'egressMbps':50}},
            'digest':lambda p:b.PROVER_UNIT_SHA if str(p).endswith('.service') else 'c'*64,'write':lambda *a:events.append(('write-unit',))}
+        policy_host=host();policy_host['PINS']=h['PINS'];h['persistent_mode']=policy_host['persistent_mode']
         patches=[patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),
                  patch.object(b,'activation_proxy_masked',side_effect=lambda h:events.append(('proxy-masked',))),
                  patch.object(b,'activation_identity',side_effect=identity),patch.object(b,'activation_paths',side_effect=lambda *a:events.append(('paths',)) or (999,998)),
@@ -2120,6 +2187,18 @@ class ProverActivation(unittest.TestCase):
             before=list(events)
             with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
             self.assertEqual(before,events)
+
+    def test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent(self):
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+            h,events,patches=self.exercise(pathlib.Path(t))
+            for item in patches:stack.enter_context(item)
+            policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+            h['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+            h['read_bounded_json']=lambda p:{'budgetStop':'2000-01-01T00:00:00Z','persistentHosting':policy}
+            self.assertEqual(b.prover_activation(h,'activate','a'*64)['status'],'active-loopback')
+            self.assertIn(('identity',),events)
+            with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
 
     def test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_contains(self):
         from contextlib import ExitStack
@@ -2323,6 +2402,7 @@ class QueryHost(unittest.TestCase):
             h={'application_failure':lambda:events.append(('application-contained',)),'PRIVATE':private,'BASE':base,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'c'*64,'queryHost':hashlib.sha256(json.dumps(q,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
                'run':run,'exclusive_record':save,'write':write,'digest':lambda p:hashlib.sha256(mapped(p).read_bytes()).hexdigest(),
                'read_bounded_json':lambda p:json.loads(mapped(p).read_text()),'validated_qualification':lambda q:q,'verify_release':lambda p:events.append(('verify-release',)), 'verify_controls':lambda:events.append(('controls',))}
+            policy_host=host();policy_host['PINS']=h['PINS'];h['persistent_mode']=policy_host['persistent_mode']
             with ExitStack() as stack:
                 for item in [patch.object(b,'pathlib',SimpleNamespace(Path=mapped)),patch.object(Path,'lstat',lstat),patch.object(Path,'stat',stat),
                     patch.object(b.os,'fstat',side_effect=lambda fd:identity(original_fstat(fd))),patch.object(b.os,'geteuid',return_value=0),
@@ -2349,6 +2429,14 @@ class QueryHost(unittest.TestCase):
             self.assertEqual(h['RELEASE'].stat().st_mode&0o777,0o550)
             self.assertEqual(h['PRIVATE'].stat().st_mode&0o777,0o700)
             state['members'].append('board-prover');self.assertEqual(b.query_host_readback(h)['publicGid'],997)
+
+    def test_persistent_query_admission_after_historical_deadline_keeps_native_checks(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+            h['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+            (h['BASE']/'deadline.json').write_text(json.dumps({'budgetStop':'2000-01-01T00:00:00Z','persistentHosting':policy}))
+            self.assertEqual(b.query_host(h)['queryHostPolicy'],'active-private-authenticated')
+            self.assertIn(('fresh-readiness',),events);self.assertIn(('verify-release',),events);self.assertIn(('controls',),events)
 
     def test_actual_readback_rejects_group_grammar_and_identity_config_unit_drift(self):
         with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
@@ -2484,6 +2572,7 @@ class ActivationDelivery(unittest.TestCase):
         h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64,'activationDelivery':b.activation_delivery_digest(request)},
            'exclusive_record':record,'write':ns['write'],'read_bounded_json':read,'verify_controls':lambda:events.append(('controls',)),
            'verify_release':lambda r:events.append(('release',)),'validated_qualification':lambda q:q}
+        ns['PINS']=h['PINS'];h['persistent_mode']=ns['persistent_mode']
         envelope={'schemaVersion':1,'campaign':request['campaign'],'scope':scope,'evidence':evidence}
         clock=[int(NOW.timestamp())];raw=lambda:json.dumps(envelope,separators=(',',':')).encode()
         return h,events,envelope,clock,raw,read
@@ -2505,6 +2594,20 @@ class ActivationDelivery(unittest.TestCase):
                 self.assertEqual(fetch.call_count,2)
                 (private/'final-receipt.json').unlink()
                 with self.assertRaisesRegex(b.Invalid,'disappeared'):b.activation_delivery(h)
+
+    def test_persistent_delivery_has_one_finite_window_after_historical_deadline(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));private=h['PRIVATE']
+            policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
+            h['PINS']['persistentHosting']=b.activation_delivery_digest(policy)
+            h['write'](h['BASE']/'deadline.json',json.dumps({'budgetStop':'2000-01-01T00:00:00Z','persistentHosting':policy}))
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',return_value=None) as fetch:
+                self.assertEqual(b.activation_delivery(h)['activationDelivery'],'pending-object')
+                window=read(private/'activation-delivery-window.json');self.assertEqual(window['stopAt']-window['startedAt'],1800)
+                clock[0]+=1800
+                with self.assertRaisesRegex(b.Invalid,'window expired'):b.activation_delivery(h)
+                self.assertEqual(fetch.call_count,1)
+                self.assertEqual(read(private/'activation-delivery-window.json'),window)
 
     def test_failed_qualification_never_opens_delivery_window(self):
         with tempfile.TemporaryDirectory() as t:
