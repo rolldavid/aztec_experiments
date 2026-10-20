@@ -361,3 +361,10 @@ test('verifier manifest binds its source, representation and exact count before 
   await assert.rejects(CRS.loadVerified(options({manifest,verifierOnly:true,loadLocal:async()=>{reads++;}})),/CRS/);assert.equal(reads,0);
  }
 });
+
+for(const size of [127,128,129])test(`decoded gzip CRS enforces pinned byte count for ${size} bytes`,async()=>{
+ const data=new Uint8Array(size).fill(7);
+ const response=new Response(data,{headers:{'content-encoding':'gzip','content-length':'24'}});
+ if(size===128)assert.deepEqual(await CRS.readResponse(response,{name:'test.dat',bytes:128}),data);
+ else await assert.rejects(CRS.readResponse(response,{name:'test.dat',bytes:128}),size<128?/Truncated CRS/:/exceeds pinned size/);
+});

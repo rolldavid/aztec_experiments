@@ -1,0 +1,11 @@
+✔ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (801.325209ms)
+✔ funding completion reports refreshed fee-needed and Bok credit without claiming readiness (439.699709ms)
+✔ funding completion reports refreshed collateral-pending and Bok credit without claiming readiness (459.278333ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1871.480625

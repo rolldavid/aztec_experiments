@@ -1,0 +1,350 @@
+✔ public reader: navigation, unsafe content, failure recovery and narrow keyboard menu (1038.072292ms)
+✔ labelled social records: removed navigation, literal reasons and distinct authored/removal/current policy provenance (645.851583ms)
+✔ labelled social renderer: unavailable account module announces failure without exposing or sending data (299.601166ms)
+✔ real panel opening from removed Unlike stays lazy and sanitizes an unavailable runtime (325.6815ms)
+✔ continuous paging serializes repeated intersection and keyboard requests, then retains back position/pages (369.543291ms)
+✔ continuous paging fails closed on reorg without automatic cursor retry (316.888625ms)
+✔ continuous paging fails closed on revision without automatic cursor retry (327.0855ms)
+✔ continuous paging fails closed on duplicate without automatic cursor retry (323.382125ms)
+✔ continuous paging fails closed on cursor-loop without automatic cursor retry (342.66975ms)
+✔ continuous paging fails closed on empty-loop without automatic cursor retry (356.141625ms)
+✔ route change and pagehide discard delayed pages and disconnect their observer (326.987125ms)
+✔ no IntersectionObserver retains keyboard-only Load more fallback (218.935ms)
+✔ native browser intersection loads a page near the end without a button click (246.578542ms)
+✔ main and subboard routes use exact board API, contextual composer, directory/post links and canonical paging (634.920875ms)
+✔ rejected board remains discoverable and navigable without new posting controls (367.07975ms)
+✔ board route fails closed for wrong-board before exposing contextual posting (217.448209ms)
+✔ board route fails closed for foreign-post before exposing contextual posting (195.363ms)
+✔ board route fails closed for unavailable before exposing contextual posting (200.698625ms)
+✔ unknown or malformed board route has no generic-feed fallback (203.246041ms)
+✔ private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor (630.499709ms)
+✔ private page validation rejects duplicate even across locally filtered rows (463.035833ms)
+✔ private page validation rejects order even across locally filtered rows (476.942625ms)
+✔ private page validation rejects snapshot even across locally filtered rows (446.859375ms)
+✔ account invalidation synchronously removes private DOM and partial recovery never requests public pages (453.503792ms)
+✔ a delayed ordinary page cannot restore private content after account invalidation (433.057834ms)
+✔ Following and Notifications use only ordinary feed parameters and explicit subscription filtering (757.099917ms)
+✔ tombstone notifications: removed reply supports read without revealing content (628.914333ms)
+✔ tombstone notifications: removed reply supports unsubscribe without revealing content (628.435333ms)
+✔ tombstone notifications: rejected reply supports read without revealing content (662.686583ms)
+✔ tombstone notifications: rejected reply supports unsubscribe without revealing content (631.303833ms)
+✔ notification message assertion retains publication rules and rejects missing or duplicate direct messages (893.307666ms)
+✔ directory empty continuations require one explicit action per page and never replay saved windows (648.407625ms)
+✔ directory definitive no-results wording appears only on the terminal empty window (335.603167ms)
+✔ directory empty continuation rejects revision without another request (396.362ms)
+✔ directory empty continuation rejects cursor-loop without another request (402.969292ms)
+✔ directory empty continuation rejects reorg without another request (342.029416ms)
+✔ notification partial recovery preserves public roots but never exposes an incomplete private feed (791.531542ms)
+✔ contextual moderator actions use public targets only after local authorization and clear on invalidation (475.531708ms)
+✔ moderator context actions respect rejected and already removed public state (383.581667ms)
+✔ return navigation anchors the visible post when newer posts shift pagination (355.849209ms)
+✔ keyboard paging hands focus to new content without stealing later user focus (234.647625ms)
+✔ keyboard paging keeps a meaningful focus when its final button disappears (343.498041ms)
+✔ automatic paging preserves existing keyboard focus and paging errors have a focus target (232.46725ms)
+✔ keyboard sparse directory paging retains its button then focuses the exhausted status (244.216458ms)
+✔ public opening is SDK-free; dialog survives reader changes, traps focus and restores it (315.801667ms)
+✔ private choices, multibyte limit, safe link preview and explicit maximum-fee confirmation (449.071291ms)
+✔ uncertain submission cannot resend; reopening and replacement reconcile the retained intent (558.491708ms)
+✔ lost prepare acknowledgement blocks new work until recovery; prepared cancellation never sends (383.245125ms)
+✔ explicit create, encrypted backup download, no automatic account creation and failed cleanup preserves account (434.202208ms)
+✔ plaintext recovery warning survives import and unavailable connection without leaking other custody messages (421.975917ms)
+✔ encrypted recovery import retains backup guidance without a false plaintext warning (322.175459ms)
+✔ funding remains honest and unavailable connection has no action buttons or automatic retry (417.842ms)
+✔ funding recovery imports only on request and requires a separate claim confirmation (624.746ms)
+✔ recovery import is explicit; quote, repost, like and unlike retain exact selected targets (812.835792ms)
+✔ failed export without a private connection is not misreported as a connection failure (314.673167ms)
+✔ owned names are readable and profile version is fetched only by explicit selection/check (335.853583ms)
+✔ stale bio version fails without rereading or overwriting; empty bio clear requires explicit review (413.453416ms)
+✔ avatar exact immutable preview bytes survive confirmation and recovered prepared intent (656.453791ms)
+✔ avatar clear, rejected uploads and failed profile connection never auto-send (856.769959ms)
+✔ invalid recovered avatar disables send and lock invalidates/revokes existing previews (358.122417ms)
+✔ name availability feedback ROLLING_NAME_INVALID preserves an editable draft without a transaction (368.373ms)
+✔ name availability feedback ROLLING_NAME_TAKEN preserves an editable draft without a transaction (413.2325ms)
+✔ name availability feedback ROLLING_NAME_AVAILABILITY_UNAVAILABLE preserves an editable draft without a transaction (364.534625ms)
+✔ name availability does not clear recovery for unknown failures or claim a check for legacy saved actions (339.752167ms)
+✔ random names remain editable local proposals until an explicit action check (334.372125ms)
+✔ profile confirmed clears only captured version and requires an explicit new check (402.123417ms)
+✔ profile reverted clears only captured version and requires an explicit new check (390.653667ms)
+✔ lost profile preparation acknowledgement retains saved intent and exact avatar while invalidating draft version (494.738375ms)
+✔ private names view pages only on request and opens one public profile deliberately (430.239208ms)
+✔ names paging failure keeps existing names and retries only on explicit user action (614.142459ms)
+✔ names management reuses registration and version-checked profile fee confirmation (980.749458ms)
+✔ account invalidation clears names/drafts immediately and discards delayed owned results (458.659459ms)
+✔ account invalidation clears names/drafts immediately and discards delayed profile results (483.384334ms)
+✔ locking from names management removes names and drafts without deleting retained recovery (442.39675ms)
+✔ empty private names view offers registration without inventing identities or public lookups (433.067791ms)
+✔ invalid private names duplicate page preserves current list and stops without retry (423.969459ms)
+✔ invalid private names cursor page preserves current list and stops without retry (406.894417ms)
+✔ one explicit recovery continues sequential bounded reads, including equal progress, without exposing partial preferences (321.153583ms)
+✔ anonymous reply review identifies Anonymous and opening private views clears the previous confirmation (440.218125ms)
+✔ every preference and read marker captures a fresh head and requires maximum-fee confirmation (1115.011667ms)
+✔ account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result (262.933792ms)
+✔ preference head failure does not prepare and recovery failure never implies an empty successful view (438.1475ms)
+✔ locking clears recovered private capability before asynchronous session cleanup settles (403.506167ms)
+✔ explicit recovery abort waits for the original private call and does not publish its late complete result (325.711042ms)
+✔ preference lock driver waits for explicit delayed refresh before expanding security (518.928375ms)
+✔ replacement inspection and review never send; confirmation shows distinct ceiling and historical fees (373.644917ms)
+✔ changed same-height marker needs explicit consent again after closing before review (554.172792ms)
+✔ reopened replacement restores renewed ceiling without inspecting, preparing or sending automatically (339.459125ms)
+✔ replacement pending is honestly fenced without preparation or sending (258.660875ms)
+✔ replacement unknown is honestly fenced without preparation or sending (270.484583ms)
+✔ replacement context-changed is honestly fenced without preparation or sending (291.494209ms)
+✔ replacement history-unavailable is honestly fenced without preparation or sending (310.142833ms)
+✔ replacement canonical is honestly fenced without preparation or sending (260.538916ms)
+✔ replacement limit-reached is honestly fenced without preparation or sending (260.428334ms)
+✔ failed replacement preparation discards eligibility but preserves saved action and requires explicit recheck (358.409541ms)
+✔ account invalidation during recovery inspection clears private history and never restores late eligibility (267.261625ms)
+✔ recovery full values wrap inside the dialog at 390px: history (342.143209ms)
+ℹ {"width":390,"phase":"history","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 390px: prepared-marker (263.1375ms)
+ℹ {"width":390,"phase":"prepared-marker","clientWidth":350,"scrollWidth":350,"documentWidth":390,"viewport":390}
+✔ recovery full values wrap inside the dialog at 1280px: history (339.284041ms)
+ℹ {"width":1280,"phase":"history","clientWidth":478,"scrollWidth":478,"documentWidth":1280,"viewport":1280}
+✔ recovery full values wrap inside the dialog at 1280px: prepared-marker (261.977416ms)
+ℹ {"width":1280,"phase":"prepared-marker","clientWidth":478,"scrollWidth":478,"documentWidth":1280,"viewport":1280}
+✔ retained unknown intent clears loading only after account connection settles (322.3375ms)
+✔ retained replacement-ready intent clears loading only after account connection settles (355.618166ms)
+✔ new actions clear previous confirmation during preparation and submission (395.747333ms)
+✖ completed refresh and import clear temporary checking messages (3381.0045ms)
+✔ changing action or account view clears old validation feedback and keeps the draft on view changes (532.832875ms)
+✔ settled connection message cleanup preserves custody guidance and failed connection alert (324.898ms)
+✔ saved original transaction needs explicit confirmation with its own fee ceiling (423.773ms)
+✔ saved replacement transaction needs explicit confirmation with its own fee ceiling (406.688417ms)
+✔ saved transaction pending never exposes a send action (350.919ms)
+✔ saved transaction canonical never exposes a send action (342.941667ms)
+✔ saved transaction unknown never exposes a send action (343.742542ms)
+✔ saved transaction empty never exposes a send action (324.509042ms)
+✔ saved transaction context-changed never exposes a send action (344.533959ms)
+✔ saved transaction hash metadata cannot grant confirmation (423.831417ms)
+✔ saved transaction fee metadata cannot grant confirmation (393.302833ms)
+✔ saved transaction fee-source metadata cannot grant confirmation (318.723292ms)
+✔ saved transaction source-candidate metadata cannot grant confirmation (331.61175ms)
+✔ saved transaction marker metadata cannot grant confirmation (331.376416ms)
+✔ saved transaction missing metadata cannot grant confirmation (382.902666ms)
+✔ saved transaction contradictory metadata cannot grant confirmation (368.005042ms)
+✔ saved transaction eligibility is RAM-only and clears on close and reload (475.445875ms)
+✔ unknown saved transaction send clears eligibility and cannot automatically replay (403.942584ms)
+✔ account invalidation during saved send keeps busy and hides all late recovery values (369.430042ms)
+✔ notification campaign reviews, confirms, then navigates to private recovery (700.629625ms)
+✔ cold private view cannot prepare a preference before checking retained financial recovery (341.637208ms)
+✔ fixed nested initialization failure preserves generic UI and retry clears stale attempt (298.320333ms)
+✔ initialization projection ignores accessors and account invalidation clears late observations (229.611625ms)
+✔ Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes (496.414917ms)
+✔ Bok composer hides unavailable capability and rejects unaffordable budgets before preparation (476.607917ms)
+✔ Bok budget converts exact six-decimal amounts to raw units without Number rounding (585.939334ms)
+✔ Bok continuation failure preserves authorized recovery without another credit authorization (325.545125ms)
+✔ Bok reverted post stays in explicit saved-request recovery after reopen without a new authorization (305.052875ms)
+✔ Moderator controls stay hidden from ordinary authors including forged action defaults (248.607083ms)
+✔ Moderator removal reviews literal reason, target, policy and fee with explicit confirmation (353.582666ms)
+✔ Moderator form exposes only contract-supported operations and bounds UTF8 input (287.5095ms)
+✔ Moderator avatar review identifies the public target without claiming ownership or needing collateral (349.721667ms)
+✔ Moderator contextual defaults retain exact public avatar target and capability clears synchronously on account invalidation (337.999292ms)
+✔ funding wallet selection is explicit, escaped and never prepares or sends a payment (416.768167ms)
+✔ rejected funding connection retains recovery and sends nothing (407.500958ms)
+✖ aggregate funding UI reviews exact allocations and consent before one payment and one bounded private claim (3466.563875ms)
+✔ initial funding entry exposes allocations without a recovery receipt or payment (403.728667ms)
+✖ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (3472.2835ms)
+✔ funding completion reports refreshed fee-needed and Bok credit without claiming readiness (453.614541ms)
+✔ funding completion reports refreshed collateral-pending and Bok credit without claiming readiness (450.89125ms)
+✔ funding quote refusal gives fixed actionable text for AGGREGATE_PUBLIC_READ_FAILED (409.180417ms)
+✔ funding quote refusal gives fixed actionable text for AGGREGATE_STALE_QUOTE (432.547041ms)
+✔ funding quote refusal gives fixed actionable text for AGGREGATE_INSUFFICIENT_USER_FUNDS (428.210208ms)
+✖ aggregate gas refusal explains explicit changed maximum and requires a fresh quote and confirmation (3518.350333ms)
+✔ aggregate funding UI pauses a larger private claim fee without another Ethereum payment (462.345709ms)
+✔ aggregate funding UI reconciles an unknown claim without repeat payment or submission (527.013375ms)
+✖ aggregate funding UI links an exact prepared claim after checkpoint interruption without preparing twice (3429.097208ms)
+✔ aggregate funding UI exposes explicit saved review after attempt checkpoint precedes submission (469.754209ms)
+✔ aggregate funding UI sets price tolerance without asking users for basis points (427.83275ms)
+✖ USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas (3456.714417ms)
+✔ canonical reverted funding claim requires explicit renewed review and never repeats the original payment (520.920292ms)
+✔ canonical cancelled funding claim requires explicit renewed review and never repeats the original payment (533.959833ms)
+✔ standalone private-fee UI separates approval, deposit and private claim without collateral (539.624666ms)
+✔ standalone bok UI separates approval, deposit and private claim without collateral (524.595375ms)
+✔ standalone top-up failed review and changed account never reach a payment (434.798208ms)
+✔ RC22 panel separates private balances and maturity without creating transactions or claiming complete Bok reservations (447.674125ms)
+✔ RC22 panel requires separate explicit exit and refund fee reviews and cancellation sends nothing (607.821583ms)
+✔ RC22 reopened exit recovers an existing refund read-only and never duplicates the exit (604.459417ms)
+✔ refresh diagnostic survives connect sanitizer and retry then clears on account invalidation (365.04075ms)
+✔ claim progress distinguishes saved records, preparation and confirmation without claiming submission success (318.387417ms)
+✔ claim progress exposes only fixed preparation failure in DOM and clears it after account invalidation (495.625083ms)
+✔ RC22 one explicit Bok accounting check completes bounded pages without partial or double-counted totals (531.594208ms)
+✔ RC22 Bok accounting stop discards a late result before an explicit new check and release review (592.581083ms)
+✔ RC22 Bok accounting invalidated fences incomplete results without further reads (444.605208ms)
+✔ RC22 Bok accounting failed fences incomplete results without further reads (434.577125ms)
+✔ RC22 Bok accounting malformed fences incomplete results without further reads (445.567708ms)
+✔ RC22 Bok panel separates private exit and saved-recipient Ethereum refund across reopen (650.07525ms)
+✔ RC22 expiry panel requires a separate fee review and cancellation does not send (511.489292ms)
+✔ RC22 expiry panel preserves unknown transaction on reopen and reports canonical partial refund without another send (781.241625ms)
+✔ Interrupted Bok cancel-bok-request explicitly reviews one saved request and cancellation restores draft (376.859958ms)
+✔ Interrupted Bok expire-bok-request explicitly reviews one saved request and cancellation restores draft (350.040167ms)
+✔ Interrupted Bok release failure and unknown send preserve recovery without another post or authorization (462.986792ms)
+✔ New conversation Post and Bok switching retains the subboard and entered draft for bok (319.76025ms)
+✔ New conversation Post and Bok switching retains the subboard and entered draft for post (305.3225ms)
+✔ Bok reply selection retains reader thread context through both saved confirmations (553.804917ms)
+✔ Conversation context starts a new Bok thread only by explicit choice and preserves message and board (341.567208ms)
+✔ Conversation context rejects missing or incomplete reply selection without preparing a transaction (338.02725ms)
+✔ dialog selections and view changes retain a meaningful keyboard position (379.515458ms)
+✔ ordinary saved post exact-byte recovery is explicit and preserves its draft (380.283792ms)
+✔ ordinary saved post replacement review is explicit and preserves its draft (347.285ms)
+✔ saved avatar recovery cannot bypass the exact preview requirement (327.246208ms)
+✔ positive pre-proof review is explicit, preserves draft, and requires renewed fee confirmation (461.651375ms)
+✔ restored aggregate claim review explains original payment and requires separate confirmation (355.347542ms)
+✔ positive pre-proof failed renewed review never exposes a send or resets unknown recovery (374.267709ms)
+✔ saved Ethereum refund review requires separate same-nonce confirmation (622.664084ms)
+✔ saved Ethereum refund review finds canonical success without sending (567.265916ms)
+✔ saved refund review failure reveals no private detail or send control (491.631708ms)
+✔ saved refund review account-change reveals no private detail or send control (514.112125ms)
+✖ funding pause fences the next stage while a held operation retains the busy panel (3557.870375ms)
+✔ Effective rules are shown for post and refreshed before publication (378.456166ms)
+✔ Effective rules are shown for reply and refreshed before publication (374.351167ms)
+✔ Effective rules are shown for quote and refreshed before publication (347.694583ms)
+✔ Effective rules are shown for repost and refreshed before publication (350.041708ms)
+✔ Effective rules are shown for bok and refreshed before publication (397.151167ms)
+✔ Effective rules follow destination changes without reads per keystroke or stale response overwrite (291.37175ms)
+✔ Effective rules block unavailable destination and allow explicit recovery (287.860666ms)
+✔ Effective rules block rejected destination and allow explicit recovery (272.587125ms)
+✔ Effective rules block mismatch destination and allow explicit recovery (268.595334ms)
+✔ Effective rules are shared in flight and recovered publication cannot send on an unavailable refresh (418.583667ms)
+✔ Moderator transfer reviews successor and loss of authority before sending (359.200167ms)
+✔ explicit refund-only recovery works after private connection failure without recreating account or private session (364.896292ms)
+✔ direct refund-only entry never opens private session and never offers account creation (313.154417ms)
+✔ refund-only publication routes ordinary unlock to recovery import without private connection (236.012833ms)
+✔ existing refund shows owned confirmation progress until confirmed without sending (492.754583ms)
+✔ existing refund shows owned confirmation progress until failure without sending (512.054042ms)
+✖ funding confirmation shows approval and original-payment progress until confirmed (3428.154208ms)
+✔ funding confirmation shows approval and original-payment progress until failure (459.732375ms)
+✔ fresh funding quote shows progress and cancelled signature keeps the account unlocked (479.331792ms)
+✔ cold funding explains the native fee credit requirement without sending or exposing private errors (407.444625ms)
+✖ account overview enables funding before any names or publishing reads (3758.961459ms)
+✖ explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads (3378.035875ms)
+✔ failed lazy name read retains funding access and retries only the selected view (548.711417ms)
+✖ reopening an unlocked composer loads only missing view data and preserves explicit refresh (3512.31675ms)
+✔ reopening a blocked account reconciles retained intent before a new draft (386.110958ms)
+✔ reopening after an unnoticed account replacement clears cached private views (344.539208ms)
+✔ guided onboarding has one decision per screen at 390px (421.519333ms)
+✔ guided onboarding has one decision per screen at 1280px (474.930834ms)
+✔ joining from a post leads to setup and retains the draft (392.507625ms)
+✔ an existing deposit with depleted fees offers posting top-up, including after choosing Bok (394.652583ms)
+ℹ tests 223
+ℹ suites 0
+ℹ pass 212
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128515.58675
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:572:1
+✖ completed refresh and import clear temporary checking messages (3381.0045ms)
+  locator.fill: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByLabel('Message', { exact: true })[22m
+  
+      at prepare (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:106:76)
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:579:8) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByLabel('Message', { exact: true })" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:844:1
+✖ aggregate funding UI reviews exact allocations and consent before one payment and one bounded private claim (3466.563875ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:849:142) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:859:282
+✖ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (3472.2835ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:871:110) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:883:1
+✖ aggregate gas refusal explains explicit changed maximum and requires a fresh quote and confirmation (3518.350333ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:901:67) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:916:1
+✖ aggregate funding UI links an exact prepared claim after checkpoint interruption without preparing twice (3429.097208ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:921:93) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:936:1
+✖ USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas (3456.714417ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:943:142) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1228:1
+✖ funding pause fences the next stage while a held operation retains the busy panel (3557.870375ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1235:93) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1342:46
+✖ funding confirmation shows approval and original-payment progress until confirmed (3428.154208ms)
+  locator.waitFor: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Your payment is confirmed.') to be visible[22m
+  
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1349:92) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByText('Your payment is confirmed.') to be visible" ]
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1376:1
+✖ account overview enables funding before any names or publishing reads (3758.961459ms)
+  page.waitForFunction: Timeout 3000ms exceeded.
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1390:59) {
+    name: 'TimeoutError',
+    log: []
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1394:1
+✖ explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads (3378.035875ms)
+  page.waitForFunction: Timeout 3000ms exceeded.
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1402:123) {
+    name: 'TimeoutError',
+    log: []
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1417:1
+✖ reopening an unlocked composer loads only missing view data and preserves explicit refresh (3512.31675ms)
+  page.waitForFunction: Timeout 3000ms exceeded.
+      at TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1425:102) {
+    name: 'TimeoutError',
+    log: []
+  }

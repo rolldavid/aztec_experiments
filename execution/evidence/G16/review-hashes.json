@@ -1,0 +1,22 @@
+{
+  "apps/rolling/reader.browser.test.mjs": "ebbf6510bd1335bffc2dfe16bcce25c6421ebdf66ad295fd40d936de91c6f8b7",
+  "apps/rolling/reader.mjs": "7bfcfaf6b126a1e5f7e9082d9f329d24c4d1b800b96adfc35279e2c4aaa674ad",
+  "apps/rolling/start.mjs": "64ba4630136ce6cec7240d33c92e3d3b5b6338f560e628322a9367f761df350f",
+  "apps/rolling/style.css": "c8a3146dc4570b39be40d88e1ef380fd14db7a12b7520c811132c50bc5ecb32c",
+  "apps/rolling/wallet-panel.browser.test.mjs": "8d1c1792ee0b3e3460367755d80de949984f061d31fc98ff85334467e5e97860",
+  "apps/rolling/wallet-panel.mjs": "d5b0da450628a486317b8bb5f8800e834b0be2a55815723f468c84ce33d50e7b",
+  "apps/rolling/wallet-runtime.browser.test.mjs": "458abc4c2615d56c7fb00b8060f735740877d5ab264c2e1cd1c17d0b76b63f62",
+  "apps/rolling/wallet-runtime.mjs": "c53c1f3828a02eeb832ed7bbf9954b7567f62d8668c5e28a692d4dbab14c9754",
+  "apps/rolling/wallet-session.mjs": "d8b3215baa4b0f501cb3606816c651217ecba91418b26a9b9dd618e5b1a94180",
+  "apps/rolling/wallet-session.test.mjs": "90dd12a77d45ac7e3085a7a7cce2aa9225836b53501a8b88d12c6e098a01eed5",
+  "scripts/test-crs-consumers.mjs": "6a8cd5bfdd620bae751bf78432f081e6a82c8a86e0421b1dfcd0cd8a0a47e8d5",
+  "scripts/testing/rolling-composer-browser.mjs": "81bcefb063ab26873a97759f327d313a50ae143f0341aa4c4282faac65f1ac8a",
+  "scripts/testing/rolling-notification-browser.mjs": "567a595a4c9604098fd8b3d6e126cbde9aca137874e4a5b9409259b54e52e0cb",
+  "scripts/testing/rolling-preference-browser.mjs": "cc9c9f57da093116235a2a8654d94e0be744314e9edc30c2016d2cd68af49927",
+  "shared/crs-client.js": "7785f34f3ff5a95d87c8a56b2f9062bb0abda11bdae0737541300268c7908d02",
+  "shared/rolling/aggregate-wallet.mjs": "38379ca73f8d05c9395acf2d901cda2528d3ad1dd8d9a697a2f135ab29973692",
+  "shared/rolling/aggregate-wallet.test.mjs": "6346b4381a4f86f6779b24ce0e8bc643b4fbe61bf99f099cd70945d9288cdc48",
+  "shared/rolling/application.mjs": "a4d4b938712a289a48ee90ba1b024cc7dfa8c7a1913146fe7a63ecf7cd41696d",
+  "shared/wallet-providers.js": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+  "execution/evidence/G16/deployment/publish.py": "18ff7c5428b1d7ae6e3d90520a2eb4fd4dc48fac9ab105adc2613db04d9fed9b"
+}

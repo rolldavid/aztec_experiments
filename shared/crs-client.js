@@ -66,7 +66,10 @@
       throw new Error('CRS HTTP ' + response.status);
     }
     const declaredSize = response.headers.get('content-length');
-    if (declaredSize !== null && Number(declaredSize) !== file.bytes) {
+    // Fetch decodes HTTP compression but retains the encoded Content-Length.
+    // The stream below always enforces the exact pinned decoded byte count.
+    const encoding = response.headers.get('content-encoding');
+    if ((!encoding || encoding === 'identity') && declaredSize !== null && Number(declaredSize) !== file.bytes) {
       await response.body?.cancel();
       throw new Error('CRS response size mismatch: ' + file.name);
     }

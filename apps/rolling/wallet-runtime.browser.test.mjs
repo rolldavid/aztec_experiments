@@ -23,16 +23,16 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.goto(server.url);await page.getByRole('heading',{name:'A little quiet here'}).waitFor();
  assert.equal(await page.evaluate(()=>crossOriginIsolated),true);
  assert.equal(requests.some(r=>/\/wallet\//.test(r.url)),false);
- await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('button',{name:'Unlock',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('button',{name:'Sign in',exact:true}).waitFor();
  assert.equal(requests.some(r=>/\/wallet\//.test(r.url)),false);
- await page.getByRole('button',{name:'Unlock',exact:true}).click();
- await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
+ await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.getByLabel('Password',{exact:true}).waitFor({timeout:30000});
  assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/aztec_bundle.js').length,1);
  assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/bok.json').length,1);
  const bokServed=await wallet.read('/wallet/bok.json');assert.equal(JSON.parse(bokServed.body).name,'PrivateBok');assert.equal(createHash('sha256').update(bokServed.body).digest('hex'),wallet.runtime.artifacts.bok.sha256);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
- assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','selectPrivateViews']);
+ assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','refundOnly','selectPrivateViews']);
  // Actual browser worker and pinned local CRS initialization, even when the
  // application uses a remote prover. This previously failed on a missing G1
  // derivation route; a public/config double cannot hide that asset failure.
@@ -42,15 +42,19 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  assert.equal(served.body.length,manifest.derivedG1.bytes);
  assert.equal(createHash('sha256').update(served.body).digest('hex'),manifest.derivedG1.sha256);
  const initialization=await page.evaluate(async()=>{
-  await __aztec.initializeBrowserProver();const options=__aztec.Barretenberg.getSingleton().options;
-  return {backend:options.backend,threads:options.threads,skipSrsInit:options.skipSrsInit};
+  // Public initialization diagnostics only: no account or private data exists yet.
+  const original=BillboardCRS.initialize;let failure;
+  BillboardCRS.initialize=async(...args)=>{try{return await original(...args);}catch(error){failure=error.message;throw error;}};
+  try{await __aztec.initializeBrowserProver();const options=__aztec.Barretenberg.getSingleton().options;
+   return {backend:options.backend,threads:options.threads,skipSrsInit:options.skipSrsInit};
+  }catch(error){return {failure:failure??error.message};}finally{BillboardCRS.initialize=original;}
  });
  assert.deepEqual(initialization,{backend:'WasmWorker',threads:1,skipSrsInit:true});
  for(const name of ['g1_uncompressed.dat','g2.dat','grumpkin_g1.dat'])assert.equal(requests.filter(r=>r.url===server.url+'/crs/'+name).length,1);
  assert.equal(requests.some(r=>r.method==='POST'),false);
- await page.getByRole('textbox',{name:'Recovery password',exact:true}).fill('disposable recovery test password');
+ await page.getByRole('textbox',{name:'Password',exact:true}).fill('disposable recovery test password');
  const downloadPromise=page.waitForEvent('download',{timeout:5000});
- await page.getByRole('button',{name:'Create account and download recovery',exact:true}).click();
+ await page.getByRole('button',{name:'Create account',exact:true}).click();
  let download;
  try{download=await downloadPromise;}catch(error){
   t.diagnostic(JSON.stringify(await page.evaluate(()=>({hasAccount:Boolean(window.walletState.aztec),busy:window.BillboardAccount.snapshot().busy}))));
@@ -140,11 +144,11 @@ test('public-only actual browser prover initialization diagnostic',{timeout:6000
   page.on('worker',worker=>{const url=new URL(worker.url());report.workers.push(url.origin===server.url&&assetPaths.has(url.pathname)?url.pathname:'unexpected');});
   report.stage='runtime-load';await page.goto(server.url+'/#/bookmarks',{waitUntil:'networkidle'});
   assert.deepEqual(await page.evaluate(async()=>({secure:isSecureContext,isolated:crossOriginIsolated,locks:typeof navigator.locks?.request==='function',sdkAbsent:globalThis.__aztec===undefined,nativeDatabase:typeof indexedDB.databases==='function'&&(await indexedDB.databases()).length===0})),{secure:true,isolated:true,locks:true,sdkAbsent:true,nativeDatabase:true});
-  await page.getByRole('button',{name:'Open private recovery',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Your private account',exact:true});await dialog.getByRole('button',{name:'Unlock',exact:true}).click();
-  await dialog.getByLabel('Recovery file',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Open your account',exact:true}).click();
+  const dialog=page.getByRole('dialog',{});await dialog.getByRole('button',{name:'Sign in',exact:true}).click();
+  await dialog.getByLabel('Account backup',{exact:true}).waitFor();
   const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort(),hasAccount:Boolean(globalThis.walletState.aztec)};});
-  assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','selectPrivateViews']);assert.equal(facade.hasAccount,false);
+  assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','refundOnly','selectPrivateViews']);assert.equal(facade.hasAccount,false);
   const served=await wallet.read('/crs/'+manifest.derivedG1.name);assert(served);assert.equal(served.body.length,manifest.derivedG1.bytes);assert.equal(createHash('sha256').update(served.body).digest('hex'),manifest.derivedG1.sha256);
   report.stage='actual-initializer';
   const observed=await page.evaluate(async()=>{

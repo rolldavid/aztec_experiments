@@ -6,6 +6,22 @@ const check=(value,code='INVALID')=>{if(!value)throw fail(code);};
 const errorValue=(error,key)=>{try{const d=error!=null?Object.getOwnPropertyDescriptor(error,key):null;return d&&'value'in d?d.value:undefined;}catch{return undefined;}};
 const clone=value=>structuredClone(value);
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+// Product defaults, derived from the authenticated deployment, not form inputs.
+// Exact router gas can only be estimated after the user's consent signature.
+// This conservative 5m-unit ceiling covers three bridge legs and swaps; confirm
+// still estimates the real transaction and refuses to exceed the reviewed cap.
+export async function starterFundingAllocation({asset,minDeposit,privateFeeCap,provider}){
+ check(['ETH','USDC'].includes(asset),'INVALID');
+ for(const value of [minDeposit,privateFeeCap])check(typeof value==='string'&&/^[1-9][0-9]{0,38}$/.test(value),'INVALID');
+ const allocation={asset,collateralWei:minDeposit,feeAmount:(BigInt(privateFeeCap)*2n).toString(),bokAmount:'1000000',feePoolFee:3000,slippageBps:100,privateFeeCap};
+ if(asset==='USDC')return {...allocation,collateralPoolFee:3000};
+ return {...allocation,bokPoolFee:3000,gasBudgetWei:await automaticFundingGasBudget(provider)};
+}
+export async function automaticFundingGasBudget(provider){
+ const fees=await provider.getFeeData(),price=fees.maxFeePerGas??fees.gasPrice;
+ check(typeof price==='bigint'&&price>0n,'GAS_UNAVAILABLE');
+ return (5000000n*price).toString();
+}
 export const AGGREGATE_SCOPE_KEYS=Object.freeze(['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash']);
 export const AGGREGATE_USDC_SCOPE_KEYS=Object.freeze([...AGGREGATE_SCOPE_KEYS,'usdcCodeHash','usdcImplementation','usdcImplementationCodeHash','usdcDomain','usdcRelayAddress']);
 export function aggregateWalletScope(scope,network,board,owner){
@@ -425,7 +441,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  async function archived(hash){const store=await slot(hash),record=await read(()=>store.read());check(record.value?.txHash===hash&&record.value.intent,'MISMATCH');const result=await read(()=>sdk.verifyEthereumIntentReceipt(provider,record.value.intent,hash));check(result?.outcome===record.value.outcome,'MISMATCH');const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return {value:record.value,result};}
  const cap={
   async prepare(input){
-   prepared=null;check(input&&Object.keys(input).sort().join()==='amount,gasBudgetWei,privateFeeCap');
+   prepared=null;check(input&&['amount,privateFeeCap','amount,gasBudgetWei,privateFeeCap'].includes(Object.keys(input).sort().join()));
    const values=clone(input);for(const key of Object.keys(values))check(typeof values[key]==='string'&&/^[1-9][0-9]{0,76}$/.test(values[key]));check(BigInt(values.amount)<1n<<128n);
    const {store,saved}=await stored();let priorHash=saved.value?.previousTxHash??null,reuse=null;
    if(saved.value?.intent){
@@ -456,7 +472,9 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    const expected=phase==='approval'?{kind:'approve',amount:values.amount,spender:captured.portal}:{kind:kind==='bok'?'bok-deposit':'fee-deposit',amount:values.amount,secretHash,recipient};
    const request={from:wallet.address,to:phase==='approval'?captured.token:captured.portal,chainId:n.chainId,nonce,data:data.toLowerCase(),value:'0',expected};
    const gas=await read(()=>provider.estimateGas({...request,value:0n,chainId:BigInt(n.chainId)})),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
-   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(values.gasBudgetWei),'GAS_CHANGED');
+   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n,'GAS_CHANGED');
+   values.gasBudgetWei??=(gas*2n*price).toString();
+   check(gas*2n*price<=BigInt(values.gasBudgetWei),'GAS_CHANGED');
    check((await read(()=>provider.getBlock(head.number)))?.hash===head.hash,'MISMATCH');await read(wallet.guard);
    prepared={store,saved,wallet,request,priorHash,value:{schemaVersion:1,kind,...values,phase,depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:kind==='bok'?{...n,...captured}:null,intent:null,claim:null,previousTxHash:priorHash}};
    return freeze({kind,phase,...values,walletName:wallet.name,token:captured.token,portal:captured.portal});

@@ -140,9 +140,9 @@ test('labelled social renderer: unavailable account module announces failure wit
 test('real panel opening from removed Unlike stays lazy and sanitizes an unavailable runtime',async t=>{
  const {page,requests}=await socialFixture(t,{wallet:'real'});
  await page.locator('#post-11 .post-more summary').click();await page.locator('#post-11').getByRole('button',{name:'Unlike',exact:true}).click();
- await page.getByRole('button',{name:'Unlock',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Sign in',exact:true}).waitFor();
  assert(!requests.some(value=>value.startsWith('/wallet/')));
- await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByRole('alert').waitFor();
  assert.match(await page.getByRole('alert').innerText(),/could not|failed|unavailable/i);
  assert.equal(requests.filter(value=>value==='/wallet/runtime.mjs').length,1);
@@ -333,17 +333,17 @@ export async function loadRollingWalletRuntime(){return {selectPrivateViews,getA
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
- await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();return {page,requests,feed,state};
+ await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Your saved conversations'}).waitFor();return {page,requests,feed,state};
 }
-async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
+async function recoverPrivateView(page){await page.getByRole('button',{name:'Open your account'}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Load saved items',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
 test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
- const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));assert(await page.getByText('Recover your saved choices to see this view. Your follows and bookmarks stay private.',{exact:true}).isVisible());
+ const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));assert(await page.getByText('Sign in to load your follows, bookmarks and notifications.',{exact:true}).isVisible());
  assert.equal(await page.evaluate(()=>document.activeElement.tagName),'BODY'); // Preserve the initial skip-link tab order.
  for(const title of ['Following','Notifications','Bookmarks']){
   await page.getByRole('link',{name:title,exact:true}).click();await page.getByRole('heading',{name:title,exact:true}).waitFor();
   assert.equal(await page.locator('#announcement').getAttribute('role'),'status');
   assert.equal(await page.locator('#announcement').getAttribute('aria-live'),'polite');
-  assert.equal(await page.locator('#announcement').textContent(),title+': unlock and recover your private views to see this feed.');
+  assert.equal(await page.locator('#announcement').textContent(),title+': sign in to see your saved conversations.');
   assert.notEqual(await page.evaluate(()=>document.activeElement.tagName),'BODY');
   if(title!=='Bookmarks')assert.equal(await page.evaluate(()=>document.activeElement.tagName),'H1');
  }
@@ -358,15 +358,15 @@ for(const mutation of ['duplicate','order','snapshot'])test('private page valida
  const {page}=await privateViewFixture(t,{mutation});await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByRole('article').count(),0);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
 });
 test('account invalidation synchronously removes private DOM and partial recovery never requests public pages',async t=>{
- const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');assert.equal(feed.length,0);
+ const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open your account'}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Load saved items',exact:true}).waitFor();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Load saved items'}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');assert.equal(feed.length,0);
  await page.evaluate(()=>privateTest.resumeRecovery());await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();
- assert.equal(await page.evaluate(()=>{privateTest.options.onChange({invalidated:true});return document.querySelectorAll('article').length;}),0);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
+ assert.equal(await page.evaluate(()=>{privateTest.options.onChange({invalidated:true});return document.querySelectorAll('article').length;}),0);await page.getByRole('heading',{name:'Your saved conversations'}).waitFor();
 });
 
 test('a delayed ordinary page cannot restore private content after account invalidation',async t=>{
  const {page,state}=await privateViewFixture(t);await recoverPrivateView(page);state.hold=true;await page.getByRole('button',{name:'Load more',exact:true}).click();
  const until=Date.now()+2000;while(!state.pending.length&&Date.now()<until)await new Promise(resolve=>setTimeout(resolve,10));assert.equal(state.pending.length,1);
- await page.evaluate(()=>privateTest.options.onChange({invalidated:true}));state.hold=false;for(const resolve of state.pending)resolve();await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
+ await page.evaluate(()=>privateTest.options.onChange({invalidated:true}));state.hold=false;for(const resolve of state.pending)resolve();await page.getByRole('heading',{name:'Your saved conversations'}).waitFor();
  assert.equal(await page.getByRole('article').count(),0);
 });
 test('Following and Notifications use only ordinary feed parameters and explicit subscription filtering',async t=>{
@@ -406,6 +406,7 @@ test('notification message assertion retains publication rules and rejects missi
  await card.getByText('Parent rules at publication · v2',{exact:true}).click();
  assert.equal(await card.locator('details .post-body').textContent(),'Keep conversation civil.');
  assert(await card.locator('details .post-body').isVisible());
+ await card.getByText('More',{exact:true}).click();
  assert.equal(await card.getByRole('button',{name:'Subscribe to thread',exact:true}).count(),1);
  await assert.rejects(assertRollingNotificationPostText(card,'Different message'),/Notification browser check failed/);
  await card.evaluate(node=>node.append(node.querySelector(':scope > .post-body').cloneNode(true)));
@@ -445,19 +446,20 @@ test('notification partial recovery preserves public roots but never exposes an 
  const {page}=await privateViewFixture(t);await recoverPrivateView(page);
  await page.getByRole('link',{name:'Main board',exact:true}).first().click();await page.locator('#post-10').waitFor();
  await page.getByRole('button',{name:'Your account',exact:true}).click();
- const d=page.getByRole('dialog',{name:'Your private account',exact:true});
- await d.getByRole('button',{name:'Private views',exact:true}).click();
- await page.evaluate(()=>privateTest.partial=true);await d.getByRole('button',{name:'Recover private views',exact:true}).click();
+ const d=page.getByRole('dialog',{});
+ await d.getByText('Account settings',{exact:true}).click();await d.getByRole('button',{name:'Follows and bookmarks',exact:true}).click();
+ await page.evaluate(()=>privateTest.partial=true);await d.getByRole('button',{name:'Load saved items',exact:true}).click();
  await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');
  assert.equal(await page.locator('#content article.post').count(),1);
  assert.equal(await d.getByText('Your saved choices are ready.',{exact:true}).count(),0);
  await checkRecovery(page,{publicBoard:true});await assert.rejects(checkRecovery(page),/Notification browser check failed/);
  await page.evaluate(()=>privateTest.resumeRecovery());
  await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();await d.getByRole('button',{name:'Close account panel',exact:true}).click();
+ await page.locator('#post-10').getByText('More',{exact:true}).click();
  assert.equal(await page.locator('#post-10').getByRole('button',{name:'Unsubscribe from thread',exact:true}).count(),1);
- await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Manage private views',exact:true}).waitFor();
- await page.getByRole('button',{name:'Manage private views',exact:true}).click();await page.evaluate(()=>privateTest.partial=true);
- await d.getByRole('button',{name:'Refresh private views',exact:true}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');
+ await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Saved items settings',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Saved items settings',exact:true}).click();await page.evaluate(()=>privateTest.partial=true);
+ await d.getByRole('button',{name:'Refresh saved items',exact:true}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');
  await checkRecovery(page);assert.equal(await page.locator('#content article.post').count(),0);
  await assert.rejects(checkRecovery(page,{publicBoard:true}),/Notification browser check failed/);
  await page.locator('#content').evaluate(node=>node.insertAdjacentHTML('beforeend','<article class="post">Synthetic forbidden private row</article>'));

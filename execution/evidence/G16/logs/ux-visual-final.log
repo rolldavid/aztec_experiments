@@ -1,0 +1,11 @@
+✔ USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas (821.045125ms)
+✔ guided onboarding has one decision per screen at 390px (444.225709ms)
+✔ guided onboarding has one decision per screen at 1280px (421.341584ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1860.582333

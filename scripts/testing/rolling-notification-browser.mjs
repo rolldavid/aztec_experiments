@@ -102,14 +102,15 @@ export async function reviewRollingNotificationAction({dialog:d,remaining,settle
  check(await d.getByText(/^Maximum network fee: [1-9][0-9]* fee-juice units\. This is a maximum, not a guaranteed final charge\.$/).count()===1);
  onReviewed();onConfirm();onStep('send');await d.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
  onStep('confirmation');await settled(d.getByText('Transaction confirmed on the verified chain.',{exact:true}));onConfirmed();
- const privateViews=d.getByRole('button',{name:'Private views',exact:true});onStep('private-navigation-ready');await settled(privateViews);onStep('private-navigation-click');await privateViews.click({timeout:remaining()});onStep('private-recovery');await recover();onStep('recovered');
+ await d.getByRole('button',{name:'Back to account',exact:true}).click({timeout:remaining()});await d.getByText('Account settings',{exact:true}).click({timeout:remaining()});
+ const privateViews=d.getByRole('button',{name:'Follows and bookmarks',exact:true});onStep('private-navigation-ready');await settled(privateViews);onStep('private-navigation-click');await privateViews.click({timeout:remaining()});onStep('private-recovery');await recover();onStep('recovered');
 }
 
 // Fee-only is checked only after the user explicitly opens an action. Cold
 // keys-only import intentionally does not query balances or owned names.
 export async function checkRollingNotificationFeeOnly({dialog,remaining,settled}){
  await settled(dialog.getByRole('button',{name:'Check action and review fee',exact:true}));
- await dialog.getByText('No posting deposit was found.',{exact:true}).waitFor({timeout:remaining()});
+ await dialog.getByText('Add a posting balance before publishing.',{exact:true}).waitFor({timeout:remaining()});
 }
 
 // Policy details also contain rich text. Only the direct child is the post's
@@ -169,11 +170,11 @@ export async function runRollingNotificationBrowser(input){
    page=await context.newPage();page.setDefaultTimeout(remaining());
   }
   await newContext();
-  const dialog=()=>page.getByRole('dialog',{name:'Your private account',exact:true});
+  const dialog=()=>page.getByRole('dialog',{});
   async function settled(ready){const state=await waitForRollingComposerState({dialog:dialog(),ready,remaining});if(state!=='ready'){report.diagnostic=state;throw failed();}}
   async function recover({before=traffic(),requireCompact=false,publicBoard=false}={}){
    const d=dialog(),done=d.getByText('Your saved choices are ready.',{exact:true}),more=d.getByRole('button',{name:'Continue private recovery',exact:true});
-   let next=d.getByRole('button',{name:'Recover private views',exact:true});report.actionStep='recovery-ready';await settled(next);
+   let next=d.getByRole('button',{name:'Load saved items',exact:true});report.actionStep='recovery-ready';await settled(next);
    for(;;){report.actionStep='recovery-click';await next.click({timeout:remaining()});report.recoverySteps++;report.actionStep='recovery-result';await settled(done.or(more));unchanged(before);if(await done.isVisible())break;await assertRollingNotificationRecoveryVisibility(page,{publicBoard});next=more;}
    check(await page.evaluate(async()=>(await indexedDB.databases()).length>0));
    const window=checkRollingColdRecoveryWindow(before,traffic(),{requireCompact});
@@ -181,13 +182,13 @@ export async function runRollingNotificationBrowser(input){
   }
   async function importKeys(){
    const before=traffic();await page.goto(c.origin+'/#/notifications',{waitUntil:'networkidle',timeout:remaining()});
-   await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});
+   await page.getByRole('heading',{name:'Your saved conversations',exact:true}).waitFor({timeout:remaining()});
    check(await page.evaluate(async()=>isSecureContext&&crossOriginIsolated&&typeof navigator.locks?.request==='function'&&globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined&&typeof indexedDB.databases==='function'&&(await indexedDB.databases()).length===0));
-   await page.getByRole('button',{name:'Open private recovery',exact:true}).click({timeout:remaining()});await dialog().getByRole('button',{name:'Unlock',exact:true}).waitFor({timeout:remaining()});
+   await page.getByRole('button',{name:'Open your account',exact:true}).click({timeout:remaining()});await dialog().getByRole('button',{name:'Sign in',exact:true}).waitFor({timeout:remaining()});
    const locked=traffic();for(const k of ['walletAssets','privateRequests','feedRequests'])check(locked[k]===before[k]);
-   await dialog().getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});await settled(dialog().getByLabel('Recovery file',{exact:true}));
-   await dialog().getByLabel('Recovery password',{exact:true}).fill(c.backupPassword,{timeout:remaining()});await dialog().getByLabel('Recovery file',{exact:true}).setInputFiles(c.backupPath,{timeout:remaining()});
-   await dialog().getByRole('button',{name:'Import recovery',exact:true}).click({timeout:remaining()});await settled(dialog().getByRole('button',{name:'Recover private views',exact:true}));
+   await dialog().getByRole('button',{name:'Sign in',exact:true}).click({timeout:remaining()});await settled(dialog().getByLabel('Account backup',{exact:true}));
+   await dialog().getByLabel('Backup password',{exact:true}).fill(c.backupPassword,{timeout:remaining()});await dialog().getByLabel('Account backup',{exact:true}).setInputFiles(c.backupPath,{timeout:remaining()});
+   await dialog().getByRole('button',{name:'Sign in',exact:true}).click({timeout:remaining()});await settled(dialog().getByRole('button',{name:'Load saved items',exact:true}));
    await recover({before,requireCompact:true});unchanged(before);
    report.actionStep='close-recovered-panel';await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
@@ -228,10 +229,10 @@ export async function runRollingNotificationBrowser(input){
    await view('Notifications',[reply.replyId,c.expected.rootId]);await page.getByRole('heading',{name:'A little quiet here',exact:true}).waitFor({timeout:remaining()});check(await page.locator('#content article.post').count()===0);
   }
   mark('suppressed');await suppressed();report.checks.suppressedReply=true;
-  const beforeRecovery=traffic();mark('lock');await page.getByRole('button',{name:'Manage private views',exact:true}).click({timeout:remaining()});
+  const beforeRecovery=traffic();mark('lock');await page.getByRole('button',{name:'Saved items settings',exact:true}).click({timeout:remaining()});
   check(await lockRollingPreferencePanel({dialog:dialog(),remaining})==='ready');check(await page.locator('#content article.post').count()===0&&await dialog().getByText('Your saved choices are ready.',{exact:true}).count()===0);report.checks.lockClears=true;
   const beforeReload=traffic();await Promise.all([page.waitForEvent('load',{timeout:remaining()}),dialog().getByRole('button',{name:'Reload to unlock',exact:true}).click({timeout:remaining()})]);
-  await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});check(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));for(const k of ['walletAssets','privateRequests','feedRequests'])check(traffic()[k]===beforeReload[k]);report.checks.reloadLocked=true;
+  await page.getByRole('heading',{name:'Your saved conversations',exact:true}).waitFor({timeout:remaining()});check(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));for(const k of ['walletAssets','privateRequests','feedRequests'])check(traffic()[k]===beforeReload[k]);report.checks.reloadLocked=true;
   await context.close();context=null;mark('reopen');await newContext();await importKeys();report.checks.freshReopen=true;
   await suppressed();report.checks.recoveredSuppression=true;unchanged(beforeRecovery);report.checks.noFinancialRecovery=true;
   const t=traffic();check(t.proofSubmits===(proofsEnabled?2:0)&&t.nodeSubmissions===2&&t.completedWritePhases===2&&!t.writePhaseOpen);mark('complete');report.passed=true;

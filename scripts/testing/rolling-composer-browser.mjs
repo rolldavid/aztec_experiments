@@ -119,8 +119,8 @@ export async function runRollingComposerBrowser(input){
   page=await context.newPage();page.setDefaultTimeout(remaining());
   mark('public-reader');await page.goto(selected.origin,{waitUntil:'networkidle',timeout:remaining()});
   await page.getByRole('button',{name:'Your account',exact:true}).click({timeout:remaining()});
-  const dialog=page.getByRole('dialog',{name:'Your private account'});
-  await dialog.getByRole('button',{name:'Unlock',exact:true}).waitFor({timeout:remaining()});
+  const dialog=page.getByRole('dialog');
+  await dialog.getByRole('button',{name:'Sign in',exact:true}).waitFor({timeout:remaining()});
   assert.deepEqual(await page.evaluate(()=>({secure:isSecureContext,isolated:crossOriginIsolated,locks:typeof navigator.locks?.request==='function',sdkAbsent:globalThis.__aztec===undefined,accountAbsent:globalThis.BillboardAccount===undefined})),{secure:true,isolated:true,locks:true,sdkAbsent:true,accountAbsent:true});
   assert.equal(result.traffic.walletAssets,0);assert.equal(result.traffic.privateRequests,0);result.checks.publicBeforeUnlock=true;
   const noSpend=()=>{assert.equal(result.traffic.proofSubmits,0);assert.equal(result.traffic.nodeSubmissions,0);assert.equal(result.traffic.l1Submissions,0);assert.equal(result.traffic.blockedRequests,0);assert.equal(result.traffic.inspectionErrors,0);};
@@ -129,11 +129,14 @@ export async function runRollingComposerBrowser(input){
    if(status!=='ready'){result.diagnostic=status;if(status==='deadline')expired=true;fail();}
   }
   async function openAccount(role){
-   mark('unlock-'+role);await dialog.getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});
-   await waitForState(dialog.getByLabel('Recovery file',{exact:true}));
-   mark('import-'+role);await dialog.getByLabel('Recovery password',{exact:true}).fill(selected.backupPassword);
-   await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(selected.backupPaths[role]);
-   await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
+   mark('unlock-'+role);await dialog.getByRole('button',{name:'Sign in',exact:true}).click({timeout:remaining()});
+   await waitForState(dialog.getByLabel('Account backup',{exact:true}));
+   mark('import-'+role);await dialog.getByLabel('Backup password',{exact:true}).fill(selected.backupPassword);
+   await dialog.getByLabel('Account backup',{exact:true}).setInputFiles(selected.backupPaths[role]);
+   await dialog.getByRole('button',{name:'Sign in',exact:true}).click();
+   await waitForState(dialog.getByText('Account settings',{exact:true}));
+   if(!await dialog.getByRole('button',{name:'Write a post',exact:true}).isVisible())await dialog.getByText('Account settings',{exact:true}).click();
+   await dialog.getByRole('button',{name:'Write a post',exact:true}).click();
    await waitForState(dialog.getByLabel('Posting identity',{exact:true}));
    mark('choices-'+role);
    const options=await dialog.getByLabel('Posting identity',{exact:true}).locator('option').evaluateAll(nodes=>nodes.map(x=>({value:x.value,label:x.textContent})));
@@ -160,8 +163,8 @@ export async function runRollingComposerBrowser(input){
   const preview=dialog.getByLabel('Message preview',{exact:true});assert.equal(await preview.textContent(),literal);assert.equal(await preview.locator('img,script,a,iframe').count(),0);assert.equal(await message.inputValue(),literal);result.checks.literalPreview=true;noSpend();
   mark('lock-a');await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByRole('button',{name:'Lock account',exact:true}).click();await dialog.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByLabel('Posting identity',{exact:true}).count(),0);
   mark('reload');await Promise.all([page.waitForEvent('load',{timeout:remaining()}),dialog.getByRole('button',{name:'Reload to unlock',exact:true}).click()]);
-  await page.getByRole('button',{name:'Your account',exact:true}).click({timeout:remaining()});await dialog.getByRole('button',{name:'Unlock',exact:true}).waitFor({timeout:remaining()});
-  await openAccount('b');assert.equal(await message.inputValue(),'');assert.equal(await dialog.getByLabel('Posting collateral',{exact:true}).inputValue(),'');await dialog.getByText('No posting deposit was found.',{exact:true}).waitFor();result.checks.accountSwitch=true;result.checks.collateralPendingB=true;noSpend();
+  await page.getByRole('button',{name:'Your account',exact:true}).click({timeout:remaining()});await dialog.getByRole('button',{name:'Sign in',exact:true}).waitFor({timeout:remaining()});
+  await openAccount('b');assert.equal(await message.inputValue(),'');assert.equal(await dialog.getByLabel('Posting collateral',{exact:true}).inputValue(),'');await dialog.getByText('Add a posting balance before publishing.',{exact:true}).waitFor();result.checks.accountSwitch=true;result.checks.collateralPendingB=true;noSpend();
   mark('complete');result.passed=true;
  }catch{result.passed=false;}
  finally{

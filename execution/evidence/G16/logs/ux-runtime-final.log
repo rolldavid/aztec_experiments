@@ -1,0 +1,52 @@
+✖ real browser SDK unlock and encrypted recovery survive unavailable private deployment without submission (2529.463875ms)
+﹣ public-only actual browser prover initialization diagnostic (0.421666ms) # SKIP
+✔ funding runtime captures named custody and rechecks chain/account without signature or send (0.564292ms)
+✔ funding runtime invalidates chain during custody read (0.138958ms)
+✔ funding runtime invalidates account during custody read (0.0615ms)
+✔ funding runtime invalidates transport during custody read (0.054833ms)
+✔ funding runtime invalidates provider during custody read (0.059541ms)
+✔ funding runtime invalidates invalidated during custody read (0.064292ms)
+✔ funding relay uses only bounded same-origin fixed requests and never retries a failed POST (2.858667ms)
+✔ funding relay caps response bytes and rejects a late account change before publication (0.304208ms)
+✔ public asset loader uses pinned native cache and waits for load/error without replay (4.114583ms)
+✔ public artifact loading cancels on page exit rather than elapsed transfer time (1.606875ms)
+✔ public script loading cancels on page exit without replay (1.612083ms)
+✔ public artifact digest mismatch fails before any script executes (1.223084ms)
+✔ native browser reuses immutable hash-addressed bytes while runtime metadata stays fresh (199.98ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 2908.258708
+
+✖ failing tests:
+
+test at apps/rolling/wallet-runtime.browser.test.mjs:12:1
+✖ real browser SDK unlock and encrypted recovery survive unavailable private deployment without submission (2529.463875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'account',
+      'connectFundingWallet',
+      'createSession',
+      'fundingWalletStatus',
+      'fundingWallets',
+      'getAccount',
+  +   'refundOnly',
+      'selectPrivateViews'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/apps/rolling/wallet-runtime.browser.test.mjs:35:50)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'account', 'connectFundingWallet', 'createSession', 'fundingWalletStatus', 'fundingWallets', 'getAccount', 'refundOnly', 'selectPrivateViews' ],
+    expected: [ 'account', 'connectFundingWallet', 'createSession', 'fundingWalletStatus', 'fundingWallets', 'getAccount', 'selectPrivateViews' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

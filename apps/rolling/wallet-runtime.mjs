@@ -81,7 +81,7 @@ async function load(signal){
  const fundingWallets=()=>{
   if(!globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
   globalThis.BillboardWalletProviders.refresh();
-  return globalThis.BillboardWalletProviders.list().map(({id,name})=>Object.freeze({id,name}));
+  return globalThis.BillboardWalletProviders.list().map(({id,name,icon})=>Object.freeze({id,name,...(icon?{icon}:{})}));
  };
  const fundingWalletStatus=()=>{
   const value=account.snapshot();

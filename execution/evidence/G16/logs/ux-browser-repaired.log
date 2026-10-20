@@ -1,0 +1,77 @@
+✔ completed refresh and import clear temporary checking messages (823.5095ms)
+✔ aggregate funding UI reviews exact allocations and consent before one payment and one bounded private claim (445.224209ms)
+✖ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (445.704792ms)
+✖ funding completion reports refreshed fee-needed and Bok credit without claiming readiness (445.876583ms)
+✖ funding completion reports refreshed collateral-pending and Bok credit without claiming readiness (435.959708ms)
+✔ aggregate gas refusal explains explicit changed maximum and requires a fresh quote and confirmation (501.69825ms)
+✔ aggregate funding UI links an exact prepared claim after checkpoint interruption without preparing twice (452.157917ms)
+✔ USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas (432.967916ms)
+✔ funding pause fences the next stage while a held operation retains the busy panel (559.828084ms)
+✔ funding confirmation shows approval and original-payment progress until confirmed (449.333292ms)
+✔ funding confirmation shows approval and original-payment progress until failure (424.468791ms)
+✔ account overview enables funding before any names or publishing reads (787.67525ms)
+✔ explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads (367.175583ms)
+✔ reopening an unlocked composer loads only missing view data and preserves explicit refresh (541.276959ms)
+✔ joining from a post leads to setup and retains the draft (335.987958ms)
+✔ an existing deposit with depleted fees offers posting top-up, including after choosing Bok (409.527958ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 13
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8033.405042
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:859:282
+✖ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (445.704792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:869:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:859:282
+✖ funding completion reports refreshed fee-needed and Bok credit without claiming readiness (445.876583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:869:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/rolling/wallet-panel.browser.test.mjs:859:282
+✖ funding completion reports refreshed collateral-pending and Bok credit without claiming readiness (435.959708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:869:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

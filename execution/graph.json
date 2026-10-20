@@ -870,7 +870,7 @@
       "title": "Implement trustworthy receipts and resumable transaction journal",
       "phase": "engineering",
       "kind": "internal",
-      "status": "active",
+      "status": "planned",
       "depends_on": [
         "W02",
         "A01"
@@ -920,7 +920,7 @@
       "evidence": "evidence/W03.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Current 20 October hosting: app/query/prover and separate Bok restored, USD1500/month persistent controls active and obsolete expiry removed. Moderator running/boot-enabled; ingestion readiness not observed. Scheduled agent work stopped by owner. See START_HERE.md and current_operating_request. Legacy production-readiness task state is not a missing POC-feature count; completed engineering acceptance remains in final_delivery.",
+      "checkpoint": "Current 20 October hosting: app/query/prover and separate Bok restored, USD1500/month persistent controls active and obsolete expiry removed. Moderator running/boot-enabled; ingestion readiness not observed. Scheduled agent work stopped by owner. See START_HERE.md and current_operating_request. Legacy production-readiness task state is not a missing POC-feature count; completed engineering acceptance remains in final_delivery. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.",
       "priority": 14,
       "development_work": {
         "id": "W03-saved-action-recovery",
@@ -2223,7 +2223,8 @@
         "X02",
         "X03",
         "O02",
-        "V06"
+        "V06",
+        "G16"
       ],
       "requirements": [
         "REQ01",
@@ -3730,7 +3731,7 @@
       "title": "Private identities and authentic subboards",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "planned",
       "depends_on": [
         "G03"
       ],
@@ -3839,7 +3840,7 @@
       "evidence": "evidence/G05.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Two genuine development private accounts each registered two names and recovered different bookmarks. Public-reader actual ingress10requests matches browser; no private identifiers in window. Broader privacy/testnet open.",
+      "checkpoint": "Two genuine development private accounts each registered two names and recovered different bookmarks. Public-reader actual ingress10requests matches browser; no private identifiers in window. Broader privacy/testnet open. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.",
       "priority": 1,
       "execution_lane": "G05",
       "owner": "lead-20261011",
@@ -4424,7 +4425,7 @@
       "title": "Recoverable index and encrypted preferences",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "planned",
       "depends_on": [
         "G06"
       ],
@@ -4522,7 +4523,7 @@
       "evidence": "evidence/G07.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Core deletion/rebuild/reopen, nonempty key recovery and native reorg passed retained scoped reviews. Nonempty two-account public-reader10request trace now captured; independent evidence review active.",
+      "checkpoint": "Core deletion/rebuild/reopen, nonempty key recovery and native reorg passed retained scoped reviews. Nonempty two-account public-reader10request trace now captured; independent evidence review active. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.",
       "priority": 1,
       "execution_lane": "G07",
       "owner": "lead-20261011",
@@ -9129,6 +9130,50 @@
         "RC44",
         "RC45"
       ]
+    },
+    {
+      "id": "G16",
+      "title": "Simple account creation and guided funding",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "verification",
+      "depends_on": [],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "shared/rolling/",
+        "execution/evidence/G16/",
+        "shared/wallet-providers.js",
+        "shared/crs-client.js",
+        "scripts/test-crs-consumers.mjs",
+        "scripts/testing/"
+      ],
+      "plan": "tasks/G16.md",
+      "actions": [
+        "Separate account creation, funding and account settings. Calculate starter allocations and gas automatically; preserve payment confirmation and recovery."
+      ],
+      "acceptance": [
+        {
+          "id": "G16-A01",
+          "description": "New-user browser journey has plain account creation, wallet choices with icons, automatic funding amounts and an explicit cost review."
+        },
+        {
+          "id": "G16-A02",
+          "description": "Focused funding and UI regression checks and independent review pass; existing financial recovery safeguards remain."
+        }
+      ],
+      "evidence": "evidence/G16.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "Guided account/funding UX implemented and independently reviewed. Focused563 boundary tests:562 passed, new topup assertion corrected to existing journal error wrapper and passed separately. Browser223 tests:212 passed;11 obsolete-navigation/text failures repaired and affected checks passed. Actual SDK browser exposed preexisting gzip/CRS encoded-length mismatch; narrow reader fix retains decoded bounds and hashes, verification in progress. Hosted app unchanged pending final evidence and normal integration gate.",
+      "execution_lane": "UX",
+      "owner": "ux-20261020",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Focused unit/boundary and browser checks plus independent review.",
+      "priority": 0
     }
   ],
   "specification": {

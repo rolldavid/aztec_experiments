@@ -2,17 +2,18 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 24/53.
+Objective state: **running**. Completed packages: 24/54.
 
 ## In progress
 
-- **Implement trustworthy receipts and resumable transaction journal (W03)** — Current 20 October hosting: app/query/prover and separate Bok restored, USD1500/month persistent controls active and obsolete expiry removed. Moderator running/boot-enabled; ingestion readiness not observed. Scheduled agent work stopped by owner. See START_HERE.md and current_operating_request. Legacy production-readiness task state is not a missing POC-feature count; completed engineering acceptance remains in final_delivery.
-- **Private identities and authentic subboards (G05)** — Two genuine development private accounts each registered two names and recovered different bookmarks. Public-reader actual ingress10requests matches browser; no private identifiers in window. Broader privacy/testnet open.
-- **Recoverable index and encrypted preferences (G07)** — Core deletion/rebuild/reopen, nonempty key recovery and native reorg passed retained scoped reviews. Nonempty two-account public-reader10request trace now captured; independent evidence review active.
+- **Simple account creation and guided funding (G16)** — Guided account/funding UX implemented and independently reviewed. Focused563 boundary tests:562 passed, new topup assertion corrected to existing journal error wrapper and passed separately. Browser223 tests:212 passed;11 obsolete-navigation/text failures repaired and affected checks passed. Actual SDK browser exposed preexisting gzip/CRS encoded-length mismatch; narrow reader fix retains decoded bounds and hashes, verification in progress. Hosted app unchanged pending final evidence and normal integration gate.
 
 ## Ready internal work
 
+- **Private identities and authentic subboards (G05)** — Two genuine development private accounts each registered two names and recovered different bookmarks. Public-reader actual ingress10requests matches browser; no private identifiers in window. Broader privacy/testnet open. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.
+- **Recoverable index and encrypted preferences (G07)** — Core deletion/rebuild/reopen, nonempty key recovery and native reorg passed retained scoped reviews. Nonempty two-account public-reader10request trace now captured; independent evidence review active. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.
 - **Private Bok escrow interface and feasibility (G14)** — Actual private escrow/request metering completed with realtestnet proofs: original0cc4 all8calls settled, authenticated reply8960 and finish8961; 250000microUSDC=13944charged+236056refunded. Publiceffects appendix retains18canonical effects,2fullTx bodies and16unavailable historical bodies; no unlinkability overclaim. Final evidence conjunction/handover in progress; independent specialist release audit remains external.
+- **Implement trustworthy receipts and resumable transaction journal (W03)** — Current 20 October hosting: app/query/prover and separate Bok restored, USD1500/month persistent controls active and obsolete expiry removed. Moderator running/boot-enabled; ingestion readiness not observed. Scheduled agent work stopped by owner. See START_HERE.md and current_operating_request. Legacy production-readiness task state is not a missing POC-feature count; completed engineering acceptance remains in final_delivery. Owner-directed UX work takes priority on20October; historical work retained, broad campaign not resumed.
 
 ## Blocked
 

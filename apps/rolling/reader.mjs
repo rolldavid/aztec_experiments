@@ -99,7 +99,7 @@ function shell(title,{boardId=null}={}){
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
  rail.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();if(event.key==='Tab'&&rail.classList.contains('open')){const targets=[...rail.querySelectorAll('a,button')],first=targets[0],last=targets.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
- main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},'Read the conversation without connecting an account.'))));
+ main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},'A place for anonymous conversation.'))));
  const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Join the conversation'),el('p',{},'Posts and reactions are recorded onchain. Named identities and authenticated Bok replies are shown with their conversations.'),
   button('Write a post',()=>openWallet({type:'post',...(boardId!==null?{subboard:boardId}:{})}),boardId!==null?{'data-board-compose':'',disabled:''}:{}),button('Register a name',()=>openWallet({type:'name'})),button('Create a subboard',()=>openWallet({type:'subboard'}))));
  app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore subboards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
@@ -143,12 +143,12 @@ async function render(){
  else if(parts[0]!=='home'){shell('Page not found');return;}
  shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
-  main.querySelector('.intro').textContent='This view is filtered on your device. Your saved choices are encrypted for recovery. The configured trusted prover and its query service can see private data used to recover or prove your activity.';
-  main.append(button('Manage private views',()=>openWallet({view:'preferences'})));
+  main.querySelector('.intro').textContent='Conversations you follow and posts you save appear here.';
+  main.append(button('Saved items settings',()=>openWallet({view:'preferences'})));
   if(privatePanel?.privateStatus?.()!=='complete'){
-   main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Recover your saved choices to see this view. Your follows and bookmarks stay private.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));
+   main.append(el('div',{class:'empty'},el('h2',{},'Your saved conversations'),el('p',{},'Sign in to load your follows, bookmarks and notifications.'),button('Open your account',()=>openWallet({view:'preferences'}))));
    focusRoute(route,positions.get(route),current===1);
-   announce(title+': unlock and recover your private views to see this feed.');return;
+   announce(title+': sign in to see your saved conversations.');return;
   }
  }
  const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);

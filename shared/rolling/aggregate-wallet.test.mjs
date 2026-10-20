@@ -529,3 +529,18 @@ for(const asset of ['ETH','USDC'])test(asset+' expiry during final credit check 
  await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});
  assert.equal(checks,3);assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);assert.equal((await funding.inspect()).paymentSaved,false);
 });
+
+test('starter funding derives the minimum deposit and funds the claim plus another action',async()=>{
+ const {starterFundingAllocation}=await import('./aggregate-wallet.mjs');let reads=0;
+ const eth=await starterFundingAllocation({asset:'ETH',minDeposit:'123456789',privateFeeCap:'700',provider:{async getFeeData(){reads++;return {maxFeePerGas:2n,gasPrice:1n};}}});
+ assert.deepEqual(eth,{asset:'ETH',collateralWei:'123456789',feeAmount:'1400',bokAmount:'1000000',feePoolFee:3000,slippageBps:100,privateFeeCap:'700',bokPoolFee:3000,gasBudgetWei:'10000000'});assert.equal(reads,1);
+ const usdc=await starterFundingAllocation({asset:'USDC',minDeposit:'400',privateFeeCap:'11',provider:{getFeeData(){throw Error('USDC must use relay pricing');}}});
+ assert.equal(usdc.feeAmount,'22');assert.equal(usdc.collateralWei,'400');assert.equal(usdc.gasBudgetWei,undefined);assert.equal(usdc.collateralPoolFee,3000);
+ await assert.rejects(starterFundingAllocation({asset:'ETH',minDeposit:'1',privateFeeCap:'1',provider:{async getFeeData(){return {maxFeePerGas:null,gasPrice:null};}}}),{code:'ROLLING_FUNDING_GAS_UNAVAILABLE'});
+});
+
+test('direct top-up derives fee ceiling from actual transaction and rejects a changed price before sending',async()=>{
+ const f=topupFixture(),cap=await f.open();const {gasBudgetWei,...input}=f.allocation;
+ const quote=await cap.prepare(input);assert.equal(quote.gasBudgetWei,'400');assert.equal(f.state.sends,0);
+ f.options.provider.getFeeData=async()=>({maxFeePerGas:3n});await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,0);
+});

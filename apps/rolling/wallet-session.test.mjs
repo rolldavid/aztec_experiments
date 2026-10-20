@@ -629,7 +629,7 @@ for(const [method,label]of [['readAccountStatus','account-status'],['ownedIdenti
 test('refresh diagnostic observer failure cannot mask zero balance or inspect private exception getters',async()=>{
  const f=await sessionFixture(),rows=[];f.input.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
  f.input.onProgress=row=>{rows.push(row);if(row.state==='started')throw Error('OBSERVER');return Promise.reject(Error('OBSERVER'));};
- const session=await createRollingWalletSession(f.input);assert.deepEqual(await session.application.readAccountStatus(),{status:'fee-needed'});assert.equal(rows.at(-1).state,'complete');assert.equal(rows.filter(r=>r.stage==='private-refresh'&&r.step==='account-status/method'&&r.state==='started').length,1);
+ const session=await createRollingWalletSession(f.input);assert.deepEqual(await session.application.readAccountStatus(),{status:'fee-needed',depositIds:['0x'+9n.toString(16).padStart(64,'0')]});assert.equal(rows.at(-1).state,'complete');assert.equal(rows.filter(r=>r.stage==='private-refresh'&&r.step==='account-status/method'&&r.state==='started').length,1);
  let accessed=0;const original=Object.defineProperty({},'code',{get(){accessed++;throw Error('PRIVATE_SENTINEL');}});f.pxe.sync=async()=>{throw original;};
  await assert.rejects(session.application.readAccountStatus(),e=>e===original);assert.equal(accessed,0);assert.equal(rows.at(-1).code,'unknown');assert(!JSON.stringify(rows).includes('PRIVATE_SENTINEL'));await session.close();
 });

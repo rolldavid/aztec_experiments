@@ -717,3 +717,8 @@ Funding original reserve recovery exact scope claimed fromffa68cd6: plugins/main
 20 October finality audit (owner explicitly requests all unnecessary finality waits removed): controls owns wallet-session/shared aggregate funding modules and tests atc5d, then censor-daemon runtime/tests + deploy/engine + devnet/bootstrap callsite. Lead owns plugin operator/ports, shared l2-journal/protocol-schema, affected existing runner assertions at1ef52e02. Reviewer independently validates both source components and exactcombinedrevision. Funding owns live84a5 originalrequestrecovery and nativefeeclaim; no sourcepathoverlap. NativeSDK per-secret tagging and actual bridgewitness requirements retained; no wallet-wide finalitylock.
 
 20Oct continuation: controls_resume2 owns bounded preparation of missing current-testnet automated Rolling moderator under .build/rolling-moderator-current and relevant runbook amendment; read-only identity/assets/budget checks, no new capacity or live mutation. Historical V6 left untouched. Lead retains integration; funding_resume2 retains live Bok/proxy restoration. This closes an actual application deployment gap, not another qualification campaign.
+
+## UX 20 October 2026
+Root ux-20261020 owns edits. funding_investigation performs read-only funding/defaults analysis; no source ownership or service operations delegated. Independent review follows implementation.
+
+G16 final review: ux_review independently reviews product, funding safeguards, harness structure and the exact deployment script; funding_investigation independently verifies contract defaults and app-only cutover. Both read-only. Root is sole source writer and service operator.

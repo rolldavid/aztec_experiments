@@ -3,7 +3,7 @@
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
 import {l2JournalScopeText} from '../../shared/l2-journal.mjs';
 import {encodeEscrowCommitment,sha256Field} from '../../shared/protocol-commitments.mjs';
-import {createAggregateWallet,createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
+import {createAggregateWallet,starterFundingAllocation,createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
@@ -156,7 +156,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   async verify(record){const r=await original(record),result=await verified(r,false);return result?.outcome==='success';},
   async recover(){const r=await original(),result=await verified(r,true);check(result);return {status:result.outcome==='success'?'refunded':result.outcome,txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};},
   async prepare({maximumGasWei}={}){
-   quote=null;check(typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
+   quote=null;check(maximumGasWei===undefined||typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
    const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
    const j=await journal(r),saved=await read(()=>j.inspectSummary());let previous=null;
    if(saved){const old=await read(()=>j.recover({retry:false}));check(['success','reverted'].includes(old.outcome));await canonicalReceipt(old);
@@ -165,11 +165,12 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    // Real portal eth_call checks settled Outbox membership and the original
    // depositor receipt, including when the board has since been rejected.
    await read(()=>provider.call(request));const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
-   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(maximumGasWei));
+   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n);
+   maximumGasWei??=String(gas*2n*price);check(gas*2n*price<=BigInt(maximumGasWei));
    quote={r,wallet,data,maximumGasWei,previous};return Object.freeze({amount:r.withdrawal.amount,recipient:r.withdrawal.depositor,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
   },
   async prepareSaved({maximumGasWei}={}){
-   quote=null;check(typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
+   quote=null;check(maximumGasWei===undefined||typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
    const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
    const j=await journal(r),saved=await read(()=>j.inspectRequest()),data=await membership(r);checkSaved(saved,r,data);
    try{const found=await read(()=>j.recover({retry:false}));checkSaved(found.request,r,data);check(requestIdentity(found.request)===requestIdentity(saved)&&found.outcome==='success');await canonicalReceipt(found);return {status:'refunded',txHash:found.txHash,amount:r.withdrawal.amount,gasCostWei:cost(found)};}
@@ -177,7 +178,8 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(saved));
    const request={from:saved.from,to:saved.to,data:saved.data,value:0n};
    await read(()=>provider.call(request));const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
-   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(maximumGasWei));
+   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n);
+   maximumGasWei??=String(gas*2n*price);check(gas*2n*price<=BigInt(maximumGasWei));
    quote={r,wallet,data,maximumGasWei,saved};return Object.freeze({savedRequest:true,nonce:saved.nonce,amount:r.withdrawal.amount,recipient:saved.from,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
   },
   cancel(){quote=null;},
@@ -260,7 +262,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,topups,withdrawal;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,prepareStarter,topups,withdrawal;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -361,6 +363,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const verifyScope=()=>verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok,bokArtifact,network,proofsEnabled,contextGuard:guardRoute});
     aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:bok.address.toString(),owner:captured.address,
      walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,verifyFeeCredit,claimStore,relay:fundingRelay,verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
+    prepareStarter=async({asset})=>aggregate.prepare(await starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap,provider}));
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    if(typeof captureFundingWallet==='function'){
@@ -424,7 +427,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
  const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
- return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

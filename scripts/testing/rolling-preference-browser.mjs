@@ -207,17 +207,17 @@ export async function runRollingPreferenceBrowser(input){
   page=await context.newPage();page.setDefaultTimeout(remaining());
   const safeTraffic=()=>{const t=observer.snapshot();for(const k of ['proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors'])assert.equal(t[k],0);return t;};
   mark('public-reader');await page.goto(selected.origin+'/#/bookmarks',{waitUntil:'networkidle',timeout:remaining()});
-  await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});
+  await page.getByRole('heading',{name:'Your saved conversations',exact:true}).waitFor({timeout:remaining()});
   assert.deepEqual(await page.evaluate(async()=>({secure:isSecureContext,isolated:crossOriginIsolated,locks:typeof navigator.locks?.request==='function',sdkAbsent:globalThis.__aztec===undefined,accountAbsent:globalThis.BillboardAccount===undefined,nativeDatabase:typeof indexedDB.databases==='function'&&(await indexedDB.databases()).length===0})),{secure:true,isolated:true,locks:true,sdkAbsent:true,accountAbsent:true,nativeDatabase:true});report.checks.freshNativeDatabase=true;
-  await page.getByRole('button',{name:'Open private recovery',exact:true}).click({timeout:remaining()});
-  const dialog=page.getByRole('dialog',{name:'Your private account',exact:true});await dialog.getByRole('button',{name:'Unlock',exact:true}).waitFor({timeout:remaining()});
+  await page.getByRole('button',{name:'Open your account',exact:true}).click({timeout:remaining()});
+  const dialog=page.getByRole('dialog',{});await dialog.getByRole('button',{name:'Sign in',exact:true}).waitFor({timeout:remaining()});
   const locked=safeTraffic();assert.equal(locked.walletAssets,0);assert.equal(locked.privateRequests,0);assert.equal(locked.feedRequests,0);report.checks.publicBeforeUnlock=true;
   async function settled(ready){const state=await waitForRollingComposerState({dialog,ready,remaining});if(state!=='ready'){report.diagnostic=state;if(state==='deadline')expired=true;fail();}}
-  mark('unlock');await dialog.getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});await settled(dialog.getByLabel('Recovery file',{exact:true}));
-  mark('import');await dialog.getByLabel('Recovery password',{exact:true}).fill(selected.backupPassword,{timeout:remaining()});await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(selected.backupPath,{timeout:remaining()});await dialog.getByRole('button',{name:'Import recovery',exact:true}).click({timeout:remaining()});
-  await settled(dialog.getByRole('button',{name:'Recover private views',exact:true}));safeTraffic();
+  mark('unlock');await dialog.getByRole('button',{name:'Sign in',exact:true}).click({timeout:remaining()});await settled(dialog.getByLabel('Account backup',{exact:true}));
+  mark('import');await dialog.getByLabel('Backup password',{exact:true}).fill(selected.backupPassword,{timeout:remaining()});await dialog.getByLabel('Account backup',{exact:true}).setInputFiles(selected.backupPath,{timeout:remaining()});await dialog.getByRole('button',{name:'Sign in',exact:true}).click({timeout:remaining()});
+  await settled(dialog.getByRole('button',{name:'Load saved items',exact:true}));safeTraffic();
   report.initialization=await captureRollingInitializationObservation(dialog,Math.min(1000,remaining()));
-  mark('recover');let next=dialog.getByRole('button',{name:'Recover private views',exact:true});
+  mark('recover');let next=dialog.getByRole('button',{name:'Load saved items',exact:true});
   const complete=dialog.getByText('Your saved choices are ready.',{exact:true}),more=dialog.getByRole('button',{name:'Continue private recovery',exact:true});
   while(true){
    await next.click({timeout:remaining()});report.recoverySteps++;await settled(complete.or(more));safeTraffic();
@@ -239,14 +239,14 @@ export async function runRollingPreferenceBrowser(input){
   mark('bookmarks');await assertView('Bookmarks');report.checks.bookmarks=true;
   mark('main-board');await page.getByRole('navigation',{name:'Community'}).getByRole('link',{name:'Main board',exact:true}).click({timeout:remaining()});await page.getByRole('button',{name:'Unfollow board',exact:true}).waitFor({timeout:remaining()});assert(safeTraffic().boardRequests>0);report.checks.mainBoardFollow=true;
   await assertView('Bookmarks');
-  mark('lock');await page.getByRole('button',{name:'Manage private views',exact:true}).click({timeout:remaining()});assert.equal(await lockRollingPreferencePanel({dialog,remaining}),'ready');
+  mark('lock');await page.getByRole('button',{name:'Saved items settings',exact:true}).click({timeout:remaining()});assert.equal(await lockRollingPreferencePanel({dialog,remaining}),'ready');
   assert.equal(await page.locator('#content article.post').count(),0);await dialog.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByText('Your saved choices are ready.',{exact:true}).count(),0);report.checks.lockClears=true;
   const beforeReload=safeTraffic();mark('reload');await Promise.all([page.waitForEvent('load',{timeout:remaining()}),dialog.getByRole('button',{name:'Reload to unlock',exact:true}).click({timeout:remaining()})]);
-  await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});assert.equal(await page.locator('#content article.post').count(),0);
+  await page.getByRole('heading',{name:'Your saved conversations',exact:true}).waitFor({timeout:remaining()});assert.equal(await page.locator('#content article.post').count(),0);
   assert(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));const afterReload=safeTraffic();for(const k of ['walletAssets','privateRequests','feedRequests'])assert.equal(afterReload[k],beforeReload[k]);report.checks.reloadLocked=true;
   mark('complete');report.passed=true;
  }catch{report.passed=false;if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;
-  if(!report.initialization&&page&&expiresAt!==undefined&&Date.now()<expiresAt)report.initialization=await captureRollingInitializationObservation(page.getByRole('dialog',{name:'Your private account',exact:true}),Math.min(1000,expiresAt-Date.now()));
+  if(!report.initialization&&page&&expiresAt!==undefined&&Date.now()<expiresAt)report.initialization=await captureRollingInitializationObservation(page.getByRole('dialog',{}),Math.min(1000,expiresAt-Date.now()));
  }
  finally{
   clearTimeout(timer);
