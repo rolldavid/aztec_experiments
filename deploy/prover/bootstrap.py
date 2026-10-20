@@ -247,6 +247,23 @@ def persistent_hosting(value):
         raise ValueError('Invalid persistent hosting policy')
     return dict(value)
 
+def control_source():
+    # A control-only amendment does not relabel or replace the admitted runtime.
+    # The fixed operator path and full-file pin are independent provenance.
+    expected=PINS.get('controlSourceSha256')
+    if expected is None:
+        source=RELEASE/'deploy/prover/bootstrap.py'
+        if digest(source)!=PINS['startup']:raise ValueError('Activation source changed')
+        return source
+    if type(expected) is not str or not re.fullmatch('[a-f0-9]{64}',expected):raise ValueError('Invalid control source pin')
+    source=pathlib.Path('/usr/local/lib/rolling-control/deploy/prover/bootstrap.py')
+    if source.resolve()!=source:raise ValueError('Control source symlink')
+    for path in [source,*source.parents]:
+        info=path.lstat()
+        if info.st_uid!=0 or stat.S_IMODE(info.st_mode)&0o022 or (not stat.S_ISREG(info.st_mode) if path==source else not stat.S_ISDIR(info.st_mode)):raise ValueError('Control source ownership')
+    if digest(source)!=expected:raise ValueError('Control source changed')
+    return source
+
 def persistent_mode(record):
     value=record.get('persistentHosting')
     expected=PINS.get('persistentHosting')
@@ -354,6 +371,7 @@ def verify_controls():
     mark('verify-budget')
     record=BASE/'deadline.json';config=json.loads(record.read_text())
     if persistent_mode(config):
+        if 'controlSourceSha256' in PINS:control_source()
         info=record.lstat()
         if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o600 or info.st_nlink!=1:raise ValueError('Persistent policy ownership')
         if run(['systemctl','show','rolling-budget.timer','--property=LoadState','--value'],capture=True,timeout=2)!='masked':raise ValueError('Persistent timer must be masked')
@@ -869,6 +887,7 @@ def application_observation():
             'runtimeArchiveSha256':record['runtimeArchiveSha256'],'manifestSha256':record['manifestSha256'],
             'proverPolicy':'masked-pending-qualification','linuxQueryQualified':False}
     if persistent_mode(record):output['persistentHosting']=persistent_hosting(record['persistentHosting'])
+    if 'controlSourceSha256' in PINS:output['controlSourceSha256']=PINS['controlSourceSha256']
     application_good=True
     if (PRIVATE/'prover-activation-intent.json').exists():
         try: output.update(activation_support('observe'))
@@ -910,8 +929,7 @@ def application_observation():
 def activation_support(operation, expected=None):
     # Only the immutable packaged source may interpret root-owned activation data.
     if operation in ('activate','query-observe','delivery') and (BASE/'application-failure.json').exists():raise ValueError('Application reconciliation required')
-    source=RELEASE/'deploy/prover/bootstrap.py'
-    if digest(source)!=PINS['startup']: raise ValueError('Activation source changed')
+    source=control_source()
     namespace={'__name__':'rolling_activation','__file__':str(source)}
     exec(compile(source.read_bytes(),str(source),'exec'),namespace)
     return namespace['prover_activation'](globals(),operation,expected)
@@ -2032,7 +2050,7 @@ def generate(config, now=None):
 # This closed diagnostic does not qualify normal deployment or run node/proof work.
 NATIVE_BYTES = 44698432
 NATIVE_REUSE = ('receipt_url','diagnostic','emit_diagnostic','mark','version_facts','run','write','digest',
-                'host_resources','persistent_hosting','persistent_mode','operation_deadline','immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
+                'host_resources','persistent_hosting','control_source','persistent_mode','operation_deadline','immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
                 'read_bounded_json','upload_receipt')
 NATIVE_GLOBALS = ('BASE','PRIVATE','STAGE','DIAGNOSTICS_ACTIVE','STEP','STEPS')
 

@@ -1182,3 +1182,14 @@ existing isolation and ordering; do not replay qualification, activation or fina
 intents. Monthly AWS budget visibility, alerts and actual usage review must be in
 place before retiring the demo cloud expiry. Changes to budget authority or source
 binding require another explicit reviewed operator amendment.
+
+A control-only amendment can pin `controlSourceSha256` in the generated attestor
+and install that exact module at
+`/usr/local/lib/rolling-control/deploy/prover/bootstrap.py`. The selector rejects
+symlinks, non-root ownership, writable directories/files, and changed bytes before
+loading activation support. The original manifest, `startup` and `bootstrap` pins
+continue to identify the admitted runtime and its original qualification; the
+separate control-source hash is reported alongside them. Do not represent this
+small control overlay as a newly packed full runtime archive. The control package
+may carry the already pinned startup-helper closure for the existing node unit's
+next boot, preserving current node process/data and the fixed native image.

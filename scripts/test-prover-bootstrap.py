@@ -171,6 +171,31 @@ class Bootstrap(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'^Redirect rejected$'):ns['fetch_package'](wrong['runtimeUrl'],destination)
             self.assertEqual(calls,[wrong['runtimeUrl']]);self.assertFalse(destination.exists())
 
+    def test_control_overlay_is_fixed_root_owned_source_bound_and_keeps_runtime_pin(self):
+        from types import SimpleNamespace
+        ns=host();original=pathlib.Path;fixed='/usr/local/lib/rolling-control/deploy/prover/bootstrap.py'
+        with tempfile.TemporaryDirectory() as t:
+            root=original(t);source=root/'control.py';source.write_text('approved control fixture');source.chmod(0o700)
+            ns['PINS'].update(startup='d'*64,controlSourceSha256=hashlib.sha256(source.read_bytes()).hexdigest())
+            # Labelled filesystem ownership only; real bytes/hash and drift check.
+            class File:
+                def __fspath__(self):return str(source)
+                def resolve(self):return self
+                def lstat(self):return SimpleNamespace(st_uid=0,st_mode=0o100700)
+                @property
+                def parents(self):return []
+                def read_bytes(self):return source.read_bytes()
+            selected=File();ns['pathlib']=SimpleNamespace(Path=lambda name:selected if name==fixed else (_ for _ in ()).throw(AssertionError('Unfixed path')))
+            self.assertIs(ns['control_source'](),selected);self.assertEqual(ns['PINS']['startup'],'d'*64)
+            source.write_text('changed')
+            with self.assertRaisesRegex(ValueError,'source changed'):ns['control_source']()
+            source.write_text('approved control fixture');selected.lstat=lambda:SimpleNamespace(st_uid=1000,st_mode=0o100700)
+            with self.assertRaisesRegex(ValueError,'ownership'):ns['control_source']()
+            selected.lstat=lambda:SimpleNamespace(st_uid=0,st_mode=0o100722)
+            with self.assertRaisesRegex(ValueError,'ownership'):ns['control_source']()
+            selected.resolve=lambda:original('/tmp/other')
+            with self.assertRaisesRegex(ValueError,'symlink'):ns['control_source']()
+
     def test_persistent_policy_is_closed_and_source_bound(self):
         policy={'schemaVersion':1,'budgetName':'Rolling Chat ongoing hosting','monthlyUsd':1500,'budgetReadbackSha256':'e'*64}
         c={**config(),'persistentHosting':policy};self.assertEqual(b.validate(c,NOW),c)
