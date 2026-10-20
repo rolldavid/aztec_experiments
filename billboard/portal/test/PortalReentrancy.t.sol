@@ -34,7 +34,7 @@ contract CallbackBridge {
         if (attack) {
             checkGuard(abi.encodeCall(portal.activate, (1, 1, 0, new bytes32[](0))), 0);
             checkGuard(abi.encodeCall(portal.deposit, (bytes32(uint256(123)))), 1 ether);
-            checkGuard(abi.encodeCall(portal.withdraw, (1, 1, 0, new bytes32[](0))), 0);
+            checkGuard(abi.encodeCall(portal.withdraw, (bytes32(uint256(123)), 1, 1, 0, new bytes32[](0))), 0);
         }
         require(!reject, "Dependency rejected after callbacks");
     }
@@ -80,7 +80,7 @@ contract PortalReentrancyTest is PortalFixtures {
     }
     function activate() private { portal.activate(1, 1, 0, new bytes32[](0)); }
     function prepareDeposit() private {
-        activate(); configure(inbox, false, false, 2 ether, 2 ether);
+        activate(); configure(inbox, false, false, 0, 2 ether);
         depositAs(portal, ALICE, 2 ether);
     }
     function assertAccounting(uint128 amount, uint256 total, uint256 balance) private view {
@@ -100,7 +100,7 @@ contract PortalReentrancyTest is PortalFixtures {
         require(address(outbox).balance == 10 ether, "Callback payment retained");
     }
     function testInboxDepositRejectsAllReentrantEntrypointsAfterEffects() public {
-        activate(); configure(inbox, true, false, 2 ether, 2 ether);
+        activate(); configure(inbox, true, false, 0, 2 ether);
         depositAs(portal, ALICE, 2 ether);
         require(inbox.calls() == 1 && inbox.guardedCallbacks() == 3, "Missing deposit callbacks");
         assertAccounting(2 ether, 2 ether, 2 ether);
@@ -125,13 +125,13 @@ contract PortalReentrancyTest is PortalFixtures {
         require(portal.depositsEnabled() && outbox.calls() == 1, "Activation retry failed");
     }
     function testRejectingInboxRollsBackReceiptValueAndCanRetry() public {
-        activate(); configure(inbox, true, true, 2 ether, 2 ether);
+        activate(); configure(inbox, true, true, 0, 2 ether);
         vm.deal(ALICE, 2 ether);
         expectDependencyFailure(); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(uint256(123)));
         assertAccounting(0, 0, 0);
         require(ALICE.balance == 2 ether, "Rejected deposit retained value");
         require(inbox.calls() == 0 && inbox.guardedCallbacks() == 0, "Rejected Inbox effects retained");
-        configure(inbox, true, false, 2 ether, 2 ether); depositAs(portal, ALICE, 2 ether);
+        configure(inbox, true, false, 0, 2 ether); depositAs(portal, ALICE, 2 ether);
         assertAccounting(2 ether, 2 ether, 2 ether);
     }
     function testRejectingOutboxRollsBackWithdrawalAndCanRetry() public {

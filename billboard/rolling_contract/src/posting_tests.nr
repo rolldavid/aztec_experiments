@@ -171,7 +171,7 @@ unconstrained fn mature_post_screening_retains_recovery_and_exit() {
     assert_eq(info[5], 2); assert_eq(info[7], 1); assert_eq(info[8], 1);
     env.mine_block_at(env.last_block_timestamp() + 11);
     env.call_private(alice, RollingBoard::at(board).withdraw(chain));
-    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain)), [0; 10]);
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain)), [0; 11]);
     assert_eq(env.view_public(RollingBoard::at(board).get_post_count()), 1);
 }
 #[test(should_fail_with="Plugin disabled")]
@@ -261,7 +261,7 @@ unconstrained fn rejected_subboard_does_not_trap_eligible_withdrawal() {
     env.call_private(alice, RollingBoard::at(board).screen(chain, child, grandchild));
     env.mine_block_at(env.last_block_timestamp() + 11);
     env.call_private(alice, RollingBoard::at(board).withdraw(chain));
-    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain)), [0; 10]);
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain)), [0; 11]);
 }
 #[test]
 unconstrained fn grouped_subboard_rejection_preserves_rules_metadata_and_creation() {
@@ -702,5 +702,5 @@ unconstrained fn history_seeded_1002_tail_authentication_and_exit() {
     env.call_private(owner, RollingBoard::at(board).screen(chain, last, none));
     env.mine_block_at(env.last_block_timestamp() + 201);
     env.call_private(owner, RollingBoard::at(board).withdraw(chain));
-    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(owner, chain)), [0; 10]);
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(owner, chain)), [0; 11]);
 }

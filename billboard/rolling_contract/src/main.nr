@@ -15,6 +15,7 @@ mod tests;
 #[aztec]
 pub contract RollingBoard {
     use aztec::{
+        hash::compute_secret_hash,
         history::{note::assert_note_existed_by, storage::public_storage_historical_read},
         keys::getters::{get_nhk_app, get_public_keys, try_get_public_keys},
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
@@ -25,7 +26,7 @@ pub contract RollingBoard {
         state_vars::{Map, Owned, PrivateMutable, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
         utils::comparison::Comparator,
     };
-    use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash};
+    use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, deposit_decision_nullifier, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash, get_cancel_msg_hash, get_refund_msg_hash};
     use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
     use crate::profiles::{OwnedNameRecord, ProfileRecord, AvatarModerationRecord, next_version, bio_digest, avatar_digest};
     global SENTINEL: Field = 0;
@@ -232,10 +233,10 @@ pub contract RollingBoard {
     #[derive(Deserialize, Eq, Serialize, Packable)]
     #[note]
     pub struct DepositNote {
-        pub schema_version: Field,
         pub deposit_chain_id: Field,
         pub amount: u128,
         pub l1_depositor: EthAddress,
+        pub deposit_id: Field,
         pub head_link: Field,
         pub screened_link: Field,
         pub sequences: SequenceState,
@@ -243,11 +244,11 @@ pub contract RollingBoard {
     }
 
     impl DepositNote {
-        fn logical_fields(self) -> [Field; 10] {
-            [self.schema_version, self.deposit_chain_id,
+        fn logical_fields(self) -> [Field; 11] {
+            [1, self.deposit_chain_id,
                 self.amount as Field, self.l1_depositor.to_field(), self.head_link,
                 self.sequences.head_sequence as Field, self.screened_link, self.sequences.screened_sequence as Field,
-                self.sequences.last_real_sequence as Field, self.next_allowed_time as Field]
+                self.sequences.last_real_sequence as Field, self.next_allowed_time as Field, self.deposit_id]
         }
     }
 
@@ -699,14 +700,38 @@ pub contract RollingBoard {
         let content = get_deposit_msg_hash(config.l1_chain_id, portal, self.address,
             config.rollup_version, depositor, amount);
         self.context.consume_l1_to_l2_message(content, [secret], portal, message_leaf_index);
+        let deposit_id = compute_secret_hash([secret]);
+        self.context.push_nullifier_unsafe(deposit_decision_nullifier(portal, depositor, deposit_id));
         let chain = deposit_chain_id(self.address, sender, content, secret, message_leaf_index);
         assert(chain != 0, "Zero deposit identity");
         let cooldown = compute_cooldown(amount, config.base_cooldown as u64, config.min_deposit);
-        let note = DepositNote { schema_version: 1, deposit_chain_id: chain,
-            amount, l1_depositor: depositor, head_link: 0, screened_link: 0,
+        let note = DepositNote { deposit_chain_id: chain,
+            amount, l1_depositor: depositor, deposit_id, head_link: 0, screened_link: 0,
             sequences: SequenceState { head_sequence: 0, screened_sequence: 0, last_real_sequence: 0 },
             next_allowed_time: checked_time_add(now, cooldown) };
         self.storage.deposits.at(sender).insert(note).deliver(MessageDelivery::onchain_constrained());
+    }
+
+    /// Anyone can finish the Ethereum owner's authenticated cancellation request.
+    /// No private account restoration or original claim secret is needed.
+    #[external("private")]
+    fn cancel_deposit(depositor: EthAddress, amount: u128, deposit_id: Field, message_leaf_index: Field) {
+        let config = self.storage.config.read();
+        config.validate(self.context.chain_id(), self.context.version());
+        let portal = self.storage.portal_address.read();
+        portal.validate();
+        depositor.validate();
+        assert(portal.to_field() != 0, "Zero portal");
+        assert(depositor.to_field() != 0, "Zero depositor");
+        assert(deposit_id != 0, "Zero deposit");
+        assert(amount >= config.min_deposit, "Deposit below minimum");
+        assert(amount <= config.max_deposit, "Deposit above maximum");
+        let content = get_cancel_msg_hash(config.l1_chain_id, portal, self.address,
+            config.rollup_version, depositor, amount, deposit_id);
+        self.context.consume_l1_to_l2_message(content, [1], portal, message_leaf_index);
+        self.context.push_nullifier_unsafe(deposit_decision_nullifier(portal, depositor, deposit_id));
+        self.context.message_portal(portal, get_refund_msg_hash(config.l1_chain_id, portal, self.address,
+            config.rollup_version, depositor, amount, deposit_id));
     }
 
     // Ported admission transition: caller validates canonical post data before this
@@ -728,7 +753,7 @@ pub contract RollingBoard {
         let notes = storage.deposits.at(sender).pop_notes(options);
         assert(notes.len() > 0, "No deposit note found -- claim a deposit first");
         let dep_note = notes.get_unchecked(0);
-        assert((dep_note.schema_version == 1) & (dep_note.deposit_chain_id == deposit_chain_id) & (deposit_chain_id != 0), "Invalid deposit identity");
+        assert((dep_note.deposit_chain_id == deposit_chain_id) & (deposit_chain_id != 0), "Invalid deposit identity");
 
         let config = storage.config.read();
         config.validate(context.chain_id(), context.version());
@@ -871,11 +896,12 @@ pub contract RollingBoard {
 
         // --- Re-insert deposit note with updated state ---
         let new_deposit = DepositNote {
-            schema_version: dep_note.schema_version, deposit_chain_id,
+            deposit_chain_id,
             sequences: SequenceState { head_sequence: sequence, screened_sequence: new_screened_sequence,
                 last_real_sequence: new_last_real },
             amount: dep_note.amount,
             l1_depositor: dep_note.l1_depositor,
+            deposit_id: dep_note.deposit_id,
             head_link: new_link,
             screened_link: new_screened_link,
             next_allowed_time: new_next_allowed,
@@ -897,14 +923,14 @@ pub contract RollingBoard {
         let notes = self.storage.deposits.at(sender).pop_notes(options);
         assert(notes.len() > 0, "No deposit note found");
         let deposit = notes.get_unchecked(0);
-        assert((deposit.schema_version == 1) & (deposit.deposit_chain_id == deposit_chain_id) & (deposit_chain_id != 0), "Invalid deposit identity");
+        assert((deposit.deposit_chain_id == deposit_chain_id) & (deposit_chain_id != 0), "Invalid deposit identity");
         assert((deposit.amount >= config.min_deposit) & (deposit.amount <= config.max_deposit), "Invalid deposit receipt");
         deposit.l1_depositor.validate();
         assert(deposit.l1_depositor.to_field() != 0, "Zero depositor");
         assert(deposit.sequences.screened_sequence >= deposit.sequences.last_real_sequence, "Too early to withdraw -- not all posts screened");
         assert(now >= deposit.next_allowed_time, "Too early to withdraw -- time lock not expired");
         let content = get_withdraw_msg_hash(config.l1_chain_id, portal, self.address,
-            config.rollup_version, deposit.l1_depositor, deposit.amount);
+            config.rollup_version, deposit.l1_depositor, deposit.amount, deposit.deposit_id);
         self.context.message_portal(portal, content);
     }
 
@@ -918,13 +944,13 @@ pub contract RollingBoard {
         ids
     }
 
-    /// Exact V1 serialization, selected by private deposit identity.
+    /// Deposit fields followed by the exact Ethereum deposit commitment.
     #[external("utility")]
-    unconstrained fn get_deposit_info(owner: AztecAddress, deposit_chain_id: Field) -> pub [Field; 10] {
+    unconstrained fn get_deposit_info(owner: AztecAddress, deposit_chain_id: Field) -> pub [Field; 11] {
         let options = NoteViewerOptions::<DepositNote, 8>::new()
             .select(DepositNote::properties().deposit_chain_id, Comparator.EQ, deposit_chain_id).set_limit(1);
         let notes = self.storage.deposits.at(owner).view_notes(options);
-        if notes.len() == 0 { [0; 10] } else { notes.get_unchecked(0).logical_fields() }
+        if notes.len() == 0 { [0; 11] } else { notes.get_unchecked(0).logical_fields() }
     }
 
     /// Returns exact child/grandchild hints for the selected live deposit.

@@ -35,7 +35,7 @@ test('fixed public quotes produce exact three allocations, user gas and signed c
 test('USDC-only gas is explicitly unavailable before any provider call',async()=>{const f=fixture();f.input.allocation.asset='USDC';await assert.rejects(f.prepare(),{code:'AGGREGATE_USDC_GAS_ROUTE_UNQUALIFIED'});assert.equal(f.calls.length,0);});
 test('wallet capability and zero user gas fail before funds or network',async()=>{for(const key of ['canSendTransaction','canSignTypedData','gasBudgetWei']){const f=fixture();f.input.wallet[key]=key==='gasBudgetWei'?'0':false;await assert.rejects(f.prepare());assert.equal(f.calls.length,0);}});
 for(const [name,options,code] of [
- ['no liquidity never substitutes issuance',{noLiquidity:true},'PUBLIC_READ_FAILED'],['wrong deployed runtime',{badCode:true},'RUNTIME'],['mismatched portal scope',{badScope:true},'SCOPE'],['quote reorg',{reorg:true},'QUOTE_REORG'],['inactive bridge',{disabled:true},'PORTAL_NOT_READY'],['active deposit preoccupation',{existing:true},'EXISTING_DEPOSIT'],['balance must cover allocations plus user gas',{poor:true},'INSUFFICIENT_USER_FUNDS'],
+ ['no liquidity never substitutes issuance',{noLiquidity:true},'PUBLIC_READ_FAILED'],['wrong deployed runtime',{badCode:true},'RUNTIME'],['mismatched portal scope',{badScope:true},'SCOPE'],['quote reorg',{reorg:true},'QUOTE_REORG'],['inactive bridge',{disabled:true},'PORTAL_NOT_READY'],['balance must cover allocations plus user gas',{poor:true},'INSUFFICIENT_USER_FUNDS'],
 ])test(name,async()=>{const f=fixture(options);await assert.rejects(f.prepare(),{code:'AGGREGATE_'+code});assert(!f.calls.some(c=>/send|sign/.test(c.method)));});
 test('invented quote objects and chain-expired plans cannot encode a payment',async()=>{await assert.rejects(aggregateFundingTransaction({plan:{}},'0x12'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});const options={},f=fixture(options),result=await f.prepare();options.pendingTime=1901;await assert.rejects(aggregateFundingTransaction(result,'0x12'),{code:'AGGREGATE_STALE_QUOTE'});});
 test('input descriptors reject accessors, inherited values and numeric coercion',async()=>{let touched=0;const f=fixture();Object.defineProperty(f.input.wallet,'address',{get(){touched++;return address(15);}});await assert.rejects(f.prepare());assert.equal(touched,0);const g=fixture();g.input.allocation.collateralWei={toString(){touched++;return '100';}};await assert.rejects(g.prepare());assert.equal(touched,0);});
@@ -94,4 +94,13 @@ for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])test(`${asset} s
  const options={},f=make(options),quote=await f.prepare();await validateAggregateFundingQuote(quote);
  await assert.rejects(validateAggregateFundingQuote(structuredClone(quote)),{code:'AGGREGATE_UNVERIFIED_QUOTE'});
  options.pendingTime=1901;await assert.rejects(validateAggregateFundingQuote(quote),{code:'AGGREGATE_STALE_QUOTE'});
+});
+
+test('fresh ETH and USDC signup remain available to a wallet with an earlier deposit', async () => {
+ for (const make of [fixture, usdcFixture]) {
+  const f = make({existing:true});
+  const quote = await f.prepare();
+  assert.equal(quote.plan.beneficiary, f.input.wallet.address);
+  assert(!f.calls.some(call => call.method === 'eth_call' && call.params[0].to === f.input.scope.collateralPortal && p.parseTransaction(call.params[0])?.name === 'getDeposit'));
+ }
 });

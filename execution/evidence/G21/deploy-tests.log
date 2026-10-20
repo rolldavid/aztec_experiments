@@ -1,0 +1,130 @@
+✔ class publication uses its own transaction; already published=false (1.663834ms)
+✔ class publication uses its own transaction; already published=true (0.495333ms)
+✔ unreconciled publication cannot advance merely because its class exists (0.603416ms)
+✔ a returned publication submission is insufficient without observed class registration (0.96625ms)
+✔ pinned internal L2Block hash method differs from public node BlockResponse hash value (3.32775ms)
+✔ deployment returns pending until native witness exists then verifies usable portal root (7.680542ms)
+✔ checkpointed receipt and actual portal root can activate while finalized head lags (0.83975ms)
+✔ missing native witness never activates a checkpointed transaction (0.577791ms)
+✔ reverted receipt fails closed before witness lookup (0.564083ms)
+✔ missing success receipt fails closed before witness lookup (0.730167ms)
+✔ dropped receipt fails closed before witness lookup (0.331875ms)
+✔ unknown receipt fails closed before witness lookup (0.328875ms)
+✔ wrong transaction receipt fails closed before witness lookup (0.281458ms)
+✔ missing block hash receipt fails closed before witness lookup (0.269958ms)
+✔ pending and proposed receipts do not qualify even with a high finalized tip (0.297417ms)
+✔ receipt block must still match canonical block at its height (0.525792ms)
+✔ re-inclusion during witness resolution returns pending; resume checks the new block (0.976417ms)
+✔ drop during witness resolution prevents activation (0.455916ms)
+✔ native witness with unusable portal root remains pending without sending (0.445625ms)
+✔ activation requires successful L1 receipt and enabled portal {"activationStatus":0} (0.599875ms)
+✔ activation requires successful L1 receipt and enabled portal {"enabled":false} (0.521708ms)
+✔ a stalled Ready RPC has a bounded unknown outcome without activation (11.28625ms)
+✔ deployment missing CREATE2 proxy is checked before wallet or proving work (1.092125ms)
+✔ deployment unrecognized CREATE2 proxy is checked before wallet or proving work (0.286625ms)
+✔ deployment pinned CREATE2 proxy is checked before wallet or proving work (0.33725ms)
+✔ Rolling deployment targets current ABI, not legacy policy/portal getters (27.714ms)
+✔ offline preparation produces manifest accepted with actual candidate artifacts (1372.654625ms)
+✔ offline CLI refuses to replace an existing manifest (1266.774709ms)
+✔ offline explicit Rolling preparation binds the actual processed class (788.412834ms)
+✔ unsupported offline intent rejects before actor input access (0.650042ms)
+✔ deployment CLI rejects legacy manifest before wallet files or SDK startup (440.760167ms)
+✔ lost binding response resumes from encrypted transaction without supplied hash or another binding (925.209584ms)
+✔ lost board deployment response resumes original transaction and deploys the board only once (346.641708ms)
+✔ unresolved saved binding cannot start another transaction or falsely complete setup (384.644792ms)
+✔ missing journal fails closed before any deployment signature and closes PXE (313.521584ms)
+✔ definitively stale deploy proof cannot silently regenerate a Rolling operation (456.34125ms)
+✔ definitively stale binding proof cannot silently regenerate a Rolling operation (374.143959ms)
+✔ stale binding cannot silently accept another binding that appeared meanwhile (355.542625ms)
+✔ stale binding cannot redeploy a missing original Ethereum portal (291.178333ms)
+✔ stale board deployment cannot silently accept a board that appeared meanwhile (317.496708ms)
+✔ deployment preflight rejects missing manifest before any transaction (81.8975ms)
+✔ deployment preflight rejects Aztec actor before any transaction (177.119958ms)
+✔ deployment preflight rejects Ethereum actor before any transaction (237.487417ms)
+✔ deployment preflight rejects chain before any transaction (243.864458ms)
+✔ deployment preflight rejects bridge before any transaction (214.529375ms)
+✖ deployment preflight rejects artifact before any transaction (132.148416ms)
+✔ existing deployment rejects runtime mismatch before binding (202.869958ms)
+✔ existing deployment rejects inbox mismatch before binding (246.044792ms)
+✔ existing deployment rejects outbox mismatch before binding (219.08425ms)
+✔ existing deployment rejects policy mismatch before binding (225.724583ms)
+✔ existing deployment rejects moderator mismatch before binding (192.057208ms)
+✔ owned preflight provider is disposed even before wallet/PXE startup (184.630667ms)
+✔ external browser provider is not disposed (198.871292ms)
+✔ deployed originalContractClassId mismatch blocks binding (210.4125ms)
+✔ deployed currentContractClassId mismatch blocks binding (256.972792ms)
+✔ critical Rolling checkpoint read is bounded (224.3415ms)
+✔ critical Rolling config read is bounded (213.009708ms)
+✔ critical Rolling portal_address read is bounded (215.831584ms)
+✔ malformed Rolling portal storage null fails closed (218.557ms)
+✔ malformed Rolling portal storage undefined fails closed (182.813709ms)
+✔ malformed Rolling portal storage false fails closed (174.595166ms)
+✔ malformed Rolling portal storage [object Object] fails closed (243.66725ms)
+✔ malformed Rolling portal storage 1461501637330902918203684832716283019655932542976 fails closed (262.145167ms)
+✔ preactivation deposit state is bounded and malformed value fails (348.396666ms)
+✔ deployment initialization exposes typed preparation and synchronization progress (188.837292ms)
+✔ Rolling actual ABI profile and encrypted recovery: none (293.486125ms)
+✔ Rolling actual ABI profile and encrypted recovery: binding (509.739084ms)
+✔ Rolling actual ABI profile and encrypted recovery: deployment (427.00775ms)
+✔ Rolling canonical moderator mismatch blocks portal binding (184.240834ms)
+✔ Rolling canonical main_rules mismatch blocks portal binding (218.913042ms)
+✔ Rolling canonical main_version mismatch blocks portal binding (178.462167ms)
+✔ Rolling canonical config mismatch blocks portal binding (183.650417ms)
+✔ Rolling canonical portal_address mismatch blocks portal binding (217.127875ms)
+✔ Rolling deployer mismatch cannot authorize portal binding (206.331667ms)
+✔ Rolling address mismatch cannot authorize portal binding (267.255125ms)
+✔ Rolling canonical-hash mismatch cannot authorize portal binding (200.284583ms)
+✔ Rolling checkpoint-height mismatch cannot authorize portal binding (192.82125ms)
+✔ Rolling bound deployment resumes after an authorized main policy update without another transaction (294.67375ms)
+✔ Rolling bound deployment rejects invalid main policy version 0 (319.110791ms)
+✔ Rolling bound deployment rejects invalid main policy version 4294967296 (265.161375ms)
+✔ Rolling bound initial policy still must match the deployment manifest (333.074166ms)
+✔ Rolling raw NodeInfo without alias uses nativefalse PXE and never prepares CRS (201.965667ms)
+✔ Rolling local native real proofs fail before PXE or deployment (177.15225ms)
+✔ Rolling restart never resends dropped valid original deployment (272.208542ms)
+✔ Rolling restart does not silently replace a stale rejected deployment (327.851959ms)
+✔ old SDK preflight without explicit native proof mode fails before wallet or PXE (208.424417ms)
+✔ Rolling creation anchor survives distinct portal journal and repeat deployment command (324.125292ms)
+✔ Rolling missing historical creation receipt remains explicit and never inferred from binding (343.656208ms)
+✔ Rolling recovered original creation reorg refuses before another binding (269.355791ms)
+✔ Rolling anchor reader guards original receipt twice and rejects terminal failure (0.517375ms)
+✔ deployment provider observes changed code immediately without weakening runtime verification (185.797875ms)
+✔ legacy engine deployment rejects before environment, wallet, or proving access (0.381125ms)
+✔ saved canonical binding cannot authorize recreation of a missing portal (287.81425ms)
+ℹ tests 93
+ℹ suites 0
+ℹ pass 92
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16569.766666
+
+✖ failing tests:
+
+test at scripts/test-w03-deploy-engine.mjs:146:99
+✖ deployment preflight rejects artifact before any transaction (132.148416ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /artifact identity mismatch/. Input:
+  
+  'Error: Rolling artifact required'
+  
+      at async TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:156:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Rolling artifact required
+        at fail (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/deployment-manifest.mjs:4:42)
+        at Object.verifyDeploymentInputs (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/shared/deployment-manifest.mjs:32:58)
+        at g.runDeploy (evalmachine.<anonymous>:303:22)
+        at Object.run (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:99:225)
+        at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/scripts/test-w03-deploy-engine.mjs:156:25)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: /artifact identity mismatch/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

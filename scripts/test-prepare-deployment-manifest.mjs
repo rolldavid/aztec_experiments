@@ -9,10 +9,10 @@ import {prepareDeploymentManifest} from './prepare-deployment-manifest.mjs';
 import {verifyDeploymentInputs,deploymentManifestConfig} from '../shared/deployment-manifest.mjs';
 import {ROOT} from './toolchain.mjs';
 const addr=n=>'0x'+n.toString(16).padStart(40,'0'),field=n=>'0x'+n.toString(16).padStart(64,'0');
-const intent=()=>({schemaVersion:1,profile:'local-test',network:{nodeUrl:'http://127.0.0.1:8080/',ethRpcUrl:'http://127.0.0.1:8545/',chainId:'31337',rollupVersion:'1',rollup:addr(1),inbox:addr(2),outbox:addr(3)},actors:{aztecDeployer:field(4),ethereumDeployer:addr(5)},board:{salt:'0',minDeposit:'1',maxDeposit:'1000',baseCooldown:'1',kMultiplier:'4',censorWindow:'60',maxSaveUp:'16',censor:field(6),policy:'No threats.'}});
+const intent=()=>({schemaVersion:2,profile:'local-test',network:{nodeUrl:'http://127.0.0.1:8080/',ethRpcUrl:'http://127.0.0.1:8545/',chainId:'31337',rollupVersion:'1',rollup:addr(1),inbox:addr(2),outbox:addr(3)},actors:{aztecDeployer:field(4),ethereumDeployer:addr(5)},board:{kind:'rolling',salt:'0',minDeposit:'1',maxDeposit:'1000',baseCooldown:'1',kMultiplier:'4',censorWindow:'60',maxSaveUp:'16',policy:'No threats.'}});
 test('offline preparation produces manifest accepted with actual candidate artifacts',async()=>{
  const manifest=await prepareDeploymentManifest(intent());
- const artifact=JSON.parse(fs.readFileSync(path.join(ROOT,'apps/src/billboard/deploy/billboard_artifact.json')));
+ const artifact=JSON.parse(fs.readFileSync(path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json')));
  const runtimeMetadata=JSON.parse(fs.readFileSync(path.join(ROOT,'shared/portal-runtime.json')));
  const portalBytecode=fs.readFileSync(path.join(ROOT,'apps/src/billboard/deploy/portal_bytecode.txt'),'utf8').trim();
  assert.ok(verifyDeploymentInputs(manifest,{artifact,runtimeMetadata,portalBytecode,config:deploymentManifestConfig(manifest),ethers}).intentDigest);
@@ -36,4 +36,20 @@ test('offline explicit Rolling preparation binds the actual processed class',asy
  const runtimeMetadata=JSON.parse(fs.readFileSync(path.join(ROOT,'shared/portal-runtime.json'))),portalBytecode=fs.readFileSync(path.join(ROOT,'apps/src/billboard/deploy/portal_bytecode.txt'),'utf8').trim();
  assert.ok(verifyDeploymentInputs(m,{artifact,runtimeMetadata,portalBytecode,config:deploymentManifestConfig(m),ethers}).intentDigest);
  i.board.kind='billboard';await assert.rejects(prepareDeploymentManifest(i));
+});
+
+
+test('unsupported offline intent rejects before actor input access',async()=>{
+ const unsupported={schemaVersion:1,board:{kind:'billboard'},get actors(){assert.fail('Unsupported deployment must not inspect actor inputs');}};
+ await assert.rejects(prepareDeploymentManifest(unsupported),{code:'BB_DEPLOYMENT_UNSUPPORTED'});
+});
+test('deployment CLI rejects legacy manifest before wallet files or SDK startup',async()=>{
+ const m=await prepareDeploymentManifest(intent());m.schemaVersion=1;delete m.board.kind;m.board.censor=field(6);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'unsupported-deployment-'));
+ try{
+  const input=path.join(dir,'manifest.json');fs.writeFileSync(input,JSON.stringify(m));
+  const result=spawnSync(process.execPath,[path.join(ROOT,'apps/src/billboard/deploy/cli.mjs'),'--manifest',input,'--aztec-wallet',path.join(dir,'must-not-read-aztec'),'--eth-wallet',path.join(dir,'must-not-read-ethereum')],{timeout:20000,encoding:'utf8',env:{PATH:process.env.PATH,HOME:process.env.HOME}});
+  assert.equal(result.status,1);assert.match(result.stderr,/BB_DEPLOYMENT_UNSUPPORTED/);assert.doesNotMatch(result.stderr,/ENOENT|must-not-read/);
+  assert.deepEqual(fs.readdirSync(dir),['manifest.json']);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });

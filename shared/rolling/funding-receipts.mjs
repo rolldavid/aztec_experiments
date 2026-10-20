@@ -12,10 +12,12 @@ import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
 import {recoverPrivateFeeClaim, captureAggregateFundingIntent, captureAggregateFundingCustody, PrivateFeeFundingError} from '../private-fee-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
 import {isTrustedPrivateNode} from '../trusted-private-node.mjs';
-import {encodeEscrowCommitment, sha256Field} from '../protocol-commitments.mjs';
+import {encodeEscrowCommitment, encodeDepositExitCommitment, sha256Field} from '../protocol-commitments.mjs';
 
 const boardAbi = new Interface([
   'function deposit(bytes32 secretHash) payable',
+  'function requestRefund(bytes32 depositId)',
+  'event RefundRequested(address indexed depositor,bytes32 indexed depositId,uint128 amount,bytes32 key,uint256 index)',
   'event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)',
   'function ROLLUP() view returns(address)', 'function L2_CONTRACT() view returns(bytes32)',
   'function VERSION() view returns(uint256)', 'function L1_CHAIN_ID() view returns(uint256)',
@@ -46,13 +48,15 @@ function frozen(value) { if(value && typeof value==='object'){Object.values(valu
 const lower = value => String(value).toLowerCase();
 const equal = (a,b) => lower(a)===lower(b);
 function validated(input) {
-  const kind=input.kind;requireThat(['collateral','private-fee','bok'].includes(kind),'INVALID');
-  const scope=object(input.scope,['chainId','version','rollup','portal','recipient',...(kind==='collateral'?[]:['token'])]);
+  const kind=input.kind;requireThat(['collateral','collateral-cancel','private-fee','bok'].includes(kind),'INVALID');
+  const collateral = kind === 'collateral' || kind === 'collateral-cancel';
+  const scope=object(input.scope,['chainId','version','rollup','portal','recipient',...(collateral?[]:['token'])]);
   uint(scope.chainId,64);uint(scope.version,32);requireThat(BigInt(scope.chainId)>0n && BigInt(scope.chainId)<=BigInt(Number.MAX_SAFE_INTEGER) && BigInt(scope.version)>0n,'INVALID');
-  for(const key of ['rollup','portal',...(kind==='collateral'?[]:['token'])]){hex(scope[key],20);requireThat(BigInt(scope[key])>0n,'INVALID');}field(scope.recipient);
-  const receipt=object(input.receipt,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash']);
-  hex(receipt.txHash);hex(receipt.blockHash);hex(receipt.sender,20);uint(receipt.nonce,53);uint(receipt.amount,kind==='collateral'?96:128);uint(receipt.leafIndex,L1_TO_L2_MSG_TREE_HEIGHT);
+  for(const key of ['rollup','portal',...(collateral?[]:['token'])]){hex(scope[key],20);requireThat(BigInt(scope[key])>0n,'INVALID');}field(scope.recipient);
+  const receipt=object(input.receipt,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash',...(kind === 'collateral-cancel' ? ['depositId'] : [])]);
+  hex(receipt.txHash);hex(receipt.blockHash);hex(receipt.sender,20);uint(receipt.nonce,53);uint(receipt.amount,collateral?96:128);uint(receipt.leafIndex,L1_TO_L2_MSG_TREE_HEIGHT);
   requireThat(BigInt(receipt.amount)>0n && BigInt(receipt.sender)>0n,'INVALID');field(receipt.messageKey);field(receipt.secretHash);
+  if (kind === 'collateral-cancel') field(receipt.depositId);
   requireThat(Number.isSafeInteger(receipt.blockNumber) && receipt.blockNumber>=0,'INVALID');
   const anchor=object(input.anchor,['number','hash','root']);requireThat(Number.isSafeInteger(anchor.number) && anchor.number>=0,'INVALID');field(anchor.hash);field(anchor.root,true);
   field(input.owner);requireThat(typeof input.contextGuard==='function','INVALID');
@@ -64,6 +68,10 @@ function validated(input) {
  * trusted private node; contextGuard must enforce that session/account binding.
  * anchor is the PXE header's {number,hash,root:l1ToL2MessageTree.root}.
  * receipt is immutable public recovery metadata, never a license to repeat a payment.
+ *
+ * collateral-cancel takes a canonical RefundRequested receipt including depositId.
+ * It needs no secrets, custody store or aggregate intent; the public bridge secret is 1.
+ * The returned cancel_deposit call can be paid by the current private account.
  *
  * secrets: collateral {walletSecret,walletSalt} plus optional claimStore.load(scope,hash);
  * private-fee {walletSecret} plus privateFeeArtifact; bok {recipientSalt,bridgeSecret}.
@@ -86,7 +94,9 @@ export async function prepareFundingClaim(input) {
   let readFailed=false;
   try {
     const {kind,scope:s,receipt:r,anchor:a,owner}=validated(input);
-    const secrets=object(input.secrets,kind==='collateral'?['walletSecret','walletSalt']:kind==='private-fee'?['walletSecret']:['recipientSalt','bridgeSecret']);
+    const cancellation = kind === 'collateral-cancel';
+    // A cancellation is authorized by the owner's Ethereum request, not an old account key.
+    const secrets = cancellation ? {} : object(input.secrets,kind==='collateral'?['walletSecret','walletSalt']:kind==='private-fee'?['walletSecret']:['recipientSalt','bridgeSecret']);
     for(const [key,value] of Object.entries(secrets))field(value,key==='walletSalt');
     // Capture every capability before the first await. Retaining an options
     // object must not permit a route or guard change during verification.
@@ -94,8 +104,9 @@ export async function prepareFundingClaim(input) {
     const aggregateIntent=captureAggregateFundingIntent(aggregateDescriptor?.value);
     const custodyDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateCustody');requireThat(!custodyDescriptor || 'value' in custodyDescriptor,'INVALID');
     const aggregateCustody=captureAggregateFundingCustody(custodyDescriptor?.value,aggregateIntent);
+    if (cancellation) requireThat(!aggregateIntent && !aggregateCustody, 'INVALID');
     const guard=input.contextGuard, privateFeeArtifact=input.privateFeeArtifact;
-    const suppliedNode=input.node, suppliedProvider=input.ethProvider, suppliedStore=input.claimStore;
+    const suppliedNode=input.node, suppliedProvider=input.ethProvider, suppliedStore=cancellation ? undefined : input.claimStore;
     requireThat(isTrustedPrivateNode(suppliedNode),'UNTRUSTED_NODE');
     const capture=(source,names)=>Object.freeze(Object.fromEntries(names.map(name=>{const fn=source?.[name];requireThat(typeof fn==='function','INVALID');return [name,fn.bind(source)];})));
     const nodeReads=capture(suppliedNode,['getNodeInfo','getContract','getBlockData','getL1ToL2MessageMembershipWitness']);
@@ -149,7 +160,25 @@ export async function prepareFundingClaim(input) {
     const call=async(to,abi,name)=>abi.decodeFunctionResult(name,await provider.call({to,data:abi.encodeFunctionData(name),blockTag:r.blockNumber}))[0];
     const boardScope={l1ChainId:s.chainId,rollupAddress:s.rollup,rollupVersion:s.version,boardAddress:s.recipient,portalAddress:s.portal};
     let content,secret,claim,messageRecipient=s.recipient;
-    if(kind==='collateral') {
+    if (cancellation) {
+      for (const [name, value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]]) {
+        requireThat(equal(await call(s.portal,boardAbi,name),value));
+      }
+      requireThat(equal(tx.to,s.portal) && String(tx.value) === '0');
+      requireThat(lower(tx.data) === boardAbi.encodeFunctionData('requestRefund',[r.depositId]).toLowerCase());
+      const topic = boardAbi.getEvent('RefundRequested').topicHash.toLowerCase();
+      const events = receipt.logs.filter(log => equal(log.address,s.portal) && lower(log.topics?.[0]) === topic);
+      requireThat(events.length === 1);
+      let event;
+      try { event = boardAbi.parseLog(events[0])?.args; } catch { throw fail('MISMATCH'); }
+      requireThat(event && equal(event.depositor,r.sender) && equal(event.depositId,r.depositId) &&
+        String(event.amount) === r.amount && equal(event.key,r.messageKey) && String(event.index) === r.leafIndex);
+      secret = Fr.ONE.toString();
+      content = await sha256Field(encodeDepositExitCommitment('cancel',boardScope,{
+        depositor:r.sender, amount:r.amount, depositId:r.depositId,
+      }));
+      claim = {contract:s.recipient, method:'cancel_deposit', args:[r.sender,r.amount,r.depositId,r.leafIndex]};
+    } else if(kind==='collateral') {
       for(const [name,value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]])requireThat(equal(await call(s.portal,boardAbi,name),value));
       const depositor=aggregateCustody?.beneficiary ?? r.sender;
       const custodyScope={...boardScope,depositor};

@@ -348,11 +348,11 @@
   const names=['MIN_DEPOSIT','MAX_DEPOSIT','L2_CONTRACT','ROLLUP','INBOX','OUTBOX','VERSION','L1_CHAIN_ID','CONFIG_HASH'];
   function failure(){return Object.assign(new Error('The configured portal, network or private fee contract could not be verified. Check the public board configuration before making a payment.'),{code:'BB_CONNECTION_VERIFICATION_FAILED'});}
   async function verify({sdk,ethers,config,privateFeeArtifact,verifyFee=true}={}){
-    let provider;const deadline=Date.now()+20000;
+    let provider;
     try{
       const selected=root.BillboardConfig.validate(config);
       if(typeof verifyFee!=='boolean')throw Error();
-      const read=fn=>sdk.boundedTransactionRead(fn,deadline-Date.now());
+      const read=async fn=>fn();
       if(verifyFee){
         if(!selected.privateFee||!privateFeeArtifact)throw Error();
         const address=await read(()=>sdk.derivePrivateFeeAddress(privateFeeArtifact));

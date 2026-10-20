@@ -46,6 +46,7 @@ const args=parseArgs();
 const manifestFd=fs.openSync(args.manifest,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
 let manifestConfig;
 try{if(!fs.fstatSync(manifestFd).isFile()||fs.fstatSync(manifestFd).size>65536)throw new Error('Invalid deployment manifest file');manifestConfig=deploymentManifestConfig(JSON.parse(fs.readFileSync(manifestFd,'utf8')));}finally{fs.closeSync(manifestFd);}
+if(manifestConfig.boardProfile!=='rolling')throw Object.assign(new Error('This release deploys RollingBoard only.'),{code:'BB_DEPLOYMENT_UNSUPPORTED'});
 const network=validateCliNetwork({nodeUrl:manifestConfig.aztecNodeUrl,ethRpcUrl:manifestConfig.ethRpcUrl});
 const AZTEC_NODE_URL=network.nodeUrl,ETH_RPC_URL=network.ethRpcUrl;
 const AZTEC_API_KEY=__realProcess.env.AZTEC_API_KEY||'';

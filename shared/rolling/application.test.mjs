@@ -52,7 +52,7 @@ function fixture(){
     if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
     if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
     if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
-    const replies={balance_of:state.bokCredit??1000n,get_plugin:{adapter:AztecAddress.fromBigIntUnsafe(state.bokAdapter??5n),enabled:state.bokEnabled!==false},request:state.bokRequest,preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
+    const replies={balance_of:state.bokCredit??1000n,get_plugin:{adapter:AztecAddress.fromBigIntUnsafe(state.bokAdapter??5n),enabled:state.bokEnabled!==false},request:state.bokRequest,preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n,56n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
@@ -1198,19 +1198,19 @@ test('top-up rejects private action fields, missing Bok custody and unavailable 
 function collateralFixture(){const f=fixture();f.options.deployment.privateFee.artifact=bokArtifact;f.options.funding={verifyWithdrawal:async()=>f.state.refunded===true};f.app=f.restart();return f;}
 test('RC22 balances page uses owned private utilities, exact zero fee and anchored maturity without public account lookup',async()=>{
  const f=collateralFixture();f.state.bokCredit=0n;const b=await f.app.readBalances();
- assert.equal(b.fee.available,'0');assert.equal(b.fee.withdrawal,'not-supported');assert.equal(b.collateral.deposits[0].amount,'100');assert.equal(b.collateral.deposits[0].eligible,true);assert.equal(b.collateral.nextCursor,null);assert.equal(b.bok,null);
+ assert.equal(b.fee.available,'0');assert.equal(b.fee.withdrawal,'not-supported');assert.equal(b.collateral.deposits[0].amount,'100');assert.equal(b.collateral.deposits[0].depositId,hex(56));assert.equal(b.collateral.deposits[0].eligible,true);assert.equal(b.collateral.nextCursor,null);assert.equal(b.bok,null);
  assert(f.state.privateReads.every(r=>!r.name.includes('public')));assert.equal(f.state.sends,0);
 });
 test('RC22 collateral reports screening debt and time lock independently and rejects exit preparation',async()=>{
  for(const [screened,last,time,reason]of [[0n,1n,50n,'screening-required'],[1n,1n,101n,'time-locked']]){
-  const f=collateralFixture();f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,screened,last,time]};
+  const f=collateralFixture();f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,screened,last,time,56n]};
   assert.equal((await f.app.readBalances()).collateral.deposits[0].reason,reason);
   await assert.rejects(f.app.prepare({type:'withdraw',deposit:'9'}),{code:'ROLLING_WITHDRAWAL_NOT_READY'});assert.equal(f.state.sends,0);
  }
 });
 test('RC22 balances reject malformed owned deposits, stale anchors and noncontiguous pages',async()=>{
  for(const mode of ['identity','anchor','gap']){const f=collateralFixture();
-  if(mode==='identity')f.state.responses={get_deposit_info:Array(10).fill(0n)};
+  if(mode==='identity')f.state.responses={get_deposit_info:Array(11).fill(0n)};
   if(mode==='gap')f.state.responses={get_deposit_ids:[9n,0n,10n,...Array(7).fill(0n)]};
   if(mode==='anchor')f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(99)});
   await assert.rejects(f.app.readBalances());assert.equal(f.state.sends,0);
@@ -1226,7 +1226,7 @@ test('RC22 exit preserves original depositor through encrypted reopen and blocks
 });
 test('RC22 exit submit rechecks private receipt and never gates withdrawal on rejected public policy',async()=>{
  const f=collateralFixture();f.state.policyReadError=Error('rejected');const review=await f.app.prepare({type:'withdraw',deposit:'9'});
- f.state.responses={get_deposit_info:[1n,9n,101n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n]};
+ f.state.responses={get_deposit_info:[1n,9n,101n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n,56n]};
  await assert.rejects(f.app.submitPrepared(review.intentId),{code:'ROLLING_WITHDRAWAL_NOT_READY'});assert.equal(f.state.sends,0);
 });
 test('RC22 a moving PXE anchor fails balances even when the earlier block remains canonical',async()=>{
@@ -1235,7 +1235,7 @@ test('RC22 a moving PXE anchor fails balances even when the earlier block remain
 });
 test('RC22 collateral page continuation is bounded and a full page never implies exhaustion',async()=>{
  const f=collateralFixture();f.state.responses={get_deposit_ids:Array.from({length:10},(_,i)=>BigInt(i+1))};
- const original=f.options.sdk.Contract.at;f.options.sdk.Contract.at=async(...args)=>{const board=await original(...args);return {methods:new Proxy(board.methods,{get(target,name){if(name!=='get_deposit_info')return target[name];return(owner,id)=>({simulate:async()=>({result:[1n,BigInt(id),100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n]})});}})};};
+ const original=f.options.sdk.Contract.at;f.options.sdk.Contract.at=async(...args)=>{const board=await original(...args);return {methods:new Proxy(board.methods,{get(target,name){if(name!=='get_deposit_info')return target[name];return(owner,id)=>({simulate:async()=>({result:[1n,BigInt(id),100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n,56n]})});}})};};
  const first=await f.app.readBalances(),page=await f.app.readBalances({cursor:first.collateral.nextCursor});assert.equal(page.collateral.deposits.length,10);assert.equal(typeof page.collateral.nextCursor,'string');assert.notEqual(page.collateral.nextCursor,first.collateral.nextCursor);assert.equal(page.collateral.complete,false);assert(f.state.privateReads.some(r=>r.name==='get_deposit_ids'&&r.args[1]===10));await assert.rejects(f.app.readBalances({cursor:first.collateral.nextCursor}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});await assert.rejects(f.restart().readBalances({cursor:page.collateral.nextCursor}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
 });
 test('RC22 unresolved local fee reservation is explicit and never double-deducts private note balance',async()=>{
@@ -1533,7 +1533,7 @@ for(const kind of ['post','claim-deposit','withdraw','moderate-post','bok','bio'
  const mutate=()=>{
   if(kind==='post')f.state.policy=2;
   if(kind==='claim-deposit')f.state.claimError=true;
-  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n]};
+  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n,56n]};
   if(kind==='moderate-post')f.state.moderator=99n;
   if(kind==='bok')f.state.bokEnabled=false;
   if(kind==='bio')f.state.responses={profile_state:decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(fn=>fn.name==='profile_state')),[1n,0n,0n,0n,0n,0n,0n,0n].map(n=>new Fr(n)))};
@@ -1556,7 +1556,7 @@ for(const kind of ['post','claim-deposit','withdraw','moderate-post','bok'])test
  await f.app.prepareReplacement(f.prepared.intentId,{expectedTxHash:f.originalHash});f.state.crashAfterPrepare=false;f.state.beforeSubmit=async()=>{
   if(kind==='post')f.state.policy=2;
   if(kind==='claim-deposit')f.state.claimError=true;
-  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n]};
+  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n,56n]};
   if(kind==='moderate-post')f.state.moderator=99n;
   if(kind==='bok')f.state.bokEnabled=false;
  };
@@ -1771,4 +1771,28 @@ for(const change of ['local-owner','network-chain'])test('funding verification r
  const f=fundingFixture(),original=f.options.sdk.prepareFundingClaim;
  f.options.sdk.prepareFundingClaim=async input=>{const result=await original(input);if(change==='local-owner'){f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);await input.contextGuard();}else f.options.accountSession.wallet.getChainInfo=async()=>({chainId:1,version:1});return result;};
  f.app=f.restart();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+
+test('stuck deposit cancellation uses the new account, revalidates the public request and retains the refund identity', async () => {
+ const f = fundingFixture();
+ const receipt = {...f.receipt, depositId:hex(56)};
+ let checks = 0;
+ f.options.sdk.prepareFundingClaim = async input => {
+  checks++;
+  assert.equal(input.kind, 'collateral-cancel');
+  assert.equal(input.owner, f.options.accountSession.owner.toString());
+  assert.equal(input.secrets, undefined);
+  assert.equal(input.aggregateIntent, undefined);
+  assert.deepEqual(input.receipt, receipt);
+  return {status:'claim-ready', claim:{contract:hex(1), method:'cancel_deposit', args:[receipt.sender,receipt.amount,receipt.depositId,receipt.leafIndex]}};
+ };
+ const app = f.restart();
+ const prepared = await app.prepare({type:'cancel-deposit',receipt});
+ assert.deepEqual(prepared.withdrawal,{kind:'cancelled-collateral',depositor:receipt.sender,amount:receipt.amount,depositId:receipt.depositId,eligible:true});
+ const result = await app.submitPrepared(prepared.intentId);
+ assert.equal(result.status,'confirmed');
+ assert.equal(f.state.sends,1);
+ assert.equal(f.state.sent.payload.name,'cancel_deposit');
+ assert.equal(checks,2);
+ assert.equal((await app.readWithdrawal()).withdrawal.depositId,receipt.depositId);
 });

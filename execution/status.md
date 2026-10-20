@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 29/58.
+Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-None.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Contract/client implementation and coherent builds complete: 71 Solidity tests,9 native TXE,425 wallet/journal,395 shared,14 discovery,2 focused browser,13 prover-policy and2 archive checks pass. Deployment checks92/93 then the corrected artifact-mutation fixture passes its focused rerun. New board/portal and Bok escrow/portal deployed; board and Bok binding await native settlement. Current site unchanged,7 original posts retained in static archive. Exact-candidate integration review and coordinated hosted publication/fresh signup acceptance remain.
 
 ## Ready internal work
 

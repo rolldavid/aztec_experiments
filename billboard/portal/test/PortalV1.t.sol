@@ -53,13 +53,13 @@ contract RefundReceiver {
     constructor(BillboardPortal p) { portal = p; }
     function configure(bool r, bool re) external { reject = r; reenter = re; }
     function deposit() external payable { portal.deposit{value:msg.value}(bytes32(uint256(123))); }
-    function withdraw(uint256 epoch) external { portal.withdraw(epoch,1,0,new bytes32[](0)); }
+    function withdraw(uint256 epoch) external { portal.withdraw(bytes32(uint256(123)),epoch,1,0,new bytes32[](0)); }
     receive() external payable {
         require(!reject,"Fixture refund rejected");
         uint128 amount = portal.getDeposit(address(this));
         sawClearedReceipt = amount == 0;
         if (reenter) {
-            try portal.withdraw(2,1,0,new bytes32[](0)) {} catch { blockedWithdraw = true; }
+            try portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0)) {} catch { blockedWithdraw = true; }
             try portal.deposit{value:msg.value}(bytes32(uint256(123))) {} catch { blockedDeposit = true; }
         }
     }
@@ -88,7 +88,7 @@ contract PortalV1Test is PortalFixtures {
         p.activate(1,1,0,new bytes32[](0));
     }
     function exitRoot(BillboardPortal p,address owner,uint128 amount) private view returns(bytes32) {
-        return message(p,PortalMessages.receipt(true,block.chainid,address(p),p.L2_CONTRACT(),p.VERSION(),owner,amount)).sha256ToField();
+        return message(p,PortalMessages.depositExit("AZTEC_BB_EXIT_V2",block.chainid,address(p),p.L2_CONTRACT(),p.VERSION(),owner,amount,p.latestDeposit(owner))).sha256ToField();
     }
     function expectReceipt(address owner,uint128 expectedAmount) private view {
         uint128 amount = portal.getDeposit(owner);
@@ -159,8 +159,9 @@ contract PortalV1Test is PortalFixtures {
         control.expectRevert(); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(Constants.P));
         expectReceipt(ALICE,0);
         depositAs(portal,ALICE,2 ether); depositAs(portal,BOB,3 ether);
-        vm.deal(ALICE,2 ether); control.expectRevert(); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(uint256(1)));
-        require(portal.totalDeposited()==5 ether,"Deposit bounds corrupted accounting");
+        vm.deal(ALICE,2 ether); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(uint256(1)));
+        require(portal.getDeposit(ALICE,bytes32(uint256(123))).amount==2 ether,"Earlier deposit overwritten");
+        require(portal.totalDeposited()==7 ether,"Fresh commitment accounting wrong");
     }
     function testInboxFailureRollsBackReceiptValueAndTotal() public {
         FailingInbox failing=new FailingInbox(); rollup.setInbox(IInbox(address(failing)));
@@ -174,34 +175,34 @@ contract PortalV1Test is PortalFixtures {
     function testCanonicalExitRefundAndRedepositRejectOldProof() public {
         activate(portal,rollup); depositAs(portal,ALICE,2 ether); depositAs(portal,BOB,3 ether);
         bytes32 oldExit=exitRoot(portal,ALICE,2 ether); rollup.publish(2,1,oldExit);
-        vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+        vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
         expectReceipt(ALICE,0); expectReceipt(BOB,3 ether);
         BillboardPortal.Deposit memory cleared=portal.getActiveDeposit(ALICE);
-        require(cleared.amount==0 && cleared.secretHash==0 && cleared.key==0 && cleared.index==0,"Refund retained claim metadata");
+        require(cleared.amount==0 && cleared.secretHash==bytes32(uint256(123)),"Spent commitment tombstone lost");
         require(portal.totalDeposited()==3 ether && ALICE.balance==2 ether,"Refund accounting failed");
-        control.expectRevert(); vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
-        depositAs(portal,ALICE,2 ether); expectReceipt(ALICE,2 ether);
+        control.expectRevert(); vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
+        vm.deal(ALICE,2 ether); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(uint256(124))); expectReceipt(ALICE,2 ether);
         // Redepositing the same amount must not make the consumed exit usable again.
-        control.expectRevert(); vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+        control.expectRevert(); vm.prank(ALICE); portal.withdraw(bytes32(uint256(124)),2,1,0,new bytes32[](0));
         expectReceipt(ALICE,2 ether); require(portal.totalDeposited()==5 ether,"Old proof changed new liability");
         require(rollup.outbox().hasMessageBeenConsumedAtEpoch(Epoch.wrap(2),1),"Old exit lost its consumed marker");
         // A new authenticated exit is a distinct Outbox message, even at the same amount.
         rollup.publish(3,1,exitRoot(portal,ALICE,2 ether));
-        vm.prank(ALICE); portal.withdraw(3,1,0,new bytes32[](0));
+        vm.prank(ALICE); portal.withdraw(bytes32(uint256(124)),3,1,0,new bytes32[](0));
     }
     function testEachExitReceiptWordIsAuthenticatedAndFailureRollsBack() public {
         activate(portal,rollup); depositAs(portal,ALICE,2 ether);
-        bytes32[8] memory words=[bytes32("AZTEC_BB_EXIT_V1"),bytes32(uint256(1)),bytes32(block.chainid),
-            bytes32(uint256(uint160(address(portal)))),L2,bytes32(VERSION),bytes32(uint256(uint160(ALICE))),bytes32(uint256(2 ether))];
+        bytes32[9] memory words=[bytes32("AZTEC_BB_EXIT_V2"),bytes32(uint256(2)),bytes32(block.chainid),
+            bytes32(uint256(uint160(address(portal)))),L2,bytes32(VERSION),bytes32(uint256(uint160(ALICE))),bytes32(uint256(2 ether)),bytes32(uint256(123))];
         for(uint256 i; i<words.length; ++i) {
             bytes32 old=words[i]; words[i]=bytes32(uint256(old)^1);
             rollup.publish(2,1,message(portal,Hash.sha256ToField(abi.encode(words))).sha256ToField());
-            control.expectRevert(); vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+            control.expectRevert(); vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
             expectReceipt(ALICE,2 ether); require(portal.totalDeposited()==2 ether && address(portal).balance==2 ether,"Failed exit changed liabilities");
             require(!rollup.outbox().hasMessageBeenConsumedAtEpoch(Epoch.wrap(2),1),"Failed exit consumed message");
             words[i]=old;
         }
-        rollup.publish(2,1,exitRoot(portal,ALICE,2 ether)); vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+        rollup.publish(2,1,exitRoot(portal,ALICE,2 ether)); vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
     }
     function testRejectedRefundRollsBackCanonicalConsumptionThenRetrySucceeds() public {
         activate(portal,rollup); RefundReceiver receiver=new RefundReceiver(portal);
@@ -226,7 +227,7 @@ contract PortalV1Test is PortalFixtures {
         new ForceSurplus{value:1 ether}(payable(address(portal)));
         require(address(portal).balance==1 ether && portal.totalDeposited()==0,"Forced value credited as collateral");
         activate(portal,rollup); depositAs(portal,ALICE,2 ether);
-        rollup.publish(2,1,exitRoot(portal,ALICE,2 ether)); vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+        rollup.publish(2,1,exitRoot(portal,ALICE,2 ether)); vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
         require(address(portal).balance==1 ether && portal.totalDeposited()==0,"Refund spent forced surplus");
     }
     function testConstructorRejectsInvalidScopeAndEconomicBounds() public {
@@ -255,9 +256,9 @@ contract PortalV1Test is PortalFixtures {
         activate(portal,rollup); depositAs(portal,ALICE,2 ether);
         rollup.publish(2,1,exitRoot(portal,ALICE,2 ether));
         rollup.setInbox(IInbox(ALICE)); rollup.setOutbox(Outbox(BOB));
-        vm.prank(ALICE); portal.withdraw(2,1,0,new bytes32[](0));
+        vm.prank(ALICE); portal.withdraw(bytes32(uint256(123)),2,1,0,new bytes32[](0));
         require(address(portal.INBOX())==address(originalInbox) && address(portal.OUTBOX())==address(original),"Bridge identity changed");
-        depositAs(portal,ALICE,2 ether); expectReceipt(ALICE,2 ether);
+        vm.deal(ALICE,2 ether); vm.prank(ALICE); portal.deposit{value:2 ether}(bytes32(uint256(124))); expectReceipt(ALICE,2 ether);
     }
     function testInvalidBridgeAndChangedChainReject() public {
         IInbox originalInbox=rollup.inbox();
@@ -304,18 +305,22 @@ contract PortalDepositConsentTest is PortalFixtures {
         uint256 deadline=block.timestamp+60;bytes memory sig=signature(address(this),1 ether,SECRET,0,deadline);
         portal.depositFor{value:1 ether}(owner,SECRET,0,deadline,sig);
         RootPublisher r=RootPublisher(address(portal.ROLLUP()));
-        bytes32 content=PortalMessages.receipt(true,block.chainid,address(portal),L2,VERSION,owner,uint128(1 ether));
+        bytes32 content=PortalMessages.depositExit("AZTEC_BB_EXIT_V2",block.chainid,address(portal),L2,VERSION,owner,uint128(1 ether),SECRET);
         r.publish(2,1,Hash.sha256ToField(DataStructures.L2ToL1Msg(DataStructures.L2Actor(L2,VERSION),DataStructures.L1Actor(address(portal),block.chainid),content)));
-        control.expectRevert();portal.withdraw(2,1,0,new bytes32[](0));
-        vm.prank(owner);portal.withdraw(2,1,0,new bytes32[](0));require(owner.balance==1 ether && portal.getDeposit(owner)==0);
+        control.expectRevert();portal.withdraw(SECRET,2,1,0,new bytes32[](0));
+        vm.prank(owner);portal.withdraw(SECRET,2,1,0,new bytes32[](0));require(owner.balance==1 ether && portal.getDeposit(owner)==0);
         control.expectRevert();portal.depositFor{value:1 ether}(owner,SECRET,0,deadline,sig);
         require(portal.depositNonces(owner)==1 && portal.getDeposit(owner)==0,"Old authorization replayed after withdrawal");
     }
-    function testDirectDepositUnchangedAndConsentCannotPreoccupyExistingOwner() public {
+    function testDirectDepositRejectsDuplicateCommitmentButAllowsFreshConsent() public {
         vm.deal(owner,2 ether);vm.prank(owner);portal.deposit{value:1 ether}(SECRET);
         bytes memory sig=signature(address(this),1 ether,SECRET,0,block.timestamp+60);
         control.expectRevert();portal.depositFor{value:1 ether}(owner,SECRET,0,block.timestamp+60,sig);
         require(portal.depositNonces(owner)==0 && portal.getDeposit(owner)==1 ether);
+        bytes32 fresh=bytes32(uint256(45));
+        sig=signature(address(this),1 ether,fresh,0,block.timestamp+60);
+        portal.depositFor{value:1 ether}(owner,fresh,0,block.timestamp+60,sig);
+        require(portal.getDeposit(owner,SECRET).amount==1 ether && portal.getDeposit(owner,fresh).amount==1 ether && portal.totalDeposited()==2 ether,"Fresh owner deposit lost original");
     }
     function testExpiredOrOtherPortalSignatureRejected() public {
         uint256 deadline=block.timestamp+60;bytes memory sig=signature(address(this),1 ether,SECRET,0,deadline);

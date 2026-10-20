@@ -50,6 +50,22 @@ export function encodeEscrowCommitment(kind, scope, receipt) {
     word(BigInt(s.l1ChainId)), word(BigInt(s.portalAddress)), word(BigInt(s.boardAddress)),
     word(BigInt(s.rollupVersion)), word(BigInt(receipt.depositor)), word(amount)]);
 }
+// V2 collateral messages identify the individual deposit. Legacy claim/exit
+// commitment bytes remain unchanged in encodeEscrowCommitment.
+export function encodeDepositExitCommitment(kind, scope, receipt) {
+  const s = validateScope(scope);
+  const labels = {exit:'AZTEC_BB_EXIT_V2',cancel:'AZTEC_BB_CANCEL_V2',refund:'AZTEC_BB_REFUND_V2'};
+  if (!Object.hasOwn(labels, kind)) throw new Error('Invalid deposit exit domain');
+  const names = ['depositor','amount','depositId'];
+  if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt) ||
+      Reflect.ownKeys(receipt).length !== names.length || names.some(name => !Object.hasOwn(receipt,name))) throw new Error('Invalid deposit exit receipt');
+  if (typeof receipt.depositor !== 'string' || !/^0x[0-9a-f]{40}$/.test(receipt.depositor)) throw new Error('Invalid depositor');
+  const amount = integer(receipt.amount, 96), depositId = scalar(receipt.depositId);
+  if (!amount || !depositId || BigInt(receipt.depositor) === 0n) throw new Error('Empty deposit exit receipt');
+  return concat([domain(labels[kind]), word(2n), word(BigInt(s.l1ChainId)),
+    word(BigInt(s.portalAddress)), word(BigInt(s.boardAddress)), word(BigInt(s.rollupVersion)),
+    word(BigInt(receipt.depositor)), word(amount), word(depositId)]);
+}
 export function encodeReadyCommitment(scope, configHash) {
   const s = validateScope(scope);
   return concat([domain('AZTEC_BB_READY_V1'), word(1n), word(BigInt(s.l1ChainId)),

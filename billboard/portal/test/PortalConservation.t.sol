@@ -20,6 +20,8 @@ contract PortalConservationTest is PortalFixtures {
     RootPublisher private rollup;
     address[3] private owners;
     uint128[3] private credited;
+    bytes32[3] private ids;
+    uint256 private nextId = 123;
     uint256 private surplus;
     uint256 private nextEpoch;
 
@@ -42,8 +44,8 @@ contract PortalConservationTest is PortalFixtures {
     }
 
     function rootFor(uint256 who, uint128 amount) private view returns (bytes32) {
-        return envelope(PortalMessages.receipt(true, block.chainid, address(portal), L2, VERSION,
-            owners[who], amount));
+        return envelope(PortalMessages.depositExit("AZTEC_BB_EXIT_V2", block.chainid, address(portal), L2, VERSION,
+            owners[who], amount, ids[who]));
     }
 
     function conserved() private view {
@@ -59,7 +61,8 @@ contract PortalConservationTest is PortalFixtures {
     }
 
     function credit(uint256 who, uint128 amount) private {
-        vm.prank(owners[who]); portal.deposit{value: amount}(bytes32(uint256(123)));
+        ids[who] = bytes32(nextId++);
+        vm.prank(owners[who]); portal.deposit{value: amount}(ids[who]);
         credited[who] = amount;
         conserved();
     }
@@ -69,13 +72,13 @@ contract PortalConservationTest is PortalFixtures {
         uint128 amount = credited[who];
         uint256 balanceBefore = owners[who].balance;
         rollup.publish(epoch, 1, rootFor(who, amount));
-        vm.prank(owners[who]); portal.withdraw(epoch, 1, 0, new bytes32[](0));
+        vm.prank(owners[who]); portal.withdraw(ids[who], epoch, 1, 0, new bytes32[](0));
         credited[who] = 0;
         require(owners[who].balance == balanceBefore + amount, "Refund amount differs");
         require(rollup.outbox().hasMessageBeenConsumedAtEpoch(Epoch.wrap(epoch), 1), "Successful exit was not consumed");
         conserved();
         // An already-consumed exit cannot reduce liabilities twice.
-        control.expectRevert(); vm.prank(owners[who]); portal.withdraw(epoch, 1, 0, new bytes32[](0));
+        control.expectRevert(); vm.prank(owners[who]); portal.withdraw(ids[who], epoch, 1, 0, new bytes32[](0));
         conserved();
     }
 
@@ -84,7 +87,7 @@ contract PortalConservationTest is PortalFixtures {
         // A forged amount must not consume the message or change liabilities.
         bytes32 badRoot = rootFor(who, credited[who] + 1);
         rollup.publish(epoch, 1, badRoot);
-        control.expectRevert(); vm.prank(owners[who]); portal.withdraw(epoch, 1, 0, new bytes32[](0));
+        control.expectRevert(); vm.prank(owners[who]); portal.withdraw(ids[who], epoch, 1, 0, new bytes32[](0));
         require(!rollup.outbox().hasMessageBeenConsumedAtEpoch(Epoch.wrap(epoch), 1), "Failed proof consumed root");
         conserved();
     }
@@ -108,11 +111,11 @@ contract PortalConservationTest is PortalFixtures {
             if (action == 0) {
                 if (credited[who] == 0) credit(who, uint128(1 ether + (seed % (2 ether + 1))));
                 else {
-                    control.expectRevert(); vm.prank(owners[who]); portal.deposit{value: 1 ether}(bytes32(uint256(123)));
+                    control.expectRevert(); vm.prank(owners[who]); portal.deposit{value: 1 ether}(ids[who]);
                 }
             } else if (action == 1) {
                 if (credited[who] != 0) refund(who);
-                else { control.expectRevert(); vm.prank(owners[who]); portal.withdraw(nextEpoch, 1, 0, new bytes32[](0)); }
+                else { control.expectRevert(); vm.prank(owners[who]); portal.withdraw(ids[who], nextEpoch, 1, 0, new bytes32[](0)); }
             } else if (action == 2) {
                 invalidReceipt(who);
             } else if (action == 3) {

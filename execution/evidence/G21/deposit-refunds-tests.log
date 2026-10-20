@@ -1,0 +1,22 @@
+✔ paged discovery uses contract IDs and distinguishes unclaimed, claimed and returned deposits (62.664667ms)
+✔ request uses isolated existing journal and returns public cancellation metadata (5.714375ms)
+✔ requested deposit is recovered from its one event block without old account data (1.436459ms)
+✔ request refuses claimed before sending (0.959708ms)
+✔ request refuses returned before sending (0.596708ms)
+✔ request refuses wallet before sending (2.219041ms)
+✔ request refuses context before sending (0.333125ms)
+✔ request refuses node before sending (1.021125ms)
+✔ a reorg during discovery cannot publish the old page (1.357042ms)
+✔ an unresolved saved request cannot be replaced by a new send (0.799417ms)
+✔ requested receipt rejects altered owner (0.973625ms)
+✔ requested receipt rejects altered depositId (0.838ms)
+✔ requested receipt rejects altered block (0.892667ms)
+✔ requested receipt rejects altered removed (0.78325ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 387.577917

@@ -17,4 +17,11 @@ library PortalMessages {
         return Hash.sha256ToField(abi.encode(isExit ? bytes32("AZTEC_BB_EXIT_V1") : bytes32("AZTEC_BB_CLAIM_V1"),
             uint256(1), chainId, portal, board, version, depositor, amount));
     }
+
+    function depositExit(bytes32 domain, uint256 chainId, address portal, bytes32 board, uint256 version,
+        address depositor, uint128 amount, bytes32 depositId) internal pure returns (bytes32)
+    {
+        return Hash.sha256ToField(abi.encode(domain, uint256(2), chainId, portal, board, version,
+            depositor, amount, depositId));
+    }
 }

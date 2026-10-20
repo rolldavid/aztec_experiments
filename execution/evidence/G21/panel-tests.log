@@ -1,0 +1,10 @@
+✔ G17 balances load without a second check and show withdrawal time as a date (1806.488292ms)
+✔ G21 unfinished signup refund uses the connected wallet without an old account backup (665.196375ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2654.003458

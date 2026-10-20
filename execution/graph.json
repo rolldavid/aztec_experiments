@@ -2228,7 +2228,8 @@
         "G17",
         "G18",
         "G19",
-        "G20"
+        "G20",
+        "G21"
       ],
       "requirements": [
         "REQ01",
@@ -9351,6 +9352,61 @@
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
+      "priority": 0
+    },
+    {
+      "id": "G21",
+      "title": "Same-owner signup restart and stuck-deposit refund",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "active",
+      "depends_on": [
+        "G20"
+      ],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "shared/",
+        "billboard/portal/",
+        "plugins/",
+        "scripts/",
+        "deploy/",
+        "execution/",
+        "START_HERE.md",
+        "billboard/rolling_contract/",
+        "experiments/private-bok/",
+        "apps/src/billboard/deploy/",
+        "apps/src/billboard/portal_bytecode.txt",
+        "apps/dist/",
+        "prover/rolling-artifacts.json",
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs"
+      ],
+      "plan": "tasks/G21.md",
+      "actions": [
+        "Change the portal and board deposit lifecycle so the same owner can start signup from scratch despite earlier deposits. Provide refund of stuck deposits without account recovery, prevent refunded collateral from remaining usable, and connect automatic signup/refund UI."
+      ],
+      "acceptance": [
+        {
+          "id": "G21-A01",
+          "description": "The same Ethereum owner can complete fresh signup despite earlier deposits. Stuck unclaimed deposits can be refunded without recovering the old private account, and refunded deposits cannot be claimed or used for posting."
+        },
+        {
+          "id": "G21-A02",
+          "description": "Focused same-owner lifecycle and claim/refund race checks pass, independent review approves, and the complete signup/refund UI is tested and published with the required contract deployment."
+        }
+      ],
+      "evidence": "evidence/G21.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "Contract/client implementation and coherent builds complete: 71 Solidity tests,9 native TXE,425 wallet/journal,395 shared,14 discovery,2 focused browser,13 prover-policy and2 archive checks pass. Deployment checks92/93 then the corrected artifact-mutation fixture passes its focused rerun. New board/portal and Bok escrow/portal deployed; board and Bok binding await native settlement. Current site unchanged,7 original posts retained in static archive. Exact-candidate integration review and coordinated hosted publication/fresh signup acceptance remain.",
+      "execution_lane": "UX",
+      "owner": "ux-root",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Native claim/cancel exclusion, Solidity custody/refund proofs, client and browser checks, coherent artifact verification, independent review, then fresh testnet signup and publication.",
       "priority": 0
     }
   ],

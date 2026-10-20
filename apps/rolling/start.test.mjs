@@ -118,3 +118,10 @@ test('immutable wallet URLs bind exact decoded bytes and keep metadata and inval
  assert.equal((await wire(server.url+'/wallet/runtime.json')).headers['cache-control'],'no-store');
  body=Buffer.from('changed asset');const changed=await wire(url);assert.equal(changed.status,404);assert.equal(changed.headers['cache-control'],'no-store');
 });
+
+test('earlier conversations remain available without an account or a running index',async t=>{
+ const server=await startRollingReader({index:{sync:async()=>{},status:()=>({state:'unavailable'}),query:()=>{throw Error('Archive must not query the current board');}}});t.after(()=>server.close());
+ const archive=await fetch(server.url+'/archive/');assert.equal(archive.status,200);const html=await archive.text();assert.doesNotMatch(html,/<script|<button|<input/);assert.equal((html.match(/<article /g)||[]).length,7);
+ const snapshot=await fetch(server.url+'/archive/snapshot.json');assert.equal(snapshot.status,200);assert.match(snapshot.headers.get('content-type'),/application\/json/);const data=await snapshot.json();assert.equal(data.response.posts.length,7);assert.equal(data.response.scope.boardAddress,'0x186d5c5e5a9bcd6d971b5e6c2a5dfb1afb58a103ee1715f7ce9997cce0c199a6');
+ for(const post of data.response.posts)assert(html.includes('id="post-'+post.id+'"'));
+});

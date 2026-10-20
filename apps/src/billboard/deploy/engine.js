@@ -296,6 +296,9 @@
   g.BillboardDeployRolling={readRollingDeploymentState,readBoardDeploymentAnchor};
 
   g.runDeploy = async function(env, config) {
+    if (config?.deploymentManifest?.schemaVersion !== 2 || config.deploymentManifest.board?.kind !== 'rolling') {
+      throw Object.assign(new Error('This release deploys RollingBoard only.'), { code: 'BB_DEPLOYMENT_UNSUPPORTED' });
+    }
     const { aztec: a, ethers, log, pause, initCRS, createStore, portalBytecode, artifact } = env;
     const verified=a.verifyDeploymentInputs(config.deploymentManifest,{artifact,portalBytecode,runtimeMetadata:a.portalRuntimeMetadata,config,ethers});
     const manifest=verified.manifest,rolling=manifest.schemaVersion===2;
@@ -629,8 +632,18 @@
       predicted=originalPortal;
     }
     log('  Portal address: ' + predicted, 'info');
+    // Preserve the original creation transaction in the zero-portal journal.
+    // New bindings use their actual portal scope. Historical binding records
+    // remain readable but cannot invent a missing original creation anchor.
+    let bindingJournal=deploymentJournal,recoveredBinding=recoveredDeployment;
+    if(rolling&&(!recoveredDeployment?.operation?.startsWith('bind-portal:'))){
+      bindingJournal=await env.createTransactionJournal({reconcileOnly:true,walletSecret:secretKeyHex,walletSalt:saltVal,
+        scope:{account:address.toString().toLowerCase(),chainId:String(nodeInfo.l1ChainId),rollup:rollupAddr.toLowerCase(),version:String(version),board:l2Addr.toString().toLowerCase(),portal:predicted.toLowerCase()},
+        Tx:a.Tx,node:rawNode,contextGuard:config.contextGuard});
+      recoveredBinding=await bindingJournal.reconcilePrevious();await bindingJournal.assertCanStart();wallet._transactionJournal=bindingJournal;
+    }
     if (await a.boundedTransactionRead(()=>provider.getCode(predicted),20000) === '0x') {
-      if(staleDeployment?.startsWith('bind-portal:'))throw unresolved();
+      if(staleDeployment?.startsWith('bind-portal:')||recoveredBinding)throw unresolved();
       if (portalAlreadySet) throw new Error('The bound portal has no code; preserve deployment recovery records.');
       const result = await ethereumDeployment.send(() => ({
         data: ethers.concat([ethers.getBytes(l2AddrHex), creation]), value: '0',
@@ -650,16 +663,6 @@
       BigInt(minDepositWei), maxDepositWei, BigInt(configHash),BigInt(manifest.network.inbox),BigInt(manifest.network.outbox)];
     if (values.some((value, index) => BigInt(value) !== expected[index])) throw new Error('Portal configuration mismatch');
 
-    // Preserve the original creation transaction in the zero-portal journal.
-    // New bindings use their actual portal scope. Historical binding records
-    // remain readable but cannot invent a missing original creation anchor.
-    let bindingJournal=deploymentJournal,recoveredBinding=recoveredDeployment;
-    if(rolling&&(!recoveredDeployment?.operation?.startsWith('bind-portal:'))){
-      bindingJournal=await env.createTransactionJournal({reconcileOnly:true,walletSecret:secretKeyHex,walletSalt:saltVal,
-        scope:{account:address.toString().toLowerCase(),chainId:String(nodeInfo.l1ChainId),rollup:rollupAddr.toLowerCase(),version:String(version),board:l2Addr.toString().toLowerCase(),portal:predicted.toLowerCase()},
-        Tx:a.Tx,node:rawNode,contextGuard:config.contextGuard});
-      recoveredBinding=await bindingJournal.reconcilePrevious();await bindingJournal.assertCanStart();wallet._transactionJournal=bindingJournal;
-    }
     const recoveredBindingHash = recoveredBinding?.operation === 'bind-portal:' + predicted.toLowerCase() &&
       recoveredBinding.receipt.executionResult === 'success' ? recoveredBinding.receipt.txHash.toString() : null;
     if (config.readyTxHash && recoveredBindingHash && config.readyTxHash !== recoveredBindingHash) throw new Error('Supplied binding hash differs from the saved transaction');

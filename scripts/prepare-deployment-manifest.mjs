@@ -9,6 +9,7 @@ import {validateDeploymentManifest} from '../shared/deployment-manifest.mjs';
 import {checkSdk} from './check-sdk.mjs';
 import {assertNodeVersion,ROOT} from './toolchain.mjs';
 export async function prepareDeploymentManifest(intent){
+ if(intent?.schemaVersion!==2||intent.board?.kind!=='rolling')throw Object.assign(new Error('This release deploys RollingBoard only.'),{code:'BB_DEPLOYMENT_UNSUPPORTED'});
  checkSdk();
  if(!intent||Object.keys(intent).sort().join()!=='actors,board,network,profile,schemaVersion')throw Error('Intent must contain only schemaVersion, profile, network, actors and board');
  const rolling=intent.schemaVersion===2;

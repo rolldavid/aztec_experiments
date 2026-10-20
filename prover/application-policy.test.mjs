@@ -39,7 +39,7 @@ test('all padding and fee/network conditions fail closed', () => {
   assert.deepEqual(validateRollingPayload(feeOnly,{...options,allowFeeClaim:true}),{applications:0,fees:1});
 });
 test('every private application circuit is address/network/function bound, including continuations', () => {
-  for(const [fn,address] of [['RollingBoard:post','1'],['RollingBoard:set_like','1'],['PrivateBok:claim','2'],['PrivateFPC:pay_fee','3']]) {
+  for(const [fn,address] of [['RollingBoard:post','1'],['RollingBoard:cancel_deposit','1'],['RollingBoard:set_like','1'],['PrivateBok:claim','2'],['PrivateFPC:pay_fee','3']]) {
     bindRollingCircuit(fn,{inputs:context(address)},options);
     assert.throws(()=>bindRollingCircuit(fn,{inputs:context('99')},options),/contract/);
     const input={inputs:context(address)};input.inputs.tx_context.version='2';assert.throws(()=>bindRollingCircuit(fn,input,options),/network/);
@@ -181,7 +181,7 @@ test('actual artifact selectors: absent Bok admits regular board preferences/pos
  const selector=async fn=>BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());
  const fn=(a,name)=>[...a.functions,...a.nonDispatchPublicFunctions].find(f=>f.name===name);
  const fee=call(3,[...selected.fee.fee][0]);
- for(const name of ['post','set_preference','mark_thread_read']){
+ for(const name of ['post','cancel_deposit','set_preference','mark_thread_read']){
   const id=await selector(fn(board,name)),p={inputs:context('4'),app_payload:{function_calls:[call(1,id),fee]}};
   assert.deepEqual(validateRollingPayload(p,policy),{applications:1,fees:1});bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy);
   for(const change of [p=>p.app_payload.function_calls.pop(),p=>p.inputs.tx_context.chain_id='2',p=>p.inputs.tx_context.version='2',p=>p.app_payload.function_calls[0].target_address.inner='99',p=>p.app_payload.function_calls[0].hide_msg_sender=true]){
@@ -252,4 +252,16 @@ test('funded bridge claim uses actual SDK claim mint pay payload and remains sco
  assert.throws(()=>validateRollingJob(circuits.slice(0,2),decoded.slice(0,2),policy),/Signed/);
  assert.throws(()=>validateRollingJob([circuits[0],circuits[2]],[decoded[0],signed],policy));
  assert.throws(()=>validateRollingPayload(signed,policy),/Unapproved/);
+});
+
+test('cancelled deposit proof uses the actual board ABI, signed account and private fee without Bok',async()=>{
+ const raw=loadRollingArtifacts(),selected=await rollingSelectors(raw),policy={...options,privateBokAddress:undefined,selectors:selected};
+ const board=loadContractArtifact(raw.find(a=>a.name==='RollingBoard'));const fn=board.functions.find(f=>f.name==='cancel_deposit');assert(fn?.verificationKey);
+ const id=BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());
+ const signed={inputs:context('4'),app_payload:{function_calls:[call(1,id),call(3,[...selected.fee.fee][0])]}};
+ const circuits=[{functionName:'RollingBoard:cancel_deposit'},{functionName:'PrivateFPC:pay_fee'},{functionName:'SchnorrInitializerlessAccount:entrypoint'}],decoded=[{inputs:context('1')},{inputs:context('3')},signed];
+ validateRollingJob(circuits,decoded,policy);
+ assert.throws(()=>validateRollingJob(circuits.slice(0,2),decoded.slice(0,2),policy),/Signed/);
+ assert.throws(()=>validateRollingJob([circuits[0],circuits[2]],[decoded[0],decoded[2]],policy),/Private fee/);
+ const publicCall=structuredClone(signed);publicCall.app_payload.function_calls[0].is_public=true;assert.throws(()=>validateRollingPayload(publicCall,policy),/Unapproved/);
 });

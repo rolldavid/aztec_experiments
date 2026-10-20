@@ -12,9 +12,13 @@ import {MessageHashUtils} from "@oz/utils/cryptography/MessageHashUtils.sol";
 import {SignatureChecker} from "@oz/utils/cryptography/SignatureChecker.sol";
 import {PortalMessages} from "./PortalMessages.sol";
 
-/// @notice Fresh V1 ETH escrow. Deposits require an authenticated Ready message.
-/// @dev No administrator refund/sweep or legacy receipt path. Forced ETH is surplus.
+/// @notice Same-owner posting deposits with cancellation of unclaimed deposits.
+/// @dev Claims and cancellations compete for one Aztec nullifier. Ethereum only
+/// refunds a cancellation acknowledged by Aztec; elapsed time never authorizes it.
 contract BillboardPortal is ReentrancyGuard {
+    // compute_secret_hash([1]) in the pinned Aztec protocol. Cancellation messages
+    // are public: authorization comes from this portal, not possession of a secret.
+    bytes32 public constant REFUND_MESSAGE_SECRET_HASH = 0x1b6b10770670d8747fd9288964a9103d9d6d84b1cf6fcc8991cdc9b07b5d59ad;
     bytes32 public constant DEPOSIT_FOR_TYPEHASH = keccak256("DepositFor(address beneficiary,address executor,uint256 amount,bytes32 secretHash,uint256 nonce,uint256 deadline)");
     mapping(address => uint256) public depositNonces;
     uint256 public immutable MIN_DEPOSIT;
@@ -32,14 +36,22 @@ contract BillboardPortal is ReentrancyGuard {
         bytes32 secretHash;
         bytes32 key;
         uint256 index;
+        bool refundRequested;
+        uint256 refundBlock;
     }
-    mapping(address => Deposit) private deposits;
+    // The claim commitment identifies the deposit, not another account or owner.
+    // Retain spent records so the same commitment can never be reused.
+    mapping(address => mapping(bytes32 => Deposit)) private deposits;
+    mapping(address => bytes32) public latestDeposit;
+    mapping(address => bytes32[]) private ownerDeposits;
     uint256 public totalDeposited;
     bool public depositsEnabled;
 
     event Activated(bytes32 indexed configHash);
     event Deposited(address indexed depositor, uint128 amount, bytes32 secretHash, bytes32 key, uint256 index);
-    event Withdrawn(address indexed depositor, uint128 amount);
+    event Withdrawn(address indexed depositor, uint128 amount, bytes32 indexed depositId);
+    event RefundRequested(address indexed depositor, bytes32 indexed depositId, uint128 amount, bytes32 key, uint256 index);
+    event Refunded(address indexed depositor, bytes32 indexed depositId, uint128 amount);
 
     constructor(address rollup, bytes32 board, uint256 version, uint256 minDeposit, uint256 maxDeposit, bytes32 configHash) {
         require(rollup.code.length > 0, "Invalid rollup");
@@ -104,27 +116,63 @@ contract BillboardPortal is ReentrancyGuard {
         require(msg.value >= MIN_DEPOSIT, "Below min deposit");
         require(msg.value <= MAX_DEPOSIT, "Above max deposit");
         require(uint256(secretHash) > 0 && uint256(secretHash) < Constants.P, "Invalid secret hash");
-        require(deposits[beneficiary].amount == 0, "Already have an active deposit");
+        require(deposits[beneficiary][secretHash].secretHash == bytes32(0), "Deposit commitment already used");
         uint128 amount = uint128(msg.value); // Constructor caps MAX_DEPOSIT at u96.
-        deposits[beneficiary].amount = amount;
         totalDeposited += amount;
         (key, index) = INBOX.sendL2Message(DataStructures.L2Actor(L2_CONTRACT, VERSION),
             PortalMessages.receipt(false, L1_CHAIN_ID, address(this), L2_CONTRACT, VERSION, beneficiary, amount), secretHash);
-        deposits[beneficiary] = Deposit(amount, secretHash, key, index);
+        deposits[beneficiary][secretHash] = Deposit(amount, secretHash, key, index, false, 0);
+        ownerDeposits[beneficiary].push(secretHash);
+        latestDeposit[beneficiary] = secretHash;
         emit Deposited(beneficiary, amount, secretHash, key, index);
     }
 
     /// @dev All effects and Outbox consumption revert if bridge verification or payment fails.
-    function withdraw(uint256 epoch, uint256 checkpointCount, uint256 leafIndex, bytes32[] calldata path) external nonReentrant {
-        uint128 amount = deposits[msg.sender].amount;
+    function withdraw(bytes32 depositId, uint256 epoch, uint256 checkpointCount, uint256 leafIndex, bytes32[] calldata path) external nonReentrant {
+        Deposit storage record = deposits[msg.sender][depositId];
+        uint128 amount = record.amount;
         require(amount != 0, "No active deposit");
-        delete deposits[msg.sender];
+        record.amount = 0;
         totalDeposited -= amount;
-        _consume(PortalMessages.receipt(true, L1_CHAIN_ID, address(this), L2_CONTRACT, VERSION,
-            msg.sender, amount), epoch, checkpointCount, leafIndex, path);
+        _consume(_depositMessage("AZTEC_BB_EXIT_V2", msg.sender, amount, depositId),
+            epoch, checkpointCount, leafIndex, path);
         (bool ok,) = msg.sender.call{value: amount}("");
         require(ok, "ETH transfer failed");
-        emit Withdrawn(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount, depositId);
+    }
+
+    /// @notice Start a refund without the private account or its claim secret.
+    /// A prior request never prevents this owner funding a fresh signup.
+    function requestRefund(bytes32 depositId) external nonReentrant returns (bytes32 key, uint256 index) {
+        require(block.chainid == L1_CHAIN_ID, "Chain changed");
+        Deposit storage record = deposits[msg.sender][depositId];
+        require(record.amount != 0, "No active deposit");
+        require(!record.refundRequested, "Refund already requested");
+        record.refundRequested = true;
+        record.refundBlock = block.number;
+        (key, index) = INBOX.sendL2Message(DataStructures.L2Actor(L2_CONTRACT, VERSION),
+            _depositMessage("AZTEC_BB_CANCEL_V2", msg.sender, record.amount, depositId), REFUND_MESSAGE_SECRET_HASH);
+        emit RefundRequested(msg.sender, depositId, record.amount, key, index);
+    }
+
+    /// @notice Anyone may finish an acknowledged refund; funds always go to its owner.
+    function refund(address depositor, bytes32 depositId, uint256 epoch, uint256 checkpointCount, uint256 leafIndex, bytes32[] calldata path)
+        external nonReentrant
+    {
+        Deposit storage record = deposits[depositor][depositId];
+        uint128 amount = record.amount;
+        require(amount != 0 && record.refundRequested, "No pending refund");
+        record.amount = 0;
+        totalDeposited -= amount;
+        _consume(_depositMessage("AZTEC_BB_REFUND_V2", depositor, amount, depositId),
+            epoch, checkpointCount, leafIndex, path);
+        (bool ok,) = depositor.call{value: amount}("");
+        require(ok, "ETH transfer failed");
+        emit Refunded(depositor, depositId, amount);
+    }
+
+    function _depositMessage(bytes32 domain, address owner, uint128 amount, bytes32 depositId) private view returns (bytes32) {
+        return PortalMessages.depositExit(domain, L1_CHAIN_ID, address(this), L2_CONTRACT, VERSION, owner, amount, depositId);
     }
 
     function _consume(bytes32 content, uint256 epoch, uint256 checkpointCount, uint256 leafIndex, bytes32[] calldata path) private {
@@ -136,13 +184,27 @@ contract BillboardPortal is ReentrancyGuard {
         OUTBOX.consume(message, Epoch.wrap(epoch), checkpointCount, leafIndex, path);
     }
 
+    /// @notice Bounded discovery of this owner's deposits, including unfinished signups.
+    function getDepositIds(address owner, uint256 offset, uint256 limit) external view returns (bytes32[] memory ids) {
+        require(limit > 0 && limit <= 100, "Invalid page size");
+        bytes32[] storage stored = ownerDeposits[owner];
+        uint256 count = offset < stored.length ? stored.length - offset : 0;
+        if (count > limit) count = limit;
+        ids = new bytes32[](count);
+        for (uint256 i; i < count; ++i) ids[i] = stored[offset + i];
+    }
+
     function getDeposit(address depositor) external view returns (uint128 amount) {
-        return deposits[depositor].amount;
+        return deposits[depositor][latestDeposit[depositor]].amount;
+    }
+
+    function getDeposit(address depositor, bytes32 depositId) external view returns (Deposit memory) {
+        return deposits[depositor][depositId];
     }
 
     /// @notice Complete public claim metadata. The private claim secret stays with the depositor.
     function getActiveDeposit(address depositor) external view returns (Deposit memory) {
-        return deposits[depositor];
+        return deposits[depositor][latestDeposit[depositor]];
     }
 
     receive() external payable { revert("Unsolicited ETH"); }

@@ -1,0 +1,21 @@
+✔ rolling mixed payload permits only its exact board/Bok/private fee calls (0.894708ms)
+✔ all padding and fee/network conditions fail closed (0.156959ms)
+✔ every private application circuit is address/network/function bound, including continuations (0.194417ms)
+✔ fragmented private fee balance permits only bound self-recursion, never a direct payload call (68.5595ms)
+✔ artifact provenance rejects missing, stale, raw and symlinked release inputs (9.103917ms)
+✔ actual private expiry is allowed but public expiry and direct callback are refused (39.859583ms)
+✔ actual authenticated Bok reply entrypoint requires configured escrow and private fee, never direct board callback (49.779334ms)
+✔ normal profile entrypoints are narrowly allowed, with private fees and no direct setters (37.358917ms)
+✔ private preference entrypoints require exact board/network/private flags and fees (40.37625ms)
+✔ actual artifact selectors: absent Bok admits regular board preferences/post but denies every Bok capability (38.29875ms)
+✔ labelled decoded jobs: disabled Bok retains signed-account and fee requirements (0.261834ms)
+✔ funded bridge claim uses actual SDK claim mint pay payload and remains scope bound (38.181167ms)
+✔ cancelled deposit proof uses the actual board ABI, signed account and private fee without Bok (30.863792ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 881.139542

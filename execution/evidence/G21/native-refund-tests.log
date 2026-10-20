@@ -1,0 +1,274 @@
+{"profile":"C01 consistent-scope TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":55537}
+[19:24:02.913] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:519:22
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:519:32
+    │
+519 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:525:15
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:525:22
+    │
+525 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:531:15
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:531:26
+    │
+531 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable op
+    ┌─ rolling_contract/src/posting_tests.nr:538:22
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                      -- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:538:26
+    │
+538 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:544:26
+    │
+544 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable bok
+    ┌─ rolling_contract/src/posting_tests.nr:551:32
+    │
+551 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                                --- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:558:26
+    │
+558 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:565:26
+    │
+565 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:572:26
+    │
+572 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: unused variable board
+    ┌─ rolling_contract/src/posting_tests.nr:579:15
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │               ----- unused variable
+    │
+
+warning: unused variable user
+    ┌─ rolling_contract/src/posting_tests.nr:579:26
+    │
+579 │     let (env, board, op, user, bok, _) = reply_setup(false);
+    │                          ---- unused variable
+    │
+
+warning: variable does not need to be mutable
+    ┌─ rolling_contract/src/posting_tests.nr:628:14
+    │
+628 │     let (mut env, board, _, owner, _) = setup();
+    │              ---
+    │
+
+warning: unused import FromField
+  ┌─ rolling_contract/src/profiles_tests.nr:3:62
+  │
+3 │     protocol::{address::{AztecAddress, EthAddress}, traits::{FromField, Packable}}};
+  │                                                              --------- unused import
+  │
+
+[rolling_contract] Running 9 test functions
+[19:24:10.003] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:10.005] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:10.052] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:10.080] INFO: txe_node Aztec Node version: txe
+[19:24:10.080] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:10.093] INFO: txe:top_level_context Created block 1 with timestamp 1792504450
+[19:24:10.352] INFO: txe:top_level_context Created block 2 with timestamp 1792504450
+[19:24:10.487] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.03120820800000001s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.03120820800000001,"rate":43930398.054255456,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:10.660] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.018408417000000555s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.018408417000000555,"rate":61968989.511698134,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:10.675] INFO: txe:top_level_context Created block 5 with timestamp 1792504450
+[19:24:10.686] INFO: txe:top_level_context Created block 6 with timestamp 1792504450
+[19:24:10.820] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.0072605000000003205s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.0072605000000003205,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":288,"l2Gas":493200},"totalSizeInBytes":288,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::refund_cancellation_wins_then_original_message_cannot_mint_collateral ... [0m[32mok[0m
+[19:24:11.170] ERROR: world-state:ipc-database Call batchInsert failed: Error: Unable to insert values into tree NullifierTree leaf type NullifierLeafValue is not updateable and 0x127c0ea5884d6652e2457f7fc9707dcc0cc9ef282323df641ca6883a11db5c43 is already present: Error: Unable to insert values into tree NullifierTree leaf type NullifierLeafValue is not updateable and 0x127c0ea5884d6652e2457f7fc9707dcc0cc9ef282323df641ca6883a11db5c43 is already present
+    at WsdbService.createError (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-foundation/wsdb/dest/generated/async.js:12:51)
+    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-foundation/wsdb/dest/generated/async.js:272:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:468:18
+    at async IpcWorldState.send (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:634:30)
+    at async IpcWorldState.execute (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:629:16)
+    at async MerkleTreesForkFacade.batchInsert (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/merkle_trees_facade.js:117:22)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/serial_queue.js:58:33
+    at async FifoMemoryQueue.process (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/base_memory_queue.js:113:17)
+[19:24:11.171] WARN: simulator:public-processor Failed to process tx 0x1977535b6e9786dc74ff96d33419c624314d763b64b415d2a3324fc45b1309a0: Transaction 0x1977535b6e9786dc74ff96d33419c624314d763b64b415d2a3324fc45b1309a0 failed with duplicate nullifiers Error: Transaction 0x1977535b6e9786dc74ff96d33419c624314d763b64b415d2a3324fc45b1309a0 failed with duplicate nullifiers
+    at PublicProcessor.doTreeInsertionsForPrivateOnlyTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:755:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async PublicProcessor.processPrivateOnlyTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:824:9)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/telemetry-client/dest/telemetry.js:35:33
+    at async PublicProcessor.processTxWithinDeadline (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:774:20)
+    at async elapsed (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/timer/elapsed.js:8:20)
+    at async PublicProcessor.processTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:721:64)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/telemetry-client/dest/telemetry.js:35:33
+    at async elapsed (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/timer/elapsed.js:8:20)
+    at async PublicProcessor.process (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:584:88)
+[19:24:11.171] INFO: simulator:public-processor Processed 0 successful txs and 1 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.004398833000001105s {"blockNumber":8,"successfulCount":0,"failedCount":1,"duration":0.004398833000001105,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":0,"l2Gas":0},"totalSizeInBytes":0,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:11.173] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:11.214] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:11.222] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:11.243] INFO: txe_node Aztec Node version: txe
+[19:24:11.243] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:11.250] INFO: txe:top_level_context Created block 1 with timestamp 1792504451
+[19:24:11.283] INFO: txe:top_level_context Created block 2 with timestamp 1792504451
+[19:24:11.345] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.027968917000000145s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.027968917000000145,"rate":49018308.431463145,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:11.470] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.01911566599999969s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01911566599999969,"rate":59676236.2347207,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:11.483] INFO: txe:top_level_context Created block 5 with timestamp 1792504451
+[19:24:11.496] INFO: txe:top_level_context Created block 6 with timestamp 1792504451
+[rolling_contract] Testing tests::refund_cannot_change_authenticated_amount ... [0m[32mok[0m
+[19:24:11.601] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:11.641] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:11.659] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:11.684] INFO: txe_node Aztec Node version: txe
+[19:24:11.684] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:11.690] INFO: txe:top_level_context Created block 1 with timestamp 1792504451
+[19:24:11.731] INFO: txe:top_level_context Created block 2 with timestamp 1792504451
+[19:24:11.800] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.02824854200000118s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02824854200000118,"rate":48533088.89357697,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:11.912] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.017291666999999507s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.017291666999999507,"rate":65971140.89694374,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:11.925] INFO: txe:top_level_context Created block 5 with timestamp 1792504451
+[19:24:11.936] INFO: txe:top_level_context Created block 6 with timestamp 1792504451
+[rolling_contract] Testing tests::refund_cannot_change_authenticated_deposit_commitment ... [0m[32mok[0m
+[19:24:12.030] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:12.071] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:12.090] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:12.105] INFO: txe_node Aztec Node version: txe
+[19:24:12.105] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:12.111] INFO: txe:top_level_context Created block 1 with timestamp 1792504452
+[19:24:12.143] INFO: txe:top_level_context Created block 2 with timestamp 1792504452
+[19:24:12.203] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.026762000000000626s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.026762000000000626,"rate":51228944.02510903,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:12.312] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.017351916999999956s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.017351916999999956,"rate":65742073.33979311,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:12.324] INFO: txe:top_level_context Created block 5 with timestamp 1792504452
+[19:24:12.334] INFO: txe:top_level_context Created block 6 with timestamp 1792504452
+[rolling_contract] Testing tests::refund_cannot_change_authenticated_ethereum_owner ... [0m[32mok[0m
+[19:24:12.425] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:12.467] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:12.474] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:12.493] INFO: txe_node Aztec Node version: txe
+[19:24:12.493] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:12.499] INFO: txe:top_level_context Created block 1 with timestamp 1792504452
+[19:24:12.540] INFO: txe:top_level_context Created block 2 with timestamp 1792504452
+[19:24:12.609] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.029897750000000087s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.029897750000000087,"rate":45855925.61313129,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:12.735] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.018982625000000555s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.018982625000000555,"rate":60094481.13735411,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:12.750] INFO: txe:top_level_context Created block 5 with timestamp 1792504452
+[19:24:12.762] INFO: txe:top_level_context Created block 6 with timestamp 1792504452
+[19:24:12.946] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.0060305410000000845s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.0060305410000000845,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":2016,"l2Gas":545900},"totalSizeInBytes":2016,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:13.280] ERROR: world-state:ipc-database Call batchInsert failed: Error: Unable to insert values into tree NullifierTree leaf type NullifierLeafValue is not updateable and 0x1b176dd2817cac94d1b7cffa62165b8292c1807f8e54213b8d322829b5a8ad03 is already present: Error: Unable to insert values into tree NullifierTree leaf type NullifierLeafValue is not updateable and 0x1b176dd2817cac94d1b7cffa62165b8292c1807f8e54213b8d322829b5a8ad03 is already present
+    at WsdbService.createError (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-foundation/wsdb/dest/generated/async.js:12:51)
+    at file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-foundation/wsdb/dest/generated/async.js:272:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:468:18
+    at async IpcWorldState.send (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:634:30)
+    at async IpcWorldState.execute (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/ipc_world_state_instance.js:629:16)
+    at async MerkleTreesForkFacade.batchInsert (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/world-state/dest/native/merkle_trees_facade.js:117:22)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/serial_queue.js:58:33
+    at async FifoMemoryQueue.process (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/queue/base_memory_queue.js:113:17)
+[rolling_contract] Testing tests::refund_claim_wins_then_cancellation_is_rejected_by_native_nullifier_tree ... [0m[32mok[0m
+[19:24:13.280] WARN: simulator:public-processor Failed to process tx 0x02b8ac2e4f89502da3ae4b5f8452ea6db89944e65d50775bbb9cc3bb10a0c5ab: Transaction 0x02b8ac2e4f89502da3ae4b5f8452ea6db89944e65d50775bbb9cc3bb10a0c5ab failed with duplicate nullifiers Error: Transaction 0x02b8ac2e4f89502da3ae4b5f8452ea6db89944e65d50775bbb9cc3bb10a0c5ab failed with duplicate nullifiers
+    at PublicProcessor.doTreeInsertionsForPrivateOnlyTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:755:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async PublicProcessor.processPrivateOnlyTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:824:9)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/telemetry-client/dest/telemetry.js:35:33
+    at async PublicProcessor.processTxWithinDeadline (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:774:20)
+    at async elapsed (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/timer/elapsed.js:8:20)
+    at async PublicProcessor.processTx (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:721:64)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/telemetry-client/dest/telemetry.js:35:33
+    at async elapsed (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/timer/elapsed.js:8:20)
+    at async PublicProcessor.process (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/simulator/dest/public/public_processor/public_processor.js:584:88)
+[19:24:13.280] INFO: simulator:public-processor Processed 0 successful txs and 1 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.0032623750000002473s {"blockNumber":8,"successfulCount":0,"failedCount":1,"duration":0.0032623750000002473,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":0,"l2Gas":0},"totalSizeInBytes":0,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:13.285] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:13.357] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:13.379] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:13.410] INFO: txe_node Aztec Node version: txe
+[19:24:13.410] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:13.416] INFO: txe:top_level_context Created block 1 with timestamp 1792504453
+[19:24:13.462] INFO: txe:top_level_context Created block 2 with timestamp 1792504453
+[19:24:13.534] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.0312250839999997s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.0312250839999997,"rate":43906655.30315349,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:13.685] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.018830332999999883s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.018830332999999883,"rate":60580500.62099311,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:13.699] INFO: txe:top_level_context Created block 5 with timestamp 1792504453
+[19:24:13.709] INFO: txe:top_level_context Created block 6 with timestamp 1792504453
+[19:24:13.843] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.005415500000000975s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.005415500000000975,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":288,"l2Gas":493200},"totalSizeInBytes":288,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:13.856] INFO: txe:top_level_context Created block 8 with timestamp 1792504453
+[19:24:14.030] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.006101208999998562s {"blockNumber":9,"successfulCount":1,"failedCount":0,"duration":0.006101208999998562,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":2016,"l2Gas":545900},"totalSizeInBytes":2016,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::refund_decision_is_scoped_to_ethereum_owner_not_only_commitment ... [0m[32mok[0m
+[19:24:14.327] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:14.398] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:14.405] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:14.427] INFO: txe_node Aztec Node version: txe
+[19:24:14.427] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:14.433] INFO: txe:top_level_context Created block 1 with timestamp 1792504454
+[19:24:14.464] INFO: txe:top_level_context Created block 2 with timestamp 1792504454
+[19:24:14.524] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.02677087500000016s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02677087500000016,"rate":51211960.759593844,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:14.632] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.017017416999999115s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.017017416999999115,"rate":67034321.36616617,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:14.644] INFO: txe:top_level_context Created block 5 with timestamp 1792504454
+[19:24:14.653] INFO: txe:top_level_context Created block 6 with timestamp 1792504454
+[19:24:14.663] INFO: txe:top_level_context Created block 7 with timestamp 1792504454
+[19:24:14.814] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.0051875830000008135s {"blockNumber":8,"successfulCount":1,"failedCount":0,"duration":0.0051875830000008135,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":2016,"l2Gas":545900},"totalSizeInBytes":2016,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:15.157] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.004741375000001426s {"blockNumber":9,"successfulCount":1,"failedCount":0,"duration":0.004741375000001426,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":288,"l2Gas":493200},"totalSizeInBytes":288,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:15.427] INFO: txe:top_level_context Created block 10 with timestamp 1792504465
+[19:24:15.553] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.004167374999999083s {"blockNumber":11,"successfulCount":1,"failedCount":0,"duration":0.004167374999999083,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":256,"l2Gas":477200},"totalSizeInBytes":256,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[rolling_contract] Testing tests::refund_pending_old_deposit_does_not_block_same_owner_fresh_claim_or_withdrawal ... [0m[32mok[0m
+[rolling_contract] Testing tests::refund_public_secret_matches_ethereum_portal_constant ... [0m[32mok[0m
+[19:24:15.814] INFO: simulator:avm-pool AVM simulator pool destroyed
+[19:24:15.848] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[19:24:15.855] INFO: world-state:ipc-database Created IPC-backed world state instance
+[19:24:15.873] INFO: txe_node Aztec Node version: txe
+[19:24:15.873] INFO: txe_node Aztec Node started on chain 0x1
+[19:24:15.879] INFO: txe:top_level_context Created block 1 with timestamp 1792504455
+[19:24:15.909] INFO: txe:top_level_context Created block 2 with timestamp 1792504455
+[19:24:15.968] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.02647900000000118s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.02647900000000118,"rate":51776464.367987424,"totalPublicGas":{"daGas":2240,"l2Gas":1370989},"totalBlockGas":{"daGas":2240,"l2Gas":1370989},"totalSizeInBytes":2368,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:16.074] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.01734166699999878s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01734166699999878,"rate":65780930.979708016,"totalPublicGas":{"daGas":192,"l2Gas":1140751},"totalBlockGas":{"daGas":320,"l2Gas":1731551},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[19:24:16.086] INFO: txe:top_level_context Created block 5 with timestamp 1792504455
+[rolling_contract] Testing tests::refund_rejects_cancellation_from_a_different_portal ... [0m[32mok[0m
+[rolling_contract] [0m[32m9 tests passed[0m
+[19:24:16.180] INFO: simulator:avm-pool AVM simulator pool destroyed

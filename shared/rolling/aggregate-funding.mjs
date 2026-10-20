@@ -86,7 +86,6 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
   for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE');
   check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true && (await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');
-  check((await call(s.collateralPortal,portal,'getDeposit',[w.address]))[0]===0n,'EXISTING_DEPOSIT');
   const minimum=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0], maximum=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0];
   check(BigInt(a.collateralWei)>=minimum && BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
   const nonce=(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString();
@@ -158,7 +157,6 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   check(String((await call(s.bokToken,usdcAbi,'implementation'))[0]).toLowerCase()===s.usdcImplementation,'USDC_IMPLEMENTATION');
   const domain={...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken};check((await call(s.bokToken,usdcAbi,'DOMAIN_SEPARATOR'))[0]===TypedDataEncoder.hashDomain(domain),'USDC_DOMAIN');
   check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true&&(await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');
-  check((await call(s.collateralPortal,portal,'getDeposit',[w.address]))[0]===0n,'EXISTING_DEPOSIT');
   check(BigInt(a.collateralWei)>=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0]&&BigInt(a.collateralWei)<=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],'COLLATERAL_BOUNDS');
   const nonce=String((await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0]);
   const quote=async(token,amount,poolFee)=>{const quoted=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.bokToken,token,amount,poolFee,0]]))[0];check(quoted>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxUsdc:((quoted*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedUsdc:quoted.toString()};};

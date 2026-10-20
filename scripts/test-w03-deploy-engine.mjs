@@ -34,7 +34,7 @@ class FixtureTx {
 const rollingRaw=JSON.parse(await readFile(new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8'));
 const rollingArtifact=loadContractArtifact(rollingRaw);
 function packPolicy(text){const bytes=Buffer.alloc(48*31);Buffer.from(text).copy(bytes);return {fields:Array.from({length:48},(_,i)=>BigInt('0x'+bytes.subarray(i*31,(i+1)*31).toString('hex'))),len:Buffer.byteLength(text)};}
-function fixture({rolling=false,lostBinding=false,lostDeploy=false,existing=true,staleDeploy=false,staleBinding=false}={}) {
+function fixture({rolling=true,lostBinding=false,lostDeploy=false,existing=true,staleDeploy=false,staleBinding=false}={}) {
  const actor=AztecAddress.fromFieldUnsafe(new Fr(1)),board=AztecAddress.fromFieldUnsafe(new Fr(2));
  const inbox='0x'+'6'.repeat(40),outbox='0x'+'7'.repeat(40);
  const rollup='0x'+'3'.repeat(40),sender='0x'+'4'.repeat(40),blockHash=field(5);
@@ -119,21 +119,22 @@ test('missing journal fails closed before any deployment signature and closes PX
  await assert.rejects(f.run(),{code:'BB_JOURNAL_INVALID'});assert.equal(f.deploys,0);assert.equal(f.bindings,0);assert.equal(f.stops,1);
 });
 
-for(const kind of ['deploy','binding'])test(`definitively stale ${kind} proof regenerates only the same deployment operation`,async()=>{
+for(const kind of ['deploy','binding'])test(`definitively stale ${kind} proof cannot silently regenerate a Rolling operation`,async()=>{
  const f=fixture(kind==='deploy'?{existing:false,staleDeploy:true}:{staleBinding:true});
  await assert.rejects(f.run(),/synthetic stale proof/);const original=[...f.receipts.keys()][0];f.clearLoss();
- const result=await f.run();assert.equal(result.status,'pending-settlement');
- assert.equal(f.deploys,kind==='deploy'?2:0);assert.equal(f.bindings,kind==='binding'?2:1);
- assert.equal(f.receipts.get(original).status,'dropped');assert.notEqual(result.readyTxHash,original);
- await f.run();assert.equal(f.deploys,kind==='deploy'?2:0);assert.equal(f.bindings,kind==='binding'?2:1);
+ await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});
+ assert.equal(f.deploys,kind==='deploy'?1:0);assert.equal(f.bindings,kind==='binding'?1:0);
+ assert.equal(f.receipts.get(original).status,'dropped');assert.equal(f.receipts.size,1);
 });
 test('stale binding cannot silently accept another binding that appeared meanwhile',async()=>{
  const f=fixture({staleBinding:true});await assert.rejects(f.run(),/synthetic stale proof/);f.clearLoss();f.setBound('0x'+'a'.repeat(40));
- await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.bindings,1);
+ await assert.rejects(f.run(),/Portal awaits Ready proof/);assert.equal(f.bindings,1);assert.equal(f.deploys,0);
 });
 test('stale binding cannot redeploy a missing original Ethereum portal',async()=>{
  const f=fixture({staleBinding:true});await assert.rejects(f.run(),/synthetic stale proof/);f.clearLoss();const previous=f.provider.getCode;f.provider.getCode=async address=>[create2Proxy,f.manifest.network.rollup,f.manifest.network.inbox,f.manifest.network.outbox].includes(address.toLowerCase())?previous(address):'0x';
- await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.bindings,1);
+ let creationAttempts=0;const open=f.env.aztec.createEthereumJournal;
+ f.env.aztec.createEthereumJournal=async options=>{const journal=await open(options);return {...journal,send(){creationAttempts++;assert.fail('Saved unresolved binding must be checked before a new Ethereum creation');}};};
+ await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.bindings,1);assert.equal(f.deploys,0);assert.equal(creationAttempts,0);
 });
 
 test('stale board deployment cannot silently accept a board that appeared meanwhile',async()=>{
@@ -149,30 +150,35 @@ for(const kind of ['missing manifest','Aztec actor','Ethereum actor','chain','br
  if(kind==='Ethereum actor')f.manifest.actors.ethereumDeployer='0x'+'9'.repeat(40);
  if(kind==='chain')f.provider.getNetwork=async()=>({chainId:1n});
  if(kind==='bridge')f.portal.getInbox=async()=> '0x'+'a'.repeat(40);
- if(kind==='artifact')f.env.artifact={changed:true};
+ if(kind==='artifact')f.env.artifact={...f.env.artifact,changed:true};
  if(kind.endsWith('actor'))extra.deploymentManifest=f.manifest;
- const expected={'missing manifest':/Invalid deployment manifest/,'Aztec actor':/Aztec deployer differs/,'Ethereum actor':/Ethereum deployer differs/,chain:/network identity mismatch/,bridge:/bridge\/code mismatch/,artifact:/artifact identity mismatch/}[kind];
+ const expected={'missing manifest':{code:'BB_DEPLOYMENT_UNSUPPORTED'},'Aztec actor':/Aztec deployer differs/,'Ethereum actor':/Ethereum deployer differs/,chain:/network identity mismatch/,bridge:/bridge\/code mismatch/,artifact:/artifact identity mismatch/}[kind];
  await assert.rejects(f.run(extra),expected);assert.equal(f.deploys,0);assert.equal(f.bindings,0);assert.equal(f.stops,0);
 });
-for(const kind of ['runtime','inbox','outbox','policy','censor'])test(`existing deployment rejects ${kind} mismatch before binding`,async()=>{
+for(const kind of ['runtime','inbox','outbox','policy','moderator'])test(`existing deployment rejects ${kind} mismatch before binding`,async()=>{
  const f=fixture();
  if(kind==='runtime'){const original=f.provider.getCode;f.provider.getCode=async address=>{const code=await original(address);return address.toLowerCase()===create2Proxy||code==='0x6000'?code:code+'00';};}
  if(kind==='inbox')f.portal.INBOX=async()=> '0x'+'a'.repeat(40);
  if(kind==='outbox')f.portal.OUTBOX=async()=> '0x'+'a'.repeat(40);
- if(kind==='policy'||kind==='censor'){const original=f.env.aztec.Contract.at;f.env.aztec.Contract.at=async(...args)=>{const contract=await original(...args);contract.methods[kind==='policy'?'get_policy_version':'get_censor']=()=>({simulate:async()=>99n});return contract;};}
- await assert.rejects(f.run(),kind==='runtime'?/runtime does not match/:['policy','censor'].includes(kind)?/censor or policy differs/:/Portal configuration mismatch/);assert.equal(f.deploys,0);assert.equal(f.bindings,0);assert.equal(f.stops,1);
+ if(kind==='policy'||kind==='moderator'){const original=f.node.getPublicStorageAt,target=BigInt(rollingArtifact.storageLayout[kind==='policy'?'main_rules':'moderator'].slot);f.node.getPublicStorageAt=async(reference,board,slot)=>reference!=='latest'&&BigInt(slot.toString())===target?new Fr(99):original(reference,board,slot);}
+ await assert.rejects(f.run(),kind==='runtime'?/runtime does not match/:['policy','moderator'].includes(kind)?/Rolling deployment state differs/:/Portal configuration mismatch/);assert.equal(f.deploys,0);assert.equal(f.bindings,0);assert.equal(f.stops,1);
 });
 
 test('owned preflight provider is disposed even before wallet/PXE startup',async()=>{const f=fixture();f.node.getNodeInfo=async()=>{throw Error('offline');};await assert.rejects(f.run(),/offline/);assert.equal(f.destroyed,1);assert.equal(f.stops,0);});
 test('external browser provider is not disposed',async()=>{const f=fixture();let owned=0;f.env.ethers.JsonRpcProvider=class{constructor(){return {...f.provider,destroy(){owned++;}};}};await f.run();assert.equal(owned,1);assert.equal(f.destroyed,0);});
-for(const key of ['originalContractClassId','currentContractClassId'])test('deployed '+key+' mismatch blocks binding',async()=>{const f=fixture();const previous=f.node.getContract;f.node.getContract=async()=>({...await previous(),[key]:field(99)});await assert.rejects(f.run(),/class|Class/);assert.equal(f.bindings,0);assert.equal(f.destroyed,1);});
-for(const method of ['is_portal_set','get_config_hash','get_portal'])test('critical '+method+' read is bounded',async()=>{
- const f=fixture();if(method==='get_portal')f.setBound('0x'+'7'.repeat(40));
- const previous=f.env.aztec.Contract.at;f.env.aztec.Contract.at=async(...args)=>{const contract=await previous(...args);contract.methods[method]=()=>({simulate:()=>new Promise(()=>{})});return contract;};
- f.env.aztec.boundedTransactionRead=(fn)=>boundedTransactionRead(fn,20);
+for(const key of ['originalContractClassId','currentContractClassId'])test('deployed '+key+' mismatch blocks binding',async()=>{const f=fixture();const previous=f.node.getContract;f.node.getContract=async()=>({...await previous(),[key]:field(99)});await assert.rejects(f.run(),/class|Class|Rolling deployment state differs/);assert.equal(f.bindings,0);assert.equal(f.destroyed,1);});
+for(const read of ['checkpoint','config','portal_address'])test('critical Rolling '+read+' read is bounded',async()=>{
+ const f=fixture();
+ if(read==='checkpoint')f.node.getBlockData=()=>new Promise(()=>{});
+ else {const previous=f.node.getPublicStorageAt,target=BigInt(rollingArtifact.storageLayout[read].slot);f.node.getPublicStorageAt=(reference,board,slot)=>reference!=='latest'&&BigInt(slot.toString())===target?new Promise(()=>{}):previous(reference,board,slot);}
+ f.env.aztec.boundedTransactionRead=fn=>boundedTransactionRead(fn,20);
  await assert.rejects(f.run(),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(f.bindings,0);assert.equal(f.destroyed,1);
 });
-for(const value of [null,undefined,0,'false',{}])test('malformed portal binding boolean '+JSON.stringify(value)+' fails closed',async()=>{const f=fixture(),previous=f.env.aztec.Contract.at;f.env.aztec.Contract.at=async(...args)=>{const contract=await previous(...args);contract.methods.is_portal_set=()=>({simulate:async()=>value});return contract;};await assert.rejects(f.run(),/Malformed portal binding/);assert.equal(f.bindings,0);});
+for(const value of [null,undefined,'false',{},1n<<160n])test('malformed Rolling portal storage '+String(value)+' fails closed',async()=>{
+ const f=fixture(),previous=f.node.getPublicStorageAt,target=BigInt(rollingArtifact.storageLayout.portal_address.slot);
+ f.node.getPublicStorageAt=(reference,board,slot)=>reference!=='latest'&&BigInt(slot.toString())===target?value:previous(reference,board,slot);
+ await assert.rejects(f.run());assert.equal(f.bindings,0);assert.equal(f.deploys,0);assert.equal(f.destroyed,1);
+});
 test('preactivation deposit state is bounded and malformed value fails',async()=>{const f=fixture();f.env.aztec.boundedTransactionRead=fn=>boundedTransactionRead(fn,20);f.portal.depositsEnabled=()=>new Promise(()=>{});await assert.rejects(f.run(),{code:'BB_SUBMISSION_UNKNOWN'});f.portal.depositsEnabled=async()=> 'false';await assert.rejects(f.run(),/Malformed portal deposit/);});
 
 test('deployment initialization exposes typed preparation and synchronization progress',async()=>{
@@ -268,4 +274,21 @@ test('deployment provider observes changed code immediately without weakening ru
    else assert.equal(verifyPortalRuntime(observed,runtimeMetadata,f.runtimeValues),true);
   }finally{provider.destroy();}
  }
+});
+
+
+test('legacy engine deployment rejects before environment, wallet, or proving access',async()=>{
+ const context=vm.createContext({});vm.runInContext(source,context);
+ const forbidden=new Proxy({}, {get(){assert.fail('Unsupported deployment must not read environment or keys');}});
+ for(const deploymentManifest of [{schemaVersion:1,board:{}},{schemaVersion:2,board:{kind:'billboard'}}])
+  await assert.rejects(context.runDeploy(forbidden,{deploymentManifest}),{code:'BB_DEPLOYMENT_UNSUPPORTED'});
+});
+
+
+test('saved canonical binding cannot authorize recreation of a missing portal',async()=>{
+ const f=fixture();await f.run();f.setBound(null);
+ const previous=f.provider.getCode;f.provider.getCode=async address=>[create2Proxy,f.manifest.network.rollup,f.manifest.network.inbox,f.manifest.network.outbox].includes(address.toLowerCase())?previous(address):'0x';
+ let creationAttempts=0;const open=f.env.aztec.createEthereumJournal;
+ f.env.aztec.createEthereumJournal=async options=>{const journal=await open(options);return {...journal,send(){creationAttempts++;assert.fail('Saved canonical binding cannot authorize a second portal creation');}};};
+ await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(creationAttempts,0);assert.equal(f.bindings,1);assert.equal(f.deploys,0);
 });

@@ -3,7 +3,7 @@ import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
 import {pluginSelectors} from './plugin-policy.mjs';
 import feeArtifact from '../apps/src/billboard/private_fee_artifact.json' with {type:'json'};
 
-const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like', 'set_bio', 'set_avatar', 'set_preference', 'mark_thread_read'];
+const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'cancel_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like', 'set_bio', 'set_avatar', 'set_preference', 'mark_thread_read'];
 const boardPublic = ['set_main_policy', 'reject_subboard', 'configure_plugin', 'remove_post', 'remove_avatar'];
 const bokBoard = new Set(['post_with_bok', 'configure_plugin']);
 const bokPrivate = ['claim', 'authorize_request', 'cancel', 'expire', 'withdraw'];

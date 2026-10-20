@@ -8,6 +8,7 @@ import {DataStructures} from "@aztec/core/libraries/DataStructures.sol";
 import {Epoch} from "@aztec/core/libraries/TimeLib.sol";
 
 interface LegacyPortal {
+    function withdraw(uint256, uint256, uint256, bytes32[] calldata) external;
     function MIN_DEPOSIT() external view returns(uint256);
     function deposits(address) external view returns(uint256);
     function totalDeposited() external view returns(uint256);
@@ -89,7 +90,7 @@ abstract contract PortalFixtures {
 
     function withdrawAs(BillboardPortal portal, address depositor) internal {
         vm.prank(depositor);
-        portal.withdraw(0, 0, 0, new bytes32[](0));
+        portal.withdraw(bytes32(uint256(123)), 0, 0, 0, new bytes32[](0));
     }
 }
 
@@ -130,7 +131,7 @@ abstract contract PortalAccountingProperties is PortalFixtures {
         BillboardPortal portal = deploy(2 ether);
         depositAs(portal, ALICE, 2 ether);
         withdrawAs(portal, ALICE);
-        depositAs(portal, ALICE, 3 ether);
+        vm.deal(ALICE, 3 ether); vm.prank(ALICE); portal.deposit{value:3 ether}(bytes32(uint256(124)));
         require(amountOf(portal, ALICE) == 3 ether, "Redeposit not recorded");
         require(portal.totalDeposited() == 3 ether && address(portal).balance == 3 ether, "Redeposit double-counted");
     }
@@ -187,7 +188,7 @@ contract PortalKnownBadFixtureTest is PortalFixtures {
         BillboardPortal bad = knownBad(2 ether);
         depositAs(bad, ALICE, 2 ether);
         depositAs(bad, BOB, 3 ether);
-        withdrawAs(bad, ALICE);
+        vm.prank(ALICE); LegacyPortal(address(bad)).withdraw(0, 0, 0, new bytes32[](0));
         require(LegacyPortal(address(bad)).deposits(ALICE) == 0 && ALICE.balance == 2 ether, "Historical individual refund changed");
         require(bad.totalDeposited() == 5 ether && address(bad).balance == 3 ether, "Expected historical stale aggregate");
         require(bad.totalDeposited() != LegacyPortal(address(bad)).deposits(ALICE) + LegacyPortal(address(bad)).deposits(BOB), "Known bad unexpectedly meets aggregate invariant");

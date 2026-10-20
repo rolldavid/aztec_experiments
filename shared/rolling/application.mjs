@@ -79,10 +79,10 @@ function component(fields,length){
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
 const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator']);
-const keys={'transfer-moderator':['successor'],'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],'claim-private-fee':['receipt'],'claim-bok':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],'withdraw-bok':['amount','recipient'],'cancel-bok-request':['requestId'],'expire-bok-request':['requestId'],withdraw:['deposit'],screen:['deposit'],
+const keys={'transfer-moderator':['successor'],'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'cancel-deposit':['receipt'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],'claim-private-fee':['receipt'],'claim-bok':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],'withdraw-bok':['amount','recipient'],'cancel-bok-request':['requestId'],'expire-bok-request':['requestId'],withdraw:['deposit'],screen:['deposit'],
   bok:['deposit','content','name','subboard','budget','parent','root'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit','claim-private-fee':'claim-private-fee','claim-bok':'claim',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like','withdraw-bok':'withdraw','cancel-bok-request':'cancel','expire-bok-request':'expire',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','cancel-deposit':'cancel_deposit','claim-deposit':'claim_deposit','claim-private-fee':'claim-private-fee','claim-bok':'claim',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like','withdraw-bok':'withdraw','cancel-bok-request':'cancel','expire-bok-request':'expire',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -206,12 +206,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function fundingClaim(kind,metadata){
     check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
-    const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash']);
+    const cancellation = kind === 'collateral-cancel';
+    const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash',...(cancellation ? ['depositId'] : [])]);
     await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await localGuard();
     const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
-    const aggregate=loadAggregate?await loadAggregate(receipt.txHash):null;await localGuard();
+    const aggregate=!cancellation&&loadAggregate?await loadAggregate(receipt.txHash):null;await localGuard();
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
-    let secrets={walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
+    let secrets=cancellation ? undefined : {walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
       check(bok&&aggregate?.bokScope,'ROLLING_FUNDING_UNAVAILABLE');
       claimScope=exactData(aggregate.bokScope,['chainId','version','rollup','portal','recipient','token']);
@@ -252,6 +253,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // secrets. Both claims are derived from custody and rechecked at submission.
     const claim=await fundingClaim('collateral',action.receipt);
     check(claim.contract===fixed.board&&claim.method==='claim_deposit','ROLLING_FUNDING_MISMATCH');
+    return plain(claim.args);
+  }
+  async function cancellationArguments(action) {
+    const claim = await fundingClaim('collateral-cancel', action.receipt);
+    check(claim.contract === fixed.board && claim.method === 'cancel_deposit', 'ROLLING_FUNDING_MISMATCH');
     return plain(claim.args);
   }
   async function privateBokClaim(receipt){
@@ -424,6 +430,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // checks grants permission to resend without the exact authenticated journal.
   async function checkActionSubmission(record){
       if(record.withdrawal?.kind==='bok'){check(same(await resolveBokWithdrawal(),record.withdrawal.bokScope),'ROLLING_CONTEXT_CHANGED');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(record.withdrawal.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');await checkBalanceAnchor(anchor);}
+      else if(record.withdrawal?.kind==='cancelled-collateral'){check(same(await cancellationArguments(record.action),record.args),'ROLLING_FUNDING_MISMATCH');}
       else if(record.withdrawal){const anchor=await balanceAnchor(),current=await collateralInfo(record.action.deposit,await contract(),BigInt(anchor.timestamp));check(current.eligible&&same(current,record.withdrawal),'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(record.action.type==='claim-deposit')check(same(await collateralClaim(record.action),record.args),'ROLLING_FUNDING_MISMATCH');
       if(record.fundingBok)check(same(await (record.action.type==='claim-bok'?privateBokClaim(record.action.receipt):bokFundingClaim(record.action)),record.fundingBok),'ROLLING_FUNDING_MISMATCH');
@@ -502,6 +509,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
+      case 'cancel-deposit':return cancellationArguments(action);
       case 'claim-deposit':return collateralClaim(action);
       case 'claim-private-fee':check(action.receipt!==undefined);return [];
       case 'claim-bok':return (await privateBokClaim(action.receipt)).args;
@@ -648,10 +656,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function collateralInfo(id,board,timestamp){
     const values=await utility(board,'get_deposit_info',[session.owner,id]);
-    check(Array.isArray(values)&&values.length===10,'ROLLING_INVALID_RESPONSE');
+    check(Array.isArray(values)&&values.length===11,'ROLLING_INVALID_RESPONSE');
     const v=values.map(chainValue);check(v[0]===1n&&v[1]===BigInt(id)&&v[2]>0n&&v[2]<(1n<<96n)&&v[3]>0n&&v[3]<(1n<<160n)&&
-      v[5]<(1n<<64n)&&v[7]<=v[5]&&v[8]<=v[5]&&v[9]<(1n<<64n),'ROLLING_INVALID_RESPONSE');
-    return {id:field(id,true),amount:String(v[2]),depositor:'0x'+v[3].toString(16).padStart(40,'0'),
+      v[5]<(1n<<64n)&&v[7]<=v[5]&&v[8]<=v[5]&&v[9]<(1n<<64n)&&v[10]>0n,'ROLLING_INVALID_RESPONSE');
+    return {id:field(id,true),depositId:field(String(v[10]),true),amount:String(v[2]),depositor:'0x'+v[3].toString(16).padStart(40,'0'),
       nextAllowedTime:String(v[9]),screenedSequence:String(v[7]),lastRealSequence:String(v[8]),
       eligible:v[7]>=v[8]&&timestamp>=v[9],reason:v[7]<v[8]?'screening-required':timestamp<v[9]?'time-locked':'eligible'};
   }
@@ -668,7 +676,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
     async readWithdrawal(){return exclusive(async()=>{await guard();const saved=await (await slot()).read();
-      if(!['withdraw','withdraw-bok'].includes(saved.value?.action?.type)||!saved.value.withdrawal)return null;
+      if(!['withdraw','withdraw-bok','cancel-deposit'].includes(saved.value?.action?.type)||!saved.value.withdrawal)return null;
       if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);
       return outcome(saved);
     });},
@@ -783,6 +791,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
+      if(action.type==='cancel-deposit'){
+        record.withdrawal={kind:'cancelled-collateral',depositor:action.receipt.sender,amount:action.receipt.amount,depositId:action.receipt.depositId,eligible:true};
+      }
       if(action.type==='withdraw-bok'){
         check(resolveBokWithdrawal,'ROLLING_BOK_UNAVAILABLE');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');
         const scope=await resolveBokWithdrawal();check(scope.recipient===bok.address,'ROLLING_CONTEXT_CHANGED');

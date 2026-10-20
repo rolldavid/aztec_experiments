@@ -11,9 +11,13 @@ const iface=new Interface([
   'event Approval(address indexed owner,address indexed spender,uint256 value)',
   'event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)',
   'function deposit(bytes32 secretHash) payable',
-  'function withdraw(uint256 epoch,uint256 numCheckpointsInEpoch,uint256 leafIndex,bytes32[] path)',
+  'function withdraw(bytes32 depositId,uint256 epoch,uint256 numCheckpointsInEpoch,uint256 leafIndex,bytes32[] path)',
   'event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)',
-  'event Withdrawn(address indexed depositor,uint128 amount)',
+  'event Withdrawn(address indexed depositor,uint128 amount,bytes32 indexed depositId)',
+  'function requestRefund(bytes32 depositId)',
+  'function refund(address depositor,bytes32 depositId,uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)',
+  'event RefundRequested(address indexed depositor,bytes32 indexed depositId,uint128 amount,bytes32 key,uint256 index)',
+  'event Refunded(address indexed depositor,bytes32 indexed depositId,uint128 amount)',
 ]);
 const bokInterface=new Interface([
   'function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpoints,uint256 index,bytes32[] path)',
@@ -66,15 +70,18 @@ function validateIntent(record,scope) {
   }
   if(['aggregate-funding','aggregate-usdc-funding'].includes(expected?.kind)){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
   const fee=scope.token!==undefined;
-  if(!expected||!(fee?['approve','fee-deposit','bok-deposit','bok-withdraw']:['deposit','withdraw']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
+  if(!expected||!(fee?['approve','fee-deposit','bok-deposit','bok-withdraw']:['deposit','withdraw','request-refund','deposit-refund']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
   const abi=['bok-deposit','bok-withdraw'].includes(expected.kind)?bokInterface:iface;
   let parsed;try{parsed=abi.parseTransaction({data:record.data,value:record.value});}catch{throw invalid();}
-  const method=expected.kind==='fee-deposit'?'depositToAztecPublic':expected.kind==='bok-deposit'?'deposit':expected.kind==='bok-withdraw'?'withdraw':expected.kind;
+  const method=expected.kind==='request-refund'?'requestRefund':expected.kind==='deposit-refund'?'refund':expected.kind==='fee-deposit'?'depositToAztecPublic':expected.kind==='bok-deposit'?'deposit':expected.kind==='bok-withdraw'?'withdraw':expected.kind;
   if(!parsed||parsed.name!==method||abi.encodeFunctionData(parsed.fragment,parsed.args).toLowerCase()!==record.data)throw invalid();
   if(expected.kind==='deposit') {
     if(!hash(expected.secretHash)||lower(parsed.args[0])!==expected.secretHash||record.value!==expected.amount)throw invalid();
   }else {
     if(record.value!=='0')throw invalid();
+    if(expected.kind==='request-refund'&&(!field(expected.depositId)||lower(parsed.args[0])!==expected.depositId))throw invalid();
+    if(expected.kind==='deposit-refund'&&(!field(expected.depositId)||lower(parsed.args[0])!==record.from||lower(parsed.args[1])!==expected.depositId))throw invalid();
+    if(expected.kind==='withdraw'&&(!field(expected.depositId)||lower(parsed.args[0])!==expected.depositId))throw invalid();
     if(expected.kind==='approve'&&(expected.spender!==scope.portal||lower(parsed.args[0])!==scope.portal||String(parsed.args[1])!==expected.amount))throw invalid();
     if(expected.kind==='fee-deposit'&&(expected.recipient!==scope.board||!hash(expected.secretHash)||lower(parsed.args[0])!==scope.board||String(parsed.args[1])!==expected.amount||lower(parsed.args[2])!==expected.secretHash))throw invalid();
     if(expected.kind==='bok-deposit'&&(!field(expected.recipient)||!field(expected.secretHash)||lower(parsed.args[0])!==expected.recipient||String(parsed.args[1])!==expected.amount||lower(parsed.args[2])!==expected.secretHash))throw invalid();
@@ -97,7 +104,7 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   const direct=matchesRequest(tx,record);
   // Wallet execution envelopes may differ from the requested call. For user
   // payments, verify the exact effect emitted by the configured contract below.
-  const effectKinds=['deposit','withdraw','approve','fee-deposit'];
+  const effectKinds=['deposit','withdraw','approve','fee-deposit','request-refund','deposit-refund'];
   if(!direct && !effectKinds.includes(record.expected.kind))return {outcome:'replaced',txHash,receipt,event:null};
   if(receipt.status===0)return {outcome:'reverted',txHash,receipt,event:null};
   if(!Array.isArray(receipt.logs))throw unknown();
@@ -136,7 +143,7 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
     if(typeof code!=='string'||code==='0x'||!/^0x(?:[0-9a-fA-F]{2})+$/.test(code))throw unknown();
     return {outcome:'success',txHash,receipt,event:null};
   }
-  const eventName=({deposit:'Deposited',withdraw:'Withdrawn',approve:'Approval','fee-deposit':'DepositToAztecPublic','activate-portal':'Activated'})[expected.kind];
+  const eventName=({deposit:'Deposited',withdraw:'Withdrawn','request-refund':'RefundRequested','deposit-refund':'Refunded',approve:'Approval','fee-deposit':'DepositToAztecPublic','activate-portal':'Activated'})[expected.kind];
   const topic=iface.getEvent(eventName).topicHash.toLowerCase(),events=[];
   for(const log of receipt.logs) {
     if(lower(log.address)!==record.to||lower(log.topics?.[0])!==topic)continue;
@@ -149,7 +156,8 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
     }else if(expected.kind==='fee-deposit') {
       if(lower(parsed.args.to)!==expected.recipient||String(parsed.args.amount)!==expected.amount||lower(parsed.args.secretHash)!==expected.secretHash)throw unknown();
     }else if(lower(parsed.args.depositor)!==record.from||String(parsed.args.amount)!==expected.amount||
-      (expected.kind==='deposit'&&lower(parsed.args.secretHash)!==expected.secretHash))throw unknown();
+      (expected.kind==='deposit'&&lower(parsed.args.secretHash)!==expected.secretHash)||
+      (['withdraw','request-refund','deposit-refund'].includes(expected.kind)&&(!field(expected.depositId)||lower(parsed.args.depositId)!==expected.depositId)))throw unknown();
     events.push(parsed.args);
   }
   if(!direct && events.length===0)return {outcome:'replaced',txHash,receipt,event:null};
@@ -233,7 +241,7 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
     let response;
     const request={from:record.from,to:record.to,data:record.data,value:BigInt(record.value),nonce:record.nonce,chainId:BigInt(record.chainId)};
     try{
-      if(['deposit','fee-deposit','bok-deposit','aggregate-funding','aggregate-usdc-funding'].includes(record.expected.kind)) {
+      if(['deposit','request-refund','fee-deposit','bok-deposit','aggregate-funding','aggregate-usdc-funding'].includes(record.expected.kind)) {
         // Match the V6 SDK deposit allowance for changing shared Inbox state.
         const estimate=await reader({preserveInsufficientFunds:true})(()=>provider.estimateGas(request));
         if(typeof estimate!=='bigint'||estimate<=0n)throw unknown();

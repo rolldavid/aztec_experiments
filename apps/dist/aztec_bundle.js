@@ -358671,10 +358671,10 @@ pub contract MultiCallEntrypoint {
     }
     throw transactionError("BB_SUBMISSION_UNKNOWN", "Drop reason is unconfirmed. Reconcile before retrying.");
   }
-  async function waitForCanonicalReceipt(node2, tx, { timeoutMs = 54e4, intervalMs, onPoll = () => {
+  async function waitForCanonicalReceipt(node2, tx, { timeoutMs = 0, intervalMs, onPoll = () => {
   }, readTimeoutMs = 2e4 } = {}) {
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || intervalMs !== void 0 && (!Number.isFinite(intervalMs) || intervalMs <= 0)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction wait configuration is invalid.");
-    const txHash = tx.getTxHash(), readLimit = Math.min(readTimeoutMs, timeoutMs);
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0 || intervalMs !== void 0 && (!Number.isFinite(intervalMs) || intervalMs <= 0)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction wait configuration is invalid.");
+    const txHash = tx.getTxHash(), readLimit = timeoutMs === 0 ? readTimeoutMs : Math.min(readTimeoutMs, timeoutMs);
     let stateConflict;
     try {
       const { waitForTx: waitForTx2 } = await Promise.resolve().then(() => (init_node2(), node_exports));
@@ -358692,7 +358692,7 @@ pub contract MultiCallEntrypoint {
         if (!pending.has(observed.status) && !accepted.has(observed.status)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt status is unrecognized.");
         if (pending.has(observed.status)) onPoll();
         return observed;
-      } }, txHash, { timeout: timeoutMs / 1e3, ...intervalMs === void 0 ? {} : { interval: Math.min(intervalMs, timeoutMs) / 1e3 }, ignoreDroppedReceiptsFor: 0, dontThrowOnRevert: true });
+      } }, txHash, { timeout: timeoutMs / 1e3, ...intervalMs === void 0 ? {} : { interval: (timeoutMs === 0 ? intervalMs : Math.min(intervalMs, timeoutMs)) / 1e3 }, ignoreDroppedReceiptsFor: 0, dontThrowOnRevert: true });
       if (!Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block identity is unavailable.");
       const block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), readLimit);
       if (!block2 || hash6(block2.hash) !== hash6(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not confirmed canonical.");
@@ -364454,6 +364454,7 @@ pub contract MultiCallEntrypoint {
   };
 
   // shared/rolling/aggregate-funding.mjs
+  var FUNDING_AUTHORIZATION_SECONDS = 15n * 60n;
   var usdcTuple = "(address beneficiary,address relayer,(uint256 amount,uint256 maxUsdc,uint24 poolFee) collateral,bytes32 collateralSecretHash,(uint256 amount,uint256 maxUsdc,uint24 poolFee) fee,bytes32 feeSecretHash,uint256 bokAmount,bytes32 bokCommitment,bytes32 bokSecretHash,uint256 nonce,uint256 validAfter,uint256 deadline,uint256 relayFeeUsdc,bytes32 authorizationSalt)";
   var aggregateUsdcFundingAbi = Object.freeze([
     `function fundUsdc(${usdcTuple} p,bytes collateralConsent,bytes authorization)`,
@@ -364600,7 +364601,6 @@ pub contract MultiCallEntrypoint {
     };
     for (const key of ["collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "chainId"]) check4(String((await call2(s.router, router, key))[0]).toLowerCase() === s[key], "SCOPE");
     check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
-    check4((await call2(s.collateralPortal, portal, "getDeposit", [w.address]))[0] === 0n, "EXISTING_DEPOSIT");
     const minimum = (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0], maximum = (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0];
     check4(BigInt(a.collateralWei) >= minimum && BigInt(a.collateralWei) <= maximum, "COLLATERAL_BOUNDS");
     const nonce = (await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0].toString();
@@ -364612,7 +364612,7 @@ pub contract MultiCallEntrypoint {
     const fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee), credit = await quote(s.bokToken, a.bokAmount, a.bokPoolFee);
     const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
     check4(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
-    const deadline = (await pendingTime(request, block2) + 120n).toString();
+    const deadline = (await pendingTime(request, block2) + FUNDING_AUTHORIZATION_SECONDS).toString();
     const plan = {
       beneficiary: w.address,
       collateral: a.collateralWei,
@@ -364721,7 +364721,6 @@ pub contract MultiCallEntrypoint {
     const domain10 = { ...s.usdcDomain, chainId: s.chainId, verifyingContract: s.bokToken };
     check4((await call2(s.bokToken, usdcAbi, "DOMAIN_SEPARATOR"))[0] === TypedDataEncoder.hashDomain(domain10), "USDC_DOMAIN");
     check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
-    check4((await call2(s.collateralPortal, portal, "getDeposit", [w.address]))[0] === 0n, "EXISTING_DEPOSIT");
     check4(BigInt(a.collateralWei) >= (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0] && BigInt(a.collateralWei) <= (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0], "COLLATERAL_BOUNDS");
     const nonce = String((await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0]);
     const quote = async (token, amount, poolFee) => {
@@ -364730,7 +364729,7 @@ pub contract MultiCallEntrypoint {
       return { amount, maxUsdc: ((quoted * BigInt(1e4 + a.slippageBps) + 9999n) / 10000n).toString(), poolFee, quotedUsdc: quoted.toString() };
     };
     const collateral = await quote(s.weth, a.collateralWei, a.collateralPoolFee), fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee);
-    const deadline = (await pendingTime(request, block2) + 120n).toString(), validAfter = "0";
+    const deadline = (await pendingTime(request, block2) + FUNDING_AUTHORIZATION_SECONDS).toString(), validAfter = "0";
     const plan = {
       beneficiary: w.address,
       relayer: relay.address,
@@ -388370,9 +388369,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     "event Approval(address indexed owner,address indexed spender,uint256 value)",
     "event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)",
     "function deposit(bytes32 secretHash) payable",
-    "function withdraw(uint256 epoch,uint256 numCheckpointsInEpoch,uint256 leafIndex,bytes32[] path)",
+    "function withdraw(bytes32 depositId,uint256 epoch,uint256 numCheckpointsInEpoch,uint256 leafIndex,bytes32[] path)",
     "event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)",
-    "event Withdrawn(address indexed depositor,uint128 amount)"
+    "event Withdrawn(address indexed depositor,uint128 amount,bytes32 indexed depositId)",
+    "function requestRefund(bytes32 depositId)",
+    "function refund(address depositor,bytes32 depositId,uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)",
+    "event RefundRequested(address indexed depositor,bytes32 indexed depositId,uint128 amount,bytes32 key,uint256 index)",
+    "event Refunded(address indexed depositor,bytes32 indexed depositId,uint128 amount)"
   ]);
   var bokInterface = new Interface([
     "function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpoints,uint256 index,bytes32[] path)",
@@ -388434,7 +388437,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return record8;
     }
     const fee2 = scope.token !== void 0;
-    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit", "bok-withdraw"] : ["deposit", "withdraw"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
+    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit", "bok-withdraw"] : ["deposit", "withdraw", "request-refund", "deposit-refund"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
     const abi2 = ["bok-deposit", "bok-withdraw"].includes(expected.kind) ? bokInterface : iface;
     let parsed;
     try {
@@ -388442,12 +388445,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } catch {
       throw invalid2();
     }
-    const method = expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind === "bok-withdraw" ? "withdraw" : expected.kind;
+    const method = expected.kind === "request-refund" ? "requestRefund" : expected.kind === "deposit-refund" ? "refund" : expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind === "bok-withdraw" ? "withdraw" : expected.kind;
     if (!parsed || parsed.name !== method || abi2.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() !== record8.data) throw invalid2();
     if (expected.kind === "deposit") {
       if (!hash8(expected.secretHash) || lower2(parsed.args[0]) !== expected.secretHash || record8.value !== expected.amount) throw invalid2();
     } else {
       if (record8.value !== "0") throw invalid2();
+      if (expected.kind === "request-refund" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== expected.depositId)) throw invalid2();
+      if (expected.kind === "deposit-refund" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== record8.from || lower2(parsed.args[1]) !== expected.depositId)) throw invalid2();
+      if (expected.kind === "withdraw" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== expected.depositId)) throw invalid2();
       if (expected.kind === "approve" && (expected.spender !== scope.portal || lower2(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
       if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower2(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
       if (expected.kind === "bok-deposit" && (!field3(expected.recipient) || !field3(expected.secretHash) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
@@ -388469,7 +388475,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const [tx, block2] = await Promise.all([read2(() => provider.getTransaction(txHash)), read2(() => provider.getBlock(receipt2.blockNumber))]);
     if (!tx || lower2(tx.hash) !== txHash || lower2(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce || String(tx.chainId) !== record8.chainId || lower2(block2?.hash) !== lower2(receipt2.blockHash) || lower2(receipt2.from) !== record8.from || lower2(receipt2.to) !== lower2(tx.to)) throw unknown5();
     const direct = matchesRequest(tx, record8);
-    const effectKinds = ["deposit", "withdraw", "approve", "fee-deposit"];
+    const effectKinds = ["deposit", "withdraw", "approve", "fee-deposit", "request-refund", "deposit-refund"];
     if (!direct && !effectKinds.includes(record8.expected.kind)) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
     if (receipt2.status === 0) return { outcome: "reverted", txHash, receipt: receipt2, event: null };
     if (!Array.isArray(receipt2.logs)) throw unknown5();
@@ -388518,7 +388524,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (typeof code !== "string" || code === "0x" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(code)) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event: null };
     }
-    const eventName = { deposit: "Deposited", withdraw: "Withdrawn", approve: "Approval", "fee-deposit": "DepositToAztecPublic", "activate-portal": "Activated" }[expected.kind];
+    const eventName = { deposit: "Deposited", withdraw: "Withdrawn", "request-refund": "RefundRequested", "deposit-refund": "Refunded", approve: "Approval", "fee-deposit": "DepositToAztecPublic", "activate-portal": "Activated" }[expected.kind];
     const topic = iface.getEvent(eventName).topicHash.toLowerCase(), events = [];
     for (const log3 of receipt2.logs) {
       if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic) continue;
@@ -388535,7 +388541,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         if (lower2(parsed.args.owner) !== record8.from || lower2(parsed.args.spender) !== expected.spender || String(parsed.args.value) !== expected.amount) throw unknown5();
       } else if (expected.kind === "fee-deposit") {
         if (lower2(parsed.args.to) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower2(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
-      } else if (lower2(parsed.args.depositor) !== record8.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower2(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
+      } else if (lower2(parsed.args.depositor) !== record8.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower2(parsed.args.secretHash) !== expected.secretHash || ["withdraw", "request-refund", "deposit-refund"].includes(expected.kind) && (!field3(expected.depositId) || lower2(parsed.args.depositId) !== expected.depositId)) throw unknown5();
       events.push(parsed.args);
     }
     if (!direct && events.length === 0) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
@@ -388546,11 +388552,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const slot = await createEncryptedJournalSlot({ storage, walletSecret, walletSalt, scopeText: validatedScope(scope), keyDomain: "AZTEC_BB_ETH_JOURNAL_KEY_V1" });
     if (!integer5(minimumNonce)) throw invalid2();
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2e4) throw invalid2();
-    let acknowledged = acknowledgeTx, lastHash = null;
+    let acknowledged = acknowledgeTx, lastHash = null, submittedResponse = null;
     function reader({ preserveInsufficientFunds = false } = {}) {
-      const deadline = Date.now() + timeoutMs;
       return async (fn) => {
-        if (Date.now() >= deadline) throw unknown5();
+        const deadline = Date.now() + timeoutMs;
         let timer;
         try {
           return await Promise.race([Promise.resolve().then(fn), new Promise((_, reject) => {
@@ -388574,6 +388579,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (contextGuard) await contextGuard();
     }
     function confirmed(result, request) {
+      submittedResponse = null;
       acknowledged = result.txHash;
       lastHash = result.txHash;
       return { ...result, request };
@@ -388653,7 +388659,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       let response;
       const request = { from: record8.from, to: record8.to, data: record8.data, value: BigInt(record8.value), nonce: record8.nonce, chainId: BigInt(record8.chainId) };
       try {
-        if (["deposit", "fee-deposit", "bok-deposit", "aggregate-funding", "aggregate-usdc-funding"].includes(record8.expected.kind)) {
+        if (["deposit", "request-refund", "fee-deposit", "bok-deposit", "aggregate-funding", "aggregate-usdc-funding"].includes(record8.expected.kind)) {
           const estimate = await reader({ preserveInsufficientFunds: true })(() => provider.estimateGas(request));
           if (typeof estimate !== "bigint" || estimate <= 0n) throw unknown5();
           request.gasLimit = estimate * 2n;
@@ -388673,17 +388679,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         throw transactionError("BB_ETH_SUBMISSION_UNKNOWN", "Ethereum submission is uncertain. Keep its saved request and use recovery.");
       }
       if (!hash8(lower2(response?.hash))) throw unknown5();
+      submittedResponse = response;
       return slot.write(saved, { ...record8, txHash: lower2(response.hash) });
     }
     async function finish(saved) {
       const read2 = reader();
       await network(read2);
-      const result = await verifyEthereumIntentReceipt(provider, saved.value, saved.value.txHash, read2);
-      if (result) return confirmed(result, saved.value);
-      await read2(() => provider.waitForTransaction(saved.value.txHash, 1, timeoutMs));
-      const after = await verifyEthereumIntentReceipt(provider, saved.value, saved.value.txHash, reader());
-      if (!after) throw unknown5();
-      return confirmed(after, saved.value);
+      let found = await locate(saved, read2);
+      saved = found.saved;
+      if (found.result) return confirmed(found.result, saved.value);
+      const record8 = saved.value;
+      const observed = await read2(() => provider.getTransaction(record8.txHash));
+      const tx = observed ?? (typeof submittedResponse?.replaceableTransaction === "function" && lower2(submittedResponse.hash) === record8.txHash ? submittedResponse : null);
+      if (!tx || typeof tx.replaceableTransaction !== "function" || lower2(tx.hash) !== record8.txHash || lower2(tx.from) !== record8.from || tx.nonce !== record8.nonce || lower2(tx.to) !== lower2(record8.to) || lower2(tx.data) !== record8.data || String(tx.value) !== record8.value || String(tx.chainId) !== record8.chainId) throw unknown5();
+      try {
+        await tx.replaceableTransaction(record8.startBlock).wait(1);
+      } catch (error312) {
+        if (!["TRANSACTION_REPLACED", "CALL_EXCEPTION"].includes(error312?.code)) throw unknown5();
+      }
+      await network(reader());
+      found = await locate(saved, reader());
+      if (!found.result) throw unknown5();
+      return confirmed(found.result, found.saved.value);
     }
     return {
       // Authenticated detached request for an explicit recovery review. It confers
@@ -388702,7 +388719,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       get lastTxHash() {
         return lastHash;
       },
-      async send(intent) {
+      async send(intent, { waitForReceipt = true } = {}) {
+        if (typeof waitForReceipt !== "boolean") throw invalid2();
         const previous = await assertCanStart(), read2 = reader();
         await network(read2);
         if (!signer || lower2(await signer.getAddress()) !== scope.depositor) throw unknown5();
@@ -388728,7 +388746,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           txHash: null
         }, scope);
         const saved = await slot.write(previous, record8);
-        const result = await finish(await broadcast(saved, previous));
+        const submitted = await broadcast(saved, previous);
+        const immediate = !waitForReceipt ? await verifyEthereumIntentReceipt(provider, submitted.value, submitted.value.txHash, reader()) : null;
+        if (!waitForReceipt && !immediate) return { outcome: "submitted", txHash: submitted.value.txHash, request: structuredClone(submitted.value) };
+        const result = immediate ? confirmed(immediate, submitted.value) : await finish(submitted);
         if (result.outcome !== "success") throw transactionError("BB_ETH_TRANSACTION_FAILED", "The Ethereum request reverted or was replaced. Reconcile it before another action.");
         return result;
       },
@@ -388736,7 +388757,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         if (!(await load()).value) return null;
         return this.recover(options);
       },
-      async recover({ retry: retry3 = false } = {}) {
+      async recover({ retry: retry3 = false, wait = false } = {}) {
+        if (typeof retry3 !== "boolean" || typeof wait !== "boolean") throw invalid2();
         let saved = await load();
         if (!saved.value) throw transactionError("BB_NO_SAVED_ETHEREUM_TRANSACTION", "No saved Ethereum request exists for this wallet and portal.");
         const read2 = reader();
@@ -388744,6 +388766,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const found = await locate(saved, read2);
         saved = found.saved;
         if (found.result) return confirmed(found.result, saved.value);
+        if (wait && saved.value.txHash) return finish(saved);
         if (!retry3 || ["aggregate-funding", "aggregate-usdc-funding"].includes(saved.value.expected.kind)) throw unknown5();
         return finish(await broadcast(saved));
       }
@@ -391520,10 +391543,33 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       word(amount)
     ]);
   }
+  function encodeDepositExitCommitment(kind, scope, receipt2) {
+    const s = validateScope(scope);
+    const labels = { exit: "AZTEC_BB_EXIT_V2", cancel: "AZTEC_BB_CANCEL_V2", refund: "AZTEC_BB_REFUND_V2" };
+    if (!Object.hasOwn(labels, kind)) throw new Error("Invalid deposit exit domain");
+    const names = ["depositor", "amount", "depositId"];
+    if (!receipt2 || typeof receipt2 !== "object" || Array.isArray(receipt2) || Reflect.ownKeys(receipt2).length !== names.length || names.some((name) => !Object.hasOwn(receipt2, name))) throw new Error("Invalid deposit exit receipt");
+    if (typeof receipt2.depositor !== "string" || !/^0x[0-9a-f]{40}$/.test(receipt2.depositor)) throw new Error("Invalid depositor");
+    const amount = integer6(receipt2.amount, 96), depositId = scalar(receipt2.depositId);
+    if (!amount || !depositId || BigInt(receipt2.depositor) === 0n) throw new Error("Empty deposit exit receipt");
+    return concat3([
+      domain7(labels[kind]),
+      word(2n),
+      word(BigInt(s.l1ChainId)),
+      word(BigInt(s.portalAddress)),
+      word(BigInt(s.boardAddress)),
+      word(BigInt(s.rollupVersion)),
+      word(BigInt(receipt2.depositor)),
+      word(amount),
+      word(depositId)
+    ]);
+  }
 
   // shared/rolling/funding-receipts.mjs
   var boardAbi = new Interface([
     "function deposit(bytes32 secretHash) payable",
+    "function requestRefund(bytes32 depositId)",
+    "event RefundRequested(address indexed depositor,bytes32 indexed depositId,uint128 amount,bytes32 key,uint256 index)",
     "event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)",
     "function ROLLUP() view returns(address)",
     "function L2_CONTRACT() view returns(bytes32)",
@@ -391586,26 +391632,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var equal3 = (a, b2) => lower3(a) === lower3(b2);
   function validated(input2) {
     const kind = input2.kind;
-    requireThat(["collateral", "private-fee", "bok"].includes(kind), "INVALID");
-    const scope = object5(input2.scope, ["chainId", "version", "rollup", "portal", "recipient", ...kind === "collateral" ? [] : ["token"]]);
+    requireThat(["collateral", "collateral-cancel", "private-fee", "bok"].includes(kind), "INVALID");
+    const collateral = kind === "collateral" || kind === "collateral-cancel";
+    const scope = object5(input2.scope, ["chainId", "version", "rollup", "portal", "recipient", ...collateral ? [] : ["token"]]);
     uint6(scope.chainId, 64);
     uint6(scope.version, 32);
     requireThat(BigInt(scope.chainId) > 0n && BigInt(scope.chainId) <= BigInt(Number.MAX_SAFE_INTEGER) && BigInt(scope.version) > 0n, "INVALID");
-    for (const key of ["rollup", "portal", ...kind === "collateral" ? [] : ["token"]]) {
+    for (const key of ["rollup", "portal", ...collateral ? [] : ["token"]]) {
       hex14(scope[key], 20);
       requireThat(BigInt(scope[key]) > 0n, "INVALID");
     }
     field7(scope.recipient);
-    const receipt2 = object5(input2.receipt, ["txHash", "blockHash", "blockNumber", "sender", "nonce", "amount", "leafIndex", "messageKey", "secretHash"]);
+    const receipt2 = object5(input2.receipt, ["txHash", "blockHash", "blockNumber", "sender", "nonce", "amount", "leafIndex", "messageKey", "secretHash", ...kind === "collateral-cancel" ? ["depositId"] : []]);
     hex14(receipt2.txHash);
     hex14(receipt2.blockHash);
     hex14(receipt2.sender, 20);
     uint6(receipt2.nonce, 53);
-    uint6(receipt2.amount, kind === "collateral" ? 96 : 128);
+    uint6(receipt2.amount, collateral ? 96 : 128);
     uint6(receipt2.leafIndex, L1_TO_L2_MSG_TREE_HEIGHT);
     requireThat(BigInt(receipt2.amount) > 0n && BigInt(receipt2.sender) > 0n, "INVALID");
     field7(receipt2.messageKey);
     field7(receipt2.secretHash);
+    if (kind === "collateral-cancel") field7(receipt2.depositId);
     requireThat(Number.isSafeInteger(receipt2.blockNumber) && receipt2.blockNumber >= 0, "INVALID");
     const anchor2 = object5(input2.anchor, ["number", "hash", "root"]);
     requireThat(Number.isSafeInteger(anchor2.number) && anchor2.number >= 0, "INVALID");
@@ -391619,7 +391667,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     let readFailed = false;
     try {
       const { kind, scope: s, receipt: r, anchor: a, owner } = validated(input2);
-      const secrets = object5(input2.secrets, kind === "collateral" ? ["walletSecret", "walletSalt"] : kind === "private-fee" ? ["walletSecret"] : ["recipientSalt", "bridgeSecret"]);
+      const cancellation = kind === "collateral-cancel";
+      const secrets = cancellation ? {} : object5(input2.secrets, kind === "collateral" ? ["walletSecret", "walletSalt"] : kind === "private-fee" ? ["walletSecret"] : ["recipientSalt", "bridgeSecret"]);
       for (const [key, value] of Object.entries(secrets)) field7(value, key === "walletSalt");
       const aggregateDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateIntent");
       requireThat(!aggregateDescriptor || "value" in aggregateDescriptor, "INVALID");
@@ -391627,8 +391676,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const custodyDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateCustody");
       requireThat(!custodyDescriptor || "value" in custodyDescriptor, "INVALID");
       const aggregateCustody = captureAggregateFundingCustody(custodyDescriptor?.value, aggregateIntent);
+      if (cancellation) requireThat(!aggregateIntent && !aggregateCustody, "INVALID");
       const guard = input2.contextGuard, privateFeeArtifact = input2.privateFeeArtifact;
-      const suppliedNode = input2.node, suppliedProvider = input2.ethProvider, suppliedStore = input2.claimStore;
+      const suppliedNode = input2.node, suppliedProvider = input2.ethProvider, suppliedStore = cancellation ? void 0 : input2.claimStore;
       requireThat(isTrustedPrivateNode(suppliedNode), "UNTRUSTED_NODE");
       const capture = (source, names) => Object.freeze(Object.fromEntries(names.map((name) => {
         const fn = source?.[name];
@@ -391698,7 +391748,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const call2 = async (to, abi2, name) => abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name), blockTag: r.blockNumber }))[0];
       const boardScope = { l1ChainId: s.chainId, rollupAddress: s.rollup, rollupVersion: s.version, boardAddress: s.recipient, portalAddress: s.portal };
       let content, secret, claim2, messageRecipient = s.recipient;
-      if (kind === "collateral") {
+      if (cancellation) {
+        for (const [name, value] of [["ROLLUP", s.rollup], ["L2_CONTRACT", s.recipient], ["VERSION", s.version], ["L1_CHAIN_ID", s.chainId]]) {
+          requireThat(equal3(await call2(s.portal, boardAbi, name), value));
+        }
+        requireThat(equal3(tx.to, s.portal) && String(tx.value) === "0");
+        requireThat(lower3(tx.data) === boardAbi.encodeFunctionData("requestRefund", [r.depositId]).toLowerCase());
+        const topic = boardAbi.getEvent("RefundRequested").topicHash.toLowerCase();
+        const events = receipt2.logs.filter((log3) => equal3(log3.address, s.portal) && lower3(log3.topics?.[0]) === topic);
+        requireThat(events.length === 1);
+        let event;
+        try {
+          event = boardAbi.parseLog(events[0])?.args;
+        } catch {
+          throw fail5("MISMATCH");
+        }
+        requireThat(event && equal3(event.depositor, r.sender) && equal3(event.depositId, r.depositId) && String(event.amount) === r.amount && equal3(event.key, r.messageKey) && String(event.index) === r.leafIndex);
+        secret = Fr.ONE.toString();
+        content = await sha256Field(encodeDepositExitCommitment("cancel", boardScope, {
+          depositor: r.sender,
+          amount: r.amount,
+          depositId: r.depositId
+        }));
+        claim2 = { contract: s.recipient, method: "cancel_deposit", args: [r.sender, r.amount, r.depositId, r.leafIndex] };
+      } else if (kind === "collateral") {
         for (const [name, value] of [["ROLLUP", s.rollup], ["L2_CONTRACT", s.recipient], ["VERSION", s.version], ["L1_CHAIN_ID", s.chainId]]) requireThat(equal3(await call2(s.portal, boardAbi, name), value));
         const depositor = aggregateCustody?.beneficiary ?? r.sender;
         const custodyScope = { ...boardScope, depositor };
@@ -396403,22 +396476,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 
   // shared/remote-prover-client.mjs
   var failure2 = (code) => Object.assign(Error("Remote proof did not complete."), { code });
-  function createRemoteProverClient({ url: url7, board: board2, chainId, rollupVersion, proofsEnabled = true, fetchImpl = globalThis.fetch, timeoutMs = 18e5, pollMs = 1e3, onStatus = () => {
+  function createRemoteProverClient({ url: url7, board: board2, chainId, rollupVersion, proofsEnabled = true, fetchImpl = globalThis.fetch, pollMs = 1e3, onStatus = () => {
   } }) {
     const endpoint3 = new URL(url7);
     if (endpoint3.username || endpoint3.password || endpoint3.search || endpoint3.hash || !(endpoint3.protocol === "https:" || endpoint3.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(endpoint3.hostname))) throw Error("Remote prover requires HTTPS or loopback");
     const base = endpoint3.href.replace(/\/$/, "");
     return Object.freeze({ async prove(steps, publicInputs = []) {
-      const signal = AbortSignal.timeout(timeoutMs);
       const metadata = { board: board2, chainId: String(chainId), rollupVersion: String(rollupVersion), mode: proofsEnabled ? "real" : "disabled", circuits: await Promise.all(steps.map((s) => circuitId(s.bytecode, s.vk))) };
       const body = encodeJob(metadata, steps.map((s) => serializeWitness(s.witness)));
       async function request(path, options = {}) {
         let response, text;
         try {
-          response = await fetchImpl(base + path, { ...options, signal, credentials: "include", redirect: "error", cache: "no-store" });
+          response = await fetchImpl(base + path, { ...options, credentials: "include", redirect: "error", cache: "no-store" });
           text = await response.text();
         } catch {
-          throw failure2(signal.aborted ? "BB_REMOTE_PROVER_TIMEOUT" : "BB_REMOTE_PROVER_OFFLINE");
+          throw failure2("BB_REMOTE_PROVER_OFFLINE");
         }
         if (!response.ok) throw failure2(response.status === 429 ? "BB_REMOTE_PROVER_BUSY" : [401, 403, 400, 413, 422].includes(response.status) ? "BB_REMOTE_PROVER_REJECTED" : "BB_REMOTE_PROVER_OFFLINE");
         try {
@@ -396438,25 +396510,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           } catch {
           }
         }
-        if (job.state === "complete") {
-          if (job.result?.mode !== metadata.mode) throw failure2("BB_REMOTE_PROVER_RESPONSE");
+        if (["complete", "failed"].includes(job.state)) {
+          if (job.state === "complete" && job.result?.mode !== metadata.mode) throw failure2("BB_REMOTE_PROVER_RESPONSE");
+          void request("/v1/jobs/" + accepted2.id, { method: "DELETE", signal: AbortSignal.timeout(1e4) }).catch(() => {
+          });
+          if (job.state === "failed") throw failure2("BB_REMOTE_PROVER_FAILED");
           return job.result;
         }
-        if (!["queued", "running"].includes(job.state)) throw failure2("BB_REMOTE_PROVER_FAILED");
-        await new Promise((resolve, reject) => {
-          const finish = () => {
-            clearTimeout(timer);
-            signal.removeEventListener("abort", abort3);
-            resolve();
-          };
-          const abort3 = () => {
-            clearTimeout(timer);
-            reject(failure2("BB_REMOTE_PROVER_TIMEOUT"));
-          };
-          const timer = setTimeout(finish, pollMs);
-          signal.addEventListener("abort", abort3, { once: true });
-          if (signal.aborted) abort3();
-        });
+        if (!["queued", "running"].includes(job.state)) throw failure2("BB_REMOTE_PROVER_RESPONSE");
+        await new Promise((resolve) => setTimeout(resolve, pollMs));
       }
     } });
   }
@@ -415896,7 +415958,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           manifest: globalThis.BILLBOARD_CRS_MANIFEST,
           verifierOnly,
           bn254NumPoints: requestedPoints,
-          loadLocal: async (file7) => crs.readResponse(await fetch("crs/" + file7.name, { signal: AbortSignal.timeout(12e4), credentials: "omit", redirect: "error" }), file7),
+          loadLocal: async (file7) => crs.readResponse(await fetch("crs/" + file7.name, { credentials: "omit", redirect: "error" }), file7),
           fetch: async () => {
             throw browserFailure();
           },
@@ -480251,9 +480313,9 @@ mod tests {
     return { manifest: m2, intentDigest: hash12(m2) };
   }
   async function preflightDeploymentNetwork(manifest, { node: node2, provider, ethers, timeoutMs = 2e4 }) {
-    const m2 = validateDeploymentManifest(manifest), n2 = m2.network, deadline = Date.now() + timeoutMs;
+    const m2 = validateDeploymentManifest(manifest), n2 = m2.network;
     if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail10("Invalid preflight timeout");
-    const read2 = (fn) => boundedTransactionRead(fn, deadline - Date.now());
+    const read2 = (fn) => boundedTransactionRead(fn, timeoutMs);
     const [info, contracts, network] = await read2(() => Promise.all([node2.getNodeInfo(), node2.getL1ContractAddresses(), provider.getNetwork()]));
     const realProofs = info && Object.getOwnPropertyDescriptor(info, "realProofs");
     if (!realProofs || !Object.hasOwn(realProofs, "value") || typeof realProofs.value !== "boolean") fail10("Native proof configuration unavailable");
@@ -480313,9 +480375,9 @@ mod tests {
   var portal_runtime_default = {
     schemaVersion: 1,
     compiler: "0.8.27+commit.40a35a09",
-    creationBytecodeSha256: "4c627a49ebbc09876457f1be6b44bcd733d063cdb798ddb3531f684fe4734b52",
-    runtimeTemplateSha256: "f525c6566b3ddae1ea0a9864cfc7444eb21bb1f49f22cdcd65d359b0baa4d22b",
-    astSha256: "5fa6a655c1907c7692a11ba77f35b6c7555b48700095781e05e4cb4c945072c3",
+    creationBytecodeSha256: "a25c37894583a0d9c022d823c702da6ee35e735537a2eca3c4e82056252ad00b",
+    runtimeTemplateSha256: "26957754b1f56ae6104a5b8842fffde13668822e29ef1e73fd91114bad3d7541",
+    astSha256: "39c4529e862a92a05ed8c805a28590d20094a08c2b278c7fb28b6f4e8a718c9f",
     sources: {
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/interfaces/IERC1271.sol": "599887e85d375f463f30e3c4cf139ea541e73c7b3535eb040da5e8d8145a4f14",
@@ -480409,150 +480471,166 @@ mod tests {
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/CompressedTimeMath.sol": "50cdddd2fcd567671cfd53da38a093e4d327332205945e90e0c16bb580873510",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/SignatureLib.sol": "438b8c0cf4e760c12b90e8d485d1675104ed77d39d507097b8b92ac7bfef1cad",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/TimeMath.sol": "eefd1773f655d8bfae082e7bb2fae011a647437d78643e002f8a541c06bdbb02",
-      "src/BillboardPortal.sol": "83db7b29b2bdf17f103a18e2c576fa414e789fe6bd5540eb66a995131f2b7e5c",
-      "src/PortalMessages.sol": "8d04182a35d47eabb3da6cabb69012584d5b722ebddb295c6079e257644fb350"
+      "src/BillboardPortal.sol": "bfc2cc54d8cea98cb0db0a150710c8198af6029ed5ef5d8491bc0f718e49f780",
+      "src/PortalMessages.sol": "01d9c085f415069f221eb08f366e395143771ffc543780010a9b9181bc4f7a99"
     },
-    runtimeTemplate: "0x60806040526004361061011e575f3560e01c8063b70106971161009d578063e1254fba11610062578063e1254fba1461044b578063e1e158a5146104a0578063f961ade3146104d3578063ff50abdc146104fe578063ffa1ad7414610513575f5ffd5b8063b701069714610372578063c0b03d13146103a5578063cb7fc7d4146103c6578063d28cb06f146103e5578063dd5967c314610418575f5ffd5b80635392fd1c116100e35780635392fd1c1461029d5780639299a4cc146102c65780639611c5c2146102f9578063acf660041461032c578063b214faa51461035f575f5ffd5b8063142a3da3146101665780631b142ea7146101ca5780632f90b18414610215578063312a84cd14610256578063338781f914610275575f5ffd5b366101625760405162461bcd60e51b815260206004820152600f60248201526e0aadce6ded8d2c6d2e8cac8408aa89608b1b60448201526064015b60405180910390fd5b5f5ffd5b348015610171575f5ffd5b506101856101803660046116f0565b610546565b6040516101c1919081516001600160801b0316815260208083015190820152604080830151908201526060918201519181019190915260800190565b60405180910390f35b3480156101d5575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016101c1565b348015610220575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b6040519081526020016101c1565b348015610261575f5ffd5b50610248610270366004611709565b6105c9565b61028861028336600461175a565b610712565b604080519283526020830191909152016101c1565b3480156102a8575f5ffd5b506004546102b69060ff1681565b60405190151581526020016101c1565b3480156102d1575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610304575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b348015610337575f5ffd5b506102487f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb81565b61028861036d3660046117f4565b6108c1565b34801561037d575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b3480156103b0575f5ffd5b506103c46103bf36600461180b565b6108e7565b005b3480156103d1575f5ffd5b506103c46103e036600461180b565b610afe565b3480156103f0575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610423575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610456575f5ffd5b506104886104653660046116f0565b6001600160a01b03165f908152600260205260409020546001600160801b031690565b6040516001600160801b0390911681526020016101c1565b3480156104ab575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b3480156104de575f5ffd5b506102486104ed3660046116f0565b60016020525f908152604090205481565b348015610509575f5ffd5b5061024860035481565b34801561051e575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b61057660405180608001604052805f6001600160801b031681526020015f81526020015f81526020015f81525090565b506001600160a01b03165f90815260026020818152604092839020835160808101855281546001600160801b03168152600182015492810192909252918201549281019290925260030154606082015290565b604080517f8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f6020808301919091527f8c30e2326f6955b482eef26e6d0f12e410e4abc4400eb476aebf36471bcca991828401527fc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc660608301524660808301523060a0808401919091528351808403909101815260c0830184528051908201207f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb60e08401526001600160a01b038a811661010085015289166101208401526101408301889052610160830187905261018083018690526101a0808401869052845180850390910181526101c0840194859052805192019190912061190160f01b84526101c283018290526101e29092019190915260429091205f91905b98975050505050505050565b5f5f61071c610c47565b6001600160a01b038816158015906107345750844211155b6107805760405162461bcd60e51b815260206004820152601760248201527f496e76616c6964206465706f73697420636f6e73656e740000000000000000006044820152606401610159565b6001600160a01b0388165f9081526001602052604090205486146107de5760405162461bcd60e51b8152602060048201526015602482015274496e76616c6964206465706f736974206e6f6e636560581b6044820152606401610159565b5f6107ed8933348b8b8b6105c9565b905061082f898287878080601f0160208091040260200160405190810160405280939291908181526020018383808284375f92019190915250610c6f92505050565b61087b5760405162461bcd60e51b815260206004820152601960248201527f496e76616c6964206465706f736974207369676e6174757265000000000000006044820152606401610159565b6108868760016118a9565b6001600160a01b038a165f908152600160205260409020556108a88989610ce2565b92509250506108b660015f55565b965096945050505050565b5f5f6108cb610c47565b6108d53384610ce2565b915091506108e260015f55565b915091565b6108ef610c47565b335f908152600260205260408120546001600160801b03169081900361094b5760405162461bcd60e51b8152602060048201526011602482015270139bc81858dd1a5d994819195c1bdcda5d607a1b6044820152606401610159565b335f908152600260208190526040822080546001600160801b031916815560018101839055908101829055600390810182905580546001600160801b03841692906109979084906118bc565b90915550610a1a9050610a1060017f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f000000000000000000000000000000000000000000000000000000000000000033886111c8565b8787878787611267565b6040515f9033906001600160801b038416908381818185875af1925050503d805f8114610a62576040519150601f19603f3d011682016040523d82523d5f602084013e610a67565b606091505b5050905080610aae5760405162461bcd60e51b8152602060048201526013602482015272115512081d1c985b9cd9995c8819985a5b1959606a1b6044820152606401610159565b6040516001600160801b038316815233907fab48b3d59a240196dc5bdd7f7a638fca310f8194c7d350c3dd7765861311ddf89060200160405180910390a25050610af760015f55565b5050505050565b610b06610c47565b60045460ff1615610b4d5760405162461bcd60e51b8152602060048201526011602482015270105b1c9958591e481858dd1a5d985d1959607a1b6044820152606401610159565b610be7610bdd7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000006113e8565b8686868686611267565b6004805460ff191660011790556040517f0000000000000000000000000000000000000000000000000000000000000000907fe1abfe35306def8dbc83e3cb0bc76ffd144cee4ab7707b4e888afd4d24c2d6ca905f90a2610af760015f55565b60025f5403610c6957604051633ee5aeb560e01b815260040160405180910390fd5b60025f55565b5f836001600160a01b03163b5f03610ccd575f5f610c8d8585611453565b5090925090505f816003811115610ca657610ca66118cf565b148015610cc45750856001600160a01b0316826001600160a01b0316145b92505050610cdb565b610cd884848461149c565b90505b9392505050565b5f5f7f00000000000000000000000000000000000000000000000000000000000000004614610d435760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b6044820152606401610159565b60045460ff16610d895760405162461bcd60e51b815260206004820152601160248201527011195c1bdcda5d1cc8191a5cd8589b1959607a1b6044820152606401610159565b7f0000000000000000000000000000000000000000000000000000000000000000341015610ded5760405162461bcd60e51b815260206004820152601160248201527010995b1bddc81b5a5b8819195c1bdcda5d607a1b6044820152606401610159565b7f0000000000000000000000000000000000000000000000000000000000000000341115610e515760405162461bcd60e51b815260206004820152601160248201527010589bdd99481b585e0819195c1bdcda5d607a1b6044820152606401610159565b8215801590610e7f57507f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000183105b610ec15760405162461bcd60e51b8152602060048201526013602482015272092dcecc2d8d2c840e6cac6e4cae840d0c2e6d606b1b6044820152606401610159565b6001600160a01b0384165f908152600260205260409020546001600160801b031615610f2f5760405162461bcd60e51b815260206004820152601e60248201527f416c7265616479206861766520616e20616374697665206465706f73697400006044820152606401610159565b6001600160a01b0384165f90815260026020526040812080546001600160801b031916346001600160801b0381169182179092556003805492939192909190610f799084906118a9565b925050819055507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631f6d510b60405180604001604052807f000000000000000000000000000000000000000000000000000000000000000081526020017f00000000000000000000000000000000000000000000000000000000000000008152506110735f7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000008d8a6111c8565b6040516001600160e01b031960e085901b16815282516004820152602090920151602483015260448201526064810187905260840160408051808303815f875af11580156110c3573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906110e791906118e3565b604080516080810182526001600160801b03808616825260208083018a8152838501878152606085018781526001600160a01b038e165f8181526002958690528890209651875496166001600160801b0319909616959095178655915160018601555191840191909155516003909201919091559051929550909350907fd387ec9906cc390806c5cae9d53299c3459a901b63def34f50cdffaca6404e15906111b89084908890889088906001600160801b0394909416845260208401929092526040830152606082015260800190565b60405180910390a2509250929050565b5f610706886111eb5770415a5445435f42425f434c41494d5f563160781b611200565b6f415a5445435f42425f455849545f563160801b5b604080516020810192909252600190820152606081018990526001600160a01b03808916608083015260a0820188905260c08201879052851660e08201526001600160801b038416610100820152610120015b604051602081830303815290604052611572565b7f000000000000000000000000000000000000000000000000000000000000000046146112c65760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b6044820152606401610159565b6040805160a0810182527f0000000000000000000000000000000000000000000000000000000000000000606082019081527f000000000000000000000000000000000000000000000000000000000000000060808301528152815180830183523081527f00000000000000000000000000000000000000000000000000000000000000006020828101919091528201528082018890529051632e5dd1df60e21b81527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063b977477c906113b29084908a908a908a908a908a90600401611905565b5f604051808303815f87803b1580156113c9575f5ffd5b505af11580156113db573d5f5f3e3d5ffd5b5050505050505050505050565b6040805170415a5445435f42425f52454144595f563160781b6020820152600191810191909152606081018690526001600160a01b038516608082015260a0810184905260c0810183905260e081018290525f906114499061010001611253565b9695505050505050565b5f5f5f835160410361148a576020840151604085015160608601515f1a61147c8882858561160d565b955095509550505050611495565b505081515f91506002905b9250925092565b5f5f5f856001600160a01b031685856040516024016114bc92919061199c565b60408051601f198184030181529181526020820180516001600160e01b0316630b135d3f60e11b179052516114f191906119ef565b5f60405180830381855afa9150503d805f8114611529576040519150601f19603f3d011682016040523d82523d5f602084013e61152e565b606091505b509150915081801561154257506020815110155b801561144957508051630b135d3f60e11b9061156790830160209081019084016119fa565b149695505050505050565b6040805160018082528183019092525f91602082018180368337019050506002836040516115a091906119ef565b602060405180830381855afa1580156115bb573d5f5f3e3d5ffd5b5050506040513d601f19601f820116820180604052508101906115de91906119fa565b6040516020016115ef929190611a11565b60405160208183030381529060405261160790611a2f565b92915050565b5f80807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a084111561164657505f915060039050826116cb565b604080515f808252602082018084528a905260ff891692820192909252606081018790526080810186905260019060a0016020604051602081039080840390855afa158015611697573d5f5f3e3d5ffd5b5050604051601f1901519150506001600160a01b0381166116c257505f9250600191508290506116cb565b92505f91508190505b9450945094915050565b80356001600160a01b03811681146116eb575f5ffd5b919050565b5f60208284031215611700575f5ffd5b610cdb826116d5565b5f5f5f5f5f5f60c0878903121561171e575f5ffd5b611727876116d5565b9550611735602088016116d5565b95989597505050506040840135936060810135936080820135935060a0909101359150565b5f5f5f5f5f5f60a0878903121561176f575f5ffd5b611778876116d5565b9550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156117a8575f5ffd5b8701601f810189136117b8575f5ffd5b803567ffffffffffffffff8111156117ce575f5ffd5b8960208284010111156117df575f5ffd5b60208201935080925050509295509295509295565b5f60208284031215611804575f5ffd5b5035919050565b5f5f5f5f5f6080868803121561181f575f5ffd5b853594506020860135935060408601359250606086013567ffffffffffffffff81111561184a575f5ffd5b8601601f8101881361185a575f5ffd5b803567ffffffffffffffff811115611870575f5ffd5b8860208260051b8401011115611884575f5ffd5b959894975092955050506020019190565b634e487b7160e01b5f52601160045260245ffd5b8082018082111561160757611607611895565b8181038181111561160757611607611895565b634e487b7160e01b5f52602160045260245ffd5b5f5f604083850312156118f4575f5ffd5b505080516020909101519092909150565b61191a81885180518252602090810151910152565b60208781015180516001600160a01b03166040848101919091529101516060830152870151608082015260a0810186905260c0810185905260e08101849052610120610100820181905281018290525f6001600160fb1b0383111561197d575f5ffd5b8260051b80856101408501379190910161014001979650505050505050565b828152604060208201525f82518060408401528060208501606085015e5f606082850101526060601f19601f8301168401019150509392505050565b5f81518060208401855e5f93019283525090919050565b5f610cdb82846119d8565b5f60208284031215611a0a575f5ffd5b5051919050565b5f611a1c82856119d8565b60ff199390931683525050601f01919050565b80516020808301519190811015611a4f575f198160200360031b1b821691505b5091905056fea2646970667358221220fca0f0f2c17a8e9658ca38b539e6f5a183d6a6a009be71d337bb2abccb4b792864736f6c634300081b0033",
+    runtimeTemplate: "0x60806040526004361061017e575f3560e01c80639611c5c2116100cd578063d28cb06f11610087578063e1e158a511610062578063e1e158a514610613578063f961ade314610646578063ff50abdc14610671578063ffa1ad7414610686575f5ffd5b8063d28cb06f14610546578063dd5967c314610579578063e1254fba146105ac575f5ffd5b80639611c5c21461045c578063acf660041461048f578063b214faa5146104c2578063b7010697146104d5578063c8a57b9114610508578063cb7fc7d414610527575f5ffd5b806347aa20fd1161013857806369da658f1161011357806369da658f146103b65780636f55317b146103d7578063775274a11461040a5780639299a4cc14610429575f5ffd5b806347aa20fd146103365780635392fd1c146103615780635ebc3c981461038a575f5ffd5b8063142a3da3146101c65780631485d297146102445780631b142ea7146102635780632f90b184146102ae578063312a84cd146102ef578063338781f91461030e575f5ffd5b366101c25760405162461bcd60e51b815260206004820152600f60248201526e0aadce6ded8d2c6d2e8cac8408aa89608b1b60448201526064015b60405180910390fd5b5f5ffd5b3480156101d1575f5ffd5b506101e56101e0366004611ffb565b6106b9565b60405161023b91905f60c0820190506001600160801b03835116825260208301516020830152604083015160408301526060830151606083015260808301511515608083015260a083015160a083015292915050565b60405180910390f35b34801561024f575f5ffd5b506101e561025e366004612014565b61073a565b34801561026e575f5ffd5b506102967f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200161023b565b3480156102b9575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b60405190815260200161023b565b3480156102fa575f5ffd5b506102e161030936600461203c565b6107bb565b61032161031c36600461208d565b610904565b6040805192835260208301919091520161023b565b348015610341575f5ffd5b506102e1610350366004611ffb565b60036020525f908152604090205481565b34801561036c575f5ffd5b5060065461037a9060ff1681565b604051901515815260200161023b565b348015610395575f5ffd5b506103a96103a4366004612127565b610ab3565b60405161023b9190612157565b3480156103c1575f5ffd5b506103d56103d03660046121e1565b610be9565b005b3480156103e2575f5ffd5b506102e17f1b6b10770670d8747fd9288964a9103d9d6d84b1cf6fcc8991cdc9b07b5d59ad81565b348015610415575f5ffd5b50610321610424366004612256565b610dcc565b348015610434575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b348015610467575f5ffd5b506102967f000000000000000000000000000000000000000000000000000000000000000081565b34801561049a575f5ffd5b506102e17f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb81565b6103216104d0366004612256565b611092565b3480156104e0575f5ffd5b506102967f000000000000000000000000000000000000000000000000000000000000000081565b348015610513575f5ffd5b506103d561052236600461226d565b6110b3565b348015610532575f5ffd5b506103d56105413660046122d2565b611262565b348015610551575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b348015610584575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b3480156105b7575f5ffd5b506105fb6105c6366004611ffb565b6001600160a01b03165f908152600260209081526040808320600383528184205484529091529020546001600160801b031690565b6040516001600160801b03909116815260200161023b565b34801561061e575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b348015610651575f5ffd5b506102e1610660366004611ffb565b60016020525f908152604090205481565b34801561067c575f5ffd5b506102e160055481565b348015610691575f5ffd5b506102e17f000000000000000000000000000000000000000000000000000000000000000081565b6106c1611fa5565b506001600160a01b03165f908152600260208181526040808420600380845282862054865290835293819020815160c08101835281546001600160801b031681526001820154938101939093529283015490820152918101546060830152600481015460ff16151560808301526005015460a082015290565b610742611fa5565b506001600160a01b0382165f908152600260208181526040808420858552825292839020835160c08101855281546001600160801b03168152600182015492810192909252918201549281019290925260038101546060830152600481015460ff16151560808301526005015460a08201525b92915050565b604080517f8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f6020808301919091527f8c30e2326f6955b482eef26e6d0f12e410e4abc4400eb476aebf36471bcca991828401527fc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc660608301524660808301523060a0808401919091528351808403909101815260c0830184528051908201207f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb60e08401526001600160a01b038a811661010085015289166101208401526101408301889052610160830187905261018083018690526101a0808401869052845180850390910181526101c0840194859052805192019190912061190160f01b84526101c283018290526101e29092019190915260429091205f91905b98975050505050505050565b5f5f61090e6113b2565b6001600160a01b038816158015906109265750844211155b6109725760405162461bcd60e51b815260206004820152601760248201527f496e76616c6964206465706f73697420636f6e73656e7400000000000000000060448201526064016101b9565b6001600160a01b0388165f9081526001602052604090205486146109d05760405162461bcd60e51b8152602060048201526015602482015274496e76616c6964206465706f736974206e6f6e636560581b60448201526064016101b9565b5f6109df8933348b8b8b6107bb565b9050610a21898287878080601f0160208091040260200160405190810160405280939291908181526020018383808284375f920191909152506113da92505050565b610a6d5760405162461bcd60e51b815260206004820152601960248201527f496e76616c6964206465706f736974207369676e61747572650000000000000060448201526064016101b9565b610a78876001612342565b6001600160a01b038a165f90815260016020526040902055610a9a898961144d565b9250925050610aa860015f55565b965096945050505050565b60605f82118015610ac5575060648211155b610b055760405162461bcd60e51b8152602060048201526011602482015270496e76616c696420706167652073697a6560781b60448201526064016101b9565b6001600160a01b0384165f90815260046020526040812080549091908510610b2d575f610b3a565b8154610b3a908690612355565b905083811115610b475750825b8067ffffffffffffffff811115610b6057610b60612368565b604051908082528060200260200182016040528015610b89578160200160208202803683370190505b5092505f5b81811015610bdf5782610ba18288612342565b81548110610bb157610bb161237c565b905f5260205f200154848281518110610bcc57610bcc61237c565b6020908102919091010152600101610b8e565b5050509392505050565b610bf16113b2565b6001600160a01b0387165f908152600260209081526040808320898452909152902080546001600160801b03168015801590610c315750600482015460ff165b610c715760405162461bcd60e51b8152602060048201526011602482015270139bc81c195b991a5b99c81c99599d5b99607a1b60448201526064016101b9565b81546001600160801b0319168255600580546001600160801b03831691905f90610c9c908490612355565b90915550610cd09050610cc67120ad2a22a1afa1212fa922a32aa7222fab1960711b8b848c6119d0565b8888888888611a4a565b5f896001600160a01b0316826001600160801b03166040515f6040518083038185875af1925050503d805f8114610d22576040519150601f19603f3d011682016040523d82523d5f602084013e610d27565b606091505b5050905080610d6e5760405162461bcd60e51b8152602060048201526013602482015272115512081d1c985b9cd9995c8819985a5b1959606a1b60448201526064016101b9565b6040516001600160801b038316815289906001600160a01b038c16907f63abd31f746c8a52fb9c785d6499085e777c98fef5e1acf4c9d3ff24df7870949060200160405180910390a3505050610dc360015f55565b50505050505050565b5f5f610dd66113b2565b7f00000000000000000000000000000000000000000000000000000000000000004614610e155760405162461bcd60e51b81526004016101b990612390565b335f9081526002602090815260408083208684529091528120805490916001600160801b039091169003610e7f5760405162461bcd60e51b8152602060048201526011602482015270139bc81858dd1a5d994819195c1bdcda5d607a1b60448201526064016101b9565b600481015460ff1615610ed45760405162461bcd60e51b815260206004820152601860248201527f526566756e6420616c726561647920726571756573746564000000000000000060448201526064016101b9565b60048101805460ff19166001179055436005820155604080518082019091527f000000000000000000000000000000000000000000000000000000000000000081527f0000000000000000000000000000000000000000000000000000000000000000602082015281546001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001691631f6d510b91610f9b907120ad2a22a1afa1212fa1a0a721a2a62fab1960711b9033906001600160801b03168a6119d0565b60405160e084901b6001600160e01b031916815282516004820152602090920151602483015260448201527f1b6b10770670d8747fd9288964a9103d9d6d84b1cf6fcc8991cdc9b07b5d59ad606482015260840160408051808303815f875af115801561100a573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061102e91906123b7565b8254604080516001600160801b0390921682526020820184905281018290529194509250849033907fe1d5c140ba1690d3b2fb6c868fb0735cdfa5726043ec3e509b1429a9a9710ef49060600160405180910390a35061108d60015f55565b915091565b5f5f61109c6113b2565b6110a6338461144d565b9150915061108d60015f55565b6110bb6113b2565b335f9081526002602090815260408083208984529091528120805490916001600160801b03909116908190036111275760405162461bcd60e51b8152602060048201526011602482015270139bc81858dd1a5d994819195c1bdcda5d607a1b60448201526064016101b9565b81546001600160801b0319168255600580546001600160801b03831691905f90611152908490612355565b9091555061117a9050610cc66f20ad2a22a1afa1212fa2ac24aa2fab1960811b33848c6119d0565b6040515f9033906001600160801b038416908381818185875af1925050503d805f81146111c2576040519150601f19603f3d011682016040523d82523d5f602084013e6111c7565b606091505b505090508061120e5760405162461bcd60e51b8152602060048201526013602482015272115512081d1c985b9cd9995c8819985a5b1959606a1b60448201526064016101b9565b6040516001600160801b0383168152899033907f4eb546306573d7a20198f1e18da1fce21fb1ace054d91f8fcbe9ed24046d64be9060200160405180910390a350505061125a60015f55565b505050505050565b61126a6113b2565b60065460ff16156112b15760405162461bcd60e51b8152602060048201526011602482015270105b1c9958591e481858dd1a5d985d1959607a1b60448201526064016101b9565b61134b6113417f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000007f0000000000000000000000000000000000000000000000000000000000000000611bab565b8686868686611a4a565b6006805460ff191660011790556040517f0000000000000000000000000000000000000000000000000000000000000000907fe1abfe35306def8dbc83e3cb0bc76ffd144cee4ab7707b4e888afd4d24c2d6ca905f90a26113ab60015f55565b5050505050565b60025f54036113d457604051633ee5aeb560e01b815260040160405180910390fd5b60025f55565b5f836001600160a01b03163b5f03611438575f5f6113f88585611c26565b5090925090505f816003811115611411576114116123d9565b14801561142f5750856001600160a01b0316826001600160a01b0316145b92505050611446565b611443848484611c6f565b90505b9392505050565b5f5f7f0000000000000000000000000000000000000000000000000000000000000000461461148e5760405162461bcd60e51b81526004016101b990612390565b60065460ff166114d45760405162461bcd60e51b815260206004820152601160248201527011195c1bdcda5d1cc8191a5cd8589b1959607a1b60448201526064016101b9565b7f00000000000000000000000000000000000000000000000000000000000000003410156115385760405162461bcd60e51b815260206004820152601160248201527010995b1bddc81b5a5b8819195c1bdcda5d607a1b60448201526064016101b9565b7f000000000000000000000000000000000000000000000000000000000000000034111561159c5760405162461bcd60e51b815260206004820152601160248201527010589bdd99481b585e0819195c1bdcda5d607a1b60448201526064016101b9565b82158015906115ca57507f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000183105b61160c5760405162461bcd60e51b8152602060048201526013602482015272092dcecc2d8d2c840e6cac6e4cae840d0c2e6d606b1b60448201526064016101b9565b6001600160a01b0384165f9081526002602090815260408083208684529091529020600101541561167f5760405162461bcd60e51b815260206004820152601f60248201527f4465706f73697420636f6d6d69746d656e7420616c726561647920757365640060448201526064016101b9565b5f349050806001600160801b031660055f82825461169d9190612342565b925050819055507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631f6d510b60405180604001604052807f000000000000000000000000000000000000000000000000000000000000000081526020017f00000000000000000000000000000000000000000000000000000000000000008152506117975f7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000008d8a611d45565b6040516001600160e01b031960e085901b16815282516004820152602090920151602483015260448201526064810187905260840160408051808303815f875af11580156117e7573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061180b91906123b7565b80935081945050506040518060c00160405280826001600160801b031681526020018581526020018481526020018381526020015f151581526020015f81525060025f876001600160a01b03166001600160a01b031681526020019081526020015f205f8681526020019081526020015f205f820151815f015f6101000a8154816001600160801b0302191690836001600160801b031602179055506020820151816001015560408201518160020155606082015181600301556080820151816004015f6101000a81548160ff02191690831515021790555060a0820151816005015590505060045f866001600160a01b03166001600160a01b031681526020019081526020015f2084908060018154018082558091505060019003905f5260205f20015f90919091909150558360035f876001600160a01b03166001600160a01b031681526020019081526020015f2081905550846001600160a01b03167fd387ec9906cc390806c5cae9d53299c3459a901b63def34f50cdffaca6404e15828686866040516119c094939291906001600160801b0394909416845260208401929092526040830152606082015260800190565b60405180910390a2509250929050565b5f611a41857f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f0000000000000000000000000000000000000000000000000000000000000000898989611dd4565b95945050505050565b7f00000000000000000000000000000000000000000000000000000000000000004614611a895760405162461bcd60e51b81526004016101b990612390565b6040805160a0810182527f0000000000000000000000000000000000000000000000000000000000000000606082019081527f000000000000000000000000000000000000000000000000000000000000000060808301528152815180830183523081527f00000000000000000000000000000000000000000000000000000000000000006020828101919091528201528082018890529051632e5dd1df60e21b81527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063b977477c90611b759084908a908a908a908a908a906004016123ed565b5f604051808303815f87803b158015611b8c575f5ffd5b505af1158015611b9e573d5f5f3e3d5ffd5b5050505050505050505050565b6040805170415a5445435f42425f52454144595f563160781b6020820152600191810191909152606081018690526001600160a01b038516608082015260a0810184905260c0810183905260e081018290525f90611c1c90610100015b604051602081830303815290604052611e48565b9695505050505050565b5f5f5f8351604103611c5d576020840151604085015160608601515f1a611c4f88828585611edd565b955095509550505050611c68565b505081515f91506002905b9250925092565b5f5f5f856001600160a01b03168585604051602401611c8f929190612484565b60408051601f198184030181529181526020820180516001600160e01b0316630b135d3f60e11b17905251611cc491906124d7565b5f60405180830381855afa9150503d805f8114611cfc576040519150601f19603f3d011682016040523d82523d5f602084013e611d01565b606091505b5091509150818015611d1557506020815110155b8015611c1c57508051630b135d3f60e11b90611d3a90830160209081019084016124e2565b149695505050505050565b5f6108f888611d685770415a5445435f42425f434c41494d5f563160781b611d7d565b6f415a5445435f42425f455849545f563160801b5b604080516020810192909252600190820152606081018990526001600160a01b03808916608083015260a0820188905260c08201879052851660e08201526001600160801b03841661010082015261012001611c08565b60408051602081018a9052600291810191909152606081018890526001600160a01b03808816608083015260a0820187905260c08201869052841660e08201526001600160801b03831661010082015261012081018290525f90611e3b9061014001611c08565b9998505050505050505050565b6040805160018082528183019092525f9160208201818036833701905050600283604051611e7691906124d7565b602060405180830381855afa158015611e91573d5f5f3e3d5ffd5b5050506040513d601f19601f82011682018060405250810190611eb491906124e2565b604051602001611ec59291906124f9565b6040516020818303038152906040526107b590612517565b5f80807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0841115611f1657505f91506003905082611f9b565b604080515f808252602082018084528a905260ff891692820192909252606081018790526080810186905260019060a0016020604051602081039080840390855afa158015611f67573d5f5f3e3d5ffd5b5050604051601f1901519150506001600160a01b038116611f9257505f925060019150829050611f9b565b92505f91508190505b9450945094915050565b6040518060c001604052805f6001600160801b031681526020015f81526020015f81526020015f81526020015f151581526020015f81525090565b80356001600160a01b0381168114611ff6575f5ffd5b919050565b5f6020828403121561200b575f5ffd5b61144682611fe0565b5f5f60408385031215612025575f5ffd5b61202e83611fe0565b946020939093013593505050565b5f5f5f5f5f5f60c08789031215612051575f5ffd5b61205a87611fe0565b955061206860208801611fe0565b95989597505050506040840135936060810135936080820135935060a0909101359150565b5f5f5f5f5f5f60a087890312156120a2575f5ffd5b6120ab87611fe0565b9550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156120db575f5ffd5b8701601f810189136120eb575f5ffd5b803567ffffffffffffffff811115612101575f5ffd5b896020828401011115612112575f5ffd5b60208201935080925050509295509295509295565b5f5f5f60608486031215612139575f5ffd5b61214284611fe0565b95602085013595506040909401359392505050565b602080825282518282018190525f918401906040840190835b8181101561218e578351835260209384019390920191600101612170565b509095945050505050565b5f5f83601f8401126121a9575f5ffd5b50813567ffffffffffffffff8111156121c0575f5ffd5b6020830191508360208260051b85010111156121da575f5ffd5b9250929050565b5f5f5f5f5f5f5f60c0888a0312156121f7575f5ffd5b61220088611fe0565b96506020880135955060408801359450606088013593506080880135925060a088013567ffffffffffffffff811115612237575f5ffd5b6122438a828b01612199565b989b979a50959850939692959293505050565b5f60208284031215612266575f5ffd5b5035919050565b5f5f5f5f5f5f60a08789031215612282575f5ffd5b86359550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156122b4575f5ffd5b6122c089828a01612199565b979a9699509497509295939492505050565b5f5f5f5f5f608086880312156122e6575f5ffd5b853594506020860135935060408601359250606086013567ffffffffffffffff811115612311575f5ffd5b61231d88828901612199565b969995985093965092949392505050565b634e487b7160e01b5f52601160045260245ffd5b808201808211156107b5576107b561232e565b818103818111156107b5576107b561232e565b634e487b7160e01b5f52604160045260245ffd5b634e487b7160e01b5f52603260045260245ffd5b6020808252600d908201526c10da185a5b8818da185b99d959609a1b604082015260600190565b5f5f604083850312156123c8575f5ffd5b505080516020909101519092909150565b634e487b7160e01b5f52602160045260245ffd5b61240281885180518252602090810151910152565b60208781015180516001600160a01b03166040848101919091529101516060830152870151608082015260a0810186905260c0810185905260e08101849052610120610100820181905281018290525f6001600160fb1b03831115612465575f5ffd5b8260051b80856101408501379190910161014001979650505050505050565b828152604060208201525f82518060408401528060208501606085015e5f606082850101526060601f19601f8301168401019150509392505050565b5f81518060208401855e5f93019283525090919050565b5f61144682846124c0565b5f602082840312156124f2575f5ffd5b5051919050565b5f61250482856124c0565b60ff199390931683525050601f01919050565b80516020808301519190811015612537575f198160200360031b1b821691505b5091905056fea26469706673582212200567ccd559e7b5325f3811ed19e43d2b140964f83240be93923b9114a02af7fc64736f6c634300081b0033",
     immutables: {
       MIN_DEPOSIT: [
         {
-          start: 1201,
+          start: 1572,
           length: 32
         },
         {
-          start: 3467,
+          start: 5334,
           length: 32
         }
       ],
       MAX_DEPOSIT: [
         {
-          start: 1065,
+          start: 1418,
           length: 32
         },
         {
-          start: 3567,
+          start: 5434,
           length: 32
         }
       ],
       L2_CONTRACT: [
         {
-          start: 727,
+          start: 1082,
           length: 32
         },
         {
-          start: 2505,
+          start: 3829,
           length: 32
         },
         {
-          start: 2935,
+          start: 4827,
           length: 32
         },
         {
-          start: 4028,
+          start: 5856,
           length: 32
         },
         {
-          start: 4140,
+          start: 5968,
           length: 32
         },
         {
-          start: 4818,
+          start: 6649,
+          length: 32
+        },
+        {
+          start: 6805,
           length: 32
         }
       ],
       ROLLUP: [
         {
-          start: 778,
+          start: 1133,
           length: 32
         }
       ],
       INBOX: [
         {
-          start: 899,
+          start: 1254,
           length: 32
         },
         {
-          start: 3970,
+          start: 3912,
+          length: 32
+        },
+        {
+          start: 5798,
           length: 32
         }
       ],
       OUTBOX: [
         {
-          start: 475,
+          start: 628,
           length: 32
         },
         {
-          start: 4971,
+          start: 6958,
           length: 32
         }
       ],
       VERSION: [
         {
-          start: 1316,
+          start: 1687,
           length: 32
         },
         {
-          start: 2538,
+          start: 3864,
           length: 32
         },
         {
-          start: 2968,
+          start: 4860,
           length: 32
         },
         {
-          start: 4066,
+          start: 5894,
           length: 32
         },
         {
-          start: 4173,
+          start: 6001,
           length: 32
         },
         {
-          start: 4858,
+          start: 6682,
+          length: 32
+        },
+        {
+          start: 6845,
           length: 32
         }
       ],
       L1_CHAIN_ID: [
         {
-          start: 550,
+          start: 703,
           length: 32
         },
         {
-          start: 2471,
+          start: 3544,
           length: 32
         },
         {
-          start: 2901,
+          start: 4793,
           length: 32
         },
         {
-          start: 3302,
+          start: 5201,
           length: 32
         },
         {
-          start: 4106,
+          start: 5934,
           length: 32
         },
         {
-          start: 4713,
+          start: 6615,
           length: 32
         },
         {
-          start: 4908,
+          start: 6732,
+          length: 32
+        },
+        {
+          start: 6895,
           length: 32
         }
       ],
       CONFIG_HASH: [
         {
-          start: 1014,
+          start: 1367,
           length: 32
         },
         {
-          start: 3001,
+          start: 4893,
           length: 32
         },
         {
-          start: 3065,
+          start: 4957,
           length: 32
         }
       ]

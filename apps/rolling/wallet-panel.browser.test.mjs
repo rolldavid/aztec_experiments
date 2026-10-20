@@ -29,7 +29,7 @@ const application={
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
  async prepareInterrupted(id){state.interruptedReviews=(state.interruptedReviews??0)+1;await boundary('interrupted-review');if(read().intentId!==id)error();const next={...read(),status:'prepared',maximumFee:'456'};write(next);return next;},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
- async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.depositIds??(state.fee==='fee-ready'?['9']:[])};},
+ async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok','cancel-deposit'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.depositIds??(state.fee==='fee-ready'?['9']:[])};},
  async ownedIdentities({cursor}){state.owned++;if(state.ownedFailureCursor===cursor)error();const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
@@ -59,7 +59,11 @@ const runtime={selectPrivateViews,get refundOnly(){return state.refundOnly===tru
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
  getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;if(state.importWarning)state.options.onMessage(state.importWarning,'warn');},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
- async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,withdrawal:{async prepareSaved(input){state.savedRefundReviews=(state.savedRefundReviews??0)+1;state.refundInput=input;await boundary('saved-refund-review');if(state.refundFound){state.refunded=true;return {status:'refunded'};}return {savedRequest:true,nonce:7,amount:read().withdrawal.amount,maximumGasWei:input.maximumGasWei??'3000000000000000',walletName:'MetaMask'};},async prepare(input){state.refundReviews=(state.refundReviews??0)+1;state.refundInput=input;await boundary('refund-review');return {amount:'100000000000000000',maximumGasWei:input.maximumGasWei??'3000000000000000',walletName:'MetaMask'};},async confirm(){state.refundSends=(state.refundSends??0)+1;await boundary('refund-send');state.refunded=true;return {status:'refunded',amount:read().withdrawal.amount};},async cancel(){state.refundCancelled=true;},async recover(){state.refundChecks=(state.refundChecks??0)+1;await boundary('refund-check');if(state.refundFound)state.refunded=true;return {status:state.refundFound?'refunded':'unknown'};}},topup:state.topupEnabled?topup:null,funding:state.aggregateEnabled?funding:null,busy:false,async close(){state.closes++;await boundary('close');}};}
+ async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,depositRefunds:state.depositRefundEnabled?{
+ async list(input){state.depositRefundList=input;return {owner:'0x'+'3'.repeat(40),deposits:[{depositId:'0x'+'4'.repeat(64),amount:'1000000000000000',status:'available'}],nextOffset:null};},
+ async request(id){state.depositRefundId=id;await boundary('deposit-refund-request');return {depositId:id,sender:'0x'+'3'.repeat(40),amount:'1000000000000000'};},
+ async prepare(receipt){await boundary('deposit-refund-bridge');const intent={intentId:'refund-1',action:{type:'cancel-deposit',receipt},status:'prepared',maximumFee:'123',withdrawal:{kind:'cancelled-collateral',depositor:receipt.sender,amount:receipt.amount,depositId:receipt.depositId,eligible:true}};write(intent);return intent;},
+ }:null,withdrawal:{async prepareSaved(input){state.savedRefundReviews=(state.savedRefundReviews??0)+1;state.refundInput=input;await boundary('saved-refund-review');if(state.refundFound){state.refunded=true;return {status:'refunded'};}return {savedRequest:true,nonce:7,amount:read().withdrawal.amount,maximumGasWei:input.maximumGasWei??'3000000000000000',walletName:'MetaMask'};},async prepare(input){state.refundReviews=(state.refundReviews??0)+1;state.refundInput=input;await boundary('refund-review');return {amount:'100000000000000000',maximumGasWei:input.maximumGasWei??'3000000000000000',walletName:'MetaMask'};},async confirm(){state.refundSends=(state.refundSends??0)+1;await boundary('refund-send');state.refunded=true;return {status:'refunded',amount:read().withdrawal.amount};},async cancel(){state.refundCancelled=true;},async recover(){state.refundChecks=(state.refundChecks??0)+1;await boundary('refund-check');if(state.refundFound)state.refunded=true;return {status:state.refundFound?'refunded':'unknown'};}},topup:state.topupEnabled?topup:null,funding:state.aggregateEnabled?funding:null,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
 const originalFetch=globalThis.fetch.bind(globalThis);state.ruleReads=[];state.ruleReleases={};
 globalThis.fetch=async(url,options)=>{
@@ -1621,4 +1625,28 @@ for(const width of [390,1280])test(`G20 account creation shows immediate progres
 test('G20 setup failure removes progress and displays an actionable error',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.hold='create';});await open(page);await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('heading',{name:'Creating your account',exact:true}).waitFor();
  await page.evaluate(()=>{test.failure='session';test.hold=null;test.release();});await page.getByRole('alert').waitFor();assert.equal(await page.locator('.account-setup-spinner').count(),0);assert(await page.getByRole('button',{name:'Reconnect',exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
+});
+
+test('G21 unfinished signup refund uses the connected wallet without an old account backup',async t=>{
+ const {page}=await browserFixture(t);
+ await page.evaluate(()=>{
+  test.depositRefundEnabled=true;
+  test.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'3'.repeat(40)};
+  test.balances={fee:{available:'1000000000000000000'},bok:null,collateral:{deposits:[],nextCursor:null}};
+ });
+ await open(page);
+ await navigateAccount(page,'Balance and withdrawals');
+ await page.getByRole('button',{name:'Find refundable deposits',exact:true}).click();
+ await page.getByRole('button',{name:'Refund 0.001 ETH',exact:true}).click();
+ await page.getByRole('button',{name:'Continue refund',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.imports),0);
+ assert.equal(await page.evaluate(()=>test.depositRefundId),'0x'+'4'.repeat(64));
+ await page.getByRole('button',{name:'Continue refund',exact:true}).click();
+ await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),1);
+ await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm Ethereum refund',exact:true}).click();
+ await page.getByText(/Ethereum refund confirmed/).waitFor();
+ assert.equal(await page.evaluate(()=>test.refundSends),1);
+ assert.equal(await page.evaluate(()=>test.imports),0);
 });

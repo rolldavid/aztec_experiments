@@ -5,7 +5,7 @@
     {
       "name": "RollingBoard",
       "path": "billboard/target/rolling_contract-RollingBoard.json",
-      "sha256": "52e8d3f0e43fb8c1fe3db59f2160453b60579277ce64a86495ab81ebff2c42f1"
+      "sha256": "a3017e14c9f4c38a1414f9bdf54be24be81d85e3bf9fb663d337ed4ce1493f4d"
     },
     {
       "name": "PrivateBok",
@@ -27,9 +27,9 @@
     "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
     "experiments/private-bok/escrow/Nargo.toml": "af34bbe690537ebb19a7d1985c9fdfb00f2622fa8983f2471879843c6eeefc29",
     "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
-    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/admission.nr": "266a21b6305e8d10f5fdad8084d19d53197e4c7814a1ca1ae8a42037bc0f1786",
     "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
-    "billboard/rolling_contract/src/main.nr": "7e3201dac1e7062ebb83c26ad05810cb4c1d86da84573a7975e6e6db2c505d14",
+    "billboard/rolling_contract/src/main.nr": "12f638bfffb85cf28fff465b8361a4d20a688af259119f9f3d6650dd66dab3e8",
     "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
     "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
     "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",

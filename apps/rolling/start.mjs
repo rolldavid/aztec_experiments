@@ -7,7 +7,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {startRollingPublicServer,createRollingPublicIndexFromConfig} from '../../scripts/rolling-public-server.mjs';
 import {loadRollingWalletAssets} from '../../scripts/rolling-wallet-assets.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
-const files=new Map([['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],['/profile-view.mjs','profile-view.mjs'],['/avatar-upload.mjs','avatar-upload.mjs'],
+const files=new Map([['/archive/','archive.html'],['/archive/snapshot.json','archive.json'],['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],['/profile-view.mjs','profile-view.mjs'],['/avatar-upload.mjs','avatar-upload.mjs'],
  ['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs'],['/wallet-cache-worker.mjs','wallet-cache-worker.mjs']]);
 const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"};
@@ -96,7 +96,7 @@ export function createRollingReaderAssetHandler(wallet){
  }
  if(!file||url.search){reply(404);return;}
  const body=await fs.readFile(path.join(root,file));
- res.writeHead(200,{...selectedHeaders,'Content-Type':file.endsWith('.mjs')?'text/javascript; charset=utf-8':file.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8'});
+ res.writeHead(200,{...selectedHeaders,'Content-Type':file.endsWith('.mjs')?'text/javascript; charset=utf-8':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.json')?'application/json; charset=utf-8':'text/html; charset=utf-8'});
  res.end(req.method==='HEAD'?undefined:body);
  };
 }

@@ -32,9 +32,27 @@ pub fn get_deposit_msg_hash(chain: u64, portal: EthAddress, board: AztecAddress,
 }
 
 pub fn get_withdraw_msg_hash(chain: u64, portal: EthAddress, board: AztecAddress, version: u32,
-    depositor: EthAddress, amount: u128) -> Field {
-    sha256_to_field(encode_words("AZTEC_BB_EXIT_V1", [1, chain as Field, portal.to_field(), board.to_field(),
-        version as Field, depositor.to_field(), amount as Field]))
+    depositor: EthAddress, amount: u128, deposit_id: Field) -> Field {
+    sha256_to_field(encode_words("AZTEC_BB_EXIT_V2", [2, chain as Field, portal.to_field(), board.to_field(),
+        version as Field, depositor.to_field(), amount as Field, deposit_id]))
+}
+
+pub fn get_cancel_msg_hash(chain: u64, portal: EthAddress, board: AztecAddress, version: u32,
+    depositor: EthAddress, amount: u128, deposit_id: Field) -> Field {
+    sha256_to_field(encode_words("AZTEC_BB_CANCEL_V2", [2, chain as Field, portal.to_field(), board.to_field(),
+        version as Field, depositor.to_field(), amount as Field, deposit_id]))
+}
+
+pub fn get_refund_msg_hash(chain: u64, portal: EthAddress, board: AztecAddress, version: u32,
+    depositor: EthAddress, amount: u128, deposit_id: Field) -> Field {
+    sha256_to_field(encode_words("AZTEC_BB_REFUND_V2", [2, chain as Field, portal.to_field(), board.to_field(),
+        version as Field, depositor.to_field(), amount as Field, deposit_id]))
+}
+
+// The context siloes this nullifier to the board. Claim and cancellation emit
+// exactly the same value, so native transaction validation admits at most one.
+pub fn deposit_decision_nullifier(portal: EthAddress, depositor: EthAddress, deposit_id: Field) -> Field {
+    poseidon2_hash_with_separator([portal.to_field(), depositor.to_field(), deposit_id], 0x42420104)
 }
 
 pub fn deposit_chain_id(board: AztecAddress, owner: AztecAddress, content: Field, secret: Field, message_leaf_index: Field) -> Field {

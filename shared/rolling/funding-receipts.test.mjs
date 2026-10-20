@@ -27,7 +27,7 @@ import {aggregateFundingAbi} from './aggregate-funding.mjs';
 import {prepareFundingClaim} from './funding-receipts.mjs';
 const h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),addr=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
 const common=['function ROLLUP() view returns(address)','function VERSION() view returns(uint256)'];
-const boardAbi=new Interface([...common,'function L1_CHAIN_ID() view returns(uint256)','function L2_CONTRACT() view returns(bytes32)','function deposit(bytes32 secretHash) payable','event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
+const boardAbi=new Interface([...common,'function requestRefund(bytes32 depositId)','event RefundRequested(address indexed depositor,bytes32 indexed depositId,uint128 amount,bytes32 key,uint256 index)','function L1_CHAIN_ID() view returns(uint256)','function L2_CONTRACT() view returns(bytes32)','function deposit(bytes32 secretHash) payable','event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const feeAbi=new Interface([...common,'function UNDERLYING() view returns(address)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function depositToAztecPublic(bytes32 to,uint256 amount,bytes32 secretHash)','event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const bokAbi=new Interface(['function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function deposit(bytes32 account,uint128 amount,bytes32 secretHash)','event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)']);
 const rollupAbi=new Interface(['function getInbox() view returns(address)','function getOutbox() view returns(address)']);
@@ -45,10 +45,17 @@ after(()=>{globalThis.fetch=originalFetch;});
 before(async()=>{artifact=JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url)));canonical=await derivePrivateFeeInstance(artifact);});
 after(async()=>{await BarretenbergSync.destroySingleton();});
 async function fixture(kind='collateral',retainedFeeSalt=null,feeMessageMode='canonical') {
- const s={chainId:'31337',version:'2',rollup:addr(10),portal:addr(11),recipient:kind==='private-fee'?canonical.address.toString():h(12),...(kind==='collateral'?{}:{token:addr(13)})};
- const r={txHash:h(100),blockHash:h(101),blockNumber:6,sender:addr(14),nonce:'3',amount:'5000',leafIndex:'9',messageKey:null,secretHash:null};
+ const cancellation = kind === 'collateral-cancel';
+ const collateral = kind === 'collateral' || cancellation;
+ const s={chainId:'31337',version:'2',rollup:addr(10),portal:addr(11),recipient:kind==='private-fee'?canonical.address.toString():h(12),...(collateral?{}:{token:addr(13)})};
+ const r={txHash:h(100),blockHash:h(101),blockNumber:6,sender:addr(14),nonce:'3',amount:'5000',leafIndex:'9',messageKey:null,secretHash:null,...(cancellation ? {depositId:h(25)} : {})};
  const owner=h(20),walletSecret=h(21),walletSalt=h(22),salt=h(23);let secret,content,account,secrets;
- if(kind==='collateral') {
+ if (cancellation) {
+  secret = h(1);
+  content = await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(
+   ['bytes32','uint256','uint256','address','bytes32','uint256','address','uint128','bytes32'],
+   [encodeBytes32String('AZTEC_BB_CANCEL_V2'),2,s.chainId,s.portal,s.recipient,s.version,r.sender,r.amount,r.depositId])));
+ } else if(kind==='collateral') {
   secrets={walletSecret,walletSalt};const derived=await deriveBoardDepositSecret({...secrets,owner,nonce:r.nonce,scope:{l1ChainId:s.chainId,rollupVersion:s.version,rollupAddress:s.rollup,boardAddress:s.recipient,portalAddress:s.portal,depositor:r.sender}});secret=derived.secret;
   content=await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','uint256','address','bytes32','uint256','address','uint256'],[encodeBytes32String('AZTEC_BB_CLAIM_V1'),1,s.chainId,s.portal,s.recipient,s.version,r.sender,r.amount])));
  } else if(kind==='private-fee') {
@@ -70,13 +77,13 @@ async function fixture(kind='collateral',retainedFeeSalt=null,feeMessageMode='ca
  let root=message.hash(),cursor=BigInt(r.leafIndex);
  for(const sibling of siblings){root=await poseidon2HashWithSeparator(cursor&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);cursor>>=1n;}
  const anchor={number:3,hash:h(300),root:root.toString()};
- const abi=kind==='collateral'?boardAbi:kind==='private-fee'?feeAbi:bokAbi;
- const args=kind==='collateral'?[r.secretHash]:kind==='private-fee'?[s.recipient,r.amount,r.secretHash]:[account,r.amount,r.secretHash];
- const eventArgs=kind==='collateral'?[r.sender,r.amount,r.secretHash,r.messageKey,r.leafIndex]:kind==='private-fee'?[s.recipient,r.amount,r.secretHash,r.messageKey,r.leafIndex]:[account,r.amount,r.messageKey,r.leafIndex];
- const eventName=kind==='private-fee'?'DepositToAztecPublic':'Deposited';
+ const abi=collateral?boardAbi:kind==='private-fee'?feeAbi:bokAbi;
+ const args=cancellation?[r.depositId]:kind==='collateral'?[r.secretHash]:kind==='private-fee'?[s.recipient,r.amount,r.secretHash]:[account,r.amount,r.secretHash];
+ const eventArgs=cancellation?[r.sender,r.depositId,r.amount,r.messageKey,r.leafIndex]:kind==='collateral'?[r.sender,r.amount,r.secretHash,r.messageKey,r.leafIndex]:kind==='private-fee'?[s.recipient,r.amount,r.secretHash,r.messageKey,r.leafIndex]:[account,r.amount,r.messageKey,r.leafIndex];
+ const eventName=cancellation?'RefundRequested':kind==='private-fee'?'DepositToAztecPublic':'Deposited';
  const event=abi.encodeEventLog(abi.getEvent(eventName),eventArgs);
  const state={reads:[],guardCalls:0,receipt:{hash:r.txHash,blockHash:r.blockHash,blockNumber:r.blockNumber,from:r.sender,to:s.portal,status:1,logs:[{address:s.portal,...event}]},
-  tx:{hash:r.txHash,from:r.sender,to:s.portal,chainId:BigInt(s.chainId),nonce:Number(r.nonce),value:kind==='collateral'?BigInt(r.amount):0n,data:abi.encodeFunctionData(kind==='private-fee'?'depositToAztecPublic':'deposit',args)},
+  tx:{hash:r.txHash,from:r.sender,to:s.portal,chainId:BigInt(s.chainId),nonce:Number(r.nonce),value:kind==='collateral'?BigInt(r.amount):0n,data:abi.encodeFunctionData(cancellation?'requestRefund':kind==='private-fee'?'depositToAztecPublic':'deposit',args)},
   blockHash:r.blockHash,finalized:{number:8,hash:h(102)},l2Hash:anchor.hash,root:anchor.root,witness:[BigInt(r.leafIndex),new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,siblings.map(x=>x.toBuffer()))],
   bindings:{ROLLUP:s.rollup,VERSION:2n,L1_CHAIN_ID:31337n,L2_CONTRACT:s.recipient,UNDERLYING:s.token,L2_TOKEN_ADDRESS:ProtocolContractAddress.FeeJuice.toString(),token:s.token,escrow:s.recipient,version:2n,chainId:31337n,inbox:addr(40),outbox:addr(41),getInbox:addr(40),getOutbox:addr(41)}};
  const node={getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.1',l1ChainId:31337,rollupVersion:2,realProofs:true,
@@ -288,4 +295,40 @@ for(const kind of ['collateral','private-fee','bok'])test('aggregate '+kind+' sh
  for(const name of ['getTransactionReceipt','getTransaction','getCode','getBlock']){const original=f.input.ethProvider[name];f.input.ethProvider[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return original(...args);};}
  assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
  assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,1);assert(counts.getBlock>=2);
+});
+
+// Cancellation uses the current account only to pay/prove the acknowledgement.
+// Ethereum's owner request fixes the refund recipient; no old account key is read.
+test('cancellation prepares from public owner request with no old account or custody', async () => {
+ const f = await fixture('collateral-cancel');
+ delete f.input.secrets;
+ Object.defineProperty(f.input,'claimStore',{get(){assert.fail('No old custody access');}});
+ f.input.owner = h(99);
+ const result = await prepareFundingClaim(f.input);
+ assert.equal(result.status,'claim-ready');
+ assert.deepEqual(result.claim,{contract:f.input.scope.recipient,method:'cancel_deposit',args:[f.input.receipt.sender,'5000',h(25),'9']});
+ assert.equal(result.evidence.content,f.content);
+});
+for (const mutation of ['depositId','owner','amount','secret','duplicate','missing','calldata','l1-reorg','l2-reorg','witness']) {
+ test('cancellation rejects changed '+mutation, async () => {
+  const f = await fixture('collateral-cancel');
+  if (mutation === 'depositId') f.input.receipt.depositId = h(26);
+  if (mutation === 'owner') f.input.receipt.sender = addr(99);
+  if (mutation === 'amount') f.input.receipt.amount = '5001';
+  if (mutation === 'secret') f.input.receipt.secretHash = h(99);
+  if (mutation === 'duplicate') f.state.receipt.logs.push(f.state.receipt.logs[0]);
+  if (mutation === 'missing') f.state.receipt.logs = [];
+  if (mutation === 'calldata') f.state.tx.data = f.abi.encodeFunctionData('requestRefund',[h(26)]);
+  if (mutation === 'l1-reorg') f.state.blockHash = h(99);
+  if (mutation === 'l2-reorg') f.state.l2Hash = h(99);
+  if (mutation === 'witness') f.state.witness[0] = 10n;
+  await assert.rejects(prepareFundingClaim(f.input));
+ });
+}
+test('cancellation pending bridge stays pending; a later canonical witness permits preparation', async () => {
+ const f = await fixture('collateral-cancel'), witness = f.state.witness;
+ f.state.witness = undefined;
+ assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l2-delivery'});
+ f.state.witness = witness;
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
 });

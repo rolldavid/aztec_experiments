@@ -255,3 +255,117 @@ unconstrained fn moderator_rotation_revokes_old_authority() {
     env.call_public(moderator, RollingBoard::at(board).transfer_moderator(alice));
     env.call_public(moderator, RollingBoard::at(board).set_main_policy(text("Old key"), 7));
 }
+
+
+// G21 uses the native TXE message tree and transaction nullifier tree. These
+// tests do not model claimed/cancelled state or substitute a bridge verifier.
+use crate::admission::{get_deposit_msg_hash, get_cancel_msg_hash, deposit_chain_id};
+use aztec::hash::compute_secret_hash;
+
+unconstrained fn refund_setup() -> (TestEnvironment, AztecAddress, AztecAddress, AztecAddress) {
+    let (env, board, moderator, alice, bob) = setup();
+    env.call_private(moderator, RollingBoard::at(board).update_portal(EthAddress::from_field(0x1234)));
+    (env, board, alice, bob)
+}
+unconstrained fn refund_messages(env: TestEnvironment, board: AztecAddress, depositor: EthAddress, secret: Field) -> (Field, Field) {
+    let portal = EthAddress::from_field(0x1234);
+    let claim = get_deposit_msg_hash(1, portal, board, 1, depositor, 10);
+    let cancel = get_cancel_msg_hash(1, portal, board, 1, depositor, 10, compute_secret_hash([secret]));
+    let claim_leaf = env.send_l1_to_l2_message(claim, secret, portal, board);
+    let cancel_leaf = env.send_l1_to_l2_message(cancel, 1, portal, board);
+    (claim_leaf, cancel_leaf)
+}
+
+#[test]
+fn refund_public_secret_matches_ethereum_portal_constant() {
+    assert_eq(compute_secret_hash([1]), 0x1b6b10770670d8747fd9288964a9103d9d6d84b1cf6fcc8991cdc9b07b5d59ad);
+}
+
+#[test(should_fail_with="duplicate nullifiers")]
+unconstrained fn refund_claim_wins_then_cancellation_is_rejected_by_native_nullifier_tree() {
+    let (env, board, alice, bob) = refund_setup();
+    let depositor = EthAddress::from_field(0xbeef); let secret = 701;
+    let (claim_leaf, cancel_leaf) = refund_messages(env, board, depositor, secret);
+    env.call_private(alice, RollingBoard::at(board).claim_deposit(depositor, 10, secret, claim_leaf));
+    let ids = env.execute_utility(RollingBoard::at(board).get_deposit_ids(alice, 0));
+    assert(ids[0] != 0);
+    // Distinct authentic Inbox messages; only the application decision
+    // nullifier collides. Bob has no access to Alice's private account.
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 10, compute_secret_hash([secret]), cancel_leaf));
+}
+
+#[test(should_fail_with="duplicate nullifiers")]
+unconstrained fn refund_cancellation_wins_then_original_message_cannot_mint_collateral() {
+    let (env, board, alice, bob) = refund_setup();
+    let depositor = EthAddress::from_field(0xbeef); let secret = 702;
+    let (claim_leaf, cancel_leaf) = refund_messages(env, board, depositor, secret);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 10, compute_secret_hash([secret]), cancel_leaf));
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_ids(alice, 0)), [0; 10]);
+    env.call_private(alice, RollingBoard::at(board).claim_deposit(depositor, 10, secret, claim_leaf));
+}
+
+#[test(should_fail_with="No L1 to L2 message found")]
+unconstrained fn refund_cannot_change_authenticated_ethereum_owner() {
+    let (env, board, _, bob) = refund_setup();
+    let (_, cancel_leaf) = refund_messages(env, board, EthAddress::from_field(0xbeef), 703);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(EthAddress::from_field(0xcafe), 10, compute_secret_hash([703]), cancel_leaf));
+}
+
+#[test(should_fail_with="No L1 to L2 message found")]
+unconstrained fn refund_cannot_change_authenticated_amount() {
+    let (env, board, _, bob) = refund_setup();
+    let depositor = EthAddress::from_field(0xbeef);
+    let (_, cancel_leaf) = refund_messages(env, board, depositor, 704);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 20, compute_secret_hash([704]), cancel_leaf));
+}
+
+#[test(should_fail_with="No L1 to L2 message found")]
+unconstrained fn refund_cannot_change_authenticated_deposit_commitment() {
+    let (env, board, _, bob) = refund_setup();
+    let depositor = EthAddress::from_field(0xbeef);
+    let (_, cancel_leaf) = refund_messages(env, board, depositor, 705);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 10, compute_secret_hash([706]), cancel_leaf));
+}
+
+#[test(should_fail_with="No L1 to L2 message found")]
+unconstrained fn refund_rejects_cancellation_from_a_different_portal() {
+    let (env, board, _, bob) = refund_setup();
+    let portal = EthAddress::from_field(0x1234); let depositor = EthAddress::from_field(0xbeef);
+    let id = compute_secret_hash([707]);
+    let content = get_cancel_msg_hash(1, portal, board, 1, depositor, 10, id);
+    let leaf = env.send_l1_to_l2_message(content, 1, EthAddress::from_field(0x5678), board);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 10, id, leaf));
+}
+
+#[test]
+unconstrained fn refund_pending_old_deposit_does_not_block_same_owner_fresh_claim_or_withdrawal() {
+    let (env, board, alice, bob) = refund_setup();
+    let portal = EthAddress::from_field(0x1234); let depositor = EthAddress::from_field(0xbeef);
+    let (_, old_cancel_leaf) = refund_messages(env, board, depositor, 708);
+    let content = get_deposit_msg_hash(1, portal, board, 1, depositor, 10);
+    let new_leaf = env.send_l1_to_l2_message(content, 709, portal, board);
+    // Fresh claim completes before the old cancellation is processed.
+    env.call_private(alice, RollingBoard::at(board).claim_deposit(depositor, 10, 709, new_leaf));
+    let chain = deposit_chain_id(board, alice, content, 709, new_leaf);
+    let before = env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain));
+    assert_eq(before[10], compute_secret_hash([709]));
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(depositor, 10, compute_secret_hash([708]), old_cancel_leaf));
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain)), before);
+    env.mine_block_at(env.last_block_timestamp() + 11);
+    env.call_private(alice, RollingBoard::at(board).withdraw(chain));
+    assert_eq(env.execute_utility(RollingBoard::at(board).get_deposit_ids(alice, 0)), [0; 10]);
+}
+
+#[test]
+unconstrained fn refund_decision_is_scoped_to_ethereum_owner_not_only_commitment() {
+    let (env, board, alice, bob) = refund_setup();
+    let (_, cancel_leaf) = refund_messages(env, board, EthAddress::from_field(0xbeef), 710);
+    env.call_private(bob, RollingBoard::at(board).cancel_deposit(EthAddress::from_field(0xbeef), 10, compute_secret_hash([710]), cancel_leaf));
+    let portal = EthAddress::from_field(0x1234); let other_owner = EthAddress::from_field(0xcafe);
+    let content = get_deposit_msg_hash(1, portal, board, 1, other_owner, 10);
+    let leaf = env.send_l1_to_l2_message(content, 710, portal, board);
+    env.call_private(alice, RollingBoard::at(board).claim_deposit(other_owner, 10, 710, leaf));
+    let chain = deposit_chain_id(board, alice, content, 710, leaf);
+    let info = env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain));
+    assert_eq(info[2], 10); assert_eq(info[10], compute_secret_hash([710]));
+}

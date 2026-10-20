@@ -63,7 +63,7 @@ async function deploymentFixture({chainId='31337'}={}){
   getPublicStorageAt:async(reference,address,slot)=>{state.reads.push(['storage',reference]);return new Fr(storage.get(slot.toBigInt()));},
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
  const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
- const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
+ const ethers={Interface,JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
  const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
   isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId,version:'1',rollup});assert.equal(opts.proofsEnabled,state.proofsEnabled??true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
@@ -502,19 +502,21 @@ import {computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {TxHash,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {hexlify,AbiCoder,getBytes,encodeBytes32String} from 'ethers';
-import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
-async function withdrawalFixture({chainId='31337',bok=false,scopeOverride={}}={}){
- const scope={account:hex(3),chainId,version:'1',rollup:eth(11),board:hex(1),portal:eth(22),...scopeOverride},record={intentId:hex(8),action:{type:'withdraw',deposit:hex(9)},status:'confirmed',txHash:hex(77),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
+import {encodeDepositExitCommitment} from '../../shared/protocol-commitments.mjs';
+async function withdrawalFixture({chainId='31337',bok=false,cancellation=false,scopeOverride={}}={}){
+ const scope={account:hex(3),chainId,version:'1',rollup:eth(11),board:hex(1),portal:eth(22),...scopeOverride},record={intentId:hex(8),action:{type:'withdraw',deposit:hex(9)},status:'confirmed',txHash:hex(77),withdrawal:{eligible:true,amount:'100',depositor:eth(33),depositId:hex(56)}};
+ if(cancellation){assert.equal(bok,false);record.action={type:'cancel-deposit',receipt:{}};record.withdrawal.kind='cancelled-collateral';}
  if(bok){record.action={type:'withdraw-bok',amount:'100',recipient:eth(33)};record.withdrawal={...record.withdrawal,kind:'bok',nonce:hex(55),bokScope:{portal:scope.portal,token:eth(66),recipient:scope.board}};}
- const content=sha256ToField([bok?Buffer.from(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','address','uint128','bytes32'],[encodeBytes32String('PLUGIN_EXIT_V1'),chainId,scope.portal,scope.board,1,eth(33),100,hex(55)]))):Buffer.from(encodeEscrowCommitment('exit',{l1ChainId:scope.chainId,rollupAddress:scope.rollup,rollupVersion:scope.version,boardAddress:scope.board,portalAddress:scope.portal},{amount:'100',depositor:eth(33)}))]);
+ const content=sha256ToField([bok?Buffer.from(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','address','uint128','bytes32'],[encodeBytes32String('PLUGIN_EXIT_V1'),chainId,scope.portal,scope.board,1,eth(33),100,hex(55)]))):Buffer.from(encodeDepositExitCommitment(cancellation?'refund':'exit',{l1ChainId:scope.chainId,rollupAddress:scope.rollup,rollupVersion:scope.version,boardAddress:scope.board,portalAddress:scope.portal},{amount:'100',depositor:eth(33),depositId:hex(56)}))]);
  const leaf=computeL2ToL1MessageHash({l2Sender:new AztecAddress(new Fr(BigInt(scope.board))),l1Recipient:EthAddress.fromString(scope.portal),content,chainId:new Fr(BigInt(chainId)),rollupVersion:new Fr(1)});
  const state={sends:0,calls:0,guard:true,connected:eth(33),price:2n,settled:true,unknown:false,head:10,tx:null,receipt:null,fork:false};const values=new Map();
  const storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(values.get(key)??null,previous);if(next===null)values.delete(key);else values.set(key,next);}};
  const provider={on:async(event,listener)=>{assert.equal(event,'finalized');state.finalityListener=listener;},off:async(event,listener)=>{assert.equal(event,'finalized');assert.equal(state.finalityListener,listener);state.finalityListener=null;},getNetwork:async()=>({chainId:BigInt(state.chainId??chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?(state.onFinalityRead?.(),{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}):({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async(_address,tag)=>tag==='pending'&&state.pendingNonce!==undefined?state.pendingNonce:state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>{state.onFees?.();return {gasPrice:state.price};},call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
  const node={getTxReceipt:async()=>({txHash:record.txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(42)}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:hex(42),data:{l2ToL1Msgs:[leaf]}}),getBlockData:async()=>({header:{globalVariables:{blockNumber:1}},blockHash:state.l2Fork?hex(99):hex(42)}),getL2ToL1MembershipWitness:async()=>({epochNumber:1,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}})};
- const abi=new Interface([bok?'event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)':'event Withdrawn(address indexed depositor,uint128 amount)']);
- const signer={getAddress:async()=>state.connected,sendTransaction:async request=>{state.sends++;state.head++;state.tx={...request,hash:hex(88)};state.receipt={hash:hex(88),from:eth(33),to:scope.portal,status:1,gasUsed:100n,gasPrice:2n,blockNumber:state.head,blockHash:hex(state.head),logs:[{address:scope.portal,...abi.encodeEventLog(abi.getEvent('Withdrawn'),[eth(33),100n,...(bok?[hex(55)]:[])])}]};if(state.unknown)throw Error('lost response');return state.tx;}};
- const opts={sdk:{createEthereumJournal,Fr,AztecAddress,EthAddress,TxHash,computeL2ToL1MessageHash,sha256ToField,boundedTransactionRead:fn=>fn()},ethers:{Interface,hexlify,AbiCoder,getBytes,encodeBytes32String},resolveBokScope:async()=>({portal:scope.portal,token:eth(66),recipient:scope.board}),provider,node,application:{readWithdrawal:async()=>record},scope,storage,walletSecret:hex(8),walletSalt:hex(9),contextGuard:async()=>{assert(state.guard);},captureWallet:async()=>({address:state.connected,chainId,name:'Development wallet',signer,guard:async()=>{assert(state.guard&&state.connected===eth(33));}})};
+ const eventName=cancellation?'Refunded':'Withdrawn';
+ const abi=new Interface([bok?'event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)':cancellation?'event Refunded(address indexed depositor,bytes32 indexed depositId,uint128 amount)':'event Withdrawn(address indexed depositor,uint128 amount,bytes32 indexed depositId)']);
+ const signer={getAddress:async()=>state.connected,sendTransaction:async request=>{state.sends++;state.head++;state.tx={...request,hash:hex(88)};state.receipt={hash:hex(88),from:eth(33),to:scope.portal,status:1,gasUsed:100n,gasPrice:2n,blockNumber:state.head,blockHash:hex(state.head),logs:[{address:scope.portal,...abi.encodeEventLog(abi.getEvent(eventName),cancellation?[eth(33),hex(56),100n]:[eth(33),100n,...(bok?[hex(55)]:[hex(56)])])}]};if(state.unknown)throw Error('lost response');return state.tx;}};
+ const opts={sdk:{createEthereumJournal,Fr,AztecAddress,EthAddress,TxHash,computeL2ToL1MessageHash,sha256ToField,waitForTx:async()=>({status:'proven',executionResult:'success'}),boundedTransactionRead:fn=>fn()},ethers:{Interface,hexlify,AbiCoder,getBytes,encodeBytes32String},resolveBokScope:async()=>({portal:scope.portal,token:eth(66),recipient:scope.board}),provider,node,application:{readWithdrawal:async()=>record},scope,storage,walletSecret:hex(8),walletSalt:hex(9),contextGuard:async()=>{assert(state.guard);},captureWallet:async()=>({address:state.connected,chainId,name:'Development wallet',signer,guard:async()=>{assert(state.guard&&state.connected===eth(33));}})};
  return {state,record,opts,values,cap:createCollateralWithdrawal(opts),restart:()=>createCollateralWithdrawal(opts)};
 }
 test('RC22 collateral refund uses actual encrypted Ethereum journal, exact original depositor and one explicit send',async()=>{
@@ -591,11 +593,39 @@ test('RC22 refund receipt reorg cannot unlock workflow or authorize another paym
  const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});await f.cap.confirm();f.state.fork=true;
  await assert.rejects(f.restart().verify(f.record));assert.equal(f.state.sends,1);
 });
-test('RC22 timeout retains ownership of the original provider read before returning failure',async()=>{
- const f=await withdrawalFixture(),original=Error('bounded read timeout');let release,started;const began=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);
- f.opts.provider.getNetwork=async()=>{started();await held;return {chainId:31337n};};f.opts.sdk.boundedTransactionRead=async fn=>Promise.race([fn(),began.then(()=>{throw original;})]);
- let settled=false;const result=f.restart().prepare({maximumGasWei:'1000'}).catch(error=>{assert.equal(error,original);settled=true;});
- await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);release();await result;assert.equal(settled,true);assert.equal(f.state.sends,0);
+test('RC22 pending transport failure retains operation ownership without a whole-flow deadline',async()=>{
+ const f=await withdrawalFixture(),original=Error('provider transport failed');let release,started;const began=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);
+ f.opts.provider.getNetwork=async()=>{started();await held;throw original;};
+ f.opts.sdk.boundedTransactionRead=()=>assert.fail('No whole-operation timeout wrapper');
+ let settled=false;const result=assert.rejects(f.restart().prepare({maximumGasWei:'1000'}),error=>error===original).then(()=>{settled=true;});
+ await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(f.state.sends,0);
+ release();await result;assert.equal(settled,true);assert.equal(f.state.sends,0);
+});
+for(const method of ['prepare','prepareSaved'])test(`G21 ${method} waits for native proven settlement before any refund call or signing`,async()=>{
+ const f=await withdrawalFixture({cancellation:true});
+ if(method==='prepareSaved'){await f.cap.prepare();await f.cap.confirm();}
+ const sends=f.state.sends,calls=f.state.calls;let release,started;
+ const began=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);
+ f.opts.sdk.waitForTx=async(node,tx,options)=>{assert.equal(node,f.opts.node);assert.equal(tx.toString(),f.record.txHash);assert.deepEqual(options,{timeout:0,waitForStatus:'proven',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});started();await held;return {status:'proven',executionResult:'success'};};
+ f.opts.sdk.boundedTransactionRead=()=>assert.fail('No whole-operation timeout wrapper');
+ let settled=false;const pending=f.restart()[method]().then(value=>{settled=true;return value;});
+ await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(f.state.calls,calls);assert.equal(f.state.sends,sends);
+ release();const result=await pending;assert.equal(settled,true);assert.equal(f.state.sends,sends);assert.equal(result.amount,'100');
+ if(method==='prepareSaved')assert.equal(result.status,'refunded');else assert(f.state.calls>calls);
+});
+test('G21 cancelled collateral uses exact refund ID and owner and recovers without another send',async()=>{
+ const f=await withdrawalFixture({cancellation:true});await f.cap.prepare();const result=await f.cap.confirm();
+ assert.equal(result.status,'refunded');assert.equal(f.state.sends,1);
+ const abi=new Interface(['function refund(address,bytes32,uint256,uint256,uint256,bytes32[])']);
+ const tx=abi.parseTransaction({data:f.state.tx.data});assert.equal(tx.name,'refund');assert.equal(tx.args[0].toLowerCase(),eth(33));assert.equal(tx.args[1],hex(56));
+ assert.equal(await f.restart().verify(f.record),true);assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+});
+for(const mutation of ['action','depositId','effect'])test(`G21 cancelled collateral rejects changed ${mutation} before signing`,async()=>{
+ const f=await withdrawalFixture({cancellation:true});
+ if(mutation==='action')f.record.action.type='withdraw';
+ if(mutation==='depositId')f.record.withdrawal.depositId=hex(57);
+ if(mutation==='effect')f.opts.node.getTxEffect=async()=>({l2BlockNumber:1,l2BlockHash:hex(42),data:{l2ToL1Msgs:[new Fr(123)]}});
+ await assert.rejects(f.restart().prepare(),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,0);
 });
 for(const outcome of ['mined','reorg','context'])test(`RC22 testnet refund canonical mined receipt preserves original send: ${outcome}`,async()=>{
  const f=await withdrawalFixture({chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=0;
@@ -700,7 +730,7 @@ test('confirmed withdrawal session opens the real refund journal with captured p
  const scope={account:f.input.account.address,chainId:'31337',version:'1',rollup:f.input.config.network.rollupAddress,board:f.input.config.board.contractAddress,portal:f.input.config.board.portalAddress};
  const workflow=await createEncryptedJournalSlot({storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt,
   scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
- const record={id,action:{type:'withdraw',deposit:hex(303)},status:'confirmed',txHash,maximumFee:'10',nonce:hex(304),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
+ const record={id,action:{type:'withdraw',deposit:hex(303)},status:'confirmed',txHash,maximumFee:'10',nonce:hex(304),withdrawal:{eligible:true,amount:'100',depositor:eth(33),depositId:hex(56)}};
  await workflow.write(await workflow.read(),record);
  f.input.sdk.createL2Journal=async()=>({inspectOutcome:async()=>({operation:'ROLLING_WORKFLOW_V1:'+id,txHash,outcome:'success',receipt:{txHash,transactionFee:1n}}),confirmed:()=>{}});
  f.input.sdk.boundedTransactionRead=fn=>fn();
@@ -976,4 +1006,20 @@ for(const values of [{price:0n},{price:-1n},{updated:1001n},{updated:0n},{answer
 });
 test('unavailable price feed does not fail payment preparation',async()=>{
  assert.equal(await fundingUsdEstimate({ethers:priceEthers,provider:{getBlock:async()=>{throw Error('offline');}},chainId:'11155111',wei:'1'}),null);
+});
+
+for(const depositId of [undefined,hex(0),'0x'+'ff'.repeat(32)])test('collateral withdrawal refuses missing or invalid deposit ID '+String(depositId),async()=>{
+ const f=await withdrawalFixture();f.record.withdrawal.depositId=depositId;
+ await assert.rejects(f.cap.prepare({maximumGasWei:'1000'}));assert.equal(f.state.sends,0);
+});
+test('collateral withdrawal binds calldata and canonical receipt to the selected deposit',async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});await f.cap.confirm();
+ const abi=new Interface(['function withdraw(bytes32 depositId,uint256,uint256,uint256,bytes32[])','event Withdrawn(address indexed depositor,uint128 amount,bytes32 indexed depositId)']);
+ assert.equal(abi.decodeFunctionData('withdraw',f.state.tx.data).depositId,f.record.withdrawal.depositId);
+ f.state.receipt.logs=[{address:f.opts.scope.portal,...abi.encodeEventLog(abi.getEvent('Withdrawn'),[eth(33),100n,hex(57)])}];
+ await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
+});
+test('changing the selected deposit after withdrawal review prevents signing',async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});f.record.withdrawal.depositId=hex(57);
+ await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
 });

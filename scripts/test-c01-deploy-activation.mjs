@@ -145,7 +145,7 @@ for (const [label, code, accepted] of [['missing','0x',false],['unrecognized','0
       loadContractArtifact(){calls.push('artifact');throw stop;},
     };
     const env={aztec,ethers:{JsonRpcProvider:Provider},pause(){calls.push('wallet');throw Error('Unexpected wallet access');},initCRS(){calls.push('prover');throw Error('Unexpected proving setup');}};
-    await assert.rejects(context.runDeploy(env,{}),accepted?error=>error===stop:/Required CREATE2 proxy runtime is missing or unsupported/);
+    await assert.rejects(context.runDeploy(env,{deploymentManifest:{schemaVersion:2,board:{kind:'rolling'}}}),accepted?error=>error===stop:/Required CREATE2 proxy runtime is missing or unsupported/);
     assert.deepEqual(calls,accepted?['network','proxy','artifact','destroy']:['network','proxy','destroy']);
   });
 }
