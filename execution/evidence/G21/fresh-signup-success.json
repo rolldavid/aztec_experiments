@@ -1,0 +1,125 @@
+{
+  "appSource": "ca11b9fcaf0958cfe2345d18ea75944854dfd1e9",
+  "nativeQuerySource": "36bc680ecabbc484a69e1161b5f87213c1aaee35",
+  "harnessSource": "f859c7ed58442a59fb962cef4d3183bc6f700c44",
+  "run": {
+    "exitCode": 0,
+    "elapsedMs": 886934
+  },
+  "report": {
+    "passed": true,
+    "scope": "Real selected MetaMask testnet payment, canonical three-bridge effects and real-proof private triple claim to Ready.",
+    "privateRecoveryRetained": true,
+    "browserVersion": "155.0.8059.79",
+    "browserLifecycle": {
+      "contextClosed": true,
+      "disconnected": true,
+      "pageCrashed": false
+    },
+    "localNetwork": "selected",
+    "aggregatePermission": {
+      "entered": true,
+      "resolved": true,
+      "rejected": false
+    },
+    "aggregateConnection": {
+      "entered": "eth_chainId",
+      "resolved": "eth_chainId",
+      "rejected": null
+    },
+    "accountSelection": "prompt-confirmed",
+    "payer": {
+      "initialEthereumNonce": 2,
+      "sameOwnerDepositVerified": true,
+      "depositId": "0x1b57f8e11878d4e73095b3de1961c028426b8d514c01241e6675ac90a878d51f"
+    },
+    "aggregate": {
+      "asset": "ETH",
+      "transactionHash": "0xd398a7fc0618335dcdfff0b350e171f68a32ecd85750c7dee7a69c06ffc7d16a",
+      "planHash": "0x514eb32ef9b1a0ec941bcf29445ee8ef22bccdb5b1ac9ad0c4367da6b0181bf9",
+      "userSends": 1,
+      "relayPosts": 0,
+      "signatures": 1,
+      "canonicalEffectsVerified": true,
+      "collateral": "1000000000000000",
+      "privateFee": "27847508272774440000",
+      "bok": "1000000",
+      "privateClaimQualified": true,
+      "postQualified": true,
+      "readyFromConfirmedPrivateClaim": true,
+      "claimTransactionHash": "0x2f3dfe4445359a19bc47d47e33f2471b6f6e1332e1d494c2fe953b7c8630aeda",
+      "postVisibleOnHome": true
+    },
+    "automaticClaim": {
+      "surface": {
+        "state": "success",
+        "busy": false,
+        "notices": [
+          "success"
+        ],
+        "buttons": {
+          "pause": {
+            "visible": false,
+            "enabled": false
+          },
+          "resume": {
+            "visible": false,
+            "enabled": false
+          },
+          "confirm": {
+            "visible": false,
+            "enabled": false
+          },
+          "check": {
+            "visible": false,
+            "enabled": false
+          },
+          "reviewAgain": {
+            "visible": false,
+            "enabled": false
+          }
+        }
+      },
+      "saved": {
+        "paymentMatches": true,
+        "claimMatches": true,
+        "claimConfirmed": true,
+        "claimTxHash": "0x2f3dfe4445359a19bc47d47e33f2471b6f6e1332e1d494c2fe953b7c8630aeda",
+        "paymentSaved": true,
+        "claimPresent": true,
+        "attempted": true,
+        "workflowPrepared": false,
+        "workflowStatus": "confirmed",
+        "feeWithinSavedCap": true,
+        "explicitClaimReview": false
+      }
+    },
+    "aggregateAttempts": {
+      "userSends": 1,
+      "relayPosts": 0,
+      "signatures": 1,
+      "paymentHashObserved": true
+    },
+    "realExtension": true,
+    "extensionVersion": "13.49.0.0",
+    "proofRequests": 2,
+    "l2Submissions": 2,
+    "publicObservation": {
+      "requests": 1164,
+      "completed": 1164,
+      "errors": 2,
+      "canonicalObservationError": true,
+      "transactions": 12,
+      "scope": "Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded"
+    },
+    "cleanupComplete": true,
+    "blockedRequests": 0,
+    "blockedDetails": [],
+    "extensionStartupDocuments": 27
+  },
+  "observerCaveat": "Functional browser journey passed; supplementary public footprint capture has two capture errors and canonicalObservationError=true. It does not establish privacy qualification. Raw public capture retained in private test directory.",
+  "publicCaptureSha256": "9c24fecdba684125da67bf7fefd8c8467ecff1e20143f41a263afa54a3aeebdd",
+  "completionStatuses": {
+    "200": 1164
+  }
+}

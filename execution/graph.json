@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Same-owner app/contracts ca11 and query36bc are published. Second fresh signup failed before payment in Bok public-storage initialization; exact HTTP/transport cause remains unproven. Independent public Bok verification subsequently passed. Harness now immediately rejects declared initialization failure and records HTTP vs transport completion; 5 browser and110 transport checks pass, independently reviewed. Next fresh run preparation stopped because macOS cannot resolve configured Sepolia RPC (normal curl/getaddrinfo fail; DNS queries and TLS-pinned read-only chainId succeed). No third browser run/payment started. Resume fresh signup after normal resolver works; do not restore abandoned accounts or claim acceptance.",
+      "checkpoint": "Fresh hosted run tkKh3I passed with same Ethereum owner nonce2/existing deposits, new private account, one ETH transaction, canonical deposit, real private claim and first post visible on Home;886934ms cold fullrun. Appca11/query36bc/harnessf859. Functional evidence fresh-signup-success.json + independent Home API readback. Supplementary public trace has2capture errors/canonicalObservationError; no privacy qualification claimed. Earlier init read failure remains unexplained; immediate failure/status diagnostics now integrated. Remaining architecture: mandatoryBok router/client coupling and63MB cold SDK. Keep acceptance truthful; no new board redeploy needed for optionalBok.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

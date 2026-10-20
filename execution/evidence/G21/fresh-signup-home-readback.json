@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "chainId": "11155111",
+    "rollupVersion": "3409706519",
+    "rollupAddress": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+    "boardAddress": "0x23c068961909d0e5efa212041e25768baff08b55e074b9a03a4deb99d5b29852",
+    "classId": "0x05ebfc663bc1037995c33fd2d7112b5234269e57cab5e9f7818ef2be65029833",
+    "bok": {
+      "address": "0x2fc1682096b9042c7a760158a5c2ddacab8ebc2892b1b339044916ca41126ab9",
+      "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+      "operatorAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+      "deployer": "0x2c8a8c02a4b70118ce06ca7f789f497349ad464a8439368d4db2bfd7a5577cf9",
+      "salt": "0x3002920e4196c9e176797108db7b13d694178f27447391dd6169abb19b07e2c2",
+      "deployment": {
+        "txHash": "0x2d1e78bbe0d9aa8e6b288057169bc6fcc06aa2a5b2f0e0da25f3a1449497900f",
+        "blockNumber": 10244,
+        "blockHash": "0x085a180c7ab8d47c568c0d07ed046cd855faff449c96e4752af11d4648bf11f8"
+      }
+    }
+  },
+  "checkpoint": {
+    "number": 10662,
+    "hash": "0x069b2bd888e1db0182f2fc89f4fc2c0d35fa792a7b9df0e217ed6add6c28be7f"
+  },
+  "complete": true,
+  "posts": [
+    {
+      "id": "11695066481375879443592569792409484297007522125569809889902211644127507585237",
+      "record": {
+        "subboard": "0",
+        "parent": "0",
+        "root": "11695066481375879443592569792409484297007522125569809889902211644127507585237",
+        "kind": "1",
+        "name_id": "0",
+        "reference": "0",
+        "content_digest": "14989240152668221017025196140792566027596011442633725273631064605077266401759"
+      },
+      "text": "Fresh account onboarding check 1a5176f1-6e78-4d21-b44b-0a031a1bfb05",
+      "timestamp": "1792515156",
+      "mainVersion": "1",
+      "localVersion": "0",
+      "position": {
+        "blockNumber": "10661",
+        "blockHash": "0x1c7771881567a433d1b13a38071827e2df637027f3d18d2218dfbe3a833680db",
+        "txHash": "0x11b346fb377d88ecb207ece5164dd445e270cb3c1e3a5ac36ab2f316ad580e5a",
+        "txIndexWithinBlock": "0",
+        "logIndexWithinTx": "0"
+      },
+      "order": "0",
+      "likes": "0",
+      "removal": null,
+      "invocation": null,
+      "bot": null
+    }
+  ],
+  "names": {},
+  "boards": {},
+  "nextCursor": null,
+  "revision": "8c34d30b-ac18-411a-badc-1b837d3477f9:2:2841"
+}
