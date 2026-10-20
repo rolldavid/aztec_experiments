@@ -2,11 +2,11 @@
 
 Generated from graph.json; edit checkpoints and blockers there, then run graph.py render.
 
-Objective state: **running**. Completed packages: 28/58.
+Objective state: **running**. Completed packages: 29/58.
 
 ## In progress
 
-- **Visible account creation progress (G20)** — Root implementing prominent setup state; independent publisher preparation delegated.
+None.
 
 ## Ready internal work
 

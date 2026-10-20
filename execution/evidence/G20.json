@@ -1,0 +1,99 @@
+{
+  "task_id": "G20",
+  "outcome": "pass",
+  "recorded_at": "2026-10-20T13:09:50.816596+00:00",
+  "source_fingerprint": "3b50b1453e895ff9ddf2c1763585a99d1bfe09af0e2245bc5f040039fd05bb32",
+  "source_inventory": "evidence/G20/source-published.json",
+  "artifacts": [
+    {
+      "path": "evidence/G20/source-published.json",
+      "sha256": "0d8e90d13417daba916b1517ac6410be801095a4e77fca3534138d7a5568a7d0"
+    },
+    {
+      "path": "evidence/G20/verification.md",
+      "sha256": "b0b59de2b2eba667240a30370936b6b95d66c33e5b17363ed8f375b9b5e5c644"
+    },
+    {
+      "path": "evidence/G20/independent-review.md",
+      "sha256": "e7c6995ffca8721fc89330707886201cd3821b4934f609c637311b3404654607"
+    },
+    {
+      "path": "evidence/G20/browser-final.log",
+      "sha256": "4bae7feb6a254955e8df360bddee0c9d3da5359f98c46f1ee7ed7d4a053f7290"
+    },
+    {
+      "path": "evidence/G20/baseline-stale-test.log",
+      "sha256": "3aa35bf2a1e20b6ebf7e7b9a862bcfcc59042d0d7849c169fdd6b106f74f2580"
+    },
+    {
+      "path": "evidence/G20/gate-result.json",
+      "sha256": "bea7a52acdc21d85a2b90f5cdba75bfc3abd33afd7e0b2c3d70f2e7a1c891ecb"
+    },
+    {
+      "path": "evidence/G20/publication.md",
+      "sha256": "6db36ff28fc76656da36f3bbd8cbb9e2478d3f4c090139eb357e55857c62a1ac"
+    },
+    {
+      "path": "evidence/G20/publication-result.json",
+      "sha256": "321994831a5a30d62302d6f602bcfebc66a7838854bbc951849dea9a7496574b"
+    },
+    {
+      "path": "evidence/G20/live-readback.json",
+      "sha256": "619d99cba3255d259af133f6b2d4baa693d1783e66efb7fc1130b6b73c9b61b6"
+    },
+    {
+      "path": "evidence/G20/progress-390.png",
+      "sha256": "861f2f40f4a20770cd53f4bd4a45fa00623e8041767b88c45fdaa24c5208dc95"
+    },
+    {
+      "path": "evidence/G20/progress-1280.png",
+      "sha256": "6721f2f75edebfc1dd390cbb626dcbf97359425be388a3538b6262270b6f91dd"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "G20-A01",
+      "result": "pass",
+      "summary": "Immediate prominent account setup progress, actual stage text, reduced motion, success/failure cleanup;5 focused browser checks pass.",
+      "artifacts": [
+        "evidence/G20/source-published.json",
+        "evidence/G20/verification.md",
+        "evidence/G20/independent-review.md",
+        "evidence/G20/browser-final.log",
+        "evidence/G20/baseline-stale-test.log",
+        "evidence/G20/gate-result.json",
+        "evidence/G20/publication.md",
+        "evidence/G20/publication-result.json",
+        "evidence/G20/live-readback.json",
+        "evidence/G20/progress-390.png",
+        "evidence/G20/progress-1280.png"
+      ]
+    },
+    {
+      "id": "G20-A02",
+      "result": "pass",
+      "summary": "Independent review and normal gate pass; two frontend files published and live hashes match; existing configs/build/state preserved.",
+      "artifacts": [
+        "evidence/G20/source-published.json",
+        "evidence/G20/verification.md",
+        "evidence/G20/independent-review.md",
+        "evidence/G20/browser-final.log",
+        "evidence/G20/baseline-stale-test.log",
+        "evidence/G20/gate-result.json",
+        "evidence/G20/publication.md",
+        "evidence/G20/publication-result.json",
+        "evidence/G20/live-readback.json",
+        "evidence/G20/progress-390.png",
+        "evidence/G20/progress-1280.png"
+      ]
+    }
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/ux_review",
+    "summary": "Approved source/harness; no new timers, retries or transaction ownership.",
+    "artifacts": [
+      "evidence/G20/independent-review.md"
+    ]
+  }
+}

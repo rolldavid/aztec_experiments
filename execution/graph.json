@@ -9316,7 +9316,7 @@
       "title": "Visible account creation progress",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "active",
+      "status": "done",
       "depends_on": [
         "G19"
       ],
@@ -9346,7 +9346,7 @@
       "evidence": "evidence/G20.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Root implementing prominent setup state; independent publisher preparation delegated.",
+      "checkpoint": "Publishedc04ac3f7a02a;5 focused browser checks and independent review pass. Prominent immediate creation progress; both live UI hashes match.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

@@ -1,0 +1,19 @@
+{
+  "source": "c04ac3f7a02ac1cb56efae57afe74fda868d7255",
+  "assets": {
+    "/wallet-panel.mjs": {
+      "sha256": "0890459dd3b766504da8aba72e85c97f3a66a98baea26dcf4b190d74d2310c6a",
+      "matches": true
+    },
+    "/style.css": {
+      "sha256": "aae720f7a2c7deb70a498c728b2b899929d402881df1b607da4e94ac3d22c20a",
+      "matches": true
+    }
+  },
+  "feedCheck": "Direct application origin:7posts,complete=true,same board. Two public curl feed checks timed out; public UI hash checks passed.",
+  "origin": {
+    "posts": 7,
+    "complete": true,
+    "boardAddress": "0x186d5c5e5a9bcd6d971b5e6c2a5dfb1afb58a103ee1715f7ce9997cce0c199a6"
+  }
+}
