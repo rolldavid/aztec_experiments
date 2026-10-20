@@ -81,5 +81,13 @@
         "evidence/G18/live-390.png"
       ]
     }
-  ]
+  ],
+  "review": {
+    "kind": "independent",
+    "reviewer": "/root/ux_review",
+    "summary": "Approved runtime, existing browser harness and three-file publisher after ownership, pagination and inline account flow fixes.",
+    "artifacts": [
+      "evidence/G18/independent-review.md"
+    ]
+  }
 }
