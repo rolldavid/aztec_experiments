@@ -1,0 +1,13 @@
+✔ guided onboarding has one decision per screen at 390px (760.874667ms)
+✔ guided onboarding has one decision per screen at 1280px (639.821375ms)
+✔ G20 account creation shows immediate progress and actual stages at 390px (644.098125ms)
+✔ G20 account creation shows immediate progress and actual stages at 1280px (633.329792ms)
+✔ G20 setup failure removes progress and displays an actionable error (557.987375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3410.886041

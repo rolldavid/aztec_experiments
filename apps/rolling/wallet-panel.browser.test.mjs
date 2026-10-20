@@ -1600,3 +1600,25 @@ test('G18 completed ownership refresh explicitly resets a name that is no longer
  await page.evaluate(()=>{test.namesPages={0:{identities:[],records:[],nextCursor:null}};});await open(page);await page.getByText('Account settings',{exact:true}).click();await page.getByRole('button',{name:'Refresh account',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');await page.getByRole('button',{name:'Close account panel',exact:true}).click();
  assert.equal(await page.locator('#posting-names select').inputValue(),'0');assert(await page.locator('#posting-names').getByText('Your previous posting name is no longer available. Posting as Anonymous.',{exact:true}).isVisible());assert.equal(await page.locator('#posting-names option[value="8"]').count(),0);
 });
+
+for(const width of [390,1280])test(`G20 account creation shows immediate progress and actual stages at ${width}px`,async t=>{
+ const {page}=await browserFixture(t);await page.setViewportSize({width,height:900});
+ await page.evaluate(()=>{test.unlocked=false;test.aggregateEnabled=true;test.walletChoices=[{id:'metamask',name:'MetaMask'}];test.hold='create';});await open(page);
+ await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.getByRole('heading',{name:'Creating your account',exact:true}).waitFor();
+ assert(await page.getByText('Encrypting your account backup…',{exact:true}).isVisible());assert.equal(await page.getByLabel('Password',{exact:true}).isVisible(),false);
+ assert.equal(await page.locator('.account-setup-spinner').evaluate(n=>getComputedStyle(n).animationName),'account-setup-spin');
+ assert.equal(await page.evaluate(()=>test.creates),1);assert.equal(await page.evaluate(()=>test.sessions),0);
+ await page.evaluate(()=>{test.hold='session';test.release();});await page.waitForFunction(()=>typeof test.sessionProgress==='function');
+ await page.evaluate(()=>test.sessionProgress({stage:'session-initialization',step:'initial-sync',deploymentStep:null,state:'started',code:null}));
+ assert(await page.getByText('Syncing your account with the network…',{exact:true}).isVisible());
+ const bounds=await page.locator('.account-setup-progress').boundingBox();assert(bounds.height>=240);assert(bounds.y>=0&&bounds.y+bounds.height<=900);assert(await page.getByRole('button',{name:'Close account panel',exact:true}).isDisabled());
+ await page.screenshot({path:`execution/evidence/G20/progress-${width}.png`});
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.account-setup-spinner').evaluate(n=>getComputedStyle(n).animationName),'none');
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Connect MetaMask',exact:true}).waitFor();
+ assert.equal(await page.locator('.account-setup-spinner').count(),0);assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.creates),1);
+});
+test('G20 setup failure removes progress and displays an actionable error',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.hold='create';});await open(page);await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('heading',{name:'Creating your account',exact:true}).waitFor();
+ await page.evaluate(()=>{test.failure='session';test.hold=null;test.release();});await page.getByRole('alert').waitFor();assert.equal(await page.locator('.account-setup-spinner').count(),0);assert(await page.getByRole('button',{name:'Reconnect',exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
+});

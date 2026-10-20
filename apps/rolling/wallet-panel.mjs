@@ -84,7 +84,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const runtimeFailure=Object.freeze({}),connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({}),rulesFailure=Object.freeze({});
  const readPublic=createPublicReader(),rulesInFlight=new Map();
  let postingRules=null,rulesScope=null,updateRules=()=>{};
- let initializationAttempt=0,plaintextRecovery=false,accountMode='create';
+ let initializationAttempt=0,plaintextRecovery=false,accountMode='create',setupMode=null;
  let autoReviewRequested=false,operationSettled=Promise.resolve();
  let identityHost=null,inlineCreation=false,selectedName='0',selectedLabel='Anonymous';
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
@@ -168,7 +168,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   for(const node of identityControls.querySelectorAll('select,button'))node.disabled=value||!!intent||node.dataset.unavailable==='true';
   for(const host of [dialog,inlineName])for(const node of host.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:node.dataset.accountingStop==='true'?!accountingCheck:node.dataset.fundingStop==='true'?!fundingAutomatic:value||node.dataset.unavailable==='true';
  }
- function note(text){live.textContent=text;}
+ function note(text){
+  live.className=setupMode?'account-setup-progress':'quiet';
+  if(setupMode&&text)live.replaceChildren(el('span',{class:'account-setup-spinner','aria-hidden':'true'}),el('strong',{},text),el('span',{class:'account-setup-help'},'This can take a little while. Keep this page open.'));
+  else live.textContent=text;
+ }
+ function startSetup(mode){setupMode=mode;note(mode==='create'?'Encrypting your account backup…':'Opening your account backup…');render();}
  function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
  async function loadBok(){
   const epoch=accountEpoch;checkAccount(epoch);
@@ -192,7 +197,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  async function work(fn,failureMessage=nameFailure){
   if(busy)return;let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;clearOperationFeedback();controlsBusy(true);
   try{await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again. Your backup is unchanged.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
-   try{if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
+   try{if(setupMode){setupMode=null;note('');}if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{finishOperation();}
   }
@@ -206,12 +211,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }
-  blocked=false;note('');onPrivateChange();
+  blocked=false;if(!setupMode)note('');onPrivateChange();
   if(!intent)await loadView();
  }
  async function connect(){
   const epoch=accountEpoch,attempt=++initializationAttempt;
   dialog.removeAttribute('data-rolling-initialization');
+  if(setupMode)note('Connecting to the network…');
   try{
   if(!accountIdentity)accountIdentity=runtime.getAccount();
   if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
@@ -220,7 +226,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    const stages={estimating:'Checking the cost…',submitting:'Sending your action. Keep this page open…'};
    let stage;try{const own=Object.getOwnPropertyDescriptor(progress??{},'stage');if(own&&Object.hasOwn(own,'value')&&typeof own.value==='string')stage=own.value;}catch{}
-   note(diagnostic?.stage==='funding-claim'?(diagnostic.state==='failed'?'This funding step could not be completed. Your recovery records are preserved.':fundingProgressMessages[diagnostic.step]):Object.hasOwn(stages,stage)?stages[stage]:'Loading your account…');
+   const setupMessages={'account-lock':'Opening your account…','trusted-node':'Connecting to the network…',deployment:'Checking the network…','account-derive':'Preparing your private account…','store-open':'Saving your account on this device…','pxe-create':'Preparing your private account…','account-register':'Preparing your private account…','contracts-register':'Preparing your private account…','initial-sync':'Syncing your account with the network…','journal-open':'Finishing account setup…','wallet-bind':'Finishing account setup…','account-manager':'Finishing account setup…','application-bind':'Finishing account setup…'};
+   note(setupMode&&diagnostic?.stage==='session-initialization'?(setupMessages[diagnostic.step]??'Finishing account setup…'):setupMode&&diagnostic?.stage==='private-refresh'?'Checking your account balance…':diagnostic?.stage==='funding-claim'?(diagnostic.state==='failed'?'This funding step could not be completed. Your recovery records are preserved.':fundingProgressMessages[diagnostic.step]):Object.hasOwn(stages,stage)?stages[stage]:'Loading your account…');
   }});}
   if(view!=='preferences')await refresh();else await recoverPreferences();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
@@ -262,14 +269,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(paragraph('Choose the account backup you saved when you joined, then enter its password.'),label('Account backup',file),label('Backup password',password),button('Sign in',()=>{
     if(!file.files?.[0]){error='Choose your account backup.';render();return;}
     const selected=file.files[0],value=password.value;password.value='';file.value='';
-    void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Signed in.';await (refundRequested?connectRefund():connect());});
+    void work(async()=>{startSetup('signin');await runtime.account.importRecovery(selected,value);notice='Signed in.';await (refundRequested?connectRefund():connect());});
    },true),button('Create a new account',()=>{accountMode='create';refundRequested=false;render();}));
    const help=el('details',{class:'account-details'},el('summary',{},'Trouble accessing an old account?'),paragraph('To collect a withdrawal you already started, restore your backup here and connect the wallet that originally paid.'));
    help.append(button('Restore a pending withdrawal',()=>{refundRequested=true;render();}));content.append(help);
   }else{
    content.append(paragraph('Choose a password to protect your account backup. No email or real name needed.'),label('Password · at least 12 characters',password),button('Create account',()=>{
     if(!password.reportValidity())return;const value=password.value;password.value='';
-    void work(async()=>{download(await runtime.account.create(value));view='funding';await connect();notice='Account created. Keep the downloaded backup and your password — you need both to sign in on another device.';});
+    void work(async()=>{startSetup('create');download(await runtime.account.create(value));view='funding';await connect();notice='Account created. Keep the downloaded backup and your password — you need both to sign in on another device.';});
    },true),paragraph('An account backup will download. Keep it somewhere safe; we cannot reset your password.'),button('Already have an account? Sign in',()=>{accountMode='signin';render();}));
   }
   content.append(privacyDetails());
@@ -902,7 +909,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   title.textContent=!signedIn?(accountMode==='signin'||refundRequested?'Sign in':'Join Rolling Chat'):view==='funding'?'Set up posting':view==='topup'?'Add credit':view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
   if(signedIn&&intent&&['prepared','replacement-prepared'].includes(intent.status))title.textContent=intent.status==='replacement-prepared'?'Review replacement':reviewLabel(intent.action);
   description.textContent=!signedIn?'Join the conversation without sharing your identity.':'';
-  description.hidden=!description.textContent;
+  description.hidden=!!setupMode||!description.textContent;
+  content.hidden=!!setupMode;
+  if(setupMode)title.textContent=setupMode==='create'?'Creating your account':'Signing you in';
   if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error','data-operation-feedback':''},error));
   if(notice)content.append(el('p',{class:'notice','data-operation-feedback':''},notice));
   if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));

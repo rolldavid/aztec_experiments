@@ -1,0 +1,23 @@
+✖ joining from a post leads to setup and retains the draft (4344.178584ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4747.349667
+
+✖ failing tests:
+
+test at apps/rolling/.g20-baseline-test.mjs:1469:1
+✖ joining from a post leads to setup and retains the draft (4344.178584ms)
+  locator.click: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByRole('button', { name: 'Write a post', exact: true })[22m
+  
+      at navigateAccount (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/.g20-baseline-test.mjs:101:15)
+      at async TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/.g20-baseline-test.mjs:1473:2) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByRole('button', { name: 'Write a post', exact: true })" ]
+  }

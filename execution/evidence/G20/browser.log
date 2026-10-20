@@ -1,0 +1,28 @@
+✔ guided onboarding has one decision per screen at 390px (1507.609625ms)
+✔ guided onboarding has one decision per screen at 1280px (660.11ms)
+✖ joining from a post leads to setup and retains the draft (3689.3575ms)
+✔ G20 account creation shows immediate progress and actual stages at 390px (704.279041ms)
+✔ G20 account creation shows immediate progress and actual stages at 1280px (662.082791ms)
+✔ G20 setup failure removes progress and displays an actionable error (581.637792ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8010.245458
+
+✖ failing tests:
+
+test at apps/rolling/wallet-panel.browser.test.mjs:1469:1
+✖ joining from a post leads to setup and retains the draft (3689.3575ms)
+  locator.click: Timeout 3000ms exceeded.
+  Call log:
+  [2m  - waiting for getByRole('button', { name: 'Write a post', exact: true })[22m
+  
+      at navigateAccount (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:101:15)
+      at async TestContext.<anonymous> (/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/apps/rolling/wallet-panel.browser.test.mjs:1473:2) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for getByRole('button', { name: 'Write a post', exact: true })" ]
+  }

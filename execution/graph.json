@@ -2227,7 +2227,8 @@
         "G16",
         "G17",
         "G18",
-        "G19"
+        "G19",
+        "G20"
       ],
       "requirements": [
         "REQ01",
@@ -9304,6 +9305,48 @@
       "evidence_mode": "historical",
       "blocker": null,
       "checkpoint": "Published73d92a9f79cd;25 focused checks and independent review pass. Live browser restart reuses all13public assets with zero downloads;2.7s navigation-to-password.",
+      "execution_lane": "UX",
+      "owner": "ux-root",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
+      "priority": 0
+    },
+    {
+      "id": "G20",
+      "title": "Visible account creation progress",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "active",
+      "depends_on": [
+        "G19"
+      ],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "execution/",
+        "START_HERE.md"
+      ],
+      "plan": "tasks/G20.md",
+      "actions": [
+        "Show immediate prominent account creation progress driven by actual initialization events; publish focused UI changes."
+      ],
+      "acceptance": [
+        {
+          "id": "G20-A01",
+          "description": "Account creation immediately replaces its form with visible animated progress and clear actual-stage updates; success and failure exit the progress state."
+        },
+        {
+          "id": "G20-A02",
+          "description": "Focused browser checks and independent review pass; published app preserves existing state."
+        }
+      ],
+      "evidence": "evidence/G20.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "Root implementing prominent setup state; independent publisher preparation delegated.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",
