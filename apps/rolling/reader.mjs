@@ -5,7 +5,20 @@ import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
-let walletPanel,privatePanel,savedItemsLoad;
+let walletPanel,privatePanel,savedItemsLoad,accountPreparation;
+async function preparePublicAssetCache(){
+ if(!navigator.serviceWorker)return;
+ try{
+  const registration=await navigator.serviceWorker.register('/wallet-cache-worker.mjs',{scope:'/'});
+  if(navigator.serviceWorker.controller)return;
+  const worker=registration.active??registration.installing??registration.waiting;
+  if(worker)await new Promise((resolve,reject)=>{
+   const changed=()=>{if(worker.state==='activated'||worker.state==='redundant'){worker.removeEventListener('statechange',changed);worker.state==='activated'?resolve():reject(Error('Asset cache installation failed'));}};
+   worker.addEventListener('statechange',changed);changed();
+  });
+ }catch{/* Public reading and account tools also work when browser storage is disabled. */}
+}
+function prepareAccountTools(){return accountPreparation??=preparePublicAssetCache().then(()=>import('/wallet/runtime.mjs')).then(runtime=>runtime.loadRollingWalletRuntime());}
 const privateViews=new Set(['following','bookmarks','notifications']);
 function privateChanged(){
  for(const node of app.querySelectorAll('[data-moderator-action]'))showModeratorButton(node);
@@ -14,7 +27,7 @@ function privateChanged(){
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
+   loadRuntime:prepareAccountTools,onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
 }
 async function openWallet(defaults={}){
  try{
@@ -264,3 +277,6 @@ document.querySelector('.skip').addEventListener('click',skipToContent);
 addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 render();
+// Prepare public code and contract data while the feed loads. Account custody,
+// wallet permissions and private sessions still begin only through user actions.
+void prepareAccountTools().catch(()=>{});

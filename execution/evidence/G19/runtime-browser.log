@@ -1,0 +1,28 @@
+✖ G19 real account tools prepare during reading and reuse cached assets on a second visit (3425.943292ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3621.641666
+
+✖ failing tests:
+
+test at apps/rolling/wallet-runtime.browser.test.mjs:307:1
+✖ G19 real account tools prepare during reading and reuse cached assets on a second visit (3425.943292ms)
+  AssertionError [ERR_ASSERTION]: /wallet/aztec_bundle.js should reuse browser cache
+  
+  28105254 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/apps/rolling/wallet-runtime.browser.test.mjs:320:271)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 28105254,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -2226,7 +2226,8 @@
         "V06",
         "G16",
         "G17",
-        "G18"
+        "G18",
+        "G19"
       ],
       "requirements": [
         "REQ01",
@@ -9260,6 +9261,49 @@
       "evidence_mode": "historical",
       "blocker": null,
       "checkpoint": "Frontend4545fb03 published and pushed.23focused browser checks and independent source/harness/publisher review pass. Live desktop/mobile selector, inline guest entry and asset readback pass;7posts preserved; no contract/backend changes or live financial actions.",
+      "execution_lane": "UX",
+      "owner": "ux-root",
+      "branch": "codex/rolling-chat-draft3",
+      "verification_method": "Focused browser tests, desktop/mobile visual inspection and source-only hosted readback.",
+      "priority": 0
+    },
+    {
+      "id": "G19",
+      "title": "Background account preparation and reusable public assets",
+      "phase": "rolling-chat-draft3",
+      "kind": "internal",
+      "status": "active",
+      "depends_on": [
+        "G18"
+      ],
+      "requirements": [
+        "REQ03"
+      ],
+      "findings": [],
+      "scope": [
+        "apps/rolling/",
+        "scripts/rolling-wallet-assets.mjs",
+        "execution/",
+        "START_HERE.md"
+      ],
+      "plan": "tasks/G19.md",
+      "actions": [
+        "Measure loader cold/warm behavior, prepare account tools on page load, remove independent download waterfalls and verify browser caching; publish same deployment."
+      ],
+      "acceptance": [
+        {
+          "id": "G19-A01",
+          "description": "Account tools prepare in the background with shared loading and parallel independent assets, without creating accounts or submitting transactions."
+        },
+        {
+          "id": "G19-A02",
+          "description": "Focused checks, measured cold/warm browser loading and independent review pass; current deployment published with preserved data."
+        }
+      ],
+      "evidence": "evidence/G19.json",
+      "evidence_mode": "historical",
+      "blocker": null,
+      "checkpoint": "Tracing sequential loader and pinned-asset browser caching; root implements, independent agents investigate/review.",
       "execution_lane": "UX",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

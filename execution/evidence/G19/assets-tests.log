@@ -1,0 +1,28 @@
+✔ reader serves only browser assets and bounded public API from one origin (37.624292ms)
+✔ wallet gzip preserves exact decoded bytes, SRI digest and isolation headers on GET and HEAD (6.55925ms)
+✔ wallet encoding negotiation honors quality, exclusions, wildcard and unsupported encodings (4.021125ms)
+✔ wallet compressed representations revalidate changing source bytes and do not mask missing/error assets (1.855041ms)
+✔ wallet admission bounds concurrent reads and queued compression work, rejecting overload without reading (31.56225ms)
+✔ wallet response byte ownership lasts through native completion or cancellation (52.325459ms)
+✔ slow identity reader does not block unrelated worker delivery and 31-worker burst succeeds (14.3875ms)
+✔ immutable wallet URLs bind exact decoded bytes and keep metadata and invalid queries fresh (3.469375ms)
+✔ verified SDK persists, concurrent requests join, changed hash replaces old bytes (37.973833ms)
+✔ private, unpinned, range and authorization requests are not intercepted (0.738667ms)
+✔ wrong digests and oversized public files are never stored (1.813959ms)
+✔ storage quota errors still return verified bytes without refetching (1.011417ms)
+✔ public wallet config is detached, exact and scoped to the same public reader deployment (2.703792ms)
+✔ operator capabilities, extra properties and unsafe endpoints cannot enter browser metadata or CSP (0.503583ms)
+✔ remote proof metadata binds board, chain, version and mode; nonlocal disabled proofs fail closed (1.998083ms)
+✔ optional Bok browser scope is exact, detached and cannot carry operator credentials (0.287333ms)
+✔ aggregate wallet metadata requires an explicit exact router/quoter scope and matching authenticated deployment (0.305208ms)
+✔ USDC wallet scope requires the complete pinned proxy implementation domain and trusted relayer together (0.328625ms)
+✔ explicit public refund endpoint adds only its origin without changing private query authority (0.199625ms)
+✔ refund-only publication requires explicit public endpoint and does not relax private configuration (0.082041ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 245.951333

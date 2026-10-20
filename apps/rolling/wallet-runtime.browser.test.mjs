@@ -243,7 +243,7 @@ async function assetDeadlineFixture(t,{holdArtifact=false,corrupt=false}={}){
  for(const name of ['addEventListener','removeEventListener']){const before=Object.getOwnPropertyDescriptor(globalThis,name);Object.defineProperty(globalThis,name,{configurable:true,value:lifecycle[name].bind(lifecycle)});t.after(()=>before?Object.defineProperty(globalThis,name,before):delete globalThis[name]);}
  const requests=[],optionsSeen=[],timeouts=[],elements=[];let cancelled=0,ready;const reached=new Promise(resolve=>ready=resolve);
  const savedDocument=Object.getOwnPropertyDescriptor(globalThis,'document');
- Object.defineProperty(globalThis,'document',{configurable:true,value:{createElement:()=>({remove(){this.removed=true;}}),head:{append(element){elements.push(element);ready();}}}});
+ Object.defineProperty(globalThis,'document',{configurable:true,value:{createElement:tag=>({tag,remove(){this.removed=true;}}),head:{append(element){if(element.tag==='script'){elements.push(element);ready();}}}}});
  t.after(()=>savedDocument?Object.defineProperty(globalThis,'document',savedDocument):delete globalThis.document);
  const oldCrs=Object.getOwnPropertyDescriptor(globalThis,'BILLBOARD_CRS_MANIFEST'),oldConfig=Object.getOwnPropertyDescriptor(globalThis,'_getPublicConfig');
  t.after(()=>{for(const [key,before] of [['BILLBOARD_CRS_MANIFEST',oldCrs],['_getPublicConfig',oldConfig]])before?Object.defineProperty(globalThis,key,before):delete globalThis[key];});
@@ -278,8 +278,8 @@ test('public asset loader uses pinned native cache and waits for load/error with
 test('public artifact loading cancels on page exit rather than elapsed transfer time',async t=>{
  const f=await assetDeadlineFixture(t,{holdArtifact:true});assert.deepEqual(f.timeouts,[30000]);
  t.mock.timers.tick(120000);await f.flush();assert.equal(f.settled,false);
- f.cancel();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.cancelled,1);assert.equal(f.elements.length,0);
- assert.equal(f.loadRollingWalletRuntime(),f.promise);assert.equal(f.requests.length,2);
+ f.cancel();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.cancelled,3);assert.equal(f.elements.length,0);
+ assert.equal(f.loadRollingWalletRuntime(),f.promise);assert.equal(f.requests.length,4);
 });
 test('public script loading cancels on page exit without replay',async t=>{
  const f=await assetDeadlineFixture(t);f.cancel();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements[0].removed,true);assert.equal(f.loadRollingWalletRuntime(),f.promise);
@@ -299,7 +299,30 @@ test('native browser reuses immutable hash-addressed bytes while runtime metadat
   await fetch('/wallet/runtime.json',{cache:'no-store',credentials:'omit'});
   return {cache:response.headers.get('cache-control'),sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('')};
  },hash);
- await page.goto(server.url);assert.deepEqual(await read(),{cache:'private, max-age=31536000, immutable',sha256:hash});
- await page.reload();assert.deepEqual(await read(),{cache:'private, max-age=31536000, immutable',sha256:hash});
+ await page.goto(server.url);assert.deepEqual(await read(),{cache:'public, max-age=31536000, immutable',sha256:hash});
+ await page.reload();assert.deepEqual(await read(),{cache:'public, max-age=31536000, immutable',sha256:hash});
  assert.equal(assets,1,'second document uses native browser cache');assert.equal(metadata,2,'runtime configuration is fetched again');
+});
+
+test('G19 real account tools prepare during reading and reuse cached assets on a second visit',{timeout:120000},async t=>{
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:eth(1),boardAddress:field(2)};
+ const config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:eth(1),ethRpcUrl:'http://127.0.0.1:1'},board:{contractAddress:field(2),portalAddress:eth(3)},privateFee:{contractAddress:field(4),gasSettings:{gasLimits:{daGas:'1',l2Gas:'1'},teardownGasLimits:{daGas:'1',l2Gas:'1'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}}},bok:{contractAddress:field(5),operatorAddress:field(6),pluginId:field(7)}};
+ const wallet=await loadRollingWalletAssets({config,trustedQuery:{url:'http://127.0.0.1:1/v1/node',allowLocalDev:true},remoteProver:null,proofsEnabled:true},scope);
+ const index={sync:async()=>{},status:()=>({schemaVersion:1,state:'ready'}),query:()=>({schemaVersion:1,scope,complete:true,checkpoint:{number:1,hash:'public'},revision:'1',posts:[],names:{},boards:{},nextCursor:null})};
+ const assetReads=new Map(),countedWallet={...wallet,read:async path=>{assetReads.set(path,(assetReads.get(path)??0)+1);return wallet.read(path);}};
+ const server=await startRollingReader({index,wallet:countedWallet});t.after(()=>server.close());
+ const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const context=await browser.newContext();const page=await context.newPage();page.setDefaultTimeout(60000);
+ const errors=[],requests=[],results=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push({path:new URL(r.url()).pathname,method:r.method()}));
+ for(const visit of ['cold','warm']){
+  await page.goto(server.url);await page.getByRole('heading',{name:'Home',exact:true}).waitFor();
+  const ready=await page.evaluate(async()=>{const start=performance.now();const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const [a,b]=await Promise.all([loadRollingWalletRuntime(),loadRollingWalletRuntime()]);return {readyMs:performance.now(),remainingMs:performance.now()-start,same:a===b,account:!!a.getAccount(),sessionReads:performance.getEntriesByType('resource').filter(r=>r.name.includes('/v1/')).length};});
+  assert.equal(ready.same,true);assert.equal(ready.account,false);assert.equal(ready.sessionReads,0);assert.equal(await page.locator('dialog[open]').count(),0);
+  const resources=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>/\/(wallet|crs)\//.test(r.name)).map(r=>({path:new URL(r.name).pathname,pinned:new URL(r.name).searchParams.has('sha256'),transfer:r.transferSize,encoded:r.encodedBodySize,decoded:r.decodedBodySize,start:r.startTime,end:r.responseEnd})));
+  for(const a of [...wallet.runtime.scripts,...Object.values(wallet.runtime.artifacts),wallet.runtime.crs]){const rows=resources.filter(r=>r.path===a.url);assert.equal(rows.length,1,a.url+' must load once');assert.equal(rows[0].decoded,a.bytes);if(visit==='warm'){assert.equal(rows[0].transfer,0,a.url+' should reuse browser cache');assert.equal(assetReads.get(a.url),1,a.url+' must not be fetched from the server again');}}
+  const sdk=resources.find(r=>r.path==='/wallet/aztec_bundle.js'),board=resources.find(r=>r.path==='/wallet/board.json'),fee=resources.find(r=>r.path==='/wallet/private-fee.json');assert(sdk.start<board.end,'SDK preload overlaps contract downloads');assert(fee.start<board.end,'contract fetches overlap');
+  const opened=Date.now();await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByLabel('Password',{exact:true}).waitFor();results.push({visit,...ready,openToPasswordMs:Date.now()-opened,resources});
+  await page.goto('about:blank');
+ }
+ assert.deepEqual(errors,[]);assert.equal(requests.some(r=>r.method==='POST'),false);assert.equal(requests.some(r=>r.path.includes('/v1/')),false);
+ await fs.writeFile('execution/evidence/G19/local-cold-warm.json',JSON.stringify(results,null,2)+'\n');
 });

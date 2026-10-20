@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
+import {webcrypto,createHash} from 'node:crypto';
+const source=await readFile(new URL('./wallet-cache-worker.mjs',import.meta.url),'utf8');
+function fixture({body='public sdk',quota=false}={}){
+ const handlers={},saved=new Map();let requests=0;
+ const cache={match:async key=>saved.get(key)?.clone(),put:async(key,value)=>{if(quota)throw Error('Quota');saved.set(key,value);},keys:async()=>[...saved.keys()].map(url=>({url})),delete:async({url})=>saved.delete(url)};
+ vm.runInNewContext(source,{self:{location:{origin:'https://board.test'},addEventListener:(name,handler)=>handlers[name]=handler},URL,Headers,Response,Uint8Array,crypto:webcrypto,caches:{open:async()=>cache},fetch:async request=>{requests++;const r=new Response(body);Object.defineProperty(r,'url',{value:request.url});return r;}});
+ return {saved,get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p});return result;}};
+}
+const hash=value=>createHash('sha256').update(value).digest('hex');
+test('verified SDK persists, concurrent requests join, changed hash replaces old bytes',async()=>{
+ const f=fixture(),path='/wallet/aztec_bundle.js?sha256='+hash('public sdk');
+ const [a,b]=await Promise.all([f.request(path),f.request(path)]);assert.equal(await a.text(),'public sdk');assert.equal(await b.text(),'public sdk');
+ await f.request(path);assert.equal(f.requests,1);
+ f.saved.set('https://board.test/wallet/aztec_bundle.js?sha256='+'0'.repeat(64),new Response('old'));
+ f.saved.delete('https://board.test'+path);await f.request(path);assert.equal(f.saved.size,1);
+});
+test('private, unpinned, range and authorization requests are not intercepted',()=>{
+ const f=fixture(),suffix='?sha256='+hash('public sdk');
+ for(const path of ['/wallet/runtime.json','/wallet/runtime.mjs','/v1/node','/wallet/unknown.js'])assert.equal(f.request(path+suffix),undefined);
+ assert.equal(f.request('/wallet/aztec_bundle.js'),undefined);
+ for(const headers of [{range:'bytes=0-9'},{authorization:'test'}])assert.equal(f.request('/wallet/aztec_bundle.js'+suffix,{headers}),undefined);
+ assert.equal(f.requests,0);
+});
+test('wrong digests and oversized public files are never stored',async()=>{
+ const f=fixture();assert.equal((await f.request('/wallet/aztec_bundle.js?sha256='+'0'.repeat(64))).type,'error');assert.equal(f.saved.size,0);
+ const body='x'.repeat(65537),large=fixture({body});assert.equal((await large.request('/crs/crs-manifest.json?sha256='+hash(body))).type,'error');assert.equal(large.saved.size,0);
+});
+test('storage quota errors still return verified bytes without refetching',async()=>{
+ const f=fixture({quota:true}),r=await f.request('/wallet/aztec_bundle.js?sha256='+hash('public sdk'));assert.equal(await r.text(),'public sdk');assert.equal(f.requests,1);
+});

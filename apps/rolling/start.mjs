@@ -8,10 +8,10 @@ import {startRollingPublicServer,createRollingPublicIndexFromConfig} from '../..
 import {loadRollingWalletAssets} from '../../scripts/rolling-wallet-assets.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
 const files=new Map([['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],['/profile-view.mjs','profile-view.mjs'],['/avatar-upload.mjs','avatar-upload.mjs'],
- ['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs']]);
+ ['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs'],['/wallet-cache-worker.mjs','wallet-cache-worker.mjs']]);
 const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"};
-const compress=promisify(gzip),MAX_ASSET_BYTES=128*1024*1024,MAX_CACHE_BYTES=32*1024*1024,MAX_RESPONSE_BYTES=128*1024*1024;
+const compress=promisify(gzip),MAX_ASSET_BYTES=128*1024*1024,MAX_CACHE_BYTES=64*1024*1024,MAX_RESPONSE_BYTES=128*1024*1024;
 // Only gzip and identity are emitted. Explicit exclusions win over wildcards;
 // malformed or contradictory weights are not interpreted as permission.
 function walletEncoding(header){
@@ -79,7 +79,7 @@ export function createRollingReaderAssetHandler(wallet){
     else{
      body=await compress(body,{level:6,maxOutputLength:MAX_ASSET_BYTES});
      if(body.length<=MAX_CACHE_BYTES){
-      while(cache.size&&(cache.size>=4||cacheBytes+body.length>MAX_CACHE_BYTES)){const oldest=cache.keys().next().value;cacheBytes-=cache.get(oldest).length;cache.delete(oldest);}
+      while(cache.size&&(cache.size>=32||cacheBytes+body.length>MAX_CACHE_BYTES)){const oldest=cache.keys().next().value;cacheBytes-=cache.get(oldest).length;cache.delete(oldest);}
       cache.set(key,body);cacheBytes+=body.length;
      }
     }
@@ -88,7 +88,7 @@ export function createRollingReaderAssetHandler(wallet){
    const outgoing=req.method==='HEAD'?0:body.length;
    if(responseBytes+outgoing>MAX_RESPONSE_BYTES){res.setHeader('Retry-After','1');reply(503);return;}
    responseBytes+=outgoing;
-   const response=sendAsset(res,200,{...selectedHeaders,...(pinned?{'Cache-Control':`${url.pathname==='/wallet/aztec_bundle.js'?'public':'private'}, max-age=31536000, immutable`}:{}),'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
+   const response=sendAsset(res,200,{...selectedHeaders,...(pinned?{'Cache-Control':`public, max-age=31536000, immutable`}:{}),'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
    // The read/compressor has finished. Response bytes remain owned until the
    // socket finishes/closes/errors; elapsed transfer time does not truncate assets.
    release();released=true;await response;return;

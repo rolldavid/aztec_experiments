@@ -111,6 +111,7 @@ flowchart TD
     G16 --> R04
     G17 --> R04
     G18 --> R04
+    G19 --> R04
     A02["A02: Resolve production dependency advisories"]
     P04 --> A02
     U02["U02: Open each board directly without user configuration"]
@@ -158,6 +159,8 @@ flowchart TD
     G16 --> G17
     G18["G18: Inline posting name selection and creation"]
     G17 --> G18
+    G19["G19: Background account preparation and reusable public assets"]
+    G18 --> G19
 ```
 
 ## Work packages
@@ -197,7 +200,7 @@ flowchart TD
 | [T06](tasks/T06.md) | Complete bounded final reliability and operator failure exercises | T05, O01 | internal |
 | [X03](tasks/X03.md) | Verify current target-network production suitability | P02 | external |
 | [O02](tasks/O02.md) | Confirm operator ownership and production configuration | O01, D01 | external |
-| [R04](tasks/R04.md) | Sign off the production-ready release package | T05, T06, X02, X03, O02, V06, G16, G17, G18 | internal |
+| [R04](tasks/R04.md) | Sign off the production-ready release package | T05, T06, X02, X03, O02, V06, G16, G17, G18, G19 | internal |
 | [A02](tasks/A02.md) | Resolve production dependency advisories | P04 | internal |
 | [U02](tasks/U02.md) | Open each board directly without user configuration | U01 | internal |
 | [U03](tasks/U03.md) | Browse and discover boards | U02 | internal |
@@ -220,3 +223,4 @@ flowchart TD
 | [G16](tasks/G16.md) | Simple account creation and guided funding | none | internal |
 | [G17](tasks/G17.md) | Everyday social journeys without transaction-console UX | G16 | internal |
 | [G18](tasks/G18.md) | Inline posting name selection and creation | G17 | internal |
+| [G19](tasks/G19.md) | Background account preparation and reusable public assets | G18 | internal |

@@ -1,0 +1,294 @@
+[
+  {
+    "visit": "cold",
+    "readyMs": 1778.8799999952316,
+    "remainingMs": 1652.7150000333786,
+    "same": true,
+    "account": false,
+    "sessionReads": 0,
+    "openToPasswordMs": 72,
+    "resources": [
+      {
+        "path": "/wallet/runtime.mjs",
+        "pinned": false,
+        "transfer": 70718,
+        "encoded": 70418,
+        "decoded": 324023,
+        "start": 110.375,
+        "end": 117.68999999761581
+      },
+      {
+        "path": "/wallet/runtime.json",
+        "pinned": false,
+        "transfer": 1427,
+        "encoded": 1127,
+        "decoded": 2686,
+        "start": 125.7049999833107,
+        "end": 126.79499995708466
+      },
+      {
+        "path": "/wallet/ethers.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 526551,
+        "decoded": 526551,
+        "start": 128.3949999809265,
+        "end": 153.59499996900558
+      },
+      {
+        "path": "/wallet/aztec_bundle.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 63240069,
+        "decoded": 63240069,
+        "start": 128.45999997854233,
+        "end": 1396.4399999976158
+      },
+      {
+        "path": "/wallet/crs-client.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 8959,
+        "decoded": 8959,
+        "start": 128.49499994516373,
+        "end": 918.7599999904633
+      },
+      {
+        "path": "/wallet/wallet-providers.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 1648,
+        "decoded": 1648,
+        "start": 128.52999997138977,
+        "end": 919.2749999761581
+      },
+      {
+        "path": "/wallet/passkey-wallet.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4772,
+        "decoded": 4772,
+        "start": 128.56999999284744,
+        "end": 919.4099999666214
+      },
+      {
+        "path": "/wallet/wallet-backup.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 8265,
+        "decoded": 8265,
+        "start": 128.60499995946884,
+        "end": 919.4499999880791
+      },
+      {
+        "path": "/wallet/claim-secret-store.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 12002,
+        "decoded": 12002,
+        "start": 128.63499999046326,
+        "end": 1302.789999961853
+      },
+      {
+        "path": "/wallet/account.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 18377,
+        "decoded": 18377,
+        "start": 128.66999995708466,
+        "end": 1302.964999973774
+      },
+      {
+        "path": "/wallet/engine.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 132050,
+        "decoded": 132050,
+        "start": 128.69499999284744,
+        "end": 1303.1299999952316
+      },
+      {
+        "path": "/crs/crs-manifest.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4169,
+        "decoded": 4169,
+        "start": 128.74499994516373,
+        "end": 919.5099999904633
+      },
+      {
+        "path": "/wallet/board.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 12063695,
+        "decoded": 12063695,
+        "start": 129.3100000023842,
+        "end": 1332.1850000023842
+      },
+      {
+        "path": "/wallet/private-fee.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 2688020,
+        "decoded": 2688020,
+        "start": 129.33999997377396,
+        "end": 1304.4949999451637
+      },
+      {
+        "path": "/wallet/bok.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4001146,
+        "decoded": 4001146,
+        "start": 129.375,
+        "end": 1304.6499999761581
+      }
+    ]
+  },
+  {
+    "visit": "warm",
+    "readyMs": 184.61000001430511,
+    "remainingMs": 148.61000001430511,
+    "same": true,
+    "account": false,
+    "sessionReads": 0,
+    "openToPasswordMs": 12,
+    "resources": [
+      {
+        "path": "/wallet/runtime.mjs",
+        "pinned": false,
+        "transfer": 70718,
+        "encoded": 70418,
+        "decoded": 324023,
+        "start": 17.605000019073486,
+        "end": 19.75499999523163
+      },
+      {
+        "path": "/wallet/runtime.json",
+        "pinned": false,
+        "transfer": 1427,
+        "encoded": 1127,
+        "decoded": 2686,
+        "start": 22.4650000333786,
+        "end": 23.314999997615814
+      },
+      {
+        "path": "/wallet/ethers.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 526551,
+        "decoded": 526551,
+        "start": 26.790000021457672,
+        "end": 26.790000021457672
+      },
+      {
+        "path": "/wallet/aztec_bundle.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 63240069,
+        "decoded": 63240069,
+        "start": 26.8400000333786,
+        "end": 26.8400000333786
+      },
+      {
+        "path": "/wallet/crs-client.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 8959,
+        "decoded": 8959,
+        "start": 26.875,
+        "end": 26.875
+      },
+      {
+        "path": "/wallet/wallet-providers.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 1648,
+        "decoded": 1648,
+        "start": 26.900000035762787,
+        "end": 26.900000035762787
+      },
+      {
+        "path": "/wallet/passkey-wallet.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4772,
+        "decoded": 4772,
+        "start": 26.92500001192093,
+        "end": 26.92500001192093
+      },
+      {
+        "path": "/wallet/wallet-backup.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 8265,
+        "decoded": 8265,
+        "start": 26.94999998807907,
+        "end": 26.94999998807907
+      },
+      {
+        "path": "/wallet/claim-secret-store.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 12002,
+        "decoded": 12002,
+        "start": 26.975000023841858,
+        "end": 26.975000023841858
+      },
+      {
+        "path": "/wallet/account.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 18377,
+        "decoded": 18377,
+        "start": 27.00499999523163,
+        "end": 27.00499999523163
+      },
+      {
+        "path": "/wallet/engine.js",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 132050,
+        "decoded": 132050,
+        "start": 27.030000030994415,
+        "end": 27.030000030994415
+      },
+      {
+        "path": "/crs/crs-manifest.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4169,
+        "decoded": 4169,
+        "start": 27.0799999833107,
+        "end": 28.850000023841858
+      },
+      {
+        "path": "/wallet/board.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 12063695,
+        "decoded": 12063695,
+        "start": 27.134999990463257,
+        "end": 54.610000014305115
+      },
+      {
+        "path": "/wallet/private-fee.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 2688020,
+        "decoded": 2688020,
+        "start": 27.1700000166893,
+        "end": 52.1700000166893
+      },
+      {
+        "path": "/wallet/bok.json",
+        "pinned": true,
+        "transfer": 0,
+        "encoded": 4001146,
+        "decoded": 4001146,
+        "start": 27.2049999833107,
+        "end": 39.24000000953674
+      }
+    ]
+  }
+]

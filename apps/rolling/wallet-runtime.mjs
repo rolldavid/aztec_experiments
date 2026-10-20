@@ -1,6 +1,6 @@
 import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
-// This module is imported only after an explicit Unlock action. Public reading
-// never imports the SDK, opens private storage or makes personalized node calls.
+// Public code and contract data may load in the background. Account creation,
+// wallet permissions and private sessions remain explicit user actions.
 import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 // Fresh metadata/API requests retain a transport failure bound. Immutable asset
 // delivery ends on native completion/error or page cancellation, never elapsed time.
@@ -62,18 +62,28 @@ async function load(signal){
  const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'];
  if(metadata.scripts.some((a,i)=>descriptor(a).url!=='/wallet/'+names[i]))throw failed();
  if(Object.keys(metadata.artifacts??{}).sort().join()!==(config.bok?'board,bok,privateFee':'board,privateFee'))throw failed();
- const crs=await boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs,{signal});
- const boardRaw=await boundedJSON(descriptor(metadata.artifacts?.board).url,32*1024*1024,metadata.artifacts.board,{signal});
- const feeRaw=await boundedJSON(descriptor(metadata.artifacts?.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal});
- const bokRaw=config.bok?await boundedJSON(descriptor(metadata.artifacts?.bok).url,32*1024*1024,metadata.artifacts.bok,{signal}):undefined;
- if(!config.bok&&metadata.artifacts?.bok!==undefined)throw failed();
- globalThis.BILLBOARD_CRS_MANIFEST=crs;
- // Custody's optional Ethereum connection reads only a detached public scope.
- globalThis._getPublicConfig=()=>structuredClone(config);
- for(const asset of metadata.scripts)await script(asset,signal);
+ // Start script downloads alongside the independent contract data. Matching
+ // integrity/CORS attributes let the ordered script elements reuse these requests.
+ const preloads=metadata.scripts.map(asset=>{
+  const link=document.createElement('link');link.rel='preload';link.as='script';link.href=assetURL(asset);
+  link.integrity='sha256-'+btoa(String.fromCharCode(...asset.sha256.match(/../g).map(x=>parseInt(x,16))));link.crossOrigin='anonymous';link.referrerPolicy='no-referrer';document.head.append(link);return link;
+ });
+ let boardRaw,feeRaw,bokRaw;
+ try{
+  const values=await Promise.all([
+   boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs,{signal}),
+   boundedJSON(descriptor(metadata.artifacts.board).url,32*1024*1024,metadata.artifacts.board,{signal}),
+   boundedJSON(descriptor(metadata.artifacts.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal}),
+   config.bok?boundedJSON(descriptor(metadata.artifacts.bok).url,32*1024*1024,metadata.artifacts.bok,{signal}):undefined
+  ]);
+  [globalThis.BILLBOARD_CRS_MANIFEST,boardRaw,feeRaw,bokRaw]=values;
+  globalThis._getPublicConfig=()=>structuredClone(config);
+  // Evaluate in dependency order; downloads are already running through preload.
+  for(const asset of metadata.scripts)await script(asset,signal);
+ }finally{for(const link of preloads)link.remove();}
  const sdk=globalThis.__aztec,account=globalThis.BillboardAccount,routing=globalThis.BillboardPrivateFeeRouting;
  if(!sdk?.createTrustedPrivateNode||!account?.configure||!routing?.isPrivateWalletForNode||!globalThis.ethers)throw failed();
- globalThis.BillboardCRS.validateManifest(crs);
+ globalThis.BillboardCRS.validateManifest(globalThis.BILLBOARD_CRS_MANIFEST);
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw),bokArtifact=bokRaw?sdk.loadContractArtifact(bokRaw):undefined;
  let session,creating;
  // Only metadata leaves provider discovery. The selected transport stays inside

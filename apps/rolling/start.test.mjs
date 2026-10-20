@@ -108,7 +108,7 @@ test('immutable wallet URLs bind exact decoded bytes and keep metadata and inval
  let body=Buffer.from('pinned asset'),reads=0;
  const server=await startRollingReader({index:readyIndex(),wallet:{connectOrigins:[],read:async()=>{reads++;return {body,type:'application/json'};}}});t.after(()=>server.close());
  const hash=createHash('sha256').update(body).digest('hex'),url=server.url+'/wallet/board.json?sha256='+hash;
- for(const encoding of ['identity','gzip']){const r=await wire(url,{encoding});assert.equal(r.status,200);assert.equal(r.headers['cache-control'],'private, max-age=31536000, immutable');assert.deepEqual(encoding==='gzip'?gunzipSync(r.body):r.body,body);assert.equal(r.headers.vary,'Accept-Encoding');}
+ for(const encoding of ['identity','gzip']){const r=await wire(url,{encoding});assert.equal(r.status,200);assert.equal(r.headers['cache-control'],'public, max-age=31536000, immutable');assert.deepEqual(encoding==='gzip'?gunzipSync(r.body):r.body,body);assert.equal(r.headers.vary,'Accept-Encoding');}
  for(const query of ['?sha256='+hash+'&x=1','?sha256='+hash+'&sha256='+hash,'?sha256='+hash.toUpperCase(),'?sha256=wrong']){const before=reads;const r=await wire(server.url+'/wallet/board.json'+query);assert.equal(r.status,404);assert.equal(r.headers['cache-control'],'no-store');assert.equal(reads,before);}
  const sdk=server.url+'/wallet/aztec_bundle.js?sha256='+hash;
  for(const encoding of ['identity','gzip']){const r=await wire(sdk,{encoding});assert.equal(r.status,200);assert.equal(r.headers['cache-control'],'public, max-age=31536000, immutable');assert.deepEqual(encoding==='gzip'?gunzipSync(r.body):r.body,body);}
