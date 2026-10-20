@@ -12,10 +12,10 @@ const copy = value => structuredClone(value);
 // Only public, strictly whitelisted event data enters this cache. It is not a
 // wallet database or an authority to sign moderation decisions.
 export function createPublicFeed({ scope, source, storage, startBlock=1, rangeSize=50, pagesPerSync=4,
-  maxEvents=50000, maxCheckpoints=20000, maxRollbackChecks=128, timeoutMs=20000 }) {
+  maxEvents=50000, maxCheckpoints=20000, maxRollbackChecks=128, timeoutMs=0 }) {
   scope=validateScope(scope);
   if (![startBlock,rangeSize,pagesPerSync,maxEvents,maxCheckpoints,maxRollbackChecks,timeoutMs].every(integer) ||
-      rangeSize<1||rangeSize>1000||pagesPerSync<1||pagesPerSync>20||maxEvents<1||maxCheckpoints<1||maxRollbackChecks<1||timeoutMs<1||timeoutMs>60000) throw fail('Invalid public feed limits.');
+      rangeSize<1||rangeSize>1000||pagesPerSync<1||pagesPerSync>20||maxEvents<1||maxCheckpoints<1||maxRollbackChecks<1||timeoutMs<0||timeoutMs>60000) throw fail('Invalid public feed limits.');
   const key=`public-feed-v3:${scopeKey(scope)}:${startBlock}`;
   let state=null,headText=null,loading=null,busy=false;
   let ranges=[],projection=createFeedProjection(fail);
@@ -66,8 +66,8 @@ export function createPublicFeed({ scope, source, storage, startBlock=1, rangeSi
   async function sync(){
     if(busy)throw fail('Public feed update already in progress.');busy=true;
     try{
-      const deadline=Date.now()+timeoutMs;
-      async function read(fn){const remaining=deadline-Date.now();if(remaining<=0)throw fail('Public feed update timed out.');let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('Public feed update timed out.')),remaining);})]);}finally{clearTimeout(timer);}}
+      const deadline=timeoutMs?Date.now()+timeoutMs:null;
+      async function read(fn){if(deadline===null)return await fn();const remaining=deadline-Date.now();if(remaining<=0)throw fail('Public feed update timed out.');let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('Public feed update timed out.')),remaining);})]);}finally{clearTimeout(timer);}}
       await load();const head=await read(()=>source.getHead());if(!head||!integer(head.number)||!hash(head.hash))throw fail('Invalid public chain head.');
       let keep=ranges.length,checks=0;
       while(keep){const c=ranges[keep-1].checkpoint;if(++checks>maxRollbackChecks){keep=0;break;}const current=c.number<=head.number?await read(()=>source.getBlock(c.number)):null;if(c.number<=head.number&&!current)throw fail('Public checkpoint is temporarily unavailable.');if(current?.number===c.number&&current.hash===c.hash)break;keep--;}

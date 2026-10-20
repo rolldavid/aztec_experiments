@@ -81,7 +81,7 @@ test('lost send reply retains original context; recovery never rebroadcasts',asy
 });
 for(const mode of ['expired','account','signature','pending-state'])test('aggregate confirmation fails closed for '+mode,async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);
- if(mode==='expired')f.state.pendingTime=1121;if(mode==='pending-state')f.state.simulationFails=true;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
+ if(mode==='expired')f.state.pendingTime=1901;if(mode==='pending-state')f.state.simulationFails=true;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
  await assert.rejects(app.confirm());assert.equal(f.state.sends,0);if(mode==='expired')assert.equal(f.state.signatures,0);
 });
 test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();assert.equal(await app.loadAggregate(h(21)),null);});
@@ -462,7 +462,7 @@ test('USDC lost submit response recovers the original relay hash and pending rec
  const f=usdcWalletFixture(),original=f.options.relay.submit;let landed=false,waits=0;
  f.options.relay.submit=async data=>{await original(data);throw Error('lost HTTP response');};
  f.options.provider.getTransactionReceipt=async()=>landed?f.state.usdcReceipt:null;
- f.options.provider.waitForTransaction=async(hash,confirmations,timeout)=>{assert.equal(hash,h(200));assert.equal(confirmations,1);assert.equal(timeout,120000);waits++;landed=true;return f.state.usdcReceipt;};
+ const get=f.options.provider.getTransaction;f.options.provider.getTransaction=async hash=>{const tx=await get(hash);return tx&&Object.assign(tx,{replaceableTransaction:start=>{assert.equal(start,16);return {wait:async(confirmations,timeout)=>{assert.equal(confirmations,1);assert.equal(timeout,undefined);waits++;landed=true;return f.state.usdcReceipt;}};}});};
  const app=await f.open();await app.prepare(f.allocation);await app.confirm();
  f.options.relay.status=async()=>{throw Error('hash already retained');};
  assert.equal((await app.recover({wait:true})).receipt.txHash,h(200));assert.equal(waits,1);assert.equal(f.state.posts,1);
@@ -475,7 +475,7 @@ test('USDC malformed or changed submit hash never becomes verified funding',asyn
 });
 test('known original ETH hash waits for receipt then rechecks canonical effects without rebroadcast',async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.landed=false;let waits=0;
- f.options.provider.waitForTransaction=async hash=>{assert.equal(hash,h(20));waits++;f.state.landed=true;return {};};
+ const get=f.options.provider.getTransaction;f.options.provider.getTransaction=async hash=>{const tx=await get(hash);return tx&&Object.assign(tx,{replaceableTransaction:start=>{assert.equal(start,16);return {wait:async(confirmations,timeout)=>{assert.equal(confirmations,1);assert.equal(timeout,undefined);waits++;f.state.landed=true;return {};}};}});};
  assert.equal((await app.recover({wait:true})).receipt.txHash,h(20));assert.equal(waits,1);assert.equal(f.state.sends,1);
 });
 
@@ -501,7 +501,7 @@ test('rejected consent does not hide an actual changed account',async()=>{
 
 test('USDC consent delay cannot open an already expired authorization prompt',async()=>{
  const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);const sign=f.wallet.signer.signTypedData;
- f.wallet.signer.signTypedData=async(...args)=>{const value=await sign(...args);f.state.pendingTime=1121;return value;};
+ f.wallet.signer.signTypedData=async(...args)=>{const value=await sign(...args);f.state.pendingTime=1901;return value;};
  await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});assert.equal(f.state.signatures,1);assert.equal(f.state.posts,0);assert.equal((await funding.inspect()).paymentSaved,false);
 });
 
@@ -524,7 +524,7 @@ test('already-paid funding recovery does not rerun new-payment eligibility',asyn
 
 for(const asset of ['ETH','USDC'])test(asset+' expiry during final credit check prevents payment dispatch',async()=>{
  const f=asset==='ETH'?fixture():usdcWalletFixture();const verify=f.options.verifyFeeCredit;let checks=0;
- f.options.verifyFeeCredit=async amount=>{await verify(amount);if(++checks===3)f.state.pendingTime=1121;};
+ f.options.verifyFeeCredit=async amount=>{await verify(amount);if(++checks===3)f.state.pendingTime=1901;};
  const funding=await f.open();await funding.prepare(f.allocation);
  await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});
  assert.equal(checks,3);assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);assert.equal((await funding.inspect()).paymentSaved,false);

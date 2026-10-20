@@ -1,5 +1,8 @@
 import {Interface, AbiCoder, keccak256, TypedDataEncoder, encodeBytes32String} from 'ethers';
 
+// Allow time to read the cost and approve both wallet prompts. Slippage and
+// on-chain deadlines still bound execution; a stale quote is never refreshed silently.
+const FUNDING_AUTHORIZATION_SECONDS=15n*60n;
 const usdcTuple='(address beneficiary,address relayer,(uint256 amount,uint256 maxUsdc,uint24 poolFee) collateral,bytes32 collateralSecretHash,(uint256 amount,uint256 maxUsdc,uint24 poolFee) fee,bytes32 feeSecretHash,uint256 bokAmount,bytes32 bokCommitment,bytes32 bokSecretHash,uint256 nonce,uint256 validAfter,uint256 deadline,uint256 relayFeeUsdc,bytes32 authorizationSalt)';
 export const aggregateUsdcFundingAbi=Object.freeze([
   `function fundUsdc(${usdcTuple} p,bytes collateralConsent,bytes authorization)`,
@@ -93,7 +96,7 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   };
   const fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee), credit=await quote(s.bokToken,a.bokAmount,a.bokPoolFee);
   const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash && current.timestamp===block.timestamp,'QUOTE_REORG');
-  const deadline=((await pendingTime(request,block))+120n).toString();
+  const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
     fee:{amount:fee.amount,maxEth:fee.maxEth,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,
     bok:{amount:credit.amount,maxEth:credit.maxEth,poolFee:credit.poolFee},bokCommitment:a.bokCommitment,bokSecretHash:a.bokSecretHash,nonce,deadline};
@@ -160,7 +163,7 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   const nonce=String((await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0]);
   const quote=async(token,amount,poolFee)=>{const quoted=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.bokToken,token,amount,poolFee,0]]))[0];check(quoted>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxUsdc:((quoted*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedUsdc:quoted.toString()};};
   const collateral=await quote(s.weth,a.collateralWei,a.collateralPoolFee),fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee);
-  const deadline=((await pendingTime(request,block))+120n).toString(),validAfter='0';
+  const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString(),validAfter='0';
   const plan={beneficiary:w.address,relayer:relay.address,collateral:{amount:a.collateralWei,maxUsdc:collateral.maxUsdc,poolFee:collateral.poolFee},collateralSecretHash:a.collateralSecretHash,
     fee:{amount:a.feeAmount,maxUsdc:fee.maxUsdc,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,bokAmount:a.bokAmount,bokCommitment:a.bokCommitment,bokSecretHash:a.bokSecretHash,
     nonce,validAfter,deadline,relayFeeUsdc:relay.feeUsdc,authorizationSalt:a.authorizationSalt};

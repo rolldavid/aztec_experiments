@@ -11,7 +11,7 @@ const revision=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
  * programs. No developer environment, Git configuration or credentials propagate.
  */
 export const repositoryGit=(args,options={})=>exec('/usr/bin/git',['-c','core.hooksPath=/dev/null','-c','core.fsync=all','-c','credential.helper=',...args],{
- timeout:60000,maxBuffer:4*1024*1024,...options,env:{PATH:'/usr/bin:/bin',HOME:'/var/empty',GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_TERMINAL_PROMPT:'0',GIT_AUTHOR_NAME:'Bok',GIT_AUTHOR_EMAIL:'bok@invalid',GIT_COMMITTER_NAME:'Bok',GIT_COMMITTER_EMAIL:'bok@invalid',LC_ALL:'C'}});
+ maxBuffer:4*1024*1024,...options,env:{PATH:'/usr/bin:/bin',HOME:'/var/empty',GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_TERMINAL_PROMPT:'0',GIT_AUTHOR_NAME:'Bok',GIT_AUTHOR_EMAIL:'bok@invalid',GIT_COMMITTER_NAME:'Bok',GIT_COMMITTER_EMAIL:'bok@invalid',LC_ALL:'C'}});
 /** One manager under the existing hosted lease. Its queues serialize a thread,
  * while different threads have independent repositories and invocation drafts.
  * This stores source revisions only; the paid-call journal remains authoritative

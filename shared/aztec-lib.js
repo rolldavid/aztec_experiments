@@ -254,7 +254,7 @@ function createAztecWallet(pxe, aztecNode, rawNode, statusId, opts = {}) {
       await a.submitOnceWithReconciliation(rawNode,tx);
       const waitOpts=typeof opts.wait==='object'?opts.wait:{};
       const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
-        timeoutMs:(waitOpts.timeout ?? 540)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
+        timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
       });
       log('  Tx confirmed! Block: ' + receipt.blockNumber + ', Status: ' + receipt.status, 'success', S);
       return { receipt };
@@ -579,7 +579,7 @@ async function preflightL1ToL2Message(aztecNode, recipientAddress, claimAmount, 
 
 // ============================================================
 // waitForL1ToL2Message -- polls until the L1->L2 message is in the
-// inbox tree AND checkpointed. Returns true on success, false on timeout.
+// inbox tree AND checkpointed. Returns true when the native message-readiness waiter completes.
 // Uses the same msgHash computation as preflightL1ToL2Message.
 // ============================================================
 async function computeL1ToL2MsgHash(aztecNode, recipientAddress, claimAmount, claimSecretFr, messageLeafIndex) {
@@ -632,52 +632,11 @@ async function computeL1ToL2MsgHash(aztecNode, recipientAddress, claimAmount, cl
 async function waitForL1ToL2Message(aztecNode, recipientAddress, claimAmount, claimSecretFr, messageLeafIndex, statusId, opts = {}) {
   const a = A();
   const S = statusId;
-  const pollInterval = opts.pollInterval || 20000; // 20s
-  const maxWait = opts.maxWait || 600000; // 10 min
-  const startTime = Date.now();
-
-  log('Computing L1->L2 message hash...', 'info', S);
-  const msgHashFr = await computeL1ToL2MsgHash(aztecNode, recipientAddress, claimAmount, claimSecretFr, messageLeafIndex);
-  const msgHex = '0x' + BigInt(msgHashFr.toString()).toString(16).padStart(64, '0');
-  log('  Message hash: ' + msgHex, 'info', S);
-
-  let attempt = 0;
-  while (Date.now() - startTime < maxWait) {
-    attempt++;
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    log('[poll ' + attempt + ', ' + elapsed + 's] Checking if message is in inbox tree...', 'info', S);
-
-    let witness = null;
-    try {
-      witness = await aztecNode.getL1ToL2MessageMembershipWitness('latest', msgHashFr);
-    } catch (e) { /* not in tree yet */ }
-
-    if (witness !== null && witness !== undefined) {
-      log('  Message IS in the inbox tree. Checking checkpoint...', 'info', S);
-      let checkpoint = null;
-      try { checkpoint = await aztecNode.getL1ToL2MessageCheckpoint(msgHashFr); } catch (e) {}
-      let latestCheckpoint = null;
-      try { latestCheckpoint = await aztecNode.getCheckpointNumber(); } catch (e) {}
-
-      if (checkpoint !== null && checkpoint !== undefined && latestCheckpoint !== null && BigInt(latestCheckpoint) >= BigInt(checkpoint)) {
-        log('  OK  Message is in tree AND checkpointed!', 'success', S);
-        log('  Leaf index: ' + witness[0] + ', checkpoint: ' + checkpoint + ' (latest: ' + latestCheckpoint + ')', 'info', S);
-        return true;
-      } else {
-        log('  In tree but not yet checkpointed (need checkpoint ' + checkpoint + ', latest ' + latestCheckpoint + '). Waiting...', 'warn', S);
-      }
-    } else {
-      log('  Not in tree yet. The L1 deposit takes ~5-10 min to be checkpointed on L2.', 'info', S);
-    }
-
-    log('  Waiting ' + (pollInterval / 1000) + 's before next poll...', 'info', S);
-    await new Promise(r => setTimeout(r, pollInterval));
-  }
-
-  const waitedMin = Math.floor((Date.now() - startTime) / 60000);
-  log('  X  Timed out after ' + waitedMin + ' min. The message may still arrive.', 'error', S);
-  log('  You can proceed to the Claim page and try again later.', 'error', S);
-  return false;
+  log('Waiting for bridge delivery…', 'info', S);
+  const message = await computeL1ToL2MsgHash(aztecNode, recipientAddress, claimAmount, claimSecretFr, messageLeafIndex);
+  await a.waitForL1ToL2MessageReady(aztecNode, message, {timeoutSeconds:0,chainTip:'checkpointed'});
+  log('Bridge delivery confirmed.', 'success', S);
+  return true;
 }
 
 // ============================================================

@@ -3,7 +3,7 @@ import {INFERENCE_OPTIONS} from './runtime-configuration.mjs';
 // Structured moderation decisions. This module receives public post/policy text
 // only; it has no signer, command, wallet-path, or transaction-destination API.
 export const MAX_REASON_BYTES = 200;
-export const LIMITS = Object.freeze({ postBytes: 1024, policyBytes: 8192, verdictBytes: 4096, responseBytes: 32768, timeoutMs: 120000 });
+export const LIMITS = Object.freeze({ postBytes: 1024, policyBytes: 8192, verdictBytes: 4096, responseBytes: 32768 });
 const encoder = new TextEncoder();
 const forbiddenControls = /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/;
 const forbiddenFramingControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/;
@@ -92,34 +92,26 @@ async function readResponse(response, signal) {
   }
 }
 
-export async function moderatePost(postText, policy, llamaPort = 5090, { fetch: fetchFn = globalThis.fetch, timeoutMs = LIMITS.timeoutMs } = {}) {
+export async function moderatePost(postText, policy, llamaPort = 5090, { fetch: fetchFn = globalThis.fetch, signal: shutdownSignal } = {}) {
   const userPrompt = buildUserPrompt(postText, policy);
   if (!Number.isInteger(llamaPort) || llamaPort < 1 || llamaPort > 65535) invalid('INVALID_INPUT', 'Model port must be an integer between 1 and 65535');
-  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > LIMITS.timeoutMs) invalid('INVALID_INPUT', 'Invalid model request timeout');
-  const controller = new AbortController();
-  let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      const error = new ModerationError('MODEL_TIMEOUT', 'Model request timed out; post remains unresolved');
-      controller.abort(error);
-      reject(error);
-    }, timeoutMs);
-  });
+  if(shutdownSignal!==undefined&&!(shutdownSignal instanceof AbortSignal))invalid('INVALID_INPUT','Invalid model cancellation signal');
+  const controller = new AbortController(),signal=shutdownSignal?AbortSignal.any([shutdownSignal,controller.signal]):controller.signal;
   try {
-    return await Promise.race([timeout, (async () => {
+    return await (async () => {
       const response = await fetchFn(`http://127.0.0.1:${llamaPort}/v1/chat/completions`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userPrompt }],
           ...INFERENCE_OPTIONS,
         }),
-        signal: controller.signal,
+        signal,
       });
       if (!response.ok) {
         await response.body?.cancel();
         invalid('MODEL_HTTP_ERROR', `Model HTTP request failed (${response.status}); post remains unresolved`);
       }
-      const data = await readResponse(response, controller.signal);
+      const data = await readResponse(response, signal);
       const choice = data?.choices?.[0];
       if (!Array.isArray(data?.choices) || data.choices.length !== 1 || choice?.finish_reason !== 'stop'
           || typeof choice?.message?.content !== 'string' || !choice.message.content.trim()) {
@@ -127,13 +119,12 @@ export async function moderatePost(postText, policy, llamaPort = 5090, { fetch: 
       }
       // Incomplete reasoning is never substituted for a missing final answer.
       return { ...parseVerdict(choice.message.content), rawResponse: choice.message.content };
-    })()]);
+    })();
   } catch (error) {
+    if (signal.aborted) throw signal.reason;
     if (error instanceof ModerationError) throw error;
-    if (controller.signal.aborted) throw controller.signal.reason;
     throw new ModerationError('MODEL_UNAVAILABLE', 'Model request failed; post remains unresolved');
   } finally {
-    clearTimeout(timer);
     controller.abort();
   }
 }

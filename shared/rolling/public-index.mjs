@@ -27,12 +27,12 @@ const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
  * this is canonical consistency checking, not a new trustless consensus client.
  */
 export async function createRollingPublicIndex({node,artifact,scope,deployment,storage,homeSubboards,rangeSize=10,pagesPerSync=2,
-  maxEvents=50000,maxRanges=20000,maxRollbackChecks=128,timeoutMs=20000,maxRecordBytes=1048576,maxSnapshotBytes=67108864}){
+  maxEvents=50000,maxRanges=20000,maxRollbackChecks=128,maxRecordBytes=1048576,maxSnapshotBytes=67108864}){
   homeSubboards=normalizeHomeSubboards(homeSubboards);
   scope=validateRollingScope(scope);check(!scope.bok);deployment=copy(deployment);exact(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
   for(const [v,min,max] of [[rangeSize,1,100],[pagesPerSync,1,20],[maxEvents,1,50000],[maxRanges,1,20000],
-    [maxRollbackChecks,1,128],[timeoutMs,1,20000],[maxRecordBytes,1024,1048576],[maxSnapshotBytes,1024,67108864]])check(natural(v)&&v>=min&&v<=max);
+    [maxRollbackChecks,1,128],[maxRecordBytes,1024,1048576],[maxSnapshotBytes,1024,67108864]])check(natural(v)&&v>=min&&v<=max);
   const decoder=await createRollingEventDecoder({artifact,scope}),projection=createRollingProjection({isValidatedEvent:isRollingEvent,maxEvents,homeSubboards});
   const key='rolling-public-v1:'+createHash('sha256').update(JSON.stringify({scope,deployment})).digest('hex'),epoch=randomUUID();
   let headText=null,state=null,cold=null,coldOffset=0,hydrated=false,busy=false,ready=false,unavailable=false,revision=0,projectionRevision=0;
@@ -61,8 +61,7 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
   }
   async function sync(){
     check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;
-    const deadline=Date.now()+timeoutMs;
-    async function read(fn){check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');const value=await fn();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');return value;}
+    async function read(fn){return await fn();}
     async function blockData(number){const block=await read(()=>node.getBlockData(number));
       if(!block)return null;const n=Number(block.header?.globalVariables?.blockNumber),h=textHash(block.blockHash);
       check(natural(n)&&hash(h));return {number:n,hash:h};}
@@ -191,13 +190,12 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
  * SQL queries use one guarded snapshot only after complete canonical publication.
  * publication() is a revision binding, not standalone authority for cached rows.
  */
-export async function createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope,deployment,storage,timeoutMs=20000,homeSubboards}){
+export async function createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope,deployment,storage,homeSubboards}){
   scope=validateRollingScope(scope);
   const curated=normalizeHomeSubboards(homeSubboards),cursorSecret=randomBytes(32);
   const own=(v,keys)=>{exact(v,keys);for(const k of keys)check(Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value'));return copy(v);};
   deployment=own(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
-  check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
   if(scope.bok)check(scope.bok.deployment.blockNumber>=deployment.blockNumber);
   const decoder=await createRollingEventDecoder({artifact,scope,bokArtifact}),epoch=randomUUID();
   const maxTransactions=Math.floor((BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_BLOCK_END_BLOB_FIELDS-NUM_CHECKPOINT_END_MARKER_FIELDS)/MIN_TX_BLOB_FIELDS);
@@ -292,10 +290,9 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   }
   async function step(){
     check(!failed,'ROLLING_PUBLIC_REOPEN_REQUIRED');
-    check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;upstreamFailed=false;const deadline=Date.now()+timeoutMs;
-    // Expired work stays owned until the SDK call settles. No detached race,
-    // retries, parallel fanout or writes from a timed-out continuation.
-    const read=async fn=>{check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');const v=await fn();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');return v;};
+    check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;upstreamFailed=false;
+    // Keep sole ownership until each SDK call completes or fails.
+    const read=async fn=>await fn();
     async function identity(){const info=await read(()=>node.getNodeInfo());
       check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&textHash(info.l1ContractAddresses?.rollupAddress)===scope.rollupAddress);
       const instance=await read(()=>node.getContract(address));check(textHash(instance?.currentContractClassId)===scope.classId&&textHash(instance?.originalContractClassId)===scope.classId);
@@ -323,7 +320,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       const recheck=async extra=>{anchors.clear();await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
         check(same(await anchor(Number(target.number)),target));
         if(extra)check((await anchor(Number(extra.number))).hash===extra.hash);
-        assertOwned();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');};
+        assertOwned();};
       // A checked canonical mismatch permits inverse work; missing data is never
       // treated as an orphan. Each call removes only one durable segment.
       const retained=control.cursor.block??control.checkpoint;
@@ -379,7 +376,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       let events=[],txHash=null;
       if(index<effects.length){const tx=effects[index];txHash=tx.hash;
         if(tx.hasBoard){
-          events=await read(()=>decoder.decodeTransaction(node,txHash,{block:raw,timeoutMs:Math.max(1,Math.min(20000,deadline-Date.now()))}));
+          events=await read(()=>decoder.decodeTransaction(node,txHash,{block:raw}));
           check(events.every(e=>e.position.blockNumber===block.number&&e.position.blockHash===block.hash&&e.position.txHash===txHash&&e.position.txIndexWithinBlock===String(index)));
         }
         if(number===deployment.blockNumber&&txHash===deployment.txHash)check(events.some(e=>e.type==='MainPolicyPublished'&&e.payload.version==='1'));
@@ -409,8 +406,8 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       // Next sync rechecks network, deployment, anchors and exact storage CAS
       // before continuing. A completed commit remains authoritative only after
       // those checks; no stale publication or automatic reopen is permitted.
-      failed=!upstreamFailed&&code!=='ROLLING_PUBLIC_TIMEOUT';
-      throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_TIMEOUT','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
+      failed=!upstreamFailed;
+      throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
     finally{busy=false;}
   }
   // Trusted operator scan only. Public query cursors remain bound to their

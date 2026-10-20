@@ -42,6 +42,36 @@ for(const backend of ['file','indexeddb']) {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'bb-eth-journal-'));
   try{const storage=backend==='file'?createFileJournalStorage(dir):createBrowserJournalStorage(new IDBFactory());await fn(fixture(storage,kind),{storage,dir});}finally{fs.rmSync(dir,{recursive:true,force:true});}
  }
+ for(const cancelled of [false,true])test(`${backend}: native replacement completion reconciles ${cancelled?'cancellation':'speed-up'} without sending again`,()=>use(async f=>{
+  const send=f.signer.sendTransaction;let waits=0,originalHash;
+  f.signer.sendTransaction=async request=>{
+   const tx=await send(request);originalHash=tx.hash;
+   const receipt=f.receipts.get(tx.hash);f.receipts.delete(tx.hash);
+   f.provider.getTransactionCount=async()=>waits?5:4;
+   tx.replaceableTransaction=start=>{assert.equal(start,10);return {wait:async(confirmations,timeout)=>{
+    assert.equal(confirmations,1);assert.equal(timeout,undefined);waits++;
+    const hash=field(),replacement={...tx,hash,...(cancelled?{to:tx.from,data:'0x',value:0n}:{})};
+    f.setHead(12);f.transactions.set(hash,replacement);f.blocks.set(12,[replacement]);
+    f.receipts.set(hash,{...receipt,hash,blockNumber:12,blockHash:blockHash(12),to:replacement.to,logs:cancelled?[]:receipt.logs});
+    throw Object.assign(Error('replacement'),{code:'TRANSACTION_REPLACED',replacement:{hash}});
+   }}};return tx;
+  };
+  const journal=await f.newSession(),submitted=await journal.send(f.intent,{waitForReceipt:false});
+  assert.equal(submitted.outcome,'submitted');
+  // Fresh continuation retains the genuine response even before RPC can return it.
+  const get=f.provider.getTransaction;f.provider.getTransaction=hash=>hash===originalHash?null:get(hash);
+  const result=await journal.recover({wait:true});
+  assert.equal(result.outcome,cancelled?'replaced':'success');assert.notEqual(result.txHash,originalHash);
+  assert.equal(waits,1);assert.equal(f.requests.length,1);
+ }));
+ test(`${backend}: restored absent original transaction stays unknown without a hash-only waiter`,()=>use(async f=>{
+  const send=f.signer.sendTransaction;f.signer.sendTransaction=async request=>{const tx=await send(request);f.receipts.clear();return tx;};
+  f.provider.getTransactionCount=async()=>4;
+  await (await f.newSession()).send(f.intent,{waitForReceipt:false});
+  f.provider.getTransaction=async()=>null;f.provider.waitForTransaction=()=>{throw Error('hash-only waiter must not run');};
+  await assert.rejects((await f.newSession({signer:null})).recover({wait:true}),{code:'BB_ETH_RECOVERY_REQUIRED'});
+  assert.equal(f.requests.length,1);
+ }));
  test(`${backend}: saved request inspection authenticates and returns detached immutable review data without sending`,()=>use(async f=>{
   const j=await f.newSession();assert.equal(await j.inspectRequest(),null);f.mode('reject');await assert.rejects(j.send(f.intent));
   const saved=await j.inspectRequest();assert.equal(saved.nonce,4);assert.equal(saved.data,f.intent.data);assert.equal(saved.txHash,null);

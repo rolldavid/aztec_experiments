@@ -42,10 +42,8 @@ export async function verifyRollingDeployment({sdk,node,ethers,config,boardArtif
  let provider,current;
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'deployment-initialization',step:current,state,code:state==='failed'?rollingSetupErrorCode(error):null});
  const begin=step=>{if(current)emit('complete');current=step;emit('started');};
- const deadline=Date.now()+20000;
- const read=async fn=>{const left=deadline-Date.now();check(left>0);let timeout;
-  try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(failure()),left);})]);}
-  finally{clearTimeout(timeout);}};
+ // Each transport owns request failure; verification ends on state or an actual error.
+ const read=async fn=>fn();
  try{
   begin('config');
   check(typeof contextGuard==='function'&&typeof proofsEnabled==='boolean');await read(contextGuard);

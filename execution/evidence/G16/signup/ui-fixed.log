@@ -1,0 +1,17 @@
+✔ funding completion reports refreshed fee-ready and Bok credit without claiming readiness (814.3615ms)
+✔ funding completion reports refreshed fee-needed and Bok credit without claiming readiness (415.260208ms)
+✔ funding completion reports refreshed collateral-pending and Bok credit without claiming readiness (407.961292ms)
+✔ USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas (404.554958ms)
+✔ funding retains the busy panel and prevents duplicate actions until the current operation completes (407.139ms)
+✔ funding confirmation shows approval and original-payment progress until confirmed (370.284958ms)
+✔ funding confirmation shows approval and original-payment progress until failure (383.4005ms)
+✔ guided onboarding has one decision per screen at 390px (345.831541ms)
+✔ guided onboarding has one decision per screen at 1280px (318.413167ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4044.751708

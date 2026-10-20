@@ -1,12 +1,12 @@
 // Browser-only avatar preparation. No network, wallet, SDK, storage or URL ownership.
-// Reversible engineering defaults: 8 MiB input, 8192 edge / 16M pixels, 10 seconds,
+// Reversible engineering defaults: 8 MiB input, 8192 edge / 16M pixels,
 // centre-square crop, sRGB 100x100, PNG then WebP qualities then opaque-only JPEG.
-// Native decoder work cannot be forcibly cancelled: these are admission/time bounds,
-// not a hard memory sandbox. Late decoded bitmaps are closed after abort/timeout.
-export const AVATAR_UPLOAD_LIMITS=Object.freeze({inputBytes:8*1024*1024,edge:8192,pixels:16*1024*1024,outputBytes:8192,size:100,timeoutMs:10000});
+// Native decoder work cannot be forcibly cancelled: these are admission bounds,
+// not a hard memory sandbox. Late decoded bitmaps are closed after cancellation.
+export const AVATAR_UPLOAD_LIMITS=Object.freeze({inputBytes:8*1024*1024,edge:8192,pixels:16*1024*1024,outputBytes:8192,size:100});
 const types=new Set(['image/png','image/jpeg','image/webp']);
 const qualities=Object.freeze([0.9,0.75,0.6,0.45,0.3,0.15]);
-const messages=Object.freeze({UNSUPPORTED:'Choose a PNG, JPEG or WebP image.',INVALID:'This image could not be decoded safely.',TOO_LARGE:'Choose an image under 8 MiB, 8192 pixels per edge and 16 megapixels.',ANIMATED:'Choose a still image; animated images are not supported.',TIMEOUT:'Image preparation took too long. Choose a smaller image.',ABORTED:'Image preparation was cancelled.',LIMIT:'This image cannot fit the 8,192-byte avatar limit while preserving transparency.',UNAVAILABLE:'This browser cannot prepare this image format.'});
+const messages=Object.freeze({UNSUPPORTED:'Choose a PNG, JPEG or WebP image.',INVALID:'This image could not be decoded safely.',TOO_LARGE:'Choose an image under 8 MiB, 8192 pixels per edge and 16 megapixels.',ANIMATED:'Choose a still image; animated images are not supported.',ABORTED:'Image preparation was cancelled.',LIMIT:'This image cannot fit the 8,192-byte avatar limit while preserving transparency.',UNAVAILABLE:'This browser cannot prepare this image format.'});
 const known=new WeakSet();
 function fail(code){const error=Object.assign(new Error(messages[code]),{code:'AVATAR_'+code});known.add(error);return error;}
 function check(value,code='INVALID'){if(!value)throw fail(code);}
@@ -85,13 +85,12 @@ function canvas(){const value=document.createElement('canvas');try{value.width=v
  * across versions. A rejected upload must never trigger a payment or publication.
  */
 export async function prepareAvatarUpload(file,{signal}={}){
- let image,preview,working,verification,timer,abort,stopped=false;
+ let image,preview,working,verification,abort,stopped=false;
  try{
   check(file instanceof Blob&&types.has(file.type),'UNSUPPORTED');check(file.size>0);check(file.size<=AVATAR_UPLOAD_LIMITS.inputBytes,'TOO_LARGE');
   check(typeof createImageBitmap==='function','UNAVAILABLE');if(signal?.aborted)throw fail('ABORTED');
-  const deadline=performance.now()+AVATAR_UPLOAD_LIMITS.timeoutMs;
-  const alive=()=>{if(performance.now()>=deadline){stopped=true;throw fail('TIMEOUT');}if(stopped||signal?.aborted)throw fail('ABORTED');};
-  const stop=new Promise((_,reject)=>{timer=setTimeout(()=>{stopped=true;reject(fail('TIMEOUT'));},AVATAR_UPLOAD_LIMITS.timeoutMs);abort=()=>{stopped=true;reject(fail('ABORTED'));};signal?.addEventListener('abort',abort,{once:true});});
+  const alive=()=>{if(stopped||signal?.aborted)throw fail('ABORTED');};
+  const stop=new Promise((_,reject)=>{abort=()=>{stopped=true;reject(fail('ABORTED'));};signal?.addEventListener('abort',abort,{once:true});});
   const wait=async promise=>{alive();const result=await Promise.race([Promise.resolve(promise),stop]);alive();return result;};
   const decode=async blob=>{let owned;const pending=createImageBitmap(blob,{imageOrientation:'from-image',premultiplyAlpha:'default',colorSpaceConversion:'default'}).then(bitmap=>{try{alive();}catch(error){bitmap.close();throw error;}owned=bitmap;return bitmap;});try{return await wait(pending);}catch(error){owned?.close();throw error;}};
   const original=new Uint8Array(await wait(file.arrayBuffer()));inspect(original,file.type);
@@ -114,5 +113,5 @@ export async function prepareAvatarUpload(file,{signal}={}){
   }
   throw fail('LIMIT');
  }catch(error){throw known.has(error)?error:fail('INVALID');}
- finally{stopped=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);image?.close();preview?.close();for(const item of [working,verification])if(item)item.value.width=item.value.height=0;}
+ finally{stopped=true;signal?.removeEventListener('abort',abort);image?.close();preview?.close();for(const item of [working,verification])if(item)item.value.width=item.value.height=0;}
 }

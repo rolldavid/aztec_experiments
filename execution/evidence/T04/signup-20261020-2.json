@@ -1,0 +1,57 @@
+{
+  "script": "scripts/test-wallet-extension-browser.mjs",
+  "args": [
+    "--wallet=metamask",
+    "--aggregate-devnet=ETH"
+  ],
+  "passed": false,
+  "observations": [
+    {
+      "passed": false,
+      "scope": "Real selected MetaMask aggregate devnet payment and canonical public bridge effects only. Private claims/post/Bok execution and real-proof testnet acceptance remain separate.",
+      "failure": {
+        "stage": "aggregate-launch-inputs",
+        "errorClass": "AssertionError",
+        "location": "test-wallet-extension-browser.mjs:130:116"
+      },
+      "cleanupComplete": true
+    }
+  ],
+  "deadlineMs": 540000,
+  "rssLimitKiB": 4194304,
+  "peakTreeRSSKiB": 0,
+  "rssSamples": [],
+  "failures": [
+    {
+      "stage": "ui-exit"
+    }
+  ],
+  "children": [
+    {
+      "role": "ui",
+      "code": 1,
+      "signal": null,
+      "closed": true,
+      "cleanupComplete": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/test-wallet-extension-browser.mjs": "93de59700bde6d572dd65e4257def079a3b29491132c308007e6bd0b2f30ba41",
+    "apps/rolling/wallet-panel.mjs": "944aabf077704c9bdd5be307f9e12270564642c87fffe4fe914a1e9558bf9b8e",
+    "scripts/t04-metamask.mjs": "bed1a4be1b0842124d61910e6f831cf6316ddcf22e412710729f1f0eb602817c",
+    "scripts/t04-phantom.mjs": "a8187d1a6f83b89eda7833b06b438482918f49c03a00c55cb84ccda636cee1b0",
+    "shared/rolling/aggregate-funding.mjs": "68c4e1bee0b6b4bd6b234e6087a0163c22c7c0813576c7997f83df519d506a14",
+    "shared/rolling/aggregate-recovery.mjs": "bbe35b9e4cc4c986d2b9cfc02ca97762aa1eef5e7f0910717c2fa3209091bc27",
+    "shared/ethereum-journal.mjs": "945a65067d22d96c195848f1fff701649bbb864e3f7e82bd8326dba8cee27588",
+    ".build/metamask-13.49.0/metamask-chrome-13.49.0.zip": "7ba00bfe4fe8b0ffb27be1e8fc06506248f1b888cb4f2e5e5e8b1c37f461f262",
+    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "/private/tmp/rolling-dev.qfm6_ikr/control2.json": "602c1df0b8b2e8ff05e787ea2d28be15122175b9317f697940ba67ad9edf5359",
+    "scripts/run-bounded-browser-check.mjs": "6d8f3467ad92458da884c2cc70c545606f2371db4719bcf13d28f611192967a0",
+    "scripts/testing/supervisor.mjs": "4d4cd4053ba360a5b5fa3281c2d4ee60588c4a65b77e65835e26846cdae4a318",
+    "scripts/owned-test-process-tree.mjs": "5a1f04078b56f30881d2e9f4a3777cae645f7c989b2d347eb00de74debe35e83",
+    "deploy/hosting-config.mjs": "f3be33a76265edadabdaf82b7fe0d5cc9bdc7339a1133f758b265460ae266b0d"
+  },
+  "elapsedMs": 726,
+  "ownedTreeAbsent": true,
+  "temporaryDirectoryRemoved": true
+}

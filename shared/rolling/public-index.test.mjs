@@ -109,12 +109,12 @@ test('network/class/deployment changes fail closed even with retained data',asyn
    await assert.rejects(index.sync());assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
  }
 });
-test('bounded capacity, read timeout and concurrent sync cannot produce partial ready state',async t=>{
+test('bounded capacity and concurrent sync cannot produce partial ready state',async t=>{
  const f=await fixture(t),index=await f.create({maxEvents:1});await assert.rejects(index.sync());assert.equal(index.status().complete,false);
- const g=await fixture(t);let release;g.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const slow=await g.create({timeoutMs:15});
+ const g=await fixture(t);let release;g.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const slow=await g.create();
  const pending=slow.sync();let settled=false;pending.then(()=>{settled=true;},()=>{settled=true;});await new Promise(r=>setTimeout(r,25));
  assert.equal(settled,false);await assert.rejects(slow.sync(),{code:'ROLLING_PUBLIC_BUSY'});assert.ok(release);release({});
- await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(slow.status().complete,false);
+ await assert.rejects(pending,{code:'ROLLING_PUBLIC_INVALID'});assert.equal(slow.status().complete,false);
 });
 
 // Controlled canonical SDK-data fixture through the actual HTTP server and
@@ -397,11 +397,12 @@ for(const defect of ['missing-history','wrong-network','wrong-class','wrong-depl
   if(defect==='final-reorg'){const original=f.node.getBlockData;let admitted=false;f.node.getBlockData=async number=>{const result=await original(number);if(number==='checkpointed')admitted=true;else if(number===3&&admitted)return {...result,blockHash:wrap(hex(888))};return result;};}
   await assert.rejects(a.index.step());assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.publication());
  });
-test('persistent deadline retains exclusive lease until the actual SDK promise settles',async t=>{
- const f=await persistentFixture(t),a=await f.open(undefined,{timeoutMs:15});let release,settled=false;
+test('persistent index retains ownership beyond the former deadline until the SDK read completes',async t=>{
+ const f=await persistentFixture(t),a=await f.open(),original=f.node.getNodeInfo;let release,settled=false;
+ t.mock.timers.enable({apis:['Date']});
  f.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const pending=a.index.step();pending.then(()=>{settled=true;},()=>{settled=true;});
- await new Promise(resolve=>setTimeout(resolve,25));assert.equal(settled,false);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_BUSY'});assert.equal(a.storage.inspect().control,null);
- release({});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(a.storage.inspect().control,null);
+ t.mock.timers.tick(21000);await Promise.resolve();assert.equal(settled,false);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_BUSY'});assert.equal(a.storage.inspect().control,null);
+ f.node.getNodeInfo=original;release(await original());await pending;
  f.node.getNodeInfo=async()=>({l1ChainId:1});await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_INVALID'});
  await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
 });

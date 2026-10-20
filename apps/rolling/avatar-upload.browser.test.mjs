@@ -62,16 +62,19 @@ test('labelled encoder refusal rejects rather than publishing oversized or alpha
   HTMLCanvasElement.prototype.toBlob=function(callback){candidates++;callback(oversized);};try{await prepare(input);return {code:'unexpected-success'};}catch(e){return {code:e.code,candidates};}finally{HTMLCanvasElement.prototype.toBlob=original;}
  });assert.equal(result.code,'AVATAR_LIMIT');assert.equal(result.candidates,7);
 });
-test('abort and timeout close late native bitmaps without exposing errors',async t=>{
+test('cancellation closes a late native bitmap without exposing errors',async t=>{
  const {page}=await setup(t);const result=await page.evaluate(async()=>{
-  const file=await make(),original=createImageBitmap,originalTimer=setTimeout;let release,closes=0;const outputs=[];
-  for(const mode of ['abort','timeout']){
-   let entered;const started=new Promise(resolve=>{entered=resolve;});window.createImageBitmap=()=>{entered();return new Promise(resolve=>{release=()=>resolve({close(){closes++;}});});};
-   if(mode==='timeout')window.setTimeout=(fn,ms,...args)=>originalTimer(fn,ms===10000?5:ms,...args);
-   const controller=new AbortController(),run=prepare(file,{signal:controller.signal}).catch(e=>e.code);await started;if(mode==='abort')controller.abort();outputs.push(await run);release();await new Promise(resolve=>originalTimer(resolve,0));window.setTimeout=originalTimer;
-  }
-  window.createImageBitmap=original;return {outputs,closes};
- });assert.deepEqual(result,{outputs:['AVATAR_ABORTED','AVATAR_TIMEOUT'],closes:2});
+  const file=await make(),original=createImageBitmap;let release,closes=0,entered;const started=new Promise(resolve=>{entered=resolve;});
+  window.createImageBitmap=()=>{entered();return new Promise(resolve=>{release=()=>resolve({close(){closes++;}});});};
+  const controller=new AbortController(),run=prepare(file,{signal:controller.signal}).catch(e=>e.code);await started;controller.abort();const code=await run;release();await Promise.resolve();await Promise.resolve();window.createImageBitmap=original;return {code,closes};
+ });assert.deepEqual(result,{code:'AVATAR_ABORTED',closes:1});
+});
+test('image processing completes after the former elapsed budget',async t=>{
+ const {page}=await setup(t);const result=await page.evaluate(async()=>{
+  const file=await make(),original=createImageBitmap;let release,entered;const started=new Promise(resolve=>{entered=resolve;}),held=new Promise(resolve=>{release=resolve;});
+  window.createImageBitmap=async(...args)=>{entered();await held;return original(...args);};
+  const run=prepare(file);await started;Object.defineProperty(performance,'now',{value:()=>100000000,configurable:true});release();try{return (await run).width;}finally{delete performance.now;window.createImageBitmap=original;}
+ });assert.equal(result,100);
 });
 
 test('actual canvas resources are released on success and context failure',async t=>{

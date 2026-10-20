@@ -183,13 +183,9 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
  }
  // The caller retains range-level anchor rechecks/reorg handling. This verifies
  // one entire successful transaction against the actual SDK block/effect APIs.
- async function decodeTransaction(node,hashValue,{timeoutMs=20000,block:suppliedBlock}={}) {
+ async function decodeTransaction(node,hashValue,{block:suppliedBlock}={}) {
   try {
-   check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
-   const deadline=Date.now()+timeoutMs;
-   // The SDK does not expose cancellation for every method. Expiry stops further
-   // admission, but the current call remains owned until it actually settles.
-   const read=async fn=>{check(Date.now()<deadline);const value=await fn();check(Date.now()<deadline);return value;};
+   const read=async fn=>await fn();
    const txHash=TxHash.fromString(hashValue),address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),info=await read(()=>node.getNodeInfo()),instance=await read(()=>node.getContract(address));
    check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&info.l1ContractAddresses.rollupAddress.toString()===scope.rollupAddress);
    check(instance?.currentContractClassId.toString()===scope.classId&&instance?.originalContractClassId.toString()===scope.classId);
@@ -201,7 +197,6 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
    check(found.data.publicLogs.length<=4096&&found.data.publicLogs.reduce((sum,log)=>sum+log.sizeInFields(),0)<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);const events=[];
    const completions=[];
    for(const [index,log] of found.data.publicLogs.entries())if(log.contractAddress.toString()===scope.boardAddress||log.contractAddress.toString()===scope.bok?.address){
-    check(Date.now()<deadline);
     // The pinned PrivateBok refund also emits the standard PartialUintNote
     // completion transport: [domain-separated commitment, balances slot, value].
     // Its tag is opaque. Provenance comes from the authenticated class and full

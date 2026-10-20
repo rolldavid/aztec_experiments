@@ -100,7 +100,7 @@ async function navigateAccount(page,name){
  if(!await target.isVisible()&&await settings.isVisible())await settings.click();
  await target.click();
 }
-async function unlock(page){await page.getByRole('button',{name:'Create account',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');if(!await page.getByRole('button',{name:'Check action and review fee',exact:true}).isVisible())await navigateAccount(page,'Write a post');await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();}
+async function unlock(page){await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');if(!await page.getByRole('button',{name:'Check action and review fee',exact:true}).isVisible())await navigateAccount(page,'Write a post');await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();}
 async function resumeFunding(page){const details=page.getByText('Already paid?',{exact:true});if(await details.isVisible()&&!await page.getByRole('button',{name:'Resume saved funding',exact:true}).isVisible())await details.click();await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();}
 
 async function prepare(page){await page.getByLabel('Message',{exact:true}).fill('Hello from the labelled UI double.');await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();}
@@ -149,7 +149,7 @@ test('uncertain submission cannot resend; reopening and replacement reconcile th
  await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Check existing transaction'}).waitFor();assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);
  assert(!(await page.locator('body').innerText()).includes('PRIVATE_SENTINEL'));
  await page.getByRole('button',{name:'Close account panel'}).click();await open(page,{type:'like',post:'66'});await page.getByRole('button',{name:'Check existing transaction'}).waitFor();assert.equal((await counts(page)).sends,1);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction'}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check existing transaction'}).waitFor();
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  await page.evaluate(()=>test.resolveOutcome='confirmed');await page.getByRole('button',{name:'Check existing transaction'}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).reconciles,1);
 });
@@ -163,11 +163,11 @@ test('lost prepare acknowledgement blocks new work until recovery; prepared canc
 });
 
 test('explicit create, encrypted backup download, no automatic account creation and failed cleanup preserves account',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Create account'}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Create account'}).waitFor();
  assert.equal(await page.evaluate(()=>test.creates),0);assert.equal(await page.evaluate(()=>test.imports),0);
  await page.getByLabel('Password',{exact:true}).fill('a strong test-only password');const downloading=page.waitForEvent('download');await page.getByRole('button',{name:'Create account'}).click();
  const download=await downloading;assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');const downloaded=JSON.parse(await fs.readFile(await download.path(),'utf8'));assert.equal(downloaded.kind,'aztec-billboard-encrypted-wallet');assert.equal(Object.hasOwn(downloaded,'secretKey'),false);
- await page.getByRole('heading',{name:'Your account',exact:true}).waitFor();await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.failure='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.ended),0);
+ await page.getByRole('button',{name:'Back to account',exact:true}).click();await page.getByRole('heading',{name:'Your account',exact:true}).waitFor();await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.failure='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.ended),0);
  await page.getByText('Backup and account security',{exact:true}).click();await page.getByLabel('New recovery password',{exact:true}).fill('a new test-only password');const exporting=page.waitForEvent('download');await page.getByRole('button',{name:'Download encrypted recovery'}).click();await exporting;assert.equal(await page.evaluate(()=>test.exports),1);
 });
 
@@ -175,7 +175,7 @@ test('plaintext recovery warning survives import and unavailable connection with
  const warning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
  assert((await fs.readFile(new URL('../../shared/account.js',import.meta.url),'utf8')).includes("_wlog('"+warning+"','warn')"),'Use the existing actual custody warning');
  const {page}=await browserFixture(t);await page.evaluate(warning=>{test.unlocked=false;test.importWarning=warning;test.failure='session';},warning);
- await open(page);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
+ await open(page);await page.getByRole('button',{name:'Already have an account? Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
  await page.getByText('Choose the account backup you saved when you joined, then enter its password.',{exact:true}).waitFor();
  await page.getByLabel('Account backup',{exact:true}).setInputFiles({name:'disposable-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByRole('button',{name:'Connect private account',exact:true}).waitFor();await page.getByText(warning,{exact:true}).waitFor();
@@ -186,7 +186,7 @@ test('plaintext recovery warning survives import and unavailable connection with
 });
 
 test('encrypted recovery import retains backup guidance without a false plaintext warning',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Already have an account? Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
  await page.getByLabel('Account backup',{exact:true}).setInputFiles({name:'disposable-encrypted-recovery.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('heading',{name:'Your account',exact:true}).waitFor();
  assert.equal(await page.getByText('This imported file contains an unencrypted key.',{exact:false}).count(),0);
  await page.getByText('Backup and account security',{exact:true}).click();await page.getByText(/A lost password cannot be reset/).waitFor();await page.getByText(/Download a fresh backup after funding or transaction recovery changes/).waitFor();
@@ -194,7 +194,7 @@ test('encrypted recovery import retains backup guidance without a false plaintex
 });
 
 test('funding remains honest and unavailable connection has no action buttons or automatic retry',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Connect private account'}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);await page.getByRole('button',{name:'Connect private account'}).waitFor();
  assert.equal((await counts(page)).sessions,1);assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);assert.equal(await page.getByRole('button',{name:'Check action and review fee'}).count(),0);
  await page.evaluate(()=>{test.failure=null;test.fee='collateral-pending';});await page.getByRole('button',{name:'Connect private account'}).click();await page.getByRole('heading',{name:'One more step before your first post',exact:true}).waitFor();
  assert(await page.getByRole('button',{name:'Set up posting',exact:true}).isVisible());await navigateAccount(page,'Write a post');await page.getByLabel('Message',{exact:true}).fill('No collateral');assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
@@ -211,13 +211,13 @@ test('funding recovery imports only on request and requires a separate claim con
  await page.getByRole('button',{name:'Check funding receipt',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert(await page.getByText('Collateral: 100 wei.',{exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
  assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'claim-deposit',...data});
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
 });
 
 test('recovery import is explicit; quote, repost, like and unlike retain exact selected targets',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Already have an account? Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).waitFor();
  await page.getByLabel('Account backup',{exact:true}).setInputFiles({name:'labelled-encrypted-double.json',mimeType:'application/json',buffer:Buffer.from('{}')});assert.equal(await page.evaluate(()=>test.imports),0);
  await page.getByLabel('Backup password',{exact:true}).fill('test-only password');await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('heading',{name:'Your account',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.imports),1);
  for(const type of ['quote','repost','like','unlike']){
@@ -233,7 +233,7 @@ test('recovery import is explicit; quote, repost, like and unlike retain exact s
 
 test('failed export without a private connection is not misreported as a connection failure',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);
- await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Connect private account'}).waitFor();
+ await page.getByRole('button',{name:'Connect private account'}).waitFor();
  assert.match(await page.getByRole('alert').innerText(),/private connection is unavailable/);
  await page.getByText('Backup and account security',{exact:true}).click();
  await page.getByLabel('New recovery password',{exact:true}).fill('a new test-only password');
@@ -269,7 +269,7 @@ test('avatar exact immutable preview bytes survive confirmation and recovered pr
  assert(await page.getByText(/Centre-square crop, resized to 100/).isVisible());await page.getByRole('button',{name:'Check action and review fee'}).click();await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});
  const saved=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.deepEqual(saved,{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:first.data});assert.equal((await previewData(page)).data,first.data);assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Close account panel'}).click();assert.equal(await page.evaluate(()=>test.previewBlobs.size),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});
  assert.equal((await previewData(page)).data,first.data);assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.profileCalls),0);
  await page.getByRole('button',{name:'Confirm and send'}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
 });
@@ -283,7 +283,7 @@ test('avatar clear, rejected uploads and failed profile connection never auto-se
 });
 test('invalid recovered avatar disables send and lock invalidates/revokes existing previews',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'prepared',maximumFee:'123',action:{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:btoa('<svg onload="bad()"/>')}})));
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByText(/saved avatar cannot be previewed safely/).waitFor();assert(await page.getByRole('button',{name:'Confirm and send'}).isDisabled());assert.equal((await counts(page)).sends,0);
+ await open(page);await page.getByText(/saved avatar cannot be previewed safely/).waitFor();assert(await page.getByRole('button',{name:'Confirm and send'}).isDisabled());assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Cancel prepared action'}).click();await selectProfile(page,'avatar');await page.getByLabel('Avatar image').setInputFiles(await imageFile(page));await page.waitForFunction(()=>document.querySelector('dialog img')?.naturalWidth===100&&!document.querySelector('dialog').matches('[aria-busy="true"]'));
  assert.equal(await page.evaluate(()=>test.previewBlobs.size),1);await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>test.previewBlobs.size),0);assert.equal(await page.locator('dialog img').count(),0);assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);
 });
@@ -388,7 +388,7 @@ for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+in
 // independently qualified; these tests assert explicit UI boundaries only.
 test('one explicit recovery continues sequential bounded reads, including equal progress, without exposing partial preferences',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');
- await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Load saved items',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Load saved items',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);assert(await page.getByText('Recover saved choices without checking funds or preparing a transaction.',{exact:true}).isVisible());assert.equal(await page.getByText('Your posting balance is available.',{exact:false}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>{test.partialResult={status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}};test.preferenceResults=[test.partialResult,new Promise(resolve=>test.releasePartial=resolve)];test.hold='preferences';});
  await page.getByRole('button',{name:'Load saved items',exact:true}).click();await page.waitForFunction(()=>test.preferenceReads===2);
  assert.equal(await page.evaluate(()=>test.release),null,'A second bounded read must settle before another starts');await page.getByRole('button',{name:'Stop loading'}).focus();
@@ -421,7 +421,7 @@ test('every preference and read marker captures a fresh head and requires maximu
  assert.equal(await page.evaluate(()=>test.headReads),6);
 });
 test('account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result',async t=>{
- const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Load saved items'}).waitFor();
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Load saved items'}).waitFor();
  await page.evaluate(()=>{test.preferenceResults=[{status:'recovering',complete:false,progress:{nextBlock:1}}];test.hold='preferences';});await page.getByRole('button',{name:'Load saved items'}).click();await page.waitForFunction(()=>test.release);
  await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
  await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),2);assert.equal(await page.evaluate(()=>test.sends),0);
@@ -433,11 +433,11 @@ test('preference head failure does not prepare and recovery failure never implie
  const feedback=await page.getByRole('alert').textContent();assert.match(feedback,/Private views could not be recovered/);assert.match(feedback,/No transaction was sent/);assert.doesNotMatch(feedback,/PRIVATE_SENTINEL|GETTER_SENTINEL|Check.*transaction/i);assert.equal(await page.evaluate(()=>test.sends),0);
 });
 test('locking clears recovered private capability before asynchronous session cleanup settles',async t=>{
- const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Load saved items'}).click();await page.getByText('Your saved choices are ready.').waitFor();
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Load saved items'}).click();await page.getByText('Your saved choices are ready.').waitFor();
  await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.hold='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.waitForFunction(()=>test.release);assert.notEqual(await page.evaluate(()=>panel.privateStatus()),'complete');await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();
 });
 test('explicit recovery abort waits for the original private call and does not publish its late complete result',async t=>{
- const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Load saved items'}).waitFor();
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Load saved items'}).waitFor();
  await page.evaluate(()=>{test.preferenceResults=[{status:'recovering',complete:false,progress:{nextBlock:1}}];test.hold='preferences';});await page.getByRole('button',{name:'Load saved items'}).click();await page.waitForFunction(()=>test.release);await page.getByRole('button',{name:'Stop loading'}).click();
  assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');
  await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),2);assert.equal(await page.evaluate(()=>test.sends),0);
@@ -475,7 +475,7 @@ async function seedReplacement(page,{marker=false,status='replacement-available'
   const intent={intentId:'42',status:prepared?'replacement-prepared':'unknown',action,nonce:hash(100),maximumFee:'123',...(prepared?{replacementReview:{sourceTxHash:hash(77),head,marker:marker?test.recoverySnapshot.marker:null,maximumFee:'456'}}:{})};
   sessionStorage.setItem('labelled-ui-intent',JSON.stringify(intent));
  },{marker,status,prepared,fullValues,requestedAction});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
+ await open(page);await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
 }
 test('replacement inspection and review never send; confirmation shows distinct ceiling and historical fees',async t=>{
  const {page}=await browserFixture(t);await seedReplacement(page);assert.equal(await page.evaluate(()=>test.recoveryChecks),0);
@@ -497,7 +497,7 @@ test('changed same-height marker needs explicit consent again after closing befo
 });
 test('reopened replacement restores renewed ceiling without inspecting, preparing or sending automatically',async t=>{
  const {page}=await browserFixture(t);await seedReplacement(page,{prepared:true});assert(await page.getByText(/New maximum network fee: 456/).isVisible());assert.equal(await page.evaluate(()=>test.recoveryChecks+test.replacementPrepares+test.sends),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send'}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Confirm replacement and send'}).waitFor();
  assert(await page.getByText(/New maximum network fee: 456/).isVisible());assert.equal(await page.evaluate(()=>test.recoveryChecks+test.replacementPrepares+test.sends),0);
 });
 for(const status of ['pending','unknown','context-changed','history-unavailable','canonical','limit-reached'])test(`replacement ${status} is honestly fenced without preparation or sending`,async t=>{
@@ -546,7 +546,7 @@ for(const width of [390,1280])for(const phase of ['history','prepared-marker'])t
 for(const prepared of [false,true])test(`retained ${prepared?'replacement-ready':'unknown'} intent clears loading only after account connection settles`,async t=>{
  const {page}=await browserFixture(t);await seedReplacement(page,{prepared});
  await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.hold='status');
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.waitForFunction(()=>test.release);
+ await open(page);await page.waitForFunction(()=>test.release);
  assert(await page.getByText('Loading private account tools…',{exact:true}).isVisible());
  assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
  await page.evaluate(()=>{test.hold=null;test.release();});await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
@@ -571,7 +571,7 @@ test('new actions clear previous confirmation during preparation and submission'
 });
 test('completed refresh and import clear temporary checking messages',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}]};});
- await open(page,{type:'post'});await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).setInputFiles({name:'test-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});
+ await open(page,{type:'post'});await page.getByRole('button',{name:'Already have an account? Sign in',exact:true}).click();await page.getByLabel('Account backup',{exact:true}).setInputFiles({name:'test-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});
  await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
  assert.equal(await page.getByText('Recovery imported. Checking retained transactions…',{exact:true}).count(),0);assert(await page.getByText('Signed in.',{exact:true}).isVisible());
  await navigateAccount(page,'Refresh account');await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
@@ -589,11 +589,11 @@ test('changing action or account view clears old validation feedback and keeps t
 });
 
 test('settled connection message cleanup preserves custody guidance and failed connection alert',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);
  await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
- assert(await page.getByText('Create an account or import your encrypted recovery file.',{exact:true}).isVisible());
+ assert(await page.getByLabel('Password',{exact:true}).isVisible());assert(await page.getByRole('button',{name:'Create account',exact:true}).isVisible());
  assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.failure='status');await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.failure='status');await open(page);
  await page.getByRole('alert').waitFor();assert(await page.getByText('The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.',{exact:true}).isVisible());
  assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);
  assert.equal((await counts(page)).sends,0);
@@ -651,7 +651,7 @@ for(const mutation of ['hash','fee','fee-source','source-candidate','marker','mi
 test('saved transaction eligibility is RAM-only and clears on close and reload',async t=>{
  const {page}=await browserFixture(t);await seedSavedResume(page);await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).waitFor();
  await page.keyboard.press('Escape');await open(page);assert.equal(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).count(),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.resumes),0);
 });
 test('unknown saved transaction send clears eligibility and cannot automatically replay',async t=>{
@@ -689,7 +689,7 @@ test('notification campaign reviews, confirms, then navigates to private recover
 });
 
 test('cold private view cannot prepare a preference before checking retained financial recovery',async t=>{
- const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});
  await page.getByRole('button',{name:'Load saved items',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();
  assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);
  await page.getByRole('button',{name:'Disable reply notifications',exact:true}).click();
@@ -703,7 +703,7 @@ test('cold private view cannot prepare a preference before checking retained fin
 // Actual DOM with a labelled initialization emitter. No real session or chain.
 test('fixed nested initialization failure preserves generic UI and retry clears stale attempt',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='session';test.initializationRecords=[{stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'}];});
- await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('alert').waitFor();
+ await open(page,{view:'preferences'});await page.getByRole('alert').waitFor();
  const dialog=page.getByRole('dialog');assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'});
  assert.match(await page.getByRole('alert').innerText(),/The private connection is unavailable/);assert(!await dialog.innerText().then(s=>s.includes('board-instance')||s.includes('PRIVATE_SENTINEL')));
  await page.evaluate(()=>{test.oldProgress=test.sessionProgress;test.failure=null;test.hold='session';test.initializationRecords=[];});await page.getByRole('button',{name:'Connect private account',exact:true}).click();await page.waitForFunction(()=>test.sessions===2&&test.release);
@@ -712,7 +712,7 @@ test('fixed nested initialization failure preserves generic UI and retry clears 
  assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'application-bind');assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.preferenceReads,test.sends]),[0,0,0,0]);
 });
 test('initialization projection ignores accessors and account invalidation clears late observations',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.initializationRecords=[{stage:'session-initialization',step:'application-bind',deploymentStep:null,state:'complete',code:null}];});await open(page,{view:'preferences'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Load saved items',exact:true}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.initializationRecords=[{stage:'session-initialization',step:'application-bind',deploymentStep:null,state:'complete',code:null}];});await open(page,{view:'preferences'});await page.getByRole('button',{name:'Load saved items',exact:true}).waitFor();
  await page.evaluate(()=>{test.getterReads=0;const bad={step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'};Object.defineProperty(bad,'stage',{get(){test.getterReads++;throw Error('PRIVATE_SENTINEL');}});test.sessionProgress(bad);});assert.equal(await page.evaluate(()=>test.getterReads),0);
  const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'application-bind');
  await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'session-initialization',step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'});});
@@ -732,7 +732,7 @@ test('Bok composer reviews credit and both fees, restores authorized draft and n
  assert(await page.getByText('This step authorizes the saved Bok budget privately and charges a network fee. Your post is not published yet; publication needs separate confirmation.',{exact:true}).isVisible());assert.equal(await page.getByText('Your exact action is saved. Sending publishes it onchain and cannot be undone.',{exact:true}).count(),0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
  assert.equal((await counts(page)).sends,1);assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);assert.equal(await page.getByText('Proving and submitting. Keep this page open; do not send again.',{exact:true}).count(),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);
  await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();assert.equal((await counts(page)).sends,0);
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),'100000');await page.getByText('Maximum Bok request cost: 0.1 USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).waitFor();
  await page.getByText('content: Ask Bok with the exact saved draft',{exact:true}).waitFor();
@@ -764,14 +764,14 @@ test('Bok budget converts exact six-decimal amounts to raw units without Number 
 
 test('Bok continuation failure preserves authorized recovery without another credit authorization',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved Bok draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));test.failure='bok-continue';});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();
+ await open(page);await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();
  await page.getByRole('alert').waitFor();assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'authorized');
 });
 
 test('Bok reverted post stays in explicit saved-request recovery after reopen without a new authorization',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'43',status:'bok-post-reverted',action:{type:'bok',content:'Saved funded Bok draft',budget:'400',subboard:'0',parent:'0',root:'0'},maximumFee:'123',bok:{phase:'post',budget:'400',availableCredit:'1000',authorizationTxHash:'confirmed-authorize'}}));});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
+ await open(page);await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
  await page.getByText(/The post reverted. Its paid network fee is not refunded/).waitFor();assert(await page.getByText('Maximum Bok request cost: 0.0004 USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).isVisible());assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),'400');assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
@@ -836,10 +836,10 @@ test('rejected funding connection retains recovery and sends nothing',async t=>{
 });
 async function aggregateQuote(page,slippage){
  await navigateAccount(page,'Set up posting');
- 
- 
+
+
  assert.equal(await page.getByLabel('Slippage limit (%)',{exact:true}).count(),0);
- await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
 }
 test('aggregate funding UI reviews exact allocations and consent before one payment and one bounded private claim',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page);
@@ -852,9 +852,9 @@ test('aggregate funding UI reviews exact allocations and consent before one paym
 test('initial funding entry exposes allocations without a recovery receipt or payment',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fee='fee-needed';});await open(page);await unlock(page);
  await navigateAccount(page,'Set up posting');
- assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);assert(await page.getByRole('button',{name:'Review cost',exact:true}).isVisible());
+ assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  assert(await page.getByText('Already paid?',{exact:true}).isVisible());
- assert.equal(await page.evaluate(()=>test.fundingPrepares??0),0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.evaluate(()=>test.fundingPrepares??0),1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
 });
 for(const [account,bok,expected] of [['fee-ready','3250000','Posting collateral and network fee credit were found.'],['fee-needed','0','Network fee credit is still needed.'],['collateral-pending',undefined,'Network fee credit was found; posting collateral is not yet available.']])test('funding completion reports refreshed '+account+' and Bok credit without claiming readiness',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page);
@@ -875,25 +875,25 @@ for(const [account,bok,expected] of [['fee-ready','3250000','Posting collateral 
 for(const [code,expected] of [['AGGREGATE_PUBLIC_READ_FAILED','could not be verified against current Ethereum state'],['AGGREGATE_STALE_QUOTE','quote has expired on Ethereum'],['AGGREGATE_INSUFFICIENT_USER_FUNDS','does not have enough funds']])test('funding quote refusal gives fixed actionable text for '+code,async t=>{
  const {page}=await browserFixture(t);await page.evaluate(code=>{test.aggregateEnabled=true;test.fundingQuoteFailure=code;},code);await open(page);await unlock(page);
  await navigateAccount(page,'Set up posting');
- 
- await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('alert').waitFor();
+
+ await page.getByRole('alert').waitFor();
  const text=await page.getByRole('alert').innerText();assert(text.includes(expected));assert(!text.includes('PRIVATE_SENTINEL'));
  assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });
 test('aggregate gas refusal explains explicit changed maximum and requires a fresh quote and confirmation',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fundingGasChanged=true;});await open(page);await unlock(page);await aggregateQuote(page);
  await page.getByRole('button',{name:'Confirm payment',exact:true}).click();
- await page.getByRole('button',{name:'Review cost',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Refresh price',exact:true}).waitFor();
  assert.match(await page.getByRole('alert').innerText(),/Ethereum gas costs exceed your approved maximum/);
  assert.match(await page.getByRole('alert').innerText(),/fresh price and review/);
  assert(!await page.getByRole('dialog').innerText().then(text=>text.includes('PRIVATE_SENTINEL')));
  assert.equal(await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).count(),0);
  assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);
  assert.deepEqual(await page.evaluate(()=>({quotes:test.fundingPrepares,confirms:test.fundingConfirms,payments:test.fundingPayments??0,sends:test.sends})),{quotes:1,confirms:1,payments:0,sends:0});
- 
+
  await page.evaluate(()=>{test.fundingGasChanged=false;test.gasBudget='4000000000000000';});
  assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);
- await page.getByRole('button',{name:'Review cost',exact:true}).click();
+ await page.getByRole('button',{name:'Refresh price',exact:true}).click();
  await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.fundingAllocation.gasBudgetWei),'4000000000000000');
  assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
@@ -936,8 +936,8 @@ test('aggregate funding UI sets price tolerance without asking users for basis p
 test('USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.usdcEnabled=true;});await open(page);await unlock(page);await navigateAccount(page,'Set up posting');
  await page.getByLabel('Pay with',{exact:true}).selectOption('USDC');assert.equal(await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).count(),0);
- 
- await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+
+ await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  assert(await page.getByText(/two signatures/).isVisible());assert(await page.getByText('7.1 USDC',{exact:true}).isVisible());
  const allocation=await page.evaluate(()=>test.fundingAllocation);assert.equal(allocation.asset,'USDC');assert.equal(allocation.collateralPoolFee,3000);assert.equal(allocation.gasBudgetWei,undefined);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
  await page.getByRole('button',{name:'Confirm payment',exact:true}).click();await page.getByText('Payment confirmed.',{exact:false}).waitFor();assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);
@@ -981,13 +981,13 @@ test('RC22 panel requires separate explicit exit and refund fee reviews and canc
 });
 test('RC22 reopened exit recovers an existing refund read-only and never duplicates the exit',async t=>{
  const {page}=await browserFixture(t);await openBalances(page);await page.getByRole('button',{name:'Review collateral exit',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).waitFor();
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.evaluate(()=>test.refundFound=true);await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText('The saved Ethereum refund is confirmed.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert.equal(await page.evaluate(()=>test.refundChecks),1);
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.evaluate(()=>test.refundFound=true);await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText('The saved Ethereum refund is confirmed.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert.equal(await page.evaluate(()=>test.refundChecks),1);
 });
 
 
 test('refresh diagnostic survives connect sanitizer and retry then clears on account invalidation',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='status';test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/account-initialize',deploymentStep:null,state:'failed',code:'unknown'}]};});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('alert').waitFor();
+ await open(page);await page.getByRole('alert').waitFor();
  const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'account-status/account-initialize');assert.equal(await page.getByRole('button',{name:'Check account recovery',exact:true}).isVisible(),true);
  assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')||s.includes('account-initialize')));
  await page.evaluate(()=>{test.failure='owned';test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}],owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'}]};});
@@ -1048,7 +1048,7 @@ test('RC22 Bok panel separates private exit and saved-recipient Ethereum refund 
  await page.getByLabel('Bok credit to withdraw in USDC',{exact:true}).fill('1.25');await page.getByRole('button',{name:'Review Bok credit exit',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.amount),'1250000');assert.equal(await page.evaluate(()=>test.sends),0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText(/Refund: 1.25 USDC/).waitFor();assert.equal(await page.evaluate(()=>test.sends),1);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText(/Refund unknown/).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText(/Refund unknown/).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
  await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).click();await page.getByRole('button',{name:'Confirm Ethereum refund',exact:true}).click();await page.getByText(/Ethereum refund confirmed: 1.25 USDC/).waitFor();assert.equal(await page.evaluate(()=>test.refundSends),1);assert.equal(await page.evaluate(()=>test.sends),0);
 });
 
@@ -1064,7 +1064,7 @@ test('RC22 expiry panel requires a separate fee review and cancellation does not
 });
 test('RC22 expiry panel preserves unknown transaction on reopen and reports canonical partial refund without another send',async t=>{
  const {page}=await browserFixture(t);await openExpiryReview(page);await page.evaluate(()=>test.submitOutcome='unknown');await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>test.sends),1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);
  await page.evaluate(()=>test.resolveOutcome='confirmed');await page.getByRole('button',{name:'Check existing transaction',exact:true}).click();await page.getByText(/Expiry transaction confirmed/).waitFor();
  assert.equal(await page.evaluate(()=>test.sends),0,'new labelled page performs only reconciliation');
@@ -1075,7 +1075,7 @@ test('RC22 expiry panel preserves unknown transaction on reopen and reports cano
 
 for(const [kind,label]of [['cancel-bok-request','Review release of this saved request'],['expire-bok-request','Review expiry of this saved request']])test('Interrupted Bok '+kind+' explicitly reviews one saved request and cancellation restores draft',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';test.refreshRecords={'bok-release':[{stage:'estimating'}]};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved funded draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:label,exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await open(page);await page.getByRole('button',{name:label,exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.equal(await page.getByText('Checking the action and its maximum fee…',{exact:true}).count(),0);assert.deepEqual(await page.evaluate(()=>test.releaseInput),{id:'42',type:kind});assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Cancel prepared action',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),'Saved funded draft');assert.equal((await counts(page)).sends,0);
@@ -1083,10 +1083,10 @@ for(const [kind,label]of [['cancel-bok-request','Review release of this saved re
 });
 test('Interrupted Bok release failure and unknown send preserve recovery without another post or authorization',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';test.failure='bok-release';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'43',status:'bok-post-reverted',action:{type:'bok',content:'Saved rejected draft',budget:'400'},maximumFee:'123',bok:{phase:'post',budget:'400',availableCredit:'1000'}}));});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Review expiry of this saved request',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal((await counts(page)).sends,0);
+ await open(page);await page.getByRole('button',{name:'Review expiry of this saved request',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal((await counts(page)).sends,0);
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'bok-post-reverted');
  await page.evaluate(()=>{test.failure=null;test.submitOutcome='unknown';});await page.getByRole('button',{name:'Review expiry of this saved request',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
- assert.equal((await counts(page)).sends,1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
  for(const name of ['Confirm and send','Review saved Bok post','Review expiry of this saved request','Review release of this saved request'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
  assert.equal((await counts(page)).sends,0);
 });
@@ -1124,7 +1124,7 @@ test('Bok reply selection retains reader thread context through both saved confi
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(action.parent,'12');assert.equal(action.root,'11');assert.equal(action.subboard,'3');assert.equal(action.type,'bok');
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),action);assert.equal((await counts(page)).sends,0);
  assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');assert.equal(await page.getByRole('button',{name:'Start new conversation',exact:true}).count(),0);
  await page.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{type:'reply',parent:'99',root:'98',subboard:'97'});await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');
@@ -1225,14 +1225,17 @@ for(const mode of ['failure','account-change'])test(`saved refund review ${mode}
  assert.equal(await page.getByRole('button',{name:'Confirm saved Ethereum refund',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert(!await page.locator('body').innerText().then(text=>text.includes('PRIVATE_SENTINEL')||text.includes('GETTER_SENTINEL')));
 });
 
-test('funding pause fences the next stage while a held operation retains the busy panel',async t=>{
+test('funding retains the busy panel and prevents duplicate actions until the current operation completes',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='prepare';});await open(page);await unlock(page);await aggregateQuote(page);
  await page.getByRole('button',{name:'Confirm payment',exact:true}).click();await page.waitForFunction(()=>!!test.release);
- const pause=page.getByRole('button',{name:'Pause payment checks',exact:true});assert.equal(await pause.isEnabled(),true);await pause.click();
- assert.match(await page.getByRole('dialog').innerText(),/Pause requested/);await page.getByText('Already paid?',{exact:true}).click();assert.equal(await page.getByRole('button',{name:'Resume saved funding',exact:true}).isDisabled(),true);
- assert.equal((await counts(page)).sends,0);await page.evaluate(()=>{test.hold=null;test.release();});
- await page.getByText('Funding checks paused.',{exact:false}).waitFor();assert.equal((await counts(page)).sends,0);
- await resumeFunding(page);await page.getByText('Payment confirmed.',{exact:false}).waitFor();
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ assert(await page.getByRole('button',{name:'Close account panel',exact:true}).isDisabled());
+ assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);
+ await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.fundingPayments),1);
+ await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.getByText('Payment confirmed. Your posting balance is set up.',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'false');
  assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingPayments),1);
 });
 
@@ -1286,7 +1289,7 @@ test('Effective rules are shared in flight and recovered publication cannot send
  assert.equal(await page.evaluate(()=>test.ruleReads.length),1);
  await page.evaluate(()=>{test.holdRules=null;test.ruleReleases['3']();});
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
- await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);
  const rules=page.getByRole('region',{name:'Current effective rules'});await rules.getByText('Subboard 3',{exact:true}).waitFor();
  await page.evaluate(()=>test.rules={'3':{unavailable:true}});await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
  await rules.getByText(/Current board rules are unavailable/).waitFor();assert.equal((await counts(page)).sends,0);
@@ -1306,7 +1309,7 @@ test('Moderator transfer reviews successor and loss of authority before sending'
 
 test('explicit refund-only recovery works after private connection failure without recreating account or private session',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='session';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'exit-1',action:{type:'withdraw',deposit:'1'},status:'confirmed',txHash:'0x'+'1'.repeat(64),withdrawal:{eligible:true,amount:'100000000000000000',depositor:'0x'+'1'.repeat(40)}}));});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await open(page);
  await page.getByRole('button',{name:'Recover Ethereum refund only',exact:true}).click();
  await page.getByText(/Refund-only recovery/).waitFor();assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
  assert.equal(await page.evaluate(()=>test.sessions),1);assert.equal(await page.evaluate(()=>test.creates),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
@@ -1316,14 +1319,14 @@ test('explicit refund-only recovery works after private connection failure witho
 });
 test('direct refund-only entry never opens private session and never offers account creation',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);
- await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByText('Trouble accessing an old account?',{exact:true}).click();await page.getByRole('button',{name:'Restore a pending withdrawal',exact:true}).click();
+ await page.getByRole('button',{name:'Already have an account? Sign in',exact:true}).click();await page.getByText('Trouble accessing an old account?',{exact:true}).click();await page.getByRole('button',{name:'Restore a pending withdrawal',exact:true}).click();
  await page.getByText('Choose the account backup you saved when you joined, then enter its password.',{exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Create account',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sessions),0);assert.equal(await page.evaluate(()=>test.creates),0);
 });
 
 test('refund-only publication routes ordinary unlock to recovery import without private connection',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.refundOnly=true;test.unlocked=false;});await open(page);
- await page.getByRole('button',{name:'Create account',exact:true}).click();
+
  await page.getByText('Choose the account backup you saved when you joined, then enter its password.',{exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Create account',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sessions),0);
 });
@@ -1344,7 +1347,7 @@ for(const outcome of ['confirmed','failure'])test(`funding confirmation shows ap
  await page.evaluate(outcome=>{test.hold='funding-payment';if(outcome==='failure')test.failure='funding-payment';},outcome);
  await page.getByRole('button',{name:'Confirm payment',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
  const pending=page.getByText('Approve the payment in your wallet…',{exact:true});assert(await pending.isVisible());
- assert(await page.getByRole('button',{name:'Confirm payment',exact:true}).isDisabled());assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,0);
  await page.evaluate(()=>{test.hold=null;test.release();});
  if(outcome==='confirmed')await page.getByText('Payment confirmed.',{exact:false}).waitFor();else await page.getByRole('alert').waitFor();
  assert.equal(await pending.count(),0);assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,outcome==='confirmed'?1:0);
@@ -1353,34 +1356,34 @@ for(const outcome of ['confirmed','failure'])test(`funding confirmation shows ap
 test('fresh funding quote shows progress and cancelled signature keeps the account unlocked',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='funding-quote';});await open(page);await unlock(page);
  await navigateAccount(page,'Set up posting');
- await page.getByRole('button',{name:'Review cost',exact:true}).click();
+ await page.waitForFunction(()=>typeof test.release==='function');
  const pending=page.getByText('Getting the current price…',{exact:true});await pending.waitFor();
- assert(await page.getByRole('button',{name:'Review cost',exact:true}).isDisabled());
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');assert.equal(await page.getByRole('button',{name:'Confirm payment',exact:true}).count(),0);
  await page.evaluate(()=>{test.hold=null;test.release();test.fundingSignatureCancelled=true;});
  await page.getByRole('button',{name:'Confirm payment',exact:true}).click();await page.getByRole('alert').waitFor();
  assert.match(await page.getByRole('alert').innerText(),/Signature cancelled. No funding payment was sent/);
  assert.equal(await page.getByRole('button',{name:'Reload to unlock',exact:true}).count(),0);assert.equal(await pending.count(),0);
  assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal(await page.evaluate(()=>test.sessions),1);
- await page.evaluate(()=>test.fundingSignatureCancelled=false);await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+ await page.evaluate(()=>test.fundingSignatureCancelled=false);await page.getByRole('button',{name:'Refresh price',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.sessions),1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });
 
 test('cold funding explains the native fee credit requirement without sending or exposing private errors',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fundingQuoteFailure='ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT';test.minimumFeeCredit='13923754136387220000';});await open(page);await unlock(page);
  await navigateAccount(page,'Set up posting');
- await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('alert').waitFor();
+ await page.getByRole('alert').waitFor();
  const text=await page.getByRole('alert').innerText();assert(text.includes('Review the cost again'));assert(text.includes('No payment was sent'));assert(!text.includes('PRIVATE_SENTINEL'));
  assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
 });
 
 test('account overview enables funding before any names or publishing reads',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='owned';});
- await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await open(page);
  await navigateAccount(page,'Set up posting');
- assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);assert(await page.getByRole('button',{name:'Review cost',exact:true}).isVisible());
+ assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,0,0,0]);
  await navigateAccount(page,'Your names');await page.waitForFunction(()=>typeof test.release==='function');
- assert(await page.getByRole('button',{name:'Set up posting',exact:true}).isDisabled());
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');assert(await page.getByRole('button',{name:'Back to account',exact:true}).isDisabled());
  await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,1,0,0]);
  await navigateAccount(page,'Write a post');await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
@@ -1393,7 +1396,7 @@ test('account overview enables funding before any names or publishing reads',asy
 
 test('explicit composer waits for owned names and authenticated capabilities, then invalidates late view reads',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.hold='moderator';test.moderator=true;test.bokCredit='1000000';});
- await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.waitForFunction(()=>typeof test.release==='function');
  assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
  assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),false);
  await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
@@ -1406,16 +1409,16 @@ test('explicit composer waits for owned names and authenticated capabilities, th
 });
 
 test('failed lazy name read retains funding access and retries only the selected view',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.failure='owned';});await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.failure='owned';});await open(page);
  await navigateAccount(page,'Your names');await page.getByRole('alert').waitFor();assert.equal(await page.getByText('No registered names were found.',{exact:false}).count(),0);
- await navigateAccount(page,'Set up posting');assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);assert(await page.getByRole('button',{name:'Review cost',exact:true}).isVisible());
+ await navigateAccount(page,'Set up posting');assert.equal(await page.getByLabel('Posting deposit (ETH)',{exact:true}).count(),0);await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  await page.evaluate(()=>test.failure=null);await navigateAccount(page,'Your names');await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.moderatorReads??0,test.bokReads??0]),[1,2,0,0]);
 });
 
 
 test('reopening an unlocked composer loads only missing view data and preserves explicit refresh',async t=>{
- const {page}=await browserFixture(t);await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByRole('button',{name:'Write a post',exact:true}).waitFor();
+ const {page}=await browserFixture(t);await open(page);await page.getByRole('button',{name:'Write a post',exact:true}).waitFor();
  await page.getByRole('button',{name:'Close account panel',exact:true}).click();await page.evaluate(()=>test.failure='status');
  await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
  assert.equal(await page.getByLabel('Action',{exact:true}).inputValue(),'reply');
@@ -1447,18 +1450,16 @@ for(const width of [390,1280])test(`guided onboarding has one decision per scree
  await open(page);
  assert(await page.getByRole('heading',{name:'Join Rolling Chat',exact:true}).isVisible());
  assert.equal(await page.getByRole('button',{name:'Unlock',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Recover Ethereum refund only',exact:true}).count(),0);
- await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByLabel('Password',{exact:true}).fill('disposable test password');
+ await page.getByLabel('Password',{exact:true}).fill('disposable test password');
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Create account',exact:true}).click();await download;
- await page.getByRole('heading',{name:'One more step before your first post',exact:true}).waitFor();
- assert.equal(await page.getByRole('button',{name:'Add credit',exact:true}).isVisible(),false);
- await page.getByRole('button',{name:'Set up posting',exact:true}).click();await page.getByRole('button',{name:'Connect MetaMask',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Connect MetaMask',exact:true}).waitFor();
  assert.equal(await page.getByText('Account settings',{exact:true}).count(),0);
  assert.equal(await page.locator('.wallet-choice .wallet-icon').count(),2);
  assert.equal(await page.locator('.wallet-icon img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
  if(process.env.ROLLING_UX_SCREENSHOTS)await page.screenshot({path:`${process.env.ROLLING_UX_SCREENSHOTS}/wallet-${width}.png`});
  await page.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
  for(const name of ['Posting deposit (ETH)','Network fee credit (fee tokens)','Bok credit (USDC)','Maximum Ethereum gas cost (ETH)','Slippage limit (%)'])assert.equal(await page.getByLabel(name,{exact:true}).count(),0);
- await page.getByLabel('Pay with').selectOption('USDC');await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Review cost',exact:true}).count(),0);await page.getByLabel('Pay with').selectOption('USDC');await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();
  for(const text of await page.locator('.funding-line>strong').allTextContents())assert.match(text,/USDC$/);
  assert.equal(await page.getByText('Account settings',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
  const dimensions=await page.getByRole('dialog').evaluate(d=>({width:d.clientWidth,scroll:d.scrollWidth}));assert(dimensions.scroll<=dimensions.width);
@@ -1467,13 +1468,13 @@ for(const width of [390,1280])test(`guided onboarding has one decision per scree
 
 test('joining from a post leads to setup and retains the draft',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.fee='fee-needed';test.aggregateEnabled=true;});
- await open(page,{type:'post',content:'A draft worth keeping'});await page.getByRole('button',{name:'Create account',exact:true}).click();await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();
- await page.getByRole('button',{name:'Set up posting',exact:true}).waitFor();assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
+ await open(page,{type:'post',content:'A draft worth keeping'});await page.getByLabel('Password',{exact:true}).fill('disposable test password');await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm payment',exact:true}).waitFor();assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
  await navigateAccount(page,'Write a post');assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'A draft worth keeping');
  assert(await page.getByRole('button',{name:'Set up posting',exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
 });
 test('an existing deposit with depleted fees offers posting top-up, including after choosing Bok',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.fee='fee-needed';test.depositIds=['9'];test.aggregateEnabled=true;test.topupEnabled=true;});await open(page);await page.getByRole('button',{name:'Create account',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.fee='fee-needed';test.depositIds=['9'];test.aggregateEnabled=true;test.topupEnabled=true;});await open(page);
  await page.getByRole('button',{name:'Add posting credit',exact:true}).click();await page.getByLabel('Top-up credit').selectOption('bok');
  await navigateAccount(page,'Write a post');await page.getByRole('button',{name:'Add posting credit',exact:true}).click();
  assert.equal(await page.getByLabel('Top-up credit').inputValue(),'private-fee');assert.equal(await page.getByLabel('Fee token top-up amount').inputValue(),'0.000000000000002');assert.equal(await page.getByRole('button',{name:'Review cost',exact:true}).count(),0);assert.equal((await counts(page)).sends,0);

@@ -10,13 +10,14 @@ const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHa
 const approvedPermissions=Object.fromEntries(['installation_repositories','actions','actions_variables','administration','artifact_metadata','checks','contents','statuses','deployments','discussions','environments','issues','merge_queues','packages','pages','pull_requests','repository_creation','repository_hooks','repository_projects','workflows'].map(name=>[name,'write']).concat([['metadata','read']]));
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
 // Controlled GitHub protocol double: no account, credential discovery or network.
-async function fixture({verifyGit=false,templateMode=false,broadProfile=false}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
+async function fixture({verifyGit=false,templateMode=false,broadProfile=false,requestStepMs=0}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
  const templateBody=Buffer.from('Bok template\n'),templateBlob=git('blob',templateBody),templateTree=git('tree',Buffer.concat([Buffer.from('100644 README.md\0'),Buffer.from(templateBlob,'hex')])),creationTemplate={repositoryId:654,fullName:owner+'/bootstrap',commit:'e'.repeat(40)};
  const calls=[],objects=new Map();let actionsEnabled=true,repo=null,head='1'.repeat(40),lost=null,absent=false,badInstallation=false,leak=false;
- const now=()=>Date.parse('2026-10-13T00:00:00Z');
+ let observed=Date.parse('2026-10-13T00:00:00Z');const now=()=>observed;
  const object=(type,bytes)=>{const id=git(type,bytes);if(verifyGit)assert.equal(execFileSync('/usr/bin/git',['hash-object','--stdin','-t',type],{input:bytes,env:{PATH:'/usr/bin:/bin',HOME:root,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'},timeout:2000,encoding:'utf8'}).trim(),id);return id;};
  const response=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
  const fetchImpl=async(url,options)=>{
+  observed+=requestStepMs;
   assert.equal(new URL(url).origin,'https://api.github.com');assert.equal(options.redirect,'error');assert.equal(options.credentials,'omit');assert(options.signal);assert.equal(options.headers['X-GitHub-Api-Version'],'2026-03-10');
   const route=new URL(url).pathname,body=options.body===undefined?undefined:JSON.parse(options.body),method=options.method;calls.push({route,method,body});let out;
   if(leak)throw Error('SYNTHETIC_TOKEN_PRIVATE_RAW');
@@ -90,7 +91,8 @@ async function connectedFixture(t,{broadProfile=false}={}){
  const leaves=[{path:'app.cjs',mode:'100644',type:'blob',sha:putBlob('original'),size:8},{path:'.github/workflows/check.yml',mode:'100644',type:'blob',sha:putBlob('protected workflow'),size:18},{path:'secret-link',mode:'120000',type:'blob',sha:putBlob('/not/exposed'),size:12}];
  const baseTree=putTree(leaves);objects.set(c.baseCommit,{sha:c.baseCommit,tree:{sha:baseTree}});
  const response=(data,status=200)=>new Response(JSON.stringify(data),{status});
- const fetchImpl=async(url,options)=>{const u=new URL(url),route=u.pathname,method=options.method,body=options.body?JSON.parse(options.body):undefined;calls.push({route,query:u.search,method,body});let out;
+ const fetchImpl=async(url,options)=>{
+  const u=new URL(url),route=u.pathname,method=options.method,body=options.body?JSON.parse(options.body):undefined;calls.push({route,query:u.search,method,body});let out;
   if(route==='/app/installations/'+installationId)out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:broadProfile?structuredClone(approvedPermissions):{administration:'write',contents:'write',pull_requests:'write',metadata:'read'}};
   else if(route.endsWith('/access_tokens')){assert.deepEqual(body,{permissions:{contents:'write',pull_requests:'write'},repository_ids:[c.repositoryId]});out={token:'connected-scoped',expires_at:'2026-10-13T01:00:00Z',repository_selection:'selected',permissions:{...body.permissions,...(broad?{administration:'write'}:{})},repositories:[{id:c.repositoryId}]};}
   else{assert.equal(options.headers.Authorization,'Bearer connected-scoped');assert(route.startsWith('/repos/'+c.fullName));const suffix=route.slice(('/repos/'+c.fullName).length);
@@ -274,7 +276,8 @@ async function poolFixture(t,{poolCount=2,admitCount=poolCount,legacy=false}={})
  for(const c of pool){heads.set(c.repositoryId,c.genesisCommit);remotes.set(c.repositoryId,{id:c.repositoryId,full_name:c.fullName,owner:{id:ownerId,login:owner,type:'User'},private:true,fork:false,archived:false,description:c.marker,default_branch:'main',actions:false});objects.set(c.genesisCommit,{sha:c.genesisCommit,tree:{sha:tree},parents:[]});}
  objects.set(tree,{sha:tree,truncated:false,tree:[{path:'README.md',mode:'100644',type:'blob',sha:blob,size:body.length}]});objects.set(blob,{sha:blob,encoding:'base64',content:body.toString('base64')});
  const response=x=>new Response(JSON.stringify(x),{status:x===null?404:200});
- const fetchImpl=async(url,options)=>{const route=new URL(url).pathname,method=options.method,b=options.body?JSON.parse(options.body):null;calls.push({route,method,body:b});if(route.startsWith('/app/'))return f.config.fetchImpl(url,options);
+ const fetchImpl=async(url,options)=>{
+  const route=new URL(url).pathname,method=options.method,b=options.body?JSON.parse(options.body):null;calls.push({route,method,body:b});if(route.startsWith('/app/'))return f.config.fetchImpl(url,options);
   const c=pool.find(c=>route==='/repos/'+c.fullName||route.startsWith('/repos/'+c.fullName+'/'));if(!c){assert(legacy,'No creation or ambient repository route');return f.config.fetchImpl(url,options);}const suffix=route.slice(('/repos/'+c.fullName).length);let result;
   if(suffix==='')result=remotes.get(c.repositoryId);
   else if(suffix==='/actions/permissions'){assert.equal(method,'GET');result={enabled:remotes.get(c.repositoryId).actions};}
@@ -339,4 +342,10 @@ test('pool admission preserves legacy creation template and mirror journals byte
 });
 test('pool lost ref acknowledgement retains unique slot and reconciles exact head without replay',async t=>{
  const f=await poolFixture(t),a=poolThread(3);await f.broker.ensureThread(a);const r={...await receipt(f),...a};f.lose('PATCH','/git/refs/heads/main');await assert.rejects(f.broker.sync(r));await f.reopen();assert.equal((await f.broker.ensureThread(a)).repositoryId,901);assert((await f.broker.sync(r)).mirrored);assert.equal(f.calls.filter(c=>c.method==='PATCH').length,1);assert.equal((await f.broker.ensureThread(poolThread(4))).repositoryId,902);
+});
+
+test('publication follows completed requests beyond the former overall broker deadline',async()=>{
+ const f=await fixture({requestStepMs:30000});
+ try{const result=await f.broker.sync(await receipt(f));assert.equal(result.mirrored,true);assert(f.calls.length>4);}
+ finally{await f.close();}
 });

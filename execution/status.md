@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 24/54.
 
 ## In progress
 
-- **Simple account creation and guided funding (G16)** — Guided account/funding UX implemented and independently reviewed. Focused563 boundary tests:562 passed, new topup assertion corrected to existing journal error wrapper and passed separately. Browser223 tests:212 passed;11 obsolete-navigation/text failures repaired and affected checks passed. Actual SDK browser exposed preexisting gzip/CRS encoded-length mismatch; narrow reader fix retains decoded bounds and hashes, verification in progress. Hosted app unchanged pending final evidence and normal integration gate.
+- **Simple account creation and guided funding (G16)** — Owner explicitly authorizes live publication and git push. Remove arbitrary operation deadlines across transaction/bridge, proof/model, account setup and processing; retain genuine transport/resource/contract bounds. Root implements client/UI and fresh signup E2E; backend agent prepares read-only proposed patch; deployment agent investigates source provenance.460 funding/session/journal tests passed before expanded scope.
 
 ## Ready internal work
 

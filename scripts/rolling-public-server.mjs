@@ -41,13 +41,9 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     return queued.promise;
   };
   const freshRead=async()=>{
-    let expired=false,deadline;
-    const progress=(async()=>{let result=await nextCycle();
-      while(!expired&&!closed&&!result.failed&&result.catchup)result=await nextCycle();
-      return result;
-    })();
-    try{return await Promise.race([progress,new Promise(resolve=>{deadline=setTimeout(()=>{expired=true;resolve({failed:true});},20000);})]);}
-    finally{clearTimeout(deadline);}
+    let result=await nextCycle();
+    while(!closed&&!result.failed&&result.catchup)result=await nextCycle();
+    return result;
   };
   const handle=async(req,res)=>{
     const reply=(status,body)=>{let text=JSON.stringify(body);if(Buffer.byteLength(text)>1048576){status=503;text='{"schemaVersion":1,"error":"unavailable"}';}

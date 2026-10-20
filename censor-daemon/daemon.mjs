@@ -111,15 +111,13 @@ export async function runDaemon(argv = process.argv.slice(2), { startRuntime = s
   const shutdown=()=>{stopping=true;wait.abort();};process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);
   try{
     log('Starting isolated model runtime and durable moderation queue.');
-    const startup=new AbortController(),startupTimer=setTimeout(()=>startup.abort(Error('Model startup deadline')),120000);
-    try{runtime=await startRuntime({image:config.modelImage,memoryMiB:config.modelMemoryMiB,imageManifestPath:config.modelManifest,modelPath:config.modelPath,modelSha256:config.modelSha256,port:config.llamaPort,threads:config.threads,ctxSize:config.ctxSize,signal:AbortSignal.any([wait.signal,startup.signal])});}
-    finally{clearTimeout(startupTimer);}
+    runtime=await startRuntime({image:config.modelImage,memoryMiB:config.modelMemoryMiB,imageManifestPath:config.modelManifest,modelPath:config.modelPath,modelSha256:config.modelSha256,port:config.llamaPort,threads:config.threads,ctxSize:config.ctxSize,signal:wait.signal});
     const identity=persistModelIdentity(config.stateDir,runtime),node=rolling?.node??createNode(config.aztecNodeUrl),healthNode=rolling?null:createNode(config.aztecNodeUrl,{timeoutMs:5000});
     do {
       let complete=false;
       try{
-        if(!store){const data=rolling?{scope:rolling.scope}:await signer.list(),id=createHash('sha256').update(scopeKey(data.scope)).digest('hex');store=openJobStore({filename:path.join(config.stateDir,id+'.sqlite'),scope:data.scope,modelVersion:identity.modelVersion,...(rolling?{profile:'rolling',development:rolling.development}:{})});storeScope=data.scope;}
-        const result=await (rolling?processRollingModerationCycle:processModerationCycle)({store,signer,node,scope:storeScope,worker,log,dryRun:config.dryRun,stopping:()=>stopping,evaluate:(post,policy)=>moderatePost(post,policy,runtime.port)});
+        if(!store){const data=rolling?{scope:rolling.scope}:await signer.list(),id=createHash('sha256').update(scopeKey(data.scope)).digest('hex');store=openJobStore({filename:path.join(config.stateDir,id+'.sqlite'),scope:data.scope,modelVersion:identity.modelVersion,...(rolling?{profile:'rolling',development:rolling.development}:{})});storeScope=data.scope;if(rolling){await rolling.assertHeld();store.recoverLeases();}}
+        const result=await (rolling?processRollingModerationCycle:processModerationCycle)({store,signer,node,scope:storeScope,worker,log,dryRun:config.dryRun,stopping:()=>stopping,evaluate:(post,policy)=>moderatePost(post,policy,runtime.port,{signal:wait.signal})});
         complete=result.complete;log(JSON.stringify(summarizeModerationHealth({status:result.status,staleAfterMs:Math.max(config.pollInterval*3000,60000)})));
         if(!stopping&&!rolling)log(JSON.stringify(await observeFeedLag({node:healthNode,scope:storeScope,checkpoint:result.status.checkpoint})));
       }catch(error){let status;try{status=store?.status();}catch{}log(JSON.stringify({...summarizeModerationHealth({status,cycleFailed:true,staleAfterMs:Math.max(config.pollInterval*3000,60000)}),diagnostic:safeModerationDiagnostic(error)}),'error');}

@@ -1,0 +1,83 @@
+{
+  "observed": "2026-10-20",
+  "source": "AWS CloudFront configuration and SSM command 182279f4-9033-4da7-9176-476ad804dd99",
+  "cloudfront": {
+    "application": {
+      "connectSeconds": 10,
+      "attempts": 1,
+      "readSeconds": 60,
+      "keepaliveSeconds": 5
+    },
+    "query": {
+      "connectSeconds": 10,
+      "attempts": 1,
+      "readSeconds": 30,
+      "keepaliveSeconds": 5
+    },
+    "prover": {
+      "connectSeconds": 10,
+      "attempts": 1,
+      "readSeconds": 30,
+      "keepaliveSeconds": 5
+    },
+    "bokArtifacts": {
+      "connectSeconds": 10,
+      "attempts": 1,
+      "readSeconds": 30,
+      "keepaliveSeconds": 5
+    },
+    "legacyWebsiteOrigin": {
+      "connectSeconds": 10,
+      "attempts": 3
+    }
+  },
+  "services": {
+    "application": {
+      "startSeconds": 90,
+      "stopSeconds": 30
+    },
+    "query": {
+      "startSeconds": 90,
+      "stopSeconds": 30
+    },
+    "node": {
+      "startSeconds": null,
+      "stopSeconds": 45
+    },
+    "prover": {
+      "startSeconds": 90,
+      "stopSeconds": 30
+    },
+    "moderator": {
+      "startSeconds": 90,
+      "stopSeconds": 300
+    },
+    "bok": {
+      "startSeconds": 90,
+      "stopSeconds": 45
+    },
+    "applicationProxy": {
+      "startSeconds": 90,
+      "stopSeconds": 90
+    },
+    "proverProxy": {
+      "startSeconds": 15,
+      "stopSeconds": 5
+    },
+    "bokArtifactProxy": {
+      "startSeconds": 90,
+      "stopSeconds": 90
+    },
+    "attestor": {
+      "startSeconds": 100,
+      "stopSeconds": 5
+    },
+    "applicationAttestor": {
+      "startSeconds": 100,
+      "stopSeconds": 5
+    }
+  },
+  "allListedServiceMaximumLifetime": null,
+  "allListedServiceWatchdogSeconds": 0,
+  "queryAndProverNodeMaxLagSeconds": 120
+}

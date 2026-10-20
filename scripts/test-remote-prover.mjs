@@ -148,3 +148,37 @@ test('development application prover selection leaves native proof configuration
   process.env.BOARD_TEST_PROOFS='invalid';assert.throws(()=>applicationProver(options),/Invalid BOARD_TEST_PROOFS/);
  }finally{if(prior===undefined)delete process.env.BOARD_TEST_PROOFS;else process.env.BOARD_TEST_PROOFS=prior;}
 });
+
+test('proof queue retains owned work and results until terminal acknowledgement',async t=>{
+ t.mock.timers.enable({apis:['Date','setTimeout','setInterval']});
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-retention-'));const gates=[];
+ const worker={prove:()=>new Promise(resolve=>gates.push(resolve)),async close(){}};
+ const queue=await createProofQueue({directory,worker,maxJobs:2,maxPerClient:2});
+ try{
+  const first=await queue.submit(Buffer.from('a'),'client');const second=await queue.submit(Buffer.from('b'),'client');
+  t.mock.timers.tick(31*60*1000);
+  assert.equal(queue.get(first).state,'running');assert.equal(queue.get(second).state,'queued');
+  assert.equal(await queue.acknowledge(first),false);assert.equal(await queue.acknowledge(second),false);
+  gates[0]({mode:'disabled'});while(queue.get(first).state!=='complete'||gates.length<2)await new Promise(setImmediate);
+  t.mock.timers.tick(61000);assert.equal(queue.get(first).state,'complete');
+  const third=await queue.submit(Buffer.from('c'),'client');assert.equal(queue.get(first),null);assert.equal(queue.get(second).state,'running');assert.equal(queue.get(third).state,'queued');
+  await assert.rejects(queue.submit(Buffer.from('d'),'client'),{status:429});
+  assert.equal(await queue.acknowledge(first),true);assert.equal(await queue.acknowledge(third),false);
+  gates[1]({mode:'disabled'});while(queue.get(second).state!=='complete'||gates.length<3)await new Promise(setImmediate);
+  assert.equal(await queue.acknowledge(second),true);
+  gates[2]({mode:'disabled'});while(queue.get(third).state!=='complete')await new Promise(setImmediate);
+  assert.equal(await queue.acknowledge(third),true);assert.equal(queue.stats().jobs,0);
+ }finally{await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+test('proof acknowledgement cannot cancel active work or bypass origin policy',async()=>{
+ let acknowledgements=0;const id='a'.repeat(64);
+ const queue={acknowledge:async()=>{acknowledgements++;return false;},get:()=>({state:'running'})};
+ const server=createProverServer({queue,origins:['https://board.example']});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const url='http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id;
+ try{
+  assert.equal((await fetch(url,{method:'DELETE',headers:{origin:'https://other.example'}})).status,403);assert.equal(acknowledgements,0);
+  assert.equal((await fetch(url,{method:'DELETE',headers:{origin:'https://board.example'}})).status,409);assert.equal(acknowledgements,1);
+  assert.equal((await(await fetch(url)).json()).state,'running');
+ }finally{await server.closeAndDrain();}
+});

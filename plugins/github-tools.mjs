@@ -21,7 +21,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     // initialization promise too: one invocation never silently retries cloning.
     const ensureCheckout=()=>checkout??=(async()=>{
       if(workspace?.readRevision){
-        await runCommand('git',['clone','--no-hardlinks','--no-checkout','--branch','accepted',workspace.repositoryPath,work],{timeout:60000,maxBuffer:1024*1024});
+        await runCommand('git',['clone','--no-hardlinks','--no-checkout','--branch','accepted',workspace.repositoryPath,work],{maxBuffer:1024*1024});
         const baseSha=(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim();
         if(baseSha!==workspace.readRevision)throw Error('Accepted repository revision changed');
         return {base:null,baseSha};
@@ -36,7 +36,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         await runCommand('git',['init',work]);await runCommand('git',['commit','--allow-empty','-m','Initialize isolated Bok thread'],{cwd:work});
         return {base:null,baseSha:(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim()};
       }
-      await runCommand('git',['clone','--depth','1','--filter=blob:none','--no-checkout','https://github.com/'+repository+'.git',work],{timeout:60000,maxBuffer:1024*1024});
+      await runCommand('git',['clone','--depth','1','--filter=blob:none','--no-checkout','https://github.com/'+repository+'.git',work],{maxBuffer:1024*1024});
       const info=await api('GET','/repos/'+repository);
       const baseSha=(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim();
       return {base:info.default_branch,baseSha};
@@ -66,8 +66,8 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         }
       }
       const patterns=['/*',...Array.from(oversized,p=>'!/'+p.replace(/[\\*?\[\] ]/g,'\\$&'))];
-      await runCommand('git',['sparse-checkout','set','--no-cone','--no-sparse-index','--',...patterns],{cwd:work,timeout:60000,maxBuffer:1024*1024});
-      await runCommand('git',['checkout','--detach',baseSha],{cwd:work,timeout:60000,maxBuffer:1024*1024});
+      await runCommand('git',['sparse-checkout','set','--no-cone','--no-sparse-index','--',...patterns],{cwd:work,maxBuffer:1024*1024});
+      await runCommand('git',['checkout','--detach',baseSha],{cwd:work,maxBuffer:1024*1024});
       return new Set(Array.from(oversized,pathKey));
     })();
     const safe=async name=>{

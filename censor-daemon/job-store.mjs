@@ -22,11 +22,11 @@ function receipt(value){
  return {txHash:value.txHash,blockHash:value.blockHash,blockNumber:String(value.blockNumber),status:value.status,executionResult:value.executionResult};
 }
 
-export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=360000,maxReconcileAttempts=20,retryDelayMs=30000,maxJobs=100000,now=Date.now,profile='legacy',development=false}){
+export function openJobStore({filename,scope,modelVersion,maxAttempts=3,maxReconcileAttempts=20,retryDelayMs=30000,maxJobs=100000,now=Date.now,profile='legacy',development=false,leaseMs=profile==='rolling'?null:360000}){
  scope=validateScope(scope);
  if(!['legacy','rolling'].includes(profile)||typeof development!=='boolean'||(profile==='rolling'&&scope.l1ChainId!==(development?'31337':'11155111')))throw fail('Invalid moderation profile');
- if(typeof filename!=='string'||!path.isAbsolute(filename)||!hex(modelVersion)||![maxAttempts,leaseMs,maxReconcileAttempts,retryDelayMs,maxJobs].every(integer)||
-  maxAttempts<1||maxAttempts>100||leaseMs<1||leaseMs>900000||maxReconcileAttempts<1||maxReconcileAttempts>1000||retryDelayMs>3600000||maxJobs<1||maxJobs>100000||typeof now!=='function')throw fail('Invalid job store configuration');
+ if(typeof filename!=='string'||!path.isAbsolute(filename)||!hex(modelVersion)||![maxAttempts,maxReconcileAttempts,retryDelayMs,maxJobs].every(integer)||
+  maxAttempts<1||maxAttempts>100||(profile==='rolling'?leaseMs!==null:!integer(leaseMs)||leaseMs<1||leaseMs>900000)||maxReconcileAttempts<1||maxReconcileAttempts>1000||retryDelayMs>3600000||maxJobs<1||maxJobs>100000||typeof now!=='function')throw fail('Invalid job store configuration');
  fs.mkdirSync(path.dirname(filename),{recursive:true,mode:0o700});
  try{const fd=fs.openSync(filename,'wx',0o600);fs.closeSync(fd);}catch(error){if(error.code!=='EEXIST')throw error;const stat=fs.lstatSync(filename);if(!stat.isFile()||stat.isSymbolicLink())throw fail('Job database must be a regular file');}
  const db=new DatabaseSync(filename);db.exec('PRAGMA busy_timeout=1000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
@@ -51,13 +51,16 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
   // A historical successful receipt must never release the uncertainty fence.
   if(record.job.state==='reconciling'){record.receipt=null;record.flagEvent=null;}
   validate(record);if(!read.get(record.key)&&db.prepare('SELECT COUNT(*) AS count FROM jobs').get().count>=maxJobs)throw fail('Job database capacity reached');write.run(record.key,record.job.modelVersion,JSON.stringify(record));}
- function expiredLeases(time){
-  for(const record of rows())if(record.lease&&record.lease.expiresAt<=time){
+ // Rolling is protected by the adapter's exclusive process lock. Recover old
+ // ownership once after acquiring that lock; elapsed time never revokes live work.
+ function recoverLeases(){if(profile!=='rolling')throw fail('Exclusive Rolling ownership required');return transaction(()=>retireLeases(()=>true));}
+ function retireLeases(expired){
+  for(const record of rows())if(record.lease&&expired(record.lease)){
    record.job.state=record.job.state==='submitted'&&includedSuccess(record)?'submitted':signing.has(record.job.state)?'reconciling':record.job.state==='leased'?'retryable-error':record.job.state;
-   record.lease=null;record.errorCode='LEASE_EXPIRED';record.retryAt=0;put(record);
+   record.lease=null;record.errorCode=profile==='rolling'?'OWNER_RESTARTED':'LEASE_EXPIRED';record.retryAt=0;put(record);
   }
  }
- function owned(key,token){const record=getRecord(key),time=clock();if(!record?.lease||record.lease.token!==token||record.lease.expiresAt<=time)throw fail('Job lease is missing or expired');return record;}
+ function owned(key,token){const record=getRecord(key),time=clock();if(!record?.lease||record.lease.token!==token||(profile!=='rolling'&&record.lease.expiresAt<=time))throw fail('Job lease is missing or expired');return record;}
  function snapshotPost(post,policies){
   if(!plain(post)||!hex(post.postId)||!hex(post.policyVersion)||typeof post.flagged!=='boolean')throw fail('Invalid public post snapshot');
   const publishedAt=decimal(post.publishedAt,63),deadline=decimal(post.flagDeadline,64),orderIndex=decimal(post.orderIndex,64);
@@ -78,7 +81,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
   if(profile==='legacy'&&(!hex(currentPolicyVersion)||!known.has(currentPolicyVersion)))throw fail('Current policy unavailable');
   const incoming=posts.map(post=>snapshotPost(post,known)),ids=new Set(incoming.map(post=>post.postId));if(ids.size!==incoming.length)throw fail('Duplicate snapshot post');
   return transaction(()=>{
-   const time=clock();expiredLeases(time);
+   const time=clock();if(profile!=='rolling')retireLeases(lease=>lease.expiresAt<=time);
    for(const post of incoming){
     const job={schemaVersion:1,scope,postId:post.postId,policyVersion:profile==='rolling'?post.currentPolicyVersion:currentPolicyVersion,modelVersion,publishedAt:post.publishedAt,deadline:post.flagDeadline,state:'queued',attempt:'0',transactionHash:null};
     const key=moderationJobKey(job);const old=getRecord(key),policy=known.get(job.policyVersion);
@@ -113,9 +116,9 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
  function leaseNext({worker}){
   if(typeof worker!=='string'||!worker.length||worker.length>100)throw fail('Invalid worker identity');
   return transaction(()=>{
-   const time=clock();expiredLeases(time);const all=rows();
+   const time=clock();if(profile!=='rolling')retireLeases(lease=>lease.expiresAt<=time);const all=rows();
    // One active worker per database protects the wallet's single transaction journal.
-   if(all.some(record=>record.lease&&record.lease.expiresAt>time))return null;
+   if(all.some(record=>record.lease&&(profile==='rolling'||record.lease.expiresAt>time)))return null;
    if(all.some(record=>record.job.state==='manual-review'&&record.intent&&!includedSuccess(record)&&record.receipt?.executionResult!=='reverted'))return null;
    const unresolved=all.filter(record=>signing.has(record.job.state)&&!(record.job.state==='submitted'&&includedSuccess(record)));
    // A model upgrade does not retire transactions created by the prior model.
@@ -136,12 +139,12 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
      if(BigInt(record.job.attempt)>=BigInt(maxAttempts)){record.job.state='manual-review';record.errorCode='RETRIES_EXHAUSTED';put(record);continue;}
      record.job.state='leased';record.job.attempt=String(BigInt(record.job.attempt)+1n);
     }
-    record.lease={token:randomUUID(),worker,expiresAt:time+leaseMs};put(record);return copy(record);
+    record.lease={token:randomUUID(),worker,expiresAt:profile==='rolling'?null:time+leaseMs};put(record);return copy(record);
    }
    return null;
   });
  }
- function renew(key,token){return transaction(()=>{const record=owned(key,token);record.lease.expiresAt=clock()+leaseMs;put(record);return copy(record.lease);});}
+ function renew(key,token){return transaction(()=>{const record=owned(key,token);record.lease.expiresAt=profile==='rolling'?null:clock()+leaseMs;put(record);return copy(record.lease);});}
  function release(key,token){return transaction(()=>{const record=owned(key,token);if(record.job.state==='leased')record.job.state='retryable-error';if(record.job.state==='submit-intent'||(record.job.state==='submitted'&&!includedSuccess(record)))record.job.state='reconciling';record.lease=null;record.retryAt=clock()+retryDelayMs;put(record);return copy(record);});}
  function transition(key,token,change){
   return transaction(()=>{
@@ -218,5 +221,5 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
    oldestDeadline:all.filter(r=>!terminal.has(r.job.state)).map(r=>r.job.deadline).sort((a,b)=>BigInt(a)<BigInt(b)?-1:1)[0]??null};
  }
 
- return Object.freeze({ingestSnapshot,invalidateCompletion,leaseNext,renew,release,transition,get:key=>{const r=getRecord(key);return r?copy(r):null;},list:()=>copy(rows()),status,close:()=>db.close()});
+ return Object.freeze({ingestSnapshot,recoverLeases,invalidateCompletion,leaseNext,renew,release,transition,get:key=>{const r=getRecord(key);return r?copy(r):null;},list:()=>copy(rows()),status,close:()=>db.close()});
 }

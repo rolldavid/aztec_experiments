@@ -174,7 +174,7 @@ export function createRollingColdPreferenceReader(input){
   return Object.freeze({async read(options={}){
    if(active)throw failure('ROLLING_COLD_PREFERENCES_BUSY');
    const keys=Reflect.ownKeys(options);check(keys.every(k=>k==='signal'||k==='deadlineAt'));const settings=exact(options,keys);
-   const signal=settings.signal,deadlineAt=settings.deadlineAt??Date.now()+10000;check(signal===undefined||signal instanceof AbortSignal);check(Number.isSafeInteger(deadlineAt));active={signal,deadlineAt};
+   const signal=settings.signal,deadlineAt=settings.deadlineAt;check(signal===undefined||signal instanceof AbortSignal);check((deadlineAt===undefined||Number.isSafeInteger(deadlineAt)));active={signal,deadlineAt};
    try{
     await guard();await readiness();
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>readStore(key)),compareAndSwap:(...args)=>checked(()=>casStore(...args))},walletSecret,walletSalt,scopeText:JSON.stringify([DOMAIN,...fullScope]),keyDomain:DOMAIN}));

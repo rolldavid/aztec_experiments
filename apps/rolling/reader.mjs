@@ -131,8 +131,8 @@ function boardOverview(data){
 async function render(){
  controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;
  // Back navigation reloads the same number of pages against the current index.
- // The whole restoration has one deadline, rather than an unbounded request chain.
- const restoreSignal=AbortSignal.any([signal,AbortSignal.timeout(20000)]),saved=positions.get(route);loadedPages=1;
+ // Navigation cancellation owns this sequence; each request handles transport errors.
+ const restoreSignal=signal,saved=positions.get(route);loadedPages=1;
  const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
  if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
  else if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}

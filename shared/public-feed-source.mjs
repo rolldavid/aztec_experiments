@@ -139,17 +139,15 @@ export async function createPublicFeedSource({node,scope,artifact,eventTags,meta
   }
   async function getEvents({fromBlock,toBlock,referenceBlock}){
     if(!natural(toBlock)||!natural(fromBlock)||fromBlock<1||toBlock<fromBlock)throw fail();
-    const deadline=Date.now()+timeoutMs;
-    return read(async()=>{
+    return (async()=>{
       const events=[];let pages=0,failed=false;
       await Promise.all(PUBLIC_FEED_TYPES.map(async type=>{
        try {
         let afterLog;
         for(;;){
           if(failed)return;
-          if(Date.now()>=deadline||++pages>maxPages)throw fail();
+          if(++pages>maxPages)throw fail();
           const page=await readPage({type,fromBlock,toBlock:toBlock+1,referenceBlock,afterLog});
-          if(Date.now()>=deadline)throw fail();
           events.push(...page.events);if(events.length>maxEvents)throw fail();
           if(page.done)break;afterLog=page.nextCursor;
         }
@@ -161,7 +159,7 @@ export async function createPublicFeedSource({node,scope,artifact,eventTags,meta
       // capped by that original reference. Reject internally conflicting hashes.
       const hashes=new Map();for(const event of events){const key=event.position.blockNumber,value=event.position.blockHash;if(hashes.has(key)&&hashes.get(key)!==value)throw fail();hashes.set(key,value);}
       return events;
-    });
+    })();
   }
   return Object.freeze({scope,getHead,getBlock,getNextEventBlock,readPage,getEvents});
 }

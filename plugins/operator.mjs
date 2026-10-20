@@ -72,7 +72,7 @@ export async function operatorCommand({command,config,statePath,actor,ethereumKe
   }
   if(command==='fees')return {publicFeeJuice:String(await getFeeJuiceBalance(from,node)),account:String(from)};
   if(['deploy-escrow','bind','register','withdraw-earnings'].includes(command)&&await getFeeJuiceBalance(from,node)===0n)throw Error('Fund the actor public Fee Juice account before submitting Aztec operations');
-  const wait={timeout:180,waitForStatus:TxStatus.CHECKPOINTED};
+  const wait={timeout:0,waitForStatus:TxStatus.CHECKPOINTED};
   const send=async(name,interaction,fee)=>{currentOperation=name;try{const old=store.read().operations[name];if(old){if(old.actor!==actor.address)throw Error('Operation belongs to another actor');const receipt=await node.getTxReceipt(TxHash.fromString(old.hash));if(receipt.status==='dropped'){await node.sendTx(Tx.fromBuffer(Buffer.from(old.raw,'hex')));}return await waitForTx(node,TxHash.fromString(old.hash),wait);}return (await interaction.send({from,wait,...(fee?{fee}: {})})).receipt;}finally{currentOperation=null;}};
   if(command==='claim-fees'){
    await initializeWallet();
@@ -86,7 +86,7 @@ export async function operatorCommand({command,config,statePath,actor,ethereumKe
    if(!signer)throw Error('Configure PLUGIN_ETHEREUM_PRIVATE_KEY locally');
    return recordedTransaction({store,name,identity:JSON.stringify(transaction,(_,v)=>typeof v==='bigint'?String(v):v),prepare:async()=>{
     onProgress('prepare-ethereum-transaction');const populated=await signer.populateTransaction(transaction),raw=await signer.signTransaction(populated);return {hash:keccak256(raw),raw};
-   },broadcast:async r=>{if(!await provider.getTransaction(r.hash))await provider.broadcastTransaction(r.raw);},wait:async r=>{const receipt=await provider.waitForTransaction(r.hash,1,120000);if(!receipt)throw Error('Ethereum transaction still pending');if(receipt.status!==1)throw Error('Ethereum transaction reverted');return receipt;}});
+   },broadcast:async r=>{if(!await provider.getTransaction(r.hash))await provider.broadcastTransaction(r.raw);},wait:async r=>{const receipt=await provider.waitForTransaction(r.hash,1);if(!receipt)throw Error('Ethereum transaction still pending');if(receipt.status!==1)throw Error('Ethereum transaction reverted');return receipt;}});
   };
   const artifact=loadContractArtifact(adapterJson);
   if(command==='deploy-escrow'){

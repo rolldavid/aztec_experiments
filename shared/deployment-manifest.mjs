@@ -35,9 +35,9 @@ export function verifyDeploymentInputs(manifest,{artifact,portalBytecode,runtime
  return {manifest:m,intentDigest:hash(m)};
 }
 export async function preflightDeploymentNetwork(manifest,{node,provider,ethers,timeoutMs=20000}){
- const m=validateDeploymentManifest(manifest),n=m.network,deadline=Date.now()+timeoutMs;
+ const m=validateDeploymentManifest(manifest),n=m.network;
  if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>20000)fail('Invalid preflight timeout');
- const read=fn=>boundedTransactionRead(fn,deadline-Date.now());
+ const read=fn=>boundedTransactionRead(fn,timeoutMs);
  const [info,contracts,network]=await read(()=>Promise.all([node.getNodeInfo(),node.getL1ContractAddresses(),provider.getNetwork()]));
  // Pinned public NodeInfo exposes the native realProofs configuration.
  // getConfig belongs to the separate admin API, not this public client.

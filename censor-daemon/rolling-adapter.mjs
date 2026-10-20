@@ -159,7 +159,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
   const prepare=record=>prepareRollingRemoval({record,contract,wallet,account,config,Fr});
   const signer=rollingModerationAdapter({index,node:normalNode,scope,lease,state,development:config.development,stopping,assertAuthority,prepare,broadcast:record=>node.sendTx(record.tx),
    deadline:async(id,at)=>(await read(await deriveStorageSlotInMap(artifact.storageLayout.post_flag_deadline.slot,Fr.fromString(id)),at)).toBigInt().toString()});
-  return {signer,node:normalNode,scope,development:config.development,publicConfig,close};
+  return {signer,node:normalNode,scope,development:config.development,publicConfig,assertHeld:()=>lease.assertHeld(),close};
  }catch{try{await close();}catch{}throw Error('Rolling moderation startup failed; inspect private operator configuration and retained state');}
 }
 

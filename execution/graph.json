@@ -9136,7 +9136,7 @@
       "title": "Simple account creation and guided funding",
       "phase": "rolling-chat-draft3",
       "kind": "internal",
-      "status": "verification",
+      "status": "active",
       "depends_on": [],
       "requirements": [
         "REQ03"
@@ -9144,12 +9144,13 @@
       "findings": [],
       "scope": [
         "apps/rolling/",
-        "shared/rolling/",
-        "execution/evidence/G16/",
-        "shared/wallet-providers.js",
-        "shared/crs-client.js",
-        "scripts/test-crs-consumers.mjs",
-        "scripts/testing/"
+        "apps/src/billboard/user/engine.js",
+        "shared/",
+        "prover/",
+        "plugins/",
+        "censor-daemon/",
+        "scripts/",
+        "execution/"
       ],
       "plan": "tasks/G16.md",
       "actions": [
@@ -9168,7 +9169,7 @@
       "evidence": "evidence/G16.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Guided account/funding UX implemented and independently reviewed. Focused563 boundary tests:562 passed, new topup assertion corrected to existing journal error wrapper and passed separately. Browser223 tests:212 passed;11 obsolete-navigation/text failures repaired and affected checks passed. Actual SDK browser exposed preexisting gzip/CRS encoded-length mismatch; narrow reader fix retains decoded bounds and hashes, verification in progress. Hosted app unchanged pending final evidence and normal integration gate.",
+      "checkpoint": "Owner explicitly authorizes live publication and git push. Remove arbitrary operation deadlines across transaction/bridge, proof/model, account setup and processing; retain genuine transport/resource/contract bounds. Root implements client/UI and fresh signup E2E; backend agent prepares read-only proposed patch; deployment agent investigates source provenance.460 funding/session/journal tests passed before expanded scope.",
       "execution_lane": "UX",
       "owner": "ux-20261020",
       "branch": "codex/rolling-chat-draft3",

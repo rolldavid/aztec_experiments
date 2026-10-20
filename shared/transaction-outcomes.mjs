@@ -53,9 +53,9 @@ export async function classifyDroppedTransaction(node,tx,receipt,{readTimeoutMs=
   }
   throw transactionError('BB_SUBMISSION_UNKNOWN','Drop reason is unconfirmed. Reconcile before retrying.');
 }
-export async function waitForCanonicalReceipt(node,tx,{timeoutMs=540000,intervalMs,onPoll=()=>{},readTimeoutMs=20000}={}) {
-  if(!Number.isFinite(timeoutMs)||timeoutMs<=0||(intervalMs!==undefined&&(!Number.isFinite(intervalMs)||intervalMs<=0)))throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction wait configuration is invalid.');
-  const txHash=tx.getTxHash(),readLimit=Math.min(readTimeoutMs,timeoutMs);let stateConflict;
+export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,onPoll=()=>{},readTimeoutMs=20000}={}) {
+  if(!Number.isFinite(timeoutMs)||timeoutMs<0||(intervalMs!==undefined&&(!Number.isFinite(intervalMs)||intervalMs<=0)))throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction wait configuration is invalid.');
+  const txHash=tx.getTxHash(),readLimit=timeoutMs===0?readTimeoutMs:Math.min(readTimeoutMs,timeoutMs);let stateConflict;
   try {
     // The SDK owns waiting. This boundary only validates each actual receipt and
     // reconciles drops; no elapsed time can authorize a replacement or resend.
@@ -71,7 +71,7 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=540000,interval
       if(!pending.has(observed.status)&&!accepted.has(observed.status))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt status is unrecognized.');
       if(pending.has(observed.status))onPoll();
       return observed;
-    }},txHash,{timeout:timeoutMs/1000,...(intervalMs===undefined?{}:{interval:Math.min(intervalMs,timeoutMs)/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});
+    }},txHash,{timeout:timeoutMs/1000,...(intervalMs===undefined?{}:{interval:(timeoutMs===0?intervalMs:Math.min(intervalMs,timeoutMs))/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});
     if(!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!receipt.blockHash)throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block identity is unavailable.');
     const block=await boundedTransactionRead(()=>node.getBlock(receipt.blockNumber),readLimit);
     if(!block||hash(block.hash)!==hash(receipt.blockHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block is not confirmed canonical.');

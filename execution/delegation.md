@@ -722,3 +722,5 @@ Funding original reserve recovery exact scope claimed fromffa68cd6: plugins/main
 Root ux-20261020 owns edits. funding_investigation performs read-only funding/defaults analysis; no source ownership or service operations delegated. Independent review follows implementation.
 
 G16 final review: ux_review independently reviews product, funding safeguards, harness structure and the exact deployment script; funding_investigation independently verifies contract defaults and app-only cutover. Both read-only. Root is sole source writer and service operator.
+
+2026-10-20 G16 follow-up: root implements fresh onboarding; funding_investigation read-only diagnoses receipt wait/wallet simulation; ux_review independently reviews candidate. No owner transaction recovery.

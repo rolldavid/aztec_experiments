@@ -100,7 +100,7 @@ export function createSigner(configuration, { run = execFileSync } = {}) {
     let stdout;
     try {
       stdout = run(trusted.nodeExecutable, argv, { shell: false, encoding: 'utf8',
-        timeout: 300000, killSignal: 'SIGKILL', maxBuffer: MAX_OUTPUT_BYTES, windowsHide: true, env });
+        maxBuffer: MAX_OUTPUT_BYTES, windowsHide: true, env });
     } catch (error) {
       // Child diagnostics can contain secrets; report only a bounded status.
       const status = Number.isInteger(error.status) ? String(error.status) : error.signal ? 'signal' : 'execution';

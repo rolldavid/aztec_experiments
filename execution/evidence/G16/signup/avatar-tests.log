@@ -1,0 +1,24 @@
+✔ real canvas image/png: centre crop and exact published-byte preview (496.329833ms)
+✔ real canvas image/jpeg: centre crop and exact published-byte preview (157.094417ms)
+✔ real canvas image/webp: centre crop and exact published-byte preview (136.220916ms)
+✔ real PNG input metadata is absent after re-encoding, with transparent crop preserved (137.156291ms)
+✔ real noisy raster exercises compression candidates within 8192 bytes (150.538083ms)
+✔ unsupported, corrupt, animated and excessive dimensions fail before native decode (137.507291ms)
+✔ real JPEG metadata is stripped; malformed lengths and type mismatch reject (128.980166ms)
+✔ labelled encoder refusal rejects rather than publishing oversized or alpha-losing output (132.20725ms)
+✔ cancellation closes a late native bitmap without exposing errors (165.424375ms)
+✔ image processing completes after the former elapsed budget (139.898ms)
+✔ actual canvas resources are released on success and context failure (153.16225ms)
+✔ labelled unavailable WebP encoder exercises real JPEG fallback and metadata stripping (174.89875ms)
+✔ real WebP input metadata is removed and animated header is rejected before decode (129.979875ms)
+✔ labelled metadata-enriched real WebP output strips ICCP/EXIF/XMP and their VP8X flags (136.547292ms)
+✔ WebP ANIM chunks and malformed chunk lengths reject before decode (124.571ms)
+✔ correctly typed small opaque encoder results cannot discard source transparency (147.218291ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2821.897792

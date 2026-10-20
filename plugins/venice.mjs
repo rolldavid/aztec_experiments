@@ -21,7 +21,7 @@ export function veniceClient({privateKey,fetchImpl=fetch,signer}={}) {
     try {
     if(auth)headers={...headers,'X-Sign-In-With-X':await signer.signIn(url)};
     return await fetchImpl(url,{method,headers:{'Content-Type':'application/json',...headers},
-      ...(body===undefined?{}:{body:JSON.stringify(body)}),redirect:'error',signal:AbortSignal.timeout(120000)});
+      ...(body===undefined?{}:{body:JSON.stringify(body)}),redirect:'error'});
     }catch{throw veniceDiagnosticError('transport-unknown');}
   }
   async function rejectionBody(response){

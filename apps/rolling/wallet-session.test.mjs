@@ -957,3 +957,23 @@ test('aggregate session checks funded small credit under its private account loc
   assert.equal(calls,1);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
+
+// Price display is informational and must never block a valid funding quote.
+import {fundingUsdEstimate} from './wallet-session.mjs';
+import * as priceEthers from 'ethers';
+function priceProvider({price=250012345678n,updated=900n,answered=7n}={}){
+ const abi=new priceEthers.Interface(['function decimals() view returns (uint8)','function latestRoundData() view returns (uint80,int256,uint256,uint256,uint80)']);
+ return {getBlock:async()=>({number:100,timestamp:1000}),call:async request=>{
+  assert.equal(request.blockTag,100);assert.equal(request.to,'0x694AA1769357215DE4FAC081bf1f309aDC325306');
+  const name=abi.parseTransaction(request).name;return abi.encodeFunctionResult(name,name==='decimals'?[8]:[7n,price,800n,updated,answered]);
+ }};
+}
+test('ETH maximum total displays rounded USD using one authenticated block',async()=>{
+ assert.equal(await fundingUsdEstimate({ethers:priceEthers,provider:priceProvider(),chainId:'11155111',wei:'1000000000000000'}),'2.50');
+});
+for(const values of [{price:0n},{price:-1n},{updated:1001n},{updated:0n},{answered:6n}])test('invalid oracle data omits USD rather than inventing a price '+JSON.stringify(values,(_,v)=>typeof v==='bigint'?String(v):v),async()=>{
+ assert.equal(await fundingUsdEstimate({ethers:priceEthers,provider:priceProvider(values),chainId:'11155111',wei:'1000000000000000'}),null);
+});
+test('unavailable price feed does not fail payment preparation',async()=>{
+ assert.equal(await fundingUsdEstimate({ethers:priceEthers,provider:{getBlock:async()=>{throw Error('offline');}},chainId:'11155111',wei:'1'}),null);
+});

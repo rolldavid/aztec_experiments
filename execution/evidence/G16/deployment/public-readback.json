@@ -1,0 +1,75 @@
+{
+  "assets": {
+    "/wallet-panel.mjs": {
+      "status": 200,
+      "sha256": "d5b0da450628a486317b8bb5f8800e834b0be2a55815723f468c84ce33d50e7b",
+      "matchesCandidate": true
+    },
+    "/reader.mjs": {
+      "status": 200,
+      "sha256": "7bfcfaf6b126a1e5f7e9082d9f329d24c4d1b800b96adfc35279e2c4aaa674ad",
+      "matchesCandidate": true
+    },
+    "/style.css": {
+      "status": 200,
+      "sha256": "c8a3146dc4570b39be40d88e1ef380fd14db7a12b7520c811132c50bc5ecb32c",
+      "matchesCandidate": true
+    },
+    "/wallet/runtime.mjs": {
+      "status": 200,
+      "sha256": "b6147ccdd73211f94d43ae927ec0f6e5125fd67e73a91ebd22e5bd7b0fe4a025",
+      "matchesCandidate": true
+    },
+    "/wallet/wallet-providers.js": {
+      "status": 200,
+      "sha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+      "matchesCandidate": true
+    },
+    "/wallet/crs-client.js": {
+      "status": 200,
+      "sha256": "7785f34f3ff5a95d87c8a56b2f9062bb0abda11bdae0737541300268c7908d02",
+      "matchesCandidate": true
+    }
+  },
+  "reader": {
+    "schemaVersion": 1,
+    "state": "syncing",
+    "scope": {
+      "chainId": "11155111",
+      "rollupVersion": "3409706519",
+      "rollupAddress": "0xed1eb2eb670b42e2fb5a478c076a264b9604089d",
+      "boardAddress": "0x186d5c5e5a9bcd6d971b5e6c2a5dfb1afb58a103ee1715f7ce9997cce0c199a6",
+      "classId": "0x3019c9945a6639318c62cbe3cab9377db891cc2378add1e734cdfc21e36b96b5",
+      "bok": {
+        "address": "0x03445e0976a4e6e95e0fc61bc8f00b1be481dc212bfe0f6b2f51f06163c09606",
+        "classId": "0x19aa66736dfb8c1478657eb80de90f05bc0baf3e4a4c6dd706b9e2d1197fee51",
+        "operatorAddress": "0x17d5f49a10c969293812ab72418fa947414e704ea13f540486b46dae4fad139e",
+        "deployer": "0x2c8a8c02a4b70118ce06ca7f789f497349ad464a8439368d4db2bfd7a5577cf9",
+        "salt": "0x00114d814ef7f8ca9389c32d34fdbd447ebaa5f62d24684dbc498837eb6c08a8",
+        "deployment": {
+          "blockNumber": 7959,
+          "blockHash": "0x1ba9d286ce136d3e8499cf921d40b5cbfe8e2be8db71bb5b1553b4b88a1e0120",
+          "txHash": "0x237134fe0e3538107b05a58c8d07af7ae87695fcc4103b509d822490ccb8812b"
+        }
+      }
+    },
+    "complete": false,
+    "authenticationEpoch": "e4c3baf6-fe18-42cf-9b05-5a02c7a29a0d",
+    "revision": "e4c3baf6-fe18-42cf-9b05-5a02c7a29a0d:22:12739",
+    "checkpoint": {
+      "number": 8592,
+      "hash": "0x289eb58b30b171deb8e66e0f8325c3e2fb8367e99551c73257310dc1b762dc8f"
+    },
+    "cursor": {
+      "blockNumber": "8593",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "pending"
+  },
+  "headers": {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: https://aztec-testnet.drpc.org https://d30njln0kead8n.cloudfront.net https://ethereum-sepolia-rpc.publicnode.com; worker-src 'self' blob:; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp"
+  }
+}

@@ -5,7 +5,7 @@ import path from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {startModelRuntime} from './model-runtime.mjs';
-import {moderatePost,buildUserPrompt,LIMITS} from './moderation.mjs';
+import {moderatePost,buildUserPrompt} from './moderation.mjs';
 import {identifyModel,sha256Bytes} from './model-version.mjs';
 
 export const THRESHOLDS=Object.freeze({minLabeled:300,minMultilingual:50,minInjection:50,maxFalsePositiveRate:0.02,maxFalseNegativeRate:0.05,maxP95Ms:10000});
@@ -136,9 +136,9 @@ export async function evaluateModel({corpusPath,outputPath,runtimeOptions,maxCas
    if(controller.signal.aborted||attempted>=maxCases)break;
    // Admit only a complete production request budget. A short batch tail is
    // unattempted work, not a shorter model deadline or a model-quality error.
-   if(remaining<LIMITS.timeoutMs){deferredCase={caseId:item.id,reason:'insufficient-request-budget',remainingMs:Math.max(0,remaining),requiredMs:LIMITS.timeoutMs};break;}
+   if(remaining<=0){deferredCase={caseId:item.id,reason:'insufficient-request-budget',remainingMs:Math.max(0,remaining),requiredMs:1};break;}
    const begin=performance.now(),result={caseId:item.id,inputDigest:digest({case:item,policy:policies.get(item.policyId)})};
-   try{const verdict=await evaluate(item.text,policies.get(item.policyId).text,runtime.port,{timeoutMs:LIMITS.timeoutMs});
+   try{const verdict=await evaluate(item.text,policies.get(item.policyId).text,runtime.port,{signal:controller.signal});
     if(typeof verdict.isViolation!=='boolean')throw Error('Invalid evaluation verdict');
     Object.assign(result,{status:'decision',isViolation:verdict.isViolation,...(typeof verdict.reason==='string'?{reason:verdict.reason}:{})});
    }catch(error){Object.assign(result,{status:'error',errorCode:typeof error.code==='string'&&/^[A-Z0-9_]{1,80}$/.test(error.code)?error.code:'MODEL_EVALUATION_FAILED'});}

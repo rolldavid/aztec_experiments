@@ -217,14 +217,14 @@ export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,
   assert.equal(message.beneficiary.toLowerCase(),account);assert.equal(message.executor.toLowerCase(),scope.router);
   assert.equal(BigInt(message.amount),BigInt(allocation.collateralWei));assert.equal(BigInt(message.nonce),BigInt(consentNonce));
   assert.match(message.secretHash,/^0x[0-9a-f]{64}$/);assert(BigInt(message.secretHash)>0n);
-  assert(BigInt(message.deadline)>BigInt(nowSeconds)&&BigInt(message.deadline)<=BigInt(nowSeconds+120));
+  assert(BigInt(message.deadline)>BigInt(nowSeconds)&&BigInt(message.deadline)<=BigInt(nowSeconds+900));
  }else{
   assert.equal(asset,'USDC');assert.equal(index,1);assert.equal(data.primaryType,'ReceiveWithAuthorization');assert.deepEqual(types,usdcAuthorizationTypes);
   assert.deepEqual(domain,{name:scope.usdcDomain.name,version:scope.usdcDomain.version,chainId:expectedChainId,verifyingContract:scope.bokToken});
   exactKeys(message,['from','to','value','validAfter','validBefore','nonce']);
   assert.equal(message.from.toLowerCase(),account);assert.equal(message.to.toLowerCase(),scope.router);
   assert(BigInt(message.value)>0n&&BigInt(message.value)<=BigInt(allocation.maximumUsdc));
-  assert(BigInt(message.validAfter)<BigInt(nowSeconds)&&BigInt(message.validBefore)>BigInt(nowSeconds)&&BigInt(message.validBefore)<=BigInt(nowSeconds+120));
+  assert(BigInt(message.validAfter)<BigInt(nowSeconds)&&BigInt(message.validBefore)>BigInt(nowSeconds)&&BigInt(message.validBefore)<=BigInt(nowSeconds+900));
   assert.match(message.nonce,/^0x[0-9a-f]{64}$/);
  }
  if(EIP712Domain!==undefined)assert.deepEqual(EIP712Domain,TypedDataEncoder.getPayload(domain,types,message).types.EIP712Domain);
@@ -323,29 +323,32 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    assertMetaMaskUnfundedContinuation({ethereumNonce:initialNonce,consentNonce,emptyRecovery:empty});report.retainedUnfundedContinuation=true;}
   }else{
    await page.getByRole('button',{name:'Your account',exact:true}).click();const initialDialog=page.getByRole('dialog');
-   if(await initialDialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await initialDialog.getByRole('button',{name:'Unlock',exact:true}).click();await initialDialog.getByLabel('Recovery password',{exact:true}).fill(c.password);
-   const [initial]=await Promise.all([page.waitForEvent('download'),initialDialog.getByRole('button',{name:'Create account and download recovery',exact:true}).click()]);
+   await initialDialog.getByLabel('Password',{exact:true}).fill(c.password,{timeout:remaining()});
+   const [initial]=await Promise.all([page.waitForEvent('download'),initialDialog.getByRole('button',{name:'Create account',exact:true}).click()]);
    await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));mark('aggregate-initial-recovery-saved');
   }
-  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Fund your account',exact:true}).click({timeout:remaining()});
+  const dialog=page.getByRole('dialog');if(continueUnfunded||unsignedContinuation)await dialog.getByRole('button',{name:'Set up posting',exact:true}).click({timeout:remaining()});
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
   report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId,permission,observe:state=>{report.accountSelectionState=state;}});
-  await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
+  await page.waitForFunction(()=>walletState.ethAccount!==null,{},{timeout:remaining()});
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
   if(c.asset==='USDC')await dialog.getByLabel('Pay with',{exact:true}).selectOption('USDC');
-  for(const [label,value]of [['Posting deposit (ETH)',formatUnits(a.collateralWei,18)],['Network fee credit (fee tokens)',formatUnits(a.feeAmount,18)],['Bok credit (USDC)',formatUnits(a.bokAmount,6)],['Slippage limit (%)',String(a.slippageBps/100)]])await dialog.getByLabel(label,{exact:true}).fill(value);
-  if(c.asset==='ETH')await dialog.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).fill(formatUnits(a.gasBudgetWei,18));
-  mark('aggregate-review');await dialog.getByRole('button',{name:'Get fresh quote',exact:true}).click();await dialog.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
+  mark('aggregate-review');await dialog.getByRole('button',{name:'Confirm payment',exact:true}).waitFor({timeout:remaining()});
   // A fresh review must retain the original encrypted fee approval.
   if(unsignedContinuation){const checked=await page.evaluate(inspectMetaMaskUnsignedExport,{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,phase:'requote',account});assert.equal(checked.originalFeeCapPreserved,true);report.retainedUnsigned.originalFeeCapPreserved=true;}
-  // Custody written by prepare must be exported before any signature/payment.
-  await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByLabel('New recovery password',{exact:true}).fill(c.password);
-  const [prepared]=await Promise.all([page.waitForEvent('download'),dialog.getByRole('button',{name:'Download encrypted recovery',exact:true}).click()]);await saveEncryptedDownload(prepared,path.join(c.recoveryDirectory,'prepared-recovery.json'));
+  if(interruptAt){
+   // Interruption qualification retains exact prepared custody without adding
+   // backup navigation to the ordinary new-user journey. Only ciphertext leaves the page.
+   const envelope=await page.evaluate(password=>window.BillboardAccount.exportRecovery(password),c.password);
+   assert.equal(envelope.kind,'aztec-billboard-encrypted-wallet');assert.equal(envelope.schemaVersion,1);
+   assert.equal(envelope.kdf,'PBKDF2-SHA256');assert.equal(envelope.iterations,600000);assert.match(envelope.ciphertext,/^[0-9a-f]+$/);
+   fs.writeFileSync(path.join(c.recoveryDirectory,'prepared-recovery.json'),JSON.stringify(envelope),{flag:'wx',mode:0o600});
+  }
   assert.equal(userSends,0);assert.equal(relayPosts,0);assert.equal(signatures.length,0);
-  unsignedApproved=true;mark('aggregate-confirm');await dialog.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();
+  unsignedApproved=true;mark('aggregate-confirm');await dialog.getByRole('button',{name:'Confirm payment',exact:true}).click();
   // Wallet callbacks drive the two authentic prompts. The provider's native
   // waiter owns inclusion; no timer or repeated transaction/status reads.
-  for(const entry of prompts){const next=await observe(entry.promise);await walletPage.getByTestId('confirm-footer-button').click({timeout:remaining()});if(next==='signature')confirmedSignatures++;}
+  for(const entry of prompts){const next=await observe(entry.promise);await walletPage.getByTestId('confirm-footer-button').waitFor({timeout:remaining()});assert.equal(await walletPage.getByText(/transaction is likely to fail/i).count(),0,'MetaMask predicts payment failure');await walletPage.getByTestId('confirm-footer-button').click({timeout:remaining()});if(next==='signature')confirmedSignatures++;}
   hash=await observe(payment.promise);mark('aggregate-payment-submitted');
   if(interruptAt==='ethereum-before-ack'){await observe(interrupted.promise);return ()=>{assert.equal(errors.length,0);assert.equal(userSends,1);assert.equal(relayPosts,0);assert.equal(signatures.length,1);};}
 
@@ -364,8 +367,19 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    return ()=>{assert.equal(errors.length,0);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);};
   }
   mark('aggregate-automatic-private-claim');
-  await observe(waitMetaMaskAutomaticClaim({page,binding:{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash:hash},report,timeout:chainId==='31337'?Math.min(80000,remaining()):remaining()}));
+  await observe(waitMetaMaskAutomaticClaim({page,binding:{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash:hash},report,timeout:remaining()}));
   if(c.asset==='USDC'){assert.equal(await provider.getBalance(account),0n);assert.equal(await provider.getTransactionCount(account,'pending'),0);}
+  mark('aggregate-first-post');
+  const message='Fresh account onboarding check '+crypto.randomUUID();
+  await dialog.getByRole('button',{name:'Write a post',exact:true}).click({timeout:remaining()});
+  await dialog.getByLabel('Message',{exact:true}).fill(message,{timeout:remaining()});
+  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();
+  await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
+  await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});
+  await dialog.getByRole('button',{name:'Close account panel',exact:true}).click();
+  await page.goto(c.origin+'/#/home');
+  await page.locator('main article.post').getByText(message,{exact:true}).waitFor({timeout:remaining()});
+  report.aggregate.postQualified=true;report.aggregate.postVisibleOnHome=true;
   return ()=>{assert.equal(errors.length,0);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);assert.equal(signatures.length,c.asset==='ETH'?1:2);};
  }finally{await Promise.allSettled([...routeTasks]);report.aggregateAttempts={userSends,relayPosts,signatures:signatures.length,paymentHashObserved:hash!==null};}
  // The route remains installed until the caller closes the context, so a late
@@ -595,7 +609,7 @@ export function inspectMetaMaskPaidRecoverySurface({settledOnly=false,terminalOn
  const vocabulary={
   'claim-confirmed':'Transaction confirmed on the verified chain.',
   'claim-confirmed-feed-unavailable':'Transaction confirmed on the verified chain. Public feed refresh is unavailable; the transaction remains confirmed.',
-  success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',
+  success:'Payment confirmed. Your posting balance is set up.',
   'review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',
   review:'The private claim needs a new review. No additional Ethereum payment will be sent.',
   reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.',

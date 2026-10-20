@@ -1,0 +1,71 @@
+{
+  "source": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+  "files": [
+    {
+      "path": "apps/rolling/reader.mjs",
+      "bytes": 24713,
+      "sha256": "7bfcfaf6b126a1e5f7e9082d9f329d24c4d1b800b96adfc35279e2c4aaa674ad"
+    },
+    {
+      "path": "apps/rolling/start.mjs",
+      "bytes": 8819,
+      "sha256": "64ba4630136ce6cec7240d33c92e3d3b5b6338f560e628322a9367f761df350f"
+    },
+    {
+      "path": "apps/rolling/style.css",
+      "bytes": 15406,
+      "sha256": "c8a3146dc4570b39be40d88e1ef380fd14db7a12b7520c811132c50bc5ecb32c"
+    },
+    {
+      "path": "apps/rolling/wallet-panel.mjs",
+      "bytes": 110353,
+      "sha256": "d5b0da450628a486317b8bb5f8800e834b0be2a55815723f468c84ce33d50e7b"
+    },
+    {
+      "path": "apps/rolling/wallet-runtime.mjs",
+      "bytes": 11466,
+      "sha256": "c53c1f3828a02eeb832ed7bbf9954b7567f62d8668c5e28a692d4dbab14c9754"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "bytes": 54098,
+      "sha256": "d8b3215baa4b0f501cb3606816c651217ecba91418b26a9b9dd618e5b1a94180"
+    },
+    {
+      "path": "shared/rolling/aggregate-wallet.mjs",
+      "bytes": 50853,
+      "sha256": "38379ca73f8d05c9395acf2d901cda2528d3ad1dd8d9a697a2f135ab29973692"
+    },
+    {
+      "path": "shared/rolling/application.mjs",
+      "bytes": 90326,
+      "sha256": "a4d4b938712a289a48ee90ba1b024cc7dfa8c7a1913146fe7a63ecf7cd41696d"
+    },
+    {
+      "path": "shared/wallet-providers.js",
+      "bytes": 1648,
+      "sha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c"
+    },
+    {
+      "path": "shared/crs-client.js",
+      "bytes": 8959,
+      "sha256": "7785f34f3ff5a95d87c8a56b2f9062bb0abda11bdae0737541300268c7908d02"
+    },
+    {
+      "path": ".build/rolling-wallet/runtime.mjs",
+      "bytes": 320933,
+      "sha256": "b6147ccdd73211f94d43ae927ec0f6e5125fd67e73a91ebd22e5bd7b0fe4a025"
+    },
+    {
+      "path": ".build/rolling-wallet/manifest.json",
+      "bytes": 15887,
+      "sha256": "ccf45ef7d73fa8c372b8ff6bc3fb9256d213d743fb30da1c32c08e7f9786d99b"
+    }
+  ],
+  "archiveSha256": "ae86e50f797a34be9c975493d4eabf5eff363dfb87668b9c2152404c36f0b46c",
+  "baseline": {
+    "unit": "7be6d8b35b24101a44e0bf695e1c54883f269dbdde9590bc77c10b08e6a8145c",
+    "sdk": "7a7a714c1f3c9d48ddd32458cf8d00012c22abd1b60e71c72da9aca4263eeaa9",
+    "wallet": "d7ff58d7163c38b5e53690d79651cfa9d5b9327a37fab02f6e6cb06f39d9aa9e"
+  }
+}

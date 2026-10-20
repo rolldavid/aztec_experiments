@@ -27,7 +27,7 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
   const origin=req.headers.origin;
   if(origin&&!origins.includes(origin)){reply(403,{error:'Origin rejected'});return;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Credentials','true');}
-  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','Content-Type');reply(204,{});return;}
+  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Methods','GET, POST, DELETE');res.setHeader('Access-Control-Allow-Headers','Content-Type');reply(204,{});return;}
   const admit=(compact=false)=>{
    let client=req.socket.remoteAddress;
    if(trustedProxy&&client===trustedProxy){const forwarded=req.headers['x-real-ip'];if(typeof forwarded!=='string'||!isIP(forwarded)){reply(400,{error:'Proxy address required'});return;}client=forwarded;}
@@ -76,7 +76,10 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
     const id=await queue.submit(body,client);reply(202,{id});return;
    }
    const match=/^\/v1\/jobs\/([a-f0-9]{64})$/.exec(req.url);
-   if(req.method==='GET'&&match){const job=queue.get(match[1]);reply(job?200:404,job??{error:'Job expired'});return;}
+   if(req.method==='GET'&&match){const job=queue.get(match[1]);reply(job?200:404,job??{error:'Job not found'});return;}
+   // The unguessable job id is the existing read/consumption capability.
+   // Acknowledgement cannot cancel queued or running computation.
+   if(req.method==='DELETE'&&match){const acknowledged=await queue.acknowledge(match[1]);reply(acknowledged?200:409,acknowledged?{acknowledged:true}:{error:'Job is still running'});return;}
    reply(404,{error:'Not found'});
   }catch(error){reply(error.status??400,{error:'Request rejected'});}
  };

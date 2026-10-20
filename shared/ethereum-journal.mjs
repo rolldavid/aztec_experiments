@@ -160,17 +160,16 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:validatedScope(scope),keyDomain:'AZTEC_BB_ETH_JOURNAL_KEY_V1'});
   if(!integer(minimumNonce))throw invalid();
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>20000)throw invalid();
-  let acknowledged=acknowledgeTx,lastHash=null;
+  let acknowledged=acknowledgeTx,lastHash=null,submittedResponse=null;
   function reader({preserveInsufficientFunds=false}={}) {
-    const deadline=Date.now()+timeoutMs;
-    return async fn=>{if(Date.now()>=deadline)throw unknown();let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(unknown()),Math.max(0,deadline-Date.now()));})]);}catch(error){if(error?.code==='BB_JOURNAL_INVALID'||(preserveInsufficientFunds&&error?.code==='INSUFFICIENT_FUNDS'))throw error;throw unknown();}finally{clearTimeout(timer);}};
+    return async fn=>{const deadline=Date.now()+timeoutMs;let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(unknown()),Math.max(0,deadline-Date.now()));})]);}catch(error){if(error?.code==='BB_JOURNAL_INVALID'||(preserveInsufficientFunds&&error?.code==='INSUFFICIENT_FUNDS'))throw error;throw unknown();}finally{clearTimeout(timer);}};
   }
   async function load() {const saved=await slot.read();if(saved.value!==null)validateIntent(saved.value,scope);return saved;}
   async function network(read) {
     if(String((await read(()=>provider.getNetwork())).chainId)!==scope.chainId)throw unknown();
     if(contextGuard)await contextGuard();
   }
-  function confirmed(result,request){acknowledged=result.txHash;lastHash=result.txHash;return {...result,request};}
+  function confirmed(result,request){submittedResponse=null;acknowledged=result.txHash;lastHash=result.txHash;return {...result,request};}
   async function locate(saved,read) {
     let record=saved.value;
     if(record.txHash) {const result=await verifyEthereumIntentReceipt(provider,record,record.txHash,read);if(result)return {saved,result};}
@@ -256,16 +255,25 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
     }
     // Wallet responses acknowledge submission; only canonical RPC data confirms intent.
     if(!hash(lower(response?.hash)))throw unknown();
+    submittedResponse=response;
     return slot.write(saved,{...record,txHash:lower(response.hash)});
   }
   async function finish(saved) {
     const read=reader();await network(read);
-    const result=await verifyEthereumIntentReceipt(provider,saved.value,saved.value.txHash,read);
-    if(result)return confirmed(result,saved.value);
-    // Bounded confirmation wait; a timeout keeps the durable request intact.
-    await read(()=>provider.waitForTransaction(saved.value.txHash,1,timeoutMs));
-    const after=await verifyEthereumIntentReceipt(provider,saved.value,saved.value.txHash,reader());
-    if(!after)throw unknown();return confirmed(after,saved.value);
+    let found=await locate(saved,read);saved=found.saved;
+    if(found.result)return confirmed(found.result,saved.value);
+    const record=saved.value;
+    // Keep the genuine wallet response for the fresh handoff. Restored sessions
+    // require the original transaction from RPC; a hash alone cannot watch nonce replacement.
+    const observed=await read(()=>provider.getTransaction(record.txHash));
+    const tx=observed??(typeof submittedResponse?.replaceableTransaction==='function'&&lower(submittedResponse.hash)===record.txHash?submittedResponse:null);
+    if(!tx||typeof tx.replaceableTransaction!=='function'||lower(tx.hash)!==record.txHash||lower(tx.from)!==record.from||tx.nonce!==record.nonce||lower(tx.to)!==lower(record.to)||lower(tx.data)!==record.data||String(tx.value)!==record.value||String(tx.chainId)!==record.chainId)throw unknown();
+    try{await tx.replaceableTransaction(record.startBlock).wait(1);}
+    catch(error){if(!['TRANSACTION_REPLACED','CALL_EXCEPTION'].includes(error?.code))throw unknown();}
+    // Native completion and replacement errors are wake-up hints. Canonical
+    // receipt, nonce and exact intent reconciliation remain the authority.
+    await network(reader());found=await locate(saved,reader());
+    if(!found.result)throw unknown();return confirmed(found.result,found.saved.value);
   }
   return {
     // Authenticated detached request for an explicit recovery review. It confers
@@ -278,7 +286,8 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
       return {kind:record.expected.kind,txHash:record.txHash,outcome:result?.outcome??'unknown'};
     },
     assertCanStart,get lastTxHash(){return lastHash;},
-    async send(intent) {
+    async send(intent,{waitForReceipt=true}={}) {
+      if(typeof waitForReceipt!=='boolean')throw invalid();
       const previous=await assertCanStart(),read=reader();await network(read);
       if(!signer||lower(await signer.getAddress())!==scope.depositor)throw unknown();
       const start=await read(()=>provider.getBlock('latest'));
@@ -290,16 +299,23 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
       const record=validateIntent({version:1,from:scope.depositor,to:intentDestination(expected,scope),chainId:scope.chainId,nonce,data:lower(data),value:String(value),expected,
         startBlock:start.number,startHash:lower(start.hash),nextBlock:start.number+1,cursorHash:null,txHash:null},scope);
       const saved=await slot.write(previous,record);
-      const result=await finish(await broadcast(saved,previous));
+      const submitted=await broadcast(saved,previous);
+      // A wallet acknowledgement is pending, not a receipt. Funding's existing
+      // continuation owns mining and bridge observation after this handoff.
+      const immediate=!waitForReceipt?await verifyEthereumIntentReceipt(provider,submitted.value,submitted.value.txHash,reader()):null;
+      if(!waitForReceipt&&!immediate)return {outcome:'submitted',txHash:submitted.value.txHash,request:structuredClone(submitted.value)};
+      const result=immediate?confirmed(immediate,submitted.value):await finish(submitted);
       if(result.outcome!=='success')throw transactionError('BB_ETH_TRANSACTION_FAILED','The Ethereum request reverted or was replaced. Reconcile it before another action.');
       return result;
     },
     async reconcilePrevious(options={}){if(!(await load()).value)return null;return this.recover(options);},
-    async recover({retry=false}={}) {
+    async recover({retry=false,wait=false}={}) {
+      if(typeof retry!=='boolean'||typeof wait!=='boolean')throw invalid();
       let saved=await load();if(!saved.value)throw transactionError('BB_NO_SAVED_ETHEREUM_TRANSACTION','No saved Ethereum request exists for this wallet and portal.');
       const read=reader();await network(read);
       const found=await locate(saved,read);saved=found.saved;
       if(found.result)return confirmed(found.result,saved.value);
+      if(wait&&saved.value.txHash)return finish(saved);
       if(!retry||['aggregate-funding','aggregate-usdc-funding'].includes(saved.value.expected.kind))throw unknown();
       // Explicit retry retains the same sender nonce, destination, calldata and
       // value. Even if an earlier broadcast is hidden by RPC, at most one request

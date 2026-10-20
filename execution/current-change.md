@@ -1,9 +1,7 @@
-# Account and funding UX — 20 October 2026
+# Signup and operation completion — 20 October 2026
 
-Owner request: remove jargon, separate funding into its own dialog, offer wallet icons, calculate required deposit/fees/gas/slippage, explain deposit and included Bok succinctly. G16 is the active application lane. Prior acceptance is historical after these edits.
+G16: shorten account creation, calculate costs automatically, show an optional verified USD estimate, and wait for actual transaction, bridge, proof and backend completion. Ethereum replacement/cancellation wakes canonical intent reconciliation. Read/connection limits remain distinct from operation completion. Preserve contract addresses, chain data, public-feed rules and private journals.
 
-Design: retain the message board’s Avenir typography and slate navigation. Use white #ffffff, paper #f4f6f9, ink #26364b, muted #596779, violet #6654be, line #dbe1e9. Left aligned, compact dialog, one primary action per step. Account creation → wallet choice → payment review → posting. Secondary recovery lives behind “Sign in” or account settings. Funding occupies a dedicated view with no account tools around it. Keep honest privacy information in a concise expandable explanation. No branding overhaul or decorative cards: the board and conversations remain the focus.
+Account creation opens directly to password entry. Creating the account proceeds to wallet connection; connecting prepares the quote automatically. Confirm payment remains the explicit spending decision. No allocation, gas or slippage fields are exposed. The busy operation cannot be duplicated or accidentally dismissed. Failed payment clears its pending approval prompt.
 
-Review against brief: simplifying labels alone would leave the intimidating form intact. Remove allocation/gas/slippage inputs and derive them at the trusted funding boundary. Keep the payment total and actual refund conditions visible.
-
-Runtime verification reproduced an existing account-setup blocker: Fetch returns decoded gzip bytes but preserves the compressed Content-Length. The CRS reader compared that header to decoded size. Scope includes shared/crs-client.js and its existing tests to validate decoded bytes, keeping exact stream-length and hash checks.
+Verification: real MetaMask fresh account, Ethereum payment, three canonical bridge effects, automatic Aztec claim and first post on Home passed in native proof-disabled development. Focused browser, price, canonical index, replacement/cancellation, prover, model and broker checks recorded under execution/evidence/G16/signup. Production publication and real-proof readback remain separate and must be recorded honestly.

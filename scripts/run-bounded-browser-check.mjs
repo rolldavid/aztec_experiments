@@ -19,7 +19,7 @@ export function browserCheckDeadline({passkey,walletExtension,aggregate,retained
  if(retainedBok!==undefined&&!['true','false'].includes(retainedBok))throw Error('Invalid retained Bok flag');
  if(retainedBok==='true'&&!(walletExtension&&aggregate))throw Error('Bok continuation requires aggregate wallet mode');
  if(testnet){if(!walletExtension||!aggregate||retainedBok==='true')throw Error('Real proofs require the explicit testnet aggregate mode');return 3600000;}
- return passkey?60000:walletExtension?(retainedBok==='true'?540000:120000):540000;
+ return passkey?60000:walletExtension?(retainedBok==='true'||aggregate?540000:120000):540000;
 }
 assertNodeVersion();
 const [script,output,...args]=process.argv.slice(2);

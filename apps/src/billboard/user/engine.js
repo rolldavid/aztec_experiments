@@ -277,7 +277,7 @@
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
-          timeoutMs:(waitOpts.timeout ?? 540)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
+          timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
         });
         if (journal) journal.confirmed(receipt);
         this._actualFees=(this._actualFees||0n)+BigInt(receipt.transactionFee??0);
@@ -564,39 +564,19 @@
 
   // Read-only readiness check at a refreshed current PXE anchor. Proving may refresh it again.
   // Missing messages never allocate fees, prove, submit, or repeat an L1 deposit.
-  async function waitForDepositMessage({a,wallet,node,key,index,contextGuard,timeoutMs=240000,pollMs=1000,waitUntilAvailable=false,onStage=()=>{}}) {
-    const pending=()=>Object.assign(new Error('The confirmed deposit is not yet available to claim. Retry the same claim later.'),{code:'BB_DEPOSIT_MESSAGE_PENDING'});
-    const unavailable=()=>Object.assign(new Error('Deposit message availability could not be checked. Retry the original claim after restoring the connection.'),{code:'BB_DEPOSIT_MESSAGE_UNAVAILABLE'});
+  async function waitForDepositMessage({a,wallet,node,key,index,contextGuard,onStage=()=>{}}) {
     const invalid=()=>Object.assign(new Error('Deposit message membership does not match the confirmed receipt.'),{code:'BB_DEPOSIT_MESSAGE_INVALID'});
-    if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>240000||!Number.isInteger(pollMs)||pollMs<1)throw invalid();
     let message,expected;
     try{if(typeof key!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(key))throw invalid();message=new a.Fr(BigInt(key));expected=BigInt(index);if(expected<0n||expected>=1n<<36n)throw invalid();}catch{throw invalid();}
-    const deadline=waitUntilAvailable?Infinity:Date.now()+timeoutMs;
-    onStage('bridge');
-    const bounded=async fn=>{
-      const left=Math.min(timeoutMs,deadline-Date.now());if(left<=0)throw pending();
-      let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(pending()),left);})]);}finally{clearTimeout(timer);}
-    };
-    while(Date.now()<deadline){
-      if(contextGuard)await bounded(contextGuard);
-      let witness;
-      try{
-        await bounded(()=>wallet.pxe.sync());
-        const header=await bounded(()=>wallet.pxe.getSyncedBlockHeader());
-        const hash=await bounded(()=>header.hash());
-        witness=await bounded(()=>node.getL1ToL2MessageMembershipWitness(hash,message));
-      }catch{throw unavailable();}
-      if(contextGuard)await bounded(contextGuard);
-      if(witness!==undefined){
-        if(!Array.isArray(witness)||witness.length!==2||typeof witness[0]!=='bigint'||witness[0]!==expected||
-           witness[1]?.pathSize!==36||typeof witness[1]?.toFields!=='function')throw invalid();
-        // Pinned Aztec 5.2 Inbox height is36. Normal proving verifies the root.
-        try{const fields=witness[1].toFields();if(!Array.isArray(fields)||fields.length!==36||fields.some(field=>!(field instanceof a.Fr)))throw invalid();}catch{throw invalid();}
-        return;
-      }
-      await new Promise(resolve=>setTimeout(resolve,Math.min(pollMs,Math.max(0,deadline-Date.now()))));
-    }
-    throw pending();
+    if(contextGuard)await contextGuard();onStage('bridge');
+    await a.waitForL1ToL2MessageReady(node,message,{timeoutSeconds:0,chainTip:'checkpointed'});
+    if(contextGuard)await contextGuard();
+    await wallet.pxe.sync();
+    const header=await wallet.pxe.getSyncedBlockHeader();
+    const witness=await node.getL1ToL2MessageMembershipWitness(await header.hash(),message);
+    if(contextGuard)await contextGuard();
+    if(!Array.isArray(witness)||witness.length!==2||typeof witness[0]!=='bigint'||witness[0]!==expected||witness[1]?.pathSize!==36||typeof witness[1]?.toFields!=='function')throw invalid();
+    const fields=witness[1].toFields();if(!Array.isArray(fields)||fields.length!==36||fields.some(field=>!(field instanceof a.Fr)))throw invalid();
   }
   g.BillboardDepositReadiness=Object.freeze({waitForDepositMessage});
 
@@ -1288,11 +1268,8 @@
     async function doReuseDeposit() {
       if (!provider || !l1Account || !portalDeployed) throw new Error('A verified portal and depositor are required.');
       secretStore();
-      const deadline=Date.now()+60000;
       const read=async operation=>{
-        const remaining=deadline-Date.now();
-        if(remaining<=0)throw Object.assign(new Error('Deposit lookup timed out.'),{code:'BB_DEPOSIT_LOOKUP_FAILED'});
-        try{return await a.boundedTransactionRead(operation,Math.min(20000,remaining));}
+        try{return await a.boundedTransactionRead(operation,20000);}
         catch{throw Object.assign(new Error('Deposit lookup unavailable. Try Claim deposit again.'),{code:'BB_DEPOSIT_LOOKUP_FAILED'});}
       };
       const head = await read(()=>provider.getBlock('latest'));

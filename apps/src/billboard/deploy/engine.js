@@ -45,7 +45,6 @@
     // Settlement belongs to the network. Check once and leave a resumable state;
     // do not hold an application run open waiting for an epoch to settle.
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 20000) throw new Error('Invalid Ready check timeout');
-    let deadline = Date.now() + timeoutMs;
     const pending = () => {
       log('Portal binding is saved. Network settlement is pending; resume deployment later.', 'info');
       return { status: 'pending-settlement', readyTxHash: hash.toString() };
@@ -55,7 +54,7 @@
       try {
         return await Promise.race([Promise.resolve().then(fn), new Promise((_, reject) => {
           timer = setTimeout(() => reject(Object.assign(new Error('Ready state is unknown; resume deployment to check again.'),
-            { code: 'BB_RECOVERY_UNKNOWN' })), Math.max(0, deadline - Date.now()));
+            { code: 'BB_RECOVERY_UNKNOWN' })), timeoutMs);
         })]);
       } finally { clearTimeout(timer); }
     }
@@ -91,7 +90,6 @@
     if (!current || current.blockNumber !== receipt.blockNumber ||
       current.blockHash.toString() !== receipt.blockHash.toString()) return pending();
     const activation = activate ? await activate(args) : await (await portal.activate(...args)).wait();
-    deadline = Date.now() + timeoutMs;
     if (activation.status !== 1 || !await read(() => portal.depositsEnabled())) throw new Error('Portal activation failed');
     return { status: 'active', receipt: activation };
   }
@@ -212,7 +210,7 @@
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
-          timeoutMs:(waitOpts.timeout ?? 540)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
+          timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
         });
         if (this._transactionJournal) this._transactionJournal.confirmed(receipt);
         log('  Tx confirmed! Block: ' + receipt.blockNumber + ', Status: ' + receipt.status, 'success');

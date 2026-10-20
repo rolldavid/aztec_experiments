@@ -47,12 +47,12 @@ export function createFundingContinuation({application,funding,sdk,node,contextG
      await fence();
      for(const receipt of legs){
       await fence();
-      await sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:120,chainTip:'checkpointed'});
+      await sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'});
       await fence();
      }
      // application.prepare synchronizes PXE before reading its message witness.
     },
-    async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:120,waitForStatus:'checkpointed',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();},
+    async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:0,waitForStatus:'checkpointed',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();},
    }}));}finally{active=null;}
   },
  });
@@ -363,7 +363,12 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const verifyScope=()=>verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok,bokArtifact,network,proofsEnabled,contextGuard:guardRoute});
     aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:bok.address.toString(),owner:captured.address,
      walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,verifyFeeCredit,claimStore,relay:fundingRelay,verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
-    prepareStarter=async({asset})=>aggregate.prepare(await starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap,provider}));
+    prepareStarter=async({asset})=>{
+     const quote=await aggregate.prepare(await starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap,provider}));
+     if(asset==='USDC')return quote;
+     const usdEstimate=await fundingUsdEstimate({ethers,provider,chainId:network.chainId,wei:quote.breakdown.maximumTotalWei});
+     return Object.freeze({...quote,usdEstimate});
+    };
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    if(typeof captureFundingWallet==='function'){
@@ -499,4 +504,19 @@ export async function verifyRollingTopupClaim({sdk,node,txHash,contextGuard}){
  if(!/^0x[0-9a-f]{64}$/.test(txHash)||BigInt(txHash)===0n)throw fail('ROLLING_SESSION_CONFIG');
  const hash=sdk.TxHash.fromString(txHash),receipt=await read(()=>node.getTxReceipt(hash));sdk.requireSuccessfulReceipt(receipt,hash);
  const block=await read(()=>node.getBlock(receipt.blockNumber));if(block?.hash?.toString()!==receipt.blockHash.toString())throw fail('ROLLING_SESSION_CONFIG');
+}
+
+/** Reference fiat value from the network's Chainlink ETH/USD feed. Display only. */
+export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
+ const feed=({'1':'0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419','11155111':'0x694AA1769357215DE4FAC081bf1f309aDC325306'})[chainId];
+ if(!feed)return null;
+ try{
+  const abi=new ethers.Interface(['function decimals() view returns (uint8)','function latestRoundData() view returns (uint80,int256,uint256,uint256,uint80)']);
+  const block=await provider.getBlock('latest');
+  const results=await Promise.all(['decimals','latestRoundData'].map(async name=>abi.decodeFunctionResult(name,await provider.call({to:feed,data:abi.encodeFunctionData(name),blockTag:block.number}))));
+  const decimals=Number(results[0][0]),[round,price,,updated,answered]=results[1];
+  if(decimals>18||price<=0n||updated<=0n||answered<round||updated>BigInt(block.timestamp)||BigInt(block.timestamp)-updated>86400n)return null;
+  const cents=(BigInt(wei)*price*100n+10n**BigInt(18+decimals)/2n)/10n**BigInt(18+decimals);
+  return (cents/100n).toString()+'.'+(cents%100n).toString().padStart(2,'0');
+ }catch{return null;}
 }

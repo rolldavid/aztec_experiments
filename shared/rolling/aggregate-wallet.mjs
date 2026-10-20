@@ -38,7 +38,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  const openSlot=text=>sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:text,keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
  const slot=await openSlot(scopeText);
  const archiveSlot=txHash=>{check(typeof txHash==='string'&&/^0x[0-9a-f]{64}$/.test(txHash));const frame=JSON.parse(scopeText);frame.splice(-1,0,txHash);return openSlot(JSON.stringify(frame));};
- let prepared=null;
+ let prepared=null,pendingJournal=null;
  const read=async fn=>{await contextGuard();const result=await fn();await contextGuard();return result;};
  // A refused signature has no broadcast ambiguity. Normalize it only at
  // this signing boundary; transaction/relay failures keep their journal fences.
@@ -156,7 +156,8 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   // the request reaches the relay is status-only recovery, never an auto-retry.
   await read(()=>verifyFeeCredit(feeAmount));
   await read(()=>sdk.validateAggregateFundingQuote(quote));
-  await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request}}));
+  const start=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(start?.number)&&start.number>=0,'PENDING');
+  await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request,startBlock:start.number}}));
   await read(wallet.guard);
   let state;try{state=await read(()=>relay.submit(request.data));}catch{state=await read(()=>relay.status(tx.planHash));}
   await rememberRelayState(await stored(),state);
@@ -245,8 +246,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
      await wallet.guard();const fees=await read(()=>provider.getFeeData());await wallet.guard();
      const price=fees.maxFeePerGas??fees.gasPrice;check(typeof price==='bigint'&&price>0n&&typeof request.gasLimit==='bigint'&&request.gasLimit*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');
      const bounded=fees.maxFeePerGas!==null&&fees.maxFeePerGas!==undefined?{...request,maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{...request,gasPrice:price};
-     return wallet.signer.sendTransaction(bounded);
-    }},contextGuard:async()=>{await contextGuard();await wallet.guard();}});
+     await read(()=>sdk.validateAggregateFundingQuote(quote));
+     await wallet.guard();return wallet.signer.sendTransaction(bounded);
+    }},contextGuard});
    let result;try{result=await read(()=>j.send(async ethereumNonce=>{
     await wallet.guard();check(ethereumNonce===nonce,'NONCE_CHANGED');await predecessor(current.saved.value);
     // Validate deadline again after any wallet consent interaction, before both
@@ -257,7 +259,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     sdk.validateAggregateFundingIntent(intent);
     await slot.write(current.saved,{...current.saved.value,intent});await contextGuard();await wallet.guard();
     return {data:intent.data,value:intent.value,expected};
-   }));}catch(error){
+   },{waitForReceipt:false}));}catch(error){
     // Only the original journal's explicit first-attempt rollback proves a
     // cancelled/unfunded request was not broadcast. Unknown outcomes retain
     // every byte of the original recovery context.
@@ -268,7 +270,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     }
     throw error;
    }
-   original(await stored(),result.request);return receipts(result);
+   pendingJournal=j;original(await stored(),result.request);return result.outcome==='submitted'?{pending:true,txHash:result.txHash}:receipts(result);
   },
   async inspect(){const saved=await stored();return saved.value?freeze({paymentSaved:!!(saved.value.intent||saved.value.relay?.submitted),privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),explicitClaimReview:saved.value.explicitClaimReview===true}):null;},
   async reviewRevertedClaim(){
@@ -304,10 +306,30 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    let recovered;
    try{recovered=await reconcile();}catch(error){
     if(!wait||!['ROLLING_FUNDING_PENDING','BB_ETH_RECOVERY_REQUIRED'].includes(errorValue(error,'code')))throw error;
-    const saved=await stored();let hash=saved.value?.relay?.transactionHash;
-    if(saved.value?.kind!=='usdc')hash=(await read(async()=>(await journal(saved.value.depositor)).inspectRequest()))?.txHash;
-    if(!hash)throw error;
-    await read(()=>provider.waitForTransaction(hash,1,120000));recovered=await reconcile();
+    const saved=await stored();
+    if(saved.value?.kind!=='usdc'){
+     const j=pendingJournal??await journal(saved.value.depositor);
+     await read(()=>j.recover({retry:false,wait:true}));recovered=await reconcile();
+    }else{
+     const hash=saved.value.relay?.transactionHash,request=saved.value.relay?.request;
+     if(!hash||!request)throw error;
+     const tx=await read(()=>provider.getTransaction(hash));
+     check(tx&&tx.hash?.toLowerCase()===hash&&tx.from?.toLowerCase()===request.from&&tx.to?.toLowerCase()===request.to&&tx.data?.toLowerCase()===request.data&&String(tx.chainId)===request.chainId&&String(tx.value)===request.value&&Number.isSafeInteger(tx.nonce)&&tx.nonce>=0&&typeof tx.replaceableTransaction==='function','PENDING');
+     const startBlock=saved.value.relay.startBlock??tx.blockNumber;
+     check(Number.isSafeInteger(startBlock)&&startBlock>=0,'PENDING');
+     let completedHash=hash;
+     try{await read(()=>tx.replaceableTransaction(startBlock).wait(1));}
+     catch(cause){
+      const code=errorValue(cause,'code');
+      if(code==='TRANSACTION_REPLACED')completedHash=errorValue(errorValue(cause,'replacement'),'hash');
+      else if(code!=='CALL_EXCEPTION')throw cause;
+     }
+     check(typeof completedHash==='string'&&/^0x[0-9a-f]{64}$/.test(completedHash),'MISMATCH');
+     const completed=await read(()=>provider.getTransaction(completedHash));
+     check(completed?.nonce===tx.nonce,'MISMATCH');
+     recovered=await reconcileUsdc(await stored(),undefined,completedHash);
+     check(recovered,'MISMATCH');
+    }
    }
    return receipts(recovered.result);
   },
@@ -423,11 +445,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  function journalOptions(value){return {storage,walletSecret,walletSalt,scope:{account:owner,...n,board:captured.recipient,portal:captured.portal,token:captured.token,depositor:value.depositor},provider,contextGuard};}
  async function verified(value,wait=false){
   check(value?.intent,'RECOVERY_REQUIRED');const j=await sdk.createEthereumJournal(journalOptions(value));let result;
-  try{result=await read(()=>j.recover({retry:false}));}catch(error){
-   if(!wait||errorValue(error,'code')!=='BB_ETH_RECOVERY_REQUIRED')throw error;
-   const hash=(await read(()=>j.inspectRequest()))?.txHash;if(!hash)throw error;
-   await read(()=>provider.waitForTransaction(hash,1,120000));result=await read(()=>j.recover({retry:false}));
-  }
+  result=await read(()=>j.recover({retry:false,wait}));
   for(const key of ['from','to','chainId','nonce','data','value'])check(result.request[key]===value.intent[key],'MISMATCH');
   check(JSON.stringify(result.request.expected)===JSON.stringify(value.intent.expected),'MISMATCH');
   check(['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');

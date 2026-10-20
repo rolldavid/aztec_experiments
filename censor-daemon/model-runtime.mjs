@@ -152,11 +152,11 @@ async function startContainer(options, entrypoint, args, healthPath) {
     await inspect();
     await runDocker(['start', containerId]);
     await runDocker(['start', proxyId]);
-    let ready = false;
-    for (let attempt = 0; attempt < 120; attempt++) {
+    for (;;) {
+      options.signal?.throwIfAborted();
       try {
         const response = await fetch(`http://127.0.0.1:${config.port}${healthPath}`, { signal: options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(1500)]):AbortSignal.timeout(1500) });
-        if (response.ok) { ready = true; await response.body?.cancel(); break; }
+        if (response.ok) { await response.body?.cancel(); break; }
         await response.body?.cancel();
       } catch { /* The model may still be loading. */ }
       const state = JSON.parse(await runDocker(['inspect', '--format', '{{json .State}}', containerId]));
@@ -164,14 +164,13 @@ async function startContainer(options, entrypoint, args, healthPath) {
       options.signal?.throwIfAborted();
       await delay(500,undefined,{signal:options.signal});
     }
-    if (!ready) throw new Error('Isolated model health check timed out');
     const running=await inspect();
     const platformIdentity=config.imageManifestPath?verifyRuntimeImage({imageReference:config.image,manifestBytes,image,container:running.container}):null;
     if(await hashModel(config.modelPath,options.signal)!==config.modelSha256)throw Error('Model weights changed during startup');
     const assets=await Promise.all(['moderation.mjs','runtime-configuration.mjs','model-runtime.mjs','runtime-identity.mjs','model-runtime-proxy.cjs'].map(async name=>({name,sha256:sha256Bytes(await fs.readFile(new URL(name,import.meta.url)))})));
     const configurationBytes=runtimeConfiguration({...config,platformIdentity},assets),promptBytes=await fs.readFile(new URL('./prompt-template.json',import.meta.url));
     const modelIdentity=identifyModel({imageDigest:'0x'+config.image.split('@sha256:')[1],weightsDigest:'0x'+config.modelSha256,configurationBytes,promptBytes});
-    const verify=async({signal=AbortSignal.timeout(10000)}={})=>{
+    const verify=async({signal=new AbortController().signal}={})=>{
       const current=await inspect(signal);
       if(manifestBytes)verifyRuntimeImage({imageReference:config.image,manifestBytes,image,container:current.container});
       if(await hashModel(config.modelPath,signal)!==config.modelSha256)throw Error('Model weights changed during execution');

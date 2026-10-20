@@ -108,8 +108,8 @@ export function createRollingPreferenceReader(input){
    let signal,deadlineAt;
    try{
     const keys=Object.keys(options);assert(keys.every(key=>['signal','deadlineAt'].includes(key)));
-    const settings=exact(options,keys);signal=settings.signal;deadlineAt=settings.deadlineAt??Date.now()+5000;
-    assert(signal===undefined||signal instanceof AbortSignal);assert(Number.isSafeInteger(deadlineAt));
+    const settings=exact(options,keys);signal=settings.signal;deadlineAt=settings.deadlineAt;
+    assert(signal===undefined||signal instanceof AbortSignal);assert((deadlineAt===undefined||Number.isSafeInteger(deadlineAt)));
    }catch{throw error('ROLLING_PREFERENCE_READER_INVALID');}
    active={signal,deadlineAt};
    try{

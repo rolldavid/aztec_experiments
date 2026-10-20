@@ -1,0 +1,137 @@
+{
+  "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+  "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+  "task_id": "G16",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "ux-browser",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "command": "node --test --test-name-pattern=\"guided onboarding|USDC funding UI\" apps/rolling/wallet-panel.browser.test.mjs; node --test --test-name-pattern=\"funding completion reports\" apps/rolling/wallet-panel.browser.test.mjs",
+      "environment": "macOS arm64, pinned Node24.21.0, Chromium",
+      "observed": "3 visual/payment cases plus3 final-state cases passed; full suite and affected navigation results documented",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/logs/ux-visual-final.log",
+          "sha256": "eaac120c5fd5a91f842ef4b4ccad7a68f2db7c2ee0657e578a3d200b39f5beee"
+        },
+        {
+          "path": "execution/evidence/G16/logs/ux-completion-final.log",
+          "sha256": "f77e204abdec111eba041e4901bd520d48803c20e1be6a6a8231073a3457f500"
+        },
+        {
+          "path": "execution/evidence/G16/verification.md",
+          "sha256": "4c2aaa4f4e417eb14e43bbbc60834d75112d37835f3cea6eb5e000677e3c8042"
+        }
+      ]
+    },
+    {
+      "id": "funding-boundary",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "command": "node --test --test-name-pattern=\"direct top-up derives\" shared/rolling/aggregate-wallet.test.mjs",
+      "environment": "macOS arm64, pinned Node24.21.0, Chromium",
+      "observed": "Derived exact fee cap and zero sends on changed price passed;562 other boundary cases passed",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/logs/ux-topup-final.log",
+          "sha256": "003da03195bb1eac6c92be9e6f692684edf9b3bec698783340682200b2531e4a"
+        },
+        {
+          "path": "execution/evidence/G16/logs/ux-unit-final.log",
+          "sha256": "bdb684f420c6885facefe58dcc279c57c3f2ba3b26595e11b25296bb78441fbd"
+        },
+        {
+          "path": "execution/evidence/G16/verification.md",
+          "sha256": "4c2aaa4f4e417eb14e43bbbc60834d75112d37835f3cea6eb5e000677e3c8042"
+        }
+      ]
+    },
+    {
+      "id": "crs-custody",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "command": "node --test scripts/test-crs-consumers.mjs; node --test --test-name-pattern=\"real browser SDK\" apps/rolling/wallet-runtime.browser.test.mjs",
+      "environment": "macOS arm64, pinned Node24.21.0, Chromium",
+      "observed": "81 CRS cases and real Chromium SDK/account/encrypted-backup case passed",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/logs/ux-crs-final.log",
+          "sha256": "73b6e66d6ade580aa7ac9b71ffb646337ba1c2d320d24c481037e6486acf50a8"
+        },
+        {
+          "path": "execution/evidence/G16/logs/ux-runtime-fixed.log",
+          "sha256": "da317c6d57ff4f1ee285d9015b5c79a140f29e4170fb44128c2bb6e724e26e8f"
+        }
+      ]
+    },
+    {
+      "id": "wallet-build",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "command": "node scripts/rolling-wallet-assets.mjs",
+      "environment": "macOS arm64, pinned Node24.21.0, Chromium",
+      "observed": "26 assets97 inputs built with unchanged SDK",
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/logs/ux-build-final.log",
+          "sha256": "986cc14f88075ff25075174a1e1d37bee2cb18a490dbb79d75868bfcb3b0894f"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+    "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+    "verdict": "approve",
+    "kind": "independent",
+    "reviewer": "/root/ux_review",
+    "implementer": "ux-20261020",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G16/review.md",
+        "sha256": "241cbfa18c591ddbcc8bfc39ddb14f0a44831499f2fd3c0500ac94f17e0d8103"
+      },
+      {
+        "path": "execution/evidence/G16/review-hashes.json",
+        "sha256": "16104c0c3bd9701ab6be4cb0da7d693a96beb2a4d73e94e26c5e73095d4cde6f"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G16-A01",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/verification.md",
+          "sha256": "4c2aaa4f4e417eb14e43bbbc60834d75112d37835f3cea6eb5e000677e3c8042"
+        }
+      ]
+    },
+    {
+      "id": "G16-A02",
+      "candidate": "0ea73a59af35a11b4a4d07a692d51a32db55cd85",
+      "base": "fef95aec628a46b1f4319bb4765af88c219f5aef",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G16/verification.md",
+          "sha256": "4c2aaa4f4e417eb14e43bbbc60834d75112d37835f3cea6eb5e000677e3c8042"
+        }
+      ]
+    }
+  ]
+}

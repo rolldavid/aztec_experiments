@@ -286,3 +286,18 @@ test('Rolling catch-up preserves the first native failure without retrying it',a
  await assert.rejects(f.signer.list(),error=>error===failure);
  assert.equal(steps,1);assert.equal(f.calls.broadcast,0);
 });
+
+test('Rolling inference outliving the former lease completes under the same owner',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>{for(let n=0;n<400;n++)f.advance();return {isViolation:false};};
+ assert.equal((await f.run()).complete,true);assert(f.store.list().every(r=>r.job.state==='evaluated-ok'));assert.equal(f.calls.broadcast,0);
+});
+for(const signed of [false,true])test('Rolling exclusive restart recovers '+(signed?'signed':'unsigned')+' work without elapsed ownership expiry',async t=>{
+ const f=rollingFixture(t);f.store.ingestSnapshot(await f.signer.list());const original=f.store.leaseNext({worker:'original'});assert(original);
+ if(signed)f.store.transition(original.key,original.lease.token,{state:'submit-intent',decision:{isViolation:true,reason:'Spam'}});
+ for(let n=0;n<1000;n++)f.advance();
+ const next=f.open();assert.equal(next.leaseNext({worker:'replacement'}),null);assert.equal(f.store.renew(original.key,original.lease.token).expiresAt,null);
+ // Production calls recovery only after its exclusive hosted.lock is held.
+ next.recoverLeases();const recovered=next.leaseNext({worker:'replacement'});assert(recovered);
+ assert.equal(recovered.job.state,signed?'reconciling':'leased');assert.notEqual(recovered.lease.token,original.lease.token);
+ assert.throws(()=>f.store.renew(original.key,original.lease.token),/lease/);assert.equal(f.calls.broadcast,0);
+});

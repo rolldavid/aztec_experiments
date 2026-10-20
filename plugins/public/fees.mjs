@@ -25,7 +25,7 @@ async function run(){try{
  if(Number(info.l1ChainId)!==11155111||Number((await provider.getNetwork()).chainId)!==11155111)throw Error('Public fixture requires Sepolia');
  const artifact=await read('apps/src/billboard/private_fee_artifact.json'),canonical=await derivePrivateFeeInstance(artifact),store=await fileState(path.join(directory,'fee-operations.json'));
  const signer=new Wallet(actor.ethereumKey,provider),handler=new Contract(String(info.l1ContractAddresses.feeAssetHandlerAddress),['function mintAmount() view returns(uint256)','function mint(address)'],provider),amount=await handler.mintAmount();
- const ethSend=async(name,tx)=>recordedTransaction({store,name,identity:JSON.stringify(tx),prepare:async()=>{const raw=await signer.signTransaction(await signer.populateTransaction(tx));return {raw,hash:keccak256(raw)};},broadcast:async r=>{if(!await provider.getTransaction(r.hash))await provider.broadcastTransaction(r.raw);},wait:async r=>{const receipt=await provider.waitForTransaction(r.hash,1,120000);if(receipt?.status!==1)throw Error('Public funding transaction awaits success');return receipt;}});
+ const ethSend=async(name,tx)=>recordedTransaction({store,name,identity:JSON.stringify(tx),prepare:async()=>{const raw=await signer.signTransaction(await signer.populateTransaction(tx));return {raw,hash:keccak256(raw)};},broadcast:async r=>{if(!await provider.getTransaction(r.hash))await provider.broadcastTransaction(r.raw);},wait:async r=>{const receipt=await provider.waitForTransaction(r.hash,1);if(receipt?.status!==1)throw Error('Public funding transaction awaits success');return receipt;}});
  if(phase==='mint'){
   const r=await ethSend('mint',await handler.mint.populateTransaction(actor.ethereumAddress));console.log(JSON.stringify({amount:String(amount),transaction:r.record.hash}));
  }else if(phase==='bridge'||phase==='recover-bridge'){
@@ -47,7 +47,7 @@ async function run(){try{
   const recordedNode=new Proxy(node,{get(target,key){if(key!=='sendTx')return Reflect.get(target,key);return async tx=>{const hash=String(await tx.getTxHash());await store.write({...store.read(),operations:{...store.read().operations,[phase]:{hash,raw:tx.toBuffer().toString('hex')}}});return node.sendTx(tx);};}});
   wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:{backend:BackendType.NativeUnixSocket,threads:1}}});
   const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(operator.secret),Fr.fromString(operator.salt),GrumpkinScalar.fromString(operator.signingKey));
-  const wait={timeout:180,waitForStatus:TxStatus.CHECKPOINTED};
+  const wait={timeout:0,waitForStatus:TxStatus.CHECKPOINTED};
   const old=store.read().operations[phase];
   if(old){const hash=TxHash.fromString(old.hash),receipt=await node.getTxReceipt(hash);if(receipt.status==='dropped')await node.sendTx(Tx.fromBuffer(Buffer.from(old.raw,'hex')));await waitForTx(node,hash,wait);}
   else if(phase==='publish'){
