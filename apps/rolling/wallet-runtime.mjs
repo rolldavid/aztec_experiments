@@ -118,15 +118,18 @@ async function load(signal){
   if(globalThis.walletState.aztec!==current||globalThis.walletState.invalidated)throw failed();
   return fundingWalletStatus();
  };
- const signInWallet=async id=>{
+ const canStartTestAccount=['11155111','31337'].includes(String(config.network.chainId));
+ const startingTestAccount=()=>canStartTestAccount&&new URL(globalThis.location.href).searchParams.get('new-account')==='1';
+ const signInWallet=async (id,{freshAccount=startingTestAccount()}={})=>{
   if(globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
   const selected=globalThis.BillboardWalletProviders.list().find(entry=>entry.id===id);
   if(!selected)throw failed();
-  await account.connect(selected.provider,selected.name,{deriveAccount:true,providerId:selected.rdns??selected.id});
+  await account.connect(selected.provider,selected.name,{deriveAccount:true,providerId:selected.rdns??selected.id,freshAccount});
+  if(startingTestAccount()){const url=new URL(globalThis.location.href);url.searchParams.delete('new-account');globalThis.history.replaceState(null,'',url);}
   return true;
  };
- const restoreAccount=()=>account.restoreRemembered();
- return Object.freeze({signInWallet,restoreAccount,account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
+ const restoreAccount=()=>startingTestAccount()?Promise.resolve(false):account.restoreRemembered();
+ return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};

@@ -15,20 +15,21 @@ import {computePartialAddress} from '@aztec-labs/stdlib/contract';
 const scripts=await Promise.all(['ethereum-account-session.js','account.js','claim-secret-store.js'].map(n=>fs.readFile(new URL(n,import.meta.url),'utf8')));
 const sdk={Fr,SchnorrInitializerlessAccountContract,deriveKeys,deriveSigningKey,getContractInstanceFromInstantiationParams,computePartialAddress};
 const signer=new ethers.Wallet('0x'+'12'.repeat(32));
-function fixture({indexedDB=new IDBFactory(),cancel=false,code='0x',duringSignature}={}){
- const calls=[],listeners=new Map();let current=signer.address,chain='0xaa36a7';
+function fixture({indexedDB=new IDBFactory(),cancel=false,code='0x',duringSignature,depositNonce=0n,chainId='11155111'}={}){
+ const calls=[],listeners=new Map();let current=signer.address,chain='0x'+BigInt(chainId).toString(16);
  const provider={async request({method,params}){
   calls.push(method);
   if(method==='eth_chainId')return chain;
   if(method==='eth_requestAccounts'||method==='eth_accounts')return [current];
   if(method==='eth_getCode')return code;
+  if(method==='eth_call'){assert.equal(params[0].to,'0x'+'34'.repeat(20));assert.equal(params[0].data,new ethers.Interface(['function depositNonces(address) view returns (uint256)']).encodeFunctionData('depositNonces',[signer.address]));return ethers.AbiCoder.defaultAbiCoder().encode(['uint256'],[depositNonce]);}
   if(method==='personal_sign'){if(cancel)throw Object.assign(Error('Rejected'),{code:4001});const signature=await signer.signMessage(ethers.getBytes(params[0]));duringSignature?.({setAccount(value){current=value;listeners.get('accountsChanged')?.([value]);}});return signature;}
   throw Error('Unexpected extension method '+method);
  },on:(name,fn)=>listeners.set(name,fn),removeListener:(name)=>listeners.delete(name)};
- const context=vm.createContext({TextEncoder,TextDecoder,URL,Uint8Array,ArrayBuffer,crypto:webcrypto,indexedDB,ethers,__aztec:sdk,location:{origin:'https://rolling.example'},navigator:{locks:{request:async(_key,options,fn)=>(fn??options)({})}},_getPublicConfig:()=>({network:{chainId:'11155111'}})});
+ const context=vm.createContext({TextEncoder,TextDecoder,URL,Uint8Array,ArrayBuffer,crypto:webcrypto,indexedDB,ethers,__aztec:sdk,location:{origin:'https://rolling.example'},navigator:{locks:{request:async(_key,options,fn)=>(fn??options)({})}},_getPublicConfig:()=>({network:{chainId},board:{portalAddress:'0x'+'34'.repeat(20)}})});
  context.window=context;for(const source of scripts)vm.runInContext(source,context);
  context.BillboardAccount.configure({requireEth:false});
- return {context,listeners,account:context.BillboardAccount,provider,calls,indexedDB,signIn:()=>context.BillboardAccount.connect(provider,'Test Ethereum wallet',{deriveAccount:true,providerId:'io.test'})};
+ return {context,listeners,account:context.BillboardAccount,provider,calls,indexedDB,signIn:(options={})=>context.BillboardAccount.connect(provider,'Test Ethereum wallet',{deriveAccount:true,providerId:'io.test',...options})};
 }
 test('real signature creates deterministic Aztec account; reload restores without extension calls; signout then new signature recreates same keys/address',async()=>{
  const first=fixture();await first.signIn();const wallet=first.context.walletState.aztec;
@@ -64,4 +65,31 @@ test('changing the connected wallet removes remembered login before the next pag
  assert.equal(first.context.walletState.invalidated,true);
  await first.context._forgetRememberedAccount();
  const next=fixture({indexedDB:first.indexedDB});assert.equal(await next.account.restoreRemembered(),false);
+});
+
+const scope={origin:'https://rolling.example',chainId:'11155111'};
+test('same Ethereum wallet starts a distinct test account, restores automatically and retains selection after signout',async()=>{
+ const original=fixture();await original.signIn();const old=original.context.walletState.aztec.address.toString();
+ const fresh=fixture({indexedDB:original.indexedDB,depositNonce:4n});await fresh.signIn({freshAccount:true});
+ const next=fresh.context.walletState.aztec.address.toString();assert.notEqual(next,old);
+ assert.equal(fresh.account.snapshot().ethereumAddress,original.account.snapshot().ethereumAddress);
+ assert.equal(await fresh.context.BillboardEthereumSession.selectedTestAccount(scope,signer.address),'5');
+ assert.equal(fresh.calls.filter(x=>x==='personal_sign').length,1);assert.equal(fresh.calls.filter(x=>x==='eth_call').length,1);
+ const reload=fixture({indexedDB:fresh.indexedDB});assert.equal(await reload.account.restoreRemembered(),true);assert.equal(reload.context.walletState.aztec.address.toString(),next);assert.deepEqual(reload.calls,[]);
+ await reload.account.endSession();const signedOut=fixture({indexedDB:fresh.indexedDB});await signedOut.signIn();assert.equal(signedOut.context.walletState.aztec.address.toString(),next);assert(!signedOut.calls.includes('eth_call'));
+});
+test('after successful signup advances portal nonce, fresh setup with cleared browser storage derives another account',async()=>{
+ const first=fixture({depositNonce:4n});await first.signIn({freshAccount:true});
+ const cleared=fixture({depositNonce:5n});await cleared.signIn({freshAccount:true});
+ assert.notEqual(cleared.context.walletState.aztec.address.toString(),first.context.walletState.aztec.address.toString());
+ const repeat=fixture({depositNonce:5n});await repeat.signIn({freshAccount:true});assert.equal(repeat.context.walletState.aztec.address.toString(),cleared.context.walletState.aztec.address.toString());
+});
+test('cancelled fresh signature retains the original account and selected generation',async()=>{
+ const first=fixture({depositNonce:2n});await first.signIn({freshAccount:true});
+ const cancelled=fixture({indexedDB:first.indexedDB,depositNonce:3n,cancel:true});await assert.rejects(cancelled.signIn({freshAccount:true}));
+ assert.equal(await cancelled.context.BillboardEthereumSession.selectedTestAccount(scope,signer.address),'3');
+ const reload=fixture({indexedDB:first.indexedDB});assert.equal(await reload.account.restoreRemembered(),true);assert.equal(reload.context.walletState.aztec.address.toString(),first.context.walletState.aztec.address.toString());
+});
+test('test account creation is rejected on mainnet before signing or reading the portal',async()=>{
+ const f=fixture({chainId:'1'});await assert.rejects(f.signIn({freshAccount:true}),{code:'BB_TEST_ACCOUNT_NETWORK'});assert(!f.calls.includes('personal_sign'));assert(!f.calls.includes('eth_call'));assert.equal(f.context.walletState.aztec,null);
 });

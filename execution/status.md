@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21 October requested social/profile confirmation fixes and live Bok funding verification completed and published. Frontend be9d4ea3 (runtime/SDK2fa6fc7b) submits likes/bookmarks/follows inline and profiles with one Save/Create; hidden payment controls corrected. Gateway1d72b5e4/native manifest a461700b7e537744 fixes checkpoint-read readiness coupling. Final actual MetaMask ETH-to-Bok purchase: one wallet approval, one Ethereum transaction, one real proof, one confirmed Aztec claim, private balance2->3USDC; no errors/manual continuation. Earlier query failures and failed-first/ corrected server rollout retained in evidence. All9services active, node/app PIDs and feed preserved. See evidence/G21/social-actions and anchored-query. Broader G21 production work remains active; this owner-requested batch is complete.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21 October active: implement explicit testnet fresh account creation using same Ethereum wallet. Deterministic numbered derivation selected from portal deposit nonce; preserve normal automatic sign-in. Focused integration/UI tests, independent review and frontend-only publish.
 
 ## Ready internal work
 

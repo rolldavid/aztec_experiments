@@ -380,6 +380,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   initializing=true;
   initializationPending=Promise.resolve().then(async()=>{
    await ensureRuntime();
+   if(runtime.startingTestAccount?.()&&!dialog.open){returnFocus=document.activeElement;dialog.showModal();closeButton.focus();}
    if(!unlocked()&&typeof runtime.restoreAccount==='function')await runtime.restoreAccount();
    if(!unlocked())return false;
    await connect();return true;
@@ -408,7 +409,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   target.append(list,button('Refresh wallet list',()=>render()));
  }
  function custody(){
-  content.append(paragraph('Connect your Ethereum wallet to open your account. Use the same wallet whenever you come back.'));
+  content.append(paragraph(runtime.startingTestAccount?.()?'Connect your wallet to start a new test account with an empty posting balance.':'Connect your Ethereum wallet to open your account. Use the same wallet whenever you come back.'));
   if(typeof runtime.fundingWallets!=='function'||typeof runtime.signInWallet!=='function'){content.append(paragraph('Wallet sign-in is unavailable. Reload the page to try again.'));return;}
   walletChoices(content,choice=>void work(async()=>{
    startSetup();note('Approve sign-in in '+choice.name+'…');await runtime.signInWallet(choice.id);await connect();
@@ -416,7 +417,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     view=status.depositIds?.length?'topup':'funding';topupKind='private-fee';
    }
   },accountFailure));
+  if(runtime.canStartTestAccount&&!runtime.startingTestAccount?.())content.append(button('Start new test account',startTestAccount));
   content.append(privacyDetails());
+ }
+ function startTestAccount(){
+  if(busy||intent)return;
+  const url=new URL(location.href);url.searchParams.set('new-account','1');url.hash='/home';location.assign(url.href);
  }
  function signOut(){return work(async()=>{
   blocked=true;clearPrivateView();render();
@@ -1203,7 +1209,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     }
    }
   }
-  if(signedIn&&!initializing&&!invalidated&&!reloadRequired)content.append(button('Sign out',()=>void signOut()));
+  if(signedIn&&!initializing&&!invalidated&&!reloadRequired){
+   if(runtime.canStartTestAccount&&view==='overview'&&!intent)content.append(button('Start new test account',startTestAccount));
+   content.append(button('Sign out',()=>void signOut()));
+  }
   controlsBusy(busy);renderBokControls();requestBokBalance();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});

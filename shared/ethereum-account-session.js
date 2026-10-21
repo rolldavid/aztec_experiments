@@ -26,14 +26,16 @@
     return { origin: url.origin, chainId: value.chainId };
   }
 
-  function createMessage({ origin, chainId, address }) {
+  function createMessage({ origin, chainId, address, testAccount = "0" }) {
+    testAccount = testAccountValue(testAccount);
+    check(testAccount === "0" || ["11155111", "31337"].includes(chainId));
     const scope = scopeValue({ origin, chainId });
     return 'Create or open your private Rolling Chat account.\n\n' +
       'Only sign this request on ' + scope.origin + '.\n' +
       'This signature is your account key; do not share it.\n\n' +
       'Ethereum account: ' + ethereumAddress(address) + '\n' +
       'Ethereum chain: ' + scope.chainId + '\n' +
-      'Rolling Chat account version: 1';
+      'Rolling Chat account version: 1' + (testAccount === '0' ? '' : '\nTest account: ' + testAccount);
   }
 
   function walletValue(value) {
@@ -45,10 +47,15 @@
     return { address: value.address, secretKey: value.secretKey, salt: value.salt };
   }
 
+  function testAccountValue(value) {
+    check(typeof value === 'string' && /^(0|[1-9][0-9]{0,76})$/.test(value) && BigInt(value) < 1n << 256n);
+    return value;
+  }
+
   function metadataValue(value) {
-    check(value && Object.keys(value).sort().join() === 'ethereumAddress,providerId');
+    check(value && ['ethereumAddress,providerId', 'ethereumAddress,providerId,testAccount'].includes(Object.keys(value).sort().join()));
     check(typeof value.providerId === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,255}$/.test(value.providerId));
-    return { ethereumAddress: ethereumAddress(value.ethereumAddress), providerId: value.providerId };
+    return { ethereumAddress: ethereumAddress(value.ethereumAddress), providerId: value.providerId, ...(value.testAccount === undefined ? {} : {testAccount:testAccountValue(value.testAccount)}) };
   }
 
   function create({ indexedDB = root.indexedDB, crypto = root.crypto } = {}) {
@@ -113,10 +120,17 @@
       return Object.freeze({ secretKey: '0x' + secret.toString(16).padStart(64, '0'), salt: '0x' + accountSalt.toString(16).padStart(64, '0') });
     }
 
+    const selectionKey = (scope, address) => scopeKey(scopeValue(scope)) + ':test-account:' + ethereumAddress(address);
+    function selectedTestAccount(scope, address) {
+      const key = selectionKey(scope, address);
+      return ordered(async () => testAccountValue((await transaction('readonly', store => store.get(key))) ?? '0'));
+    }
+
     function save(scope, wallet, metadata) {
       const keyScope = scopeKey(scopeValue(scope));
       const capturedWallet = walletValue(wallet);
       const capturedMetadata = metadataValue(metadata);
+      const selectedKey = selectionKey(scope, capturedMetadata.ethereumAddress);
       return ordered(async () => {
         check(crypto?.subtle && typeof crypto.getRandomValues === 'function', 'CRYPTO_UNAVAILABLE');
         const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
@@ -126,7 +140,10 @@
         try {
           ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: authenticatedData(keyScope, capturedMetadata) }, key, plaintext);
         } finally { plaintext.fill(0); }
-        await transaction('readwrite', store => store.put({ version: VERSION, scope: keyScope, metadata: capturedMetadata, key, iv, ciphertext }, keyScope));
+        await transaction('readwrite', store => {
+          store.put(capturedMetadata.testAccount ?? '0', selectedKey);
+          return store.put({ version: VERSION, scope: keyScope, metadata: capturedMetadata, key, iv, ciphertext }, keyScope);
+        });
       });
     }
 
@@ -158,7 +175,7 @@
       return ordered(() => transaction('readwrite', store => store.delete(keyScope)));
     }
 
-    return Object.freeze({ createMessage, derive, save, load, clear });
+    return Object.freeze({ createMessage, derive, save, load, clear, selectedTestAccount });
   }
 
   root.BillboardEthereumSession = Object.freeze({ ...create(), create });

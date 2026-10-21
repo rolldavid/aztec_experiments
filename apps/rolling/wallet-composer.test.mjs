@@ -97,7 +97,7 @@ test('opening and reopening the social composer reuses the unlocked session whil
  f.balance.resolve({available:true,availableCredit:'0'});
 });
 
-function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready'}={}){
+function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready',freshAccount=false}={}){
  const document=dom(t),statusStarted=Promise.withResolvers(),calls={load:0,restore:0,signIn:0,sessions:0,status:0,names:0,moderator:0,signOut:0};let account=null,configured;
  const identity=document.createElement('section');document.body.append(identity);
  const session={busy:false,application:{
@@ -105,7 +105,7 @@ function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statu
   async ownedIdentities(){calls.names++;return {identities:[],records:[],nextCursor:null};},
   async readModeratorStatus(){calls.moderator++;return {authorized:false};}
  },async close(){}};
- const runtime={account:{configure(value){configured=value;},async endSession(){calls.signOut++;account=null;configured.onChange({});}},
+ const runtime={canStartTestAccount:true,startingTestAccount:()=>freshAccount,account:{configure(value){configured=value;},async endSession(){calls.signOut++;account=null;configured.onChange({});}},
   getAccount:()=>account,
   fundingWallets:()=>[{id:'metamask',name:'MetaMask',icon:'data:image/png;base64,AA=='}],
   fundingWalletStatus:()=>({connected:!!account,name:'MetaMask',address:'0x'+'1'.repeat(40)}),
@@ -325,4 +325,13 @@ test('Bok continuation replaces stale Ethereum notice with the observed credit s
  f.progress({stage:'proof-progress'});assert(f.document.body.textContent.includes('Adding your Bok credit…'));assert(!f.document.body.textContent.includes('Loading your account…'));
  f.progress({stage:'proving'});assert(f.document.body.textContent.includes('Preparing your Bok credit…'));
  gate.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+});
+
+test('explicit fresh account route opens wallet selection and continues into unfunded onboarding',async t=>{
+ const f=signInFixture(t,{freshAccount:true,status:'collateral-pending'});await f.panel.initialize();
+ assert.equal(f.document.querySelector('dialog').open,true);
+ assert(f.document.body.textContent.includes('start a new test account with an empty posting balance'));
+ const connect=f.document.querySelectorAll('button').find(b=>b.textContent.includes('Connect MetaMask'));assert(connect);connect.fire('click');
+ await f.document.until(()=>f.calls.status===1&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.calls.signIn,1);assert.equal(f.calls.sessions,1);assert(!f.document.body.textContent.includes('Recover the existing deposit'));
 });

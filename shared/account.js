@@ -61,7 +61,7 @@ function _activateWallet(prepared) {
 function _firstEthereumAccount(accounts) {
   return Array.isArray(accounts) && accounts.length>0 && accounts.every(account=>typeof account==='string' && /^0x[0-9a-fA-F]{40}$/.test(account)) ? accounts[0].toLowerCase() : null;
 }
-async function connectEthereumAccount(transport, walletName='Browser wallet', {selectAccount=false,deriveAccount=false,providerId=''}={}) {
+async function connectEthereumAccount(transport, walletName='Browser wallet', {selectAccount=false,deriveAccount=false,providerId='',freshAccount=false}={}) {
   return _walletOperation(async()=>{
     if(window.walletState.ethSigner) {
       if(window.walletState.aztec || !deriveAccount)throw new Error('An Ethereum wallet is already connected.');
@@ -105,7 +105,7 @@ async function connectEthereumAccount(transport, walletName='Browser wallet', {s
     // The engine independently verifies signer, node and portal chain agreement.
     _wlog(window.walletState.ethWalletName+' connected: '+account,'success');
     _updateAccountState();
-    if(deriveAccount && !window.walletState.aztec)await _openEthereumAccount(providerId);
+    if(deriveAccount && !window.walletState.aztec)await _openEthereumAccount(providerId,{freshAccount});
     _checkReady();
     } finally {_connectingEth=null;}
   });
@@ -131,7 +131,7 @@ function _watchRememberedAccount(){
  _sessionChannel=new BroadcastChannel('rolling-chat-account-session-v1');
  _sessionChannel.onmessage=()=>{if(window.walletState.aztec)_invalidateWalletContext();};
 }
-async function _openEthereumAccount(providerId){
+async function _openEthereumAccount(providerId,{freshAccount=false}={}){
  const store=window.BillboardEthereumSession,scope=_ethereumScope(),generation=_walletGeneration;
  const address=window.walletState.ethAccount.toLowerCase(),signer=window.walletState.ethSigner,transport=window.walletState.ethTransport;
  const guard=async()=>{
@@ -142,17 +142,24 @@ async function _openEthereumAccount(providerId){
  await navigator.locks.request('rolling-chat-account-session:'+scope.origin+':'+scope.chainId,async()=>{
   await guard();
   const saved=await store.load(scope);await guard();
-  let raw;
-  if(saved?.metadata.ethereumAddress===address)raw=saved.wallet;
+  let raw,testAccount=await store.selectedTestAccount(scope,address);await guard();
+  if(freshAccount){
+   if(!['11155111','31337'].includes(scope.chainId))throw Object.assign(Error('Fresh test accounts are only available on test networks.'),{code:'BB_TEST_ACCOUNT_NETWORK'});
+   const portal=new ethers.Contract(_getPublicConfig().board.portalAddress,['function depositNonces(address) view returns (uint256)'],window.walletState.ethProvider);
+   // Each successful signup advances this durable counter, including gasless
+   // payments. Clearing browser storage therefore cannot reuse a funded test account.
+   testAccount=(await portal.depositNonces(address)+1n).toString();await guard();
+  }
+  if(!freshAccount&&saved?.metadata.ethereumAddress===address){raw=saved.wallet;testAccount=saved.metadata.testAccount??'0';}
   else {
    // Verification below proves EOA ownership, including delegated EOAs.
-   const message=store.createMessage({...scope,address});
+   const message=store.createMessage({...scope,address,testAccount});
    const signature=await signer.signMessage(message);await guard();
    raw=await store.derive({ethers,signature,message,address});await guard();
   }
   const prepared=await _prepareWallet(raw);await guard();
   prepared.ethereumAddress=address;
-  await store.save(scope,{secretKey:prepared.secretKey,salt:prepared.salt,address:prepared.address.toString()},{ethereumAddress:address,providerId});await guard();
+  await store.save(scope,{secretKey:prepared.secretKey,salt:prepared.salt,address:prepared.address.toString()},{ethereumAddress:address,providerId,...(testAccount==='0'?{}:{testAccount})});await guard();
   _watchRememberedAccount();_sessionChannel?.postMessage({type:'account-changed'});
   _activateWallet(prepared);
  });
