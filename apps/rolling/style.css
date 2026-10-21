@@ -48,3 +48,5 @@ main h1,main h2,main h3,.post>p,.post-top>div{overflow-wrap:anywhere;min-width:0
 .composer-cost{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 20px;margin:16px 0;color:var(--muted);font-size:13px}.composer-cost strong{color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.composer-cost small{font-size:11px}
 
 .credit-presets,.credit-total{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}.credit-total{justify-content:space-between}.credit-total strong{font-variant-numeric:tabular-nums}.credit-presets button{padding:8px 18px}
+
+.account-dialog .button[hidden]{display:none!important}
