@@ -27,7 +27,7 @@ function privateChanged(){
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:prepareAccountTools,onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
+   loadRuntime:prepareAccountTools,onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
 }
 async function openWallet(defaults={}){
  try{
@@ -171,7 +171,7 @@ async function render(){
     void savedItemsLoad.then(ok=>{if(current!==sequence||signal.aborted||ok)return;state.replaceChildren(el('p',{},'Your saved items could not load.'),button('Try again',()=>render()));});
     return;
    }
-   main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.',notifications:'Sign in to see updates to your conversations.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet({view:'preferences',accountMode:'signin'}))));
+   main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.',notifications:'Sign in to see updates to your conversations.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet({view:'preferences'}))));
    focusRoute(route,positions.get(route),current===1);
    announce(title+': sign in to see your saved conversations.');return;
   }
@@ -279,6 +279,5 @@ document.querySelector('.skip').addEventListener('click',skipToContent);
 addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 render();
-// Prepare public code and contract data while the feed loads. Account custody,
-// wallet permissions and private sessions still begin only through user actions.
-void prepareAccountTools().catch(()=>{});
+// Restore this browser’s saved account without opening the panel or prompting a wallet.
+void accountPanel().catch(()=>{});

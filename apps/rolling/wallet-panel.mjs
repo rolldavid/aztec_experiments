@@ -1,4 +1,4 @@
-// Presentation only. No SDK import or account access before explicit Unlock.
+// Presentation only. Account restoration is delegated to the runtime; wallet prompts require a click.
 import {allowance,createMessageContent} from './model.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {prepareAvatarUpload} from './avatar-upload.mjs';
@@ -142,13 +142,10 @@ export async function runTopupPayment(cap,input,quote,onStep=()=>{}){
 }
 
 const message='This action could not be completed. Your draft is saved. If you already sent it, check its status before trying again.';
-const plaintextRecoveryWarning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
-const recoveryLimits='Keep your backup and password safe. You need both to restore your account; we cannot reset your password.';
-const backupFreshness='Download an updated backup after adding or withdrawing funds. Earlier backups may not include those payments.';
 
 /** loadRuntime returns the trusted account facade/getAccount/createSession binding.
  * getAccount values are used only as an unlocked boolean, never rendered or logged.
- * close hides the dialog; Lock ends custody explicitly. No transaction auto-retry.
+ * close hides the dialog; Sign out ends custody explicitly. No transaction auto-retry.
  * Workflow restoration is the production application's encrypted journal, not DOM
  * state or localStorage. A replaced page discovers it through readAccountStatus.
  * Profile edits capture readProfile versions only on explicit selection/check.
@@ -164,7 +161,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const runtimeFailure=Object.freeze({}),connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({}),rulesFailure=Object.freeze({});
  const readPublic=createPublicReader(),rulesInFlight=new Map();
  let postingRules=null,rulesScope=null,updateRules=()=>{};
- let initializationAttempt=0,plaintextRecovery=false,accountMode='create',setupMode=null;
+ let initializationAttempt=0,setupMode=null;
+ let runtimePending=null,initializationPending=null,initializing=false,connectPending=null;
  let autoReviewRequested=false,operationSettled=Promise.resolve();
  let bokHost=null,updateBokForm=()=>{};
  let identityHost=null,inlineCreation=false,selectedName='0',selectedLabel='Anonymous';
@@ -176,7 +174,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let fundingQuote=null,fundingQuoteRequested=false,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH'};
- let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='overview',namesLoaded=false,actionsLoaded=false,refundRequested=false;const previewURLs=new Set();
+ let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='overview',namesLoaded=false,actionsLoaded=false;const previewURLs=new Set();
  const dialog=el('dialog',{class:'account-dialog','aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
  const title=el('h2',{id:'rolling-wallet-title'},'Join Rolling Chat');
  const closeButton=button('Close account panel',()=>close());closeButton.setAttribute('aria-label','Close account panel');
@@ -189,9 +187,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
  function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return phase==='ready'?`${decimal(value.availableCredit,6)} USDC available`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
- function requestBokBalance(){if(!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
+ function requestBokBalance(){if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
  function addBokCredit(){
-  if(busy||!session||!unlocked())return;
+  if(initializing||busy||!session||!unlocked())return;
   topupKind='bok';topupInputs={amount:''};topupQuote=null;view='topup';clearOperationFeedback();
   if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();}render();
  }
@@ -201,9 +199,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   bokHost.hidden=false;
   const balance=el('span',{'data-bok-balance':'','aria-live':'polite'},bokBalanceText());
   bokHost.append(el('strong',{},'Bok balance'),balance);
-  if(session.topup?.bok){const add=button('Add credit',addBokCredit);add.disabled=busy;bokHost.append(add);}
+  if(session.topup?.bok){const add=button('Add credit',addBokCredit);add.disabled=busy||initializing;bokHost.append(add);}
   const phase=bokBalance.snapshot().phase;
-  if(phase!=='loading'){const reload=button(phase==='idle'?'Show balance':'Refresh balance',()=>{if(busy)return;bokBalance.invalidate();requestBokBalance();});reload.disabled=busy;bokHost.append(reload);}
+  if(phase!=='loading'){const reload=button(phase==='idle'?'Show balance':'Refresh balance',()=>{if(busy||initializing)return;bokBalance.invalidate();requestBokBalance();});reload.disabled=busy||initializing;bokHost.append(reload);}
  }
  function attachBokControls(host){if(!(host instanceof Node))throw Error('Bok balance host unavailable');bokHost=host;renderBokControls();requestBokBalance();}
 
@@ -278,7 +276,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(setupMode&&text)live.replaceChildren(el('span',{class:'account-setup-spinner','aria-hidden':'true'}),el('strong',{},text),el('span',{class:'account-setup-help'},'This can take a little while. Keep this page open.'));
   else live.textContent=text;
  }
- function startSetup(mode){setupMode=mode;note(mode==='create'?'Encrypting your account backup…':'Opening your account backup…');render();}
+ function startSetup(){setupMode='wallet';note('Opening your account…');render();}
  function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
  async function loadBok(){const epoch=accountEpoch;checkAccount(epoch);await bokBalance.load();checkAccount(epoch);bokStatus=bokBalance.snapshot().value;}
  // View reads stay serialized; refresh and account changes invalidate these private results.
@@ -300,7 +298,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
  async function work(fn,failureMessage=nameFailure){
   if(busy)return;let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;clearOperationFeedback();controlsBusy(true);
-  try{await bokBalance.settled();await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again. Your backup is unchanged.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
+  try{if(initializationPending)await initializationPending;await bokBalance.settled();await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(setupMode){setupMode=null;note('');}if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{finishOperation();}
@@ -311,14 +309,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);balances=null;bokAccounting=null;recoveryInspection=null;moderatorStatus=null;invalidateBokBalance();namesLoaded=false;actionsLoaded=false;identities=[];identityRecords=[];cursor=0;clearPreferences();blocked=true;
   const next=await session.application.readAccountStatus();
   checkAccount(epoch);status=next;intent=next.intent??null;
-  if(session.mode==='refund-only'){blocked=false;note('');return;}
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }
   blocked=false;if(!setupMode)note('');onPrivateChange();
   if(!intent)await loadView();
  }
- async function connect(){
+ function connect(){return connectPending??=connectAccount().finally(()=>{connectPending=null;});}
+ async function connectAccount(){
   const epoch=accountEpoch,attempt=++initializationAttempt;
   dialog.removeAttribute('data-rolling-initialization');
   if(setupMode)note('Connecting to the network…');
@@ -337,68 +335,65 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(view!=='preferences')await refresh();else await recoverPreferences();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
  }
- async function connectRefund(){
-  if(typeof runtime.createRefundSession!=='function')throw Error('Refund-only recovery is not configured');
-  const epoch=accountEpoch;if(!accountIdentity)accountIdentity=runtime.getAccount();session=await runtime.createRefundSession();checkAccount(epoch);await refresh();
- }
- async function unlock({refundOnly=false}={}){refundRequested=refundOnly;await work(async()=>{
-  note('Loading account tools…');
-  if(!runtime){
+ function ensureRuntime(){
+  return runtimePending??=Promise.resolve().then(async()=>{
    let loaded;try{loaded=await loadRuntime();}catch{throw runtimeFailure;}
-   if(!loaded?.account||typeof loaded.getAccount!=='function'||typeof loaded.createSession!=='function')throw Error('Invalid runtime');
-   runtime=loaded;refundRequested=refundRequested||runtime.refundOnly===true;
-   runtime.account.configure({requireEth:false,autoPasskey:false,canEndSession:()=>!session?.busy,
-    // Custody's fixed import warning is safe product copy. Never forward
-    // arbitrary account, SDK or exception messages into the private panel.
-    onMessage:(value,type)=>{if(type==='warn'&&value===plaintextRecoveryWarning)plaintextRecovery=true;},onSetupError:()=>{error=message;},onChange:value=>{
-     if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;recoveryAbort?.abort();clearPrivateView();note('The account changed. Preserve recovery and reload before continuing.');render();}
-    }});
-  }
-  if(unlocked())await (refundRequested?connectRefund():connect());else note(refundRequested?'Import your existing encrypted recovery file to recover the original refund.':'');
- });}
- function download(envelope){
-  // Only the existing custody module's ciphertext envelope may leave the panel.
-  const keys=['schemaVersion','kind','kdf','iterations','salt','iv','ciphertext'];
-  if(!envelope||Object.keys(envelope).sort().join()!==keys.sort().join()||envelope.schemaVersion!==1||envelope.kind!=='aztec-billboard-encrypted-wallet'||envelope.kdf!=='PBKDF2-SHA256'||envelope.iterations!==600000||!/^([0-9a-f]{2}){16}$/.test(envelope.salt)||!/^([0-9a-f]{2}){12}$/.test(envelope.iv)||typeof envelope.ciphertext!=='string'||!/^([0-9a-f]{2}){16,}$/.test(envelope.ciphertext)||envelope.ciphertext.length>32*1024*1024+32)throw Error('Invalid encrypted export');
-  const url=URL.createObjectURL(new Blob([JSON.stringify(envelope)],{type:'application/json'}));
-  const link=el('a',{href:url,download:'rolling-chat-encrypted-recovery.json'});document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   if(!loaded?.account||typeof loaded.getAccount!=='function'||typeof loaded.createSession!=='function')throw runtimeFailure;
+   runtime=loaded;
+   runtime.account.configure({requireEth:false,canEndSession:()=>!session?.busy,onSetupError:()=>{error=message;},onChange:value=>{
+    if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;recoveryAbort?.abort();clearPrivateView();note('The account changed. Reload before continuing.');render();}
+   }});
+   return runtime;
+  });
  }
- function passwordField(text){const input=el('input',{type:'password',autocomplete:'new-password',minlength:'12',required:'', 'aria-label':text});return input;}
+ function initialize(){
+  if(initializationPending)return initializationPending;
+  initializing=true;
+  initializationPending=Promise.resolve().then(async()=>{
+   await ensureRuntime();
+   if(!unlocked()&&typeof runtime.restoreAccount==='function')await runtime.restoreAccount();
+   if(!unlocked())return false;
+   await connect();return true;
+  }).catch(failure=>{
+   error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':'Your account could not connect. Check your connection and try again.';
+   return false;
+  }).finally(()=>{initializing=false;note('');render();});
+  render();return initializationPending;
+ }
  function privacyDetails(){return el('details',{class:'account-details'},el('summary',{},'How privacy works'),paragraph('Posts are public. Other readers cannot see which posts belong to the same anonymous account. This version uses a trusted proving service that can see the private data it processes.'));}
- function custody(){
-  const restoring=accountMode==='signin'||refundRequested;
-  const password=passwordField(restoring?'Backup password':'Password');
-  if(restoring){
-   password.autocomplete='current-password';password.removeAttribute('minlength');
-   const file=el('input',{type:'file',accept:'.json,application/json','aria-label':'Account backup'});
-   content.append(paragraph('Choose the account backup you saved when you joined, then enter its password.'),label('Account backup',file),label('Backup password',password),button('Sign in',()=>{
-    if(!file.files?.[0]){error='Choose your account backup.';render();return;}
-    const selected=file.files[0],value=password.value;password.value='';file.value='';
-    void work(async()=>{startSetup('signin');await runtime.account.importRecovery(selected,value);notice='Signed in.';await (refundRequested?connectRefund():connect());});
-   },true),button('Create a new account',()=>{accountMode='create';refundRequested=false;render();}));
-   const help=el('details',{class:'account-details'},el('summary',{},'Trouble accessing an old account?'),paragraph('To collect a withdrawal you already started, restore your backup here and connect the wallet that originally paid.'));
-   help.append(button('Restore a pending withdrawal',()=>{refundRequested=true;render();}));content.append(help);
-  }else{
-   content.append(paragraph('Choose a password to protect your account backup. No email or real name needed.'),label('Password · at least 12 characters',password),button('Create account',()=>{
-    if(!password.reportValidity())return;const value=password.value;password.value='';
-    void work(async()=>{startSetup('create');download(await runtime.account.create(value));view='funding';await connect();notice='Account created. Keep the downloaded backup and your password — you need both to sign in on another device.';});
-   },true),paragraph('An account backup will download. Keep it somewhere safe; we cannot reset your password.'),button('Already have an account? Sign in',()=>{accountMode='signin';render();}));
+ function walletChoices(target,connectWallet){
+  const choices=runtime.fundingWallets();
+  if(!Array.isArray(choices)||choices.length>32)throw connectionFailure;
+  if(!choices.length)target.append(paragraph('No wallet extension found. Open this page in a browser with MetaMask, Phantom or another Ethereum wallet installed.'));
+  const list=el('div',{class:'wallet-choices'});
+  for(const choice of choices){
+   if(typeof choice.id!=='string'||typeof choice.name!=='string'||choice.name.length>128)throw connectionFailure;
+   const connectButton=button('Connect '+choice.name,()=>connectWallet(choice));
+   connectButton.className+=' wallet-choice';
+   const icon=el('span',{class:'wallet-icon','aria-hidden':'true'});
+   // Provider icons remain image data, never wallet-supplied markup.
+   if(typeof choice.icon==='string'&&/^data:image\/(?:png|jpeg|webp|svg\+xml)[;,]/i.test(choice.icon)&&choice.icon.length<131072)icon.append(el('img',{src:choice.icon,alt:'',width:'32',height:'32'}));
+   else icon.textContent=/metamask/i.test(choice.name)?'🦊':/phantom/i.test(choice.name)?'👻':/coinbase/i.test(choice.name)?'🔵':'◈';
+   connectButton.insertBefore(icon,connectButton.childNodes[0]);list.append(connectButton);
   }
+  target.append(list,button('Refresh wallet list',()=>render()));
+ }
+ function custody(){
+  content.append(paragraph('Connect your Ethereum wallet to open your account. Use the same wallet whenever you come back.'));
+  if(typeof runtime.fundingWallets!=='function'||typeof runtime.signInWallet!=='function'){content.append(paragraph('Wallet sign-in is unavailable. Reload the page to try again.'));return;}
+  walletChoices(content,choice=>void work(async()=>{
+   startSetup();await runtime.signInWallet(choice.id);await connect();
+   if(!intent&&['fee-needed','collateral-pending'].includes(status?.status)){
+    view=status.depositIds?.length?'topup':'funding';topupKind='private-fee';
+   }
+  }));
   content.append(privacyDetails());
  }
- function recovery(){
-  const section=el('details',{},el('summary',{},'Backup and account security'));
-  const password=passwordField('Backup password');
-  section.append(paragraph('Download a password-protected copy of your account to sign in on another device.'),paragraph(recoveryLimits),paragraph(backupFreshness),label('Backup password',password),button('Download account backup',()=>{
-   if(!password.reportValidity())return;const value=password.value;password.value='';
-   void work(async()=>{download(await runtime.account.exportRecovery(value));notice='Account backup downloaded.';});
-  }),button('Sign out',()=>void work(async()=>{
-   blocked=true;clearPrivateView();render();
-   if(session){await session.close();session=null;}
-   await runtime.account.endSession();reloadRequired=true;clearPrivateView();note('Account locked. Reload before unlocking again.');
-  })));
-  content.append(section);
- }
+ function signOut(){return work(async()=>{
+  blocked=true;clearPrivateView();render();
+  if(session){await session.close();session=null;}
+  await runtime.account.endSession();reloadRequired=true;clearPrivateView();note('Signed out.');
+ });}
  function savedResumeReview(snapshot){
   const saved=snapshot.exactResume,record=snapshot.intent,hash=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value);
   if(saved?.status!=='resumable'||snapshot.status!=='unknown'||!hash(saved.txHash)||saved.txHash!==snapshot.currentTxHash||
@@ -895,23 +890,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    target.append(el('p',{class:'connected-wallet'},el('span',{'aria-hidden':'true'},'✓'),snapshot.name+' '+snapshot.address.slice(0,6)+'…'+snapshot.address.slice(-4)));return true;
   }
   target.append(el('h3',{},'Connect your wallet'),paragraph(explanation));
-  const choices=runtime.fundingWallets();
-  if(!Array.isArray(choices)||choices.length>32)throw connectionFailure;
-  if(!choices.length)target.append(paragraph('No wallet extension found. Open this page in a browser with MetaMask, Phantom or another Ethereum wallet installed.'));
-  const list=el('div',{class:'wallet-choices'});
-  for(const choice of choices){
-   if(typeof choice.id!=='string'||typeof choice.name!=='string'||choice.name.length>128)throw connectionFailure;
-   const connectButton=button('Connect '+choice.name,()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);note('Open '+choice.name+' to connect.');await runtime.connectFundingWallet(choice.id);checkAccount(epoch);note('');
-   }));
-   connectButton.classList.add('wallet-choice');
-   const icon=el('span',{class:'wallet-icon','aria-hidden':'true'});
-   // Provider icons are image data only; never inject wallet-supplied SVG markup.
-   if(typeof choice.icon==='string'&&/^data:image\/(?:png|jpeg|webp|svg\+xml)[;,]/i.test(choice.icon)&&choice.icon.length<131072)icon.append(el('img',{src:choice.icon,alt:'',width:'32',height:'32'}));
-   else icon.textContent=/metamask/i.test(choice.name)?'🦊':/phantom/i.test(choice.name)?'👻':/coinbase/i.test(choice.name)?'🔵':'◈';
-   connectButton.prepend(icon);list.append(connectButton);
-  }
-  target.append(list,button('Refresh wallet list',()=>render()));return false;
+  walletChoices(target,choice=>void work(async()=>{
+   const epoch=accountEpoch;checkAccount(epoch);note('Open '+choice.name+' to connect.');await runtime.connectFundingWallet(choice.id);checkAccount(epoch);note('');
+  }));return false;
  }
  function stopFunding(){fundingAutomatic=false;fundingActiveCapability?.pauseClaim();}
  function fundingControl(label,handler){const control=button(label,handler);if(fundingAutomatic)control.dataset.fundingStop='true';return control;}
@@ -1050,24 +1031,24 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(signedIn&&selectedName!=='0'&&!identities.includes(selectedName))select.append(el('option',{value:selectedName},selectedLabel));
   select.append(el('option',{value:'create'},'Create a name…'));
   select.value=inlineCreation?'create':signedIn?selectedName:'0';
-  const incomplete=!!session&&signedIn&&(!namesLoaded||cursor!==null);select.dataset.unavailable=String(incomplete);select.disabled=busy||!!intent||incomplete;
+  const incomplete=initializing||!!session&&signedIn&&(!namesLoaded||cursor!==null);select.dataset.unavailable=String(incomplete);select.disabled=busy||!!intent||incomplete;
   select.addEventListener('change',()=>{
    if(busy||intent)return;
    if(select.value==='create'){
     inlineCreation=true;clearOperationFeedback();view='action';draft={type:'name',first:'',last:''};
     if(dialog.open)dialog.close();inlineName.hidden=false;inlineName.append(description,live,content);render();
-    if(!runtime)void unlock();else if(session&&unlocked())void work(loadView);
+    if(!runtime||initializing)void initialize();else if(session&&unlocked())void work(loadView);
    }else{selectedName=select.value;selectedLabel=ownedLabel(selectedName);if(['post','reply','quote','repost','bok'].includes(draft.type))draft.name=selectedName;}
   });
   identityControls.replaceChildren(label('Post as',select));
-  if(incomplete&&!busy){const retry=button('Load names',()=>void work(()=>loadView({loadIdentity:true})));retry.disabled=!!intent;identityControls.append(retry);}
+  if(incomplete&&!busy&&!initializing){const retry=button('Load names',()=>void work(()=>loadView({loadIdentity:true})));retry.disabled=!!intent;identityControls.append(retry);}
   if(inlineCreation){
    const cancel=button('Cancel',()=>{if(busy||intent)return;inlineCreation=false;restoreDialogContent();clearOperationFeedback();renderIdentityControls();});cancel.disabled=busy||!!intent;identityControls.append(cancel);
   }else if(notice.startsWith('Name created.')||notice.startsWith('Your previous posting name'))identityControls.append(el('span',{class:'quiet',role:'status'},notice));
  }
  function attachIdentityControls(host){
   identityHost=host;host.append(identityControls,inlineName);renderIdentityControls();
-  if(session&&unlocked()&&!namesLoaded&&!busy)void work(loadView);
+  if(session&&unlocked()&&!namesLoaded&&!busy&&!initializing)void work(loadView);
  }
  function render(previousFocus=document.activeElement){
   renderIdentityControls();
@@ -1081,23 +1062,20 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   releasePreviews();content.replaceChildren();
   if(inlineCreation)content.append(el('h3',{},view==='funding'?'Set up your account':intent?'Review your name':'Create a name'));
   const signedIn=!!runtime&&unlocked();
-  title.textContent=!signedIn?(accountMode==='signin'||refundRequested?'Sign in':'Join Rolling Chat'):view==='funding'?'Set up posting':view==='topup'?'Add credit':view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
+  title.textContent=!signedIn?'Connect your wallet':view==='funding'?'Set up posting':view==='topup'?'Add credit':view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
   if(signedIn&&intent&&['prepared','replacement-prepared'].includes(intent.status))title.textContent=intent.status==='replacement-prepared'?'Review replacement':reviewLabel(intent.action);
   description.textContent=!signedIn?'Join the conversation without sharing your identity.':'';
   description.hidden=!!setupMode||!description.textContent;
   content.hidden=!!setupMode;
-  if(setupMode)title.textContent=setupMode==='create'?'Creating your account':'Signing you in';
+  if(setupMode||initializing)title.textContent='Opening your account…';
   if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error','data-operation-feedback':''},error));
   if(notice)content.append(el('p',{class:'notice','data-operation-feedback':''},notice));
-  if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));
-  if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload to unlock',()=>location.reload()));}
+  if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload page',()=>location.reload()));}
+  else if(initializing)content.append(paragraph('Opening your account…'));
   else if(!runtime)content.append(error?button('Reload page',()=>location.reload()):paragraph('Loading account setup…'));
   else if(!unlocked())custody();
   else{
-   if(!session){content.append(paragraph(runtime.refundOnly?'Restore your pending withdrawal from your backup.':'Your account could not connect. Try again to continue.'),...(runtime.refundOnly?[]:[button('Reconnect',()=>void work(connect),true)]));
-    if(typeof runtime.createRefundSession==='function')content.append(el('details',{class:'account-details'},el('summary',{},'Pending withdrawal'),paragraph('Use the wallet that originally paid to collect a withdrawal you already started.'),button('Restore pending withdrawal',()=>void work(connectRefund))));
-   }
-   else if(session.mode==='refund-only'){content.append(paragraph('Refund-only recovery. Only public exit data is read from the configured public node. Private account actions are unavailable in this mode.'));if(intent)refundView();else content.append(paragraph('The original Ethereum refund is confirmed. Your recovery records are retained.'));}
+   if(!session)content.append(paragraph('Your account could not connect. Try again to continue.'),button('Reconnect',()=>void work(connect),true));
    else if(intent)showIntent();
    else if(blocked&&view==='preferences'){
     content.append(paragraph('Recover saved choices without checking funds or preparing a transaction.'));preferencesView();
@@ -1116,7 +1094,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
       if(typeof session.application.readBalances==='function')settings.append(button('Balance and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');}));
       settings.append(button('Create a board',()=>chooseAction('subboard')));if(moderatorStatus?.authorized)settings.append(button('Update site rules',()=>chooseAction('set-main-policy')),button('Transfer moderator authority',()=>chooseAction('transfer-moderator')));
       if(session.topup)settings.append(button('Add credit',()=>selectView('topup')));
-      content.append(settings);
+      settings.append(button('Sign out',()=>void signOut()));content.append(settings);
      }else{
       if(!viewReady())content.append(button(view==='names'?'Load your names':'Load publishing options',()=>void work(loadView),true));
       else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs.amount='';topupQuote=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
@@ -1124,7 +1102,6 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
      }
     }
    }
-   if(!inlineCreation&&!['funding','topup'].includes(view))recovery();
   }
   controlsBusy(busy);renderBokControls();requestBokBalance();
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
@@ -1140,9 +1117,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(busy||session?.busy&&!bokBalance.pending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
- dialog.addEventListener('close',()=>{for(const input of dialog.querySelectorAll('input[type=password]'))input.value='';if(returnFocus?.isConnected)returnFocus.focus();});
+ dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{
   if(event.key!=='Tab')return;
   const focusable=[...dialog.querySelectorAll('button,input,select,textarea,summary,a[href]')].filter(node=>!node.disabled&&node.getClientRects().length);
@@ -1152,11 +1129,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
  });
  render();
- return Object.freeze({open(defaults={}){
-  if(busy)return;
+ return Object.freeze({initialize,open(defaults={}){
+  if(busy){if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();closeButton.focus();}return;}
   if(inlineCreation){inlineCreation=false;restoreDialogContent();}
   if(session)unlocked(); // Detect replaced custody before rendering cached account data.
-  if(defaults.accountMode==='signin')accountMode='signin';
   if(!intent){autoReviewRequested=false;clearOperationFeedback();view=defaults.view==='preferences'?'preferences':Object.hasOwn(TYPES,defaults.type)?'action':'overview';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:'',name:selectedName};
    for(const key of IDS)if(field(defaults[key]))next[key]=defaults[key];
    if(next.type==='moderate-avatar'&&field(defaults.name))next.name=defaults.name;
@@ -1164,7 +1140,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}
   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
-  if(!runtime)void unlock();
+  if(!initializationPending)void initialize();
+  if(initializing)return;
   if(session&&unlocked()&&view==='preferences'&&!preferences)void work(recoverPreferences);
   if(session&&unlocked()&&view!=='preferences'){
    // Reopening a draft does not change the account. Preserve the last completed
@@ -1172,5 +1149,5 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(blocked||status===null)void work(refresh);
    else if(!intent&&!viewReady())void work(loadView);
   }
- },close,attachIdentityControls,attachBokControls,async loadSavedItems(){while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
+ },close,attachIdentityControls,attachBokControls,async loadSavedItems(){if(initializationPending)await initializationPending;while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
 }

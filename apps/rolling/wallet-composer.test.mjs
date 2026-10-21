@@ -93,3 +93,75 @@ test('opening and reopening the social composer reuses the unlocked session whil
  assert(f.document.querySelector('textarea'));assert.equal(f.document.querySelector('textarea').disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.deepEqual(f.core(),before);assert.equal(f.reads(),1);
  f.balance.resolve({available:true,availableCredit:'0'});
 });
+
+function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready'}={}){
+ const document=dom(t),statusStarted=Promise.withResolvers(),calls={load:0,restore:0,signIn:0,sessions:0,status:0,names:0,moderator:0,signOut:0};let account=null,configured;
+ const identity=document.createElement('section');document.body.append(identity);
+ const session={busy:false,application:{
+  async readAccountStatus(){calls.status++;statusStarted.resolve();if(statusGate){session.busy=true;await statusGate.promise;session.busy=false;}return {status,depositIds:status==='fee-ready'?['9']:[]};},
+  async ownedIdentities(){calls.names++;return {identities:[],records:[],nextCursor:null};},
+  async readModeratorStatus(){calls.moderator++;return {authorized:false};}
+ },async close(){}};
+ const runtime={account:{configure(value){configured=value;},async endSession(){calls.signOut++;account=null;configured.onChange({});}},
+  getAccount:()=>account,
+  fundingWallets:()=>[{id:'metamask',name:'MetaMask',icon:'data:image/png;base64,AA=='}],
+  fundingWalletStatus:()=>({connected:!!account,name:'MetaMask',address:'0x'+'1'.repeat(40)}),
+  async restoreAccount(){calls.restore++;if(restoreGate)await restoreGate.promise;if(restored)account={};return restored;},
+  async signInWallet(id){assert.equal(id,'metamask');calls.signIn++;if(signInGate)await signInGate.promise;account={};},
+  async createSession(){calls.sessions++;if(sessionGate)await sessionGate.promise;return session;}
+ };
+ const panel=mountRollingWalletPanel({loadRuntime:async()=>{calls.load++;return runtime;}});panel.attachIdentityControls(identity);
+ return {document,panel,calls,identity,statusStarted:statusStarted.promise};
+}
+
+test('wallet chooser has icons and no password, files, passkey or backup path; one click preserves a reply',{timeout:3000},async t=>{
+ const signInGate=Promise.withResolvers(),f=signInFixture(t,{signInGate});
+ f.panel.open({accountMode:'signin',type:'reply',parent:'10',root:'1',subboard:'0',content:'Keep my reply'});
+ await f.panel.initialize();const chooser=f.document.querySelectorAll('button').find(b=>b.textContent.includes('Connect MetaMask'));
+ assert(chooser);assert(chooser.querySelector('img'));assert.equal(f.calls.signIn,0);
+ assert.equal(f.document.querySelector('input[type=password]'),null);assert.equal(f.document.querySelector('input[type=file]'),null);
+ assert(!/backup|passkey|older account/i.test(f.document.body.textContent));
+ chooser.fire('click');chooser.fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('Opening your account…'));signInGate.resolve();
+ await f.document.until(()=>f.document.querySelector('textarea')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.calls.signIn,1);assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,1);assert.equal(f.document.querySelector('textarea').value,'Keep my reply');
+ assert.equal(f.document.querySelector('h2').textContent,'Reply');
+ assert.equal(f.document.querySelector('input[type=password]'),null);assert(!/backup|passkey/i.test(f.document.body.textContent));
+});
+
+test('initialize silently restores once, shares one session, and updates main-page identity without opening a dialog',{timeout:3000},async t=>{
+ const f=signInFixture(t,{restored:true}),first=f.panel.initialize();assert.equal(f.panel.initialize(),first);
+ assert.equal(await first,true);assert.equal(await f.panel.initialize(),true);
+ assert.equal(!!f.document.querySelector('dialog').open,false);
+ assert.equal(f.calls.load,1);assert.equal(f.calls.restore,1);assert.equal(f.calls.signIn,0);assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,1);
+ assert.equal(f.identity.querySelector('select').disabled,false);
+ f.panel.open({type:'post',content:'An already signed-in post'});assert.equal(f.document.querySelector('textarea').value,'An already signed-in post');assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,1);
+});
+
+test('opening and closing during background restoration stays immediate and keeps the latest requested draft',{timeout:3000},async t=>{
+ const restoreGate=Promise.withResolvers(),sessionGate=Promise.withResolvers(),f=signInFixture(t,{restored:true,restoreGate,sessionGate});
+ const init=f.panel.initialize();f.panel.open({type:'post',content:'First draft'});
+ const dialog=f.document.querySelector('dialog');assert.equal(dialog.open,true);assert.equal(dialog.getAttribute('aria-busy'),'false');assert.equal(f.panel.close(),true);
+ f.panel.open({type:'reply',parent:'10',root:'1',subboard:'0',content:'Latest draft'});assert.equal(dialog.open,true);assert.equal(dialog.getAttribute('aria-busy'),'false');
+ restoreGate.resolve();sessionGate.resolve();await init;
+ assert.equal(f.document.querySelector('textarea').value,'Latest draft');assert.equal(f.document.querySelector('textarea').disabled,false);
+ assert.equal(f.calls.signIn,0);assert.equal(f.calls.restore,1);assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,1);
+});
+
+test('an unfunded wallet opens posting setup after sign-in without a password or automatic payment',{timeout:3000},async t=>{
+ const f=signInFixture(t,{status:'collateral-pending'});f.panel.open({type:'post',content:'My first post'});await f.panel.initialize();
+ f.document.querySelectorAll('button').find(b=>b.textContent.includes('Connect MetaMask')).fire('click');
+ await f.document.until(()=>f.document.querySelector('h2').textContent==='Set up posting'&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.calls.signIn,1);assert.equal(f.calls.sessions,1);assert.equal(f.document.querySelector('input[type=password]'),null);
+});
+
+
+test('closing while background account status owns the SDK remains available',{timeout:3000},async t=>{
+ const statusGate=Promise.withResolvers(),f=signInFixture(t,{restored:true,statusGate});
+ const init=f.panel.initialize();f.panel.open({type:'post',content:'Preserved during account status'});
+ // createSession progress is observed via the actual status method call, not a delay.
+ await f.statusStarted;
+ assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(f.panel.close(),true);
+ statusGate.resolve();await init;assert.equal(!!f.document.querySelector('dialog').open,false);
+ assert.equal(f.calls.sessions,1);assert.equal(f.calls.signIn,0);
+});
