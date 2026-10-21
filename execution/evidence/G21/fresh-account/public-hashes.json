@@ -1,10 +1,14 @@
 {
+  "/reader.mjs": {
+    "sha256": "16a02c028f83b54888b8cf01706b59f33c0614fd407145a5a19826592996a433",
+    "matches": true
+  },
   "/wallet-panel.mjs": {
-    "sha256": "b665bb50676597d1e0bdcb159155b54e2861e29dc91b81682eed155e1a786e29",
+    "sha256": "a6a301063a7c008c6956ab6ea03df8161b08df33306e97bb9a3e66fe701605ad",
     "matches": true
   },
   "/wallet/runtime.mjs": {
-    "sha256": "29e19b14b753b274ef3e5dd503ffa34ef03d38e419e03258b83ae1e526dbda77",
+    "sha256": "8868fe37978890372bc0ae90335af826797653fc75a6a36276c571badb48df9f",
     "matches": true
   },
   "/wallet/account.js": {

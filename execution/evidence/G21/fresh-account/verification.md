@@ -9,3 +9,5 @@ The selected public generation and encrypted session commit in one IndexedDB tra
 An overbroad older wallet-panel.browser suite was started and stopped after obsolete review/confirmation selectors failed; it is not reported as passing. The current targeted composer/session tests cover this changed flow. Publication and live UI readback are recorded separately.
 
 Live route check caught HTTP404 for a top-level query parameter. The final route uses #/new-account, renders Home and immediately opens the chooser; successful sign-in consumes the fragment. Independent review approved the correction. The first staging attempt also rejected string PID values before mutation; typed inventory corrected the packet.
+
+Published final frontend6f1317ca494dc5ac502774eb3c5a769bd9575e5d. All five changed public resources match local hashes. User Chrome tab367289755 opened #/new-account and automatically displayed the fresh test-account wallet chooser; screenshot retained. App, proxy and protected service PIDs were preserved. No personal wallet signature/payment was requested by the agent.

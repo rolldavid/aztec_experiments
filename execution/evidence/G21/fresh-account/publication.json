@@ -1,10 +1,10 @@
 {
-  "commit": "ed561b112d46785621186353a51c40d6a79586d4",
+  "commit": "6f1317ca494dc5ac502774eb3c5a769bd9575e5d",
   "appPid": 232957,
   "runningSource": "/opt/rolling-app/releases/ui-195cb269bf52",
-  "nextSource": "/opt/rolling-app/releases/ui-ed561b112d46",
-  "ui": "/opt/rolling-ui/releases/ed561b112d46785621186353a51c40d6a79586d4",
-  "previousUi": "/opt/rolling-ui/releases/be9d4ea33db4561b23c13647170f9926f25d2486",
+  "nextSource": "/opt/rolling-app/releases/ui-6f1317ca494d",
+  "ui": "/opt/rolling-ui/releases/6f1317ca494dc5ac502774eb3c5a769bd9575e5d",
+  "previousUi": "/opt/rolling-ui/releases/ed561b112d46785621186353a51c40d6a79586d4",
   "protectedPids": {
     "rolling-node.service": 232950,
     "rolling-query.service": 274641,

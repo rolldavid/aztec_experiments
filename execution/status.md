@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21 October active: implement explicit testnet fresh account creation using same Ethereum wallet. Deterministic numbered derivation selected from portal deposit nonce; preserve normal automatic sign-in. Focused integration/UI tests, independent review and frontend-only publish.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21 October same-wallet fresh test signup implemented and published as6f1317ca. Explicit #/new-account uses configured portal deposit nonce for deterministic fresh Aztec generation, retains selected generation across signout, bypasses old browser custody, and auto-opens chooser.80 focused checks pass, independent review no blockers, live user Chrome chooser and five public hashes verified. No new payment was sent for this frontend change; no contracts redeployed or running processes restarted. See evidence/G21/fresh-account.
 
 ## Ready internal work
 
