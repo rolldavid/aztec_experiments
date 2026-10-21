@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "cc504bdf1abc",
+  "changedReleaseFiles": {
+    ".build/rolling-wallet/manifest.json": "4bdc43a24a2dee1e1f32010b4bc216861687bfb704f0afca500bc5f912cb5671",
+    ".build/rolling-wallet/runtime.mjs": "4586be82b731d52524a6fede0431abbd98e3cb4f941742539add344ffbbac5f5",
+    ".build/sdk/aztec_browser.js": "b7e0f41f20b8851b6b40abb4e15a5b53d0a76bc07efaa80093de79fa6a6ddef6",
+    ".build/sdk/aztec_bundle.js": "36e5541313c0f445adb6eab03462b3934d3bc38dab448e0394cd806b13c19798",
+    ".build/sdk/sdk-manifest.json": "83b1d3e9f2c741e938f5148565da4db2b305a6d742fbf4e40bc94032f3d84279",
+    "apps/rolling/style.css": "20989ba45ad65cd612d67a7a353f2cd46093c4bb5547ee9c4d30aeaa2bf5e4b0",
+    "apps/rolling/wallet-panel.mjs": "90199e422192157e4c174d4827bf41171ea66c6ce5e8d196fb5902251b354db9",
+    "apps/rolling/wallet-session.mjs": "501fc51d8969a78d9a046ac7b00d6a4bc7a66cff6d133a3ae747fa29fa4403a5",
+    "apps/src/billboard/user/engine.js": "b11ef0b6c27efbc6b8e02e33938405e9c1eb67ae7faf0f0570507f9c3b11fe8a",
+    "shared/private-fee-estimation.mjs": "b7d968a372afe2d2db6aff48a082f44ed20b62aaa512b92fc339a9ebe41cb0ed",
+    "shared/private-fee-validation.mjs": "9ae899f5a559767ff7d31f334d6ab7a47334df8b570723e87693e6c7fec9d93e",
+    "shared/rolling/aggregate-wallet.mjs": "b9e00ca5144972792db0ac4a4c71febbef8aa038d440fdc9910474ee80a9cf4d",
+    "shared/rolling/application.mjs": "985b4feee3a094298fef71c99a32400f765a0158cc34e75ef4c8e30ee9c6a6f5",
+    "shared/rolling/funding-receipts.mjs": "c075d3245754df74940787e0fc329cf3135f49901274b2a8bd12c2ee926e7bfd",
+    "shared/rolling/synchronized-application.mjs": "5fd896791c6c172592dd3e4fa6f42b3dab9e829ff8ea6856a916f6f7ea7370e6",
+    "shared/sdk-entry.mjs": "c41e5a2da92f347e34c6ad5556fb11bc47e32277391091a3fdfc17439eb59ae4"
+  },
+  "sdkBuild": "passed",
+  "walletBuild": "passed",
+  "integratedUI": 34,
+  "walletConfig": 8
+}
