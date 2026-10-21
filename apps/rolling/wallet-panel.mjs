@@ -184,7 +184,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let postingRules=null,rulesScope=null,updateRules=()=>{};
  let initializationAttempt=0,setupMode=null;
  let runtimePending=null,initializationPending=null,initializing=false,connectPending=null;
- let autoReviewRequested=false,postingInProgress=false,operationSettled=Promise.resolve();
+ let postingInProgress=false,operationSettled=Promise.resolve();
  let bokHost=null,updateBokForm=()=>{};
  let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous';
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
@@ -193,6 +193,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null;
  let topupKind='private-fee',topupQuote=null,topupInputs={amount:''},topupQuoteKey=null,topupQuotePending=null,topupQuoteError='',topupSaved=null,updateTopupQuote=()=>{};
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
+ const preferenceUpdates=new Map();
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let fundingQuote=null,fundingQuoteRequested=false,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH'};
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='overview',namesLoaded=false,actionsLoaded=false;const previewURLs=new Set();
@@ -229,10 +230,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
- function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
+ function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
  async function recoverPreferences(){
   const epoch=accountEpoch;checkAccount(epoch);preferences=null;preferenceProgress=null;
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
@@ -240,7 +241,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const result=await session.application.readColdPreferences({signal:abort.signal});
    checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
    if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){
-    preferences=result.preferences;preferenceProgress=null;notice='Your saved items are ready.';note('');onPrivateChange();return;
+    preferences=result.preferences;preferenceUpdates.clear();preferenceProgress=null;notice='Your saved items are ready.';note('');onPrivateChange();return;
    }
    if(result?.status!=='recovering'||result.complete!==false)throw connectionFailure;
    // The reader retains its validated cursor, including log positions that are
@@ -255,7 +256,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const stop=button('Stop loading',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
   content.append(button(preferences?'Refresh saved items':recoveryAbort?'Loading saved items':'Load saved items',()=>void work(recoverPreferences,()=>'Your saved items could not load. Check your connection and try again.'),true));
  }
- function choosePreference(value){if(busy||intent)return;autoReviewRequested=false;clearOperationFeedback();view='action';draft={...value};if(blocked||viewReady())render();else void work(loadView);}
+ function choosePreference(value){void act(value);}
  function ownedLabel(id){if(field(id)&&BigInt(id)===0n)return 'Anonymous';const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
  function acceptNames(page,append=false){
   if(!Array.isArray(page.identities)||!Array.isArray(page.records)||page.identities.length!==page.records.length)throw Error('Private name records unavailable');
@@ -306,6 +307,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   // These are feature reads, not prerequisites for opening/funding an account.
   if(loadIdentity||view==='names'||view==='action'&&['bio','avatar'].includes(draft.type)){
    if(!namesLoaded)await loadNames();while(cursor!==null)await loadNames(true);
+   if((dialog.open||inlineCreation)&&view==='action'&&['bio','avatar'].includes(draft.type)&&identities.includes(draft.name)&&!profileSnapshot)await checkProfile(draft.name);
   }
   if(view==='action'&&MODERATOR_TYPES.has(draft.type)&&moderatorStatus===null){
    moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():{authorized:false};checkAccount(epoch);onPrivateChange();
@@ -584,6 +586,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({});checkAccount(epoch);refundQuote=value;}),true),button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking the saved Ethereum refund; waiting for network confirmation.');const value=await session.withdrawal.prepareSaved({});note('');checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking existing Ethereum refund; waiting for network confirmation.');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
  const postingTypes=new Set(['post','reply','quote','repost','bok']);
+ const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar']),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
  const rulesId=action=>postingTypes.has(action?.type)&&field(action.subboard)?BigInt(action.subboard).toString():null;
  function rulesReady(action){return !postingTypes.has(action?.type)||postingRules?.id===rulesId(action)&&postingRules.status==='ready'&&!postingRules.value.rejected;}
  function validateRules(data,id){
@@ -643,10 +646,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function actionLabel(action){
   if(action?.type==='preference')return ({1:action.enabled?'Save bookmark':'Remove bookmark',2:action.enabled?'Follow board':'Unfollow board',3:action.enabled?'Follow person':'Unfollow person',4:action.enabled?'Follow conversation':'Unfollow conversation',5:action.enabled?'Turn on reply notifications':'Turn off reply notifications'})[action.kind]??'Save setting';
-  return ({post:'Post',reply:'Reply',quote:'Post quote',repost:'Repost',like:'Like post',unlike:'Remove like',name:'Register name',subboard:'Create board',bio:'Save bio',avatar:'Save avatar','read-marker':'Mark as read','cancel-deposit':'Continue refund',bok:'Ask Bok'})[action?.type]??TYPES[action?.type]??'Confirm';
+  return ({post:'Post',reply:'Reply',quote:'Post quote',repost:'Repost',like:'Like post',unlike:'Remove like',name:'Create name',subboard:'Create board',bio:'Save bio',avatar:'Save avatar','read-marker':'Mark as read','cancel-deposit':'Continue refund',bok:'Ask Bok'})[action?.type]??TYPES[action?.type]??'Confirm';
  }
  function feeLabel(value){const amount=BigInt(value);return amount>0n&&amount<100000000000000n?'less than 0.0001':'up to '+decimal((amount+99999999999999n)/100000000000000n,4);}
- function reviewLabel(action){return postingTypes.has(action?.type)?(action.type==='bok'?'Post':actionLabel(action)):'Review cost';}
+ function reviewLabel(action){return immediateTypes.has(action?.type)?(action.type==='bok'?'Post':actionLabel(action)):'Review cost';}
  function showIntent(){
   if(['withdraw','withdraw-bok','cancel-deposit'].includes(intent.action?.type)&&intent.status==='confirmed'&&session.withdrawal){refundView();return;}
   const replacement=intent.status==='replacement-prepared',prepared=intent.status==='prepared'||replacement;
@@ -746,7 +749,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(result.status==='authorized'){note('');notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
   if(result.status==='confirmed'){
-   if(postingTypes.has(result.action?.type)){draft={...draft,content:''};releasePreviews();note('');if(dialog.open)dialog.close();}
+   if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open)dialog.close();}
+   if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
    if(result.action?.type==='name'){namesLoaded=false;identities=[];identityRecords=[];cursor=0;}
@@ -762,10 +766,48 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    notice='Transaction reverted. A network fee may have been charged. Recovery checks must complete before a new action.';await refresh();
   }else note(result.status==='prepared'?'The saved action has not been sent. Review before confirming.':'The transaction is still unconfirmed or unknown. Check later; do not resend.');
  }
+ async function executeAction(action,{immediate=immediateTypes.has(action.type),onResult=()=>{}}={}){
+  const epoch=accountEpoch;checkAccount(epoch);blocked=true;
+  try{
+   if(action.type==='preference'||action.type==='read-marker'){
+    const head=await session.application.readPreferenceHead();checkAccount(epoch);
+    if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;
+    action.expectedRevision=head.revision;
+   }
+   intent=await session.application.prepare(action,...(immediate?[{immediate:true}]:[]));checkAccount(epoch);
+  }finally{blocked=false;}
+  if(!immediate){note('Review the saved action before confirming.');return intent;}
+  const send=async()=>{const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;const result=await session.application.submitPrepared(id);checkAccount(epoch);blocked=false;return result;};
+  let result=await send();intent=result;
+  if(action.type==='bok'&&result.status==='authorized'){intent=await session.application.prepareBokPost(result.intentId,{immediate:true});checkAccount(epoch);result=await send();}
+  onResult(result);await receive(result);return result;
+ }
+ let panelApi;
+ async function act(defaults){
+  // Capture the user's exact target and selected operation before any await.
+  const type=defaults?.type;if(!readerActionTypes.has(type))return {status:'failed',message:'This action is unavailable.'};
+  const action={type};
+  if(type==='like'||type==='unlike'){if(!field(defaults.post))return {status:'failed',message:'This post is unavailable.'};action.post=defaults.post;}
+  else if(type==='preference'){
+   if(!Number.isInteger(defaults.kind)||defaults.kind<1||defaults.kind>5||!field(defaults.target)||typeof defaults.enabled!=='boolean')return {status:'failed',message:'This saved setting is unavailable.'};
+   Object.assign(action,{kind:defaults.kind,target:defaults.kind===5?'0':defaults.target,enabled:defaults.enabled});
+  }else{
+   if(!field(defaults.thread)||typeof defaults.throughBlock!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(defaults.throughBlock)||BigInt(defaults.throughBlock)>0xffffffffn)return {status:'failed',message:'This conversation is unavailable.'};
+   Object.assign(action,{thread:defaults.thread,throughBlock:defaults.throughBlock});
+  }
+  if(busy)return {status:'blocked',reason:'busy'};
+  if(!initializationPending)await initialize();else if(initializing)await initializationPending;
+  if(busy)return {status:'blocked',reason:'busy'};
+  if(!session||!unlocked()||blocked||status?.status!=='fee-ready'||intent){panelApi.open(action);return {status:'blocked',reason:intent?'existing-action':'setup'};}
+  let outcome;
+  await work(async()=>{note('Saving…');await executeAction(action,{onResult:result=>{outcome=result;}});});
+  if(outcome)return {status:outcome.status};
+  return intent?.status==='unknown'?{status:'unknown'}:{status:'failed',message:error||'This action could not complete. Try again.'};
+ }
  function chooseAction(type,name){
   if(busy||!unlocked()||intent||blocked)return;
   clearOperationFeedback();view='action';clearProfileDraft();draft={type,subboard:'0',content:'',name:name??selectedName};
-  if(viewReady()&&!name)render();else void work(async()=>{await loadView();if(name)await checkProfile(name);});
+  if(viewReady()&&!name)render();else void work(loadView);
  }
  function namesView(){
   content.append(paragraph('A name lets people recognise your posts and follow you. It does not need to be your real name. You can still choose Anonymous when posting.'),button('Register a name',()=>chooseAction('name'),true));
@@ -875,21 +917,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='reply'||kind==='bok')Object.assign(action,{subboard:draft.subboard,parent:draft.parent,root:draft.root});
    if(kind==='bok')action.budget=units(action.budget,6);
    const selectedAvatar=avatarDraft;
-   const direct=postingTypes.has(action.type);
-   void work(async()=>{await checkPostingRules(action,{confirm:direct});if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
-    blocked=true;try{if(kind==='preference'||kind==='read-marker'){const epoch=accountEpoch;checkAccount(epoch);const head=await session.application.readPreferenceHead();checkAccount(epoch);if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;action.expectedRevision=head.revision;}intent=await session.application.prepare(action,...(direct?[{immediate:true}]:[]));}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;if(kind==='name'&&nameFailure(failure))blocked=false;throw failure;}blocked=false;
-    if(direct){
-     const epoch=accountEpoch;checkAccount(epoch);
-     const send=async()=>{const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;const result=await session.application.submitPrepared(id);checkAccount(epoch);return result;};
-     let result=await send();intent=result;blocked=false;
-     // Only this click may continue its own freshly confirmed Bok authorization.
-     if(action.type==='bok'&&result.status==='authorized'){intent=await session.application.prepareBokPost(result.intentId,{immediate:true});checkAccount(epoch);result=await send();}
-     await receive(result);
-    }else note('');
-   },nameFailure,{posting:direct});
+   const direct=immediateTypes.has(action.type);
+   void work(async()=>{
+    await checkPostingRules(action,{confirm:direct});
+    if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
+    try{await executeAction(action,{immediate:direct});}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}
+   },nameFailure,{posting:postingTypes.has(action.type)});
   };
   const cost=el('strong'),balance=el('strong');
-  if(postingTypes.has(draft.type)){
+  if(immediateTypes.has(draft.type)){
    balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));
    content.append(el('div',{class:'composer-cost'},el('span',{},'Balance ',balance),el('span',{},'Max cost ',cost),el('small',{},'posting credits')));
   }
@@ -918,7 +954,6 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   rulesView(draft,validate);
   fields.get('subboard')?.addEventListener('change',()=>{void loadRules(rulesId(draft),true).catch(()=>{});});
   validate();
-  if(['like','unlike','preference','read-marker'].includes(kind)&&!autoReviewRequested&&!busy&&!error&&!blocked&&validate())queueMicrotask(()=>{if(dialog.open&&!busy&&!intent&&!autoReviewRequested&&view==='action'){autoReviewRequested=true;prepareReview();}});
  }
  function fundingWalletView(target=content, explanation='Choose the wallet you want to pay with.'){
   if(typeof runtime.fundingWallets!=='function'||typeof runtime.connectFundingWallet!=='function'||typeof runtime.fundingWalletStatus!=='function')return true;
@@ -1186,13 +1221,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
  });
  render();
- return Object.freeze({initialize,open(defaults={}){
+ return panelApi=Object.freeze({initialize,act,open(defaults={}){
   if(busy){if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();closeButton.focus();}return;}
   if(inlineCreation){inlineCreation=false;restoreDialogContent();}
   if(session)unlocked(); // Detect replaced custody before rendering cached account data.
-  if(!intent){autoReviewRequested=false;clearOperationFeedback();view=defaults.view==='preferences'?'preferences':Object.hasOwn(TYPES,defaults.type)?'action':'overview';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:'',name:selectedName};
+  if(!intent){clearOperationFeedback();view=defaults.view==='preferences'?'preferences':Object.hasOwn(TYPES,defaults.type)?'action':'overview';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:'',name:selectedName};
    for(const key of IDS)if(field(defaults[key]))next[key]=defaults[key];
-   if(next.type==='moderate-avatar'&&field(defaults.name))next.name=defaults.name;
+   if(['moderate-avatar','bio','avatar'].includes(next.type)&&field(defaults.name))next.name=defaults.name;
    if(next.type==='preference'&&Number.isInteger(defaults.kind)&&defaults.kind>=1&&defaults.kind<=5&&field(defaults.target)&&typeof defaults.enabled==='boolean')Object.assign(next,{kind:defaults.kind,target:defaults.target,enabled:defaults.enabled});
    if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}

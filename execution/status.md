@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October250cae75 Bok one-transaction ETH funding and simpler quote/pay UI published. Exact assets/config verified; API/feed/prover200; all protected services unchanged. Reviewed native local EVM purchase and live Sepolia quote/estimate pass. Earlier efficiency/post-completion ed3afe3b included. Broader audit identified remaining review/confirm duplication on simple social/profile actions; no claim of a new live MetaMask/Aztec claim journey.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October owner requests remove redundant confirmations on likes/bookmarks/profile edits, actual MetaMask-to-Aztec Bok funding end-to-end, then publish. Flow agent owns panel/application, reviewer owns reader integration and cross-review; funding agent investigates test harness; root owns live extension test and publication. Existing live250cae75 preserved.
 
 ## Ready internal work
 

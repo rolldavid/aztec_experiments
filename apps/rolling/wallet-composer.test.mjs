@@ -31,17 +31,18 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+  readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+  readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>{core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.()});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
- await document.until(()=>(defaults.type?document.querySelector('textarea'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ await document.until(()=>(defaults.type?document.querySelector('[data-action-review]'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
  return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
 }
 test('typing @bok and editing/removing it stays immediate while a shared balance read is pending',{timeout:3000},async t=>{
@@ -269,4 +270,35 @@ test('compact monetary displays round balances down and payment caps up',()=>{
  for(const amount of ['0','1','9999999999','1234567890123456789','999999999999999999999999'])for(const places of [4,8]){
   const shown=compactAmount(amount,18,places,true),[whole,fraction='']=shown.split('.'),displayed=BigInt(whole)*10n**18n+BigInt(fraction.padEnd(18,'0'));assert(displayed>=BigInt(amount));
  }
+});
+
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'preference',kind:1,target:'42',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'read-marker',thread:'42',throughBlock:'19'}])test(`reader ${action.type} acts once without opening a modal (${action.kind??''})`,{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const result=await f.panel.act(action);await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));assert.equal(result.status,'confirmed');assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.prepared(),{...action,...(['preference','read-marker'].includes(action.type)?{expectedRevision:'7'}:{})});
+ if(action.type==='preference')assert.equal(f.panel.preferenceEnabled(action.kind,action.target),action.enabled);
+});
+test('reader action captures target before waiting and blocks double clicks',{timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),started=Promise.withResolvers(),f=await fixture(t,{posting:{prepare:()=>{started.resolve();return gate.promise;}}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const action={type:'like',post:'42'},first=f.panel.act(action);action.post='99';await started.promise;assert.deepEqual(await f.panel.act({type:'like',post:'42'}),{status:'blocked',reason:'busy'});assert.equal(f.document.querySelector('dialog').open,false);gate.resolve();assert.equal((await first).status,'confirmed');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));assert.equal(f.prepared().post,'42');assert.equal(f.submissions.length,1);
+});
+for(const status of ['unknown','reverted'])test(`reader ${status} is not reported as successful or resent automatically`,{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{status}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();assert.equal((await f.panel.act({type:'like',post:'42'})).status,status);assert.equal(f.submissions.length,1);assert.equal(f.document.querySelector('dialog').open,false);
+ if(status==='reverted')await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));if(status==='unknown'){assert.equal((await f.panel.act({type:'like',post:'42'})).reason,'existing-action');assert.equal(f.submissions.length,1);}
+});
+test('missing posting credit opens setup without sending the reader action',{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{},fee:'fee-needed'});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();assert.deepEqual(await f.panel.act({type:'like',post:'42'}),{status:'blocked',reason:'setup'});assert.equal(f.submissions.length,0);assert.equal(f.document.querySelector('dialog').open,true);
+});
+for(const type of ['name','bio','avatar'])test(`one ${type} save creates and submits exact edited action`,{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{},profile:true,defaults:{type,name:'5'}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ if(type==='name'){const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');}
+ else if(type==='bio'){const input=f.document.querySelector('textarea');input.value='My exact bio';input.fire('input');}
+ else f.document.querySelectorAll('button').find(b=>b.textContent==='Clear avatar').fire('click');
+ const save=f.document.querySelector('[data-action-review]');assert(!save.textContent.includes('Review'));assert.equal(save.disabled,false);save.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.document.querySelector('dialog').open,false);
+ await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));if(type==='bio')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'3',content:'My exact bio'});if(type==='avatar')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'4',width:0,height:0,data:''});
+});
+
+test('a confirmed bookmark allows the next explicit inverse action without a modal',{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:true})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),true);
+ assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:false})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),false);assert.equal(f.submissions.length,2);assert.equal(f.document.querySelector('dialog').open,false);await f.document.until(()=>f.reads()>=3&&f.host.textContent.includes('0 USDC available'));
 });

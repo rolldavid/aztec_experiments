@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {allowance,safeURL,rankPosts,searchBoards} from './model.mjs';
+import {allowance,safeURL,rankPosts,searchBoards,createInlineAction} from './model.mjs';
 import {boards,posts,ownNames,profiles} from './fixtures.mjs';
 test('992-byte boundary rejects oversized input without truncating',()=>{
  assert.equal(allowance('a'.repeat(992)).valid,true);
@@ -38,4 +38,26 @@ test('every fixture reply has a canonical parent and existing root',()=>{
 
 test('each selectable name has its own public profile with no ownership grouping',()=>{
  for(const name of ownNames){assert(profiles[name], `Missing profile for ${name}`);assert.equal(profiles[name].bot,undefined);assert.deepEqual(Object.keys(profiles[name]).sort(),['bio','color','initials']);}
+});
+
+test('inline reader action captures the clicked target and shares repeated clicks until completion',async()=>{
+ const gate=Promise.withResolvers(),states=[],sent=[];let post='10';
+ const run=createInlineAction({action:()=>({type:'like',post}),perform:async action=>{sent.push(action);await gate.promise;return {status:'confirmed'};},onState:state=>states.push(state)});
+ const first=run();assert.deepEqual(states,['pending']);post='20';assert.equal(run(),first);
+ await Promise.resolve();assert.deepEqual(sent,[{type:'like',post:'10'}]);assert(Object.isFrozen(sent[0]));
+ gate.resolve();assert.equal((await first).status,'confirmed');assert.deepEqual(states,['pending','confirmed']);assert.equal(sent.length,1);
+});
+test('an uncertain reader action cannot be submitted again by its control',async()=>{
+ for(const perform of [async()=>({status:'unknown'}),async()=>{throw Error('private provider details');},async()=>({status:'unexpected'})]){
+  let calls=0;const states=[],run=createInlineAction({action:()=>({type:'preference',kind:1,target:'7',enabled:true}),perform:async action=>{calls++;return perform(action);},onState:(state,action,result)=>states.push({state,result})});
+  assert.equal((await run()).status,'unknown');assert.equal((await run()).status,'unknown');assert.equal(calls,1);
+  assert.deepEqual(states.map(s=>s.state),['pending','unknown']);assert(!JSON.stringify(states).includes('private provider details'));
+ }
+});
+test('setup or a definite failure requires a new explicit click, with current preference selection',async()=>{
+ for(const status of ['blocked','failed','reverted','cancelled']){
+  const sent=[];let enabled=true;
+  const run=createInlineAction({action:()=>({type:'preference',kind:1,target:'7',enabled}),perform:async action=>{sent.push(action);return {status};},onState:()=>{}});
+  await run();assert.equal(sent.length,1);enabled=false;await run();assert.deepEqual(sent.map(a=>a.enabled),[true,false]);
+ }
 });

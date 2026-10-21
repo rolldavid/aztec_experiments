@@ -1818,9 +1818,9 @@ test('immediate post skips review estimation but submission estimates and enforc
  f.state.fee=101n;await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.estimates,1);assert.equal(f.state.sends,0);
  f.state.fee=10n;await f.app.submitPrepared(prepared.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,1);
 });
-test('immediate preparation is restricted to social posting with no caller fee override',async()=>{
+test('immediate preparation rejects unrelated financial actions and caller fee overrides',async()=>{
  for(const options of [{immediate:false},{immediate:true,maximumFee:'999'}])await assert.rejects(fixture().app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One click'},options));
- await assert.rejects(fixture().app.prepare({type:'name',first:'Test',last:'Person'},{immediate:true}));
+ await assert.rejects(fixture().app.prepare({type:'withdraw',deposit:'9'},{immediate:true}));
 });
 
 test('immediate Bok preparation skips review estimates for both authorized request and exact saved post',async()=>{
@@ -1854,4 +1854,19 @@ test('Bok claim receives a detached authenticated purchase router scope only on 
  const prepared=await app.prepare({...f.action,feeReceipt:{...f.receipt,txHash:hex(53)}},{immediate:true});
  assert.equal(f.state.estimates,0);assert.equal(f.state.claimReads[0].bokTopupScope.router,'0x'+'aa'.repeat(20));assert.equal(f.state.claimReads[1].bokTopupScope,undefined);
  assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'River',last:'Moss'},{type:'bio',name:'5',expectedVersion:'0',content:'Exact bio'},{type:'avatar',name:'5',expectedVersion:'0',width:0,height:0,data:''},{type:'preference',kind:1,target:'42',enabled:true,expectedRevision:'0'},{type:'read-marker',thread:'42',throughBlock:'10',expectedRevision:'0'}])test(`immediate ${action.type} retains exact action and one submission estimate`,async()=>{
+ const f=fixture(),prepared=await f.app.prepare(action,{immediate:true});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(prepared.maximumFee,'100');
+ assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);assert.deepEqual(prepared.action,action);
+});
+
+test('immediate actions retain name/revision admission and profile/fee submission checks',async()=>{
+ const named=fixture();named.state.nameRegistered=1n;await assert.rejects(named.app.prepare({type:'name',first:'River',last:'Moss'},{immediate:true}),{code:'ROLLING_NAME_TAKEN'});assert.equal(named.state.sends,0);
+ const preference=fixture();preference.state.preferenceHead=preferenceHead(true,1,'1','11');await assert.rejects(preference.app.prepare({type:'preference',kind:1,target:'42',enabled:true,expectedRevision:'0'},{immediate:true}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});assert.equal(preference.state.sends,0);
+ for(const [action,change] of [
+  [{type:'bio',name:'5',expectedVersion:'0',content:'Exact bio'},f=>{f.state.profileVersion=1;}],
+  [{type:'avatar',name:'5',expectedVersion:'0',width:0,height:0,data:''},f=>{f.state.profileVersion=1;}],
+  [{type:'like',post:'42'},f=>{f.state.fee=101n;}],
+ ]){const f=fixture(),prepared=await f.app.prepare(action,{immediate:true});change(f);await assert.rejects(f.app.submitPrepared(prepared.intentId),undefined,action.type);assert.equal(f.state.sends,0);}
 });

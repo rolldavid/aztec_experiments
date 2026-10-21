@@ -761,3 +761,5 @@ Root owns shared account/runtime integration. funding_investigation implements p
 21October owner expanded scope: post_path_review implements simulation reuse then audits UX; post_publish_plan owns funding receipt consolidation and Bok approval-error/atomic topup redesign; flow_scope_efficiency owns single-operation sync/readiness, nonblocking account views, compact posting cost/balance and closing confirmed composer. Root publishedc00886fe and owns integration/deployment; no contract/private-state resets. No trusted intermediary authorized.
 
 21October Bok batch: post_publish_plan owned atomic contract/receipt/journal; flow_scope_efficiency owned quote UI/session/config; post_path_review independently reviewed both and publisher, plus reader copy cleanup reviewed by root. Inputs frozen after targeted checks; root publishes.
+
+21October follow-up: flow_scope_efficiency implements single-action social/profile flows; post_path_review reader integration and independent panel review; post_publish_plan MetaMask E2E harness investigation; root live disposable-wallet test and publication.

@@ -810,7 +810,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input,options){return exclusive(async()=>{
-      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','claim-deposit','claim-private-fee','claim-bok'].includes(input?.type));
+      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok'].includes(input?.type));
       await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
@@ -847,7 +847,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=await interaction(await selectedContract(record),record);record.encoded=selected.encoded;
-      // Immediate posting uses the application's configured ceiling. Submission
+      // Immediate actions use the application's configured ceiling. Submission
       // estimates once against current state and must stay within this bound.
       if(immediate){
         // Claim validation retains its exact bridge fee payload even when the

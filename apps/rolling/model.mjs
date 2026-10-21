@@ -42,3 +42,23 @@ export function searchBoards(boards, query) {
   const normalized = query.trim().toLocaleLowerCase();
   return boards.filter(b => `${b.name} ${b.description} ${b.id}`.toLocaleLowerCase().includes(normalized));
 }
+
+// A reader control owns one captured action until it settles. An uncertain
+// result can be inspected, but this control cannot submit it a second time.
+export function createInlineAction({action,perform,onState}) {
+  let pending=null,uncertain=null;
+  return function run() {
+    if(pending)return pending;
+    if(uncertain)return Promise.resolve(uncertain);
+    const captured=Object.freeze({...action()});
+    onState('pending',captured);
+    pending=Promise.resolve().then(()=>perform(captured)).then(result=>{
+      if(!['confirmed','reverted','blocked','cancelled','failed','unknown'].includes(result?.status))result={status:'unknown'};
+      if(result.status==='unknown')uncertain=result;
+      onState(result.status,captured,result);return result;
+    },()=>{
+      uncertain={status:'unknown'};onState('unknown',captured,uncertain);return uncertain;
+    }).finally(()=>{pending=null;});
+    return pending;
+  };
+}
