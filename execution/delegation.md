@@ -744,3 +744,11 @@ G21 current signup failure: funding_investigation investigates trusted-read boun
 21 October G21: root sole writer/operator. funding_investigation proposes optional-Bok router/quote/receipt patch; ux_review proposes lazy plugin account/application wiring; publication_prepare proposes narrow SDK dynamic-asset build patch. Agents read-only on repository/services; independent cross-review follows.
 
 21October setup outage: root investigates live service stop source and owns restoration; funding_investigation reviews persistent hosting controls read-only. No browser launches.
+
+21October availability correction: root owns reporting-only monitor and systemd supervision; funding_investigation performs read-only lifecycle/reentry analysis. No browser or whole-onboarding campaigns.
+
+21October parallel feedback intake: owner requests batching six queued issues and parallel implementation. Awaiting issue details; related paths will share one owner and independent groups will use isolated checkouts. Meanwhile publication_prepare reviews supervision publisher, ux_review reviews monitor/startup/drop-ins, root integrates and owns live service changes.
+
+21October feedback batch1: funding_investigation implements immediate Bok checkbox and main-page balance in isolated checkout from6bd5; ux_review independently traces/reviews that flow. Root owns outstanding availability publication. publication_prepare independently reviews that publisher. No browser relaunches, contracts, or whole onboarding for these changes.
+
+21October feedback grouped for parallel implementation: funding_investigation owns @bok mention composer + main-page balance/Add credit in isolated rolling-bok-responsive; ux_review owns account session reuse after creation; publication_prepare owns actual Bok topup failure and ETH-to-USDC payment. Agents coordinate shared interfaces, run focused checks, commit isolated candidates and cross-review. Root integrates and publishes, and finishes prior availability change. No browser relaunches or whole onboarding per component edit.

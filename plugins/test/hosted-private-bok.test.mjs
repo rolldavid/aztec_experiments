@@ -159,7 +159,7 @@ test('one-shot billing owner refuses the active service lease before SDK or evid
  const lease=await acquireHostedLease(directory);
  try{await assert.rejects(runHostedBillingReconciliation({config,receiptFile:'/nonexistent/private-input',env:{}}),/preserve original receipt/);await lease.assertHeld();assert.equal((await fs.readdir(directory)).join(),'hosted.lock');}
  finally{await lease.close();}
- try{await assert.rejects(runHostedBillingReconciliation({config,receiptFile:'/nonexistent/private-input',env:{}}),/preserve original receipt/);assert.deepEqual(await fs.readdir(directory),[]);}
+ try{await assert.rejects(runHostedBillingReconciliation({config,receiptFile:'/nonexistent/private-input',env:{}}),/preserve original receipt/);assert.deepEqual(await fs.readdir(directory),['hosted.lock']);assert.equal(await fs.readFile(path.join(directory,'hosted.lock'),'utf8'),'');}
  finally{await fs.rm(directory,{recursive:true,force:true});}
 });
 test('billing recovery persists original receipt in the actual file store across an interrupted owner',async()=>{
@@ -238,14 +238,14 @@ test('hosted filesystem lease rejects second owner and preserves a replaced lock
  try{
   const lease=await acquireHostedLease(root);await lease.assertHeld();
   assert.equal((await fs.stat(path.join(root,'hosted.lock'))).mode&0o777,0o600);
-  await assert.rejects(acquireHostedLease(root),{code:'EEXIST'});
+  await assert.rejects(acquireHostedLease(root),{code:'HOSTED_LEASE_BUSY'});
   await fs.rename(path.join(root,'hosted.lock'),path.join(root,'original'));
   await fs.writeFile(path.join(root,'hosted.lock'),'replacement',{flag:'wx',mode:0o600});
   await assert.rejects(lease.assertHeld(),/changed/);await assert.rejects(lease.close(),/changed/);
   assert.equal(await fs.readFile(path.join(root,'hosted.lock'),'utf8'),'replacement');
   await fs.unlink(path.join(root,'hosted.lock'));
   const next=await acquireHostedLease(root);await next.close();await next.close();
-  await assert.rejects(fs.stat(path.join(root,'hosted.lock')),{code:'ENOENT'});
+  assert.equal(await fs.readFile(path.join(root,'hosted.lock'),'utf8'),'');
   await assert.rejects(next.assertHeld(),/closed/);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });

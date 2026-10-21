@@ -1,0 +1,15 @@
+test_failure_reports_without_lifecycle_action (__main__.Supervision.test_failure_reports_without_lifecycle_action) ... ok
+test_monitor_has_no_shutdown_or_failure_hooks (__main__.Supervision.test_monitor_has_no_shutdown_or_failure_hooks) ... ok
+test_persistent_supervision_has_no_permanent_restart_limit (__main__.Supervision.test_persistent_supervision_has_no_permanent_restart_limit) ... ok
+test_ready_requires_all_services_and_actual_query_prover_readiness (__main__.Supervision.test_ready_requires_all_services_and_actual_query_prover_readiness) ... ok
+test_restart_state_does_not_stop_healthy_peers (__main__.Supervision.test_restart_state_does_not_stop_healthy_peers) ... ok
+test_startup_check_fails_without_shutdown (__main__.Supervision.test_startup_check_fails_without_shutdown) ... ROLLING_STARTUP_CHECK_UNAVAILABLE
+ok
+test_startup_preserves_control_and_runtime_integrity_checks (__main__.Supervision.test_startup_preserves_control_and_runtime_integrity_checks) ... ROLLING_STARTUP_CHECK_UNAVAILABLE
+ROLLING_STARTUP_CHECK_UNAVAILABLE
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.001s
+
+OK

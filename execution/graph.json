@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "21October account setup outage restored and control fix c5272579 published/pushed. Observer had stopped query/prover/proxy after an observation failure; transient health transport errors now report degraded, retaining strict admission/integrity.42 focused tests pass; broad historical test failures recorded with baseline. Existing user browser reconnect succeeded and wallet chooser rendered. Public checkpointed/proposed readiness passes. Control hashbc00fa0d6a759df9c273e12ccb96720147b9bda824641f5a998a7c1253f6bb18; native manifestf3 and node/app PIDs unchanged. Query/prover/proxy/moderator restored; no new account/payment/browser/contract. Exact original exception unavailable. UI error wording still generic; separate index lifecycle remains outstanding.",
+      "checkpoint": "21October availability correction implemented: reporting-only monitor, non-destructive node startup checks, automatic service restart and kernel-backed lease. Focused checks pass (136 Node, 7 monitor, 26 activation, 16 query); Linux real SIGKILL/systemd restart passed without touching live services. Independent publisher review resolving final rollback details before no-restart publication. In parallel, funding_investigation implements urgent immediate Bok checkbox/main-page balance UX in isolated checkout; ux_review reviews it. Other user feedback intake open.",
       "execution_lane": "operational readiness",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

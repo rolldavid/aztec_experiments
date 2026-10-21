@@ -1300,6 +1300,33 @@ def query_host_config(record):
 # preserve these public source addresses; systemd filters both directions.
 QUERY_ORIGIN_FACING_CIDRS = ('13.124.199.0/24', '130.176.0.0/18', '130.176.128.0/21', '130.176.136.0/23', '130.176.140.0/22', '130.176.144.0/20', '130.176.160.0/19', '130.176.192.0/19', '130.176.64.0/21', '130.176.72.0/22', '130.176.76.0/24', '130.176.78.0/23', '130.176.80.0/22', '130.176.86.0/23', '130.176.88.0/21', '130.176.96.0/19', '15.158.0.0/16', '18.68.0.0/16', '204.246.166.0/24', '205.251.218.0/24', '24.110.128.0/17', '3.172.0.0/18', '3.172.64.0/18', '3.29.57.0/26', '51.74.20.0/24', '51.74.21.0/24', '51.74.22.0/24', '52.46.0.0/18', '52.82.128.0/23', '52.82.134.0/23', '54.182.128.0/20', '54.182.144.0/21', '54.182.154.0/23', '54.182.156.0/22', '54.182.160.0/21', '54.182.172.0/22', '54.182.176.0/21', '54.182.184.0/22', '54.182.188.0/23', '54.182.224.0/21', '54.182.240.0/21', '54.182.248.0/22', '54.239.134.0/23', '54.239.170.0/23', '54.239.204.0/22', '54.239.208.0/21', '64.252.128.0/18', '64.252.64.0/18', '70.132.0.0/18')
 
+SUPERVISION_UNITS = ('rolling-node','rolling-query','board-prover','board-prover-proxy','rolling-application','rolling-application-proxy','rolling-moderator','rolling-bok-testnet','rolling-bok-artifact-proxy')
+def supervision_dropin(service):
+    if service not in SUPERVISION_UNITS:raise Invalid('Unknown supervised service')
+    dependencies={'rolling-node':('rolling-egress.service','docker.service'),'rolling-query':('rolling-egress.service','rolling-node.service'),
+      'rolling-application':('rolling-egress.service','rolling-node.service'),
+      'rolling-application-proxy':('rolling-egress.service','rolling-application.service'),
+      'rolling-moderator':('rolling-egress.service','docker.service rolling-query.service'),
+      'rolling-bok-testnet':('rolling-egress.service','docker.service'),
+      'rolling-bok-artifact-proxy':('rolling-egress.service','rolling-bok-testnet.service')}
+    unit='[Unit]\nStartLimitIntervalSec=0\nOnFailure=\n'
+    if service in dependencies:
+        required,wanted=dependencies[service]
+        unit+='Requires=\nRequires='+required+'\nBindsTo=\nWants='+wanted+'\n'
+    unit+='[Service]\nRestart=always\nRestartSec=5s\nKillMode=control-group\n'
+    if service=='rolling-node':unit+='ExecStartPre=\nExecStartPre=/usr/bin/python3 /usr/local/lib/rolling-supervision/supervision.py --check\n'
+    return unit
+
+def supervision_properties(h,service):
+    drop=pathlib.Path('/etc/systemd/system')/(service+'.service.d')/'availability.conf'
+    if not drop.exists():return {'Restart':'no','DropInPaths':''}
+    if not h['PINS'].get('persistentHosting'):raise Invalid('Supervision requires persistent hosting')
+    for path in (drop,drop.parent):
+        info=path.lstat()
+        if path.is_symlink() or info.st_uid!=0 or stat.S_IMODE(info.st_mode)&0o022:raise Invalid('Supervision ownership')
+    if not drop.is_file() or drop.read_text()!=supervision_dropin(service):raise Invalid('Supervision policy changed')
+    return {'Restart':'always','DropInPaths':str(drop)}
+
 def query_host_unit(release):
     # release is derived solely from the already checked manifest digest.
     if not re.fullmatch('/opt/board-prover/releases/rolling-[a-f0-9]{16}',str(release)):raise Invalid('Query release path')
@@ -1385,7 +1412,7 @@ def query_host_readback(h, *, runtime=False):
     raw=h['run'](['systemctl','show','rolling-query.service','--property=User,Group,SupplementaryGroups,Restart,ActiveState,MainPID,DropInPaths,MemoryMax'],capture=True,timeout=5)
     if len(raw)>4096:raise Invalid('Query service state')
     rows=[line.partition('=') for line in raw.splitlines()];values={k:v for k,sep,v in rows}
-    exact={'User':'rolling-query','Group':'rolling-query','SupplementaryGroups':'rolling-runtime','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(2*1024**3)}
+    exact={'User':'rolling-query','Group':'rolling-query','SupplementaryGroups':'rolling-runtime','ActiveState':'active','MemoryMax':str(2*1024**3),**supervision_properties(h,'rolling-query')}
     if len(rows)!=len(values) or any(not sep for _,sep,_ in rows) or set(values)!=set(exact)|{'MainPID'} or any(values[k]!=v for k,v in exact.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Query service state')
     with open(pathlib.Path('/proc')/values['MainPID']/'status','rb') as f:data=f.read(16385)
     if len(data)>16384:raise Invalid('Query process identity')
@@ -1873,7 +1900,7 @@ def proxy_host_observe(h, *, runtime=False):
         if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o644 or path.read_text()!=expected:raise Invalid('Proxy installed source')
     raw=h['run'](['systemctl','show','board-prover-proxy.service','--property=User,Group,Restart,ActiveState,MainPID,DropInPaths,MemoryMax,Type,TimeoutStartUSec,TimeoutStopUSec'],capture=True,timeout=5)
     rows=[line.partition('=') for line in raw.splitlines()];values={k:v for k,_,v in rows}
-    expected={'User':'board-prover','Group':'board-prover','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(128*1024**2),'Type':'notify','TimeoutStartUSec':'15s','TimeoutStopUSec':'5s'}
+    expected={'User':'board-prover','Group':'board-prover','ActiveState':'active','MemoryMax':str(128*1024**2),'Type':'notify','TimeoutStartUSec':'15s','TimeoutStopUSec':'5s',**supervision_properties(h,'board-prover-proxy')}
     if len(rows)!=len(values) or set(values)!=set(expected)|{'MainPID'} or any(values[k]!=v for k,v in expected.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Proxy service state')
     executable=pathlib.Path('/proc')/values['MainPID']/'exe'
     if executable.resolve()!=h['RELEASE']/'caddy/caddy':raise Invalid('Proxy process executable')
@@ -1922,7 +1949,7 @@ def activation_service(h, uid, gid, config_sha):
         key,sep,value=line.partition('=')
         if not sep or key in values:raise Invalid('Prover service properties')
         values[key]=value
-    exact={'User':'board-prover','Group':'board-prover','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(24*1024**3)}
+    exact={'User':'board-prover','Group':'board-prover','ActiveState':'active','MemoryMax':str(24*1024**3),**supervision_properties(h,'board-prover')}
     if set(values)!=set(exact)|{'MainPID'} or any(values[k]!=v for k,v in exact.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Prover service controls')
     status=pathlib.Path('/proc')/values['MainPID']/'status'
     with open(status,'rb') as f:data=f.read(16385)

@@ -1,0 +1,5 @@
+{
+    "Status": "Success",
+    "Output": "✔ kernel lease excludes contenders and preserves the inode across normal restart (46.932615ms)\n✔ actual process death releases kernel ownership without changing an uncertain journal (65.717801ms)\n✔ a path replacement is rejected and never removed by the old owner (14.373317ms)\n✔ symlinks, hardlinks and public lock files fail without modifying their targets (1.963246ms)\nℹ tests 4\nℹ suites 0\nℹ pass 4\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 175.677445\n{\"linuxKernelLeaseTests\": \"passed\", \"actualSystemdCrashRecovery\": true, \"restartCount\": 1, \"journalUnchanged\": true, \"liveServicesTouched\": false}\n",
+    "Error": ""
+}

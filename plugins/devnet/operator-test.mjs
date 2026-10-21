@@ -130,10 +130,10 @@ if(focused){
  test('development lease rejects symlinked parent and preserves a replaced owner inode',async()=>{
   const {acquireDevelopmentLease}=await import('./start.mjs');const parent=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-owner-'))),root=path.join(parent,'state'),link=path.join(parent,'link');
   try{await fs.mkdir(root,{mode:0o700});await fs.symlink(parent,link);await assert.rejects(acquireDevelopmentLease(path.join(link,'state')),/canonical/);
-   const lease=await acquireDevelopmentLease(root);await lease.assertHeld();await assert.rejects(acquireDevelopmentLease(root),{code:'EEXIST'});
+   const lease=await acquireDevelopmentLease(root);await lease.assertHeld();await assert.rejects(acquireDevelopmentLease(root),{code:'HOSTED_LEASE_BUSY'});
    const lock=path.join(root,'hosted.lock');await fs.rename(lock,lock+'.original');await fs.writeFile(lock,'replacement',{mode:0o600,flag:'wx'});
    await assert.rejects(lease.assertHeld(),/changed/);await assert.rejects(lease.close(),/changed/);assert.equal(await fs.readFile(lock,'utf8'),'replacement');
-   await fs.unlink(lock);const second=await acquireDevelopmentLease(root);await second.close();await assert.rejects(fs.stat(lock),{code:'ENOENT'});
+   await fs.unlink(lock);const second=await acquireDevelopmentLease(root);await second.close();assert.equal(await fs.readFile(lock,'utf8'),'');
    await fs.chmod(root,0o755);await assert.rejects(acquireDevelopmentLease(root),/private/);
   }finally{await fs.rm(parent,{recursive:true,force:true});}
  });

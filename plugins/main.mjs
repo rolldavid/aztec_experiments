@@ -1,3 +1,5 @@
+import {acquireHostedLease} from './hosted-lease.mjs';
+export {acquireHostedLease};
 import {prepareInProcessNativeRuntime} from '../prover/runtime.mjs';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import fs from 'node:fs/promises';
@@ -72,22 +74,6 @@ export async function runHostedService({config,env=process.env,onError=error=>co
     }});
     return {address:server.address,close};
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Service startup and cleanup failed');}throw error;}
-}
-
-/** A crash leaves the existing lock for explicit reconciliation. No stale-lock
- * takeover; cleanup removes only the inode this process exclusively created. */
-export async function acquireHostedLease(directory){
- const lockPath=path.join(directory,'hosted.lock'),lock=await fs.open(lockPath,'wx',0o600);
- let identity,closed=false;
- const same=stat=>stat.isFile()&&!stat.isSymbolicLink()&&stat.dev===identity.dev&&stat.ino===identity.ino;
- async function close(){
-  if(closed)return;closed=true;
-  try{if(identity){const current=await fs.lstat(lockPath);assert(same(current),'Hosted lease path changed');await fs.unlink(lockPath);}}
-  finally{await lock.close();}
- }
- try{identity=await lock.stat();await lock.writeFile(String(process.pid));await lock.sync();}
- catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Hosted lease acquisition failed');}throw error;}
- return {async assertHeld(){assert(!closed,'Hosted lease closed');assert(same(await fs.lstat(lockPath)),'Hosted lease path changed');},close};
 }
 
 /** Decode private actor material in memory; neither parser text nor raw SDK

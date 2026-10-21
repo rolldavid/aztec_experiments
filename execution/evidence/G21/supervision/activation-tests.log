@@ -1,0 +1,41 @@
+test_activation_support_is_source_bound_and_not_automatic_at_qualification (__main__.ProverActivation.test_activation_support_is_source_bound_and_not_automatic_at_qualification) ... ok
+test_actual_paths_preserves_official_node_file_links_and_hardens_targets_without_following (__main__.ProverActivation.test_actual_paths_preserves_official_node_file_links_and_hardens_targets_without_following) ... ok
+test_actual_paths_prevalidates_all_links_before_any_identity_or_permission_mutation (__main__.ProverActivation.test_actual_paths_prevalidates_all_links_before_any_identity_or_permission_mutation) ... ok
+test_actual_paths_rejects_late_special_file_or_parent_before_any_mutation (__main__.ProverActivation.test_actual_paths_rejects_late_special_file_or_parent_before_any_mutation) ... ok
+test_actual_traffic_parser_accepts_closed_header_detail_layouts (__main__.ProverActivation.test_actual_traffic_parser_accepts_closed_header_detail_layouts) ... ok
+test_actual_traffic_parser_rejects_wrong_duplicate_unknown_and_family_mappings (__main__.ProverActivation.test_actual_traffic_parser_rejects_wrong_duplicate_unknown_and_family_mappings) ... ok
+test_actual_unsafe_link_after_durable_intent_shuts_down_and_refuses_replay (__main__.ProverActivation.test_actual_unsafe_link_after_durable_intent_shuts_down_and_refuses_replay) ... ok
+test_both_address_families_must_execute_owner_mark_and_keep_class_mapping (__main__.ProverActivation.test_both_address_families_must_execute_owner_mark_and_keep_class_mapping) ... ok
+test_closed_scope_rejects_provider_keys_wrong_network_coercion_and_duplicates (__main__.ProverActivation.test_closed_scope_rejects_provider_keys_wrong_network_coercion_and_duplicates) ... ok
+test_evidence_requires_exact_receipt_scope_artifacts_and_ready_not_opaque_hash (__main__.ProverActivation.test_evidence_requires_exact_receipt_scope_artifacts_and_ready_not_opaque_hash) ... ok
+test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_contains (__main__.ProverActivation.test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_contains) ... ok
+test_live_scope_response_requires_fresh_readiness_and_exact_checkpoint (__main__.ProverActivation.test_live_scope_response_requires_fresh_readiness_and_exact_checkpoint) ... ok
+test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused (__main__.ProverActivation.test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused) ... ok
+test_pending_attestation_is_not_active_and_expired_intent_fails_closed (__main__.ProverActivation.test_pending_attestation_is_not_active_and_expired_intent_fails_closed) ... ok
+test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent (__main__.ProverActivation.test_persistent_prover_admission_after_historical_deadline_keeps_scope_and_once_intent) ... ok
+test_prover_configuration_is_fixed_loopback_no_capabilities_admin_or_extra_plugins (__main__.ProverActivation.test_prover_configuration_is_fixed_loopback_no_capabilities_admin_or_extra_plugins) ... ok
+test_proxy_observer_requires_bound_state_and_expires_incomplete_transition (__main__.ProverActivation.test_proxy_observer_requires_bound_state_and_expires_incomplete_transition) ... ok
+test_proxy_scope_templates_and_actual_pinned_archive (__main__.ProverActivation.test_proxy_scope_templates_and_actual_pinned_archive) ... ok
+test_proxy_transition_one_intent_before_start_and_no_replay (__main__.ProverActivation.test_proxy_transition_one_intent_before_start_and_no_replay) ... ok
+test_runtime_health_distinguishes_degraded_query_from_invalid_service (__main__.ProverActivation.test_runtime_health_distinguishes_degraded_query_from_invalid_service) ... ok
+test_runtime_health_transport_failure_is_degraded_but_admission_is_strict (__main__.ProverActivation.test_runtime_health_transport_failure_is_degraded_but_admission_is_strict) ... /opt/homebrew/Cellar/python@3.14/3.14.8_2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py:484: ResourceWarning: Implicitly cleaning up <HTTPError 301: 'Invalid boundary'>
+  _warnings.warn(self.warn_message, ResourceWarning)
+/opt/homebrew/Cellar/python@3.14/3.14.8_2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py:484: ResourceWarning: Implicitly cleaning up <HTTPError 401: 'Invalid boundary'>
+  _warnings.warn(self.warn_message, ResourceWarning)
+/opt/homebrew/Cellar/python@3.14/3.14.8_2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py:484: ResourceWarning: Implicitly cleaning up <HTTPError 403: 'Invalid boundary'>
+  _warnings.warn(self.warn_message, ResourceWarning)
+/opt/homebrew/Cellar/python@3.14/3.14.8_2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py:484: ResourceWarning: Implicitly cleaning up <HTTPError 503: 'Unavailable'>
+  _warnings.warn(self.warn_message, ResourceWarning)
+ok
+test_runtime_observe_reports_degraded_without_changing_activation_or_proof_qualification (__main__.ProverActivation.test_runtime_observe_reports_degraded_without_changing_activation_or_proof_qualification) ... /opt/homebrew/Cellar/python@3.14/3.14.8_2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py:484: ResourceWarning: Implicitly cleaning up <HTTPError 404: 'Invalid boundary'>
+  _warnings.warn(self.warn_message, ResourceWarning)
+ok
+test_runtime_query_probe_unavailable_never_accepts_authentication_bypass (__main__.ProverActivation.test_runtime_query_probe_unavailable_never_accepts_authentication_bypass) ... ok
+test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_contains (__main__.ProverActivation.test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_contains) ... ok
+test_sdk_scope_check_uses_release_artifacts_and_canonical_portal_and_bok_checks (__main__.ProverActivation.test_sdk_scope_check_uses_release_artifacts_and_canonical_portal_and_bok_checks) ... ok
+test_uid_rules_reject_missing_duplicate_overwrite_wrong_uid_and_unbounded_output (__main__.ProverActivation.test_uid_rules_reject_missing_duplicate_overwrite_wrong_uid_and_unbounded_output) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.144s
+
+OK
