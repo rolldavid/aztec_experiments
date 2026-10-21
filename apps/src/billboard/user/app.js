@@ -97,7 +97,7 @@ element('resumeOperation').onclick=async()=>{try{const result=await application.
 function initialize(){
   view.identity(_getPublicConfig());refreshMessages();
   if(!window.__aztec?.createPXE){waitForBundle(initialize);return;}
-  initWalletButtons('walletButtonsContainer',{autoPasskey:true,statusId:'setupStatus',canEndSession:()=>!isBusy(),onReady:setupAccount,onChange:state=>{invalidated=state.invalidated;if(invalidated){ready=false;element('depositBtn').disabled=true;element('withdrawConfirm').disabled=true;updateDraft();}}});
+  initWalletButtons('walletButtonsContainer',{statusId:'setupStatus',canEndSession:()=>!isBusy(),onReady:setupAccount,onChange:state=>{invalidated=state.invalidated;if(invalidated){ready=false;element('depositBtn').disabled=true;element('withdrawConfirm').disabled=true;updateDraft();}}});
   const button=view.element('button','Balance & activity','secondary');button.onclick=()=>{showAccount();element('wbAccountMenu').open=false;};element('accountActions').append(button);
   element('setupStatus').textContent='';poller=setInterval(()=>{if(!document.hidden){refreshMessages();refreshReadiness();}},15000);
 }

@@ -69,7 +69,7 @@ const sharedFiles = {
   CRS_CLIENT: loadShared('crs-client.js'),
   POSEIDON2: loadShared('poseidon2.js'),
   ETHERS: loadShared('ethers.min.js'),
-  WALLET_BUTTONS: loadShared('wallet-providers.js') + '\n' + loadShared('passkey-wallet.js') + '\n' + loadShared('wallet-backup.js') + '\n' + loadShared('claim-secret-store.js') + '\n' + loadShared('account.js') + '\n' + loadShared('wallet-buttons.js'),
+  WALLET_BUTTONS: loadShared('wallet-providers.js') + '\n' + loadShared('ethereum-account-session.js') + '\n' + loadShared('claim-secret-store.js') + '\n' + loadShared('account.js') + '\n' + loadShared('wallet-buttons.js'),
   APP_ENV: loadShared('operation-state.js') + '\n' + loadShared('proving-preference.js') + '\n' + loadShared('app-env.js') + '\n' + loadShared('application.js') + '\n' + loadShared('proving-toggle.js'),
   MODERATION_POLICY: loadShared('moderation-policy.js'),
 };
