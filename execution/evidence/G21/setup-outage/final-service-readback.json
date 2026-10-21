@@ -1,0 +1,7 @@
+{
+  "CommandId": "4aa3f812-82f6-4ba6-b826-1a3caadc45e3",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "Result=success\nExecMainExitTimestamp=\nId=rolling-query.service\nActiveState=active\n\nResult=success\nExecMainExitTimestamp=\nId=board-prover.service\nActiveState=active\n\nResult=success\nExecMainExitTimestamp=\nId=board-prover-proxy.service\nActiveState=active\n\nResult=success\nExecMainExitTimestamp=Wed 2026-10-21 03:48:44 UTC\nId=rolling-application-attest.service\nActiveState=inactive\n\nResult=success\nId=rolling-attest.timer\nActiveState=active\n\nResult=success\nId=rolling-application-attest.timer\nActiveState=active\n",
+  "StandardErrorContent": ""
+}

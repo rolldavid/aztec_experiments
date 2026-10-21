@@ -1,0 +1,7 @@
+{
+  "CommandId": "3792db0a-3505-4ef8-81c9-d983232698fa",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"published\": true, \"sourceSha256\": \"aa4d4c41af7346aba41495bae40a8921f4461160cd89e755e8270acc36e0d6da\", \"controlSourceSha256\": \"bc00fa0d6a759df9c273e12ccb96720147b9bda824641f5a998a7c1253f6bb18\", \"attestorSha256\": \"0891e16b218036c69b3430d2c78246ac1c6c49e7a1e54648e7b2100c23d2ffe7\", \"manifestSha256\": \"f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27\", \"pidsUnchanged\": {\"rolling-node\": \"4287\", \"rolling-query\": \"199731\", \"board-prover\": \"199732\", \"board-prover-proxy\": \"199733\", \"rolling-application\": \"138589\", \"rolling-application-proxy\": \"138592\", \"rolling-moderator\": \"199809\"}, \"proverAvailability\": \"ready\", \"queryAvailability\": \"ready\"}\n",
+  "StandardErrorContent": ""
+}

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October setup outage: actual HTTP504 traced to application-observer containment of query/prover/proxy at20October19:52UTC. Original services restored after pinned release/control verification; existing user browser reconnected and reached wallet chooser without new browser/account/transaction. Reviewed fix classifies runtime probe transport failure as degraded while preserving strict admission and integrity checks.42 affected tests pass; broad historical suite failures reproduced on baseline. Publishing control-overlay amendment only; native/app processes and chain identity remain unchanged.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October account setup outage restored and control fix c5272579 published/pushed. Observer had stopped query/prover/proxy after an observation failure; transient health transport errors now report degraded, retaining strict admission/integrity.42 focused tests pass; broad historical test failures recorded with baseline. Existing user browser reconnect succeeded and wallet chooser rendered. Public checkpointed/proposed readiness passes. Control hashbc00fa0d6a759df9c273e12ccb96720147b9bda824641f5a998a7c1253f6bb18; native manifestf3 and node/app PIDs unchanged. Query/prover/proxy/moderator restored; no new account/payment/browser/contract. Exact original exception unavailable. UI error wording still generic; separate index lifecycle remains outstanding.
 
 ## Ready internal work
 
