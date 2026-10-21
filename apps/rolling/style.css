@@ -42,3 +42,5 @@ main h1,main h2,main h3,.post>p,.post-top>div{overflow-wrap:anywhere;min-width:0
 .archive-page footer{padding:24px;overflow-wrap:anywhere}
 .archive-page .post-body a{overflow-wrap:anywhere}
 @media(max-width:700px){.archive-page .feed{margin:0}}
+
+.bok-balance{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem 1rem;padding:.8rem 0;margin-bottom:1rem;border-bottom:1px solid var(--line)}.bok-balance[hidden],.bok-invitation[hidden]{display:none}.bok-balance span{color:var(--muted);font-size:14px}.bok-balance .button{min-height:36px}.bok-invitation{padding:1rem;background:var(--paper);border:1px solid var(--line);border-radius:8px;margin:1rem 0}.bok-invitation p{font-size:14px}

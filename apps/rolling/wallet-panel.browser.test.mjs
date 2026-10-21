@@ -1513,15 +1513,16 @@ for(const [defaults,expected,label]of [
  assert.equal(await page.evaluate(()=>test.owned+(test.bokReads??0)+(test.moderatorReads??0)),0);
  await page.locator('[data-action-confirm]').click();await page.waitForFunction(()=>test.effects===1);assert.equal((await counts(page)).sends,1);
 });
-test('G17 Bok invitation retains reply ancestry and message when toggled',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000000');await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
- assert.equal(await page.evaluate(()=>test.bokReads??0),0);
- await page.getByLabel('Message',{exact:true}).fill('Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).check();
- await page.waitForFunction(()=>test.bokReads===1&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
- assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Help me with this');await page.getByLabel('Ask Bok to reply',{exact:true}).uncheck();
- assert.equal(await page.getByRole('heading',{name:'Reply',exact:true}).count(),1);await page.getByLabel('Ask Bok to reply',{exact:true}).check();
+test('Bok mentions retain reply ancestry and editing stays available during a pending balance read',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.hold='bok';});await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
+ await page.waitForFunction(()=>test.release);await page.getByLabel('Message',{exact:true}).fill('Help me @bok with this');
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'false');assert.equal(await page.getByLabel('Message',{exact:true}).isEnabled(),true);
+ assert.equal(await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).isVisible(),true);
+ await page.getByLabel('Message',{exact:true}).fill('Help me with this');assert.equal(await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).isVisible(),false);
+ await page.getByLabel('Message',{exact:true}).fill('Help me @bok with this');await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.getByText('Bok balance: 1 USDC',{exact:true}).waitFor();assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Help me @bok with this');
  await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
- const a=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(a.type,'bok');assert.equal(a.parent,'10');assert.equal(a.root,'1');assert.equal(a.subboard,'3');assert.equal(a.content,'Help me with this');assert.equal(a.budget,'250000');assert.equal((await counts(page)).sends,0);
+ const a=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(a.type,'bok');assert.equal(a.parent,'10');assert.equal(a.root,'1');assert.equal(a.subboard,'3');assert.equal(a.content,'Help me @bok with this');assert.equal(a.budget,'250000');assert.equal((await counts(page)).sends,0);
 });
 test('G17 saved items load on opening and technical progress stays in details',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByText('Your saved choices are ready.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.prepares),0);
@@ -1657,10 +1658,8 @@ test('G21 unfinished signup refund uses the connected wallet without an old acco
 test('optional Bok failure leaves an ordinary reply editable and never reads again automatically',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokConfigured=true;test.failure='bok';});
  await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await page.locator('[data-action-review]').waitFor();
- assert.equal(await page.evaluate(()=>test.bokReads??0),0);await page.getByLabel('Message',{exact:true}).fill('A reply without the assistant');
- await page.getByLabel('Ask Bok to reply',{exact:true}).click();await page.getByRole('alert').waitFor();
- assert.equal(await page.evaluate(()=>test.bokReads),1);assert.equal(await page.getByLabel('Ask Bok to reply',{exact:true}).isChecked(),false);
- assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'A reply without the assistant');
+ await page.waitForFunction(()=>test.bokReads===1);await page.getByLabel('Message',{exact:true}).fill('A reply without the assistant');
+ assert.equal(await page.getByLabel('Message',{exact:true}).isEnabled(),true);assert.equal(await page.getByLabel('Ask Bok to reply',{exact:true}).count(),0);
  await page.locator('[data-action-review]').click();await page.locator('[data-action-confirm]').waitFor();
  const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);
  assert.equal(action.type,'reply');assert.equal(action.parent,'10');assert.equal(action.root,'1');assert.equal(action.content,'A reply without the assistant');
