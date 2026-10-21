@@ -335,3 +335,8 @@ test('explicit fresh account route opens wallet selection and continues into unf
  await f.document.until(()=>f.calls.status===1&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.equal(f.calls.signIn,1);assert.equal(f.calls.sessions,1);assert(!f.document.body.textContent.includes('Recover the existing deposit'));
 });
+
+test('fresh account action reloads the existing page with a client-side route',async t=>{
+ const f=signInFixture(t);const old=globalThis.location,location={hash:'#/home',reloads:0,reload(){this.reloads++;}};globalThis.location=location;t.after(()=>{globalThis.location=old;});
+ await f.panel.initialize();f.panel.open();const start=f.document.querySelectorAll('button').find(b=>b.textContent==='Start new test account');assert(start);start.fire('click');assert.equal(location.hash,'#/new-account');assert.equal(location.reloads,1);
+});

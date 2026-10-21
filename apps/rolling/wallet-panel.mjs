@@ -422,7 +422,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function startTestAccount(){
   if(busy||intent)return;
-  const url=new URL(location.href);url.searchParams.set('new-account','1');url.hash='/home';location.assign(url.href);
+  location.hash='#/new-account';location.reload();
  }
  function signOut(){return work(async()=>{
   blocked=true;clearPrivateView();render();

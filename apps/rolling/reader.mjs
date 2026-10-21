@@ -4,7 +4,8 @@ import {createMessageContent as richText,createInlineAction} from './model.mjs';
 import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
-let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
+const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
+let controller,sequence=0,route=currentRoute(),main,loadedPages=1;
 let walletPanel,privatePanel,savedItemsLoad,accountPreparation;
 async function preparePublicAssetCache(){
  if(!navigator.serviceWorker)return;
@@ -301,7 +302,7 @@ async function render(){
 addEventListener('pagehide',()=>{sequence++;controller?.abort();});
 addEventListener('pageshow',event=>{if(event.persisted)render();});
 document.querySelector('.skip').addEventListener('click',skipToContent);
-addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
+addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=currentRoute();render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 render();
 // Restore this browser’s saved account without opening the panel or prompting a wallet.

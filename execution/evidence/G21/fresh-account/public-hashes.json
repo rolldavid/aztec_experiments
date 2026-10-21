@@ -1,0 +1,18 @@
+{
+  "/wallet-panel.mjs": {
+    "sha256": "b665bb50676597d1e0bdcb159155b54e2861e29dc91b81682eed155e1a786e29",
+    "matches": true
+  },
+  "/wallet/runtime.mjs": {
+    "sha256": "29e19b14b753b274ef3e5dd503ffa34ef03d38e419e03258b83ae1e526dbda77",
+    "matches": true
+  },
+  "/wallet/account.js": {
+    "sha256": "75e5ad1eb51cac5cd8886da210549384ec529ee941eb633ea780649cb42124cc",
+    "matches": true
+  },
+  "/wallet/ethereum-account-session.js": {
+    "sha256": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b",
+    "matches": true
+  }
+}

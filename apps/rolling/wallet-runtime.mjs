@@ -119,13 +119,13 @@ async function load(signal){
   return fundingWalletStatus();
  };
  const canStartTestAccount=['11155111','31337'].includes(String(config.network.chainId));
- const startingTestAccount=()=>canStartTestAccount&&new URL(globalThis.location.href).searchParams.get('new-account')==='1';
+ const startingTestAccount=()=>canStartTestAccount&&globalThis.location.hash==='#/new-account';
  const signInWallet=async (id,{freshAccount=startingTestAccount()}={})=>{
   if(globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
   const selected=globalThis.BillboardWalletProviders.list().find(entry=>entry.id===id);
   if(!selected)throw failed();
   await account.connect(selected.provider,selected.name,{deriveAccount:true,providerId:selected.rdns??selected.id,freshAccount});
-  if(startingTestAccount()){const url=new URL(globalThis.location.href);url.searchParams.delete('new-account');globalThis.history.replaceState(null,'',url);}
+  if(startingTestAccount()){const url=new URL(globalThis.location.href);url.hash='/home';globalThis.history.replaceState(null,'',url);}
   return true;
  };
  const restoreAccount=()=>startingTestAccount()?Promise.resolve(false):account.restoreRemembered();
