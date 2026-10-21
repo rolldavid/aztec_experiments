@@ -198,7 +198,42 @@ test('mock transport: one request on failure; no retry or secret cause, strict r
   let calls=0;set(async(url,init)=>{calls++;assert.equal(url,'https://trusted.example/prover/v1/node');assert.equal(init.redirect,'error');assert.equal(init.credentials,'omit');assert.equal(init.referrerPolicy,'no-referrer');throw Error('PRIVATE_SENTINEL');});
   await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);
 }));
-for(const [label,response] of [['redirect',()=>new Response('',{status:302,headers:{location:'https://ordinary.example'}})],['invalid JSON',()=>new Response('PRIVATE_SENTINEL')],['HTTP failure',()=>new Response('PRIVATE_SENTINEL',{status:503})]])test('mock transport: '+label+' fails without retry',async()=>withFetch(async set=>{let calls=0;set(async()=>{calls++;return response();});await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);}));
+for(const [label,response] of [['redirect',()=>new Response('',{status:302,headers:{location:'https://ordinary.example'}})],['invalid JSON',()=>new Response('PRIVATE_SENTINEL')],['HTTP failure',()=>new Response('PRIVATE_SENTINEL',{status:400})]])test('mock transport: '+label+' fails without retry',async()=>withFetch(async set=>{let calls=0;set(async()=>{calls++;return response();});await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);}));
+for(const status of [502,503,504])test('mock transport: transient '+status+' retries one read batch then uses normal SDK validation',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));let calls=0,first;
+ set(async(url,init)=>{calls++;if(calls===1){first=init.body;return new Response('PRIVATE_SENTINEL',{status});}if(calls===2)assert.equal(init.body,first);return new Response(jsonStringify(await responseFor(f,JSON.parse(init.body))));});
+ const node=await create();assert.equal(isTrustedPrivateNode(node),true);assert.equal(f.calls.filter(([name])=>name==='getNodeInfo').length,1);
+}));
+test('mock transport: bridge witness read batch retries identical bytes and cancels gateway body',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));f.node.getL1ToL2MessageMembershipWitness=async()=>undefined;
+ set(async(url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));const node=await create();let calls=0,cancels=0,first;
+ set(async(url,init)=>{calls++;if(calls===1){first=init.body;return new Response(new ReadableStream({cancel(){cancels++;}}),{status:504});}assert.equal(init.body,first);assert.equal(cancels,1);return new Response(jsonStringify(await responseFor(f,JSON.parse(init.body))));});
+ const [witness,info]=await Promise.all([node.getL1ToL2MessageMembershipWitness(8,h(1)),node.getNodeInfo()]);assert.equal(witness,undefined);assert.equal(info.l1ChainId,31337);assert.equal(JSON.parse(first).length,2);assert.equal(calls,2);
+}));
+test('mock transport: persistent gateway read failure is bounded to two attempts',async()=>withFetch(async set=>{
+ let calls=0;set(async()=>{calls++;return new Response('PRIVATE_SENTINEL',{status:504});});await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,2);
+}));
+for(const variant of ['mutation','mixed batch','simulation','RPC rejection','malformed JSON','schema rejection','version rejection','unknown transport','HTTP 408','HTTP 429'])test('mock transport: '+variant+' never triggers gateway retry',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+ set(async(url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));const node=await create();let calls=0,batch;
+ set(async(url,init)=>{calls++;batch=JSON.parse(init.body);
+  if(variant==='unknown transport')throw Error('PRIVATE_SENTINEL');
+  if(variant==='malformed JSON')return new Response('PRIVATE_SENTINEL');
+  if(variant==='RPC rejection')return new Response(jsonStringify(batch.map(r=>({id:r.id,jsonrpc:'2.0',error:{code:-32000,message:'PRIVATE_SENTINEL'}}))));
+  if(variant==='schema rejection')return new Response(jsonStringify(batch.map(r=>({id:r.id,jsonrpc:'2.0',result:'PRIVATE_SENTINEL'}))));
+  if(variant==='version rejection')return new Response(jsonStringify(await responseFor(f,batch)),{headers:{'x-aztec-l1ChainId':'1'}});
+  return new Response('PRIVATE_SENTINEL',{status:variant==='HTTP 408'?408:variant==='HTTP 429'?429:504});
+ });
+ if(variant==='mixed batch'){
+  const outcomes=await Promise.allSettled([node.sendTx({fixture:'PRIVATE_SENTINEL'}),node.getNodeInfo()]);assert(outcomes.every(x=>x.status==='rejected'&&x.reason.code==='BB_TRUSTED_NODE_UNAVAILABLE'));assert.equal(batch.length,2);
+ }else await rejects(()=>variant==='mutation'?node.sendTx({fixture:'PRIVATE_SENTINEL'}):variant==='simulation'?node.simulatePublicCalls({fixture:'PRIVATE_SENTINEL'}):node.getNodeInfo(),'UNAVAILABLE');
+ assert.equal(calls,1);
+}));
+test('mock transport: missing bridge witness remains a valid empty result without retry',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));f.node.getL1ToL2MessageMembershipWitness=async()=>undefined;let calls=0;
+ set(async(url,init)=>{calls++;return new Response(jsonStringify(await responseFor(f,JSON.parse(init.body))));});const node=await create();calls=0;
+ assert.equal(await node.getL1ToL2MessageMembershipWitness(8,h(1)),undefined);assert.equal(calls,1);
+}));
 test('mock transport with real SDK schema: brand, public inspection, no submission retries',async()=>withFetch(async set=>{
   const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));let sends=0;
   set(async(url,init)=>{

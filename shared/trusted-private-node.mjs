@@ -1,5 +1,6 @@
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
+import {retry,makeBackoff,NoRetryError} from '@aztec-labs/foundation/retry';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
 
@@ -177,12 +178,39 @@ function endpoint(value, allowLocalDev) {
     return url.href;
   } catch { throw fail('CONFIG'); }
 }
+// Explicit installed PXE read surface. New SDK methods do not silently acquire
+// retry authority. Effects, simulations and mixed batches never qualify.
+const retryableReads=new Set([
+ 'getWorldStateSyncStatus','findLeavesIndexes','getNullifierMembershipWitness','getLowNullifierMembershipWitness',
+ 'getPublicDataWitness','getBlockHashMembershipWitness','getBlockHashMembershipWitnessAtArchive',
+ 'getNoteHashMembershipWitness','getL1ToL2MessageMembershipWitness','getL1ToL2MessageIndex',
+ 'getL2ToL1Messages','getL2ToL1MembershipWitness','getTxEffectMembershipWitness','getBlockNumber',
+ 'getCheckpointNumber','getChainTips','getL1Constants','getSyncedL2SlotNumber','getSyncedL2EpochNumber',
+ 'getSyncedL1Timestamp','getCheckpointsData','getBlock','getBlockData','getBlocks','getCheckpoint','getCheckpoints',
+ 'isReady','getNodeInfo','getCurrentMinFees','getPredictedMinFees','getMaxPriorityFees','getNodeVersion',
+ 'getVersion','getChainId','getL1ContractAddresses','getProtocolContractAddresses','getPrivateLogsByTags',
+ 'getPublicLogsByTags','getTxReceipt','getTxEffect','getTxByHash','getTxsByHash','getPublicStorageAt',
+ 'getContractClass','getContract','getAllowedPublicSetup'
+].map(name=>'aztec_'+name));
 // Official SDK JSON-RPC transport shape. Deliberately not defaultFetch: that
 // helper logs bodies, follows redirects, and its caller normally adds retries.
 async function privateFetch(host, body, extraHeaders={}) {
   try {
-    const response=await fetch(host,{method:'POST',body:jsonStringify(body),headers:{...extraHeaders,'content-type':'application/json'},
-      redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(30000)});
+    // Classify the exact serialized payload that both attempts send. Only a
+    // concrete transient gateway response permits the native bounded retry.
+    const payload=jsonStringify(body),requests=JSON.parse(payload);
+    const readOnly=Array.isArray(requests)&&requests.length>0&&requests.every(request=>retryableReads.has(request?.method));
+    const response=await retry(async()=>{
+      let result;
+      try{result=await fetch(host,{method:'POST',body:payload,headers:{...extraHeaders,'content-type':'application/json'},
+        redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(30000)});}
+      catch{throw new NoRetryError('Private node request unavailable.');}
+      if(readOnly&&!result.redirected&&[502,503,504].includes(result.status)){
+        await result.body?.cancel().catch(discard);
+        throw fail('UNAVAILABLE');
+      }
+      return result;
+    },'Private node read',makeBackoff([0]),silent,true);
     if(!response.ok || response.redirected || !response.body)throw fail('UNAVAILABLE');
     const reader=response.body.getReader(),chunks=[];let size=0;
     try {
@@ -194,7 +222,8 @@ async function privateFetch(host, body, extraHeaders={}) {
 }
 
 /** Uses installed SDK schemas/serialization/version checks, with silent logging.
- * No transport retries, redirects, alternate endpoint or ordinary-node fallback.
+ * One immediate native retry for allowlisted reads on HTTP 502/503/504 only.
+ * No submission retries, redirects, alternate endpoint or ordinary-node fallback.
  */
 export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120,readinessTier='proposed'}) {
   const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier}),host=endpoint(url,allowLocalDev);
