@@ -1,7 +1,7 @@
 // Labelled DOM and session doubles. No browser, crypto, RPC or real account.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountRollingWalletPanel,runTopupPayment,compactAmount} from './wallet-panel.mjs';
+import {mountRollingWalletPanel,runTopupPayment,compactAmount,fundingProgressMessage} from './wallet-panel.mjs';
 function dom(t){
  let document;const observers=new Set(),changed=()=>{for(const fn of observers)fn();};
  class Element{
@@ -32,7 +32,7 @@ function dom(t){
  t.after(()=>Object.assign(globalThis,old));return document;
 }
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false}={}){
- const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
+ const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
@@ -40,10 +40,10 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
- const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>{core.sessions++;return session;}};
+ const runtime={getAccount:()=>account,account:{configure(){}},createSession:async options=>{onProgress=options.onProgress;core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.()});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('[data-action-review]'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
- return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
+ return {document,panel,host,balance,started,progress:value=>onProgress(value),reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
 }
 test('typing @bok and editing/removing it stays immediate while a shared balance read is pending',{timeout:3000},async t=>{
  const f=await fixture(t);await f.started.promise;const editor=f.document.querySelector('textarea'),dialog=f.document.querySelector('dialog');
@@ -301,4 +301,28 @@ test('a confirmed bookmark allows the next explicit inverse action without a mod
  const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
  assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:true})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),true);
  assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:false})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),false);assert.equal(f.submissions.length,2);assert.equal(f.document.querySelector('dialog').open,false);await f.document.until(()=>f.reads()>=3&&f.host.textContent.includes('0 USDC available'));
+});
+
+test('funding progress only reports confirmed payment after reaching the private-credit stages',()=>{
+ assert.equal(fundingProgressMessage({step:'recover',state:'started'}),'Waiting for your payment to confirm…');
+ assert(!fundingProgressMessage({step:'recover',state:'complete'}).includes('Payment confirmed'));
+ assert.equal(fundingProgressMessage({step:'prepare',state:'started'}),'Payment confirmed. Adding your posting balance on Aztec…');
+ assert.equal(fundingProgressMessage({step:'prepare',state:'started'},'bok'),'Payment confirmed. Adding your Bok credit on Aztec…');
+ assert.equal(fundingProgressMessage({step:'reconcile',state:'started'},'bok'),'Waiting for your Bok credit to confirm…');
+ assert(!fundingProgressMessage({step:'prepare',state:'failed'},'bok').includes('Payment confirmed'));
+});
+test('Bok continuation replaces stale Ethereum notice with the observed credit stage',{timeout:3000},async t=>{
+ let f;const gate=Promise.withResolvers(),started=Promise.withResolvers();
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){started.resolve();await gate.promise;return {state:'complete'};}};
+ f=await fixture(t,{topup:cap});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await started.promise;
+ const stale=f.document.createElement('p');stale.setAttribute('data-operation-feedback','');stale.textContent='Payment submitted. Waiting for confirmation…';f.document.querySelector('dialog').append(stale);
+ // Put the existing notice in the rendered content container, as fundingView does.
+ f.document.querySelector('.credit-total').parentElement.append(stale);
+ f.progress({stage:'funding-claim',step:'prepare',deploymentStep:null,state:'started',code:null});
+ assert(!f.document.body.textContent.includes('Payment submitted. Waiting for confirmation'));assert(f.document.body.textContent.includes('Payment confirmed. Adding your Bok credit on Aztec…'));
+ f.progress({stage:'submitting'});assert(f.document.body.textContent.includes('Adding your Bok credit…'));assert(!f.document.body.textContent.includes('Sending your action'));
+ f.progress({stage:'proof-progress'});assert(f.document.body.textContent.includes('Adding your Bok credit…'));assert(!f.document.body.textContent.includes('Loading your account…'));
+ f.progress({stage:'proving'});assert(f.document.body.textContent.includes('Preparing your Bok credit…'));
+ gate.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
 });
