@@ -9,3 +9,5 @@ Checks: 41 simulation/validation tests; 14 focused engine tests; 187 funding/rec
 Native proving still executes private code and requires accepted bridge membership evidence. No claim of measured live speedup; no new browser/payment test for this batch. No board contract or deployment changes.
 
 Integrated public wallet config checks: 8/8 passed.
+
+First remote staging was rejected before activation: SDK build input files were missing from the incremental packet. Expanded the packet inventory to include SDK application inputs and all generated SDK outputs. Existing live release and processes were unchanged.
