@@ -12,7 +12,7 @@ import {createSynchronizedRollingApplication} from '../../shared/rolling/synchro
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
-export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind']);
+export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','journal-open','wallet-bind','account-manager','application-bind']);
 const refreshMethods=Object.freeze({readAccountStatus:'account-status',ownedIdentities:'owned-names',readModeratorStatus:'moderator-status',readBokStatus:'bok-status'});
 const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
 function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&refreshCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
@@ -34,7 +34,7 @@ export async function verifyRollingFundingCredit({sdk,node,gasSettings,incomingA
  if(existing<maximum)throw Object.assign(fail('ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'),{minimumFeeCredit:maximum.toString()});
 }
 
-export function createFundingContinuation({application,funding,sdk,node,contextGuard,locked,onProgress}){
+export function createFundingContinuation({application,funding,sdk,node,contextGuard,locked,onProgress,invalidateSnapshot=()=>{}}){
  let active=null;
  return Object.freeze({
   pauseClaim(){if(active){active.paused=true;}},
@@ -46,14 +46,12 @@ export function createFundingContinuation({application,funding,sdk,node,contextG
     async bridge(receipts){
      const legs=['receipt','feeReceipt','bokReceipt'].filter(key=>receipts[key]).map(key=>receipts[key]);
      await fence();
-     for(const receipt of legs){
-      await fence();
-      await sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'});
-      await fence();
-     }
-     // application.prepare synchronizes PXE before reading its message witness.
+     const results=await Promise.allSettled(legs.map(receipt=>Promise.resolve().then(()=>sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'}))));
+     await fence();const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+     invalidateSnapshot();
+     // Delivery changes the usable anchor; prepare synchronizes once here.
     },
-    async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:0,waitForStatus:'checkpointed',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();},
+    async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:0,waitForStatus:'checkpointed',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();invalidateSnapshot();},
    }}));}finally{active=null;}
   },
  });
@@ -279,16 +277,31 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
+ let operationScope=null;
  let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
  const guard=async()=>{assertCaptured();await contextGuard();assertCaptured();};
  const locked=async work=>{
-  if(busy)throw fail('ROLLING_BUSY');busy=true;
+  if(busy)throw fail('ROLLING_BUSY');busy=true;operationScope={synchronized:false};
   try{return await locks.request(lockName,{ifAvailable:true},async lock=>{if(!lock)throw fail('ROLLING_OTHER_TAB');await guard();return work();});}
-  finally{busy=false;}
+  finally{busy=false;operationScope=null;}
  };
+ async function fundingRead(name,args){
+  fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
+  const anchored=(name==='getCode'&&Number.isSafeInteger(args[1]))||(name==='call'&&Number.isSafeInteger(args[0]?.blockTag));
+  const immutable=anchored||['getNetwork','getTransaction','getTransactionReceipt'].includes(name);
+  const scope=operationScope;
+  if(!scope||!immutable)return fundingProvider[name](...args);
+  const key=JSON.stringify([name,args],(_key,value)=>typeof value==='bigint'?value.toString():value);
+  const cache=scope.ethereumReads??=new Map();
+  if(!cache.has(key)){
+   const pending=Promise.resolve().then(()=>fundingProvider[name](...args));cache.set(key,pending);
+   pending.then(value=>{if(value==null||name==='getTransaction'&&value.blockHash==null)cache.delete(key);},()=>cache.delete(key));
+  }
+  return cache.get(key);
+ }
  async function dispose(){
   try{if(pxe){try{await pxe.stop();pxe=undefined;store=undefined;}
    catch(error){try{if(store){await store.close();store=undefined;}}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session cleanup failed');}throw error;}}
@@ -344,8 +357,8 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     await guard();await pxe.registerContractClass(contractArtifact);
     await guard();await pxe.registerContract(contractInstance);
    }
-   begin('initial-sync');
-   await guard();await pxe.sync();await guard();
+   // The first private operation selects the anchor once. Opening the engine
+   // itself does not require a second, immediately discarded synchronization.
    begin('journal-open');
    const privateStore=sdk.createBrowserJournalStorage();
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
@@ -373,7 +386,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    // No signer is supplied: importing a recovery receipt cannot pay again.
    const funding={claimStore,verifyWithdrawal:record=>withdrawal?withdrawal.verify(record):false,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
-    const result=await fundingProvider[name](...args);await guardRoute();return result;
+    const result=await fundingRead(name,args);await guardRoute();return result;
    }]))};
    funding.resolveBokWithdrawal=async()=>verifyRollingTopupScope({sdk,ethers,node,provider:funding.provider,network,privateFee:deployment.privateFee.address.toString(),bok:await ensureBok(),kind:'bok',contextGuard:guardRoute});
    if(selected.aggregateFunding!==undefined){
@@ -381,7 +394,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     if(scope.chainId!==network.chainId||scope.collateralPortal!==deployment.portal||scope.privateFpc!==deployment.privateFee.address.toString()||typeof captureFundingWallet!=='function')throw fail('ROLLING_SESSION_CONFIG');
     const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
      await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
-     const result=await fundingProvider[name](...args);await guardRoute();return result;
+     const result=await fundingRead(name,args);await guardRoute();return result;
     }]));
     const verifyFeeCredit=incomingAmount=>verifyRollingFundingCredit({sdk,node,gasSettings:selected.privateFee.gasSettings,incomingAmount,contextGuard:guardRoute,
      readExistingCredit:async()=>{
@@ -401,14 +414,14 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    if(typeof captureFundingWallet==='function'){
-    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingProvider[name](...args);await guardRoute();return value;}]));
+    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingRead(name,args);await guardRoute();return value;}]));
     topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,swapScope:kind==='bok'?selected.aggregateFunding:undefined,
      resolveScope:async()=>verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee:deployment.privateFee.address.toString(),bok:kind==='bok'?await ensureBok():undefined,kind,contextGuard:guardRoute}),verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
    }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,resolveBok:ensureBok,contextGuard:guard,privateStore,funding,onProgress,readBokAccountingPage:createUniformBokAccountingReader(),
-    accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
+    accountSession:{operationScope:()=>operationScope,owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
      ...(typeof routing.createPreproofRecovery==='function'?{preproofRecovery:routing.createPreproofRecovery(wallet,node,journal)}:{})}});
    // The reader owns synchronization, but the session owns this same account
    // lock and PXE lifetime. Its head capability is the raw guarded application
@@ -447,7 +460,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  let refreshPhase=null;
- const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{refreshPhase?.('pxe-sync');await pxe.sync();refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ const synchronized=createSynchronizedRollingApplication({application:app,operationScope:()=>operationScope,synchronize:async()=>{refreshPhase?.('pxe-sync');await pxe.sync();refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
   let step=method+'/lock',contextChecks=0;
@@ -463,7 +476,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
- const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress});
+ const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.aggregateFunding!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
  const refunds = Object.freeze({
   list: options => locked(() => depositRefunds.list(options)),
@@ -478,7 +491,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    });
   },
  });
- return Object.freeze({application,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

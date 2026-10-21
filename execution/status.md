@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October one-click post verified: 21 UI +495 application/session +3 immediate +8 asset checks; independent review approved. Static-only publication next. User additionally authorized parallel full-flow performance optimization: post_path_review simulation/proof, post_publish_plan receipt/funding checks, flow_scope_efficiency operation-scoped sync/readiness and nonblocking account reads.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October one-click post c00886fe live. Reviewed flow-efficiency and composer batch built: 187 funding, 41 validation, 14 engine, 34 UI/sync, 28 session, 10 focused application, 8 asset checks pass. Static-only publication next; Bok atomic ETH topup and broader UX cleanup continue in parallel. No board redeployment.
 
 ## Ready internal work
 

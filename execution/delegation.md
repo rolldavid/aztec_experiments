@@ -757,3 +757,5 @@ G21 current signup failure: funding_investigation investigates trusted-read boun
 Root owns shared account/runtime integration. funding_investigation implements panel/reader in isolated checkout; publication_prepare implements signature derivation/encrypted IndexedDB session in isolated checkout; ux_review independently reviews custody and integrated changes. No browser launches, contract replacements or healthy backend restarts.
 
 21 October: root implements one-click posting. post_path_review investigates and independently reviews read-only; post_publish_plan locates static-only deployment workflow read-only. No delegated source edits or expensive tests.
+
+21October owner expanded scope: post_path_review implements simulation reuse then audits UX; post_publish_plan owns funding receipt consolidation and Bok approval-error/atomic topup redesign; flow_scope_efficiency owns single-operation sync/readiness, nonblocking account views, compact posting cost/balance and closing confirmed composer. Root publishedc00886fe and owns integration/deployment; no contract/private-state resets. No trusted intermediary authorized.

@@ -33,14 +33,14 @@ function dom(t){
 }
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={bokConfigured:true,busy:false,topup:{bok:{}},application:{
-  readAccountStatus:async()=>{core.status++;return {status:fee,depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+ const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:{}},application:{
+  readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>{core.sessions++;return session;}};
- const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
+ const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.()});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('textarea'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
  return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
 }
@@ -178,6 +178,7 @@ for(const type of ['post','reply','quote','repost'])test(`one ${type} click subm
  assert.equal(button.textContent,'Posting…');assert(button.disabled);await entered.promise;assert.equal(f.submissions.length,0);
  hold.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+ assert.equal(f.document.querySelector('dialog').open,false);
  assert.deepEqual(f.submissions,['post-1']);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.prepared().content,'My exact message');assert.equal(f.prepared().type,type);
  if(type==='reply'){assert.equal(f.prepared().parent,'10');assert.equal(f.prepared().root,'1');}
  if(['quote','repost'].includes(type))assert.equal(f.prepared().reference,'12');
@@ -189,6 +190,7 @@ for(const status of ['authorized','unknown','reverted'])test(`one Bok post click
  const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});assert.equal(button.textContent,'Post');button.fire('click');
  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  if(status!=='unknown')await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('1 USDC available'));
+ assert.equal(f.document.querySelector('dialog').open,status!=='authorized');
  assert.deepEqual(f.submissions,status==='authorized'?['post-1','post-2']:['post-1']);assert(f.prepareOptions.every(o=>o.immediate===true));
 });
 
@@ -206,4 +208,26 @@ test('submission rejection retains the exact draft and unresolved action without
  const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');
  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-review]'),null);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Keep this exact draft'));
+});
+
+test('composer shows two compact fee numbers without extra account reads or review disclaimer',{timeout:3000},async t=>{
+ const f=await fixture(t);const summary=f.document.querySelector('.composer-cost');assert(summary);assert.equal(summary.querySelectorAll('strong').length,2);assert(summary.textContent.includes('Balance 1'));assert(summary.textContent.includes('Max cost 0.001'));assert(!f.document.body.textContent.includes('Published content cannot be erased'));
+ assert.deepEqual(f.core(),{sessions:1,status:1,names:0,moderator:0});f.balance.resolve({available:true,availableCredit:'0'});
+});
+test('main name dropdown loads names on request and leaves Create available without signup reads',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});const host=f.document.createElement('section');f.document.body.append(host);f.panel.attachIdentityControls(host);
+ let select=host.querySelector('select');assert.equal(select.disabled,false);assert(select.options.some(o=>o.value==='create'));assert(select.options.some(o=>o.value==='load'));assert.equal(f.core().names,0);assert.equal(f.core().moderator,0);
+ select.value='load';select.fire('change');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.core().names,1);assert.equal(f.core().moderator,0);
+});
+test('moderator discovery runs only when account settings are opened',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});assert.equal(f.core().moderator,0);
+ const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.core().moderator,1);assert.equal(f.core().names,0);assert.equal(f.document.querySelector('.account-links').open,true);
+});
+
+test('confirmed post closes immediately while public feed refresh is still pending',{timeout:3000},async t=>{
+ const refresh=Promise.withResolvers(),started=Promise.withResolvers();const f=await fixture(t,{posting:{effect:()=>{started.resolve();return refresh.promise;}}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});const editor=f.document.querySelector('textarea');editor.value='Confirmed before feed refresh';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');await started.promise;
+ assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.deepEqual(f.submissions,['post-1']);
+ refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
 });

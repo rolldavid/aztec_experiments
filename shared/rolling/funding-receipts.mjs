@@ -9,8 +9,9 @@ import {DomainSeparator, L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
-import {recoverPrivateFeeClaim, captureAggregateFundingIntent, captureAggregateFundingCustody, PrivateFeeFundingError} from '../private-fee-funding.mjs';
+import {claimSecrets, captureAggregateFundingIntent, captureAggregateFundingCustody, PrivateFeeFundingError} from '../private-fee-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
+import {derivePrivateFeeInstance, requirePublishedPrivateFee, derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {isTrustedPrivateNode} from '../trusted-private-node.mjs';
 import {encodeEscrowCommitment, encodeDepositExitCommitment, sha256Field} from '../protocol-commitments.mjs';
 
@@ -45,6 +46,12 @@ function object(value,keys) {
   const copy={};for(const key of keys){const d=Object.getOwnPropertyDescriptor(value,key);requireThat(d && 'value' in d,'INVALID');copy[key]=d.value;}return copy;
 }
 function frozen(value) { if(value && typeof value==='object'){Object.values(value).forEach(frozen);Object.freeze(value);}return value; }
+// Drain the fixed independent read group before returning, even on failure.
+async function together(reads) {
+  const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
+  const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+  return results.map(result=>result.value);
+}
 const lower = value => String(value).toLowerCase();
 const equal = (a,b) => lower(a)===lower(b);
 function validated(input) {
@@ -133,15 +140,14 @@ export async function prepareFundingClaim(input) {
       return immutable.get(key);
     })]));
     const node=Object.fromEntries(['getNodeInfo','getContract'].map(name=>[name,(...args)=>read(()=>nodeReads[name](...args))]));
-    const info=await node.getNodeInfo(), network=await provider.getNetwork();
+    const [info,network,receipt,tx]=await together([()=>node.getNodeInfo(),()=>provider.getNetwork(),()=>provider.getTransactionReceipt(r.txHash),()=>provider.getTransaction(r.txHash)]);
     requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup) && String(network.chainId)===s.chainId);
-    const receipt=await provider.getTransactionReceipt(r.txHash);
     if(!receipt)return frozen({status:'absent'}); // Unknown submission is NEVER declared unsent.
     requireThat(equal(receipt.hash,r.txHash) && receipt.blockNumber===r.blockNumber && equal(receipt.blockHash,r.blockHash),'REORG');
     const checkL1=async()=>{const b=await provider.getBlock(r.blockNumber);requireThat(b && equal(b.hash,r.blockHash),'REORG');};
     await checkL1();
     requireThat(receipt.status===0 || receipt.status===1,'UNKNOWN');
-    const tx=await provider.getTransaction(r.txHash);requireThat(tx,'UNKNOWN');
+    requireThat(tx,'UNKNOWN');
     requireThat(equal(tx.hash,r.txHash) && equal(tx.from,r.sender) && String(tx.nonce)===r.nonce && String(tx.chainId)===s.chainId && equal(receipt.from,r.sender) && equal(receipt.to,tx.to));
     if(receipt.status===0){await checkL1();return frozen({status:'reverted'});}
     requireThat(Array.isArray(receipt.logs) && receipt.logs.length<=4096 && typeof tx.data==='string' && tx.data.length<=(aggregateIntent?16384:8192),'UNKNOWN');
@@ -158,12 +164,14 @@ export async function prepareFundingClaim(input) {
       requireThat(aggregate && aggregate.amount===r.amount && aggregate.secretHash===r.secretHash && aggregate.messageKey===r.messageKey && aggregate.leafIndex===r.leafIndex);
     }
     const call=async(to,abi,name)=>abi.decodeFunctionResult(name,await provider.call({to,data:abi.encodeFunctionData(name),blockTag:r.blockNumber}))[0];
+    const bindings=async(to,abi,expected)=>{
+      const values=await together(expected.map(([name])=>()=>call(to,abi,name)));
+      requireThat(expected.every(([,value],index)=>equal(values[index],value)));
+    };
     const boardScope={l1ChainId:s.chainId,rollupAddress:s.rollup,rollupVersion:s.version,boardAddress:s.recipient,portalAddress:s.portal};
     let content,secret,claim,messageRecipient=s.recipient;
     if (cancellation) {
-      for (const [name, value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]]) {
-        requireThat(equal(await call(s.portal,boardAbi,name),value));
-      }
+      await bindings(s.portal,boardAbi,[['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]]);
       requireThat(equal(tx.to,s.portal) && String(tx.value) === '0');
       requireThat(lower(tx.data) === boardAbi.encodeFunctionData('requestRefund',[r.depositId]).toLowerCase());
       const topic = boardAbi.getEvent('RefundRequested').topicHash.toLowerCase();
@@ -179,7 +187,7 @@ export async function prepareFundingClaim(input) {
       }));
       claim = {contract:s.recipient, method:'cancel_deposit', args:[r.sender,r.amount,r.depositId,r.leafIndex]};
     } else if(kind==='collateral') {
-      for(const [name,value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]])requireThat(equal(await call(s.portal,boardAbi,name),value));
+      await bindings(s.portal,boardAbi,[['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]]);
       const depositor=aggregateCustody?.beneficiary ?? r.sender;
       const custodyScope={...boardScope,depositor};
       const saved=loadClaim ? await read(()=>loadClaim(custodyScope,r.secretHash)) : null;
@@ -193,19 +201,34 @@ export async function prepareFundingClaim(input) {
       content=await sha256Field(encodeEscrowCommitment('claim',boardScope,{depositor,amount:r.amount}));
       claim={contract:s.recipient,method:'claim_deposit',args:[depositor,r.amount,secret,r.leafIndex]};
     } else if(kind==='private-fee') {
-      const record={schema:'private-fee-funding-v1',chainId:s.chainId,version:s.version,rollupAddress:s.rollup,portalAddress:s.portal,tokenAddress:s.token,privateFeeAddress:s.recipient,
-        sender:r.sender,nonce:r.nonce,amount:r.amount,txHash:r.txHash,leafIndex:r.leafIndex};
-      const recovered=await recoverPrivateFeeClaim({node,ethProvider:provider,owner:new AztecAddress(Fr.fromString(owner)),walletSecret:secrets.walletSecret,privateFeeArtifact,record,aggregateIntent,aggregateCustody,expectedChainId:s.chainId,expectedVersion:s.version});
-      requireThat(equal(recovered.messageKey,r.messageKey));secret=recovered.secret.toString();
-      // The existing helper owns deterministic FPC verification and derivation;
-      // repeat only immutable L1 bindings at the receipt anchor (helper uses latest).
-      const feeAbi=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)']);
-      for(const [name,value] of [['ROLLUP',s.rollup],['UNDERLYING',s.token],['VERSION',s.version],['L2_TOKEN_ADDRESS',ProtocolContractAddress.FeeJuice.toString()]])requireThat(equal(await call(s.portal,feeAbi,name),value));
+      const record={chainId:s.chainId,version:s.version,privateFeeAddress:s.recipient,sender:r.sender,nonce:r.nonce};
+      // The outer verifier already authenticated this exact transaction and all
+      // aggregate effects. Verify the fee scope once at the receipt block instead
+      // of invoking a second complete recovery flow against latest Ethereum state.
+      if(aggregateIntent)requireThat(aggregateIntent.expected.privateFpc===s.recipient);
+      requireThat(equal(info.l1ContractAddresses?.feeJuicePortalAddress,s.portal) && equal(info.l1ContractAddresses?.feeJuiceAddress,s.token));
+      const canonical=await derivePrivateFeeInstance(privateFeeArtifact);requireThat(equal(canonical.address,s.recipient));
+      await requirePublishedPrivateFee(node,canonical);
+      const account=new AztecAddress(Fr.fromString(owner));
+      const salt=aggregateCustody ? Fr.fromString(aggregateCustody.privateFeeSalt) : null;
+      const recovered=salt ? {salt,secret:await derivePrivateFeeBridgeSecret({salt,owner:account})} : await claimSecrets({walletSecret:secrets.walletSecret,owner:account,record});
+      secret=recovered.secret.toString();
+      const feeAbi=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function depositToAztecPublic(bytes32,uint256,bytes32) returns(bytes32,uint256)']);
+      await bindings(s.portal,feeAbi,[['ROLLUP',s.rollup],['UNDERLYING',s.token],['VERSION',s.version],['L2_TOKEN_ADDRESS',ProtocolContractAddress.FeeJuice.toString()]]);
+      if(!aggregate){
+        const intent={from:r.sender,to:s.portal,nonce:Number(r.nonce),chainId:s.chainId,
+          data:feeAbi.encodeFunctionData('depositToAztecPublic',[s.recipient,r.amount,r.secretHash]).toLowerCase(),value:'0',
+          expected:{kind:'fee-deposit',recipient:s.recipient,amount:r.amount,secretHash:r.secretHash}};
+        let verified;try{verified=await verifyEthereumIntentReceipt(provider,intent,r.txHash);}catch{throw fail(readFailed?'UNKNOWN':'MISMATCH');}
+        requireThat(verified?.outcome==='success' && equal(verified.event.key,r.messageKey) && String(verified.event.index)===r.leafIndex);
+      }
       content=await sha256Field(getBytes(feeClaimAbi.encodeFunctionData('claim',[s.recipient,r.amount])));messageRecipient=ProtocolContractAddress.FeeJuice.toString();
       claim={contract:s.recipient,kind:'private-fee-bridge',bridgeClaim:{amount:r.amount,salt:recovered.salt.toString(),leafIndex:r.leafIndex}};
     } else {
-      for(const [name,value] of [['token',s.token],['escrow',s.recipient],['version',s.version],['chainId',s.chainId]])requireThat(equal(await call(s.portal,bokAbi,name),value));
-      for(const [name,rollupName] of [['inbox','getInbox'],['outbox','getOutbox']])requireThat(equal(await call(s.portal,bokAbi,name),await call(s.rollup,rollupAbi,rollupName)));
+      await together([
+        ()=>bindings(s.portal,bokAbi,[['token',s.token],['escrow',s.recipient],['version',s.version],['chainId',s.chainId]]),
+        ...[['inbox','getInbox'],['outbox','getOutbox']].map(([name,rollupName])=>async()=>{const [actual,expected]=await together([()=>call(s.portal,bokAbi,name),()=>call(s.rollup,rollupAbi,rollupName)]);requireThat(equal(actual,expected));}),
+      ]);
       const recipient=(await poseidon2HashWithSeparator([new Fr(BigInt(s.chainId)),new Fr(BigInt(s.portal)),Fr.fromString(s.recipient),new Fr(BigInt(s.version)),Fr.fromString(owner),Fr.fromString(secrets.recipientSalt)],0x424b4301)).toString();
       secret=secrets.bridgeSecret;
       // PluginPortal's event omits secretHash; require exact direct calldata too.
@@ -228,15 +251,14 @@ export async function prepareFundingClaim(input) {
       const block=await read(()=>nodeReads.getBlockData(a.number));
       requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
     };
-    await checkL2();
-    const witness=await read(()=>nodeReads.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()));
-    if(!witness){await checkL1();await checkL2();return frozen({status:'waiting',reason:'l2-delivery'});}
+    const [,witness]=await together([checkL2,()=>read(()=>nodeReads.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()))]);
+    if(!witness){await together([checkL1,checkL2]);return frozen({status:'waiting',reason:'l2-delivery'});}
     requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
     const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);
     let root=message.hash(),index=witness[0];
     for(const sibling of path){root=await poseidon2HashWithSeparator(index&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);index>>=1n;}
     requireThat(index===0n && root.toString()===a.root);
-    await checkL1();await checkL2();
+    await together([checkL1,checkL2]);
     await read(()=>Promise.resolve());
     return frozen({status:'claim-ready',claim,evidence:{kind,txHash:r.txHash,l1:{number:r.blockNumber,hash:r.blockHash},l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
   } catch(error) {

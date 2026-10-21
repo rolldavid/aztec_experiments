@@ -121,6 +121,7 @@ import fs from 'node:fs';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {createRollingApplication} from './application.mjs';
+import {normalizePrivateFeeGasSettings} from '../private-fee-client.mjs';
 import {advanceAggregateClaim} from './aggregate-wallet.mjs';
 const boardArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
@@ -133,13 +134,13 @@ function durableClaimApplication(f,funding){
  const wallet={aztecNode:node,pxe:{getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:3},hash:async()=>h(60),state:{l1ToL2MessageTree:{root:new Fr(61)}}})},getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async(_payload,options)=>{
   state.sends++;state.outcome={operation:options.journalOperation,outcome:'success',txHash:h(70),receipt:{txHash:h(70),status:'checkpointed',blockNumber:3,blockHash:h(60),transactionFee:1n}};return {receipt:{}};
  }};
- const sdk={Fr,AztecAddress,encodeArguments,isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,inspectTrustedNode:async()=>{},
+ const sdk={Fr,AztecAddress,encodeArguments,normalizePrivateFeeGasSettings,isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,inspectTrustedNode:async()=>{},
   Contract:{at:()=>({methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>({result:[0n,...Array(9).fill(0n)]})})})})},
   BatchCall:class{constructor(_wallet,interactions){this.interactions=interactions;}},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async({interaction})=>{state.prepares++;return {maximumFee:10n,payload:interaction,gasSettings:{}};},
   prepareFundingClaim:async input=>({status:'claim-ready',claim:input.kind==='collateral'?{contract:f.options.board,method:'claim_deposit',args:[input.receipt.sender,input.receipt.amount,h(80),input.receipt.leafIndex]}:input.kind==='private-fee'?{contract:f.options.scope.privateFpc,kind:'private-fee-bridge',bridgeClaim:{amount:input.receipt.amount,salt:h(81),leafIndex:input.receipt.leafIndex}}:{contract:f.options.bok,method:'claim',args:[input.receipt.amount,input.secrets.recipientSalt,input.secrets.bridgeSecret,input.receipt.leafIndex]}})};
  const options={sdk,deployment:{board:{address:f.options.board,artifact:boardArtifact},network:f.options.network,portal:f.options.scope.collateralPortal,
-  privateFee:{address:f.options.scope.privateFpc,artifact:{},gasSettings:{}},bok:{address:f.options.bok,operator:h(16),pluginId:h(17),artifact:bokArtifact}},
+  privateFee:{address:f.options.scope.privateFpc,artifact:{},gasSettings:{gasLimits:{daGas:5,l2Gas:5},teardownGasLimits:{daGas:0,l2Gas:1},maxFeesPerGas:{feePerDaGas:1,feePerL2Gas:1},maxPriorityFeesPerGas:{feePerDaGas:0,feePerL2Gas:0}}},bok:{address:f.options.bok,operator:h(16),pluginId:h(17),artifact:bokArtifact}},
   accountSession:{owner,wallet,node,journal,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt},privateStore:f.options.storage,contextGuard:async()=>{},funding:{provider:f.options.provider,loadAggregate:hash=>funding.loadAggregate(hash)}};
  const workflow={state,open:()=>createRollingApplication(options)};f.state.workflow=workflow;return workflow;
 }
@@ -695,4 +696,29 @@ test('posting token balance failure does not suggest USDC or an unavailable ETH 
   assert.equal(error.code,'ROLLING_FUNDING_FEE_TOKEN_BALANCE');
   const text=aggregateFundingFailure(error);assert.match(text,/fee tokens/);assert.doesNotMatch(text,/USDC|ETH/);return true;
  });assert.equal(f.state.sends,0);
+});
+
+test('fresh ETH funding uses the verified waiter result without a second receipt recovery',async()=>{
+ const f=fixture(),recoverCalls=[];const original=f.options.sdk.createEthereumJournal;
+ f.options.sdk.createEthereumJournal=async options=>{
+  const journal=await original(options);
+  return {...journal,recover:async options=>{recoverCalls.push(options);if(options.wait)f.state.landed=true;return journal.recover(options);}};
+ };
+ const app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.landed=false;
+ const result=await app.recover({wait:true});
+ assert.equal(result.receipt.txHash,h(20));assert.equal(f.state.sends,1);
+ assert.deepEqual(recoverCalls,[{retry:false},{retry:false,wait:true}]);
+});
+
+test('automatic funding prepares directly for submission, including after bridge readiness',async()=>{
+ const f=claimProgressFixture(),prepare=f.input.application.prepare,calls=[];let bridgeWaits=0;
+ f.input.application.prepare=async(action,options)=>{
+  calls.push({action,options});
+  if(calls.length===1)throw Object.assign(Error('bridge pending'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l2-delivery'});
+  return prepare(action,options);
+ };
+ f.input.waits={bridge:async()=>{bridgeWaits++;},claim:()=>assert.fail('Already confirmed')};
+ assert.equal((await advanceAggregateClaim(f.input)).state,'complete');assert.equal(bridgeWaits,1);assert.equal(calls.length,2);
+ for(const call of calls)assert.deepEqual(call,{action:{type:'claim-deposit',receipt:{private:'SECRET_RECEIPT'}},options:{immediate:true}});
+ assert.equal(f.calls.filter(call=>call==='submit').length,1);
 });

@@ -153,8 +153,11 @@ const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove
 export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,resolveBok,funding,onProgress=()=>{},contextGuard}){
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
-  let busy=false,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
+  let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
+  const networkChecks=new WeakMap();
   const session=accountSession;
+  const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
+  const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
   const preproof=session?.preproofRecovery;
   const localPreproof=preproof&&typeof preproof.checkpoint==='function'&&typeof preproof.send==='function'&&
     typeof privateStore?.readRecoveryEpoch==='function'&&typeof privateStore?.ensureRecoveryEpoch==='function'&&typeof privateStore?.rotateRecoveryEpoch==='function'
@@ -191,18 +194,33 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function localGuard(){
     check(session&&typeof contextGuard==='function','ROLLING_LOCKED');await contextGuard();
-    check(owner===session.owner.toString()&&sdk.isTrustedPrivateNode(session.node)&&
+    check(owner===session.owner.toString()&&session.wallet.getChainInfo===chainInfoMethod&&session.wallet.getAccounts===accountsMethod&&sdk.isTrustedPrivateNode(session.node)&&
       session.wallet.aztecNode===session.node&&sdk.isPrivateWalletForNode(session.wallet,session.node)&&sdk.isPrivatePXEForNode(session.wallet.pxe,session.node)&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
       JSON.stringify(fixed.network)===JSON.stringify(deployment.network)&&fixed.portal===deployment.portal&&
       (!bok||deployment.bok?.address.toString()===bok.address&&deployment.bok?.operator.toString()===bok.operator&&field(deployment.bok?.pluginId,true)===bok.pluginId),'ROLLING_CONTEXT_CHANGED');
   }
   async function guard(){
     await localGuard();
-    await sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled});
-    const chain=await session.wallet.getChainInfo();check(chainValue(chain?.chainId)===chainValue(scope.chainId)&&chainValue(chain?.version)===chainValue(scope.version),'ROLLING_CONTEXT_CHANGED');
-    const accounts=await session.wallet.getAccounts();check(accounts.some(a=>(a.address??a).toString()===owner),'ROLLING_CONTEXT_CHANGED');
+    // One readiness snapshot belongs to the active account operation, not each
+    // internal read. Identity/route fences still run at every async boundary.
+    const scope=getOperationScope()??callScope;
+    let checked=scope&&networkChecks.get(scope);
+    if(!checked){
+      checked=(async()=>{
+        const values=await Promise.allSettled([
+          ()=>sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled}),
+          ()=>session.wallet.getChainInfo(),()=>session.wallet.getAccounts(),
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        const chain=values[1].value,accounts=values[2].value;
+        check(chainValue(chain?.chainId)===chainValue(fixed.network.chainId)&&chainValue(chain?.version)===chainValue(fixed.network.version),'ROLLING_CONTEXT_CHANGED');
+        check(accounts.some(a=>(a.address??a).toString()===owner),'ROLLING_CONTEXT_CHANGED');
+      })();
+      if(scope)networkChecks.set(scope,checked);
+    }
+    await checked;await localGuard();
   }
-  async function exclusive(fn){check(!busy,'ROLLING_BUSY');busy=true;try{return await fn();}finally{busy=false;}}
+  async function exclusive(fn){check(!busy,'ROLLING_BUSY');busy=true;callScope={};try{return await fn();}finally{busy=false;callScope=null;}}
   const progress=stage=>{try{onProgress({stage});}catch{/* display errors cannot alter transaction control */}};
   const contract=()=>sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),deployment.board.artifact,session.wallet);
   async function utility(board,name,args,artifact=deployment.board.artifact){
@@ -791,7 +809,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input,options){return exclusive(async()=>{
-      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok'].includes(input?.type));
+      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','claim-deposit','claim-private-fee','claim-bok'].includes(input?.type));
       await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
@@ -830,7 +848,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const selected=await interaction(await selectedContract(record),record);record.encoded=selected.encoded;
       // Immediate posting uses the application's configured ceiling. Submission
       // estimates once against current state and must stay within this bound.
-      if(immediate)record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
+      if(immediate){
+        // Claim validation retains its exact bridge fee payload even when the
+        // separate review simulation is omitted. Submission rechecks it.
+        if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)await payment(action,record);
+        record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
+      }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();await store.write(prior,record);return summary(record);
     });},
@@ -975,7 +998,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       await (await slot()).write(saved,{...saved.value,status:attempt?'pre-proof':'submitting',...(attempt?{preproof:attempt}:{})});
       active=await savedIntent(id);await guard();progress('submitting');
-      const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},
+      const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,
         transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
           await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();

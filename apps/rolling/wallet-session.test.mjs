@@ -333,7 +333,6 @@ const diagnosticSessionFailures={
  'pxe-create':(f,error)=>{f.input.sdk.createPXE=async()=>{throw error;};},
  'account-register':(f,error)=>{f.input.sdk.computePartialAddress=async()=>{throw error;};},
  'contracts-register':(f,error)=>{f.pxe.registerContractClass=async()=>{throw error;};},
- 'initial-sync':(f,error)=>{f.pxe.sync=async()=>{throw error;};},
  'journal-open':(f,error)=>{f.input.sdk.createBrowserJournalStorage=()=>{throw error;};},
  'wallet-bind':(f,error)=>{f.input.routing.createAztecWallet=()=>{throw error;};},
  'account-manager':(f,error)=>{f.input.sdk.AccountManager.create=async()=>{throw error;};},
@@ -370,7 +369,7 @@ test('session diagnostic does not hide account invalidation or invoke exception 
 for(const mode of [undefined,true,false])test(`native PXE configuration follows captured proof mode ${mode}`,async()=>{
  const f=await sessionFixture();if(mode!==undefined)f.input.proofsEnabled=mode;f.deploymentState.proofsEnabled=mode??true;
  const session=await createRollingWalletSession(f.input);
- try{assert.equal(f.state.trustedProofsEnabled,mode??true);assert.deepEqual(f.state.pxeConfig,{proverEnabled:mode??true,autoSync:false,syncChainTip:'checkpointed'});assert.equal(f.state.syncs,1);assert.equal(f.state.registrations,1);}
+ try{assert.equal(f.state.trustedProofsEnabled,mode??true);assert.deepEqual(f.state.pxeConfig,{proverEnabled:mode??true,autoSync:false,syncChainTip:'checkpointed'});assert.equal(f.state.syncs,0);assert.equal(f.state.registrations,1);}
  finally{await session.close();}assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
 });
 test('native PXE disabled configuration rejects nondevelopment networks before any SDK access',async()=>{
@@ -844,14 +843,14 @@ test('funding continuation uses installed SDK readiness for every exact saved ke
  assert.deepEqual(f.calls.filter(c=>c[0]==='message').map(c=>c[1]),Object.values(f.receipts).map(r=>r.messageKey));
  assert.deepEqual(f.calls.map(c=>c[0]),['prepare','message','message','message','prepare','checkpoint','checkpoint','submit']);
 });
-for(const action of ['pause','invalidate'])test('funding '+action+' drains the current SDK wait and fences the next message and submission',async()=>{
+for(const action of ['pause','invalidate'])test('funding '+action+' drains concurrent SDK waits and fences submission',async()=>{
  const f=continuationFixture();let entered,release;const seen=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
  const original=f.input.node.getL1ToL2MessageIndex;f.input.node.getL1ToL2MessageIndex=async key=>{entered();await gate;return original(key);};
  const cap=createFundingContinuation(f.input),running=cap.advanceClaim();await seen;
  if(action==='pause')cap.pauseClaim();else f.invalidate();
  assert.equal(f.busy,true);await assert.rejects(cap.advanceClaim(),{code:'ROLLING_BUSY'});assert(!f.calls.some(c=>c[0]==='submit'));
  release();if(action==='pause')assert.deepEqual(await running,{state:'paused'});else await assert.rejects(running,/account changed/);
- assert.equal(f.busy,false);assert.equal(f.calls.filter(c=>c[0]==='message').length,1);assert(!f.calls.some(c=>c[0]==='submit'));
+ assert.equal(f.busy,false);assert.equal(f.calls.filter(c=>c[0]==='message').length,3);assert(!f.calls.some(c=>c[0]==='submit'));
 });
 test('attempted funding claim waits for its exact hash with installed SDK and reconciles a revert without submitting',async()=>{
  const f=continuationFixture(),txHash=TxHash.fromString(hex(85));let reconciles=0;
@@ -1057,4 +1056,15 @@ for(const asset of ['ETH','USDC'])test('zero Bok '+asset+' scope avoids plugin r
  const provider={getBlock:async()=>({number:20,hash:hex(20)}),call:async request=>{assert.equal(request.blockTag,20);assert.notEqual(request.to,scope.bokPortal);const name=abi.parseTransaction(request).name;calls.push([request.to,name]);return abi.encodeFunctionResult(name,[name==='UNDERLYING'?scope.feeToken:request.to===scope.feeToken?18:6]);}};
  const recheck=await verifyRollingAggregateScope({sdk:{Fr,inspectTrustedNode:async()=>{}},ethers:{Interface},node,provider,scope,network:{},proofsEnabled:false,contextGuard:async()=>{},includeBok:false,asset});
  await recheck();assert.equal(calls.length,asset==='USDC'?6:4);assert.equal(calls.some(([address])=>address===scope.bokToken),asset==='USDC');
+});
+
+test('all bridge legs start together and one delivered snapshot is invalidated',async()=>{
+ const f=continuationFixture(),gates=Object.values(f.receipts).map(()=>Promise.withResolvers()),entered=Promise.withResolvers();let calls=0,invalidations=0;
+ const original=f.input.sdk.waitForL1ToL2MessageReady;f.input.sdk={...f.input.sdk,waitForL1ToL2MessageReady:async(...args)=>{const index=calls++;if(calls===gates.length)entered.resolve();await gates[index].promise;return original(...args);}};
+ f.input.invalidateSnapshot=()=>{invalidations++;};const cap=createFundingContinuation(f.input),pending=cap.advanceClaim();await entered.promise;assert.equal(calls,3);assert.equal(f.busy,true);assert(!f.calls.some(c=>c[0]==='submit'));
+ for(const gate of gates)gate.resolve();assert.equal((await pending).state,'complete');assert.equal(invalidations,1);
+});
+test('opening a private session performs no discarded synchronization; first account read syncs once',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);assert.equal(f.state.syncs,0);
+ await session.application.readAccountStatus();assert.equal(f.state.syncs,1);await session.close();
 });

@@ -18,7 +18,7 @@ test('explicit synchronization exposes a newly included name through the actual 
  }finally{await queue.stop();}
 });
 test('failed synchronization and context changes prevent every private operation without retry',async()=>{
- for(const name of names)for(const failure of ['before','sync','after']){
+ for(const name of names.filter(name=>name!=='readModeratorStatus'))for(const failure of ['before','sync','after']){
   let guards=0,syncs=0,calls=0;const error=Error(failure);
   const application=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(n=>[n,()=>{calls++;}])),
    contextGuard:()=>{guards++;if(failure==='before'||failure==='after'&&guards===2)throw error;},
@@ -74,4 +74,18 @@ test('interrupted Bok release captures exact id and action before synchronizatio
  let reads=0,syncs=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{syncs++;},synchronize:()=>{syncs++;}});
  for(const bad of [{get type(){reads++;return 'cancel-bok-request';}},{type:'expire-bok-request',requestId:'other'},{type:'post'},Object.create({type:'cancel-bok-request'})])await assert.rejects(guarded.prepareBokRelease('original-intent',bad),{code:'ROLLING_INVALID_ACTION'});
  assert.equal(reads,0);assert.equal(syncs,0);
+});
+
+test('one flow reuses its anchor and refreshes after its own confirmed transaction',async()=>{
+ let scope={synchronized:false},syncs=0,guards=0,calls=0;
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>{calls++;return {status:name==='submitPrepared'?'confirmed':'prepared'};}]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{guards++;},synchronize:()=>{syncs++;},operationScope:()=>scope});
+ await app.readAccountStatus();await app.prepare({type:'post'});await app.submitPrepared('id');assert.equal(syncs,1);
+ await app.readAccountStatus();assert.equal(syncs,2);assert.equal(calls,4);assert.equal(guards,8);
+ scope={synchronized:false};await app.readAccountStatus();assert.equal(syncs,3);
+});
+test('public moderator identity does not synchronize private state',async()=>{
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>({authorized:true})]));let guards=0;
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{guards++;},synchronize:()=>assert.fail('public identity has no private anchor')});
+ assert.deepEqual(await app.readModeratorStatus(),{authorized:true});assert.equal(guards,2);
 });

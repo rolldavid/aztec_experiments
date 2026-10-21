@@ -194,7 +194,7 @@
         const previousJournal = journal ? await journal.assertCanStart() : null;
         const fixedGas = !!opts.fee?.gasSettings;
         const checkedGas = fixedGas ? a.GasSettings.from(opts.fee.gasSettings) : null;
-        log(fixedGas ? '  Simulating with configured gas limits...' : '  Estimating gas (simulating tx)...', 'info');
+        log(fixedGas ? '  Using configured gas limits...' : '  Estimating gas (simulating tx)...', 'info');
         const feeOptions = await this.completeFeeOptions({
           from: opts.from,
           feePayer: executionPayload.feePayer,
@@ -202,18 +202,18 @@
           forEstimation: !fixedGas,
         });
 
-        const simResult = await this.simulateViaEntrypoint(executionPayload, {
-          from: opts.from, feeOptions, skipTxValidation: !fixedGas, skipFeeEnforcement: !fixedGas,
-          additionalScopes: opts.additionalScopes, sendMessagesAs: opts.sendMessagesAs,
-        });
-
-        if (!simResult.publicInputs || (simResult.publicInputs.forPublic && !simResult.publicOutput?.txEffect?.revertCode?.isOK()) || simResult.publicOutput?.revertReason) {
-          throw Object.assign(new Error('Transaction simulation did not complete successfully. No proof or transaction was submitted.'), {code:'BB_SIMULATION_FAILED'});
-        }
-        const gu = simResult.gasUsed;
-        if (fixedGas && ['daGas', 'l2Gas'].some(key =>
-          gu.totalGas[key] > checkedGas.gasLimits[key] || gu.teardownGas[key] > checkedGas.teardownGasLimits[key])) {
-          throw Object.assign(new Error('This transaction exceeds the configured fee limits. No proof or transaction was submitted.'), {code:'BB_GAS_LIMIT_EXCEEDED'});
+        // Fixed limits were selected by the caller; measuring them again cannot
+        // change that budget. Only an unbounded send needs an estimation pass.
+        let gu;
+        if (!fixedGas) {
+          const simResult = await this.simulateViaEntrypoint(executionPayload, {
+            from: opts.from, feeOptions, skipTxValidation: true, skipFeeEnforcement: true,
+            additionalScopes: opts.additionalScopes, sendMessagesAs: opts.sendMessagesAs,
+          });
+          if (!simResult.publicInputs || (simResult.publicInputs.forPublic && !simResult.publicOutput?.txEffect?.revertCode?.isOK()) || simResult.publicOutput?.revertReason) {
+            throw Object.assign(new Error('Transaction simulation did not complete successfully. No proof or transaction was submitted.'), {code:'BB_SIMULATION_FAILED'});
+          }
+          gu = simResult.gasUsed;
         }
         const pad = 1 + this._estimatedGasPadding;
         const gasLimits = fixedGas ? checkedGas.gasLimits.clone() : gu.totalGas.mul(pad);
@@ -237,16 +237,30 @@
         const feeOpts2 = await this.completeFeeOptions({
           from: opts.from, feePayer: executionPayload.feePayer, gasSettings: finalGasSettings,
         });
-        // Validate the final gas settings before proving; the signed payment payload remains unchanged.
-        const finalSimulation = await this.simulateViaEntrypoint(executionPayload, {
-          from: opts.from, feeOptions: feeOpts2, skipTxValidation: false, skipFeeEnforcement: false,
-          additionalScopes: opts.additionalScopes, sendMessagesAs: opts.sendMessagesAs,
-        });
-        if (!finalSimulation.publicInputs || (finalSimulation.publicInputs.forPublic && !finalSimulation.publicOutput?.txEffect?.revertCode?.isOK()) || finalSimulation.publicOutput?.revertReason) {
-          throw Object.assign(new Error('Transaction simulation did not complete successfully. No proof or transaction was submitted.'), {code:'BB_SIMULATION_FAILED'});
+        // Reuse the immediately preceding strict simulation only when its
+        // one-shot capability still matches this exact wallet, payload and
+        // anchor. Ordinary callers validate once here under the final budget.
+        let validatedGas;
+        if (opts.simulationValidation !== undefined) {
+          if (!fixedGas || feeOpts2.walletFeePaymentMethod || typeof a.consumePrivateFeeSimulationValidation !== 'function') {
+            throw Object.assign(new Error('Transaction validation cannot be reused for this send.'), {code:'BB_SIMULATION_CHANGED'});
+          }
+          validatedGas = await a.consumePrivateFeeSimulationValidation(opts.simulationValidation, {
+            wallet:this, payload:executionPayload, from:opts.from, gasSettings:feeOpts2.gasSettings,
+            additionalScopes:opts.additionalScopes, sendMessagesAs:opts.sendMessagesAs,
+          });
+        } else {
+          const finalSimulation = await this.simulateViaEntrypoint(executionPayload, {
+            from: opts.from, feeOptions: feeOpts2, skipTxValidation: false, skipFeeEnforcement: false,
+            additionalScopes: opts.additionalScopes, sendMessagesAs: opts.sendMessagesAs,
+          });
+          if (!finalSimulation.publicInputs || (finalSimulation.publicInputs.forPublic && !finalSimulation.publicOutput?.txEffect?.revertCode?.isOK()) || finalSimulation.publicOutput?.revertReason) {
+            throw Object.assign(new Error('Transaction simulation did not complete successfully. No proof or transaction was submitted.'), {code:'BB_SIMULATION_FAILED'});
+          }
+          validatedGas = finalSimulation.gasUsed;
         }
-        if (['daGas', 'l2Gas'].some(key => finalSimulation.gasUsed.totalGas[key] > finalGasSettings.gasLimits[key] || finalSimulation.gasUsed.teardownGas[key] > finalGasSettings.teardownGasLimits[key])) {
-          throw Object.assign(new Error('This transaction exceeds the estimated fee limits. No proof or transaction was submitted.'), {code:'BB_GAS_LIMIT_EXCEEDED'});
+        if (['daGas', 'l2Gas'].some(key => validatedGas.totalGas[key] > finalGasSettings.gasLimits[key] || validatedGas.teardownGas[key] > finalGasSettings.teardownGasLimits[key])) {
+          throw Object.assign(new Error('This transaction exceeds the configured fee limits. No proof or transaction was submitted.'), {code:'BB_GAS_LIMIT_EXCEEDED'});
         }
         this._progress('proving');
         log('  Proving tx (can take minutes)...', 'info');

@@ -73,7 +73,7 @@ test('actual wallet preserves a fixed fee budget and account scope/tag',async()=
   assert.equal(result.receipt,receipt);assert.equal(calls.filter(c=>c==='submit').length,1);
   const fees=calls.filter(c=>c[0]==='fees');assert.equal(fees[0][1].forEstimation,false);
   assert.deepEqual(fees[1][1].gasSettings.toBuffer(),expectedSettings.toBuffer());
-  assert.equal(calls.filter(c=>c[0]==='simulate').length,2);
+  assert.equal(calls.filter(c=>c[0]==='simulate').length,1);
   const request=calls.find(c=>c[0]==='request');assert.equal(request[1],payload);assert.equal(request[2],owner);
   const proof=calls.find(c=>c[0]==='prove');assert.equal(proof[2].senderForTags,owner);assert.equal(proof[2].scopes[0],owner);
   wallet._contextGuard=async()=>{throw new Error('context changed during proof');};
@@ -684,24 +684,24 @@ test('fee preparation preserves only the recognized low-cap diagnostic',async()=
  await assert.rejects(sender('claim',[]),e=>e.code==='PRIVATE_FEE_CAP_TOO_LOW'&&!e.message.includes('private detail'));assert.equal(sends,0);
 });
 
-for (const failure of ['revert','gas-change']) test(`fixed fee reservation is revalidated: ${failure} stops before proof`,async()=>{
+for (const failure of ['revert','gas-change']) test(`fixed fee reservation is validated once: ${failure} stops before proof`,async()=>{
  const c=context();let simulations=0,proofs=0;
  class BaseWallet {
   constructor(pxe){this.pxe=pxe;}
   async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
   async simulateViaEntrypoint(_payload,opts){
    simulations++;
-   if(simulations===2){
+   if(simulations===1){
     assert.equal(opts.skipTxValidation,false);assert.equal(opts.skipFeeEnforcement,false);
     assert.equal(opts.feeOptions.gasSettings.gasLimits.l2Gas,200);
    }
-   return {publicInputs:{forPublic:{}},publicOutput:simulations===2&&failure==='revert'?{revertReason:'reservation changed'}:{txEffect:{revertCode:{isOK:()=>true}}},
-    gasUsed:{totalGas:new Gas(50,simulations===2&&failure==='gas-change'?201:100),teardownGas:new Gas(0,1)}};
+   return {publicInputs:{forPublic:{}},publicOutput:simulations===1&&failure==='revert'?{revertReason:'reservation changed'}:{txEffect:{revertCode:{isOK:()=>true}}},
+    gasUsed:{totalGas:new Gas(50,simulations===1&&failure==='gas-change'?201:100),teardownGas:new Gas(0,1)}};
   }
  }
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({BaseWallet,GasSettings},{proveTx:async()=>{proofs++;throw Error('must not prove');}},{},{},()=>{},Fr.ONE);
  await assert.rejects(wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()}}),{code:failure==='revert'?'BB_SIMULATION_FAILED':'BB_GAS_LIMIT_EXCEEDED'});
- assert.equal(simulations,2);assert.equal(proofs,0);
+ assert.equal(simulations,1);assert.equal(proofs,0);
 });
 
 test('claim retrieves active metadata after reload without receipts or log scans',async()=>{

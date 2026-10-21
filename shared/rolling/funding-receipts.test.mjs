@@ -343,3 +343,37 @@ for(const kind of ['collateral','private-fee','bok'])test(`zero Bok aggregate ${
  if(kind==='bok'){await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));}
  else assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
 });
+
+test('aggregate fee verification reads metadata and pinned portal bindings once',async()=>{
+ const f=await aggregateFixture('private-fee');let nodeInfo=0,network=0,transaction=0,receipt=0;
+ const info=f.backend.getNodeInfo;f.backend.getNodeInfo=async(...args)=>{nodeInfo++;return info(...args);};
+ for(const [name,count] of [['getNetwork',()=>network++],['getTransaction',()=>transaction++],['getTransactionReceipt',()=>receipt++]]){
+  const original=f.input.ethProvider[name];f.input.ethProvider[name]=async(...args)=>{count();return original(...args);};
+ }
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
+ assert.deepEqual({nodeInfo,network,transaction,receipt},{nodeInfo:1,network:1,transaction:1,receipt:1});
+ for(const name of ['ROLLUP','UNDERLYING','VERSION','L2_TOKEN_ADDRESS'])assert.deepEqual(f.state.reads.filter(read=>Array.isArray(read)&&read[0]===name),[[name,6]]);
+ // Receipt authentication brackets the aggregate effects once; the outer
+ // canonical checks still run before validation and after witness verification.
+ assert.equal(f.state.reads.filter(read=>read==='l1').length,4);
+});
+test('independent portal bindings run together and failed groups drain before release',{timeout:3000},async()=>{
+ const f=await fixture(),entered=Promise.withResolvers(),release=Promise.withResolvers(),names=[];
+ const original=f.input.ethProvider.call;
+ f.input.ethProvider.call=async request=>{
+  const name=f.abi.parseTransaction(request).name;names.push(name);if(names.length===4)entered.resolve();
+  if(name==='ROLLUP')throw Error('connection failed');
+  if(name==='VERSION')await release.promise;
+  return original(request);
+ };
+ let settled=false;const pending=prepareFundingClaim(f.input).finally(()=>{settled=true;});const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_UNKNOWN'});
+ await entered.promise;assert.equal(settled,false);assert.deepEqual(new Set(names),new Set(['ROLLUP','L2_CONTRACT','VERSION','L1_CHAIN_ID']));
+ release.resolve();await rejected;assert(!f.state.reads.includes('witness'));
+});
+test('fee verification binds the published FPC and node portal/token without nested recovery',async()=>{
+ for(const mutate of [
+  f=>{const original=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>{const info=await original();info.l1ContractAddresses.feeJuicePortalAddress=addr(99);return info;};},
+  f=>{const original=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>{const info=await original();info.l1ContractAddresses.feeJuiceAddress=addr(99);return info;};},
+  f=>{f.backend.getContract=async()=>undefined;},
+ ]){const f=await aggregateFixture('private-fee');mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));}
+});

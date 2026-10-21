@@ -3,6 +3,7 @@ import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
 import {mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
 import {getGasLimits} from '@aztec-labs/wallet-sdk/base-wallet';
 import {createPrivateFeeSimulator} from './private-fee-simulation.mjs';
+import {createPrivateFeeSimulationValidation,snapshotPrivateFeeSimulationInput} from './private-fee-validation.mjs';
 const dimensions=['daGas','l2Gas'];
 const fail=code=>Object.assign(new Error(code),{code});
 const min=(a,b)=>a<b?a:b;
@@ -40,10 +41,12 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const boundedFee=bounded.getFeeLimit().toBigInt();
  if(boundedFee<=available){
   const reservation=boundedFee||1n;await guard();const payload=await payloadFor(reservation);
+  const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(payload,from,bounded);
   const result=await simulator.public(payload,from,bounded,true);
   if(!successful(result))throw result.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
   if(dimensions.some(k=>result.gasUsed.totalGas[k]>bounded.gasLimits[k]||result.gasUsed.teardownGas[k]>bounded.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
-  await guard();return {payload,gasSettings:bounded,reservation,maximumFee:boundedFee,passes:1};
+  await guard();const simulationValidation=await createPrivateFeeSimulationValidation({wallet,simulationPXE,payload,from,gasSettings:bounded,result,inputSnapshot});
+  return {payload,gasSettings:bounded,reservation,maximumFee:boundedFee,passes:1,simulationValidation};
  }
  // Zero prices are legal ONLY in private-only simulation. They never reach the node.
  const privateSettings=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty(),maxPriorityFeesPerGas:GasFees.empty()});privateSettings.teardownGasLimits=Gas.empty();
@@ -72,10 +75,12 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
       const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
       if(required<=available){
        const finalReservation=required||1n,finalPayload=await payloadFor(finalReservation);await guard();
+       const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(finalPayload,from,gasSettings);
        const final=await simulator.public(finalPayload,from,gasSettings,true);
        if(!successful(final))throw final.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
        if(dimensions.some(k=>final.gasUsed.totalGas[k]>gasSettings.gasLimits[k]||final.gasUsed.teardownGas[k]>gasSettings.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
-       await guard();return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1};
+       await guard();const simulationValidation=await createPrivateFeeSimulationValidation({wallet,simulationPXE,payload:finalPayload,from,gasSettings,result:final,inputSnapshot});
+       return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1,simulationValidation};
       }
      }else if(!outOfGas(full.publicOutput?.revertReason))throw full.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
     }
@@ -90,5 +95,5 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
 }
 export async function sendPrivateFeeTransaction(input){
  const estimated=await estimatePrivateFeeTransaction(input);
- return input.wallet.sendTx(estimated.payload,{from:input.from,fee:{gasSettings:estimated.gasSettings}});
+ return input.wallet.sendTx(estimated.payload,{from:input.from,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation});
 }

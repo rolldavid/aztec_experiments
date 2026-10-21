@@ -313,7 +313,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     const saved=await stored();
     if(saved.value?.kind!=='usdc'){
      const j=pendingJournal??await journal(saved.value.depositor);
-     await read(()=>j.recover({retry:false,wait:true}));recovered=await reconcile();
+     const result=await read(()=>j.recover({retry:false,wait:true}));
+     original(saved,result.request);check(result.outcome==='success',result.outcome==='reverted'?'REVERTED':'PENDING');
+     recovered={saved,result};
     }else{
      const hash=saved.value.relay?.transactionHash,request=saved.value.relay?.request;
      if(!hash||!request)throw error;
@@ -396,11 +398,11 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
      check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>same(action[key],receipts[key])),'RECOVERY_REQUIRED');
      next=current.intent;
     }else{
-     try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));}
+     try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));}
      catch(error){
       if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||errorValue(error,'reason')!=='l2-delivery')throw error;
       await read('prepare',()=>waits.bridge(receipts,errorValue(error,'reason')));
-      next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));
+      next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));
      }
     }
    }catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_NOT_READY')return {state:'waiting',phase:'bridge'};throw error;}

@@ -1,5 +1,5 @@
 // The caller owns the account lock, PXE lifetime and trusted-route guard.
-// autoSync:false requires synchronization before every private application operation.
+// autoSync:false synchronizes once per account flow, and again after chain state changes.
 const methods=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','prepareBokRelease','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','prepareInterrupted','resumeSaved'];
 // This financial confirmation must bind the caller's selection before the
 // synchronization await, not retain a mutable object until the raw app runs.
@@ -28,14 +28,22 @@ function balanceArguments(args){
   return [{cursor:d.value}];
  }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
 }
-export function createSynchronizedRollingApplication({application,synchronize,contextGuard}){
+export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null}){
  if(typeof synchronize!=='function'||typeof contextGuard!=='function')throw Error('Rolling synchronization unavailable');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
    const captured=name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args):args;
-   await contextGuard();await synchronize();await contextGuard();return call(...captured);
+   await contextGuard();
+   const scope=operationScope();
+   // Moderator identity is public storage; it needs no private-state sync.
+   if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){
+    await synchronize();if(scope)scope.synchronized=true;
+   }
+   await contextGuard();const result=await call(...captured);
+   if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
+   return result;
   }];
  });
  return Object.freeze(Object.fromEntries(calls));

@@ -1768,7 +1768,7 @@ test('funding receipt fences check local identity without repeating network atte
  for(const [object,name,key]of [[f.options.sdk,'inspectTrustedNode','node'],[f.options.accountSession.wallet,'getChainInfo','chain'],[f.options.accountSession.wallet,'getAccounts','accounts']]){const original=object[name];object[name]=async(...args)=>{counts[key]++;return original(...args);};}
  const original=f.options.sdk.prepareFundingClaim;
  f.options.sdk.prepareFundingClaim=async input=>{const before={...counts};for(let i=0;i<20;i++)await input.contextGuard();assert.deepEqual(counts,before);return original(input);};
- f.app=f.restart();await f.app.prepare({type:'claim-deposit',receipt:f.receipt});assert(counts.node>1);assert.equal(f.state.sends,0);
+ f.app=f.restart();await f.app.prepare({type:'claim-deposit',receipt:f.receipt});assert.equal(counts.node,1);assert.equal(counts.chain,1);assert.equal(counts.accounts,1);assert.equal(f.state.sends,0);
 });
 for(const change of ['local-owner','network-chain'])test('funding verification refuses '+change+' changes before using a derived claim',async()=>{
  const f=fundingFixture(),original=f.options.sdk.prepareFundingClaim;
@@ -1828,4 +1828,22 @@ test('immediate Bok preparation skips review estimates for both authorized reque
  const authorized=await f.app.submitPrepared(prepared.intentId);assert.equal(authorized.status,'authorized');assert.equal(f.state.estimates,1);
  const post=await f.app.prepareBokPost(authorized.intentId,{immediate:true});assert.equal(f.state.estimates,1);assert.equal(post.maximumFee,'100');
  await f.app.submitPrepared(post.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,2);assert.equal(f.state.calls.at(-1).name,'post_with_bok');
+});
+
+test('a shared account flow attests network once and a new flow validates again',async()=>{
+ const f=fixture();let scope={},checks=0;f.options.accountSession.operationScope=()=>scope;
+ const inspect=f.options.sdk.inspectTrustedNode;f.options.sdk.inspectTrustedNode=async(...args)=>{checks++;return inspect(...args);};f.app=f.restart();
+ await f.app.readAccountStatus();await f.app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One flow'},{immediate:true});assert.equal(checks,1);
+ scope={};await f.app.readAccountStatus();assert.equal(checks,2);
+});
+test('immediate collateral claim saves configured cap without a review simulation',async()=>{
+ const f=fundingFixture(),prepared=await f.app.prepare({type:'claim-deposit',receipt:f.receipt},{immediate:true});assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
+ await f.app.submitPrepared(prepared.intentId);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+});
+
+for(const usdc of [false,true])test(`immediate ${usdc?'USDC':'ETH'} aggregate claim keeps bridged payment and submits with one estimation`,async()=>{
+ const f=aggregateClaimFixture(usdc),app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});
+ assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(prepared.maximumFee,'100');assert.equal(f.state.payments.length,1);
+ const result=await app.submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ assert.deepEqual(f.state.sent.payload.interactions.map(call=>call.name),['claim_deposit','claim']);assert(f.state.payments.every(p=>p.claim.amount==='200'));
 });

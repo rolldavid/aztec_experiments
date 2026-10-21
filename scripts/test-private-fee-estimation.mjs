@@ -11,13 +11,15 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {PrivateFeePaymentMethod,PrivateMintAndPayFeePaymentMethod} from '../shared/private-fee-payment.mjs';
 import {estimatePrivateFeeTransaction,sendPrivateFeeTransaction} from '../shared/private-fee-estimation.mjs';
 import {createPrivateFeeSimulator} from '../shared/private-fee-simulation.mjs';
+import {consumePrivateFeeSimulationValidation} from '../shared/private-fee-validation.mjs';
+const anchorBlockHeader={hash:async()=>new Fr(91)};
 after(()=>BarretenbergSync.destroySingleton());
 function fixture({available=500n,prices=new GasFees(2n,3n),privateGas=()=>new Gas(10,20),main=new Gas(2,10),refund=new Gas(1,5)}={}){
  const payer=AztecAddress.fromFieldUnsafe(new Fr(42)),selector=FunctionSelector.fromString('0x12345678'),calls=[],sends=[];
  const prepared={availableCredit:available,paymentMethod:new PrivateFeePaymentMethod(payer,1n),refundSelector:selector.toString(),gasSettings:new GasSettings(new Gas(100,1000),new Gas(50,500),prices,GasFees.empty())};
  const reservation=p=>p.calls.find(c=>c.name==='pay_fee')?.args[0].toBigInt()??p.calls.find(c=>c.name==='mint_and_pay_fee').args[3].toBigInt();
  const error=(address=payer,sel=selector,message='Not enough L2GAS gas left')=>new SimulationError(message,[{contractAddress:address,functionSelector:sel}]);
- const input={prepared,from:AztecAddress.fromFieldUnsafe(new Fr(43)),interaction:{request:async()=>new ExecutionPayload([],[],[],[])},node:{getNodeInfo:async()=>({txsLimits:{gas:new Gas(1000,10000)}})},wallet:{sendTx:async(...args)=>{sends.push(args);return {receipt:{status:'checkpointed'}};}},simulator:{
+ const input={prepared,from:AztecAddress.fromFieldUnsafe(new Fr(43)),interaction:{request:async()=>new ExecutionPayload([],[],[],[])},node:{getNodeInfo:async()=>({txsLimits:{gas:new Gas(1000,10000)}})},wallet:{pxe:{getSyncedBlockHeader:async()=>anchorBlockHeader},sendTx:async(...args)=>{sends.push(args);return {receipt:{status:'checkpointed'}};}},simulator:{
   private:async(payload,_from,gas)=>{assert.equal(gas.getFeeLimit().toBigInt(),0n);assert(gas.teardownGasLimits.equals(Gas.empty()));calls.push({phase:'private',payload,gas});return new TxSimulationResult(undefined,{gasUsed:privateGas(reservation(payload))});},
   public:async(payload,_from,gas,enforce=false)=>{
    calls.push({phase:'public',payload,gas,enforce});assert(gas.maxFeesPerGas.equals(prices),'Public node must receive actual fee prices');assert(reservation(payload)>=gas.getFeeLimit().toBigInt(),'Contract reservation invariant');
@@ -26,7 +28,7 @@ function fixture({available=500n,prices=new GasFees(2n,3n),privateGas=()=>new Ga
    if(!mainFits)reason=error(AztecAddress.fromFieldUnsafe(new Fr(99)));
    else if(refund.daGas>gas.teardownGasLimits.daGas||refund.l2Gas>gas.teardownGasLimits.l2Gas)reason=error();
    const measured=gas.teardownGasLimits.equals(Gas.empty())?work:work.add(refund);
-   return new TxSimulationResult(undefined,{forPublic:{}},{txEffect:{revertCode:reason?RevertCode.REVERTED:RevertCode.OK},gasUsed:{totalGas:measured,teardownGas:reason?Gas.empty():refund},revertReason:reason});
+   return new TxSimulationResult(undefined,{forPublic:{},constants:{anchorBlockHeader}},{txEffect:{revertCode:reason?RevertCode.REVERTED:RevertCode.OK},gasUsed:{totalGas:measured,teardownGas:reason?Gas.empty():refund},revertReason:reason});
   },
  }};
  return {input,calls,sends,error,payer,selector};
@@ -89,21 +91,37 @@ test('reverted final simulation without optional reason cannot be accepted',asyn
 test('cold setup out-of-gas fails closed rather than disguising rejection as funding shortage',async()=>{const h=fixture();h.input.simulator.public=async()=>{throw Error('[SETUP] UNRECOVERABLE ERROR! The transaction will be thrown out. Not enough L2GAS gas left');};await assert.rejects(sendPrivateFeeTransaction(h.input),/SETUP/);assert.equal(h.sends.length,0);});
 
 import vm from 'node:vm';import fs from 'node:fs/promises';
-for(const lateRevert of [false,true])test('actual wallet preserves the measured proof budget and refuses late reasonless reverts: '+lateRevert,async()=>{
- const h=fixture(),proved=[],journaled=[],submitted=[],hash=new Fr(77),tx={getTxHash:()=>hash};let walletSimulations=0;
+test('actual wallet consumes the strict estimation once without extra simulation, then proves and submits',async()=>{
+ const h=fixture(),proved=[],journaled=[],submitted=[],hash=new Fr(77),tx={getTxHash:()=>hash};
  class SDKWalletBoundary {
   constructor(pxe){this.pxe=pxe;}
   completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
-  async simulateViaEntrypoint(payload,opts){const r=await h.input.simulator.public(payload,opts.from,opts.feeOptions.gasSettings,true);if(lateRevert&&++walletSimulations===2)r.publicOutput.txEffect.revertCode=RevertCode.REVERTED;return r;}
+  async simulateViaEntrypoint(){assert.fail('Strict estimation already validated this exact send');}
   createTxExecutionRequestFromPayloadAndFee(payload,from,fee){return {payload,from,gasSettings:fee.gasSettings};}
   scopesFrom(from){return [from];}senderForTagsFrom(from){return from;}
  }
  const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(await fs.readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
- const a={BaseWallet:SDKWalletBoundary,GasSettings,submitOnceWithReconciliation:async(_node,value)=>submitted.push(value),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
- const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{proveTx:async request=>{proved.push(request);return {toTx:async()=>tx};}},{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),confirmed(){}}});h.input.wallet=wallet;
- if(lateRevert){await assert.rejects(sendPrivateFeeTransaction(h.input),{code:'BB_SIMULATION_FAILED'});assert.equal(proved.length,0);assert.equal(journaled.length,0);assert.equal(submitted.length,0);return;}
+ const a={BaseWallet:SDKWalletBoundary,GasSettings,consumePrivateFeeSimulationValidation,submitOnceWithReconciliation:async(_node,value)=>submitted.push(value),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async request=>{proved.push(request);return {toTx:async()=>tx};}},{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),confirmed(){}}});h.input.wallet=wallet;
  await sendPrivateFeeTransaction(h.input);assert.equal(proved.length,1);assert.equal(journaled.length,1);assert.equal(submitted.length,1);assert.equal(journaled[0],submitted[0]);
- const enforced=h.calls.filter(c=>c.enforce);assert.equal(enforced.length,3);for(const c of enforced){assert.deepEqual(c.gas,proved[0].gasSettings);assert.equal(c.payload,proved[0].payload);}assert.equal(proved[0].payload.calls[0].args[0].toBigInt(),proved[0].gasSettings.getFeeLimit().toBigInt());
+ const enforced=h.calls.filter(c=>c.enforce);assert.equal(enforced.length,1);for(const c of enforced){assert.deepEqual(c.gas,proved[0].gasSettings);assert.equal(c.payload,proved[0].payload);}assert.equal(proved[0].payload.calls[0].args[0].toBigInt(),proved[0].gasSettings.getFeeLimit().toBigInt());
+});
+
+for(const change of ['wallet','pxe','payload','payload-mutation','gas','owner','anchor','scopes','sender','replay'])test('strict simulation handoff rejects '+change,async()=>{
+ const h=fixture({available:3200n}),estimated=await estimatePrivateFeeTransaction(h.input);
+ const input={wallet:h.input.wallet,payload:estimated.payload,from:h.input.from,gasSettings:estimated.gasSettings};
+ if(change==='wallet')input.wallet={...input.wallet};
+ if(change==='pxe')input.wallet.pxe={...input.wallet.pxe};
+ if(change==='payload')input.payload={...input.payload};
+ if(change==='payload-mutation')input.payload.calls[0].args[0]=new Fr(1);
+ if(change==='gas')input.gasSettings=GasSettings.from({...input.gasSettings,gasLimits:new Gas(1,1)});
+ if(change==='owner')input.from=h.payer;
+ if(change==='anchor')input.wallet.pxe.getSyncedBlockHeader=async()=>({hash:async()=>new Fr(92)});
+ if(change==='scopes')input.additionalScopes=[h.payer];
+ if(change==='sender')input.sendMessagesAs=h.payer;
+ if(change==='replay')await consumePrivateFeeSimulationValidation(estimated.simulationValidation,input);
+ await assert.rejects(consumePrivateFeeSimulationValidation(estimated.simulationValidation,input),{code:'BB_SIMULATION_CHANGED'});
+ await assert.rejects(consumePrivateFeeSimulationValidation(estimated.simulationValidation,{wallet:h.input.wallet,payload:estimated.payload,from:h.input.from,gasSettings:estimated.gasSettings}),{code:'BB_SIMULATION_CHANGED'});
 });
 
 
@@ -138,4 +156,24 @@ test('adequate-credit strict result must fit its declared limits and remain succ
 test('adequate-credit bridge payload retains its claim and positive reservation at zero fees',async()=>{
  const h=fixture({available:500n,prices:GasFees.empty()});h.input.prepared.paymentMethod=new PrivateMintAndPayFeePaymentMethod(h.payer,{amount:500n,salt:new Fr(2),leafIndex:new Fr(3),secret:new Fr(4)},1n);
  const result=await estimatePrivateFeeTransaction(h.input);assert.equal(h.calls.length,1);assert.equal(result.maximumFee,0n);assert.equal(result.reservation,1n);assert.equal(result.payload.calls[1].name,'mint_and_pay_fee');assert.equal(result.payload.calls[1].args[0].toBigInt(),500n);assert.equal(result.payload.calls[1].args[3].toBigInt(),1n);
+});
+
+for(const phase of ['simulation','validation-anchor','consume-anchor'])test('simulation handoff rejects payload mutation during '+phase,async()=>{
+ const h=fixture({available:3200n}),entered=Promise.withResolvers(),release=Promise.withResolvers();
+ if(phase==='simulation'){
+  const original=h.input.simulator.public;
+  h.input.simulator.public=async(...args)=>{const result=await original(...args);entered.resolve();await release.promise;return result;};
+ }else if(phase==='validation-anchor'){
+  const original=h.input.simulator.public;
+  h.input.simulator.public=async(...args)=>{const result=await original(...args);result.publicInputs.constants={anchorBlockHeader:{hash:async()=>{entered.resolve();await release.promise;return new Fr(91);}}};return result;};
+ }
+ if(phase==='consume-anchor'){
+  const estimated=await estimatePrivateFeeTransaction(h.input);
+  h.input.wallet.pxe.getSyncedBlockHeader=async()=>{entered.resolve();await release.promise;return anchorBlockHeader;};
+  const pending=consumePrivateFeeSimulationValidation(estimated.simulationValidation,{wallet:h.input.wallet,payload:estimated.payload,from:h.input.from,gasSettings:estimated.gasSettings});
+  await entered.promise;estimated.payload.calls[0].args[0]=new Fr(1);release.resolve();await assert.rejects(pending,{code:'BB_SIMULATION_CHANGED'});
+ }else{
+  const pending=estimatePrivateFeeTransaction(h.input);await entered.promise;h.calls[0].payload.calls[0].args[0]=new Fr(1);release.resolve();await assert.rejects(pending,{code:'BB_SIMULATION_CHANGED'});
+ }
+ assert.equal(h.sends.length,0);
 });
