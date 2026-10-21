@@ -15,9 +15,8 @@ const scripts={
  'aztec_bundle.js':'.build/sdk/aztec_browser.js',
  'crs-client.js':'shared/crs-client.js',
  'wallet-providers.js':'shared/wallet-providers.js',
- 'passkey-wallet.js':'shared/passkey-wallet.js',
- 'wallet-backup.js':'shared/wallet-backup.js',
  'claim-secret-store.js':'shared/claim-secret-store.js',
+ 'ethereum-account-session.js':'shared/ethereum-account-session.js',
  'account.js':'shared/account.js',
  'engine.js':'apps/src/billboard/user/engine.js',
 };

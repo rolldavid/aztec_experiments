@@ -1,0 +1,47 @@
+✔ Bok mention is a whole handle, case insensitive, and not an email or another handle (1.399208ms)
+✔ page and composer share one pending and completed account balance without synchronous reads (0.259875ms)
+✔ account change discards private balance from the previous account (0.149875ms)
+✔ invalidation discards in-flight completion; failed optional reads do not retry on renders (0.427584ms)
+✔ missing, disabled and zero credit remain distinct; no zero substitutes for an error (0.167ms)
+✔ typing @bok and editing/removing it stays immediate while a shared balance read is pending (28.139042ms)
+✔ basic signup does not start optional Bok work (1.457708ms)
+✔ failed optional balance leaves ordinary posting editable and displays its own unavailable status (0.893666ms)
+✔ mention preparation retains reply ancestry and the exact edited budget; it never sends (1.889959ms)
+✔ main-page credit action is available without a balance dialog and preserves the compose draft (1.18725ms)
+✔ existing deposited account can read Bok balance even when its posting credit is empty (0.943ms)
+✔ opening and reopening the social composer reuses the unlocked session while optional balance is pending (1.109666ms)
+✔ wallet chooser has icons and no password, files, passkey or backup path; one click preserves a reply (2.958917ms)
+✔ initialize silently restores once, shares one session, and updates main-page identity without opening a dialog (0.801958ms)
+✔ opening and closing during background restoration stays immediate and keeps the latest requested draft (0.699833ms)
+✔ an unfunded wallet opens posting setup after sign-in without a password or automatic payment (1.256666ms)
+✔ closing while background account status owns the SDK remains available (0.480959ms)
+✔ writing is available with a fresh account before names, moderator or Bok reads (0.348041ms)
+✔ private settings still require their account-scoped view reads (0.413459ms)
+✔ incomplete name ownership still blocks name-dependent settings (0.062542ms)
+✔ real signature creates deterministic Aztec account; reload restores without extension calls; signout then new signature recreates same keys/address (228.283291ms)
+✔ signature cancellation leaves no account and a retry can complete (22.442292ms)
+✔ account changes during signature cannot activate or remember the wrong identity (7.257917ms)
+✔ delegated Ethereum EOA still derives its account from its own signature (14.456417ms)
+✔ remembered account refuses a different Ethereum payer (28.364959ms)
+✔ changing the connected wallet removes remembered login before the next page restore (17.250541ms)
+✔ signature request clearly identifies origin/account/chain and remains stable without nonce or time (1.324416ms)
+✔ EOA signature derives deterministic separate nonzero field values across canonical signature encodings (13.498709ms)
+✔ derivation rejects wrong signer/message and binds origin plus chain (9.842375ms)
+✔ remembered account uses cloned nonextractable AES key and authenticated ciphertext, reloads in a new instance (3.348083ms)
+✔ remembered account rejects changed ciphertext (1.19125ms)
+✔ remembered account rejects changed metadata (0.907708ms)
+✔ remembered account rejects changed scope (0.849209ms)
+✔ remembered account rejects changed version (0.764791ms)
+✔ remembered account rejects changed key (0.798709ms)
+✔ scope copying cannot decrypt another origin and chain session (1.092709ms)
+✔ clear follows queued save, removes only selected scope, and invalid replacements preserve current session (1.551417ms)
+✔ fresh signatures and module instances recover the identical account after remembered storage is cleared (5.436667ms)
+✔ remembered wallet requires canonical full-field hex salt (0.351708ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 914.997292

@@ -63,6 +63,15 @@ const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for
 const button=(label,handler,primary=false)=>{const node=el('button',{type:'button',class:`button${primary?' primary':''}`},label);node.addEventListener('click',handler);return node;};
 const paragraph=text=>el('p',{},text);
 const label=(text,control)=>el('label',{class:'form-field'},text,control);
+function accountFailure(failure){
+ const code=failure?.code;
+ if(code===4001||code==='ACTION_REJECTED'||code==='BB_WALLET_REJECTED')return 'Sign-in cancelled in your wallet. Connect again when you are ready.';
+ if(code==='BB_ACCOUNT_OWNER_MISMATCH')return 'Connect the Ethereum wallet you used to create this account.';
+ if(code==='BB_WALLET_NETWORK')return 'Switch your Ethereum wallet to Sepolia, then connect again.';
+ if(code==='BB_ETHEREUM_SESSION_SIGNATURE')return 'Your wallet could not sign in as the selected Ethereum account. Select an account that supports Ethereum message signing.';
+ if(typeof code==='string'&&code.startsWith('BB_ETHEREUM_SESSION_STORAGE'))return 'Your browser could not save your sign-in. Allow this site to store data, then connect again.';
+ return 'Wallet sign-in could not complete. Check your wallet extension, then connect again.';
+}
 function nameFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(!code||!Object.hasOwn(code,'value'))return null;
   return code.value==='ROLLING_NAME_INVALID'?'Enter a valid first and last name. Use 1–32 ASCII letters, spaces, apostrophes or hyphens in each part; start and end with a letter. Bok is reserved.':code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
@@ -382,11 +391,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(paragraph('Connect your Ethereum wallet to open your account. Use the same wallet whenever you come back.'));
   if(typeof runtime.fundingWallets!=='function'||typeof runtime.signInWallet!=='function'){content.append(paragraph('Wallet sign-in is unavailable. Reload the page to try again.'));return;}
   walletChoices(content,choice=>void work(async()=>{
-   startSetup();await runtime.signInWallet(choice.id);await connect();
+   startSetup();note('Approve sign-in in '+choice.name+'…');await runtime.signInWallet(choice.id);await connect();
    if(!intent&&['fee-needed','collateral-pending'].includes(status?.status)){
     view=status.depositIds?.length?'topup':'funding';topupKind='private-fee';
    }
-  }));
+  },accountFailure));
   content.append(privacyDetails());
  }
  function signOut(){return work(async()=>{
@@ -1070,7 +1079,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(setupMode||initializing)title.textContent='Opening your account…';
   if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error','data-operation-feedback':''},error));
   if(notice)content.append(el('p',{class:'notice','data-operation-feedback':''},notice));
-  if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload page',()=>location.reload()));}
+  if(invalidated||reloadRequired){content.append(paragraph('You are signed out. Reload to connect your wallet.'),button('Reload page',()=>location.reload()));}
   else if(initializing)content.append(paragraph('Opening your account…'));
   else if(!runtime)content.append(error?button('Reload page',()=>location.reload()):paragraph('Loading account setup…'));
   else if(!unlocked())custody();
@@ -1094,7 +1103,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
       if(typeof session.application.readBalances==='function')settings.append(button('Balance and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');}));
       settings.append(button('Create a board',()=>chooseAction('subboard')));if(moderatorStatus?.authorized)settings.append(button('Update site rules',()=>chooseAction('set-main-policy')),button('Transfer moderator authority',()=>chooseAction('transfer-moderator')));
       if(session.topup)settings.append(button('Add credit',()=>selectView('topup')));
-      settings.append(button('Sign out',()=>void signOut()));content.append(settings);
+      content.append(settings);
      }else{
       if(!viewReady())content.append(button(view==='names'?'Load your names':'Load publishing options',()=>void work(loadView),true));
       else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs.amount='';topupQuote=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
@@ -1103,6 +1112,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     }
    }
   }
+  if(signedIn&&!initializing&&!invalidated&&!reloadRequired)content.append(button('Sign out',()=>void signOut()));
   controlsBusy(busy);renderBokControls();requestBokBalance();
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October urgent feedback fixes195cb269 published: retained account composer, local @bok detection without blocking editor, main-page Bok credit/Add credit, ETH→USDC standalone topup and actionable stage errors.326 integrated checks +SDK/walletbuild +live Sepolia readonlyquote pass. Caddy native READY and public route/hash/header probes pass after reviewed4f8 operatororderfix. Frontend nowindependent ofindex; currentappPID138589 andnativePIDs preserved. No newreal topup/browserperformance trial. Availability69eb supervisorlivebothhosts; allservice monitorsreportready. Continue owner feedback; broaderqualification remainsincomplete, no scheduledcampaign restart.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October wallet sign-in correction active: replace random password/file onboarding with Ethereum EOA signature-derived Aztec account and automatic remembered browser session. Root custody/runtime; funding agent panel/reader isolated; publication agent encrypted session module isolated; ux agent independent review. Preserve existing journals, live contracts and services; frontend-only publish after focused checks.
 
 ## Ready internal work
 

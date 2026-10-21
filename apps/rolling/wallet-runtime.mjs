@@ -53,13 +53,13 @@ export function loadRollingWalletRuntime(){
 async function load(signal){
  if(!isSecureContext||!navigator.locks?.request||!crossOriginIsolated)throw failed();
  const metadata=await boundedJSON('/wallet/runtime.json',65536,undefined,{signal});
- if(metadata?.schemaVersion!==1||!Array.isArray(metadata.scripts)||metadata.scripts.length!==9||
+ if(metadata?.schemaVersion!==1||!Array.isArray(metadata.scripts)||metadata.scripts.length!==8||
   Object.keys(metadata).sort().join()!=='artifacts,config,crs,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery')throw failed();
  const config=structuredClone(metadata.config),query=structuredClone(metadata.trustedQuery),remote=metadata.remoteProver?structuredClone(metadata.remoteProver):undefined;
  if(typeof metadata.proofsEnabled!=='boolean'||(!metadata.proofsEnabled&&config.network?.chainId!=='31337'))throw failed();
  // Host pins exact script ordering and hashes. Reject repeated or unexpected
  // script names before any code executes, including the account singleton.
- const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'];
+ const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','claim-secret-store.js','ethereum-account-session.js','account.js','engine.js'];
  if(metadata.scripts.some((a,i)=>descriptor(a).url!=='/wallet/'+names[i]))throw failed();
  if(Object.keys(metadata.artifacts??{}).sort().join()!==(config.bok?'board,bok,privateFee':'board,privateFee'))throw failed();
  // Start script downloads alongside the independent contract data. Matching
@@ -100,7 +100,7 @@ async function load(signal){
  // Only metadata leaves provider discovery. The selected transport stays inside
  // existing custody, which verifies the configured chain and invalidates changes.
  const fundingWallets=()=>{
-  if(!globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
+  if(globalThis.walletState.invalidated)throw failed();
   globalThis.BillboardWalletProviders.refresh();
   return globalThis.BillboardWalletProviders.list().map(({id,name,icon})=>Object.freeze({id,name,...(icon?{icon}:{})}));
  };
@@ -118,7 +118,15 @@ async function load(signal){
   if(globalThis.walletState.aztec!==current||globalThis.walletState.invalidated)throw failed();
   return fundingWalletStatus();
  };
- return Object.freeze({account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
+ const signInWallet=async id=>{
+  if(globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
+  const selected=globalThis.BillboardWalletProviders.list().find(entry=>entry.id===id);
+  if(!selected)throw failed();
+  await account.connect(selected.provider,selected.name,{deriveAccount:true,providerId:selected.rdns??selected.id});
+  return true;
+ };
+ const restoreAccount=()=>account.restoreRemembered();
+ return Object.freeze({signInWallet,restoreAccount,account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};

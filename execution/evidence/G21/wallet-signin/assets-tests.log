@@ -1,0 +1,20 @@
+✔ verified SDK persists, concurrent requests join, changed hash replaces old bytes (18.377708ms)
+✔ private, unpinned, range and authorization requests are not intercepted (0.712459ms)
+✔ wrong digests and oversized public files are never stored (1.227959ms)
+✔ storage quota errors still return verified bytes without refetching (0.654167ms)
+✔ public wallet config is detached, exact and scoped to the same public reader deployment (1.464334ms)
+✔ operator capabilities, extra properties and unsafe endpoints cannot enter browser metadata or CSP (0.457791ms)
+✔ remote proof metadata binds board, chain, version and mode; nonlocal disabled proofs fail closed (0.322208ms)
+✔ optional Bok browser scope is exact, detached and cannot carry operator credentials (0.501458ms)
+✔ aggregate wallet metadata requires an explicit exact router/quoter scope and matching authenticated deployment (0.33025ms)
+✔ USDC wallet scope requires the complete pinned proxy implementation domain and trusted relayer together (0.344333ms)
+✔ explicit public refund endpoint adds only its origin without changing private query authority (0.20725ms)
+✔ refund-only publication requires explicit public endpoint and does not relax private configuration (0.095959ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.344708

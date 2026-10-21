@@ -3,8 +3,8 @@
 // application versions requiring a key-only custody migration.
 // AES-GCM encrypts at rest. It cannot protect an unlocked wallet against malicious page code.
 function makeClaimSecretStore(walletSecret, walletSalt = '0x' + '0'.repeat(64)) {
-  const canonicalWallet = globalThis.BillboardWalletBackup.validateWallet({secretKey: walletSecret, salt: walletSalt});
-  walletSecret = canonicalWallet.secretKey; walletSalt = canonicalWallet.salt;
+  const modulus=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  if([walletSecret,walletSalt].some(value=>typeof value!=='string'||!/^0x[0-9a-f]{64}$/.test(value)||BigInt(value)>=modulus)||BigInt(walletSecret)===0n)throw Error('Invalid account key.');
   const encoder = new TextEncoder();
   const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2,'0')).join('');
   const unhex = text => Uint8Array.from(text.match(/../g) || [], pair => parseInt(pair,16));
@@ -69,73 +69,8 @@ function makeClaimSecretStore(walletSecret, walletSalt = '0x' + '0'.repeat(64)) 
       return validateRecord(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(plaintext)),secretHash);
     } catch (_) { throw new Error('Cannot authenticate the saved claim secret with this wallet and scope.'); }
   }
-  async function exportRecords() {
-    const db = await open(); let entries;
-    try {
-      entries = await new Promise((resolve, reject) => {
-        const tx = db.transaction('records','readonly'); const store = tx.objectStore('records');
-        const keys = store.getAllKeys(); const values = store.getAll();
-        tx.oncomplete = () => resolve(keys.result.map((key, i) => [key, values.result[i]]));
-        tx.onabort = tx.onerror = () => reject(new Error('Cannot read claim secrets for backup.'));
-      });
-    } finally { db.close(); }
-    if (entries.length > 10000) throw new Error('Claim-secret backup is too large.');
-    const walletId = await walletIdPromise; const records = [];
-    for (const [storageKey, envelope] of entries) {
-      if (typeof storageKey !== 'string' || !storageKey.startsWith(walletId + ':')) continue;
-      const scopeKey = storageKey.slice(walletId.length + 1);
-      const parts = JSON.parse(scopeKey);
-      if (!Array.isArray(parts) || parts.length !== 8 || parts[0] !== 'AZTEC_BB_CLAIM_STORE_V2') throw new Error('Invalid claim-secret backup scope.');
-      const fields = ['l1ChainId','rollupAddress','rollupVersion','boardAddress','portalAddress','depositor'];
-      const scope = Object.fromEntries(fields.map((name,i) => [name,parts[i+1]]));
-      const secretHash = parts[7];
-      if (aad(scope,secretHash) !== scopeKey) throw new Error('Invalid claim-secret backup scope.');
-      // V2 never imports the old key-only store automatically. Every selected
-      // account record must authenticate before a backup is considered complete.
-      const record = await decodeEnvelope(envelope, scopeKey, secretHash);
-      records.push({scope,record});
-    }
-    return records;
-  }
-  async function restoreRecords(records) {
-    if (!Array.isArray(records) || records.length > 10000) throw new Error('Invalid restored claims.');
-    const prepared = []; const keys = new Set(); const walletId = await walletIdPromise;
-    for (const value of records) {
-      const {scope,record} = globalThis.BillboardWalletBackup.validateClaim(value);
-      const sdk = globalThis.__aztec;
-      if (!sdk?.Fr || typeof sdk.computeSecretHash !== 'function') throw new Error('Load the pinned Aztec SDK before restoring claim secrets.');
-      const actualHash = await sdk.computeSecretHash(new sdk.Fr(BigInt(record.secret)));
-      if (actualHash.toString().toLowerCase() !== record.secretHash) throw new Error('Restored claim secret does not match its commitment.');
-      const storageKey = aad(scope,record.secretHash);
-      if (keys.has(storageKey)) throw new Error('Duplicate restored claim.'); keys.add(storageKey);
-      const databaseKey = walletId + ':' + storageKey;
-      const existing = await readEnvelope(databaseKey);
-      if (existing !== undefined) {
-        const old = await decodeEnvelope(existing,storageKey,record.secretHash);
-        if (old.secret !== record.secret) throw new Error('A different claim secret already occupies this record.');
-      }
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:encoder.encode(storageKey),tagLength:128},await keyPromise,encoder.encode(JSON.stringify(record)));
-      prepared.push({storageKey:databaseKey,expected:existing,envelope:{schemaVersion:1,walletId,iv:hex(iv),ciphertext:hex(new Uint8Array(ciphertext))}});
-    }
-    const db = await open();
-    try {
-      await new Promise((resolve,reject) => {
-        const tx = db.transaction('records','readwrite',{durability:'strict'}); const store = tx.objectStore('records');
-        for (const entry of prepared) {
-          const request = store.get(entry.storageKey);
-          request.onsuccess = () => {
-            if (JSON.stringify(request.result) !== JSON.stringify(entry.expected)) { tx.abort(); return; }
-            if (request.result === undefined) store.add(entry.envelope,entry.storageKey);
-          };
-        }
-        tx.oncomplete = () => resolve();
-        tx.onabort = tx.onerror = () => reject(new Error('Claim restore did not commit; existing records were preserved.'));
-      });
-    } finally { db.close(); }
-  }
   return {
-    load, exportRecords, restoreRecords,
+    load,
     async save(scope,record) {
       validateRecord(record,record?.secretHash);
       const storageKey=aad(scope,record.secretHash);
@@ -163,12 +98,6 @@ function makeClaimSecretStore(walletSecret, walletSalt = '0x' + '0'.repeat(64)) 
     },
   };
 }
-
-// Every wallet screen preserves the same collateral custody during backup.
-globalThis.BillboardClaimBackup=Object.freeze({
-  exportRecords(wallet){return makeClaimSecretStore(wallet.secretKey,wallet.salt).exportRecords();},
-  restoreRecords(wallet,claims){return makeClaimSecretStore(wallet.secretKey,wallet.salt).restoreRecords(claims);},
-});
 
 // Only public search progress; private keys and claim secrets never enter this cache.
 function createDepositRecoveryProgress(){
