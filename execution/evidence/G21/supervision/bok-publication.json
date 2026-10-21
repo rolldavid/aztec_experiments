@@ -1,0 +1,58 @@
+{
+  "published": true,
+  "role": "bok",
+  "commit": "69eb1831e0c9c8d69dce14c0bae27dffbf4c0fea",
+  "processesUnchanged": {
+    "rolling-bok-testnet": {
+      "pid": "48663",
+      "cwd": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09"
+    },
+    "rolling-bok-artifact-proxy": {
+      "pid": "48665",
+      "cwd": "/"
+    }
+  },
+  "nextStartReleases": {
+    "rolling-bok-testnet": {
+      "current": "/opt/rolling-app/releases/lifecycle-ca11b9fcaf09",
+      "nextStart": "/opt/rolling-app/releases/supervision-69eb1831e0c9"
+    }
+  },
+  "controlSourceSha256": "475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38",
+  "attestorSha256": "561ab85a9418474cc1416d672728c522d96e83ecc21776f7279f10eaa5dcc61e",
+  "manifestSha256": "05d526891911bd90eaa84711d99f08d894ff1976beee80a544863636d65e8e5e",
+  "legacyMonitorUnitsMasked": [
+    "rolling-attest.timer",
+    "rolling-attest.service",
+    "rolling-application-attest.timer",
+    "rolling-application-attest.service",
+    "rolling-application-stop.service"
+  ],
+  "monitor": {
+    "checks": {
+      "host-controls": {
+        "ok": true
+      }
+    },
+    "observedAt": 1792556014,
+    "ready": true,
+    "role": "bok",
+    "schemaVersion": 1,
+    "services": {
+      "rolling-bok-artifact-proxy": {
+        "active": true,
+        "pid": 48665,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-bok-testnet": {
+        "active": true,
+        "pid": 48663,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      }
+    }
+  }
+}

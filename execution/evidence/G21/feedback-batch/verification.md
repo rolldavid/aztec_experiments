@@ -1,0 +1,7 @@
+# Integrated urgent UX fixes
+
+Opening the post composer uses the existing unlocked account snapshot; authoritative preparation retains private checks. @bok detection is local to the input event and replaces the checkbox. Main-page Bok balance and Add credit are visible to unlocked configured accounts. One account-scoped optional balance lookup updates only balance/budget controls; pending or failed reads do not disable typing or replace the draft.
+
+Bok top-up supports ETH via an exact-output USDC purchase, then existing spending approval/deposit/private claim. Wallet confirmations follow automatically without repeated application review clicks. Each receipt controls progress; no elapsed transaction success/failure deadline or repeat payment is introduced. Stage-specific errors identify missing funds, cancellations and whether an exchange already completed. ETH maximum swap input and the current transaction fee budget are shown; later wallets display their actual transaction fees.
+
+326 integrated Node checks pass, including actual mounted panel with a held-open balance response, session/composer reuse, swap/approval/deposit/claim and Ethereum journal validations. Both SDK and wallet manifests rebuilt successfully. Live Sepolia read-only router/quoter validation succeeded. Browser assertions were updated but no browser was launched; no real ETH swap/top-up transaction was performed in this targeted verification. No claim of measured event-loop performance or new whole-onboarding qualification.

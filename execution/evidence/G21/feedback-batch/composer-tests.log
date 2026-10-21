@@ -1,0 +1,23 @@
+✔ Bok mention is a whole handle, case insensitive, and not an email or another handle (1.399125ms)
+✔ page and composer share one pending and completed account balance without synchronous reads (0.193042ms)
+✔ account change discards private balance from the previous account (0.109375ms)
+✔ invalidation discards in-flight completion; failed optional reads do not retry on renders (0.377333ms)
+✔ missing, disabled and zero credit remain distinct; no zero substitutes for an error (0.144541ms)
+✔ typing @bok and editing/removing it stays immediate while a shared balance read is pending (24.157917ms)
+✔ basic signup does not start optional Bok work (2.620292ms)
+✔ failed optional balance leaves ordinary posting editable and displays its own unavailable status (2.158167ms)
+✔ mention preparation retains reply ancestry and the exact edited budget; it never sends (3.264ms)
+✔ main-page credit action is available without a balance dialog and preserves the compose draft (2.413375ms)
+✔ existing deposited account can read Bok balance even when its posting credit is empty (1.854375ms)
+✔ opening and reopening the social composer reuses the unlocked session while optional balance is pending (1.521333ms)
+✔ writing is available with a fresh account before names, moderator or Bok reads (0.361167ms)
+✔ private settings still require their account-scoped view reads (0.453792ms)
+✔ incomplete name ownership still blocks name-dependent settings (0.057375ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.753458

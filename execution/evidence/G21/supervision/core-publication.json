@@ -1,0 +1,123 @@
+{
+  "published": true,
+  "role": "core",
+  "commit": "69eb1831e0c9c8d69dce14c0bae27dffbf4c0fea",
+  "processesUnchanged": {
+    "rolling-node": {
+      "pid": "4287",
+      "cwd": "/"
+    },
+    "rolling-query": {
+      "pid": "199731",
+      "cwd": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec"
+    },
+    "board-prover": {
+      "pid": "199732",
+      "cwd": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec"
+    },
+    "board-prover-proxy": {
+      "pid": "199733",
+      "cwd": "/"
+    },
+    "rolling-application": {
+      "pid": "138589",
+      "cwd": "/opt/rolling-app/releases/ux-ab6744b8cdd1"
+    },
+    "rolling-application-proxy": {
+      "pid": "138592",
+      "cwd": "/"
+    },
+    "rolling-moderator": {
+      "pid": "199809",
+      "cwd": "/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09"
+    }
+  },
+  "nextStartReleases": {
+    "rolling-application": {
+      "current": "/opt/rolling-app/releases/ux-ab6744b8cdd1",
+      "nextStart": "/opt/rolling-app/releases/supervision-69eb1831e0c9"
+    },
+    "rolling-moderator": {
+      "current": "/opt/rolling-moderator/releases/lifecycle-ca11b9fcaf09",
+      "nextStart": "/opt/rolling-moderator/releases/supervision-69eb1831e0c9"
+    }
+  },
+  "controlSourceSha256": "d9cfcd1ec3a69573634a3a26a4ea870ffbbb39df84dc5445406c939fcbf6e839",
+  "attestorSha256": "320a27df4721d353b42edf361cd72adafd5bfb862836a274bc946f4931b02b2e",
+  "manifestSha256": "f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27",
+  "legacyMonitorUnitsMasked": [
+    "rolling-attest.timer",
+    "rolling-attest.service",
+    "rolling-application-attest.timer",
+    "rolling-application-attest.service",
+    "rolling-application-stop.service"
+  ],
+  "monitor": {
+    "checks": {
+      "host-controls": {
+        "ok": true
+      },
+      "prover": {
+        "ok": true
+      },
+      "query-boundary": {
+        "ok": true
+      }
+    },
+    "observedAt": 1792555980,
+    "ready": true,
+    "role": "core",
+    "schemaVersion": 1,
+    "services": {
+      "board-prover": {
+        "active": true,
+        "pid": 199732,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "board-prover-proxy": {
+        "active": true,
+        "pid": 199733,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-application": {
+        "active": true,
+        "pid": 138589,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-application-proxy": {
+        "active": true,
+        "pid": 138592,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-moderator": {
+        "active": true,
+        "pid": 199809,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-node": {
+        "active": true,
+        "pid": 4287,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      },
+      "rolling-query": {
+        "active": true,
+        "pid": 199731,
+        "restarts": 0,
+        "running": true,
+        "successful": true
+      }
+    }
+  }
+}

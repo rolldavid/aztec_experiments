@@ -1,0 +1,54 @@
+{
+  "files": {
+    ".build/rolling-wallet/manifest.json": {
+      "sha256": "de5cb339936fa396b132449f60056645a2597282a0776891612de1ce77b2d8eb",
+      "previousSha256": "7a68182e35a69fafd24b8bcf7804be79763f94e344caed09276e1e408027eb18"
+    },
+    ".build/rolling-wallet/runtime.mjs": {
+      "sha256": "e160c3b7d09eddde493022d6796f84e9df9ea3839833e2a7db389f2ad31ae05c",
+      "previousSha256": "db2e7c73a0656fc2f584dee4e65b667fb0305a1ade13b5e431d64769d9ee128d"
+    },
+    ".build/sdk/aztec_browser.js": {
+      "sha256": "a3a8bcfb734ab41490dbc0d5b17c305f1999c45da8a8a9d6abacbeaa0d9a3a70",
+      "previousSha256": "ec6f16866970ee5a7dc05158def7f55525441fd47b303f6db7f7a450c2bc20e6"
+    },
+    ".build/sdk/aztec_bundle.js": {
+      "sha256": "268620649d21ce8aa5e0bde96f9d1e87f66169e20f1d69067e270b1ef3c9718c",
+      "previousSha256": "e0c28a6c5bb3be183e2576ba58cdc0d057e313c58a6f0d5e2d89b222bfbf04b6"
+    },
+    ".build/sdk/sdk-manifest.json": {
+      "sha256": "8b3305c0fa3a8b0a0faa2697174cf7d335c4a30c0998973609cd0aad8f23c9cb",
+      "previousSha256": "3b98b35c1f33b2b9fe3275022257bf42cb4ac4406e027ee90c1defbdc7d4fdd7"
+    },
+    "apps/rolling/reader.mjs": {
+      "sha256": "bccd8452b8e1b0690660b1992b4181d10a8f4ace9a301b7bdb500bd736dbeca4",
+      "previousSha256": "ce3e72de5f3d9e3a08f3cb882a013c584689cba821bf0b5b8e0becd5efb620eb"
+    },
+    "apps/rolling/style.css": {
+      "sha256": "95c3ba044e27e5db49aa0305df9eb001b003e7109e307bb77e547b62e6096fc3",
+      "previousSha256": "4aadda8357126b8d31380dc4f29d57742e7002721e5ad1f6fc61b5ef787c53b9"
+    },
+    "apps/rolling/wallet-panel.mjs": {
+      "sha256": "425810349a32383894445e1b15c045f01bef2bfe82551de6f3529ec3e411cdc3",
+      "previousSha256": "3866b0597d7d0ed7d15dddad3aa94c505252d1305561b3660cda3782844d307a"
+    },
+    "apps/rolling/wallet-session.mjs": {
+      "sha256": "49fc3d26756d4cd543c35cf2d87b413fa14804503794bce66c7c74cd3ca15e6c",
+      "previousSha256": "7ae4410d02efc430f19ef90f7aa99f98cde5fe9f81911811bf4bd291ee5d4b51"
+    },
+    "shared/ethereum-journal.mjs": {
+      "sha256": "5e44bfc17a53597ec9fa603fd4eaa546d68e02fb7ebfe3a9a25ffa7cd5d2ebe3",
+      "previousSha256": "fc5a6e5d6567a124a0d6b44e6303f280722f39c1c20af7c8cf94a59c0863d952"
+    },
+    "shared/rolling/aggregate-wallet.mjs": {
+      "sha256": "85e4343068f7a96ed3aef49c3c2a44aa1f2e362fc227aee1678130ae30a93105",
+      "previousSha256": "e66c7e3f2b5850cd4698d816d4bef0b359093c0a28a8d1c0e522bd82f1883002"
+    },
+    "shared/rolling/topup-swap.mjs": {
+      "sha256": "7adc30c996669a339e4bf8f665dde446d7ec8006dfa0fb8a4c42cff1d059a9d0",
+      "previousSha256": null
+    }
+  },
+  "sdkManifestSha256": "8b3305c0fa3a8b0a0faa2697174cf7d335c4a30c0998973609cd0aad8f23c9cb",
+  "walletManifestSha256": "de5cb339936fa396b132449f60056645a2597282a0776891612de1ce77b2d8eb"
+}

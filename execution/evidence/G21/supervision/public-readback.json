@@ -1,0 +1,17 @@
+{
+  "/api/status": {
+    "httpStatus": 200,
+    "state": "ready",
+    "posts": null
+  },
+  "/api/feed?limit=1": {
+    "httpStatus": 200,
+    "state": null,
+    "posts": 1
+  },
+  "/prover/healthz": {
+    "httpStatus": 200,
+    "state": null,
+    "posts": null
+  }
+}
