@@ -69,7 +69,7 @@ function nameFailure(failure){
  }catch{return null;}
 }
 function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
-function aggregateFundingFailure(failure){
+function fundingFailureText(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')){
   if(code.value==='ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'){
    const minimum=Object.getOwnPropertyDescriptor(failure,'minimumFeeCredit');
@@ -77,8 +77,17 @@ function aggregateFundingFailure(failure){
     return 'Posting costs have changed. Review the cost again to get an updated price. No payment was sent.';
   }
   const messages={
+   ROLLING_FUNDING_TOKEN_BALANCE:'Your connected wallet does not have enough USDC. Choose Pay with ETH, or add USDC to that wallet.',
+   ROLLING_FUNDING_FEE_TOKEN_BALANCE:'Your connected wallet does not have enough posting fee tokens. Add fee tokens to that wallet before buying posting credit.',
+   ROLLING_FUNDING_SWAP_UNAVAILABLE:'ETH payment is unavailable for this credit. Choose USDC.',
+   ROLLING_FUNDING_SWAP_LIQUIDITY:'An ETH price for this credit is unavailable. Try a smaller amount or pay with USDC.',
+   ROLLING_FUNDING_SWAP_SCOPE:'The ETH exchange could not be verified. No exchange was sent. Try again when the service is available.',
+   BB_ETH_REQUEST_CANCELLED:'Payment cancelled in your wallet. You can continue when you are ready.',
+   BB_ETH_INSUFFICIENT_FUNDS:'Your wallet needs more ETH to cover this payment and Ethereum fees.',
+   INSUFFICIENT_FUNDS:'Your wallet needs more ETH to cover this payment and Ethereum fees.',
+   PRIVATE_FEE_BALANCE_INSUFFICIENT:'Your posting balance needs credit before the Bok credit can be added. Add posting credit, then continue this top-up.',
    ROLLING_FUNDING_SIGNATURE_CANCELLED:'Signature cancelled. No funding payment was sent. Your account remains unlocked; get a fresh quote when you are ready.',
-   ROLLING_FUNDING_GAS_CHANGED:'Ethereum gas costs exceed your approved maximum. Get a fresh price and review it before paying. Your recovery records are preserved.',
+   ROLLING_FUNDING_GAS_CHANGED:'Ethereum fees changed. Review the current cost before continuing.',
    AGGREGATE_STALE_QUOTE:'This quote has expired on Ethereum. Get a fresh quote and review the amounts before confirming again.',
    AGGREGATE_QUOTE_REORG:'Ethereum changed the block used for this quote. Get a fresh quote before confirming again.',
    AGGREGATE_PUBLIC_READ_FAILED:'The funding quote could not be verified against current Ethereum state. Check your Ethereum connection, then get a fresh quote. Your recovery records are preserved.',
@@ -89,7 +98,47 @@ function aggregateFundingFailure(failure){
   };
   if(Object.hasOwn(messages,code.value))return messages[code.value];
  }}catch{}
+ const stage=Object.getOwnPropertyDescriptor(failure??{},'topupStage')?.value;
+ const stages={quote:'The credit price could not be loaded. Check your wallet is connected to the right network, then try again.',swap:'The ETH exchange could not be completed. Check the transaction in your wallet before continuing.',approval:'USDC spending approval could not be completed. Check the approval in your wallet, then continue.',deposit:'The credit payment could not be completed. Check the transaction in your wallet before continuing.',claim:'Your payment was sent, but the private credit could not be added yet. Continue this top-up to finish adding it.'};
+ if(Object.hasOwn(stages,stage))return stages[stage];
  return nameFailure(failure);
+}
+
+export function aggregateFundingFailure(failure){
+ const message=fundingFailureText(failure);
+ const exchanged=Object.getOwnPropertyDescriptor(failure??{},'topupExchanged')?.value===true;
+ const stage=Object.getOwnPropertyDescriptor(failure??{},'topupStage')?.value;
+ const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;
+ if(stage==='swap'&&!exchanged&&code==='BB_ETH_REQUEST_CANCELLED')return 'ETH exchange cancelled. No ETH was spent.';
+ if(!exchanged||stage==='claim')return message;
+ const prefix=code==='BB_ETH_REQUEST_CANCELLED'||stage==='approval'||stage==='quote'?
+  'Your ETH exchange completed. The USDC is in your wallet. ':'Your ETH exchange completed. ';
+ return prefix+(message??'Continue this top-up to finish adding your credit.');
+}
+
+function topupFailure(error,stage,exchanged=false){
+ const code=Object.getOwnPropertyDescriptor(error??{},'code')?.value;
+ return Object.assign(new Error('Credit purchase could not be completed.',{cause:error}),{code:typeof code==='string'?code:'ROLLING_TOPUP_FAILED',topupStage:stage,topupExchanged:exchanged});
+}
+
+// Continue only after each preceding Ethereum transaction is confirmed. Each
+// send still requires its own wallet approval; no failed payment is retried.
+export async function runTopupPayment(cap,input,quote,onStep=()=>{}){
+ let current=quote,exchanged=quote.exchanged===true;
+ for(const phase of ['swap','approval','deposit']){
+  if(current.phase!==phase)continue;
+  let stage=phase;
+  try{
+   await onStep(phase);
+   const result=await cap.confirm();
+   if(phase==='deposit')return result;
+   if(phase==='swap'?!result.swapped:!result.approved)throw Error('Unexpected payment result.');
+   if(phase==='swap')exchanged=true;
+   stage='quote';current=await cap.prepare(input);
+   if(!(phase==='swap'?['approval','deposit']:['deposit']).includes(current.phase))throw Error('Unexpected payment step.');
+  }catch(error){throw topupFailure(error,stage,exchanged);}
+ }
+ throw topupFailure(Error('No payment prepared.'),'quote');
 }
 
 const message='This action could not be completed. Your draft is saved. If you already sent it, check its status before trying again.';
@@ -896,17 +945,63 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   return view==='topup'?session?.topup?.[topupKind]:session?.funding;
  }
  function topupView(){
-  if(!fundingWalletView())return;content.append(el('h3',{},'Add credit'),paragraph('Posting balance pays for posts and account updates. Bok credit pays for requests to the AI assistant.'));
-  const choices=Object.keys(session.topup??{});if(!choices.length){content.append(paragraph('Direct top-ups are unavailable for this deployment.'));return;}
-  if(!choices.includes(topupKind))topupKind=choices[0];const cap=session.topup[topupKind];if(!topupInputs.amount)topupInputs.amount=topupKind==='bok'?'1':decimal(BigInt(cap.defaultPrivateFeeCap)*2n,18);
-  if(topupQuote){const q=topupQuote;content.append(paragraph(q.phase==='approval'?'Approve only the displayed token amount for the verified bridge. This does not deposit or claim the top-up.':'Deposit the reviewed tokens to the verified bridge. Then claim the credit privately; no posting deposit is changed.'),paragraph('Amount: '+decimal(q.amount,topupKind==='bok'?6:18)+(topupKind==='bok'?' USDC for Bok.':' fee tokens.')),paragraph('Ethereum gas maximum for this step: '+decimal(q.gasBudgetWei,18)+' ETH.'),paragraph('Private claim fee maximum: '+decimal(q.privateFeeCap,18)+' fee tokens ('+q.privateFeeCap+' base units).'),paragraph('Wallet: '+q.walletName+'.'));
-   content.append(button(q.phase==='approval'?'Confirm token approval':'Confirm top-up and private claim',()=>void work(async()=>{const epoch=accountEpoch;checkAccount(epoch);topupQuote=null;const result=await cap.confirm();checkAccount(epoch);if(result.approved){stopFunding();notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}else{fundingAutomatic=true;await advanceFunding();}}),true),button('Change top-up review',()=>{topupQuote=null;render();}));
+  if(!fundingWalletView())return;
+  content.append(el('h3',{},'Add credit'),paragraph('Posting balance pays for posts and account updates. Bok credit pays for requests to the AI assistant.'));
+  const choices=Object.keys(session.topup??{});
+  if(!choices.length){content.append(paragraph('Credit purchases are unavailable for this account.'));return;}
+  if(!choices.includes(topupKind))topupKind=choices[0];
+  const cap=session.topup[topupKind],isBok=topupKind==='bok';
+  if(!topupInputs.amount)topupInputs.amount=isBok?'1':decimal(BigInt(cap.defaultPrivateFeeCap)*2n,18);
+  if(!topupInputs.asset)topupInputs.asset=isBok&&cap.ethAvailable?'ETH':'USDC';
+  const allocation=()=>({amount:units(topupInputs.amount,isBok?6:18),asset:isBok?topupInputs.asset:'USDC',privateFeeCap:cap.defaultPrivateFeeCap});
+  if(topupQuote){
+   const q=topupQuote,input=allocation();
+   content.append(paragraph(isBok?'Add $'+decimal(q.amount,6)+' of Bok credit.':'Add '+decimal(q.amount,18)+' posting credit.'));
+   if(q.phase==='swap')content.append(paragraph('Pay up to '+decimal(q.maximumSwapWei,18)+' ETH. Your ETH is exchanged for USDC automatically; any unused ETH is returned.'),paragraph('Approve the exchange, USDC spending, and credit payment in your wallet. Ethereum fees apply to each transaction.'));
+   else content.append(paragraph('Pay '+decimal(q.amount,isBok?6:18)+(isBok?' USDC.':' fee tokens.')+' Approve the payment in your wallet.'));
+   content.append(paragraph('Ethereum fee limit for the next transaction: '+decimal(q.gasBudgetWei,18)+' ETH.'));
+   content.append(button('Add credit',()=>void work(async()=>{
+    const epoch=accountEpoch;checkAccount(epoch);topupQuote=null;
+    await runTopupPayment(cap,input,q,phase=>{
+     checkAccount(epoch);note(({swap:'Confirm the ETH exchange in your wallet…',approval:'Approve USDC spending in your wallet…',deposit:'Confirm the credit payment in your wallet…'})[phase]);
+    });
+    checkAccount(epoch);fundingAutomatic=true;
+    try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
+   },aggregateFundingFailure),true),button('Change amount',()=>{topupQuote=null;render();}));
   }else if(!fundingAutomatic){
-   const select=el('select',{'aria-label':'Top-up credit'});for(const kind of choices)select.append(el('option',{value:kind},kind==='bok'?'Bok assistant (USDC)':'Posting balance (fee tokens)'));select.value=topupKind;select.addEventListener('change',()=>{clearOperationFeedback();topupKind=select.value;topupInputs.amount='';render();});content.append(label('Top-up credit',select));
-   for(const [key,name]of [['amount',topupKind==='bok'?'USDC top-up amount':'Fee token top-up amount']]){const input=el('input',{type:'text',inputmode:'decimal','aria-label':name});input.value=topupInputs[key];input.addEventListener('input',()=>topupInputs[key]=input.value);content.append(label(name,input));}
-   content.append(button('Review top-up',()=>void work(async()=>{const epoch=accountEpoch;checkAccount(epoch);topupQuote=await cap.prepare({amount:units(topupInputs.amount,topupKind==='bok'?6:18),privateFeeCap:cap.defaultPrivateFeeCap});checkAccount(epoch);}),true));
+   const select=el('select',{'aria-label':'Top-up credit'});
+   for(const kind of choices)select.append(el('option',{value:kind},kind==='bok'?'Bok assistant':'Posting balance'));
+   select.value=topupKind;select.addEventListener('change',()=>{clearOperationFeedback();topupKind=select.value;topupInputs={amount:''};render();});
+   content.append(label('Top-up credit',select));
+   const amountName=isBok?'Bok credit (USD)':'Fee token top-up amount';
+   const amount=el('input',{type:'text',inputmode:'decimal','aria-label':amountName});amount.value=topupInputs.amount;
+   amount.addEventListener('input',()=>topupInputs.amount=amount.value);content.append(label(amountName,amount));
+   if(isBok){
+    const asset=el('select',{'aria-label':'Pay with'});
+    if(cap.ethAvailable)asset.append(el('option',{value:'ETH'},'ETH'));
+    asset.append(el('option',{value:'USDC'},'USDC'));asset.value=topupInputs.asset;
+    asset.addEventListener('change',()=>{topupInputs.asset=asset.value;clearOperationFeedback();});content.append(label('Pay with',asset));
+   }
+   content.append(button('Review cost',()=>void work(async()=>{
+    const epoch=accountEpoch;checkAccount(epoch);note('Getting the current price…');
+    try{topupQuote=await cap.prepare(allocation());}catch(error){throw topupFailure(error,'quote');}
+    checkAccount(epoch);note('');
+   },aggregateFundingFailure),true));
   }
-  content.append(fundingControl(fundingAutomatic?'Pause top-up checks':'Resume saved top-up',()=>{if(fundingAutomatic){stopFunding();notice=busy?'Pause requested. Waiting for the current funding operation to settle.':'Top-up checks paused. Saved payment and custody are preserved.';render();}else void work(async()=>{fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw error;}});}));
+  content.append(fundingControl(fundingAutomatic?'Pause top-up checks':'Continue top-up',()=>{
+   if(fundingAutomatic){stopFunding();notice='Paused. Your payment is saved.';render();}
+   else void work(async()=>{
+    const saved=await cap.inspect();
+    if(!saved?.paymentSaved){note('Review the cost to start adding credit.');return;}
+    if(saved?.paymentSaved&&['swap','approval'].includes(saved.phase)){
+     await cap.recover({wait:true});
+     topupInputs={amount:decimal(saved.amount,isBok?6:18),asset:saved.asset};
+     topupQuote=await cap.prepare({amount:saved.amount,asset:saved.asset,privateFeeCap:saved.privateFeeCap});
+     note('Continue with the next wallet approval.');return;
+    }
+    fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
+   },aggregateFundingFailure);
+  }));
  }
  async function prepareFundingQuote(){
   fundingQuoteRequested=true;const epoch=accountEpoch;checkAccount(epoch);note('Getting the current price…');

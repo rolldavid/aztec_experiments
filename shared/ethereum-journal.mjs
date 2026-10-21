@@ -1,4 +1,5 @@
 import {validateAggregateFundingIntent,verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
+import {validateTopupSwapIntent,verifyTopupSwapEffects} from './rolling/topup-swap.mjs';
 import {Interface,getCreateAddress,getCreate2Address,keccak256} from 'ethers';
 const CREATE2_PROXY='0x4e59b44847b379578588920ca78fbf26c0b4956c';
 import {createEncryptedJournalSlot} from './journal-record.mjs';
@@ -69,6 +70,7 @@ function validateIntent(record,scope) {
     return record;
   }
   if(['aggregate-funding','aggregate-usdc-funding'].includes(expected?.kind)){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
+  if(expected?.kind==='topup-swap'){try{validateTopupSwapIntent(record,scope,{Interface});}catch{throw invalid();}return record;}
   const fee=scope.token!==undefined;
   if(!expected||!(fee?['approve','fee-deposit','bok-deposit','bok-withdraw']:['deposit','withdraw','request-refund','deposit-refund']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
   const abi=['bok-deposit','bok-withdraw'].includes(expected.kind)?bokInterface:iface;
@@ -109,6 +111,11 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   if(receipt.status===0)return {outcome:'reverted',txHash,receipt,event:null};
   if(!Array.isArray(receipt.logs))throw unknown();
   const expected=record.expected;
+  if(expected.kind==='topup-swap'){
+    let event;try{event=verifyTopupSwapEffects(record,receipt,{Interface});}catch{throw unknown();}
+    const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();
+    return {outcome:'success',txHash,receipt,event};
+  }
   if(['aggregate-funding','aggregate-usdc-funding'].includes(expected.kind)) {
     const event=await verifyAggregateFundingEffects(provider,record,receipt,read);
     const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();

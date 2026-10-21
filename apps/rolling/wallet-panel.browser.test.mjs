@@ -955,17 +955,16 @@ for(const status of ['reverted','cancelled'])test(`canonical ${status} funding c
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.waitForFunction(()=>test.sends===1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });
 
-for(const kind of ['private-fee','bok'])test(`standalone ${kind} UI separates approval, deposit and private claim without collateral`,async t=>{
+for(const kind of ['private-fee','bok'])test(`standalone ${kind} UI continues approval, deposit and private claim without extra review clicks`,async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.topupEnabled=true;test.bokCredit='2500000';});await open(page);await unlock(page);await navigateAccount(page,'Add credit');
- assert(await page.getByText('Posting balance pays for posts and account updates. Bok credit pays for requests to the AI assistant.',{exact:true}).isVisible());await page.getByLabel('Top-up credit',{exact:true}).selectOption(kind);await page.getByLabel(kind==='bok'?'USDC top-up amount':'Fee token top-up amount',{exact:true}).fill('3');
- await page.getByRole('button',{name:'Review top-up',exact:true}).click();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);assert(await page.getByText(/This does not deposit or claim/).isVisible());
- await page.getByRole('button',{name:'Confirm token approval',exact:true}).click();await page.getByText('Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.topupPayments),1);assert.equal((await counts(page)).sends,0);
- await page.getByRole('button',{name:'Review top-up',exact:true}).click();await page.getByRole('button',{name:'Confirm top-up and private claim',exact:true}).click();await page.getByText('Top-up and private claim confirmed. Your posting collateral is unchanged.',{exact:true}).waitFor();
+ assert(await page.getByText('Posting balance pays for posts and account updates. Bok credit pays for requests to the AI assistant.',{exact:true}).isVisible());await page.getByLabel('Top-up credit',{exact:true}).selectOption(kind);await page.getByLabel(kind==='bok'?'Bok credit (USD)':'Fee token top-up amount',{exact:true}).fill('3');
+ await page.getByRole('button',{name:'Review cost',exact:true}).click();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);
+ await page.getByRole('button',{name:'Add credit',exact:true}).click();await page.getByText('Top-up and private claim confirmed. Your posting collateral is unchanged.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.topupPayments),2);assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.type),kind==='bok'?'claim-bok':'claim-private-fee');assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });
 test('standalone top-up failed review and changed account never reach a payment',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.topupEnabled=true;test.failure='topup-review';});await open(page);await unlock(page);await navigateAccount(page,'Add credit');await page.getByLabel('Fee token top-up amount',{exact:true}).fill('3');await page.getByRole('button',{name:'Review top-up',exact:true}).click();await page.getByText(/could not/).first().waitFor();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);
- await page.evaluate(()=>{test.failure=null;test.rawAccount={...test.rawAccount};});await page.getByRole('button',{name:'Review top-up',exact:true}).click();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.topupEnabled=true;test.failure='topup-review';});await open(page);await unlock(page);await navigateAccount(page,'Add credit');await page.getByLabel('Fee token top-up amount',{exact:true}).fill('3');await page.getByRole('button',{name:'Review cost',exact:true}).click();await page.getByText(/could not/).first().waitFor();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);
+ await page.evaluate(()=>{test.failure=null;test.rawAccount={...test.rawAccount};});await page.getByRole('button',{name:'Review cost',exact:true}).click();assert.equal(await page.evaluate(()=>test.topupPayments??0),0);
 });
 
 async function openBalances(page,{reason='eligible',nextCursor=null}={}){

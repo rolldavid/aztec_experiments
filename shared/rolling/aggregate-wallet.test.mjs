@@ -560,3 +560,139 @@ test('zero Bok aggregate payment retains two exact receipts without any Bok secr
  await assert.rejects(reopened.checkpointSubmission(h(100),{type:'claim-deposit',receipt:receipts.receipt}),{code:'ROLLING_FUNDING_MISMATCH'});
  await assert.rejects(reopened.checkpointSubmission(h(100),{type:'claim-deposit',...receipts,bokReceipt:receipts.feeReceipt}),{code:'ROLLING_FUNDING_MISMATCH'});
 });
+
+import {topupSwapAbi,validateTopupSwapIntent} from './topup-swap.mjs';
+const topupSwapInterface=new ethers.Interface(topupSwapAbi);
+import {runTopupPayment,aggregateFundingFailure} from '../../apps/rolling/wallet-panel.mjs';
+function ethTopupFixture(){
+ const f=topupFixture(),s=f.options.scope;
+ f.options.swapScope=s;
+ f.state.balance=0n;
+ const call=f.options.provider.call,getBlock=f.options.provider.getBlock,send=f.wallet.signer.sendTransaction;
+ f.options.provider.getBlock=async tag=>({...await getBlock(tag),timestamp:1000});
+ f.options.provider.call=async request=>request.to===f.scope.token?call(request):f.options.provider.send('eth_call',[request,'0x10']);
+ const transfer=new ethers.Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);
+ f.wallet.signer.sendTransaction=async request=>{
+  if(request.to!==s.swapRouter){
+   const response=await send(request);
+   if(request.to===f.scope.portal&&!f.state.revert){f.state.balance-=300n;f.state.allowance-=300n;}
+   return response;
+  }
+  f.state.sends++;
+  const hash=h(300+f.state.sends),blockNumber=16+f.state.sends;
+  const tx={...request,hash,blockNumber,value:String(request.value),chainId:String(request.chainId)};
+  const multi=topupSwapInterface.parseTransaction({data:request.data});
+  assert.equal(multi.name,'multicall');assert.equal(String(multi.args[0]),'1900');
+  const swap=topupSwapInterface.parseTransaction({data:multi.args[1][0]}).args[0];
+  assert.equal(swap.tokenOut.toLowerCase(),s.bokToken);assert.equal(swap.recipient.toLowerCase(),f.wallet.address);
+  assert.equal(topupSwapInterface.parseTransaction({data:multi.args[1][1]}).name,'refundETH');
+  f.state.balance+=swap.amountOut;
+  f.transactions.set(hash,tx);
+  f.receipts.set(hash,{hash,from:f.wallet.address,to:request.to,blockNumber,blockHash:h(blockNumber),status:1,logs:[{address:s.bokToken,...transfer.encodeEventLog('Transfer',[a(200),f.wallet.address,swap.amountOut])}]});
+  if(f.state.unknown)throw Error('Lost exchange acknowledgement.');
+  return {hash};
+ };
+ return {...f,allocation:{...f.allocation,asset:'ETH'}};
+}
+
+test('USDC top-up reports insufficient wallet tokens before any payment',async()=>{
+ const f=topupFixture();f.state.balance=0n;
+ await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_FUNDING_TOKEN_BALANCE'});
+ assert.equal(f.state.sends,0);
+});
+
+test('ETH Bok purchase swaps exact output then approves and deposits without collateral or extra reviews',async()=>{
+ const f=ethTopupFixture(),cap=await f.open(),quote=await cap.prepare(f.allocation),phases=[];
+ assert.equal(quote.phase,'swap');assert.equal(quote.maximumSwapWei,'303');assert.equal(f.state.sends,0);
+ const result=await runTopupPayment(cap,f.allocation,quote,phase=>phases.push(phase));
+ assert.deepEqual(phases,['swap','approval','deposit']);assert.equal(f.state.sends,3);
+ assert.equal(result.receipt.amount,'300');assert.equal((await cap.inspect()).phase,'deposit');
+ assert.deepEqual([...f.transactions.values()].map(tx=>tx.to),[f.options.scope.swapRouter,f.scope.token,f.scope.portal]);
+ assert.deepEqual([...f.transactions.values()].map(tx=>tx.value),['303','0','0']);
+ const custody=await cap.loadAggregate(result.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);
+});
+
+test('confirmed ETH swap survives reopen and proceeds to approval without buying USDC again',async()=>{
+ const f=ethTopupFixture(),first=await f.open();await first.prepare(f.allocation);
+ assert.deepEqual(await first.confirm(),{swapped:true});
+ const next=await f.open(),quote=await next.prepare(f.allocation);assert.equal(quote.phase,'approval');
+ await runTopupPayment(next,f.allocation,quote);assert.equal(f.state.sends,3);
+});
+
+test('lost ETH swap reply is reconciled, never swapped again on the next credit review',async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await cap.prepare(f.allocation);f.state.unknown=true;
+ await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,1);
+ f.state.unknown=false;const reopened=await f.open();assert.deepEqual(await reopened.recover(),{swapped:true});
+ assert.equal((await reopened.prepare(f.allocation)).phase,'approval');assert.equal(f.state.sends,1);
+});
+
+test('ETH swap validates configured chain/router code and refuses an altered refund or recipient',async()=>{
+ const f=ethTopupFixture();f.options.swapScope={...f.options.scope,routerCodeHash:h(901)};
+ await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_FUNDING_SWAP_SCOPE'});assert.equal(f.state.sends,0);
+ const g=ethTopupFixture(),cap=await g.open();await cap.prepare(g.allocation);await cap.confirm();
+ const saved=await (await g.options.sdk.createEthereumJournal({storage:g.options.storage,walletSecret:g.options.walletSecret,walletSalt:g.options.walletSalt,
+  scope:{account:g.options.owner,...g.options.network,board:g.scope.recipient,portal:g.options.scope.swapRouter,token:g.scope.token,depositor:g.wallet.address},provider:g.options.provider})).inspectRequest();
+ const scope={portal:g.options.scope.swapRouter,token:g.scope.token};validateTopupSwapIntent(saved,scope,ethers);
+ assert.throws(()=>validateTopupSwapIntent({...saved,expected:{...saved.expected,recipient:a(999)}},scope,ethers));
+ const parsed=topupSwapInterface.parseTransaction(saved);
+ assert.throws(()=>validateTopupSwapIntent({...saved,data:topupSwapInterface.encodeFunctionData('multicall',[parsed.args[0],[parsed.args[1][0]]])},scope,ethers));
+});
+
+test('payment continuation stops at failed wallet stage and preserves actionable code',async()=>{
+ let prepares=0,sends=0;const events=[];
+ const cap={async confirm(){sends++;throw Object.assign(Error('private detail'),{code:'BB_ETH_REQUEST_CANCELLED'});},async prepare(){prepares++;}};
+ await assert.rejects(runTopupPayment(cap,{}, {phase:'swap'},phase=>events.push(phase)),error=>error.code==='BB_ETH_REQUEST_CANCELLED'&&error.topupStage==='swap'&&!error.message.includes('private detail'));
+ assert.deepEqual(events,['swap']);assert.equal(sends,1);assert.equal(prepares,0);
+});
+
+
+test('credit errors identify missing USDC, cancelled exchange, and retained USDC after later cancellation',async()=>{
+ assert.match(aggregateFundingFailure({code:'ROLLING_FUNDING_TOKEN_BALANCE'}),/Choose Pay with ETH/);
+ assert.equal(aggregateFundingFailure({code:'BB_ETH_REQUEST_CANCELLED',topupStage:'swap'}),'ETH exchange cancelled. No ETH was spent.');
+ let confirms=0;
+ const cap={async confirm(){if(++confirms===1)return {swapped:true};throw Object.assign(Error('private detail'),{code:'BB_ETH_REQUEST_CANCELLED'});},async prepare(){return {phase:'approval'};}};
+ await assert.rejects(runTopupPayment(cap,{}, {phase:'swap'}),error=>{
+  assert.equal(error.topupStage,'approval');assert.equal(error.topupExchanged,true);
+  assert.match(aggregateFundingFailure(error),/USDC is in your wallet/);return true;
+ });
+ assert.match(aggregateFundingFailure({code:'UNKNOWN',topupStage:'claim'}),/payment was sent/);
+});
+
+test('ETH credit continuation awaits native receipt completion before the approval wallet prompt',async()=>{
+ const f=ethTopupFixture(),send=f.wallet.signer.sendTransaction,getBlock=f.options.provider.getBlock,getHead=f.options.provider.getBlockNumber;
+ let pending=false,release,waitStarted;
+ const started=new Promise(resolve=>{waitStarted=resolve;});
+ f.options.provider.getBlockNumber=()=>pending?Promise.resolve(16):getHead();
+ f.options.provider.getBlock=tag=>pending&&(tag==='latest'||tag===16)?Promise.resolve({number:16,hash:h(16),timestamp:1000,prefetchedTransactions:[]}):getBlock(tag);
+ f.wallet.signer.sendTransaction=async request=>{
+  const response=await send(request);
+  if(request.to!==f.options.scope.swapRouter)return response;
+  pending=true;const receipt=f.receipts.get(response.hash);f.receipts.delete(response.hash);
+  const tx=f.transactions.get(response.hash);tx.replaceableTransaction=()=>({wait:()=>new Promise(resolve=>{
+   release=()=>{pending=false;f.receipts.set(response.hash,receipt);resolve(receipt);};waitStarted();
+  })});
+  return response;
+ };
+ const cap=await f.open(),quote=await cap.prepare(f.allocation),phases=[];
+ const result=runTopupPayment(cap,f.allocation,quote,phase=>phases.push(phase));
+ await started;assert.equal(f.state.sends,1);assert.deepEqual(phases,['swap']);
+ release();await result;assert.deepEqual(phases,['swap','approval','deposit']);assert.equal(f.state.sends,3);
+});
+
+test('ETH purchase completes the original private Bok claim and allows a later independent credit purchase',async()=>{
+ const f=ethTopupFixture();let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);
+ const funding=await f.open();await runTopupPayment(funding,f.allocation,await funding.prepare(f.allocation));
+ workflow=durableClaimApplication(f,funding);
+ const done=await advanceAggregateClaim({application:workflow.open(),funding});
+ assert.equal(done.state,'complete');assert.equal(done.intent.action.type,'claim-bok');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,3);
+ const next=await f.open(),quote=await next.prepare(f.allocation);assert.equal(quote.phase,'swap');
+ await runTopupPayment(next,f.allocation,quote);assert.equal(f.state.sends,6);
+});
+
+test('posting token balance failure does not suggest USDC or an unavailable ETH option',async()=>{
+ const f=topupFixture('private-fee');f.state.balance=0n;
+ await assert.rejects((await f.open()).prepare(f.allocation),error=>{
+  assert.equal(error.code,'ROLLING_FUNDING_FEE_TOKEN_BALANCE');
+  const text=aggregateFundingFailure(error);assert.match(text,/fee tokens/);assert.doesNotMatch(text,/USDC|ETH/);return true;
+ });assert.equal(f.state.sends,0);
+});
