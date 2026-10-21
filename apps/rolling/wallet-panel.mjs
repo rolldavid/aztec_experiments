@@ -25,6 +25,14 @@ export function projectRollingInitialization(value){
 }
 const MODERATOR_TYPES=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator']);
 const TYPES={'transfer-moderator':'Transfer moderator authority','withdraw-bok':'Withdraw Bok credit','cancel-bok-request':'Release an unused Bok request','expire-bok-request':'Expire a Bok request',withdraw:'Withdraw posting collateral',screen:'Screen posting history','moderate-post':'Remove a post','moderate-avatar':'Remove an avatar','reject-subboard':'Reject a subboard','set-main-policy':'Update parent rules',bok:'Ask Bok',preference:'Save your choice','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
+const COMPOSER_TYPES=new Set(['post','reply','quote','repost','bok']);
+// Editing uses the unlocked session and its last account snapshot. Private
+// publishing checks still run when preparing the action, not on navigation.
+export function rollingViewReady({view,type,identityAttached=false,namesLoaded=false,cursor=0,moderatorStatus=null,actionsLoaded=false}){
+ if(view==='action'&&COMPOSER_TYPES.has(type))return true;
+ if(identityAttached&&(!namesLoaded||cursor!==null))return false;
+ return view==='overview'?moderatorStatus!==null:view==='names'?namesLoaded:view==='action'?(['like','unlike','preference','read-marker'].includes(type)||actionsLoaded):true;
+}
 const IDS=['subboard','parent','root','reference','post'];
 const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
 const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;};
@@ -180,19 +188,21 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   bokStatus=typeof session.application.readBokStatus==='function'?await session.application.readBokStatus():null;checkAccount(epoch);
  }
  // View reads stay serialized; refresh and account changes invalidate these private results.
- async function loadView(){
+ async function loadView({loadIdentity=false}={}){
   const epoch=accountEpoch;checkAccount(epoch);
+  if(view==='action'&&COMPOSER_TYPES.has(draft.type)&&!loadIdentity)return;
   if(identityHost){if(!namesLoaded)await loadNames();while(cursor!==null)await loadNames(true);}
+  if(view==='action'&&COMPOSER_TYPES.has(draft.type)){note('');return;}
   if((view==='names'||view==='action'&&!['like','unlike','preference','read-marker'].includes(draft.type))&&!namesLoaded){note('Loading your registered names…');await loadNames();}
   if(view==='action'&&!['like','unlike','preference','read-marker'].includes(draft.type)&&!actionsLoaded){
    note('Checking publishing options…');
-   moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():null;checkAccount(epoch);
-   if(draft.type==='bok')await loadBok();checkAccount(epoch);actionsLoaded=true;onPrivateChange();
+   if(moderatorStatus===null)moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():{authorized:false};checkAccount(epoch);
+   actionsLoaded=true;onPrivateChange();
   }
   if(view==='overview'&&moderatorStatus===null){moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():{authorized:false};checkAccount(epoch);onPrivateChange();}
   note('');
  }
- function viewReady(){if(identityHost&&(!namesLoaded||cursor!==null))return false;return view==='overview'?moderatorStatus!==null:view==='names'?namesLoaded:view==='action'?(['like','unlike','preference','read-marker'].includes(draft.type)||actionsLoaded):true;}
+ function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded});}
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
  async function work(fn,failureMessage=nameFailure){
   if(busy)return;let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;clearOperationFeedback();controlsBusy(true);
@@ -642,7 +652,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function chooseAction(type,name){
   if(busy||!unlocked()||intent||blocked)return;
   clearOperationFeedback();view='action';clearProfileDraft();draft={type,subboard:'0',content:'',name:name??selectedName};
-  void work(async()=>{await loadView();if(name)await checkProfile(name);});
+  if(viewReady()&&!name)render();else void work(async()=>{await loadView();if(name)await checkProfile(name);});
  }
  function namesView(){
   content.append(paragraph('A name lets people recognise your posts and follow you. It does not need to be your real name. You can still choose Anonymous when posting.'),button('Register a name',()=>chooseAction('name'),true));
@@ -903,7 +913,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }else{selectedName=select.value;selectedLabel=ownedLabel(selectedName);if(['post','reply','quote','repost','bok'].includes(draft.type))draft.name=selectedName;}
   });
   identityControls.replaceChildren(label('Post as',select));
-  if(incomplete&&!busy){const retry=button('Load names',()=>void work(loadView));retry.disabled=!!intent;identityControls.append(retry);}
+  if(incomplete&&!busy){const retry=button('Load names',()=>void work(()=>loadView({loadIdentity:true})));retry.disabled=!!intent;identityControls.append(retry);}
   if(inlineCreation){
    const cancel=button('Cancel',()=>{if(busy||intent)return;inlineCreation=false;restoreDialogContent();clearOperationFeedback();renderIdentityControls();});cancel.disabled=busy||!!intent;identityControls.append(cancel);
   }else if(notice.startsWith('Name created.')||notice.startsWith('Your previous posting name'))identityControls.append(el('span',{class:'quiet',role:'status'},notice));

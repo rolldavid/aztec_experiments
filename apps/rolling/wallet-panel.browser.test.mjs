@@ -1666,3 +1666,33 @@ test('optional Bok failure leaves an ordinary reply editable and never reads aga
  assert.equal(action.type,'reply');assert.equal(action.parent,'10');assert.equal(action.root,'1');assert.equal(action.content,'A reply without the assistant');
  assert.equal(await page.evaluate(()=>test.bokReads),1);assert.equal((await counts(page)).sends,0);
 });
+
+// Navigation regression uses the actual panel with the existing labelled SDK
+// double. It does not qualify network latency or cryptographic execution.
+test('an unlocked account opens and reopens the composer without private refreshes',async t=>{
+ const {page}=await browserFixture(t);await open(page);
+ await page.getByRole('button',{name:'Write a post',exact:true}).waitFor();
+ await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const before=await page.evaluate(()=>({sessions:test.sessions,status:test.statusReads,owned:test.owned,moderator:test.moderatorReads??0,bok:test.bokReads??0}));
+ await page.evaluate(()=>{test.failure='moderator';});
+ await page.getByRole('button',{name:'Write a post',exact:true}).click();
+ await page.getByLabel('Message',{exact:true}).fill('Writing should start immediately.');
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ await open(page,{type:'reply',parent:'10',root:'1'});
+ await page.getByLabel('Message',{exact:true}).fill('The same account can reply.');
+ assert.deepEqual(await page.evaluate(()=>({sessions:test.sessions,status:test.statusReads,owned:test.owned,moderator:test.moderatorReads??0,bok:test.bokReads??0})),before);
+ assert.equal(await page.locator('dialog').getAttribute('aria-busy'),'false');
+ assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
+});
+test('names remain explicitly loadable while writing without checking moderator options',async t=>{
+ const {page}=await browserFixture(t);await inlineNames(page);await open(page,{type:'post'});
+ await page.getByLabel('Message',{exact:true}).waitFor();
+ await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(await page.evaluate(()=>test.owned),0);
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ await page.locator('#posting-names').getByRole('button',{name:'Load names',exact:true}).click();
+ await page.waitForFunction(()=>test.owned===2&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(await page.evaluate(()=>test.moderatorReads??0),0);
+ assert.deepEqual(await page.locator('#posting-names select option').allTextContents(),['Anonymous','River Lane','Ellis Moss','Create a name…']);
+ assert.equal((await counts(page)).sends,0);
+});
