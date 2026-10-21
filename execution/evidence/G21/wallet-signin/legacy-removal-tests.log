@@ -1,0 +1,20 @@
+✔ build provenance rejects changed frontend sources paired with old HTML (26.495334ms)
+✔ build provenance rejects output changes and removed output (26.539584ms)
+✔ source removal and newly discovered app invalidate previous build (25.616917ms)
+✔ partial or interrupted builds cannot preserve a valid aggregate manifest (25.861875ms)
+✔ mid-build drift and private RPC overrides cannot be certified (27.987625ms)
+✔ internal symlinks hash the actual source while escapes and cycles reject (20.535292ms)
+✔ obsolete template cannot leave a served HTML page in certified output (19.722833ms)
+✔ unexpected top-level and nested HTML reject certification without deletion (24.2865ms)
+✔ output symlink escapes and cycles cannot bypass the served HTML inventory (19.116208ms)
+✔ plugin source and distributed bundle are bound to frontend provenance (31.505416ms)
+✔ demo controls restore once across mounts without prompts or legacy inputs (3.084041ms)
+✔ explicit wallet choice derives account, preserves hooks and signs out through custody (1.95075ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 298.212833

@@ -14,7 +14,6 @@ import { sha256ToField } from '@aztec-labs/foundation/crypto/sha256';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { EthAddress } from '@aztec-labs/foundation/eth-address';
 
-const backupSource = await fs.readFile(new URL('../shared/wallet-backup.js',import.meta.url),'utf8');
 const claimSource=await fs.readFile(new URL('../shared/claim-secret-store.js',import.meta.url),'utf8');
 const configSource=await fs.readFile(new URL('../shared/public-app-config.js',import.meta.url),'utf8');
 const appEnvSource=await fs.readFile(new URL('../shared/app-env.js',import.meta.url),'utf8');
@@ -40,7 +39,7 @@ function appContext() {
   vm.runInContext(configSource,context,{filename:'shared/public-app-config.js'});
   context.billboardConfigStore=context.BillboardConfig.createStore({storage:null});
   vm.runInContext(appEnvSource,context,{filename:'shared/app-env.js'});
-  vm.runInContext(backupSource,context,{filename:'shared/wallet-backup.js'});vm.runInContext(claimSource,context);return context;
+  vm.runInContext(claimSource,context);return context;
 }
 async function editEnvelope(context,key,transform) {
   const db=await new Promise((resolve,reject)=>{const req=context.indexedDB.open('aztec-billboard-claim-secrets-v2',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
@@ -64,7 +63,7 @@ test('browser actual module persists ciphertext and interoperates with Node AES-
 test('browser actual custody rejects wrong wallet, ciphertext corruption and moved scope',async()=>{
   const c=appContext(),store=c.makeClaimSecretStore(walletSecret,walletSalt);await store.save(scope,record);
   assert.equal(await c.makeClaimSecretStore('0x'+'8'.padStart(64,'0'),walletSalt).load(scope,record.secretHash),null);
-  assert.equal(await c.makeClaimSecretStore(walletSecret,'0x0').load(scope,record.secretHash),null);
+  assert.equal(await c.makeClaimSecretStore(walletSecret,'0x'+'0'.repeat(64)).load(scope,record.secretHash),null);
   const foreignId=createHash('sha256').update('AZTEC_BB_CLAIM_BACKUP_OWNER_V2\0'+'0x'+'8'.padStart(64,'0')+walletSalt).digest('hex');
   await editEnvelope(c,keyFor(scope,record.secretHash),(value,db)=>{db.put(value,foreignId+':'+aadFor(scope,record.secretHash));});
   await assert.rejects(c.makeClaimSecretStore('0x'+'8'.padStart(64,'0'),walletSalt).load(scope,record.secretHash),/another wallet/);

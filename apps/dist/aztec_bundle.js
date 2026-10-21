@@ -8720,7 +8720,7 @@ var __aztec = (() => {
           try {
             if (parts.length !== 2)
               throw new Error();
-            const [address6, prefix] = parts;
+            const [address7, prefix] = parts;
             if (!prefix)
               throw new Error();
             const prefixNum = Number(prefix);
@@ -8728,7 +8728,7 @@ var __aztec = (() => {
               throw new Error();
             if (prefixNum < 0 || prefixNum > 128)
               throw new Error();
-            new URL(`http://[${address6}]`);
+            new URL(`http://[${address7}]`);
           } catch {
             payload.issues.push({
               code: "invalid_format",
@@ -19919,8 +19919,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             reg.add(this, meta13);
             return this;
           },
-          refine(check12, params) {
-            return this.check(refine(check12, params));
+          refine(check13, params) {
+            return this.check(refine(check13, params));
           },
           superRefine(refinement, params) {
             return this.check(superRefine(refinement, params));
@@ -36296,11 +36296,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         * @param address - The string representing the Ethereum address.
         * @returns An EthAddress instance.
         */
-        static fromString(address6) {
-          if (!_EthAddress.isAddress(address6)) {
-            throw new Error(`Invalid address string: ${address6}`);
+        static fromString(address7) {
+          if (!_EthAddress.isAddress(address7)) {
+            throw new Error(`Invalid address string: ${address7}`);
           }
-          return new _EthAddress(Buffer2.from(address6.replace(/^0x/i, ""), "hex"));
+          return new _EthAddress(Buffer2.from(address7.replace(/^0x/i, ""), "hex"));
         }
         /**
         * Creates an EthAddress from a plain object without Zod validation.
@@ -36338,13 +36338,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         * @param address - The string to be checked for validity as an Ethereum address.
         * @returns True if the input string represents a valid Ethereum address, false otherwise.
         */
-        static isAddress(address6) {
-          if (!/^(0x)?[0-9a-f]{40}$/i.test(address6)) {
+        static isAddress(address7) {
+          if (!/^(0x)?[0-9a-f]{40}$/i.test(address7)) {
             return false;
-          } else if (/^(0x|0X)?[0-9a-f]{40}$/.test(address6) || /^(0x|0X)?[0-9A-F]{40}$/.test(address6)) {
+          } else if (/^(0x|0X)?[0-9a-f]{40}$/.test(address7) || /^(0x|0X)?[0-9A-F]{40}$/.test(address7)) {
             return true;
           } else {
-            return _EthAddress.checkAddressChecksum(address6);
+            return _EthAddress.checkAddressChecksum(address7);
           }
         }
         /**
@@ -36364,11 +36364,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         * @param address - The hex-encoded string representing the Ethereum address.
         * @returns A boolean value indicating whether the address has a valid checksum.
         */
-        static checkAddressChecksum(address6) {
-          address6 = address6.replace(/^0x/i, "");
-          const addressHash = keccak256String(address6.toLowerCase());
+        static checkAddressChecksum(address7) {
+          address7 = address7.replace(/^0x/i, "");
+          const addressHash = keccak256String(address7.toLowerCase());
           for (let i = 0; i < 40; i++) {
-            if (parseInt(addressHash[i], 16) > 7 && address6[i].toUpperCase() !== address6[i] || parseInt(addressHash[i], 16) <= 7 && address6[i].toLowerCase() !== address6[i]) {
+            if (parseInt(addressHash[i], 16) > 7 && address7[i].toUpperCase() !== address7[i] || parseInt(addressHash[i], 16) <= 7 && address7[i].toLowerCase() !== address7[i]) {
               return false;
             }
           }
@@ -36384,18 +36384,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         * @param address - The Ethereum address as a hex-encoded string.
         * @returns The Ethereum address in its checksum format.
         */
-        static toChecksumAddress(address6) {
-          if (!_EthAddress.isAddress(address6)) {
+        static toChecksumAddress(address7) {
+          if (!_EthAddress.isAddress(address7)) {
             throw new Error("Invalid address string.");
           }
-          address6 = address6.toLowerCase().replace(/^0x/i, "");
-          const addressHash = keccak256String(address6);
+          address7 = address7.toLowerCase().replace(/^0x/i, "");
+          const addressHash = keccak256String(address7);
           let checksumAddress2 = "0x";
-          for (let i = 0; i < address6.length; i++) {
+          for (let i = 0; i < address7.length; i++) {
             if (parseInt(addressHash[i], 16) > 7) {
-              checksumAddress2 += address6[i].toUpperCase();
+              checksumAddress2 += address7[i].toUpperCase();
             } else {
-              checksumAddress2 += address6[i];
+              checksumAddress2 += address7[i];
             }
           }
           return checksumAddress2;
@@ -39151,7 +39151,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           try {
             if (parts.length !== 2)
               throw new Error();
-            const [address6, prefix] = parts;
+            const [address7, prefix] = parts;
             if (!prefix)
               throw new Error();
             const prefixNum = Number(prefix);
@@ -39159,7 +39159,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               throw new Error();
             if (prefixNum < 0 || prefixNum > 128)
               throw new Error();
-            new URL(`http://[${address6}]`);
+            new URL(`http://[${address7}]`);
           } catch {
             payload.issues.push({
               code: "invalid_format",
@@ -50350,8 +50350,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             reg.add(this, meta13);
             return this;
           },
-          refine(check12, params) {
-            return this.check(refine2(check12, params));
+          refine(check13, params) {
+            return this.check(refine2(check13, params));
           },
           superRefine(refinement, params) {
             return this.check(superRefine2(refinement, params));
@@ -59293,10 +59293,10 @@ ${err2.message}`);
         }
         static fromBuffer(buffer) {
           const reader = BufferReader.asReader(buffer);
-          const address6 = reader.readObject(AztecAddress);
+          const address7 = reader.readObject(AztecAddress);
           const fields2 = ContractClassLogFields.fromBuffer(reader);
           const emittedLength = reader.readNumber();
-          return new _ContractClassLog(address6, fields2, emittedLength);
+          return new _ContractClassLog(address7, fields2, emittedLength);
         }
         static async random() {
           const emittedLength = Math.ceil(CONTRACT_CLASS_LOG_SIZE_IN_FIELDS / 2);
@@ -59773,8 +59773,8 @@ ${err2.message}`);
   }
   async function computeAddress(publicKeys, partialAddress) {
     const preaddress = await computePreaddress(await publicKeys.hash(), partialAddress);
-    const address6 = await Grumpkin.add(await derivePublicKeyFromSecretKey(new Fq(preaddress.toBigInt())), publicKeys.ivpkM);
-    return new AztecAddress(address6.x);
+    const address7 = await Grumpkin.add(await derivePublicKeyFromSecretKey(new Fq(preaddress.toBigInt())), publicKeys.ivpkM);
+    return new AztecAddress(address7.x);
   }
   async function computeAddressSecret(preaddress, ivsk) {
     const addressSecretCandidate = ivsk.add(new Fq(preaddress.toBigInt()));
@@ -68305,7 +68305,7 @@ ${val.stack}`;
           try {
             if (parts.length !== 2)
               throw new Error();
-            const [address6, prefix] = parts;
+            const [address7, prefix] = parts;
             if (!prefix)
               throw new Error();
             const prefixNum = Number(prefix);
@@ -68313,7 +68313,7 @@ ${val.stack}`;
               throw new Error();
             if (prefixNum < 0 || prefixNum > 128)
               throw new Error();
-            new URL(`http://[${address6}]`);
+            new URL(`http://[${address7}]`);
           } catch {
             payload.issues.push({
               code: "invalid_format",
@@ -79504,8 +79504,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             reg.add(this, meta13);
             return this;
           },
-          refine(check12, params) {
-            return this.check(refine3(check12, params));
+          refine(check13, params) {
+            return this.check(refine3(check13, params));
           },
           superRefine(refinement, params) {
             return this.check(superRefine3(refinement, params));
@@ -84175,23 +84175,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       CommitteeAttestation = class _CommitteeAttestation {
         address;
         signature;
-        constructor(address6, signature) {
-          this.address = address6;
+        constructor(address7, signature) {
+          this.address = address7;
           this.signature = signature;
         }
         static get schema() {
           return external_exports2.object({
             address: EthAddress.schema,
             signature: Signature.schema
-          }).transform(({ address: address6, signature }) => new _CommitteeAttestation(address6, signature));
+          }).transform(({ address: address7, signature }) => new _CommitteeAttestation(address7, signature));
         }
         // Create an empty attestation for an address that has not signed
-        static fromAddress(address6) {
-          return new _CommitteeAttestation(address6, Signature.empty());
+        static fromAddress(address7) {
+          return new _CommitteeAttestation(address7, Signature.empty());
         }
         // Create an attestation from an address and a signature
-        static fromAddressAndSignature(address6, signature) {
-          return new _CommitteeAttestation(address6, signature);
+        static fromAddressAndSignature(address7, signature) {
+          return new _CommitteeAttestation(address7, signature);
         }
         static fromSignature(signature) {
           return new _CommitteeAttestation(EthAddress.ZERO, signature);
@@ -84201,9 +84201,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
         static fromBuffer(buffer) {
           const reader = BufferReader.asReader(buffer);
-          const address6 = reader.readObject(EthAddress);
+          const address7 = reader.readObject(EthAddress);
           const signature = reader.readObject(Signature);
-          return new _CommitteeAttestation(address6, signature);
+          return new _CommitteeAttestation(address7, signature);
         }
         static random() {
           return new _CommitteeAttestation(EthAddress.random(), Signature.random());
@@ -84234,8 +84234,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               if (dataIndex + 20 > dataBuffer.length) {
                 throw new Error(`Insufficient data for address at position ${i}`);
               }
-              const address6 = EthAddress.fromBuffer(dataBuffer.subarray(dataIndex, dataIndex + 20));
-              attestations.push(new _CommitteeAttestation(address6, Signature.empty()));
+              const address7 = EthAddress.fromBuffer(dataBuffer.subarray(dataIndex, dataIndex + 20));
+              attestations.push(new _CommitteeAttestation(address7, Signature.empty()));
               dataIndex += 20;
             }
           }
@@ -88640,10 +88640,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           return serializeToBuffer(numToUInt8(this.version), this.salt, this.deployer, this.currentContractClassId, this.originalContractClassId, this.initializationHash, this.immutablesHash, this.publicKeys);
         }
         /** Returns a copy of this object with its address included. */
-        withAddress(address6) {
+        withAddress(address7) {
           return {
             ...this,
-            address: address6
+            address: address7
           };
         }
         static fromBuffer(bufferOrReader) {
@@ -88708,10 +88708,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           return serializeToBuffer(numToUInt8(this.version), this.salt, this.deployer, this.originalContractClassId, this.initializationHash, this.immutablesHash, this.publicKeys);
         }
         /** Returns a copy of this object with its address included. */
-        withAddress(address6) {
+        withAddress(address7) {
           return {
             ...this,
-            address: address6
+            address: address7
           };
         }
         static fromBuffer(bufferOrReader) {
@@ -88909,13 +88909,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         address;
         publicKeys;
         partialAddress;
-        constructor(address6, publicKeys, partialAddress) {
-          this.address = address6;
+        constructor(address7, publicKeys, partialAddress) {
+          this.address = address7;
           this.publicKeys = publicKeys;
           this.partialAddress = partialAddress;
         }
-        static async create(address6, publicKeys, partialAddress) {
-          const completeAddress = new _CompleteAddress(address6, publicKeys, partialAddress);
+        static async create(address7, publicKeys, partialAddress) {
+          const completeAddress = new _CompleteAddress(address7, publicKeys, partialAddress);
           await completeAddress.validate();
           return completeAddress;
         }
@@ -88936,8 +88936,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           return await this.fromPublicKeysAndPartialAddress(publicKeys, partialAddress);
         }
         static async fromPublicKeysAndPartialAddress(publicKeys, partialAddress) {
-          const address6 = await computeAddress(publicKeys, partialAddress);
-          return new _CompleteAddress(address6, publicKeys, partialAddress);
+          const address7 = await computeAddress(publicKeys, partialAddress);
+          return new _CompleteAddress(address7, publicKeys, partialAddress);
         }
         async getPreaddress() {
           return computePreaddress(await this.publicKeys.hash(), this.partialAddress);
@@ -89001,10 +89001,10 @@ Partial Address: ${this.partialAddress.toString()}
         */
         static fromBuffer(buffer) {
           const reader = BufferReader.asReader(buffer);
-          const address6 = reader.readObject(AztecAddress);
+          const address7 = reader.readObject(AztecAddress);
           const publicKeys = reader.readObject(PublicKeys);
           const partialAddress = reader.readObject(Fr);
-          return _CompleteAddress.create(address6, publicKeys, partialAddress);
+          return _CompleteAddress.create(address7, publicKeys, partialAddress);
         }
         /**
         * Create a CompleteAddress instance from a hex-encoded string.
@@ -89014,8 +89014,8 @@ Partial Address: ${this.partialAddress.toString()}
         * @param address - The hex-encoded string representing the complete address.
         * @returns A Point instance.
         */
-        static fromString(address6) {
-          return _CompleteAddress.fromBuffer(Buffer2.from(address6.replace(/^0x/i, ""), "hex"));
+        static fromString(address7) {
+          return _CompleteAddress.fromBuffer(Buffer2.from(address7.replace(/^0x/i, ""), "hex"));
         }
         /**
         * Convert the CompleteAddress to a hexadecimal string representation, with a "0x" prefix.
@@ -91057,8 +91057,8 @@ Partial Address: ${this.partialAddress.toString()}
       init_process2();
       init_base();
       InvalidAddressError = class extends BaseError2 {
-        constructor({ address: address6 }) {
-          super(`Address "${address6}" is invalid.`, {
+        constructor({ address: address7 }) {
+          super(`Address "${address7}" is invalid.`, {
             metaMessages: [
               "- Address must be a hex value of 20 bytes (40 hex characters).",
               "- Address must match its checksum counterpart."
@@ -91115,16 +91115,16 @@ Partial Address: ${this.partialAddress.toString()}
       return checksumAddressCache.get(`${address_}.${chainId}`);
     const hexAddress = chainId ? `${chainId}${address_.toLowerCase()}` : address_.substring(2).toLowerCase();
     const hash12 = keccak2562(stringToBytes(hexAddress), "bytes");
-    const address6 = (chainId ? hexAddress.substring(`${chainId}0x`.length) : hexAddress).split("");
+    const address7 = (chainId ? hexAddress.substring(`${chainId}0x`.length) : hexAddress).split("");
     for (let i = 0; i < 40; i += 2) {
-      if (hash12[i >> 1] >> 4 >= 8 && address6[i]) {
-        address6[i] = address6[i].toUpperCase();
+      if (hash12[i >> 1] >> 4 >= 8 && address7[i]) {
+        address7[i] = address7[i].toUpperCase();
       }
-      if ((hash12[i >> 1] & 15) >= 8 && address6[i + 1]) {
-        address6[i + 1] = address6[i + 1].toUpperCase();
+      if ((hash12[i >> 1] & 15) >= 8 && address7[i + 1]) {
+        address7[i + 1] = address7[i + 1].toUpperCase();
       }
     }
-    const result = `0x${address6.join("")}`;
+    const result = `0x${address7.join("")}`;
     checksumAddressCache.set(`${address_}.${chainId}`, result);
     return result;
   }
@@ -91142,18 +91142,18 @@ Partial Address: ${this.partialAddress.toString()}
   });
 
   // node_modules/viem/_esm/utils/address/isAddress.js
-  function isAddress(address6, options) {
+  function isAddress(address7, options) {
     const { strict: strict2 = true } = options ?? {};
-    const cacheKey = `${address6}.${strict2}`;
+    const cacheKey = `${address7}.${strict2}`;
     if (isAddressCache.has(cacheKey))
       return isAddressCache.get(cacheKey);
     const result = (() => {
-      if (!addressRegex.test(address6))
+      if (!addressRegex.test(address7))
         return false;
-      if (address6.toLowerCase() === address6)
+      if (address7.toLowerCase() === address7)
         return true;
       if (strict2)
-        return checksumAddress(address6) === address6;
+        return checksumAddress(address7) === address7;
       return true;
     })();
     isAddressCache.set(cacheKey, result);
@@ -358975,13 +358975,13 @@ pub contract MultiCallEntrypoint {
     }
     return error312;
   }
-  function assert6(check12, message, code, info) {
-    if (!check12) {
+  function assert6(check13, message, code, info) {
+    if (!check13) {
       throw makeError(message, code, info);
     }
   }
-  function assertArgument(check12, message, name, value) {
-    assert6(check12, message, "INVALID_ARGUMENT", { argument: name, value });
+  function assertArgument(check13, message, name, value) {
+    assert6(check13, message, "INVALID_ARGUMENT", { argument: name, value });
   }
   function assertArgumentCount(count, expectedCount, message) {
     if (message == null) {
@@ -359006,9 +359006,9 @@ pub contract MultiCallEntrypoint {
       }
       ;
       if (form === "NFD") {
-        const check12 = String.fromCharCode(233).normalize("NFD");
+        const check13 = String.fromCharCode(233).normalize("NFD");
         const expected = String.fromCharCode(101, 769);
-        if (check12 !== expected) {
+        if (check13 !== expected) {
           throw new Error("broken");
         }
       }
@@ -360237,9 +360237,9 @@ pub contract MultiCallEntrypoint {
   // node_modules/ethers/lib.esm/address/address.js
   var BN_02 = BigInt(0);
   var BN_36 = BigInt(36);
-  function getChecksumAddress(address6) {
-    address6 = address6.toLowerCase();
-    const chars = address6.substring(2).split("");
+  function getChecksumAddress(address7) {
+    address7 = address7.toLowerCase();
+    const chars = address7.substring(2).split("");
     const expanded = new Uint8Array(40);
     for (let i = 0; i < 40; i++) {
       expanded[i] = chars[i].charCodeAt(0);
@@ -360263,10 +360263,10 @@ pub contract MultiCallEntrypoint {
     ibanLookup[String.fromCharCode(65 + i)] = String(10 + i);
   }
   var safeDigits = 15;
-  function ibanChecksum(address6) {
-    address6 = address6.toUpperCase();
-    address6 = address6.substring(4) + address6.substring(0, 2) + "00";
-    let expanded = address6.split("").map((c) => {
+  function ibanChecksum(address7) {
+    address7 = address7.toUpperCase();
+    address7 = address7.substring(4) + address7.substring(0, 2) + "00";
+    let expanded = address7.split("").map((c) => {
       return ibanLookup[c];
     }).join("");
     while (expanded.length >= safeDigits) {
@@ -360296,25 +360296,25 @@ pub contract MultiCallEntrypoint {
     }
     return result;
   }
-  function getAddress(address6) {
-    assertArgument(typeof address6 === "string", "invalid address", "address", address6);
-    if (address6.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
-      if (!address6.startsWith("0x")) {
-        address6 = "0x" + address6;
+  function getAddress(address7) {
+    assertArgument(typeof address7 === "string", "invalid address", "address", address7);
+    if (address7.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
+      if (!address7.startsWith("0x")) {
+        address7 = "0x" + address7;
       }
-      const result = getChecksumAddress(address6);
-      assertArgument(!address6.match(/([A-F].*[a-f])|([a-f].*[A-F])/) || result === address6, "bad address checksum", "address", address6);
+      const result = getChecksumAddress(address7);
+      assertArgument(!address7.match(/([A-F].*[a-f])|([a-f].*[A-F])/) || result === address7, "bad address checksum", "address", address7);
       return result;
     }
-    if (address6.match(/^XE[0-9]{2}[0-9A-Za-z]{30,31}$/)) {
-      assertArgument(address6.substring(2, 4) === ibanChecksum(address6), "bad icap checksum", "address", address6);
-      let result = fromBase36(address6.substring(4)).toString(16);
+    if (address7.match(/^XE[0-9]{2}[0-9A-Za-z]{30,31}$/)) {
+      assertArgument(address7.substring(2, 4) === ibanChecksum(address7), "bad icap checksum", "address", address7);
+      let result = fromBase36(address7.substring(4)).toString(16);
       while (result.length < 40) {
         result = "0" + result;
       }
       return getChecksumAddress("0x" + result);
     }
-    assertArgument(false, "invalid address", "address", address6);
+    assertArgument(false, "invalid address", "address", address7);
   }
 
   // node_modules/ethers/lib.esm/address/contract-address.js
@@ -364479,6 +364479,7 @@ pub contract MultiCallEntrypoint {
   ]);
   var bok = new Interface(["function active() view returns(bool)"]);
   var quoter = new Interface(["function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256 amountIn,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"]);
+  var ZERO_FIELD = "0x" + "0".repeat(64);
   var P = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var prepared = /* @__PURE__ */ new WeakMap();
   function fail2(code) {
@@ -364567,10 +364568,16 @@ pub contract MultiCallEntrypoint {
     field(s.privateFpc);
     const a = record4(x.allocation, ["asset", "collateralWei", "feeAmount", "bokAmount", "feePoolFee", "bokPoolFee", "slippageBps", "collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]);
     check4(a.asset === "ETH", "USDC_GAS_ROUTE_UNQUALIFIED");
-    for (const k of ["collateralWei", "feeAmount", "bokAmount"]) check4(uint(a[k], k === "collateralWei" ? 96 : 128) > 0n);
-    for (const k of ["feePoolFee", "bokPoolFee"]) check4([100, 500, 3e3, 1e4].includes(a[k]));
+    for (const k of ["collateralWei", "feeAmount"]) check4(uint(a[k], k === "collateralWei" ? 96 : 128) > 0n);
+    const hasBok = uint(a.bokAmount, 128) > 0n;
+    check4([100, 500, 3e3, 1e4].includes(a.feePoolFee));
+    check4(hasBok ? [100, 500, 3e3, 1e4].includes(a.bokPoolFee) : a.bokPoolFee === 0);
     check4(Number.isSafeInteger(a.slippageBps) && a.slippageBps >= 0 && a.slippageBps <= 500);
-    for (const k of ["collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]) field(a[k]);
+    for (const k of ["collateralSecretHash", "feeSecretHash"]) field(a[k]);
+    for (const k of ["bokCommitment", "bokSecretHash"]) {
+      if (hasBok) field(a[k]);
+      else check4(a[k] === ZERO_FIELD);
+    }
     const w = record4(x.wallet, ["address", "chainId", "canSendTransaction", "canSignTypedData", "gasBudgetWei"]);
     hex8(w.address, 20);
     uint(w.chainId, 64);
@@ -364587,12 +364594,12 @@ pub contract MultiCallEntrypoint {
     check4(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
     const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false]));
     const tag = block2.number;
-    for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash]]) {
-      const code = await request("eth_getCode", [address6, tag]);
+    for (const [address7, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash]]) {
+      const code = await request("eth_getCode", [address7, tag]);
       check4(typeof code === "string" && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak2563(code) === expected, "RUNTIME");
     }
-    const call2 = async (address6, abi2, name, args = []) => {
-      const data = await request("eth_call", [{ to: address6, data: abi2.encodeFunctionData(name, args) }, tag]);
+    const call2 = async (address7, abi2, name, args = []) => {
+      const data = await request("eth_call", [{ to: address7, data: abi2.encodeFunctionData(name, args) }, tag]);
       try {
         return abi2.decodeFunctionResult(name, data);
       } catch {
@@ -364600,7 +364607,7 @@ pub contract MultiCallEntrypoint {
       }
     };
     for (const key of ["collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "chainId"]) check4(String((await call2(s.router, router, key))[0]).toLowerCase() === s[key], "SCOPE");
-    check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
+    check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (!hasBok || (await call2(s.bokPortal, bok, "active"))[0] === true), "PORTAL_NOT_READY");
     const minimum = (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0], maximum = (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0];
     check4(BigInt(a.collateralWei) >= minimum && BigInt(a.collateralWei) <= maximum, "COLLATERAL_BOUNDS");
     const nonce = (await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0].toString();
@@ -364609,7 +364616,7 @@ pub contract MultiCallEntrypoint {
       check4(q > 0n, "LIQUIDITY_UNQUALIFIED");
       return { amount, maxEth: ((q * BigInt(1e4 + a.slippageBps) + 9999n) / 10000n).toString(), poolFee, quotedEth: q.toString() };
     };
-    const fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee), credit = await quote(s.bokToken, a.bokAmount, a.bokPoolFee);
+    const fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee), credit = hasBok ? await quote(s.bokToken, a.bokAmount, a.bokPoolFee) : { amount: "0", maxEth: "0", poolFee: 0, quotedEth: "0" };
     const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
     check4(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
     const deadline = (await pendingTime(request, block2) + FUNDING_AUTHORIZATION_SECONDS).toString();
@@ -364644,7 +364651,7 @@ pub contract MultiCallEntrypoint {
       consentDigest: TypedDataEncoder.hash(consent.domain, consent.types, consent.value),
       planHash: keccak2563(AbiCoder.defaultAbiCoder().encode([router.getFunction("fund").inputs[0]], [plan])),
       ready: false,
-      requiredClaims: ["collateral", "private-fee", "bok"]
+      requiredClaims: ["collateral", "private-fee", ...hasBok ? ["bok"] : []]
     });
     await validState(request, result, false);
     prepared.set(result, request);
@@ -364682,10 +364689,15 @@ pub contract MultiCallEntrypoint {
     for (const key of ["name", "version"]) check4(typeof s.usdcDomain[key] === "string" && /^[A-Za-z0-9 .-]{1,64}$/.test(s.usdcDomain[key]));
     const a = record4(x.allocation, ["asset", "collateralWei", "feeAmount", "bokAmount", "collateralPoolFee", "feePoolFee", "slippageBps", "collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash", "authorizationSalt"]);
     check4(a.asset === "USDC");
-    for (const key of ["collateralWei", "feeAmount", "bokAmount"]) check4(uint(a[key], key === "collateralWei" ? 96 : 128) > 0n);
+    for (const key of ["collateralWei", "feeAmount"]) check4(uint(a[key], key === "collateralWei" ? 96 : 128) > 0n);
+    const hasBok = uint(a.bokAmount, 128) > 0n;
     for (const key of ["collateralPoolFee", "feePoolFee"]) check4([100, 500, 3e3, 1e4].includes(a[key]));
     check4(Number.isSafeInteger(a.slippageBps) && a.slippageBps >= 0 && a.slippageBps <= 500);
-    for (const key of ["collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]) field(a[key]);
+    for (const key of ["collateralSecretHash", "feeSecretHash"]) field(a[key]);
+    for (const key of ["bokCommitment", "bokSecretHash"]) {
+      if (hasBok) field(a[key]);
+      else check4(a[key] === ZERO_FIELD);
+    }
     hex8(a.authorizationSalt);
     const w = record4(x.wallet, ["address", "chainId", "canSignTypedData"]);
     hex8(w.address, 20);
@@ -364704,12 +364716,12 @@ pub contract MultiCallEntrypoint {
     };
     check4(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
     const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false])), tag = block2.number;
-    for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash], [s.bokToken, s.usdcCodeHash], [s.usdcImplementation, s.usdcImplementationCodeHash]]) {
-      const code = await request("eth_getCode", [address6, tag]);
+    for (const [address7, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash], [s.bokToken, s.usdcCodeHash], [s.usdcImplementation, s.usdcImplementationCodeHash]]) {
+      const code = await request("eth_getCode", [address7, tag]);
       check4(typeof code === "string" && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak2563(code) === expected, "RUNTIME");
     }
-    const call2 = async (address6, abi2, name, args = []) => {
-      const value = await request("eth_call", [{ to: address6, data: abi2.encodeFunctionData(name, args) }, tag]);
+    const call2 = async (address7, abi2, name, args = []) => {
+      const value = await request("eth_call", [{ to: address7, data: abi2.encodeFunctionData(name, args) }, tag]);
       try {
         return abi2.decodeFunctionResult(name, value);
       } catch {
@@ -364720,7 +364732,7 @@ pub contract MultiCallEntrypoint {
     check4(String((await call2(s.bokToken, usdcAbi, "implementation"))[0]).toLowerCase() === s.usdcImplementation, "USDC_IMPLEMENTATION");
     const domain10 = { ...s.usdcDomain, chainId: s.chainId, verifyingContract: s.bokToken };
     check4((await call2(s.bokToken, usdcAbi, "DOMAIN_SEPARATOR"))[0] === TypedDataEncoder.hashDomain(domain10), "USDC_DOMAIN");
-    check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
+    check4((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (!hasBok || (await call2(s.bokPortal, bok, "active"))[0] === true), "PORTAL_NOT_READY");
     check4(BigInt(a.collateralWei) >= (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0] && BigInt(a.collateralWei) <= (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0], "COLLATERAL_BOUNDS");
     const nonce = String((await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0]);
     const quote = async (token, amount, poolFee) => {
@@ -364773,7 +364785,7 @@ pub contract MultiCallEntrypoint {
       breakdown: { collateral, fee: fee2, bokAmount: a.bokAmount, relayFeeUsdc: relay.feeUsdc, maximumUsdc },
       relayGasBudgetWei: relay.gasBudgetWei,
       ready: false,
-      requiredClaims: ["collateral", "private-fee", "bok"],
+      requiredClaims: ["collateral", "private-fee", ...hasBok ? ["bok"] : []],
       relayPreflightRequired: true,
       failureGasRisk: "relayer-unreimbursed-on-revert"
     });
@@ -364805,6 +364817,7 @@ pub contract MultiCallEntrypoint {
   var board = new Interface(["event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)"]);
   var fee = new Interface(["event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)"]);
   var bok2 = new Interface(["event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)"]);
+  var ZERO_FIELD2 = "0x" + "0".repeat(64);
   var lower = (x) => typeof x === "string" ? x.toLowerCase() : "";
   var check5 = (x) => {
     if (!x) throw Object.assign(Error("Aggregate funding recovery is unresolved."), { code: "BB_ETH_RECOVERY_REQUIRED" });
@@ -364825,13 +364838,17 @@ pub contract MultiCallEntrypoint {
     check5(lower(usdc ? p.relayer : p.beneficiary) === record8.from && hex9(lower(p.beneficiary), 20) && collateral > 0n && collateral < 2n ** 96n);
     if (usdc) {
       check5(lower(p.beneficiary) !== record8.to && lower(p.relayer) !== record8.to && hex9(p.authorizationSalt) && p.relayFeeUsdc > 0n && p.deadline > p.validAfter);
-      check5(p.bokAmount > 0n && p.bokAmount < 2n ** 128n && BigInt(record8.value) === 0n);
+      check5(p.bokAmount >= 0n && p.bokAmount < 2n ** 128n && BigInt(record8.value) === 0n);
       for (const leg of [p.collateral, p.fee]) check5(leg.amount > 0n && leg.amount < 2n ** 128n && leg.maxUsdc > 0n && [100n, 500n, 3000n, 10000n].includes(leg.poolFee));
     } else {
-      for (const leg of [p.fee, p.bok]) check5(leg.amount > 0n && leg.amount < 2n ** 128n && leg.maxEth > 0n && [100n, 500n, 3000n, 10000n].includes(leg.poolFee));
+      for (const leg of [p.fee, ...p.bok.amount > 0n ? [p.bok] : []]) check5(leg.amount > 0n && leg.amount < 2n ** 128n && leg.maxEth > 0n && [100n, 500n, 3000n, 10000n].includes(leg.poolFee));
+      check5(p.bok.amount >= 0n && p.bok.amount < 2n ** 128n);
+      if (p.bok.amount === 0n) check5(p.bok.maxEth === 0n && p.bok.poolFee === 0n);
       check5(BigInt(record8.value) === p.collateral + p.fee.maxEth + p.bok.maxEth);
     }
-    for (const value of [p.collateralSecretHash, p.feeSecretHash, p.bokCommitment, p.bokSecretHash]) check5(field2(lower(value)));
+    for (const value of [p.collateralSecretHash, p.feeSecretHash]) check5(field2(lower(value)));
+    const hasBok = (usdc ? p.bokAmount : p.bok.amount) > 0n;
+    for (const value of [p.bokCommitment, p.bokSecretHash]) check5(hasBok ? field2(lower(value)) : value === ZERO_FIELD2);
     check5(p.deadline > 0n);
     for (const signature of parsed.args.slice(1)) check5(signature.length > 2 && signature.length <= 8194);
     check5(keccak2563(AbiCoder.defaultAbiCoder().encode([router2.getFunction(method).inputs[0]], [p])) === e.planHash);
@@ -364839,11 +364856,12 @@ pub contract MultiCallEntrypoint {
   }
   async function verifyAggregateFundingEffects(provider, record8, receipt2, read2 = (fn) => fn()) {
     const p = validateAggregateFundingIntent(record8), e = record8.expected, usdc = e.kind === "aggregate-usdc-funding";
+    const hasBok = (usdc ? p.bokAmount : p.bok.amount) > 0n;
     const code = await read2(() => provider.getCode(record8.to, receipt2.blockNumber));
     check5(typeof code === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(code) && keccak2563(code) === e.routerCodeHash);
     check5(Array.isArray(receipt2.logs) && receipt2.logs.length <= 4096);
-    const one = (address6, abi2, name) => {
-      const topic = abi2.getEvent(name).topicHash, logs = receipt2.logs.filter((l) => lower(l.address) === address6 && lower(l.topics?.[0]) === topic);
+    const one = (address7, abi2, name) => {
+      const topic = abi2.getEvent(name).topicHash, logs = receipt2.logs.filter((l) => lower(l.address) === address7 && lower(l.topics?.[0]) === topic);
       check5(logs.length === 1);
       const log3 = logs[0];
       check5(Array.isArray(log3.topics) && log3.topics.length <= 4 && typeof log3.data === "string" && log3.data.length <= 4096);
@@ -364852,12 +364870,13 @@ pub contract MultiCallEntrypoint {
     const funded = one(record8.to, router2, usdc ? "UsdcFunded" : "Funded");
     check5(lower(funded.beneficiary) === lower(p.beneficiary) && funded.planHash === e.planHash && funded.collateral === (usdc ? p.collateral.amount : p.collateral) && funded.feeAmount === p.fee.amount && funded.bokAmount === (usdc ? p.bokAmount : p.bok.amount));
     if (usdc) check5(lower(funded.relayer) === record8.from && funded.relayFeeUsdc === p.relayFeeUsdc && funded.collateralUsdc > 0n && funded.collateralUsdc <= p.collateral.maxUsdc && funded.feeUsdc > 0n && funded.feeUsdc <= p.fee.maxUsdc && funded.refund === p.collateral.maxUsdc + p.fee.maxUsdc - funded.collateralUsdc - funded.feeUsdc);
-    else check5(funded.feeEth > 0n && funded.feeEth <= p.fee.maxEth && funded.bokEth > 0n && funded.bokEth <= p.bok.maxEth && funded.refund === p.fee.maxEth + p.bok.maxEth - funded.feeEth - funded.bokEth);
-    const collateral = one(e.collateralPortal, board, "Deposited"), privateFee = one(e.feePortal, fee, "DepositToAztecPublic"), credit = one(e.bokPortal, bok2, "Deposited");
+    else check5(funded.feeEth > 0n && funded.feeEth <= p.fee.maxEth && (hasBok ? funded.bokEth > 0n && funded.bokEth <= p.bok.maxEth : funded.bokEth === 0n) && funded.refund === p.fee.maxEth + p.bok.maxEth - funded.feeEth - funded.bokEth);
+    const collateral = one(e.collateralPortal, board, "Deposited"), privateFee = one(e.feePortal, fee, "DepositToAztecPublic"), credit = hasBok ? one(e.bokPortal, bok2, "Deposited") : null;
+    if (!hasBok) check5(!receipt2.logs.some((log3) => lower(log3.address) === e.bokPortal && lower(log3.topics?.[0]) === bok2.getEvent("Deposited").topicHash));
     check5(lower(collateral.depositor) === lower(p.beneficiary) && collateral.amount === (usdc ? p.collateral.amount : p.collateral) && collateral.secretHash === p.collateralSecretHash);
     check5(privateFee.to === e.privateFpc && privateFee.amount === p.fee.amount && privateFee.secretHash === p.feeSecretHash);
-    check5(credit.account === p.bokCommitment && credit.amount === (usdc ? p.bokAmount : p.bok.amount));
-    for (const event of [collateral, privateFee, credit]) check5(field2(lower(event.key)) && event.index >= 0n);
+    if (hasBok) check5(credit.account === p.bokCommitment && credit.amount === (usdc ? p.bokAmount : p.bok.amount));
+    for (const event of [collateral, privateFee, ...credit ? [credit] : []]) check5(field2(lower(event.key)) && event.index >= 0n);
     return {
       planHash: e.planHash,
       beneficiary: lower(p.beneficiary),
@@ -364865,7 +364884,7 @@ pub contract MultiCallEntrypoint {
       ...usdc ? { collateralUsdc: String(funded.collateralUsdc), feeUsdc: String(funded.feeUsdc), relayFeeUsdc: String(funded.relayFeeUsdc) } : { feeEth: String(funded.feeEth), bokEth: String(funded.bokEth) },
       collateral: { amount: String(collateral.amount), secretHash: collateral.secretHash, messageKey: collateral.key, leafIndex: String(collateral.index) },
       privateFee: { amount: String(privateFee.amount), secretHash: privateFee.secretHash, messageKey: privateFee.key, leafIndex: String(privateFee.index) },
-      bok: { amount: String(credit.amount), secretHash: p.bokSecretHash, messageKey: credit.key, leafIndex: String(credit.index), commitment: credit.account }
+      ...credit ? { bok: { amount: String(credit.amount), secretHash: p.bokSecretHash, messageKey: credit.key, leafIndex: String(credit.index), commitment: credit.account } } : {}
     };
   }
 
@@ -367843,7 +367862,7 @@ ${content.join("\n")}
     const parts = value.split("/");
     if (parts.length !== 2)
       return false;
-    const [address6, prefix] = parts;
+    const [address7, prefix] = parts;
     if (!prefix)
       return false;
     const prefixNum = Number(prefix);
@@ -367851,7 +367870,7 @@ ${content.join("\n")}
       return false;
     if (prefixNum < 0 || prefixNum > 128)
       return false;
-    return isValidIPv6(address6);
+    return isValidIPv6(address7);
   }
   var $ZodCIDRv64 = /* @__PURE__ */ $constructor4("$ZodCIDRv6", (inst, def) => {
     def.pattern ?? (def.pattern = cidrv67);
@@ -369963,7 +369982,7 @@ ${content.join("\n")}
       return PROVEN;
     stack.add(inst);
     let result = NONE;
-    const check12 = (child) => {
+    const check13 = (child) => {
       if (result !== PROVEN && child?._zod) {
         const answer = isRecursive(child, stack, resolve);
         if (answer > result)
@@ -369992,35 +370011,35 @@ ${content.join("\n")}
       case "object": {
         const raw = rawShape(def);
         merge7(raw ? shape(raw, true) : ASSUMED);
-        check12(def.catchall);
+        check13(def.catchall);
         break;
       }
       case "properties":
         merge7(shape(def.shape, false));
         break;
       case "array":
-        check12(def.element);
+        check13(def.element);
         break;
       case "tuple":
         for (const el of def.items)
-          check12(el);
-        check12(def.rest);
+          check13(el);
+        check13(def.rest);
         break;
       case "record":
       case "map":
-        check12(def.keyType);
-        check12(def.valueType);
+        check13(def.keyType);
+        check13(def.valueType);
         break;
       case "set":
-        check12(def.valueType);
+        check13(def.valueType);
         break;
       case "union":
         for (const el of def.options)
-          check12(el);
+          check13(el);
         break;
       case "intersection":
-        check12(def.left);
-        check12(def.right);
+        check13(def.left);
+        check13(def.right);
         break;
       case "optional":
       case "nullable":
@@ -370031,15 +370050,15 @@ ${content.join("\n")}
       case "nonoptional":
       case "promise":
       case "success":
-        check12(def.innerType);
+        check13(def.innerType);
         break;
       case "pipe":
-        check12(def.in);
-        check12(def.out);
+        check13(def.in);
+        check13(def.out);
         break;
       case "function":
-        check12(def.input);
-        check12(def.output);
+        check13(def.input);
+        check13(def.output);
         break;
       // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
       case "lazy": {
@@ -370080,10 +370099,10 @@ ${content.join("\n")}
           if (!value || typeof value !== "object")
             continue;
           if (value._zod)
-            check12(value);
+            check13(value);
           else if (Array.isArray(value))
             for (const el of value)
-              check12(el);
+              check13(el);
         }
       }
     }
@@ -378170,8 +378189,8 @@ ${code}
     if (!schemaChecks || schemaChecks.length === 0)
       return accessor;
     let currentAccessor = accessor;
-    for (const check12 of schemaChecks) {
-      const def = check12._zod.def;
+    for (const check13 of schemaChecks) {
+      const def = check13._zod.def;
       if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
         throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
       }
@@ -378219,7 +378238,7 @@ ${code}
           currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
           break;
         case "custom":
-          currentAccessor = generateCustomRefineCheck(doc, ctx, check12, currentAccessor);
+          currentAccessor = generateCustomRefineCheck(doc, ctx, check13, currentAccessor);
           break;
         case "bigint_format":
           generateBigIntFormatCheck(doc, def, currentAccessor);
@@ -378235,7 +378254,7 @@ ${code}
           break;
         case "overwrite": {
           const newAccessor = newVar(ctx);
-          generateOverwriteCheck(doc, ctx, check12, currentAccessor, newAccessor);
+          generateOverwriteCheck(doc, ctx, check13, currentAccessor, newAccessor);
           currentAccessor = newAccessor;
           break;
         }
@@ -378358,8 +378377,8 @@ ${code}
     const propAccessor = `${accessor}[${JSON.stringify(def.property)}]`;
     generateCheck(doc, ctx, def.schema, propAccessor);
   }
-  function generateOverwriteCheck(doc, ctx, check12, currentAccessor, newAccessor) {
-    const tx = check12._zod.def.tx;
+  function generateOverwriteCheck(doc, ctx, check13, currentAccessor, newAccessor) {
+    const tx = check13._zod.def.tx;
     if (!tx) {
       throw new ZodCompileUnsupportedError("overwrite check without a transform function");
     }
@@ -378375,8 +378394,8 @@ ${code}
   function pushIssue(issue7) {
     this.issues.push(issue7);
   }
-  function generateCustomRefineCheck(doc, ctx, check12, accessor) {
-    const def = check12._zod.def;
+  function generateCustomRefineCheck(doc, ctx, check13, accessor) {
+    const def = check13._zod.def;
     if (def.fn) {
       if (isAsyncFunction(def.fn)) {
         throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
@@ -378389,11 +378408,11 @@ ${code}
       doc.write(`if (!${resVar}) return INVALID;`);
       return accessor;
     }
-    if (check12._zod.check) {
-      if (isAsyncFunction(check12._zod.check)) {
+    if (check13._zod.check) {
+      if (isAsyncFunction(check13._zod.check)) {
         throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
       }
-      const checkFn = check12._zod.check;
+      const checkFn = check13._zod.check;
       const helperFn = (value) => {
         const fakePayload = { value, issues: [], addIssue: pushIssue };
         const result = checkFn(fakePayload);
@@ -382379,8 +382398,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       reg.add(this, meta13);
       return this;
     },
-    refine(check12, params) {
-      return this.check(refine4(check12, params));
+    refine(check13, params) {
+      return this.check(refine4(check13, params));
     },
     superRefine(refinement, params) {
       return this.check(superRefine4(refinement, params));
@@ -388338,8 +388357,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   init_dirname();
   init_buffer2();
   init_process2();
-  function isProtocolContract(address6) {
-    return Object.values(ProtocolContractAddress).some((a) => a.equals(address6));
+  function isProtocolContract(address7) {
+    return Object.values(ProtocolContractAddress).some((a) => a.equals(address7));
   }
   var protocolContractClassIds = new Set(Object.values(ProtocolContractClassId).map((id3) => id3.toString()));
 
@@ -388360,6 +388379,50 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   init_dirname();
   init_buffer2();
   init_process2();
+
+  // shared/rolling/topup-swap.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var topupSwapAbi = Object.freeze([
+    "function exactOutputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountOut,uint256 amountInMaximum,uint160 sqrtPriceLimitX96)) payable returns(uint256)",
+    "function refundETH() payable",
+    "function multicall(uint256 deadline,bytes[] data) payable returns(bytes[])"
+  ]);
+  var lower2 = (value) => typeof value === "string" ? value.toLowerCase() : "";
+  var address = (value) => /^0x[0-9a-f]{40}$/.test(value) && BigInt(value) > 0n;
+  var positive = (value) => typeof value === "string" && /^[1-9][0-9]{0,77}$/.test(value);
+  var check7 = (value, code = "SWAP_INVALID") => {
+    if (!value) throw Object.assign(Error("The ETH exchange could not be verified."), { code: "ROLLING_FUNDING_" + code });
+  };
+  function validateTopupSwapIntent(record8, scope, ethers) {
+    const topupSwapInterface = new ethers.Interface(topupSwapAbi);
+    const e = record8.expected;
+    check7(e && Object.keys(e).sort().join() === "amount,deadline,kind,maximumWei,poolFee,recipient,token,weth");
+    check7(e.kind === "topup-swap" && address(e.token) && address(e.weth) && e.token !== e.weth && address(e.recipient));
+    check7(positive(e.amount) && BigInt(e.amount) < 1n << 128n && positive(e.maximumWei) && positive(e.deadline) && e.poolFee === 3e3);
+    check7(record8.value === e.maximumWei && record8.from === e.recipient && record8.to === scope.portal && scope.token === e.token);
+    const data = topupSwapInterface.encodeFunctionData("multicall", [e.deadline, [
+      topupSwapInterface.encodeFunctionData("exactOutputSingle", [[e.weth, e.token, e.poolFee, e.recipient, e.amount, e.maximumWei, 0]]),
+      topupSwapInterface.encodeFunctionData("refundETH")
+    ]]).toLowerCase();
+    check7(record8.data === data);
+  }
+  function verifyTopupSwapEffects(record8, receipt2, ethers) {
+    const transferInterface = new ethers.Interface(["event Transfer(address indexed from,address indexed to,uint256 value)"]);
+    const e = record8.expected;
+    let received = 0n;
+    for (const log3 of receipt2.logs) {
+      if (lower2(log3.address) !== e.token || lower2(log3.topics?.[0]) !== transferInterface.getEvent("Transfer").topicHash.toLowerCase()) continue;
+      const transfer2 = transferInterface.parseLog(log3);
+      if (lower2(transfer2.args.to) === e.recipient) received += transfer2.args.value;
+      if (lower2(transfer2.args.from) === e.recipient) received -= transfer2.args.value;
+    }
+    check7(received === BigInt(e.amount), "SWAP_EFFECT");
+    return { amount: e.amount, recipient: e.recipient };
+  }
+
+  // shared/ethereum-journal.mjs
   var CREATE2_PROXY = "0x4e59b44847b379578588920ca78fbf26c0b4956c";
   var iface = new Interface([
     "function activate(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)",
@@ -388386,16 +388449,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var field3 = (value) => hash8(value) && BigInt(value) > 0n && BigInt(value) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var unknown5 = () => transactionError("BB_ETH_RECOVERY_REQUIRED", "Recover the saved Ethereum request before starting another payment.");
   var invalid2 = () => transactionError("BB_JOURNAL_INVALID", "Ethereum recovery storage is invalid. Preserve it before continuing.");
-  var address = (v) => typeof v === "string" && /^0x[0-9a-f]{40}$/.test(v);
+  var address2 = (v) => typeof v === "string" && /^0x[0-9a-f]{40}$/.test(v);
   var hash8 = (v) => typeof v === "string" && /^0x[0-9a-f]{64}$/.test(v);
-  var lower2 = (v) => typeof v === "string" ? v.toLowerCase() : "";
-  var positive = (v) => typeof v === "string" && /^[1-9][0-9]{0,77}$/.test(v);
+  var lower3 = (v) => typeof v === "string" ? v.toLowerCase() : "";
+  var positive2 = (v) => typeof v === "string" && /^[1-9][0-9]{0,77}$/.test(v);
   var integer5 = (v) => Number.isSafeInteger(v) && v >= 0;
   function validatedScope(scope) {
     const names = ["account", "chainId", "rollup", "version", "board", "portal", "depositor", ...scope?.token !== void 0 ? ["token"] : [], ...scope?.deployment !== void 0 ? ["deployment"] : []];
     if (!scope || Object.keys(scope).sort().join() !== [...names].sort().join()) throw invalid2();
     if (scope.deployment !== void 0 && (!hash8(scope.deployment) || scope.token !== void 0)) throw invalid2();
-    if (scope.token !== void 0 && !address(scope.token) || !hash8(scope.account) || !hash8(scope.board) || !address(scope.rollup) || !address(scope.portal) || !address(scope.depositor) || !positive(scope.chainId) || !positive(scope.version)) throw invalid2();
+    if (scope.token !== void 0 && !address2(scope.token) || !hash8(scope.account) || !hash8(scope.board) || !address2(scope.rollup) || !address2(scope.portal) || !address2(scope.depositor) || !positive2(scope.chainId) || !positive2(scope.version)) throw invalid2();
     return JSON.stringify(["AZTEC_BB_ETH_JOURNAL_V1", ...names.map((n2) => scope[n2])]);
   }
   function intentDestination(expected, scope) {
@@ -388410,11 +388473,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (!record8 || record8.version !== 1 || record8.from !== scope.depositor || record8.to !== intentDestination(record8.expected, scope) || record8.chainId !== scope.chainId || !integer5(record8.nonce) || !integer5(record8.startBlock) || !hash8(record8.startHash) || !integer5(record8.nextBlock) || record8.nextBlock < 1 || record8.cursorHash !== null && !hash8(record8.cursorHash) || record8.txHash !== null && !hash8(record8.txHash) || typeof record8.data !== "string" || record8.data.length > 131072 || !/^0x(?:[0-9a-f]{2})+$/.test(record8.data) || typeof record8.value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(record8.value)) throw invalid2();
     const expected = record8.expected;
     if (scope.deployment !== void 0) {
-      if (!expected || !["create-portal", "create2-portal", "activate-portal"].includes(expected.kind) || !address(expected.portal) || record8.value !== "0") throw invalid2();
+      if (!expected || !["create-portal", "create2-portal", "activate-portal"].includes(expected.kind) || !address2(expected.portal) || record8.value !== "0") throw invalid2();
       if (expected.kind === "create-portal") {
-        if (keccak2563(record8.data) !== scope.deployment || lower2(getCreateAddress({ from: record8.from, nonce: record8.nonce })) !== expected.portal) throw invalid2();
+        if (keccak2563(record8.data) !== scope.deployment || lower3(getCreateAddress({ from: record8.from, nonce: record8.nonce })) !== expected.portal) throw invalid2();
       } else if (expected.kind === "create2-portal") {
-        if (record8.data.slice(0, 66) !== scope.board || keccak2563("0x" + record8.data.slice(66)) !== scope.deployment || lower2(getCreate2Address(CREATE2_PROXY, scope.board, scope.deployment)) !== expected.portal) throw invalid2();
+        if (record8.data.slice(0, 66) !== scope.board || keccak2563("0x" + record8.data.slice(66)) !== scope.deployment || lower3(getCreate2Address(CREATE2_PROXY, scope.board, scope.deployment)) !== expected.portal) throw invalid2();
       } else {
         if (expected.portal !== scope.portal || !hash8(expected.configHash)) throw invalid2();
         let parsed2;
@@ -388436,8 +388499,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       return record8;
     }
+    if (expected?.kind === "topup-swap") {
+      try {
+        validateTopupSwapIntent(record8, scope, { Interface });
+      } catch {
+        throw invalid2();
+      }
+      return record8;
+    }
     const fee2 = scope.token !== void 0;
-    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit", "bok-withdraw"] : ["deposit", "withdraw", "request-refund", "deposit-refund"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
+    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit", "bok-withdraw"] : ["deposit", "withdraw", "request-refund", "deposit-refund"]).includes(expected.kind) || !positive2(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
     const abi2 = ["bok-deposit", "bok-withdraw"].includes(expected.kind) ? bokInterface : iface;
     let parsed;
     try {
@@ -388448,22 +388519,22 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const method = expected.kind === "request-refund" ? "requestRefund" : expected.kind === "deposit-refund" ? "refund" : expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind === "bok-withdraw" ? "withdraw" : expected.kind;
     if (!parsed || parsed.name !== method || abi2.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() !== record8.data) throw invalid2();
     if (expected.kind === "deposit") {
-      if (!hash8(expected.secretHash) || lower2(parsed.args[0]) !== expected.secretHash || record8.value !== expected.amount) throw invalid2();
+      if (!hash8(expected.secretHash) || lower3(parsed.args[0]) !== expected.secretHash || record8.value !== expected.amount) throw invalid2();
     } else {
       if (record8.value !== "0") throw invalid2();
-      if (expected.kind === "request-refund" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== expected.depositId)) throw invalid2();
-      if (expected.kind === "deposit-refund" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== record8.from || lower2(parsed.args[1]) !== expected.depositId)) throw invalid2();
-      if (expected.kind === "withdraw" && (!field3(expected.depositId) || lower2(parsed.args[0]) !== expected.depositId)) throw invalid2();
-      if (expected.kind === "approve" && (expected.spender !== scope.portal || lower2(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
-      if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower2(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
-      if (expected.kind === "bok-deposit" && (!field3(expected.recipient) || !field3(expected.secretHash) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
-      if (expected.kind === "bok-withdraw" && (!address(expected.recipient) || BigInt(expected.recipient) === 0n || !field3(expected.exitNonce) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.exitNonce)) throw invalid2();
+      if (expected.kind === "request-refund" && (!field3(expected.depositId) || lower3(parsed.args[0]) !== expected.depositId)) throw invalid2();
+      if (expected.kind === "deposit-refund" && (!field3(expected.depositId) || lower3(parsed.args[0]) !== record8.from || lower3(parsed.args[1]) !== expected.depositId)) throw invalid2();
+      if (expected.kind === "withdraw" && (!field3(expected.depositId) || lower3(parsed.args[0]) !== expected.depositId)) throw invalid2();
+      if (expected.kind === "approve" && (expected.spender !== scope.portal || lower3(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
+      if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower3(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower3(parsed.args[2]) !== expected.secretHash)) throw invalid2();
+      if (expected.kind === "bok-deposit" && (!field3(expected.recipient) || !field3(expected.secretHash) || lower3(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower3(parsed.args[2]) !== expected.secretHash)) throw invalid2();
+      if (expected.kind === "bok-withdraw" && (!address2(expected.recipient) || BigInt(expected.recipient) === 0n || !field3(expected.exitNonce) || lower3(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower3(parsed.args[2]) !== expected.exitNonce)) throw invalid2();
     }
     return record8;
   }
   function matchesRequest(tx, record8) {
     try {
-      return lower2(tx.from) === record8.from && (tx.to == null ? null : lower2(tx.to)) === record8.to && Number(tx.nonce) === record8.nonce && String(tx.chainId) === record8.chainId && lower2(tx.data) === record8.data && BigInt(tx.value) === BigInt(record8.value);
+      return lower3(tx.from) === record8.from && (tx.to == null ? null : lower3(tx.to)) === record8.to && Number(tx.nonce) === record8.nonce && String(tx.chainId) === record8.chainId && lower3(tx.data) === record8.data && BigInt(tx.value) === BigInt(record8.value);
     } catch {
       return false;
     }
@@ -388471,32 +388542,43 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   async function verifyEthereumIntentReceipt(provider, record8, txHash, read2 = (fn) => fn()) {
     const receipt2 = await read2(() => provider.getTransactionReceipt(txHash));
     if (!receipt2) return null;
-    if (lower2(receipt2.hash) !== txHash || !integer5(receipt2.blockNumber) || !hash8(lower2(receipt2.blockHash)) || ![0, 1].includes(receipt2.status)) throw unknown5();
+    if (lower3(receipt2.hash) !== txHash || !integer5(receipt2.blockNumber) || !hash8(lower3(receipt2.blockHash)) || ![0, 1].includes(receipt2.status)) throw unknown5();
     const [tx, block2] = await Promise.all([read2(() => provider.getTransaction(txHash)), read2(() => provider.getBlock(receipt2.blockNumber))]);
-    if (!tx || lower2(tx.hash) !== txHash || lower2(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce || String(tx.chainId) !== record8.chainId || lower2(block2?.hash) !== lower2(receipt2.blockHash) || lower2(receipt2.from) !== record8.from || lower2(receipt2.to) !== lower2(tx.to)) throw unknown5();
+    if (!tx || lower3(tx.hash) !== txHash || lower3(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce || String(tx.chainId) !== record8.chainId || lower3(block2?.hash) !== lower3(receipt2.blockHash) || lower3(receipt2.from) !== record8.from || lower3(receipt2.to) !== lower3(tx.to)) throw unknown5();
     const direct = matchesRequest(tx, record8);
     const effectKinds = ["deposit", "withdraw", "approve", "fee-deposit", "request-refund", "deposit-refund"];
     if (!direct && !effectKinds.includes(record8.expected.kind)) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
     if (receipt2.status === 0) return { outcome: "reverted", txHash, receipt: receipt2, event: null };
     if (!Array.isArray(receipt2.logs)) throw unknown5();
     const expected = record8.expected;
+    if (expected.kind === "topup-swap") {
+      let event;
+      try {
+        event = verifyTopupSwapEffects(record8, receipt2, { Interface });
+      } catch {
+        throw unknown5();
+      }
+      const current = await read2(() => provider.getBlock(receipt2.blockNumber));
+      if (lower3(current?.hash) !== lower3(receipt2.blockHash)) throw unknown5();
+      return { outcome: "success", txHash, receipt: receipt2, event };
+    }
     if (["aggregate-funding", "aggregate-usdc-funding"].includes(expected.kind)) {
       const event = await verifyAggregateFundingEffects(provider, record8, receipt2, read2);
       const current = await read2(() => provider.getBlock(receipt2.blockNumber));
-      if (lower2(current?.hash) !== lower2(receipt2.blockHash)) throw unknown5();
+      if (lower3(current?.hash) !== lower3(receipt2.blockHash)) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event };
     }
     if (expected.kind === "bok-withdraw") {
       const topic2 = bokInterface.getEvent("Withdrawn").topicHash.toLowerCase(), events2 = [];
       for (const log3 of receipt2.logs) {
-        if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic2) continue;
+        if (lower3(log3.address) !== record8.to || lower3(log3.topics?.[0]) !== topic2) continue;
         let parsed;
         try {
           parsed = bokInterface.parseLog(log3);
         } catch {
           throw unknown5();
         }
-        if (!parsed || lower2(parsed.args.recipient) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower2(parsed.args.nonce) !== expected.exitNonce) throw unknown5();
+        if (!parsed || lower3(parsed.args.recipient) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower3(parsed.args.nonce) !== expected.exitNonce) throw unknown5();
         events2.push(parsed.args);
       }
       if (events2.length !== 1) throw unknown5();
@@ -388505,21 +388587,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (expected.kind === "bok-deposit") {
       const topic2 = bokInterface.getEvent("Deposited").topicHash.toLowerCase(), events2 = [];
       for (const log3 of receipt2.logs) {
-        if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic2) continue;
+        if (lower3(log3.address) !== record8.to || lower3(log3.topics?.[0]) !== topic2) continue;
         let parsed;
         try {
           parsed = bokInterface.parseLog(log3);
         } catch {
           throw unknown5();
         }
-        if (!parsed || lower2(parsed.args.account) !== expected.recipient || String(parsed.args.amount) !== expected.amount || !field3(lower2(parsed.args.key))) throw unknown5();
+        if (!parsed || lower3(parsed.args.account) !== expected.recipient || String(parsed.args.amount) !== expected.amount || !field3(lower3(parsed.args.key))) throw unknown5();
         events2.push(parsed.args);
       }
       if (events2.length !== 1) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event: events2[0] };
     }
     if (["create-portal", "create2-portal"].includes(expected.kind)) {
-      if (expected.kind === "create-portal" && lower2(receipt2.contractAddress) !== expected.portal) throw unknown5();
+      if (expected.kind === "create-portal" && lower3(receipt2.contractAddress) !== expected.portal) throw unknown5();
       const code = await read2(() => provider.getCode(expected.portal, receipt2.blockNumber));
       if (typeof code !== "string" || code === "0x" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(code)) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event: null };
@@ -388527,7 +388609,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const eventName = { deposit: "Deposited", withdraw: "Withdrawn", "request-refund": "RefundRequested", "deposit-refund": "Refunded", approve: "Approval", "fee-deposit": "DepositToAztecPublic", "activate-portal": "Activated" }[expected.kind];
     const topic = iface.getEvent(eventName).topicHash.toLowerCase(), events = [];
     for (const log3 of receipt2.logs) {
-      if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic) continue;
+      if (lower3(log3.address) !== record8.to || lower3(log3.topics?.[0]) !== topic) continue;
       let parsed;
       try {
         parsed = iface.parseLog(log3);
@@ -388536,12 +388618,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       if (!parsed) throw unknown5();
       if (expected.kind === "activate-portal") {
-        if (lower2(parsed.args.configHash) !== expected.configHash) throw unknown5();
+        if (lower3(parsed.args.configHash) !== expected.configHash) throw unknown5();
       } else if (expected.kind === "approve") {
-        if (lower2(parsed.args.owner) !== record8.from || lower2(parsed.args.spender) !== expected.spender || String(parsed.args.value) !== expected.amount) throw unknown5();
+        if (lower3(parsed.args.owner) !== record8.from || lower3(parsed.args.spender) !== expected.spender || String(parsed.args.value) !== expected.amount) throw unknown5();
       } else if (expected.kind === "fee-deposit") {
-        if (lower2(parsed.args.to) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower2(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
-      } else if (lower2(parsed.args.depositor) !== record8.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower2(parsed.args.secretHash) !== expected.secretHash || ["withdraw", "request-refund", "deposit-refund"].includes(expected.kind) && (!field3(expected.depositId) || lower2(parsed.args.depositId) !== expected.depositId)) throw unknown5();
+        if (lower3(parsed.args.to) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower3(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
+      } else if (lower3(parsed.args.depositor) !== record8.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower3(parsed.args.secretHash) !== expected.secretHash || ["withdraw", "request-refund", "deposit-refund"].includes(expected.kind) && (!field3(expected.depositId) || lower3(parsed.args.depositId) !== expected.depositId)) throw unknown5();
       events.push(parsed.args);
     }
     if (!direct && events.length === 0) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
@@ -388595,26 +388677,26 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (record8.nextBlock > 1) {
         const anchor2 = await read2(() => provider.getBlock(record8.nextBlock - 1));
         const expected = record8.cursorHash ?? record8.startHash;
-        if (lower2(anchor2?.hash) !== expected || head < record8.nextBlock - 1) {
+        if (lower3(anchor2?.hash) !== expected || head < record8.nextBlock - 1) {
           saved = await slot.write(saved, { ...record8, nextBlock: 1, cursorHash: null });
           record8 = saved.value;
         }
       }
       const tip = await read2(() => provider.getBlock(head));
-      if (tip?.number !== head || !hash8(lower2(tip.hash))) throw unknown5();
+      if (tip?.number !== head || !hash8(lower3(tip.hash))) throw unknown5();
       const minedNonce = await read2(() => provider.getTransactionCount(record8.from, head));
       if (!integer5(minedNonce)) throw unknown5();
       if (minedNonce <= record8.nonce) {
         const current = await read2(() => provider.getBlock(head));
-        if (lower2(current?.hash) !== lower2(tip.hash)) throw unknown5();
-        saved = await slot.write(saved, { ...record8, nextBlock: head + 1, cursorHash: lower2(tip.hash) });
+        if (lower3(current?.hash) !== lower3(tip.hash)) throw unknown5();
+        saved = await slot.write(saved, { ...record8, nextBlock: head + 1, cursorHash: lower3(tip.hash) });
         return { saved, result: null };
       }
       let cursorHash = record8.cursorHash, nextBlock = record8.nextBlock, previousHash = record8.nextBlock === 1 ? null : record8.cursorHash ?? record8.startHash;
       for (let number20 = nextBlock; number20 <= head; number20++) {
         const block2 = await read2(() => provider.getBlock(number20, true));
-        if (!block2 || block2.number !== number20 || !hash8(lower2(block2.hash)) || previousHash && lower2(block2.parentHash) !== previousHash) throw unknown5();
-        previousHash = lower2(block2.hash);
+        if (!block2 || block2.number !== number20 || !hash8(lower3(block2.hash)) || previousHash && lower3(block2.parentHash) !== previousHash) throw unknown5();
+        previousHash = lower3(block2.hash);
         let transactions;
         try {
           transactions = block2.prefetchedTransactions;
@@ -388623,18 +388705,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
         if (!Array.isArray(transactions)) throw unknown5();
         for (const tx of transactions) {
-          if (lower2(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce) continue;
-          if (!hash8(lower2(tx.hash))) throw unknown5();
-          const result = await verifyEthereumIntentReceipt(provider, record8, lower2(tx.hash), read2);
-          if (!result || result.receipt.blockNumber !== number20 || lower2(result.receipt.blockHash) !== lower2(block2.hash)) throw unknown5();
+          if (lower3(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce) continue;
+          if (!hash8(lower3(tx.hash))) throw unknown5();
+          const result = await verifyEthereumIntentReceipt(provider, record8, lower3(tx.hash), read2);
+          if (!result || result.receipt.blockNumber !== number20 || lower3(result.receipt.blockHash) !== lower3(block2.hash)) throw unknown5();
           saved = await slot.write(saved, { ...saved.value, txHash: result.txHash });
           return { saved, result };
         }
-        cursorHash = lower2(block2.hash);
+        cursorHash = lower3(block2.hash);
         nextBlock = number20 + 1;
         if ((number20 - record8.nextBlock + 1) % 10 === 0 || number20 === head) {
           const current = await read2(() => provider.getBlock(number20));
-          if (lower2(current?.hash) !== cursorHash) throw unknown5();
+          if (lower3(current?.hash) !== cursorHash) throw unknown5();
           saved = await slot.write(saved, { ...record8, nextBlock, cursorHash });
         }
       }
@@ -388654,7 +388736,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const record8 = saved.value;
       if (!signer) throw unknown5();
       await network(reader());
-      if (lower2(await signer.getAddress()) !== record8.from) throw unknown5();
+      if (lower3(await signer.getAddress()) !== record8.from) throw unknown5();
       if (contextGuard) await contextGuard();
       let response;
       const request = { from: record8.from, to: record8.to, data: record8.data, value: BigInt(record8.value), nonce: record8.nonce, chainId: BigInt(record8.chainId) };
@@ -388678,9 +388760,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
         throw transactionError("BB_ETH_SUBMISSION_UNKNOWN", "Ethereum submission is uncertain. Keep its saved request and use recovery.");
       }
-      if (!hash8(lower2(response?.hash))) throw unknown5();
+      if (!hash8(lower3(response?.hash))) throw unknown5();
       submittedResponse = response;
-      return slot.write(saved, { ...record8, txHash: lower2(response.hash) });
+      return slot.write(saved, { ...record8, txHash: lower3(response.hash) });
     }
     async function finish(saved) {
       const read2 = reader();
@@ -388690,8 +388772,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (found.result) return confirmed(found.result, saved.value);
       const record8 = saved.value;
       const observed = await read2(() => provider.getTransaction(record8.txHash));
-      const tx = observed ?? (typeof submittedResponse?.replaceableTransaction === "function" && lower2(submittedResponse.hash) === record8.txHash ? submittedResponse : null);
-      if (!tx || typeof tx.replaceableTransaction !== "function" || lower2(tx.hash) !== record8.txHash || lower2(tx.from) !== record8.from || tx.nonce !== record8.nonce || lower2(tx.to) !== lower2(record8.to) || lower2(tx.data) !== record8.data || String(tx.value) !== record8.value || String(tx.chainId) !== record8.chainId) throw unknown5();
+      const tx = observed ?? (typeof submittedResponse?.replaceableTransaction === "function" && lower3(submittedResponse.hash) === record8.txHash ? submittedResponse : null);
+      if (!tx || typeof tx.replaceableTransaction !== "function" || lower3(tx.hash) !== record8.txHash || lower3(tx.from) !== record8.from || tx.nonce !== record8.nonce || lower3(tx.to) !== lower3(record8.to) || lower3(tx.data) !== record8.data || String(tx.value) !== record8.value || String(tx.chainId) !== record8.chainId) throw unknown5();
       try {
         await tx.replaceableTransaction(record8.startBlock).wait(1);
       } catch (error312) {
@@ -388723,24 +388805,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         if (typeof waitForReceipt !== "boolean") throw invalid2();
         const previous = await assertCanStart(), read2 = reader();
         await network(read2);
-        if (!signer || lower2(await signer.getAddress()) !== scope.depositor) throw unknown5();
+        if (!signer || lower3(await signer.getAddress()) !== scope.depositor) throw unknown5();
         const start = await read2(() => provider.getBlock("latest"));
         const pendingNonce = await read2(() => provider.getTransactionCount(scope.depositor, "pending"));
         if (!integer5(pendingNonce)) throw unknown5();
         const nonce = Math.max(pendingNonce, previous.value ? previous.value.nonce + 1 : 0, minimumNonce);
         const { data, value, expected } = typeof intent === "function" ? await intent(nonce) : intent;
-        if (!start || !integer5(start.number) || !hash8(lower2(start.hash)) || !integer5(nonce)) throw unknown5();
+        if (!start || !integer5(start.number) || !hash8(lower3(start.hash)) || !integer5(nonce)) throw unknown5();
         const record8 = validateIntent({
           version: 1,
           from: scope.depositor,
           to: intentDestination(expected, scope),
           chainId: scope.chainId,
           nonce,
-          data: lower2(data),
+          data: lower3(data),
           value: String(value),
           expected,
           startBlock: start.number,
-          startHash: lower2(start.hash),
+          startHash: lower3(start.hash),
           nextBlock: start.number + 1,
           cursorHash: null,
           txHash: null
@@ -388794,7 +388876,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (n2 >= MODULUS) throw fail3();
     return new Fr(n2);
   }
-  function address2(value, bits) {
+  function address3(value, bits) {
     if (typeof value !== "string" || !(bits === 160 ? /^0x[0-9a-f]{40}$/ : /^0x[0-9a-f]{64}$/).test(value) || BigInt(value) === 0n) throw fail3();
     return field4(value);
   }
@@ -388802,7 +388884,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const secretKey = field4(walletSecret);
     if (secretKey.toBigInt() === 0n) throw fail3();
     if (uint2(scope.l1ChainId, 64) === 0n || uint2(scope.rollupVersion, 32) === 0n) throw fail3();
-    const secret = await poseidon2HashWithSeparator([new Fr(1), secretKey, field4(walletSalt), new Fr(uint2(scope.l1ChainId, 64)), new Fr(uint2(scope.rollupVersion, 32)), address2(scope.rollupAddress, 160), address2(scope.boardAddress, 254), address2(scope.portalAddress, 160), address2(scope.depositor, 160), address2(owner, 254), new Fr(uint2(nonce, 64))], DOMAIN);
+    const secret = await poseidon2HashWithSeparator([new Fr(1), secretKey, field4(walletSalt), new Fr(uint2(scope.l1ChainId, 64)), new Fr(uint2(scope.rollupVersion, 32)), address3(scope.rollupAddress, 160), address3(scope.boardAddress, 254), address3(scope.portalAddress, 160), address3(scope.depositor, 160), address3(owner, 254), new Fr(uint2(nonce, 64))], DOMAIN);
     const secretHash = await computeSecretHash(secret);
     if (secret.toBigInt() === 0n || secretHash.toBigInt() === 0n) throw fail3();
     return { secret: secret.toString(), secretHash: secretHash.toString() };
@@ -389216,8 +389298,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * An object containing contract methods mapped to their respective names.
     */
     methods;
-    constructor(address6, artifact, wallet) {
-      this.address = address6;
+    constructor(address7, artifact, wallet) {
+      this.address = address7;
       this.artifact = artifact;
       this.wallet = wallet;
       this.methods = {};
@@ -389982,8 +390064,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     async getInitializationExecutionPayload(options) {
       const executionsPayloads = [];
       if (this.constructorArtifact && !options?.skipInitialization) {
-        const { address: address6 } = await this.getInstance();
-        const constructorCall = new ContractFunctionInteraction(this.wallet, address6, this.constructorArtifact, this.args);
+        const { address: address7 } = await this.getInstance();
+        const constructorCall = new ContractFunctionInteraction(this.wallet, address7, this.constructorArtifact, this.args);
         executionsPayloads.push(await constructorCall.request());
       }
       return mergeExecutionPayloads(executionsPayloads);
@@ -390251,8 +390333,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @param wallet - The wallet to use when interacting with the contract.
     * @returns A promise that resolves to a new Contract instance.
     */
-    static at(address6, artifact, wallet) {
-      return new _Contract(address6, artifact, wallet);
+    static at(address7, artifact, wallet) {
+      return new _Contract(address7, artifact, wallet);
     }
     /**
     * Creates a tx to deploy (initialize and/or publish) a new instance of a contract.
@@ -390641,8 +390723,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var PrivateFeePaymentMethod = class _PrivateFeePaymentMethod {
     #address;
     #reservation;
-    constructor(address6, reservation) {
-      this.#address = address6;
+    constructor(address7, reservation) {
+      this.#address = address7;
       this.#reservation = BigInt(reservation);
       if (this.#reservation <= 0n || this.#reservation >= 1n << 128n) throw Error("Invalid fee reservation");
     }
@@ -390670,8 +390752,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   };
   var PrivateMintAndPayFeePaymentMethod = class _PrivateMintAndPayFeePaymentMethod extends PrivateFeePaymentMethod {
     #claim;
-    constructor(address6, { amount, secret, salt, leafIndex }, reservation) {
-      super(address6, reservation);
+    constructor(address7, { amount, secret, salt, leafIndex }, reservation) {
+      super(address7, reservation);
       this.#claim = { amount: BigInt(amount), secret: new Fr(secret.toBigInt()), salt: new Fr(salt.toBigInt()), leafIndex: new Fr(leafIndex.toBigInt()) };
     }
     withReservation(reservation) {
@@ -390687,8 +390769,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   };
   var PrivateClaimAndPayFeePaymentMethod = class _PrivateClaimAndPayFeePaymentMethod extends PrivateFeePaymentMethod {
     #claim;
-    constructor(address6, { amount, secret, salt, leafIndex }, reservation) {
-      super(address6, reservation);
+    constructor(address7, { amount, secret, salt, leafIndex }, reservation) {
+      super(address7, reservation);
       this.#claim = { amount: BigInt(amount), secret: new Fr(secret.toBigInt()), salt: new Fr(salt.toBigInt()), leafIndex: new Fr(leafIndex.toBigInt()) };
     }
     withReservation(reservation) {
@@ -390712,20 +390794,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       this.code = code;
     }
   };
-  var check7 = (ok2, code) => {
+  var check8 = (ok2, code) => {
     if (!ok2) throw new PrivateFeePreparationError(code);
   };
   function uint3(value, bits) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check7(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
+      check8(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check7(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
+      check8(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
-    check7(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
+    check8(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
     return value;
   }
   function field5(value) {
@@ -390733,11 +390815,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value)) return Fr.fromString(value);
     return new Fr(uint3(value, 254));
   }
-  function address3(value) {
+  function address4(value) {
     const text = value instanceof AztecAddress ? value.toString() : value;
-    check7(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
+    check8(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
     const result = new AztecAddress(Fr.fromString(text));
-    check7(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
+    check8(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
     return result;
   }
   var equal2 = (a, b2) => a?.toString() === b2?.toString();
@@ -390745,9 +390827,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const artifact = loadContractArtifact(value);
     const functions = getAllFunctionAbis(artifact);
     const publicFunctions = functions.filter((f) => f.functionType === "public" && f.name !== "public_dispatch");
-    check7(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
+    check8(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
     for (const [name, count] of [["pay_fee", 1], ["mint_and_pay_fee", 4], ["mint", 3]]) {
-      check7(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
+      check8(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
     }
     return artifact;
   }
@@ -390758,30 +390840,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return Contract.deploy(wallet, artifactOf(privateFeeArtifact), [], void 0, { salt: Fr.ZERO, universalDeploy: true });
   }
   async function requirePublishedPrivateFee(node2, canonical2) {
-    check7(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check8(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
     const instance = await node2.getContract(canonical2.address, "latest");
-    check7(instance, "PRIVATE_FEE_NOT_PUBLISHED");
-    check7(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
+    check8(instance, "PRIVATE_FEE_NOT_PUBLISHED");
+    check8(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
   }
   async function derivePrivateFeeAddress(privateFeeArtifact) {
     return (await derivePrivateFeeInstance(privateFeeArtifact)).address;
   }
   async function derivePrivateFeeBridgeSecret({ salt, owner }) {
     const fixedSalt = field5(salt);
-    check7(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
-    return poseidon2HashWithSeparator([fixedSalt, address3(owner).toField()], 3952304070);
+    check8(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
+    return poseidon2HashWithSeparator([fixedSalt, address4(owner).toField()], 3952304070);
   }
   async function derivePrivateFeeBridgeSecretHash(input2) {
     return computeSecretHash(await derivePrivateFeeBridgeSecret(input2));
   }
   function normalizePrivateFeeGasSettings(value) {
-    check7(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    check8(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
     const da = uint3(value.gasLimits?.daGas, 32), l2 = uint3(value.gasLimits?.l2Gas, 32);
     const tda = uint3(value.teardownGasLimits?.daGas, 32), tl2 = uint3(value.teardownGasLimits?.l2Gas, 32);
     const fda = uint3(value.maxFeesPerGas?.feePerDaGas, 128), fl2 = uint3(value.maxFeesPerGas?.feePerL2Gas, 128);
     const pda = uint3(value.maxPriorityFeesPerGas?.feePerDaGas, 128), pl2 = uint3(value.maxPriorityFeesPerGas?.feePerL2Gas, 128);
     const maximumFee = da * fda + l2 * fl2;
-    check7(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
+    check8(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
     return { gasSettings: new GasSettings(new Gas(Number(da), Number(l2)), new Gas(Number(tda), Number(tl2)), new GasFees(fda, fl2), new GasFees(pda, pl2)), maximumFee };
   }
   async function preparePrivateFeePayment(input2) {
@@ -390793,31 +390875,31 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
   }
   async function prepare({ wallet, node: node2, owner, privateFeeAddress, privateFeeArtifact, expectedChainId, expectedVersion, gasSettings, claim: claim2 } = {}) {
-    check7(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
-    check7(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
-    const author = address3(owner), payer = address3(privateFeeAddress), chainId = uint3(expectedChainId, 64), version12 = uint3(expectedVersion, 32);
-    check7(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
+    check8(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check8(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    const author = address4(owner), payer = address4(privateFeeAddress), chainId = uint3(expectedChainId, 64), version12 = uint3(expectedVersion, 32);
+    check8(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
     const fixed = normalizePrivateFeeGasSettings(gasSettings);
     const [walletChain, nodeInfo] = await Promise.all([wallet.getChainInfo(), node2.getNodeInfo()]);
-    check7(uint3(walletChain.chainId, 64) === chainId && uint3(walletChain.version, 32) === version12 && uint3(nodeInfo.l1ChainId, 64) === chainId && uint3(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
+    check8(uint3(walletChain.chainId, 64) === chainId && uint3(walletChain.version, 32) === version12 && uint3(nodeInfo.l1ChainId, 64) === chainId && uint3(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
     const minimum = await node2.getCurrentMinFees();
-    check7(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint3(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
+    check8(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint3(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
     const artifact = artifactOf(privateFeeArtifact), canonical2 = await derivePrivateFeeInstance(artifact);
-    check7(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
+    check8(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
     await requirePublishedPrivateFee(node2, canonical2);
     let paymentMethod, availableCredit, smallClaim;
     const privateBalance = async () => {
-      check7(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
+      check8(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
       const { result } = await Contract.at(payer, artifact, wallet).methods.balance_of(author).simulate({ from: author });
       return uint3(result, 128);
     };
     if (claim2 !== void 0) {
-      check7(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
+      check8(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
       const amount = uint3(claim2.amount, 128), salt = field5(claim2.salt), leafIndex = field5(claim2.leafIndex);
-      check7(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
+      check8(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
       availableCredit = amount;
       const secret = await derivePrivateFeeBridgeSecret({ salt, owner: author });
-      check7(claim2.secret === void 0 || equal2(field5(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
+      check8(claim2.secret === void 0 || equal2(field5(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
       const verifiedClaim = { amount, salt, leafIndex, secret };
       paymentMethod = new PrivateMintAndPayFeePaymentMethod(payer, verifiedClaim, 1n);
       if (amount < fixed.maximumFee) smallClaim = verifiedClaim;
@@ -390832,7 +390914,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     if (!paymentMethod) {
       availableCredit = await privateBalance();
-      check7(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
+      check8(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
       paymentMethod = new PrivateFeePaymentMethod(payer, 1n);
     }
     const refund = getAllFunctionAbis(artifact).find((f) => f.name === "_complete_refund");
@@ -390859,32 +390941,32 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (record8) this.recoveryRecord = Object.freeze({ ...record8 });
     }
   };
-  var check8 = (ok2, code) => {
+  var check9 = (ok2, code) => {
     if (!ok2) throw new PrivateFeeFundingError(code);
   };
   function uint4(value, bits = 128) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check8(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
+      check9(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check8(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
+      check9(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
-    check8(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
     return value;
   }
-  function address4(value) {
+  function address5(value) {
     const result = getAddress(value?.toString());
-    check8(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
+    check9(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   function secretField(value) {
     const text = value instanceof Fr ? value.toString() : value;
-    check8(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
     const result = Fr.fromString(text);
-    check8(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   var eq = (a, b2) => String(a).toLowerCase() === String(b2).toLowerCase();
@@ -390893,18 +390975,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name, args) }))[0];
   }
   async function verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion }) {
-    check8(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+    check9(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
     const chainId = uint4(expectedChainId, 64), version12 = uint4(expectedVersion, 32);
     const [info, network, canonical2] = await Promise.all([node2.getNodeInfo(), ethProvider.getNetwork(), derivePrivateFeeInstance(privateFeeArtifact)]);
-    check8(uint4(network.chainId, 64) === chainId && uint4(info.l1ChainId, 64) === chainId && uint4(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
-    check8(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
+    check9(uint4(network.chainId, 64) === chainId && uint4(info.l1ChainId, 64) === chainId && uint4(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    check9(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
     await requirePublishedPrivateFee(node2, canonical2);
     const scope = {
       chainId: chainId.toString(),
       version: version12.toString(),
-      rollupAddress: address4(info.l1ContractAddresses?.rollupAddress),
-      portalAddress: address4(info.l1ContractAddresses?.feeJuicePortalAddress),
-      tokenAddress: address4(info.l1ContractAddresses?.feeJuiceAddress),
+      rollupAddress: address5(info.l1ContractAddresses?.rollupAddress),
+      portalAddress: address5(info.l1ContractAddresses?.feeJuicePortalAddress),
+      tokenAddress: address5(info.l1ContractAddresses?.feeJuiceAddress),
       privateFeeAddress: canonical2.address.toString()
     };
     const [rollup, token, portalVersion, l2Token] = await Promise.all([
@@ -390913,7 +390995,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       read(ethProvider, scope.portalAddress, portalAbi, "VERSION"),
       read(ethProvider, scope.portalAddress, portalAbi, "L2_TOKEN_ADDRESS")
     ]);
-    check8(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint4(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
+    check9(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint4(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
     return scope;
   }
   async function claimSecrets({ walletSecret, owner, record: record8 }) {
@@ -390933,24 +391015,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (input2 === void 0) return void 0;
     const invalid4 = "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH";
     const capture = (value, keys) => {
-      check8(value && [Object.prototype, null].includes(Object.getPrototypeOf(value)), invalid4);
+      check9(value && [Object.prototype, null].includes(Object.getPrototypeOf(value)), invalid4);
       const result = {};
       for (const key of keys) {
         const d = Object.getOwnPropertyDescriptor(value, key);
-        check8(d && "value" in d, invalid4);
+        check9(d && "value" in d, invalid4);
         result[key] = d.value;
       }
       return result;
     };
     const r = capture(input2, ["from", "to", "nonce", "chainId", "data", "value", "expected"]);
-    check8(r.expected && Reflect.ownKeys(r.expected).length === 7, invalid4);
+    check9(r.expected && Reflect.ownKeys(r.expected).length === 7, invalid4);
     r.expected = capture(r.expected, ["kind", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "privateFpc", "planHash"]);
-    for (const key of ["from", "to"]) check8(typeof r[key] === "string" && /^0x[0-9a-f]{40}$/.test(r[key]) && BigInt(r[key]) > 0n, invalid4);
-    check8(Number.isSafeInteger(r.nonce) && r.nonce >= 0 && typeof r.chainId === "string" && /^[1-9][0-9]{0,19}$/.test(r.chainId) && BigInt(r.chainId) < 2n ** 64n, invalid4);
-    check8(typeof r.data === "string" && /^0x(?:[0-9a-f]{2})+$/.test(r.data) && r.data.length <= 16384 && typeof r.value === "string" && /^(0|[1-9][0-9]{0,77})$/.test(r.value) && (r.expected.kind === "aggregate-usdc-funding" || r.value !== "0"), invalid4);
+    for (const key of ["from", "to"]) check9(typeof r[key] === "string" && /^0x[0-9a-f]{40}$/.test(r[key]) && BigInt(r[key]) > 0n, invalid4);
+    check9(Number.isSafeInteger(r.nonce) && r.nonce >= 0 && typeof r.chainId === "string" && /^[1-9][0-9]{0,19}$/.test(r.chainId) && BigInt(r.chainId) < 2n ** 64n, invalid4);
+    check9(typeof r.data === "string" && /^0x(?:[0-9a-f]{2})+$/.test(r.data) && r.data.length <= 16384 && typeof r.value === "string" && /^(0|[1-9][0-9]{0,77})$/.test(r.value) && (r.expected.kind === "aggregate-usdc-funding" || r.value !== "0"), invalid4);
     const hash12 = Object.getOwnPropertyDescriptor(input2, "txHash");
     if (hash12) {
-      check8("value" in hash12 && (hash12.value === null || typeof hash12.value === "string" && /^0x[0-9a-f]{64}$/.test(hash12.value)), invalid4);
+      check9("value" in hash12 && (hash12.value === null || typeof hash12.value === "string" && /^0x[0-9a-f]{64}$/.test(hash12.value)), invalid4);
       r.txHash = hash12.value;
     }
     try {
@@ -390965,38 +391047,38 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const invalid4 = "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH";
     const usdc = intent?.expected.kind === "aggregate-usdc-funding";
     if (!usdc) {
-      check8(input2 === void 0, invalid4);
+      check9(input2 === void 0, invalid4);
       return void 0;
     }
     const keys = ["kind", "planHash", "beneficiary", "privateFeeSalt"];
-    check8(input2 && [Object.prototype, null].includes(Object.getPrototypeOf(input2)) && Reflect.ownKeys(input2).length === keys.length, invalid4);
+    check9(input2 && [Object.prototype, null].includes(Object.getPrototypeOf(input2)) && Reflect.ownKeys(input2).length === keys.length, invalid4);
     const r = {};
     for (const key of keys) {
       const d = Object.getOwnPropertyDescriptor(input2, key);
-      check8(d && "value" in d, invalid4);
+      check9(d && "value" in d, invalid4);
       r[key] = d.value;
     }
-    check8(r.kind === "aggregate-usdc-custody-v1" && r.planHash === intent.expected.planHash && typeof r.beneficiary === "string" && /^0x[0-9a-f]{40}$/.test(r.beneficiary) && BigInt(r.beneficiary) > 0n && typeof r.privateFeeSalt === "string" && /^0x[0-9a-f]{64}$/.test(r.privateFeeSalt) && BigInt(r.privateFeeSalt) > 0n && BigInt(r.privateFeeSalt) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n, invalid4);
+    check9(r.kind === "aggregate-usdc-custody-v1" && r.planHash === intent.expected.planHash && typeof r.beneficiary === "string" && /^0x[0-9a-f]{40}$/.test(r.beneficiary) && BigInt(r.beneficiary) > 0n && typeof r.privateFeeSalt === "string" && /^0x[0-9a-f]{64}$/.test(r.privateFeeSalt) && BigInt(r.privateFeeSalt) > 0n && BigInt(r.privateFeeSalt) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n, invalid4);
     let plan;
     try {
       plan = validateAggregateFundingIntent(intent);
     } catch {
       throw new PrivateFeeFundingError(invalid4);
     }
-    check8(plan.beneficiary.toLowerCase() === r.beneficiary, invalid4);
+    check9(plan.beneficiary.toLowerCase() === r.beneficiary, invalid4);
     return Object.freeze(r);
   }
   function validRecord(record8) {
-    check8(record8 && record8.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(record8 && record8.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
     const allowed = ["schema", "chainId", "version", "rollupAddress", "portalAddress", "tokenAddress", "privateFeeAddress", "sender", "nonce", "amount", "txHash", "leafIndex"];
-    check8(Object.keys(record8).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
-    check8(uint4(record8.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(Object.keys(record8).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(uint4(record8.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
     uint4(record8.nonce, 64);
-    address4(record8.sender);
-    if (record8.txHash !== void 0) check8(typeof record8.txHash === "string" && /^0x[0-9a-fA-F]{64}$/.test(record8.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
+    address5(record8.sender);
+    if (record8.txHash !== void 0) check9(typeof record8.txHash === "string" && /^0x[0-9a-fA-F]{64}$/.test(record8.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
   }
   async function fundingJournal(input2, scope, sender) {
-    check8(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
+    check9(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
     return createEthereumJournal({
       storage: input2.journalStorage,
       walletSecret: secretField(input2.walletSecret).toString(),
@@ -391011,15 +391093,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   async function recoverPrivateFeeFunding(input2) {
     const ethProvider = input2.ethProvider;
     const scope = await verifyScope({ ...input2, ethProvider });
-    if (input2.ethSigner) check8(uint4((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
-    const sender = address4(input2.sender ?? await input2.ethSigner?.getAddress());
+    if (input2.ethSigner) check9(uint4((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    const sender = address5(input2.sender ?? await input2.ethSigner?.getAddress());
     const journal = await fundingJournal({ ...input2, ethProvider }, scope, sender);
     const result = await journal.recover({ retry: input2.retry === true });
     if (result.outcome !== "success") return { outcome: result.outcome, lastEthereumTxHash: result.txHash };
     if (result.request.expected.kind === "approve") return { outcome: "approved", amount: result.request.expected.amount, lastEthereumTxHash: result.txHash };
     const record8 = { schema: SCHEMA, ...scope, sender, nonce: String(result.request.nonce), amount: result.request.expected.amount, txHash: result.txHash, leafIndex: String(result.event.index) };
     const { secretHash } = await claimSecrets({ ...input2, record: record8 });
-    check8(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+    check9(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
     if (input2.saveRecovery) await input2.saveRecovery(copy(record8));
     return { outcome: "funded", lastEthereumTxHash: result.txHash, record: copy(record8) };
   }
@@ -391027,35 +391109,35 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     let record8, depositAttempted = false, phase = "validate-input";
     try {
       const { node: node2, ethSigner, ethProvider, owner, walletSecret, privateFeeAddress, privateFeeArtifact, amount, saveRecovery, expectedChainId, expectedVersion } = input2 ?? {};
-      check8(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+      check9(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
       secretField(walletSecret);
       secretField(owner?.toString());
       const quantity2 = uint4(amount);
-      check8(quantity2 > 0n, "PRIVATE_FEE_FUNDING_INVALID");
+      check9(quantity2 > 0n, "PRIVATE_FEE_FUNDING_INVALID");
       phase = "verify-scope";
       const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion });
-      check8(uint4((await ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
-      const sender = address4(await ethSigner.getAddress());
+      check9(uint4((await ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+      const sender = address5(await ethSigner.getAddress());
       phase = "journal-preflight";
       const journal = await fundingJournal(input2, scope, sender);
       await journal.assertCanStart();
       phase = "read-token-funding";
       const [balance, allowance] = await Promise.all([read(ethProvider, scope.tokenAddress, tokenAbi, "balanceOf", [sender]), read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress])]);
-      check8(balance >= quantity2, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
+      check9(balance >= quantity2, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
       if (allowance < quantity2) {
         phase = "submit-approval";
         await journal.send({ data: tokenAbi.encodeFunctionData("approve", [scope.portalAddress, quantity2]), value: "0", expected: { kind: "approve", amount: quantity2.toString(), spender: scope.portalAddress.toLowerCase() } });
         phase = "verify-allowance";
-        check8(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity2, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
+        check9(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity2, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
       }
-      check8(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+      check9(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
       phase = "select-deposit-nonce";
       const deposited = await journal.send(async (nonce) => {
         record8 = { schema: SCHEMA, ...scope, sender, nonce: nonce.toString(), amount: quantity2.toString() };
         const { secretHash } = await claimSecrets({ walletSecret, owner, record: record8 });
         phase = "save-before-deposit";
         await saveRecovery(copy(record8));
-        check8(uint4((await ethProvider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+        check9(uint4((await ethProvider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
         phase = "submit-deposit";
         depositAttempted = true;
         return { data: portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, quantity2, secretHash.toString()]), value: "0", expected: { kind: "fee-deposit", amount: quantity2.toString(), secretHash: secretHash.toString(), recipient: scope.privateFeeAddress.toLowerCase() } };
@@ -391103,42 +391185,42 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   async function recoverPrivateFeeClaim(input2) {
     try {
       const { node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, expectedChainId, expectedVersion } = input2 ?? {};
-      check8(input2.record && [Object.prototype, null].includes(Object.getPrototypeOf(input2.record)), "PRIVATE_FEE_RECOVERY_INVALID");
+      check9(input2.record && [Object.prototype, null].includes(Object.getPrototypeOf(input2.record)), "PRIVATE_FEE_RECOVERY_INVALID");
       const recordData = {};
       for (const key of Reflect.ownKeys(input2.record)) {
         const d = Object.getOwnPropertyDescriptor(input2.record, key);
-        check8(typeof key === "string" && d && "value" in d, "PRIVATE_FEE_RECOVERY_INVALID");
+        check9(typeof key === "string" && d && "value" in d, "PRIVATE_FEE_RECOVERY_INVALID");
         recordData[key] = d.value;
       }
       validRecord(recordData);
-      check8(recordData.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
+      check9(recordData.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
       const aggregateDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateIntent");
-      check8(!aggregateDescriptor || "value" in aggregateDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
+      check9(!aggregateDescriptor || "value" in aggregateDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
       const record8 = Object.freeze({
         ...recordData,
         chainId: uint4(recordData.chainId, 64).toString(),
         version: uint4(recordData.version, 32).toString(),
-        rollupAddress: address4(recordData.rollupAddress),
-        portalAddress: address4(recordData.portalAddress),
-        tokenAddress: address4(recordData.tokenAddress),
+        rollupAddress: address5(recordData.rollupAddress),
+        portalAddress: address5(recordData.portalAddress),
+        tokenAddress: address5(recordData.tokenAddress),
         privateFeeAddress: secretField(recordData.privateFeeAddress).toString(),
-        sender: address4(recordData.sender),
+        sender: address5(recordData.sender),
         nonce: uint4(recordData.nonce, 64).toString(),
         amount: uint4(recordData.amount).toString(),
         ...recordData.leafIndex === void 0 ? {} : { leafIndex: uint4(recordData.leafIndex, 254).toString() }
       }), aggregateIntent = captureAggregateFundingIntent(aggregateDescriptor?.value);
       const custodyDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateCustody");
-      check8(!custodyDescriptor || "value" in custodyDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
+      check9(!custodyDescriptor || "value" in custodyDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
       const aggregateCustody = captureAggregateFundingCustody(custodyDescriptor?.value, aggregateIntent);
       const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress: record8.privateFeeAddress, expectedChainId, expectedVersion });
-      check8(Object.entries(scope).every(([key, value]) => eq(value, record8[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
+      check9(Object.entries(scope).every(([key, value]) => eq(value, record8[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
       const retainedSalt = aggregateCustody ? Fr.fromString(aggregateCustody.privateFeeSalt) : null;
       const { salt, secret, secretHash } = aggregateCustody ? { salt: retainedSalt, secret: await derivePrivateFeeBridgeSecret({ salt: retainedSalt, owner }), secretHash: await derivePrivateFeeBridgeSecretHash({ salt: retainedSalt, owner }) } : await claimSecrets({ walletSecret, owner, record: record8 });
       const [receipt2, transaction] = await Promise.all([ethProvider.getTransactionReceipt(record8.txHash), ethProvider.getTransaction(record8.txHash)]);
-      check8(receipt2 && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
-      check8(receipt2.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
+      check9(receipt2 && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
+      check9(receipt2.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
       const block2 = await ethProvider.getBlock(receipt2.blockNumber);
-      check8(block2 && eq(block2.hash, receipt2.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
+      check9(block2 && eq(block2.hash, receipt2.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
       const expectedData = portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, uint4(record8.amount), secretHash.toString()]);
       const intent = aggregateIntent ?? {
         from: record8.sender.toLowerCase(),
@@ -391149,19 +391231,19 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         value: "0",
         expected: { kind: "fee-deposit", recipient: scope.privateFeeAddress.toLowerCase(), amount: String(record8.amount), secretHash: secretHash.toString().toLowerCase() }
       };
-      if (aggregateIntent) check8(aggregateIntent.from === record8.sender.toLowerCase() && aggregateIntent.nonce === Number(uint4(record8.nonce, 64)) && aggregateIntent.chainId === scope.chainId && aggregateIntent.expected.feePortal === scope.portalAddress.toLowerCase() && aggregateIntent.expected.privateFpc === scope.privateFeeAddress.toLowerCase() && (!aggregateIntent.txHash || aggregateIntent.txHash === record8.txHash.toLowerCase()), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+      if (aggregateIntent) check9(aggregateIntent.from === record8.sender.toLowerCase() && aggregateIntent.nonce === Number(uint4(record8.nonce, 64)) && aggregateIntent.chainId === scope.chainId && aggregateIntent.expected.feePortal === scope.portalAddress.toLowerCase() && aggregateIntent.expected.privateFpc === scope.privateFeeAddress.toLowerCase() && (!aggregateIntent.txHash || aggregateIntent.txHash === record8.txHash.toLowerCase()), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
       let verified2;
       try {
         verified2 = await verifyEthereumIntentReceipt(ethProvider, intent, record8.txHash.toLowerCase());
       } catch {
         throw new PrivateFeeFundingError("PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
       }
-      check8(verified2?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
-      if (aggregateCustody) check8(verified2.event.beneficiary === aggregateCustody.beneficiary, "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      check9(verified2?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+      if (aggregateCustody) check9(verified2.event.beneficiary === aggregateCustody.beneficiary, "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
       const event = aggregateIntent ? { key: verified2.event.privateFee.messageKey, index: verified2.event.privateFee.leafIndex } : verified2.event;
-      if (aggregateIntent) check8(verified2.event.privateFee.amount === String(record8.amount) && verified2.event.privateFee.secretHash === secretHash.toString(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      if (aggregateIntent) check9(verified2.event.privateFee.amount === String(record8.amount) && verified2.event.privateFee.secretHash === secretHash.toString(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
       const leafIndex = new Fr(uint4(event.index, 254));
-      check8(record8.leafIndex === void 0 || uint4(record8.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      check9(record8.leafIndex === void 0 || uint4(record8.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
       return { amount: uint4(record8.amount), salt, secret, leafIndex, messageKey: event.key };
     } catch (error312) {
       if (error312 instanceof PrivateFeeFundingError) throw error312;
@@ -391172,7 +391254,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const inner = await computeFeeJuiceMessageNullifier(Fr.fromString(claim2.messageKey), claim2.secret);
     const nullifier = await siloNullifier(ProtocolContractAddress.FeeJuice, inner);
     const indices = await node2.findLeavesIndexes("latest", MerkleTreeId.NULLIFIER_TREE, [nullifier]);
-    check8(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
+    check9(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
     return indices[0] !== void 0;
   }
 
@@ -391628,8 +391710,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     return value;
   }
-  var lower3 = (value) => String(value).toLowerCase();
-  var equal3 = (a, b2) => lower3(a) === lower3(b2);
+  var lower4 = (value) => String(value).toLowerCase();
+  var equal3 = (a, b2) => lower4(a) === lower4(b2);
   function validated(input2) {
     const kind = input2.kind;
     requireThat(["collateral", "collateral-cancel", "private-fee", "bok"].includes(kind), "INVALID");
@@ -391743,7 +391825,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         requireThat(verified2?.outcome === "success" && verified2.receipt.blockNumber === r.blockNumber && equal3(verified2.receipt.blockHash, r.blockHash));
         if (aggregateCustody) requireThat(verified2.event.beneficiary === aggregateCustody.beneficiary);
         aggregate = verified2.event[kind === "private-fee" ? "privateFee" : kind];
-        requireThat(aggregate.amount === r.amount && aggregate.secretHash === r.secretHash && aggregate.messageKey === r.messageKey && aggregate.leafIndex === r.leafIndex);
+        requireThat(aggregate && aggregate.amount === r.amount && aggregate.secretHash === r.secretHash && aggregate.messageKey === r.messageKey && aggregate.leafIndex === r.leafIndex);
       }
       const call2 = async (to, abi2, name) => abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name), blockTag: r.blockNumber }))[0];
       const boardScope = { l1ChainId: s.chainId, rollupAddress: s.rollup, rollupVersion: s.version, boardAddress: s.recipient, portalAddress: s.portal };
@@ -391753,9 +391835,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           requireThat(equal3(await call2(s.portal, boardAbi, name), value));
         }
         requireThat(equal3(tx.to, s.portal) && String(tx.value) === "0");
-        requireThat(lower3(tx.data) === boardAbi.encodeFunctionData("requestRefund", [r.depositId]).toLowerCase());
+        requireThat(lower4(tx.data) === boardAbi.encodeFunctionData("requestRefund", [r.depositId]).toLowerCase());
         const topic = boardAbi.getEvent("RefundRequested").topicHash.toLowerCase();
-        const events = receipt2.logs.filter((log3) => equal3(log3.address, s.portal) && lower3(log3.topics?.[0]) === topic);
+        const events = receipt2.logs.filter((log3) => equal3(log3.address, s.portal) && lower4(log3.topics?.[0]) === topic);
         requireThat(events.length === 1);
         let event;
         try {
@@ -394689,21 +394771,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       lo: mapFieldToNoir(privateKey.lo)
     };
   }
-  function mapAztecAddressToNoir(address6) {
+  function mapAztecAddressToNoir(address7) {
     return {
-      inner: mapFieldToNoir(address6.toField())
+      inner: mapFieldToNoir(address7.toField())
     };
   }
-  function mapAztecAddressFromNoir(address6) {
-    return AztecAddress.fromFieldUnsafe(mapFieldFromNoir(address6.inner));
+  function mapAztecAddressFromNoir(address7) {
+    return AztecAddress.fromFieldUnsafe(mapFieldFromNoir(address7.inner));
   }
-  function mapEthAddressToNoir(address6) {
+  function mapEthAddressToNoir(address7) {
     return {
-      inner: mapFieldToNoir(address6.toField())
+      inner: mapFieldToNoir(address7.toField())
     };
   }
-  function mapEthAddressFromNoir(address6) {
-    return EthAddress.fromField(mapFieldFromNoir(address6.inner));
+  function mapEthAddressFromNoir(address7) {
+    return EthAddress.fromField(mapFieldFromNoir(address7.inner));
   }
   function mapGasFromNoir(gasUsed) {
     return Gas.from({
@@ -397167,41 +397249,41 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var fail7 = () => {
     throw Error("PXE_PREFERENCE_RECOVERY_FAILED");
   };
-  var check9 = (x) => {
+  var check10 = (x) => {
     if (!x) fail7();
   };
   var copy2 = (x) => JSON.parse(JSON.stringify(x));
   var same = (a, b2) => JSON.stringify(a) === JSON.stringify(b2);
   var id2 = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), (x) => x.toString(16).padStart(2, "0")).join("");
   function exact2(x, keys) {
-    check9(x && Object.getPrototypeOf(x) === Object.prototype);
+    check10(x && Object.getPrototypeOf(x) === Object.prototype);
     const ds = Object.getOwnPropertyDescriptors(x);
-    check9(Reflect.ownKeys(ds).length === keys.length);
+    check10(Reflect.ownKeys(ds).length === keys.length);
     const r = {};
     for (const k of keys) {
-      check9(ds[k] && "value" in ds[k]);
+      check10(ds[k] && "value" in ds[k]);
       r[k] = ds[k].value;
     }
     return r;
   }
   function hex15(x, zero2 = false, width = 64) {
-    check9(typeof x === "string" && new RegExp("^0x[0-9a-f]{" + width + "}$").test(x));
-    if (width === 64) check9(BigInt(x) < Fr.MODULUS);
-    check9(zero2 || BigInt(x) > 0n);
+    check10(typeof x === "string" && new RegExp("^0x[0-9a-f]{" + width + "}$").test(x));
+    if (width === 64) check10(BigInt(x) < Fr.MODULUS);
+    check10(zero2 || BigInt(x) > 0n);
     return x;
   }
   function integer8(x, max = 4294967295, min2 = 0) {
-    check9(Number.isSafeInteger(x) && x >= min2 && x <= max);
+    check10(Number.isSafeInteger(x) && x >= min2 && x <= max);
     return x;
   }
   function fields(x, max, min2 = 0) {
-    check9(Array.isArray(x));
+    check10(Array.isArray(x));
     const len = Object.getOwnPropertyDescriptor(x, "length")?.value;
     integer8(len, max, min2);
     const out = [];
     for (let i = 0; i < len; i++) {
       const d = Object.getOwnPropertyDescriptor(x, String(i));
-      check9(d && "value" in d);
+      check10(d && "value" in d);
       out.push(hex15(d.value, true));
     }
     return out;
@@ -397213,31 +397295,31 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       hex15(hash12);
       const captured = fields(headerFields, 23, 23);
       const header = BlockHeader.fromFields(captured.map(Fr.fromString));
-      check9(header.getBlockNumber() === number20 && (await header.hash()).toString() === hash12);
-      check9(header.globalVariables.chainId.equals(anchor2.globalVariables.chainId) && header.globalVariables.version.equals(anchor2.globalVariables.version));
+      check10(header.getBlockNumber() === number20 && (await header.hash()).toString() === hash12);
+      check10(header.globalVariables.chainId.equals(anchor2.globalVariables.chainId) && header.globalVariables.version.equals(anchor2.globalVariables.version));
       await guard();
       if (number20 === anchor2.getBlockNumber()) {
-        check9((await anchor2.hash()).toString() === hash12);
-        if (supplied.has(number20)) check9(supplied.get(number20) === null);
+        check10((await anchor2.hash()).toString() === hash12);
+        if (supplied.has(number20)) check10(supplied.get(number20) === null);
         return header;
       }
       const key = number20 + ":" + hash12;
       if (!proofs.has(key)) {
-        check9(proofs.size < 256);
+        check10(proofs.size < 256);
         proofs.set(key, (async () => {
           let witness;
           if (supplied.has(number20)) {
             const value2 = supplied.get(number20);
-            check9(value2 !== null && value2.anchorNumber === anchor2.getBlockNumber() && value2.anchorHash === (await anchor2.hash()).toString());
+            check10(value2 !== null && value2.anchorNumber === anchor2.getBlockNumber() && value2.anchorHash === (await anchor2.hash()).toString());
             witness = { leafIndex: BigInt(value2.leafIndex), siblingPath: value2.siblingPath.map(Fr.fromString) };
           } else witness = await node2.getBlockHashMembershipWitness(await anchor2.toBlockParameter(), BlockHash.fromString(hash12));
           await guard();
           const index = Object.getOwnPropertyDescriptor(witness ?? {}, "leafIndex")?.value, siblings = Object.getOwnPropertyDescriptor(witness ?? {}, "siblingPath")?.value;
-          check9(typeof index === "bigint" && index === BigInt(number20) && index < BigInt(anchor2.lastArchive.nextAvailableLeafIndex));
-          check9(Array.isArray(siblings) && siblings.length === ARCHIVE_HEIGHT && ARCHIVE_HEIGHT === 30);
+          check10(typeof index === "bigint" && index === BigInt(number20) && index < BigInt(anchor2.lastArchive.nextAvailableLeafIndex));
+          check10(Array.isArray(siblings) && siblings.length === ARCHIVE_HEIGHT && ARCHIVE_HEIGHT === 30);
           const path = Array.from({ length: ARCHIVE_HEIGHT }, (_, i) => {
             const d = Object.getOwnPropertyDescriptor(siblings, String(i));
-            check9(d && "value" in d && d.value instanceof Fr);
+            check10(d && "value" in d && d.value instanceof Fr);
             return Fr.fromBuffer(Fr.prototype.toBuffer.call(d.value));
           });
           let value = Fr.fromString(hash12), position2 = index;
@@ -397245,7 +397327,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             value = position2 & 1n ? await computeMerkleHash(sibling, value) : await computeMerkleHash(value, sibling);
             position2 >>= 1n;
           }
-          check9(position2 === 0n && value.equals(anchor2.lastArchive.root));
+          check10(position2 === 0n && value.equals(anchor2.lastArchive.root));
           await guard();
         })());
       }
@@ -397259,32 +397341,32 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return async (artifact, expectedHash, expectedClass) => {
       hex15(expectedHash);
       hex15(expectedClass);
-      check9(artifact && artifact.name === "RollingBoard");
+      check10(artifact && artifact.name === "RollingBoard");
       const bytes3 = contractArtifactToBuffer(artifact);
       if (verified2 && verified2.hash === expectedHash && verified2.classId === expectedClass && verified2.bytes.equals(bytes3)) return;
       const captured = contractArtifactFromBuffer(bytes3);
-      check9(captured.name === "RollingBoard");
+      check10(captured.name === "RollingBoard");
       const hash12 = await computeArtifactHash(captured);
-      check9(hash12.toString() === expectedHash);
-      check9((await getContractClassFromArtifact({ ...captured, artifactHash: hash12 })).id.toString() === expectedClass);
-      check9(contractArtifactToBuffer(artifact).equals(bytes3));
+      check10(hash12.toString() === expectedHash);
+      check10((await getContractClassFromArtifact({ ...captured, artifactHash: hash12 })).id.toString() === expectedClass);
+      check10(contractArtifactToBuffer(artifact).equals(bytes3));
       verified2 = { bytes: bytes3, hash: expectedHash, classId: expectedClass };
     };
   }
   function snapshot(input2, options) {
     const p = exact2(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart", ...Object.hasOwn(input2, "optimistic") ? ["optimistic"] : []]);
-    check9(p.optimistic === void 0 || p.optimistic === true);
-    check9(!p.optimistic || p.expected !== null && p.restart === false);
+    check10(p.optimistic === void 0 || p.optimistic === true);
+    check10(!p.optimistic || p.expected !== null && p.restart === false);
     for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex15(p[k]);
     p.network = exact2(p.network, ["chainId", "version", "rollup"]);
     integer8(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
     integer8(p.network.version, 4294967295, 1);
     hex15(p.network.rollup, false, 40);
-    check9(typeof p.restart === "boolean" && (!p.restart || p.expected === null));
-    check9(typeof p.proofsEnabled === "boolean" && ["proposed", "checkpointed", "proven", "finalized"].includes(p.tier));
+    check10(typeof p.restart === "boolean" && (!p.restart || p.expected === null));
+    check10(typeof p.proofsEnabled === "boolean" && ["proposed", "checkpointed", "proven", "finalized"].includes(p.tier));
     if (p.expected !== null) {
       p.expected = exact2(p.expected, ["epoch", "sequence"]);
-      check9(typeof p.expected.epoch === "string" && /^[0-9a-f]{64}$/.test(p.expected.epoch));
+      check10(typeof p.expected.epoch === "string" && /^[0-9a-f]{64}$/.test(p.expected.epoch));
       integer8(p.expected.sequence, Number.MAX_SAFE_INTEGER);
     }
     if (p.block !== null) {
@@ -397294,7 +397376,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           const w = exact2(b2.archiveWitness, ["anchorNumber", "anchorHash", "leafIndex", "siblingPath"]);
           integer8(w.anchorNumber, 4294967295, 1);
           hex15(w.anchorHash);
-          check9(typeof w.leafIndex === "string" && /^[1-9][0-9]{0,9}$/.test(w.leafIndex) && w.leafIndex === String(b2.blockNumber));
+          check10(typeof w.leafIndex === "string" && /^[1-9][0-9]{0,9}$/.test(w.leafIndex) && w.leafIndex === String(b2.blockNumber));
           w.siblingPath = fields(w.siblingPath, 30, 30);
           b2.archiveWitness = w;
         }
@@ -397307,33 +397389,33 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (Array.isArray(p.block)) {
         integer8(p.block.length, 256, 1);
         const values = p.block;
-        check9(Reflect.ownKeys(values).length === values.length + 1);
+        check10(Reflect.ownKeys(values).length === values.length + 1);
         let bytes3 = 0;
         p.block = Array.from({ length: values.length }, (_, i) => {
           const d = Object.getOwnPropertyDescriptor(values, String(i));
-          check9(d && "value" in d);
+          check10(d && "value" in d);
           const raw = d.value;
-          check9(raw && Object.getPrototypeOf(raw) === Object.prototype);
+          check10(raw && Object.getPrototypeOf(raw) === Object.prototype);
           const count = (object8, key, max, min2) => {
             const item = Object.getOwnPropertyDescriptor(object8, key);
-            check9(item && "value" in item && Array.isArray(item.value));
+            check10(item && "value" in item && Array.isArray(item.value));
             const length = Object.getOwnPropertyDescriptor(item.value, "length")?.value;
             integer8(length, max, min2);
             return length;
           };
           const proof = Object.getOwnPropertyDescriptor(raw, "archiveWitness");
-          check9(!proof || "value" in proof);
+          check10(!proof || "value" in proof);
           const proofFields = proof && proof.value !== null ? count(proof.value, "siblingPath", 30, 30) : 0;
           bytes3 += (count(raw, "fields", 24575, 7) + count(raw, "headerFields", 23, 23) + proofFields) * 69 + 2048;
-          check9(bytes3 <= 2 * 1024 * 1024);
+          check10(bytes3 <= 2 * 1024 * 1024);
           return block2(raw);
         });
-        check9(p.block.every((b2, i) => i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1));
-        if (p.block.length > 32) check9(p.block.every((b2) => Object.hasOwn(b2, "archiveWitness")));
+        check10(p.block.every((b2, i) => i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1));
+        if (p.block.length > 32) check10(p.block.every((b2) => Object.hasOwn(b2, "archiveWitness")));
       } else p.block = block2(p.block);
     }
     const { contextGuard } = exact2(options, ["contextGuard"]);
-    check9(typeof contextGuard === "function");
+    check10(typeof contextGuard === "function");
     return { p, guard: contextGuard };
   }
   var RollingPreferenceRecoveryStore = class extends BaseStagingStore {
@@ -397348,17 +397430,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           meta13 = JSON.stringify({ database: id2(), generation: id2() });
           stage.set("meta", meta13);
         }
-        check9(typeof meta13 === "string" && meta13.length < 256);
+        check10(typeof meta13 === "string" && meta13.length < 256);
         const m2 = JSON.parse(meta13);
-        check9(typeof m2.database === "string" && /^[0-9a-f]{64}$/.test(m2.database) && typeof m2.generation === "string" && /^[0-9a-f]{64}$/.test(m2.generation));
+        check10(typeof m2.database === "string" && /^[0-9a-f]{64}$/.test(m2.database) && typeof m2.generation === "string" && /^[0-9a-f]{64}$/.test(m2.generation));
         const raw = stage.get(key) ?? rawState;
-        check9(raw === void 0 || typeof raw === "string" && raw.length <= MAX_STATE);
+        check10(raw === void 0 || typeof raw === "string" && raw.length <= MAX_STATE);
         return { meta: m2, state: raw === void 0 ? null : JSON.parse(raw) };
       });
     }
     save(key, state, changeSetId) {
       const text = JSON.stringify(state);
-      check9(text.length <= MAX_STATE);
+      check10(text.length <= MAX_STATE);
       return this.withChangeSet(changeSetId, (stage) => {
         stage.set(key, text);
       });
@@ -397375,7 +397457,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
   };
   function bindRollingPreferenceRecovery(pxe, store, tier, page, headCall) {
-    check9(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
+    check10(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
     bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall, verifyArtifact: createRollingPreferenceArtifactVerifier() }));
   }
   function receipt(state, records = [], head = null) {
@@ -397383,20 +397465,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function checkpoint(r) {
     const c = exact2({ database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy2(r.anchor), head: copy2(r.head) }, ["database", "epoch", "sequence", "anchor", "head"]);
-    for (const k of ["database", "epoch"]) check9(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
+    for (const k of ["database", "epoch"]) check10(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
     integer8(c.sequence, Number.MAX_SAFE_INTEGER);
     c.anchor = exact2(c.anchor, ["blockNumber", "blockHash"]);
     integer8(c.anchor.blockNumber);
     hex15(c.anchor.blockHash);
     c.head = exact2(c.head, ["initialized", "schema", "revision", "digest"]);
     const h = c.head;
-    check9(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
-    check9(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
+    check10(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
+    check10(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
     return c;
   }
   function resumedCheckpoint(r) {
     const c = { database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy2(r.anchor), nextBlock: r.nextBlock, nextLog: r.nextLog };
-    for (const k of ["database", "epoch"]) check9(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
+    for (const k of ["database", "epoch"]) check10(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
     integer8(c.sequence, Number.MAX_SAFE_INTEGER);
     exact2(c.anchor, ["blockNumber", "blockHash"]);
     integer8(c.anchor.blockNumber);
@@ -397413,14 +397495,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     integer8(p.txIndex, 6142);
     integer8(p.firstLog, 63);
     integer8(p.logCount, 8, 1);
-    check9(p.firstLog + p.logCount <= 64);
+    check10(p.firstLog + p.logCount <= 64);
     return p;
   }
   async function runRollingPreferenceRecovery(pxe, input2, options) {
     try {
       const { p, guard } = snapshot(input2, options), binding3 = bindings.get(pxe);
-      check9(binding3 && binding3.tier === p.tier && pxe.proverEnabled === p.proofsEnabled);
-      const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), owner = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
+      check10(binding3 && binding3.tier === p.tier && pxe.proverEnabled === p.proofsEnabled);
+      const address7 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), owner = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
       const key = JSON.stringify([p.network, p.proofsEnabled, p.tier, p.contractAddress, p.expectedClassId, p.expectedArtifactHash, p.scope, 1]);
       let beforeCommit;
       await guard();
@@ -397441,21 +397523,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             },
             async () => {
               const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
-              check9(raw);
+              check10(raw);
               return { hash: raw.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header)) };
             },
             async () => {
               if (historicalInstance) return SerializableContractInstance.fromBuffer(historicalInstance);
-              const raw = await pxe.node.getContract(address6, parameter);
-              check9(raw);
+              const raw = await pxe.node.getContract(address7, parameter);
+              check10(raw);
               return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
             }
           ]);
-          check9(info.chainId === p.network.chainId && info.version === p.network.version && info.rollup === p.network.rollup && info.proofs === p.proofsEnabled);
-          check9(observed.hash === anchorRecord.blockHash);
+          check10(info.chainId === p.network.chainId && info.version === p.network.version && info.rollup === p.network.rollup && info.proofs === p.proofsEnabled);
+          check10(observed.hash === anchorRecord.blockHash);
           const h = observed.header;
-          check9((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
-          check9(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
+          check10((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+          check10(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address7));
           historicalInstance = new SerializableContractInstance(instance).toBuffer();
           await guard();
         };
@@ -397468,23 +397550,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         };
         await canonical2();
         const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
-        check9(artifact && artifact.name === "RollingBoard");
+        check10(artifact && artifact.name === "RollingBoard");
         await binding3.verifyArtifact(artifact, p.expectedArtifactHash, p.expectedClassId);
         frame.historical = async (input3, changeSetId, header) => {
-          check9(changeSetId === context.changeSetId && input3.contractAddress === p.contractAddress && input3.scope === p.scope && input3.expectedClassId === p.expectedClassId && input3.expectedArtifactHash === p.expectedArtifactHash && same(input3.network, p.network) && input3.proofsEnabled === p.proofsEnabled);
-          check9(BlockHeader.prototype.toBuffer.call(header).equals(BlockHeader.prototype.toBuffer.call(anchor2)));
+          check10(changeSetId === context.changeSetId && input3.contractAddress === p.contractAddress && input3.scope === p.scope && input3.expectedClassId === p.expectedClassId && input3.expectedArtifactHash === p.expectedArtifactHash && same(input3.network, p.network) && input3.proofsEnabled === p.proofsEnabled);
+          check10(BlockHeader.prototype.toBuffer.call(header).equals(BlockHeader.prototype.toBuffer.call(anchor2)));
           await guard();
           const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
-          check9(raw);
+          check10(raw);
           const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-          check9(raw.blockHash.toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && (await h.hash()).toString() === anchorRecord.blockHash);
+          check10(raw.blockHash.toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && (await h.hash()).toString() === anchorRecord.blockHash);
           await guard();
         };
         frame.verifyArtifact = (value) => binding3.verifyArtifact(value, p.expectedArtifactHash, p.expectedClassId);
         beforeCommit = async () => {
           const validators = frame.validators.slice();
           for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
-          if (stagedSeal) check9(same(await stageSnapshot(), stagedSeal));
+          if (stagedSeal) check10(same(await stageSnapshot(), stagedSeal));
           await canonical2();
           await guard();
         };
@@ -397499,16 +397581,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           };
           const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
           register(checkBlock);
-          check9(verified2.blockNumber === block2.blockNumber);
+          check10(verified2.blockNumber === block2.blockNumber);
           return verified2;
         };
         const stageSnapshot = async () => ({
           events: await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => {
-            check9(stage.size <= 8);
+            check10(stage.size <= 8);
             return [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]);
           }),
           notes: await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
-            check9(stage.notes.size <= 8 && stage.nullifierEmissions.size <= 8);
+            check10(stage.notes.size <= 8 && stage.nullifierEmissions.size <= 8);
             return [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]);
           }),
           nullifiers: await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => [...stage.nullifierEmissions])
@@ -397516,14 +397598,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const containsStage = (current, prior) => {
           for (const kind of ["events", "notes", "nullifiers"]) {
             const map7 = new Map(current[kind]);
-            for (const [key2, value] of prior[kind]) check9(map7.has(key2) && same(map7.get(key2), value));
+            for (const [key2, value] of prior[kind]) check10(map7.has(key2) && same(map7.get(key2), value));
           }
         };
         let stagedSeal = null;
         const ingest = async (block2, first2, logCount) => {
           const prior = await stageSnapshot();
-          if (stagedSeal) check9(same(prior, stagedSeal));
-          else check9(prior.events.length === 0 && prior.notes.length === 0 && prior.nullifiers.length === 0);
+          if (stagedSeal) check10(same(prior, stagedSeal));
+          else check10(prior.events.length === 0 && prior.notes.length === 0 && prior.nullifiers.length === 0);
           await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
           const after = await stageSnapshot();
           containsStage(after, prior);
@@ -397533,7 +397615,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             for (const [key2, e] of changeSet) {
               const current = e.txHash.toString() === first2.txHash;
               if (!previousEvents.has(key2) || current) {
-                check9(e.contractAddress.toString() === p.contractAddress && e.scopes.has(p.scope) && current && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash.toString() === block2.blockHash && e.msgContent.length === 8);
+                check10(e.contractAddress.toString() === p.contractAddress && e.scopes.has(p.scope) && current && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash.toString() === block2.blockHash && e.msgContent.length === 8);
                 integer8(e.eventIndexInTx, 63);
               }
               if (current) selected.push({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) });
@@ -397544,7 +397626,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             const selected = [];
             for (const [key2, n2] of stage.notes) {
               const d = n2.noteDao, current = d.txHash.toString() === first2.txHash;
-              if (!previousNotes.has(key2) || current) check9(d.owner.toString() === p.scope && d.contractAddress.toString() === p.contractAddress && current && d.l2BlockNumber === block2.blockNumber && d.l2BlockHash === block2.blockHash && d.txIndexInBlock === first2.txIndex);
+              if (!previousNotes.has(key2) || current) check10(d.owner.toString() === p.scope && d.contractAddress.toString() === p.contractAddress && current && d.l2BlockNumber === block2.blockNumber && d.l2BlockHash === block2.blockHash && d.txIndexInBlock === first2.txIndex);
               if (current) selected.push({ nullifier: d.siloedNullifier.toString(), slot: d.storageSlot.toString(), owner: d.owner.toString(), contract: d.contractAddress.toString(), txHash: d.txHash.toString(), blockNumber: d.l2BlockNumber, blockHash: d.l2BlockHash, txIndex: d.txIndexInBlock });
             }
             return selected;
@@ -397554,8 +397636,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           return { events, candidates };
         };
         const active = async (c) => {
-          const notes = await pxe.noteStore.getNotes({ contractAddress: address6, owner, scopes: [owner], storageSlot: Fr.fromString(c.slot), siloedNullifier: Fr.fromString(c.nullifier) }, context.changeSetId);
-          check9(notes.length <= 1);
+          const notes = await pxe.noteStore.getNotes({ contractAddress: address7, owner, scopes: [owner], storageSlot: Fr.fromString(c.slot), siloedNullifier: Fr.fromString(c.nullifier) }, context.changeSetId);
+          check10(notes.length <= 1);
           return notes.length === 1;
         };
         let state = loaded;
@@ -397568,46 +397650,46 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         };
         if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || state.schemaVersion !== 2) return await reset3();
         exact2(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "previous", "last", ...Object.hasOwn(state, "resumed") ? ["resumed"] : []]);
-        check9(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
+        check10(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
         integer8(state.anchor.blockNumber);
         hex15(state.anchor.blockHash);
         integer8(state.sequence, Number.MAX_SAFE_INTEGER);
         integer8(state.nextBlock, state.anchor.blockNumber + 1, 1);
         integer8(state.nextLog, 24575);
-        check9(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
-        check9(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
+        check10(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
+        check10(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
         if (state.previous) {
           exact2(state.previous, ["database", "epoch", "sequence", "anchor", "head"]);
           const previous = checkpoint(state.previous);
-          check9(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
-        } else check9(state.previous === null && state.last.previous === void 0);
+          check10(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
+        } else check10(state.previous === null && state.last.previous === void 0);
         if (state.resumed) {
           exact2(state.resumed, ["database", "epoch", "sequence", "anchor", "nextBlock", "nextLog"]);
           const prior = resumedCheckpoint(state.resumed);
-          check9(state.previous === null && prior.database === state.database && prior.epoch !== state.epoch && prior.anchor.blockNumber < state.anchor.blockNumber && same(state.last.resumed, prior));
-        } else check9(state.last.resumed === void 0);
+          check10(state.previous === null && prior.database === state.database && prior.epoch !== state.epoch && prior.anchor.blockNumber < state.anchor.blockNumber && same(state.last.resumed, prior));
+        } else check10(state.last.resumed === void 0);
         if (state.candidate) {
           exact2(state.candidate, ["nullifier", "slot", "origin"]);
           hex15(state.candidate.nullifier);
           hex15(state.candidate.slot);
           locator(state.candidate.origin);
-          check9(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
+          check10(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
         }
         if (state.sequence === 0) {
-          if (state.resumed) check9(state.nextBlock === state.resumed.nextBlock && state.nextLog === state.resumed.nextLog);
-          else check9(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
+          if (state.resumed) check10(state.nextBlock === state.resumed.nextBlock && state.nextLog === state.resumed.nextLog);
+          else check10(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
         }
         if (p.optimistic) {
           const prior = state.sequence === 0 ? state.previous ?? state.resumed : null;
-          check9(p.expected.epoch === state.epoch && (p.expected.sequence === state.sequence || p.expected.sequence === state.sequence - 1) || prior && p.expected.epoch === prior.epoch && p.expected.sequence === prior.sequence);
+          check10(p.expected.epoch === state.epoch && (p.expected.sequence === state.sequence || p.expected.sequence === state.sequence - 1) || prior && p.expected.epoch === prior.epoch && p.expected.sequence === prior.sequence);
         }
         if (!same(state.anchor, anchorRecord)) {
           if (anchorRecord.blockNumber <= state.anchor.blockNumber || state.last.complete && (state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0)) return await reset3();
           const priorCanonical = async () => {
             const raw = await pxe.node.getBlockData(state.anchor.blockNumber);
-            check9(raw);
+            check10(raw);
             const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check9(h.getBlockNumber() === state.anchor.blockNumber && (await h.hash()).toString() === raw.blockHash.toString());
+            check10(h.getBlockNumber() === state.anchor.blockNumber && (await h.hash()).toString() === raw.blockHash.toString());
             await guard();
             return raw.blockHash.toString() === state.anchor.blockHash;
           };
@@ -397615,28 +397697,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           const priorAnchor = copy2(state.anchor);
           frame.validators.push(async () => {
             const raw = await pxe.node.getBlockData(priorAnchor.blockNumber);
-            check9(raw);
+            check10(raw);
             const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check9(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
+            check10(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
             await guard();
           });
           if (p.expected === null || p.optimistic) {
             await beforeCommit();
             return { ...copy2(state.last), advance: { anchor: copy2(anchorRecord), headPage: state.candidate ? copy2(state.candidate.origin) : null } };
           }
-          check9(p.expected.epoch === state.epoch && p.expected.sequence === state.sequence);
+          check10(p.expected.epoch === state.epoch && p.expected.sequence === state.sequence);
           let candidate = state.candidate;
           if (candidate) {
             const origin = locator(candidate.origin);
-            check9(p.block && p.block.blockNumber === origin.blockNumber && p.block.blockHash === origin.blockHash);
+            check10(p.block && p.block.blockNumber === origin.blockNumber && p.block.blockHash === origin.blockHash);
             const verified2 = await authenticate(p.block), logs = verified2.ciphertexts.filter((log3) => log3.txIndex === origin.txIndex && log3.logIndex >= origin.firstLog && log3.logIndex < origin.firstLog + origin.logCount);
-            check9(logs.length === origin.logCount && logs.every((log3, i) => log3.txHash === origin.txHash && log3.logIndex === origin.firstLog + i));
+            check10(logs.length === origin.logCount && logs.every((log3, i) => log3.txHash === origin.txHash && log3.logIndex === origin.firstLog + i));
             const replay = await ingest(p.block, logs[0], origin.logCount);
             const exactFormer = replay.candidates.filter((c) => c.nullifier === candidate.nullifier && c.slot === candidate.slot);
-            check9(exactFormer.length === 1);
-            for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check9(!await active(c));
+            check10(exactFormer.length === 1);
+            for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check10(!await active(c));
             if (!await active(candidate)) candidate = null;
-          } else check9(p.block === null && (!state.last.complete || state.last.head.initialized === false));
+          } else check10(p.block === null && (!state.last.complete || state.last.head.initialized === false));
           const complete = state.last.complete, previous = complete ? checkpoint(state.last) : null, resumed = complete ? null : resumedCheckpoint(state.last);
           state = { ...state, epoch: id2(), anchor: anchorRecord, sequence: 0, nextBlock: complete ? previous.anchor.blockNumber + 1 : state.nextBlock, nextLog: complete ? 0 : state.nextLog, pending: complete ? [] : state.pending, candidate, previous };
           if (resumed) state.resumed = resumed;
@@ -397657,24 +397739,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             return copy2(state.last);
           }
         }
-        check9(p.expected.epoch === state.epoch);
+        check10(p.expected.epoch === state.epoch);
         if (p.expected.sequence === state.sequence - 1) {
           await beforeCommit();
           return copy2(state.last);
         }
-        check9(p.expected.sequence === state.sequence && !state.last.complete);
+        check10(p.expected.sequence === state.sequence && !state.last.complete);
         let records = [], head = null;
         if (state.nextBlock > anchorRecord.blockNumber) {
-          check9(p.block === null && state.pending.length === 0);
-          const call2 = await pxe.contractStore.getFunctionCall("preference_head", [owner], address6, Fr.fromString(p.expectedClassId));
-          check9(call2.type === FunctionType.UTILITY);
+          check10(p.block === null && state.pending.length === 0);
+          const call2 = await pxe.contractStore.getFunctionCall("preference_head", [owner], address7, Fr.fromString(p.expectedClassId));
+          check10(call2.type === FunctionType.UTILITY);
           const noteStore = new Proxy(pxe.noteStore, { get(target, k) {
             if (k === "getNotes") return (filter, changeSetId) => {
-              check9(changeSetId === context.changeSetId && filter.contractAddress.equals(address6) && filter.owner?.equals(owner) && filter.status === 1 && filter.scopes.length === 1 && filter.scopes[0].equals(owner));
+              check10(changeSetId === context.changeSetId && filter.contractAddress.equals(address7) && filter.owner?.equals(owner) && filter.status === 1 && filter.scopes.length === 1 && filter.scopes[0].equals(owner));
               if (!state.candidate) return Promise.resolve([]);
-              check9(filter.storageSlot?.toString() === state.candidate.slot && filter.siloedNullifier === void 0);
+              check10(filter.storageSlot?.toString() === state.candidate.slot && filter.siloedNullifier === void 0);
               return target.getNotes({ ...filter, siloedNullifier: Fr.fromString(state.candidate.nullifier) }, changeSetId).then((notes) => {
-                check9(notes.length === 1);
+                check10(notes.length === 1);
                 return notes;
               });
             };
@@ -397684,29 +397766,29 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           await guard();
           const result = await binding3.headCall(call2, noteStore, owner, anchor2, context.changeSetId);
           await guard();
-          check9(result.offchainEffects.length === 0 && result.result.length === 4);
+          check10(result.offchainEffects.length === 0 && result.result.length === 4);
           const values = result.result.map((x) => x.toBigInt());
-          check9((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
+          check10((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
           head = { initialized: values[0] === 1n, schema: 1, revision: String(values[2]), digest: String(values[3]) };
-          check9(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
+          check10(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
         } else {
           const consume = async (block2, verified2, multiple) => {
-            check9(block2.blockNumber === state.nextBlock && verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
+            check10(block2.blockNumber === state.nextBlock && verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
             let used = 0;
             while (state.nextLog < verified2.ciphertexts.length) {
               const first2 = verified2.ciphertexts[state.nextLog], logs = [];
               for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 - used && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
-              check9(logs.length > 0);
+              check10(logs.length > 0);
               const { events, candidates } = await ingest(block2, first2, logs.length);
               for (const e of events) {
                 const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
-                if (prior) check9(same(prior, e));
+                if (prior) check10(same(prior, e));
                 else state.pending.push(e);
-                check9(state.pending.length <= 64);
+                check10(state.pending.length <= 64);
               }
               for (const candidate of candidates) {
                 if (await active(candidate)) {
-                  if (state.candidate) check9(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
+                  if (state.candidate) check10(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
                   else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot, origin: { blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, txIndex: first2.txIndex, firstLog: first2.logIndex, logCount: logs.length } };
                 }
               }
@@ -397715,44 +397797,44 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               if (state.nextLog === verified2.ciphertexts.length || verified2.ciphertexts[state.nextLog].txIndex !== first2.txIndex) {
                 records.push(...state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record8 }) => record8));
                 state.pending = [];
-                check9(records.length <= 64);
+                check10(records.length <= 64);
               }
               if (!multiple) break;
             }
             if (state.nextLog === verified2.ciphertexts.length) {
-              check9(state.pending.length === 0);
+              check10(state.pending.length === 0);
               state.nextBlock++;
               state.nextLog = 0;
             }
           };
           if (Array.isArray(p.block)) {
-            check9(state.nextLog === 0 && state.pending.length === 0 && p.block[0].blockNumber === state.nextBlock && p.block.at(-1).blockNumber <= anchorRecord.blockNumber);
+            check10(state.nextLog === 0 && state.pending.length === 0 && p.block[0].blockNumber === state.nextBlock && p.block.at(-1).blockNumber <= anchorRecord.blockNumber);
             const validators = [], verified2 = [];
             let physicalLogs = 0;
             for (let offset = 0; offset < p.block.length; offset += 4) {
               const values = await rollingPreferenceReadBatch(p.block.slice(offset, offset + 4).map((block2) => async () => authenticate(block2, (validate2) => validators.push(validate2))));
               for (const value of values) {
-                check9(value.blockNumber === state.nextBlock + verified2.length);
+                check10(value.blockNumber === state.nextBlock + verified2.length);
                 physicalLogs += value.ciphertexts.length;
-                check9(physicalLogs <= 8);
+                check10(physicalLogs <= 8);
                 verified2.push(value);
               }
             }
             frame.validators.push(...validators);
             for (let i = 0; i < verified2.length; i++) await consume(p.block[i], verified2[i], true);
           } else {
-            check9(p.block);
+            check10(p.block);
             await consume(p.block, await authenticate(p.block), false);
           }
         }
-        check9(state.sequence < Number.MAX_SAFE_INTEGER);
+        check10(state.sequence < Number.MAX_SAFE_INTEGER);
         state.sequence++;
         state.last = receipt(state, records, head);
         await binding3.store.save(key, state, context.changeSetId);
         await beforeCommit();
         return copy2(state.last);
       }, { beforeCommit: async () => {
-        check9(typeof beforeCommit === "function");
+        check10(typeof beforeCommit === "function");
         await beforeCommit();
       } });
     } catch {
@@ -398093,16 +398175,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * registered for `address`. A missing instance is an absence the caller decides how to handle, not an error; genuine
     * failures (e.g. the node being unreachable) still throw.
     */
-    async getCurrentClassId(address6, anchorBlockHeader) {
-      if (isProtocolContract(address6)) {
-        const instance = await this.contractStore.getContractInstance(address6);
+    async getCurrentClassId(address7, anchorBlockHeader) {
+      if (isProtocolContract(address7)) {
+        const instance = await this.contractStore.getContractInstance(address7);
         return instance?.originalContractClassId;
       }
-      const nodeInstance = await this.node.getContract(address6, await anchorBlockHeader.toBlockParameter());
+      const nodeInstance = await this.node.getContract(address7, await anchorBlockHeader.toBlockParameter());
       if (nodeInstance) {
         return nodeInstance.currentContractClassId;
       }
-      return (await this.contractStore.getContractInstance(address6))?.originalContractClassId;
+      return (await this.contractStore.getContractInstance(address7))?.originalContractClassId;
     }
   };
 
@@ -398475,13 +398557,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       this.activeChangeSets.delete(changeSetId);
     }
   };
-  function toCallKey({ address: address6, selector }) {
-    return `${address6.toString()}:${selector.toString()}`;
+  function toCallKey({ address: address7, selector }) {
+    return `${address7.toString()}:${selector.toString()}`;
   }
   function fromCallKey(key) {
-    const [address6, selector] = key.split(":");
+    const [address7, selector] = key.split(":");
     return {
-      address: AztecAddress.fromStringUnsafe(address6),
+      address: AztecAddress.fromStringUnsafe(address7),
       selector: FunctionSelector.fromString(selector)
     };
   }
@@ -398612,8 +398694,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     STANDARD_MULTI_CALL_ENTRYPOINT_ADDRESS,
     STANDARD_PUBLIC_CHECKS_ADDRESS
   ];
-  function isSkipSyncContract(address6) {
-    return skipSyncContracts.some((a) => a.equals(address6));
+  function isSkipSyncContract(address7) {
+    return skipSyncContracts.some((a) => a.equals(address7));
   }
 
   // node_modules/@aztec-labs/pxe/dest/contract/helpers.js
@@ -400715,39 +400797,39 @@ ${val.stack}`;
       this.overrides = overrides;
     }
     /** Returns the address preimage of the instance at `address`, from the override if any, else from storage. */
-    getContractInstance(address6) {
-      const override = this.overrides?.[address6.toString()];
+    getContractInstance(address7) {
+      const override = this.overrides?.[address7.toString()];
       if (override) {
         return Promise.resolve(override.instance);
       }
-      return this.store.getContractInstance(address6);
+      return this.store.getContractInstance(address7);
     }
     /**
     * Resolves the class id `address` runs in this simulation: the override's class if overridden, else resolved against
     * the chain at the anchor block.
     */
-    getCurrentClassId(address6) {
-      const override = this.overrides?.[address6.toString()];
+    getCurrentClassId(address7) {
+      const override = this.overrides?.[address7.toString()];
       if (override) {
         return Promise.resolve(override.instance.currentContractClassId);
       }
-      return this.contractClassService.getCurrentClassId(address6, this.anchorBlockHeader);
+      return this.contractClassService.getCurrentClassId(address7, this.anchorBlockHeader);
     }
-    async getFunctionArtifact(address6, selector) {
-      const classId = await this.getCurrentClassId(address6);
+    async getFunctionArtifact(address7, selector) {
+      const classId = await this.getCurrentClassId(address7);
       return classId ? this.store.getFunctionArtifact(classId, selector) : void 0;
     }
-    async getFunctionArtifactWithDebugMetadata(address6, selector) {
-      const classId = await this.getCurrentClassId(address6);
+    async getFunctionArtifactWithDebugMetadata(address7, selector) {
+      const classId = await this.getCurrentClassId(address7);
       return classId ? this.store.getFunctionArtifactWithDebugMetadata(classId, selector) : void 0;
     }
-    async getDebugContractName(address6) {
-      const classId = await this.getCurrentClassId(address6);
+    async getDebugContractName(address7) {
+      const classId = await this.getCurrentClassId(address7);
       return classId ? this.store.getDebugContractName(classId) : void 0;
     }
-    async getDebugFunctionName(address6, selector) {
-      const classId = await this.getCurrentClassId(address6);
-      return classId ? this.store.getDebugFunctionName(classId, selector) : `${address6}:${selector}`;
+    async getDebugFunctionName(address7, selector) {
+      const classId = await this.getCurrentClassId(address7);
+      return classId ? this.store.getDebugFunctionName(classId, selector) : `${address7}:${selector}`;
     }
   };
 
@@ -405408,10 +405490,10 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * @param address - Address.
     * @returns A contract instance.
     */
-    async getContractInstance(address6) {
-      const instance = await this.anchoredContractData.getContractInstance(address6);
+    async getContractInstance(address7) {
+      const instance = await this.anchoredContractData.getContractInstance(address7);
       if (!instance) {
-        throw new Error(`No contract instance found for address ${address6.toString()}`);
+        throw new Error(`No contract instance found for address ${address7.toString()}`);
       }
       return instance;
     }
@@ -405757,15 +405839,15 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * hold the keys for `address`.
     * @throws If `address` is not in the execution's allowed scopes.
     */
-    async getSharedSecrets(address6, ephPks, contractAddress) {
+    async getSharedSecrets(address7, ephPks, contractAddress) {
       if (!contractAddress.equals(this.contractAddress)) {
         throw new Error(`getSharedSecrets called with contract address ${contractAddress}, expected ${this.contractAddress}`);
       }
-      assertAllowedScope(address6, this.scopes);
-      const recipientCompleteAddress = await this.addressStore.getCompleteAddress(address6);
+      assertAllowedScope(address7, this.scopes);
+      const recipientCompleteAddress = await this.addressStore.getCompleteAddress(address7);
       if (!recipientCompleteAddress) {
-        this.logger.warn(`Computing shared secrets for address ${address6} whose keys are not held - returning no secrets`, {
-          address: address6,
+        this.logger.warn(`Computing shared secrets for address ${address7} whose keys are not held - returning no secrets`, {
+          address: address7,
           contractAddress: this.contractAddress
         });
         return EphemeralArray.fromValues(this.ephemeralArrayService, []);
@@ -406263,10 +406345,10 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * Resolves the class id the given contract runs at this simulation's anchor block. The instance no longer carries
     * its class id (it is chain-derived), so it is resolved via the anchored contract data instead.
     */
-    async #getCurrentContractClassId(address6) {
-      const classId = await this.anchoredContractData.getCurrentClassId(address6);
+    async #getCurrentContractClassId(address7) {
+      const classId = await this.anchoredContractData.getCurrentClassId(address7);
       if (classId === void 0) {
-        throw new Error(`Cannot resolve the current contract class for ${address6}`);
+        throw new Error(`Cannot resolve the current contract class for ${address7}`);
       }
       return classId;
     }
@@ -407549,7 +407631,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           shouldCache: (response) => response !== void 0
         });
       },
-      getContract: (address6, referenceBlock) => readCachedIfBlockIsHashPinned(referenceBlock, (blockHash) => `contract:${blockHash}:${address6.toString()}`, () => source.getContract(address6, referenceBlock)),
+      getContract: (address7, referenceBlock) => readCachedIfBlockIsHashPinned(referenceBlock, (blockHash) => `contract:${blockHash}:${address7.toString()}`, () => source.getContract(address7, referenceBlock)),
       getBlockHashMembershipWitness: (referenceBlock, blockHash) => readCachedIfBlockIsHashPinned(referenceBlock, (referenceHash) => `block-hash-membership-witness:${referenceHash}:${blockHash.toString()}`, () => source.getBlockHashMembershipWitness(referenceBlock, blockHash)),
       getPublicDataWitness: (referenceBlock, leafSlot) => readCachedIfBlockIsHashPinned(referenceBlock, (blockHash) => `public-data-witness:${blockHash}:${leafSlot.toString()}`, () => source.getPublicDataWitness(referenceBlock, leafSlot)),
       getNoteHashMembershipWitness: (referenceBlock, noteHash) => readCachedIfBlockIsHashPinned(referenceBlock, (blockHash) => `note-hash-membership-witness:${blockHash}:${noteHash.toString()}`, () => source.getNoteHashMembershipWitness(referenceBlock, noteHash)),
@@ -408735,14 +408817,14 @@ ${context.join("\n")}`;
       this.anchoredContractData = new AnchoredContractData(contractStore, contractClassService, blockHeader);
     }
     /** Retrieves the preimage of a contract address from the registered contract instances db. */
-    async getContractAddressPreimage(address6) {
-      const instance = await this.anchoredContractData.getContractInstance(address6);
+    async getContractAddressPreimage(address7) {
+      const instance = await this.anchoredContractData.getContractInstance(address7);
       if (!instance) {
-        throw new Error(`Contract instance not found when getting address preimage. Contract address: ${address6}.`);
+        throw new Error(`Contract instance not found when getting address preimage. Contract address: ${address7}.`);
       }
-      const currentContractClassId = await this.anchoredContractData.getCurrentClassId(address6);
+      const currentContractClassId = await this.anchoredContractData.getCurrentClassId(address7);
       if (!currentContractClassId) {
-        throw new Error(`Could not resolve the current class id for registered contract ${address6}.`);
+        throw new Error(`Could not resolve the current class id for registered contract ${address7}.`);
       }
       return {
         saltedInitializationHash: await computeSaltedInitializationHash(instance),
@@ -410811,12 +410893,12 @@ See docs for context: https://docs.aztec.network/errors/14`);
       this.#senders = this.#store.openMap("senders");
       this.#sharedSecretsByRecipient = this.#store.openMultiMap("recipient_shared_secrets");
     }
-    addSender(address6) {
+    addSender(address7) {
       return this.#store.transactionAsync(async () => {
-        if (await this.#senders.hasAsync(address6.toString())) {
+        if (await this.#senders.hasAsync(address7.toString())) {
           return false;
         }
-        await this.#senders.set(address6.toString(), true);
+        await this.#senders.set(address7.toString(), true);
         return true;
       });
     }
@@ -410825,12 +410907,12 @@ See docs for context: https://docs.aztec.network/errors/14`);
         return (await toArray(this.#senders.keysAsync())).map(AztecAddress.fromStringUnsafe);
       });
     }
-    removeSender(address6) {
+    removeSender(address7) {
       return this.#store.transactionAsync(async () => {
-        if (!await this.#senders.hasAsync(address6.toString())) {
+        if (!await this.#senders.hasAsync(address7.toString())) {
           return false;
         }
-        await this.#senders.delete(address6.toString());
+        await this.#senders.delete(address7.toString());
         return true;
       });
     }
@@ -411257,18 +411339,18 @@ See docs for context: https://docs.aztec.network/errors/14`);
       });
     }
     /** Best-effort debug function name for the class `address` runs at `anchorBlockHeader`. Used for log display only. */
-    async #getDebugFunctionName(address6, selector, anchorBlockHeader) {
+    async #getDebugFunctionName(address7, selector, anchorBlockHeader) {
       try {
-        const classId = await this.contractClassService.getCurrentClassId(address6, anchorBlockHeader);
-        return classId ? await this.contractStore.getDebugFunctionName(classId, selector) : `${address6}:${selector}`;
+        const classId = await this.contractClassService.getCurrentClassId(address7, anchorBlockHeader);
+        return classId ? await this.contractStore.getDebugFunctionName(classId, selector) : `${address7}:${selector}`;
       } catch {
-        return `${address6}:${selector}`;
+        return `${address7}:${selector}`;
       }
     }
     /** Best-effort debug contract name for the class `address` runs at `anchorBlockHeader`. Used for log display only. */
-    async #getDebugContractName(address6, anchorBlockHeader) {
+    async #getDebugContractName(address7, anchorBlockHeader) {
       try {
-        const classId = await this.contractClassService.getCurrentClassId(address6, anchorBlockHeader);
+        const classId = await this.contractClassService.getCurrentClassId(address7, anchorBlockHeader);
         return classId ? await this.contractStore.getDebugContractName(classId) : void 0;
       } catch {
         return void 0;
@@ -411276,12 +411358,12 @@ See docs for context: https://docs.aztec.network/errors/14`);
     }
     async #registerProtocolContracts() {
       const registered = Object.fromEntries(await allToCompletion(protocolContractNames.map(async (name) => {
-        const { address: address6, instance, artifact } = await this.protocolContractsProvider.getProtocolContractArtifact(name);
+        const { address: address7, instance, artifact } = await this.protocolContractsProvider.getProtocolContractArtifact(name);
         await this.contractStore.addContractArtifact(artifact);
         await this.contractStore.addContractInstance(instance);
         return [
           name,
-          address6.toString()
+          address7.toString()
         ];
       })));
       this.log.verbose(`Registered protocol contracts in pxe`, registered);
@@ -411417,8 +411499,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * @param address - The contract address.
     * @returns The contract instance address preimage if found, undefined otherwise.
     */
-    getContractInstance(address6) {
-      return this.contractStore.getContractInstance(address6);
+    getContractInstance(address7) {
+      return this.contractStore.getContractInstance(address7);
     }
     /**
     * Returns the contract artifact for a given contract class id, if it's registered in the PXE.
@@ -411553,21 +411635,21 @@ See docs for context: https://docs.aztec.network/errors/14`);
       return filter?.kind ? sources.filter((source) => source.kind === filter.kind) : sources;
     }
     /** Registers a sender, skipping addresses that belong to a local account. Returns whether it was newly added. */
-    async #registerSender(address6) {
-      if (!await address6.isValid()) {
-        throw new Error(`Address ${address6} is not valid: it does not correspond to a point on the Grumpkin curve. Cannot register it as a sender.`);
+    async #registerSender(address7) {
+      if (!await address7.isValid()) {
+        throw new Error(`Address ${address7} is not valid: it does not correspond to a point on the Grumpkin curve. Cannot register it as a sender.`);
       }
       const accounts = await this.keyStore.getAccounts();
-      if (accounts.some((a) => a.equals(address6))) {
+      if (accounts.some((a) => a.equals(address7))) {
         this.log.info(`Sender:
- "${address6.toString()}"
+ "${address7.toString()}"
  already registered.`);
         return false;
       }
-      const wasAdded = await this.taggingSecretSourcesStore.addSender(address6);
+      const wasAdded = await this.taggingSecretSourcesStore.addSender(address7);
       this.log.info(wasAdded ? `Added sender:
- ${address6.toString()}` : `Sender:
- "${address6.toString()}"
+ ${address7.toString()}` : `Sender:
+ "${address7.toString()}"
  already registered.`);
       return wasAdded;
     }
@@ -411618,7 +411700,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     async getRegisteredAccounts() {
       const completeAddresses = await this.addressStore.getCompleteAddresses();
       const accounts = await this.keyStore.getAccounts();
-      return completeAddresses.filter((completeAddress) => accounts.find((address6) => address6.equals(completeAddress.address)));
+      return completeAddresses.filter((completeAddress) => accounts.find((address7) => address7.equals(completeAddress.address)));
     }
     /**
     * Registers a contract class in the PXE without registering any associated contract instance with it.
@@ -411644,15 +411726,15 @@ See docs for context: https://docs.aztec.network/errors/14`);
     */
     registerContract(instance) {
       return this.operationQueue.run(async () => {
-        const address6 = await computeContractAddressFromInstance(instance);
+        const address7 = await computeContractAddressFromInstance(instance);
         await this.contractStore.addContractInstance({
           ...instance,
-          address: address6
+          address: address7
         });
-        this.log.info(`Added contract at ${address6}`, {
-          address: address6
+        this.log.info(`Added contract at ${address7}`, {
+          address: address7
         });
-        return address6;
+        return address7;
       });
     }
     /**
@@ -411927,7 +412009,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
       const fail13 = () => {
         throw new Error("PXE_PREFERENCE_PAGE_FAILED");
       };
-      const check12 = (ok2) => {
+      const check13 = (ok2) => {
         if (!ok2) fail13();
       };
       const own2 = (object8, key) => {
@@ -411936,17 +412018,17 @@ See docs for context: https://docs.aztec.network/errors/14`);
         return d.value;
       };
       const exact4 = (object8, keys) => {
-        check12(object8 && Object.getPrototypeOf(object8) === Object.prototype);
-        check12(Reflect.ownKeys(object8).length === keys.length);
+        check13(object8 && Object.getPrototypeOf(object8) === Object.prototype);
+        check13(Reflect.ownKeys(object8).length === keys.length);
         return Object.fromEntries(keys.map((key) => [key, own2(object8, key)]));
       };
       const field10 = (value) => {
-        check12(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
-        check12(BigInt(value) > 0n && BigInt(value) < Fr.MODULUS);
+        check13(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
+        check13(BigInt(value) > 0n && BigInt(value) < Fr.MODULUS);
         return value;
       };
       const natural2 = (value, maximum, minimum = 0) => {
-        check12(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
+        check13(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
         return value;
       };
       try {
@@ -411966,36 +412048,36 @@ See docs for context: https://docs.aztec.network/errors/14`);
           "headerFields"
         ]);
         const snapshotFields2 = (value, maximum, minimum) => {
-          check12(Array.isArray(value));
+          check13(Array.isArray(value));
           const length = natural2(own2(value, "length"), maximum, minimum);
           const copy3 = [];
           for (let i = 0; i < length; i++) {
             const item = own2(value, String(i));
-            check12(typeof item === "string" && /^0x[0-9a-f]{64}$/.test(item) && BigInt(item) < Fr.MODULUS);
+            check13(typeof item === "string" && /^0x[0-9a-f]{64}$/.test(item) && BigInt(item) < Fr.MODULUS);
             copy3.push(item);
           }
           return copy3;
         };
         p.compactFields = snapshotFields2(p.compactFields, 24575, 7);
         p.headerFields = snapshotFields2(p.headerFields, 23, 23);
-        check12((p.compactFields.length + p.headerFields.length) * 69 + 2048 <= 2 * 1024 * 1024);
+        check13((p.compactFields.length + p.headerFields.length) * 69 + 2048 <= 2 * 1024 * 1024);
         const guard = exact4(options, ["contextGuard"]).contextGuard;
-        check12(typeof guard === "function");
+        check13(typeof guard === "function");
         for (const key of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "blockHash", "txHash"]) p[key] = field10(p[key]);
         p.network = exact4(p.network, ["chainId", "version", "rollup"]);
         natural2(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
         natural2(p.network.version, 4294967295, 1);
-        check12(typeof p.network.rollup === "string" && /^0x[0-9a-f]{40}$/.test(p.network.rollup));
-        check12(typeof p.proofsEnabled === "boolean" && p.proofsEnabled === this.proverEnabled);
+        check13(typeof p.network.rollup === "string" && /^0x[0-9a-f]{40}$/.test(p.network.rollup));
+        check13(typeof p.proofsEnabled === "boolean" && p.proofsEnabled === this.proverEnabled);
         natural2(p.blockNumber, 4294967295, 1);
         natural2(p.firstLog, MAX_PRIVATE_LOGS_PER_TX - 1);
         natural2(p.logCount, 8, 1);
-        check12(p.firstLog + p.logCount <= MAX_PRIVATE_LOGS_PER_TX);
-        const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), scope = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
+        check13(p.firstLog + p.logCount <= MAX_PRIVATE_LOGS_PER_TX);
+        const address7 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), scope = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
         const classId = Fr.fromString(p.expectedClassId), txHash = TxHash.fromString(p.txHash);
         let validateCommit;
         const beforeCommit = async () => {
-          check12(typeof validateCommit === "function");
+          check13(typeof validateCommit === "function");
           await validateCommit();
         };
         await guard();
@@ -412003,7 +412085,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           await guard();
           const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorBlockHeader));
           const anchorHash = (await anchor2.hash()).toString();
-          check12(p.blockNumber <= anchor2.getBlockNumber());
+          check13(p.blockNumber <= anchor2.getBlockNumber());
           const archive = frame?.archive ?? createRollingPreferenceArchive(this.node, anchor2, guard);
           const canonical2 = async () => {
             if (frame) {
@@ -412013,53 +412095,53 @@ See docs for context: https://docs.aztec.network/errors/14`);
               return;
             }
             const info = await this.node.getNodeInfo();
-            check12(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
+            check13(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
             const coordinates = [[anchor2.getBlockNumber(), anchorHash]];
             const parameter = await anchor2.toBlockParameter();
             const values = await rollingPreferenceReadBatch([
               ...coordinates.map(([number20]) => async () => {
                 const data = await this.node.getBlockData(BlockNumber(number20));
-                check12(data);
+                check13(data);
                 return { hash: data.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(data.header)) };
               }),
               async () => {
-                const observed = await this.node.getContract(address6, parameter);
-                check12(observed);
+                const observed = await this.node.getContract(address7, parameter);
+                check13(observed);
                 return SerializableContractInstance.fromBuffer(new SerializableContractInstance(observed).toBuffer());
               }
             ]);
             for (let i = 0; i < coordinates.length; i++) {
               const [number20, hash12] = coordinates[i], data = values[i], h = data.header;
-              check12(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+              check13(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
             }
             const instance = values[1];
-            check12(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
+            check13(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address7));
             await archive(p.blockNumber, p.blockHash, p.headerFields);
             await guard();
           };
           await canonical2();
           const artifact = await this.contractStore.getContractArtifact(classId);
-          check12(artifact && artifact.name === "RollingBoard");
+          check13(artifact && artifact.name === "RollingBoard");
           if (frame) await frame.verifyArtifact(artifact);
           else {
             const artifactHash = await computeArtifactHash(artifact);
-            check12(artifactHash.toString() === p.expectedArtifactHash);
+            check13(artifactHash.toString() === p.expectedArtifactHash);
             const computedClass = await getContractClassFromArtifact({ ...artifact, artifactHash });
-            check12(computedClass.id.equals(classId));
+            check13(computedClass.id.equals(classId));
           }
           const call2 = await this.contractStore.getFunctionCall(
             "recover_preference_page",
             [scope, txHash.hash, p.blockNumber, Fr.fromString(p.blockHash), p.firstLog, p.logCount],
-            address6,
+            address7,
             classId
           );
-          check12(call2.type === FunctionType.UTILITY);
+          check13(call2.type === FunctionType.UTILITY);
           const array7 = (value, max) => {
-            check12(Array.isArray(value) && value.length <= max);
+            check13(Array.isArray(value) && value.length <= max);
             return value;
           };
           const effectBytes = (effect2) => {
-            check12(effect2 instanceof TxEffect && effect2.txHash.equals(txHash));
+            check13(effect2 instanceof TxEffect && effect2.txHash.equals(txHash));
             array7(effect2.noteHashes, MAX_NOTE_HASHES_PER_TX);
             array7(effect2.nullifiers, MAX_NULLIFIERS_PER_TX);
             array7(effect2.l2ToL1Msgs, MAX_L2_TO_L1_MSGS_PER_TX);
@@ -412068,24 +412150,24 @@ See docs for context: https://docs.aztec.network/errors/14`);
             array7(effect2.publicLogs, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH / PUBLIC_LOG_HEADER_LENGTH);
             array7(effect2.contractClassLogs, MAX_CONTRACT_CLASS_LOGS_PER_TX);
             for (const log3 of effect2.privateLogs) {
-              check12(array7(log3.fields, PRIVATE_LOG_SIZE_IN_FIELDS).length === PRIVATE_LOG_SIZE_IN_FIELDS);
+              check13(array7(log3.fields, PRIVATE_LOG_SIZE_IN_FIELDS).length === PRIVATE_LOG_SIZE_IN_FIELDS);
               natural2(log3.emittedLength, PRIVATE_LOG_SIZE_IN_FIELDS, 1);
-              check12(log3.hasZeroPadding());
+              check13(log3.hasZeroPadding());
             }
             let publicFields = 0;
             for (const log3 of effect2.publicLogs) {
               publicFields += array7(log3.fields, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH).length + PUBLIC_LOG_HEADER_LENGTH;
-              check12(publicFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
+              check13(publicFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
             }
             for (const log3 of effect2.contractClassLogs) {
-              check12(array7(log3.fields.fields, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS).length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
+              check13(array7(log3.fields.fields, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS).length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
               natural2(log3.emittedLength, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS, 1);
             }
-            check12(p.firstLog + p.logCount <= effect2.privateLogs.length);
+            check13(p.firstLog + p.logCount <= effect2.privateLogs.length);
             return TxEffect.prototype.toBuffer.call(effect2);
           };
           const receipt2 = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
-          check12(receipt2 instanceof MinedTxReceipt && receipt2.isMined() && receipt2.txHash.equals(txHash) && receipt2.blockNumber === p.blockNumber && receipt2.blockHash.toString() === p.blockHash && receipt2.txEffect);
+          check13(receipt2 instanceof MinedTxReceipt && receipt2.isMined() && receipt2.txHash.equals(txHash) && receipt2.blockNumber === p.blockNumber && receipt2.blockHash.toString() === p.blockHash && receipt2.txEffect);
           const receiptFields = {
             status: own2(receipt2, "status"),
             executionResult: own2(receipt2, "executionResult"),
@@ -412095,26 +412177,26 @@ See docs for context: https://docs.aztec.network/errors/14`);
             txIndexInBlock: own2(receipt2, "txIndexInBlock"),
             epochNumber: own2(receipt2, "epochNumber")
           };
-          check12(["proposed", "checkpointed", "proven", "finalized"].includes(receiptFields.status));
-          check12(["success", "reverted"].includes(receiptFields.executionResult) && typeof receiptFields.transactionFee === "bigint");
+          check13(["proposed", "checkpointed", "proven", "finalized"].includes(receiptFields.status));
+          check13(["success", "reverted"].includes(receiptFields.executionResult) && typeof receiptFields.transactionFee === "bigint");
           natural2(receiptFields.slotNumber, Number.MAX_SAFE_INTEGER);
           natural2(receiptFields.epochNumber, Number.MAX_SAFE_INTEGER);
           natural2(receiptFields.txIndexInBlock, 6141);
           const bytes3 = effectBytes(receipt2.txEffect);
           const effect = TxEffect.fromBuffer(bytes3);
-          check12(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
+          check13(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
           const header = await archive(p.blockNumber, p.blockHash, p.headerFields);
-          check12((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
+          check13((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
           const witness = await this.node.getTxEffectMembershipWitness(txHash);
-          check12(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
+          check13(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
           const pathLength = witness.siblingPath.pathSize;
           natural2(pathLength, 13);
-          check12(witness.siblingPath.toBufferArray().length === pathLength);
+          check13(witness.siblingPath.toBufferArray().length === pathLength);
           const leafIndex = witness.leafIndex;
-          check12(typeof leafIndex === "bigint" && leafIndex >= 0n && leafIndex < 1n << BigInt(pathLength));
+          check13(typeof leafIndex === "bigint" && leafIndex >= 0n && leafIndex < 1n << BigInt(pathLength));
           const pinnedWitness = { leafIndex, siblingPath: new SiblingPath(pathLength, witness.siblingPath.toBufferArray().map((value) => Buffer2.from(value))) };
-          check12(await verifyTxEffectMembershipWitness(await effect.computeTxEffectsTreeLeaf(), pinnedWitness, header.txEffectsTreeRoot));
-          check12(header.toFields().every((value, index) => value.toString() === p.headerFields[index]));
+          check13(await verifyTxEffectMembershipWitness(await effect.computeTxEffectsTreeLeaf(), pinnedWitness, header.txEffectsTreeRoot));
+          check13(header.toFields().every((value, index) => value.toString() === p.headerFields[index]));
           const verified2 = await authenticateCompactBlock({
             fields: p.compactFields,
             headerFields: p.headerFields,
@@ -412125,15 +412207,15 @@ See docs for context: https://docs.aztec.network/errors/14`);
             }
           });
           const selected = verified2.ciphertexts.filter((log3) => log3.txHash === p.txHash);
-          check12(selected.length === effect.privateLogs.length && selected.length > 0);
+          check13(selected.length === effect.privateLogs.length && selected.length > 0);
           for (let i = 0; i < selected.length; i++) {
             const emitted = effect.privateLogs[i].getEmittedFields();
-            check12(selected[i].txIndex === receiptFields.txIndexInBlock && selected[i].logIndex === i && selected[i].fields.length === emitted.length && emitted.every((value, index) => value.toString() === selected[i].fields[index]));
+            check13(selected[i].txIndex === receiptFields.txIndexInBlock && selected[i].logIndex === i && selected[i].fields.length === emitted.length && emitted.every((value, index) => value.toString() === selected[i].fields[index]));
           }
           const detachedReceipt = () => MinedTxReceipt.from({ ...receiptFields, txHash: TxHash.fromString(p.txHash), blockHash: BlockHash.fromString(p.blockHash), txEffect: TxEffect.fromBuffer(bytes3), debugLogs: void 0 });
           const pinnedNode = new Proxy(this.node, { get(target, key) {
             if (key === "getTxReceipt") return async (hash12, opts) => {
-              check12(hash12 instanceof TxHash && hash12.equals(txHash) && exact4(opts, ["includeTxEffect"]).includeTxEffect === true);
+              check13(hash12 instanceof TxHash && hash12.equals(txHash) && exact4(opts, ["includeTxEffect"]).includeTxEffect === true);
               return detachedReceipt();
             };
             const value = Reflect.get(target, key, target);
@@ -412160,13 +412242,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
           });
           await guard();
           const result = await this.#executeUtility(simulator, call2, [], [scope], anchor2, changeSetId);
-          check12(result.offchainEffects.length === 0 && result.result.length === 1);
+          check13(result.offchainEffects.length === 0 && result.result.length === 1);
           const admitted = Number(result.result[0].toBigInt());
           natural2(admitted, p.logCount);
           validateCommit = async () => {
             await canonical2();
             const after = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
-            check12(after instanceof MinedTxReceipt && after.isMined() && after.txHash.equals(txHash) && after.blockNumber === p.blockNumber && after.blockHash.toString() === p.blockHash && after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber && after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes3));
+            check13(after instanceof MinedTxReceipt && after.isMined() && after.txHash.equals(txHash) && after.blockNumber === p.blockNumber && after.blockHash.toString() === p.blockHash && after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber && after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes3));
             await guard();
           };
           await validateCommit();
@@ -413537,7 +413619,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
   init_bn254();
   init_keys();
   function makeProtocolContract(name, artifact) {
-    const address6 = ProtocolContractAddress[name];
+    const address7 = ProtocolContractAddress[name];
     const salt = ProtocolContractSalt[name];
     const classId = ProtocolContractClassId[name];
     const { artifactHash, privateFunctionsRoot, publicBytecodeCommitment } = ProtocolContractClassIdPreimage[name];
@@ -413559,14 +413641,14 @@ See docs for context: https://docs.aztec.network/errors/14`);
       immutablesHash: Fr.ZERO,
       publicKeys: PublicKeys.default(),
       salt,
-      deployer: address6,
-      address: address6
+      deployer: address7,
+      address: address7
     };
     return {
       instance,
       contractClass,
       artifact,
-      address: address6
+      address: address7
     };
   }
 
@@ -413691,7 +413773,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
   init_aztec_address();
   init_keys();
   function makeStandardContract(name, artifact) {
-    const address6 = StandardContractAddress[name];
+    const address7 = StandardContractAddress[name];
     const salt = StandardContractSalt[name];
     const classId = StandardContractClassId[name];
     const { artifactHash, privateFunctionsRoot, publicBytecodeCommitment } = StandardContractClassIdPreimage[name];
@@ -413714,13 +413796,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
       publicKeys: PublicKeys.default(),
       salt,
       deployer: AztecAddress.ZERO,
-      address: address6
+      address: address7
     };
     return {
       instance,
       contractClass,
       artifact,
-      address: address6
+      address: address7
     };
   }
 
@@ -417020,7 +417102,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
 
   // shared/sdk-store.mjs
   init_log();
-  function address5(value, length, field10) {
+  function address6(value, length, field10) {
     const text = typeof value === "string" ? value : value?.toString();
     if (typeof text !== "string" || !new RegExp(`^0x[0-9a-fA-F]{${length}}$`).test(text) || /^0x0+$/.test(text)) {
       throw new Error(`PXE storage requires a valid ${field10}`);
@@ -417033,8 +417115,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
       throw new Error("PXE storage requires the node L1 chain ID");
     }
     if (!Number.isSafeInteger(schemaVersion) || schemaVersion < 0) throw new Error("Invalid PXE storage schema version");
-    const rollup = address5(config9.rollupAddress, 40, "rollup address");
-    const account = address5(config9.accountAddress, 64, "account address");
+    const rollup = address6(config9.rollupAddress, 40, "rollup address");
+    const account = address6(config9.accountAddress, 64, "account address");
     const directory = config9.dataDirectory;
     if (typeof directory !== "string" || directory.length === 0 || directory.length > 512 || /[\u0000-\u001f\u007f]/.test(directory)) {
       throw new Error("PXE storage requires an explicit application data namespace");
@@ -417283,7 +417365,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check10,
+    check: () => check11,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     clone: () => clone5,
@@ -419813,7 +419895,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
       try {
         if (parts.length !== 2)
           throw new Error();
-        const [address6, prefix] = parts;
+        const [address7, prefix] = parts;
         if (!prefix)
           throw new Error();
         const prefixNum = Number(prefix);
@@ -419821,7 +419903,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           throw new Error();
         if (prefixNum < 0 || prefixNum > 128)
           throw new Error();
-        new URL(`http://[${address6}]`);
+        new URL(`http://[${address7}]`);
       } catch {
         payload.issues.push({
           code: "invalid_format",
@@ -429882,7 +429964,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check10,
+    check: () => check11,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     codec: () => codec5,
@@ -430203,8 +430285,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check12, params) {
-        return this.check(refine5(check12, params));
+      refine(check13, params) {
+        return this.check(refine5(check13, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine5(refinement, params));
@@ -431347,7 +431429,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType5.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor5(inst, ctx, json7, params);
   });
-  function check10(fn) {
+  function check11(fn) {
     const ch = new $ZodCheck5({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -432076,7 +432158,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check11,
+    check: () => check12,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     clone: () => clone6,
@@ -434606,7 +434688,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       try {
         if (parts.length !== 2)
           throw new Error();
-        const [address6, prefix] = parts;
+        const [address7, prefix] = parts;
         if (!prefix)
           throw new Error();
         const prefixNum = Number(prefix);
@@ -434614,7 +434696,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           throw new Error();
         if (prefixNum < 0 || prefixNum > 128)
           throw new Error();
-        new URL(`http://[${address6}]`);
+        new URL(`http://[${address7}]`);
       } catch {
         payload.issues.push({
           code: "invalid_format",
@@ -444675,7 +444757,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check11,
+    check: () => check12,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     codec: () => codec6,
@@ -444996,8 +445078,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check12, params) {
-        return this.check(refine6(check12, params));
+      refine(check13, params) {
+        return this.check(refine6(check13, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine6(refinement, params));
@@ -446140,7 +446222,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType6.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor6(inst, ctx, json7, params);
   });
-  function check11(fn) {
+  function check12(fn) {
     const ch = new $ZodCheck6({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -447372,8 +447454,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   // node_modules/@aztec-labs/entrypoints/dest/default_multi_call_entrypoint.js
   var DefaultMultiCallEntrypoint = class {
     address;
-    constructor(address6 = STANDARD_MULTI_CALL_ENTRYPOINT_ADDRESS) {
-      this.address = address6;
+    constructor(address7 = STANDARD_MULTI_CALL_ENTRYPOINT_ADDRESS) {
+      this.address = address7;
     }
     async createTxExecutionRequest(exec, gasSettings, chainInfo) {
       const { authWitnesses, capsules, extraHashedArgs } = exec;
@@ -447559,8 +447641,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var DefaultAccountEntrypoint = class {
     address;
     auth;
-    constructor(address6, auth) {
-      this.address = address6;
+    constructor(address7, auth) {
+      this.address = address7;
       this.auth = auth;
     }
     async createTxExecutionRequest(exec, gasSettings, chainInfo, options) {
@@ -447894,14 +447976,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @param options - The deploy options to augment.
     */
     prepareDeployOptions(options) {
-      const { address: address6 } = this.getCachedInstanceOrThrow();
+      const { address: address7 } = this.getCachedInstanceOrThrow();
       const existing = options.additionalScopes ?? [];
-      const sendMessagesAs = options.sendMessagesAs ?? (options.from === NO_FROM ? address6 : void 0);
+      const sendMessagesAs = options.sendMessagesAs ?? (options.from === NO_FROM ? address7 : void 0);
       return {
         ...options,
         additionalScopes: [
           ...existing,
-          address6
+          address7
         ],
         sendMessagesAs
       };
@@ -448232,7 +448314,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         ...additionalScopes,
         ...tagSenderScopes
       ];
-      const scopeSet = new Set(allScopes.map((address6) => address6.toString()));
+      const scopeSet = new Set(allScopes.map((address7) => address7.toString()));
       return [
         ...scopeSet
       ].map(AztecAddress.fromStringUnsafe);
@@ -448410,12 +448492,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         throw err2;
       }
     }
-    async registerSender(address6, _alias = "") {
+    async registerSender(address7, _alias = "") {
       await this.pxe.registerTaggingSecretSource({
         kind: "address-derived",
-        sender: address6
+        sender: address7
       });
-      return address6;
+      return address7;
     }
     async registerContract(instance, artifact, secretKeyOrKeys) {
       if (artifact) {
@@ -448424,9 +448506,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const contractAddress = await this.pxe.registerContract(instance);
       if (secretKeyOrKeys) {
         const derivedKeys = secretKeyOrKeys instanceof Fr ? await deriveKeys(secretKeyOrKeys) : await deriveKeysFromMasterSecretKeys(secretKeyOrKeys);
-        const { address: address6 } = await this.pxe.registerAccount(derivedKeys, await computePartialAddress(instance));
-        if (!address6.equals(contractAddress)) {
-          throw new Error(`Registered account address ${address6.toString()} does not match contract instance address ${contractAddress.toString()}: the provided keys do not correspond to this account.`);
+        const { address: address7 } = await this.pxe.registerAccount(derivedKeys, await computePartialAddress(instance));
+        if (!address7.equals(contractAddress)) {
+          throw new Error(`Registered account address ${address7.toString()} does not match contract instance address ${contractAddress.toString()}: the provided keys do not correspond to this account.`);
         }
       }
     }
@@ -448570,8 +448652,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * Resolves a contract address to a human-readable name via PXE, if available.
     * @param address - The contract address to resolve.
     */
-    async getContractName(address6) {
-      const instance = await this.pxe.getContractInstance(address6);
+    async getContractName(address7) {
+      const instance = await this.pxe.getContractInstance(address7);
       if (!instance) {
         return void 0;
       }
@@ -448617,16 +448699,16 @@ ${context.join("\n")}`;
     * Returns metadata about a contract, including whether it has been initialized, published, and updated.
     * @param address - The contract address to query.
     */
-    async getContractMetadata(address6) {
-      const instance = await this.pxe.getContractInstance(address6);
-      const publiclyRegisteredContractPromise = this.aztecNode.getContract(address6);
+    async getContractMetadata(address7) {
+      const instance = await this.pxe.getContractInstance(address7);
+      const publiclyRegisteredContractPromise = this.aztecNode.getContract(address7);
       let initializationStatus;
       if (instance) {
-        const initNullifier = await computeSiloedPrivateInitializationNullifier(address6, instance.initializationHash);
+        const initNullifier = await computeSiloedPrivateInitializationNullifier(address7, instance.initializationHash);
         const witness = await this.aztecNode.getNullifierMembershipWitness("latest", initNullifier);
         initializationStatus = witness ? ContractInitializationStatus.INITIALIZED : ContractInitializationStatus.UNINITIALIZED;
       } else {
-        const publicNullifier = await computeSiloedPublicInitializationNullifier(address6);
+        const publicNullifier = await computeSiloedPublicInitializationNullifier(address7);
         const witness = await this.aztecNode.getNullifierMembershipWitness("latest", publicNullifier);
         initializationStatus = witness ? ContractInitializationStatus.INITIALIZED : ContractInitializationStatus.UNKNOWN;
       }
@@ -480180,11 +480262,11 @@ mod tests {
         if (!call2 || seen.has(call2) || seen.size >= 128) throw unsupported();
         seen.add(call2);
         diagnostics2.callsVisited = seen.size;
-        const address6 = call2.publicInputs?.callContext?.contractAddress;
-        diagnostics2.callAddressIsAddress = address6 instanceof AztecAddress;
+        const address7 = call2.publicInputs?.callContext?.contractAddress;
+        diagnostics2.callAddressIsAddress = address7 instanceof AztecAddress;
         diagnostics2.nestedType = type(call2.nestedExecutionResults);
-        if (!(address6 instanceof AztecAddress) || !Array.isArray(call2.nestedExecutionResults) || call2.nestedExecutionResults.length > 128) throw unsupported();
-        if (address6.equals(board2)) {
+        if (!(address7 instanceof AztecAddress) || !Array.isArray(call2.nestedExecutionResults) || call2.nestedExecutionResults.length > 128) throw unsupported();
+        if (address7.equals(board2)) {
           diagnostics2.boardCalls++;
           if (applicationCall) throw unsupported();
           applicationCall = call2;
@@ -480686,10 +480768,10 @@ mod tests {
   function cost(gas, prices) {
     return BigInt(gas.daGas) * prices.feePerDaGas + BigInt(gas.l2Gas) * prices.feePerL2Gas;
   }
-  function allocate(budget, lower4, caps, prices) {
-    const rates = [prices.feePerDaGas, prices.feePerL2Gas], values = dimensions.map((k) => lower4[k]);
-    if (dimensions.some((k) => lower4[k] > caps[k]) || cost(lower4, prices) > budget) return null;
-    let remaining = budget - cost(lower4, prices);
+  function allocate(budget, lower5, caps, prices) {
+    const rates = [prices.feePerDaGas, prices.feePerL2Gas], values = dimensions.map((k) => lower5[k]);
+    if (dimensions.some((k) => lower5[k] > caps[k]) || cost(lower5, prices) > budget) return null;
+    let remaining = budget - cost(lower5, prices);
     const needs = dimensions.map((k, i) => BigInt(caps[k] - values[i]) * rates[i]), total = needs[0] + needs[1];
     for (let i = 0; i < 2; i++) if (rates[i] === 0n) values[i] = caps[dimensions[i]];
     else if (total) values[i] += Number(min(needs[i], remaining * needs[i] / total) / rates[i]);
@@ -480729,8 +480811,8 @@ mod tests {
     for (let pass = 0; pass < 8; pass++) {
       await guard();
       const payload = await payloadFor(reservation);
-      const privateResult = await simulator.private(payload, from, privateSettings), lower4 = privateResult.gasUsed.totalGas;
-      const gasLimits = allocate(reservation - 1n, lower4, caps, ceiling.maxFeesPerGas);
+      const privateResult = await simulator.private(payload, from, privateSettings), lower5 = privateResult.gasUsed.totalGas;
+      const gasLimits = allocate(reservation - 1n, lower5, caps, ceiling.maxFeesPerGas);
       if (gasLimits) {
         let probe;
         try {

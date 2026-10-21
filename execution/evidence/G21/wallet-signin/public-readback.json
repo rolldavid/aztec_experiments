@@ -1,0 +1,30 @@
+{
+  "/reader.mjs": "b055f92c8f126d6d9980d53790c1df8a76cc7c07a7a43e752f6cd0fd3268ba15",
+  "/wallet-panel.mjs": "26a32d801e13fecff92e39ce7f50ddd2c67a2abdb7b30e1e7fdc0ff45bb493fd",
+  "/wallet/runtime.mjs": "6dd9e5bbbc216d8920f6926fdb6da1cedab9e74a194736e8bbfe50316b65c990",
+  "/api/status": {
+    "status": 200,
+    "state": "ready",
+    "posts": 0
+  },
+  "/api/feed?limit=1": {
+    "status": 200,
+    "state": null,
+    "posts": 1
+  },
+  "/prover/healthz": {
+    "status": 200,
+    "state": null,
+    "posts": 0
+  },
+  "scripts": [
+    "/wallet/ethers.js",
+    "/wallet/aztec_bundle.js",
+    "/wallet/crs-client.js",
+    "/wallet/wallet-providers.js",
+    "/wallet/claim-secret-store.js",
+    "/wallet/ethereum-account-session.js",
+    "/wallet/account.js",
+    "/wallet/engine.js"
+  ]
+}

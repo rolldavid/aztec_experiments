@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October wallet sign-in correction active: replace random password/file onboarding with Ethereum EOA signature-derived Aztec account and automatic remembered browser session. Root custody/runtime; funding agent panel/reader isolated; publication agent encrypted session module isolated; ux agent independent review. Preserve existing journals, live contracts and services; frontend-only publish after focused checks.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October Ethereum sign-in0726aad9817c published. Fixed signature deterministically derives Aztec master secret/salt/address; remembered encrypted browser custody restores automatically; no legacy password/file/passkey flow in Rolling.39 account/UI +12 assets +6 publication checks pass; real Ethereum/WebCrypto/Aztec address derivation covered, no new browser/payment run. Public hashes8scripts/feed/prover pass. Static pointer switched with allcurrentPIDs preserved (app232957); nextstartui0726. Obsolete shared account modules/recovery CLI and unsupported browser-envelope runners deleted; demo HTML rebuilt;12 focused cleanup checks pass; broaderqualification unchanged.
 
 ## Ready internal work
 

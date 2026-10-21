@@ -1,0 +1,18 @@
+✔ browser actual module persists ciphertext and interoperates with Node AES-GCM (7.332084ms)
+✔ browser actual custody rejects wrong wallet, ciphertext corruption and moved scope (2.991916ms)
+✔ browser save observes transaction abort and never reports durable success (1.102792ms)
+✔ actual engine codec matches frozen claim, boundary and exit commitments (4.14725ms)
+✔ actual public deposit flow saves and reads back before send; returns bridge message index without secret (6.779875ms)
+✔ actual deposit rejects missing trusted config and an unbranded node before custody or payment (1.000334ms)
+✔ actual deposit flow fails closed for missing store, failed durability and disabled portal (2.428792ms)
+✔ actual deposit flow fails closed for mismatched read-back and existing receipt (1.723583ms)
+✔ actual recovery rejects inconsistent deposit metadata and requires its saved secret (2.563542ms)
+✔ wiped claim storage reports missing secret and cannot send another payment (0.800958ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 304.271375
