@@ -17,28 +17,7 @@ test('wrong packaged Node pin fails before application',t=>{const f=setup(t);fs.
 test('environment helper rejects unsupported propagation and drops arbitrary values',()=>{assert.throws(()=>assertOperatorEnvironment({}),/shell/);const env={HOME:'/tmp/home',BILLBOARD_OPERATOR_PROFILE:'1',OTEL_SDK_DISABLED:'true',OTEL_PROPAGATORS:'none',EXTRA:'secret'};assert.equal(operatorEnvironment('/package',env).EXTRA,undefined);assert.throws(()=>assertOperatorEnvironment({...env,OTEL_PROPAGATORS:'baggage'}));assert.throws(()=>assertOperatorEnvironment({...env,OTEL_FOO:'x'}));});
 test('runtime package excludes developer signing dependencies, TXE and path escapes',()=>{for(const name of ['node_modules/elliptic/lib/index.js','node_modules/@ethersproject/wallet/index.js','node_modules/@aztec-labs/txe/dest/server.js','node_modules/@aztec-labs/cli/index.js','node_modules/@aztec-labs/cli-wallet/index.js','../escape','/etc/passwd'])assert.throws(()=>assertPermittedPath(name));assertPermittedPath('node_modules/ethers/lib.esm/index.js');assertPermittedPath('.build/sdk/aztec_bundle.js');assert.equal(operatorCommand('/package',['author','post']).entry,'/package/apps/src/billboard/user/cli.mjs');});
 
-test('standalone recovery bundle validates real claim commitments without repository dependencies',async t=>{
- const {buildRecoveryBundle,runtimeInventory}=await import('./package-operator.mjs');const {runInNewContext}=await import('node:vm');
- const built=await buildRecoveryBundle(root),manifest=JSON.parse(fs.readFileSync(built.manifest));for(const name of Object.keys(manifest.inputs))assertPermittedPath(name);
- const f=setup(t);fs.copyFileSync(built.output,path.join(f.dir,'recovery.mjs'));
- const expected=runInNewContext(fs.readFileSync(path.join(root,'shared/poseidon2.js'),'utf8')+'\ncomputeSecretHash(1n).toString(16)');
- const code=`import assert from 'node:assert/strict';
- const originalSelf=globalThis.self,originalProcess=globalThis.process;
- const {createRecoveryFile,restoreRecoveryFile}=await import('./recovery.mjs');
- const field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
- const wallet={secretKey:field(2),salt:field(3)},password='disposable-recovery-password';
- const record={schemaVersion:1,secret:field(1),secretHash:'0x'+${JSON.stringify(expected)}.padStart(64,'0')};
- const scope={l1ChainId:'31337',rollupAddress:'0x'+'11'.repeat(20),rollupVersion:'5',boardAddress:field(4),portalAddress:'0x'+'22'.repeat(20),depositor:'0x'+'33'.repeat(20)};
- const storage={keys:async()=>[],read:async()=>null},claimStore={exportRecords:async()=>[{scope,record}]};
- const envelope=await createRecoveryFile({wallet,storage,claimStore,password});
- let saved;assert.deepEqual(await restoreRecoveryFile({wallet,storage,claimStore:{load:async()=>null,save:async(s,r)=>{saved=r;}},password,envelope}),{claims:1,journals:0});assert.deepEqual(saved,record);
- await assert.rejects(createRecoveryFile({wallet,storage,claimStore:{exportRecords:async()=>[{scope,record:{...record,secretHash:field(9)}}]},password}),/commitment mismatch/);
- assert.equal(globalThis.self,originalSelf);assert.equal(globalThis.process,originalProcess);console.log('clean recovery passed');`;
- fs.writeFileSync(path.join(f.dir,'check.mjs'),code);
- const run=spawnSync(process.execPath,[path.join(f.dir,'check.mjs')],{cwd:f.dir,encoding:'utf8',env:{PATH:'/usr/bin:/bin'},timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/clean recovery passed/);
- const inventory=runtimeInventory(root,{nodePath:process.execPath,hashFiles:false,recoveryBundle:built});
- assert(inventory.packages.some(p=>p.name==='ethers'&&p.version.startsWith('6.')));assert(inventory.packages.some(p=>p.name==='fake-indexeddb'));assert(inventory.packages.every(p=>!p.name.startsWith('@aztec/')));assert(!inventory.files.some(f=>f.path.includes('/test_')||f.path.includes('/test-')));
-});
+test('retired account-file recovery route cannot launch',()=>{assert.equal(Object.hasOwn(ROUTES,'recover-wallet'),false);assert.throws(()=>operatorCommand('/package',['recover-wallet','restore']),/Unknown operator command/);});
 test('inherited PATH cannot choose launcher Node or path helpers',t=>{const f=setup(t),poison=path.join(f.dir,'poison'),marker=path.join(f.dir,'poison-ran');fs.mkdirSync(poison);for(const name of ['node','dirname','env','awk']){const filename=path.join(poison,name);fs.writeFileSync(filename,'#!/bin/sh\necho bad > '+JSON.stringify(marker)+'\nexit 99\n',{mode:0o755});}const run=f.run(['author'],{PATH:poison});assert.equal(run.status,0,run.stderr);assert(!fs.existsSync(marker));});
 test('dynamic CLI resources are explicit inventory requirements',async()=>{
  const {OPERATOR_RESOURCES}=await import('./package-operator.mjs');

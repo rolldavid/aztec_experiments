@@ -17,11 +17,9 @@ import {retryUntil} from '@aztec-labs/foundation/retry';
 import {TEST_FEE_PADDING} from '@aztec-labs/aztec/testing';
 import {startDevnet,ensureDevelopmentMessageReady} from './network.mjs';
 import {API_VERSION,packText,handleField} from '../protocol.mjs';
-import {restoreApplicationAuthor} from '../../scripts/w02-wallet-restore.mjs';
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1',proofs=false,browserAuthor=false,onProgress=console.log}){
-  const [generated,operator]=await generateSchnorrAccounts(2,'schnorr_initializerless');
-  const author=browserAuthor?(await restoreApplicationAuthor(generated)).author:generated;
+export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1',proofs=false,onProgress=console.log}){
+  const [author,operator]=await generateSchnorrAccounts(2,'schnorr_initializerless');
   const net=await startDevnet({directory,fundingAddresses:[author.address,operator.address],proofs,onProgress});
   let wallet,provider,closed=false;
   async function close(){

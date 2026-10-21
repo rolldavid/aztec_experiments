@@ -46,23 +46,10 @@ not tools. Keep deployment credentials scoped to the configured repository.
 pins the escrow, board, rollup, portal and token. Public deployments require HTTPS
 and finalized chain state. The frontend must allow the descriptor origin in CSP.
 
-`npm run dev:plugins:browser` creates a local funded board test identity and serves
-the real application. `PLUGIN_PROOFS=true npm run test:plugins:wallet` tests real MetaMask funding,
-Aztec claim/post, live Venice/GitHub reply, measured accounting and withdrawal.
-The fixture mints local USDC and prepares board collateral/private transaction fees;
-it does not pre-fund the plugin account. Venice uses real credits. Test wallet
-material stays in ignored `.build`. Explicit MetaMask Terms consent is required;
-the per-run `accept-wallet-terms` marker records consent already given by the user.
-`PLUGIN_PROOFS=true npm run test:plugins:write` also creates and verifies a real
-draft PR. `PLUGIN_PROOFS=true npm run test:plugins:operations` verifies deployment,
-fresh operator fee-credit onboarding, and earnings redemption. These commands run
-under the maintained test supervisor and require successful cleanup. Set
-`PLUGIN_PROOFS=false` explicitly for faster local iteration; public networks keep
-proving enabled. Run expensive qualification scenarios one at a time.
-`PLUGIN_PROOFS=true node --env-file=plugins/.env plugins/devnet/qualify.mjs interruption`
-exercises a real funded request with an explicitly interrupted runner, service restart,
-no replay, expiry and release through the normal UI. It makes no paid inference;
-the separate read/write scenarios qualify actual Venice billing.
+`npm run dev:plugins` retains the native development environment.
+`PLUGIN_PROOFS=true npm run test:plugins:operations` verifies deployment,
+operator fee-credit onboarding and earnings redemption under the test supervisor.
+The previous account-file browser qualification runners have been retired.
 
 See [deployment and operator commands](DEPLOYMENT.md) for independent plugin setup.
 

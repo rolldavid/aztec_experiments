@@ -28,7 +28,7 @@ export function operatorCrsResources(manifest){
  const {files,derivedG1}=BillboardCRS.validateManifest(manifest);
  return [...files.values(),derivedG1].map(file=>({path:'apps/dist/crs/'+file.name,sha256:file.sha256}));
 }
-export function runtimeInventory(root=ROOT,{nodePath,hashFiles=true,recoveryBundle=null}={}){
+export function runtimeInventory(root=ROOT,{nodePath,hashFiles=true}={}){
  const files=new Map(),packages=new Map(),scanned=new Set();
  const add=(relative,source=path.join(root,relative),expected)=>{assertPermittedPath(relative);if(files.has(relative))return;const stat=regular(source);if(source.startsWith(root+path.sep))noSymlink(root,source);const digest=hashFiles||expected?sha(fs.readFileSync(source)):null;if(expected&&digest!==expected)throw Error('Runtime artifact digest mismatch: '+relative);files.set(relative,{path:relative,source,bytes:stat.size,sha256:digest,executable:!!(stat.mode&0o111)});};
  function packageAt(name,from){
@@ -46,7 +46,6 @@ export function runtimeInventory(root=ROOT,{nodePath,hashFiles=true,recoveryBund
  }
  function source(relative){
   if(scanned.has(relative))return;scanned.add(relative);
-  if(relative==='apps/src/billboard/user/recovery-file.mjs'&&recoveryBundle){add(relative,recoveryBundle.output);add('runtime/recovery-manifest.json',recoveryBundle.manifest);return;}
   add(relative);
   if(!/\.(?:mjs|cjs|js)$/.test(relative))return;
   const filename=path.join(root,relative),text=fs.readFileSync(filename,'utf8');
@@ -65,30 +64,13 @@ export function runtimeInventory(root=ROOT,{nodePath,hashFiles=true,recoveryBund
  if(nodePath){regular(nodePath);if(fs.lstatSync(nodePath).isSymbolicLink())throw Error('Pinned Node must not be a symlink');add('runtime/bin/node',path.resolve(nodePath));}
  return {schemaVersion:1,profile:'operator',packages:[...packages.values()].sort((a,b)=>a.path.localeCompare(b.path)),files:[...files.values()].sort((a,b)=>a.path.localeCompare(b.path))};
 }
-export async function buildRecoveryBundle(root=ROOT){
- const {build,version}=await import('esbuild');
- if(version!=='0.25.12')throw Error('Unpinned recovery bundle compiler');
- const directory=path.join(root,'.build/operator-recovery'),output=path.join(directory,'recovery-file.mjs'),manifest=path.join(directory,'manifest.json');
- fs.mkdirSync(directory,{recursive:true});
- const result=await build({absWorkingDir:root,entryPoints:['apps/src/billboard/user/recovery-file.mjs'],outfile:output,bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',metafile:true,
-  mainFields:['browser','module','main'],conditions:['browser'],external:['node:*','buffer','crypto','util','os','events','assert','stream','path','fs','tty','url','http','https','zlib'],
-  banner:{js:'// Module-local browser selection: no global SDK/process mutation.\nimport {createRequire as __recoveryRequire} from \"node:module\";\nvar require = __recoveryRequire(import.meta.url);\nvar self = {};'},
-  define:{'process.env.NODE_ENV':'"production"','process.env.LOG_LEVEL':'"silent"'},loader:{'.wasm':'binary'},logLevel:'silent'});
- const inputs={};for(const name of Object.keys(result.metafile.inputs).sort()){assertPermittedPath(name);noSymlink(root,path.join(root,name));inputs[name]=sha(fs.readFileSync(path.join(root,name)));}
- for(const record of Object.values(result.metafile.outputs))for(const item of record.imports)if(!isBuiltin(item.path))throw Error('Unbundled recovery dependency: '+item.path);
- if(result.outputFiles.length!==1)throw Error('Unexpected recovery bundle outputs');
- fs.writeFileSync(output,result.outputFiles[0].contents);
- fs.writeFileSync(manifest,JSON.stringify({schemaVersion:1,compiler:version,inputs,output:{path:'apps/src/billboard/user/recovery-file.mjs',sha256:sha(result.outputFiles[0].contents)}},null,2)+'\n');
- return {output,manifest};
-}
 export async function packageOperator({root=ROOT,destination,nodePath,dryRun=false}){
  checkOperatorBuild(root);
  const pins=JSON.parse(fs.readFileSync(path.join(root,'toolchain.json')));
  regular(nodePath);
  const version=execFileSync(nodePath,['--version'],{encoding:'utf8',env:{PATH:'/usr/bin:/bin'},timeout:10000}).trim();
  if(version!=='v'+pins.node)throw Error('Incorrect Node version for package');
- const recoveryBundle=await buildRecoveryBundle(root);
- const inventory=runtimeInventory(root,{nodePath,hashFiles:!dryRun,recoveryBundle});
+ const inventory=runtimeInventory(root,{nodePath,hashFiles:!dryRun});
  checkOperatorBuild(root);
  if(dryRun)return inventory;
  const target=path.resolve(destination);if(fs.existsSync(target))throw Error('Package destination must not exist');
