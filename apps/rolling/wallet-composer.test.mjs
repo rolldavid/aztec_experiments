@@ -28,19 +28,21 @@ function dom(t){
  document={createElement:t=>new Element(t),createTextNode:t=>new Element('#text',t),body:new Element('body')};document.activeElement=document.body;
  document.querySelector=s=>document.body.querySelector(s);document.querySelectorAll=s=>document.body.querySelectorAll(s);
  document.until=predicate=>new Promise(resolve=>{const observe=()=>{const value=predicate();if(value){observers.delete(observe);resolve(value);}};observers.add(observe);observe();});
- const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
+ const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'}}={}){
- const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const core={sessions:0,status:0,names:0,moderator:0};
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null}={}){
+ const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={bokConfigured:true,busy:false,topup:{bok:{}},application:{
   readAccountStatus:async()=>{core.status++;return {status:fee,depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
-  readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action){prepared=action;throw Error('stop at authoritative preparation boundary');}
+  readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
+  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
+  async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>{core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('textarea'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
- return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,core:()=>({...core})};
+ return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
 }
 test('typing @bok and editing/removing it stays immediate while a shared balance read is pending',{timeout:3000},async t=>{
  const f=await fixture(t);await f.started.promise;const editor=f.document.querySelector('textarea'),dialog=f.document.querySelector('dialog');
@@ -164,4 +166,44 @@ test('closing while background account status owns the SDK remains available',{t
  assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(f.panel.close(),true);
  statusGate.resolve();await init;assert.equal(!!f.document.querySelector('dialog').open,false);
  assert.equal(f.calls.sessions,1);assert.equal(f.calls.signIn,0);
+});
+
+for(const type of ['post','reply','quote','repost'])test(`one ${type} click submits the captured draft once and prevents double clicks`,{timeout:3000},async t=>{
+ const hold=Promise.withResolvers(),entered=Promise.withResolvers();
+ const defaults={type,subboard:'0',...(type==='reply'?{parent:'10',root:'1'}:{}),...(['quote','repost'].includes(type)?{reference:'12'}:{})};
+ const f=await fixture(t,{defaults,posting:{prepare:()=>{entered.resolve();return hold.promise;}}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});
+ const editor=f.document.querySelector('textarea');editor.value='My exact message';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});
+ assert(!button.textContent.includes('Review'));button.fire('click');button.fire('click');
+ assert.equal(button.textContent,'Posting…');assert(button.disabled);await entered.promise;assert.equal(f.submissions.length,0);
+ hold.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+ assert.deepEqual(f.submissions,['post-1']);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.prepared().content,'My exact message');assert.equal(f.prepared().type,type);
+ if(type==='reply'){assert.equal(f.prepared().parent,'10');assert.equal(f.prepared().root,'1');}
+ if(['quote','repost'].includes(type))assert.equal(f.prepared().reference,'12');
+});
+for(const status of ['authorized','unknown','reverted'])test(`one Bok post click continues only confirmed authorization: ${status}`,{timeout:3000},async t=>{
+ let sends=0;const posting={status,submit:()=>{if(++sends===2)posting.status='confirmed';}};
+ const f=await fixture(t,{posting});await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ await f.document.until(()=>f.host.textContent.includes('1 USDC available'));const editor=f.document.querySelector('textarea');editor.value='@bok please reply';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});assert.equal(button.textContent,'Post');button.fire('click');
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ if(status!=='unknown')await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('1 USDC available'));
+ assert.deepEqual(f.submissions,status==='authorized'?['post-1','post-2']:['post-1']);assert(f.prepareOptions.every(o=>o.immediate===true));
+});
+
+test('changed displayed rules stop one-click posting before preparation or sending',{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});
+ const editor=f.document.querySelector('textarea');editor.value='Do not send under changed rules';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});
+ f.document.rules={version:'2',text:'Changed rules'};
+ button.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);assert(f.document.body.textContent.includes('Current board rules are unavailable, changed'));
+});
+test('submission rejection retains the exact draft and unresolved action without a second Post send',{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{submit:()=>{throw Error('ambiguous response');}}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});
+ const editor=f.document.querySelector('textarea');editor.value='Keep this exact draft';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-review]'),null);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Keep this exact draft'));
 });

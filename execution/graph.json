@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "21October Ethereum sign-in0726aad9817c published. Fixed signature deterministically derives Aztec master secret/salt/address; remembered encrypted browser custody restores automatically; no legacy password/file/passkey flow in Rolling.39 account/UI +12 assets +6 publication checks pass; real Ethereum/WebCrypto/Aztec address derivation covered, no new browser/payment run. Public hashes8scripts/feed/prover pass. Static pointer switched with allcurrentPIDs preserved (app232957); nextstartui0726. Obsolete shared account modules/recovery CLI and unsupported browser-envelope runners deleted; demo HTML rebuilt;12 focused cleanup checks pass; broaderqualification unchanged.",
+      "checkpoint": "21October one-click post verified: 21 UI +495 application/session +3 immediate +8 asset checks; independent review approved. Static-only publication next. User additionally authorized parallel full-flow performance optimization: post_path_review simulation/proof, post_publish_plan receipt/funding checks, flow_scope_efficiency operation-scoped sync/readiness and nonblocking account reads.",
       "execution_lane": "application completion",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",

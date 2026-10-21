@@ -66,7 +66,7 @@ function fixture(){
   const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -1810,4 +1810,22 @@ test('lazy Bok resolver is not needed for account status or ordinary post prepar
  f.options.resolveBok=async()=>{resolutions++;return verified;};app=f.restart();
  assert.equal((await app.readBokStatus()).available,true);assert.equal(resolutions,2);
  assert.equal((await app.readBokStatus()).available,true);assert.equal(resolutions,2);
+});
+
+test('immediate post skips review estimation but submission estimates and enforces configured fee ceiling',async()=>{
+ const f=fixture(),action={type:'post',subboard:'0',name:'0',deposit:'9',content:'One click'};
+ const prepared=await f.app.prepare(action,{immediate:true});assert.equal(prepared.maximumFee,'100');assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+ f.state.fee=101n;await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.estimates,1);assert.equal(f.state.sends,0);
+ f.state.fee=10n;await f.app.submitPrepared(prepared.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,1);
+});
+test('immediate preparation is restricted to social posting with no caller fee override',async()=>{
+ for(const options of [{immediate:false},{immediate:true,maximumFee:'999'}])await assert.rejects(fixture().app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One click'},options));
+ await assert.rejects(fixture().app.prepare({type:'name',first:'Test',last:'Person'},{immediate:true}));
+});
+
+test('immediate Bok preparation skips review estimates for both authorized request and exact saved post',async()=>{
+ const f=bokFixture(),prepared=await f.app.prepare(bokAction(),{immediate:true});assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
+ const authorized=await f.app.submitPrepared(prepared.intentId);assert.equal(authorized.status,'authorized');assert.equal(f.state.estimates,1);
+ const post=await f.app.prepareBokPost(authorized.intentId,{immediate:true});assert.equal(f.state.estimates,1);assert.equal(post.maximumFee,'100');
+ await f.app.submitPrepared(post.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,2);assert.equal(f.state.calls.at(-1).name,'post_with_bok');
 });

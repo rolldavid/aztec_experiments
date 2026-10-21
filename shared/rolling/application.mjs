@@ -790,7 +790,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(field(expected.toString(),true)===id,'ROLLING_INVALID_RESPONSE');seen.add(id);records.push({id,first,last});
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
-    async prepare(input){return exclusive(async()=>{await guard();const action=clone(input),store=await slot();let prior=await store.read();
+    async prepare(input,options){return exclusive(async()=>{
+      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok'].includes(input?.type));
+      await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
       const previousTx=await session.journal.assertCanStart();
@@ -826,9 +828,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=await interaction(await selectedContract(record),record);record.encoded=selected.encoded;
-      progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
-        prepared:await payment(action,record),from:session.owner,guard});
-      record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
+      // Immediate posting uses the application's configured ceiling. Submission
+      // estimates once against current state and must stay within this bound.
+      if(immediate)record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
+      else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
+        prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();await store.write(prior,record);return summary(record);
     });},
     async prepareBokRelease(id,input){return exclusive(async()=>{
       const {type}=exactData(input,['type']);check(['cancel-bok-request','expire-bok-request'].includes(type),'ROLLING_INVALID_ACTION');
@@ -844,7 +848,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
       await checkBokRelease(source,type);await (await slot()).write(saved,record);return summary(record);
     });},
-    async prepareBokPost(id){return exclusive(async()=>{
+    async prepareBokPost(id,options){return exclusive(async()=>{
+      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true);
       await guard();let saved=await savedIntent(id);check(['authorize','post'].includes(saved.value.bok?.phase),'ROLLING_RECOVERY_UNSUPPORTED');
       const previousPhase=saved.value.bok.phase,authorized=await outcome(saved);
       check(authorized.status===(previousPhase==='authorize'?'authorized':'bok-post-reverted'),'ROLLING_RECOVERY_REQUIRED');saved=await savedIntent(id);
@@ -864,8 +869,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // Its proof attempt must not inherit authority bound to the previous ID.
       delete record.preproof;delete record.preproofReview;
       const selected=await interaction(await contract(),record);record.encoded=selected.encoded;
-      progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
-        prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
+      if(immediate)record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
+      else {progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
+        prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();}
       await waitingBok(record);await guard();await (await slot()).write(saved,record);return summary(record);
     });},
     // Explicit saved-action recovery. Inspection never writes financial records;

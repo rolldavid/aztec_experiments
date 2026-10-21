@@ -755,3 +755,5 @@ G21 current signup failure: funding_investigation investigates trusted-read boun
 
 ## 21 October — Ethereum sign-in and automatic browser session
 Root owns shared account/runtime integration. funding_investigation implements panel/reader in isolated checkout; publication_prepare implements signature derivation/encrypted IndexedDB session in isolated checkout; ux_review independently reviews custody and integrated changes. No browser launches, contract replacements or healthy backend restarts.
+
+21 October: root implements one-click posting. post_path_review investigates and independently reviews read-only; post_publish_plan locates static-only deployment workflow read-only. No delegated source edits or expensive tests.
