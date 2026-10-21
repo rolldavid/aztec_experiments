@@ -1,3 +1,4 @@
+export {prepareBokCreditPurchase} from './rolling/bok-credit-purchase.mjs';
 export {createEncryptedJournalSlot} from './journal-record.mjs';
 export {prepareAggregateFunding, validateAggregateFundingQuote, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
 export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';

@@ -246,13 +246,13 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const gas=await read(()=>provider.estimateGas(gasRequest)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);
    const j=await sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{account:owner,...n,board,portal:s.router,depositor:wallet.address},provider,
-    acknowledgeTx:current.saved.value.previousTxHash,signer:{getAddress:()=>wallet.signer.getAddress(),sendTransaction:async request=>{
+    acknowledgeTx:current.saved.value.previousTxHash,signer:wallet.signer,prepareRequest:async request=>{
      await wallet.guard();const fees=await read(()=>provider.getFeeData());await wallet.guard();
      const price=fees.maxFeePerGas??fees.gasPrice;check(typeof price==='bigint'&&price>0n&&typeof request.gasLimit==='bigint'&&request.gasLimit*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');
-     const bounded=fees.maxFeePerGas!==null&&fees.maxFeePerGas!==undefined?{...request,maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{...request,gasPrice:price};
+     const bounded=fees.maxFeePerGas!==null&&fees.maxFeePerGas!==undefined?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price};
      await read(()=>sdk.validateAggregateFundingQuote(quote));
-     await wallet.guard();return wallet.signer.sendTransaction(bounded);
-    }},contextGuard});
+     await wallet.guard();return bounded;
+    },contextGuard});
    let result;try{result=await read(()=>j.send(async ethereumNonce=>{
     await wallet.guard();check(ethereumNonce===nonce,'NONCE_CHANGED');await predecessor(current.saved.value);
     // Validate deadline again after any wallet consent interaction, before both
@@ -268,7 +268,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     // cancelled/unfunded request was not broadcast. Unknown outcomes retain
     // every byte of the original recovery context.
     const descriptor=error==null?null:Object.getOwnPropertyDescriptor(error,'code');
-    if(descriptor&&'value' in descriptor&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS'].includes(descriptor.value)){
+    if(descriptor&&'value' in descriptor&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS','BB_ETH_PREFLIGHT_FAILED'].includes(descriptor.value)){
      try{const saved=await stored();check(saved.value?.intent?.nonce===nonce,'MISMATCH');await read(()=>slot.write(saved,current.saved.value));}
      catch(cleanup){throw new AggregateError([error,cleanup],'Funding cancellation recovery could not be saved.');}
     }
@@ -434,8 +434,8 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
 
 /** Direct token top-ups compose the original Ethereum journal and private claim
  * workflow. They never touch posting collateral or create a public L2 account. */
-export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope}){
- check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));let captured,prepared;
+export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope,topupScope}){
+ check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));topupScope=topupScope===undefined?undefined:freeze(clone(topupScope));let captured,prepared;
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
  const tokenAbi=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
  const portalAbi=new ethers.Interface(kind==='bok'?['function deposit(bytes32,uint128,bytes32)']:['function depositToAztecPublic(bytes32,uint256,bytes32)']);
@@ -448,7 +448,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  }
  async function slot(hash){const scope=await context(),frame=['ROLLING_TOPUP_FUNDING_V1',n.chainId,n.version,n.rollup,board,owner,kind,scope.portal,scope.token,scope.recipient];if(hash!==undefined){check(/^0x[0-9a-f]{64}$/.test(hash));frame.push(hash);}frame.push(1);return sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});}
  async function stored(){const store=await slot(),saved=await read(()=>store.read());if(saved.value)check(saved.value.kind===kind&&saved.value.schemaVersion===1,'MISMATCH');return {store,saved};}
- function journalOptions(value){return {storage,walletSecret,walletSalt,scope:{account:owner,...n,board:captured.recipient,portal:value.phase==='swap'?value.swapRouter:captured.portal,token:captured.token,depositor:value.depositor},provider,contextGuard};}
+ function journalOptions(value){return {storage,walletSecret,walletSalt,scope:{account:owner,...n,board:captured.recipient,portal:value.purchaseRouter??(value.phase==='swap'?value.swapRouter:captured.portal),token:captured.token,depositor:value.depositor},provider,contextGuard};}
  async function verified(value,wait=false){
   check(value?.intent,'RECOVERY_REQUIRED');const j=await sdk.createEthereumJournal(journalOptions(value));let result;
   result=await read(()=>j.recover({retry:false,wait}));
@@ -467,12 +467,12 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   async prepare(input){
    prepared=null;check(input&&['amount,privateFeeCap','amount,gasBudgetWei,privateFeeCap','amount,asset,privateFeeCap','amount,asset,gasBudgetWei,privateFeeCap'].includes(Object.keys(input).sort().join()));
    const values=clone(input);values.asset??='USDC';check(['USDC','ETH'].includes(values.asset));
-   check(values.asset!=='ETH'||kind==='bok'&&swapScope,'SWAP_UNAVAILABLE');
+   check(values.asset!=='ETH'||kind==='bok'&&topupScope,'SWAP_UNAVAILABLE');
    for(const key of Object.keys(values).filter(key=>key!=='asset'))check(typeof values[key]==='string'&&/^[1-9][0-9]{0,76}$/.test(values[key]));check(BigInt(values.amount)<1n<<128n);
    const {store,saved}=await stored();let priorHash=saved.value?.previousTxHash??null,reuse=null;
    if(saved.value?.intent){
     const result=await verified(saved.value);priorHash=result.txHash;
-    if(result.outcome==='success'&&['approval','swap'].includes(saved.value.phase)&&values.amount===saved.value.amount&&values.privateFeeCap===saved.value.privateFeeCap){
+    if(result.outcome==='success'&&['approval','swap'].includes(saved.value.phase)&&values.asset===(saved.value.asset??'USDC')&&values.amount===saved.value.amount&&values.privateFeeCap===saved.value.privateFeeCap){
      reuse=saved.value;
      if(saved.value.phase==='swap'){
       const archive=await slot(result.txHash),old=await read(()=>archive.read()),value={...saved.value,txHash:result.txHash,outcome:result.outcome};
@@ -489,12 +489,15 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    const wallet=await read(captureWallet);await read(wallet.guard);if(reuse)check(wallet.address===reuse.depositor,'MISMATCH');
    const head=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(head?.number)&&/^0x[0-9a-f]{64}$/.test(head?.hash));
    const call=async(name,args)=>tokenAbi.decodeFunctionResult(name,await read(()=>provider.call({to:captured.token,data:tokenAbi.encodeFunctionData(name,args),blockTag:head.number})))[0];
-   const balance=await call('balanceOf',[wallet.address]),allowance=await call('allowance',[wallet.address,captured.portal]);
-   const phase=values.asset==='ETH'&&!reuse?'swap':allowance<BigInt(values.amount)?'approval':'deposit';
+   const atomic=values.asset==='ETH'&&!reuse;
+   const tokenReads=atomic?[]:await Promise.allSettled([Promise.resolve().then(()=>call('balanceOf',[wallet.address])),Promise.resolve().then(()=>call('allowance',[wallet.address,captured.portal]))]);
+   const failed=tokenReads.find(result=>result.status==='rejected');if(failed)throw failed.reason;
+   const [balance,allowance]=atomic?[0n,0n]:tokenReads.map(result=>result.value);
+   const phase=atomic?'deposit':allowance<BigInt(values.amount)?'approval':'deposit';
    const exchanged=phase!=='swap'&&(reuse?.phase==='swap'||reuse?.exchanged===true);
-   if(phase!=='swap')check(balance>=BigInt(values.amount),kind==='bok'?'TOKEN_BALANCE':'FEE_TOKEN_BALANCE');
+   if(!atomic&&phase!=='swap')check(balance>=BigInt(values.amount),kind==='bok'?'TOKEN_BALANCE':'FEE_TOKEN_BALANCE');
    if(reuse?.phase==='approval')check(phase==='deposit','RECOVERY_REQUIRED');
-   const j=await sdk.createEthereumJournal(journalOptions({depositor:wallet.address,phase,swapRouter:swapScope?.swapRouter})),existing=await read(()=>j.inspectSummary());
+   const j=await sdk.createEthereumJournal(journalOptions({depositor:wallet.address,phase,swapRouter:swapScope?.swapRouter,...(atomic?{purchaseRouter:topupScope.router}:{})})),existing=await read(()=>j.inspectSummary());
    // Swap and bridge use different destination journals. A previous completed
    // claim may leave a terminal record in either; its saved request still binds it.
    check(existing===null||['success','reverted'].includes(existing.outcome),'RECOVERY_REQUIRED');
@@ -510,7 +513,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    }else secretHash=(await read(()=>sdk.claimSecrets({walletSecret,owner,record:{...n,privateFeeAddress:captured.recipient,sender:wallet.address,nonce}}))).secretHash.toString();
    const data=phase==='approval'?tokenAbi.encodeFunctionData('approve',[captured.portal,values.amount]):portalAbi.encodeFunctionData(kind==='bok'?'deposit':'depositToAztecPublic',[recipient,values.amount,secretHash]);
    const expected=phase==='approval'?{kind:'approve',amount:values.amount,spender:captured.portal}:{kind:kind==='bok'?'bok-deposit':'fee-deposit',amount:values.amount,secretHash,recipient};
-   const payment=phase==='swap'?await read(async()=>{
+   const payment=atomic?await read(()=>sdk.prepareBokCreditPurchase({provider,scope:topupScope,portal:captured.portal,token:captured.token,recipient,secretHash,amount:values.amount,chainId:n.chainId})):phase==='swap'?await read(async()=>{
     const {prepareTopupSwap}=await import('./topup-swap.mjs');
     return prepareTopupSwap({ethers,provider,scope:swapScope,portal:captured.portal,token:captured.token,recipient:wallet.address,amount:values.amount,chainId:n.chainId});
    }):
@@ -521,20 +524,24 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    values.gasBudgetWei??=(gas*2n*price).toString();
    check(gas*2n*price<=BigInt(values.gasBudgetWei),'GAS_CHANGED');
    check((await read(()=>provider.getBlock(head.number)))?.hash===head.hash,'MISMATCH');await read(wallet.guard);
-   prepared={store,saved,wallet,request,priorHash,journalPriorHash:existing?.txHash,value:{schemaVersion:1,kind,...values,phase,exchanged,...(phase==='swap'?{swapRouter:swapScope.swapRouter}:{}),depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:kind==='bok'?{...n,...captured}:null,intent:null,claim:null,previousTxHash:priorHash}};
+   prepared={store,saved,wallet,request,priorHash,journalPriorHash:existing?.txHash,value:{schemaVersion:1,kind,...values,fixedGasBudget:input.gasBudgetWei!==undefined,phase,exchanged,...(atomic?{purchaseRouter:topupScope.router}:{}),...(phase==='swap'?{swapRouter:swapScope.swapRouter}:{}),depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:kind==='bok'?{...n,...captured}:null,intent:null,claim:null,previousTxHash:priorHash}};
    return freeze({kind,phase,...values,exchanged,maximumSwapWei:request.value,walletName:wallet.name,token:captured.token,portal:captured.portal});
   },
   async confirm(){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context();await read(wallet.guard);
    if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
-   const signer={getAddress:()=>wallet.signer.getAddress(),sendTransaction:async tx=>{await read(wallet.guard);await context();const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&gasLimit*price<=BigInt(current.value.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);return wallet.signer.sendTransaction({...tx,gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});}};
-   const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer,acknowledgeTx:current.journalPriorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
+   const prepareRequest=async tx=>{await read(wallet.guard);await context();const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+    const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;
+    check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&(!current.value.fixedGasBudget||gasLimit*price<=BigInt(current.value.gasBudgetWei)),'GAS_CHANGED');
+    await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};
+   };
+   const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer:wallet.signer,prepareRequest,acknowledgeTx:current.journalPriorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
    try{await read(()=>j.send(async nonce=>{check(nonce===request.nonce,'NONCE_CHANGED');saved=await read(()=>current.store.write(saved,{...saved.value,intent:request}));return {data:request.data,value:request.value,expected:request.expected};}));}
-   catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value'in d&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS'].includes(d.value)){try{await read(()=>current.store.write(saved,current.saved.value));}catch(cleanup){throw new AggregateError([error,cleanup],'Top-up cancellation could not be saved.');}}throw error;}
+   catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value'in d&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS','BB_ETH_PREFLIGHT_FAILED'].includes(d.value)){try{await read(()=>current.store.write(saved,current.saved.value));}catch(cleanup){throw new AggregateError([error,cleanup],'Top-up cancellation could not be saved.');}}throw error;}
    return cap.recover();
   },
-  async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
+  async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,completed:!!saved.value.confirmedClaim,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
   async recover({wait=false}={}){const {saved}=await stored(),result=await verified(saved.value,wait);check(result.outcome==='success','REVERTED');if(saved.value.phase==='approval')return {approved:true};if(saved.value.phase==='swap')return {swapped:true};const e=result.event;
    return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
   },

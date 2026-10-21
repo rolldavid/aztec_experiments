@@ -40,7 +40,7 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  await page.getByRole('link',{name:'Read the conversation from the beginning',exact:true}).click();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();
  await page.getByRole('link',{name:'View conversation',exact:true}).click();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();
  await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByRole('heading',{name:'Workshop',exact:true}).waitFor();
- await page.getByText('Effective rules',{exact:true}).click();assert(await page.getByText('Respect people',{exact:true}).isVisible());
+ await page.getByText('Board rules',{exact:true}).click();assert(await page.getByText('Respect people',{exact:true}).isVisible());
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Open navigation',exact:true}).click();
  assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),true);await page.keyboard.press('Escape');assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),false);
  longLabels=true;await page.evaluate(()=>location.hash='/directory/long');await page.getByRole('heading',{name:'W'.repeat(90),exact:true}).waitFor();
@@ -125,8 +125,8 @@ test('labelled social records: removed navigation, literal reasons and distinct 
  assert.deepEqual(await page.evaluate(()=>window.recordedActions),[{type:'unlike',post:'10'},{type:'unlike',post:'11'}]);
  assert(requests.every(value=>!value.includes('/wallet/')&&!value.includes('owned')&&!value.includes('liked')));
  await page.setViewportSize({width:1280,height:900});
- await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByText('Effective rules',{exact:true}).click();
- assert(await page.getByText('Current parent policy v8',{exact:true}).isVisible());assert(await page.getByText('Subboard rejected under parent policy v6',{exact:true}).isVisible());
+ await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByText('Board rules',{exact:true}).click();
+ assert(!(await page.getByText('Current parent policy v8',{exact:true}).isVisible()));await page.getByText('Rule history',{exact:true}).click();assert(await page.getByText('Current parent policy v8',{exact:true}).isVisible());assert(await page.getByText('Subboard rejected under parent policy v6',{exact:true}).isVisible());
 });
 
 test('labelled social renderer: unavailable account module announces failure without exposing or sending data',async t=>{
@@ -270,10 +270,10 @@ test('main and subboard routes use exact board API, contextual composer, directo
  const {page,state,requests,hostile}=await boardFixture(t);
  await page.getByRole('navigation',{name:'Community'}).getByRole('link',{name:'Main board',exact:true}).click();await page.getByRole('heading',{name:'Main board',level:1}).waitFor();await page.locator('[data-board-compose]:not([disabled])').waitFor();
  assert.equal(state.calls.at(-1),'/api/board?id=0&limit=30');await page.getByRole('button',{name:'Write a post',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'post',subboard:'0'});
- await page.getByText('Effective board rules',{exact:true}).click();assert(await page.getByRole('heading',{name:'Current parent rules · v2'}).isVisible());
+ await page.getByText('Board rules',{exact:true}).click();assert(await page.getByRole('heading',{name:'Site rules'}).isVisible());
  await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByRole('link',{name:'Workshop',exact:true}).click();await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();await page.locator('#post-21').waitFor();
- assert.equal(state.calls.at(-1),'/api/board?id=20&limit=30');assert(await page.getByText('Build useful things.',{exact:true}).isVisible());assert(await page.getByText('Created under parent policy v1',{exact:true}).isVisible());
- await page.getByText('Effective board rules',{exact:true}).click();assert(await page.getByText(hostile,{exact:true}).isVisible());assert.equal(await page.locator('main img, main script').count(),0);
+ assert.equal(state.calls.at(-1),'/api/board?id=20&limit=30');assert(await page.getByText('Build useful things.',{exact:true}).isVisible());assert(!(await page.getByText('Created under parent policy v1',{exact:true}).isVisible()));
+ await page.getByText('Board rules',{exact:true}).click();assert(await page.getByText(hostile,{exact:true}).isVisible());await page.getByText('Rule history',{exact:true}).click();assert(await page.getByText('Created under parent policy v1',{exact:true}).isVisible());assert.equal(await page.locator('main img, main script').count(),0);
  await page.locator('#post-21').getByText('Parent rules at publication · v1',{exact:true}).click();assert(await page.locator('#post-21').getByText('Historical parent rules',{exact:true}).isVisible());
  assert.equal(await page.locator('#post-21').getByRole('link',{name:'Workshop',exact:true}).getAttribute('href'),'#/board/20');
  await page.getByRole('button',{name:'Write a post',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===2);assert.deepEqual(await page.evaluate(()=>boardActions[1]),{type:'post',subboard:'20'});
@@ -285,7 +285,7 @@ test('rejected board remains discoverable and navigable without new posting cont
  const {page}=await boardFixture(t,{rejected:true});await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
  assert(await page.getByText('Rejection reason: <script>rejected()</script>',{exact:true}).isVisible());assert.equal(await page.locator('main script').count(),0);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
  const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Bookmark']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
- await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
+ await page.getByText('Board rules',{exact:true}).click();await page.getByText('Rule history',{exact:true}).click();await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
  await card.locator('.post-more summary').click();await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
 });
 

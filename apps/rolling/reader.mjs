@@ -125,25 +125,28 @@ function shell(title,{boardId=null}={}){
  return main;
 }
 function boardCard(board){
- const rules=el('details',{},el('summary',{},'Effective rules'),el('h3',{},'Parent rules'),policyVersion(board.mainVersion)?el('p',{class:'quiet'},'Current parent policy v'+board.mainVersion):null,richText(board.mainRules),el('h3',{},'Local rules'),richText(board.rules));
- return el('article',{class:'post'},el('h2',{},field(board.id)?link(text(board.name),'/board/'+board.id):text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Rejected by the main board: '+text(board.rejection?.reason)):null,board.rejected&&policyVersion(board.rejection?.mainVersion)?el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion):null,rules,board.rejected?null:moderatorButton('Reject this subboard',{type:'reject-subboard',subboard:board.id}));
+ const rules=el('details',{},el('summary',{},'Board rules'),el('h3',{},'Site rules'),richText(board.mainRules),el('h3',{},'Additional rules'),richText(board.rules));
+ const history=el('details',{},el('summary',{},'Rule history'),policyVersion(board.mainVersion)?el('p',{class:'quiet'},'Current parent policy v'+board.mainVersion):null,board.rejected&&policyVersion(board.rejection?.mainVersion)?el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion):null);
+ if(history.childElementCount>1)rules.append(history);
+ return el('article',{class:'post'},el('h2',{},field(board.id)?link(text(board.name),'/board/'+board.id):text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Board closed: '+text(board.rejection?.reason)):null,rules,board.rejected?null:moderatorButton('Reject this subboard',{type:'reject-subboard',subboard:board.id}));
 }
 function boardOverview(data){
  const section=el('section',{'aria-label':'Board information'}),board=data.board,policy=data.mainPolicy;
+ const history=el('details',{},el('summary',{},'Rule history'),el('p',{class:'quiet'},'Current parent policy v'+policy.version));
  if(board){
   section.append(el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)));
-  if(policyVersion(board.creationVersion))section.append(el('p',{class:'quiet'},'Created under parent policy v'+board.creationVersion));
-  if(board.rejected)section.append(el('p',{class:'removed',role:'status'},'This subboard is rejected. New posts are disabled. Existing thread links and unlike remain available.'),el('p',{class:'removed'},'Rejection reason: '+text(board.rejection?.reason)));
+  if(policyVersion(board.creationVersion))history.append(el('p',{class:'quiet'},'Created under parent policy v'+board.creationVersion));
+  if(board.rejected)section.append(el('p',{class:'removed',role:'status'},'This board is closed to new posts.'),el('p',{class:'removed'},'Rejection reason: '+text(board.rejection?.reason)));
  }
- const rules=el('details',{},el('summary',{},'Effective board rules'),el('h2',{},'Current parent rules · v'+policy.version),richText(policy.text));
- if(board)rules.append(el('h2',{},'Immutable local rules'),richText(board.rules),el('p',{class:'quiet'},'Both current parent rules and local rules apply.'));
- else rules.append(el('p',{class:'quiet'},'The main board follows these parent rules.'));
+ const rules=el('details',{},el('summary',{},'Board rules'),el('h2',{},'Site rules'),richText(policy.text));
+ if(board)rules.append(el('h2',{},'Additional rules'),richText(board.rules));
+ rules.append(history);
  section.append(rules);
  if(!board)section.append(moderatorButton('Update parent rules',{type:'set-main-policy'}));
  else if(!board.rejected)section.append(moderatorButton('Reject this subboard',{type:'reject-subboard',subboard:board.id}));
  if(board?.rejection&&policyVersion(board.rejection.mainVersion)){
   const applied=data.policies.find(p=>p.version===board.rejection.mainVersion);
-  if(applied)section.append(el('details',{},el('summary',{},'Parent rules at rejection · v'+applied.version),richText(applied.text)));
+  if(applied)history.append(el('details',{},el('summary',{},'Parent rules at rejection · v'+applied.version),richText(applied.text)));
  }
  return section;
 }

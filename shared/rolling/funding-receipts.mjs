@@ -1,3 +1,4 @@
+import {captureBokTopupScope,bokCreditPurchaseIntentFromTransaction,verifyBokCreditPurchaseEffects} from './bok-credit-purchase.mjs';
 import {AbiCoder, Interface, getBytes, encodeBytes32String} from 'ethers';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
@@ -109,6 +110,9 @@ export async function prepareFundingClaim(input) {
     // object must not permit a route or guard change during verification.
     const aggregateDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateIntent');requireThat(!aggregateDescriptor || 'value' in aggregateDescriptor,'INVALID');
     const aggregateIntent=captureAggregateFundingIntent(aggregateDescriptor?.value);
+    const topupDescriptor=Object.getOwnPropertyDescriptor(input,'bokTopupScope');requireThat(!topupDescriptor||'value' in topupDescriptor,'INVALID');
+    const bokTopupScope=topupDescriptor?.value===undefined?null:captureBokTopupScope(topupDescriptor.value);
+    if(bokTopupScope)requireThat(kind==='bok'&&bokTopupScope.chainId===s.chainId&&bokTopupScope.bokPortal===s.portal&&bokTopupScope.bokToken===s.token,'INVALID');
     const custodyDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateCustody');requireThat(!custodyDescriptor || 'value' in custodyDescriptor,'INVALID');
     const aggregateCustody=captureAggregateFundingCustody(custodyDescriptor?.value,aggregateIntent);
     if (cancellation) requireThat(!aggregateIntent && !aggregateCustody, 'INVALID');
@@ -117,7 +121,7 @@ export async function prepareFundingClaim(input) {
     requireThat(isTrustedPrivateNode(suppliedNode),'UNTRUSTED_NODE');
     const capture=(source,names)=>Object.freeze(Object.fromEntries(names.map(name=>{const fn=source?.[name];requireThat(typeof fn==='function','INVALID');return [name,fn.bind(source)];})));
     const nodeReads=capture(suppliedNode,['getNodeInfo','getContract','getBlockData','getL1ToL2MessageMembershipWitness']);
-    const providerMethods=['getNetwork','getTransactionReceipt','getTransaction','getBlock','call',...(aggregateIntent?['getCode']:[])];
+    const providerMethods=['getNetwork','getTransactionReceipt','getTransaction','getBlock','call',...(aggregateIntent||bokTopupScope?['getCode']:[])];
     const providerReads=capture(suppliedProvider,providerMethods);
     const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
     if(aggregateCustody && kind==='collateral')requireThat(loadClaim,'INVALID');
@@ -233,6 +237,12 @@ export async function prepareFundingClaim(input) {
       secret=secrets.bridgeSecret;
       // PluginPortal's event omits secretHash; require exact direct calldata too.
       if(aggregate)requireThat(aggregate.commitment===recipient);
+      else if(bokTopupScope&&equal(tx.to,bokTopupScope.router)){
+        const purchase=bokCreditPurchaseIntentFromTransaction(tx,bokTopupScope);
+        requireThat(purchase.expected.recipient===recipient&&purchase.expected.amount===r.amount&&purchase.expected.secretHash===r.secretHash);
+        const effect=await verifyBokCreditPurchaseEffects(provider,purchase,receipt);
+        requireThat(effect.key===r.messageKey&&String(effect.index)===r.leafIndex);
+      }
       else requireThat(equal(tx.to,s.portal) && BigInt(tx.value)===0n && equal(tx.data,bokAbi.encodeFunctionData('deposit',[recipient,r.amount,r.secretHash])));
       const topic=bokAbi.getEvent('Deposited').topicHash;
       const logs=receipt.logs.filter(log=>equal(log.address,s.portal) && equal(log.topics?.[0],topic));requireThat(logs.length===1);

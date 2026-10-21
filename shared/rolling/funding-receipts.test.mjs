@@ -377,3 +377,29 @@ test('fee verification binds the published FPC and node portal/token without nes
   f=>{f.backend.getContract=async()=>undefined;},
  ]){const f=await aggregateFixture('private-fee');mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));}
 });
+
+import {bokCreditPurchaseAbi} from './bok-credit-purchase.mjs';
+async function atomicBokFixture(){
+ const f=await fixture('bok'),r=f.input.receipt,s=f.input.scope;
+ const purchaseAbi=new Interface(bokCreditPurchaseAbi),bindingAbi=new Interface(['function chainId() view returns(uint256)','function bokPortal() view returns(address)','function bokToken() view returns(address)','function weth() view returns(address)','function swapRouter() view returns(address)']);
+ const topup={chainId:s.chainId,router:addr(70),routerCodeHash:keccak256('0x6000'),bokPortal:s.portal,bokToken:s.token,weth:addr(71),swapRouter:addr(72),quoter:addr(73),quoterCodeHash:keccak256('0x6001')};
+ const recipient=f.eventArgs[0],data=purchaseAbi.encodeFunctionData('buyCredit',[[recipient,r.amount,r.secretHash,3000,1000]]);
+ Object.assign(f.state.tx,{to:topup.router,data,value:100n});f.state.receipt.to=topup.router;
+ f.state.receipt.logs.push({address:topup.router,...purchaseAbi.encodeEventLog('CreditPurchased',[r.sender,recipient,r.amount,r.secretHash,r.messageKey,r.leafIndex,90,10])});
+ f.input.bokTopupScope=topup;f.input.ethProvider.getCode=async()=> '0x6000';const call=f.input.ethProvider.call;
+ f.input.ethProvider.call=async request=>{if(request.to!==topup.router)return call(request);const parsed=bindingAbi.parseTransaction(request);return bindingAbi.encodeFunctionResult(parsed.name,[topup[parsed.name]]);};
+ return {...f,purchaseAbi,topup};
+}
+test('atomic ETH purchase authenticates router then prepares the actual private Bok bridge witness',async()=>{
+ const f=await atomicBokFixture(),result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');
+ assert.deepEqual(result.claim.args,['5000',f.input.secrets.recipientSalt,f.secret,'9']);assert(f.state.reads.includes('witness'));
+});
+for(const mutation of ['runtime','recipient','secret','index','payer','value'])test('atomic Bok claim rejects changed '+mutation+' before witness',async()=>{
+ const f=await atomicBokFixture(),p=f.purchaseAbi.parseTransaction({data:f.state.tx.data}).args[0],r=f.input.receipt;
+ if(mutation==='runtime')f.input.ethProvider.getCode=async()=> '0x6002';
+ if(mutation==='recipient')f.state.tx.data=f.purchaseAbi.encodeFunctionData('buyCredit',[[h(99),p.amount,p.secretHash,p.poolFee,p.deadline]]);
+ if(mutation==='secret')f.state.tx.data=f.purchaseAbi.encodeFunctionData('buyCredit',[[p.commitment,p.amount,h(99),p.poolFee,p.deadline]]);
+ if(mutation==='value')f.state.tx.value=101n;
+ if(mutation==='index'||mutation==='payer')f.state.receipt.logs[1]={address:f.topup.router,...f.purchaseAbi.encodeEventLog('CreditPurchased',[mutation==='payer'?addr(99):r.sender,p.commitment,r.amount,r.secretHash,r.messageKey,mutation==='index'?10:r.leafIndex,90,10])};
+ await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));
+});

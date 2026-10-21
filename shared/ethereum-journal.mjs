@@ -1,3 +1,4 @@
+import {validateBokCreditPurchaseIntent,verifyBokCreditPurchaseEffects} from './rolling/bok-credit-purchase.mjs';
 import {validateAggregateFundingIntent,verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import {validateTopupSwapIntent,verifyTopupSwapEffects} from './rolling/topup-swap.mjs';
 import {Interface,getCreateAddress,getCreate2Address,keccak256} from 'ethers';
@@ -28,6 +29,8 @@ const bokInterface=new Interface([
 ]);
 const field=value=>hash(value)&&BigInt(value)>0n&&BigInt(value)<21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 const unknown=()=>transactionError('BB_ETH_RECOVERY_REQUIRED','Recover the saved Ethereum request before starting another payment.');
+const providerCodes=new Set(['ACTION_REJECTED','INSUFFICIENT_FUNDS','CALL_EXCEPTION','NETWORK_ERROR','SERVER_ERROR','TIMEOUT','UNKNOWN_ERROR','NONCE_EXPIRED','REPLACEMENT_UNDERPRICED','UNSUPPORTED_OPERATION','BAD_DATA',4001,4100,4900,4901,-32002]);
+function ethereumFailure(code,message,cause,stage){const raw=Object.getOwnPropertyDescriptor(cause??{},'providerCode')?.value??Object.getOwnPropertyDescriptor(cause??{},'code')?.value;return Object.assign(transactionError(code,message),{ethereumStage:stage,...(providerCodes.has(raw)?{providerCode:String(raw)}:{})});}
 const invalid=()=>transactionError('BB_JOURNAL_INVALID','Ethereum recovery storage is invalid. Preserve it before continuing.');
 const address=v=>typeof v==='string'&&/^0x[0-9a-f]{40}$/.test(v);
 const hash=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
@@ -70,6 +73,7 @@ function validateIntent(record,scope) {
     return record;
   }
   if(['aggregate-funding','aggregate-usdc-funding'].includes(expected?.kind)){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
+  if(expected?.kind==='bok-purchase'){try{validateBokCreditPurchaseIntent(record,scope);}catch{throw invalid();}return record;}
   if(expected?.kind==='topup-swap'){try{validateTopupSwapIntent(record,scope,{Interface});}catch{throw invalid();}return record;}
   const fee=scope.token!==undefined;
   if(!expected||!(fee?['approve','fee-deposit','bok-deposit','bok-withdraw']:['deposit','withdraw','request-refund','deposit-refund']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
@@ -111,6 +115,11 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   if(receipt.status===0)return {outcome:'reverted',txHash,receipt,event:null};
   if(!Array.isArray(receipt.logs))throw unknown();
   const expected=record.expected;
+  if(expected.kind==='bok-purchase'){
+    let event;try{event=await verifyBokCreditPurchaseEffects(provider,record,receipt,read);}catch{throw unknown();}
+    const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();
+    return {outcome:'success',txHash,receipt,event};
+  }
   if(expected.kind==='topup-swap'){
     let event;try{event=verifyTopupSwapEffects(record,receipt,{Interface});}catch{throw unknown();}
     const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();
@@ -171,13 +180,13 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   if(events.length!==1)throw unknown();
   return {outcome:'success',txHash,receipt,event:events[0]};
 }
-export async function createEthereumJournal({storage,walletSecret,walletSalt,scope,provider,signer,acknowledgeTx,contextGuard,timeoutMs=20000,minimumNonce=0}) {
+export async function createEthereumJournal({storage,walletSecret,walletSalt,scope,provider,signer,acknowledgeTx,contextGuard,prepareRequest,minimumNonce=0}) {
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:validatedScope(scope),keyDomain:'AZTEC_BB_ETH_JOURNAL_KEY_V1'});
   if(!integer(minimumNonce))throw invalid();
-  if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>20000)throw invalid();
+  if(prepareRequest!==undefined&&typeof prepareRequest!=='function')throw invalid();
   let acknowledged=acknowledgeTx,lastHash=null,submittedResponse=null;
   function reader({preserveInsufficientFunds=false}={}) {
-    return async fn=>{const deadline=Date.now()+timeoutMs;let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(unknown()),Math.max(0,deadline-Date.now()));})]);}catch(error){if(error?.code==='BB_JOURNAL_INVALID'||(preserveInsufficientFunds&&error?.code==='INSUFFICIENT_FUNDS'))throw error;throw unknown();}finally{clearTimeout(timer);}};
+    return async fn=>{try{return await fn();}catch(error){if(error?.code==='BB_JOURNAL_INVALID'||(preserveInsufficientFunds&&error?.code==='INSUFFICIENT_FUNDS'))throw error;throw ethereumFailure('BB_ETH_READ_FAILED','Ethereum could not be reached. Your payment has not been marked as failed.',error,'read');}};
   }
   async function load() {const saved=await slot.read();if(saved.value!==null)validateIntent(saved.value,scope);return saved;}
   async function network(read) {
@@ -242,31 +251,37 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
   }
   async function broadcast(saved,previous) {
     const record=saved.value;if(!signer)throw unknown();
-    await network(reader());
-    if(lower(await signer.getAddress())!==record.from)throw unknown();
-    if(contextGuard)await contextGuard();
-    let response;
+    let response,walletCalled=false;
     const request={from:record.from,to:record.to,data:record.data,value:BigInt(record.value),nonce:record.nonce,chainId:BigInt(record.chainId)};
     try{
-      if(['deposit','request-refund','fee-deposit','bok-deposit','aggregate-funding','aggregate-usdc-funding'].includes(record.expected.kind)) {
+      await network(reader());
+      if(lower(await signer.getAddress())!==record.from)throw unknown();
+      if(contextGuard)await contextGuard();
+      if(['deposit','request-refund','fee-deposit','bok-deposit','bok-purchase','aggregate-funding','aggregate-usdc-funding'].includes(record.expected.kind)) {
         // Match the V6 SDK deposit allowance for changing shared Inbox state.
         const estimate=await reader({preserveInsufficientFunds:true})(()=>provider.estimateGas(request));
         if(typeof estimate!=='bigint'||estimate<=0n)throw unknown();
         request.gasLimit=estimate*2n;
         if(contextGuard)await contextGuard();
       }
-      response=await signer.sendTransaction(request);
+      if(prepareRequest){
+        const fees=await prepareRequest(Object.freeze({...request}));
+        if(!fees||Object.keys(fees).some(key=>!['gasLimit','gasPrice','maxFeePerGas','maxPriorityFeePerGas'].includes(key))||Object.values(fees).some(value=>typeof value!=='bigint'||value<0n)||fees.gasLimit===0n)throw invalid();
+        Object.assign(request,fees);
+      }
+      if(contextGuard)await contextGuard();
+      walletCalled=true;response=await signer.sendTransaction(request);
     }catch(error){
       // Only the first attempt can establish that this new intent was never sent.
       // A rejected retry says nothing about an earlier attempt: keep its record.
       const rejected=error?.code===4001||error?.code==='ACTION_REJECTED';
       const unfunded=error?.code==='INSUFFICIENT_FUNDS';
-      if(previous && (rejected||unfunded)) {
+      if(previous && (rejected||unfunded||!walletCalled)) {
         await slot.write(saved,previous.value);
-        throw transactionError(rejected?'BB_ETH_REQUEST_CANCELLED':'BB_ETH_INSUFFICIENT_FUNDS',
-          rejected?'Payment cancelled. No transaction was sent. You can try again.':'Not enough ETH for this payment and gas. Add funds, then try again.');
+        throw ethereumFailure(rejected?'BB_ETH_REQUEST_CANCELLED':unfunded?'BB_ETH_INSUFFICIENT_FUNDS':'BB_ETH_PREFLIGHT_FAILED',
+          rejected?'Payment cancelled. No transaction was sent. You can try again.':unfunded?'Not enough ETH for this payment and gas. Add funds, then try again.':'The wallet payment could not be prepared. No transaction was sent.',error,walletCalled?'wallet':'preflight');
       }
-      throw transactionError('BB_ETH_SUBMISSION_UNKNOWN','Ethereum submission is uncertain. Keep its saved request and use recovery.');
+      throw ethereumFailure('BB_ETH_SUBMISSION_UNKNOWN','Your wallet has not confirmed whether the payment was sent. Check its activity before trying again.',error,'wallet');
     }
     // Wallet responses acknowledge submission; only canonical RPC data confirms intent.
     if(!hash(lower(response?.hash)))throw unknown();
@@ -284,7 +299,7 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
     const tx=observed??(typeof submittedResponse?.replaceableTransaction==='function'&&lower(submittedResponse.hash)===record.txHash?submittedResponse:null);
     if(!tx||typeof tx.replaceableTransaction!=='function'||lower(tx.hash)!==record.txHash||lower(tx.from)!==record.from||tx.nonce!==record.nonce||lower(tx.to)!==lower(record.to)||lower(tx.data)!==record.data||String(tx.value)!==record.value||String(tx.chainId)!==record.chainId)throw unknown();
     try{await tx.replaceableTransaction(record.startBlock).wait(1);}
-    catch(error){if(!['TRANSACTION_REPLACED','CALL_EXCEPTION'].includes(error?.code))throw unknown();}
+    catch(error){if(!['TRANSACTION_REPLACED','CALL_EXCEPTION'].includes(error?.code))throw ethereumFailure('BB_ETH_CONFIRMATION_UNKNOWN','Your payment was sent. Ethereum confirmation is unavailable; the payment has not been marked as failed.',error,'confirmation');}
     // Native completion and replacement errors are wake-up hints. Canonical
     // receipt, nonce and exact intent reconciliation remain the authority.
     await network(reader());found=await locate(saved,reader());

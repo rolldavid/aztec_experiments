@@ -1847,3 +1847,11 @@ for(const usdc of [false,true])test(`immediate ${usdc?'USDC':'ETH'} aggregate cl
  const result=await app.submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
  assert.deepEqual(f.state.sent.payload.interactions.map(call=>call.name),['claim_deposit','claim']);assert(f.state.payments.every(p=>p.claim.amount==='200'));
 });
+
+test('Bok claim receives a detached authenticated purchase router scope only on its own receipt',async()=>{
+ const f=topUpFixture('bok'),purchase={router:'0x'+'aa'.repeat(20),routerCodeHash:hex(95)};
+ f.options.funding.bokTopupScope=purchase;const app=f.restart();purchase.router='0x'+'bb'.repeat(20);
+ const prepared=await app.prepare({...f.action,feeReceipt:{...f.receipt,txHash:hex(53)}},{immediate:true});
+ assert.equal(f.state.estimates,0);assert.equal(f.state.claimReads[0].bokTopupScope.router,'0x'+'aa'.repeat(20));assert.equal(f.state.claimReads[1].bokTopupScope,undefined);
+ assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});

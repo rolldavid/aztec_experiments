@@ -183,10 +183,10 @@ for(const backend of ['file','indexeddb']) {
   const {gasLimit:first,...a}=f.requests[0],{gasLimit:second,...b}=f.requests[1];
   assert.equal(first,200000n);assert.equal(second,280000n);assert.deepEqual(a,b);
  }));
- for(const failure of ['reject','timeout','invalid'])test(`${backend}: ${failure} gas estimate cannot sign or erase recovery`,()=>use(async f=>{
-  f.provider.estimateGas=()=>failure==='timeout'?new Promise(()=>{}):failure==='invalid'?0n:Promise.reject(Error('private RPC detail'));
-  await assert.rejects((await f.newSession({timeoutMs:20})).send(f.intent),{code:'BB_ETH_SUBMISSION_UNKNOWN'});
-  assert.equal(f.requests.length,0);await assert.rejects((await f.newSession()).assertCanStart(),{code:'BB_ETH_RECOVERY_REQUIRED'});
+ for(const failure of ['reject','transport-failure','invalid'])test(`${backend}: ${failure} gas estimate fails before submission and permits fresh preparation`,()=>use(async f=>{
+  f.provider.estimateGas=()=>failure==='transport-failure'?Promise.reject(Object.assign(Error('private RPC detail'),{code:'TIMEOUT'})):failure==='invalid'?0n:Promise.reject(Error('private RPC detail'));
+  await assert.rejects((await f.newSession({timeoutMs:20})).send(f.intent),{code:'BB_ETH_PREFLIGHT_FAILED',ethereumStage:'preflight'});
+  assert.equal(f.requests.length,0);await (await f.newSession()).assertCanStart();
  }));
  test(`${backend}: definitive insufficient funds during initial estimate permits fresh payment`,()=>use(async f=>{
   f.provider.estimateGas=async()=>{throw Object.assign(Error('private diagnostic'),{code:'INSUFFICIENT_FUNDS'});};
@@ -311,7 +311,7 @@ for(const backend of ['file','indexeddb']) {
    await assert.rejects((await f.newSession()).recover({retry:true}),{code:'BB_ETH_RECOVERY_REQUIRED'});
   }
   f.provider.getTransactionCount=async()=>{throw Error('RPC unavailable');};
-  await assert.rejects((await f.newSession()).recover({retry:true}),{code:'BB_ETH_RECOVERY_REQUIRED'});
+  await assert.rejects((await f.newSession()).recover({retry:true}),{code:'BB_ETH_READ_FAILED'});
   assert.equal(f.requests.length,1);
  }));
  test(`${backend}: nonce lookup crossing a reorg cannot authorize retry`,()=>use(async f=>{
@@ -324,12 +324,31 @@ for(const backend of ['file','indexeddb']) {
   f.mode('reject');await assert.rejects((await f.newSession()).send(f.intent));f.setHead(1110);f.provider.getTransactionCount=async()=>5;
   const original=f.provider.getBlock,calls=[];let breakAt=31;
   f.provider.getBlock=async(n,full)=>{if(full){calls.push(n);if(n===breakAt)throw new Error('gap');}return original(n,full);};
-  await assert.rejects((await f.newSession()).recover(),{code:'BB_ETH_RECOVERY_REQUIRED'});assert(calls.includes(30));calls.length=0;breakAt=-1;
+  await assert.rejects((await f.newSession()).recover(),{code:'BB_ETH_READ_FAILED'});assert(calls.includes(30));calls.length=0;breakAt=-1;
   await assert.rejects((await f.newSession({timeoutMs:20000})).recover(),{code:'BB_ETH_RECOVERY_REQUIRED'});assert.equal(calls[0],31);assert.equal(calls.at(-1),1110);assert.equal(f.requests.length,1);
  }));
 }
-test('Ethereum lookup obeys a short read deadline',async()=>{
+test('Ethereum lookup retains ownership until its provider completes',async t=>{
  const store=new Map(),storage={read:async k=>store.get(k)??null,compareAndSwap:async(k,old,next)=>{assert.equal(store.get(k)??null,old);store.set(k,next);}};
- const f=fixture(storage);f.mode('reject');await assert.rejects((await f.newSession()).send(f.intent));f.provider.getNetwork=()=>new Promise(()=>{});
- await assert.rejects((await f.newSession({timeoutMs:10})).recover(),{code:'BB_ETH_RECOVERY_REQUIRED'});
+ const f=fixture(storage);f.mode('reject');await assert.rejects((await f.newSession()).send(f.intent));const held=Promise.withResolvers(),entered=Promise.withResolvers();f.provider.getNetwork=()=>{entered.resolve();return held.promise;};
+ t.mock.timers.enable({apis:['setTimeout']});let settled=false;
+ const result=(await f.newSession({timeoutMs:10})).recover().finally(()=>{settled=true;});
+ await entered.promise;t.mock.timers.tick(60000);await Promise.resolve();assert.equal(settled,false);
+ held.reject(Object.assign(Error('unavailable'),{code:'NETWORK_ERROR'}));await assert.rejects(result,{code:'BB_ETH_READ_FAILED',providerCode:'NETWORK_ERROR',ethereumStage:'read'});
+});
+test('wallet approval remains pending until wallet responds, regardless of elapsed time',async t=>{
+ const values=new Map(),storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,before,after)=>{assert.equal(values.get(key)??null,before);values.set(key,after);}};
+ const f=fixture(storage),entered=Promise.withResolvers(),gate=Promise.withResolvers(),send=f.options.signer.sendTransaction;
+ f.options.signer.sendTransaction=async request=>{entered.resolve();await gate.promise;return send(request);};
+ const journal=await f.newSession();let settled=false;t.mock.timers.enable({apis:['setTimeout']});
+ const pending=journal.send(f.intent).finally(()=>{settled=true;});await entered.promise;t.mock.timers.tick(3600000);await Promise.resolve();assert.equal(settled,false);assert.equal(f.requests.length,0);
+ gate.resolve();assert.equal((await pending).outcome,'success');assert.equal(f.requests.length,1);
+});
+test('fee preflight callback failure is definitely unsent and cannot alter payment routing',async()=>{
+ const values=new Map(),storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,before,after)=>{assert.equal(values.get(key)??null,before);values.set(key,after);}};
+ const f=fixture(storage);
+ for(const prepareRequest of [async()=>{throw Object.assign(Error('private provider detail'),{code:'NETWORK_ERROR'});},async()=>({to:addr()})]){
+  await assert.rejects((await f.newSession({prepareRequest})).send(f.intent),{code:'BB_ETH_PREFLIGHT_FAILED',ethereumStage:'preflight'});
+  assert.equal(f.requests.length,0);await (await f.newSession()).assertCanStart();
+ }
 });

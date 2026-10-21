@@ -54,7 +54,7 @@ def preserved(configured=SOURCE,unit_hash=None,current=None):
 
 def safe_relative(name):
  p=pathlib.PurePosixPath(name);assert not p.is_absolute() and '..' not in p.parts and str(p)==name and 'node_modules' not in p.parts
- assert name.startswith(('apps/','shared/','scripts/','.build/sdk/','.build/rolling-wallet/'))
+ assert name.startswith(('apps/','shared/','scripts/','.build/sdk/','.build/rolling-wallet/')) or name in {'.build/contracts-manifest.json','billboard/portal/src/BokCreditRouter.sol','billboard/portal/test/BokCreditRouter.t.sol','billboard/portal/out/BokCreditRouter.sol/BokCreditRouter.json'}
  return p
 
 EXPORT=r'''import fs from 'node:fs/promises';import path from 'node:path';import {pathToFileURL} from 'node:url';
@@ -64,8 +64,20 @@ const manifest=JSON.parse(await fs.readFile(source+'/.build/rolling-wallet/manif
 // Validators above bind source, artifacts, SDK, CRS, configuration and deployment.
 process.stdout.write(JSON.stringify({runtime:wallet.runtime,files:manifest.files}));'''
 
+def wallet_file(source):
+ local=source/'deploy/runtime-wallet.json'
+ return local if local.is_file() else pathlib.Path('/etc/rolling-app/wallet.json')
+
+def install_wallet_update(source,target,update):
+ assert isinstance(update,dict) and set(update)=={'router','routerCodeHash'}
+ assert re.fullmatch('0x[0-9a-f]{40}',update['router']) and re.fullmatch('0x[0-9a-f]{64}',update['routerCodeHash'])
+ original=wallet_file(source);assert not original.is_symlink();value=json.loads(original.read_text())
+ assert value['config'].get('bok') and value['config'].get('aggregateFunding')
+ value['config']['bokTopup']=update
+ info=original.stat();atomic(target/'deploy/runtime-wallet.json',json.dumps(value,separators=(',',':')).encode(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
+
 def wallet(source,node):
- return json.loads(run([node,'--input-type=module','-e',EXPORT,str(source),'/etc/rolling-app/wallet.json','/etc/rolling-app/public.json']))
+ return json.loads(run([node,'--input-type=module','-e',EXPORT,str(source),str(wallet_file(source)),'/etc/rolling-app/public.json']))
 
 def public_directory(target):
  assert target.is_relative_to(BASE)
@@ -101,6 +113,7 @@ def activate():
   assert not (UI/name).is_symlink() and digest(UI/name)==want
  for name,entry in m['files'].items():
   safe_relative(name);assert not (NEXT/name).is_symlink() and digest(NEXT/name)==entry['sha256']
+ if r.get('walletConfigSha256') is not None:assert not (NEXT/'deploy/runtime-wallet.json').is_symlink() and digest(NEXT/'deploy/runtime-wallet.json')==r['walletConfigSha256']
  preserved()
  unit=pathlib.Path(m['appUnit']);info=unit.stat();original=unit.read_bytes()
  assert sha(original)==m['unitFiles'][str(unit)]
@@ -149,17 +162,21 @@ if mode=='stage':
   target=NEXT/name;reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,(P/'files'/name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
   assert digest(target)==entry['sha256'];assert not (SOURCE/name).exists() or target.stat().st_ino!=(SOURCE/name).stat().st_ino
  node=m['node'];assert re.fullmatch(r'/opt/board-prover/releases/rolling-[a-f0-9]+/node/bin/node',node) and digest(pathlib.Path(node))==m['nodeSha256']
+ if 'bokTopup' in m:install_wallet_update(SOURCE,NEXT,m['bokTopup'])
  old,new=wallet(RUNNING,node),wallet(NEXT,node)
  unit=pathlib.Path(m['appUnit']);assert digest(unit)==m['unitFiles'][str(unit)]
  original=unit.read_text();rows=original.splitlines(keepends=True)
  assert rows.count('WorkingDirectory='+str(SOURCE)+'\n')==1
  starts=[line for line in rows if line.startswith('ExecStart=')];assert len(starts)==1 and shlex.split(starts[0][10:])[0]==node
  updated=''.join(line.replace(str(SOURCE),str(NEXT)) if line.startswith(('WorkingDirectory=','ExecStart=')) else line for line in rows)
+ if (NEXT/'deploy/runtime-wallet.json').is_file():
+  updated=updated.replace('/etc/rolling-app/wallet.json',str(NEXT/'deploy/runtime-wallet.json'))
+  assert str(NEXT/'deploy/runtime-wallet.json') in updated
  assert shlex.split(next(line[10:] for line in updated.splitlines() if line.startswith('ExecStart=')))[0]==node
  atomic(P/'application.service.next',updated.encode(),0o600)
  public_directory(UI);export_assets(RUNNING,old);export_assets(NEXT,new,UI)
  for url,name in PUBLIC.items():public_file(UI/(url.lstrip('/')+('index.html' if url.endswith('/') else '')),(NEXT/'apps/rolling'/name).read_bytes())
- result={'schemaVersion':1,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
+ result={'schemaVersion':1,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'walletConfigSha256':digest(NEXT/'deploy/runtime-wallet.json') if (NEXT/'deploy/runtime-wallet.json').is_file() else None,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
  atomic(P/'stage-result.json',json.dumps(result,sort_keys=True).encode(),0o600)
  for name,entry in m['files'].items():assert (not (SOURCE/name).exists()) if entry['previousSha256'] is None else digest(SOURCE/name)==entry['previousSha256']
  preserved();print(json.dumps({'staged':True,'files':len(result['files'])}))

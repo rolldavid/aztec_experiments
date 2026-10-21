@@ -414,8 +414,11 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    if(typeof captureFundingWallet==='function'){
+    const bokTopupScope=selected.bokTopup&&selected.aggregateFunding?{...selected.aggregateFunding,...selected.bokTopup}:undefined;
+    if(selected.bokTopup&&!bokTopupScope)throw fail('ROLLING_SESSION_CONFIG');
+    funding.bokTopupScope=bokTopupScope;
     const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingRead(name,args);await guardRoute();return value;}]));
-    topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,swapScope:kind==='bok'?selected.aggregateFunding:undefined,
+    topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,topupScope:kind==='bok'?bokTopupScope:undefined,
      resolveScope:async()=>verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee:deployment.privateFee.address.toString(),bok:kind==='bok'?await ensureBok():undefined,kind,contextGuard:guardRoute}),verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
@@ -477,7 +480,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
  const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
- const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.aggregateFunding!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
+ const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.bokTopup!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
  const refunds = Object.freeze({
   list: options => locked(() => depositRefunds.list(options)),
   request: id => locked(() => depositRefunds.request(id)),

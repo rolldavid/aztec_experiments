@@ -164,6 +164,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     ?Object.freeze({checkpoint:preproof.checkpoint,send:preproof.send}):null;
   const owner=session?.owner?.toString();
   const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
+  const bokTopupScope=funding?.bokTopupScope?clone(funding.bokTopupScope):undefined;
   const resolveBokWithdrawal=typeof funding?.resolveBokWithdrawal==='function'?funding.resolveBokWithdrawal.bind(funding):null;
   const verifyWithdrawal=typeof funding?.verifyWithdrawal==='function'?funding.verifyWithdrawal.bind(funding):null;
   const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
@@ -253,7 +254,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     // Full network/account attestation brackets verification. Per-read fences
     // check local session identity without multiplying those network queries.
-    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,
+    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:localGuard});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;

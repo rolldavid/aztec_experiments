@@ -1,0 +1,9 @@
+{
+  "ethereumChainId": "11155111",
+  "router": "0x2ce9b42769ff5419ce9b26fd48e83e3a08c2938b",
+  "amountUsdc": "1",
+  "maximumEthWei": "20720601922841",
+  "estimatedGas": "649283",
+  "liveQuoteAndEstimate": "passed",
+  "transactionSent": false
+}

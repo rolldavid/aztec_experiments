@@ -1,7 +1,7 @@
 // Labelled DOM and session doubles. No browser, crypto, RPC or real account.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountRollingWalletPanel} from './wallet-panel.mjs';
+import {mountRollingWalletPanel,runTopupPayment,compactAmount} from './wallet-panel.mjs';
 function dom(t){
  let document;const observers=new Set(),changed=()=>{for(const fn of observers)fn();};
  class Element{
@@ -31,9 +31,9 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:{}},application:{
+ const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
@@ -230,4 +230,43 @@ test('confirmed post closes immediately while public feed refresh is still pendi
  const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');await started.promise;
  assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.deepEqual(f.submissions,['post-1']);
  refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+});
+
+test('Bok credit automatically quotes and keeps amount editable, discarding an obsolete price',{timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),started=Promise.withResolvers(),quotes=[];let payments=0;
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){quotes.push(input);if(quotes.length===1){started.resolve();await gate.promise;}return {...input,phase:'deposit',maximumSwapWei:'2000000000000000'};},async confirm(){payments++;return {};},async advanceClaim(){return {state:'complete'};},async inspect(){return null;}};
+ const f=await fixture(t,{topup:cap});await f.started.promise;f.balance.resolve({available:true,availableCredit:'2000000'});await f.document.until(()=>f.host.textContent.includes('2 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');await started.promise;
+ const amount=f.document.querySelector('input[aria-label="Amount (USD)"]');assert(amount);assert.equal(amount.disabled,false);assert.equal(f.document.querySelector('select[aria-label="Top-up credit"]'),null);assert(!f.document.body.textContent.includes('Review cost'));assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Continue top-up'));
+ amount.value='5';amount.fire('input');amount.fire('change');assert.equal(amount.disabled,false);assert.equal(f.document.querySelector('input[aria-label="Amount (USD)"]'),amount);gate.resolve();
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled&&!b.hidden));assert.deepEqual(quotes.map(q=>q.amount),['1000000','5000000']);assert(f.document.querySelector('.credit-total').textContent.includes('2 USDC'));assert(f.document.querySelector('.credit-total').textContent.includes('0.002 ETH'));
+ pay.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(payments,1);assert.equal(quotes.length,2);
+});
+for(const completed of [false,true])test(`failed automatic Bok quote offers price retry without unrelated payment continuation (${completed?'completed payment':'no payment'})`,{timeout:3000},async t=>{
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(){throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'BB_ETH_READ_FAILED'});},async inspect(){return completed?{paymentSaved:true,completed:true}:null;}};
+ const f=await fixture(t,{topup:cap});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
+ await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh price'&&!b.hidden));assert(!f.document.body.textContent.includes('PRIVATE_SENTINEL'));assert(f.document.querySelectorAll('button').find(b=>b.textContent==='Continue payment').hidden);assert(f.document.querySelectorAll('button').find(b=>b.textContent==='Pay').disabled);
+});
+
+test('cancelled Bok payment exposes a fresh price without enabling an unquoted resend',{timeout:3000},async t=>{
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){throw Object.assign(Error('cancelled'),{code:'BB_ETH_REQUEST_CANCELLED'});},async inspect(){return null;}};
+ const f=await fixture(t,{topup:cap});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(f.document.querySelectorAll('button').find(b=>b.textContent==='Pay').disabled);assert(!f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh price').hidden);assert(f.document.querySelectorAll('button').find(b=>b.textContent==='Continue payment').hidden);
+});
+
+test('credit payment errors retain only approved Ethereum diagnostic fields',async()=>{
+ for(const safe of [true,false]){const failure=Object.assign(Error('PRIVATE_SENTINEL'),{code:'BB_ETH_PREFLIGHT_FAILED',providerCode:safe?'CALL_EXCEPTION':'PRIVATE_SENTINEL',ethereumStage:safe?'preflight':'PRIVATE_SENTINEL'});
+ await assert.rejects(runTopupPayment({confirm:async()=>{throw failure;}},{},{phase:'deposit'}),error=>{assert.equal(error.code,'BB_ETH_PREFLIGHT_FAILED');assert.equal(error.providerCode,safe?'CALL_EXCEPTION':undefined);assert.equal(error.ethereumStage,safe?'preflight':undefined);return true;});}
+});
+
+test('compact monetary displays round balances down and payment caps up',()=>{
+ assert.equal(compactAmount('1234567890123456789',18,4),'1.2345');
+ assert.equal(compactAmount('1234567890123456789',18,4,true),'1.2346');
+ assert.equal(compactAmount('1',18,4,true),'0.0001');
+ assert.equal(compactAmount('1234567890123456789',18,8,true),'1.2345679');
+ assert.equal(compactAmount('1',18,8,true),'0.00000001');
+ assert.equal(compactAmount('1000000000000000000',18,8,true),'1');
+ for(const amount of ['0','1','9999999999','1234567890123456789','999999999999999999999999'])for(const places of [4,8]){
+  const shown=compactAmount(amount,18,places,true),[whole,fraction='']=shown.split('.'),displayed=BigInt(whole)*10n**18n+BigInt(fraction.padEnd(18,'0'));assert(displayed>=BigInt(amount));
+ }
 });

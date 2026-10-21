@@ -78,6 +78,12 @@ function nameFailure(failure){
  }catch{return null;}
 }
 function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
+// Presentation only. Never feed rounded amounts back into payment authorization.
+export function compactAmount(value,decimals,places,roundUp=false){
+ const amount=BigInt(value);if(amount<0n||!Number.isInteger(decimals)||!Number.isInteger(places)||places<1||decimals<places)throw Error('Invalid display amount');
+ const scale=10n**BigInt(decimals-places),rounded=amount/scale+(roundUp&&amount%scale!==0n?1n:0n);
+ return decimal(rounded,places);
+}
 function fundingFailureText(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')){
   if(code.value==='ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'){
@@ -93,6 +99,11 @@ function fundingFailureText(failure){
    ROLLING_FUNDING_SWAP_SCOPE:'The ETH exchange could not be verified. No exchange was sent. Try again when the service is available.',
    BB_ETH_REQUEST_CANCELLED:'Payment cancelled in your wallet. You can continue when you are ready.',
    BB_ETH_INSUFFICIENT_FUNDS:'Your wallet needs more ETH to cover this payment and Ethereum fees.',
+   BB_ETH_READ_FAILED:'Ethereum could not confirm the payment details. Refresh the price and try again.',
+   BB_ETH_PREFLIGHT_FAILED:'Ethereum rejected this payment before it was sent. Refresh the price and try again.',
+   BB_ETH_SUBMISSION_UNKNOWN:'Your wallet may have sent the payment. Check its status before paying again.',
+   BB_ETH_CONFIRMATION_UNKNOWN:'Your payment was sent. Confirmation is temporarily unavailable; continue checking this payment.',
+   ROLLING_FUNDING_PURCHASE_SCOPE:'The credit payment service could not be verified. No payment was sent.',
    INSUFFICIENT_FUNDS:'Your wallet needs more ETH to cover this payment and Ethereum fees.',
    PRIVATE_FEE_BALANCE_INSUFFICIENT:'Your posting balance needs credit before the Bok credit can be added. Add posting credit, then continue this top-up.',
    ROLLING_FUNDING_SIGNATURE_CANCELLED:'Signature cancelled. No funding payment was sent. Your account remains unlocked; get a fresh quote when you are ready.',
@@ -126,8 +137,9 @@ export function aggregateFundingFailure(failure){
 }
 
 function topupFailure(error,stage,exchanged=false){
- const code=Object.getOwnPropertyDescriptor(error??{},'code')?.value;
- return Object.assign(new Error('Credit purchase could not be completed.',{cause:error}),{code:typeof code==='string'?code:'ROLLING_TOPUP_FAILED',topupStage:stage,topupExchanged:exchanged});
+ const code=Object.getOwnPropertyDescriptor(error??{},'code')?.value,providerCode=Object.getOwnPropertyDescriptor(error??{},'providerCode')?.value,ethereumStage=Object.getOwnPropertyDescriptor(error??{},'ethereumStage')?.value;
+ const safeProvider=['ACTION_REJECTED','INSUFFICIENT_FUNDS','CALL_EXCEPTION','NETWORK_ERROR','SERVER_ERROR','TIMEOUT','UNKNOWN_ERROR','NONCE_EXPIRED','REPLACEMENT_UNDERPRICED','UNSUPPORTED_OPERATION','BAD_DATA','4001','4100','4900','4901','-32002'].includes(providerCode),safeStage=['read','preflight','wallet','confirmation'].includes(ethereumStage);
+ return Object.assign(new Error('Credit purchase could not be completed.',{cause:error}),{code:typeof code==='string'?code:'ROLLING_TOPUP_FAILED',topupStage:stage,topupExchanged:exchanged,...(safeProvider?{providerCode}:{}),...(safeStage?{ethereumStage}:{})});
 }
 
 // Continue only after each preceding Ethereum transaction is confirmed. Each
@@ -179,7 +191,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let depositRefundPage=null;
  let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null;
- let topupKind='private-fee',topupQuote=null,topupInputs={amount:''};
+ let topupKind='private-fee',topupQuote=null,topupInputs={amount:''},topupQuoteKey=null,topupQuotePending=null,topupQuoteError='',topupSaved=null,updateTopupQuote=()=>{};
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let fundingQuote=null,fundingQuoteRequested=false,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH'};
@@ -192,14 +204,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  dialog.append(el('div',{class:'dialog-top'},title,closeButton),description,live,content);
  document.body.append(dialog);
  const bokBalance=createBokBalanceQuery({identity:()=>unlocked()?session:null,read:()=>session.application.readBokStatus(),onChange:()=>{
-  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();
+  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
  function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return phase==='ready'?`${decimal(value.availableCredit,6)} USDC available`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
  function requestBokBalance(){if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
  function addBokCredit(){
   if(initializing||busy||!session||!unlocked())return;
-  topupKind='bok';topupInputs={amount:''};topupQuote=null;view='topup';clearOperationFeedback();
+  topupKind='bok';topupInputs={amount:''};resetTopupQuote();topupSaved=null;view='topup';clearOperationFeedback();
   if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();}render();
  }
  function renderBokControls(){
@@ -217,7 +229,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -304,7 +316,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
  async function work(fn,failureMessage=nameFailure,{posting=false}={}){
   if(busy)return;let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
-  try{if(initializationPending)await initializationPending;await bokBalance.settled();await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
+  try{if(initializationPending)await initializationPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(setupMode){setupMode=null;note('');}postingInProgress=false;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{finishOperation();}
@@ -878,7 +890,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   };
   const cost=el('strong'),balance=el('strong');
   if(postingTypes.has(draft.type)){
-   balance.textContent=typeof status?.privateFeeCredit==='string'?decimal(status.privateFeeCredit,18):status?.status==='fee-needed'?'0':'—';
+   balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));
    content.append(el('div',{class:'composer-cost'},el('span',{},'Balance ',balance),el('span',{},'Max cost ',cost),el('small',{},'posting credits')));
   }
   const review=button(reviewLabel(draft),prepareReview,true);
@@ -900,7 +912,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
    if(kind==='subboard')valid=valid&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(fields.get('slug').value);
-   cost.textContent=typeof session?.postingFeeLimit==='string'?decimal((BigInt(session.postingFeeLimit)*(kind==='bok'?2n:1n)).toString(),18):'—';
+   const maximum=typeof session?.postingFeeLimit==='string'?(BigInt(session.postingFeeLimit)*(kind==='bok'?2n:1n)).toString():null;cost.textContent=maximum?compactAmount(maximum,18,4,true):'—';if(maximum)cost.setAttribute('title',decimal(maximum,18));
    review.textContent=postingInProgress?'Posting…':reviewLabel(draft);review.dataset.unavailable=String(!valid);review.disabled=busy||!valid;return valid;
   }
   rulesView(draft,validate);
@@ -932,7 +944,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
   if(result.state==='complete'){
    const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();await refresh();checkAccount(epoch);if(bokTopup){await loadBok();checkAccount(epoch);}
-   if(view==='topup')notice='Top-up and private claim confirmed. Your posting collateral is unchanged.';
+   if(view==='topup'){notice=bokTopup?'Bok credit added.':'Posting credit added.';topupSaved=null;resetTopupQuote();view=draft.content?'action':'overview';}
    else{
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
     notice=status?.status==='fee-ready'?'Payment confirmed. Your posting balance is set up.':'Payment confirmed. Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
@@ -951,64 +963,78 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const type=intent?.action?.type;if(type==='claim-private-fee')return session?.topup?.['private-fee'];if(type==='claim-bok')return session?.topup?.bok;
   return view==='topup'?session?.topup?.[topupKind]:session?.funding;
  }
+ function resetTopupQuote(){topupQuote=null;topupQuoteKey=null;topupQuoteError='';updateTopupQuote();}
+ function topupSelection(){
+  const cap=session?.topup?.[topupKind],isBok=topupKind==='bok';
+  if(!cap)return null;
+  const input={amount:units(topupInputs.amount,isBok?6:18),asset:isBok?topupInputs.asset:'USDC',privateFeeCap:cap.defaultPrivateFeeCap};
+  return {cap,input,key:JSON.stringify([accountEpoch,topupKind,input])};
+ }
+ function requestTopupQuote(){
+  if(busy||initializing||blocked||intent||fundingAutomatic||topupSaved?.paymentSaved&&!topupSaved?.completed||view!=='topup'||!dialog.open||topupQuotePending)return;
+  let selected;try{selected=topupSelection();}catch{return;}
+  if(!selected||selected.key===topupQuoteKey)return;
+  const {cap,input,key}=selected,epoch=accountEpoch;topupQuoteKey=key;topupQuote=null;topupQuoteError='';
+  topupQuotePending=(async()=>{
+   await bokBalance.settled();if(busy||view!=='topup'||epoch!==accountEpoch){if(topupQuoteKey===key)topupQuoteKey=null;return;}
+   let current;try{current=topupSelection();}catch{return;}if(current?.key!==key)return;
+   try{const quoted=await cap.prepare(input);checkAccount(epoch);if(topupSelection()?.key===key)topupQuote=quoted;}
+   catch(failure){
+    if(epoch!==accountEpoch||view!=='topup')return;
+    let current;try{current=topupSelection();}catch{return;}if(current?.key!==key)return;
+    topupQuoteError=aggregateFundingFailure(topupFailure(failure,'quote'));
+    try{const saved=await cap.inspect();checkAccount(epoch);if(saved?.paymentSaved&&!saved.completed)topupSaved=saved;}catch{}
+   }
+  })().finally(()=>{topupQuotePending=null;updateTopupQuote();if(view==='topup'&&!busy)queueMicrotask(requestTopupQuote);});
+  updateTopupQuote();
+ }
+ async function continueTopup(cap,isBok){
+  const saved=await cap.inspect();if(!saved?.paymentSaved||saved.completed){topupSaved=null;resetTopupQuote();return;}
+  if(['swap','approval'].includes(saved.phase)){
+   await cap.recover({wait:true});topupInputs={amount:decimal(saved.amount,isBok?6:18),asset:saved.asset};topupSaved=null;resetTopupQuote();return;
+  }
+  fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
+ }
  function topupView(){
   if(!fundingWalletView())return;
-  content.append(el('h3',{},'Add credit'),paragraph('Posting balance pays for posts and account updates. Bok credit pays for requests to the AI assistant.'));
-  const choices=Object.keys(session.topup??{});
-  if(!choices.length){content.append(paragraph('Credit purchases are unavailable for this account.'));return;}
+  const choices=Object.keys(session.topup??{});if(!choices.length){content.append(paragraph('Credit purchases are unavailable for this account.'));return;}
   if(!choices.includes(topupKind))topupKind=choices[0];
   const cap=session.topup[topupKind],isBok=topupKind==='bok';
   if(!topupInputs.amount)topupInputs.amount=isBok?'1':decimal(BigInt(cap.defaultPrivateFeeCap)*2n,18);
   if(!topupInputs.asset)topupInputs.asset=isBok&&cap.ethAvailable?'ETH':'USDC';
-  const allocation=()=>({amount:units(topupInputs.amount,isBok?6:18),asset:isBok?topupInputs.asset:'USDC',privateFeeCap:cap.defaultPrivateFeeCap});
-  if(topupQuote){
-   const q=topupQuote,input=allocation();
-   content.append(paragraph(isBok?'Add $'+decimal(q.amount,6)+' of Bok credit.':'Add '+decimal(q.amount,18)+' posting credit.'));
-   if(q.phase==='swap')content.append(paragraph('Pay up to '+decimal(q.maximumSwapWei,18)+' ETH. Your ETH is exchanged for USDC automatically; any unused ETH is returned.'),paragraph('Approve the exchange, USDC spending, and credit payment in your wallet. Ethereum fees apply to each transaction.'));
-   else content.append(paragraph('Pay '+decimal(q.amount,isBok?6:18)+(isBok?' USDC.':' fee tokens.')+' Approve the payment in your wallet.'));
-   content.append(paragraph('Ethereum fee limit for the next transaction: '+decimal(q.gasBudgetWei,18)+' ETH.'));
-   content.append(button('Add credit',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);topupQuote=null;
-    await runTopupPayment(cap,input,q,phase=>{
-     checkAccount(epoch);note(({swap:'Confirm the ETH exchange in your wallet…',approval:'Approve USDC spending in your wallet…',deposit:'Confirm the credit payment in your wallet…'})[phase]);
-    });
-    checkAccount(epoch);fundingAutomatic=true;
-    try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
-   },aggregateFundingFailure),true),button('Change amount',()=>{topupQuote=null;render();}));
-  }else if(!fundingAutomatic){
-   const select=el('select',{'aria-label':'Top-up credit'});
-   for(const kind of choices)select.append(el('option',{value:kind},kind==='bok'?'Bok assistant':'Posting balance'));
-   select.value=topupKind;select.addEventListener('change',()=>{clearOperationFeedback();topupKind=select.value;topupInputs={amount:''};render();});
-   content.append(label('Top-up credit',select));
-   const amountName=isBok?'Bok credit (USD)':'Fee token top-up amount';
-   const amount=el('input',{type:'text',inputmode:'decimal','aria-label':amountName});amount.value=topupInputs.amount;
-   amount.addEventListener('input',()=>topupInputs.amount=amount.value);content.append(label(amountName,amount));
-   if(isBok){
-    const asset=el('select',{'aria-label':'Pay with'});
-    if(cap.ethAvailable)asset.append(el('option',{value:'ETH'},'ETH'));
-    asset.append(el('option',{value:'USDC'},'USDC'));asset.value=topupInputs.asset;
-    asset.addEventListener('change',()=>{topupInputs.asset=asset.value;clearOperationFeedback();});content.append(label('Pay with',asset));
-   }
-   content.append(button('Review cost',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);note('Getting the current price…');
-    try{topupQuote=await cap.prepare(allocation());}catch(error){throw topupFailure(error,'quote');}
-    checkAccount(epoch);note('');
-   },aggregateFundingFailure),true));
+  if(isBok)content.append(paragraph('Use Bok credit when you ask @bok to reply.'));
+  const amountName=isBok?'Amount (USD)':'Posting credit amount',amount=el('input',{type:'text',inputmode:'decimal','aria-label':amountName});amount.value=topupInputs.amount;const edits=[amount];
+  amount.addEventListener('input',()=>{topupInputs.amount=amount.value;resetTopupQuote();requestTopupQuote();});
+  amount.addEventListener('change',requestTopupQuote);content.append(label(amountName,amount));
+  if(isBok){
+   const presets=el('div',{class:'credit-presets'});for(const value of ['1','5','10'])presets.append(button('$'+value,()=>{amount.value=value;topupInputs.amount=value;resetTopupQuote();requestTopupQuote();}));edits.push(...presets.children);content.append(presets);
+   const asset=el('select',{'aria-label':'Pay with'});if(cap.ethAvailable)asset.append(el('option',{value:'ETH'},'ETH'));asset.append(el('option',{value:'USDC'},'USDC'));asset.value=topupInputs.asset;edits.push(asset);
+   asset.addEventListener('change',()=>{topupInputs.asset=asset.value;resetTopupQuote();requestTopupQuote();});content.append(label('Pay with',asset));
   }
-  content.append(fundingControl(fundingAutomatic?'Pause top-up checks':'Continue top-up',()=>{
-   if(fundingAutomatic){stopFunding();notice='Paused. Your payment is saved.';render();}
-   else void work(async()=>{
-    const saved=await cap.inspect();
-    if(!saved?.paymentSaved){note('Review the cost to start adding credit.');return;}
-    if(saved?.paymentSaved&&['swap','approval'].includes(saved.phase)){
-     await cap.recover({wait:true});
-     topupInputs={amount:decimal(saved.amount,isBok?6:18),asset:saved.asset};
-     topupQuote=await cap.prepare({amount:saved.amount,asset:saved.asset,privateFeeCap:saved.privateFeeCap});
-     note('Continue with the next wallet approval.');return;
-    }
-    fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
-   },aggregateFundingFailure);
-  }));
+  const summary=el('div',{class:'credit-total','aria-live':'polite'}),feedback=el('p',{role:'status',class:'quiet'});
+  const pay=button('Pay',()=>void work(async()=>{
+   const selected=topupSelection(),q=topupQuote,epoch=accountEpoch;
+   if(!q||selected?.key!==topupQuoteKey)throw topupFailure(Error('Price changed'),'quote');
+   topupQuote=null;
+   try{
+    await runTopupPayment(cap,selected.input,q,phase=>{checkAccount(epoch);note(phase==='approval'?'Approve USDC spending in your wallet…':'Confirm your payment in your wallet…');});
+    checkAccount(epoch);topupSaved={paymentSaved:true,phase:'deposit',...selected.input};fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
+   }catch(failure){topupQuoteError=aggregateFundingFailure(failure)??'The payment could not complete. Refresh the price and try again.';try{topupSaved=await cap.inspect();}catch{}throw failure;}
+  },aggregateFundingFailure),true);
+  const retry=button('Refresh price',()=>{resetTopupQuote();requestTopupQuote();});
+  const resume=fundingControl('Continue payment',()=>void work(()=>continueTopup(cap,isBok),aggregateFundingFailure));
+  updateTopupQuote=()=>{
+   if(view!=='topup'||!summary.isConnected)return;
+   let valid=false;try{valid=!!topupQuote&&topupSelection()?.key===topupQuoteKey;}catch{}
+   const q=valid?topupQuote:null,balance=isBok?bokStatus?.availableCredit:status?.privateFeeCredit;
+   const displayedBalance=balance===undefined?'—':(isBok?decimal(balance,6):compactAmount(balance,18,4))+(isBok?' USDC':''),displayedPayment=q?(q.asset==='ETH'?compactAmount(q.maximumSwapWei,18,8,true)+' ETH':isBok?decimal(q.amount,6)+' USDC':compactAmount(q.amount,18,4,true)+' credits'):'—';
+   summary.replaceChildren(el('span',{},'Balance ',el('strong',balance===undefined?{}:{title:decimal(balance,isBok?6:18)},displayedBalance)),el('span',{},q?(q.asset==='ETH'?'Pay up to ':'Pay '):'Payment ',el('strong',q?{title:decimal(q.asset==='ETH'?q.maximumSwapWei:q.amount,q.asset==='ETH'?18:isBok?6:18)}:{},displayedPayment)));
+   const pending=!!topupSaved?.paymentSaved&&!topupSaved.completed;for(const edit of edits){edit.dataset.unavailable=String(pending);edit.disabled=busy||pending;}pay.hidden=pending||fundingAutomatic;pay.dataset.unavailable=String(!valid);pay.disabled=busy||!valid;
+   retry.hidden=!topupQuoteError||pending;resume.hidden=!pending||fundingAutomatic;
+   feedback.textContent=topupQuotePending?'Getting the current price…':topupQuoteError||(q?'Plus the Ethereum fee shown in your wallet.':'Enter an amount to see the price.');
+  };
+  content.append(summary,feedback,pay,retry,resume);updateTopupQuote();
+  if(fundingAutomatic)content.append(fundingControl('Pause checks',()=>{stopFunding();render();}));
  }
  async function prepareFundingQuote(){
   fundingQuoteRequested=true;const epoch=accountEpoch;checkAccount(epoch);note('Getting the current price…');
@@ -1020,15 +1046,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!fundingAutomatic&&session.funding.usdcAvailable){const asset=el('select',{'aria-label':'Pay with'});for(const [value,text]of [['ETH','ETH'],['USDC','USDC — no ETH needed']])asset.append(el('option',{value},text));asset.value=fundingInputs.asset;asset.addEventListener('change',()=>{clearOperationFeedback();fundingInputs.asset=asset.value;fundingQuote=null;fundingQuoteRequested=false;render();});content.append(label('Pay with',asset));}
   if(fundingQuote){
    const q=fundingQuote,b=q.breakdown,isUsdc=q.kind==='rolling-aggregate-usdc-v1',currency=isUsdc?' USDC':' ETH';
-   const deposit=isUsdc?decimal(b.collateral.maxUsdc,6):decimal(b.collateralWei,18);
-   const posting=isUsdc?decimal(b.fee.maxUsdc,6):decimal(b.fee.maxEth,18);
-   const assistant=isUsdc?decimal(b.bokAmount,6):decimal(b.bok.maxEth,18);
+   const deposit=isUsdc?decimal(b.collateral.maxUsdc,6):compactAmount(b.collateralWei,18,8,true);
+   const posting=isUsdc?decimal(b.fee.maxUsdc,6):compactAmount(b.fee.maxEth,18,8,true);
+   const assistant=isUsdc?decimal(b.bokAmount,6):compactAmount(b.bok.maxEth,18,8,true);
    content.append(el('h3',{},'Set up posting'),
     fundingSummary('Refundable deposit',deposit+currency,'Discourages spam. Withdraw after your posts have been checked and the wait between posts has ended. Rule-breaking posts extend the wait.'),
     fundingSummary('Posting balance',posting+currency,'Pays the network each time you post or update your account.'),
     ...(BigInt(isUsdc?b.bokAmount:b.bok.amount)>0n?[fundingSummary('Bok assistant',assistant+currency,decimal(isUsdc?b.bokAmount:b.bok.amount,6)+' USDC of credit for requests to Bok.')]:[]),
-    fundingSummary(isUsdc?'Payment fee':'Ethereum fee limit',decimal(isUsdc?b.relayFeeUsdc:b.gasBudgetWei,isUsdc?6:18)+currency,isUsdc?'Included in your USDC payment.':'You pay the actual network fee, up to this limit.'),
-    el('div',{class:'funding-total'},el('span',{},'Maximum total'),el('strong',{},decimal(isUsdc?b.maximumUsdc:b.maximumTotalWei,isUsdc?6:18)+currency)),
+    fundingSummary(isUsdc?'Payment fee':'Ethereum fee limit',(isUsdc?decimal(b.relayFeeUsdc,6):compactAmount(b.gasBudgetWei,18,8,true))+currency,isUsdc?'Included in your USDC payment.':'You pay the actual network fee, up to this limit.'),
+    el('div',{class:'funding-total'},el('span',{},'Maximum total'),el('strong',{title:decimal(isUsdc?b.maximumUsdc:b.maximumTotalWei,isUsdc?6:18)+currency},(isUsdc?decimal(b.maximumUsdc,6):compactAmount(b.maximumTotalWei,18,8,true))+currency)),
     paragraph(isUsdc?'≈ $'+Number(decimal(b.maximumUsdc,6)).toFixed(2)+' USD':q.usdEstimate?'≈ $'+q.usdEstimate+' USD':'USD estimate unavailable'),
     paragraph('Sepolia testnet · test funds only.'),
     paragraph(isUsdc?'Your wallet will ask for two signatures to approve this payment.':'Approve the payment in your wallet.'));
@@ -1091,7 +1117,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   releasePreviews();content.replaceChildren();
   if(inlineCreation)content.append(el('h3',{},view==='funding'?'Set up your account':intent?'Review your name':'Create a name'));
   const signedIn=!!runtime&&unlocked();
-  title.textContent=!signedIn?'Connect your wallet':view==='funding'?'Set up posting':view==='topup'?'Add credit':view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
+  title.textContent=!signedIn?'Connect your wallet':view==='funding'?'Set up posting':view==='topup'?(topupKind==='bok'?'Add Bok credit':'Add posting credit'):view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
   if(signedIn&&intent&&['prepared','replacement-prepared'].includes(intent.status))title.textContent=intent.status==='replacement-prepared'?'Review replacement':reviewLabel(intent.action);
   description.textContent=!signedIn?'Join the conversation without sharing your identity.':'';
   description.hidden=!!setupMode||!description.textContent;
@@ -1117,24 +1143,24 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     else{
      if(view==='overview'){
       const needsFunding=status?.status==='fee-needed'||status?.status==='collateral-pending',needsTopup=status?.status==='fee-needed'&&status?.depositIds?.length>0;
-      content.append(el('h3',{},needsTopup?'Add to your posting balance':needsFunding?'One more step before your first post':'Ready for a conversation?'),paragraph(needsTopup?'Your deposit is already in place. Add posting credit to keep going.':needsFunding?'Set up your posting balance to join in.':'Post anonymously, or choose a name when you write.'),button(needsTopup?'Add posting credit':needsFunding?'Set up posting':'Write a post',()=>{if(needsTopup){topupKind='private-fee';topupInputs.amount='';topupQuote=null;}if(needsFunding)selectView(needsTopup?'topup':'funding');else chooseAction('post');},true));
+      content.append(el('h3',{},needsTopup?'Add to your posting balance':needsFunding?'One more step before your first post':'Ready for a conversation?'),paragraph(needsTopup?'Your deposit is already in place. Add posting credit to keep going.':needsFunding?'Set up your posting balance to join in.':'Post anonymously, or choose a name when you write.'),button(needsTopup?'Add posting credit':needsFunding?'Set up posting':'Write a post',()=>{if(needsTopup){topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;}if(needsFunding)selectView(needsTopup?'topup':'funding');else chooseAction('post');},true));
       const settings=el('details',{class:'account-links'},el('summary',{},'Account settings'));
       settings.open=accountSettingsOpen;settings.addEventListener('toggle',()=>{accountSettingsOpen=settings.open;if(settings.open&&moderatorStatus===null&&!busy)void work(async()=>{const epoch=accountEpoch;moderatorStatus=await session.application.readModeratorStatus();checkAccount(epoch);onPrivateChange();});});
       settings.append(button('Refresh account',()=>void work(refresh)),button('Your names',()=>selectView('names')),button('Follows and bookmarks',()=>selectView('preferences')));
       if(typeof session.application.readBalances==='function')settings.append(button('Balance and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');}));
       settings.append(button('Create a board',()=>chooseAction('subboard')));if(moderatorStatus?.authorized)settings.append(button('Update site rules',()=>chooseAction('set-main-policy')),button('Transfer moderator authority',()=>chooseAction('transfer-moderator')));
-      if(session.topup)settings.append(button('Add credit',()=>selectView('topup')));
+      if(session.topup?.['private-fee'])settings.append(button('Add posting credit',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView('topup');}));
       content.append(settings);
      }else{
       if(!viewReady())content.append(button(view==='names'?'Load your names':'Load publishing options',()=>void work(loadView),true));
-      else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs.amount='';topupQuote=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
+      else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
       if(!inlineCreation)content.append(button('Back to account',()=>selectView('overview')));
      }
     }
    }
   }
   if(signedIn&&!initializing&&!invalidated&&!reloadRequired)content.append(button('Sign out',()=>void signOut()));
-  controlsBusy(busy);renderBokControls();requestBokBalance();
+  controlsBusy(busy);renderBokControls();requestBokBalance();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});
   }
@@ -1148,7 +1174,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{
