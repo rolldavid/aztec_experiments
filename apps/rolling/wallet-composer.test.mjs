@@ -32,15 +32,15 @@ function dom(t){
  t.after(()=>Object.assign(globalThis,old));return document;
 }
 async function fixture(t,{fee='fee-ready',defaults={type:'post'}}={}){
- const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;
+ const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null;const core={sessions:0,status:0,names:0,moderator:0};
  const session={bokConfigured:true,busy:false,topup:{bok:{}},application:{
-  readAccountStatus:async()=>({status:fee,depositIds:['9']}),ownedIdentities:async()=>({identities:[],records:[],nextCursor:null}),readModeratorStatus:async()=>({authorized:false}),
+  readAccountStatus:async()=>{core.status++;return {status:fee,depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:[],records:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action){prepared=action;throw Error('stop at authoritative preparation boundary');}
  }};
- const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>session};
+ const runtime={getAccount:()=>account,account:{configure(){}},createSession:async()=>{core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
- await document.until(()=>document.querySelector('textarea')&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
- return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared};
+ await document.until(()=>(defaults.type?document.querySelector('textarea'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ return {document,panel,host,balance,started,reads:()=>reads,prepared:()=>prepared,core:()=>({...core})};
 }
 test('typing @bok and editing/removing it stays immediate while a shared balance read is pending',{timeout:3000},async t=>{
  const f=await fixture(t);await f.started.promise;const editor=f.document.querySelector('textarea'),dialog=f.document.querySelector('dialog');
@@ -83,4 +83,13 @@ test('main-page credit action is available without a balance dialog and preserve
 test('existing deposited account can read Bok balance even when its posting credit is empty',{timeout:3000},async t=>{
  const f=await fixture(t,{fee:'fee-needed'});await f.started.promise;assert.equal(f.reads(),1);f.balance.resolve({available:true,availableCredit:'8'});
  await f.document.until(()=>f.host.textContent.includes('0.000008 USDC available'));
+});
+
+test('opening and reopening the social composer reuses the unlocked session while optional balance is pending',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{}});await f.started.promise;const before=f.core();
+ const write=f.document.querySelectorAll('button').find(b=>b.textContent==='Write a post');write.fire('click');
+ const editor=f.document.querySelector('textarea');assert(editor);assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.deepEqual(f.core(),before);
+ assert.equal(f.panel.close(),true);f.panel.open({type:'reply',parent:'10',root:'1',subboard:'0'});
+ assert(f.document.querySelector('textarea'));assert.equal(f.document.querySelector('textarea').disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.deepEqual(f.core(),before);assert.equal(f.reads(),1);
+ f.balance.resolve({available:true,availableCredit:'0'});
 });
