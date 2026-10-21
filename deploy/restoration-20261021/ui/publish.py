@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""One reviewed UI publication. Run stage, review result/config, then activate.
+"""Repeat static UI publication. Run stage, review result, then activate.
 Packet plan.json: commit(40hex), configuredSource, runningSource, appPid,
 appStartTime(/proc/PID/stat field22), configHashes{absolute:sha256}, unitFiles
 {absolute:sha256}, files{relative:{sha256,previousSha256|null}}, caddySha256,
-protectedPids{unit:pid}, node, nodeSha256, appUnit (base unit in unitFiles), proxyNotifyVerified=true
-(after independent native Type=notify verification; required for activate). Payload at packet/files/<relative>. No private values leave host.
+protectedPids{unit:pid} (including the application proxy), node, nodeSha256,
+appUnit (base unit in unitFiles), notifySha256, expectedCurrentUi (exact absolute
+current symlink target). Caddy routing and its notify drop-in must already exist.
+Payload at packet/files/<relative>. No private values leave host.
 """
-import hashlib,json,os,pathlib,re,shlex,shutil,stat,subprocess,sys,urllib.request
+import hashlib,json,os,pathlib,re,shlex,stat,subprocess,sys,urllib.request
 P=pathlib.Path(sys.argv[1]).resolve();mode=sys.argv[2];assert mode in ('stage','activate')
 m=json.loads((P/'plan.json').read_text());assert re.fullmatch('[0-9a-f]{40}',m['commit'])
-BASE=pathlib.Path('/opt/rolling-ui');SOURCE=pathlib.Path(m['configuredSource']);RUNNING=pathlib.Path(m['runningSource']);NEXT=pathlib.Path('/opt/rolling-app/releases/ui-'+m['commit'][:12]);UI=BASE/'releases'/m['commit'];CADDY=pathlib.Path('/etc/rolling-app/Caddyfile');BINARY='/opt/board-prover/releases/rolling-71d5e83614a05c42/caddy/caddy'
+BASE=pathlib.Path('/opt/rolling-ui');SOURCE=pathlib.Path(m['configuredSource']);RUNNING=pathlib.Path(m['runningSource']);NEXT=pathlib.Path('/opt/rolling-app/releases/ui-'+m['commit'][:12]);UI=BASE/'releases'/m['commit'];CADDY=pathlib.Path('/etc/rolling-app/Caddyfile')
 NOTIFY=pathlib.Path('/etc/systemd/system/rolling-application-proxy.service.d/90-ui-ready.conf')
 sha=lambda b:hashlib.sha256(b).hexdigest()
 def digest(p):return sha(p.read_bytes())
@@ -24,15 +26,31 @@ def atomic(p,data,mode=0o644,uid=0,gid=0):
   finally:os.close(fd)
  except:raise
 
-def preserved():
+def check_current(expected):
+ current=BASE/'current'
+ assert current.is_symlink() and os.readlink(current)==str(expected)
+ assert current.resolve()==pathlib.Path(expected).resolve() and pathlib.Path(expected).is_dir()
+
+def switch_current(expected,target):
+ check_current(expected)
+ temporary=BASE/'current.new';assert not temporary.exists() and not temporary.is_symlink()
+ os.symlink(target,temporary);os.replace(temporary,BASE/'current')
+ fd=os.open(BASE,os.O_RDONLY|os.O_DIRECTORY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+
+def preserved(configured=SOURCE,unit_hash=None,current=None):
  assert run(['systemctl','show','rolling-application.service','-p','MainPID','--value'])==str(m['appPid'])
  assert pathlib.Path('/proc/'+str(m['appPid'])+'/cwd').resolve()==RUNNING
  assert pathlib.Path('/proc/'+str(m['appPid'])+'/stat').read_text().rsplit(')',1)[1].split()[19]==str(m['appStartTime'])
- assert 'rolling-application-proxy.service' not in m['protectedPids']
- for unit,pid in m['protectedPids'].items():assert re.fullmatch(r'[A-Za-z0-9-]+\.service',unit) and run(['systemctl','show',unit,'-p','MainPID','--value'])==str(pid)
+ assert 'rolling-application-proxy.service' in m['protectedPids']
+ for unit,pid in m['protectedPids'].items():assert isinstance(pid,int) and pid>0 and re.fullmatch(r'[A-Za-z0-9-]+\.service',unit) and run(['systemctl','show',unit,'-p','MainPID','--value'])==str(pid)
  for name,want in m['configHashes'].items():assert digest(pathlib.Path(name))==want
- for name,want in m['unitFiles'].items():assert digest(pathlib.Path(name))==want
- assert run(['systemctl','show','rolling-application.service','-p','WorkingDirectory','--value'])==str(SOURCE)
+ for name,want in m['unitFiles'].items():assert digest(pathlib.Path(name))==(unit_hash if unit_hash and name==m['appUnit'] else want)
+ assert digest(CADDY)==m['caddySha256'] and not CADDY.is_symlink()
+ assert digest(NOTIFY)==m['notifySha256'] and not NOTIFY.is_symlink()
+ assert run(['systemctl','show','rolling-application.service','-p','WorkingDirectory','--value'])==str(configured)
+ check_current(current or m['expectedCurrentUi'])
 
 def safe_relative(name):
  p=pathlib.PurePosixPath(name);assert not p.is_absolute() and '..' not in p.parts and str(p)==name and 'node_modules' not in p.parts
@@ -71,25 +89,61 @@ def export_assets(source,description,destination=None):
  if destination:public_file(destination/'wallet/runtime.json',json.dumps(description['runtime'],separators=(',',':')).encode())
 
 PUBLIC={'/':'live.html','/archive/':'archive.html','/archive/snapshot.json':'archive.json','/reader.mjs':'reader.mjs','/reader-client.mjs':'reader-client.mjs','/profile-view.mjs':'profile-view.mjs','/avatar-upload.mjs':'avatar-upload.mjs','/model.mjs':'model.mjs','/navigation.mjs':'navigation.mjs','/style.css':'style.css','/wallet-panel.mjs':'wallet-panel.mjs','/wallet-cache-worker.mjs':'wallet-cache-worker.mjs'}
-def caddy(headers):
- lines=['{',' admin off',' auto_https off',' log {','  output discard',' }','}',':4319 {',' bind 172.31.32.101',' route {','  @api path /api /api/*','  handle @api {','   reverse_proxy 127.0.0.1:4318','  }','  handle {','   route {','   header {']
- for name,value in headers.items():
-  assert re.fullmatch('[A-Za-z-]+',name) and '\n' not in value and '\r' not in value;lines.append('    '+name+' '+json.dumps(value))
- lines+=['   }','   encode gzip','   @wrongMethod not method GET HEAD','   header @wrongMethod Allow "GET, HEAD"','   respond @wrongMethod 405','   @pinned {','    path /wallet/* /crs/*','    not path /wallet/runtime.json',"    expression `{http.request.uri.query}.matches('^sha256=[a-f0-9]{64}$')`",'   }','   handle @pinned {','    root * /opt/rolling-ui/by-hash','    rewrite * /{query.sha256}{path}','    header Cache-Control "public, max-age=31536000, immutable"','    file_server','   }',"   @query expression `{http.request.uri.query} != ''`",'   respond @query 404','   @public path '+' '.join(PUBLIC)+' /wallet/* /crs/*','   handle @public {','    root * /opt/rolling-ui/current','    file_server','   }','   respond 404','   }','  }',' }','}']
- return ('\n'.join(lines)+'\n').encode()
+
+def activate():
+ r=json.loads((P/'stage-result.json').read_text())
+ assert r['schemaVersion']==1 and r['commit']==m['commit'] and r['source']==str(NEXT) and r['ui']==str(UI)
+ assert r['planSha256']==digest(P/'plan.json') and r['publisherSha256']==digest(pathlib.Path(__file__))
+ assert r['expectedCurrentUi']==m['expectedCurrentUi'] and r['caddySha256']==m['caddySha256'] and r['notifySha256']==m['notifySha256']
+ assert digest(P/'application.service.next')==r['unitSha256']
+ for name,want in r['files'].items():
+  relative=pathlib.PurePosixPath(name);assert not relative.is_absolute() and '..' not in relative.parts
+  assert not (UI/name).is_symlink() and digest(UI/name)==want
+ for name,entry in m['files'].items():
+  safe_relative(name);assert not (NEXT/name).is_symlink() and digest(NEXT/name)==entry['sha256']
+ preserved()
+ unit=pathlib.Path(m['appUnit']);info=unit.stat();original=unit.read_bytes()
+ assert sha(original)==m['unitFiles'][str(unit)]
+ atomic(P/'application.service.before',original,0o600)
+ atomic(P/'current.before',m['expectedCurrentUi'].encode(),0o600)
+ switch_attempted=False;install_attempted=False
+ try:
+  # Record the future source without stopping any healthy owner. Caddy already
+  # serves /opt/rolling-ui/current and immutable assets from /by-hash.
+  install_attempted=True
+  atomic(unit,(P/'application.service.next').read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
+  run(['systemctl','daemon-reload'])
+  preserved(configured=NEXT,unit_hash=r['unitSha256'])
+  switch_attempted=True;switch_current(m['expectedCurrentUi'],UI)
+  with urllib.request.urlopen('http://172.31.32.101:4319/wallet/runtime.json',timeout=10) as response:
+   assert sha(response.read())==r['files']['wallet/runtime.json']
+  preserved(configured=NEXT,unit_hash=r['unitSha256'],current=UI)
+ except:
+  # Roll back pointers and future startup configuration only. Existing hashed
+  # assets remain available to tabs which observed the candidate publication.
+  if switch_attempted:
+   if (BASE/'current').is_symlink() and os.readlink(BASE/'current')==str(UI):switch_current(UI,m['expectedCurrentUi'])
+   else:check_current(m['expectedCurrentUi'])
+  if install_attempted:
+   actual=digest(unit);assert actual in (sha(original),r['unitSha256'])
+   if actual==r['unitSha256']:atomic(unit,original,stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
+   run(['systemctl','daemon-reload'])
+  preserved()
+  raise
+ atomic(P/'activation-result.json',json.dumps({'commit':m['commit'],'appPid':m['appPid'],'runningSource':str(RUNNING),'nextSource':str(NEXT),'ui':str(UI),'previousUi':m['expectedCurrentUi'],'protectedPids':m['protectedPids'],'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256']}).encode(),0o600)
+ print('{"activated":true,"appRestarted":false,"proxyRestarted":false}')
 
 assert os.getuid()==0
-assert str(NOTIFY) not in m['unitFiles'] and not NOTIFY.exists() and not NOTIFY.is_symlink()
+assert re.fullmatch(r'/opt/rolling-ui/releases/[0-9a-f]{40}',m['expectedCurrentUi'])
+assert re.fullmatch('[0-9a-f]{64}',m['notifySha256'])
+assert str(NOTIFY) not in m['unitFiles'] or m['unitFiles'][str(NOTIFY)]==m['notifySha256']
 proxy_unit=run(['systemctl','show','rolling-application-proxy.service','-p','FragmentPath','--value']);assert proxy_unit in m['unitFiles']
 preserved()
 if mode=='stage':
  assert digest(CADDY)==m['caddySha256'];assert not NEXT.exists() and not UI.exists()
- # Capture existing exact static security/isolation policy, not an invented CSP.
- with urllib.request.urlopen('http://127.0.0.1:4318/',timeout=10) as response:
-  names=['Cache-Control','X-Content-Type-Options','Referrer-Policy','Content-Security-Policy','Cross-Origin-Opener-Policy','Cross-Origin-Embedder-Policy','Cross-Origin-Resource-Policy'];headers={k:response.headers[k] for k in names};assert all(headers.values())
  for name,entry in m['files'].items():
   safe_relative(name);old=SOURCE/name;payload=P/'files'/name;assert not payload.is_symlink() and digest(payload)==entry['sha256']
-  assert (not old.exists()) if entry['previousSha256'] is None else (not old.is_symlink() and digest(old)==entry['previousSha256'])
+  assert (not old.exists() and not old.is_symlink()) if entry['previousSha256'] is None else (not old.is_symlink() and digest(old)==entry['previousSha256'])
  run(['cp','-al',str(SOURCE),str(NEXT)])
  for name,entry in m['files'].items():
   target=NEXT/name;reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,(P/'files'/name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
@@ -105,43 +159,9 @@ if mode=='stage':
  atomic(P/'application.service.next',updated.encode(),0o600)
  public_directory(UI);export_assets(RUNNING,old);export_assets(NEXT,new,UI)
  for url,name in PUBLIC.items():public_file(UI/(url.lstrip('/')+('index.html' if url.endswith('/') else '')),(NEXT/'apps/rolling'/name).read_bytes())
- candidate=caddy(headers);atomic(P/'Caddyfile.next',candidate,0o600);run([BINARY,'validate','--config',str(P/'Caddyfile.next'),'--adapter','caddyfile'])
- result={'schemaVersion':1,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'caddySha256':sha(candidate),'unitSha256':digest(P/'application.service.next'),'securityHeaders':headers,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
+ result={'schemaVersion':1,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
  atomic(P/'stage-result.json',json.dumps(result,sort_keys=True).encode(),0o600)
  for name,entry in m['files'].items():assert (not (SOURCE/name).exists()) if entry['previousSha256'] is None else digest(SOURCE/name)==entry['previousSha256']
  preserved();print(json.dumps({'staged':True,'files':len(result['files'])}))
 else:
- assert m.get('proxyNotifyVerified') is True
- r=json.loads((P/'stage-result.json').read_text());assert r['commit']==m['commit'] and r['source']==str(NEXT) and r['ui']==str(UI)
- assert digest(P/'application.service.next')==r['unitSha256']
- assert digest(P/'Caddyfile.next')==r['caddySha256'] and digest(CADDY)==m['caddySha256']
- for name,want in r['files'].items():assert digest(UI/name)==want
- # Preserve exact old Caddy bytes; NEVER stop/restart application or index.
- atomic(P/'Caddyfile.before',CADDY.read_bytes(),0o600)
- current=BASE/'current';assert not current.exists() and not current.is_symlink() # first migration only
- os.symlink(UI,BASE/'current.new');os.replace(BASE/'current.new',current)
- atomic(CADDY,(P/'Caddyfile.next').read_bytes(),stat.S_IMODE(CADDY.stat().st_mode),CADDY.stat().st_uid,CADDY.stat().st_gid)
- try:
-  # Caddy's independently verified native READY notification owns startup.
-  # Later symlink publications need neither a reload nor a service restart.
-  atomic(NOTIFY,b'[Service]\nType=notify\nNotifyAccess=main\n');run(['systemctl','daemon-reload'])
-  run(['systemctl','restart','rolling-application-proxy.service'])
-  with urllib.request.urlopen('http://172.31.32.101:4319/wallet/runtime.json',timeout=10) as response:assert sha(response.read())==r['files']['wallet/runtime.json']
-  preserved()
- except:
-  atomic(CADDY,(P/'Caddyfile.before').read_bytes(),stat.S_IMODE(CADDY.stat().st_mode),CADDY.stat().st_uid,CADDY.stat().st_gid)
-  if NOTIFY.exists():
-   assert not NOTIFY.is_symlink() and NOTIFY.read_bytes()==b'[Service]\nType=notify\nNotifyAccess=main\n';NOTIFY.unlink()
-  run(['systemctl','daemon-reload']);run(['systemctl','restart','rolling-application-proxy.service']);raise
- # Future starts use new code; amend the exact base unit, including absolute
- # script paths, without changing the pinned native Node executable.
- unit=pathlib.Path(m['appUnit']);assert digest(unit)==m['unitFiles'][str(unit)];info=unit.stat()
- atomic(P/'application.service.before',unit.read_bytes(),0o600)
- atomic(unit,(P/'application.service.next').read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
- try:run(['systemctl','daemon-reload'])
- except:
-  atomic(unit,(P/'application.service.before').read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid);run(['systemctl','daemon-reload']);raise
- assert run(['systemctl','show','rolling-application.service','-p','WorkingDirectory','--value'])==str(NEXT)
- assert run(['systemctl','show','rolling-application.service','-p','MainPID','--value'])==str(m['appPid'])
- assert pathlib.Path('/proc/'+str(m['appPid'])+'/cwd').resolve()==RUNNING
- atomic(P/'activation-result.json',json.dumps({'commit':m['commit'],'appPid':m['appPid'],'runningSource':str(RUNNING),'nextSource':str(NEXT),'ui':str(UI)}).encode(),0o600);print('{"activated":true,"appRestarted":false}')
+ activate()
