@@ -11,9 +11,8 @@ const FIELD=21888242871839275222246405745257275088548364400416034343698204186575
 const scope={origin:'https://rolling.example',chainId:'11155111'};
 const signer=new ethers.Wallet('0x'+'12'.repeat(32));
 const metadata={ethereumAddress:signer.address.toLowerCase(),providerId:'io.metamask'};
-const wallet={address:'0x'+'01'.repeat(32),secretKey:'0x'+'02'.repeat(32),salt:'123'};
-function fixture(){
- const indexedDB=new IDBFactory();
+const wallet={address:'0x'+'01'.repeat(32),secretKey:'0x'+'02'.repeat(32),salt:'0x'+123n.toString(16).padStart(64,'0')};
+function fixture(indexedDB=new IDBFactory()){
  const context=vm.createContext({TextEncoder,TextDecoder,URL,Uint8Array,ArrayBuffer,crypto:webcrypto,indexedDB});
  vm.runInContext(source,context,{filename:'ethereum-account-session.js'});
  return {api:context.BillboardEthereumSession,indexedDB};
@@ -52,6 +51,7 @@ test('EOA signature derives deterministic separate nonzero field values across c
  const canonical=await api.derive({ethers,signature:high,message,address:signer.address});
  assert.deepEqual(plain(first),plain(compact));assert.deepEqual(plain(first),plain(parity));assert.deepEqual(plain(first),plain(canonical));
  assert.match(first.secretKey,/^0x[0-9a-f]{64}$/);
+ assert.match(first.salt,/^0x[0-9a-f]{64}$/);
  for(const value of [first.secretKey,first.salt])assert(BigInt(value)>0n&&BigInt(value)<FIELD);
  assert.notEqual(BigInt(first.secretKey),BigInt(first.salt));
 });
@@ -111,4 +111,26 @@ test('clear follows queued save, removes only selected scope, and invalid replac
  assert.throws(()=>api.save(scope,{...wallet,secretKey:'0x'+'00'.repeat(32)},metadata),{code:'BB_ETHEREUM_SESSION_INVALID'});
  assert.deepEqual(plain(await api.load(scope)),{wallet,metadata});
  await api.clear(scope);assert.equal(await api.load(scope),null);assert.deepEqual(plain(await api.load(other)),{wallet,metadata});
+});
+
+test('fresh signatures and module instances recover the identical account after remembered storage is cleared',async()=>{
+ const first=fixture(),firstSigner=new ethers.Wallet('0x'+'12'.repeat(32));
+ const firstMessage=first.api.createMessage({...scope,address:firstSigner.address});
+ const firstSignature=await firstSigner.signMessage(firstMessage);
+ const initial=await first.api.derive({ethers,signature:firstSignature,message:firstMessage,address:firstSigner.address});
+ await first.api.save(scope,{address:wallet.address,...initial},metadata);
+ await first.api.clear(scope);assert.equal(await first.api.load(scope),null);
+ const second=fixture(first.indexedDB),secondSigner=new ethers.Wallet('0x'+'12'.repeat(32));
+ const secondMessage=second.api.createMessage({...scope,address:secondSigner.address});
+ const secondSignature=await secondSigner.signMessage(secondMessage);
+ const restored=await second.api.derive({ethers,signature:secondSignature,message:secondMessage,address:secondSigner.address});
+ assert.equal(secondMessage,firstMessage);assert.equal(secondSignature,firstSignature);
+ assert.deepEqual(plain(restored),plain(initial));
+ assert.match(restored.salt,/^0x[0-9a-f]{64}$/);
+ assert.equal(await second.api.load(scope),null);
+});
+
+test('remembered wallet requires canonical full-field hex salt',()=>{
+ const {api}=fixture();
+ for(const salt of ['123','0x7b','0x'+'ff'.repeat(32)])assert.throws(()=>api.save(scope,{...wallet,salt},metadata),{code:'BB_ETHEREUM_SESSION_INVALID'});
 });

@@ -41,7 +41,7 @@
     check(typeof value.address === 'string' && /^0x[0-9a-f]{64}$/.test(value.address));
     check(typeof value.secretKey === 'string' && /^0x[0-9a-f]{64}$/.test(value.secretKey));
     check(BigInt(value.address) > 0n && BigInt(value.address) < FIELD && BigInt(value.secretKey) > 0n && BigInt(value.secretKey) < FIELD);
-    check(typeof value.salt === 'string' && /^(0|[1-9][0-9]{0,76})$/.test(value.salt) && BigInt(value.salt) < FIELD);
+    check(typeof value.salt === 'string' && /^0x[0-9a-f]{64}$/.test(value.salt) && BigInt(value.salt) < FIELD);
     return { address: value.address, secretKey: value.secretKey, salt: value.salt };
   }
 
@@ -110,7 +110,7 @@
       };
       const secret = await field('secret-key');
       const accountSalt = await field('account-salt');
-      return Object.freeze({ secretKey: '0x' + secret.toString(16).padStart(64, '0'), salt: accountSalt.toString() });
+      return Object.freeze({ secretKey: '0x' + secret.toString(16).padStart(64, '0'), salt: '0x' + accountSalt.toString(16).padStart(64, '0') });
     }
 
     function save(scope, wallet, metadata) {
