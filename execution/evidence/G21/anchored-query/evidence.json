@@ -1,0 +1,81 @@
+{
+  "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+  "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+  "task_id": "G21",
+  "holds": [],
+  "findings": [],
+  "checks": [
+    {
+      "id": "anchored-query-tests",
+      "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+      "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+      "status": "pass",
+      "exit_code": 0,
+      "command": "'/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/A02-node/node-v24.21.0-darwin-arm64/bin/node' --test prover/private-query.test.mjs",
+      "environment": "Darwin 25.5.0 arm64, pinned Node v24.21.0, rolling-lead-bok checkout. Actual run owner /root/post_publish_plan confirmed exit and exact file/log hashes through collaboration.",
+      "observed": "102 tests: 101 pass, 0 fail, 1 retained-real-proof fixture skip. No deployment or real proof asserted.",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G21/anchored-query/tests.log",
+          "sha256": "f14f13ee6fae83f27ac0024d7b360e7f980da03c6233a1eb1e06f222253e1367"
+        },
+        {
+          "path": "execution/evidence/G21/anchored-query/source-hashes.json",
+          "sha256": "a150ca8f0619d1ea7132740c71306c51db87534ea681c8c74bb621ebcb65535d"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+    "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+    "kind": "independent",
+    "reviewer": "/root/post_path_review",
+    "implementer": "/root",
+    "verdict": "approve",
+    "artifacts": [
+      {
+        "path": "execution/evidence/G21/anchored-query/review.md",
+        "sha256": "a602d7328c687084af3f0734ef5b0328e91d3caa48e012c8eaf5b0dae860d4c2"
+      },
+      {
+        "path": "execution/evidence/G21/anchored-query/source-hashes.json",
+        "sha256": "a150ca8f0619d1ea7132740c71306c51db87534ea681c8c74bb621ebcb65535d"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "G21-ANCHORED-READINESS",
+      "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+      "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G21/anchored-query/acceptance.md",
+          "sha256": "dfa7c5f9f58f21b67e9b54dd80fcb33c9613ae468c9ec08656c5086adde9bb52"
+        },
+        {
+          "path": "execution/evidence/G21/anchored-query/source-hashes.json",
+          "sha256": "a150ca8f0619d1ea7132740c71306c51db87534ea681c8c74bb621ebcb65535d"
+        }
+      ]
+    },
+    {
+      "id": "G21-STRICT-ESCALATION",
+      "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+      "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+      "status": "pass",
+      "artifacts": [
+        {
+          "path": "execution/evidence/G21/anchored-query/acceptance.md",
+          "sha256": "dfa7c5f9f58f21b67e9b54dd80fcb33c9613ae468c9ec08656c5086adde9bb52"
+        },
+        {
+          "path": "execution/evidence/G21/anchored-query/source-hashes.json",
+          "sha256": "a150ca8f0619d1ea7132740c71306c51db87534ea681c8c74bb621ebcb65535d"
+        }
+      ]
+    }
+  ]
+}

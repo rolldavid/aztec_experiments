@@ -1,0 +1,42 @@
+{
+  "i-0a9b5b9ba55815cda": {
+    "rolling-node": {
+      "active": true,
+      "pid": 232950
+    },
+    "rolling-query": {
+      "active": true,
+      "pid": 274641
+    },
+    "board-prover": {
+      "active": true,
+      "pid": 274642
+    },
+    "board-prover-proxy": {
+      "active": true,
+      "pid": 274771
+    },
+    "rolling-application": {
+      "active": true,
+      "pid": 232957
+    },
+    "rolling-application-proxy": {
+      "active": true,
+      "pid": 232963
+    },
+    "rolling-moderator": {
+      "active": true,
+      "pid": 274662
+    }
+  },
+  "i-0a7d9957f2b3d7f19": {
+    "rolling-bok-testnet": {
+      "active": true,
+      "pid": 48663
+    },
+    "rolling-bok-artifact-proxy": {
+      "active": true,
+      "pid": 48665
+    }
+  }
+}

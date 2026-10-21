@@ -1,0 +1,36 @@
+{
+  "testEthereum": "0x8d83fed116a7542934CA2E968055555317F91CA4",
+  "signup": {
+    "ethereum": "0xcc75ab496361ed3900bc45290bb63942c3d170bf6d11fb526d426bcb849d3331",
+    "aztec": "0x034b8dfa7ab8c839802b7346b6ee6fc225337afc57fe552a9bf99e0c1cb2dcb2",
+    "confirmed": true
+  },
+  "first": {
+    "ethereumHash": "0x6d4ae97f97facc96753088b8867bd963ba85a16dc472f4101c2f87cb873f4cc9",
+    "aztecHash": "0x22496acccde18c1635357eac263ffefb112879b306bfe6fc9eb6cfd3213b6b22",
+    "ethereumStatus": 1,
+    "block": 11961879,
+    "amount": "1000000",
+    "balanceBefore": "0",
+    "balanceAfter": "1000000",
+    "ethereumTransactions": 1,
+    "aztecTransactions": 1,
+    "proofJobs": 1,
+    "manualContinueAfterQuery504": true
+  },
+  "second": {
+    "ethereum": "0x95a7c72f486139c5ceba724b57d6e718c714736dda18c69e8d53060567b1e2c9",
+    "ethereumBlock": 11961910,
+    "aztec": "0x0c3122ecc4a06e01047e794b9b262d87db758ee60e2e46d6d3823bce918171fb",
+    "status": "confirmed",
+    "initialFailure": {
+      "status": 503,
+      "durationMs": 331,
+      "methods": [
+        "aztec_findLeavesIndexes"
+      ]
+    },
+    "explicitResumeAfterPublishedFix": true,
+    "privateBalanceUnits": "2000000"
+  }
+}

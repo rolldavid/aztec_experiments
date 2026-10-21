@@ -1,0 +1,46 @@
+{
+  "task_id": "G21",
+  "implementer": "/root",
+  "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+  "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+  "integration_ref": "refs/heads/codex/g21-anchored-query-gate-base",
+  "allowed_paths": [
+    "prover/private-query.mjs",
+    "prover/private-query.test.mjs",
+    "execution/evidence/G21/anchored-query/tests.log"
+  ],
+  "required_checks": [
+    "anchored-query-tests"
+  ],
+  "requirements": [
+    "G21-ANCHORED-READINESS",
+    "G21-STRICT-ESCALATION"
+  ],
+  "holds": [],
+  "ownership": [
+    {
+      "task_id": "G21",
+      "owner": "/root",
+      "paths": [
+        "prover/private-query.mjs",
+        "prover/private-query.test.mjs",
+        "execution/evidence/G21/anchored-query/tests.log",
+        "START_HERE.md"
+      ]
+    },
+    {
+      "task_id": "G21-publication",
+      "owner": "/root/post_publish_plan",
+      "paths": [
+        ".build/G21-anchored-query-packet"
+      ]
+    },
+    {
+      "task_id": "G21-gate",
+      "owner": "/root/flow_scope_efficiency",
+      "paths": [
+        ".build/G21-anchored-query-gate"
+      ]
+    }
+  ]
+}

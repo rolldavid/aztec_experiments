@@ -1,0 +1,19 @@
+{
+  "commit": "be9d4ea33db4561b23c13647170f9926f25d2486",
+  "appPid": 232957,
+  "runningSource": "/opt/rolling-app/releases/ui-195cb269bf52",
+  "nextSource": "/opt/rolling-app/releases/ui-be9d4ea33db4",
+  "ui": "/opt/rolling-ui/releases/be9d4ea33db4561b23c13647170f9926f25d2486",
+  "previousUi": "/opt/rolling-ui/releases/2fa6fc7be60a4667fbcf192a4bb835eaefd6e634",
+  "protectedPids": {
+    "rolling-node.service": 232950,
+    "rolling-query.service": 232952,
+    "board-prover.service": 199732,
+    "board-prover-proxy.service": 199733,
+    "rolling-moderator.service": 240124,
+    "rolling-application-proxy.service": 232963
+  },
+  "caddySha256": "94d3ffa7e654d2b110aa32edd25ca68b4a76f0f70bd3e1e4056ae44dbc1f2221",
+  "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae",
+  "styleSha256": "0ad83e2014b829abed593fc87ab5d05f15416b18abcdae2785bd01756971c8ed"
+}

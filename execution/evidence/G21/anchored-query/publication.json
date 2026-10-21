@@ -1,0 +1,117 @@
+{
+  "source": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+  "firstAttempt": {
+    "status": "failed-before-admission",
+    "cause": "Activation identity used historical checkpoint10278; the same identity check failed on the restored old runtime. Fresh checkpoint12341 passed.",
+    "rollbackGap": "Moderator was stopped by existing query BindsTo; the protected-process assertion prevented proxy restart. Existing units were immediately restored.",
+    "nodeAndApplicationPreserved": true
+  },
+  "freshPreflight": {
+    "freshCheckpoint": 12341,
+    "exitCode": 0,
+    "passed": true,
+    "stderrTail": ""
+  },
+  "promotion": {
+    "promoted": true,
+    "source": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+    "manifest": "a461700b7e53774429eb76675964ff2aae11c68eafc2e23fc780fcf1f8cfd962",
+    "nodePreserved": true,
+    "proverRestarted": true,
+    "proverProcess": {
+      "pid": 274642,
+      "startTicks": "10277537",
+      "exe": "/opt/board-prover/releases/rolling-a461700b7e537744/node/bin/node",
+      "cwd": "/opt/board-prover/releases/rolling-a461700b7e537744"
+    },
+    "unaffectedProcessesPreserved": {
+      "rolling-application.service": {
+        "cwd": "/opt/rolling-app/releases/ui-195cb269bf52",
+        "exe": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+        "pid": 232957,
+        "startTicks": "8447896"
+      },
+      "rolling-node.service": {
+        "cwd": "/",
+        "exe": "/usr/bin/python3.12",
+        "pid": 232950,
+        "startTicks": "8447893"
+      }
+    },
+    "moderatorRestored": {
+      "pid": 274662,
+      "startTicks": "10277544",
+      "exe": "/opt/board-prover/releases/rolling-71d5e83614a05c42/node/bin/node",
+      "cwd": "/opt/rolling-moderator/releases/supervision-69eb1831e0c9"
+    },
+    "activationReexecuted": false,
+    "runtimeObservation": {
+      "proverPolicy": "active-loopback",
+      "proverActivated": true,
+      "proxyPolicy": "active-private",
+      "proxyViewerOrigin": "https://d30njln0kead8n.cloudfront.net",
+      "proxyQuery": {
+        "enabled": true,
+        "ready": true
+      },
+      "proverQuery": {
+        "enabled": true,
+        "ready": true
+      },
+      "proverAvailability": "ready",
+      "applicationScopeSha256": "0fd7f693bb44af59457c420852ff17441ac2ae7f130a0f9ebca23eba8e68d688",
+      "bokScope": "constructor-allowlist-only",
+      "applicationProofQualified": false
+    },
+    "queryRestarted": true,
+    "queryProcess": {
+      "pid": 274641,
+      "startTicks": "10277536",
+      "exe": "/opt/board-prover/releases/rolling-a461700b7e537744/node/bin/node",
+      "cwd": "/opt/board-prover/releases/rolling-a461700b7e537744"
+    },
+    "previousQueryProcess": {
+      "pid": 272722,
+      "startTicks": "10230796",
+      "exe": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec/node/bin/node",
+      "cwd": "/opt/board-prover/releases/rolling-f3efd677aa45a7ec"
+    },
+    "queryCredentialsPreserved": true,
+    "budgetStop": "2026-10-20T14:46:12Z",
+    "qualificationPassed": true,
+    "qualificationReexecuted": false,
+    "carryForwardSha256": "51a50b257a9269559a188f1dc148cc37784273b097503e9d636f029e2cf34bd0",
+    "affectedCheckSha256": "6aba019782894c3c88ecb0379eb119b0ae68889bd464a080de5ddb129fadda97",
+    "deltaSha256": "34d2027320abfd06a64d4697e1364dfbea97be787fdeba465f2eaf9c9c4cbd29",
+    "packageMetadataSha256": "00c569889f2d53cd173be4c6014446bbf5583e8cf4c100570febb1e0c580c1c8",
+    "inventorySha256": "c2d42c10790f213eabf434370255c2190e792d0188b77684b75113023d761259"
+  },
+  "publicHealth": {
+    "ready": true,
+    "proofs": "real",
+    "queue": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "query": {
+      "enabled": true,
+      "ready": true
+    }
+  },
+  "commands": {
+    "firstPromotion": "0f689c07-5a82-46c2-b9ec-152ed277c646",
+    "restoration": "685944ab-a0aa-45f6-aa84-4677869160cb",
+    "freshPreflight": "be3b4c4e-6d27-4b6e-8313-ede94ff1a6af",
+    "promotion": "18e0a974-a395-4e0a-a2b4-378b47449964"
+  },
+  "fullNativeQualificationReexecuted": false,
+  "focusedTests": {
+    "passed": 101,
+    "skipped": 1,
+    "failed": 0
+  }
+}

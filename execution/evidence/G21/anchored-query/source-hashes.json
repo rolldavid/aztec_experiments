@@ -1,0 +1,10 @@
+{
+  "candidate": "1d72b5e43e090cf749f72fbdbbdaa2080aa1c52e",
+  "base": "be9d4ea33db4561b23c13647170f9926f25d2486",
+  "files": {
+    "prover/private-query.mjs": "c5212cb3f0d85951a7dab16d35f13839bfd805a35b041ef5b28a7d94b8386563",
+    "prover/private-query.test.mjs": "52f96c9bf84fbd54279075b44f9f92d0436cbefecc04ee633fdca478692fa353",
+    "execution/evidence/G21/anchored-query/tests.log": "f14f13ee6fae83f27ac0024d7b360e7f980da03c6233a1eb1e06f222253e1367"
+  },
+  "gateSha256": "49d7651a1d34935ba855727fdeddb1487cdbff9a8d32567da882a62bdd446060"
+}

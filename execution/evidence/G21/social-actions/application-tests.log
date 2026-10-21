@@ -1,0 +1,22 @@
+✔ immediate post skips review estimation but submission estimates and enforces configured fee ceiling (69.733042ms)
+✔ immediate preparation rejects unrelated financial actions and caller fee overrides (0.358791ms)
+✔ immediate Bok preparation skips review estimates for both authorized request and exact saved post (20.147291ms)
+✔ immediate collateral claim saves configured cap without a review simulation (3.211667ms)
+✔ immediate ETH aggregate claim keeps bridged payment and submits with one estimation (5.529542ms)
+✔ immediate USDC aggregate claim keeps bridged payment and submits with one estimation (3.287459ms)
+✔ immediate like retains exact action and one submission estimate (1.72325ms)
+✔ immediate unlike retains exact action and one submission estimate (1.675625ms)
+✔ immediate name retains exact action and one submission estimate (4.550458ms)
+✔ immediate bio retains exact action and one submission estimate (4.202875ms)
+✔ immediate avatar retains exact action and one submission estimate (30.161ms)
+✔ immediate preference retains exact action and one submission estimate (3.585375ms)
+✔ immediate read-marker retains exact action and one submission estimate (2.874542ms)
+✔ immediate actions retain name/revision admission and profile/fee submission checks (13.366083ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1353.318333

@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "21October owner requests remove redundant confirmations on likes/bookmarks/profile edits, actual MetaMask-to-Aztec Bok funding end-to-end, then publish. Flow agent owns panel/application, reviewer owns reader integration and cross-review; funding agent investigates test harness; root owns live extension test and publication. Existing live250cae75 preserved.",
+      "checkpoint": "21 October requested social/profile confirmation fixes and live Bok funding verification completed and published. Frontend be9d4ea3 (runtime/SDK2fa6fc7b) submits likes/bookmarks/follows inline and profiles with one Save/Create; hidden payment controls corrected. Gateway1d72b5e4/native manifest a461700b7e537744 fixes checkpoint-read readiness coupling. Final actual MetaMask ETH-to-Bok purchase: one wallet approval, one Ethereum transaction, one real proof, one confirmed Aztec claim, private balance2->3USDC; no errors/manual continuation. Earlier query failures and failed-first/ corrected server rollout retained in evidence. All9services active, node/app PIDs and feed preserved. See evidence/G21/social-actions and anchored-query. Broader G21 production work remains active; this owner-requested batch is complete.",
       "execution_lane": "application completion",
       "owner": "ux-root",
       "branch": "codex/rolling-chat-draft3",
