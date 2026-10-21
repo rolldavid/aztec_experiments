@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October efficiency/composer ed3afe3b published with protected PIDs unchanged. Atomic Bok topup contract deployed to Sepolia; live quote/estimate passes. One-transaction native local EVM purchase,427 focused checks,219 final journal,40 UI/config,4 scoped and8 publisher checks pass; independent review approved. Final SDK/runtime bundle and static publication in progress. Reader copy cleanup included; broader single-action/profile UX remains identified.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October250cae75 Bok one-transaction ETH funding and simpler quote/pay UI published. Exact assets/config verified; API/feed/prover200; all protected services unchanged. Reviewed native local EVM purchase and live Sepolia quote/estimate pass. Earlier efficiency/post-completion ed3afe3b included. Broader audit identified remaining review/confirm duplication on simple social/profile actions; no claim of a new live MetaMask/Aztec claim journey.
 
 ## Ready internal work
 

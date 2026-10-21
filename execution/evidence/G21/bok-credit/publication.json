@@ -1,0 +1,58 @@
+{
+  "activation": {
+    "commit": "250cae757d58ea85127faaaebde34323b1f61137",
+    "appPid": 232957,
+    "runningSource": "/opt/rolling-app/releases/ui-195cb269bf52",
+    "nextSource": "/opt/rolling-app/releases/ui-250cae757d58",
+    "ui": "/opt/rolling-ui/releases/250cae757d58ea85127faaaebde34323b1f61137",
+    "previousUi": "/opt/rolling-ui/releases/ed3afe3b950b8f0a20209d4d682bb2a25d2e55b6",
+    "protectedPids": {
+      "rolling-node.service": 232950,
+      "rolling-query.service": 232952,
+      "board-prover.service": 199732,
+      "board-prover-proxy.service": 199733,
+      "rolling-moderator.service": 240124,
+      "rolling-application-proxy.service": 232963
+    },
+    "caddySha256": "94d3ffa7e654d2b110aa32edd25ca68b4a76f0f70bd3e1e4056ae44dbc1f2221",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "liveChecks": {
+    "/wallet-panel.mjs": {
+      "status": 200,
+      "sha256": "41e6f4bc47104cb67f3a5eba8e257e96933e7ba09479dd6e00967cfa53e6ddcc"
+    },
+    "/wallet/runtime.mjs": {
+      "status": 200,
+      "sha256": "b43a1c30dc7b5361c6c80c2e9985e82289a0c2993c88052b6e7184d93850932a"
+    },
+    "/wallet/runtime.json": {
+      "status": 200,
+      "sha256": "7b6341f6ffe081fbe8dadf9184290d947deda6cb31fddbca900a66d420b5ffc9"
+    },
+    "/reader.mjs": {
+      "status": 200,
+      "sha256": "2c6f918114c8a451b8e0f6e918a17af8ff22b2e04d51e2d233bc603ed72b2052"
+    },
+    "/style.css": {
+      "status": 200,
+      "sha256": "bc80276e856b6307dacf04e35dece67e814b05940455cfe1eaef1c46b6913d92"
+    },
+    "/api/status": {
+      "status": 200,
+      "sha256": "be5903fce05977b080d1ae0421b6d19a4caea1420d18f6cb8cf71c96adb37937"
+    },
+    "/api/feed?limit=1": {
+      "status": 200,
+      "sha256": "c5d56208f0aa3405cfacad139ce8be6eb34a4cb7b5550181f37b28824d0fd7c9"
+    },
+    "/prover/healthz": {
+      "status": 200,
+      "sha256": "0d0024215a181b7a02e18e0e5eb27c3b4ae5f90065e00e2a72f88669ee7865b0"
+    }
+  },
+  "bokTopup": {
+    "router": "0x2ce9b42769ff5419ce9b26fd48e83e3a08c2938b",
+    "routerCodeHash": "0x911df59587ef65e43c2e777b37b1de80d87e764edfacf77306becdaeebef4627"
+  }
+}

@@ -15,3 +15,5 @@ Remaining UX audit findings: likes/bookmarks/follows and profile edits still hav
 Integrated boundary checks:53/53 passed, including actual local EVM transaction. Runtime build caught the new quote helper importing ethers into the lightweight UI bundle; moved the quote entry point behind the existing SDK boundary rather than relaxing the bundle gate. Currency-switch continuation regression passes with all105 aggregate wallet tests.
 
 Final pinned SDK and lightweight runtime builds passed; runtime has no bundled node_modules. Narrow Bok router build preserves existing portal, funding router and all Noir artifacts. Publisher uses an immutable release-local wallet configuration; existing running configuration and services stay untouched.
+
+After publication, the existing in-app browser tab was refreshed; Home rendered both current posts and the main-page Post as selector. No browser was launched or killed, and no account/payment operation was triggered.
