@@ -1,0 +1,21 @@
+test_activation_keeps_query_public_group_and_adds_only_prover_reader (tests.QueryHost.test_activation_keeps_query_public_group_and_adds_only_prover_reader) ... ok
+test_actual_readback_rejects_group_grammar_and_identity_config_unit_drift (tests.QueryHost.test_actual_readback_rejects_group_grammar_and_identity_config_unit_drift) ... ok
+test_attestor_bound_opt_in_or_retained_records_cannot_disappear_silently (tests.QueryHost.test_attestor_bound_opt_in_or_retained_records_cannot_disappear_silently) ... ok
+test_closed_query_config_has_digest_only_and_no_proof_resources (tests.QueryHost.test_closed_query_config_has_digest_only_and_no_proof_resources) ... ok
+test_failed_acceptance_preserved_with_valid_private_operator_admission (tests.QueryHost.test_failed_acceptance_preserved_with_valid_private_operator_admission) ... ok
+test_failed_qualification_retains_node_without_allocating_query (tests.QueryHost.test_failed_qualification_retains_node_without_allocating_query) ... ok
+test_fixed_query_unit_confines_identity_and_preserves_secret_boundary (tests.QueryHost.test_fixed_query_unit_confines_identity_and_preserves_secret_boundary) ... ok
+test_pending_or_existing_intent_never_allocates_or_restarts (tests.QueryHost.test_pending_or_existing_intent_never_allocates_or_restarts) ... ok
+test_persistent_query_admission_after_historical_deadline_keeps_native_checks (tests.QueryHost.test_persistent_query_admission_after_historical_deadline_keeps_native_checks) ... ok
+test_public_plan_rejects_unsafe_links_before_any_ownership_change (tests.QueryHost.test_public_plan_rejects_unsafe_links_before_any_ownership_change) ... ok
+test_public_runtime_real_modes_preserve_file_links_and_private_sentinel (tests.QueryHost.test_public_runtime_real_modes_preserve_file_links_and_private_sentinel) ... ok
+test_query_failure_contains_even_without_result_write (tests.QueryHost.test_query_failure_contains_even_without_result_write) ... ok
+test_retained_state_disappearance_fails_closed_without_second_start (tests.QueryHost.test_retained_state_disappearance_fails_closed_without_second_start) ... ok
+test_runtime_query_readback_reports_degraded_and_keeps_identity_checks (tests.QueryHost.test_runtime_query_readback_reports_degraded_and_keeps_identity_checks) ... ok
+test_simulated_commissioning_actual_readback_once_and_reader_modes (tests.QueryHost.test_simulated_commissioning_actual_readback_once_and_reader_modes) ... ok
+test_unready_private_query_admission_preserves_host_and_allocates_nothing (tests.QueryHost.test_unready_private_query_admission_preserves_host_and_allocates_nothing) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.139s
+
+OK

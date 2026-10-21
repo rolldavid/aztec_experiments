@@ -1333,18 +1333,34 @@ def query_public_harden(entries,gid):
     release=entries[0][0]
     for p in (release.parent,release.parent.parent):os.chmod(p,0o755,follow_symlinks=False)
 
-def query_listener_denials(address):
+def unavailable_http(error):
+    """Transport availability only; malformed replies and boundary failures are fatal."""
+    import http.client,urllib.error
+    if isinstance(error,urllib.error.HTTPError):
+        return error.code in (408,429) or 500<=error.code<=599
+    return isinstance(error,(urllib.error.URLError,TimeoutError,ConnectionError,http.client.IncompleteRead))
+
+def query_listener_denials(address, *, observation=False):
     import urllib.request,urllib.error
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):raise Invalid('Query redirect')
     opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    available=True
     for path,method,expected in [('/healthz','GET',404),('/v1/node','POST',401)]:
         request=urllib.request.Request('http://'+address+':8083'+path,data=b'[]' if method=='POST' else None,method=method)
         try:
-            with opener.open(request,timeout=2):raise Invalid('Query unauthenticated admission')
-        except urllib.error.HTTPError as error:
-            with error:
-                if error.code!=expected or len(error.read(513))>512:raise Invalid('Query boundary')
+            try:
+                with opener.open(request,timeout=2):raise Invalid('Query unauthenticated admission')
+            except urllib.error.HTTPError as error:
+                with error:
+                    if error.code!=expected:raise
+                    if len(error.read(513))>512:raise Invalid('Query boundary')
+        except Exception as error:
+            if not observation or not unavailable_http(error):raise
+            # Still inspect the other boundary: an observed authentication bypass
+            # must remain fatal even when the first listener probe was unavailable.
+            available=False
+    return available
 
 def query_host_fresh(h):
     # Independent current upstream inspection: operator digest cannot sign a
@@ -1352,7 +1368,7 @@ def query_host_fresh(h):
     code="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from './shared/trusted-private-node.mjs';const o="+json.dumps({'url':QUALIFICATION['service']['queryNode']['url'],'expectedNetworkScope':{'chainId':QUALIFICATION['service']['chainId'],'version':QUALIFICATION['service']['rollupVersion'],'rollup':QUALIFICATION['service']['queryNode']['rollupAddress']},'proofsEnabled':True,'maxLagSeconds':120},separators=(',',':'))+";const n=createAztecNodeClient(o.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let size=0;const c=[];for await(const b of r.body){size+=b.length;if(size>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});if((await inspectTrustedNode(n,o)).ready!==true)throw Error();process.stdout.write('ready');"
     if h['run']([str(h['RELEASE']/'node/bin/node'),'--max-old-space-size=256','--input-type=module','--eval',code],capture=True,timeout=25,cwd=h['RELEASE'])!='ready':raise Invalid('Query freshness')
 
-def query_host_readback(h):
+def query_host_readback(h, *, runtime=False):
     import pwd,grp
     r=activation_private(h['PRIVATE']/'query-host-result.json')
     if type(r) is not dict or set(r)!={'uid','gid','publicGid','configSha256','unitSha256','manifestSha256'} or r['manifestSha256']!=h['PINS']['manifest'] or any(type(r[k]) is not int or not 0<r[k]<2**31 for k in ('uid','gid','publicGid')) or any(type(r[k]) is not str or not re.fullmatch('[a-f0-9]{64}',r[k]) for k in ('configSha256','unitSha256')):raise Invalid('Query result')
@@ -1383,12 +1399,13 @@ def query_host_readback(h):
     for p in (release,release/'node',release/'node/bin',release/'node/bin/node',release/'prover',release/'prover/start.mjs'):
         i=p.lstat()
         if i.st_uid!=0 or i.st_gid!=r['publicGid'] or not (stat.S_ISDIR(i.st_mode) or stat.S_ISREG(i.st_mode)) or stat.S_IMODE(i.st_mode)!=(0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440):raise Invalid('Query public permissions')
-    query_listener_denials(record['privateAddress'])
+    available=query_listener_denials(record['privateAddress'],observation=True) if runtime else query_listener_denials(record['privateAddress'])
+    if runtime:r={**r,'listenerAvailable':available}
     # Availability is checked on every authenticated request by the service.
     # A normal sync transition must not terminate the host via this control audit.
     return r
 
-def query_host(h):
+def query_host(h, *, runtime=False):
     import fcntl,pwd,grp,time
     if os.geteuid()!=0:raise Invalid('Query authority')
     private=h['PRIVATE'];intent=private/'query-host-intent.json';result=private/'query-host-result.json'
@@ -1398,7 +1415,9 @@ def query_host(h):
             record=query_host_request(h)
             if intent.exists():
                 if not result.exists():raise Invalid('Query interrupted; reconcile only')
-                query_host_readback(h);return {'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False}
+                readback=query_host_readback(h,runtime=True) if runtime else query_host_readback(h)
+                return {'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False,
+                        **({'queryAvailability':'ready' if readback['listenerAvailable'] else 'degraded'} if runtime else {})}
             if result.exists():raise Invalid('Query result without intent')
             if not (private/'final-receipt.json').exists():return {'queryHostPolicy':'pending-qualification','queryProofJobsEnabled':False}
             final=activation_private(private/'final-receipt.json');q=h['validated_qualification'](final.get('qualification',{}))
@@ -1751,9 +1770,15 @@ def activation_health(url='http://127.0.0.1:8081/healthz', *, observation=False)
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):raise Invalid('Health redirect')
     opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
-    with opener.open(url,timeout=5) as response:
-        data=response.read(16385)
-        if response.status!=200 or len(data)>16384:raise Invalid('Prover health')
+    try:
+        with opener.open(url,timeout=5) as response:
+            data=response.read(16385)
+            if response.status!=200 or len(data)>16384:raise Invalid('Prover health')
+    except Exception as error:
+        if not observation or not unavailable_http(error):raise
+        # No queue counters or successful probe are invented. The configured
+        # service remains admitted; each real request enforces its own readiness.
+        return {'queue':None,'query':{'enabled':True,'ready':False,'reason':'unavailable'}}
     health=json.loads(data)
     if type(health) is not dict or set(health)!={'ready','proofs','queue','query'} or health['ready'] is not True or health['proofs']!='real':raise Invalid('Prover health')
     query=health['query']
@@ -1948,7 +1973,7 @@ def prover_activation(h, operation, expected=None):
     import fcntl,time
     if operation=='qualification-projection':return qualification_projection(h,*expected)
     if operation=='qualification-anchors':return qualification_anchors(expected)
-    if operation=='query-observe':return query_host(h)
+    if operation=='query-observe':return query_host(h,runtime=True)
     if operation=='delivery':return activation_delivery(h)
     if os.geteuid()!=0 or operation not in ('activate','observe'):raise Invalid('Activation authority')
     private=h['PRIVATE'];intent_path=private/'prover-activation-intent.json';result_path=private/'prover-activation-result.json'

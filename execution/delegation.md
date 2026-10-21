@@ -742,3 +742,5 @@ G21 bridge acceptance repair: root owns edits, focused checks, integration and c
 G21 current signup failure: funding_investigation investigates trusted-read boundary read-only; ux_review reviews immediate terminal-failure observation in the browser harness. Root alone writes source and runs services/tests.
 
 21 October G21: root sole writer/operator. funding_investigation proposes optional-Bok router/quote/receipt patch; ux_review proposes lazy plugin account/application wiring; publication_prepare proposes narrow SDK dynamic-asset build patch. Agents read-only on repository/services; independent cross-review follows.
+
+21October setup outage: root investigates live service stop source and owns restoration; funding_investigation reviews persistent hosting controls read-only. No browser launches.

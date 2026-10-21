@@ -1,0 +1,7 @@
+{
+  "CommandId": "5d708ff9-f8cd-4ab4-8a93-1b214b284d96",
+  "Status": "Success",
+  "ResponseCode": 0,
+  "StandardOutputContent": "{\"restored\": true, \"proverAvailability\": \"ready\", \"incident\": \"application-failure-incident-1792554147.json\", \"manifestSha256\": \"f3efd677aa45a7ececada71b0f23d4a05966ec4081c27a4ffacf9e801aa6aa27\"}\n",
+  "StandardErrorContent": ""
+}

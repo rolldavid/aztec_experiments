@@ -1873,6 +1873,44 @@ class ProverActivation(unittest.TestCase):
             with self.subTest(changes=changes),patch('urllib.request.build_opener',return_value=response(ready,**changes)),self.assertRaises(b.Invalid):
                 b.activation_health(observation=True)
 
+    def test_runtime_health_transport_failure_is_degraded_but_admission_is_strict(self):
+        from types import SimpleNamespace
+        import urllib.error,http.client
+        failures=[TimeoutError(),ConnectionRefusedError(),ConnectionResetError(),
+                  urllib.error.URLError('unavailable'),http.client.IncompleteRead(b''),
+                  urllib.error.HTTPError('http://127.0.0.1',503,'Unavailable',{},io.BytesIO(b''))]
+        for failure in failures:
+            with self.subTest(error=type(failure).__name__):
+                opener=SimpleNamespace(open=lambda *a,**kw:(_ for _ in ()).throw(failure))
+                with patch('urllib.request.build_opener',return_value=opener):
+                    self.assertEqual(b.activation_health(observation=True),{'queue':None,'query':{'enabled':True,'ready':False,'reason':'unavailable'}})
+                    with self.assertRaises(type(failure)):b.activation_health()
+        for status in (301,401,403,404):
+            failure=urllib.error.HTTPError('http://127.0.0.1',status,'Invalid boundary',{},io.BytesIO(b''))
+            with patch('urllib.request.build_opener',return_value=SimpleNamespace(open=lambda *a,**kw:(_ for _ in ()).throw(failure))),self.assertRaises(urllib.error.HTTPError):
+                b.activation_health(observation=True)
+        stream=io.BytesIO(b'not-json');stream.status=200
+        with patch('urllib.request.build_opener',return_value=SimpleNamespace(open=lambda *a,**kw:stream)),self.assertRaises(ValueError):
+            b.activation_health(observation=True)
+
+    def test_runtime_query_probe_unavailable_never_accepts_authentication_bypass(self):
+        from types import SimpleNamespace
+        import urllib.error
+        def error(status):return urllib.error.HTTPError('http://127.0.0.1',status,'fixture',{},io.BytesIO(b''))
+        for failures,expected in [([error(404),error(401)],True),([TimeoutError(),error(401)],False),([error(404),ConnectionRefusedError()],False),([error(503),error(503)],False)]:
+            responses=iter(failures)
+            with patch('urllib.request.build_opener',return_value=SimpleNamespace(open=lambda *a,**kw:(_ for _ in ()).throw(next(responses)))):
+                self.assertEqual(b.query_listener_denials('127.0.0.1',observation=True),expected)
+        responses=iter([TimeoutError(),io.BytesIO(b'accepted')])
+        def mixed(*args,**kwargs):
+            response=next(responses)
+            if isinstance(response,Exception):raise response
+            return response
+        with patch('urllib.request.build_opener',return_value=SimpleNamespace(open=mixed)),self.assertRaisesRegex(b.Invalid,'unauthenticated admission'):
+            b.query_listener_denials('127.0.0.1',observation=True)
+        with patch('urllib.request.build_opener',return_value=SimpleNamespace(open=lambda *a,**kw:(_ for _ in ()).throw(TimeoutError()))),self.assertRaises(TimeoutError):
+            b.query_listener_denials('127.0.0.1')
+
     def test_runtime_observe_reports_degraded_without_changing_activation_or_proof_qualification(self):
         from contextlib import ExitStack
         import time
@@ -2454,6 +2492,16 @@ class QueryHost(unittest.TestCase):
             self.assertEqual(h['RELEASE'].stat().st_mode&0o777,0o550)
             self.assertEqual(h['PRIVATE'].stat().st_mode&0o777,0o700)
             state['members'].append('board-prover');self.assertEqual(b.query_host_readback(h)['publicGid'],997)
+
+    def test_runtime_query_readback_reports_degraded_and_keeps_identity_checks(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            b.query_host(h)
+            with patch.object(b,'query_listener_denials',return_value=False) as probe:
+                result=b.query_host(h,runtime=True)
+                self.assertEqual(result,{'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False,'queryAvailability':'degraded'})
+                probe.assert_called_once_with('10.0.0.4',observation=True)
+                state['groups']='997 0'
+                with self.assertRaisesRegex(b.Invalid,'Query public group'):b.query_host(h,runtime=True)
 
     def test_persistent_query_admission_after_historical_deadline_keeps_native_checks(self):
         with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
