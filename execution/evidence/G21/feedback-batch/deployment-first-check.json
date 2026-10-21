@@ -1,0 +1,1 @@
+{"passed":false,"liveApplicationChanged":false,"nativeNotifyReady":true,"publicAssetsAndSecurityHeaders":true,"oldAndNewPinnedRuntimeAndSdk":true,"failedCheck":"runtime.json with forbidden query was not rejected","cause":"Caddy reordered handle before respond in the fallback block","fix":"Explicit route preserves method, pinned asset, query rejection and public asset order"}
