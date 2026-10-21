@@ -1,0 +1,39 @@
+{
+  "/reader.mjs": {
+    "httpStatus": 200,
+    "sha256": "bccd8452b8e1b0690660b1992b4181d10a8f4ace9a301b7bdb500bd736dbeca4",
+    "isolationHeaders": true
+  },
+  "/wallet-panel.mjs": {
+    "httpStatus": 200,
+    "sha256": "425810349a32383894445e1b15c045f01bef2bfe82551de6f3529ec3e411cdc3",
+    "isolationHeaders": true
+  },
+  "/style.css": {
+    "httpStatus": 200,
+    "sha256": "95c3ba044e27e5db49aa0305df9eb001b003e7109e307bb77e547b62e6096fc3",
+    "isolationHeaders": true
+  },
+  "/wallet/runtime.mjs": {
+    "httpStatus": 200,
+    "sha256": "e160c3b7d09eddde493022d6796f84e9df9ea3839833e2a7db389f2ad31ae05c",
+    "isolationHeaders": true
+  },
+  "walletMetadataMatchesSdk": true,
+  "/api/status": {
+    "httpStatus": 200,
+    "state": "ready",
+    "posts": null
+  },
+  "/api/feed?limit=1": {
+    "httpStatus": 200,
+    "state": null,
+    "posts": 1
+  },
+  "/prover/healthz": {
+    "httpStatus": 200,
+    "state": null,
+    "posts": null
+  },
+  "invalidQueriesRejected": true
+}

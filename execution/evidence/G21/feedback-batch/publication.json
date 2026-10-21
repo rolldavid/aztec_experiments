@@ -1,0 +1,11 @@
+{
+  "commit": "195cb269bf520cc8a87a04593afcf4535ed08328",
+  "appPid": "138589",
+  "runningSource": "/opt/rolling-app/releases/ux-ab6744b8cdd1",
+  "nextSource": "/opt/rolling-app/releases/ui-195cb269bf52",
+  "ui": "/opt/rolling-ui/releases/195cb269bf520cc8a87a04593afcf4535ed08328",
+  "operatorCommit": "4f8a7fcd724b19a63b76383b4e01e7bb708ff2ad",
+  "publisherSha256": "a7e177c7aaa729720b16536dd17444b1a573fc2fce524871587fbab851a3713f",
+  "nativeProcessesPreserved": true,
+  "proxyRestarted": true
+}

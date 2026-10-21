@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October service supervision69eb1831 published on bothhosts: all9PIDs/cwds unchanged, reportsready, publicfeed/status/prover200. Composer account reuse and @bok/main-page credit changes integrated from independent parallel agents;15 focused actual-panel/model checks pass, independent cross-review approves. ETH-funded Bok topup/error fix in parallel implementation. Root prepares static UI publication independent from persistent index, then integrates/publishes remaining topup. No browser launches or wholeonboarding peredit.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 21October urgent feedback fixes195cb269 published: retained account composer, local @bok detection without blocking editor, main-page Bok credit/Add credit, ETH→USDC standalone topup and actionable stage errors.326 integrated checks +SDK/walletbuild +live Sepolia readonlyquote pass. Caddy native READY and public route/hash/header probes pass after reviewed4f8 operatororderfix. Frontend nowindependent ofindex; currentappPID138589 andnativePIDs preserved. No newreal topup/browserperformance trial. Availability69eb supervisorlivebothhosts; allservice monitorsreportready. Continue owner feedback; broaderqualification remainsincomplete, no scheduledcampaign restart.
 
 ## Ready internal work
 
