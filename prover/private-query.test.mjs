@@ -294,12 +294,12 @@ test('service carries readiness observer internally without extending serialized
 // Fixed historical dispatch uses actual installed argument/response schemas;
 // canonical block contents below are labelled fixtures, not chain evidence.
 const historyHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
-async function historyFixture(t,{strict=false,change,inspectChange,messageIndex,messageLeaves=0,messageWitness}={}){
+async function historyFixture(t,{strict=false,change,inspectChange,messageIndex,messageLeaves=0,messageWitness,compactBlocks}={}){
  const inspected=[],operations=[];let final=false;
  const ready={ready:true,latestBlockNumber:7,latestBlockHash:historyHash(7),readinessTier:'checkpointed',readinessBlockNumber:7,readinessBlockHash:historyHash(7),oldestHistoricBlockNumber:1};
  const block=n=>{const header=BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:n}),txEffectsTreeRoot:new Fr(77)});header.state.l1ToL2MessageTree=new AppendOnlyTreeSnapshot(new Fr(88),messageLeaves);return {header,archive:AppendOnlyTreeSnapshot.empty(),blockHash:historyHash(n),checkpointNumber:1,indexWithinCheckpoint:0};};
  const mined={txHash:historyHash(100),status:'checkpointed',executionResult:'success',transactionFee:'0',blockHash:historyHash(6),blockNumber:6,slotNumber:1,txIndexInBlock:0,epochNumber:0};
- const f=await fixture(t,{compactBlocks:{tier:'checkpointed',origins:[]},inspect:async(_node,opts)=>{
+ const f=await fixture(t,{compactBlocks,inspect:async(_node,opts)=>{
   inspected.push(opts.readinessTier??'proposed');if(inspectChange)await inspectChange(opts,inspected);if(!opts.readinessTier&&strict)throw Error('strict unavailable');
   if(inspected.length>1)final=true;return ready;},upstreamReply:async(_req,res,rows)=>{
    const values=[];for(const row of rows){const method=row.method.split('_').slice(1).join('_');operations.push(method);let result;
@@ -308,6 +308,7 @@ async function historyFixture(t,{strict=false,change,inspectChange,messageIndex,
     else if(method==='getTxReceipt')result={...mined};
     else if(method==='getTxEffectMembershipWitness')result={blockNumber:6,root:new Fr(77),categoriesHash:new Fr(1),leafIndex:0n,siblingPath:new SiblingPath(0,[])};
     else if(method==='getBlockHashMembershipWitness')result=undefined;
+    else if(method==='findLeavesIndexes')result=row.params[2].map(()=>undefined);
     else if(method==='getL1ToL2MessageIndex')result=messageIndex;
     else if(method==='getL1ToL2MessageMembershipWitness')result=messageWitness;
     else if(method==='getWorldStateSyncStatus')result={latestBlockNumber:7,latestBlockHash:historyHash(7),finalizedBlockNumber:3,oldestHistoricBlockNumber:1,treesAreSynched:true};
@@ -582,4 +583,54 @@ test('checkpoint bridge: mixed latest batch remains strictly gated before forwar
  const f=await historyFixture(t,{strict:true});
  const response=await f.post([call('aztec_getL1ToL2MessageIndex',[historyHash(19)]),{...call('aztec_getBlockData',['latest']),id:2}]);
  assert.equal(response.status,503);assert.deepEqual(f.operations,[]);assert.deepEqual(f.inspected,['proposed']);
+});
+
+// Production has no compactBlocks configuration. The actual SDK witness read
+// still uses its exact canonical checkpoint; compact transport is orthogonal.
+for(const compactBlocks of [undefined,{tier:'proposed',origins:[]},{tier:'proven',origins:[]}])test('anchored RPC: SDK leaf lookup uses checkpoint policy without compact coupling '+(compactBlocks?.tier??'disabled'),async t=>{
+ const {BlockHash}=await import('@aztec-labs/stdlib/block');
+ const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+ const f=await historyFixture(t,{strict:true,compactBlocks}),node=await bridgeClient(f);
+ const result=await node.findLeavesIndexes({number:6,hash:BlockHash.fromString(historyHash(6))},MerkleTreeId.NULLIFIER_TREE,[new Fr(19)]);
+ assert.deepEqual(result,[undefined]);assert.deepEqual(f.inspected,['checkpointed','checkpointed']);
+ assert.equal(f.operations.filter(method=>method==='findLeavesIndexes').length,1);
+ if(!compactBlocks)assert.equal(f.privateQuery.handleCompact,undefined);
+});
+for(const [label,selector,change]of[
+ ['pruned',0],['above checkpoint',8],['wrong anchor hash',{number:6,hash:historyHash(99)}],
+ ['final reorg',{number:6,hash:historyHash(6)},({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result],
+])test('anchored RPC: leaf lookup rejects '+label+' without compact configuration',async t=>{
+ const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+ const f=await historyFixture(t,{strict:true,change});
+ const response=await f.post(call('aztec_findLeavesIndexes',[selector,MerkleTreeId.NULLIFIER_TREE,[historyHash(19)]]));
+ assert.equal(response.status,503);assert((await response.json()).error);
+ assert.equal(f.operations.includes('findLeavesIndexes'),label==='final reorg');
+});
+
+test('anchored RPC: real SDK transaction schema stays proposed-gated alone and in a mixed anchored batch',async t=>{
+ const {Tx}=await import('@aztec-labs/stdlib/tx');
+ // A native schema fixture with an empty proof; never submitted to a real node.
+ const send=JSON.parse(jsonStringify(call('aztec_sendTx',[Tx.random()])));
+ for(const requests of [send,[call('aztec_getBlockData',[{number:6,hash:historyHash(6)}]),{...send,id:2}]]){
+  const f=await historyFixture(t,{strict:true});const response=await f.post(requests);
+  assert.equal(response.status,503);assert.deepEqual(f.inspected,['proposed']);assert.deepEqual(f.operations,[]);
+ }
+});
+
+test('anchored RPC: above-checkpoint leaf lookup requires healthy proposed readiness before dispatch',async t=>{
+ const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+ for(const strict of [false,true]){
+  const f=await historyFixture(t,{strict});Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
+  const response=await f.post(call('aztec_findLeavesIndexes',[{number:8,hash:historyHash(8)},MerkleTreeId.NULLIFIER_TREE,[historyHash(19)]]));
+  assert.equal(response.status,strict?503:200);assert.equal(f.operations.includes('findLeavesIndexes'),!strict);
+  assert.deepEqual(f.inspected,strict?['checkpointed','proposed']:['checkpointed','proposed','proposed']);
+  if(!strict)assert.deepEqual((await response.json()).result,[null]);
+ }
+});
+for(const change of ['regress','reorg','prune'])test('anchored RPC: proposed escalation rejects '+change+' before leaf lookup',async t=>{
+ const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');let f;
+ f=await historyFixture(t,{inspectChange:(_options,inspected)=>{if(inspected.length===2){if(change==='regress')f.ready.latestBlockNumber=7;if(change==='prune')f.ready.oldestHistoricBlockNumber=9;}},change:({method,result,final})=>change==='reorg'&&method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result});
+ Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
+ const response=await f.post(call('aztec_findLeavesIndexes',[{number:8,hash:historyHash(8)},MerkleTreeId.NULLIFIER_TREE,[historyHash(19)]]));
+ assert.equal(response.status,503);assert(!f.operations.includes('findLeavesIndexes'));
 });

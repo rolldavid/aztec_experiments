@@ -182,7 +182,11 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
   const fixedSelector=value=>Number.isSafeInteger(value)&&value>=0 || value instanceof BlockHash ||
     (!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length>0&&Object.keys(value).every(k=>k==='number'||k==='hash')&&
       (value.number===undefined||Number.isSafeInteger(value.number)&&value.number>=0)&&(value.hash===undefined||value.hash instanceof BlockHash));
-  const checkpointedHeader=call=>compact?.tier==='checkpointed'&&call.method==='getBlockData'&&call.args[0]==='checkpointed';
+  // RPC state reads authenticate a retained checkpoint independently of the
+  // optional compact-block transport. A synchronizing proposed head must not
+  // disable witnesses for an exact, canonical checkpointed anchor.
+  const anchoredReadTier='checkpointed';
+  const checkpointedHeader=call=>call.method==='getBlockData'&&call.args[0]==='checkpointed';
   const historicalKind=call=>metadataReads.has(call.method)?'metadata':txReads.has(call.method)?'transaction':
     checkpointedHeader(call)||selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
   const canonicalRecord=async(selector,ready,records,limit=ready.readinessBlockNumber,stateful=true)=>{
@@ -247,8 +251,8 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
       } catch {reply(400, errorResponse(null, -32602)); return;}
       let historical=false,ready,absenceTip,records=[];
       try {
-        historical=!!compact&&compact.tier!=='proposed'&&prepared.every(call=>historicalKind(call));
-        ready=await inspect(historical?compact.tier:undefined);
+        historical=prepared.every(call=>historicalKind(call));
+        ready=await inspect(historical?anchoredReadTier:undefined);
         if(historical){
           let strict=false;
           for(const call of prepared){
@@ -272,7 +276,11 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
                 if(!Number.isSafeInteger(tip.number)||number<=tip.number||await node[call.method](...call.args)!==undefined)throw unavailable();
                 absenceTip=tip;call.cached={value:undefined};continue;
               }
-              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,records,publicBlock?ready.latestBlockNumber:ready.readinessBlockNumber,!publicBlock);
+              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,records,ready.latestBlockNumber,!publicBlock);
+              // A healthy proposed anchor remains usable, but never borrows
+              // the checkpointed read policy. Escalate the complete batch
+              // before dispatch if a state witness is newer than checkpoint.
+              if(!publicBlock&&call.anchor.number>ready.readinessBlockNumber)strict=true;
               if(call.method==='getBlockData')call.cached={value:call.anchor.data};
             }else if(kind==='transaction'){
               const receipt=await node.getTxReceipt(call.args[0],call.method==='getTxReceipt'?call.args[1]:undefined);
@@ -289,6 +297,11 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           // This is a stronger policy before publication, not a retry or a
           // replacement for an unavailable historical result.
           if(strict){const strictReady=await inspect(),strictRecords=[];historical=false;
+            for(const call of prepared)if(call.anchor){
+              const stateful=historicalKind(call)==='selector'&&!['getBlock','getBlockData'].includes(call.method);
+              if(call.anchor.number>strictReady.latestBlockNumber||stateful&&call.anchor.number<strictReady.oldestHistoricBlockNumber)throw unavailable();
+            }
+            await recheckRecords(records,strictReady);
             for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictRecords,strictReady.latestBlockNumber,false);strictRecords.push(call.anchor);records.push(call.anchor);}
           }
           else records.push({number:ready.readinessBlockNumber,hash:ready.readinessBlockHash},{number:ready.latestBlockNumber,hash:ready.latestBlockHash});
@@ -310,7 +323,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         catch {return errorResponse(id);}
       }));
       if(historical||records.length||absenceTip){try{
-        const finalReady=await inspect(historical?compact.tier:undefined);await recheckRecords(records,finalReady);
+        const finalReady=await inspect(historical?anchoredReadTier:undefined);await recheckRecords(records,finalReady);
         if(absenceTip){const current=await inspect();
           if(current.latestBlockNumber!==absenceTip.number||current.latestBlockHash!==absenceTip.hash)throw unavailable();
         }
