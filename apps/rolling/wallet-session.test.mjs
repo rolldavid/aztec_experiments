@@ -1092,3 +1092,37 @@ test('direct action holds one account lock and synchronization through prepare a
  assert.equal(captured.length,1);assert.equal(captured[0].status,'unknown');assert.equal(captured[0].action.first,'Fresh');
  await assert.rejects(session.application.submitPrepared(captured[0].intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);await session.close();
 });
+
+test('Bok capability launches all four same-anchor storage reads before any completes',{timeout:3000},async()=>{
+ const f=await bokCapabilityFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let count=0,canonical=0;
+ const read=f.input.node.getPublicStorageAt,block=f.input.node.getBlockData;
+ f.input.node.getBlockData=async which=>{if(which!=='checkpointed'){canonical++;assert.equal(count,4);}return block(which);};
+ f.input.node.getPublicStorageAt=async(reference,address,slot)=>{
+  assert.deepEqual(reference,{hash:hex(55)});assert.equal(String(address),f.input.config.contractAddress);
+  if(++count===4)entered.resolve();await gate.promise;return read(reference,address,slot);
+ };
+ const pending=verifyRollingBokCapability(f.input);await entered.promise;assert.equal(count,4);assert.equal(canonical,0);assert.equal(f.state.inspections,0);
+ gate.resolve();await pending;assert.equal(canonical,1);assert.equal(f.state.reads.length,5);
+});
+for(const kind of ['throw','mismatch'])test(`Bok capability ${kind} drains all sibling field reads before failing`,{timeout:3000},async()=>{
+ const f=await bokCapabilityFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('Exact storage failure');let count=0,finished=false,canonical=0;
+ const read=f.input.node.getPublicStorageAt,block=f.input.node.getBlockData;
+ f.input.node.getBlockData=async which=>{if(which!=='checkpointed')canonical++;return block(which);};
+ f.input.node.getPublicStorageAt=(reference,address,slot)=>{
+  count++;if(count===4)entered.resolve();
+  if(count===1){if(kind==='throw')throw failure;return new Fr(999);}
+  return gate.promise.then(()=>read(reference,address,slot));
+ };
+ const pending=verifyRollingBokCapability(f.input).finally(()=>{finished=true;});
+ const rejection=assert.rejects(pending,kind==='throw'?error=>error===failure:{code:'ROLLING_DEPLOYMENT_INVALID'});
+ await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);assert.equal(canonical,0);
+ gate.resolve();await rejection;assert.equal(canonical,0);assert.equal(f.state.inspections,0);
+});
+test('Bok capability checks current context after all four reads drain',{timeout:3000},async()=>{
+ const f=await bokCapabilityFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('Account invalidated after reads started');let count=0,invalid=false;
+ const read=f.input.node.getPublicStorageAt;
+ f.input.contextGuard=async()=>{if(invalid)throw failure;};
+ f.input.node.getPublicStorageAt=async(...args)=>{if(++count===4)entered.resolve();await gate.promise;return read(...args);};
+ const pending=verifyRollingBokCapability(f.input);const rejection=assert.rejects(pending,error=>error===failure);
+ await entered.promise;invalid=true;gate.resolve();await rejection;assert.equal(f.state.inspections,0);
+});

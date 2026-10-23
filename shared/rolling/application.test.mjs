@@ -2026,3 +2026,44 @@ test('parallel plugin storage reads drain the sibling before releasing a failed 
  f.options.accountSession.node.getPublicStorageAt=(ref,address,slot)=>{if(slot.toBigInt()===base.toBigInt()){entered();return gate.then(()=>new Fr(5));}if(slot.toBigInt()===base.toBigInt()+1n)throw Error('read failed');return original(ref,address,slot);};
  const pending=f.restart().prepare(bokAction(),{immediate:true}).finally(()=>{finished=true;});const rejected=assert.rejects(pending,/read failed/);await started;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);release();await rejected;assert.equal(f.state.sends,0);
 });
+
+test('final policy anchor RPC overlaps a queued local header only after the storage read completes',{timeout:3000},async()=>{
+ const f=fixture(),storage=Promise.withResolvers(),storageEntered=Promise.withResolvers(),header=Promise.withResolvers(),headerEntered=Promise.withResolvers(),blockEntered=Promise.withResolvers();
+ let headerReads=0,blockReads=0,storageFinished=false;
+ const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ f.state.beforePolicyRead=async()=>{storageEntered.resolve();await storage.promise;storageFinished=true;};
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{
+  if(++headerReads===2){assert.equal(storageFinished,true);headerEntered.resolve();await header.promise;}
+  return originalHeader();
+ };
+ f.options.accountSession.node.getBlockData=async height=>{assert.equal(storageFinished,true);blockReads++;blockEntered.resolve();return {header:{globalVariables:{blockNumber:height}},blockHash:hex(42)};};
+ const pending=f.app.prepare({type:'post',deposit:'9',content:'Independent final anchor reads'},{immediate:true});
+ await storageEntered.promise;assert.equal(blockReads,0);storage.resolve();
+ await Promise.all([headerEntered.promise,blockEntered.promise]);assert.equal(blockReads,1);assert.equal(f.values.size,0);
+ header.resolve();assert.equal((await pending).status,'prepared');assert.equal(f.state.estimates,0);
+});
+for(const failed of ['header','block'])test(`final anchor ${failed} failure drains its independent sibling before releasing the action`,{timeout:3000},async()=>{
+ const f=fixture(),held=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('Exact '+failed+' failure');let headerReads=0,finished=false;
+ const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{
+  if(++headerReads===2){if(failed==='header')throw failure;entered.resolve();await held.promise;}
+  return originalHeader();
+ };
+ f.options.accountSession.node.getBlockData=height=>{
+  if(failed==='block')throw failure;
+  entered.resolve();return held.promise.then(()=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(42)}));
+ };
+ const pending=f.app.prepare({type:'post',deposit:'9',content:'Drain failed read'},{immediate:true}).finally(()=>{finished=true;});
+ const rejection=assert.rejects(pending,error=>error===failure);await entered.promise;await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(finished,false);assert.equal(f.values.size,0);held.resolve();await rejection;assert.equal(f.state.sends,0);
+});
+for(const changed of ['local-anchor','canonical-block','context'])test(`parallel final anchor checks reject ${changed} without saving an intent`,{timeout:3000},async()=>{
+ const f=fixture();let headerReads=0;const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>++headerReads===2&&changed==='local-anchor'?{globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)}:originalHeader();
+ f.options.accountSession.node.getBlockData=async height=>{
+  if(changed==='context')f.state.guard=false;
+  return {header:{globalVariables:{blockNumber:height}},blockHash:hex(changed==='canonical-block'?43:42)};
+ };
+ await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Changed anchor'},{immediate:true}),changed==='context'?undefined:{code:'ROLLING_CONTEXT_CHANGED'});
+ assert.equal(f.values.size,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+});

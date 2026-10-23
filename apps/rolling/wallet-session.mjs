@@ -74,10 +74,15 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  const same=(a,b)=>BigInt(a.toString())===BigInt(b.toString());
  check(instance&&same(instance.address,address)&&same(instance.currentContractClassId,expected)&&same(instance.originalContractClassId,expected)&&same(await sdk.computeContractAddressFromInstance(instance),address));
  const expectedValues={board:deployment.board.address,operator:selected.operatorAddress,l1_chain:deployment.network.chainId,version:deployment.network.version};
- for(const [name,value]of Object.entries(expectedValues)){
-  const slot=artifact.storageLayout?.[name]?.slot;check(slot!==undefined);
-  await contextGuard();const actual=await node.getPublicStorageAt(reference,address,new sdk.Fr(BigInt(slot)));check(same(actual,value));
- }
+ const fields=Object.entries(expectedValues).map(([name,value])=>{
+  const slot=artifact.storageLayout?.[name]?.slot;check(slot!==undefined);return {slot:new sdk.Fr(BigInt(slot)),value};
+ });
+ // Independent immutable fields share the same verified contract and block.
+ // Drain the complete group before returning a failure or checking canonicality.
+ const observations=await Promise.allSettled(fields.map(async({slot,value})=>{
+  await contextGuard();const actual=await node.getPublicStorageAt(reference,address,slot);check(same(actual,value));
+ }));
+ const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
  await contextGuard();const again=await node.getBlockData(number);check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
  await sdk.inspectTrustedNode(node,{expectedNetworkScope:deployment.network,proofsEnabled:deployment.proofsEnabled});await contextGuard();
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});

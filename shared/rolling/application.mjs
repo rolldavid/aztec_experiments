@@ -766,8 +766,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     return {blockNumber,blockHash:hashText(await header.hash()),timestamp:String(timestamp)};
   }
   async function checkBalanceAnchor(anchor){
-    const current=await balanceAnchor();check(same(current,anchor),'ROLLING_CONTEXT_CHANGED');
-    const block=await session.node.getBlockData(anchor.blockNumber);check(Number(block?.header?.globalVariables?.blockNumber)===anchor.blockNumber&&hashText(block.blockHash)===anchor.blockHash,'ROLLING_CONTEXT_CHANGED');await guard();
+    await guard();
+    // Both checks follow the anchored storage read. The local header may wait
+    // behind a screening utility in the PXE queue; the canonical RPC need not.
+    const observations=await Promise.allSettled([
+      ()=>balanceAnchor(),()=>session.node.getBlockData(anchor.blockNumber),
+    ].map(read=>Promise.resolve().then(read)));
+    const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+    const [current,block]=observations.map(value=>value.value);
+    check(same(current,anchor),'ROLLING_CONTEXT_CHANGED');
+    check(Number(block?.header?.globalVariables?.blockNumber)===anchor.blockNumber&&hashText(block.blockHash)===anchor.blockHash,'ROLLING_CONTEXT_CHANGED');await guard();
   }
   async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
