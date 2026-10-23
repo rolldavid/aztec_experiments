@@ -156,7 +156,26 @@ test('actual browser runs generated static JS with isolated storage and labelled
   await context.route('**/*',async route=>{const url=route.request().url();if(url.startsWith(f.origin+'/'))return route.continue();if(url==='https://public-static-fixture.invalid/script.js'){assetCalls++;return route.fulfill({status:200,contentType:'application/javascript',body:'window.externalAssetLoaded=true;'});}if(url==='https://public-static-fixture.invalid/style.css'){assetCalls++;return route.fulfill({status:200,contentType:'text/css',body:'#status { color: rgb(12, 34, 56); }'});}if(url==='https://public-static-fixture.invalid/data'){publicCalls++;return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"label":"inert public fixture"}'});}return route.abort();});
   const page=await context.newPage();await page.goto(p.latestUrl);await page.locator('#status').filter({hasText:'isolated JS works'}).waitFor({timeout:5000});assert.equal(publicCalls,1);assert.equal(scopedCalls,1);assert.equal(assetCalls,2);assert.equal(await page.locator('#status').evaluate(el=>getComputedStyle(el).color),'rgb(12, 34, 56)');assert.equal(await page.evaluate(()=>window.origin),'null');
   assert.equal(await page.evaluate(()=>{try{document.cookie='x=y';return document.cookie}catch{return 'blocked'}}),'blocked');
-  assert.deepEqual(await context.cookies(),[]);await context.close();
+  assert.deepEqual(await context.cookies(),[]);
+  // The authoring contract offers URL fragments for small reload-persistent
+  // state. Exercise that capability under the real publisher CSP, without
+  // granting storage access or inventing a browser storage mock.
+  const stateHtml=`<!doctype html><title>Fragment state fixture</title><button id="increment">Add</button><output id="count"></output><script>
+  let count=0;
+  try { const raw=location.hash.slice(1); if(raw.length<=256){const state=JSON.parse(decodeURIComponent(raw));if(state.v===1&&Number.isInteger(state.count)&&state.count>=0&&state.count<=3)count=state.count;} } catch {}
+  const render=()=>document.querySelector('#count').textContent=String(count);render();
+  document.querySelector('#increment').onclick=()=>{count=Math.min(3,count+1);location.replace('#'+encodeURIComponent(JSON.stringify({v:1,count})));render();};
+  </script>`;
+  const statePage=await f.publisher.publish(await receipt(f.artifactRoot,2,revision(1),{html:stateHtml}));
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(statePage.latestUrl);assert.equal(await page.locator('#count').innerText(),'0');
+  await page.locator('#increment').click();assert.equal(await page.locator('#count').innerText(),'1');
+  assert.match(new URL(page.url()).hash,/count/);await page.reload();assert.equal(await page.locator('#count').innerText(),'1');
+  assert.equal(await page.evaluate(()=>window.origin),'null');
+  assert.equal(await page.evaluate(()=>{try{return localStorage.length}catch{return 'blocked'}}),'blocked');
+  await page.goto(statePage.latestUrl+'#malformed');await page.reload();assert.equal(await page.locator('#count').innerText(),'0');
+  await page.goto(statePage.latestUrl);assert.equal(await page.locator('#count').innerText(),'0');assert.deepEqual(errors,[]);
+  await context.close();
  }finally{await browser?.close();await artifactApi?.close();await f.close();}
 });
 

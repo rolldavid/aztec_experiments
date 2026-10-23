@@ -1,0 +1,63 @@
+{
+  "status": "published-but-browser-failed",
+  "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+  "requestId": "0x0f9b7a755babd53644ac79415e55cfcc6cd655b4cf170f3027f634af225d1cbf",
+  "target": "0x27585f1332b267d222895cb38b8393009e4a0a23f9498f201b8ddb64472dc622",
+  "budgetMicroUsdc": "1000000",
+  "thread": "4765888027184167413378790215818002954126604611785256906826698634731597930115",
+  "prompt": "@bok Build and publish a small habit tracker called Daily Three. Let me add up to three habits, check them off for today, and reset today\u2019s checks. Save habits and checks locally so they survive reloads. Make it pleasant on phone and desktop. Include links to the working app and its source.",
+  "authorizationTx": "0x0ad6c2c5d1f9ab49000c80ae77bd5146f23934ca3353e7ef37722a6b3ceb8fdd",
+  "post": {
+    "blockNumber": "1025",
+    "blockHash": "0x0c503b13d9430c8baaf3dd360145827c858793deaf023c78e21ceba2123b98c1",
+    "txHash": "0x003937d4d6b61a5587fc3155631b410c4de593e9495085d7f4adf901448f65a7",
+    "txIndexWithinBlock": "0",
+    "logIndexWithinTx": "0"
+  },
+  "expectedRepository": "zac-williamson/rolling-chat-bok-pool-20261015-03",
+  "acceptance": [
+    "Bok commits generated app to assigned GitHub repository",
+    "Bok publishes app through actual artifact pipeline",
+    "Authenticated Bok reply contains working published link",
+    "Generated app accepts up to three habits, checks persist on reload and reset works",
+    "Desktop and mobile layout usable",
+    "Request reaches terminal accounting with actual charge and returned remainder"
+  ],
+  "originalResult": {
+    "requestId": "0x0f9b7a755babd53644ac79415e55cfcc6cd655b4cf170f3027f634af225d1cbf",
+    "canonicalAccounting": {
+      "requestId": "0x0f9b7a755babd53644ac79415e55cfcc6cd655b4cf170f3027f634af225d1cbf",
+      "anchor": {
+        "number": 1035,
+        "hash": "0x17785cb2e9bc6e2e59c6b94fd641d4079309958b73bfeb11df90a433bd1fbab5"
+      },
+      "state": "4",
+      "sequence": "1",
+      "budget": "1000000",
+      "available": "0",
+      "reserved": "0",
+      "charged": "15988",
+      "refunded": "984012",
+      "primaryDone": "1",
+      "secondaryDone": "1",
+      "receipt": "0x01b1c89d492a5513283b3f5c5ea0c65d27c357a2dee4a41434a4aa9a4b918e29"
+    },
+    "acceptedSourceRevision": "45e42b138f2e9401cf9feea4b1b96490f17b8040",
+    "githubMirror": {
+      "repository": "zac-williamson/rolling-chat-bok-pool-20261015-03",
+      "commit": "9fa821d7ba339878696f90b2041e5bf97cd4dd7a",
+      "verification": "GitHub API verified by root agent; supplied in handoff"
+    },
+    "applicationStatus": "Published source passed isolated build validation, but actual browser found localStorage SecurityError under existing CSP sandbox. Functional app verification failed; guidance fix pending."
+  },
+  "browserFailure": {
+    "message": "Failed to read the localStorage property from Window: The document is sandboxed and lacks the allow-same-origin flag.",
+    "httpStatus": 200,
+    "effect": "App initialization stopped before controls were registered."
+  },
+  "repair": {
+    "scope": "Correct public authoring instructions; retain existing opaque-origin CSP. Ask Bok to revise this same app through a real reply.",
+    "focusedCheck": "29 static-publication tests passed, including real browser storage isolation and fragment persistence across reload.",
+    "fragmentLiveProbe": "Actual published artifact preserved location.hash across reload while localStorage remained blocked."
+  }
+}

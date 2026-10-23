@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "23 October stable6 restoration complete for current owner request: source ee6195e5 published on fresh board0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc, version679261766. Complete Linux runtime8fed2c764e5b62fc qualified;9services active,19public hashes verified. Fresh MetaMask signup711d3455 and post0d372e04 passed; moderator evaluated post successfully. Bok activation fde0b28e and registration1907421b confirmed; one-approval ETH payment8508191e and automatic real-proof claim1bd62a18 increased private credit0\u21921USDC. Three actual browser proofs, no failed jobs. Final handover/evidence in evidence/G21/stable6; source and records prepared for default master push. No old state migrated, recovered or archived. No fresh Bok model/code-generation request tested; broader production gates remain separate. Await owner feedback rather than restarting historical campaigns.",
+      "checkpoint": "23 October: owner requests actual @bok app-generation end-to-end acceptance on restored stable6 deployment, including code in pool repository20261015-03, published app, authenticated reply and settlement. Existing test account has1USDC Bok credit. Reuse its browser/account; do not repeat signup. Root owns UI and transactions; delegated read-only runtime observation. Prior signup/post/funding results remain valid; full Bok job not yet tested.",
       "execution_lane": "operational readiness",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9843,11 +9843,11 @@
   },
   "current_operating_request": {
     "id": "G21-stable6-restoration-20261023",
-    "status": "verified",
+    "status": "active",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
     "at": "2026-10-23T08:55:12.283999+00:00",
-    "request": "Restore the live app on the upgraded testnet; discard old application state and publish.",
+    "request": "Test a real @bok request end to end: create an app in selected repository and publish result.",
     "scope": [
       "Stable Aztec6.0.0 on canonical Sepolia rollup version679261766",
       "Fresh application contracts, actors and state; no migration, recovery or archive work",
@@ -9855,7 +9855,7 @@
       "Persistent services within existing monthly budget"
     ],
     "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
-    "verification": "Fresh real MetaMask signup, first post and one-approval ETH Bok purchase with automatic private claim;3real browser proofs completed,0failed;19public file hashes verified;9services running; moderator evaluated post. No fresh Bok model/code-generation job run.",
+    "verification": "Real Bok job committed source and published app/reply; contract confirms15988microUSDC charge and984012refund. Published browser app fails with localStorage SecurityError under opaque-origin sandbox. Functional acceptance remains incomplete.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9863,6 +9863,6 @@
       "START_HERE.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Current restoration request is complete. Keep services running; await owner feedback. Do not restart historical campaigns or scheduled agents."
+    "nextAction": "Correct Bok browser-host guidance after reproduced localStorage crash; publish Bok-only source; request a real same-thread revision and verify published controls, reload, reply and accounting."
   }
 }

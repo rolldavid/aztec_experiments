@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 23 October stable6 restoration complete for current owner request: source ee6195e5 published on fresh board0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc, version679261766. Complete Linux runtime8fed2c764e5b62fc qualified;9services active,19public hashes verified. Fresh MetaMask signup711d3455 and post0d372e04 passed; moderator evaluated post successfully. Bok activation fde0b28e and registration1907421b confirmed; one-approval ETH payment8508191e and automatic real-proof claim1bd62a18 increased private credit0→1USDC. Three actual browser proofs, no failed jobs. Final handover/evidence in evidence/G21/stable6; source and records prepared for default master push. No old state migrated, recovered or archived. No fresh Bok model/code-generation request tested; broader production gates remain separate. Await owner feedback rather than restarting historical campaigns.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 23 October: owner requests actual @bok app-generation end-to-end acceptance on restored stable6 deployment, including code in pool repository20261015-03, published app, authenticated reply and settlement. Existing test account has1USDC Bok credit. Reuse its browser/account; do not repeat signup. Root owns UI and transactions; delegated read-only runtime observation. Prior signup/post/funding results remain valid; full Bok job not yet tested.
 
 ## Ready internal work
 
