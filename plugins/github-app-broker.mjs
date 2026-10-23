@@ -47,6 +47,20 @@ async function capture(receipt,artifactRoot){
  return {binding:{repositoryId:r.repositoryId,threadId:r.threadId,invocationId:r.invocationId,acceptedRevision:r.acceptedRevision,readRevision:r.readRevision,sourceDigest:v.sourceDigest,sourceArchiveSha256:v.sourceArchiveSha256},files,tree:treeHash(files)};
 }
 
+// This bounded optimization never sets publication capacity. Older objects
+// outside the inspected ancestry are uploaded normally, not rejected.
+export function completedAncestorBlobs(revisions,b,parent){
+ const knownBlobs=new Set(),ancestors=new Set();let ancestor=b.readRevision;
+   while(ancestor!==null&&ancestors.size<64){
+    assert(hex(ancestor,40)&&!ancestors.has(ancestor));ancestors.add(ancestor);
+    const prior=revisions[ancestor];assert(prior?.complete===true&&prior.binding?.acceptedRevision===ancestor&&prior.binding.repositoryId===b.repositoryId&&prior.binding.threadId===b.threadId);
+    assert(hex(prior.remoteCommit,40)&&prior.remoteCommit===parent&&prior.steps?.commit?.done===true&&prior.steps.commit.result?.sha===parent&&prior.steps.ref?.done===true&&prior.steps.ref.result?.sha===parent);
+    for(const [label,step]of Object.entries(prior.steps))if(label.startsWith('blob:')&&step.done===true){assert(hex(step.result?.sha,40));knownBlobs.add(step.result.sha);}
+    ancestor=prior.binding.readRevision;parent=prior.parent;
+   }
+ return knownBlobs;
+}
+
 /** One trusted host owns directory. Disabled by default; no ambient gh/env tokens.
  * REST mirror commits are explicitly DISTINCT from local accepted Git commits. */
 async function broker({installationPermissionProfile='restricted',creationTemplate=null,connectedRepositories=[],repositoryPool=null,enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
@@ -280,14 +294,7 @@ async function broker({installationPermissionProfile='restricted',creationTempla
    // Completed ancestors already keep their immutable blobs reachable in this
    // exact repository. Reuse only acknowledged objects from the journal's
    // verified parent chain, never a partial revision or another repository.
-   const knownBlobs=new Set(),ancestors=new Set();let ancestor=b.readRevision,parent=entry.parent;
-   while(ancestor!==null){
-    assert(hex(ancestor,40)&&!ancestors.has(ancestor)&&ancestors.size<64);ancestors.add(ancestor);
-    const prior=repo.revisions[ancestor];assert(prior?.complete===true&&prior.binding?.acceptedRevision===ancestor&&prior.binding.repositoryId===b.repositoryId&&prior.binding.threadId===b.threadId);
-    assert(hex(prior.remoteCommit,40)&&prior.remoteCommit===parent&&prior.steps?.commit?.done===true&&prior.steps.commit.result?.sha===parent&&prior.steps.ref?.done===true&&prior.steps.ref.result?.sha===parent);
-    for(const [label,step]of Object.entries(prior.steps))if(label.startsWith('blob:')&&step.done===true){assert(hex(step.result?.sha,40));knownBlobs.add(step.result.sha);}
-    ancestor=prior.binding.readRevision;parent=prior.parent;
-   }
+   const knownBlobs=completedAncestorBlobs(repo.revisions,b,entry.parent);
    // Existing current intents must still reconcile, even if an ancestor has
    // identical bytes. New blobs retain their original per-write permission
    // checks; drain each bounded group before leaving the broker's ownership.

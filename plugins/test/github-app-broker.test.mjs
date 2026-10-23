@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {createHash,generateKeyPairSync,randomUUID,verify} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {createGitHubAppBroker,getGitHubBrokerDiagnostic} from '../github-app-broker.mjs';
+import {createGitHubAppBroker,getGitHubBrokerDiagnostic,completedAncestorBlobs} from '../github-app-broker.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHash('sha1').update(type+' '+Buffer.byteLength(b)+'\0').update(b).digest('hex');
 const approvedPermissions=Object.fromEntries(['installation_repositories','actions','actions_variables','administration','artifact_metadata','checks','contents','statuses','deployments','discussions','environments','issues','merge_queues','packages','pages','pull_requests','repository_creation','repository_hooks','repository_projects','workflows'].map(name=>[name,'write']).concat([['metadata','read']]));
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
@@ -426,4 +426,12 @@ test('an existing same-content blob intent is reconciled rather than skipped as 
  await f.reopen();const offset=f.calls.length;assert((await f.broker.sync(second)).mirrored);
  const calls=f.calls.slice(offset);assert(calls.some(c=>c.method==='GET'&&c.route.endsWith('/git/blobs/'+git('blob',files['app.cjs']))));assert(!calls.some(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')));
  const final=JSON.parse(await fs.readFile(file));assert.equal(Object.values(final.repositories)[0].revisions[second.acceptedRevision].steps['blob:app.cjs'].done,true);
+});
+
+test('ancestor reuse stops at its optimization bound and leaves older blobs for normal upload',()=>{
+ const hex=n=>n.toString(16).padStart(40,'0'),binding={repositoryId:'a'.repeat(64),threadId:'0x'+'b'.repeat(64),readRevision:hex(70)},revisions={};
+ for(let n=1;n<=70;n++){
+  const commit=hex(1000+n);revisions[hex(n)]={complete:true,binding:{...binding,acceptedRevision:hex(n),readRevision:n===1?null:hex(n-1)},remoteCommit:commit,parent:hex(999+n),steps:{commit:{done:true,result:{sha:commit}},ref:{done:true,result:{sha:commit}},['blob:f'+n]:{done:true,result:{sha:hex(2000+n)}}}};
+ }
+ const known=completedAncestorBlobs(revisions,binding,hex(1070));assert.equal(known.size,64);assert(known.has(hex(2070)));assert(known.has(hex(2007)));assert(!known.has(hex(2006)));
 });
