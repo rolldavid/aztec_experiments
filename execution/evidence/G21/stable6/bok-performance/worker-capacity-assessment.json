@@ -1,0 +1,76 @@
+{
+  "observedAt": "2026-10-23T23:10:27.153941+00:00",
+  "mode": "read-only assessment; no service, instance, config or ledger mutation",
+  "budget": {
+    "authorizedMonthlyUsd": "1500",
+    "existing31DayForecastUsd": "1462.937679780821917808219179",
+    "existingForecastBasis": "aztec_experiments/execution/infrastructure-ledger.json persistent_hosting_20261020 and referenced monthly-forecast.json",
+    "headroomUsd": "37.062320219178082191780821",
+    "preservedAllowances": "20% tax allowance,500GB networking forecast,archives/static20USD,100USD billing/traffic/cleanup buffer"
+  },
+  "current": {
+    "instanceId": "i-0a7d9957f2b3d7f19",
+    "instanceType": "r7i.xlarge",
+    "purchaseModel": "on-demand",
+    "region": "us-east-1",
+    "az": "us-east-1a",
+    "vcpus": 4,
+    "physicalCores": 2,
+    "threadsPerCore": 2,
+    "memoryGiB": 32,
+    "rootEncryptedGp3GiB": 128,
+    "usdPerHour": "0.2646",
+    "nativeProverThreads": 4,
+    "observedNativeProofSecondsApprox": 5.4,
+    "workerProofStageSecondsApprox": 6.74
+  },
+  "pricingSource": "AWS Pricing GetProducts AmazonEC2 Linux Shared NA Used US East (N. Virginia), read-only current query",
+  "options": [
+    {
+      "type": "r7i.2xlarge",
+      "usdPerHour": "0.5292",
+      "vcpus": 8,
+      "physicalCores": 4,
+      "memoryGiB": 64,
+      "incremental31DayUsdIncludingTaxAllowance": "236.23488",
+      "new31DayForecastUsd": "1699.172559780821917808219179",
+      "remainingHeadroomUsd": "-199.172559780821917808219179",
+      "performanceMeasured": false
+    },
+    {
+      "type": "c6a.2xlarge",
+      "usdPerHour": "0.306",
+      "vcpus": 8,
+      "physicalCores": 4,
+      "memoryGiB": 16,
+      "incremental31DayUsdIncludingTaxAllowance": "36.96192",
+      "new31DayForecastUsd": "1499.899599780821917808219179",
+      "remainingHeadroomUsd": "0.100400219178082191780821",
+      "performanceMeasured": false
+    }
+  ],
+  "priorSameInputVerifiedProofSeconds": {
+    "threads1": 10.2458,
+    "threads4": 4.9372,
+    "threads8": 5.1595,
+    "hostVcpus": 4,
+    "caveat": "Eight threads on four vCPUs does not measure eight real vCPUs. No speedup from resizing is established."
+  },
+  "awsBudgetReadback": {
+    "lastUpdatedUTC": "2026-10-23T21:07:49.788Z",
+    "actualMonthToDateUsd": "383.294",
+    "forecastCurrentCalendarMonthUsd": "463.423",
+    "scopeCaveat": "Account budget excludes Lightsail but conservatively includes unrelated London compute; partial launch month estimate is not a full31day project operating forecast."
+  },
+  "availability": {
+    "sameHostResizeRequiresEC2Stop": true,
+    "servicesAffected": "Bok worker and its artifact proxy unavailable during stop/start; core services need not restart. This is not a zero-downtime operation.",
+    "cpuOptionCaveat": "AWS can preserve old CoreCount2/ThreadsPerCore2 on type change. Any future qualified resize must explicitly verify4cores/8vCPUs and native configuration, or it may retain4vCPUs.",
+    "rollback": "Drain first; preserve EBS and all current journals. Revert only instance type and exact changed thread config after another stop; do not restore old financial state. Capacity/startup delays make timing uncertain."
+  },
+  "decision": "Do not resize or provision. Same-family option exceeds existing budget. Cheaper alternative consumes essentially all headroom and provides no proven speedup.",
+  "references": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html"
+  ]
+}

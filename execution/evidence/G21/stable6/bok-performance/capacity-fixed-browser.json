@@ -1,0 +1,219 @@
+{
+  "source": "Browser performance timings rendered in actual Chrome UI; CUA capture, no direct browser instrumentation access",
+  "workerSource": "00c5ba14876f669773aefe932000bb2ddd6eab02",
+  "actualClickUtc": "2026-10-23T23:08:31.133Z",
+  "requestId": "0x207a47739fca90241edab0e40b0993b9694530a293c48d3b6f821ef40c0f72c3",
+  "timeOrigin": 1792796775726.025,
+  "entries": [
+    {
+      "name": "rolling.reader.load",
+      "start": 1144.7900000810623,
+      "duration": 616.789999961853
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1757.2549999952316,
+      "duration": 4.295000076293945
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 29513.085000038147,
+      "duration": 3325.7699999809265
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 43084.15000009537,
+      "duration": 1272.054999947548
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 120939.07500004768,
+      "duration": 3392.0499999523163
+    },
+    {
+      "name": "rolling.action.sync",
+      "start": 135908.33500003815,
+      "duration": 1297.8300000429153
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 139372.22500002384,
+      "duration": 1890.6050000190735
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 135908.2800000906,
+      "duration": 5367.164999961853
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 142229.060000062,
+      "duration": 3005.569999933243
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 145234.66500008106,
+      "duration": 265.8349999189377
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 142228.95500004292,
+      "duration": 3380.3400000333786
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 145609.30500006676,
+      "duration": 0.48000001907348633
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 145609.79000008106,
+      "duration": 950.3450000286102
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 154888.65000009537,
+      "duration": 898.3049999475479
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 155787.0450000763,
+      "duration": 5067.664999961853
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 160854.82500004768,
+      "duration": 8030.539999961853
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 168888.2950000763,
+      "duration": 37.329999923706055
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 168925.67500007153,
+      "duration": 300.085000038147
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 146597.75,
+      "duration": 22669.460000038147
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 154919.71500003338,
+      "duration": 14347.519999980927
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 164259.24000012875,
+      "duration": 5007.984999895096
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 168023.30000007153,
+      "duration": 1243.9349999427795
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 168208.86499977112,
+      "duration": 1058.3650002479553
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 168255.58000004292,
+      "duration": 1011.6549999713898
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 169267.22500002384,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 146560.15000009537,
+      "duration": 23710.81499993801
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 170270.97500002384,
+      "duration": 913.2050000429153
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 214604.90000009537,
+      "duration": 500.90499997138977
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 215092.92500007153,
+      "duration": 12.855000019073486
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 135566.02500009537,
+      "duration": 80345.77999997139
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 141275.49500000477,
+      "duration": 74626.75
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 171184.19500005245,
+      "duration": 44727.60500001907
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 215904.94500005245,
+      "duration": 384.2649999856949
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 216285.55500006676,
+      "duration": 3.6449999809265137
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 215912.9850000143,
+      "duration": 3208.8799999952316
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 226405.88500010967,
+      "duration": 1012.6899999380112
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 357943.0300000906,
+      "duration": 551.1050000190735
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 358487.30500006676,
+      "duration": 6.804999947547913
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 358530.44500005245,
+      "duration": 3537.2050000429153
+    }
+  ],
+  "postInteractionToReplyRenderMs": 222928.08499991894,
+  "actualClickToReplyRenderMs": 223087.134765625,
+  "balance": {
+    "beforeUSDC": "0.742963",
+    "afterUSDC": "0.690064",
+    "updatedWithoutReload": true
+  },
+  "publishedAppManualCheck": {
+    "revision": "9bf01d6106e323fee2ae1af7105aad90362047f6",
+    "disabledWhenNoneChecked": true,
+    "removesCheckedOnly": true,
+    "uncheckedHabitSurvivesReload": true,
+    "screenshot": "/private/tmp/rolling-corrected-app-verified.png"
+  },
+  "note": "Native aggregate spans are duration values anchored at completion. Their synthetic start positions do not represent actual phase start times. Nested durations must not be summed."
+}

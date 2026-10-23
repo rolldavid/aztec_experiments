@@ -1,0 +1,82 @@
+{
+  "requestId": "0x207a47739fca90241edab0e40b0993b9694530a293c48d3b6f821ef40c0f72c3",
+  "clickAt": "2026-10-23T23:08:31.133Z",
+  "admissionAt": "2026-10-23T23:09:12.331106+00:00",
+  "finishedAt": "2026-10-23T23:12:14.211803+00:00",
+  "clickToAdmissionSeconds": 41.198106,
+  "clickToFinishedSeconds": 223.078803,
+  "clickToVisibleReplySeconds": 223.087134765625,
+  "workerSeconds": 181.880835,
+  "partitions": {
+    "provider.completion": 71.333111,
+    "tool.check_workspace": 12.381947,
+    "tool.finish_workspace": 0.057215,
+    "publication.static": 0.051691,
+    "publication.mirror": 3.85819,
+    "escrow.prove": 6.541677,
+    "escrow.wait": 77.031508,
+    "board.readRequest": 0.837636,
+    "otherWorkerSeconds": 9.78786
+  },
+  "partitionNote": "Exclusive selected worker stage durations; other is residual, includes edits, guards, repository admission, send, etc. Nested aggregates not summed.",
+  "modelCalls": 13,
+  "summaryCalls": 0,
+  "boardReads": 17,
+  "proofProfile": {
+    "totalMs": 6540.507,
+    "syncMs": 0.001,
+    "provingMs": 5276.597,
+    "validationMs": 361.993,
+    "unaccountedMs": 59.64,
+    "witnessMs": 842.277,
+    "functionCount": 4,
+    "wallTimeUs": "1792797055752394"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x2aa9347a200a514866fecd5238a60f3d499ba63ae5d79c29a6dffa914ee4b01b",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1821,
+    "blockHash": "0x290181832c178a6d3a34aaca000c3d9e8b36bfb0441cbe0573be6203054d0a2e"
+  },
+  "aggregateChargeMicroUSDC": "52899",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "197101",
+  "acceptedRevision": "9bf01d6106e323fee2ae1af7105aad90362047f6",
+  "isolatedBrowserChecks": 164,
+  "appUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/9bf01d6106e323fee2ae1af7105aad90362047f6/files/index.html",
+  "browserAcceptance": {
+    "source": "parent retained actual Chrome",
+    "checks": [
+      "Clear completed disabled when empty",
+      "Added Keep and Completed",
+      "Checked Completed and cleared it",
+      "Reload preserved Keep unchecked and removed Completed",
+      "Button disabled after clear"
+    ],
+    "screenshot": "/private/tmp/rolling-corrected-app-verified.png"
+  },
+  "observedUIBalance": {
+    "before": "0.742963",
+    "after": "0.690064",
+    "automaticRefresh": true
+  },
+  "sourceEvidence": [
+    "/tmp/bok-corrected-observe03.json",
+    "/tmp/bok-corrected-receipt01-result.json",
+    "/tmp/bok-corrected-native-result.json",
+    "/private/tmp/rolling-corrected-final-browser.txt"
+  ],
+  "failedCheckDiagnosis": {
+    "evidence": "/tmp/bok-corrected-repair-indices-result.json",
+    "confirmedPlanDefect": "expectChecked(#clearCompletedBtn,false) targets a button; runner compares element.checked strictly and that property is undefined for this button.",
+    "checkboxIndices": [
+      0,
+      2
+    ],
+    "repair": "Removed invalid checked assertion; generated HTML unchanged after first check.",
+    "limitation": "Failed browser runtime error was not durably retained; source and exact repair establish this impossible assertion, not the precise first failing runtime line.",
+    "minimalCorrection": "Document checkbox/radio-only expectChecked; reject a non-checkable target with an immediate specific error. Use :disabled/:enabled selectors for buttons."
+  }
+}

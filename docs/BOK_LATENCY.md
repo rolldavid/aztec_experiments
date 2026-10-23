@@ -79,6 +79,39 @@ These nested measurements must not be added to their containing totals.
 [browser measurements](../execution/evidence/G21/stable6/bok-performance/tool-repair-run-browser.json),
 [exact rejected argument shapes](../execution/evidence/G21/stable6/bok-performance/focused-plan-edit-failure.json).
 
+## Capacity-aware repeat — 3m43s, automatic refund verified
+
+The next comparable request completed in **223.087s** from actual Post click to
+visible settled reply (52.0% below464.264s). It published revision`9bf01d61`, passed
+164 browser checks and passed the separate manual completed/unfinished/reload
+check. The balance automatically changed from0.742963 to0.690064USDC: charge0.052899,
+unused budget0.197101. No page refresh or account recovery was involved.
+
+There were no history-summary calls or rejected append-only tool arguments.
+Thirteen model calls took71.333s. Nine initial exact edits were all independent:
+six in HTML, two in unit tests and one in the browser plan. Their combined arguments
+were about7.1KB, so neither dependencies nor output capacity required nine turns.
+The tool now accepts a bounded array of replacements against one original file;
+all replacements validate before one atomic write. Its latency effect remains to
+be measured in the next run.
+
+The first app check contained an impossible `expectChecked` assertion on a button.
+The model repaired the test without changing app HTML. Both checks totalled12.382s;
+GitHub publication3.858s; native final proof6.542s; board reads0.838s; final canonical
+wait77.032s. This run was slower than the earlier205.939s best sample despite fewer
+unnecessary operations, because generated tool choices and network slot timing vary.
+
+[Partition](../execution/evidence/G21/stable6/bok-performance/capacity-fixed-profile.json),
+[browser and app acceptance](../execution/evidence/G21/stable6/bok-performance/capacity-fixed-browser.json).
+
+A local native-type microbenchmark measured the detached public-tail copy at
+0.894ms for82,774bytes (rollup variant0.423ms for38,609bytes). Original bytes remained
+unchanged. This copy is not the multi-second bottleneck. The worker already uses
+all four logical CPUs on two physical cores. A same-family four-physical-core host
+would exceed the existing monthly infrastructure budget; no resize was made.
+[Copy measurement](../execution/evidence/G21/stable6/bok-performance/detached-tail-copy.json),
+[capacity assessment](../execution/evidence/G21/stable6/bok-performance/worker-capacity-assessment.json).
+
 ## Follow-up validation measurement
 
 The same accepted92-step plan and198 checks took7.562s with one CPU and serial

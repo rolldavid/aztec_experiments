@@ -1,12 +1,12 @@
 # Active performance work — 24 October 2026
 
-Root integrates and owns real browser transactions. Network agent independently
-reviews changes and publishes exact approved releases; it traced checkpoint delay
-to the deployed72-second pipelined slot schedule. Fresh-account agent owns isolated
-browser validation and redundant model discovery work. Packaging agent owns native
-proof diagnostics/builds and measurement-driven proof optimization. Existing hosts
-and authorized credentials only; no old-state migration. Current successful
-comparable result205.939s is recorded in docs/BOK_LATENCY.md; goal remains active.
+Root integrates and owns real browser transactions and evidence. Latest comparable
+run223.087s is verified, including published app and automatic balance refund.
+Fresh-account agent completed reviewed batched file edits; packaging agent owns
+independent simulation/validator review and exact worker publication. Network agent
+completed typed-checkbox assertion correction and provides runtime observation.
+Only existing hosts and authorized credentials; no state migration or host resize.
+Goal remains active. See docs/BOK_LATENCY.md for measurements and limitations.
 
 ## Live component ownership — 2026-10-19T12:48Z
 

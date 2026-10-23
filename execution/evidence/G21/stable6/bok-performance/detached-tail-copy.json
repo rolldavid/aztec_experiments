@@ -1,0 +1,26 @@
+{
+  "kind": "local synthetic native-type copy microbenchmark; no chain or proof execution",
+  "node": "v24.21.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "results": [
+    {
+      "variant": "rollup",
+      "bytes": 38609,
+      "iterations": 1000,
+      "minMs": 0.39517165999999976,
+      "medianMs": 0.42347958999999946,
+      "maxMs": 0.4488079100000004,
+      "originalUnchanged": true
+    },
+    {
+      "variant": "public",
+      "bytes": 82774,
+      "iterations": 1000,
+      "minMs": 0.8714120900000012,
+      "medianMs": 0.8938299999999981,
+      "maxMs": 0.9882408300000008,
+      "originalUnchanged": true
+    }
+  ]
+}
