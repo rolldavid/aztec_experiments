@@ -98,38 +98,52 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert.equal(String(info.l1ChainId),chainId,'Chain changed'); assert.equal(String(info.rollupVersion),version,'Rollup version changed');
    assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),rollup,'Rollup changed');
   };
-  const anchored=async(tag=finality)=>{
-   await checkNetwork(); const b=await node.getBlock(tag); assert(b?.header && Number.isSafeInteger(Number(b.number)),'Canonical block unavailable');
-   const anchor={number:b.number,hash:b.hash}; hex(b.hash); const instance=await node.getContract(addr,anchor);
-   assert.equal(String(instance?.currentContractClassId),classId,'Escrow class mismatch');
-   const read=slot=>node.getPublicStorageAt(anchor,addr,slot);
-   for(const [name,expected] of [['operator',BigInt(op.toString())],['board',BigInt(boardAddress)],['l1_chain',BigInt(chainId)],['version',BigInt(version)]])
-    assert.equal((await read(artifact.storageLayout[name].slot)).toBigInt(),expected,'Escrow configuration mismatch');
-   const fields=[];for(let i=0;i<requestFields.length;i++) fields.push((await read(new Fr(requestSlot.toBigInt()+BigInt(i)))).toBigInt());
-   const r=Object.fromEntries(requestFields.map((name,i)=>[name,fields[i]]));
-   r.state=Number(integer(r.state,8)); r.sequence=Number(integer(r.sequence,32)); r.deadline=integer(r.deadline,64);
-   for(const name of ['budget','available','reserved','charged','refunded']) r[name]=integer(r[name],128);
-   for(const name of ['primary_done','secondary_done']){assert(r[name]===0n||r[name]===1n);r[name]=r[name]===1n;}
-   for(const name of ['invocation_hash','primary_refund','secondary_refund','receipt'])r[name]=new Fr(r[name]).toString();
-   assert([1,2,3,4].includes(r.state),'Request unavailable'); assert.equal(r.invocation_hash,invocation,'Invocation target mismatch');
-   assert(r.budget>0n && r.available+r.reserved+r.charged+r.refunded===r.budget,'Request conservation failure');
-   assert.equal(String((await node.getBlock(b.number))?.hash),String(b.hash),'Canonical block changed');
-   return {canonical:true,request:r,anchor:{number:Number(b.number),hash:String(b.hash),timestamp:String(integer(b.header.globalVariables.timestamp,64)),finality},instance};
+  // One observation shares only reads of the same hash-pinned block. It is
+  // discarded at the next public operation; mutable state never gets an age cache.
+  const observation=()=>({network:null,blocks:new Map(),snapshots:new Map()});
+  const checkedNetwork=read=>read.network??=(checkNetwork());
+  const selectedBlock=async(tag,read)=>{
+   await checkedNetwork(read);
+   if(!read.blocks.has(tag))read.blocks.set(tag,node.getBlock(tag));
+   return read.blocks.get(tag);
+  };
+  const anchored=async(tag=finality,read=observation())=>{
+   const b=await selectedBlock(tag,read);assert(b?.header && Number.isSafeInteger(Number(b.number)),'Canonical block unavailable');
+   const anchor={number:b.number,hash:b.hash};hex(b.hash);
+   const key=String(b.number)+':'+String(b.hash);
+   if(!read.snapshots.has(key))read.snapshots.set(key,(async()=>{
+    const slots=['operator','board','l1_chain','version'].map(name=>artifact.storageLayout[name].slot)
+     .concat(requestFields.map((_,i)=>new Fr(requestSlot.toBigInt()+BigInt(i))));
+    const [instance,...values]=await Promise.all([node.getContract(addr,anchor),...slots.map(slot=>node.getPublicStorageAt(anchor,addr,slot))]);
+    assert.equal(String(instance?.currentContractClassId),classId,'Escrow class mismatch');
+    const expected=[BigInt(op.toString()),BigInt(boardAddress),BigInt(chainId),BigInt(version)];
+    for(let i=0;i<expected.length;i++)assert.equal(values[i].toBigInt(),expected[i],'Escrow configuration mismatch');
+    const r=Object.fromEntries(requestFields.map((name,i)=>[name,values[i+4].toBigInt()]));
+    r.state=Number(integer(r.state,8));r.sequence=Number(integer(r.sequence,32));r.deadline=integer(r.deadline,64);
+    for(const name of ['budget','available','reserved','charged','refunded'])r[name]=integer(r[name],128);
+    for(const name of ['primary_done','secondary_done']){assert(r[name]===0n||r[name]===1n);r[name]=r[name]===1n;}
+    for(const name of ['invocation_hash','primary_refund','secondary_refund','receipt'])r[name]=new Fr(r[name]).toString();
+    assert([1,2,3,4].includes(r.state),'Request unavailable');assert.equal(r.invocation_hash,invocation,'Invocation target mismatch');
+    assert(r.budget>0n&&r.available+r.reserved+r.charged+r.refunded===r.budget,'Request conservation failure');
+    assert.equal(String((await node.getBlock(b.number))?.hash),String(b.hash),'Canonical block changed');
+    return {canonical:true,request:r,anchor:{number:Number(b.number),hash:String(b.hash),timestamp:String(integer(b.header.globalVariables.timestamp,64)),finality},instance};
+   })());
+   return read.snapshots.get(key);
   };
   const initial=await anchored();await wallet.registerContract(initial.instance,artifact);
   const contract=await Contract.at(addr,artifact,wallet); if(!store.read().privateBokEscrow)await save(journal());else journal();
   const unsubmittedReserve=record=>record.method==='reserve'&&record.args?.[1]===0&&record.proofMode===proofMode&&record.phase==='preparing'&&!['recoveryAttempted','txHash','transactionSha256','submissionError'].some(key=>Object.hasOwn(record,key));
-  const inspectOne=async (operationId,replacement=false)=>{
+  const inspectOne=async (operationId,replacement=false,read=observation())=>{
    const readRecord=()=>replacement?journal().operations[operationId]?.replacement:journal().operations[operationId];
    const recordUpdate=changes=>replacement?update(operationId,{replacement:{...readRecord(),...changes}}):update(operationId,changes);
    assert(/^[0-9a-f]{64}$/.test(operationId));await held();
-   const record=readRecord();if(!record){await checkNetwork();return {status:'absent'};}
+   const record=readRecord();if(!record){await checkedNetwork(read);return {status:'absent'};}
    assert(methods.includes(record.method) && record.args?.[0]===id,'Invalid recorded operation');
    assert.equal(digest(record.args),record.argsDigest,'Recorded arguments changed');
    // Current authority expires before the new read. Historical rows are evidence,
    // never a substitute for receipt availability, canonicality or finality now.
    await recordUpdate({result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
-   await checkNetwork();
+   await checkedNetwork(read);
    if(!record.txHash)return {status:unsubmittedReserve(record)?'not-submitted':'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
    let receipt;
    try{receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));}
@@ -141,7 +155,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    await recordUpdate({observation});
    assert.equal(String(receipt.txHash),record.txHash,'Receipt hash mismatch');assert(statuses.includes(receipt.status),'Invalid receipt status');
    if(['pending','dropped'].includes(receipt.status))return {status:receipt.status==='dropped'?'failed':'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
-   const block=await node.getBlock(receipt.blockNumber),effect=await node.getTxEffect(TxHash.fromString(record.txHash));
+   const [block,effect]=await Promise.all([node.getBlock(receipt.blockNumber),node.getTxEffect(TxHash.fromString(record.txHash))]);
    if(!block||!effect)return {status:'pending',canonical:false};
    observation.blockNumber=Number(receipt.blockNumber);observation.blockHash=String(receipt.blockHash);
    observation.effectSha256=bytesHash(effect.data.toBuffer());await recordUpdate({observation});
@@ -160,23 +174,23 @@ export function createPrivateBokEscrowFactory(sdk) {
     await recordUpdate({includedHistory:[...history,included]});
    }
    if(!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
-   const tip=await node.getBlock(finality);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
+   const tip=await selectedBlock(finality,read);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
    // Recheck the configured class and state against the same required finality.
-   await anchored();
+   await anchored(finality,read);
    assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
    const result={status:receipt.executionResult==='success'?'succeeded':'failed',canonical:true,method:record.method,argsDigest:record.argsDigest,
     txHash:record.txHash,transactionFee:String(receipt.transactionFee),blockNumber:observation.blockNumber,blockHash:observation.blockHash};
    await recordUpdate({observation:{...observation,canonical:true},result});return result;
   };
-  const inspect=async operationId=>{
-   const original=await inspectOne(operationId),record=journal().operations[operationId];
+  const inspect=async (operationId,read=observation())=>{
+   const original=await inspectOne(operationId,false,read),record=journal().operations[operationId];
    if(!record?.replacement)return original;
    const replacement=record.replacement;
    assert.equal(replacement.originalTxHash,record.txHash,'Replacement original hash changed');
    assert.equal(replacement.argsDigest,record.argsDigest,'Replacement arguments changed');
    assert.deepEqual(replacement.args,record.args,'Replacement arguments changed');
    assert.equal(replacement.method,'settle');assert.equal(record.method,'settle');
-   const observed=await inspectOne(operationId,true);
+   const observed=await inspectOne(operationId,true,read);
    // Observe both exact hashes: an original late inclusion is also authoritative,
    // while each included transaction keeps its own fee/effect history.
    const result=original.status==='succeeded'&&original.canonical?original:observed;
@@ -205,12 +219,17 @@ export function createPrivateBokEscrowFactory(sdk) {
    scope(request);sequence(callId);amount(maximum);
    // A checkpointed read alone is insufficient: require the exact recorded reserve transaction.
    const reservation=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,callId,String(maximum)]));
-   assert(reservation,'Reservation intent missing');assert.equal((await inspect(reservation[0])).status,'succeeded','Reservation not checkpointed');
-   const r=await anchored(),latest=await anchored('latest');
+   assert(reservation,'Reservation intent missing');const read=observation();
+   assert.equal((await inspect(reservation[0],read)).status,'succeeded','Reservation not checkpointed');
+   const [r,latest]=await Promise.all([anchored(finality,read),anchored('latest',read)]);
    for(const row of [r,latest])assert(row.request.state===2&&row.request.sequence===callId&&row.request.reserved===maximum&&maximum>0n,'Reservation not canonical');
    await held();const now=BigInt(Math.floor(Date.now()/1000)),chainTime=BigInt(latest.anchor.timestamp);
    assert((now>chainTime?now:chainTime)+180n<latest.request.deadline,'Reservation too close to expiry');
-   return {canonical:true,deadline:String(latest.request.deadline),finality,controlledSettlement:development};
+   // Recheck both snapshots at the guard boundary, including when both selectors
+   // shared one snapshot. A reorg during the latest read cannot release paid work.
+   const anchors=new Map([r,latest].map(row=>[row.anchor.number,row.anchor.hash]));
+   for(const [number,hash]of anchors)assert.equal(String((await node.getBlock(number))?.hash),hash,'Canonical block changed during reservation guard');
+   return {canonical:true,request:r.request,anchor:r.anchor,deadline:String(latest.request.deadline),finality,controlledSettlement:development};
   };
   const send=async(method,args,operation)=>{
    scope(args[0]);const operationId=operation?.operationId,argsDigest=digest(args.map(v=>typeof v==='bigint'?String(v):v));

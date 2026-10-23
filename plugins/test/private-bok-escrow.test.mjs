@@ -386,3 +386,33 @@ test('replacement rechecks reservation and late original inclusion after proof b
   assert.deepEqual(f.counts(),{proofs:1,sends:0});
  }
 });
+
+
+// Counts logical node calls, not HTTP envelopes; no live RPC or timing claim.
+function measureNode(node){
+ const counts={};for(const [name,method]of Object.entries(node))if(typeof method==='function')node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return method(...args);};
+ return counts;
+}
+test('unit fake: one reservation observation shares identical checkpoint/latest snapshot',async()=>{
+ const f=await fixture(),op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
+ const counts=measureNode(f.options.node),r=await f.port.assertUsable(f.id,0,400n);
+ assert.equal(r.canonical,true);assert.equal(r.request.reserved,400n);assert.equal(r.anchor.hash,H(57));
+ assert.equal(counts.getNodeInfo,1);assert.equal(counts.getContract,1);assert.equal(counts.getPublicStorageAt,18);
+ assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),29);
+});
+test('unit fake: independent pinned storage slots are read concurrently and fresh on the next guard',async()=>{
+ const f=await fixture(),original=f.options.node.getPublicStorageAt;let active=0,peak=0;
+ f.options.node.getPublicStorageAt=async(...args)=>{active++;peak=Math.max(peak,active);await new Promise(resolve=>setImmediate(resolve));try{return await original(...args);}finally{active--;}};
+ await f.port.request(f.id);assert.equal(peak,18);
+ f.row.available=900n;f.row.charged=100n;assert.equal((await f.port.request(f.id)).request.charged,100n);
+});
+test('unit fake: distinct latest block and reorg during final guard remain authoritative',async()=>{
+ const f=await fixture(),op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
+ const originalBlock=f.options.node.getBlock,originalRead=f.options.node.getPublicStorageAt;
+ f.options.node.getBlock=async tag=>tag==='latest'||tag===11?{...f.block,number:11,hash:new Field(58)}:originalBlock(tag);
+ f.options.node.getPublicStorageAt=async(anchor,...rest)=>{if(anchor.number===11&&Number(rest[1].toBigInt())===100)return new Field(3);return originalRead(anchor,...rest);};
+ await assert.rejects(f.port.assertUsable(f.id,0,400n),/Reservation not canonical/);
+ f.options.node.getPublicStorageAt=originalRead;
+ let numbered=0;f.options.node.getBlock=async tag=>{if(typeof tag==='number'&&++numbered===5)return {...f.block,hash:new Field(99)};return originalBlock(tag);};
+ await assert.rejects(f.port.assertUsable(f.id,0,400n),/Canonical block changed during reservation guard/);
+});

@@ -319,13 +319,13 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  const save=async j=>{const next={...store.read(),privateBok:copy(j)};if(Buffer.byteLength(JSON.stringify(next))>8388608)throw Error('Private request journal capacity exceeded');await store.write(next);};
  const setCall=async(id,changes)=>{const j=journal();j.calls[id]={...j.calls[id],...changes};await save(j);};
  const callId=id=>{if(!uint(id,cap.maxCalls-1))throw Error('Request call limit');};
- const read=async()=>{
-  const result=await escrow.request(binding.requestId);if(result?.canonical!==true)throw Error('Canonical request required');
+ const validated=result=>{if(result?.canonical!==true)throw Error('Canonical request required');
   const {state,sequence,invocation_hash,budget,available,reserved,charged,refunded,receipt}=result.request??{};
   if(![1,2,3,4].includes(state)||!uint(sequence)||invocation_hash!==binding.target)throw Error('Canonical request identity mismatch');
   const r={state,sequence,invocation_hash,budget:amount(budget),available:amount(available),reserved:amount(reserved),charged:amount(charged),refunded:amount(refunded),receipt};
   if(!r.budget||r.budget>cap.maxBudget||r.available+r.reserved+r.charged+r.refunded!==r.budget)throw Error('Request conservation or budget failure');return r;
  };
+ const read=async()=>validated(await escrow.request(binding.requestId));
  const operate=async(method,args)=>{
   const argsDigest=hash(args.map(x=>typeof x==='bigint'?String(x):x)),operationId=hash({identity:binding,accountingMode:'invocation-v1',method,argsDigest});
   const j=journal();if(!j.operations[operationId]){
@@ -349,13 +349,14 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  const measured=c=>billingFor(c.id,c.billing);
  const outcome=c=>({callId:c.id,billing:measured(c),replyAvailable:false});
  const total=()=>Object.values(journal().calls).reduce((n,c)=>n+(c.billing?BigInt(measured(c).charge):0n),0n);
- const reserved=async()=>{const r=await read();if(r.state!==2||!reservationMatches(r))throw Error('Reservation changed');const b=journal().reservation;await escrow.assertUsable(binding.requestId,b.sequence,amount(b.maximum));return r;};
- const deliver=async id=>{
+ const reserved=async()=>{const b=journal().reservation;const r=validated(await escrow.assertUsable(binding.requestId,b.sequence,amount(b.maximum)));if(r.state!==2||!reservationMatches(r))throw Error('Reservation changed');return r;};
+ const deliver=async(id,guard=true)=>{
   const c=journal().calls[id],result=outcome(c);if(journal().finished||!c.response||c.responseDelivered)return result;
   const message=retainedBokResponse(c.response);if(hash({inputDigest:c.inputDigest,billingReceipt:c.billing.receipt,message,finishReason:c.finishReason??null})!==c.responseDigest)throw Error('Retained provider response changed');
-  // Tools may run against durably metered work under the same live reservation;
-  // board publication still waits for aggregate canonical settlement.
-  await reserved();await setCall(id,{responseDelivered:true});return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
+  // A fresh response has passed the immediate pre-provider guard and durable
+  // billing receipt. Releasing it does not authorize another paid call. A resumed
+  // response rechecks authority; publication still checks canonical settlement.
+  if(guard)await reserved();await setCall(id,{responseDelivered:true});return {...result,replyAvailable:true,message,...(c.finishReason?{finishReason:c.finishReason}:{})};
  };
  const fence=async id=>{
   const r=await read();if(![2,3].includes(r.state)||!reservationMatches(r))throw Error('Unknown call reservation mismatch');
@@ -416,14 +417,16 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
      const r=await read();if(r.state!==2||r.sequence!==0||r.reserved!==0n||r.charged!==0n)throw Error('Fresh invocation required');
      const maximum=r.available<cap.maxReservation?r.available:cap.maxReservation;
      j.reservation={sequence:r.sequence,maximum:String(maximum),before:{budget:String(r.budget),available:String(r.available),charged:String(r.charged),refunded:String(r.refunded)}};available=maximum;
-    }else{await reserved();available=amount(j.reservation.maximum)-total();}
+    }else{available=amount(j.reservation.maximum)-total();}
     if(available<=0n)throw Object.assign(Error('Invocation budget exhausted'),{code:'INSUFFICIENT_BALANCE'});
     const q=quoteRecord(await provider.quote(frozen,available),available,frozen.maxTokens,cap);
     c={id,phase:'quoted',inputDigest,requestedTokens:frozen.maxTokens,quote:quoteJSON(q),available:String(available)};j.calls[id]=c;await save(j);
    }
    const reservation=journal().reservation;
    if(id===0&&c.phase==='quoted')await operate('reserve',[binding.requestId,reservation.sequence,amount(reservation.maximum)]);
-   await reserved();if(total()+amount(c.quote.maximum)>amount(reservation.maximum))throw Error('Invocation allowance exceeded');
+   if(total()+amount(c.quote.maximum)>amount(reservation.maximum))throw Error('Invocation allowance exceeded');
+   // Quote creation and journal persistence cannot authorize spending. Check
+   // mutable chain state once, after the durable fence and just before dispatch.
    await setCall(id,{phase:'possibly-sent'});await reserved();
    try{
     const result=await provider.execute(frozen,quoteFor(c)),b=billingFor(id,result?.billing);
@@ -436,7 +439,7 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
     const diagnostic=getVeniceDiagnostic(error);try{if(diagnostic)await setCall(id,{providerDiagnostic:diagnostic});}finally{await fence(id);}
     throw Error('Provider outcome unknown; original receipt required');
    }
-   return deliver(id);
+   return deliver(id,false);
   }),
   reconcile:exclusive(async(id,value)=>{
    const b=await validateReconciliation(id,value),c=journal().calls[id];

@@ -28,7 +28,7 @@ function fixture({store:externalStore}={}){
  };
  const escrow={identity:{network:identity.network,escrow:identity.escrow},
   request:async()=>({canonical:controls.canonical!==false,request:{...r}}),
-  assertUsable:async()=>{if(controls.unusable)throw Error('Reservation near deadline');},
+  assertUsable:async()=>{if(controls.unusable)throw Error('Reservation near deadline');return {canonical:controls.canonical!==false,request:{...r}};},
   inspectOperation:async id=>{
    const op=ops.get(id);if(controls.inspectUnknown&&op)return {status:'pending'};
    return op??{status:'absent'};
@@ -472,4 +472,30 @@ test('invocation accounting shared receipt claims serialize across requests and 
 });
 test('invocation accounting requires shared receipt ownership and keeps fresh coding default separate from old limits',()=>{
  const h=fixture();assert.throws(()=>h.create({accountingMode:'invocation-v1'}),/Serialized receipt/);
+});
+
+
+test('invocation uses one current reservation guard after its durable provider fence',async()=>{
+ const h=fixture(),m=invocation(h),request=h.escrow.request,usable=h.escrow.assertUsable;
+ let reads=0,guards=0;
+ h.escrow.request=async(...args)=>{reads++;return request(...args);};
+ h.escrow.assertUsable=async(...args)=>{guards++;assert.equal(h.store.read().privateBok.calls[guards-1].phase,'possibly-sent');return usable(...args);};
+ for(let id=0;id<3;id++)await m.complete(id,input);
+ assert.equal(reads,1,'Only initial budget sizing needs a separate request read');
+ assert.equal(guards,3,'One authoritative mutable guard per paid call');assert.equal(h.counts.execute,3);
+});
+test('invocation refuses changed state at the final pre-provider guard',async()=>{
+ for(const stage of ['quote','durable-fence']){
+  const h=fixture(),m=invocation(h);await m.complete(0,input);
+  if(stage==='quote'){const quote=h.provider.quote;h.provider.quote=async(...args)=>{const result=await quote(...args);h.r.state=3;return result;};}
+  else {const write=h.store.write;h.store.write=async next=>{await write(next);if(next.privateBok?.calls[1]?.phase==='possibly-sent')h.r.state=3;};}
+  await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
+ }
+});
+test('invocation retained response resume still validates current reservation before tool delivery',async()=>{
+ const h=fixture(),write=h.store.write;let interrupt=true;
+ h.store.write=async next=>{if(interrupt&&next.privateBok?.calls[0]?.responseDelivered)throw Error('handoff interrupted');return write(next);};
+ await assert.rejects(invocation(h).complete(0,input),/handoff interrupted/);interrupt=false;h.controls.unusable=true;
+ await assert.rejects(invocation(h).resume(0),/near deadline/);assert.equal(h.counts.execute,1);assert.equal(h.store.read().privateBok.calls[0].responseDelivered,undefined);
+ h.controls.unusable=false;assert.equal((await invocation(h).resume(0)).replyAvailable,true);assert.equal(h.counts.execute,1);
 });
