@@ -1062,3 +1062,16 @@ test('hosted native prover concurrency initializes the shared singleton before u
   await assert.rejects(initializeHostedNativeProver(options),/singleton configuration mismatch/);
  }
 });
+
+test('hosted capacity checks journal byte limit before catalogue without a paid call',async()=>{
+ const x=fixture();let checks=0;x.args.limits={maxInputBytes:1024};
+ x.args.provider.canFitInput=async input=>{checks++;assert.equal(input.messages[0].content,'small');return true;};
+ x.args.runAgent=async({model})=>{
+  assert.equal(await model.canFitInput({messages:[{role:'user',content:'x'.repeat(1024)}],tools:[],maxTokens:10}),false);
+  assert.equal(checks,0);assert.equal(x.events.filter(v=>v==='paid').length,0);
+  assert.equal(await model.canFitInput({messages:[{role:'user',content:'small'}],tools:[],maxTokens:10}),true);
+  assert.equal(checks,1);assert.equal(x.events.filter(v=>v==='paid').length,0);
+  const result=await model.complete({messages:[{role:'user',content:'small'}],tools:[],maxTokens:10});return {replyText:result.message.content};
+ };
+ await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
+});

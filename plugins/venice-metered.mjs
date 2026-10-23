@@ -28,6 +28,10 @@ function summaryWithoutReasoning(input){
  if(input.reasoningEffort!=='none'||!Object.hasOwn(input,'cheaperThan')||!Array.isArray(input.tools)||input.tools.length)throw Error('Invalid summary reasoning policy');
  return true;
 }
+function completionBody(input,modelId,maxTokens){
+ return {model:modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:maxTokens,n:1,stream:false,...(summaryWithoutReasoning(input)?{reasoning:{enabled:false}}:{}),
+  venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}};
+}
 export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUsd=5}){
  let readiness=Promise.resolve(),catalogue;
  const holds=new Map();
@@ -71,6 +75,7 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    };
    const scoped=veniceMeteredProvider({model,autoTopUp:false,client:scopedClient});
    return {
+    canFitInput(input){if(closed)throw Error('Provider invocation closed');return scoped.canFitInput(input);},
     async beforeDispatch(quote,available){
      if(closed||inflight||uncertain)throw Error('Provider invocation unavailable');
      if(budget===undefined){if(typeof available!=='bigint'||available<=0n||available>BigInt(Number.MAX_SAFE_INTEGER))throw Error('Invalid invocation credit budget');budget=available;}
@@ -99,6 +104,16 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
     },
    };
   },
+  async canFitInput(input){
+   const modelId=input.modelId??model,catalog=await models();
+   const spec=catalog.data?.find(x=>x.id===modelId)?.model_spec;
+   if(!spec||spec.offline||!spec.capabilities?.supportsFunctionCalling||!integer(spec.availableContextTokens)||!spec.availableContextTokens||!integer(input.maxTokens)||!input.maxTokens)return false;
+   // Conservative byte-sized input allowance: do not estimate four characters
+   // per token. Include the exact outgoing JSON and reserve the requested output.
+   // The provider's actual tokenizer/context enforcement remains authoritative.
+   const bytes=Buffer.byteLength(JSON.stringify(completionBody(input,modelId,input.maxTokens)));
+   return bytes+input.maxTokens<=spec.availableContextTokens;
+  },
   async quote(input,available){
    const modelId=input.modelId??model;
    const catalog=await models();
@@ -124,8 +139,7 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    return quote;
   },
   async execute(input,quote){
-   const result=await measureBokStage('provider.completion',()=>client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,...(summaryWithoutReasoning(input)?{reasoning:{enabled:false}}:{}),
-    venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}}));
+   const result=await measureBokStage('provider.completion',()=>client.json('/api/v1/chat/completions',{method:'POST',body:completionBody(input,quote.modelId,quote.maxTokens)}));
    let stage='missing-result/usage';
    try {
     // Capture billing primitives once; never re-read a changing response getter.

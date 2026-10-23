@@ -272,3 +272,27 @@ test('failed edit cannot be hidden by a passing finish later in the same batch',
  const toolbox={open:async()=>({definitions:[{function:{name:'finish_workspace'}}],call:async name=>{if(name==='edit_file')throw Error('Exact edit missing');checks++;return {passed:true};},accept:async()=>{accepts++;},close:async()=>{}})};
  const r=await createAgent({model,toolbox,instructions:'Help',maxCalls:1}).run({text:'Change app',id:'a',postId:'b'});assert.equal(checks,0);assert.equal(accepts,0);assert.match(r.replyText,/No update was published/);
 });
+
+test('host capacity admits originals above 8KB using the complete request, without summary',async()=>{
+ const f=conversationFixture();let checked;
+ f.options.model.canFitInput=async input=>{checked=structuredClone(input);return true;};
+ const complete=f.options.model.complete;f.options.model.complete=async input=>{assert.deepEqual(input,checked);return complete(input);};
+ await f.run();assert.equal(f.calls.length,1);assert.equal(f.calls[0].modelId,'main');
+ assert.deepEqual(JSON.parse(f.calls[0].messages[1].content.split('\n').slice(1).join('\n')),f.history.messages.slice(0,-1));
+ assert(Buffer.byteLength(JSON.stringify(f.history.messages.slice(0,-1)))>8192);
+ assert(checked.tools.some(t=>t.function.name==='read_thread_messages'));
+});
+test('complete request capacity failure preserves bounded summary and exact latest request',async()=>{
+ const f=conversationFixture({large:false});let checked=0;
+ f.options.model.canFitInput=async input=>{checked++;assert(input.messages.some(m=>m.content==='LATEST_SENTINEL'));return false;};
+ await f.run();assert.equal(checked,1);assert.deepEqual(f.calls.map(c=>c.modelId),['cheap','main']);
+ assert(!f.calls[0].messages.at(-1).content.includes('LATEST_SENTINEL'));
+});
+
+test('capacity candidate includes complete initial repository tools and source before choosing history',async()=>{
+ const f=conversationFixture();const source='EXACT_SOURCE_'+('x'.repeat(12000));let checked;
+ f.options.toolbox.open=async()=>({definitions:['list_files','read_file','check_workspace'].map(name=>({type:'function',function:{name}})),sourceRevision:'a'.repeat(40),
+  call:async(name)=>name==='list_files'?{files:['index.html'],truncated:false}:{text:source},close:async()=>{}});
+ f.options.model.canFitInput=async input=>{checked=structuredClone(input);assert(input.messages.some(m=>m.role==='tool'&&m.content.includes(source)));assert.equal(input.tools.length,4);return true;};
+ await f.run();assert.equal(f.calls.length,1);assert(checked.messages.some(m=>m.content?.startsWith('Prior conversation originals')));
+});

@@ -171,3 +171,17 @@ test('balance admission cannot reuse a hold released during its older balance re
  const b=f.provider.invocation(),admission=b.quote(input,750000n);await started;a.close();release();
  await assert.rejects(admission,/funding/);b.close();
 });
+
+test('capacity uses whole outgoing UTF-8 body plus output, reusing invocation catalogue without credits or inference',async()=>{
+ let catalogues=0,credits=0,inference=0;
+ const limits={...spec,availableContextTokens:10000};
+ const client={json:async route=>{if(route==='/api/v1/models'){catalogues++;return {data:[{id:'kimi-k2-5',model_spec:limits}]};}inference++;throw Error('Unexpected inference');},balance:async()=>{credits++;return {canConsume:true,balanceUsd:10};}};
+ const provider=veniceMeteredProvider({client}).invocation();
+ const request={messages:[{role:'user',content:'x'.repeat(8200)}],tools:[{type:'function',function:{name:'tool',parameters:{type:'object'}}}],maxTokens:100};
+ assert.equal(await provider.canFitInput(request),true);
+ assert.equal(await provider.canFitInput({...request,messages:[{role:'user',content:'🌎'.repeat(2500)}]}),false);
+ assert.equal(await provider.canFitInput({...request,maxTokens:2000}),false);
+ assert.deepEqual([catalogues,credits,inference],[1,0,0]);
+ await provider.quote(request,1000000n);assert.deepEqual([catalogues,credits,inference],[1,1,0]);provider.close();
+ await assert.rejects(async()=>provider.canFitInput(request),/closed/);
+});

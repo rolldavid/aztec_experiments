@@ -338,7 +338,11 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   }
   saved=resumeReceived?saved:resumeSubmitted?{...saved,submittedReservationContinuationAttempted:true}:resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
   let call=0;
-  try{result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
+  try{result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{...(typeof provider.canFitInput==='function'?{canFitInput:async input=>{
+   const bound=store.read().privateBok?.limits?.maxInputBytes??limits?.maxInputBytes??65536;
+   const serialized=JSON.stringify(input);
+   return typeof serialized==='string'&&Buffer.byteLength(serialized)<=bound&&await provider.canFitInput(input);
+  }}:{}),complete:async input=>{
    // The guarded provider rechecks canonical board authority immediately before
    // the durable dispatch boundary, after quoting and the reservation guard.
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
