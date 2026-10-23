@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {HOSTING_TYPES,hostingHeaders,hostingPolicyHash} from './hosting-policy.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
+export const BROWSER_PLAN_MAX_STEPS=256;
 const actions={fill:['selector','value'],click:['selector'],check:['selector','checked'],select:['selector','value'],press:['selector','key'],reload:[],expectText:['selector','text'],expectCount:['selector','count'],expectChecked:['selector','checked'],expectVisible:['selector']};
 const browserPlanMessages=Object.freeze({
  BROWSER_JSON:'Use valid JSON in browser-tests.json.',
@@ -20,7 +21,7 @@ const browserPlanMessages=Object.freeze({
  BROWSER_KEY:'Use a key name of at most 40 letters, digits or plus signs.',
  BROWSER_CHECKED:'Use a boolean checked value (true or false).',
  BROWSER_COUNT:'Use an integer count between 0 and 512.',
- BROWSER_STEP_LIMIT:'Use at most 64 steps across all scenarios.',
+ BROWSER_STEP_LIMIT:`Use at most ${BROWSER_PLAN_MAX_STEPS} steps across all scenarios.`,
  BROWSER_ASSERTION:'Add a visible-state assertion to this scenario.',
  BROWSER_RELOAD:'Include at least one reload action across the scenarios.',
 });
@@ -28,7 +29,7 @@ const browserPlanMessages=Object.freeze({
 // selectors, unknown field names or the JSON parser's source-bearing exception.
 export function browserPlanDiagnostic(value){
  if(!value||!Object.hasOwn(browserPlanMessages,value.code)||typeof value.path!=='string'||value.path.length>120||
-  !/^(?:\$|version|scenarios(?:\[[0-9]{1,2}\])?(?:\.steps(?:\[[0-9]{1,2}\])?)?(?:\.(?:name|path|action|index|selector|value|text|key|checked|count))?)$/.test(value.path))return undefined;
+  !/^(?:\$|version|scenarios(?:\[[0-9]{1,2}\])?(?:\.steps(?:\[[0-9]{1,3}\])?)?(?:\.(?:name|path|action|index|selector|value|text|key|checked|count))?)$/.test(value.path))return undefined;
  return {code:value.code,path:value.path,message:browserPlanMessages[value.code]};
 }
 export function validateBrowserPlan(plan){
@@ -52,7 +53,7 @@ export function validateBrowserPlan(plan){
    if(Object.hasOwn(step,'key')){text(step.key,40,at+'.key');require(/^[A-Za-z0-9+]+$/.test(step.key),'BROWSER_KEY',at+'.key');}
    if(Object.hasOwn(step,'checked'))require(typeof step.checked==='boolean','BROWSER_CHECKED',at+'.checked');
    if(Object.hasOwn(step,'count'))require(Number.isInteger(step.count)&&step.count>=0&&step.count<=512,'BROWSER_COUNT',at+'.count');
-   if(step.action.startsWith('expect'))assertions++;if(step.action==='reload')reloads++;require(++steps<=64,'BROWSER_STEP_LIMIT',at);
+   if(step.action.startsWith('expect'))assertions++;if(step.action==='reload')reloads++;require(++steps<=BROWSER_PLAN_MAX_STEPS,'BROWSER_STEP_LIMIT',at);
   }
   require(assertions>0,'BROWSER_ASSERTION',where+'.steps');
  }

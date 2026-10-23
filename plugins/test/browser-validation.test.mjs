@@ -12,11 +12,15 @@ for(const [name,value] of [
 ])test('browser plan rejects '+name,()=>assert.throws(()=>validateBrowserPlan(value)));
 test('browser plan accepts bounded declarative interactions',()=>assert(validateBrowserPlan(plan([{action:'click',selector:'button'}]))));
 test('browser plan reports the exact excess step across scenarios without relaxing the limit',()=>{
- const atLimit=plan(Array.from({length:62},()=>({action:'click',selector:'button'})));assert.equal(validateBrowserPlan(atLimit),atLimit);
+ const atLimit=plan(Array.from({length:254},()=>({action:'click',selector:'button'})));assert.equal(validateBrowserPlan(atLimit),atLimit);
  const over=structuredClone(atLimit);over.scenarios.push({name:'another',path:'index.html',steps:[{action:'expectVisible',selector:'body'}]});
  assert.throws(()=>validateBrowserPlan(over),error=>{
-  assert.deepEqual(error.browserPlan,{code:'BROWSER_STEP_LIMIT',path:'scenarios[1].steps[0]',message:'Use at most 64 steps across all scenarios.'});return true;
+  assert.deepEqual(error.browserPlan,{code:'BROWSER_STEP_LIMIT',path:'scenarios[1].steps[0]',message:'Use at most 256 steps across all scenarios.'});return true;
  });
+});
+test('browser plan permits adding feature coverage beyond the old 64-step ceiling',()=>{
+ const expanded=plan(Array.from({length:80},()=>({action:'expectVisible',selector:'body'})));assert.equal(validateBrowserPlan(expanded),expanded);
+ const over=plan(Array.from({length:255},()=>({action:'expectVisible',selector:'body'})));assert.throws(()=>validateBrowserPlan(over),error=>error.browserPlan.path==='scenarios[0].steps[256]');
 });
 test('browser plan diagnoses field and action without echoing untrusted values',()=>{
  for(const [step,code,field] of [[{action:'PRIVATE_SOURCE_SENTINEL'},'BROWSER_ACTION','action'],[{action:'check',selector:'#PRIVATE_SOURCE_SENTINEL',checked:'PRIVATE_SOURCE_SENTINEL'},'BROWSER_CHECKED','checked'],[{action:'expectCount',selector:'body',count:-1},'BROWSER_COUNT','count'],[{action:'reload',index:0},'BROWSER_INDEX_ACTION','index']]){

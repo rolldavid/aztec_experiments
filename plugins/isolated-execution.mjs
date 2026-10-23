@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {browserPlanDiagnostic,validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
+import {BROWSER_PLAN_MAX_STEPS,browserPlanDiagnostic,validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
 
 // Existing authenticated public image, never pulled by the execution capability.
 export const STATIC_IMAGE='sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222';
@@ -19,7 +19,7 @@ export const STATIC_SOURCE_REQUIREMENTS=Object.freeze({
  STATIC_PACKAGE_INVALID:'Repair package.json so it is a valid JSON object.',
  STATIC_BUILD_REQUIRED:'Add a nonempty scripts.build command to package.json; it must write the published files to dist/.',
  STATIC_BROWSER_TEST_REQUIRED:'Add browser-tests.json with version:1, declarative scenarios, visible-state assertions and reload coverage. Follow the hosting contract.',
- STATIC_BROWSER_TEST_INVALID:'Repair browser-tests.json: only documented declarative actions, 1–8 scenarios, at most 64 steps, assertions and reload coverage.',
+ STATIC_BROWSER_TEST_INVALID:`Repair browser-tests.json: only documented declarative actions, 1–8 scenarios, at most ${BROWSER_PLAN_MAX_STEPS} steps, assertions and reload coverage.`,
  STATIC_TEST_REQUIRED:'Add an explicit Node test file (for example main.test.cjs) that checks the requested behavior.',
 });
 const sourceRequirement=code=>Object.assign(Error(STATIC_SOURCE_REQUIREMENTS[code]),{code});

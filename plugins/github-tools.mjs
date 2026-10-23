@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {browserPlanDiagnostic,validateBrowserPlan} from './browser-validation.mjs';
+import {BROWSER_PLAN_MAX_STEPS,browserPlanDiagnostic,validateBrowserPlan} from './browser-validation.mjs';
 import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 import {repositoryGit} from './thread-repositories.mjs';
 const trustedCommand=(command,args,options)=>{if(command!=='git')throw Error('Unsupported repository command');return repositoryGit(args,options);};
@@ -10,15 +10,15 @@ const string={type:'string'};
 const pathKey=name=>name.normalize('NFC').toLowerCase();
 function browserPlanSummary(plan){
  const count=Array.isArray(plan?.scenarios)?plan.scenarios.reduce((n,s)=>n+(Array.isArray(s?.steps)?s.steps.length:0),0):null;
- try{validateBrowserPlan(plan);}catch(error){const d=browserPlanDiagnostic(error.browserPlan);if(d)throw Error(d.message+' At '+d.path+'.'+(count===null?'':' Proposed total: '+count+' steps; limit: 64.')+' File unchanged.');throw error;}
+ try{validateBrowserPlan(plan);}catch(error){const d=browserPlanDiagnostic(error.browserPlan);if(d)throw Error(d.message+' At '+d.path+'.'+(count===null?'':' Proposed total: '+count+' steps; limit: '+BROWSER_PLAN_MAX_STEPS+'.')+' File unchanged.');throw error;}
  const steps=count;
- return {steps,remainingSteps:64-steps,scenarios:plan.scenarios.map((s,index)=>({index,name:s.name,steps:s.steps.length}))};
+ return {steps,remainingSteps:BROWSER_PLAN_MAX_STEPS-steps,scenarios:plan.scenarios.map((s,index)=>({index,name:s.name,steps:s.steps.length}))};
 }
 function browserPlanText(text){
  let plan;try{plan=JSON.parse(text);}catch{throw Error('Use valid JSON in browser-tests.json.');}
  return browserPlanSummary(plan);
 }
-const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',minItems:1,maxItems:64,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
+const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',minItems:1,maxItems:BROWSER_PLAN_MAX_STEPS,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
 
 
 /** GitHub implementation of the agent tool API. Writes stay in a fresh branch.
@@ -95,7 +95,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('list_files','List current workspace files, including uncommitted edits',{prefix:string}),
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
-      definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the exact 64-step budget. Empty arrays leave other scenarios unchanged.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}}),
+      definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the remaining step budget. Empty arrays leave other scenarios unchanged.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}}),
       definition('edit_file','Replace one exact occurrence in an existing UTF-8 file. old_text must be nonempty and unique; use enough unchanged context. Prefer this for small changes instead of rewriting whole files.',{path:string,old_text:string,new_text:string}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),

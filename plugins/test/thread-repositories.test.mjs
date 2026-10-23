@@ -291,12 +291,12 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
  await fs.writeFile(path.join(workspace.work,'browser-tests.json'),'PRIVATE_PARSE_SENTINEL');
  missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_INVALID');assert(!JSON.stringify(missing).includes('PRIVATE_PARSE_SENTINEL'));
  assert.deepEqual(missing.requirement.detail,{code:'BROWSER_JSON',path:'$',message:'Use valid JSON in browser-tests.json.'});
- const steps=Array.from({length:63},()=>({action:'click',selector:'button'}));steps.push({action:'reload'},{action:'expectVisible',selector:'body'});
- await assert.rejects(session.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]})}),/64 steps/);
+ const steps=Array.from({length:255},()=>({action:'click',selector:'button'}));steps.push({action:'reload'},{action:'expectVisible',selector:'body'});
+ await assert.rejects(session.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]})}),/256 steps/);
  await fs.writeFile(path.join(workspace.work,'browser-tests.json'),JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]}));
  const excessive=await session.call('check_workspace',{});assert.equal(excessive.passed,false);assert.equal(excessive.phase,'input');
  assert.equal(excessive.requirement.code,'STATIC_BROWSER_TEST_INVALID');
- assert.deepEqual(excessive.requirement.detail,{code:'BROWSER_STEP_LIMIT',path:'scenarios[0].steps[64]',message:'Use at most 64 steps across all scenarios.'});
+ assert.deepEqual(excessive.requirement.detail,{code:'BROWSER_STEP_LIMIT',path:'scenarios[0].steps[256]',message:'Use at most 256 steps across all scenarios.'});
 
 });
 
@@ -382,14 +382,16 @@ test('browser scenario patch keeps unchanged scenarios and validates whole plan 
  const s=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>s.close());
  const scenario=(name,n=2)=>({name,path:'index.html',steps:[{action:'reload'},...Array.from({length:n-1},()=>({action:'expectVisible',selector:'p'}))]});
  const original={version:1,scenarios:[scenario('untouched'),scenario('replace')]};
- assert.equal((await s.call('write_file',{path:'browser-tests.json',content:JSON.stringify(original)})).browserPlan.remainingSteps,60);
+ assert.equal((await s.call('write_file',{path:'browser-tests.json',content:JSON.stringify(original)})).browserPlan.remainingSteps,252);
  const result=await s.call('edit_browser_plan',{remove:[],replace:[{index:1,scenario:scenario('replacement',3)}],append:[scenario('new')]});
- assert.equal(result.browserPlan.steps,7);assert.equal(result.browserPlan.remainingSteps,57);
+ assert.equal(result.browserPlan.steps,7);assert.equal(result.browserPlan.remainingSteps,249);
  const before=(await s.call('read_file',{path:'browser-tests.json'})).text;assert.deepEqual(JSON.parse(before).scenarios[0],original.scenarios[0]);
- for(const args of [{remove:[0,0],replace:[],append:[]},{remove:[0],replace:[{index:0,scenario:scenario('bad')}],append:[]},{remove:[],replace:[],append:[scenario('too many',64)]}])await assert.rejects(s.call('edit_browser_plan',args));
+ for(const args of [{remove:[0,0],replace:[],append:[]},{remove:[0],replace:[{index:0,scenario:scenario('bad')}],append:[]},{remove:[],replace:[],append:[scenario('too many',256)]}])await assert.rejects(s.call('edit_browser_plan',args));
  assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
- await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[scenario('over limit',65)]})}),/64 steps/);
+ await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[scenario('over limit',257)]})}),/256 steps/);
  await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:'{bad JSON'}),/valid JSON/);
  assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+ const expanded=await s.call('edit_browser_plan',{remove:[],replace:[],append:[scenario('new feature coverage',80)]});
+ assert.equal(expanded.browserPlan.steps,87);assert.deepEqual(JSON.parse((await s.call('read_file',{path:'browser-tests.json'})).text).scenarios.slice(0,3),JSON.parse(before).scenarios);
  assert.equal((await s.call('finish_workspace',{})).passed,true);await s.accept();assert.equal(validations,1,'finish and acceptance share exact source validation');
 });
