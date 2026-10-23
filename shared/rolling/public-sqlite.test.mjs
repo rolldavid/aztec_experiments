@@ -24,6 +24,14 @@ const start=store=>store.startGeneration({expectedControl:null,origin:{number:'0
 const commit=(store,control,e,b=block(Number(e.position.blockNumber)))=>store.commitTransaction({expectedControl:control,block:b,txIndex:e.position.txIndexWithinBlock,txHash:e.position.txHash,events:[e]});
 const projection=(store,control,table='plugins',k='7')=>store.readProjection({expectedControl:control,table,k});
 
+test('service-owned storage rejects nonprivate directory and database before normalizing permissions',t=>{
+ const f=fixture(t);f.store.close();fs.chmodSync(f.directory,0o755);
+ assert.throws(()=>createRollingPublicSqliteStore(f.directory,{scope,serviceOwned:true}),{code:'ROLLING_PUBLIC_STORAGE_INVALID'});fs.chmodSync(f.directory,0o700);
+ const file=path.join(f.directory,'rolling-public-v3.sqlite');fs.chmodSync(file,0o644);
+ assert.throws(()=>createRollingPublicSqliteStore(f.directory,{scope,serviceOwned:true}),{code:'ROLLING_PUBLIC_STORAGE_INVALID'});assert.equal(fs.statSync(file).mode&0o777,0o644);
+ fs.chmodSync(file,0o600);const owned=createRollingPublicSqliteStore(f.directory,{scope,serviceOwned:true});owned.close();
+});
+
 test('SQLite original branded events and exact physical cursor atomically commit',async t=>{
  const {store}=fixture(t);let c=start(store);const e=await plugin();const before=store.inspect();
  assert.throws(()=>commit(store,c,structuredClone(e)));assert.deepEqual(store.inspect(),before);

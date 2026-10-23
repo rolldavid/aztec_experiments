@@ -206,7 +206,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   const eventKey=e=>key(e.position.blockNumber)+key(e.position.txIndexWithinBlock)+key(e.position.logIndexWithinTx);
   const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
   let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
-  let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null;
+  let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null,resumedOwned=false;
   let contentRevision=0;
   // A rejected native read invalidates this publication, not durable ownership.
   // Track the actual transport boundary even when the ABI decoder sanitizes it.
@@ -218,7 +218,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   }]));
   const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
     scope,complete:ready,authenticationEpoch:epoch,contentRevision:`${epoch}:${contentRevision}`,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
-    checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':'complete'):'pending'});
+    checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':resumedOwned?'service-owned':'complete'):'pending'});
   function assertOwned(){check(same(storage.inspect().control,control),'PUBLIC_FEED_CONFLICT');}
   function status(){if(ready){try{assertOwned();}catch{ready=false;unavailable=true;}}return state();}
   function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
@@ -312,10 +312,16 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       const base=await anchor(deployment.blockNumber-1);
       if(origin)check(same(origin,base));else origin=base;
       if(!loaded){const inspected=storage.inspect();control=inspected.control;
-        if(control){validateControl(control);previous=copy(control);cache(BigInt(control.checkpoint.number)>=BigInt(base.number));}
-        control=storage.startGeneration({expectedControl:control,origin:base});validateControl(control);loaded=true;
-        if(previous){oldPages={events:stream('readEventPage'),segments:stream('readSegmentPage'),blocks:stream('readBlockPage')};if(previous.segmentCount==='0')finishComparison();}
-        else comparisonDone=true;
+        if(control){validateControl(control);cache(BigInt(control.checkpoint.number)>=BigInt(base.number));}
+        if(control&&storage.canResumeOwned?.({expectedControl:control,deployment})){
+          // Only the explicit private service-store capability can grant this.
+          // Canonical checkpoint/cursor and catch-up checks below still apply.
+          comparisonDone=true;loaded=true;resumedOwned=true;
+        }else{
+          previous=copy(control);control=storage.startGeneration({expectedControl:control,origin:base});validateControl(control);loaded=true;
+          if(previous){oldPages={events:stream('readEventPage'),segments:stream('readSegmentPage'),blocks:stream('readBlockPage')};if(previous.segmentCount==='0')finishComparison();}
+          else comparisonDone=true;
+        }
       }
       assertOwned();
       const recheck=async extra=>{anchors.clear();await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
@@ -339,7 +345,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
             cache(same(semantic(next.value.before),semantic(control)));comparisonDone=true;orphanedCache=true;
           }else finishComparison();
         }
-        await recheck(control.checkpoint);ready=true;return state();
+        await recheck(control.checkpoint);storage.recordOwnedPublication?.({expectedControl:control,deployment});ready=true;return state();
       }
       const number=Number(control.cursor.blockNumber),canonical=await anchor(number);
       // The current block body is immutable under its canonical hash. Reuse it

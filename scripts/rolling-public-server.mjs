@@ -192,7 +192,7 @@ export async function createRollingPublicIndexFromConfig(config){
     }});
     const artifact=loadContractArtifact(JSON.parse(await readFile(captured.artifactPath,'utf8')));
     const bokArtifact=captured.bokArtifactPath===undefined?undefined:loadContractArtifact(JSON.parse(await readFile(captured.bokArtifactPath,'utf8')));
-    const storage=createRollingPublicSqliteStore(captured.cacheDirectory,{scope:captured.scope});
+    const storage=createRollingPublicSqliteStore(captured.cacheDirectory,{scope:captured.scope,serviceOwned:true});
     try{
       const persistent=await createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope:captured.scope,deployment:captured.deployment,homeSubboards,storage});
       return {index:ownRollingPersistentPublicIndex(persistent,storage),port:captured.port};

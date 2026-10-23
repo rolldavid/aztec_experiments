@@ -1,7 +1,6 @@
-// Persistent public cache, NOT canonical authority. No production factory uses
-// this component yet. Its caller must authenticate every physical transaction,
-// recheck the canonical block/context around ingestion, and fully reauthenticate
-// retained history on each process start before publishing any public views.
+// Default stores are untrusted caches and require full canonical authentication.
+// An explicit service-owned store may resume its own validated publication;
+// it is local server state, not an imported cache or independent chain authority.
 import fs from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
@@ -15,6 +14,8 @@ const requireThat=(v,code='ROLLING_PUBLIC_STORAGE_INVALID')=>{if(!v)throw error(
 const conflict=()=>error('ROLLING_PUBLIC_STORAGE_CONFLICT');
 const capacity=()=>error('ROLLING_PUBLIC_STORAGE_CAPACITY');
 const tables=new Set(ROLLING_PROJECTION_TABLES);
+// Bump when decoder/reducer semantics or the durable projection format change.
+const OWNED_RESUME_VERSION=1;
 const hash=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
 const uint=(v,bits=256)=>typeof v==='string'&&/^(0|[1-9][0-9]*)$/.test(v)&&v.length<=78&&BigInt(v)<(1n<<BigInt(bits));
 const key=v=>{requireThat(uint(v));return BigInt(v).toString(16).padStart(64,'0');};
@@ -51,8 +52,9 @@ export const ROLLING_PUBLIC_QUERY_SQL=Object.freeze({
 
 // One physical owning directory and one immutable scope per database. A new
 // generation is an explicit rebuild, never an inferred trusted cache restore.
-export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
+export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=false,...options}={}){
  requireThat(typeof directory==='string'&&path.isAbsolute(directory));
+ requireThat(typeof serviceOwned==='boolean');
  requireThat(Object.keys(options).every(k=>Object.hasOwn(limitsDefault,k)));
  const limits={...limitsDefault,...options};
  requireThat(bounded(limits.maxRowBytes,65536,4*1024*1024)&&bounded(limits.maxTransactionBytes,limits.maxRowBytes,128*1024*1024)&&bounded(limits.maxReadBytes,limits.maxRowBytes,32*1024*1024)&&bounded(limits.cacheKiB,1024,65536));
@@ -60,6 +62,16 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  fs.mkdirSync(directory,{recursive:true,mode:0o700});
  requireThat(fs.realpathSync(directory)===path.resolve(directory)&&fs.lstatSync(directory).isDirectory());
  const filename=path.join(directory,'rolling-public-v3.sqlite');
+ const assertPrivateOwner=()=>{
+  if(!serviceOwned)return;
+  requireThat(typeof process.geteuid==='function');const uid=process.geteuid(),dir=fs.lstatSync(directory);
+  requireThat(dir.isDirectory()&&!dir.isSymbolicLink()&&dir.uid===uid&&(dir.mode&0o777)===0o700);
+  for(const suffix of ['', '-wal', '-shm']){const file=filename+suffix;if(fs.existsSync(file)){const stat=fs.lstatSync(file);
+   requireThat(stat.isFile()&&!stat.isSymbolicLink()&&stat.nlink===1&&stat.uid===uid&&(stat.mode&0o777)===0o600);
+  }}
+ };
+ assertPrivateOwner();
+ if(serviceOwned&&!fs.existsSync(filename)){const fd=fs.openSync(filename,'wx',0o600);fs.closeSync(fd);}
  for(const suffix of ['', '-wal', '-shm']){const file=filename+suffix;if(fs.existsSync(file)){const s=fs.lstatSync(file);requireThat(s.isFile()&&!s.isSymbolicLink()&&s.nlink===1);}}
  const db=new DatabaseSync(filename);let closed=false,active=false;
  // Authentication epoch is RAM-only, distinct from durable generation/revision.
@@ -68,6 +80,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  PRAGMA cache_size=-${limits.cacheKiB}; PRAGMA mmap_size=0; PRAGMA temp_store=FILE;
  PRAGMA busy_timeout=0;
  CREATE TABLE IF NOT EXISTS control(id INTEGER PRIMARY KEY CHECK(id=1),value TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS owned_resume(id INTEGER PRIMARY KEY CHECK(id=1),value TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS projection(g TEXT NOT NULL,kind TEXT NOT NULL,k TEXT NOT NULL,value TEXT NOT NULL,
  ord TEXT,board TEXT,name TEXT,root TEXT,likes TEXT,stamp TEXT,slug TEXT,idnum TEXT,PRIMARY KEY(g,kind,k)) WITHOUT ROWID;
  CREATE INDEX IF NOT EXISTS projection_accounting ON projection(g,kind,idnum,k);
@@ -109,7 +122,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
   try{db.exec(write?'BEGIN IMMEDIATE':'BEGIN');begun=true;
    // Establish the deferred read snapshot before checking its version. Writes
    // hold IMMEDIATE's writer lease. No network/await occurs in this transaction.
-   prepare('SELECT id FROM control WHERE id=1').get();checkDataVersion();
+   prepare('SELECT id FROM control WHERE id=1').get();checkDataVersion();assertPrivateOwner();
    const result=fn();checkDataVersion();db.exec('COMMIT');begun=false;
    // An external WAL commit during a read snapshot must invalidate its result
    // before publication as well; do not silently adopt the newer data_version.
@@ -154,6 +167,23 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
   };return capture(expected);
  };
  function inspect(){return transaction(false,()=>({authenticationEpoch,trusted:false,control:clone(checkControl(readControl(budget(limits.maxReadBytes))))}));}
+ function resumeBinding(c,deployment){
+  plain(deployment,['blockNumber','blockHash','txHash']);requireThat(Number.isSafeInteger(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
+  return {version:OWNED_RESUME_VERSION,schema:3,scope:scopeText,deployment:clone(deployment),generation:c.generation};
+ }
+ function canResumeOwned({expectedControl,deployment}){
+  if(!serviceOwned)return false;const expected=captureExpected(expectedControl);
+  return transaction(false,()=>{const b=budget(limits.maxReadBytes),c=current(expected,b);if(!c)return false;
+   let saved;try{saved=readSized('SELECT value FROM owned_resume WHERE id=1',[],b);}catch(error){if(error instanceof SyntaxError)return false;throw error;}
+   return JSON.stringify(saved)===JSON.stringify(resumeBinding(c,deployment));
+  });
+ }
+ function recordOwnedPublication({expectedControl,deployment}){
+  if(!serviceOwned)return;const expected=captureExpected(expectedControl);
+  return transaction(true,()=>{const c=current(expected,budget(limits.maxTransactionBytes));requireThat(c&&c.cursor.block===null&&c.scalars.version!=='0');
+   const value=encode(resumeBinding(c,deployment));prepare('INSERT INTO owned_resume VALUES(1,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value WHERE value!=excluded.value').run(value);
+  });
+ }
  function startGeneration({expectedControl,origin}){
   const expected=captureExpected(expectedControl);plain(origin,['number','hash']);requireThat(uint(origin.number,53)&&hash(origin.hash));const base=clone(origin);
   return transaction(true,()=>{const old=current(expected,budget(limits.maxTransactionBytes));
@@ -333,7 +363,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
    return {rows,next:more?last:null,bytes:pageBudget.bytes,revision:c.revision,generation:g,trusted:false};
   });
  }
- return Object.freeze({filename,authenticationEpoch,inspect,startGeneration,commitTransaction,completeBlock,rollbackOne,readProjection,readPendingPredecessors,readPublicPage,
+ return Object.freeze({filename,authenticationEpoch,inspect,canResumeOwned,recordOwnedPublication,startGeneration,commitTransaction,completeBlock,rollbackOne,readProjection,readPendingPredecessors,readPublicPage,
   readEventPage:options=>readPage('events',options),readSegmentPage:options=>readPage('segments',options),readBlockPage:options=>readPage('blocks',options),
   close(){requireThat(!active);if(!closed){db.close();closed=true;}}});
 }

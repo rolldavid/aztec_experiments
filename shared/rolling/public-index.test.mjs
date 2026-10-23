@@ -314,13 +314,40 @@ test('notification reader ingests initial history during awaited root work, then
 async function persistentFixture(t){
  const stores=[],f=await fixture(t,stores);f.blocks.set(0,{hash:wrap(hex(1000)),header:{globalVariables:{blockNumber:0,timestamp:0n}},body:{txEffects:[]}});
  const directory=path.join(f.directory,'persistent');
- const store=()=>{const s=createRollingPublicSqliteStore(directory,{scope});stores.push(s);return s;};
+ const store=(options={})=>{const s=createRollingPublicSqliteStore(directory,{scope,...options});stores.push(s);return s;};
  const open=async(storage=store(),extra={})=>({storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,scope,deployment:f.options.deployment,storage,...extra})});
  const drain=async(index,limit=100)=>{let steps=0;while(!index.status().complete){assert.ok(steps++<limit,'finite fixture must progress');await index.step();}return steps;};
  const projection=(s,table,k)=>s.readProjection({expectedControl:s.inspect().control,table,k});
  const mutate=fn=>{const db=new DatabaseSync(path.join(directory,'rolling-public-v3.sqlite'));try{fn(db);}finally{db.close();}};
- return {...f,open,drain,projection,mutate};
+ return {...f,open,openOwned:extra=>open(store({serviceOwned:true}),extra),drain,projection,mutate};
 }
+test('service-owned restart resumes its publication without historical bodies and waits for catch-up',async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await f.drain(a.index);const before=a.storage.inspect().control;a.storage.close();f.calls.length=0;
+ const b=await f.openOwned();assert.equal(b.index.status().complete,false);assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+ assert.equal(await f.drain(b.index),1);assert.deepEqual(f.calls,[]);assert.equal(b.index.status().cacheComparison,'service-owned');assert.equal(b.storage.inspect().control.generation,before.generation);assert.equal(b.index.query('post',{id:'10'}).post.text,'Hello');b.storage.close();
+ f.put(4,[await f.post(20,4,'New post')]);f.setHead(4);const c=await f.openOwned();await c.index.step();assert.equal(c.index.status().complete,false);assert.throws(()=>c.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+ await f.drain(c.index);assert.deepEqual(f.calls.map(([,n])=>n),[4]);assert.equal(c.index.query('post',{id:'20'}).post.text,'New post');
+});
+test('service-owned restart rolls back a fork before publishing without replaying its unchanged prefix',async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await f.drain(a.index);const generation=a.storage.inspect().control.generation;a.storage.close();
+ f.put(3,[await f.post(20,3,'Fork replacement')],100);f.calls.length=0;const b=await f.openOwned();await b.index.step();assert.equal(b.index.status().complete,false);assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+ await f.drain(b.index);assert.equal(b.storage.inspect().control.generation,generation);assert.equal(b.index.query('post',{id:'10'}).post,null);assert.equal(b.index.query('post',{id:'20'}).post.text,'Fork replacement');assert.deepEqual(f.calls.map(([,n])=>n),[3]);
+});
+test('service-owned restart resumes an interrupted new block only after checking its canonical anchor',async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await f.drain(a.index);
+ f.put(4,[await f.post(20,4,'New post')]);f.blocks.get(4).body.txEffects.push({txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)});f.setHead(4);
+ await a.index.step();assert.equal(a.storage.inspect().control.cursor.nextTxIndex,'1');const generation=a.storage.inspect().control.generation;a.storage.close();f.calls.length=0;
+ const b=await f.openOwned();await f.drain(b.index);assert.equal(b.storage.inspect().control.generation,generation);assert.deepEqual(f.calls.map(([,n])=>n),[4]);assert.equal(b.storage.inspect().control.scalars.postCount,'2');
+});
+for(const provenance of ['missing','version','deployment','generation'])test(`service-owned ${provenance} provenance explicitly rebuilds before serving`,async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await f.drain(a.index);const generation=a.storage.inspect().control.generation;a.storage.close();
+ f.mutate(db=>{if(provenance==='missing')db.exec('DELETE FROM owned_resume');else{const row=JSON.parse(db.prepare('SELECT value FROM owned_resume').get().value);if(provenance==='version')row.version++;if(provenance==='deployment')row.deployment.txHash=hex(999);if(provenance==='generation')row.generation='999';db.prepare('UPDATE owned_resume SET value=?').run(JSON.stringify(row));}});
+ f.calls.length=0;const b=await f.openOwned();await b.index.step();assert.equal(b.index.status().complete,false);assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(b.index);
+ assert.notEqual(b.storage.inspect().control.generation,generation);assert.deepEqual(f.calls.map(([,n])=>n),[1,2,3]);
+});
+test('default untrusted reopen ignores owned provenance and still authenticates every retained body',async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await f.drain(a.index);a.storage.close();f.calls.length=0;const b=await f.open();await f.drain(b.index);assert.deepEqual(f.calls.map(([,n])=>n),[1,2,3]);
+});
 test('persistent ingestion completes the last transaction block without refetching or merging durable segments',async t=>{
  const f=await persistentFixture(t),{storage:s,index}=await f.open();assert.throws(()=>index.publication());
  let count=0;while(!index.status().complete){const before=s.inspect().control;await index.step();const after=s.inspect().control;

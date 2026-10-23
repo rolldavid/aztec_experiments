@@ -296,7 +296,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
   const [boardRaw,bokRaw]=loadRollingArtifacts(),boardArtifact=loadContractArtifact(boardRaw),artifact=loadContractArtifact(bokRaw);
   const indexScope={chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,classId:String((await getContractClassFromArtifact(boardArtifact)).id)};
-  const storage=createRollingPublicSqliteStore(path.join(config.stateDirectory,'public-index'),{scope:indexScope});
+  const storage=createRollingPublicSqliteStore(path.join(config.stateDirectory,'public-index'),{scope:indexScope,serviceOwned:true});
   try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage}),storage);}catch(error){storage.close();throw error;}
   // A request owns its own billing journal. Only shared wallet operations and
   // canonical index snapshots serialize; unrelated model calls may overlap.
