@@ -1,0 +1,182 @@
+{
+  "source": "Actual Chrome UI performance panel via CUA",
+  "workerSource": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+  "actualClickUtc": "2026-10-23T23:22:40.885Z",
+  "requestId": "0x0fe5aa9c9831691da91de99ce2e28ebf338e1826a3dfdf8befa4d5c8e7287bb8",
+  "timeOrigin": 1792796775726.025,
+  "entries": [
+    {
+      "name": "rolling.action.sync",
+      "start": 985788.9150000811,
+      "duration": 4715.5199999809265
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 992866.1900000572,
+      "duration": 4532.899999976158
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 985788.7450000048,
+      "duration": 11621.94000005722
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 998434.1700000763,
+      "duration": 4061.610000014305
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 1002495.7950000763,
+      "duration": 310.22500002384186
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 998433.9450000525,
+      "duration": 4476.110000014305
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1002910.0700000525,
+      "duration": 0.1799999475479126
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 1002910.2549999952,
+      "duration": 909.0900000333786
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 1015319.0650000572,
+      "duration": 897.1449999809265
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 1016216.2750000954,
+      "duration": 4776.564999938011
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 1020993.0200001001,
+      "duration": 8165.084999918938
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 1029160.7900000811,
+      "duration": 62.49500000476837
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 1029223.3250000477,
+      "duration": 290.75
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 1003884.1500000954,
+      "duration": 25698.224999904633
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 1015380.430000186,
+      "duration": 14201.959999918938
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 1022046.5350000858,
+      "duration": 7535.850000023842
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 1027937.9250000715,
+      "duration": 1644.460000038147
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 1028297.350000143,
+      "duration": 1285.0449999570847
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 1028551.475000143,
+      "duration": 1030.9099999666214
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 1029582.3850001097,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 1003819.3650000095,
+      "duration": 27293.66000008583
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1031113.0350000858,
+      "duration": 1820.054999947548
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 985278.6800000668,
+      "duration": 93320.99500000477
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 997410.7400000095,
+      "duration": 81182.60000002384
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 1032933.1000000238,
+      "duration": 45666.56500005722
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1077890.2350000143,
+      "duration": 709.7549999952316
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 1078596.7950000763,
+      "duration": 379.82999992370605
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1078963.8400000334,
+      "duration": 12.745000004768372
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1078612.935000062,
+      "duration": 4253.4349999427795
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1093147.7700001001,
+      "duration": 1854.1099998950958
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1151348.390000105,
+      "duration": 848.6549999713898
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1152186.435000062,
+      "duration": 10.585000038146973
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1152248.1900000572,
+      "duration": 4335.475000023842
+    }
+  ],
+  "actualClickToReplyRenderMs": 167038.044921875,
+  "postInteractionToReplyRenderMs": 166918.34000003338,
+  "balance": {
+    "beforeUSDC": "0.690064",
+    "afterUSDC": "0.674707",
+    "updatedWithoutReload": true
+  },
+  "note": "Native aggregate span starts are synthetic completion-anchored durations; nested measurements must not be summed."
+}

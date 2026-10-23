@@ -1,0 +1,69 @@
+{
+  "scope": "read-only audit of ordinary funded browser post and worker atomic finalize; no chain operations",
+  "source": "00c5ba14",
+  "counts": {
+    "privateExecution": 1,
+    "kernelWitnessPass": 1,
+    "publicSimulation": 1,
+    "nodeTransactionValidation": 1,
+    "proof": 1,
+    "feeEstimationSimulation": 0
+  },
+  "copyBenchmark": {
+    "kind": "local synthetic native-type copy microbenchmark; no chain or proof execution",
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "results": [
+      {
+        "variant": "rollup",
+        "bytes": 38609,
+        "iterations": 1000,
+        "minMs": 0.39517165999999976,
+        "medianMs": 0.42347958999999946,
+        "maxMs": 0.4488079100000004,
+        "originalUnchanged": true
+      },
+      {
+        "variant": "public",
+        "bytes": 82774,
+        "iterations": 1000,
+        "minMs": 0.8714120900000012,
+        "medianMs": 0.8938299999999981,
+        "maxMs": 0.9882408300000008,
+        "originalUnchanged": true
+      }
+    ]
+  },
+  "ordinaryBrowserMeasuredMs": {
+    "nativeTotal": 17386.43,
+    "sync": 0,
+    "privateWitness": 3130.16,
+    "kernelWitness": 833.225,
+    "publicValidation": 1182.06,
+    "proofTransport": 11537.755,
+    "nativeUnaccounted": 703.23,
+    "transportSerialization": 708.72,
+    "transportSubmit": 3602.26,
+    "transportWait": 6786.37,
+    "localDecompression": 52.04,
+    "localVerification": 372.76
+  },
+  "workerMeasuredMs": {
+    "total": 6737.437,
+    "sync": 0.001,
+    "witness": 915.966,
+    "proof": 5410.598,
+    "validation": 345.687,
+    "unaccounted": 65.185
+  },
+  "findings": [
+    "Tail validation detaches only native public inputs, not private execution or witness maps.",
+    "Native public-simulation and final transaction construction collect/sort class logs but do not deep-clone the private execution tree.",
+    "Previous log mutation affected in-memory execution/public-input and witness consistency, not canonical blockchain state. PXE staged local writes commit on operation success and discard on failure.",
+    "Both fixed-budget completeFeeOptions calls use supplied prices and cached wallet node info; repeated reconstruction is local, not repeated simulation or network round trip.",
+    "Remote proof serializes each witness once; circuitId hashes freshly assembled bytecode/VK data; encodeJob copies already-compressed witnesses into one wire buffer.",
+    "Current timing does not isolate circuit hashing, witness serialization and final wire packing, so no supported large-gain claim exists for eliminating copies."
+  ],
+  "candidate": "If transport serialization becomes a target, split its existing numeric span into circuit-identity, witness serialization and wire packing before changing allocation/caching; do not cache mutable buffers by identity."
+}

@@ -1,10 +1,11 @@
 # Active performance work — 24 October 2026
 
 Root integrates and owns real browser transactions and evidence. Latest comparable
-run223.087s is verified, including published app and automatic balance refund.
-Fresh-account agent completed reviewed batched file edits; packaging agent owns
-independent simulation/validator review and exact worker publication. Network agent
-completed typed-checkbox assertion correction and provides runtime observation.
+run167.038s is verified, including published app and automatic balance refund.
+Fresh-account agent completed reviewed batched file edits; packaging completed
+independent simulation/validator review and exact392bee96worker publication. Network
+agent completed typed-checkbox correction and verified the canonical benchmark.
+All delegated lanes are idle; no benchmark or service mutation is in progress.
 Only existing hosts and authorized credentials; no state migration or host resize.
 Goal remains active. See docs/BOK_LATENCY.md for measurements and limitations.
 

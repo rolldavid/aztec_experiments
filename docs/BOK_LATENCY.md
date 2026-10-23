@@ -5,6 +5,54 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Latest published result — 2m47s from Post to settled, visible reply
+
+The identical feature request from the same original app source now completes in
+**167.038 seconds**, down from464.264 seconds: **64.0% less elapsed time**. Worker
+completion was167.217 seconds. Revision`5544d5e5` passed174 actual browser checks
+on the first attempt and the separate manual completed/unfinished/reload check.
+The reply appeared automatically. The unused0.234643USDC returned automatically:
+Bok balance0.690064→0.674707, actual charge0.015357USDC.
+
+| Stage | Original seconds | Latest seconds | Change |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|11.622|17% faster|
+| Fee estimation |15.486|4.476|71% faster|
+| Browser proof, including local work and transport |37.196|27.294|27% faster|
+| Model calls |192.671 (14 calls)|27.131 (2 calls)|86% faster|
+| Board reads |3.482|0.314|91% faster|
+| Validation, static publication and GitHub mirror |13.068|7.562|42% faster|
+| Worker proof |6.619|6.509|2% faster|
+| Final canonical checkpoint wait |56.215|66.645|19% slower|
+| Other worker processing |15.960|6.159|61% faster|
+
+These overlapping categories must not be summed into the total. The linked
+partition assigns worker time once. Browser preparation varies: recent comparable
+samples were10.260,5.554,5.367 and11.622 seconds. This latest run's incremental sync
+and private utility reads were slower; no repeated execution appeared inside proof
+generation. Do not select only the fastest sample to claim every stage met20%.
+
+The first model response contained all edits in four tool calls, including two
+batches of HTML changes, one unit-test batch and a browser-plan append. The second
+response finished the workspace. No summary, tool errors, repair loops or repeated
+source discovery occurred. This is a measured result from the published tool
+change, not a prediction from lower call counts.
+
+The application runs two Aztec transactions and no Ethereum transactions for this
+funded request. Final native proving remains about5.25s on the worker's two physical
+cores; full worker proof6.51s. Its validation copy costs under1ms. The final66.65s
+wait remains the deployed public network's72-second pipelined checkpoint schedule,
+not an elapsed application deadline. The requested per-stage improvement and
+~30s checkpoint round-trip goals are **not fully met**; the substantial end-to-end
+improvement and the limits above are separately evidenced.
+
+Live worker source`392bee96`; final deployment changed only the model/tool and
+browser-validation modules. No contract/config/core service change was needed.
+[Browser timings](../execution/evidence/G21/stable6/bok-performance/batched-edits-browser.json),
+[complete partition and publication](../execution/evidence/G21/stable6/bok-performance/batched-edits-profile.json),
+[release receipt](../execution/evidence/G21/stable6/bok-performance/batched-edits-publication.json),
+[simulation audit](../execution/evidence/G21/stable6/bok-performance/simulation-copy-audit.json).
+
 ## Comparable feature run — 3m26s, remaining work explicit
 
 The identical **Clear completed** request, starting from the same original app

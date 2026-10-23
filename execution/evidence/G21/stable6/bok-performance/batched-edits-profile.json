@@ -1,0 +1,135 @@
+{
+  "requestId": "0x0fe5aa9c9831691da91de99ce2e28ebf338e1826a3dfdf8befa4d5c8e7287bb8",
+  "clickAt": "2026-10-23T23:22:40.885Z",
+  "admissionAt": "2026-10-23T23:23:33.781442+00:00",
+  "finishedAt": "2026-10-23T23:25:28.101540+00:00",
+  "clickToAdmissionSeconds": 52.896442,
+  "clickToFinishedSeconds": 167.21654,
+  "workerSeconds": 114.320232,
+  "partitions": {
+    "provider.completion": 27.13101,
+    "tool.finish_workspace": 3.946164,
+    "publication.static": 0.054837,
+    "publication.mirror": 3.560715,
+    "escrow.prove": 6.509331,
+    "escrow.wait": 66.64548,
+    "board.readRequest": 0.313793,
+    "otherWorkerSeconds": 6.158902
+  },
+  "partitionNote": "Exclusive selected worker durations; residual includes edits/guards/admission/send. Nested spans not summed.",
+  "modelCalls": 2,
+  "summaryCalls": 0,
+  "toolMetadata": [
+    {
+      "id": 0,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 2,
+          "oldTextBytes": 187,
+          "newTextBytes": 316
+        },
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 4,
+          "oldTextBytes": 390,
+          "newTextBytes": 698
+        },
+        {
+          "name": "edit_file",
+          "path": "test.js",
+          "editCount": 2,
+          "oldTextBytes": 155,
+          "newTextBytes": 1243
+        },
+        {
+          "name": "edit_browser_plan",
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    }
+  ],
+  "toolErrors": [],
+  "firstPassValidation": true,
+  "boardReads": 6,
+  "proofProfile": {
+    "totalMs": 6508.313,
+    "syncMs": 0.001,
+    "provingMs": 5250.523,
+    "validationMs": 354.776,
+    "unaccountedMs": 61.401,
+    "witnessMs": 841.613,
+    "functionCount": 4,
+    "wallTimeUs": "1792797860051159"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x0af1935ddb38e7a27e971d33aee55a17e68bb3f111a15b7b205a868e47405d92",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1832,
+    "blockHash": "0x1e0221304f7eec9a142ba963fd4cacf2f3403562405c36c370c31ea358c7c123"
+  },
+  "aggregateChargeMicroUSDC": "15357",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "234643",
+  "acceptedRevision": "5544d5e5562e1af84aee74d35e105bae1319d723",
+  "publicationReceipt": {
+    "producedRevision": "5544d5e5562e1af84aee74d35e105bae1319d723",
+    "readRevision": "b0cbe207f8000460b8aba7d1b855e54cb2dfed5b",
+    "validation": {
+      "passed": true,
+      "testsPassed": true,
+      "buildPassed": true,
+      "testCount": 1,
+      "sourceDigest": "4a53742593e0e8ecfd6719fa707775a73c9b3c19b888d3a3928d39ddefd662f3",
+      "artifactSha256": "edf77ed4fdfaa33379a48f1ff2133970af14f37bf7790757df256f2f8b9889ec"
+    },
+    "browser": {
+      "passed": true,
+      "checks": 174,
+      "browserVersion": "153.0.8010.12",
+      "planSha256": "12a1ca1d685d1f2300f6dfdb4999d3556fa6325628136c73c01f33214ed5d93f",
+      "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+      "artifactSha256": "edf77ed4fdfaa33379a48f1ff2133970af14f37bf7790757df256f2f8b9889ec"
+    },
+    "publication": {
+      "status": "complete"
+    }
+  },
+  "appUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/5544d5e5562e1af84aee74d35e105bae1319d723/files/index.html",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "sourceEvidence": [
+    "/tmp/bok-batched-observe04.json",
+    "/tmp/bok-batched-receipt01-result.json",
+    "/tmp/bok-batched-native-result.json",
+    "/tmp/bok-batched-proof-observe-result.json"
+  ],
+  "clickToVisibleReplySeconds": 167.038044921875,
+  "observedUIBalance": {
+    "before": "0.690064",
+    "after": "0.674707",
+    "automaticRefresh": true
+  },
+  "manualAppAcceptance": {
+    "revision": "5544d5e5562e1af84aee74d35e105bae1319d723",
+    "disabledWhenNoneChecked": true,
+    "removesCheckedOnly": true,
+    "uncheckedSurvivesReload": true,
+    "screenshot": "/private/tmp/rolling-batched-app-verified.png"
+  }
+}
