@@ -769,3 +769,7 @@ Root owns shared account/runtime integration. funding_investigation implements p
 23 October availability restoration: root owns service diagnosis, source integration and publication. network_upgrade_check independently verifies actual testnet version and necessary upgrade scope read-only. No automatic contract redeployment; preserve working services and existing state.
 
 23 October stable6 migration: stable_sdk_patch_review reviews exact upstream patch compatibility; stable_release_packaging traces existing publish tools. Root owns source/package updates and deployment. Owner explicitly discards all old application state; clean network deployment without archival/migration/recovery work.
+
+23 October stable6 live verification: root owns the one persistent MetaMask test context, contract activation and integration. stable_release_packaging checks actual service identities and public delivery read-only; network_upgrade_check identifies native settlement waiters and reviews final handover. No competing transactions or service mutations.
+
+Stable6 review complete: network_upgrade_check verified fresh handover identities and corrected block terminology; stable_release_packaging independently verified19 public hashes,9 running services, fresh post and moderator success. Root completed actual MetaMask signup/post/Bok ETH funding. Review evidence is under evidence/G21/stable6.

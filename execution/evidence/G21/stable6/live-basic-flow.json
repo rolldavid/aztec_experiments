@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-10-23T08:41:33.607Z",
+  "origin": "https://d30njln0kead8n.cloudfront.net",
+  "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+  "paymentHash": "0x711d34556b2d6c4c5de862f63d8388b3c6c8da5342b4eec193e20d9f21fc73bd",
+  "freshSignupConfirmed": true,
+  "postVisible": true,
+  "composerClosed": true,
+  "proofRequests": 2,
+  "httpErrors": [],
+  "pageErrors": [],
+  "payment": {
+    "hash": "0x711d34556b2d6c4c5de862f63d8388b3c6c8da5342b4eec193e20d9f21fc73bd",
+    "chainId": "11155111",
+    "from": "0x8d83fed116a7542934CA2E968055555317F91CA4",
+    "to": "0x849d66e8027d7C9Ba2bB2105900319A2Ebd53d4d",
+    "valueWei": "1012684957913832",
+    "blockNumber": 11975502,
+    "canonical": true,
+    "status": 1
+  },
+  "post": {
+    "text": "Test post after the Aztec testnet upgrade.",
+    "id": "13251227973728304873256846325488783601521986421551098189278335468168905698784",
+    "position": {
+      "blockNumber": "1004",
+      "blockHash": "0x1bc9640b6e842fcab656f58dc0f39a9b4bd0c10967af447c8f7a85f751129b26",
+      "txHash": "0x0d372e0473511f907802787e3245dfe880344e7ad4a8c9e0c42ebb2a34825065",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    }
+  },
+  "board": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+  "rollup": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+  "rollupVersion": "679261766"
+}

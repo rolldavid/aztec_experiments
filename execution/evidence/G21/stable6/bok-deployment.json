@@ -1,0 +1,39 @@
+{
+  "network": {
+    "chainId": "11155111",
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+    "rollupVersion": "679261766"
+  },
+  "bokOperations": {
+    "deploy-escrow": {
+      "hash": "0x2b6fb9c5eaeaa087cc86db48b11644038d18a575d485685241bac647300498a6",
+      "phase": "submission-unknown"
+    },
+    "deploy-portal": {
+      "hash": "0x686929fc720c97c455f0c5e4841e31680e0be6b81c3a23b811958d55e063898e",
+      "phase": "submission-unknown"
+    },
+    "bind": {
+      "hash": "0x035f1a00a563504b0a43c75cdd6d69d733075a17eba6203c8e199c0d8498b68f",
+      "phase": "submission-unknown"
+    },
+    "activate": {
+      "hash": "0xfde0b28ea71f60fb08b8749232c8b84f2232e9419b5c242226052742354a76ff",
+      "phase": "submission-unknown"
+    },
+    "register": {
+      "hash": "0x1907421b4e62199439e9f14607af156f07903809b7476173cd00351b241448d5",
+      "phase": "submission-unknown"
+    }
+  },
+  "portalActive": true,
+  "registrationCanonical": true,
+  "activation": {
+    "transactionHash": "0xfde0b28ea71f60fb08b8749232c8b84f2232e9419b5c242226052742354a76ff",
+    "blockNumber": 11975530
+  },
+  "registration": {
+    "transactionHash": "0x1907421b4e62199439e9f14607af156f07903809b7476173cd00351b241448d5",
+    "blockNumber": 1007
+  }
+}

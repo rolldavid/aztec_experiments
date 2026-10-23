@@ -1,0 +1,270 @@
+{
+  "observations": [
+    {
+      "host": "core",
+      "observedAt": "2026-10-23T08:35:38.461Z",
+      "ssmCommand": "2ee5f28c-f745-4d51-9a4c-c4d72f92bf0a",
+      "rows": [
+        {
+          "unit": "board-prover-proxy.service",
+          "MainPID": "566049",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/",
+          "actualExecutable": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc/caddy/caddy"
+        },
+        {
+          "unit": "board-prover.service",
+          "MainPID": "565979",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "/opt/board-prover/current",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+          "actualExecutable": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc/node/bin/node"
+        },
+        {
+          "unit": "rolling-application-proxy.service",
+          "MainPID": "568553",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/",
+          "actualExecutable": "/opt/board-prover/releases/rolling-71d5e83614a05c42/caddy/caddy"
+        },
+        {
+          "unit": "rolling-application.service",
+          "MainPID": "567540",
+          "Result": "success",
+          "NRestarts": "31",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "/opt/rolling-app/releases/ui-ee6195e5eb21",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/opt/rolling-upgrade-6.0.0",
+          "actualExecutable": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc/node/bin/node"
+        },
+        {
+          "unit": "rolling-egress.service",
+          "MainPID": "0",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "exited"
+        },
+        {
+          "unit": "rolling-moderator.service",
+          "MainPID": "567551",
+          "Result": "success",
+          "NRestarts": "31",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "/opt/rolling-upgrade-6.0.0",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/opt/rolling-upgrade-6.0.0",
+          "actualExecutable": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc/node/bin/node"
+        },
+        {
+          "unit": "rolling-monitor.service",
+          "MainPID": "0",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "inactive",
+          "SubState": "dead"
+        },
+        {
+          "unit": "rolling-node.service",
+          "MainPID": "561964",
+          "Result": "success",
+          "NRestarts": "69",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/",
+          "actualExecutable": "/usr/bin/python3.12"
+        },
+        {
+          "unit": "rolling-query.service",
+          "MainPID": "565186",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+          "actualExecutable": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc/node/bin/node"
+        },
+        {
+          "config": "public",
+          "identity": {
+            "chainId": "11155111",
+            "rollupVersion": "679261766",
+            "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+            "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+            "classId": "0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e",
+            "bok": {
+              "address": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432",
+              "classId": "0x14dfcc3846ae5f244eca1359846276be464fc8c787a75612d1ff29d113c9e021",
+              "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+              "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+              "salt": "0x14cb46bb4a8f828697189242caf02bda7d7a3afc2db817fe7ebb0ce9421b3aae",
+              "deployment": {
+                "txHash": "0x2b6fb9c5eaeaa087cc86db48b11644038d18a575d485685241bac647300498a6",
+                "blockNumber": 951,
+                "blockHash": "0x0b8d1919d700d815abb0aabb78a87f47f610968438e722fba33a68908025362d"
+              }
+            }
+          }
+        },
+        {
+          "config": "wallet",
+          "identity": {
+            "contractAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+            "portalAddress": "0xc8f9d5dfd6acedb32b65bec19ef4c97f27dd77d3"
+          }
+        },
+        {
+          "uiCurrent": "/opt/rolling-ui/releases/ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+          "uiExists": true
+        },
+        {
+          "currentPid": "567540",
+          "log": "{\"rollingChatUrl\":\"[URL] reader with private account actions\"}"
+        }
+      ]
+    },
+    {
+      "host": "bok",
+      "observedAt": "2026-10-23T08:35:39.817Z",
+      "ssmCommand": "fc595620-004b-4508-a8de-3a6b7658ad55",
+      "rows": [
+        {
+          "unit": "rolling-bok-artifact-proxy.service",
+          "MainPID": "215908",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/",
+          "actualExecutable": "/opt/board-prover/releases/rolling-05d526891911bd90/caddy/caddy"
+        },
+        {
+          "unit": "rolling-bok-testnet.service",
+          "MainPID": "215907",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "/opt/rolling-upgrade-6.0.0",
+          "ActiveState": "active",
+          "SubState": "running",
+          "actualCwd": "/opt/rolling-upgrade-6.0.0",
+          "actualExecutable": "/opt/board-prover/releases/rolling-05d526891911bd90/node/bin/node"
+        },
+        {
+          "unit": "rolling-egress.service",
+          "MainPID": "0",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "active",
+          "SubState": "exited"
+        },
+        {
+          "unit": "rolling-monitor.service",
+          "MainPID": "0",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "inactive",
+          "SubState": "dead"
+        },
+        {
+          "unit": "rolling-node.service",
+          "MainPID": "0",
+          "Result": "success",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "WorkingDirectory": "",
+          "ActiveState": "inactive",
+          "SubState": "dead"
+        },
+        {
+          "runtime": {
+            "scope": {
+              "chainId": "11155111",
+              "rollupVersion": "679261766",
+              "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+              "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+              "receiver": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432"
+            },
+            "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+            "stateDirectory": "/var/lib/rolling-bok-testnet/stable6-122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+            "funding": {
+              "protocol": "private-bok-usdc/v1",
+              "portalAddress": "0x7a851d33bbb8858d6575b79b0bf04663a305aeb0",
+              "tokenAddress": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238"
+            }
+          }
+        },
+        {
+          "endpoint": "/health",
+          "response": {
+            "status": "ready",
+            "active": 0,
+            "lastFailure": null,
+            "lastSuccess": null
+          }
+        },
+        {
+          "endpoint": "/v1/descriptor",
+          "response": {
+            "protocol": "billboard-plugin/v2",
+            "applicationProfile": "rolling",
+            "scope": {
+              "chainId": "11155111",
+              "rollupVersion": "679261766",
+              "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+              "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+              "receiver": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432"
+            },
+            "description": "Bok development assistant",
+            "funding": {
+              "protocol": "private-bok-usdc/v1",
+              "portalAddress": "0x7a851d33bbb8858d6575b79b0bf04663a305aeb0",
+              "tokenAddress": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238"
+            }
+          }
+        },
+        {
+          "sourceFilesVerified": 634,
+          "mismatches": [],
+          "staged": true,
+          "activationSubmitted": true
+        },
+        {
+          "currentPid": "215907",
+          "log": "Plugin service listening on { address: '127.0.0.1', family: 'IPv4', port: 8807 }"
+        }
+      ]
+    }
+  ]
+}

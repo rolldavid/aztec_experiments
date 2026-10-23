@@ -1,0 +1,76 @@
+{
+  "observedAt": "2026-10-23T08:52:13.314493+00:00",
+  "core": {
+    "status": "Success",
+    "results": [
+      {
+        "unit": "rolling-moderator.service",
+        "MainPID": "567551",
+        "NRestarts": "31",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "currentPidRecentErrors": [],
+        "lastModeratorHealth": {
+          "type": "billboard-moderation-health-v1",
+          "stateCounts": {
+            "queued": 0,
+            "leased": 0,
+            "evaluated-ok": 1,
+            "submit-intent": 0,
+            "submitted": 0,
+            "reconciling": 0,
+            "retryable-error": 0,
+            "confirmed-flag": 0,
+            "expired": 0,
+            "manual-review": 0
+          },
+          "severity": "ok",
+          "checkpointHeight": 1012,
+          "lastSuccessfulIngestAgeMs": 3,
+          "counts": {
+            "retryableErrors": 0,
+            "unresolvedSigning": 0,
+            "manualSigningFences": 0,
+            "awaitingFinality": 0,
+            "expiredObligations": 0,
+            "manualAttention": 0,
+            "unsignedPending": 0
+          },
+          "alerts": []
+        }
+      }
+    ],
+    "error": ""
+  },
+  "bok": {
+    "status": "Success",
+    "results": [
+      {
+        "unit": "rolling-bok-testnet.service",
+        "MainPID": "215907",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "currentPidRecentErrors": [
+          "Plugin action failed: Rolling hosted request requires reconciliation"
+        ],
+        "lastModeratorHealth": null
+      },
+      {
+        "bokHealth": {
+          "status": "ready",
+          "active": 0,
+          "lastFailure": null,
+          "lastSuccess": null
+        }
+      }
+    ],
+    "error": ""
+  }
+}

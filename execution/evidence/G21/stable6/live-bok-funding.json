@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-23T08:53:14.393Z",
+  "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+  "realMetaMask": true,
+  "asset": "ETH",
+  "walletApprovals": 1,
+  "payments": 1,
+  "privateClaims": 1,
+  "manualClaimContinuation": false,
+  "balanceBeforeMicroUsdc": "0",
+  "balanceAfterMicroUsdc": "1000000",
+  "payment": {
+    "hash": "0x8508191e24c754b55cd395c5be9987693026b6fbff56ce6dad796e657281c013",
+    "chainId": "11155111",
+    "to": "0x78E74B6174fCB0aFb9f24f1dC37f828F0BCbba5d",
+    "valueWei": "24099184746805",
+    "status": 1,
+    "blockNumber": 11975565,
+    "canonical": true
+  },
+  "claim": {
+    "hash": "0x1bd62a186c196b5c37356294de1565a75ad7f2c1539a9c6c1e400233c3391986",
+    "status": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 1012,
+    "blockHash": "0x2ef65bc628227c6dd6feeba66eb8a713c64973263bab70a2f6ec3063df7e681e",
+    "canonical": true
+  },
+  "totalProofRequests": 3,
+  "httpErrors": [],
+  "pageErrors": []
+}

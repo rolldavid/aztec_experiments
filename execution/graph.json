@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "23 October: stable6 node synchronized on canonical rollup0x1f435a7f2da358caf887a470faeee7d5d5f4efba/version679261766. SDK/contracts/CRS rebuilt; image Node24.22.1 guard and new RPC logger interface fixed. Linux BB6.0.0 hash/version verified;138 query/trusted-node tests and33 toolchain tests pass. Clean runtime packaging and fresh deployment in progress; app NOT yet restored/published. Owner discards old application state, no migration/recovery/archive.",
+      "checkpoint": "23 October stable6 restoration complete for current owner request: source ee6195e5 published on fresh board0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc, version679261766. Complete Linux runtime8fed2c764e5b62fc qualified;9services active,19public hashes verified. Fresh MetaMask signup711d3455 and post0d372e04 passed; moderator evaluated post successfully. Bok activation fde0b28e and registration1907421b confirmed; one-approval ETH payment8508191e and automatic real-proof claim1bd62a18 increased private credit0\u21921USDC. Three actual browser proofs, no failed jobs. Final handover/evidence in evidence/G21/stable6; source and records prepared for default master push. No old state migrated, recovered or archived. No fresh Bok model/code-generation request tested; broader production gates remain separate. Await owner feedback rather than restarting historical campaigns.",
       "execution_lane": "operational readiness",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9842,30 +9842,27 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "id": "G12-restore-service-20261020",
-    "status": "checkpointed",
-    "owner": "lead-20261011",
-    "branch": "codex/rolling-chat-draft3",
-    "at": "2026-10-20T06:33:08.819859+00:00",
-    "request": "bring the app back online",
+    "id": "G21-stable6-restoration-20261023",
+    "status": "verified",
+    "owner": "root",
+    "branch": "codex/rolling-chat-account-ux",
+    "at": "2026-10-23T08:55:12.283999+00:00",
+    "request": "Restore the live app on the upgraded testnet; discard old application state and publish.",
     "scope": [
-      "existing core app/query/prover",
-      "separate Bok plugin",
-      "existing public routes",
-      "preserved account/journal restoration",
-      "Persistentoperation replacingdemoexpiry; optimizecostwhilemaintainingavailability"
+      "Stable Aztec6.0.0 on canonical Sepolia rollup version679261766",
+      "Fresh application contracts, actors and state; no migration, recovery or archive work",
+      "Existing core and Bok hosts and public routes",
+      "Persistent services within existing monthly budget"
     ],
-    "source": "f4eb6515e4f55330e07e10ec348b3bd3532199cb",
-    "verification": "Native service health and actual existing reader/reply/page state; no replay of historical payments/model calls",
-    "budget": "USD1500/month ongoinghosting explicitlyauthorized20October; monthlyforecast1462.93768inclbuffers",
+    "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+    "verification": "Fresh real MetaMask signup, first post and one-approval ETH Bok purchase with automatic private claim;3real browser proofs completed,0failed;19public file hashes verified;9services running; moderator evaluated post. No fresh Bok model/code-generation job run.",
+    "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
+      "execution/evidence/G21/stable6/",
       "execution/infrastructure-ledger.json",
-      "execution/sessions/",
-      "execution/evidence/G12/",
-      "existing deployment packets"
+      "START_HERE.md"
     ],
-    "controlSource": "0205d08b52d23b0167cc91b11463ee80b0fc403d",
     "currentHandover": "START_HERE.md",
-    "nextAction": "On explicit resume, inspect moderator ingestion health; process/boot verified, ingestion unverified. No scheduled agent work. Preserve live services."
+    "nextAction": "Current restoration request is complete. Keep services running; await owner feedback. Do not restart historical campaigns or scheduled agents."
   }
 }

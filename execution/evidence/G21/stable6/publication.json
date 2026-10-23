@@ -1,0 +1,250 @@
+{
+  "observedAt": "2026-10-23T08:45:55.833693+00:00",
+  "origin": "https://d30njln0kead8n.cloudfront.net",
+  "commit": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+  "activation": {
+    "commit": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
+    "appPid": 567540,
+    "runningSource": "/opt/rolling-upgrade-6.0.0",
+    "nextSource": "/opt/rolling-app/releases/ui-ee6195e5eb21",
+    "ui": "/opt/rolling-ui/releases/ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11"
+  },
+  "stagedHashesMatch": true,
+  "currentUiMatchesReceipt": true,
+  "runtimeEqualsStaged": true,
+  "assets": [
+    {
+      "url": "/avatar-upload.mjs",
+      "status": 200,
+      "bytes": 10792,
+      "sha256": "23438da4363c6e73baa88edc4f3a0df4b0f2694b33383d31d2e1cf44adac9197",
+      "expectedSha256": "23438da4363c6e73baa88edc4f3a0df4b0f2694b33383d31d2e1cf44adac9197",
+      "matches": true
+    },
+    {
+      "url": "/",
+      "status": 200,
+      "bytes": 471,
+      "sha256": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+      "expectedSha256": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+      "matches": true
+    },
+    {
+      "url": "/model.mjs",
+      "status": 200,
+      "bytes": 3025,
+      "sha256": "6f7eaa923f833d7a23afa61311399aadc30e6fecdaa5cb6586ae8552516e10c8",
+      "expectedSha256": "6f7eaa923f833d7a23afa61311399aadc30e6fecdaa5cb6586ae8552516e10c8",
+      "matches": true
+    },
+    {
+      "url": "/navigation.mjs",
+      "status": 200,
+      "bytes": 2360,
+      "sha256": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649",
+      "expectedSha256": "94be8944c651c6dbfc17ae426e9940b80a4846433cb94c34a64208c68b9de649",
+      "matches": true
+    },
+    {
+      "url": "/profile-view.mjs",
+      "status": 200,
+      "bytes": 9971,
+      "sha256": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+      "expectedSha256": "9d65b484f9bf80e1e0de66066245c4c389302da75704b427d767cbd62776875f",
+      "matches": true
+    },
+    {
+      "url": "/reader-client.mjs",
+      "status": 200,
+      "bytes": 2632,
+      "sha256": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+      "expectedSha256": "7f1d35ebe9e51f84c7cfdda78c942316913cde2ee3acb70c63a00ed08bac6871",
+      "matches": true
+    },
+    {
+      "url": "/reader.mjs",
+      "status": 200,
+      "bytes": 30712,
+      "sha256": "16a02c028f83b54888b8cf01706b59f33c0614fd407145a5a19826592996a433",
+      "expectedSha256": "16a02c028f83b54888b8cf01706b59f33c0614fd407145a5a19826592996a433",
+      "matches": true
+    },
+    {
+      "url": "/style.css",
+      "status": 200,
+      "bytes": 19554,
+      "sha256": "0ad83e2014b829abed593fc87ab5d05f15416b18abcdae2785bd01756971c8ed",
+      "expectedSha256": "0ad83e2014b829abed593fc87ab5d05f15416b18abcdae2785bd01756971c8ed",
+      "matches": true
+    },
+    {
+      "url": "/wallet-cache-worker.mjs",
+      "status": 200,
+      "bytes": 2647,
+      "sha256": "e20cb34f627af8176901ae6f3f520256edfc7711829e392c5d947794dfe913b2",
+      "expectedSha256": "e20cb34f627af8176901ae6f3f520256edfc7711829e392c5d947794dfe913b2",
+      "matches": true
+    },
+    {
+      "url": "/wallet-panel.mjs",
+      "status": 200,
+      "bytes": 135897,
+      "sha256": "a6a301063a7c008c6956ab6ea03df8161b08df33306e97bb9a3e66fe701605ad",
+      "expectedSha256": "a6a301063a7c008c6956ab6ea03df8161b08df33306e97bb9a3e66fe701605ad",
+      "matches": true
+    },
+    {
+      "url": "/wallet/runtime.json",
+      "status": 200,
+      "bytes": 4230,
+      "sha256": "26a487e7c1b5fc16fa43fd91a274ec0ee3a43f4d6001231717e53f00ed394ae7",
+      "expectedSha256": "26a487e7c1b5fc16fa43fd91a274ec0ee3a43f4d6001231717e53f00ed394ae7",
+      "matches": true
+    },
+    {
+      "url": "/wallet/ethers.js?sha256=532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b",
+      "status": 200,
+      "bytes": 526551,
+      "sha256": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b",
+      "expectedSha256": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b",
+      "matches": true
+    },
+    {
+      "url": "/wallet/aztec_bundle.js?sha256=d3a2f0785c3333ec75cd20784ee076d3d1276c5239059115ab28bacc337027e7",
+      "status": 200,
+      "bytes": 16531466,
+      "sha256": "d3a2f0785c3333ec75cd20784ee076d3d1276c5239059115ab28bacc337027e7",
+      "expectedSha256": "d3a2f0785c3333ec75cd20784ee076d3d1276c5239059115ab28bacc337027e7",
+      "matches": true
+    },
+    {
+      "url": "/wallet/crs-client.js?sha256=636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503",
+      "status": 200,
+      "bytes": 8944,
+      "sha256": "636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503",
+      "expectedSha256": "636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503",
+      "matches": true
+    },
+    {
+      "url": "/wallet/wallet-providers.js?sha256=2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+      "status": 200,
+      "bytes": 1648,
+      "sha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+      "expectedSha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+      "matches": true
+    },
+    {
+      "url": "/wallet/claim-secret-store.js?sha256=34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e",
+      "status": 200,
+      "bytes": 7525,
+      "sha256": "34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e",
+      "expectedSha256": "34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e",
+      "matches": true
+    },
+    {
+      "url": "/wallet/ethereum-account-session.js?sha256=5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b",
+      "status": 200,
+      "bytes": 9979,
+      "sha256": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b",
+      "expectedSha256": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b",
+      "matches": true
+    },
+    {
+      "url": "/wallet/account.js?sha256=75e5ad1eb51cac5cd8886da210549384ec529ee941eb633ea780649cb42124cc",
+      "status": 200,
+      "bytes": 16173,
+      "sha256": "75e5ad1eb51cac5cd8886da210549384ec529ee941eb633ea780649cb42124cc",
+      "expectedSha256": "75e5ad1eb51cac5cd8886da210549384ec529ee941eb633ea780649cb42124cc",
+      "matches": true
+    },
+    {
+      "url": "/wallet/engine.js?sha256=b11ef0b6c27efbc6b8e02e33938405e9c1eb67ae7faf0f0570507f9c3b11fe8a",
+      "status": 200,
+      "bytes": 132752,
+      "sha256": "b11ef0b6c27efbc6b8e02e33938405e9c1eb67ae7faf0f0570507f9c3b11fe8a",
+      "expectedSha256": "b11ef0b6c27efbc6b8e02e33938405e9c1eb67ae7faf0f0570507f9c3b11fe8a",
+      "matches": true
+    }
+  ],
+  "allAssetsMatch": true,
+  "feed": {
+    "httpStatus": 200,
+    "board": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+    "expectedBoardMatches": true,
+    "rollupVersion": "679261766",
+    "checkpoint": {
+      "number": 1007,
+      "hash": "0x21f6ef73b92932d9894d9c706cc59b9b6177eb33770f7b69f71b119e2506551a"
+    },
+    "complete": true,
+    "postCount": 1,
+    "expectedPostFound": true,
+    "postPosition": {
+      "blockNumber": "1004",
+      "blockHash": "0x1bc9640b6e842fcab656f58dc0f39a9b4bd0c10967af447c8f7a85f751129b26",
+      "txHash": "0x0d372e0473511f907802787e3245dfe880344e7ad4a8c9e0c42ebb2a34825065",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    }
+  },
+  "health": {
+    "/api/status": {
+      "httpStatus": 200,
+      "body": {
+        "schemaVersion": 1,
+        "state": "ready",
+        "scope": {
+          "chainId": "11155111",
+          "rollupVersion": "679261766",
+          "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+          "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+          "classId": "0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e",
+          "bok": {
+            "address": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432",
+            "classId": "0x14dfcc3846ae5f244eca1359846276be464fc8c787a75612d1ff29d113c9e021",
+            "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+            "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+            "salt": "0x14cb46bb4a8f828697189242caf02bda7d7a3afc2db817fe7ebb0ce9421b3aae",
+            "deployment": {
+              "txHash": "0x2b6fb9c5eaeaa087cc86db48b11644038d18a575d485685241bac647300498a6",
+              "blockNumber": 951,
+              "blockHash": "0x0b8d1919d700d815abb0aabb78a87f47f610968438e722fba33a68908025362d"
+            }
+          }
+        },
+        "complete": true,
+        "authenticationEpoch": "abf39af7-d6c9-4045-a230-947bf2d5ce39",
+        "revision": "abf39af7-d6c9-4045-a230-947bf2d5ce39:1:75",
+        "checkpoint": {
+          "number": 1008,
+          "hash": "0x280ebb89f2e88bfa7b268da1edd991102b26c19c02d08ab7d72c6a7d5735e82c"
+        },
+        "cursor": {
+          "blockNumber": "1009",
+          "nextTxIndex": "0",
+          "block": null
+        },
+        "cacheComparison": "complete"
+      }
+    },
+    "/prover/healthz": {
+      "httpStatus": 200,
+      "body": {
+        "ready": true,
+        "proofs": "real",
+        "queue": {
+          "jobs": 0,
+          "bytes": 0,
+          "running": false,
+          "submitted": 2,
+          "completed": 2,
+          "failed": 0
+        },
+        "query": {
+          "enabled": true,
+          "ready": true
+        }
+      }
+    }
+  }
+}
