@@ -85,11 +85,16 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   const author=address(owner),payer=address(privateFeeAddress),chainId=uint(expectedChainId,64),version=uint(expectedVersion,32);
   check(!author.equals(payer),'PRIVATE_FEE_OWNER_IS_PAYER');
   const fixed=normalizePrivateFeeGasSettings(gasSettings);
-  const [walletChain,nodeInfo]=await Promise.all([wallet.getChainInfo(),node.getNodeInfo()]);
+  const artifact=artifactOf(privateFeeArtifact);
+  // Network identity, prices and canonical artifact derivation are independent.
+  // Drain every read before releasing the caller's account lease on failure.
+  const observations=await Promise.allSettled([
+    ()=>wallet.getChainInfo(),()=>node.getNodeInfo(),()=>node.getCurrentMinFees(),()=>derivePrivateFeeInstance(artifact),
+  ].map(read=>Promise.resolve().then(read)));
+  const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+  const [walletChain,nodeInfo,minimum,canonical]=observations.map(value=>value.value);
   check(uint(walletChain.chainId,64)===chainId&&uint(walletChain.version,32)===version&&uint(nodeInfo.l1ChainId,64)===chainId&&uint(nodeInfo.rollupVersion,32)===version,'PRIVATE_FEE_CHAIN_MISMATCH');
-  const minimum=await node.getCurrentMinFees();
   check(['feePerDaGas','feePerL2Gas'].every(key=>fixed.gasSettings.maxFeesPerGas[key]>=uint(minimum[key],128)),'PRIVATE_FEE_CAP_TOO_LOW');
-  const artifact=artifactOf(privateFeeArtifact),canonical=await derivePrivateFeeInstance(artifact);
   check(equal(canonical.address,payer),'PRIVATE_FEE_NONCANONICAL_ADDRESS');
   await requirePublishedPrivateFee(node,canonical);
   let paymentMethod,availableCredit,smallClaim;

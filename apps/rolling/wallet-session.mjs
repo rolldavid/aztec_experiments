@@ -335,7 +335,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const verified=await verifyRollingBokCapability({sdk,node,config:selected.bok,artifact:bokArtifact,deployment,contextGuard:guardRoute});
     await guardRoute();await pxe.registerContractClass(bokArtifact);
     await guardRoute();await pxe.registerContract(verified.instance);
-    await guardRoute();await pxe.sync();await guardRoute();
+    // The owning action has already selected its PXE anchor. Registering a
+    // contract does not change it; native utility/proof execution syncs notes.
+    await guardRoute();
     deployment.bok=verified;bok=verified;return bok;
    };
    begin('account-derive');
@@ -425,7 +427,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
    }
-   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,resolveBok:ensureBok,contextGuard:guard,privateStore,funding,onProgress,readBokAccountingPage:createUniformBokAccountingReader(),
+   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,resolveBok:ensureBok,contextGuard:guard,privateStore,funding,onProgress,measure:measureRollingStage,readBokAccountingPage:createUniformBokAccountingReader(),
     accountSession:{operationScope:()=>operationScope,owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
      ...(typeof routing.createPreproofRecovery==='function'?{preproofRecovery:routing.createPreproofRecovery(wallet,node,journal)}:{})}});
    // The reader owns synchronization, but the session owns this same account

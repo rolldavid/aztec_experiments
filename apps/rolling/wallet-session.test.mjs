@@ -731,7 +731,7 @@ test('RC22 Bok refund completes on canonical mined receipt and still rejects reo
 test('RC22 expiry selection passes through existing session synchronization and refuses absent owned accounting before send',async()=>{
  const f=await aggregateSessionFixture(),session=await createRollingWalletSession(f.input);const before=f.state.syncs;
  await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
- assert.equal(f.state.syncs,before+2);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ assert.equal(f.state.syncs,before+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  await session.close();await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);
 });
 

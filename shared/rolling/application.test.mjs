@@ -51,6 +51,7 @@ function fixture(){
     if(name==='preference_head'&&state.preferenceHeadError)throw state.preferenceHeadError;
     if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
     if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
+    if(name==='get_screen_hints'&&state.beforeHintsRead)await state.beforeHintsRead();
     if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
     const replies={balance_of:state.bokCredit??1000n,get_plugin:{adapter:AztecAddress.fromBigIntUnsafe(state.bokAdapter??5n),enabled:state.bokEnabled!==false},request:state.bokRequest,preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n,56n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
@@ -63,7 +64,7 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
-  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
+  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
@@ -1831,12 +1832,40 @@ test('immediate Bok authorizes and publishes in one exact batch, estimate and se
  const [authorize,post]=f.state.sent.payload.interactions;assert.equal(authorize.name,'authorize_request');assert.equal(post.name,'post_with_bok');assert.equal(authorize.args[0],post.args[6]);assert.equal(post.args[5],f.options.deployment.bok.pluginId);assert.equal(authorize.args[2],bokAction().budget);
  assert.equal((await app.reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });
-test('immediate Bok batch rechecks balance and enforces total fee before sending',async()=>{
- for(const change of ['credit','fee']){
+test('immediate Bok batch relies on strict contract simulation and enforces total fee before sending',async()=>{
+ for(const change of ['credit','parent','plugin','fee']){
   const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+  // Labelled contract-simulation rejection: the actual contract assertions are
+  // authorize_request.subtract and RollingBoard._publish, not utility preflights.
+  const estimate=f.options.sdk.estimatePrivateFeeTransaction;
+  f.options.sdk.estimatePrivateFeeTransaction=async input=>{
+   const result=await estimate(input);
+   if(f.state.simulationFailure)throw Error('Contract simulation: '+f.state.simulationFailure);
+   return result;
+  };
   const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});
-  if(change==='credit')f.state.bokCredit=0n;else f.state.fee=101n;
-  await assert.rejects(app.submitPrepared(prepared.intentId),{code:change==='credit'?'ROLLING_BOK_CREDIT_INSUFFICIENT':'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+  if(change==='fee')f.state.fee=101n;else f.state.simulationFailure=change;
+  await assert.rejects(app.submitPrepared(prepared.intentId),change==='fee'?{code:'ROLLING_FEE_CHANGED'}:/Contract simulation/);
+  assert.equal(f.state.estimates,1);assert.equal(f.state.sends,0);
+ }
+});
+test('warm atomic Bok reply uses one screening utility, anchored policy storage, one strict estimate and one send',async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.name='batch';this.interactions=interactions;}};
+ const app=f.restart();await app.readBokStatus();f.state.privateReads.length=0;
+ const prepared=await app.prepare({...bokAction(),parent:'10',root:'1'},{immediate:true});
+ assert.equal(prepared.bok.availableCredit,null);assert.equal(f.state.estimates,0);
+ await app.submitPrepared(prepared.intentId);
+ assert.deepEqual(f.state.privateReads.map(value=>value.name),['get_screen_hints']);assert.deepEqual(f.state.policyReads,[{reference:{hash:hex(42)},address:hex(1)}]);
+ assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);assert.equal(f.state.sent.opts.beforeSubmit,undefined);
+});
+test('cold atomic Bok binds immutable adapter once, and refuses a wrong deployment before simulation',async()=>{
+ for(const wrong of [false,true]){
+  const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+  if(wrong)f.state.bokAdapter=8n;const app=f.restart();
+  if(wrong){await assert.rejects(app.prepare(bokAction(),{immediate:true}),{code:'ROLLING_BOK_UNAVAILABLE'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);}
+  else{const prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);}
+  assert.equal(f.state.privateReads.filter(row=>row.name==='get_plugin').length,1);
+  assert.equal(f.state.privateReads.filter(row=>['balance_of','get_post'].includes(row.name)).length,0);
  }
 });
 
@@ -1879,4 +1908,17 @@ test('immediate actions retain name/revision admission and profile/fee submissio
   [{type:'avatar',name:'5',expectedVersion:'0',width:0,height:0,data:''},f=>{f.state.profileVersion=1;}],
   [{type:'like',post:'42'},f=>{f.state.fee=101n;}],
  ]){const f=fixture(),prepared=await f.app.prepare(action,{immediate:true});change(f);await assert.rejects(f.app.submitPrepared(prepared.intentId),undefined,action.type);assert.equal(f.state.sends,0);}
+});
+
+test('posting policy storage overlaps screening and rejects a changed canonical anchor before saving',async()=>{
+ for(const reorg of [false,true]){
+  const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let reads=0;
+  const arrive=async()=>{if(++reads===2)entered.resolve();await gate.promise;};
+  f.state.beforePolicyRead=arrive;f.state.beforeHintsRead=arrive;
+  if(reorg)f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(43)});
+  const pending=f.app.prepare({type:'post',deposit:'9',subboard:'0',name:'0',content:'Parallel preparation'},{immediate:true});
+  await entered.promise;assert.equal(reads,2);assert.equal(f.values.size,0);gate.resolve();
+  if(reorg){await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);}
+  else{assert.equal((await pending).status,'prepared');assert.equal(f.state.estimates,0);}
+ }
 });

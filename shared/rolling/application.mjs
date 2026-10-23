@@ -150,7 +150,7 @@ const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove
  * receipt remains in this workflow until the captured session refund verifier
  * confirms the separate original-depositor Ethereum journal outcome.
  */
-export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,resolveBok,funding,onProgress=()=>{},contextGuard}){
+export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,resolveBok,funding,onProgress=()=>{},contextGuard,measure=(_stage,operation)=>operation()}){
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
@@ -171,11 +171,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
   let bok=deployment?.bok&&{address:deployment.bok.address.toString(),operator:deployment.bok.operator.toString(),pluginId:field(deployment.bok.pluginId,true)};
-  async function ensureBok(){
+  let bokBindingVerified=false;
+  async function ensureBok({bind=false}={}){
     await localGuard();
     if(!bok&&typeof resolveBok==='function'){
       const verified=await resolveBok();
       if(verified){deployment.bok=verified;bok={address:verified.address.toString(),operator:verified.operator.toString(),pluginId:field(verified.pluginId,true)};}
+    }
+    if(bind&&bok&&!bokBindingVerified){
+      // configure_plugin makes a plugin ID's adapter immutable. Establish this
+      // deployment binding once; enabled state belongs to transaction simulation.
+      const plugin=await utility(await contract(),'get_plugin',[bok.pluginId]);
+      check(field(plugin?.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
+      await localGuard();bokBindingVerified=true;
     }
     await localGuard();return bok;
   }
@@ -301,7 +309,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(['post','atomic'].includes(record.bok.phase)?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
-  async function checkBokRecord(record){const scopes=[record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope];if(scopes.some(Boolean)||record?.withdrawal?.kind==='bok')await ensureBok();for(const savedScope of scopes)if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
+  async function checkBokRecord(record){const scopes=[record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope];if(scopes.some(Boolean)||record?.withdrawal?.kind==='bok')await ensureBok({bind:record.bok?.phase==='atomic'});for(const savedScope of scopes)if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value&&saved.value.id===id,'ROLLING_INTENT_NOT_FOUND');await checkBokRecord(saved.value);return saved;}
   function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
@@ -466,8 +474,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(record.action.type==='claim-private-fee')check(record.fundingFee,'ROLLING_FUNDING_MISMATCH');
       if(record.bokReleaseSource)await checkBokRelease(record.bokReleaseSource,record.action.type);
       await checkModeration(record);
-      if(record.bok)await checkBokThread(record.action,await contract());
-      if(['authorize','atomic'].includes(record.bok?.phase)){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
+      if(record.bok&&record.bok.phase!=='atomic')await checkBokThread(record.action,await contract());
+      if(record.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(record.bok?.phase==='post')await waitingBok(record);
   }
   async function checkActionRecoveryContext(record){
@@ -535,7 +543,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       name:BigInt(draft.name_id),reference:BigInt(draft.reference),nonce:BigInt(nonce),content});
     return field((await sdk.poseidon2HashWithSeparator(preimage.map(n=>new sdk.Fr(n)),INVOCATION_DOMAIN)).toString(),true);
   }
-  async function argumentsFor(action,board,nonce){
+  async function postingPolicy(board,subboard){
+    if(subboard===zero){
+      // main_policy is a PUBLIC ABI method: simulate() executes a whole wallet
+      // transaction. Posting only needs this one anchored storage value.
+      const slot=deployment.board.artifact.storageLayout?.main_version?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
+      const anchor=await balanceAnchor();
+      const value=chainValue(await session.node.getPublicStorageAt({hash:anchor.blockHash},deployment.board.address,new sdk.Fr(BigInt(slot))));
+      check(value<=0xffffffffn,'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
+      return {mainVersion:Number(value),localVersion:0};
+    }
+    const policy=await utility(board,'effective_policy',[subboard]);
+    check(Array.isArray(policy)&&policy.length===5,'ROLLING_POLICY_UNAVAILABLE');
+    check(policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
+    return {mainVersion:Number(BigInt(policy[0])),localVersion:Number(BigInt(policy[2]))};
+  }
+  async function argumentsFor(action,board,nonce,{atomicBok=false}={}){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
       case 'cancel-deposit':return cancellationArguments(action);
@@ -564,16 +587,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       case 'withdraw':return [field(action.deposit,true)];
       case 'screen':return screeningArguments(board,field(action.deposit,true));
       default:{
-        await checkBokThread(action,board);
+        // Atomic authorization + publication is validated once by the actual
+        // private/public contract simulation, including parent/root/removal.
+        if(!atomicBok)await checkBokThread(action,board);
+        else check((field(action.parent??'0')===zero)===(field(action.root??'0')===zero),'ROLLING_INVALID_ACTION');
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
-        const policy=subboard===zero?await utility(board,'main_policy',[]):await utility(board,'effective_policy',[subboard]);
-        check(Array.isArray(policy)&&policy.length===(subboard===zero?2:5),'ROLLING_POLICY_UNAVAILABLE');
-        check(subboard===zero||policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
+        let policy,screening;
+        if(subboard===zero){
+          const observations=await Promise.allSettled([postingPolicy(board,subboard),screeningArguments(board,field(action.deposit,true))]);
+          const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+          [policy,screening]=observations.map(value=>value.value);
+        }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true));}
         const [message,length]=text(action.content,32,kind!==3);
         const draft={subboard,parent:field(action.parent??'0',action.type==='reply'),root_reference:field(action.root??'0',action.type==='reply'),kind,
           name_id:field(action.name??'0'),reference:field(action.reference??'0',kind!==1),message,length,
-          expected_main_policy_version:Number(BigInt(policy[0])),expected_local_policy_version:subboard===zero?0:Number(BigInt(policy[2]))};
-        const [deposit,...hints]=await screeningArguments(board,field(action.deposit,true));
+          expected_main_policy_version:policy.mainVersion,expected_local_policy_version:policy.localVersion};
+        const [deposit,...hints]=screening;
         return [deposit,nonce,draft,...hints];
       }
     }
@@ -626,7 +655,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
     const plugin=await utility(await contract(),'get_plugin',[bok.pluginId]);
     check(plugin?.enabled===true&&field(plugin.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
-    await guard();return bokContract();
+    await guard();bokBindingVerified=true;return bokContract();
   }
   async function bokCredit(){
     const current=await bokContext(),credit=BigInt(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));
@@ -827,9 +856,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
-      if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');}
+      if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok({bind:immediate&&action.type==='bok'});check(bok,'ROLLING_BOK_UNAVAILABLE');}
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
-      const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
+      const args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
@@ -847,10 +876,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // public accounting snapshot or browser clock, decides deadline eligibility.
       if(action.type==='expire-bok-request')record.bokRequestScope=clone(bok);
       if(action.type==='bok'){
-        const budget=uint128(action.budget);check(budget>0n);const available=await bokCredit();check(available>=budget,'ROLLING_BOK_CREDIT_INSUFFICIENT');
+        const budget=uint128(action.budget);check(budget>0n);
+        const available=immediate?null:await bokCredit();if(available!==null)check(available>=budget,'ROLLING_BOK_CREDIT_INSUFFICIENT');
         const draft=args[2],requestId=field(sdk.Fr.random().toString(),true);
         const target=await bokInvocationTarget(draft,nonce,action.content);
-        record.bok={scope:clone(bok),phase:'authorize',requestId,target,budget:String(budget),availableCredit:String(available),postArgs:args};
+        record.bok={scope:clone(bok),phase:'authorize',requestId,target,budget:String(budget),availableCredit:available===null?null:String(available),postArgs:args};
         record.args=[requestId,target,String(budget)];
         if(immediate){record.bok.phase='atomic';record.method='post_with_bok';record.args=[...args,bok.pluginId,requestId];}
       }
@@ -993,7 +1023,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
       await checkActionSubmission(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
-      const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(saved.value.action,saved.value),from:session.owner,guard});
+      const preparedPayment=await measure('action.fee-prepare',()=>payment(saved.value.action,saved.value));
+      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       let attempt=null,active;
@@ -1010,7 +1041,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await (await slot()).write(saved,{...saved.value,status:attempt?'pre-proof':'submitting',...(attempt?{preproof:attempt}:{})});
       active=await savedIntent(id);await guard();progress('submitting');
       const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,
-        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
+        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok&&saved.value.bok.phase!=='atomic'?{beforeSubmit:async()=>{
           await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
         }}:{}),...(replacing?{beforeSubmit:async hash=>{

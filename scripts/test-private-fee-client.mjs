@@ -144,3 +144,12 @@ test('small top-up cannot turn a balance lookup failure into bootstrap fallback'
  input.wallet.executeUtility=async()=>{throw Error('PRIVATE_INPUT_MARKER');};
  await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_PREPARATION_FAILED'});
 });
+
+test('independent fee metadata reads start together and drain before a failure releases the caller',async()=>{
+ const {input,state}=fixture(),gate=Promise.withResolvers(),started=Promise.withResolvers();let reads=0,finished=false;
+ for(const name of ['getNodeInfo','getCurrentMinFees']){const original=input.node[name];input.node[name]=async()=>{if(++reads===2)started.resolve();await gate.promise;return original();};}
+ input.wallet.getChainInfo=async()=>{throw Error('controlled metadata failure');};
+ const pending=preparePrivateFeePayment(input).finally(()=>{finished=true;});
+ await started.promise;assert.equal(finished,false);assert.equal(state.registered,0);assert.equal(state.reads,0);
+ gate.resolve();await assert.rejects(pending,{code:'PRIVATE_FEE_PREPARATION_FAILED'});assert.equal(finished,true);assert.equal(state.registered,0);
+});
