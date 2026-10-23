@@ -2,16 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
+import os from 'node:os';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {Gas,GasSettings} from '@aztec-labs/stdlib/gas';
 import {PrivateKernelTailCircuitPublicInputs,PartialPrivateTailPublicInputsForPublic} from '@aztec-labs/stdlib/kernel';
 import {PrivateSimulationResult,TxProvingResult} from '@aztec-labs/stdlib/tx';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
-import {CircuitKind} from '@aztec-foundation/bb.js';
 const pxeSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8');
 const kernelSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js',import.meta.url),'utf8');
 const pxe=validatedPxeProve(pxeSource),kernel=validatedKernelProve(kernelSource);
+// Resolve the enum through the transformed module's real import declaration.
+// Supplying it independently to the extracted-method harness would hide a
+// missing production binding after an otherwise successful expensive proof.
+const kindImport=pxe.match(/^import \{CircuitKind\} from '([^']+)';$/m);
+assert.ok(kindImport,'Transformed PXE must import the enum used by its timing aggregation');
+const {CircuitKind}=await import('data:text/javascript,'+encodeURIComponent(`import {CircuitKind} from ${JSON.stringify(import.meta.resolve(kindImport[1]))};export {CircuitKind};`));
 function method(source,start,end){const a=source.indexOf(start);assert.ok(a>=0);const b=source.indexOf(end,a);assert.ok(b>a);return source.slice(a,b);}
 const Timer=class{ms(){return 0;}};
 function inputs(){const value=PrivateKernelTailCircuitPublicInputs.empty();value.forRollup=undefined;value.forPublic=PartialPrivateTailPublicInputsForPublic.empty();value.forPublic.nonRevertibleAccumulatedData.nullifiers[0]=new Fr(1);value.feePayer=AztecAddress.fromFieldUnsafe(new Fr(2));return value;}
@@ -78,3 +86,15 @@ test('native opt-in preserves the existing proof-only API',async()=>{
  const h=pxeHarness();await h.instance.proveTx(h.request,{scopes:[]});assert.deepEqual(h.calls,['queue','private','kernel','proof','tags','commit']);
 });
 test('exact native source pins reject changed dependencies',()=>{assert.throws(()=>validatedPxeProve(pxeSource+'\n'),/source mismatch/);assert.throws(()=>validatedKernelProve(kernelSource+'\n'),/source mismatch/);});
+test('complete transformed PXE loads with its real module bindings',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'pxe-timing-import-'));
+ const original=await fs.realpath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url));
+ try{
+  await fs.mkdir(path.join(directory,'dest'));
+  for(const name of await fs.readdir(original))if(!['dest','node_modules'].includes(name))await fs.symlink(path.join(original,name),path.join(directory,name));
+  await fs.symlink(await fs.realpath(new URL('../node_modules',import.meta.url)),path.join(directory,'node_modules'));
+  for(const name of await fs.readdir(path.join(original,'dest')))if(name!=='pxe.js')await fs.symlink(path.join(original,'dest',name),path.join(directory,'dest',name));
+  const target=path.join(directory,'dest','pxe.js');await fs.writeFile(target,pxe);
+  const loaded=await import(pathToFileURL(target));assert.equal(typeof loaded.PXE,'function');
+ }finally{await fs.rm(directory,{recursive:true,force:true});}
+});

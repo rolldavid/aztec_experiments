@@ -7,6 +7,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
+ source="import {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
