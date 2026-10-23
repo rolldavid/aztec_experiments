@@ -12,6 +12,14 @@ const revision=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
  */
 export const repositoryGit=(args,options={})=>exec('/usr/bin/git',['-c','core.hooksPath=/dev/null','-c','core.fsync=all','-c','credential.helper=',...args],{
  maxBuffer:4*1024*1024,...options,env:{PATH:'/usr/bin:/bin',HOME:'/var/empty',GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_TERMINAL_PROMPT:'0',GIT_AUTHOR_NAME:'Bok',GIT_AUTHOR_EMAIL:'bok@invalid',GIT_COMMITTER_NAME:'Bok',GIT_COMMITTER_EMAIL:'bok@invalid',LC_ALL:'C'}});
+/** One request keeps its admitted repository lease through agent execution.
+ * The preflight and toolbox consume the same exact session, including a failed
+ * open promise. Closing is safe even when admission fails before agent startup. */
+export function admittedRepositorySession(repositories,input){
+ const identity=Object.freeze({...input});let opening,closed=false;
+ const open=async candidate=>{assert(!closed,'Admitted repository closed');assert.deepEqual(candidate,identity);return opening??=(repositories.open(identity));};
+ return Object.freeze({admit:()=>open(identity),open,async close(){if(closed)return;closed=true;if(opening){let session;try{session=await opening;}catch{return;}await session.close();}}});
+}
 /** One manager under the existing hosted lease. Its queues serialize a thread,
  * while different threads have independent repositories and invocation drafts.
  * This stores source revisions only; the paid-call journal remains authoritative
@@ -126,7 +134,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    if(state.operations[invocationId])throw Error('Invocation already has an accepted revision');
    assert(new Set([...Object.keys(state.operations),...Object.keys(state.candidates??{})]).size<maxRevisions,'Thread revision limit reached');
    const readRevision=state.acceptedRevision;draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let accepted=null,acceptStarted=false;
-   let checked=null,snapshot=null;
+   let checked=null,failedCheck=null,snapshot=null;
    const retain=async(force=false)=>{
     assert(!closed);await lease.assertHeld();
     const parent=(await git(['rev-parse','HEAD'],{cwd:work})).stdout.trim();assert(revision(parent));if(readRevision)assert.equal(parent,readRevision);
@@ -152,7 +160,17 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     const {tree,parent,produced,unchanged}=await retain(forceCheck);
     if(checked?.tree===tree&&checked.parent===parent&&(!forceCheck||checked.validation))return checked;
     checked=null;
-    const validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;
+    if(failedCheck?.tree===tree&&failedCheck.parent===parent)throw failedCheck.error;
+    failedCheck=null;
+    let validation;
+    try{validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;}
+    catch(error){
+     // Deterministic source/build/browser failures remain failures for this
+     // exact tree and this session's fixed executor/policy. Infrastructure
+     // errors are not memoized; an edit or a new session must validate again.
+     if(error.code==='STATIC_FAILED'&&error.result?.passed===false&&error.result.revision===produced)failedCheck={tree,parent,error};
+     throw error;
+    }
     if((!unchanged||forceCheck)&&validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
     checked={tree,parent,produced,validation,unchanged};return checked;
    };

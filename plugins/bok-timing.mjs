@@ -9,7 +9,7 @@ const methods={
  board:['readRequest'],conversation:['load','assertCurrent'],
 };
 const stages=new Set([
- 'request.total',
+ 'request.total','repository.admit',
  ...Object.entries(methods).flatMap(([prefix,names])=>names.map(name=>prefix+'.'+name)),
  'agent.history','agent.open','agent.context','agent.summary','agent.model','agent.accept','agent.close',
  'tool.list_files','tool.read_file','tool.write_file','tool.read_pr','tool.create_pr','tool.check_workspace','tool.read_thread_messages','tool.other',

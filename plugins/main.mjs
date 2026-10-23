@@ -28,13 +28,21 @@ import {rollingConversation} from './conversation.mjs';
 import {bokRunner} from './bok.mjs';
 import {veniceClient} from './venice.mjs';
 import {githubApi,githubToolbox} from './github-tools.mjs';
-import {threadRepositories} from './thread-repositories.mjs';
+import {threadRepositories,admittedRepositorySession} from './thread-repositories.mjs';
 import {HOSTING_GUIDANCE} from './hosting-policy.mjs';
 import {createIsolatedExecution} from './isolated-execution.mjs';
 import {createStaticPublication} from './static-publication.mjs';
 import {createArtifactApi,ARTIFACT_API_GUIDANCE} from './artifact-api.mjs';
 import {createGitHubAppBroker} from './github-app-broker.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
+
+// Operator configuration only: keep repository identity stable when upgrading
+// a plugin contract. Payment/account scope continues using the current receiver.
+export function hostedRepositoryNamespace(config,scope){
+ const value=config.repositoryNamespace===undefined?JSON.stringify({scope,pluginId:config.pluginId}):config.repositoryNamespace;
+ assert(typeof value==='string'&&value.length>0&&Buffer.byteLength(value)<=4096&&!/[\u0000-\u001f\u007f]/.test(value),'Invalid repository namespace');
+ return value;
+}
 
 /** Composition root: only this module knows which implementations are selected. */
 export async function runHostedService({config,env=process.env,onError=error=>console.error('Plugin action failed:',error.message)}) {
@@ -265,7 +273,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   import('../shared/rolling/public-sqlite.mjs'),import('../scripts/rolling-public-server.mjs')]);
  const descriptor=validateDescriptor(config.descriptor,config.descriptor.scope);assert.equal(descriptor.applicationProfile,'rolling');
  assert.equal(config.applicationProfile,'rolling');assert.equal(typeof config.development,'boolean');
- const scope=descriptor.scope;
+ const scope=descriptor.scope,repositoryNamespace=hostedRepositoryNamespace(config,descriptor.scope);
  // Validate public network/endpoint data before reading actor keys or provider setup.
  rollingOperatorConfig({applicationProfile:'rolling',development:config.development,nodeUrl:config.nodeUrl,ethereumUrl:config.ethereumUrl,
   chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,operatorAddress:config.operatorAddress});
@@ -311,7 +319,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply});
   const board={close:()=>rawBoard.close(),pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
   const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
-  const conversation={load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>indexed(()=>history.assertCurrent())};})};
+  const conversation=measureBokObjectStages({load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>measureBokStage('conversation.assertCurrent',()=>indexed(()=>history.assertCurrent()))};})},'conversation');
   const summaryModelId=env.VENICE_SUMMARY_MODEL||config.summaryModelId;
   assert(typeof summaryModelId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(summaryModelId),'Cheaper summary model required');
   assert(env.VENICE_WALLET_PRIVATE_KEY,'Provider key required');
@@ -335,9 +343,9 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   assert(!config.connectedRepositories?.length||mirror,'Connected repositories require dedicated GitHub App');
   artifactsServer=http.createServer((req,res)=>{void publication.handle(req,res);});
   await new Promise((resolve,reject)=>{artifactsServer.once('error',reject);artifactsServer.listen(config.staticPublication.port??8788,config.staticPublication.host??'127.0.0.1',resolve);});
-  const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,ensureThread:mirror?input=>publicationOperation(()=>mirror.ensureThread(input)):undefined,connections:mirror?{connectionFor:mirror.connectionFor,readConnected:threadId=>publicationOperation(()=>mirror.readConnected(threadId))}:undefined,
+  const repositories=threadRepositories({directory:workspaceRoot,namespace:repositoryNamespace,lease,startEmpty:true,ensureThread:mirror?input=>publicationOperation(()=>mirror.ensureThread(input)):undefined,connections:mirror?{connectionFor:mirror.connectionFor,readConnected:threadId=>publicationOperation(()=>mirror.readConnected(threadId))}:undefined,
    validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publishAcceptedRevision({publication,mirror,receipt}))});
-  const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
+  await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   recoverPending=hostedRecoveryScanner({directory:config.stateDirectory,scope,pluginId:config.pluginId,board,lease});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,recoverPending,host:config.host??'127.0.0.1',port:config.port??8787,
@@ -349,8 +357,11 @@ export async function runRollingHostedService({config,env=process.env,onError=()
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'})));
     const escrow=measureBokObjectStages(serializeHostedEscrow(rawEscrow,walletOperation),'escrow');
     const limits=store.read().privateBok?.limits??{maxCalls:16,maxTokens:4096,maxInputBytes:262144,...config.limits};
-    return runPrivateBokRequest({request,board:measureBokObjectStages(board,'board'),escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
+    const admitted=admittedRepositorySession(repositories,{threadId:request.threadId,invocationId:request.requestId,repository});
+    const toolbox=githubToolbox({repository,api,repositories:{open:admitted.open}});
+    try{return await runPrivateBokRequest({request,board:measureBokObjectStages(board,'board'),escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?()=>measureBokStage('repository.admit',()=>admitted.admit()):undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:limits.maxCalls??16,maxTokens:limits.maxTokens??4096,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use check_workspace to run isolated Node tests, builds and browser scenarios and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. '+HOSTING_GUIDANCE+' Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
+    }finally{await admitted.close();}
    }))});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,
    setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};

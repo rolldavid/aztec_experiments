@@ -42,3 +42,11 @@ test('real-proof conversation uses checkpointed projection while finalized tip l
  const history=await rollingConversation({...h,development:false}).load({postId:f(3)});await history.assertCurrent();
  assert.equal(history.messages.length,3);assert(tags.includes('checkpointed'));h.state.reorg=true;await assert.rejects(history.assertCurrent());
 });
+
+test('same-anchor conversation uses one canonical data read per guard and one load validation',async()=>{
+ const h=fixture(),counts={};for(const [name,fn]of Object.entries(h.node))h.node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return fn(...args);};
+ const history=await h.load();assert.deepEqual(counts,{getNodeInfo:1,getBlock:1,getBlockData:1});
+ for(const name of Object.keys(counts))delete counts[name];await history.assertCurrent();
+ assert.deepEqual(counts,{getBlock:1,getBlockData:1});
+ h.state.reorg=true;await assert.rejects(history.assertCurrent(),'fresh canonical anchor still detects reorg');
+});

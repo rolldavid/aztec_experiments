@@ -5,7 +5,7 @@ import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedT
 import {bokReceiptClaims} from '../private-bok-metering.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
-import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
+import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable,hostedRepositoryNamespace} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -285,6 +285,26 @@ for(const development of [true,false])test('actual SDK board projection gates ca
   assert.deepEqual(counts,{getNodeInfo:1,getBlock:2,getContract:1,getPublicStorageAt:4});
   assert.equal(peakReads,5,'class and four independent storage reads run together');
   Object.assign(node,originalNode);
+  // Real index metadata enables exact immutable storage reuse. Scope and both
+  // canonical observations still occur; a new projection invalidates storage.
+  const basicStatus=index.status,basicSync=index.sync;let revision='cache1',syncs=0;
+  index.status=()=>({state:'ready',complete:true,revision,checkpoint:{number:5,hash:f(99)}});
+  index.sync=async()=>{syncs++;};
+  await port.readRequest(f(1));for(const key of Object.keys(counts))delete counts[key];
+  for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return fn(...args);};
+  assert.equal((await port.readRequest(f(1))).usable,true);
+  assert.equal(syncs,0,'unchanged canonical checkpoint skips full index synchronization');
+  assert.deepEqual(counts,{getBlock:3,getNodeInfo:1},'same hash and projection reuse anchored storage');
+  revision='cache2';await port.readRequest(f(1));assert.equal(counts.getContract,1);assert.equal(counts.getPublicStorageAt,4);
+  post.text='changed indexed text';await port.readRequest(f(1));assert.equal(counts.getContract,2,'changed source invalidates even a defective unchanged revision');post.text='@bok hello';
+  state.anchor=f(98);await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);
+  state.realProofs=development;await assert.rejects(port.readRequest(f(1)));state.realProofs=!development;
+  let indexedTip=5;index.status=()=>({state:'ready',complete:true,revision,checkpoint:{number:indexedTip,hash:f(indexedTip===5?99:100)}});
+  index.sync=async()=>{syncs++;indexedTip=6;revision='cache3';};
+  node.getBlock=async()=>({number:6,hash:BlockHash.fromString(f(100))});
+  node.getPublicStorageAt=async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:6,hash:f(100)});return new Fr(storage.get(slot.toBigInt()));};
+  storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false,'new checkpoint rechecks changed moderation');assert.equal(syncs,1);storage.set(flagged,0n);
+  index.status=basicStatus;index.sync=basicSync;Object.assign(node,originalNode);
   // A failed parallel read must not release index ownership while other reads
   // are still running. Rejection is delivered only after every read drains.
   let releaseReads,readsStarted,storageReads=0,finished=false;
@@ -953,4 +973,12 @@ test('hosted activated invocation with no model call replies and refunds in one 
 test('hosted input rejection before its first provider call releases the full activated budget with its reply',async()=>{
  const x=invocationFixture();x.args.runAgent=async()=>{throw Object.assign(Error('too large'),{code:'BOK_INPUT_LIMIT'});};
  await x.run();assert.deepEqual(x.events,['finalize_reply']);assert.equal(x.row.charged,0n);assert.equal(x.row.refunded,1000n);assert.equal(x.row.reserved,0n);
+});
+test('operator-pinned repository namespace survives plugin upgrades without changing payment scope',()=>{
+ const oldScope={receiver:f(8),boardAddress:f(9)},oldConfig={pluginId:f(1)};
+ const existing=hostedRepositoryNamespace(oldConfig,oldScope);
+ assert.equal(existing,JSON.stringify({scope:oldScope,pluginId:f(1)}));
+ const nextScope={...oldScope,receiver:f(10)},config={pluginId:f(2),repositoryNamespace:existing};
+ assert.equal(hostedRepositoryNamespace(config,nextScope),existing);assert.equal(nextScope.receiver,f(10));
+ for(const repositoryNamespace of ['',null,12,{},'x'.repeat(4097),'bad\0namespace','bad\nnamespace'])assert.throws(()=>hostedRepositoryNamespace({repositoryNamespace},oldScope),/namespace/);
 });

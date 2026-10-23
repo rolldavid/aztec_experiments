@@ -70,7 +70,7 @@ export async function rollingPredecessorsClear({index,request,isTerminal=async()
  * Human ownership/private tags never enter this port. Current on-chain plugin,
  * moderation and policy reads are pinned to the same required-finality block. */
 export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,development,isTerminalWithoutReply}){
- const admission={};
+ const admission={};let cachedState=null;
  assert.equal(boardArtifact.name,'RollingBoard');const board=AztecAddress.fromStringUnsafe(scope.boardAddress);
  const expectedClass=(await getContractClassFromArtifact(boardArtifact)).id.toString();
  const toField=x=>'0x'+BigInt(x).toString(16).padStart(64,'0');
@@ -90,6 +90,14 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   };
   const [,head]=await together([checkScope(),node.getBlock('checkpointed')]);
   assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:String(head.hash)};
+  // Only immutable, hash-anchored storage is reused. Predecessor admission and
+  // the canonical anchor are still observed for every guard. One entry bounds
+  // memory and a changed index revision or post invalidates it immediately.
+  const projection=index.status();
+  const cacheKey=projection.state==='ready'&&projection.complete===true&&typeof projection.revision==='string'
+   ?JSON.stringify([anchor,projection.revision,post]):null;
+  let values=cacheKey&&cachedState?.key===cacheKey?cachedState.values:null;
+  if(!values){
   const read=slot=>node.getPublicStorageAt(anchor,board,slot);
   const flaggedSlot=await deriveStorageSlotInMap(boardArtifact.storageLayout.post_flagged.slot,new Fr(BigInt(post.id)));
   const local=post.record.subboard==='0'?null:await deriveStorageSlotInMap(boardArtifact.storageLayout.subboards.slot,new Fr(BigInt(post.record.subboard)));
@@ -103,18 +111,29 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   const mainVersion=Number(mainValue.toBigInt());assert(Number.isSafeInteger(mainVersion)&&mainVersion>0);
   // Exact pinned SubboardRecord: exists, rules, metadata, creation_version, rejected, reason.
   const localAllowed=!local||(localValues[0].toBigInt()===1n&&localValues[1].toBigInt()===0n);
+  values={adapter:String(adapter),enabled:enabled.toBigInt()===1n,flagged,mainVersion,localAllowed};
+  }
+  const {adapter,enabled,flagged,mainVersion,localAllowed}=values;
   // This contract's effective_policy/publish_plugin_reply define immutable local version 1.
   const identity={postId:toField(post.id),threadId:toField(post.record.root),order:String(post.order),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,adapter:scope.receiver};
   const predecessorsClear=await rollingPredecessorsClear({index,request:identity,isTerminal:row=>isTerminalWithoutReply?.(row,anchor)??false,admission});
   assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed during predecessor admission');
+  if(cacheKey){assert.equal(index.status().revision,projection.revision,'Board projection changed during read');cachedState={key:cacheKey,values};}
   return {...identity,predecessorsClear,
    text:post.text,replied:invocation.reply!==null,mainVersion,localVersion:post.record.subboard==='0'?0:1,
-   usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&String(adapter)===scope.receiver&&enabled.toBigInt()===1n&&BigInt(post.position.blockNumber)<=BigInt(head.number)&&predecessorsClear};
+   usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&adapter===scope.receiver&&enabled&&BigInt(post.position.blockNumber)<=BigInt(head.number)&&predecessorsClear};
  };
  // Catch-up is ordinary retained index work, not an elapsed-time failure.
  // Yield after a bounded batch so service shutdown and other canonical reads
  // can proceed. Never publish a scan until the index authenticates its full tip.
- const syncReady=async()=>{for(let steps=0;steps<32;steps++){
+ const syncReady=async()=>{
+  assert(!admission.closed,'Canonical predecessor admission closed');
+  const current=index.status();
+  if(current.state==='ready'&&current.complete===true&&current.checkpoint){
+   const head=await node.getBlock('checkpointed'),after=index.status();
+   if(head&&head.number===current.checkpoint.number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return true;
+  }
+  for(let steps=0;steps<32;steps++){
   assert(!admission.closed,'Canonical predecessor admission closed');
   await index.sync();if(index.status().state==='ready')return true;
  }return false;};
