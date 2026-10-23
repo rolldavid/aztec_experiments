@@ -1,3 +1,4 @@
+import {measureBokStage} from './bok-timing.mjs';
 import {sha256,toUtf8Bytes} from 'ethers';
 import {quoteCall,usageCharge,ceilDiv} from './metering.mjs';
 import {veniceDiagnosticError,getVeniceResponseStatus,veniceFinishReason} from './venice-diagnostics.mjs';
@@ -28,12 +29,14 @@ function summaryWithoutReasoning(input){
  return true;
 }
 export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUsd=5}){
- let readiness=Promise.resolve();
+ let readiness=Promise.resolve(),catalogue;
+ // Share only concurrent catalogue reads, never cached prices across calls.
+ const models=()=>catalogue??=(measureBokStage('provider.catalogue',()=>client.json('/api/v1/models')).finally(()=>{catalogue=undefined;}));
  const ensureCredits=maximum=>{
   const check=readiness.then(async()=>{
-   let balance=await client.balance();
+   let balance=await measureBokStage('provider.balance',()=>client.balance());
    const ready=()=>balance.canConsume&&Number.isFinite(balance.balanceUsd)&&BigInt(Math.floor(balance.balanceUsd*1e6))>=maximum;
-   if(!ready()){if(!autoTopUp)throw Error('Operator Venice wallet needs funding');await client.topUp(maxTopUpUsd);balance=await client.balance();}
+   if(!ready()){if(!autoTopUp)throw Error('Operator Venice wallet needs funding');await measureBokStage('provider.topup',()=>client.topUp(maxTopUpUsd));balance=await measureBokStage('provider.balance',()=>client.balance());}
    if(!ready())throw Error('Operator Venice credits unavailable');
   });
   readiness=check.catch(()=>{});
@@ -42,7 +45,7 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
  return {
   async quote(input,available){
    const modelId=input.modelId??model;
-   const catalog=await client.json('/api/v1/models');
+   const catalog=await models();
    const spec=catalog.data?.find(x=>x.id===modelId)?.model_spec;
    if(summaryWithoutReasoning(input)){
     const c=spec?.capabilities;
@@ -61,12 +64,12 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
     const summaryRates=rates(quote),mainRates=rates(compared);
     if(summaryRates.some((rate,i)=>rate>mainRates[i])||!summaryRates.some((rate,i)=>rate<mainRates[i]))throw Error('Summary model must be cheaper');
    }
-   await ensureCredits(quote.maximum);
+   await measureBokStage('provider.credits',()=>ensureCredits(quote.maximum));
    return quote;
   },
   async execute(input,quote){
-   const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,...(summaryWithoutReasoning(input)?{reasoning:{enabled:false}}:{}),
-    venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}});
+   const result=await measureBokStage('provider.completion',()=>client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,...(summaryWithoutReasoning(input)?{reasoning:{enabled:false}}:{}),
+    venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}}));
    let stage='missing-result/usage';
    try {
     // Capture billing primitives once; never re-read a changing response getter.

@@ -87,6 +87,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     ];
     return {
       privateSource:!!workspace?.connection,
+      sourceRevision:workspace&&!workspace.connection?workspace.readRevision:undefined,
       definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'&&(!workspace.connection||x.function.name!=='read_pr')),definition('check_workspace','Run isolated Node tests, static build and mandatory browser scenarios under the real hosting policy for current source; repair failures before finishing',{})]:definitions,
       summary:reason=>workspace?.connection?'Connected repository work did not publish a pull request.':(workspace?reason:reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){

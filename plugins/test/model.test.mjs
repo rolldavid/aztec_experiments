@@ -213,3 +213,29 @@ for(const publication of [{latestUrl:'javascript:alert(1)',latestSourceUrl:'http
  const toolbox={open:async()=>({definitions:[],accept:async()=>({repositoryId:'repo',acceptedRevision:'a'.repeat(40),publication}),close:async()=>{}})};
  await assert.rejects(createAgent({toolbox,instructions:'Build',model:{complete:async()=>({message:{role:'assistant',content:'Done'}})}}).run({id:'a',postId:'b',text:'Build'}),/Invalid publication link|Publication links exceed reply limit/);
 });
+
+test('static update receives bounded untrusted source before first paid model call without discovery turns',async()=>{
+ const calls=[],definitions=['list_files','read_file','check_workspace'].map(name=>({function:{name}}));let input;
+ const toolbox={open:async()=>({sourceRevision:'a'.repeat(40),definitions,call:async(name,args)=>{calls.push([name,args]);return name==='list_files'?{files:['index.html','package.json','test.js'],truncated:false}:{text:args.path==='index.html'?'<p>EXISTING_UNTRUSTED_SOURCE</p>':'{}'};},close:async()=>{}})};
+ await createAgent({toolbox,instructions:'Trusted instructions',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Change the existing app'});
+ assert.equal(calls.filter(([name])=>name==='list_files').length,1);assert.equal(calls.filter(([name])=>name==='read_file').length,3);
+ assert(!input.messages[0].content.includes('EXISTING_UNTRUSTED_SOURCE'));
+ const context=input.messages.find(row=>row.role==='user'&&row.content.includes('Initial repository snapshot'));
+ assert(context.content.includes('EXISTING_UNTRUSTED_SOURCE'));assert(context.content.includes('untrusted source data'));
+ assert(Buffer.byteLength(context.content)<25000);
+});
+test('initial context omits whole oversized files explicitly and never preloads connected private sources',async()=>{
+ for(const privateSource of [false,true]){
+  let reads=0,input;const definitions=['list_files','read_file','check_workspace'].map(name=>({function:{name}}));
+  const toolbox={open:async()=>({sourceRevision:'a'.repeat(40),privateSource,definitions,call:async name=>{reads++;return name==='list_files'?{files:['index.html','package.json'],truncated:false}:{text:'X'.repeat(30000)};},close:async()=>{}})};
+  await createAgent({toolbox,instructions:'Help',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Edit'});
+  if(privateSource){assert.equal(reads,0);assert(!input.messages.some(row=>row.content.includes('Initial repository snapshot')));}
+  else{const text=input.messages.find(row=>row.content.includes('Initial repository snapshot')).content;assert(text.includes('"omitted":["index.html","package.json"]'));assert(!text.includes('XXX'));assert(Buffer.byteLength(text)<25000);}
+ }
+});
+
+test('new empty generated repository seeds its state without checkout or file reads',async()=>{
+ let input;const toolbox={open:async()=>({sourceRevision:null,definitions:['list_files','read_file','check_workspace'].map(name=>({function:{name}})),call:()=>assert.fail('Empty repository needs no checkout'),close:async()=>{}})};
+ await createAgent({toolbox,instructions:'Build',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Build'});
+ assert(input.messages.some(row=>row.role==='user'&&row.content.includes('repository is empty')));
+});

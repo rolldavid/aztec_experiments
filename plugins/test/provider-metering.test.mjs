@@ -110,3 +110,10 @@ for(const kind of ['primary','tools','unknown-effort'])test('summary reasoning p
  const request={...input,cheaperThan:'main',reasoningEffort:'none'};if(kind==='primary')delete request.cheaperThan;if(kind==='tools')request.tools=[{type:'function'}];if(kind==='unknown-effort')request.reasoningEffort='high';
  await assert.rejects(veniceMeteredProvider({client}).quote(request,1000000n),/Invalid summary reasoning policy/);assert.equal(credits,0);assert.equal(inference,0);
 });
+
+test('concurrent quotes share an in-flight catalogue but later quotes refresh prices',async()=>{
+ let release,started,requests=0;const gate=new Promise(resolve=>release=resolve),entered=new Promise(resolve=>started=resolve);
+ const client={balance:async()=>({canConsume:true,balanceUsd:10}),json:async path=>{assert(path.endsWith('/models'));requests++;started();await gate;return {data:[{id:'kimi-k2-5',model_spec:spec}]};}};
+ const provider=veniceMeteredProvider({client}),a=provider.quote(input,1000000n),b=provider.quote(input,1000000n);
+ await entered;assert.equal(requests,1);release();await Promise.all([a,b]);await provider.quote(input,1000000n);assert.equal(requests,2);
+});
