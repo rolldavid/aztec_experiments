@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import {constants as fsConstants} from 'node:fs';
 import {dirname} from 'node:path';
 import {randomBytes,createHash} from 'node:crypto';
+import {Semaphore} from '@aztec-labs/foundation/queue';
 
 /** Local operator input only. Never pass parser/OS messages or receipt contents
  * to a public service. The hash binds supplied evidence, not provider attestation. */
@@ -141,12 +142,16 @@ export function operatorNodeFetch({endpoint,key,serialize,fetchImpl=globalThis.f
  if(typeof endpoint!=='string'||(key!==undefined&&(typeof key!=='string'||!/^[0-9a-f]{64}$/.test(key)))||typeof serialize!=='function')throw rejected();
  const url=new URL(endpoint);
  if(url.username||url.password||url.search||url.hash||url.href!==endpoint)throw rejected();
+ // Anchored escrow reads can fill thirteen SDK batches. Keep them parallel,
+ // within the gateway's eight-request limit with room for other node clients.
+ const slots=new Semaphore(4);
  return async(host,body,extraHeaders={})=>{
-  let timer,reader;
+  let timer,reader,acquired=false;
   const controller=new AbortController();
   try{
    if(host!==endpoint||Object.getPrototypeOf(extraHeaders)!==Object.prototype||Reflect.ownKeys(extraHeaders).length)throw rejected();
    const encoded=serialize(body);if(typeof encoded!=='string'||Buffer.byteLength(encoded)>8*1024**2)throw rejected();
+   await slots.acquire();acquired=true;
    timer=setTimeout(()=>controller.abort(),10000);
    const response=await fetchImpl(endpoint,{method:'POST',redirect:'error',credentials:'omit',headers:{'content-type':'application/json',...(key?{'x-aztec-api-key':key}:{})},body:encoded,signal:controller.signal});
    if(response.status!==200||response.redirected)throw rejected();
@@ -159,7 +164,7 @@ export function operatorNodeFetch({endpoint,key,serialize,fetchImpl=globalThis.f
    for(const row of Array.isArray(decoded)?decoded:[decoded])if(row&&Object.hasOwn(row,'error'))row.error={code:-32000,message:'Operator RPC rejected'};
    return {response:decoded,headers:response.headers};
   }catch{throw Error('Operator RPC unavailable');}
-  finally{clearTimeout(timer);controller.abort();try{await reader?.cancel();}catch{}}
+  finally{clearTimeout(timer);controller.abort();try{await reader?.cancel();}catch{}finally{if(acquired)slots.release();}}
  };
 }
 

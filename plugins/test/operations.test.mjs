@@ -162,6 +162,27 @@ test('operator transport scopes synthetic authentication to exact endpoint POST 
  for(const host of [endpoint+'/',endpoint+'?x=1','https://elsewhere.example/v1/node'])await assert.rejects(transport(host,rpcBody),/RPC unavailable/);
  await assert.rejects(transport(endpoint,rpcBody,{authorization:'private'}));assert.equal(calls,1);
 });
+test('operator transport bounds concurrent batches and releases a slot after failure without retry',async()=>{
+ const endpoint=config().nodeUrl,held=new Map(),started=[];let active=0,maximum=0;
+ const transport=operatorNodeFetch({endpoint,serialize:JSON.stringify,fetchImpl:async(_,init)=>{
+  const body=JSON.parse(init.body),id=body[0].id;started.push(id);active++;maximum=Math.max(maximum,active);
+  try{return await new Promise((resolve,reject)=>held.set(id,{resolve:()=>resolve(new Response(JSON.stringify(body.map(row=>({jsonrpc:'2.0',id:row.id,result:row.id}))))),reject}));}
+  finally{active--;held.delete(id);}
+ }});
+ // Two distinct anchored snapshots produce thirteen three-call SDK batches.
+ const calls=Array.from({length:13},(_,i)=>transport(endpoint,Array.from({length:3},(_,j)=>({jsonrpc:'2.0',id:i*3+j,method:'aztec_getPublicStorageAt',params:[]}))).then(value=>({value}),error=>({error})));
+ const dispatched=()=>new Promise(resolve=>setImmediate(resolve));
+ await dispatched();assert.deepEqual(started,[0,3,6,9]);assert.equal(active,4);
+ held.get(0).reject(Error('PRIVATE_UPSTREAM_FAILURE'));await dispatched();
+ assert.deepEqual(started,[0,3,6,9,12]);assert.equal(active,4);
+ while(held.size){for(const gate of [...held.values()])gate.resolve();await dispatched();}
+ const results=await Promise.all(calls);assert.equal(results[0].error.message,'Operator RPC unavailable');
+ for(let i=1;i<results.length;i++)assert.deepEqual(results[i].value.response.map(row=>row.result),[i*3,i*3+1,i*3+2]);
+ assert.equal(maximum,4);assert.equal(active,0);assert.deepEqual(started,Array.from({length:13},(_,i)=>i*3));
+ // Exhausting and draining the queue leaves every slot available for later work.
+ const again=transport(endpoint,[{...rpcBody[0],id:99}]);await dispatched();held.get(99).resolve();
+ assert.equal((await again).response[0].result,99);assert.equal(active,0);
+});
 test('operator transport refuses inherited hidden and accessor headers without access',async()=>{
  let calls=0,gets=0;const endpoint=config().nodeUrl,transport=operatorNodeFetch({endpoint,serialize:JSON.stringify,fetchImpl:async()=>{calls++;return rpcResponse();}});
  const accessor={};Object.defineProperty(accessor,'authorization',{get(){gets++;throw Error('private');}});
