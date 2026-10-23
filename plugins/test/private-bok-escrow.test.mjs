@@ -3,7 +3,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
-import {getGasLimits} from '@aztec-labs/wallet-sdk/base-wallet';
 import {createPrivateBokEscrowFactory} from '../private-bok-escrow.mjs';
 const H=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const digest=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
@@ -13,7 +12,7 @@ class Field {
 }
 const names=['state','invocation_hash','sequence','deadline','budget','available','reserved','charged','refunded','primary_refund','secondary_refund','primary_done','secondary_done','receipt'];
 async function fixture(overrides={}){
- let simulations=0,feeQuotes=0,limitReads=0;
+ let validations=0,feeQuotes=0,balanceReads=0,feeBalance=10000000000n;
  let saved={operations:{}},proofs=0,sends=0,held=true,sendLost=false,proofFailed=false,wrongCall=false,writeFailure=false;
  const id=H(50),target=H(51),address=H(52),operator=H(53),board=H(54),classId=H(55),txHash=H(56),blockHash=H(57),rollup='0x'+'12'.repeat(20);
  const real=overrides.development===false;
@@ -31,7 +30,7 @@ async function fixture(overrides={}){
   return {calls:[lastCall]};
  }})});
  class BatchCall {constructor(_wallet,interactions){this.interactions=interactions;}async request(){return {calls:(await Promise.all(this.interactions.map(i=>i.request()))).flatMap(p=>p.calls)};}}
- const sdk={GasSettings,getGasLimits,TxExecutionRequest:{from:value=>({...value})},TxContext:{from:value=>({...value})},BatchCall,waitForTx:async()=>receipt,Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
+ const sdk={getFeeJuiceBalance:async(owner,client)=>{balanceReads++;assert.equal(String(owner),operator);assert.equal(client,node);return feeBalance;},BatchCall,waitForTx:async()=>receipt,Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
  const node={getNodeInfo:async()=>({l1ChainId:chainId,realProofs:nodeProofs,rollupVersion:1,l1ContractAddresses:{rollupAddress:rollup}}),
   getBlock:async tag=>typeof tag==='number'&&blockMismatch?{...block,hash:new Field(99)}:block,
   getContract:async()=>({currentContractClassId:new Field(actualClass)}),
@@ -41,13 +40,11 @@ async function fixture(overrides={}){
  const tx={data:{feePayer:new Field(operator),constants:{txContext:{get chainId(){return new Field(chainId);},version:new Field(1)}}},getTxHash:()=>new Field(txHash),toBuffer:()=>Buffer.from('unit fake transaction'),
   getPublicCallRequestsWithCalldata:()=>(payloadCalls??[lastCall]).map(c=>({request:{contractAddress:new Field(wrongCall?99:address),msgSender:new Field(operator)},functionSelector:c.selector,args:c.args}))};
  tx.data.getNonRevertiblePublicCallRequests=()=>[];tx.data.getRevertiblePublicCallRequests=()=>payloadCalls??[lastCall];tx.data.getTeardownPublicCallRequest=()=>undefined;
- const gasUsed={totalGas:new Gas(100,1000),teardownGas:Gas.empty()},maxTxGasLimits=new Gas(10000,1000000);
- const wallet={registerContract:async()=>{},completeFeeOptions:async options=>{feeQuotes++;assert.equal(options.forEstimation,true);return {gasSettings:GasSettings.forEstimation({maxFeesPerGas:new GasFees(2n,3n)})};},getMaxTxGasLimits:async()=>{limitReads++;return maxTxGasLimits;},createTxExecutionRequestFromPayloadAndFee:async(p,from,fee)=>{payloadCalls=p.calls;return {payload:p,salt:'same nonce',authWitnesses:['same authorization'],txContext:{chainId:new Field(chainId),version:new Field(1),gasSettings:fee.gasSettings}};},scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
-  pxe:{proverEnabled:real,proofCreator:{trusted:true},simulateAndProveTx:async(request,options)=>{
-   simulations++;assert.equal(options.simulatePublic,true);assert.equal(options.skipTxValidation,false);assert.equal(options.skipFeeEnforcement,true);
-   const {proveTxRequest,proveOpts}=await options.prepareProve({gasUsed,publicInputs:{forPublic:true},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}}});
-   assert.equal(proveTxRequest.salt,request.salt);assert.deepEqual(proveTxRequest.authWitnesses,request.authWitnesses);assert.equal(proveTxRequest.payload,request.payload);
-   return wallet.pxe.proveTx(proveTxRequest,proveOpts);
+ const maxTxGasLimits=new Gas(10000,1000000);
+ const wallet={registerContract:async()=>{},completeFeeOptions:async options=>{feeQuotes++;assert.equal(options.forEstimation,undefined);return {gasSettings:GasSettings.fallback({gasLimits:maxTxGasLimits,maxFeesPerGas:new GasFees(2n,3n)})};},createTxExecutionRequestFromPayloadAndFee:async(p,from,fee)=>{payloadCalls=p.calls;return {payload:p,salt:'same nonce',authWitnesses:['same authorization'],txContext:{chainId:new Field(chainId),version:new Field(1),gasSettings:fee.gasSettings}};},scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
+  pxe:{proverEnabled:real,proofCreator:{trusted:true},simulateAndProveTx:async()=>{throw Error('Unexpected estimation path');},proveTxWithPublicValidation:async(request,options)=>{
+   validations++;assert.deepEqual(options.scopes,[]);assert.equal(String(options.senderForTags),operator);
+   return wallet.pxe.proveTx(request,options);
   },proveTx:async request=>{tx.data.constants.txContext.gasSettings=request.txContext.gasSettings;assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
  const store={read:()=>saved,write:async next=>{if(writeFailure)throw Error('disk secret');saved=structuredClone(next);}};
  const lease={assertHeld:async()=>assert(held,'lost lease')};
@@ -56,8 +53,8 @@ async function fixture(overrides={}){
  const create=()=>createPrivateBokEscrowFactory(sdk)(options),port=await create();
  const op=(method,args,key=0)=>({operationId:digest([method,key]),argsDigest:digest(args.map(x=>typeof x==='bigint'?String(x):x))});
  return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,sdk,counts:()=>({proofs,sends}),
-  gasUsed,maxTxGasLimits,feeCounts:()=>({simulations,feeQuotes,limitReads}),journal:()=>saved.privateBokEscrow,set:(key,value)=>{
-   if(key==='nodeProofs')nodeProofs=value;if(key==='pxeEnabled')wallet.pxe.proverEnabled=value;if(key==='proverMode')wallet.pxe.proofCreator.proofsEnabled=value;if(key==='proverTrusted')wallet.pxe.proofCreator.trusted=value;
+  maxTxGasLimits,feeCounts:()=>({validations,feeQuotes,balanceReads}),journal:()=>saved.privateBokEscrow,set:(key,value)=>{
+   if(key==='feeBalance')feeBalance=value;if(key==='nodeProofs')nodeProofs=value;if(key==='pxeEnabled')wallet.pxe.proverEnabled=value;if(key==='proverMode')wallet.pxe.proofCreator.proofsEnabled=value;if(key==='proverTrusted')wallet.pxe.proofCreator.trusted=value;
    if(key==='sendLost')sendLost=value;if(key==='proofFailed')proofFailed=value;if(key==='wrongCall')wrongCall=value;if(key==='held')held=value;
    if(key==='chainId')chainId=value;if(key==='class')actualClass=value;if(key==='operator')actualOperator=value;if(key==='blockMismatch')blockMismatch=value;if(key==='writeFailure')writeFailure=value;
   }};
@@ -445,9 +442,9 @@ test('unit fake: final batch pending/lost acknowledgement observes one original 
  assert.equal((await next.finalize_reply(...args,op)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
 });
 
-test('pinned SDK gas and transaction types: one estimate pads actual batch cost and preserves authorization',async()=>{
+test('pinned SDK gas and transaction types: funded native ceiling preserves exact request and batch with one validated proof',async()=>{
  const {TxExecutionRequest,TxContext}=await import('@aztec-labs/stdlib/tx');
- const f=await fixture(),wallet=f.options.wallet;f.sdk.TxExecutionRequest=TxExecutionRequest;f.sdk.TxContext=TxContext;
+ const f=await fixture(),wallet=f.options.wallet;
  let originalRequest,preparedPayload;
  const create=wallet.createTxExecutionRequestFromPayloadAndFee;
  wallet.createTxExecutionRequestFromPayloadAndFee=async(payload,from,fee)=>{
@@ -457,38 +454,37 @@ test('pinned SDK gas and transaction types: one estimate pads actual batch cost 
  };
  const prove=wallet.pxe.proveTx;
  wallet.pxe.proveTx=async(request,options)=>{
-  const expected=TxExecutionRequest.from({...originalRequest,txContext:TxContext.from({...originalRequest.txContext,gasSettings:request.txContext.gasSettings})});
-  assert.deepEqual(request.toBuffer(),expected.toBuffer(),'only gas settings change in the signed request');
-  assert.deepEqual(request.txContext.gasSettings.gasLimits,getGasLimits(f.gasUsed,f.maxTxGasLimits).gasLimits);
-  const balance=10000n,maxFee=request.txContext.gasSettings.getFeeLimit().toBigInt();
-  assert(GasSettings.fallback({gasLimits:f.maxTxGasLimits,maxFeesPerGas:request.txContext.gasSettings.maxFeesPerGas}).getFeeLimit().toBigInt()>balance,'old default would be unaffordable');
-  assert(maxFee<balance,'native estimated cap is affordable');
+  assert.equal(request,originalRequest,'the native primitive receives the exact prepared request');
+  assert.deepEqual(request.toBuffer(),originalRequest.toBuffer());
+  assert.deepEqual(request.txContext.gasSettings.gasLimits,f.maxTxGasLimits);
+  assert(request.txContext.gasSettings.getFeeLimit().toBigInt()<10000000000n);
   return prove(request,options);
  };
  const args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],operation=f.op('finalize_reply',args);
  assert.equal((await f.port.finalize_reply(...args,operation)).status,'succeeded');
  assert.deepEqual(preparedPayload.calls.map(call=>call.name),['settle','publish_reply','finish']);
  assert.deepEqual(preparedPayload.calls.map(call=>call.args.map(arg=>arg.toBigInt())),[[BigInt(f.id),0n,120n,88n],[BigInt(f.id),89n,...Array(32).fill(0n),1n,0n,0n],[BigInt(f.id)]]);
- assert.deepEqual(f.feeCounts(),{simulations:1,feeQuotes:1,limitReads:1});assert.deepEqual(f.counts(),{proofs:1,sends:1});
- const record=f.journal().operations[operation.operationId];assert.equal(BigInt(record.estimatedMaximumFee),f.tx.data.constants.txContext.gasSettings.getFeeLimit().toBigInt());
- assert.deepEqual(record.estimatedGas.gasLimits,{daGas:f.tx.data.constants.txContext.gasSettings.gasLimits.daGas,l2Gas:f.tx.data.constants.txContext.gasSettings.gasLimits.l2Gas});
+ assert.deepEqual(f.feeCounts(),{validations:1,feeQuotes:1,balanceReads:1});assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ const record=f.journal().operations[operation.operationId];assert.equal(BigInt(record.maximumFee),f.tx.data.constants.txContext.gasSettings.getFeeLimit().toBigInt());
+ assert.deepEqual(record.gas.gasLimits,{daGas:f.tx.data.constants.txContext.gasSettings.gasLimits.daGas,l2Gas:f.tx.data.constants.txContext.gasSettings.gasLimits.l2Gas});
 });
-test('native gas padding clamps to network caps but never admits measured usage above a cap',async()=>{
- const at=await fixture();at.maxTxGasLimits.daGas=105;at.maxTxGasLimits.l2Gas=1050;
- await at.port.finish(at.id,at.op('finish',[at.id]));
- assert.deepEqual(at.tx.data.constants.txContext.gasSettings.gasLimits,new Gas(105,1050));
- for(const dimension of ['daGas','l2Gas']){
-  const f=await fixture();f.gasUsed.totalGas[dimension]=f.maxTxGasLimits[dimension]+1;
-  await assert.rejects(f.port.finish(f.id,f.op('finish',[f.id])),/unresolved/);
-  assert.deepEqual(f.counts(),{proofs:0,sends:0});assert.equal(f.feeCounts().simulations,1);
+test('funded fixed ceiling: exact balance admits; one unit short fails before private work',async()=>{
+ const cap=GasSettings.fallback({gasLimits:new Gas(10000,1000000),maxFeesPerGas:new GasFees(2n,3n)}).getFeeLimit().toBigInt();
+ for(const [balance,passes] of [[cap,true],[cap-1n,false]]){
+  const f=await fixture();f.set('feeBalance',balance);const operation=f.op('finish',[f.id]);
+  if(passes){assert.equal((await f.port.finish(f.id,operation)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});}
+  else{await assert.rejects(f.port.finish(f.id,operation),error=>error.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT');assert.deepEqual(f.counts(),{proofs:0,sends:0});assert.equal(f.journal().operations[operation.operationId].failure,'operator-fee-balance-insufficient');}
+  assert.deepEqual(f.feeCounts(),{validations:passes?1:0,feeQuotes:1,balanceReads:1});
  }
 });
-test('simulation revert or altered proven fee settings prevents broadcast',async()=>{
- for(const boundary of ['simulation','proven fee']){
+test('required native validation, failed validation or altered proven fees prevent broadcast',async()=>{
+ for(const boundary of ['missing capability','validation','proven fee']){
   const f=await fixture(),wallet=f.options.wallet;
-  if(boundary==='simulation')wallet.pxe.simulateAndProveTx=async(_request,options)=>options.prepareProve({gasUsed:f.gasUsed,publicInputs:{forPublic:true},publicOutput:{txEffect:{revertCode:{isOK:()=>false}}}});
+  if(boundary==='missing capability')delete wallet.pxe.proveTxWithPublicValidation;
+  else if(boundary==='validation')wallet.pxe.proveTxWithPublicValidation=async()=>{throw Error('Native public validation failed');};
   else{const prove=wallet.pxe.proveTx;wallet.pxe.proveTx=async(...args)=>{const result=await prove(...args);f.tx.data.constants.txContext.gasSettings=GasSettings.empty();return result;};}
   await assert.rejects(f.port.finish(f.id,f.op('finish',[f.id])),/unresolved/);assert.equal(f.counts().sends,0);
+  if(boundary!=='proven fee')assert.equal(f.counts().proofs,0);
  }
 });
 test('explicit final reply replacement binds all nine original arguments and never repeats',async()=>{
@@ -497,7 +493,7 @@ test('explicit final reply replacement binds all nine original arguments and nev
  const record=f.journal().operations[f.operation.operationId];assert.equal(record.replacement.method,'finalize_reply');
  assert.deepEqual(record.replacement.args,original.args);assert.equal(record.argsDigest,original.argsDigest);assert.equal(record.txHash,original.txHash);
  assert.deepEqual(f.tx.getPublicCallRequestsWithCalldata().map(call=>call.args.length),[4,37,1]);
- assert.deepEqual(f.feeCounts(),{simulations:1,feeQuotes:1,limitReads:1});assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ assert.deepEqual(f.feeCounts(),{validations:1,feeQuotes:1,balanceReads:1});assert.deepEqual(f.counts(),{proofs:1,sends:1});
  assert.equal((await (await f.create()).replaceDroppedOperation(f.authority)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
  f.setOriginal('checkpointed');assert.equal((await f.port.inspectOperation(f.operation.operationId)).txHash,f.originalHash);
  assert.equal(f.journal().operations[f.operation.operationId].includedHistory[0].transactionFee,'7');assert.equal(f.journal().operations[f.operation.operationId].replacement.includedHistory[0].transactionFee,'7');
@@ -515,7 +511,7 @@ test('explicit final reply replacement refuses altered message authority and pen
 test('final reply replacement consumed before simulation/proof failure cannot be automatically retried',async()=>{
  const f=await replacementFixture('finalize_reply');f.set('proofFailed',true);
  await assert.rejects(f.port.replaceDroppedOperation(f.authority),/unresolved/);assert.deepEqual(f.counts(),{proofs:1,sends:0});
- await (await f.create()).replaceDroppedOperation(f.authority);assert.deepEqual(f.counts(),{proofs:1,sends:0});assert.equal(f.feeCounts().simulations,1);
+ await (await f.create()).replaceDroppedOperation(f.authority);assert.deepEqual(f.counts(),{proofs:1,sends:0});assert.equal(f.feeCounts().validations,1);
 });
 
 test('proposed reservation permits paid admission but a reorg fences it and final observation still waits checkpoint',async()=>{

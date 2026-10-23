@@ -17,13 +17,13 @@ const requestFields = ['state','invocation_hash','sequence','deadline','budget',
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
 export async function createPrivateBokEscrow(options) {
- const [{Contract,BatchCall}, {Fr}, {AztecAddress}, {TxHash,TxExecutionRequest,TxContext}, {GasSettings}, {getGasLimits}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
+ const [{Contract,BatchCall}, {Fr}, {AztecAddress}, {TxHash}, {getFeeJuiceBalance}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
   import('@aztec-labs/aztec.js/contracts'), import('@aztec-labs/foundation/curves/bn254'),
-  import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'), import('@aztec-labs/stdlib/gas'), import('@aztec-labs/wallet-sdk/base-wallet'),
+  import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'), import('@aztec-labs/aztec.js/utils'),
   import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'), import('@aztec-labs/aztec.js/node'),
   import('@aztec-labs/bb-prover/client/bundle'), import('@aztec-labs/bb-prover/client/lazy'),
  ]);
- return createPrivateBokEscrowFactory({Contract, BatchCall, Fr, AztecAddress, TxHash, TxExecutionRequest, TxContext, GasSettings, getGasLimits, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
+ return createPrivateBokEscrowFactory({Contract, BatchCall, Fr, AztecAddress, TxHash, getFeeJuiceBalance, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
   waitForTx,isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
 }
 
@@ -255,28 +255,21 @@ export function createPrivateBokEscrowFactory(sdk) {
      assert.equal(call.name,steps[i][0]);assert.equal(String(call.to),String(addr));assert.equal(call.type,'public');assert.equal(call.isStatic,false);
      assert.deepEqual(call.args.map(x=>x.toBigInt()),steps[i][1].flat().map(x=>BigInt(x)),'Payload arguments changed');
     }
-    const [fee,maxTxGasLimits]=await Promise.all([
-     wallet.completeFeeOptions({from:op,feePayer:payload.feePayer,forEstimation:true}),wallet.getMaxTxGasLimits(),
+    assert.equal(typeof wallet.pxe.proveTxWithPublicValidation,'function','Validated native proof capability required');
+    // Use the SDK's node-advertised transaction ceiling, not estimation limits.
+    // The operator must afford the full commitment before doing private work;
+    // actual kernel output is validated with fee enforcement before the proof.
+    const [fee,balance]=await Promise.all([
+     wallet.completeFeeOptions({from:op,feePayer:payload.feePayer}),sdk.getFeeJuiceBalance(op,node),
     ]);
-    const simulationRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
-    let estimatedGasSettings;
+    const maximumFee=fee.gasSettings.getFeeLimit().toBigInt();
+    if(balance<maximumFee)throw Object.assign(new Error('Operator fee balance is below the transaction maximum'),{code:'BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'});
+    await recordUpdate({maximumFee:String(maximumFee),gas:{gasLimits:{daGas:fee.gasSettings.gasLimits.daGas,l2Gas:fee.gasSettings.gasLimits.l2Gas},teardownGasLimits:{daGas:fee.gasSettings.teardownGasLimits.daGas,l2Gas:fee.gasSettings.teardownGasLimits.l2Gas}}});
+    const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
     const proveOpts={scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)};
-    // Native atomic estimation/proving shares one anchor and sync. Estimation's
-    // deliberately high limits must never become the submitted fee commitment.
-    const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.simulateAndProveTx(simulationRequest,{
-     ...proveOpts,simulatePublic:true,skipTxValidation:false,skipFeeEnforcement:true,
-     prepareProve:async simulation=>{
-      assert(simulation.publicInputs?.forPublic&&simulation.publicOutput?.txEffect?.revertCode?.isOK()&&!simulation.publicOutput?.revertReason,'Escrow simulation failed');
-      const gasSettings=sdk.GasSettings.from({...fee.gasSettings,...sdk.getGasLimits(simulation.gasUsed,maxTxGasLimits)});estimatedGasSettings=gasSettings;
-      await recordUpdate({estimatedMaximumFee:String(gasSettings.getFeeLimit().toBigInt()),estimatedGas:{gasLimits:{daGas:gasSettings.gasLimits.daGas,l2Gas:gasSettings.gasLimits.l2Gas},teardownGasLimits:{daGas:gasSettings.teardownGasLimits.daGas,l2Gas:gasSettings.teardownGasLimits.l2Gas}}});
-      // Only gas limits change. Keep the exact account authorization, nonce,
-      // calls and fee prices; do not call a wallet/PXE method under its queue lock.
-      const proveTxRequest=sdk.TxExecutionRequest.from({...simulationRequest,txContext:sdk.TxContext.from({...simulationRequest.txContext,gasSettings})});
-      return {proveTxRequest,proveOpts};
-     },
-    }));
+    const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.proveTxWithPublicValidation(txRequest,proveOpts));
     assert(!proven.chonkProof.isEmpty(),'Missing proof');const tx=await proven.toTx();
-    assert.deepEqual(tx.data.constants.txContext.gasSettings.toBuffer(),estimatedGasSettings.toBuffer(),'Proven fee settings changed');
+    assert.deepEqual(tx.data.constants.txContext.gasSettings.toBuffer(),fee.gasSettings.toBuffer(),'Proven fee settings changed');
     assert.equal(String(tx.data.feePayer),String(op),'Operator fee payer changed');
     assert.equal(tx.data.constants.txContext.chainId.toBigInt(),BigInt(chainId),'Proven chain mismatch');
     assert.equal(tx.data.constants.txContext.version.toBigInt(),BigInt(version),'Proven version mismatch');
@@ -301,7 +294,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     // An exception may mean accepted-but-response-lost. Never send this action again.
     try{await measureBokStage('escrow.send',()=>node.sendTx(tx));}catch{await recordUpdate({submissionError:true});}
     return await waitForOperation(operationId);
-   }catch{if(!poisoned)await recordUpdate({failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
+   }catch(error){if(!poisoned)await recordUpdate({failure:error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'?'operator-fee-balance-insufficient':'operation-unresolved'});if(error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT')throw error;throw Error('Escrow operation unresolved; inspect original intent');}
   };
   const replaceDroppedOperation=async authority=>{
    const {operationId,argsDigest,originalTxHash}=authority??{};
