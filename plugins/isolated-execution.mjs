@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
+import {browserPlanDiagnostic,validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
 
 // Existing authenticated public image, never pulled by the execution capability.
 export const STATIC_IMAGE='sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222';
@@ -65,7 +65,8 @@ export async function captureStaticSource(directory){
  if(typeof pkg.scripts?.build!=='string'||!pkg.scripts.build.trim())throw sourceRequirement('STATIC_BUILD_REQUIRED');
  if(!files.some(f=>/(?:^|\/)(?:test[^/]*|[^/]*[.-]test)\.[cm]?js$/.test(f.path)))throw sourceRequirement('STATIC_TEST_REQUIRED');
  const browserFile=files.find(f=>f.path==='browser-tests.json');if(!browserFile)throw sourceRequirement('STATIC_BROWSER_TEST_REQUIRED');
- try{validateBrowserPlan(JSON.parse(Buffer.from(browserFile.data,'base64')));}catch{throw sourceRequirement('STATIC_BROWSER_TEST_INVALID');}
+ let browserPlan;try{browserPlan=JSON.parse(Buffer.from(browserFile.data,'base64'));}catch{throw Object.assign(sourceRequirement('STATIC_BROWSER_TEST_INVALID'),{browserPlan:browserPlanDiagnostic({code:'BROWSER_JSON',path:'$'})});}
+ try{validateBrowserPlan(browserPlan);}catch(cause){throw Object.assign(sourceRequirement('STATIC_BROWSER_TEST_INVALID'),{browserPlan:browserPlanDiagnostic(cause?.browserPlan)});}
  const manifest=files.map(({data,...f})=>f);return {files,manifest,sha256:sha(JSON.stringify(manifest)),bytes};
 }
 
@@ -239,7 +240,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
     limits:{...STATIC_LIMITS,workMs,totalMs:workMs+15000},publication:'untrusted static output; separate origin required; no publication performed'};
    await fs.writeFile(path.join(output,'result.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o600});
    return receipt;
-  }catch(cause){if(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,cause?.code))failureResult.requirement=cause.code;failureResult.failure=diagnosis(cause);if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
+  }catch(cause){if(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,cause?.code))failureResult.requirement=cause.code;if(cause?.code==='STATIC_BROWSER_TEST_INVALID'&&browserPlanDiagnostic(cause.browserPlan))failureResult.browserPlan=browserPlanDiagnostic(cause.browserPlan);failureResult.failure=diagnosis(cause);if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
   }finally{
    cleaning=true;
    try{

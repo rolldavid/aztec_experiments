@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateBrowserPlan,exerciseBrowser,browserInput,browserReceipt,validateBrowserReceipt} from '../browser-validation.mjs';
+import {browserPlanDiagnostic,validateBrowserPlan,exerciseBrowser,browserInput,browserReceipt,validateBrowserReceipt} from '../browser-validation.mjs';
 const plan=steps=>({version:1,scenarios:[{name:'use app',path:'index.html',steps:[...steps,{action:'reload'},{action:'expectVisible',selector:'body'}]}]});
 for(const [name,value] of [
  ['missing scenarios',{version:1,scenarios:[]}],
@@ -11,6 +11,20 @@ for(const [name,value] of [
  ['no assertion',{version:1,scenarios:[{name:'x',path:'index.html',steps:[{action:'reload'}]}]}],
 ])test('browser plan rejects '+name,()=>assert.throws(()=>validateBrowserPlan(value)));
 test('browser plan accepts bounded declarative interactions',()=>assert(validateBrowserPlan(plan([{action:'click',selector:'button'}]))));
+test('browser plan reports the exact excess step across scenarios without relaxing the limit',()=>{
+ const atLimit=plan(Array.from({length:62},()=>({action:'click',selector:'button'})));assert.equal(validateBrowserPlan(atLimit),atLimit);
+ const over=structuredClone(atLimit);over.scenarios.push({name:'another',path:'index.html',steps:[{action:'expectVisible',selector:'body'}]});
+ assert.throws(()=>validateBrowserPlan(over),error=>{
+  assert.deepEqual(error.browserPlan,{code:'BROWSER_STEP_LIMIT',path:'scenarios[1].steps[0]',message:'Use at most 64 steps across all scenarios.'});return true;
+ });
+});
+test('browser plan diagnoses field and action without echoing untrusted values',()=>{
+ for(const [step,code,field] of [[{action:'PRIVATE_SOURCE_SENTINEL'},'BROWSER_ACTION','action'],[{action:'check',selector:'#PRIVATE_SOURCE_SENTINEL',checked:'PRIVATE_SOURCE_SENTINEL'},'BROWSER_CHECKED','checked'],[{action:'expectCount',selector:'body',count:-1},'BROWSER_COUNT','count'],[{action:'reload',index:0},'BROWSER_INDEX_ACTION','index']]){
+  assert.throws(()=>validateBrowserPlan(plan([step])),error=>{assert.equal(error.browserPlan.code,code);assert.equal(error.browserPlan.path,'scenarios[0].steps[0].'+field);assert(!JSON.stringify(error.browserPlan).includes('PRIVATE_SOURCE_SENTINEL'));return true;});
+ }
+ for(const value of [{code:'PRIVATE_SOURCE_SENTINEL',path:'$'},{code:'BROWSER_JSON',path:'PRIVATE_SOURCE_SENTINEL'}])assert.equal(browserPlanDiagnostic(value),undefined);
+ assert.deepEqual(browserPlanDiagnostic({code:'BROWSER_JSON',path:'$',message:'PRIVATE_SOURCE_SENTINEL',source:'PRIVATE_SOURCE_SENTINEL'}),{code:'BROWSER_JSON',path:'$',message:'Use valid JSON in browser-tests.json.'});
+});
 const actual=process.env.BOK_BROWSER_TESTS==='1';
 const run=async(html,steps=[],more=[])=>{
  const {chromium}=await import('playwright');

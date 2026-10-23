@@ -4,29 +4,59 @@ import {HOSTING_TYPES,hostingHeaders,hostingPolicyHash} from './hosting-policy.m
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const actions={fill:['selector','value'],click:['selector'],check:['selector','checked'],select:['selector','value'],press:['selector','key'],reload:[],expectText:['selector','text'],expectCount:['selector','count'],expectChecked:['selector','checked'],expectVisible:['selector']};
+const browserPlanMessages=Object.freeze({
+ BROWSER_JSON:'Use valid JSON in browser-tests.json.',
+ BROWSER_SIZE:'Keep browser-tests.json within 64 KiB.',
+ BROWSER_FIELDS:'Use exactly the documented fields for this object or action.',
+ BROWSER_VERSION:'Set version to the number 1.',
+ BROWSER_SCENARIOS:'Provide between 1 and 8 scenarios.',
+ BROWSER_TEXT:'Use nonempty text within the documented length limit for this field.',
+ BROWSER_PATH:'Use a relative HTML file path without empty, dot or parent segments.',
+ BROWSER_STEPS:'Provide at least one step in this scenario.',
+ BROWSER_ACTION:'Use a documented action: fill, click, check, select, press, reload, expectText, expectCount, expectChecked or expectVisible.',
+ BROWSER_INDEX_ACTION:'Use index only with actions that take a selector.',
+ BROWSER_INDEX:'Use an integer index between 0 and 99.',
+ BROWSER_VALUE:'Use a string of at most 2000 characters.',
+ BROWSER_KEY:'Use a key name of at most 40 letters, digits or plus signs.',
+ BROWSER_CHECKED:'Use a boolean checked value (true or false).',
+ BROWSER_COUNT:'Use an integer count between 0 and 512.',
+ BROWSER_STEP_LIMIT:'Use at most 64 steps across all scenarios.',
+ BROWSER_ASSERTION:'Add a visible-state assertion to this scenario.',
+ BROWSER_RELOAD:'Include at least one reload action across the scenarios.',
+});
+// Only fixed reasons and schema/index paths reach the model, never source values,
+// selectors, unknown field names or the JSON parser's source-bearing exception.
+export function browserPlanDiagnostic(value){
+ if(!value||!Object.hasOwn(browserPlanMessages,value.code)||typeof value.path!=='string'||value.path.length>120||
+  !/^(?:\$|version|scenarios(?:\[[0-9]{1,2}\])?(?:\.steps(?:\[[0-9]{1,2}\])?)?(?:\.(?:name|path|action|index|selector|value|text|key|checked|count))?)$/.test(value.path))return undefined;
+ return {code:value.code,path:value.path,message:browserPlanMessages[value.code]};
+}
 export function validateBrowserPlan(plan){
- const exact=(value,keys)=>assert(value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys.sort().join(','),'Unexpected browser test fields');
- const text=(value,max)=>assert(typeof value==='string'&&value.length>0&&value.length<=max,'Invalid browser test text');
- assert(Buffer.byteLength(JSON.stringify(plan))<=65536,'Browser tests exceed 64KiB');
- exact(plan,['version','scenarios']);assert.equal(plan.version,1);assert(Array.isArray(plan.scenarios)&&plan.scenarios.length>0&&plan.scenarios.length<=8,'Provide 1–8 browser scenarios');
+ const require=(condition,code,path)=>{if(!condition){const diagnostic=browserPlanDiagnostic({code,path});throw Object.assign(Error(diagnostic.message),{browserPlan:diagnostic});}};
+ const exact=(value,keys,path)=>require(value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys.sort().join(','),'BROWSER_FIELDS',path);
+ const text=(value,max,path)=>require(typeof value==='string'&&value.length>0&&value.length<=max,'BROWSER_TEXT',path);
+ require(Buffer.byteLength(JSON.stringify(plan))<=65536,'BROWSER_SIZE','$');
+ exact(plan,['version','scenarios'],'$');require(plan.version===1,'BROWSER_VERSION','version');require(Array.isArray(plan.scenarios)&&plan.scenarios.length>0&&plan.scenarios.length<=8,'BROWSER_SCENARIOS','scenarios');
  let steps=0,reloads=0;
- for(const scenario of plan.scenarios){
-  exact(scenario,['name','path','steps']);text(scenario.name,120);text(scenario.path,240);
-  assert(/^[A-Za-z0-9_.\/-]+\.html$/i.test(scenario.path)&&scenario.path.split('/').every(x=>x&&x!=='.'&&x!=='..'),'Browser path must be a relative HTML file');
-  assert(Array.isArray(scenario.steps)&&scenario.steps.length>0,'Browser scenario needs steps');let assertions=0;
-  for(const step of scenario.steps){
-   assert(step&&Object.hasOwn(actions,step.action),'Unknown browser test action');const keys=['action',...actions[step.action]];
-   if(Object.hasOwn(step,'index')){assert(actions[step.action].includes('selector'));assert(Number.isInteger(step.index)&&step.index>=0&&step.index<100);keys.push('index');}
-   exact(step,keys);if(step.selector!==undefined)text(step.selector,300);
-   for(const key of ['value','text'])if(Object.hasOwn(step,key))assert(typeof step[key]==='string'&&step[key].length<=2000);
-   if(Object.hasOwn(step,'key')){text(step.key,40);assert(/^[A-Za-z0-9+]+$/.test(step.key));}
-   if(Object.hasOwn(step,'checked'))assert.equal(typeof step.checked,'boolean');
-   if(Object.hasOwn(step,'count'))assert(Number.isInteger(step.count)&&step.count>=0&&step.count<=512);
-   if(step.action.startsWith('expect'))assertions++;if(step.action==='reload')reloads++;assert(++steps<=64,'Browser tests exceed 64 steps');
+ for(const [i,scenario] of plan.scenarios.entries()){
+  const where='scenarios['+i+']';
+  exact(scenario,['name','path','steps'],where);text(scenario.name,120,where+'.name');text(scenario.path,240,where+'.path');
+  require(/^[A-Za-z0-9_.\/-]+\.html$/i.test(scenario.path)&&scenario.path.split('/').every(x=>x&&x!=='.'&&x!=='..'),'BROWSER_PATH',where+'.path');
+  require(Array.isArray(scenario.steps)&&scenario.steps.length>0,'BROWSER_STEPS',where+'.steps');let assertions=0;
+  for(const [j,step] of scenario.steps.entries()){
+   const at=where+'.steps['+j+']';
+   require(step&&Object.hasOwn(actions,step.action),'BROWSER_ACTION',at+'.action');const keys=['action',...actions[step.action]];
+   if(Object.hasOwn(step,'index')){require(actions[step.action].includes('selector'),'BROWSER_INDEX_ACTION',at+'.index');require(Number.isInteger(step.index)&&step.index>=0&&step.index<100,'BROWSER_INDEX',at+'.index');keys.push('index');}
+   exact(step,keys,at);if(step.selector!==undefined)text(step.selector,300,at+'.selector');
+   for(const key of ['value','text'])if(Object.hasOwn(step,key))require(typeof step[key]==='string'&&step[key].length<=2000,'BROWSER_VALUE',at+'.'+key);
+   if(Object.hasOwn(step,'key')){text(step.key,40,at+'.key');require(/^[A-Za-z0-9+]+$/.test(step.key),'BROWSER_KEY',at+'.key');}
+   if(Object.hasOwn(step,'checked'))require(typeof step.checked==='boolean','BROWSER_CHECKED',at+'.checked');
+   if(Object.hasOwn(step,'count'))require(Number.isInteger(step.count)&&step.count>=0&&step.count<=512,'BROWSER_COUNT',at+'.count');
+   if(step.action.startsWith('expect'))assertions++;if(step.action==='reload')reloads++;require(++steps<=64,'BROWSER_STEP_LIMIT',at);
   }
-  assert(assertions>0,'Each browser scenario needs a visible-state assertion');
+  require(assertions>0,'BROWSER_ASSERTION',where+'.steps');
  }
- assert(reloads>0,'Browser tests must exercise reload');return plan;
+ require(reloads>0,'BROWSER_RELOAD','scenarios');return plan;
 }
 export function artifactIdentity(artifacts){return sha(JSON.stringify(artifacts.map(f=>{const b=Buffer.from(f.data,'base64');return {path:f.path,bytes:b.length,sha256:sha(b)};})));}
 export function validateBrowserReceipt(value,{artifactSha256,policyHash}={}){

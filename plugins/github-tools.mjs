@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {browserPlanDiagnostic} from './browser-validation.mjs';
 import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 import {repositoryGit} from './thread-repositories.mjs';
 const trustedCommand=(command,args,options)=>{if(command!=='git')throw Error('Unsupported repository command');return repositoryGit(args,options);};
@@ -94,7 +95,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       async call(name,args){
         if(name==='check_workspace'&&workspace){
           await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
-          return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000,...(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,result.requirement)?{requirement:{code:result.requirement,message:STATIC_SOURCE_REQUIREMENTS[result.requirement]}}:{})};
+          return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000,...(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,result.requirement)?{requirement:{code:result.requirement,message:STATIC_SOURCE_REQUIREMENTS[result.requirement],...(result.requirement==='STATIC_BROWSER_TEST_INVALID'&&browserPlanDiagnostic(result.browserPlan)?{detail:browserPlanDiagnostic(result.browserPlan)}:{})}}:{})};
         }
         if(name==='list_files'){
           if(typeof args.prefix!=='string'||args.prefix.length>240||/[\0\r\n]/.test(args.prefix))throw Error('Invalid file prefix');

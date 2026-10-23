@@ -288,6 +288,13 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
  let missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_REQUIRED');
  await session.call('write_file',{path:'browser-tests.json',content:'PRIVATE_PARSE_SENTINEL'});
  missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_INVALID');assert(!JSON.stringify(missing).includes('PRIVATE_PARSE_SENTINEL'));
+ assert.deepEqual(missing.requirement.detail,{code:'BROWSER_JSON',path:'$',message:'Use valid JSON in browser-tests.json.'});
+ const steps=Array.from({length:63},()=>({action:'click',selector:'button'}));steps.push({action:'reload'},{action:'expectVisible',selector:'body'});
+ await session.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]})});
+ const excessive=await session.call('check_workspace',{});assert.equal(excessive.passed,false);assert.equal(excessive.phase,'input');
+ assert.equal(excessive.requirement.code,'STATIC_BROWSER_TEST_INVALID');
+ assert.deepEqual(excessive.requirement.detail,{code:'BROWSER_STEP_LIMIT',path:'scenarios[0].steps[64]',message:'Use at most 64 steps across all scenarios.'});
+
 });
 
 test('successful tool writes retain latest unaccepted source when later billing fails before validation',async t=>{
